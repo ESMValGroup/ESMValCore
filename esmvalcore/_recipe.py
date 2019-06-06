@@ -1016,6 +1016,7 @@ class Recipe:
         logger.info("Creating tasks from recipe")
         tasks = set()
 
+        priority = 0
         for diagnostic_name, diagnostic in self.diagnostics.items():
             logger.info("Creating tasks for diagnostic %s", diagnostic_name)
 
@@ -1029,7 +1030,9 @@ class Recipe:
                     profiles=self._preprocessors,
                     config_user=self._cfg,
                     task_name=task_name)
+                task.priority = priority
                 tasks.add(task)
+                priority += 1
 
             # Create diagnostic tasks
             for script_name, script_cfg in diagnostic['scripts'].items():
@@ -1040,7 +1043,9 @@ class Recipe:
                     output_dir=script_cfg['output_dir'],
                     settings=script_cfg['settings'],
                     name=task_name)
+                task.priority = priority
                 tasks.add(task)
+                priority += 1
 
         check.tasks_valid(tasks)
 

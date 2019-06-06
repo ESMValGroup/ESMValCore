@@ -199,6 +199,7 @@ class BaseTask:
         self.output_files = None
         self.name = name
         self.activity = None
+        self.priority = 0
 
     def initialize_provenance(self, recipe_entity):
         """Initialize task provenance activity."""
@@ -601,7 +602,8 @@ def _run_tasks_sequential(tasks):
     n_tasks = len(get_flattened_tasks(tasks))
     logger.info("Running %s tasks sequentially", n_tasks)
 
-    for task in get_independent_tasks(tasks):
+    tasks = get_independent_tasks(tasks)
+    for task in sorted(tasks, key=lambda t: t.priority):
         task.run()
 
 
@@ -626,7 +628,7 @@ def _run_tasks_parallel(tasks, max_parallel_tasks=None):
     while scheduled or running:
         # Submit new tasks to pool
         just_scheduled = []
-        for task in scheduled:
+        for task in sorted(scheduled, key=lambda t: t.priority):
             if not task.ancestors or all(done(t) for t in task.ancestors):
                 result = pool.apply_async(_run_task, [task])
                 results.append(result)
