@@ -6,15 +6,14 @@ from copy import deepcopy
 
 import iris
 import numpy as np
-import six
 import stratify
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 
+from ..cmor.fix import fix_file, fix_metadata
+from ..cmor.table import CMOR_TABLES
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
-from ..cmor.fix import fix_file, fix_metadata
-from ..cmor.table import CMOR_TABLES
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -202,7 +201,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         emsg = 'Unknown regridding scheme, got {!r}.'
         raise ValueError(emsg.format(scheme))
 
-    if isinstance(target_grid, six.string_types):
+    if isinstance(target_grid, str):
         if os.path.isfile(target_grid):
             target_grid = iris.load_cube(target_grid)
         else:

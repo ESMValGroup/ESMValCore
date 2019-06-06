@@ -52,7 +52,6 @@ requirements:
     - psutil
     - pydot
     - pyyaml
-    - six
     - yamale  # in esmvalgroup and birdhouse channel
 
 test:
