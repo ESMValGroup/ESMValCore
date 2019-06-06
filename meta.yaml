@@ -2,10 +2,10 @@
 ---
 
 # Build commmand:
-# conda build . -c conda-forge -c birdhouse
+# conda build . -c conda-forge -c esmvalgroup
 
 # Package version number
-{% set version = "2.0a2" %}
+{% set version = "2.0a3" %}
 
 package:
   name: esmvalcore
@@ -30,16 +30,19 @@ requirements:
     - git
     - python {{ python }}
     # Normally installed via pip:
+    - pytest-runner
     - setuptools_scm
   run:
     # esmvaltool
     - python
-    - libunwind  #  specifically for Python3.7+
+    - libunwind  # specifically for Python3.7+
     - graphviz
     - iris>=2.2
+    - matplotlib<3,>=2  # required by iris
     - python-stratify
     # Normally installed via pip:
     - cf-units
+    - cython  # required by cf-units but not automatically installed
     - esmpy
     - nc-time-axis
     - netCDF4
@@ -55,7 +58,7 @@ requirements:
 test:
   # TODO: add unit tests? This seems to require installing the tests
   imports:
-    - esmvaltool
+    - esmvalcore
   commands:
     - esmvaltool -h
 
@@ -63,5 +66,5 @@ about:
   home: https://www.esmvaltool.org
   license: Apache License, Version 2.0
   license_file: LICENSE
-  summary: ESMValTool Core: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP.
-  description: ESMValTool Core: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP.
+  summary: "ESMValTool Core: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP."
+  description: "ESMValTool Core: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP."
