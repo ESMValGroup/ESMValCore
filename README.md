@@ -9,10 +9,10 @@
 [![Anaconda-Server Badge](https://anaconda.org/esmvalgroup/esmvalcore/badges/installer/conda.svg)](https://conda.anaconda.org/esmvalgroup)
 
 
-ESMValTool: A community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP
+ESMValTool Core: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP
 
 # Getting started
-This is the development branch for version 2 of ESMValTool. ESMValTool version 2 is under rapid development, an installation from source is recommended at the moment.
+This is the development branch for ESMValTool Core. ESMValTool version 2 is under rapid development, an installation from source is recommended at the moment.
 
 ## Installing from source [recommended]
 Please see [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/development/CONTRIBUTING.md) for instructions on installing ESMValTool from source.
