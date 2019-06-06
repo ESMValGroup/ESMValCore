@@ -9,13 +9,10 @@ from mock import create_autospec
 from six import text_type
 
 import esmvalcore
-import esmvaltool
 from esmvalcore._recipe import TASKSEP, read_recipe_file
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
-from esmvaltool.diag_scripts.shared import (
-    ProvenanceLogger, get_diagnostic_filename, get_plot_filename)
 
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
@@ -145,7 +142,8 @@ def get_recipe(tempdir, content, cfg):
 
 
 def test_simple_recipe(tmp_path, patched_datafinder, config_user):
-
+    script = tmp_path / 'diagnostic.py'
+    script.write_text('')
     content = dedent("""
         datasets:
           - dataset: bcc-csm1-1
@@ -173,9 +171,9 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
                   - dataset: MPI-ESM-LR
             scripts:
               script_name:
-                script: examples/diagnostic.py
+                script: {}
                 custom_setting: 1
-        """)
+        """.format(script))
 
     recipe = get_recipe(tmp_path, content, config_user)
     raw = yaml.safe_load(content)
@@ -221,7 +219,7 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
     for task in diagnostic_tasks:
         print("Task", task.name)
         assert task.ancestors == list(preproc_tasks)
-        assert task.script == 'examples/diagnostic.py'
+        assert task.script == str(script)
         for key in MANDATORY_SCRIPT_SETTINGS_KEYS:
             assert key in task.settings and task.settings[key]
         assert task.settings['custom_setting'] == 1
@@ -634,6 +632,22 @@ def test_derive_with_fx(tmp_path, patched_datafinder, config_user):
     assert ancestor_product.attributes['short_name'] == 'nbp'
 
 
+def get_plot_filename(basename, cfg):
+    """Get a valid path for saving a diagnostic plot."""
+    return os.path.join(
+        cfg['plot_dir'],
+        basename + '.' + cfg['output_file_type'],
+    )
+
+
+def get_diagnostic_filename(basename, cfg, extension='nc'):
+    """Get a valid path for saving a diagnostic data file."""
+    return os.path.join(
+        cfg['work_dir'],
+        basename + '.' + extension,
+    )
+
+
 def simulate_diagnostic_run(diagnostic_task):
     """Simulate Python diagnostic run."""
     cfg = diagnostic_task.settings
@@ -645,7 +659,7 @@ def simulate_diagnostic_run(diagnostic_task):
         'plot_file': get_plot_filename('test', cfg),
         'statistics': ['mean', 'var'],
         'domains': ['trop', 'et'],
-        'plot_type': 'zonal',
+        'plot_types': ['zonal'],
         'authors': ['ande_bo'],
         'references': ['acknow_project'],
         'ancestors': input_files,
@@ -653,18 +667,61 @@ def simulate_diagnostic_run(diagnostic_task):
 
     diagnostic_file = get_diagnostic_filename('test', cfg)
     create_test_file(diagnostic_file)
-    with ProvenanceLogger(cfg) as provenance_logger:
-        provenance_logger.log(diagnostic_file, record)
+    provenance = os.path.join(cfg['run_dir'], 'diagnostic_provenance.yml')
+    os.makedirs(cfg['run_dir'])
+    with open(provenance, 'w') as file:
+        yaml.safe_dump({diagnostic_file: record}, file)
 
     diagnostic_task._collect_provenance()
     return record
 
 
-def test_diagnostic_task_provenance(tmp_path, patched_datafinder, config_user):
+TAGS = {
+    'authors': {
+        'ande_bo': {
+            'name': 'Bouwe Andela',
+        },
+    },
+    'references': {
+        'acknow_author': "Please acknowledge the author(s).",
+        'contact_authors': "Please contact the author(s) ...",
+        'acknow_project': "Please acknowledge the project(s).",
+    },
+    'projects': {
+        'c3s-magic': 'C3S MAGIC project',
+    },
+    'themes': {
+        'phys': 'physics',
+    },
+    'realms': {
+        'atmos': 'atmosphere',
+    },
+    'statistics': {
+        'mean': 'mean',
+        'var': 'variability',
+    },
+    'domains': {
+        'et': 'extra tropics',
+        'trop': 'tropics',
+    },
+    'plot_types': {
+        'zonal': 'zonal',
+    },
+}
+
+
+def test_diagnostic_task_provenance(
+        tmp_path,
+        patched_datafinder,
+        monkeypatch,
+        config_user,
+        ):
+    monkeypatch.setattr(esmvalcore._config, 'TAGS', TAGS)
+    monkeypatch.setattr(esmvalcore._recipe, 'TAGS', TAGS)
+    monkeypatch.setattr(esmvalcore._task, 'TAGS', TAGS)
 
     script = tmp_path / 'diagnostic.py'
-    with script.open('w'):
-        pass
+    script.write_text('')
 
     content = dedent("""
         diagnostics:
@@ -706,20 +763,15 @@ def test_diagnostic_task_provenance(tmp_path, patched_datafinder, config_user):
                                             key).pop() == record[key]
 
     # Check that diagnostic script tags have been added
-    with open(
-            os.path.join(
-                os.path.dirname(esmvaltool.__file__),
-                'config-references.yml')) as file:
-        tags = yaml.safe_load(file)
     for key in ('statistics', 'domains', 'authors', 'references'):
         assert product.attributes[key] == tuple(
-            tags[key][k] for k in record[key])
+            TAGS[key][k] for k in record[key])
 
     # Check that recipe diagnostic tags have been added
     src = yaml.safe_load(DEFAULT_DOCUMENTATION + content)
     for key in ('realms', 'themes'):
         value = src['diagnostics']['diagnostic_name'][key]
-        assert product.attributes[key] == tuple(tags[key][k] for k in value)
+        assert product.attributes[key] == tuple(TAGS[key][k] for k in value)
 
     # Check that recipe tags have been added
     recipe_record = product.provenance.get_record('recipe:recipe_test.yml')
@@ -727,7 +779,7 @@ def test_diagnostic_task_provenance(tmp_path, patched_datafinder, config_user):
     for key in ('description', 'references'):
         value = src['documentation'][key]
         if key == 'references':
-            value = ', '.join(tags[key][k] for k in value)
+            value = ', '.join(TAGS[key][k] for k in value)
         assert recipe_record[0].get_attribute('attribute:' +
                                               key).pop() == value
 

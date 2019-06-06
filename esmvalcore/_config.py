@@ -17,14 +17,14 @@ logger = logging.getLogger(__name__)
 CFG = {}
 CFG_USER = {}
 
+
 def find_diagnostics():
     """Try to find installed diagnostic scripts."""
     try:
         import esmvaltool
     except ImportError:
         return ''
-    else:
-        return os.path.dirname(esmvaltool.__file__)
+    return os.path.dirname(esmvaltool.__file__)
 
 
 DIAGNOSTICS_PATH = find_diagnostics()
