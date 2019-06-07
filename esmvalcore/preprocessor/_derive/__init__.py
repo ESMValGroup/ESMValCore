@@ -52,7 +52,7 @@ def get_required(short_name):
         and occasionally mip or fx_files.
 
     """
-    DerivedVariable = ALL_DERIVED_VARIABLES[short_name]
+    DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
     variables = deepcopy(DerivedVariable().required)
     return variables
 
@@ -107,7 +107,7 @@ def derive(cubes,
                     "'%s' not found", fx_var, short_name)
 
     # Derive variable
-    DerivedVariable = ALL_DERIVED_VARIABLES[short_name]
+    DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
     cube = DerivedVariable().calculate(cubes)
 
     # Set standard attributes
