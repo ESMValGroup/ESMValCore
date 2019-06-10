@@ -3,7 +3,6 @@ import os
 import shutil
 import tempfile
 
-import esmvaltool._config
 import pytest
 import yaml
 
