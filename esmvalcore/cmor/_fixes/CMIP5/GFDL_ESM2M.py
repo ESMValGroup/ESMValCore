@@ -1,6 +1,5 @@
 # pylint: disable=invalid-name, no-self-use, too-few-public-methods
 """Fixes for GFDL ESM2M"""
-from cf_units import Unit
 
 from ..fix import Fix
 from ..CMIP5.GFDL_ESM2G import allvars as base_allvars

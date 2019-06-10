@@ -17,41 +17,28 @@ from esmvalcore._version import __version__
 
 PACKAGES = [
     'esmvalcore',
-    'esmvaltool',
 ]
 
 REQUIREMENTS = {
     # Installation script (this file) dependencies
     'setup': [
+        'pytest-runner',
         'setuptools_scm',
     ],
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
-        'cartopy',
-        'cdo',
-        'cf_units',
-        'cython',
-        'eofs',
-        'fiona',
-        'matplotlib<3',
+        'cf-units',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numba',
         'numpy',
-        'pandas',
-        'pillow',
         'prov[dot]',
         'psutil',
         'pyyaml',
         'scitools-iris>=2.2',
-        'scikit-learn',
-        'shapely',
         'six',
         'stratify',
-        'vmprof',
-        'xarray',
-        'xlsxwriter',
         'yamale',
     ],
     # Test dependencies
@@ -65,6 +52,7 @@ REQUIREMENTS = {
         'pytest>=3.9',
         'pytest-cov',
         'pytest-env',
+        'pytest-flake8',
         'pytest-html',
         'pytest-metadata>=1.5.1',
     ],
@@ -78,6 +66,7 @@ REQUIREMENTS = {
         'pylint',
         'sphinx',
         'sphinx_rtd_theme',
+        'vmprof',
         'yamllint',
         'yapf',
     ],
@@ -114,47 +103,6 @@ class CustomCommand(Command):
             self.distribution.fetch_build_eggs(self.distribution.tests_require)
 
 
-class RunTests(CustomCommand):
-    """Class to run tests and generate reports."""
-
-    user_options = [('installation', None,
-                     'Run tests that require installation.')]
-
-    def initialize_options(self):
-        """Initialize custom options."""
-        self.installation = False
-
-    def finalize_options(self):
-        """Do nothing."""
-
-    def run(self):
-        """Run tests and generate a coverage report."""
-        self.install_deps_temp()
-
-        import pytest
-
-        version = sys.version_info[0]
-        report_dir = 'test-reports/python{}'.format(version)
-        args = [
-            'tests',
-            'esmvalcore',  # for doctests
-            'esmvaltool',  # for doctests
-            '--ignore=esmvalcore/cmor/tables/',
-            '--doctest-modules',
-            '--cov=esmvalcore',
-            '--cov-report=term',
-            '--cov-report=html:{}/coverage_html'.format(report_dir),
-            '--cov-report=xml:{}/coverage.xml'.format(report_dir),
-            '--junit-xml={}/report.xml'.format(report_dir),
-            '--html={}/report.html'.format(report_dir),
-        ]
-        if self.installation:
-            args.append('--installation')
-        errno = pytest.main(args)
-
-        sys.exit(errno)
-
-
 class RunLinter(CustomCommand):
     """Class to run a linter and generate reports."""
 
@@ -171,7 +119,6 @@ class RunLinter(CustomCommand):
         check_paths = PACKAGES + [
             'setup.py',
             'tests',
-            'util',
         ]
         ignore = [
             'doc/',
@@ -205,44 +152,38 @@ class RunLinter(CustomCommand):
 
 
 with open('README.md') as readme:
-    setup(
-        name='ESMValTool',
-        version=__version__,
-        description='Earth System Models eValuation Tool',
-        long_description=readme.read(),
-        url='https://www.esmvaltool.org',
-        download_url='https://github.com/ESMValGroup/ESMValTool',
-        license='Apache License, Version 2.0',
-        classifiers=[
-            'Environment :: Console',
-            'License :: OSI Approved :: Apache Software License',
-            'Programming Language :: Python',
-            'Programming Language :: Python :: 3.6',
-            'Programming Language :: Python :: 3.7',
+    README = readme.read()
+
+setup(
+    name='ESMValCore',
+    version=__version__,
+    description='Earth System Models eValuation Core',
+    long_description=README,
+    url='https://www.esmvaltool.org',
+    download_url='https://github.com/ESMValGroup/ESMValCore',
+    license='Apache License, Version 2.0',
+    classifiers=[
+        'Environment :: Console',
+        'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+    ],
+    packages=PACKAGES,
+    # Include all version controlled files
+    include_package_data=True,
+    setup_requires=REQUIREMENTS['setup'],
+    install_requires=REQUIREMENTS['install'],
+    tests_require=REQUIREMENTS['test'],
+    extras_require={'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test']},
+    entry_points={
+        'console_scripts': [
+            'esmvaltool = esmvalcore._main:run',
         ],
-        packages=PACKAGES,
-        # Include all version controlled files
-        include_package_data=True,
-        setup_requires=REQUIREMENTS['setup'],
-        install_requires=REQUIREMENTS['install'],
-        tests_require=REQUIREMENTS['test'],
-        extras_require={
-            'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test']
-        },
-        entry_points={
-            'console_scripts': [
-                'esmvaltool = esmvalcore._main:run',
-                'cmorize_obs = esmvaltool.'
-                'utils.cmorizers.obs.cmorize_obs:execute_cmorize',
-                'nclcodestyle = esmvaltool.'
-                'utils.nclcodestyle.nclcodestyle:_main',
-                'mip_convert_setup = esmvaltool.'
-                'utils.cmorizers.mip_convert.esmvt_mipconv_setup:main'
-            ],
-        },
-        cmdclass={
-            'test': RunTests,
-            'lint': RunLinter,
-        },
-        zip_safe=False,
-    )
+    },
+    cmdclass={
+        #         'test': RunTests,
+        'lint': RunLinter,
+    },
+    zip_safe=False,
+)

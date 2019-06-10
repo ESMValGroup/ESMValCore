@@ -31,9 +31,9 @@ def _create_sample_cube():
     return cube
 
 
-def add_auxiliary_coordinate(cubeList):
-    """Add AuxCoords to cubes in cubeList."""
-    for cube in cubeList:
+def add_auxiliary_coordinate(cubelist):
+    """Add AuxCoords to cubes in cubelist."""
+    for cube in cubelist:
         iris.coord_categorisation.add_day_of_month(cube, cube.coord('time'))
         iris.coord_categorisation.add_day_of_year(cube, cube.coord('time'))
 

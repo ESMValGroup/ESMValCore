@@ -175,13 +175,13 @@ class TestCMORCheck(unittest.TestCase):
         self.cube = self.get_cube(self.var_info)
         self._check_cube()
 
-    def test_check_with_no_positive_CMIP5(self):
+    def test_check_with_no_positive_cmip5(self):
         """Check CMIP5 variable with no positive attribute report warning"""
         self.cube = self.get_cube(self.var_info)
         self.var_info.positive = 'up'
         self._check_warnings_on_metadata()
 
-    def test_check_with_no_positive_CMIP6(self):
+    def test_check_with_no_positive_cmip6(self):
         """Check CMIP6 variable with no positive attribute report warning."""
         self.cube = self.get_cube(self.var_info)
         self.var_info.positive = 'up'

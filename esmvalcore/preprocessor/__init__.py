@@ -4,7 +4,7 @@ import inspect
 import logging
 
 import six
-from iris.cube import Cube, CubeList
+from iris.cube import Cube
 
 from .._provenance import TrackedFile
 from .._task import BaseTask

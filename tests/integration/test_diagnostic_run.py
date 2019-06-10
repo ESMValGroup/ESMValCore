@@ -52,19 +52,20 @@ def check(result_file):
 
 
 SCRIPTS = {
-    'diagnostic.py':
-    dedent("""
-        import yaml
-        from esmvaltool.diag_scripts.shared import run_diagnostic
-
-        def main(cfg):
-            with open(cfg['setting_name'], 'w') as file:
-                yaml.safe_dump(cfg, file)
-
-        if __name__ == '__main__':
-            with run_diagnostic() as config:
-                main(config)
-        """),
+    # TODO: make independent from ESMValTool installation
+    #     'diagnostic.py':
+    #     dedent("""
+    #         import yaml
+    #         from esmvaltool.diag_scripts.shared import run_diagnostic
+    #
+    #         def main(cfg):
+    #             with open(cfg['setting_name'], 'w') as file:
+    #                 yaml.safe_dump(cfg, file)
+    #
+    #         if __name__ == '__main__':
+    #             with run_diagnostic() as config:
+    #                 main(config)
+    #         """),
     'diagnostic.ncl':
     dedent("""
         begin
@@ -92,17 +93,18 @@ SCRIPTS = {
         print(paste0("INFO    Writing settings to ", settings$setting_name))
         yaml::write_yaml(settings, settings$setting_name)
         """),
-    'diagnostic.jl':
-    dedent("""
-        import YAML
-        @info "Starting diagnostic script with" ARGS
-        config_file = ARGS[1]
-        cfg = YAML.load_file(config_file)
-        out_file = cfg["setting_name"]
-        @info "Copying file to" out_file
-        Base.Filesystem.cp(config_file, out_file)
-        @info "Done"
-    """),
+    # TODO: make independent of YAML library
+    #     'diagnostic.jl':
+    #     dedent("""
+    #         import YAML
+    #         @info "Starting diagnostic script with" ARGS
+    #         config_file = ARGS[1]
+    #         cfg = YAML.load_file(config_file)
+    #         out_file = cfg["setting_name"]
+    #         @info "Copying file to" out_file
+    #         Base.Filesystem.cp(config_file, out_file)
+    #         @info "Done"
+    #     """),
 }
 
 
