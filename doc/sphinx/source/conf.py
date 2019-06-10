@@ -13,15 +13,15 @@
 # serve to show the default.
 
 import sys
-import os
+from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-os.chdir(os.path.abspath(os.path.dirname(__file__)))
-sys.path.insert(0, os.path.abspath('./../../..'))
+root = Path(__file__).absolute().parent.parent.parent
+sys.path.insert(0, str(root))
 
-from esmvaltool import __version__
+from esmvalcore import __version__
 
 # -- General configuration ------------------------------------------------
 

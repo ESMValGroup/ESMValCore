@@ -2,13 +2,13 @@
 ---
 
 # Build commmand:
-# conda build . -c conda-forge -c birdhouse
+# conda build . -c conda-forge -c esmvalgroup
 
 # Package version number
-{% set version = "2.0a2" %}
+{% set version = "2.0.0a0" %}
 
 package:
-  name: esmvaltool
+  name: esmvalcore
   version: {{ version }}
 
 source:
@@ -20,67 +20,45 @@ source:
 
 build:
   # Increment the build number when building a new conda package of the same
-  # esmvaltool version, reset to 0 when building a new version.
+  # esmvalcore version, reset to 0 when building a new version.
   number: 0
   script: |
       python setup.py install --single-version-externally-managed --record=/tmp/record.txt
-      POST_LINK="${PREFIX}/bin/.esmvaltool-post-link.sh"
-      cp -v ${RECIPE_DIR}/language_support.sh ${POST_LINK};
-      chmod +x ${POST_LINK};
 
 requirements:
   build:
     - git
     - python {{ python }}
     # Normally installed via pip:
+    - pytest-runner
     - setuptools_scm
   run:
     # esmvaltool
     - python
-    - libunwind  #  specifically for Python3.7+
+    - libunwind  # specifically for Python3.7+
     - graphviz
     - iris>=2.2
+    - matplotlib<3,>=2  # required by iris
     - python-stratify
     # Normally installed via pip:
-    - cartopy
     - cf-units
-    - cython
-    - eofs
+    - cython  # required by cf-units but not automatically installed
     - esmpy
-    - matplotlib<3
     - nc-time-axis
     - netCDF4
     - numba
     - numpy
-    - pandas
-    - pillow
     - prov
     - psutil
     - pydot
-    - python-cdo
     - pyyaml
-    - scikit-learn
-    - shapely
     - six
-    - vmprof
-    - xarray>=0.12.0
-    - yamale  # in birdhouse channel
-    - fiona
-    - xlsxwriter
-    # Command line tools used by diagnostic scripts
-    - cdo
-    - imagemagick
-    - nco
-    # Multi language support:
-    - ncl>=6.5.0
-    - r-base
-    - r-curl  # Dependency of lintr, but fails to compile because it cannot find libcurl installed from conda.
-    - r-udunits2  # Fails to compile because it cannot find udunits2 installed from conda.
+    - yamale  # in esmvalgroup and birdhouse channel
 
 test:
   # TODO: add unit tests? This seems to require installing the tests
   imports:
-    - esmvaltool
+    - esmvalcore
   commands:
     - esmvaltool -h
 
@@ -88,5 +66,5 @@ about:
   home: https://www.esmvaltool.org
   license: Apache License, Version 2.0
   license_file: LICENSE
-  summary: A community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP.
-  description: A community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP.
+  summary: "ESMValTool Core: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP."
+  description: "ESMValTool Core: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP."
