@@ -7,8 +7,7 @@ import pytest
 import yaml
 
 import esmvalcore._config
-from esmvalcore._data_finder import (get_input_filelist, get_input_fx_filelist,
-                                     get_output_file)
+from esmvalcore._data_finder import get_input_filelist, get_output_file
 from esmvalcore.cmor.table import read_cmor_tables
 
 # Initialize with standard config developer file
