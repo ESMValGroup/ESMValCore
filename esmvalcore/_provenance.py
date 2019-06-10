@@ -49,6 +49,9 @@ def attribute_to_authors(entity, authors):
     create_namespace(entity.bundle, namespace)
 
     for author in authors:
+        if isinstance(author, str):
+            # This happens if the config-references.yml file is not available
+            author = {'name': author}
         agent = entity.bundle.agent(
             namespace + ':' + author['name'],
             {'attribute:' + k: author[k]

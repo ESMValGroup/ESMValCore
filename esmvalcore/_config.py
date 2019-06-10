@@ -7,7 +7,6 @@ import time
 from distutils.version import LooseVersion
 
 import iris
-import six
 import yaml
 
 from .cmor.table import read_cmor_tables
@@ -17,14 +16,14 @@ logger = logging.getLogger(__name__)
 CFG = {}
 CFG_USER = {}
 
+
 def find_diagnostics():
     """Try to find installed diagnostic scripts."""
     try:
         import esmvaltool
     except ImportError:
         return ''
-    else:
-        return os.path.dirname(esmvaltool.__file__)
+    return os.path.dirname(esmvaltool.__file__)
 
 
 DIAGNOSTICS_PATH = find_diagnostics()
@@ -74,7 +73,7 @@ def read_config_user_file(config_file, recipe_name):
 
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
-        if isinstance(root, six.string_types):
+        if isinstance(root, str):
             cfg['rootpath'][key] = [_normalize_path(root)]
         else:
             cfg['rootpath'][key] = [_normalize_path(path) for path in root]
@@ -91,12 +90,12 @@ def read_config_user_file(config_file, recipe_name):
     cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
 
     # Save user configuration in global variable
-    for key, value in six.iteritems(cfg):
+    for key, value in cfg.items():
         CFG_USER[key] = value
 
     # Read developer configuration file
     cfg_developer = read_config_developer_file(cfg['config_developer_file'])
-    for key, value in six.iteritems(cfg_developer):
+    for key, value in cfg_developer.items():
         CFG[key] = value
     read_cmor_tables(CFG)
 

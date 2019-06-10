@@ -66,7 +66,7 @@ class Test(tests.Test):
         self.shape[self.z_dim] = len(levels)
         self.assertEqual(result.shape, tuple(self.shape))
 
-    def test_interpolation__extrapolated_NaN_filling(self):
+    def test_interpolation__extrapolated_nan_filling(self):
         levels = [-10, 1, 2, 10]
         scheme = 'nearest'
         result = extract_levels(self.cube, levels, scheme)

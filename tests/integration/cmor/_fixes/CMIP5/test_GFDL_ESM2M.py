@@ -1,7 +1,6 @@
 import unittest
 
 from cf_units import Unit
-from iris.coords import DimCoord
 from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.CMIP5.GFDL_ESM2M import co2, sftof
