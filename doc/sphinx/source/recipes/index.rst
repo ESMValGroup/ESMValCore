@@ -9,11 +9,13 @@ Recipes
    recipe_capacity_factor
    recipe_clouds
    recipe_combined_climate_extreme_index
+   recipe_combined_indices
    recipe_consecdrydays
    recipe_crem
    recipe_cvdp
    recipe_diurnal_temperature_index
    recipe_ensclus
+   recipe_extreme_events
    recipe_flato13ipcc
    recipe_heatwaves_coldwaves
    recipe_hyint
