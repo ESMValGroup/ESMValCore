@@ -5,7 +5,6 @@ import collections
 
 import iris
 import numpy as np
-import six
 
 
 def _is_single_item(testee):
@@ -15,7 +14,7 @@ def _is_single_item(testee):
     Return whether this is a single item, rather than an iterable.
     We count string types as 'single', also.
     """
-    return (isinstance(testee, six.string_types)
+    return (isinstance(testee, str)
             or not isinstance(testee, collections.Iterable))
 
 
@@ -26,12 +25,12 @@ def _as_list_of_coords(cube, names_or_coords):
         names_or_coords = [names_or_coords]
     coords = []
     for name_or_coord in names_or_coords:
-        if isinstance(name_or_coord, (iris.coords.Coord, six.string_types)):
+        if isinstance(name_or_coord, (iris.coords.Coord, str)):
             coords.append(cube.coord(name_or_coord))
         else:
             # Don't know how to handle this type
             msg = ("Don't know how to handle coordinate of type %s. "
-                   "Ensure all coordinates are of type six.string_types "
+                   "Ensure all coordinates are of type str "
                    "or iris.coords.Coord.") % (type(name_or_coord), )
             raise TypeError(msg)
     return coords
