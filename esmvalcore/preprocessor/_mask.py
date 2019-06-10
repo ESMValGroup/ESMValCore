@@ -12,7 +12,6 @@ import os
 
 import numpy as np
 
-import dask.array as da
 import cartopy.io.shapereader as shpreader
 import iris
 import shapely.vectorized as shp_vect
