@@ -28,7 +28,8 @@ class Test(tests.Test):
                                      units='degrees_north',
                                      coord_system=coord_sys)
         coords_spec3 = [(lats2, 0), (lons2, 1)]
-        self.arr = iris.cube.Cube(self.data2, units='K', dim_coords_and_dims=coords_spec3)
+        self.arr = iris.cube.Cube(self.data2, units='K',
+                                  dim_coords_and_dims=coords_spec3)
 
     def test_convert_incompatible_units(self):
         """Test conversion to incompatible units."""
