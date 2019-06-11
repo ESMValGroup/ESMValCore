@@ -122,7 +122,7 @@ class TestFixMetadata(unittest.TestCase):
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes', return_value=[]):
             with self.assertRaises(ValueError):
-                cube_returned = fix_metadata(
+                fix_metadata(
                     [
                         self._create_mock_cube('not_me'),
                         self._create_mock_cube('me_neither')
