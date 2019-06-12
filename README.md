@@ -37,8 +37,10 @@ The ESMValTool Core package provides various functions for:
 
 -   Finding data in a directory structure typically used for CMIP data
 -   Reading CMOR tables and using those to check model and observational data.
--   ESMValTool preprocessor functions for e.g. regridding, vertical
-    interpolation, statistics, correcting (meta)data errors, etcetera.
+-   ESMValTool preprocessor functions based on
+    [iris](https://scitools.org.uk/iris/docs/latest/) for e.g. regridding,
+    vertical interpolation, statistics, correcting (meta)data errors, extracting
+    a time range, etcetera.
 
 ## Running ESMValTool
 
