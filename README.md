@@ -36,7 +36,9 @@ for instructions on installing ESMValTool Core from source.
 The ESMValTool Core package provides various functions for:
 
 -   Finding data in a directory structure typically used for CMIP data
+
 -   Reading CMOR tables and using those to check model and observational data.
+
 -   ESMValTool preprocessor functions based on
     [iris](https://scitools.org.uk/iris/docs/latest/) for e.g. regridding,
     vertical interpolation, statistics, correcting (meta)data errors, extracting
@@ -47,8 +49,10 @@ The ESMValTool Core package provides various functions for:
 -   Review `config-user.yml`. To customize for your system, create a copy, edit
     and use the command line option `-c` to instruct `esmvaltool` to use your
     custom configuration file.
+
 -   Install the [ESMValTool](https://github.com/ESMValGroup/ESMValTool)
     to run [ESMValTool recipes and diagnostics](https://esmvaltool.readthedocs.io/en/latest/recipes/index.html)
+
 -   Run e.g. `esmvaltool -c ~/config-user.yml examples/recipe_python.yml` after
     downloading the necessary data.
 
