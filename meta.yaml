@@ -5,7 +5,7 @@
 # conda build . -c conda-forge -c esmvalgroup
 
 # Package version number
-{% set version = "2.0.0a0" %}
+{% set version = "2.0.0a1" %}
 
 package:
   name: esmvalcore
@@ -14,7 +14,7 @@ package:
 source:
   # Use these two lines to build a release:
   # git_rev: v{{ version }}
-  # git_url: https://github.com/ESMValGroup/ESMValTool.git
+  # git_url: https://github.com/ESMValGroup/ESMValCore.git
   # Use this line instead of the above to test building without a release:
   path: .
 
@@ -52,7 +52,6 @@ requirements:
     - psutil
     - pydot
     - pyyaml
-    - six
     - yamale  # in esmvalgroup and birdhouse channel
 
 test:

@@ -4,9 +4,7 @@ import logging
 import logging.config
 import os
 import time
-from distutils.version import LooseVersion
 
-import iris
 import yaml
 
 from .cmor.table import read_cmor_tables
@@ -27,11 +25,6 @@ def find_diagnostics():
 
 
 DIAGNOSTICS_PATH = find_diagnostics()
-
-
-def use_legacy_iris():
-    """Return True if legacy iris is used."""
-    return LooseVersion(iris.__version__) < LooseVersion("2.0.0")
 
 
 def read_config_user_file(config_file, recipe_name):
