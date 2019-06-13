@@ -338,6 +338,48 @@ def test_empty_variable(tmp_path, patched_datafinder, config_user):
     assert product.attributes['dataset'] == 'CanESM2'
 
 
+def test_preproc_at_diag_level(tmp_path, patched_datafinder, config_user):
+    """Test that it is possible to specify all information in the dataset."""
+    content = dedent("""
+        preprocessors:
+          preproc1:
+            extract_levels:
+              levels: 85000
+              scheme: nearest
+          preproc2:
+            extract_levels:
+              levels: 40000
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            additional_datasets:
+              - dataset: CanESM2
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+            preprocessor: preproc1
+            variables:
+              pr:
+              ta:
+              tas:
+                preprocessor: preproc2
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    assert len(recipe.tasks) == 3
+    for task in recipe.tasks:
+        product = task.products.pop()
+        if product.attributes['short_name'] in ('pr', 'ta'):
+            assert product.attributes['preprocessor'] == 'preproc1'
+        else:
+            assert product.attributes['preprocessor'] == 'preproc2'
+
+
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,
                            monkeypatch):
 

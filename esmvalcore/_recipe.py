@@ -836,13 +836,15 @@ class Recipe:
 
         for name, raw_diagnostic in raw_diagnostics.items():
             diagnostic = {}
+            default_preproc = raw_diagnostic.get('preprocessor', 'default')
             diagnostic['name'] = name
             diagnostic['preprocessor_output'] = \
                 self._initialize_preprocessor_output(
                     name,
                     raw_diagnostic.get('variables', {}),
                     raw_datasets +
-                    raw_diagnostic.get('additional_datasets', []))
+                    raw_diagnostic.get('additional_datasets', []),
+                    default_preproc)
             variable_names = tuple(raw_diagnostic.get('variables', {}))
             diagnostic['scripts'] = self._initialize_scripts(
                 name, raw_diagnostic.get('scripts'), variable_names)
@@ -919,7 +921,7 @@ class Recipe:
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
-                                        raw_datasets):
+                                        raw_datasets, default_preproc):
         """Define variables in diagnostic."""
         logger.debug("Populating list of variables for diagnostic %s",
                      diagnostic_name)
@@ -936,7 +938,7 @@ class Recipe:
                 raw_variable['short_name'] = variable_group
             raw_variable['diagnostic'] = diagnostic_name
             raw_variable['preprocessor'] = str(
-                raw_variable.get('preprocessor', 'default'))
+                raw_variable.get('preprocessor', default_preproc))
             preprocessor_output[variable_group] = \
                 self._initialize_variables(raw_variable, raw_datasets)
 
