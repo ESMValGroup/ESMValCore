@@ -2,19 +2,21 @@
 
 import unittest
 
-import iris
-import iris.coord_categorisation
-import iris.coords
+
 import numpy as np
 import pytest
 from cf_units import Unit
+import iris
+import iris.coord_categorisation
+import iris.coords
 from iris.cube import Cube
 from numpy.testing import assert_array_equal
 
 import tests
-from esmvalcore.preprocessor._time import (annual_mean, extract_month,
-                                           extract_season, extract_time,
-                                           regrid_time, time_average)
+from esmvalcore.preprocessor._time import (
+    annual_mean, extract_month, extract_season, extract_time,
+    regrid_time, seasonal_statistics, time_statistics
+)
 
 
 def _create_sample_cube():
@@ -139,58 +141,140 @@ class TestExtractSeason(tests.Test):
             sliced.coord('month_number').points)
 
 
-class TestTimeAverage(tests.Test):
-    """Test class for the :func:`esmvalcore.preprocessor._time_pp` module"""
+class TestTimeStatistics(tests.Test):
+    """Test class for :func:`esmvalcore.preprocessor._time.time_statistics`"""
 
-    def test_time_average(self):
+    @staticmethod
+    def _create_cube(data, times, bounds):
+        time = iris.coords.DimCoord(
+            times,
+            bounds=bounds,
+            standard_name='time',
+            units=Unit('days since 1950-01-01', calendar='gregorian'))
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        return cube
+
+    def test_time_mean(self):
         """Test for time average of a 1D field."""
         data = np.ones((3))
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
-        time = iris.coords.DimCoord(
-            times,
-            bounds=bounds,
-            standard_name='time',
-            units=Unit('days since 1950-01-01', calendar='gregorian'))
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        cube = self._create_cube(data, times, bounds)
 
-        result = time_average(cube)
+        result = time_statistics(cube, 'mean')
         expected = np.array([1.])
         assert_array_equal(result.data, expected)
 
-    def test_time_average_uneven(self):
+    def test_time_mean_uneven(self):
         """Test for time average of a 1D field with uneven time boundaries."""
         data = np.array([1., 5.])
         times = np.array([5., 25.])
         bounds = np.array([[0., 1.], [1., 4.]])
-        time = iris.coords.DimCoord(
-            times,
-            bounds=bounds,
-            standard_name='time',
-            units=Unit('days since 1950-01-01', calendar='gregorian'))
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        cube = self._create_cube(data, times, bounds)
 
-        result = time_average(cube)
+        result = time_statistics(cube, 'mean')
         expected = np.array([4.])
         assert_array_equal(result.data, expected)
 
-    def test_time_average_365_day(self):
+    def test_time_mean_365_day(self):
         """Test for time avg of a realisitc time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181]])
-        time = iris.coords.DimCoord(
-            times,
-            bounds=bounds,
-            standard_name='time',
-            var_name='time',
-            units=Unit('days since 1950-01-01', calendar='365_day'))
-        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        cube = self._create_cube(data, times, bounds)
 
-        result = time_average(cube)
+        result = time_statistics(cube, 'mean')
         expected = np.array([1.])
         assert_array_equal(result.data, expected)
+
+
+    def test_time_max(self):
+        """Test for time max of a 1D field."""
+        data = np.arange((3))
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = time_statistics(cube, 'max')
+        expected = np.array([2.])
+        assert_array_equal(result.data, expected)
+
+    def test_time_min(self):
+        """Test for time min of a 1D field."""
+        data = np.arange((3))
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = time_statistics(cube, 'min')
+        expected = np.array([0.])
+        assert_array_equal(result.data, expected)
+
+    def test_time_median(self):
+        """Test for time meadian of a 1D field."""
+        data = np.arange((3))
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = time_statistics(cube, 'median')
+        expected = np.array([1.])
+        assert_array_equal(result.data, expected)
+
+class TestSeasonalStatistics(tests.Test):
+    """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`"""
+
+    @staticmethod
+    def _create_cube(data, times):
+        time = iris.coords.DimCoord(
+            times,
+            standard_name='time',
+            units=Unit('days since 1950-01-01', calendar='360_day'))
+        time.guess_bounds()
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        return cube
+
+    def test_season_mean(self):
+        """Test for season average of a 1D field."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+
+        result = seasonal_statistics(cube, 'mean')
+        expected = np.array([3., 6., 9.])
+        assert_array_equal(result.data, expected)
+
+    def test_season_median(self):
+        """Test for season median of a 1D field."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+
+        result = seasonal_statistics(cube, 'median')
+        expected = np.array([3., 6., 9.])
+        assert_array_equal(result.data, expected)
+
+    def test_season_min(self):
+        """Test for season min of a 1D field."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+
+        result = seasonal_statistics(cube, 'min')
+        expected = np.array([2., 5., 8.])
+        assert_array_equal(result.data, expected)
+
+    def test_season_max(self):
+        """Test for season max of a 1D field."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+
+        result = seasonal_statistics(cube, 'max')
+        expected = np.array([4., 7., 10.])
+        assert_array_equal(result.data, expected)
+
 
 
 class TestRegridTimeMonthly(tests.Test):
