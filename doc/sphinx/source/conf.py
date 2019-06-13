@@ -13,6 +13,7 @@
 # serve to show the default.
 
 import sys
+import os
 from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -22,6 +23,17 @@ root = Path(__file__).absolute().parent.parent.parent
 sys.path.insert(0, str(root))
 
 from esmvalcore import __version__
+
+# -- RTD configuration ------------------------------------------------
+
+# on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
+on_rtd = os.environ.get("READTHEDOCS", None) == "True"
+on_rtd = True
+
+# This is used for linking and such so we link to the thing we're building
+rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
+if rtd_version not in ["stable", "latest"]:
+    rtd_version = "stable"
 
 # -- General configuration ------------------------------------------------
 
@@ -402,4 +414,55 @@ intersphinx_mapping = {
     'iris': ('https://scitools.org.uk/iris/docs/latest/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'esmvaltool': ('https://esmvaltool.readthedocs.io/en/%s/' % rtd_version, None),
+    'esmvalcore': ('https://esmvalcore.readthedocs.io/en/%s/' % rtd_version, None),
+
 }
+
+# -- Custom Document processing ----------------------------------------------
+
+import esmvalcore.utils.doc.gensidebar as gensidebar
+
+gensidebar.generate_sidebar(globals(), "esmvalcore")
+
+import sphinx.addnodes
+import docutils.nodes
+
+
+def process_child(node):
+    """This function changes class references to not have the
+       intermediate module name by hacking at the doctree"""
+
+    # Edit descriptions to be nicer
+    if isinstance(node, sphinx.addnodes.desc_addname):
+        if len(node.children) == 1:
+            child = node.children[0]
+            text = child.astext()
+            if text.startswith("esmvalcore.") and text.endswith("."):
+                # remove the last element
+                text = ".".join(text.split(".")[:-2]) + "."
+                node.children[0] = docutils.nodes.Text(text)
+
+    # Edit literals to be nicer
+    elif isinstance(node, docutils.nodes.literal):
+        child = node.children[0]
+        text = child.astext()
+
+        # Remove the imported module name
+        if text.startswith("esmvalcore."):
+            stext = text.split(".")
+            text = ".".join(stext[:-2] + [stext[-1]])
+            node.children[0] = docutils.nodes.Text(text)
+
+    for child in node.children:
+        process_child(child)
+
+
+def doctree_read(app, doctree):
+    for child in doctree.children:
+        process_child(child)
+
+
+def setup(app):
+    app.connect("doctree-read", doctree_read)
+
