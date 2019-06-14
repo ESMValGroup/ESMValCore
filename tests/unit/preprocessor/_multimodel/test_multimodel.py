@@ -1,4 +1,4 @@
-"""Unit test for :func:`esmvalcore.preprocessor._volume`."""
+"""Unit test for :func:`esmvalcore.preprocessor._multimodel`."""
 
 import unittest
 
