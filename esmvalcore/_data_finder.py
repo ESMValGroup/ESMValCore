@@ -10,7 +10,6 @@ import os
 import re
 
 from ._config import get_project_config
-from .cmor.table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
 
