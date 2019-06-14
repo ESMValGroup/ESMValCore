@@ -9,9 +9,8 @@ import logging
 import os
 import re
 
-import six
-
 from ._config import get_project_config
+from .cmor.table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +173,7 @@ def _select_drs(input_type, drs, project):
     """Select the directory structure of input path."""
     cfg = get_project_config(project)
     input_path = cfg[input_type]
-    if isinstance(input_path, six.string_types):
+    if isinstance(input_path, str):
         return input_path
 
     structure = drs.get(project, 'default')

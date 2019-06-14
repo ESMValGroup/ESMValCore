@@ -3,7 +3,6 @@ import copy
 import inspect
 import logging
 
-import six
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
@@ -207,7 +206,7 @@ def preprocess(items, step, **settings):
     items = []
     for item in result:
         if isinstance(item,
-                      (PreprocessorFile, Cube, six.string_types)):
+                      (PreprocessorFile, Cube, str)):
             items.append(item)
         else:
             items.extend(item)
