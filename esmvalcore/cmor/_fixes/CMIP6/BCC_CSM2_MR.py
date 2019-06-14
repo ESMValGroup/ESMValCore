@@ -28,11 +28,11 @@ class allvars(Fix):
             try:
                 old_time = cube.coord('time')
             except iris.exceptions.CoordinateNotFoundError:
-                return cubes
+                continue
 
             # if time variable is monotonic, there is nothing to do
             if old_time.is_monotonic():
-                pass
+                continue
 
             time_units = old_time.units
             time_data = old_time.points
@@ -47,8 +47,8 @@ class allvars(Fix):
                     continue
                 correct_time = time_units.num2date(time_data[idx - 1])
                 if days <= 31 and days >= 28:  # assume monthly time steps
-                    new_time = \
-                        correct_time.replace(month=correct_time.month + 1)
+                    new_time = correct_time.replace(month=correct_time.month +
+                                                    1)
                 else:  # use "time[1] - time[0]" as step
                     new_time = correct_time + time_diff
                 old_time.points[idx] = time_units.date2num(new_time)
