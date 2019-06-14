@@ -198,8 +198,7 @@ def _find_input_dirs(variable, rootpath, drs):
     project = variable['project']
 
     root = get_rootpath(rootpath, project)
-    input_type = 'input_dir'
-    path_template = _select_drs(input_type, drs, project)
+    path_template = _select_drs('input_dir', drs, project)
 
     dirnames = []
     for dirname_template in _replace_tags(path_template, variable):
@@ -217,8 +216,7 @@ def _find_input_dirs(variable, rootpath, drs):
 
 def _get_filenames_glob(variable, drs):
     """Return patterns that can be used to look for input files."""
-    input_type = 'input_file'
-    path_template = _select_drs(input_type, drs, variable['project'])
+    path_template = _select_drs('input_file', drs, variable['project'])
     filenames_glob = _replace_tags(path_template, variable)
     return filenames_glob
 
