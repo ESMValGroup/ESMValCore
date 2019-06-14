@@ -10,7 +10,6 @@ prov[dot]
 psutil
 pyyaml
 shapely
-six
 xarray
 yamale
 sklearn

@@ -37,7 +37,6 @@ REQUIREMENTS = {
         'psutil',
         'pyyaml',
         'scitools-iris>=2.2',
-        'six',
         'stratify',
         'yamale',
     ],

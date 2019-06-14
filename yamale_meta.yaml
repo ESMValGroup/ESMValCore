@@ -1,0 +1,51 @@
+{% set name = "yamale" %}
+{% set version = "1.7.0" %}
+{% set file_ext = "tar.gz" %}
+{% set hash_type = "sha256" %}
+{% set hash_value = "18f921a8272b85b1d74df19e18f8656254c4561ef8abee323bbdbf411f79ec0b" %}
+
+package:
+  name: '{{ name|lower }}'
+  version: '{{ version }}'
+
+source:
+  fn: '{{ name }}-{{ version }}.{{ file_ext }}'
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.{{ file_ext }}
+  '{{ hash_type }}': '{{ hash_value }}'
+
+build:
+  number: 0
+  entry_points:
+    - yamale=yamale.command_line:main
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - pyyaml
+  run:
+    - python
+    - pyyaml
+
+test:
+  imports:
+    - yamale
+    - yamale.readers
+    - yamale.readers.tests
+    - yamale.schema
+    - yamale.syntax
+    - yamale.syntax.tests
+    - yamale.tests
+    - yamale.validators
+    - yamale.validators.tests
+  commands:
+    - yamale --help
+
+about:
+  home: https://github.com/23andMe/Yamale
+  license: MIT License
+  license_family: MIT
+  summary: A schema and validator for YAML.
+  description: A schema and validator for YAML.
+
