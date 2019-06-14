@@ -1,7 +1,5 @@
-"""
-This file generates the common sidebar/toctree for the sphinx/ReadTheDocs
-documentation of the ESMValTool and its subprojects.
-"""
+"""This file generates the common sidebar/toctree for the sphinx/ReadTheDocs
+documentation of the ESMValTool and its subprojects."""
 
 import os
 
@@ -20,7 +18,8 @@ def _write_if_changed(fname, contents):
 
 
 def generate_sidebar(conf, conf_api):
-    """Generate sidebar for ReadTheDocs with links to subprojects and superprojects accordingly."""
+    """Generate sidebar for ReadTheDocs with links to subprojects and
+       superprojects accordingly."""
 
     # determine 'latest' or 'stable'
     # if not conf.do_gen:
