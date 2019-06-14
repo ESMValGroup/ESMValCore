@@ -28,7 +28,7 @@ from esmvalcore import __version__
 
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-on_rtd = True
+on_rtd = True  # TODO: Remove this line after testing
 
 # This is used for linking and such so we link to the thing we're building
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
@@ -277,8 +277,7 @@ latex_elements = {
 latex_documents = [
     ('index', 'ESMValTool_Users_Guide.tex',
      u'ESMValTool User\'s and Developer\'s Guide',
-     u'ESMValTool Development Team',
-     'manual'),
+     u'ESMValTool Development Team', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -414,9 +413,11 @@ intersphinx_mapping = {
     'iris': ('https://scitools.org.uk/iris/docs/latest/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'esmvaltool': ('https://esmvaltool.readthedocs.io/en/%s/' % rtd_version, None),
-    'esmvalcore': ('https://esmvalcore.readthedocs.io/en/%s/' % rtd_version, None),
-
+    'esmvaltool':
+    ('https://esmvaltool.readthedocs.io/en/%s/' % rtd_version, None),
+    'esmvalcore':
+    ('https://esmvaltool.readthedocs.io/projects/esmvalcore/en/%s/' %
+     rtd_version, None),
 }
 
 # -- Custom Document processing ----------------------------------------------
@@ -465,4 +466,3 @@ def doctree_read(app, doctree):
 
 def setup(app):
     app.connect("doctree-read", doctree_read)
-

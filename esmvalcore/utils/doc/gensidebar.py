@@ -37,41 +37,27 @@ def generate_sidebar(conf, conf_api):
     def endl():
         lines.append("")
 
-    def write(desc, link):
-        if conf_api == "esmvaltool":
-            args = desc, link
-        elif not do_gen:
-            return
-        else:
-            args = (
-                desc,
-                "https://esmvaltool.readthedocs.io/en/%s/%s.html" %
-                (version, link),
-            )
-
-        lines.append("    %s <%s>" % args)
-
-    def write_api(project, desc, link):
+    def write(project, desc, link, mapping=conf['intersphinx_mapping']):
         if project != conf_api:
             if do_gen:
-                args = desc, project, version, link
-                lines.append(
-                    "    %s API <https://esmvaltool.readthedocs.io/projects/%s/en/%s/%s.html>"
-                    % args)
+                args = desc, mapping[project][0], link
+                lines.append("    %s <%s%s.html>" % args)
         else:
-            lines.append("    %s API <%s>" % (desc, link))
+            lines.append("    %s <%s>" % (desc, link))
 
     #
     # Specify the sidebar contents here
     #
 
     toctree("ESMValTool")
-    write_api("esmvaltool","Preface","preface/index")
-    write_api("esmvaltool","Getting started","getting_started/index")
-    write_api("esmvalcore","ESMValTool Core","esmvalcore/index")
-    write_api("esmvaltool","Guidelines for diagnostic developers","esmvaldiag/index")
-    write_api("esmvaltool","Recipes","recipes/index")
-    write_api("esmvaltool","ESMValTool Code API Documentation","codedoc2/esmvaltool")
+    write("esmvaltool", "Preface", "preface/index")
+    write("esmvaltool", "Getting started", "getting_started/index")
+    write("esmvalcore", "ESMValTool Core", "esmvalcore/index")
+    write("esmvaltool", "Guidelines for diagnostic developers",
+          "esmvaldiag/index")
+    write("esmvaltool", "Recipes", "recipes/index")
+    write("esmvaltool", "ESMValTool Code API Documentation",
+          "codedoc2/esmvaltool")
     endl()
 
     write_if_changed("_sidebar.rst.inc", "\n".join(lines))
