@@ -166,7 +166,7 @@ def get_time_weights(cube):
 
 def seasonal_statistics(cube, operator='mean'):
     """
-    Compute seasonal statistics
+    Compute seasonal statistics.
 
     Chunks time in 3-month periods and computes means over them;
 
@@ -215,7 +215,7 @@ def seasonal_statistics(cube, operator='mean'):
 
 def monthly_statistics(cube, operator='mean'):
     """
-    Compute monthly statistics
+    Compute monthly statistics.
 
     Chunks time in monthly periods and computes means over them;
 
@@ -241,7 +241,7 @@ def monthly_statistics(cube, operator='mean'):
 
 def daily_statistics(cube, operator='mean'):
     """
-    Compute daily statistics
+    Compute daily statistics.
 
     Chunks time in daily periods and computes statistics over them;
 
@@ -267,7 +267,7 @@ def daily_statistics(cube, operator='mean'):
 
 def climatology(cube, operator='mean', period='full'):
     """
-    Compute climatologies in the specified granularity
+    Compute climatologies in the specified granularity.
 
     Computes daily, monthly, seasonal or yearly climatologies
 
@@ -295,7 +295,7 @@ def climatology(cube, operator='mean', period='full'):
         iris.coord_categorisation.add_season(
             cube, 'time', name=clim_coord
         )
-    elif period in ('full'):
+    elif period in ('full', ):
         clim_coord = 'time'
     else:
         raise ValueError('Climatology does not support period %s' % period)

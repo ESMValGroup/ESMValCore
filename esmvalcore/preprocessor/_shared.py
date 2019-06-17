@@ -1,5 +1,5 @@
 """
-Shared functions for preprocessor
+Shared functions for preprocessor.
 
 Utility functions that can be used for multiple preprocessor steps
 """
@@ -54,7 +54,7 @@ def get_iris_analysis_operation(operator):
 
 def operator_accept_weights(operator):
     """
-    Get if operator support weights
+    Get if operator support weights.
 
     Parameters
     ----------
