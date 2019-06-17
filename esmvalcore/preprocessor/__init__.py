@@ -20,8 +20,10 @@ from ._multimodel import multi_model_statistics
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
 from ._regrid import extract_levels, regrid
-from ._time import (annual_mean, extract_month, extract_season, extract_time,
-                    regrid_time, seasonal_mean, time_average)
+from ._time import (extract_month, extract_season, extract_time, regrid_time,
+                    daily_statistics, monthly_statistics, seasonal_statistics,
+                    annual_statistics, decadal_statistics,
+                    climatology)
 from ._volume import (volume_statistics, depth_integration, extract_trajectory,
                       extract_transect, extract_volume)
 
@@ -77,9 +79,12 @@ __all__ = [
     # 'annual_cycle': annual_cycle,
     # 'diurnal_cycle': diurnal_cycle,
     'zonal_means',
-    'annual_mean',
-    'seasonal_mean',
-    'time_average',
+    'daily_statistics',
+    'monthly_statistics',
+    'seasonal_statistics',
+    'annual_statistics',
+    'decadal_statistics',
+    'climatology',
     'regrid_time',
     'cmor_check_data',
     # Save to file

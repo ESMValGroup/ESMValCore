@@ -8,18 +8,9 @@ import logging
 
 import iris
 from dask import array as da
+from ._shared import guess_bounds, get_iris_analysis_operation
 
 logger = logging.getLogger(__name__)
-
-
-# guess bounds tool
-def _guess_bounds(cube, coords):
-    """Guess bounds of a cube, or not."""
-    # check for bounds just in case
-    for coord in coords:
-        if not cube.coord(coord).has_bounds():
-            cube.coord(coord).guess_bounds()
-    return cube
 
 
 # slice cube over a restricted area (box)
@@ -70,37 +61,6 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     selection = select_lats & select_lons
     data = da.ma.masked_where(~selection, cube.core_data())
     return cube.copy(data)
-
-
-def get_iris_analysis_operation(operator):
-    """
-    Determine the iris analysis operator from a string.
-
-    Map string to functional operator.
-
-    Parameters
-    ----------
-    operator: str
-        A named operator.
-
-    Returns
-    -------
-        function: A function from iris.analysis
-
-    Raises
-    ------
-    ValueError
-        operator not in allowed operators list.
-        allowed operators: mean, median, std_dev, variance, min, max
-    """
-    operators = ['mean', 'median', 'std_dev', 'variance', 'min', 'max']
-    operator = operator.lower()
-    if operator not in operators:
-        raise ValueError("operator {} not recognised. "
-                         "Accepted values are: {}."
-                         "".format(operator, ', '.join(operators)))
-    operation = getattr(iris.analysis, operator.upper())
-    return operation
 
 
 def zonal_means(cube, coordinate, mean_type):
@@ -230,7 +190,7 @@ def area_statistics(cube, operator, fx_files=None):
 
     coord_names = ['longitude', 'latitude']
     if grid_areas is None or not grid_areas.any():
-        cube = _guess_bounds(cube, coord_names)
+        cube = guess_bounds(cube, coord_names)
         grid_areas = iris.analysis.cartography.area_weights(cube)
         logger.info('Calculated grid area shape: %s', grid_areas.shape)
 
