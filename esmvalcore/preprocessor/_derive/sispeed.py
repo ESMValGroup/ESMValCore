@@ -1,7 +1,6 @@
 """Derivation of variable `sispeed`."""
 
 from iris import Constraint
-import iris.cube
 from iris.coords import DimCoord
 
 from ._baseclass import DerivedVariableBase
