@@ -7,6 +7,8 @@ selecting geographical regions; constructing area averages; etc.
 import logging
 
 import iris
+from iris.util import broadcast_to_shape
+from numba import vectorize
 from dask import array as da
 from ._shared import guess_bounds, get_iris_analysis_operation
 
@@ -56,10 +58,20 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     # irregular grids
     lats = cube.coord('latitude').points
     lons = cube.coord('longitude').points
-    select_lats = start_latitude < lats < end_latitude
-    select_lons = start_longitude < lons < end_longitude
-    selection = select_lats & select_lons
-    data = da.ma.masked_where(~selection, cube.core_data())
+    @vectorize
+    def create_mask(lat, lon):
+        if start_latitude <= lat <= end_latitude and \
+            start_longitude <= lon <= end_longitude:
+            return True
+        return False
+
+    mask = create_mask(lats, lons)
+    mask_shape = mask.shape
+    data_shape = cube.shape
+    if mask_shape != data_shape:
+        mapping = cube.coord_dims('latitude')
+    mask = broadcast_to_shape(mask, cube.shape, mapping)
+    data = da.ma.masked_where(~mask, cube.core_data())
     return cube.copy(data)
 
 
