@@ -23,7 +23,7 @@ from ._regrid import extract_levels, regrid
 from ._time import (extract_month, extract_season, extract_time, regrid_time,
                     daily_statistics, monthly_statistics, seasonal_statistics,
                     annual_statistics, decadal_statistics,
-                    climatology)
+                    climate_statistics)
 from ._volume import (volume_statistics, depth_integration, extract_trajectory,
                       extract_transect, extract_volume)
 
@@ -84,7 +84,7 @@ __all__ = [
     'seasonal_statistics',
     'annual_statistics',
     'decadal_statistics',
-    'climatology',
+    'climate_statistics',
     'regrid_time',
     'cmor_check_data',
     # Save to file

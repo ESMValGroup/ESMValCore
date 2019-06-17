@@ -11,7 +11,8 @@ import iris
 import iris.coord_categorisation
 import numpy as np
 
-from ._shared import get_iris_analysis_operation, operator_accept_weights
+from ._shared import (get_iris_analysis_operation, operator_accept_weights,
+                      guess_bounds)
 
 logger = logging.getLogger(__name__)
 
@@ -265,11 +266,12 @@ def daily_statistics(cube, operator='mean'):
     return cube
 
 
-def climatology(cube, operator='mean', period='full'):
+def climate_statistics(cube, operator='mean', period='full'):
     """
-    Compute climatologies in the specified granularity.
+    Compute climate statistics with the specified granularity.
 
-    Computes daily, monthly, seasonal or yearly climatologies
+    Computes daily, monthly, seasonal or yearly statistics for the
+    full available period
 
     Parameters
     ----------
@@ -298,9 +300,12 @@ def climatology(cube, operator='mean', period='full'):
     elif period in ('full', ):
         clim_coord = 'time'
     else:
-        raise ValueError('Climatology does not support period %s' % period)
+        raise ValueError(
+            'Climate_statistics does not support period %s' % period
+        )
 
     if operator_accept_weights(operator):
+        guess_bounds(cube, ('time', ))
         time_weights = get_time_weights(cube)
     else:
         time_weights = None
