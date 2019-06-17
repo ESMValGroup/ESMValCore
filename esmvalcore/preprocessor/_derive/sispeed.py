@@ -1,6 +1,5 @@
 """Derivation of variable `sispeed`."""
 
-import numpy as np
 from iris import Constraint
 import iris.cube
 from iris.coords import DimCoord
