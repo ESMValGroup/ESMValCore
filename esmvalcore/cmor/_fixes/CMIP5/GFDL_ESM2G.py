@@ -14,6 +14,7 @@ def _get_and_remove(cubes, long_name):
         pass
 
 
+# pylint: disable=invalid-name,
 class allvars(Fix):
     """Common fixes."""
 
@@ -37,6 +38,7 @@ class allvars(Fix):
         return cubes
 
 
+# pylint: disable=invalid-name,
 class co2(Fix):
     """Fixes for co2."""
 
@@ -60,6 +62,7 @@ class co2(Fix):
         return cube
 
 
+# pylint: disable=invalid-name,
 class fgco2(Fix):
     """Fixes for fgco2."""
 
@@ -82,13 +85,16 @@ class fgco2(Fix):
         return cubes
 
 
+# pylint: disable=invalid-name,
 class usi(Fix):
     """Fixes for usi."""
 
     def fix_metadata(self, cubes):
         """
         Fix metadata.
+
         Fixes bad standard_name
+
         Parameters
         ----------
         cubes: iris.cube.CubeList
@@ -100,13 +106,16 @@ class usi(Fix):
         return cubes
 
 
+# pylint: disable=invalid-name,
 class vsi(Fix):
     """Fixes for vsi."""
 
     def fix_metadata(self, cubes):
         """
         Fix metadata.
+
         Fixes bad standard_name
+
         Parameters
         ----------
         cubes: iris.cube.CubeList
