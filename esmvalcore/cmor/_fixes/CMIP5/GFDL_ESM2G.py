@@ -80,3 +80,39 @@ class fgco2(Fix):
         _get_and_remove(cubes, 'Latitude of tracer (h) points')
         _get_and_remove(cubes, 'Longitude of tracer (h) points')
         return cubes
+
+
+class usi(Fix):
+    """Fixes for usi."""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix metadata.
+        Fixes bad standard_name
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        cubes[0].standard_name = 'sea_ice_x_velocity'
+        return cubes
+
+
+class vsi(Fix):
+    """Fixes for vsi."""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix metadata.
+        Fixes bad standard_name
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        cubes[0].standard_name = 'sea_ice_y_velocity'
+        return cubes
