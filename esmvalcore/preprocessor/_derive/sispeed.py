@@ -56,7 +56,4 @@ class DerivedVariable(DerivedVariableBase):
             )
 
         speed = (siu ** 2 + siv ** 2) ** 0.5
-        speed.short_name = 'sispeed'
-        speed.standard_name = 'sea_ice_speed'
-        speed.long_name = 'Sea-ice speed'
         return speed
