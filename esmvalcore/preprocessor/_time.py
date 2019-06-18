@@ -284,6 +284,15 @@ def climate_statistics(cube, operator='mean', period='full'):
         Monthly statistics cube
     """
     period = period.lower()
+
+    if period in ('full', ):
+        if operator_accept_weights(operator):
+            time_weights = get_time_weights(cube)
+            cube = cube.collapsed('time', operator, weights=time_weights)
+        else:
+            cube = cube.collapsed('time', operator)
+        return cube
+
     clim_coord = 'clim_coord'
     if period in ['daily', 'day']:
         iris.coord_categorisation.add_day_of_year(
@@ -297,26 +306,13 @@ def climate_statistics(cube, operator='mean', period='full'):
         iris.coord_categorisation.add_season(
             cube, 'time', name=clim_coord
         )
-    elif period in ('full', ):
-        clim_coord = 'time'
     else:
         raise ValueError(
             'Climate_statistics does not support period %s' % period
         )
-
-    if operator_accept_weights(operator):
-        guess_bounds(cube, ('time', ))
-        time_weights = get_time_weights(cube)
-    else:
-        time_weights = None
     operator = get_iris_analysis_operation(operator)
-
-    if time_weights is not None:
-        cube = cube.collapsed(clim_coord, operator, weights=time_weights)
-    else:
-        cube = cube.collapsed(clim_coord, operator)
-    if period != 'full':
-        cube.remove_coord('clim_coord')
+    cube = cube.aggregated_by(clim_coord, operator)
+    cube.remove_coord(clim_coord)
     return cube
 
 
