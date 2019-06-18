@@ -63,9 +63,9 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     def create_mask(lat, lon):
         if lon < 0:
             lon += 360
-        if start_latitude <= lat <= end_latitude and \
-            start_longitude <= lon <= end_longitude:
-            return True
+        if start_latitude <= lat <= end_latitude:
+            if start_longitude <= lon <= end_longitude:
+                return True
         return False
 
     mask = create_mask(lats, lons)

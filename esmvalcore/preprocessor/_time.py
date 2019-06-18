@@ -11,8 +11,7 @@ import iris
 import iris.coord_categorisation
 import numpy as np
 
-from ._shared import (get_iris_analysis_operation, operator_accept_weights,
-                      guess_bounds)
+from ._shared import get_iris_analysis_operation, operator_accept_weights
 
 logger = logging.getLogger(__name__)
 
