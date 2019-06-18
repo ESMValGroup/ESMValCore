@@ -66,7 +66,6 @@ def operator_accept_weights(operator):
         bool: True if operator support weights, False otherwise
 
     """
-    operator = operator.lower()
-    if operator in ('mean',):
+    if operator.lower() in ('mean',):
         return True
     return False

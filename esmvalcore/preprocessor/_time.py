@@ -11,8 +11,7 @@ import iris
 import iris.coord_categorisation
 import numpy as np
 
-from ._shared import (get_iris_analysis_operation, operator_accept_weights,
-                      guess_bounds)
+from ._shared import get_iris_analysis_operation, operator_accept_weights
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +175,11 @@ def seasonal_statistics(cube, operator='mean'):
     cube: iris.cube.Cube
         input cube.
 
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
+        'max'
+
     Returns
     -------
     iris.cube.Cube
@@ -225,6 +229,11 @@ def monthly_statistics(cube, operator='mean'):
     cube: iris.cube.Cube
         input cube.
 
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
+        'max'
+
     Returns
     -------
     iris.cube.Cube
@@ -250,6 +259,11 @@ def daily_statistics(cube, operator='mean'):
     ----------
     cube: iris.cube.Cube
         input cube.
+
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
+        'max'
 
     Returns
     -------
@@ -278,6 +292,16 @@ def climate_statistics(cube, operator='mean', period='full'):
     cube: iris.cube.Cube
         input cube.
 
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
+        'max'
+
+    period: str, optional
+        Period to compute the statistic over.
+        Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
+        'mon', 'daily', 'day'
+
     Returns
     -------
     iris.cube.Cube
@@ -286,11 +310,14 @@ def climate_statistics(cube, operator='mean', period='full'):
     period = period.lower()
 
     if period in ('full', ):
+        operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
             time_weights = get_time_weights(cube)
-            cube = cube.collapsed('time', operator, weights=time_weights)
+            cube = cube.collapsed(
+                'time', operator_method, weights=time_weights
+            )
         else:
-            cube = cube.collapsed('time', operator)
+            cube = cube.collapsed('time', operator_method)
         return cube
 
     clim_coord = 'clim_coord'
@@ -298,7 +325,7 @@ def climate_statistics(cube, operator='mean', period='full'):
         iris.coord_categorisation.add_day_of_year(
             cube, 'time', name=clim_coord
         )
-    elif period in ['monthly', 'mon']:
+    elif period in ['monthly', 'month', 'mon']:
         iris.coord_categorisation.add_month_number(
             cube, 'time', name=clim_coord
         )

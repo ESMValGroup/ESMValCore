@@ -18,7 +18,7 @@ from esmvalcore.preprocessor._time import (
     regrid_time,
     decadal_statistics, annual_statistics, seasonal_statistics,
     monthly_statistics, daily_statistics,
-    climatology
+    climate_statistics
 )
 
 
@@ -171,7 +171,7 @@ class TestClimatology(tests.Test):
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climatology(cube, operator='mean')
+        result = climate_statistics(cube, operator='mean')
         expected = np.array([1.])
         assert_array_equal(result.data, expected)
 
@@ -182,7 +182,7 @@ class TestClimatology(tests.Test):
         bounds = np.array([[0., 1.], [1., 4.]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climatology(cube, operator='mean')
+        result = climate_statistics(cube, operator='mean')
         expected = np.array([4.])
         assert_array_equal(result.data, expected)
 
@@ -194,7 +194,7 @@ class TestClimatology(tests.Test):
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climatology(cube, operator='mean')
+        result = climate_statistics(cube, operator='mean')
         expected = np.array([1.])
         assert_array_equal(result.data, expected)
 
@@ -206,8 +206,8 @@ class TestClimatology(tests.Test):
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climatology(cube, operator='mean', period='season')
-        expected = np.array([1.])
+        result = climate_statistics(cube, operator='mean', period='season')
+        expected = np.array([1., 1., 1.])
         assert_array_equal(result.data, expected)
 
     def test_monthly(self):
@@ -218,7 +218,7 @@ class TestClimatology(tests.Test):
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climatology(cube, operator='mean', period='mon')
+        result = climate_statistics(cube, operator='mean', period='mon')
         expected = np.ones((6, ))
         assert_array_equal(result.data, expected)
 
@@ -230,7 +230,7 @@ class TestClimatology(tests.Test):
                            [365, 366], [366, 367], [367, 368]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climatology(cube, operator='mean', period='day')
+        result = climate_statistics(cube, operator='mean', period='day')
         expected = np.array([1, 1, 1])
         assert_array_equal(result.data, expected)
 
@@ -243,7 +243,7 @@ class TestClimatology(tests.Test):
         cube = self._create_cube(data, times, bounds)
 
         with self.assertRaises(ValueError):
-            climatology(cube, operator='mean', period='bad')
+            climate_statistics(cube, operator='mean', period='bad')
 
     def test_time_max(self):
         """Test for time max of a 1D field."""
@@ -252,7 +252,7 @@ class TestClimatology(tests.Test):
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climatology(cube, operator='max')
+        result = climate_statistics(cube, operator='max')
         expected = np.array([2.])
         assert_array_equal(result.data, expected)
 
@@ -263,7 +263,7 @@ class TestClimatology(tests.Test):
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climatology(cube, operator='min')
+        result = climate_statistics(cube, operator='min')
         expected = np.array([0.])
         assert_array_equal(result.data, expected)
 
@@ -274,7 +274,7 @@ class TestClimatology(tests.Test):
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climatology(cube, operator='median')
+        result = climate_statistics(cube, operator='median')
         expected = np.array([1.])
         assert_array_equal(result.data, expected)
 
