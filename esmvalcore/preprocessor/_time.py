@@ -453,7 +453,7 @@ def decadal_statistics(cube, operator='mean'):
     ----------
     cube: iris.cube.Cube
         input cube.
-        
+
     operator: str, optional
         Select operator to apply.
         Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
