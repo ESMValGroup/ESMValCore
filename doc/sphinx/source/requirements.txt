@@ -1,7 +1,4 @@
-cdo
-cython
-matplotlib<3
-nc-time-axis
+dask[array]
 netCDF4
 numba
 numpy
@@ -9,9 +6,6 @@ pillow
 prov[dot]
 psutil
 pyyaml
+scipy
 shapely
-xarray
 yamale
-sklearn
-pandas
-eofs
