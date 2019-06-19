@@ -264,18 +264,39 @@ def tile_grid_areas(cube, grid_areas):
         raise ValueError('Fx area {} and dataset {} shapes do not match.'
                          ''.format(grid_areas.shape, cube.shape))
 
-    if cube.ndim == 4 and grid_areas.ndim == 2:
-        grid_areas = np.tile(grid_areas,
-                             [cube.shape[0], cube.shape[1], 1, 1])
+    if cube.ndim == grid_areas.ndim:
+        return grid_areas
+
+    # # np.tile works as iris can't accept dask arrays for weights.
+    # if cube.ndim == 4 and grid_areas.ndim == 2:
+    #     grid_areas = np.tile(grid_areas,
+    #                          [cube.shape[0], cube.shape[1], 1, 1])
+    # elif cube.ndim == 4 and grid_areas.ndim == 3:
+    #     grid_areas = np.tile(grid_areas, [cube.shape[0], 1, 1, 1])
+    # elif cube.ndim == 3 and grid_areas.ndim == 2:
+    #     grid_areas = np.tile(grid_areas, [cube.shape[0], 1, 1])
+    # else:
+    #     raise ValueError('Grid and dataset number of dimensions not '
+    #                      'recognised: {} and {}.'
+    #                      ''.format(cube.ndim, grid_areas.ndim))
+
+    # Using dash arary stack instead of np.tile
+    if cube.ndim == grid_areas.ndim:
+        return grid_areas
+    elif cube.ndim == 4 and grid_areas.ndim == 2:
+        for shape in [1, 0]:
+            ga = [grid_areas for itr in range(cube.shape[shape])]
+            grid_areas = da.stack(ga, axis=0)
     elif cube.ndim == 4 and grid_areas.ndim == 3:
-        grid_areas = np.tile(grid_areas, [cube.shape[0], 1, 1, 1])
+        ga = [grid_areas for itr in range(cube.shape[0])]
+        grid_areas = da.stack(ga, axis=0)
     elif cube.ndim == 3 and grid_areas.ndim == 2:
-        grid_areas = np.tile(grid_areas, [cube.shape[0], 1, 1])
+        ga = [grid_areas for itr in range(cube.shape[0])]
+        grid_areas = da.stack(ga, axis=0)
     else:
         raise ValueError('Grid and dataset number of dimensions not '
                          'recognised: {} and {}.'
                          ''.format(cube.ndim, grid_areas.ndim))
-    print("tile_grid_areas:\tgrid_areas:", grid_areas)
     return grid_areas
 
 
@@ -333,7 +354,8 @@ def area_statistics(cube, operator, fx_files=None):
         operator in weighted_operators:
         logger.error(
             'fx_file needed to calculate grid cell area for irregular grids.')
-        raise ValueError('Fx_file needed to calculate weighted area statitics.')
+        raise ValueError('Fx_file needed to calculate weighted area'
+                         'statitics.')
 
     if operator in weighted_operators and fx_files == None:
         raise ValueError("Operator {} requires fx_files. ".format(operator))
@@ -357,7 +379,7 @@ def area_statistics(cube, operator, fx_files=None):
     if operator in weighted_operators:
         return cube.collapsed(coord_names,
                               operation,
-                              weights=grid_areas)
+                              weights=np.array(grid_areas))
 
     # Many IRIS analysis functions do not accept weights arguments.
     return cube.collapsed(coord_names, operation)
