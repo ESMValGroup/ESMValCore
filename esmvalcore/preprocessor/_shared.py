@@ -9,6 +9,9 @@ import iris
 
 logger = logging.getLogger(__name__)
 
+allowed_operators = ['mean', 'median', 'std_dev', 'variance', 'min', 'max']
+weighted_operators = ['mean',]
+
 
 def get_iris_analysis_operation(operator):
     """
@@ -32,11 +35,10 @@ def get_iris_analysis_operation(operator):
         allowed operators: mean, median, std_dev, variance, min, max
     """
     # TODO: why limit this to a small number of operations?
-    operators = ['mean', 'median', 'std_dev', 'variance', 'min', 'max']
     operator = operator.lower()
-    if operator not in operators:
+    if operator not in allowed_operators:
         raise ValueError("operator {} not recognised. "
                          "Accepted values are: {}."
-                         "".format(operator, ', '.join(operators)))
+                         "".format(operator, ', '.join(allowed_operators)))
     operation = getattr(iris.analysis, operator.upper())
     return operation
