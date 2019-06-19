@@ -29,7 +29,6 @@ from esmvalcore import __version__
 
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-on_rtd = True  # TODO: Remove this line after testing
 
 # This is used for linking and such so we link to the thing we're building
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
