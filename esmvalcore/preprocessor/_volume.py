@@ -10,7 +10,7 @@ import logging
 
 import iris
 import numpy as np
-from ._shared import get_iris_analysis_operation
+from ._shared import get_iris_analysis_operation, weighted_operators
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +211,7 @@ def volume_statistics(
         for key, fx_file in fx_files.items():
             if fx_file is None:
                 continue
-            logger.info('Attempting to load %s from file: %s', key, fx_file)
+            logger.info('Load %s from file: %s', key, fx_file)
             fx_cube = iris.load_cube(fx_file)
 
             grid_volume = fx_cube.data
@@ -249,7 +249,7 @@ def volume_statistics(
         for z_itr in range(cube.shape[1]):
             # ####
             # Calculate weighted mean for this time and layer
-            if operator == 'mean':
+            if operator in weighted_operators:
                 total = cube[time_itr, z_itr].collapsed(
                     [cube.coord(axis='z'), 'longitude', 'latitude'],
                     operation,
@@ -281,7 +281,7 @@ def volume_statistics(
 
     # #####
     # Create a small dummy output array for the output cube
-    if operator == 'mean':
+    if operator in weighted_operators:
         src_cube = cube[:2, :2].collapsed([cube.coord(axis='z'),
                                            'longitude', 'latitude'],
                                           operation,
