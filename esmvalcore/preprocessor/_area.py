@@ -8,6 +8,7 @@ import logging
 
 import iris
 from dask import array as da
+import numpy as np
 from ._shared import get_iris_analysis_operation, weighted_operators
 
 logger = logging.getLogger(__name__)
@@ -223,6 +224,16 @@ def zonal_meridional_statistics(cube, operator, coord, fx_files=None):
 def load_fx_files(fx_files):
     """
     Load the fx_files.
+
+    Parameters
+    ----------
+        fx_files: dict
+            dictionary of field:filename for the fx_files
+
+    Returns
+    -------
+    np.array
+        The fx_file data.
     """
     for key, fx_file in fx_files.items():
         if fx_file is None:
@@ -249,13 +260,17 @@ def tile_grid_areas(cube, grid_areas):
     iris.cube.Cube
         Freshly tiled grid areas cube.
     """
+    if grid_areas.shape != cube.shape[-2:]:
+        raise ValueError('Fx area {} and dataset {} shapes do not match.'
+                         ''.format(grid_areas.shape, cube.shape))
+
     if cube.ndim == 4 and grid_areas.ndim == 2:
-        grid_areas = da.tile(grid_areas,
+        grid_areas = np.tile(grid_areas,
                              [cube.shape[0], cube.shape[1], 1, 1])
     elif cube.ndim == 4 and grid_areas.ndim == 3:
-        grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
+        grid_areas = np.tile(grid_areas, [cube.shape[0], 1, 1, 1])
     elif cube.ndim == 3 and grid_areas.ndim == 2:
-        grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
+        grid_areas = np.tile(grid_areas, [cube.shape[0], 1, 1])
     else:
         raise ValueError('Grid and dataset number of dimensions not '
                          'recognised: {} and {}.'
