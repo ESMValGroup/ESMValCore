@@ -1,4 +1,5 @@
 """Module with functions to check a recipe."""
+import itertools
 import logging
 import os
 import subprocess
@@ -96,8 +97,9 @@ def data_availability(input_files, var, dirnames, filenames):
         var.pop('filename', None)
         logger.error("No input files found for variable %s", var)
         if dirnames and filenames:
-            logger.error("Looked for files matching %s in %s", filenames,
-                         dirnames)
+            patterns = itertools.product(dirnames, filenames)
+            patterns = [os.path.join(d, f) for (d, f) in patterns]
+            logger.error("Looked for files matching\n%s", "\n".join(patterns))
         elif dirnames and not filenames:
             logger.error(
                 "Looked for files in %s, but did not find any file pattern "
