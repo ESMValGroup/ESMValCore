@@ -90,10 +90,24 @@ def variable(var, required_keys):
                 missing, var.get('short_name'), var.get('diagnostic')))
 
 
-def data_availability(input_files, var):
+def data_availability(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
     if not input_files:
-        raise RecipeError("No input files found for variable {}".format(var))
+        var.pop('filename', None)
+        logger.error("No input files found for variable %s", var)
+        if dirnames and filenames:
+            logger.error("Looked for files matching %s in %s", filenames,
+                         dirnames)
+        elif dirnames and not filenames:
+            logger.error(
+                "Looked for files in %s, but did not find any file pattern "
+                "to match against", dirnames)
+        elif filenames and not dirnames:
+            logger.error(
+                "Looked for files matching %s, but did not find any existing "
+                "input directory", filenames)
+        logger.error("Set 'log_level' to 'debug' to get more information")
+        raise RecipeError("Missing data")
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))
     available_years = set()
