@@ -443,4 +443,24 @@ so for cases when we deal with a lot of datasets (R + N = N), data is fully real
 
 Ms = 1.5 x (N - 1) GB
 Mm = 1.5 x (N - 2) GB
-=======
+
+
+Unit conversion
+===============
+
+Converting units is also supported. This is particularly useful in
+cases where different datasets might have different units, for example
+when comparing CMIP5 and CMIP6 variables where the units have changed
+or in case of observational datasets that are delivered in different
+units.
+
+In these cases, having a unit conversion at the end of the processing
+will guarantee homogeneous input for the diagnostics.
+
+.. note::
+   Conversion is only supported between compatible units! In other
+   words, converting temperature units from `degC` to `Kelvin` works
+   fine, changing precipitation units from a rate based unit to an
+   amount based unit is not supported at the moment.
+
+See also :func:`esmvalcore.preprocessor.convert_units`.
