@@ -446,7 +446,7 @@ def decadal_statistics(cube, operator='mean'):
     Compute decadal statistics.
 
     Note that this function does not weight the decadal mean if
-    uneven time periods are present. Ie, all data inside the year/decade
+    uneven time periods are present. Ie, all data inside the decade
     are treated equally.
 
     Parameters
