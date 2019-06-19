@@ -1,4 +1,4 @@
-"""Tests for shared functions for CMIP6 fixes."""
+"""Tests for shared functions for fixes."""
 import iris
 import pytest
 from cf_units import Unit
