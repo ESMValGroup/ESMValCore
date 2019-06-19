@@ -408,7 +408,7 @@ def regrid_time(cube, frequency):
 
 def annual_statistics(cube, operator='mean'):
     """
-    Compute annual or decadal statistics.
+    Compute annual statistics.
 
     Note that this function does not weight the annual or decadal mean if
     uneven time periods are present. Ie, all data inside the year/decade
