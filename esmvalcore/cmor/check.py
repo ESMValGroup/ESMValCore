@@ -178,9 +178,35 @@ class CMORCheck():
         # Check standard_name
         if self._cmor_var.standard_name:
             if self._cube.standard_name != self._cmor_var.standard_name:
-                self.report_error(
-                    self._attr_msg, self._cube.var_name, 'standard_name',
-                    self._cmor_var.standard_name, self._cube.standard_name)
+                if self.automatic_fixes:
+                    logger.warning(
+                        'Standard name for %s changed from %s to %s',
+                        cube.var_name,
+                        cube.standard_name,
+                        self._cmor_var.standard_name
+                    )
+                    self._cube.standard_name = self._cmor_var.standard_name
+                else:
+                    self.report_error(
+                        self._attr_msg, self._cube.var_name, 'standard_name',
+                        self._cmor_var.standard_name, self._cube.standard_name
+                    )
+        # Check long_name
+        if self._cmor_var.long_name:
+            if self._cube.long_name != self._cmor_var.long_name:
+                if self.automatic_fixes:
+                    logger.warning(
+                        'Long name for %s changed from %s to %s',
+                        cube.var_name,
+                        cube.long_name,
+                        self._cmor_var.long_name
+                    )
+                    self._cube.long_name = self._cmor_var.long_name
+                else:
+                    self.report_warning(
+                        self._attr_msg, self._cube.var_name, 'long_name',
+                        self._cmor_var.long_name, self._cube.long_name
+                    )
 
         # Check units
         if (self.automatic_fixes and self._cube.attributes.get(
