@@ -8,7 +8,7 @@ import logging
 
 import iris
 from dask import array as da
-from ._shared import get_iris_analysis_operation
+from ._shared import get_iris_analysis_operation, weighted_operators
 
 logger = logging.getLogger(__name__)
 
@@ -214,52 +214,56 @@ def zonal_meridional_statistics(cube, operator, coord, fx_files=None):
             grid_volume = fx_cube.data
             grid_volume_found = True
 
-    if grid_volume_found and operator.lower() == 'mean':
+    if grid_volume_found and operator.lower() in weighted_operators:
         return cube.collapsed(coord, operation, weights=grid_volume)
 
     return cube.collapsed(coord, operation)
 
 
-def tile_grid_areas(cube, fx_files):
+def load_fx_files(fx_files):
+    """
+    Load the fx_files.
+    """
+    for key, fx_file in fx_files.items():
+        if fx_file is None:
+            continue
+        logger.info('Attempting to load %s from file: %s', key, fx_file)
+        fx_cube = iris.load_cube(fx_file)
+        fx_data = fx_cube.core_data()
+    return fx_data
+
+
+def tile_grid_areas(cube, grid_areas):
     """
     Tile the grid area data to match the dataset cube.
 
     Parameters
     ----------
     cube: iris.cube.Cube
-        input cube.
-    fx_files: dict
-        dictionary of field:filename for the fx_files
+        Input cube.
+    grid_areas: iris.cube.Cube
+        fx files area.
 
     Returns
     -------
     iris.cube.Cube
         Freshly tiled grid areas cube.
     """
-    grid_areas = None
-    if fx_files:
-        for key, fx_file in fx_files.items():
-            if fx_file is None:
-                continue
-            logger.info('Attempting to load %s from file: %s', key, fx_file)
-            fx_cube = iris.load_cube(fx_file)
-
-            grid_areas = fx_cube.core_data()
-            if cube.ndim == 4 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas,
-                                     [cube.shape[0], cube.shape[1], 1, 1])
-            elif cube.ndim == 4 and grid_areas.ndim == 3:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
-            elif cube.ndim == 3 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
-            else:
-                raise ValueError('Grid and dataset number of dimensions not '
-                                 'recognised: {} and {}.'
-                                 ''.format(cube.ndim, grid_areas.ndim))
+    if cube.ndim == 4 and grid_areas.ndim == 2:
+        grid_areas = da.tile(grid_areas,
+                             [cube.shape[0], cube.shape[1], 1, 1])
+    elif cube.ndim == 4 and grid_areas.ndim == 3:
+        grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
+    elif cube.ndim == 3 and grid_areas.ndim == 2:
+        grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
+    else:
+        raise ValueError('Grid and dataset number of dimensions not '
+                         'recognised: {} and {}.'
+                         ''.format(cube.ndim, grid_areas.ndim))
+    print("tile_grid_areas:\tgrid_areas:", grid_areas)
     return grid_areas
 
 
-# get the area average
 def area_statistics(cube, operator, fx_files=None):
     """
     Apply a statistical operator in the horizontal direction.
@@ -308,29 +312,34 @@ def area_statistics(cube, operator, fx_files=None):
     ValueError
         if input data cube has different shape than grid area weights
     """
-    grid_areas = tile_grid_areas(cube, fx_files)
+    coord_names = ['longitude', 'latitude']
 
-    if not fx_files and cube.coord('latitude').points.ndim == 2:
+    if not fx_files and cube.coord('latitude').points.ndim == 2 and \
+        operator in weighted_operators:
         logger.error(
             'fx_file needed to calculate grid cell area for irregular grids.')
-        raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
+        raise ValueError('Fx_file needed to calculate weighted area statitics.')
 
-    coord_names = ['longitude', 'latitude']
-    if grid_areas is None or not grid_areas.any():
-        cube = _guess_bounds(cube, coord_names)
-        grid_areas = iris.analysis.cartography.area_weights(cube)
-        logger.info('Calculated grid area shape: %s', grid_areas.shape)
+    if operator in weighted_operators and fx_files == None:
+        raise ValueError("Operator {} requires fx_files. ".format(operator))
 
-    if cube.shape != grid_areas.shape:
-        raise ValueError('Cube shape ({}) doesn`t match grid area shape '
-                         '({})'.format(cube.shape, grid_areas.shape))
+    if fx_files:
+        grid_areas = load_fx_files(fx_files)
+        grid_areas = tile_grid_areas(cube, grid_areas)
+        if cube.shape != grid_areas.shape:
+            raise ValueError('Cube shape ({}) doesn`t match grid area shape '
+                             '({})'.format(cube.shape, grid_areas.shape))
+
+    #if grid_areas is None or not grid_areas.any():
+#        cube = _guess_bounds(cube, coord_names)
+#        grid_areas = iris.analysis.cartography.area_weights(cube)
+#        logger.info('Calculated grid area shape: %s', grid_areas.shape)
 
     operation = get_iris_analysis_operation(operator)
 
     # TODO: implement weighted stdev, median, s var when available in iris.
     # See iris issue: https://github.com/SciTools/iris/issues/3208
-
-    if operator == 'mean':
+    if operator in weighted_operators:
         return cube.collapsed(coord_names,
                               operation,
                               weights=grid_areas)
