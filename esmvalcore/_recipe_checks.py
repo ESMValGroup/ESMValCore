@@ -99,7 +99,11 @@ def data_availability(input_files, var, dirnames, filenames):
         if dirnames and filenames:
             patterns = itertools.product(dirnames, filenames)
             patterns = [os.path.join(d, f) for (d, f) in patterns]
-            logger.error("Looked for files matching\n%s", "\n".join(patterns))
+            if len(patterns) == 1:
+                msg = f': {patterns[0]}'
+            else:
+                msg = '\n{}'.format('\n'.join(patterns))
+            logger.error("Looked for files matching%s", msg)
         elif dirnames and not filenames:
             logger.error(
                 "Looked for files in %s, but did not find any file pattern "
