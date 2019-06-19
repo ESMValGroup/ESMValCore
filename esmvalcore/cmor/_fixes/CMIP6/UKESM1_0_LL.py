@@ -6,7 +6,7 @@ from ..fix import Fix
 class mrsos(Fix):
     """Fixes for mrsos."""
 
-    def fix_metadata(self, cube):
+    def fix_metadata(self, cubes):
         """
         Fix metadata.
 
@@ -24,5 +24,6 @@ class mrsos(Fix):
         iris.cube.Cube
 
         """
-        cube.standard_name = 'moisture_content_of_soil_layer'
-        return cube
+        for cube in cubes:
+            cube.standard_name = 'moisture_content_of_soil_layer'
+        return cubes
