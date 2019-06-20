@@ -63,8 +63,8 @@ class TestGetCube(unittest.TestCase):
             self.fix.get_cube_from_list(self.cubes)
 
     def test_get_default(self):
-        """Check that the default raises (Fix is a cube)."""
-        self.cube_1.var_name = 'Fix'
+        """Check that the default return the cube (fix is a cube)."""
+        self.cube_1.var_name = 'fix'
         self.assertIs(self.cube_1, self.fix.get_cube_from_list(self.cubes))
 
 
