@@ -32,7 +32,7 @@ def read_cmor_tables(cfg_developer):
         project = cfg_developer[table]
 
         cmor_type = project.get('cmor_type', 'CMIP5')
-        table_path = project.get('cmor_tables', cmor_type.lower())
+        table_path = project.get('cmor_path', cmor_type.lower())
         table_path = os.path.expandvars(os.path.expanduser(table_path))
 
         cmor_strict = project.get('cmor_strict', True)

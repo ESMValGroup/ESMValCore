@@ -273,3 +273,13 @@ EMAC:
   input_file: ''
   output_file: '[dataset]_[ensemble]_[short_name]_[start_year]-[end_year]'
   cmor_type: 'CMIP5'
+
+ERA5:
+  cmor_strict: true
+  input_dir:
+    default: 'Tier[tier]/[dataset]'
+  input_file:
+    default: '[project]_[dataset]_[type]_[version]_[mip]_[short_name]_*.nc'
+  output_file: '[project]_[dataset]_[type]_[version]_[mip]_[short_name]_[start_year]-[end_year]'
+  cmor_type: 'CMIP6'
+  cmor_path: 'era5'
