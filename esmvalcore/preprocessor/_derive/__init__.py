@@ -108,7 +108,15 @@ def derive(cubes,
 
     # Derive variable
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
-    cube = DerivedVariable().calculate(cubes)
+    try:
+        cube = DerivedVariable().calculate(cubes)
+    except Exception as exc:
+        msg = (f"Derivation of variable '{short_name}' failed. If you used "
+               f"the option '--skip-nonexistent' for running your recipe, "
+               f"this might be caused by missing input data for derivation "
+               f"('{short_name}' needs the variables "
+               f"{DerivedVariable().required}.")
+        raise ValueError(msg) from exc
 
     # Set standard attributes
     cube.var_name = short_name
