@@ -1,0 +1,25 @@
+!============
+variable_entry:    rsds
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     surface_downwelling_shortwave_flux_in_air
+units:             W m-2
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Surface Downwelling Shortwave Radiation
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          rsds
+type:              real
+positive:          down
+valid_min:         -0.002946
+valid_max:         524.4
+ok_min_mean_abs:   143.9
+ok_max_mean_abs:   181.6
+!----------------------------------
+!

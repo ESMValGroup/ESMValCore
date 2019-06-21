@@ -1,0 +1,21 @@
+!============
+variable_entry:    tsn
+!============
+modeling_realm:    landIce land
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     temperature_in_surface_snow
+units:             K
+cell_methods:      time: mean (with samples weighted by snow mass) area: mean where land
+cell_measures:     area: areacella
+long_name:         Snow Internal Temperature
+comment:           This temperature is averaged over all the snow in the grid cell that rests on land or land ice.  When computing the time-mean here, the time samples, weighted by the mass of snow on the land portion of the grid cell, are accumulated and then divided by the sum of the weights.   Reported as ""missing in regions free of snow on land.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          tsn
+type:              real
+!----------------------------------
+!
