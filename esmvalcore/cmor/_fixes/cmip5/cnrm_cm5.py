@@ -1,9 +1,9 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for CNRM-CM5 model."""
 from ..fix import Fix
 
 
-class msftmyz(Fix):
+class Msftmyz(Fix):
     """Fixes for msftmyz."""
 
     def fix_data(self, cube):
@@ -27,5 +27,5 @@ class msftmyz(Fix):
         return cube
 
 
-class msftmyzba(msftmyz):
+class Msftmyzba(Msftmyz):
     """Fixes for msftmyzba."""

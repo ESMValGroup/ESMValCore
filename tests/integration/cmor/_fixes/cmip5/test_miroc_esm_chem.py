@@ -8,6 +8,7 @@ from esmvalcore.cmor._fixes.cmip5.miroc_esm_chem import Tro3
 
 class TestTro3(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='tro3', units='J')
         self.fix = Tro3()
 

@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for BNU ESM model."""
 from cf_units import Unit
 from dask import array as da
@@ -156,7 +156,7 @@ class SpCo2(Fix):
         return cube
 
 
-class od550aer(Fix):
+class Od550Aer(Fix):
     """Fixes for od550aer."""
 
     def fix_data(self, cube):

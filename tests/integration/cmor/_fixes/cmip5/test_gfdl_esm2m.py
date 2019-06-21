@@ -19,6 +19,7 @@ class TestSftof(unittest.TestCase):
 
 class TestCo2(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
         self.fix = Co2()
 

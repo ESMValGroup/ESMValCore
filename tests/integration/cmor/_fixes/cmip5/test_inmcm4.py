@@ -5,16 +5,18 @@ import tempfile
 import unittest
 
 import iris
-from cf_units import Unit
 from iris.cube import Cube
+from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip5.inmcm4 import gpp, lai, nbp
+
+from esmvalcore.cmor._fixes.cmip5.inmcm4 import Gpp, Lai, Nbp
 
 
 class TestGpp(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='gpp', units='J')
-        self.fix = gpp()
+        self.fix = Gpp()
 
     def test_fix_data(self):
         cube = self.fix.fix_data(self.cube)
@@ -24,8 +26,9 @@ class TestGpp(unittest.TestCase):
 
 class TestLai(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='lai', units='J')
-        self.fix = lai()
+        self.fix = Lai()
 
     def test_fix_data(self):
         cube = self.fix.fix_data(self.cube)
@@ -37,9 +40,10 @@ class TestNbp(unittest.TestCase):
     """Tests for nbp."""
 
     def setUp(self):
+        """Prepare tests."""
         """Prepare temp folder for test."""
         self.cube = Cube([1.0], var_name='nbp')
-        self.fix = nbp()
+        self.fix = Nbp()
         self.temp_folder = tempfile.mkdtemp()
 
     def tearDown(self):

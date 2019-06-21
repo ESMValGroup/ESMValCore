@@ -1,12 +1,11 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for CCSM4 model."""
 from iris.cube import CubeList
 
 from ..fix import Fix
 
 
-# noinspection PyPep8Naming
-class prw(Fix):
+class Prw(Fix):
     """Fixes for prw."""
 
     def fix_metadata(self, cubes):

@@ -1,11 +1,11 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for MRI-ESM1 model."""
 from dask import array as da
 
 from ..fix import Fix
 
 
-class msftmyz(Fix):
+class Msftmyz(Fix):
     """Fixes for msftmyz."""
 
     def fix_data(self, cube):

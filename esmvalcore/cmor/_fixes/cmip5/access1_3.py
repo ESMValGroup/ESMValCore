@@ -1,11 +1,10 @@
 """Fixes for ACCESS1-3 model."""
-# pylint: disable=invalid-name
+
 from cf_units import Unit
 import iris
 from ..fix import Fix
 
 
-# noinspection PyPep8Naming
 class AllVars(Fix):
     """Common fixes to all vars."""
 

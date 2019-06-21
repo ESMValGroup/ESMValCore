@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for bcc-csm1-1-m."""
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
@@ -7,7 +7,7 @@ from scipy.ndimage import map_coordinates
 from ..fix import Fix
 
 
-class tos(Fix):
+class Tos(Fix):
     """Fixes for tos."""
 
     def fix_data(self, cube):

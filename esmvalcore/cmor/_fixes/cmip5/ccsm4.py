@@ -1,12 +1,11 @@
 """Fixes for CCSM4 model."""
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 import numpy as np
 
 from ..fix import Fix
 
 
-# noinspection PyPep8Naming
-class rlut(Fix):
+class Rlut(Fix):
     """Fixes for rlut."""
 
     def fix_metadata(self, cubes):
@@ -31,63 +30,51 @@ class rlut(Fix):
         return cubes
 
 
-# noinspection PyPep8Naming
-class rlutcs(rlut):
+class Rlutcs(Rlut):
     """Fixes for rlutcs."""
 
 
-# noinspection PyPep8Naming
-class rsut(rlut):
+class Rsut(Rlut):
     """Fixes for rsut."""
 
 
-# noinspection PyPep8Naming
-class rsutcs(rlut):
+class Rsutcs(Rlut):
     """Fixes for rsutcs."""
 
 
-# noinspection PyPep8Naming
-class rlus(rlut):
+class Rlus(Rlut):
     """Fixes for rlus."""
 
 
-# noinspection PyPep8Naming
-class rsus(rlut):
+class Rsus(Rlut):
     """Fixes for rsus."""
 
 
-# noinspection PyPep8Naming
-class rsuscs(rlut):
+class Rsuscs(Rlut):
     """Fixes for rsuscs."""
 
 
-# noinspection PyPep8Naming
-class rlds(rlut):
+class Rlds(Rlut):
     """Fixes for rlds."""
 
 
-# noinspection PyPep8Naming
-class rldscs(rlut):
+class Rldscs(Rlut):
     """Fixes for rldscs."""
 
 
-# noinspection PyPep8Naming
-class rsds(rlut):
+class Rsds(Rlut):
     """Fixes for rsds."""
 
 
-# noinspection PyPep8Naming
-class rsdscs(rlut):
+class Rsdscs(Rlut):
     """Fixes for rsdscs."""
 
 
-# noinspection PyPep8Naming
-class rsdt(rlut):
+class Rsdt(Rlut):
     """Fixes for rsdt."""
 
 
-# noinspection PyPep8Naming
-class so(Fix):
+class So(Fix):
     """Fixes for so."""
 
     def fix_metadata(self, cubes):

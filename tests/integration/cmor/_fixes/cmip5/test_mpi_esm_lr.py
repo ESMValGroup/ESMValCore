@@ -8,6 +8,7 @@ from esmvalcore.cmor._fixes.cmip5.mpi_esm_lr import Pctisccp
 
 class TestPctisccp2(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='pctisccp', units='J')
         self.fix = Pctisccp()
 

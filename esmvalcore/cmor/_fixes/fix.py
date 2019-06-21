@@ -103,10 +103,10 @@ class Fix(object):
         return cube
 
     def __eq__(self, other):
-        return type(self) == type(other)
+        return isinstance(self, other.__class__)
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self.__eq__(other)
 
     @staticmethod
     def get_fixes(project, dataset, variable):

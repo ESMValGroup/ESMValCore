@@ -1,9 +1,9 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for SSMI model."""
 from ..fix import Fix
 
 
-class prw(Fix):
+class Prw(Fix):
     """Fixes for prw."""
 
     def fix_metadata(self, cubes):

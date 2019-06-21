@@ -9,6 +9,7 @@ from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import AllVars
 
 class TestAll(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='co2', units='J')
         self.cube.add_dim_coord(
             DimCoord(

@@ -8,6 +8,7 @@ from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
 
 class TestCanESM2Fgco2(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='fgco2', units='J')
         self.fix = FgCo2()
 

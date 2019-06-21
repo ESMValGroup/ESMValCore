@@ -88,6 +88,7 @@ class TestCMORCheck(unittest.TestCase):
     """Test CMORCheck class"""
 
     def setUp(self):
+        """Prepare tests."""
         self.var_info = VariableInfoMock()
         self.cube = self.get_cube(self.var_info)
 

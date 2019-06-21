@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for HadGEM2_ES."""
 import numpy as np
 import iris
@@ -6,7 +6,7 @@ import iris
 from ..fix import Fix
 
 
-class allvars(Fix):
+class AllVars(Fix):
     """Fixes common to all vars."""
 
     def fix_metadata(self, cubes):
@@ -32,7 +32,7 @@ class allvars(Fix):
         return cubes
 
 
-class o2(Fix):
+class O2(Fix):
     """Fixes for o2."""
 
     def fix_file(self, filepath, output_dir):

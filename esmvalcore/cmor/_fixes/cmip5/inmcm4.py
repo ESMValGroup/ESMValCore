@@ -1,11 +1,11 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for inmcm4 model."""
 import iris
 
 from ..fix import Fix
 
 
-class gpp(Fix):
+class Gpp(Fix):
     """Fixes for gpp."""
 
     def fix_data(self, cube):
@@ -29,7 +29,7 @@ class gpp(Fix):
         return cube
 
 
-class lai(Fix):
+class Lai(Fix):
     """Fixes for lai."""
 
     def fix_data(self, cube):
@@ -53,7 +53,7 @@ class lai(Fix):
         return cube
 
 
-class nbp(Fix):
+class Nbp(Fix):
     """Fixes for nbp."""
 
     def fix_file(self, filepath, output_dir):
@@ -88,16 +88,16 @@ class nbp(Fix):
         return new_path
 
 
-class baresoilFrac(Fix):
+class BaresoilFrac(Fix):
     """Fixes for baresoilFrac."""
 
-    def fix_metadata(self, cubelist):
+    def fix_metadata(self, cubes):
         """
         Fix missing scalar dimension.
 
         Parameters
         ----------
-        cubelist: iris CubeList
+        cubes: iris CubeList
             List of cubes to fix
 
         Returns
@@ -112,6 +112,6 @@ class baresoilFrac(Fix):
             var_name='type',
             units='1',
             bounds=None)
-        for cube in cubelist:
+        for cube in cubes:
             cube.add_aux_coord(typebare)
-        return cubelist
+        return cubes

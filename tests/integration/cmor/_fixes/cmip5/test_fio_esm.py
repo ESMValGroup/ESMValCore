@@ -8,6 +8,7 @@ from esmvalcore.cmor._fixes.cmip5.fio_esm import Ch4, Co2
 
 class TestCh4(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='ch4', units='J')
         self.fix = Ch4()
 
@@ -19,6 +20,7 @@ class TestCh4(unittest.TestCase):
 
 class TestCo2(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
         self.fix = Co2()
 

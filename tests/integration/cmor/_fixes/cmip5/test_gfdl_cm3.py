@@ -8,6 +8,7 @@ from esmvalcore.cmor._fixes.cmip5.gfdl_cm3 import Sftof
 
 class TestSftof(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='sftof', units='J')
         self.fix = Sftof()
 

@@ -10,6 +10,7 @@ from esmvalcore.cmor._fixes.cmip5.miroc_esm import AllVars, Co2, Gpp, Tro3
 
 class TestCo2(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
         self.fix = Co2()
 
@@ -21,6 +22,7 @@ class TestCo2(unittest.TestCase):
 
 class TestTro3(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='tro3', units='J')
         self.fix = Tro3()
 
@@ -32,6 +34,7 @@ class TestTro3(unittest.TestCase):
 
 class TestGpp(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([1.0], var_name='gpp', units='J')
         self.fix = Gpp()
 
@@ -43,6 +46,7 @@ class TestGpp(unittest.TestCase):
 
 class TestAll(unittest.TestCase):
     def setUp(self):
+        """Prepare tests."""
         self.cube = Cube([[1.0, 2.0], [3.0, 4.0]], var_name='co2', units='J')
         self.cube.add_dim_coord(
             DimCoord(

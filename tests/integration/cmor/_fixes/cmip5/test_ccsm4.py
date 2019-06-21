@@ -4,13 +4,14 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.ccsm4 import rlut, rlutcs, so
+from esmvalcore.cmor._fixes.cmip5.ccsm4 import Rlut, Rlutcs, So
 
 
 class TestsRlut(unittest.TestCase):
     """Test for rlut fixes"""
 
     def setUp(self):
+        """Prepare tests."""
         """Prepare tests"""
         self.cube = Cube([1.0, 2.0], var_name='rlut')
         self.cube.add_dim_coord(
@@ -20,7 +21,7 @@ class TestsRlut(unittest.TestCase):
                          [0.00001, 0.999999],
                          [1.00001, 1.999999],
                      ]), 0)
-        self.fix = rlut()
+        self.fix = Rlut()
 
     def test_fix_metadata(self):
         """Check that latitudes values are rounded"""
@@ -46,7 +47,7 @@ class TestsRlutcs(unittest.TestCase):
                          [0.00001, 0.999999],
                          [1.00001, 1.999999],
                      ]), 0)
-        self.fix = rlutcs()
+        self.fix = Rlutcs()
 
     def test_fix_metadata(self):
         """Check that latitudes values are rounded"""
@@ -65,7 +66,7 @@ class TestSo(unittest.TestCase):
     def setUp(self):
         """Prepare tests"""
         self.cube = Cube([1.0, 2.0], var_name='so', units='1.0')
-        self.fix = so()
+        self.fix = So()
 
     def test_fix_metadata(self):
         """Checks that units are changed to the correct value"""

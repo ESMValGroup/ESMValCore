@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for MIROC5 model."""
 from dask import array as da
 
@@ -29,7 +29,7 @@ class Sftof(Fix):
         return cube
 
 
-class snw(Fix):
+class Snw(Fix):
     """Fixes for snw."""
 
     def fix_data(self, cube):
@@ -53,7 +53,7 @@ class snw(Fix):
         return cube
 
 
-class snc(snw):
+class Snc(Snw):
     """Fixes for snc."""
 
     # dayspermonth = (/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/)
@@ -86,7 +86,7 @@ class snc(snw):
     # end if
 
 
-class msftmyz(Fix):
+class Msftmyz(Fix):
     """Fixes for msftmyz."""
 
     def fix_data(self, cube):

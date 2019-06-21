@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name, no-self-use, too-few-public-methods
+
 """Fixes for NorESM1-ME model."""
 
 import numpy as np
@@ -6,7 +6,7 @@ import numpy as np
 from ..fix import Fix
 
 
-class tas(Fix):
+class Tas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
