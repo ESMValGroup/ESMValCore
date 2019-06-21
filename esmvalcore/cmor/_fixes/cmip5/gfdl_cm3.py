@@ -1,5 +1,5 @@
 
-"""Fixes for GFDL CM3 model"""
+"""Fixes for GFDL CM3 model."""
 from ..fix import Fix
 
 from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
@@ -10,7 +10,7 @@ class AllVars(BaseAllVars):
 
 
 class Sftof(Fix):
-    """Fixes for sftof"""
+    """Fix sftof."""
 
     def fix_data(self, cube):
         """

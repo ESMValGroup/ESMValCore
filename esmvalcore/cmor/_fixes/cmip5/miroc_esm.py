@@ -1,5 +1,5 @@
 
-"""Fixes for MIROC ESM model"""
+"""Fixes for MIROC ESM model."""
 import cf_units
 from iris.coords import DimCoord
 from iris.exceptions import CoordinateNotFoundError
@@ -32,7 +32,7 @@ class Tro3(Fix):
 
 
 class Co2(Fix):
-    """Fixes for co2"""
+    """Fixes for co2."""
 
     def fix_metadata(self, cubes):
         """
@@ -54,7 +54,7 @@ class Co2(Fix):
 
 
 class Gpp(Fix):
-    """Fixes for gpp"""
+    """Fixes for gpp."""
 
     def fix_metadata(self, cubes):
         """
@@ -77,7 +77,7 @@ class Gpp(Fix):
 
 
 class AllVars(Fix):
-    """Common fixes to all vars"""
+    """Common fixes to all vars."""
 
     def fix_metadata(self, cubes):
         """

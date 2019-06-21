@@ -1,12 +1,12 @@
 
-"""Fixes for FGOALS-g2 model"""
+"""Fix FGOALS-g2 model."""
 from cf_units import Unit
 
 from ..fix import Fix
 
 
 class AllVars(Fix):
-    """Fixes common to all vars"""
+    """Fix errors common to all vars."""
 
     def fix_metadata(self, cubes):
         """

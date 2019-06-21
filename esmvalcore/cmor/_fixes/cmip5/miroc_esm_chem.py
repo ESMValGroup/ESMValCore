@@ -1,10 +1,10 @@
 
-"""Fixes for MIROC ESM CHEM"""
+"""Fixes for MIROC ESM CHEM."""
 from ..fix import Fix
 
 
 class Tro3(Fix):
-    """Fixes for tro3"""
+    """Fixes for tro3."""
 
     def fix_data(self, cube):
         """

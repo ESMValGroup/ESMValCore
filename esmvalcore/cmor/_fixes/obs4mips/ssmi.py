@@ -7,6 +7,7 @@ class Prw(Fix):
     """Fixes for prw."""
 
     def fix_metadata(self, cubes):
+        """Fix latitude varname."""
         for cube in cubes:
             latitude = cube.coord('latitude')
             latitude.var_name = 'lat'

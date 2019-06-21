@@ -1,5 +1,5 @@
 
-"""Fixes for HadGEM2_CC"""
+"""Fix HadGEM2_CC."""
 import iris
 import numpy as np
 
@@ -7,11 +7,11 @@ from ..fix import Fix
 
 
 class AllVars(Fix):
-    """Fixes common to all vars"""
+    """Fix common errors for all vars."""
 
     def fix_metadata(self, cubes):
         """
-        Fixes latitude.
+        Fix latitude.
 
         Parameters
         ----------
@@ -33,7 +33,7 @@ class AllVars(Fix):
 
 
 class O2(Fix):
-    """Fixes for o2"""
+    """Fixes for o2."""
 
     def fix_file(self, filepath, output_dir):
         """
@@ -42,12 +42,14 @@ class O2(Fix):
         Should be used only to fix errors that prevent loading or can
         not be fixed in the cube (i.e. those related with missing_value
         and _FillValue or missing standard_name).
+
         Parameters
         ----------
         filepath: basestring
             file to fix.
         output_dir: basestring
             path to the folder to store the fix files, if required.
+
         Returns
         -------
         basestring
