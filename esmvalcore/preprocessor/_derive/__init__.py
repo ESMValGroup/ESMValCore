@@ -115,7 +115,7 @@ def derive(cubes,
                f"the option '--skip-nonexistent' for running your recipe, "
                f"this might be caused by missing input data for derivation "
                f"('{short_name}' needs the variables "
-               f"{DerivedVariable().required}.")
+               f"{DerivedVariable().required}).")
         raise ValueError(msg) from exc
 
     # Set standard attributes
