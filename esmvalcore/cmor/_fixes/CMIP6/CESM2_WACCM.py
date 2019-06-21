@@ -1,6 +1,6 @@
 """Fixes for CESM2-WACCM model."""
 from ..fix import Fix
-from . import add_height_coord
+from ..shared import add_height_coord
 
 
 class tas(Fix):
