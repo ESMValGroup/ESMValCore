@@ -10,6 +10,7 @@ from esmvalcore.cmor._fixes.cmip5.access1_0 import AllVars
 
 class TestAllVars(unittest.TestCase):
     """Test all vars fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')

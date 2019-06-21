@@ -8,16 +8,16 @@ from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
 
 
 class TestFixFile(unittest.TestCase):
-    """Fix file tests"""
+    """Fix file tests."""
 
     def setUp(self):
-        """Prepare for testing"""
+        """Prepare for testing."""
         self.filename = 'filename'
         self.mock_fix = mock.Mock()
         self.mock_fix.fix_file.return_value = 'new_filename'
 
     def test_fix(self):
-        """Check that the returned fix is applied"""
+        """Check that the returned fix is applied."""
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                 return_value=[self.mock_fix]):
@@ -27,7 +27,7 @@ class TestFixFile(unittest.TestCase):
             self.assertEqual(file_returned, 'new_filename')
 
     def test_nofix(self):
-        """Check that the same file is returned if no fix is available"""
+        """Check that the same file is returned if no fix is available."""
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes', return_value=[]):
             file_returned = fix_file('filename', 'short_name', 'project',
@@ -36,10 +36,10 @@ class TestFixFile(unittest.TestCase):
 
 
 class TestGetCube(unittest.TestCase):
-    """Test get cube by var_name method"""
+    """Test get cube by var_name method."""
 
     def setUp(self):
-        """Prepare for testing"""
+        """Prepare for testing."""
         self.cube_1 = mock.Mock()
         self.cube_1.var_name = 'cube1'
         self.cube_2 = mock.Mock()
@@ -48,7 +48,7 @@ class TestGetCube(unittest.TestCase):
         self.fix = Fix()
 
     def test_get_first_cube(self):
-        """Test selecting first cube"""
+        """Test selecting first cube."""
         self.assertIs(self.cube_1,
                       self.fix.get_cube_from_list(self.cubes, "cube1"))
 
@@ -151,7 +151,7 @@ class TestFixData(unittest.TestCase):
             self.assertTrue(cube_returned is not self.fixed_cube)
 
     def test_cmor_checker_called(self):
-        """Check that the cmor check is done"""
+        """Check that the cmor check is done."""
         checker = mock.Mock()
         checker.return_value = mock.Mock()
         with mock.patch(

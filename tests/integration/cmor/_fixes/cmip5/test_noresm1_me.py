@@ -59,6 +59,7 @@ CUBES_TO_FIX = [
 
 @pytest.mark.parametrize('cubes_in,cubes_out', CUBES_TO_FIX)
 def test_tas(cubes_in, cubes_out):
+    """Test tas fixes."""
     fix = Tas()
     new_cubes = fix.fix_metadata(cubes_in)
     assert new_cubes is cubes_in

@@ -1,3 +1,4 @@
+"""Test FGOALS-g2 fixes."""
 import unittest
 
 from cf_units import Unit
@@ -8,6 +9,8 @@ from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import AllVars
 
 
 class TestAll(unittest.TestCase):
+    """Test fixes for all vars."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='co2', units='J')
@@ -20,6 +23,7 @@ class TestAll(unittest.TestCase):
         self.fix = AllVars()
 
     def test_fix_metadata(self):
+        """Test calendar fix."""
         cube = self.fix.fix_metadata([self.cube])[0]
 
         time = cube.coord('time')

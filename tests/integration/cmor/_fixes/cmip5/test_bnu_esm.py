@@ -1,4 +1,4 @@
-"""Test fixes for BNU-ESM"""
+"""Test fixes for BNU-ESM."""
 import unittest
 
 from cf_units import Unit
@@ -37,11 +37,13 @@ class Testfgco2(unittest.TestCase):
         self.fix = FgCo2()
 
     def test_fix_metadata(self):
+        """Test unit fix."""
         cube = self.fix.fix_metadata([self.cube])[0]
         self.assertEqual(cube.units, Unit('kg m-2 s-1'))
         self.assertEqual(cube.data[0], 1)
 
     def test_fix_data(self):
+        """Test data fix."""
         cube = self.fix.fix_data(self.cube)
         self.assertEqual(cube.data[0], 12.0 / 44.0)
         self.assertEqual(cube.units, Unit('J'))
@@ -56,11 +58,13 @@ class TestCh4(unittest.TestCase):
         self.fix = Ch4()
 
     def test_fix_metadata(self):
+        """Test unit fix."""
         cube = self.fix.fix_metadata([self.cube])[0]
         self.assertEqual(cube.units, Unit('1e-9'))
         self.assertEqual(cube.data[0], 1)
 
     def test_fix_data(self):
+        """Test data fix."""
         cube = self.fix.fix_data(self.cube)
         self.assertEqual(cube.data[0], 29.0 / 16.0 * 1.e9)
         self.assertEqual(cube.units, Unit('J'))
@@ -75,11 +79,13 @@ class Testspco2(unittest.TestCase):
         self.fix = SpCo2()
 
     def test_fix_metadata(self):
+        """Test fix."""
         cube = self.fix.fix_metadata([self.cube])[0]
         self.assertEqual(cube.units, Unit('J'))
         self.assertEqual(cube.data[0], 1)
 
     def test_fix_data(self):
+        """Test data fix."""
         cube = self.fix.fix_data(self.cube)
         self.assertEqual(cube.data[0], 1.e6)
         self.assertEqual(cube.units, Unit('J'))

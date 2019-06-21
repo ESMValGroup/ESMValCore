@@ -20,6 +20,7 @@ CUBES_LISTS = [
 
 @pytest.mark.parametrize('cubes_in,cubes_out', CUBES_LISTS)
 def test_get_and_remove(cubes_in, cubes_out):
+    """Test get and remove helper method."""
     _get_and_remove(cubes_in, 'to_be_rm')
     assert cubes_in is not cubes_out
     assert cubes_in == cubes_out
@@ -31,6 +32,7 @@ CUBES = iris.cube.CubeList([CUBE_1, CUBE_2])
 @mock.patch(
     'esmvalcore.cmor._fixes.cmip5.gfdl_esm2g._get_and_remove', autospec=True)
 def test_allvars(mock_get_and_remove):
+    """Test fixes for all vars."""
     fix = AllVars()
     fix.fix_metadata(CUBES)
     assert mock_get_and_remove.call_count == 3
@@ -44,6 +46,7 @@ def test_allvars(mock_get_and_remove):
 @mock.patch(
     'esmvalcore.cmor._fixes.cmip5.gfdl_esm2g._get_and_remove', autospec=True)
 def test_fgco2(mock_get_and_remove):
+    """Test fgco2 fixes."""
     fix = FgCo2()
     fix.fix_metadata(CUBES)
     assert mock_get_and_remove.call_count == 2
@@ -54,11 +57,15 @@ def test_fgco2(mock_get_and_remove):
 
 
 class TestCo2(unittest.TestCase):
+    """Test co2 fixes."""
+
     def setUp(self):
+        """Prepare tests."""
         self.cube = iris.cube.Cube([1.0], var_name='co2', units='J')
         self.fix = Co2()
 
     def test_fix_data(self):
+        """Test data fix."""
         cube = self.fix.fix_data(self.cube)
         self.assertEqual(cube.data[0], 1e6)
         self.assertEqual(cube.units, Unit('J'))
