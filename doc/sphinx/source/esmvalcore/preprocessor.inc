@@ -368,7 +368,6 @@ Documentation of _regrid.py (part 1)
 
 Masking
 =======
-Documentation of _mask.py (part 1)
 
 Introduction to masking
 -----------------------
@@ -517,7 +516,6 @@ See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related functi
 
 Horizontal regridding
 =====================
-Documentation of _regrid.py (part 2)
 
 Regridding is necessary when various datasets are available on a variety of `lat-lon` grids and they need
 to be brought together on a common grid (for various statistical operations e.g. multimodel statistics or
@@ -529,11 +527,75 @@ regridding is based on the horizontal grid of another cube (the reference grid).
 The underlying regridding mechanism in ESMValTool uses `cube.regrid()` method from iris, so we point the reader
 to its documentation: `https://scitools.org.uk/iris/docs/latest/iris/iris/cube.html#iris.cube.Cube.regrid`_
 
-See also :func:`esmvalcore.preprocessor.regrid`
+The use of the horizontal regridding functionality is flexible depending on what type of reference grid
+and what interpolation scheme is preferred. Below we show a few examples.
 
-Masking of missing values
-=========================
-Documentation of _mask.py (part 2)
+Regridding on a reference dataset grid
+--------------------------------------
+
+The example below shows how to regrid on the reference dataset `ERA-Interim` (observational data, but just
+as well CMIP, obs4mips, or ana4mips datasets can be used); in this case the `scheme` is `linear`.
+
+.. code-block:: bash
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: ERA-Interim
+          scheme: linear
+
+Regridding on an `MxN` grid specification
+-----------------------------------------
+
+The example below shows how to regrid on a reference grid with a cell specification of `2.5x2.5` degrees.
+This is similar to regridding on reference datasets, but in the previous case the reference dataset grid
+cell specifications are not necessarily known a priori. Reegridding on an `MxN` cell specification is
+oftentimes used when operating on localized data.
+
+.. code-block:: bash
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme: nearest
+
+In this case the NearestNeighbour interpolation scheme is used.
+
+When using a `MxN` type of grid it is possible to offset the grid cell centrepoints
+using the `lat_offset` and `lon_offset` arguments:
+
+* `lat_offset`: offsets the grid centers of the latitude coordinate w.r.t. the
+  pole by half a grid step;
+* `lon_offset`: offsets the grid centers of the longitude coordinate w.r.t. Greenwich
+  meridian by half a grid step.
+
+.. code-block:: bash
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          lon_offset: True
+          lat_offset: True
+          scheme: nearest
+
+Regridding (interpolation, extrapolation) schemes
+-------------------------------------------------
+
+The schemes used for the interpolation and extrapolation operations needed by the
+horizontal regridding functionality directly map to their corresponding implementaions
+in iris:
+
+* `linear`: `Linear(extrapolation_mode='mask')`,
+* `linear_extrapolate`: `Linear(extrapolation_mode='extrapolate')`,
+* `nearest`: `Nearest(extrapolation_mode='mask')`,
+* `area_weighted`: `AreaWeighted()`,
+* `unstructured_nearest`: `UnstructuredNearest()`,
+
+TODO: can we get some explanations which one's best for what??
+
+See also :func:`esmvalcore.preprocessor.regrid`
 
 Multi-model statistics
 ======================
@@ -554,36 +616,37 @@ consistent shapes, and from a statistical point of view, this is needed since we
 implemented; also higher dimesnional data is not supported (ie anything with dimensionality higher
 than four: time, vertical axis, two horizontal axes).
 
-Time-area statistics
-====================
-Documentation of _area_pp.py and _volume_pp.py
-
 Information on maximum memory required
 ======================================
 In the most general case, we can set upper limits on the maximum memory the anlysis will require:
 
 
-Ms = (R + N) x F_eff - F_eff - when no multimodel analysis is performed;
-Mm = (2R + N) x F_eff - 2F_eff - when multimodel analysis is performed;
+`Ms = (R + N) x F_eff - F_eff` - when no multimodel analysis is performed;
+`Mm = (2R + N) x F_eff - 2F_eff` - when multimodel analysis is performed;
 
 where
 
-Ms: maximum memory for non-multimodel module
-Mm: maximum memory for multimodel module
-R: computational efficiency of module; R is typically 2-3
-N: number of datasets
-F_eff: average size of data per dataset where F_eff = e x f x F
-where e is the factor that describes how lazy the data is (e = 1 for fully realized data)
-and f describes how much the data was shrunk by the immediately previous module eg
-time extraction, area selection or level extraction; note that for fix_data f relates only
-to the time extraction, if data is exact in time (no time selection) f = 1 for fix_data
+* `Ms`: maximum memory for non-multimodel module
+* `Mm`: maximum memory for multimodel module
+* `R`: computational efficiency of module; `R` is typically 2-3
+* `N`: number of datasets
+* `F_eff`: average size of data per dataset where `F_eff = e x f x F`
+  where `e` is the factor that describes how lazy the data is (`e = 1` for fully realized data)
+  and `f` describes how much the data was shrunk by the immediately previous module eg
+  time extraction, area selection or level extraction; note that for fix_data f relates only
+  to the time extraction, if data is exact in time (no time selection) `f = 1` for fix_data
 
-so for cases when we deal with a lot of datasets (R + N = N), data is fully realized, assuming
-an average size of 1.5GB for 10 years of 3D netCDF data, N datasets will require
+so for cases when we deal with a lot of datasets `(R + N = N)`, data is fully realized, assuming
+an average size of 1.5GB for 10 years of `3D` netCDF data, `N` datasets will require
 
 
-Ms = 1.5 x (N - 1) GB
-Mm = 1.5 x (N - 2) GB
+`Ms = 1.5 x (N - 1)` GB
+`Mm = 1.5 x (N - 2)` GB
+
+As a thumb rule, the maximum required memory at a certain time, when meeding multimodel analysis
+could be estimated by multiplying the number of datasets by the average file size of all the datasets;
+this memory intake is high but also assumes that all data is fully realized in memory; this aspect
+will gradually change and the amount of realized data will decrease with the increase of `dask` use.
 
 
 Unit conversion
