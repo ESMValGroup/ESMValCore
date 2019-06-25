@@ -24,7 +24,8 @@ library include:
 * ease of integration of new preprocessing routines;
 * ease of maintenance (including unit and integration testing) of existing routines;
 * a straightforward manner of importing and using the preprocessing routines as part
-  of the overall usage of the software and, as a special case, the use during diagnostic execution;
+  of the overall usage of the software and, as a special case, the use during diagnostic
+  execution;
 * shifting the effort for the scientific diagnostic developer from implementing both standard
   and diagnostic-specific functionalities to allowing them to dedicate most of the effort to
   developing scientifically-relevant diagnostics and metrics;
@@ -102,7 +103,8 @@ The `_time.py` module contains the following preprocessor functions:
 * `time_average`: Take the weighted average over the time dimension.
 * `seasonal_mean`: Produces a mean for each season (DJF, MAM, JJA, SON)
 * `annual_mean`: Produces an annual or decadal mean.
-* `regrid_time`: Aligns the time axis of each dataset to have common time points and calendars.
+* `regrid_time`: Aligns the time axis of each dataset to have common time points
+  and calendars.
 
 `extract_time`
 --------------
@@ -470,17 +472,19 @@ the 'config' diagnostic variable items e.g.:
 Missing values masks
 --------------------
 
-Missing (masked) values can be a nuisance especially when dealing with multimodel ensembles and having to compute
-multimodel statistics; different numbers of missing data from dataset to datest may introduce biases and artifically
-assign more weight to the datasets that have less missing data. This is handled in ESMValTool via the missing values
-masks: two types of such masks are available: one for the multimodel case and another for the single model case.
+Missing (masked) values can be a nuisance especially when dealing with multimodel ensembles
+and having to compute multimodel statistics; different numbers of missing data from dataset
+to datest may introduce biases and artifically assign more weight to the datasets that have
+less missing data. This is handled in ESMValTool via the missing values masks: two types of
+such masks are available: one for the multimodel case and another for the single model case.
 
-The multimodel missing values mask (mask_fillvalues) is a preprocessor step that usually comes after all the single-model
-steps (regridding, area selection etc) have been performed; in a nutshell, it combines missing values masks from individual
-models into a multimodel missing values mask; the individual model masks are built according to common criteria:
-the user chooses a time window in which missing data points are counted, and if the number of missing data points relative
-to the number of total data points in a window is less than a chosen fractional theshold, the window is discarded i.e.
-all the points in the window are masked (set to missing).
+The multimodel missing values mask (mask_fillvalues) is a preprocessor step that usually comes
+after all the single-model steps (regridding, area selection etc) have been performed; in a
+nutshell, it combines missing values masks from individual models into a multimodel missing
+values mask; the individual model masks are built according to common criteria: the user chooses
+a time window in which missing data points are counted, and if the number of missing data points
+relative to the number of total data points in a window is less than a chosen fractional theshold,
+the window is discarded i.e. all the points in the window are masked (set to missing).
 
 .. code-block:: bash
 
@@ -491,8 +495,9 @@ all the points in the window are masked (set to missing).
           min_value: 19.0
           time_window: 10.0
 
-In the example above, the fractional threshold for missing data vs. total data is set to 95% and the time window is set to
-10.0 (units of the time coordinate units). Optionally, a minimum value threshold can be applied, in this case it is set
+In the example above, the fractional threshold for missing data vs. total data is set to 95% and
+the time window is set to 10.0 (units of the time coordinate units). Optionally, a minimum value
+threshold can be applied, in this case it is set
 to 19.0 (in units of the variable units).
 
 See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
@@ -500,12 +505,13 @@ See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
 Minimum, maximum and interval masking
 -------------------------------------
 
-Thresholding on minimum and maximum accepted data values can also be performed: masks are constructed based on the
-results of thresholding; inside and outside interval thresholding and masking can also be performed. These functions
-are `mask_above_threshold`, `mask_below_threshold`, `mask_inside_range`, and `mask_outside_range`.
+Thresholding on minimum and maximum accepted data values can also be performed: masks are
+constructed based on the results of thresholding; inside and outside interval thresholding
+and masking can also be performed. These functions are `mask_above_threshold`,
+`mask_below_threshold`, `mask_inside_range`, and `mask_outside_range`.
 
-Thes functions always take a `cube` as first argument and either `threshold` for threshold masking or the pair
-`minimum`, `maximum` for interval masking.
+Thes functions always take a `cube` as first argument and either `threshold` for threshold
+masking or the pair `minimum`, `maximum` for interval masking.
 
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related functions.
 
@@ -539,13 +545,14 @@ number of multi-model statistical measures: using the preprocessor module `multi
 will enable the user to ask for either a multi-model `mean` and/or `median` with a set of argument
 parameters passed to `multi_model_statistics`.
 Multimodel statistics in ESMValTool are computed along the time axis, and as such,
-can be computed across a common overlap in time (by specifying `span: overlap` argument) or across the full length
-in time of each model (by specifying `span: full` argument).
+can be computed across a common overlap in time (by specifying `span: overlap` argument) or across
+the full length in time of each model (by specifying `span: full` argument).
 Restrictive compuation is also available by excluding  any set of models that the user
 will not want to include in the statistics (by setting `exclude: [excluded models list]` argument).
-The implementation has a few restrictions that apply to the input data: model datasets must have consistent shapes,
-and from a statistical point of view, this is needed since weights are not yet implemented; also higher dimesnional
-data is not supported (ie anything with dimensionality higher than four: time, vertical axis, two horizontal axes).
+The implementation has a few restrictions that apply to the input data: model datasets must have
+consistent shapes, and from a statistical point of view, this is needed since weights are not yet
+implemented; also higher dimesnional data is not supported (ie anything with dimensionality higher
+than four: time, vertical axis, two horizontal axes).
 
 Time-area statistics
 ====================
@@ -568,9 +575,11 @@ N: number of datasets
 F_eff: average size of data per dataset where F_eff = e x f x F
 where e is the factor that describes how lazy the data is (e = 1 for fully realized data)
 and f describes how much the data was shrunk by the immediately previous module eg
-time extraction, area selection or level extraction; note that for fix_data f relates only to the time extraction, if data is exact in time (no time selection) f = 1 for fix_data
+time extraction, area selection or level extraction; note that for fix_data f relates only
+to the time extraction, if data is exact in time (no time selection) f = 1 for fix_data
 
-so for cases when we deal with a lot of datasets (R + N = N), data is fully realized, assuming an average size of 1.5GB for 10 years of 3D netCDF data, N datasets will require
+so for cases when we deal with a lot of datasets (R + N = N), data is fully realized, assuming
+an average size of 1.5GB for 10 years of 3D netCDF data, N datasets will require
 
 
 Ms = 1.5 x (N - 1) GB
