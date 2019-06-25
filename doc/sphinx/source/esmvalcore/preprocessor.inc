@@ -3,7 +3,48 @@
 ************
 Preprocessor
 ************
-The ESMValTool preprocessor can be used to perform all types of climate data pre-processing needed before indices or diagnostics can be calculated. It is a base component for many other diagnostics and metrics shown on this portal. It can be applied to tailor the climate model data to the need of the user for its own calculations.
+
+Overview
+========
+
+ESMValTool is a modular Python 3.6+ software package possesing capabilities
+of executing a large number of diagnostic routines
+that can be written in a number of programming languages (Python, NCL, R, Julia).
+The modular nature benefits the users and developers in different key areas:
+a new feature developed specifically for version 2.0 is the preprocessing core or
+the preprocessor (esmvalcore) that executes the bulk of standardized data operations
+and is highly optimized for maximum performance in data-intensive tasks. The main
+objective of the preprocessor is to integrate as many standardizable data analysis
+functions as possible so that the diagnostics can focus on the specific scientific
+tasks they carry. The preprocessor is linked to the diagnostics library and the
+diagnostic execution is seamlessly performed after the preprocessor has completed the
+its steps. The benefit of having a preprocessing unit separate from the diagnostics
+library include:
+
+* ease of integration of new preprocessing routines;
+* ease of maintenance (including unit and integration testing) of existing routines;
+* a straightforward manner of importing and using the preprocessing routines as part
+  of the overall usage of the software and, as a special case, the use during diagnostic execution;
+* shifting the effort for the scientific diagnostic developer from implementing both standard
+  and diagnostic-specific functionalities to allowing them to dedicate most of the effort to
+  developing scientifically-relevant diagnostics and metrics;
+* a more strict code review process, given the smaller code base than for diagnostics.
+
+The ESMValTool preprocessor can be used to perform a broad range of operations
+on the input data before diagnostics or metrics are applied. The
+preprocessor performs these operations in a centralized, documented and
+efficient way, thus reducing the data processing load on the diagnostics side.
+
+Each of the preprocessor operations is written in a dedicated python module and
+all of them receive and return an Iris cube, working sequentially on the data
+with no interactions between them.  The order
+in which the preprocessor operations is applied is set by default in order to
+minimize the loss of information due to, for example, temporal and spatial
+subsetting or multi-model averaging. Nevertheless, the user is free to change
+such order to address specific scientific requirements, but keeping in mind
+that some operations must be necessarily performed in a specific order. This is
+the case, for instance, for multi-model statistics, which required the model to
+be on a common grid and therefore has to be called after the regridding module.
 
 Features of the ESMValTool Climate data pre-processor are:
 
@@ -17,7 +58,38 @@ Features of the ESMValTool Climate data pre-processor are:
 
 Variable derivation
 ===================
-Documentation of _derive.py
+The variable derivation module allows to derive variables which are not in the
+CMIP standard data request using standard variables as input. The typical use
+case of this operation is the evaluation of a variable which is only available
+in an observational dataset but not in the models. In this case a derivation
+function is provided by the ESMValTool in order to calculate the variable and
+perform the comparison. For example, several observational datasets deliver
+total column ozone as observed variable (`toz`), but CMIP models only provide
+the ozone 3D field. In this case, a derivation function is provided to
+vertically integrate the ozone and obtain total column ozone for direct
+comparison with the observations.
+
+To contribute a new derived variable, it is also necessary to define a name for
+it and to provide the corresponding CMOR table. This is to guarantee the proper
+metadata definition is attached to the derived data. Such custom CMOR tables
+are collected as part of the `ESMValTool core package
+<https://github.com/ESMValGroup/ESMValCore>`_. By default, the variable
+derivation will be applied only if not already available in the input data, but
+the derivation can be forced by setting the appropriate flag.
+
+.. code-block:: yaml
+
+  variables:
+    toz:
+      derive: true
+      force_derivation: false
+
+The required arguments for this module are two boolean switches:
+* derive: activate variable derivation
+* force_derivation: force variable derivation even if the variable is
+directly available in the input data.
+
+See also :func:`esmvalcore.preprocessor.derive`.
 
 
 Time manipulation
@@ -296,53 +368,74 @@ Masking
 =======
 Documentation of _mask.py (part 1)
 
-1. Introduction to masking
----------------------------
+Introduction to masking
+-----------------------
 
-Certain metrics and diagnostics need to be computed and performed on restricted regions of the Globe; ESMValTool supports subsetting the input data on land mass, oceans and seas, ice. This is achived by masking the model data and keeping only the values associated with grid points that correspond to e.g. land mass
-or oceans and seas; masking is done either by using standard mask files that have the same grid resolution as the model data (these files are usually produced
-at the same time with the model data and are called fx files) or, in the absence of these files, by using Natural Earth masks. Natural Earth masks, even if they are not model-specific, represent a good approximation since their grid resolution is almost always much higher than the model data, and they are constantly updated with changing
-geographical features.
+Certain metrics and diagnostics need to be computed and performed on specific
+domains on the globe. The ESMValTool preprocessor supports filtering
+the input data on continents, oceans/seas and ice. This is achived by masking
+the model data and keeping only the values associated with grid points that
+correspond to, e.g., land, ocean or ice surfaces, as specified by the
+user. Where possible, the masking is realized using the standard mask files
+provided together with the model data as part of the CMIP data request (the
+so-called fx variable). In the absence of these files, the Natural Earth masks
+are used: although these are not model-specific, they represent a good
+approximation since they have a much higher resolution than most of the models
+and they are regularly updated with changing geographical features.
 
-2. Land-sea masking
--------------------
+Land-sea masking
+----------------
 
-In ESMValTool v2 land-seas-ice masking can be done in two places: in the preprocessor, to apply a mask on the data before any subsequent preprocessing step, and before
-running the diagnostic, or in the disgnostic phase. We present both these implementations below.
+In ESMValTool, land-sea-ice masking can be done in two places: in the
+preprocessor, to apply a mask on the data before any subsequent preprocessing
+step and before running the diagnostic, or in the diagnostic scripts
+themselves. We present both these implementations below.
 
-To mask out seas in the preprocessor step, simply add `mask_landsea:` as a preprocessor step in the `preprocessor` of your choice section of the recipe, example:
+To mask out a certain domain (e.g., sea) in the preprocessor,
+`mask_landsea` can be used:
 
-.. code-block:: bash
+.. code-block:: yaml
 
     preprocessors:
-      my_masking_preprocessor:
+      preproc_mask:
         mask_landsea:
           mask_out: sea
 
-The tool will retrieve the corresponding `fx: stfof` type of mask for each of the used variables and apply the mask so that only the land mass points are
-kept in the data after applying the mask; conversely, it will retrieve the `fx: sftlf` files when land needs to be masked out.
-`mask_out` accepts: land or sea as values. If the corresponding fx file is not found (some models are missing these
-type of files; observational data is missing them altogether), then the tool attempts to mask using Natural Earth mask files (that are vectorized rasters).
-Note that the resolutions for the Natural Earth masks are much higher than any usual CMIP model: 10m for land and 50m for ocean masks.
+and requires only one argument:
+* mask_out: either land or sea.
 
-3. Ice masking
----------------
+The preprocessor automatically retrieves the corresponding mask (`fx: stfof` in
+this case) and applies it so that sea-covered grid cells are set to
+missing. Conversely, it retrieves the `fx: sftlf` mask when land need to be
+masked out, respectively. If the corresponding fx file is not found (which is
+the case for some models and almost all observational datasets), the
+preprocessor attempts to mask the data using Natural Earth mask files (that are
+vectorized rasters). As mentioned above, the spatial resolution of the the
+Natural Earth masks are much higher than any typical global model (10m for
+land and 50m for ocean masks).
 
-Note that for masking out ice the preprocessor is using a different function, this so that both land and sea or ice can be masked out without
-losing generality. To mask ice out one needs to add the preprocessing step much as above:
+Ice masking
+-----------
 
-.. code-block:: bash
+Note that for masking out ice sheets, the preprocessor uses a different
+function, to ensure that both land and sea or ice can be masked out without
+losing generality. To mask ice out, `mask_landseaice` can be used:
 
-    preprocessors:
-      my_masking_preprocessor:
-        mask_landseaice:
-          mask_out: ice
+.. code-block:: yaml
 
-To keep only the ice, one needs to mask out landsea, so use that as value for mask_out. As in the case of mask_landsea, the tool will automatically
-retrieve the `fx: sftgif` file corresponding the the used variable and extract the ice mask from it.
+  preprocessors:
+    preproc_mask:
+      mask_landseaice:
+        mask_out: ice
 
-4. mask files
---------------
+and requires only one argument:
+* mask_out: either landsea or ice.
+
+As in the case of `mask_landsea`, the preprocessor automatically retrieves the
+`fx: sftgif` mask.
+
+Mask files
+----------
 
 At the core of the land/sea/ice masking in the preprocessor are the mask files (whether it be fx type or Natural Earth type of files); these files (bar Natural Earth)
 can be retrived and used in the diagnostic phase as well or solely. By specifying the `fx_files:` key in the variable in diagnostic in the recipe, and populating it
@@ -366,8 +459,8 @@ the 'config' diagnostic variable items e.g.:
         sftlf_file = attributes['fx_files']['sftlf']
         areacello_file = attributes['fx_files']['areacello']
 
-5. Missing values masks
------------------------
+Missing values masks
+--------------------
 
 Missing (masked) values can be a nuisance especially when dealing with multimodel ensembles and having to compute
 multimodel statistics; different numbers of missing data from dataset to datest may introduce biases and artifically
@@ -396,8 +489,8 @@ to 19.0 (in units of the variable units).
 
 A similar preprocessor step exists for the single-dataset: mask_window_threshold (with the same arguments as mask_fillvalues).
 
-6. Min, max and interval masking
---------------------------------
+Min, max and interval masking
+-----------------------------
 
 Thresholding on minimum and maximum accepted data values can also be performed: masks are constructed based on the
 results of thresholding; inside and outside interval thresholding and masking can also be performed. These functions
@@ -413,7 +506,21 @@ Documentation of _mask.py (part 2)
 
 Multi-model statistics
 ======================
-Documentation of_multimodel.py
+Computing multi-model statistics is an integral part of model analysis and evaluation: individual
+models display a variety of biases depedning on model set-up, initial conditions, forcings and
+implementation; comparing model data to observational data, these biases have a significanly lower
+statistical impact when using a multi-model ensemble. ESMValTool has the capability of computing a
+number of multi-model statistical measures: using the preprocessor module `multi_model_statistics`
+will enable the user to ask for either a multi-model `mean` and/or `median` with a set of argument
+parameters passed to `multi_model_statistics`.
+Multimodel statistics in ESMValTool are computed along the time axis, and as such,
+can be computed across a common overlap in time (by specifying `span: overlap` argument) or across the full length
+in time of each model (by specifying `span: full` argument).
+Restrictive compuation is also available by excluding  any set of models that the user
+will not want to include in the statistics (by setting `exclude: [excluded models list]` argument).
+The implementation has a few restrictions that apply to the input data: model datasets must have consistent shapes,
+and from a statistical point of view, this is needed since weights are not yet implemented; also higher dimesnional
+data is not supported (ie anything with dimensionality higher than four: time, vertical axis, two horizontal axes).
 
 Time-area statistics
 ====================
