@@ -58,6 +58,9 @@ test:
   # TODO: add unit tests? This seems to require installing the tests
   imports:
     - esmvalcore
+    - esmvalcore.cmor
+    - esmvalcore.preprocessor
+
   commands:
     - esmvaltool -h
 
