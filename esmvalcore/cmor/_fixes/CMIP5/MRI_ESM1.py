@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name, no-self-use, too-few-public-methods
 """Fixes for MRI-ESM1 model."""
-import numpy as np
+from dask import array as da
+
 from ..fix import Fix
 
 
@@ -22,8 +23,5 @@ class msftmyz(Fix):
         iris.cube.Cube
 
         """
-        cube.data = np.ma.array(cube.data)
-        cube.data = np.ma.masked_where(cube.data.mask + (cube.data == 0.),
-                                       cube.data)
-
+        cube.data = da.ma.masked_equal(cube.core_data(), 0.)
         return cube
