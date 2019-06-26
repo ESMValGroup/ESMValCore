@@ -1,5 +1,5 @@
 
-"""Fixes for EC-Earth3-HR PRIMAVERA project data"""
+"""Fixes for EC-Earth3-HR PRIMAVERA project data."""
 from ..fix import Fix
 
 
