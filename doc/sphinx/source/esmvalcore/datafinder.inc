@@ -15,8 +15,8 @@ these parameters have been provided, the tool will automatically find the right 
 detail below the data finding and retrieval process and the inputs the user needs to specify,
 giving examples on how to use the data finding routine under different scenarios.
 
-CMIP data: Data Reference Syntax (DRS) and the ESGF
-===================================================
+CMIP data: CMOR Data Reference Syntax (DRS) and the ESGF
+========================================================
 CMIP data is widely available via the Earth System Grid Federation (`ESGF <https://esgf.llnl.gov/>`_)
 and is accessible to users either via dowload from the ESGF portal or through the ESGF data nodes hosted
 by large computing facilities (like CEDA-Jasmin, DKRZ etc). This data adheres to, among other standards,
@@ -51,12 +51,51 @@ by the user.
 The second point underlines the fact that the user has full control over what type and the amount of data they
 need for their analyses. Setting the data retrieval parameters is explained below:
 
-Setting the correct paths
--------------------------
+Setting the correct root paths
+------------------------------
 The first step towards providing ESMValTool the correct set of parameters for data retrieval is setting
 the root paths to the data. This is done in the user configuration file ``config-user.yml``.
 The two sections where the user will set the paths are ``rootpath`` and ``drs``. ``rootpath`` contains pointers
-to ``CMIP``, ``OBS``, ``default`` and ``RAWOBS`` root paths:
+to ``CMIP``, ``OBS``, ``default`` and ``RAWOBS`` root paths; ``drs`` sets the type of directory structure
+the root paths are structured by. It is important to first discuss the ``drs`` parameter: as we've seen in
+the previous section, the DRS as a standard is used for both file naming conventions and for directory structures.
+
+Explaining ``drs: CMIP5:`` or ``drs: CMIP6:``
+---------------------------------------------
+Whreas ESMValTool will **always** use the CMOR standard for file naming (please refer above), by setting the ``drs``
+parameter the user tells the tool what type of root paths they need the data from, e.g.:
+
+  .. code-block:: yaml
+
+   drs:
+     CMIP6: BADC
+
+will tell the tool that the user needs data from a repository structured according to the BADC DRS structure `ie`
+
+``ROOT/[institute]/[dataset_name]/[experiment]/[ensemble]/[mip]/[variable_short_name]/[grid]``;
+
+setting the ``ROOT`` parameter is explained below. This is a strictly-structured repository tree and if
+there are any sort of irregularities (e.g. there is no ``[mip]`` directory) the data will not be found!
+``BADC`` can be replaced with ``DKRZ`` or ``ETHZ`` depending on the existing ``ROOT`` directory structure.
+
+The snippet
+
+  .. code-block:: yaml
+
+   drs:
+     CMIP6: default
+
+is another way to retrieve data from a ``ROOT`` directory that has no DRS-like structure; ``default`` is
+a directory that contains all the needed data files (a bucket full of everything).
+
+.. note::
+   When using ``CMIP6: default`` or ``CMIP5: default`` it is important to remember that all the needed files
+   must be in the same top-level directory set by ``default`` (see below how to set ``default``).
+
+Explaining ``rootpath:``
+------------------------
+
+``rootpath`` identifies the root directory for different data types (``ROOT`` as we used it above):
 
 * ``CMIP`` e.g. ``CMIP5`` or ``CMIP6``: this is the `root` path(s) to where the CMIP files are stored;
   it can be a single path or a list of paths; it can point to an ESGF node or it can point to a user
@@ -90,7 +129,12 @@ to ``CMIP``, ``OBS``, ``default`` and ``RAWOBS`` root paths:
 
     OBS: /group_workspaces/jasmin4/esmeval/obsdata-v2
 
+* ``default``: this is the `root` path(s) to where files are stored without any DRS-like directory
+  structure; in a nutshell, this is a single directory that should contain all the files needed by the
+  run, without any sub-directory structure.
 
+* ``RAWOBS``: this is the `root` path(s) to where the raw observational data files are stored; this is
+  used by ``cmorize_obs``.
 
 
 
