@@ -44,7 +44,8 @@ def generate_sidebar(conf, conf_api):
                 args = desc, mapping[project][0], link
                 lines.append("    %s <%s%s.html>" % args)
         else:
-            lines.append("    %s <%s>" % (desc, link))
+            args = desc, mapping[project][0], link
+            lines.append("    %s <%s%s.html>" % args)
 
     #
     # Specify the sidebar contents here
@@ -58,7 +59,7 @@ def generate_sidebar(conf, conf_api):
     _write("esmvalcore", "ESMValTool Core", "esmvalcore/index")
     _write("esmvaltool", "Guidelines for diagnostic developers",
            "esmvaldiag/index")
-        _write("esmvaltool", "ESMValTool Code API Documentation",
+    _write("esmvaltool", "ESMValTool Code API Documentation",
            "codedoc2/esmvaltool")
     _endl()
 
