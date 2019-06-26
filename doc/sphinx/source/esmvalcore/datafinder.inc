@@ -26,15 +26,16 @@ the DRS and Controlled Vocabulary standard for naming files and structured paths
 ensures that files and paths to them are named according to a standardized convention. An example of this
 convention, and also used by ESMValTool for file discovery and data retrieval can be seen here:
 
-* CMIP6 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[grid]_[start-date]-[end-date].nc``;
-* CMIP5 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[start-date]-[end-date].nc``;
+* CMIP6 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[grid]_[start-date]-[end-date].nc``
+* CMIP5 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[start-date]-[end-date].nc``
+* OBS file: ``[project]_[dataset_name]_[type]_[version]_[mip]_[short_name]_[start-date]-[end-date].nc``
 
 and similar standards exist for the standard paths (input directories); for the ESGF data nodes,
 these paths differ slightly, an example is given below:
 
 * CMIP6 path for BADC: ``ROOT-BADC/[institute]/[dataset_name]/[experiment]/[ensemble]/[mip]/
   [variable_short_name]/[grid]``;
-* CMIP6 pth for ETHZ: ``ROOT-ETHZ/[experiment]/[mip]/[variable_short_name]/[dataset_name]/[ensemble]/[grid]``;
+* CMIP6 path for ETHZ: ``ROOT-ETHZ/[experiment]/[mip]/[variable_short_name]/[dataset_name]/[ensemble]/[grid]``
 
 From the ESMValTool user perspective the number of data input parameters is optimized to allow for ease of use.
 We detail this procedure in the next section.
@@ -154,7 +155,7 @@ datasets are listed in any recipe, under either the ``datasets`` and/or ``additi
 ``_data_finder`` will use this information to find data for **all** the variables specified in ``diagnostics/variables``.
 
 Recap and example
------------------
+=================
 Let's look at a practical example for a recap of the information above: suppose you are using a ``config-user.yml``
 that has the following entries for data finding:
 
@@ -197,15 +198,26 @@ and finally, using the file naming definition from CMOR-DRS_ find the file:
 ``ta/gn/latest/``
 ``ta_Amon_UKESM1-0-LL_historical_r1i1p1f2_gn_195001-201412.nc``
 
+Observational data
+==================
+Observational data is retrieved in the same manner as CMIP data, for example using the ``OBS`` root path set to
 
+  .. code-block:: yaml
 
+    OBS: /group_workspaces/jasmin4/esmeval/obsdata-v2
 
+and the dataset
 
+  .. code-block:: yaml
 
+    - {dataset: ERA-Interim,  project: OBS,  type: reanaly,  version: 1,  start_year: 2014,  end_year: 2015,  tier: 3}
 
+in ``recipe.yml`` in ``datasets`` or ``additional_datasets``, the rules set in CMOR-DRS_ are used again
+and the file will be automatically found:
 
+``/group_workspaces/jasmin4/esmeval/obsdata-v2/``
+``Tier3/ERA-Interim/``
+``OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc``
 
-
-
-
-
+Note that for observational data for ``drs: default`` the ``default`` directory must contain a sub-directory
+``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``).
