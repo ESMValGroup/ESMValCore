@@ -17,15 +17,15 @@ import os
 from pathlib import Path
 from datetime import datetime
 
-import esmvalcore.utils.doc.gensidebar as gensidebar
-from esmvalcore import __version__
-
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 root = Path(__file__).absolute().parent.parent
 sys.path.insert(0, str(root))
+
+import esmvalcore.utils.doc.gensidebar as gensidebar
+from esmvalcore import __version__
+
 
 # -- RTD configuration ------------------------------------------------
 
@@ -429,6 +429,5 @@ intersphinx_mapping = {
 }
 
 # -- Custom Document processing ----------------------------------------------
-
 
 gensidebar.generate_sidebar(globals(), "esmvalcore")
