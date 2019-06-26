@@ -26,7 +26,6 @@ sys.path.insert(0, str(root))
 import esmvalcore.utils.doc.gensidebar as gensidebar
 from esmvalcore import __version__
 
-
 # -- RTD configuration ------------------------------------------------
 
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from
