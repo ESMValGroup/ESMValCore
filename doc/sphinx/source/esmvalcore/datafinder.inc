@@ -15,6 +15,8 @@ these parameters have been provided, the tool will automatically find the right 
 detail below the data finding and retrieval process and the inputs the user needs to specify,
 giving examples on how to use the data finding routine under different scenarios.
 
+.. _CMOR-DRS:
+
 CMIP data: CMOR Data Reference Syntax (DRS) and the ESGF
 ========================================================
 CMIP data is widely available via the Earth System Grid Federation (`ESGF <https://esgf.llnl.gov/>`_)
@@ -37,8 +39,8 @@ these paths differ slightly, an example is given below:
 From the ESMValTool user perspective the number of data input parameters is optimized to allow for ease of use.
 We detail this procedure in the next section.
 
-ESMValTool data retrieval
-=========================
+Data retrieval
+==============
 Data retrieval in ESMValTool has two main aspects from the user's point of view:
 
 * data can be found by the tool, subject to availability on disk;
@@ -60,8 +62,8 @@ to ``CMIP``, ``OBS``, ``default`` and ``RAWOBS`` root paths; ``drs`` sets the ty
 the root paths are structured by. It is important to first discuss the ``drs`` parameter: as we've seen in
 the previous section, the DRS as a standard is used for both file naming conventions and for directory structures.
 
-Explaining ``drs: CMIP5:`` or ``drs: CMIP6:``
----------------------------------------------
+Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``
+---------------------------------------------------------------------
 Whreas ESMValTool will **always** use the CMOR standard for file naming (please refer above), by setting the ``drs``
 parameter the user tells the tool what type of root paths they need the data from, e.g.:
 
@@ -92,8 +94,8 @@ a directory that contains all the needed data files (a bucket full of everything
    When using ``CMIP6: default`` or ``CMIP5: default`` it is important to remember that all the needed files
    must be in the same top-level directory set by ``default`` (see below how to set ``default``).
 
-Explaining ``rootpath:``
-------------------------
+Explaining ``config-user/rootpath:``
+------------------------------------
 
 ``rootpath`` identifies the root directory for different data types (``ROOT`` as we used it above):
 
@@ -136,9 +138,64 @@ Explaining ``rootpath:``
 * ``RAWOBS``: this is the `root` path(s) to where the raw observational data files are stored; this is
   used by ``cmorize_obs``.
 
+Dataset definitions in ``recipe``
+---------------------------------
+Once the correct paths have been established, it is now time to collect the information on the specific
+datasets that are needed for the analysis. This information, together with the CMOR convention for
+naming files (see CMOR-DRS_) will allow ``_data_finder`` to search and find the right files. The specific
+datasets are listed in any recipe, under either the ``datasets`` and/or ``additional_datasets`` sections, e.g.
 
+.. code-block:: yaml
 
+  datasets:
+    - {dataset: HadGEM2-CC,  project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
+    - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, grid: gn, start_year: 2004,  end_year: 2014}
 
+``_data_finder`` will use this information to find data for **all** the variables specified in ``diagnostics/variables``.
+
+Recap and example
+-----------------
+Let's look at a practical example for a recap of the information above: suppose you are using a ``config-user.yml``
+that has the following entries for data finding:
+
+.. code-block:: yaml
+
+  rootpath:  # running on CEDA-Jasmin
+    CMIP6: /badc/cmip6/data/CMIP6/CMIP
+  drs:
+    CMIP6: BADC  # since you are on CEDA-Jasmin
+
+and the dataset you need is specified in your ``recipe.yml`` as:
+
+.. code-block:: yaml
+
+  - {dataset: UKESM1-0-LL, project: CMIP6, mip: Amon, exp: historical, grid: gn, ensemble: r1i1p1f2, start_year: 2004,  end_year: 2014}
+
+for a variable e.g.
+
+.. code-block:: yaml
+
+  diagnostics:
+    some_diagnostic:
+      description: some_description
+      variables:
+        ta:
+          preprocessor: some_preprocessor
+
+``_data_finder`` will use the root path ``/badc/cmip6/data/CMIP6/CMIP`` and the dataset information and will
+assemble the full DRS path using information from CMOR-DRS_ and establish the path to the files as
+
+``/badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon``
+
+then look for variable ``ta`` and specifically the latest version of the data file:
+
+``/badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/``
+
+and finally, using the file naming definition from CMOR-DRS_ find the file:
+
+``/badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/``
+``ta/gn/latest/``
+``ta_Amon_UKESM1-0-LL_historical_r1i1p1f2_gn_195001-201412.nc``
 
 
 
