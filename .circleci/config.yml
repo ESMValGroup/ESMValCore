@@ -144,7 +144,7 @@ jobs:
             # Install prerequisites
             mkdir /logs
             conda update -y conda > /logs/conda_base.txt 2>&1
-            conda install -y conda-build conda-verify >> /logs/conda_base.txt 2>&1
+            conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export -n base > /logs/build_environment.yml
