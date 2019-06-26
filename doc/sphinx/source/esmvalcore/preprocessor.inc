@@ -37,8 +37,9 @@ preprocessor performs these operations in a centralized, documented and
 efficient way, thus reducing the data processing load on the diagnostics side.
 
 Each of the preprocessor operations is written in a dedicated python module and
-all of them receive and return an Iris cube, working sequentially on the data
-with no interactions between them.  The order
+all of them receive and return an Iris
+`cube <https://scitools.org.uk/iris/docs/v2.0/iris/iris/cube.html>`_ ,
+working sequentially on the data with no interactions between them.  The order
 in which the preprocessor operations is applied is set by default in order to
 minimize the loss of information due to, for example, temporal and spatial
 subsetting or multi-model averaging. Nevertheless, the user is free to change
@@ -363,7 +364,70 @@ Javier
 
 Vertical interpolation
 ======================
-Documentation of _regrid.py (part 1)
+Vertical level selection is an important aspect of data preprocessing since it allows the
+scientist to perform a number of metrics specific to certain levels (whether it be air pressure
+or depth, e.g. the Quasi-Biennial-Oscillation (QBO) u30 is computed at 30 hPa). Dataset native
+vertical grids may not come with the desired set of levels, so an interpolation operation will be
+needed to regrid the data vertically. ESMValTool can perform this vertical interpolation via the
+``extract_levels`` preprocessor. Level extraction may be done in a number of ways:
+
+Level extraction can be done at specific values passed to ``extract_levels`` as ``levels:`` with 
+its value a list of levels (note that the units are CMOR-standard, Pascals (Pa)):
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_select_levels_from_list:
+        extract_levels:
+          levels: [100000., 50000., 3000., 1000.]
+          scheme: linear
+
+It is also possible to extract the CMIP-specific, CMOR levels as they appear in the CMOR table,
+e.g. ``plev10`` or ``plev17`` or ``plev19`` etc:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_select_levels_from_cmip_table:
+        extract_levels:
+          levels: {cmor_table: CMIP6, coordinate: plev10}
+          scheme: nearest
+
+Of good use is also the level extraction with values specific to a certain dataset, without
+the user actually polling the dataset of interest to find out the specific levels: e.g. in the
+example below we offer two alternatives to extract the levels and vertically regrid onto the
+vertical levels of ``ERA-Interim``:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_select_levels_from_dataset:
+        extract_levels:
+          levels: ERA-Interim
+          # This also works, but allows specifying the pressure coordinate name
+          # levels: {dataset: ERA-Interim, coordinate: air_pressure}
+          scheme: linear_horizontal_extrapolate_vertical
+
+* See also :func:`esmvalcore.preprocessor.extract_levels`.
+* See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
+
+.. note::
+   **Advanced User and Developer**
+
+   For both vertical and horizontal regridding one can control the extrapolation mode when defining
+   the interpolation scheme. Controlling the extrapolation mode allows us to avoid situations
+   where extrapolating values makes little physical sense (e.g. extrapolating beyond the last data point).
+   The extrapolation mode is controlled by the `extrapolation_mode` keyword. For the available interpolation
+   schemes available in Iris, the extrapolation_mode keyword must be one of:
+
+        * ``extrapolate`` – the extrapolation points will be calculated by extending the gradient
+          of the closest two points,
+        * ``error`` – a ``ValueError`` exception will be raised, notifying an attempt to extrapolate,
+        * ``nan`` – the extrapolation points will be be set to NaN,
+        * ``mask`` – the extrapolation points will always be masked, even if the source data is not
+          a ``MaskedArray``, or
+        * ``nanmask`` – if the source data is a MaskedArray the extrapolation points will be masked.
+          Otherwise they will be set to NaN.
 
 Masking
 =======
