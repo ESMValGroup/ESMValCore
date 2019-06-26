@@ -181,8 +181,7 @@ jobs:
             conda env export > /logs/environment.yml
             # Test installation
             esmvaltool -h
-            ncl -V
-            cdo --version
+            python -c 'from esmvalcore import *; print(__version__)'
 
 workflows:
   version: 2
