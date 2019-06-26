@@ -30,12 +30,7 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         siconc = cubes.extract_strict(Constraint(name='sea_ice_thickness'))
-        siconc.remove_coord('year')
-        siconc.remove_coord('day_of_year')
-
-        sivol = cubes.extract_strict(Constraint(name='sea_ice_y_velocity'))
-        sivol.remove_coord('year')
-        sivol.remove_coord('day_of_year')
+        sivol = cubes.extract_strict(Constraint(name='sea_ice_area_fraction'))
 
         sithick = siconc * sivol
         return sithick
