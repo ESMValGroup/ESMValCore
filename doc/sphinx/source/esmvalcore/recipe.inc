@@ -152,14 +152,15 @@ have:
 - The diagnostics can also include an optional ``additional_datasets`` section.
 
 The ``additional_datasets`` can add datasets beyond those listed in the the
-`Datasets`_ section. This is useful if specific datasets need to be linked with
-a specific diagnostics. The addition datasets can be used to add variable
-specific datasets. This is also a good way to add observational datasets can be
-added to the diagnostic.
+Datasets_ section. This is useful if specific datasets need to be linked with
+a specific diagnostic. The ``additional_datasets`` can be used to add variable
+specific datasets. This is also a good way to add observational datasets.
 
-The following example, taken from recipe_ocean_example.yml, shows a diagnostic
+Running a simple diagnostic
+---------------------------
+The following example, taken from ``recipe_ocean_example.yml``, shows a diagnostic
 named `diag_map`, which loads the temperature at the ocean surface between
-the years 2001 and 2003 and then passes it to the prep_map preprocessor.
+the years 2001 and 2003 and then passes it to the ``prep_map`` preprocessor.
 The result of this process is then passed to the ocean diagnostic map scipt,
 ``ocean/diagnostic_maps.py``.
 
@@ -188,13 +189,81 @@ diagnostic script assumes that all the data has the same time range.
 Note that the path to the script provided in the `script` option should be
 either:
 
-1. the absolute path to the script.
-2. the path relative to the ``esmvaltool/diag_scripts`` directory.
+ - the absolute path to the script.
+ - the path relative to the ``esmvaltool/diag_scripts`` directory.
 
 
-As mentioned above, the datasets are provided in the `Diagnostics`_ section
-in this section. However, they could also be included in the `Datasets`_
+As mentioned above, the datasets are provided in the Diagnostics_ section
+in this section. However, they could also be included in the Datasets_
 section.
+
+Passing arguments to diagnostic
+-------------------------------
+The ``diagnostics`` section may include a lot of arguments that can be used by the
+diagnostic script; these arguments are stored at runtime in a dictionary that is then
+made available to the diagnostic script via the interface link (no matter if the diagnostic
+is run in Python, NCL etc). Here is an example of such groups of arguments:
+
+.. code-block:: yaml
+
+    scripts:
+      autoassess_strato_test_1: &autoassess_strato_test_1_settings
+        script: autoassess/autoassess_area_base.py
+        title: "Autoassess Stratosphere Diagnostic Metric MPI-MPI"
+        area: stratosphere
+        control_model: MPI-ESM-LR
+        exp_model: MPI-ESM-MR
+        obs_models: [ERA-Interim]  # list to hold models that are NOT for metrics but for obs operations
+        additional_metrics: [ERA-Interim, inmcm4]  # list to hold additional datasets for metrics
+
+In this example, apart from the pointer to the diagnostic script ``script: autoassess/autoassess_area_base.py``,
+we pass a suite of parameters to be used by the script (``area``, ``control_model`` etc). These parameters are
+stored in key-value pairs in the diagnostic configuration file, an interface file that can be used by importing
+the ``run_diagnostic`` utility:
+
+.. code-block:: python
+
+   from esmvaltool.diag_scripts.shared import run_diagnostic
+
+   # write the diagnostic code here e.g.
+   def run_some_diagnostic(my_area, my_control_model, my_exp_model):
+       """Diagnostic to be run."""
+       if my_area == 'stratosphere':
+           diag = my_control_model / my_exp_model
+           return diag
+
+   def main(cfg):
+       """Main diagnostic run function."""
+       my_area = cfg['area']
+       my_control_model = cfg['control_model']
+       my_exp_model = cfg['exp_model']
+       run_some_diagnostic(my_area, my_control_model, my_exp_model)
+
+   if __name__ == '__main__':
+
+       with run_diagnostic() as config:
+           main(config)
+
+Running your own diagnostic
+---------------------------
+If the user decides to test a e.g. ``my_first_diagnostic.py`` diagnostic they have just written
+and, of course, this diagnostic is not in the ESMValTool diagnostics library, they can do it by
+passing the absolute path to the diagnostic:
+
+.. code-block:: yaml
+
+    diagnostics:
+
+    myFirstDiag:
+      description: Joe Pesci wrote a funny diagnostic
+      variables:
+        tos: # Temperature at the ocean surface
+          preprocessor: prep_map
+          start_year: 2001
+          end_year: 2003
+      scripts:
+        JoeDiagFunny:
+          script: /home/users/joepesci/esmvaltool_testing/my_first_diagnostic.py
 
 
 Brief introduction to YAML
