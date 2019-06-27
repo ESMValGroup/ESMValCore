@@ -144,18 +144,12 @@ jobs:
             # Install prerequisites
             mkdir /logs
             conda update -y conda > /logs/conda_base.txt 2>&1
-            conda install -y conda-build conda-verify >> /logs/conda_base.txt 2>&1
+            conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export -n base > /logs/build_environment.yml
             # Build conda package
-            conda build . -c conda-forge -c birdhouse > /logs/build_log.txt
-            # Install conda package
-            conda create -y --name esmvaltool > /logs/conda_esmvaltool.txt 2>&1
-            set +x; conda activate esmvaltool; set -x
-            conda install -y esmvaltool --use-local -c conda-forge
-            conda env export > /logs/test_environment.yml
-            esmvaltool -h
+            conda build . -c conda-forge -c esmvalgroup > /logs/build_log.txt
       - store_artifacts:
           path: /logs
 
@@ -181,8 +175,7 @@ jobs:
             conda env export > /logs/environment.yml
             # Test installation
             esmvaltool -h
-            ncl -V
-            cdo --version
+            python -c 'from esmvalcore import *; print(__version__)'
 
 workflows:
   version: 2
