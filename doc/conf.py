@@ -23,7 +23,7 @@ from datetime import datetime
 root = Path(__file__).absolute().parent.parent
 sys.path.insert(0, str(root))
 
-import esmvalcore.utils.doc.gensidebar as gensidebar
+from esmvalcore.utils.doc.gensidebar import generate_sidebar
 from esmvalcore import __version__
 
 # -- RTD configuration ------------------------------------------------
@@ -429,4 +429,4 @@ intersphinx_mapping = {
 
 # -- Custom Document processing ----------------------------------------------
 
-gensidebar.generate_sidebar(globals(), "esmvalcore")
+generate_sidebar(globals(), "esmvalcore")
