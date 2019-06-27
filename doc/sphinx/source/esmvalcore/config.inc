@@ -148,10 +148,14 @@ Developer configuration file
 
 This configuration file describes the file system structure for several
 key projects (CMIP5, CMIP6) on several key machines (BADC, CP4CDS, DKRZ, ETHZ,
-SMHI, BSC).
+SMHI, BSC) - CMIP data is stored as part of the Earth System Grid Federation (ESGF)
+and the standards for file naming and paths to files are set out by CMOR and DRS.
+For a detailed description of these standards and how the impact on the use in ESMValTool
+we refer the user to CMOR-DRS_ section where we relate these standards to the data retrieval
+mechanism built-in ESMValTool.
 
-The data directory structure of the CMIP5 project is set up differently
-at each site. The following code snipper is an example of several paths
+The data directory structure of the CMIP5/6 projects is set up differently
+at each site. The following code snippet is an example of several paths
 descriptions for the CMIP5 at various sites:
 
 .. code-block:: yaml
@@ -172,13 +176,16 @@ As an example, the CMIP5 file path on BADC would be:
 
         [institute]/[dataset ]/[exp]/[frequency]/[modeling_realm]/[mip]/[ensemble]/latest/[short_name]
 
-When loading these files, ESMValTool replaces the placeholders with the true
-values. The resulting real path would look something like this:
+When loading these files, ESMValTool replaces the placeholders ``[item]`` with actual
+values supplied for by the information form ``config-user.yml`` and ``recipe.yml``.
+The resulting real path would look something like this:
 
-.. code-block:: yaml
+.. code-block:: bash
 
     MOHC/HadGEM2-CC/rcp85/mon/ocean/Omon/r1i1p1/latest/tos
 
+Again, for a more in-depth description this process, as part of the data retrieval mechanism,
+please see CMOR-DRS_.
 
 References configuration file
 =============================
