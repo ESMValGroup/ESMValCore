@@ -5,7 +5,7 @@
 # conda build . -c conda-forge -c esmvalgroup
 
 # Package version number
-{% set version = "2.0.0a1" %}
+{% set version = "2.0.0b0" %}
 
 package:
   name: esmvalcore
@@ -58,6 +58,9 @@ test:
   # TODO: add unit tests? This seems to require installing the tests
   imports:
     - esmvalcore
+    - esmvalcore.cmor
+    - esmvalcore.preprocessor
+
   commands:
     - esmvaltool -h
 
