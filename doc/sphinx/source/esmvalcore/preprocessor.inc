@@ -576,9 +576,9 @@ See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
        preprocessors:
          missing_values_preprocessor:
            mask_fillvalues:
-             threshold_fraction: 0.0  # keep all missing values
-             min_value: -1e20         # small enough not to alter the data
-             time_window: 10.0        # this will not matter anymore
+             threshold_fraction: 0.0     # keep all missing values
+             min_value: -1e20            # small enough not to alter the data
+             #  time_window: 10.0        # this will not matter anymore
 
 Minimum, maximum and interval masking
 -------------------------------------
@@ -739,7 +739,7 @@ see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
    Note that the multimodel array operations, albeit performed in per-time/per-horizontal level
    loops to save memory, could, however, be rather memory-intensive (since they are not performed
-   lazily as yet). Section _MemoryUse details the memory intake for different run scenarios, but
+   lazily as yet). Section MemoryUse_ details the memory intake for different run scenarios, but
    as a thumb rule, for the multimodel preprocessor, the expected maximum memory intake could be
    approximated as the number of datasets multiplied by the average size in memory for one dataset.
 
