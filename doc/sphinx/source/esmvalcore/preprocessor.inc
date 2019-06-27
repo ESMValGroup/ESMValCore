@@ -693,6 +693,14 @@ See also :func:`esmvalcore.preprocessor.regrid`
         * ``nanmask`` – if the source data is a MaskedArray the extrapolation points will be masked.
           Otherwise they will be set to NaN.
 
+.. note::
+   **Memory limits for horizontal regridding**
+
+   The rigridding mechanism is (at the moment) done with fully realized data in memory, so depending
+   on how fine the target grid is, it may use a rather large amount of memory. Empirically target grids
+   of up to ``0.5x0.5`` degrees should not produce any memory-related issues, but be advised that
+   for resolutions of ``< 0.5`` degrees the regridding becomes very slow and will use a lot of memory.
+
 Multi-model statistics
 ======================
 Computing multi-model statistics is an integral part of model analysis and evaluation: individual
