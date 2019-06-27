@@ -4,18 +4,20 @@
 Utilities
 *********
 
+This section provides extra information on topics that are not part of ESMValTool
+code base but are used by ESMValTool directly or indirectly.
 
 Brief introduction to YAML
 ==========================
 
-While .yaml is a relatively common format, maybe users may not have
+While ``.yaml`` or ``.yml`` is a relatively common format, maybe users may not have
 encountered this language before. The key information about this format is:
 
-- Yaml is a human friendly markup language.
-- Yaml is commonly used for configuration files.
+- yaml is a human friendly markup language.
+- yaml is commonly used for configuration files (gradually replacing the venerable ``.ini``)
 - the syntax is relatively straightforward
-- Indentation matters a lot (like python)!
+- indentation matters a lot (like ``Python``)!
 - yaml is case sensitive
-- A yml tutorial is available here: https://learnxinyminutes.com/docs/yaml/
-- A yml quick reference card is available here: https://yaml.org/refcard.html
-- ESMValTool uses the yamllint linter tool: http://www.yamllint.com
+- a yaml tutorial is available `here <https://learnxinyminutes.com/docs/yaml/>`_
+- a yaml quick reference card is available `here <https://yaml.org/refcard.html>`_
+- ESMValTool uses the ``yamllint`` linter `tool <http://www.yamllint.com>`_
