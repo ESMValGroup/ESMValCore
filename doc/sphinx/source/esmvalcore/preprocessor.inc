@@ -156,6 +156,7 @@ between 1 and 12 as the named month string will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_month`.
 
+.. _time_average:
 
 ``time_average``
 ----------------
@@ -596,6 +597,8 @@ masking or the pair ``minimum`, ``maximum`` for interval masking.
 
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related functions.
 
+.. _regrid:
+
 Horizontal regridding
 =====================
 
@@ -703,6 +706,8 @@ See also :func:`esmvalcore.preprocessor.regrid`
    on how fine the target grid is, it may use a rather large amount of memory. Empirically target grids
    of up to ``0.5x0.5`` degrees should not produce any memory-related issues, but be advised that
    for resolutions of ``< 0.5`` degrees the regridding becomes very slow and will use a lot of memory.
+
+.. _multi_model_statistics:
 
 Multi-model statistics
 ======================
