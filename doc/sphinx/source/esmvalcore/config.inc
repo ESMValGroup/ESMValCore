@@ -143,6 +143,8 @@ plotting such as coastline descriptions and so on.
    in the Data Finder section; these sections relate directly to the data finding capabilities
    of ESMValTool and are very important to be understood by the user.
 
+.. _config-developer:
+
 Developer configuration file
 ============================
 
@@ -186,6 +188,8 @@ The resulting real path would look something like this:
 
 Again, for a more in-depth description this process, as part of the data retrieval mechanism,
 please see CMOR-DRS_.
+
+.. _config-ref:
 
 References configuration file
 =============================
