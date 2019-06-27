@@ -22,7 +22,6 @@ def calculate_total_flux(intpp_cube, cube_area):
     -------
     numpy.array:
         An numpy array containing the total flux of CO2.
-
     """
     data = []
     times = intpp_cube.coord('time')
@@ -49,7 +48,7 @@ class DerivedVariable(DerivedVariableBase):
     required = [
         {
             'short_name': 'intpp',
-#            'mip': 'Omon',
+            # 'mip': 'Omon',
             'fx_files': [
                 'areacello',
             ],
@@ -60,8 +59,9 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute longwave cloud radiative effect."""
         intpp_cube = cubes.extract_strict(
-            iris.Constraint(name='surface_downward_mass_flux_of_carbon_dioxide'
-                            '_expressed_as_carbon'))
+            iris.Constraint(name='net_primary_mole_productivity_of_carbon_by_'
+                                 'phytoplanktonsurface_downward_mass_flux_of_'
+                                 'carbon_dioxide'))
 
         try:
             cube_area = cubes.extract_strict(iris.Constraint(name='cell_area'))
