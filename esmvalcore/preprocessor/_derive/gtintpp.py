@@ -76,6 +76,9 @@ class DerivedVariable(DerivedVariableBase):
             iris.analysis.MEAN,
         )
         result.units = intpp_cube.units * cube_area.units
-
         result.data = total_flux
+
+        output_units = 'Pg  yr-1'
+        result.convert_units(new_units)
+
         return result
