@@ -111,7 +111,7 @@ axis_entry: iTr
 !----------------------------------
 ! Axis attributes:
 !----------------------------------
-standard_name:    vegetation_transition_code
+standard_name:
 units:            1
 long_name:        Vegetation transition code
 !----------------------------------
