@@ -63,6 +63,8 @@ to ``CMIP``, ``OBS``, ``default`` and ``RAWOBS`` root paths; ``drs`` sets the ty
 the root paths are structured by. It is important to first discuss the ``drs`` parameter: as we've seen in
 the previous section, the DRS as a standard is used for both file naming conventions and for directory structures.
 
+.. _config-user-drs:
+
 Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``
 ---------------------------------------------------------------------
 Whreas ESMValTool will **always** use the CMOR standard for file naming (please refer above), by setting the ``drs``
@@ -94,6 +96,8 @@ a directory that contains all the needed data files (a bucket full of everything
 .. note::
    When using ``CMIP6: default`` or ``CMIP5: default`` it is important to remember that all the needed files
    must be in the same top-level directory set by ``default`` (see below how to set ``default``).
+
+.. _config-user-rootpath:
 
 Explaining ``config-user/rootpath:``
 ------------------------------------
