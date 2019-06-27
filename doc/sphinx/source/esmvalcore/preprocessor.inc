@@ -715,7 +715,7 @@ Multimodel statistics in ESMValTool are computed along the time axis, and as suc
 can be computed across a common overlap in time (by specifying ``span: overlap`` argument) or across
 the full length in time of each model (by specifying ``span: full`` argument).
 
-Restrictive compuation is also available by excluding  any set of models that the user
+Restrictive computation is also available by excluding  any set of models that the user
 will not want to include in the statistics (by setting ``exclude: [excluded models list]`` argument).
 The implementation has a few restrictions that apply to the input data: model datasets must have
 consistent shapes, and from a statistical point of view, this is needed since weights are not yet
@@ -732,6 +732,18 @@ than four: time, vertical axis, two horizontal axes).
           exclude: [NCEP]
 
 see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
+
+.. note::
+
+   **Memory limits for multimodel statistics**
+
+   Note that the multimodel array operations, albeit performed in per-time/per-horizontal level
+   loops to save memory, could, however, be rather memory-intensive (since they are not performed
+   lazily as yet). Section _MemoryUse details the memory intake for different run scenarios, but
+   as a thumb rule, for the multimodel preprocessor, the expected maximum memory intake could be
+   approximated as the number of datasets multiplied by the average size in memory for one dataset.
+
+.. _MemoryUse:
 
 Information on maximum memory required
 ======================================
