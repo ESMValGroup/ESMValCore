@@ -357,10 +357,13 @@ but it may be necceasiry for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 
+.. _cmor-checks-fixes:
 
 CMORization and dataset-specific fixes
 ======================================
-Javier
+.. warning::
+
+   Section to be added by Javier ``CMORMAN`` Vegas-Regidor
 
 Vertical interpolation
 ======================
