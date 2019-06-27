@@ -59,8 +59,10 @@ def generate_sidebar(conf, conf_api):
     _write("esmvalcore", "ESMValTool Core", "esmvalcore/index")
     _write("esmvaltool", "Guidelines for diagnostic developers",
            "esmvaldiag/index")
-    _write("esmvaltool", "ESMValTool Code API Documentation",
-           "codedoc2/esmvaltool")
+    _write("esmvalcore", "ESMValTool Core API Reference",
+           "api/esmvalcore")
+    _write("esmvaltool", "ESMValTool Diagnostics API Reference",
+           "api/esmvaltool")
     _endl()
 
     _write_if_changed("_sidebar.rst.inc", "\n".join(lines))
