@@ -244,6 +244,9 @@ the ``run_diagnostic`` utility:
        with run_diagnostic() as config:
            main(config)
 
+This way a lot of the optional arguments necessary to a diagnostic are at the user's
+control via the recipe.
+
 Running your own diagnostic
 ---------------------------
 If the user decides to test a e.g. ``my_first_diagnostic.py`` diagnostic they have just written
@@ -265,8 +268,26 @@ passing the absolute path to the diagnostic:
         JoeDiagFunny:
           script: /home/users/joepesci/esmvaltool_testing/my_first_diagnostic.py
 
-This way a lot of the optional arguments necessary to a diagnostic are at the user's
-control via the recipe.
+This way the user may test their diagnostic thoroughly before committing to git and including
+their new diagnostic in the ESMValTool diagnostics library.
 
 Re-using parameters from one ``script`` to another
 -------------------------------------------------- 
+Due to ``yaml`` features it is possible to recycle entire diagnostics sections for use with other
+diagnostics. Here is an example:
+
+.. code-block:: yaml
+
+    scripts:
+      cycle: &cycle_settings
+        script: perfmetrics/main.ncl
+        plot_type: cycle
+        time_avg: monthlyclim
+      grading: &grading_settings
+        <<: *cycle_settings
+        plot_type: cycle_latlon
+        calc_grading: true
+        normalization: [centered_median, none]
+
+In this example the hook ``&cycle_settings`` can be used to pass the ``cycle:`` parameters to
+``grading:`` via the shortcut ``<<: *cycle_settings``.
