@@ -1,0 +1,21 @@
+SOURCE: CMIP5
+!============
+variable_entry:    gtintpp
+!============
+modeling_realm:    ocnBgchem
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             mol s-1
+cell_methods:      time: mean area: where sea
+cell_measures:     area: areacello
+long_name:         Global Total Primary Organic Carbon Production by All Types of Phytoplankton
+comment:           Global Total of Vertically integrated total primary (organic carbon) production by phytoplankton.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+type:              real
+!----------------------------------
+!
