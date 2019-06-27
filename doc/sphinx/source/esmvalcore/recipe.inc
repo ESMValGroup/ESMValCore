@@ -4,8 +4,6 @@
 Recipe
 ******
 
-.. _recipe:
-
 Overview
 ========
 
@@ -18,9 +16,10 @@ Broadly, recipes contain information on the user who wrote the
 recipe file, the datasets which need to be run, the preprocessors that need to be
 applied, and the diagnostics which need to be run over the preprocessed data.
 This information is provided to ESMValTool in for main recipe sections:
-`Documentation`_, `Datasets`_, `Preprocessors`_ and `Diagnostics`_,
+Documentation_, Datasets_, Preprocessors_ and Diagnostics_,
 respectively.
 
+.. _Documentation:
 
 Recipe section: ``documentation``
 =================================
@@ -64,6 +63,11 @@ For example, please see the documentation section from the recipe:
    Note that the authors, projects, and references will need to be included in the
    ``config-references.yml`` file. The author name uses the format:
    ``surname_name``. For instance, Joe Pesci would be: ``authors: - pesci_joe``.
+   Also note that Joe Pesci does not appreciate you calling him ``funny``.
+   For a first-time user that does not yet have their name added to ``config-references.yml``
+   a run of an already-made recipe or running with no author name is possible.
+
+.. _Datasets:
 
 Recipe section: ``datasets``
 ============================
@@ -91,8 +95,9 @@ For example, a datasets section could be:
 
 
 Note that this section is not required, as datasets can also be provided in the
-`Diagnostics`_ section.
+Diagnostics_ section.
 
+.. _Preprocessors:
 
 Recipe section: ``preprocessors``
 =================================
@@ -107,8 +112,9 @@ Each preprocessor section includes:
 - Any or none arguments given to the preprocessor steps (one yaml tab (2 spaces) under preprocessor step name)
 - The order that the preprocesor steps are applied can also be specified using the ``custom_order`` preprocesor function.
 
-The following preprocessor is an example of a preprocessor that contains
-multiple preprocessing steps:
+The following snippet is an example of a preprocessor named ``prep_map`` that contains
+multiple preprocessing steps (regrid_ with two arguments, time_average_ with no arguments
+and multi_model_statistics_ with two arguments):
 
 .. code-block:: yaml
 
@@ -131,9 +137,10 @@ multiple preprocessing steps:
    basic operations like: loading data, applying CMOR checks and fixes (cmor-checks-fixes_)
    and saving the data to disk (if needed).
 
+.. _Diagnostics:
 
-Diagnostics
-===========
+Recipe section: ``diagnostics``
+===============================
 
 The diagnostics section includes one or more diagnostics. Each diagnostics will
 have:
