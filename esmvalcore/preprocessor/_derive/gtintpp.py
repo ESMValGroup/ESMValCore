@@ -60,8 +60,7 @@ class DerivedVariable(DerivedVariableBase):
         """Compute longwave cloud radiative effect."""
         intpp_cube = cubes.extract_strict(
             iris.Constraint(name='net_primary_mole_productivity_of_carbon_by_'
-                                 'phytoplanktonsurface_downward_mass_flux_of_'
-                                 'carbon_dioxide'))
+                                 'phytoplankton'))
 
         try:
             cube_area = cubes.extract_strict(iris.Constraint(name='cell_area'))
@@ -75,10 +74,14 @@ class DerivedVariable(DerivedVariableBase):
             ['latitude', 'longitude'],
             iris.analysis.MEAN,
         )
-        result.units = intpp_cube.units * cube_area.units
+
+        # TODO: Load seconds per year from model calendar.
+        days_per_year = 365.
+        seconds_per_day = 24*60*60.
+        g_per_mol = 12.011
+        total_flux = total_flux * g_per_mol * days_per_year * seconds_per_day * 1E-15
         result.data = total_flux
 
-        output_units = 'Pg  yr-1'
-        result.convert_units(new_units)
-
+        # These units are set in the CMOR table.
+        result.units = 'Pg yr-1'
         return result

@@ -61,7 +61,7 @@ class DerivedVariable(DerivedVariableBase):
         """Compute longwave cloud radiative effect."""
         fgco2_cube = cubes.extract_strict(
             iris.Constraint(name='surface_downward_mass_flux_of_carbon_dioxide'
-                            '_expressed_as_carbon'))
+                                 '_expressed_as_carbon'))
 
         try:
             cube_area = cubes.extract_strict(iris.Constraint(name='cell_area'))
@@ -75,11 +75,12 @@ class DerivedVariable(DerivedVariableBase):
             ['latitude', 'longitude'],
             iris.analysis.MEAN,
         )
-        result.units = fgco2_cube.units * cube_area.units
-
+        days_per_year =365.25
+        seconds_per_day = 24*60*60
+        total_flux = total_flux * 1E-12 * days_per_year * seconds_per_day
         result.data = total_flux
 
-        output_units = 'Pg  yr-1'
-        result.convert_units(new_units)
-                
+        # These units are set by the CMOR table, this is just for reference.
+        output_units = 'Pg yr-1'
+        result.units = output_units
         return result
