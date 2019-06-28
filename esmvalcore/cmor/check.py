@@ -410,8 +410,16 @@ class CMORCheck():
             coord.units = cf_units.Unit(coord.units.origin, simplified_cal)
 
         tol = 0.001
-        intervals = {'dec': (3600, 3660), 'day': (1, 1)}
-        if self.frequency == 'mon':
+        intervals = {'dec': (3600, 3660)}
+        if self.frequency == 'day':
+            for i in range(len(coord.points) - 1):
+                first = int(coord.points[i])
+                second = int(coord.points[i+1])
+                if first + 1 != second:
+                    msg = '{}: Frequency {} does not match input data'
+                    self.report_error(msg, var_name, self.frequency)
+                    break
+        elif self.frequency == 'mon':
             for i in range(len(coord.points) - 1):
                 first = coord.cell(i).point
                 second = coord.cell(i + 1).point
