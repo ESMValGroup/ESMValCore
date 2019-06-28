@@ -1030,7 +1030,8 @@ class Recipe:
                     profiles=self._preprocessors,
                     config_user=self._cfg,
                     task_name=task_name)
-                task.priority = priority
+                for task0 in task.flatten():
+                    task0.priority = priority
                 tasks.add(task)
                 priority += 1
 
