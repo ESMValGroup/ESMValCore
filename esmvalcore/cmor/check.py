@@ -412,20 +412,17 @@ class CMORCheck():
             coord.units = cf_units.Unit(coord.units.origin, simplified_cal)
 
             attrs = cube.attributes
-            if 'branch_time_in_child' in attrs:
-                attr = 'branch_time_in_child'
-                value = attrs[attr]
-                cube.attributes[attr] = old_units.convert(value, coord.units)
+            attr = 'branch_time_in_child'
+            if attr in attrs:
+                attrs[attr] = old_units.convert(attrs[attr], coord.units)
 
-            if 'parent_time_units' in attrs:
-                attr = 'parent_time_units'
-                parent_units = cf_units.Unit(attrs[attr],
-                                             simplified_cal)
-                if 'branch_time_in_parent' in attrs:
-                    attr = 'branch_time_in_parent'
-                    value = attrs[attr]
-                    cube.attributes[attr] = parent_units.convert(value,
-                                                                 coord.units)
+            attr = 'parent_time_units'
+            if attr in attrs:
+                parent_units = cf_units.Unit(attrs[attr], simplified_cal)
+                attr = 'branch_time_in_parent'
+                if attr in attrs:
+                    attrs[attr] = parent_units.convert(attrs[attr],
+                                                       coord.units)
 
         tol = 0.001
         intervals = {'dec': (3600, 3660), 'day': (1, 1)}
