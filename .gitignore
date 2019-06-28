@@ -83,9 +83,7 @@ test-reports/
 /python_test_out.txt
 
 # Build folder
-doc/diag_scripts/**
-doc/plot_scripts/**
-doc/sphinx/build
+doc/build
 doc/_sidebar.rst.inc
 
 # Data files
