@@ -2,7 +2,11 @@
 ESMValTool Core
 ###############
 
-.. include:: config.inc
-.. include:: datafinder.inc
-.. include:: recipe.inc
-.. include:: preprocessor.inc
+
+.. toctree::
+   :maxdepth: 1
+
+    Configuration files <config>
+    Finding data <datafinder>
+    Recipe <recipe>
+    Preprocessor <preprocessor>
