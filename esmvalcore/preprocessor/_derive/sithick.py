@@ -1,7 +1,6 @@
 """Derivation of variable `sithick`."""
 
 from iris import Constraint
-from iris.coords import DimCoord
 
 from ._baseclass import DerivedVariableBase
 
@@ -19,6 +18,10 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """
         Compute sea ice thickness from volume and concentration
+
+        In CMIP5, `sit` is called `sea_ice_thickness` but it is not real
+        thickness. It is ice volume per area unit. In CMIP6, it is called
+        `sivol` and the real thickness is called `sithick`
 
         Arguments
         ----

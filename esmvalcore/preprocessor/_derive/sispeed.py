@@ -30,14 +30,10 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         siu = cubes.extract_strict(Constraint(name='sea_ice_x_velocity'))
-        siu.remove_coord('year')
-        siu.remove_coord('day_of_year')
 
         siv = cubes.extract_strict(Constraint(name='sea_ice_y_velocity'))
         siv.remove_coord('latitude')
         siv.remove_coord('longitude')
-        siv.remove_coord('year')
-        siv.remove_coord('day_of_year')
 
         # Models usually store siu and siv in slightly different points
         if isinstance(siu.coord('latitude'), DimCoord):
