@@ -8,7 +8,7 @@ import iris
 from iris.cube import Cube
 from cf_units import Unit
 
-
+from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.inmcm4 import Gpp, Lai, Nbp
 
 
@@ -19,6 +19,11 @@ class TestGpp(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='gpp', units='J')
         self.fix = Gpp()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'INMCM4', 'gpp'), [Gpp()])
 
     def test_fix_data(self):
         """Test data fox."""
@@ -34,6 +39,11 @@ class TestLai(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='lai', units='J')
         self.fix = Lai()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'INMCM4', 'lai'), [Lai()])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -51,6 +61,11 @@ class TestNbp(unittest.TestCase):
         self.cube = Cube([1.0], var_name='nbp')
         self.fix = Nbp()
         self.temp_folder = tempfile.mkdtemp()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'INMCM4', 'nbp'), [Nbp()])
 
     def tearDown(self):
         """Delete temp folder."""

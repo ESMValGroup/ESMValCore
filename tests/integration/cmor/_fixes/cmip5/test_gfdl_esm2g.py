@@ -6,6 +6,7 @@ import mock
 import pytest
 from cf_units import Unit
 
+from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import (_get_and_remove, AllVars,
                                                      Co2, FgCo2)
 
@@ -63,6 +64,11 @@ class TestCo2(unittest.TestCase):
         """Prepare tests."""
         self.cube = iris.cube.Cube([1.0], var_name='co2', units='J')
         self.fix = Co2()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'co2'), [AllVars(), Co2()])
 
     def test_fix_data(self):
         """Test data fix."""

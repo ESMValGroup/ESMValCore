@@ -5,6 +5,7 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 
+from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.ccsm4 import Rlut, Rlutcs, So
 
 
@@ -25,6 +26,11 @@ class TestsRlut(unittest.TestCase):
             0
         )
         self.fix = Rlut()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'CCSM4', 'rlut'), [Rlut()])
 
     def test_fix_metadata(self):
         """Check that latitudes values are rounded."""
@@ -55,6 +61,11 @@ class TestsRlutcs(unittest.TestCase):
         )
         self.fix = Rlutcs()
 
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'CCSM4', 'rlutcs'), [Rlutcs()])
+
     def test_fix_metadata(self):
         """Check that latitudes values are rounded."""
         cube = self.fix.fix_metadata([self.cube])[0]
@@ -73,6 +84,11 @@ class TestSo(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='so', units='1.0')
         self.fix = So()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'CCSM4', 'so'), [So()])
 
     def test_fix_metadata(self):
         """Checks that units are changed to the correct value."""

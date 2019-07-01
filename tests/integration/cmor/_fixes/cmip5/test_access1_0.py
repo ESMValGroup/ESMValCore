@@ -5,6 +5,7 @@ from cf_units import Unit
 from iris.cube import Cube
 from iris.coords import AuxCoord
 
+from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.access1_0 import AllVars
 
 
@@ -22,6 +23,10 @@ class TestAllVars(unittest.TestCase):
             Unit('days since 1850-01-01', 'julian')
         ))
         self.fix = AllVars()
+
+    def test_get(self):
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'ACCESS1-0', 'tas'), [AllVars()])
 
     def test_fix_metadata(self):
         """Test fix for bad calendar."""

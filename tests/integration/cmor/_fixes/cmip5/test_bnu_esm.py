@@ -5,6 +5,7 @@ import numpy.ma as ma
 from cf_units import Unit
 from iris.cube import Cube
 
+from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.bnu_esm import (Ch4, Co2, FgCo2, SpCo2,
                                                   Od550Aer)
 
@@ -16,6 +17,11 @@ class TestCo2(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
         self.fix = Co2()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'BNU-ESM', 'co2'), [Co2()])
 
     def test_fix_metadata(self):
         """Test unit change."""
@@ -38,6 +44,11 @@ class Testfgco2(unittest.TestCase):
         self.cube = Cube([1.0], var_name='fgco2', units='J')
         self.fix = FgCo2()
 
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'BNU-ESM', 'fgco2'), [FgCo2()])
+
     def test_fix_metadata(self):
         """Test unit fix."""
         cube = self.fix.fix_metadata([self.cube])[0]
@@ -59,6 +70,11 @@ class TestCh4(unittest.TestCase):
         self.cube = Cube([1.0], var_name='ch4', units='J')
         self.fix = Ch4()
 
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'BNU-ESM', 'ch4'), [Ch4()])
+
     def test_fix_metadata(self):
         """Test unit fix."""
         cube = self.fix.fix_metadata([self.cube])[0]
@@ -79,6 +95,11 @@ class Testspco2(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='spco2', units='J')
         self.fix = SpCo2()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'BNU-ESM', 'spco2'), [SpCo2()])
 
     def test_fix_metadata(self):
         """Test fix."""
@@ -102,6 +123,11 @@ class TestOd550Aer(unittest.TestCase):
             ma.MaskedArray([1.e36], mask=(False,)),
             var_name='od550aer',)
         self.fix = Od550Aer()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'BNU-ESM', 'od550aer'), [Od550Aer()])
 
     def test_fix_data(self):
         """Test data fix."""

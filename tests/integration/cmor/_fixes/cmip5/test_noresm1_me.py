@@ -3,6 +3,7 @@ import pytest
 import iris
 from iris.cube import CubeList
 
+from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.noresm1_me import Tas
 
 DIM_COORD_SHORT = iris.coords.DimCoord(
@@ -64,3 +65,8 @@ def test_tas(cubes_in, cubes_out):
     new_cubes = fix.fix_metadata(cubes_in)
     assert new_cubes is cubes_in
     assert new_cubes == cubes_out
+
+
+def test_get():
+    """Test fix get"""
+    assert Fix.get_fixes('CMIP5', 'NORESM1-ME', 'tas') == [Tas()]

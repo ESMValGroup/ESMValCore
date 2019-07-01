@@ -6,6 +6,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateNotFoundError
 
+from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.miroc_esm import AllVars, Co2, Gpp, Tro3
 
 
@@ -16,6 +17,11 @@ class TestCo2(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
         self.fix = Co2()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'co2'), [AllVars(), Co2()])
 
     def test_fix_metadata(self):
         """Test unit fix."""
@@ -32,6 +38,11 @@ class TestTro3(unittest.TestCase):
         self.cube = Cube([1.0], var_name='tro3', units='J')
         self.fix = Tro3()
 
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'tro3'), [AllVars(), Tro3()])
+
     def test_fix_data(self):
         """Test data fix."""
         cube = self.fix.fix_data(self.cube)
@@ -46,6 +57,11 @@ class TestGpp(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='gpp', units='J')
         self.fix = Gpp()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'gpp'), [AllVars(), Gpp()])
 
     def test_fix_metadata(self):
         """Test unit fix."""
@@ -70,6 +86,11 @@ class TestAll(unittest.TestCase):
         self.cube.add_dim_coord(DimCoord([0, 1], long_name='AR5PL35'), 1)
 
         self.fix = AllVars()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'tos'), [AllVars()])
 
     def test_fix_metadata_plev(self):
         """Test plev fix."""

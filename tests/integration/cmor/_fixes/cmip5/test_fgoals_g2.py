@@ -5,6 +5,7 @@ from cf_units import Unit
 from iris.coords import DimCoord
 from iris.cube import Cube
 
+from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import AllVars
 
 
@@ -21,6 +22,11 @@ class TestAll(unittest.TestCase):
                 units=Unit('days since 0001-01', calendar='gregorian')),
             0)
         self.fix = AllVars()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'FGOALS-G2', 'tas'), [AllVars()])
 
     def test_fix_metadata(self):
         """Test calendar fix."""
