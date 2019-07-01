@@ -17,7 +17,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """
-        Compute sea ice thickness from volume and concentration
+        Compute sea ice thickness from volume and concentration.
 
         In CMIP5, `sit` is called `sea_ice_thickness` but it is not real
         thickness. It is ice volume per area unit. In CMIP6, it is called
