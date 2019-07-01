@@ -73,6 +73,7 @@ autodoc_mock_imports = [
     'ESMF',
     'cartopy',
     'cf_units',
+    'psutil',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
