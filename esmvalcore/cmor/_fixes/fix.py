@@ -146,7 +146,6 @@ class Fix(object):
 
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
-            print(classes)
             for fix_name in ('allvars', variable):
                 try:
                     fixes.append(classes[fix_name]())
