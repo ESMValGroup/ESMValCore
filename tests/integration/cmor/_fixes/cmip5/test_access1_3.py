@@ -5,7 +5,7 @@ from cf_units import Unit
 from iris.cube import Cube
 from iris.coords import AuxCoord
 
-from esmvalcore.cmor._fixes.cmip5.access1_0 import AllVars
+from esmvalcore.cmor._fixes.cmip5.access1_3 import AllVars
 
 
 class TestAllVars(unittest.TestCase):

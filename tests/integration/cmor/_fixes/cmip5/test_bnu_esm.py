@@ -1,10 +1,12 @@
 """Test fixes for BNU-ESM."""
 import unittest
 
+import numpy.ma as ma
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4, Co2, FgCo2, SpCo2
+from esmvalcore.cmor._fixes.cmip5.bnu_esm import (Ch4, Co2, FgCo2, SpCo2,
+                                                  Od550Aer)
 
 
 class TestCo2(unittest.TestCase):
@@ -89,3 +91,19 @@ class Testspco2(unittest.TestCase):
         cube = self.fix.fix_data(self.cube)
         self.assertEqual(cube.data[0], 1.e6)
         self.assertEqual(cube.units, Unit('J'))
+
+
+class TestOd550Aer(unittest.TestCase):
+    """Test fixes for SpCO2."""
+
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = Cube(
+            ma.MaskedArray([1.e36], mask=(False,)),
+            var_name='od550aer',)
+        self.fix = Od550Aer()
+
+    def test_fix_data(self):
+        """Test data fix."""
+        cube = self.fix.fix_data(self.cube)
+        self.assertEqual(cube.data.mask[0], True)
