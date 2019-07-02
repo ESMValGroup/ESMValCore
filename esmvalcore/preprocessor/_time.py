@@ -193,7 +193,7 @@ def daily_statistics(cube, operator='mean'):
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(['day_of_year', 'year'], operator)
     return cube
-    
+
 
 def monthly_statistics(cube, operator='mean'):
     """
