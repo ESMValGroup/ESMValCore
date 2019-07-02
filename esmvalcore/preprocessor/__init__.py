@@ -22,6 +22,7 @@ from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
 from ._regrid import extract_levels, regrid
 from ._time import (annual_mean, extract_month, extract_season, extract_time,
                     regrid_time, seasonal_mean, time_average)
+from ._units import convert_units
 from ._volume import (volume_statistics, depth_integration, extract_trajectory,
                       extract_transect, extract_volume)
 
@@ -83,6 +84,7 @@ __all__ = [
     'time_average',
     'regrid_time',
     'cmor_check_data',
+    'convert_units',
     # Save to file
     'save',
     'cleanup',
