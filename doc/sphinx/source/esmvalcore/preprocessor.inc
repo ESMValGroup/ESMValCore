@@ -24,13 +24,36 @@ Time manipulation
 =================
 The _time.py module contains the following preprocessor functions:
 
-* extract_time: Extract a time range from a cube.
-* extract_season: Extract only the times that occur within a specific season.
-* extract_month: Extract only the times that occur within a specific month.
-* time_average: Take the weighted average over the time dimension.
-* seasonal_mean: Produces a mean for each season (DJF, MAM, JJA, SON)
-* annual_mean: Produces an annual or decadal mean.
-* regrid_time: Aligns the time axis of each dataset to have common time points and calendars.
+* extract_time_: Extract a time range from a cube.
+* extract_season_: Extract only the times that occur within a specific season.
+* extract_month_: Extract only the times that occur within a specific month.
+* daily_statistics_: Compute statistics for each day
+* monthly_statistics_: Compute statistics for each month
+* seasonal_statistics_: Compute statistics for each season
+* annual_statistics_: Compute statistics for each year
+* decadal_statistics_: Compute statistics for each decade
+* climate_statistics_: Compute statistics for the full period
+* regrid_time_: Realign time to make data from different datasets compatible
+
+Statistics functions are applied by default in the order they appear in the
+list. For example, the following example applied to hourly data will retrieve
+the minimum values for the full period (by season) of the monthly mean of the
+daily maximum of any given variable.
+
+.. code-block:: yaml
+
+    daily_statistics:
+      operator: max
+
+    monthly_statistics:
+      operator: mean
+
+    climate_statistics:
+      operator: min
+      period: season
+
+
+.. _extract_time:
 
 1. extract_time
 ---------------
@@ -52,6 +75,7 @@ will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_time`.
 
+.. _extract_season:
 
 2. extract_season
 -----------------
@@ -70,6 +94,7 @@ the seasonal_mean function, below.
 
 See also :func:`esmvalcore.preprocessor.extract_season`.
 
+.. _extract_month:
 
 3. extract_month
 ----------------
@@ -80,42 +105,126 @@ between 1 and 12 as the named month string will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_month`.
 
+.. _daily_statistics:
 
-4. time_average
----------------
+4. daily_statistics
+-------------------
 
-This functions takes the weighted average over the time dimension. This
-function requires no arguments and removes the time dimension of the cube.
+This function produces statistics for each day in the dataset.
 
-See also :func:`esmvalcore.preprocessor.time_average`.
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
 
+See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
-5. seasonal_mean
-----------------
+.. _monthly_statistics:
 
-This function produces a seasonal mean for each season (DJF, MAM, JJA, SON).
-Note that this function will not check for missing time points. For instance,
-if you are looking at the DJF field, but your datasets starts on January 1st,
-the first DJF field will only contain data from January and February.
+5. monthly_statistics
+---------------------
+
+This function produces statistics for each month in the dataset.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.monthly_statistics`.
+
+.. _seasonal_statistics:
+
+6. seasonal_statistics
+----------------------
+
+This function produces statistics for each season (DJF, MAM, JJA, SON) in the
+dataset. Note that this function will not check for missing time points.
+For instance, if you are looking at the DJF field, but your datasets
+starts on January 1st, the first DJF field will only contain data
+from January and February.
 
 We recommend using the extract_time to start the dataset from the following
 December and remove such biased initial datapoints.
 
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
+
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
+.. _annual_statistics:
 
-6. annual_mean
---------------
+7. annual_statistics
+--------------------
 
-This function produces an annual or a decadal mean. The only argument is the
-decadal boolean switch. When this switch is set to true, this function
-will output the decadal averages.
+This function produces statistics for each year.
 
-See also :func:`esmvalcore.preprocessor.annual_mean`.
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
 
+See also :func:`esmvalcore.preprocessor.annual_statistics`.
 
-7. regrid_time
---------------
+.. _decadal_statistics:
+
+8. decadal_statistics
+---------------------
+
+This function produces statistics for each decade.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.decadal_statistics`.
+
+.. _climate_statistics:
+
+9. climate_statistics
+---------------------
+
+This function produces statistics for the whole dataset. It can produce scalars
+(if the full period is chosen) or daily, monthly or seasonal statics.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean', 'median', 'std_dev',
+      'variance', 'min' and 'max'. Default is 'mean'
+
+    * period: define the granularity of the statistics: get values for the
+      full period, for each month or day of year.
+      Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
+      'mon', 'daily', 'day'. Default is 'full'
+
+Examples:
+    * Monthly climatology:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+                operator: mean
+                period: month
+
+    * Daily maximum for the full period:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+                operator: max
+                period: day
+
+    * Minimum value in the period:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+                operator: min
+                period: full
+
+See also :func:`esmvalcore.preprocessor.climate_statistics`.
+
+.. _regrid_time:
+
+10. regrid_time
+---------------
 
 This function aligns the time points of each component dataset so that the dataset
 iris cubes can be subtracted. The operation makes the datasets time points common and
@@ -123,6 +232,9 @@ sets common calendars; it also resets the time bounds and auxiliary coordinates 
 reflect the artifically shifted time points. Current implementation for monthly
 and daily data; the frequency is set automatically from the variable CMOR table
 unless a custom frequency is set manually by the user in recipe.
+
+Parameters:
+    * frequency: data frequency. Supported values are 'mon' and 'day'
 
 
 Area manipulation
@@ -167,7 +279,7 @@ See also :func:`esmvalcore.preprocessor.zonal_means`.
 
 
 3. area_statistics
------------------
+------------------
 
 This function calculates the average value over a region - weighted by the
 cell areas of the region.
@@ -224,12 +336,12 @@ See also :func:`esmvalcore.preprocessor.extract_volume`.
 
 
 2. volume_statistics
------------------
+--------------------
 
 This function calculates the volume-weighted average across three dimensions,
 but maintains the time dimension. The following arguments are required:
 
-This function takes the argument: operator, which defines the 
+This function takes the argument: operator, which defines the
 operation to apply over the volume.
 
 No depth coordinate is required as this is determined by iris. This
@@ -312,7 +424,7 @@ running the diagnostic, or in the disgnostic phase. We present both these implem
 
 To mask out seas in the preprocessor step, simply add `mask_landsea:` as a preprocessor step in the `preprocessor` of your choice section of the recipe, example:
 
-.. code-block:: bash
+.. code-block:: yaml
 
     preprocessors:
       my_masking_preprocessor:
@@ -331,7 +443,7 @@ Note that the resolutions for the Natural Earth masks are much higher than any u
 Note that for masking out ice the preprocessor is using a different function, this so that both land and sea or ice can be masked out without
 losing generality. To mask ice out one needs to add the preprocessing step much as above:
 
-.. code-block:: bash
+.. code-block:: yaml
 
     preprocessors:
       my_masking_preprocessor:
@@ -348,7 +460,7 @@ At the core of the land/sea/ice masking in the preprocessor are the mask files (
 can be retrived and used in the diagnostic phase as well or solely. By specifying the `fx_files:` key in the variable in diagnostic in the recipe, and populating it
 with a list of desired files e.g.:
 
-.. code-block:: bash
+.. code-block:: yaml
 
     variables:
       ta:
@@ -381,7 +493,7 @@ the user chooses a time window in which missing data points are counted, and if 
 to the number of total data points in a window is less than a chosen fractional theshold, the window is discarded i.e.
 all the points in the window are masked (set to missing).
 
-.. code-block:: bash
+.. code-block:: yaml
 
     preprocessors:
       missing_values_preprocessor:

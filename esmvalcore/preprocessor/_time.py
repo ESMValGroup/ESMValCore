@@ -164,6 +164,68 @@ def get_time_weights(cube):
     return time_weights
 
 
+def daily_statistics(cube, operator='mean'):
+    """
+    Compute daily statistics.
+
+    Chunks time in daily periods and computes statistics over them;
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
+        'max'
+
+    Returns
+    -------
+    iris.cube.Cube
+        Daily statistics cube
+    """
+    if not cube.coords('day_of_year'):
+        iris.coord_categorisation.add_day_of_year(cube, 'time')
+    if not cube.coords('year'):
+        iris.coord_categorisation.add_year(cube, 'time')
+
+    operator = get_iris_analysis_operation(operator)
+    cube = cube.aggregated_by(['day_of_year', 'year'], operator)
+    return cube
+    
+
+def monthly_statistics(cube, operator='mean'):
+    """
+    Compute monthly statistics.
+
+    Chunks time in monthly periods and computes means over them;
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
+        'max'
+
+    Returns
+    -------
+    iris.cube.Cube
+        Monthly statistics cube
+    """
+    if not cube.coords('month_number'):
+        iris.coord_categorisation.add_month_number(cube, 'time')
+    if not cube.coords('year'):
+        iris.coord_categorisation.add_year(cube, 'time')
+
+    operator = get_iris_analysis_operation(operator)
+    cube = cube.aggregated_by(['month_number', 'year'], operator)
+    return cube
+
+
 def seasonal_statistics(cube, operator='mean'):
     """
     Compute seasonal statistics.
@@ -218,11 +280,13 @@ def seasonal_statistics(cube, operator='mean'):
     return cube.extract(three_months_bound)
 
 
-def monthly_statistics(cube, operator='mean'):
+def annual_statistics(cube, operator='mean'):
     """
-    Compute monthly statistics.
+    Compute annual statistics.
 
-    Chunks time in monthly periods and computes means over them;
+    Note that this function does not weight the annual mean if
+    uneven time periods are present. Ie, all data inside the year
+    are treated equally.
 
     Parameters
     ----------
@@ -237,23 +301,27 @@ def monthly_statistics(cube, operator='mean'):
     Returns
     -------
     iris.cube.Cube
-        Monthly statistics cube
+        Annual mean cube
     """
-    if not cube.coords('month_number'):
-        iris.coord_categorisation.add_month_number(cube, 'time')
-    if not cube.coords('year'):
-        iris.coord_categorisation.add_year(cube, 'time')
+    # time_weights = get_time_weights(cube)
+
+    # TODO: Add weighting in time dimension. See iris issue 3290
+    # https://github.com/SciTools/iris/issues/3290
 
     operator = get_iris_analysis_operation(operator)
-    cube = cube.aggregated_by(['month_number', 'year'], operator)
-    return cube
+
+    if not cube.coords('year'):
+        iris.coord_categorisation.add_year(cube, 'time')
+    return cube.aggregated_by('year', operator)
 
 
-def daily_statistics(cube, operator='mean'):
+def decadal_statistics(cube, operator='mean'):
     """
-    Compute daily statistics.
+    Compute decadal statistics.
 
-    Chunks time in daily periods and computes statistics over them;
+    Note that this function does not weight the decadal mean if
+    uneven time periods are present. Ie, all data inside the decade
+    are treated equally.
 
     Parameters
     ----------
@@ -268,16 +336,25 @@ def daily_statistics(cube, operator='mean'):
     Returns
     -------
     iris.cube.Cube
-        Daily statistics cube
+        Annual mean cube
     """
-    if not cube.coords('day_of_year'):
-        iris.coord_categorisation.add_day_of_year(cube, 'time')
-    if not cube.coords('year'):
-        iris.coord_categorisation.add_year(cube, 'time')
+    # time_weights = get_time_weights(cube)
+
+    # TODO: Add weighting in time dimension. See iris issue 3290
+    # https://github.com/SciTools/iris/issues/3290
 
     operator = get_iris_analysis_operation(operator)
-    cube = cube.aggregated_by(['day_of_year', 'year'], operator)
-    return cube
+
+    if not cube.coords('decade'):
+        def get_decade(coord, value):
+            """Callback function to get decades from cube."""
+            date = coord.units.num2date(value)
+            return date.year - date.year % 10
+
+        iris.coord_categorisation.add_categorised_coord(
+            cube, 'decade', 'time', get_decade)
+
+    return cube.aggregated_by('decade', operator)
 
 
 def climate_statistics(cube, operator='mean', period='full'):
@@ -404,80 +481,3 @@ def regrid_time(cube, frequency):
         cube, cube.coord('time'), name='day_of_year')
 
     return cube
-
-
-def annual_statistics(cube, operator='mean'):
-    """
-    Compute annual statistics.
-
-    Note that this function does not weight the annual mean if
-    uneven time periods are present. Ie, all data inside the year
-    are treated equally.
-
-    Parameters
-    ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
-        'max'
-
-    Returns
-    -------
-    iris.cube.Cube
-        Annual mean cube
-    """
-    # time_weights = get_time_weights(cube)
-
-    # TODO: Add weighting in time dimension. See iris issue 3290
-    # https://github.com/SciTools/iris/issues/3290
-
-    operator = get_iris_analysis_operation(operator)
-
-    if not cube.coords('year'):
-        iris.coord_categorisation.add_year(cube, 'time')
-    return cube.aggregated_by('year', operator)
-
-
-def decadal_statistics(cube, operator='mean'):
-    """
-    Compute decadal statistics.
-
-    Note that this function does not weight the decadal mean if
-    uneven time periods are present. Ie, all data inside the decade
-    are treated equally.
-
-    Parameters
-    ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
-        'max'
-
-    Returns
-    -------
-    iris.cube.Cube
-        Annual mean cube
-    """
-    # time_weights = get_time_weights(cube)
-
-    # TODO: Add weighting in time dimension. See iris issue 3290
-    # https://github.com/SciTools/iris/issues/3290
-
-    operator = get_iris_analysis_operation(operator)
-
-    if not cube.coords('decade'):
-        def get_decade(coord, value):
-            """Callback function to get decades from cube."""
-            date = coord.units.num2date(value)
-            return date.year - date.year % 10
-
-        iris.coord_categorisation.add_categorised_coord(
-            cube, 'decade', 'time', get_decade)
-
-    return cube.aggregated_by('decade', operator)
