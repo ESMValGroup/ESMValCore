@@ -58,15 +58,13 @@ class TestGetStartEndYear(unittest.TestCase):
 
     def test_start_and_date_in_name(self):
         """Test parse one date at the start and one in experiment's name"""
-        start, end = get_start_end_year(
-            '19800101_var_control-1950_whatever.nc')
+        start, end = get_start_end_year('19800101_var_control-1950_whatever.nc')
         self.assertEqual(1980, start)
         self.assertEqual(1980, end)
 
     def test_end_and_date_in_name(self):
         """Test parse one date at the end and one in experiment's name"""
-        start, end = get_start_end_year(
-            'var_control-1950_whatever_19800101.nc')
+        start, end = get_start_end_year('var_control-1950_whatever_19800101.nc')
         self.assertEqual(1980, start)
         self.assertEqual(1980, end)
 

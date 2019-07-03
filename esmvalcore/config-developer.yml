@@ -269,7 +269,9 @@ ana4mips:
 
 EMAC:
   input_dir:
-    DKRZ: '[dataset]/[channel]'
-  input_file: '[dataset]*[channel]-*.nc'
+    default: '[dataset]/[channel]'
+  input_file: '[dataset]*[channel]*.nc'
   output_file: '[dataset]_[channel]_[short_name]_[start_year]-[end_year]'
   cmor_type: 'CMIP6'
+  start_year_prefix: '^.{0,15}'
+  end_year_prefix: null

@@ -29,7 +29,7 @@ def find_files(dirnames, filenames):
     return result
 
 
-def get_start_end_year(filename):
+def get_start_end_year(filename, variable=None):
     """Get the start and end year from a file name.
 
     This works for filenames matching
@@ -43,10 +43,21 @@ def get_start_end_year(filename):
     YYYY*[-,_]YYYY*[-,_]*.*
       or
     YYYY*[-,_]*[-,_]YYYY*.* (Does this make sense? Is this worth catching?)
-    """
-    name = os.path.splitext(filename)[0]
+      or
+    project specific formatting.
 
-    filename = name.split(os.sep)[-1]
+    """
+    filename = os.path.splitext(os.path.basename(filename))[0]
+    if variable is not None:
+        cfg = get_project_config(variable['project'])
+        if cfg.get('start_year_prefix'):
+            start_year = int(re.sub(cfg['start_year_prefix'], '', filename)[:4])
+            if cfg.get('end_year_prefix'):
+                end_year = int(re.sub(cfg['end_year_prefix'], '', filename)[:4])
+            else:
+                end_year = None
+            return (start_year, end_year)
+
     filename_list = [elem.split('-') for elem in filename.split('_')]
     filename_list = [elem for sublist in filename_list for elem in sublist]
 
@@ -75,20 +86,25 @@ def get_start_end_year(filename):
         start_year, end_year = int(dates[0][:4]), int(dates[1][:4])
     else:
         raise ValueError('Name {0} dates do not match a recognized '
-                         'pattern'.format(name))
+                         'pattern'.format(filename))
 
     return start_year, end_year
 
 
-def select_files(filenames, start_year, end_year):
+def select_files(filenames, variable):
     """Select files containing data between start_year and end_year.
 
     This works for filenames matching *_YYYY*-YYYY*.* or *_YYYY*.*
     """
+    start_year = variable['start_year']
+    end_year = variable['end_year']
     selection = []
     for filename in filenames:
-        start, end = get_start_end_year(filename)
-        if start <= end_year and end >= start_year:
+        start, end = get_start_end_year(filename, variable)
+        correct_years = start <= end_year
+        if end is not None:
+            correct_years = correct_years and end >= start_year
+        if correct_years:
             selection.append(filename)
     return selection
 
@@ -241,7 +257,7 @@ def _find_input_files(variable, rootpath, drs, fx_var=None):
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
     files = _find_input_files(variable, rootpath, drs)
-    files = select_files(files, variable['start_year'], variable['end_year'])
+    files = select_files(files, variable)
     return files
 
 
