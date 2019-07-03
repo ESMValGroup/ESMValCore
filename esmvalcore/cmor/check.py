@@ -203,7 +203,7 @@ class CMORCheck():
                     )
                     self._cube.long_name = self._cmor_var.long_name
                 else:
-                    self.report_warning(
+                    self.report_error(
                         self._attr_msg, self._cube.var_name, 'long_name',
                         self._cmor_var.long_name, self._cube.long_name
                     )
