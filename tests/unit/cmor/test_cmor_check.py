@@ -188,7 +188,7 @@ class TestCMORCheck(unittest.TestCase):
         """Test check fails for a bad short_name."""
         self.cube = self.get_cube(self.var_info)
         self.cube.long_name = 'bad_name'
-        self._check_warnings_on_metadata()
+        self._check_fails_in_metadata()
 
     def test_check_with_unit_conversion(self):
         """Test check succeeds for a good cube requiring unit conversion."""
@@ -261,7 +261,9 @@ class TestCMORCheck(unittest.TestCase):
             checker.check_metadata()
 
     def _check_warnings_on_metadata(self, automatic_fixes=False):
-        checker = CMORCheck(self.cube, self.var_info, automatic_fixes=False)
+        checker = CMORCheck(
+            self.cube, self.var_info, automatic_fixes=automatic_fixes
+        )
         checker.check_metadata()
         self.assertTrue(checker.has_warnings())
 
