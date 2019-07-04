@@ -271,7 +271,12 @@ EMAC:
   input_dir:
     default: '[dataset]/[channel]'
   input_file: '[dataset]*[channel]*.nc'
-  output_file: '[dataset]_[channel]_[short_name]_[start_year]-[end_year]'
+  output_file: '[dataset]_[short_name]_[start_year]-[end_year]'
   cmor_type: 'CMIP6'
-  start_year_prefix: '^.{0,15}'
-  end_year_prefix: null
+  date_prefix_regex: '^.{0,15}'
+  cmorize:
+    # Paths relative to esmvaltool.preprocessor
+    # Also accepts absolute paths (starting with '/')
+    cmorizer: '_emac/_cmorizer.py'
+    var_mapping: '_emac/var_mapping.yml'
+    light_cmorizer: true

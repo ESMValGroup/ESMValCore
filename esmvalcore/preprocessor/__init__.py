@@ -9,6 +9,7 @@ from .._provenance import TrackedFile
 from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
                     zonal_means)
+from ._cmorize import cmorize
 from ._derive import derive
 from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
@@ -30,6 +31,8 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     'download',
+    # CMORization
+    'cmorize',
     # File reformatting/CMORization
     'fix_file',
     # Load cubes from file

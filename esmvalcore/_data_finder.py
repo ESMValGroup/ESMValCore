@@ -9,6 +9,8 @@ import logging
 import os
 import re
 
+import yaml
+
 from ._config import get_project_config, replace_mip_fx
 from .cmor.table import CMOR_TABLES
 
@@ -29,7 +31,7 @@ def find_files(dirnames, filenames):
     return result
 
 
-def get_start_end_year(filename, variable=None):
+def get_start_end_year(filename, variable):
     """Get the start and end year from a file name.
 
     This works for filenames matching
@@ -44,19 +46,19 @@ def get_start_end_year(filename, variable=None):
       or
     YYYY*[-,_]*[-,_]YYYY*.* (Does this make sense? Is this worth catching?)
       or
-    project specific formatting.
+    project specific formatting (preprocess filename prior to data extraction
+    using `date_prefix_regex` or `date_prefix_tags`).
+
 
     """
-    filename = os.path.splitext(os.path.basename(filename))[0]
-    if variable is not None:
-        cfg = get_project_config(variable['project'])
-        if cfg.get('start_year_prefix'):
-            start_year = int(re.sub(cfg['start_year_prefix'], '', filename)[:4])
-            if cfg.get('end_year_prefix'):
-                end_year = int(re.sub(cfg['end_year_prefix'], '', filename)[:4])
-            else:
-                end_year = None
-            return (start_year, end_year)
+    name = os.path.basename(filename)
+    filename = os.path.splitext(name)[0]
+    cfg = get_project_config(variable['project'])
+    if cfg.get('date_prefix_regex'):
+        filename = re.sub(cfg['date_prefix_regex'], '', filename)
+    if cfg.get('date_prefix_tabs'):
+        pattern = _replace_tags(cfg['date_prefix_tabs'], variable)
+        filename = filename.replace(pattern, '')
 
     filename_list = [elem.split('-') for elem in filename.split('_')]
     filename_list = [elem for sublist in filename_list for elem in sublist]
@@ -254,9 +256,35 @@ def _find_input_files(variable, rootpath, drs, fx_var=None):
     return files
 
 
+def load_mapping(variable):
+    """Load variable mapping for CMORizer preprocessor."""
+    path = variable['mapping']
+    if not os.path.isabs(path):
+        root = os.path.dirname(os.path.realpath(__file__))
+        path = os.path.join(root, 'preprocessor', path)
+    with open(path, 'r') as file:
+        mapping = yaml.safe_load(file)
+    short_name = variable['short_name']
+    if short_name not in mapping:
+        raise ValueError(
+            f"Mapping {path} for project {variable['project']} does not "
+            f"contain variable '{short_name}'")
+    logger.debug("Loading variable mapping %s for variable '%s'", path,
+                 short_name)
+    return mapping[short_name]
+
+
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
-    files = _find_input_files(variable, rootpath, drs)
+    if 'mapping' in variable:
+        mapping = load_mapping(variable)
+        files = []
+        for channel in mapping.values():
+            var = dict(variable)
+            var['channel'] = channel
+            files.extend(_find_input_files(var, rootpath, drs))
+    else:
+        files = _find_input_files(variable, rootpath, drs)
     files = select_files(files, variable)
     return files
 

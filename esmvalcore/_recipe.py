@@ -10,7 +10,7 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import TAGS, get_institutes, replace_tags
+from ._config import TAGS, get_institutes, replace_tags, get_project_config
 from ._data_finder import (get_input_filelist, get_input_fx_filelist,
                            get_output_file, get_statistic_output_file)
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -582,6 +582,36 @@ def _match_products(products, variables):
     return grouped_products
 
 
+def _update_cmorizer_settings(settings, variable):
+    """Get correct settings if CMORization for project is desired."""
+    cfg = get_project_config(variable['project'])
+    if 'cmorize' not in cfg:
+        return
+    project = variable['project']
+    cmorize_options = cfg['cmorize']
+    if 'cmorizer' not in cmorize_options:
+        raise ValueError(
+            f"Project {project} uses 'cmorize', but 'cmorizer' is not "
+            f"specified")
+    if 'var_mapping' not in cmorize_options:
+        raise ValueError(
+            f"Project {project} uses 'cmorize', but 'var_mapping' is not "
+            f"specified")
+
+    # Update settings
+    cmorize_dir = os.path.splitext(variable['filename'])[0] + '_cmorized'
+    options = {
+        'short_name': variable['short_name'],
+        'cmorizer': cmorize_options['cmorizer'],
+        'var_mapping': cmorize_options['var_mapping'],
+        'output_dir': cmorize_dir,
+    }
+    settings['cmorize'] = dict(options)
+
+    # Update variable
+    variable['mapping'] = cmorize_options['var_mapping']
+
+
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user):
     """Get preprocessor product definitions for a set of datasets."""
@@ -600,6 +630,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         settings = _get_default_settings(
             variable, config_user, derive='derive' in profile)
         _apply_preprocessor_profile(settings, profile)
+        _update_cmorizer_settings(settings=settings, variable=variable)
         _update_multi_dataset_settings(variable, settings)
         _update_target_levels(
             variable=variable,
