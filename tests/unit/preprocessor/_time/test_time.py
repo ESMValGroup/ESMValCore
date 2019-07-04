@@ -1,18 +1,18 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
 import unittest
-
+import pytest
+import tests
 
 import numpy as np
-import pytest
+from numpy.testing import assert_array_equal
+
 from cf_units import Unit
 import iris
 import iris.coord_categorisation
 import iris.coords
 from iris.cube import Cube
-from numpy.testing import assert_array_equal
 
-import tests
 from esmvalcore.preprocessor._time import (
     extract_month, extract_season, extract_time,
     regrid_time,
