@@ -256,6 +256,11 @@ def get_input_fx_filelist(variable, rootpath, drs):
         realm = getattr(table.get(var['short_name']), 'modeling_realm', None)
         var['modeling_realm'] = realm if realm else table.realm
 
+        # Ocean Biogeochemistry does not have dedicated fx files.
+        if var['modeling_realm'] == ['ocnBgchem',]:
+            var['modeling_realm'] = ['ocean',]
+        print('var', var)
+
         files = _find_input_files(var, rootpath, drs, fx_var)
         fx_files[fx_var] = files[0] if files else None
 
