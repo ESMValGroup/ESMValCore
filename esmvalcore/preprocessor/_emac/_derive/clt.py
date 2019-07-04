@@ -1,9 +1,11 @@
 """Derivation of variable `clt`."""
 
 import logging
-import iris
+
+from . import var_name_constraint
+
 
 def derive(cubes):
-    clt_cube = 100.* cubes.extract_strict(iris.Constraint(name='aclcov_ave'))
+    clt_cube = 100.* cubes.extract_strict(var_name_constraint('aclcov_ave'))
     
     return clt_cube

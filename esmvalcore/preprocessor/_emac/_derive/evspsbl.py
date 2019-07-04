@@ -1,9 +1,11 @@
 """Derivation of variable `evspsbl`."""
 
 import logging
-import iris
+
+from . import var_name_constraint
+
 
 def derive(cubes):
-    evspsbl_cube = -1.* cubes.extract_strict(iris.Constraint(name='evap_ave'))
+    evspsbl_cube = -1.* cubes.extract_strict(var_name_constraint('evap_ave'))
     
     return evspsbl_cube
