@@ -1,10 +1,7 @@
 """Derivation of variable `rsutcs`."""
 
-import logging
-
 from . import var_name_constraint
 
-
 def derive(cubes):
-    rsutcs_cube = cubes.extract_strict(var_name_constraint('viso_flxsftop'))- (cubes.extract_strict(var_name_constraint('viso_flxstop'))-cubes.extract_strict(var_name_constraint('rad01_srad0u')))
+    rsutcs_cube = cubes.extract_strict(var_name_constraint('flxsftop'))- (cubes.extract_strict(var_name_constraint('flxstop'))-cubes.extract_strict(var_name_constraint('srad0u_ave')))
     return rsutcs_cube

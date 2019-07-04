@@ -1,7 +1,5 @@
 """Derivation of variable `clt`."""
 
-import logging
-
 from . import var_name_constraint
 
 
