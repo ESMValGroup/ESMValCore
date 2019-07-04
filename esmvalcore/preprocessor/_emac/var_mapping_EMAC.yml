@@ -1,0 +1,77 @@
+
+# mapping table for EMAC variables
+#
+# cmor varname: {emac varname: channel}
+
+#awhea: {awhea: ?} 
+clivi: {xivi_ave: Amon}
+clt: {aclcov_ave: Amon} #recipe
+clwvi: [{xlvi_ave: Amon}, {xivi_ave: Amon}] #recipe
+co2mass: {MP_CO2_ave: tracer_pdef_gp}
+evspsbl: {evap_ave: Amon} #recipe
+hfss: {ahfs_ave: Amon}
+hfls: {ahfl_ave: Amon}
+np: [{NOxcg_ave: lnox_PaR_T_gp}, {NOxic_ave: lnox_PaR_T_gp}, {dt: lnox_PaR_T_gp}] #recipe
+pr: [{aprl_ave: Amon},{aprc_ave: Amon},{aprs_ave: Amon}] #recipe
+prc: {aprc_ave: Amon}
+prl: {aprl_ave: Amon} #not cmor 
+prsn: {aprs_ave: Amon}
+prw: {qvi_ave: Amon}
+siconca: {seaice_ave: Amon}
+sithick: {siced_ave: Amon}
+rlds: [{flxtbot_ave: Amon} ,{tradsu_ave: Amon}] #recipe
+rlus: {tradsu_ave: Amon}
+rlut: {flxttop_ave: Amon}
+rlutcs: {flxtftop_ave: Amon}
+rsds: [{flxsbot_ave: Amon},{sradsu_ave: Amon}] #recipe
+rsdt: [{flxstop_ave: Amon}, {srad0u_ave: Amon}] #recipe
+rsus: {sradsu_ave: Amon}
+rsut: {srad0u_ave: Amon}
+rsutcs: {flxusftop_ave: Amon}
+rtmt: [{flxttop_ave: Amon}, {flxstop_ave: Amon}] #recipe
+tas: {temp2_ave: Amon}
+ts: {tsurf: Amon}
+tosga: {tosga_ave: Omon}
+toz: {toz: column}
+
+#forcings
+TN_GHG_CO2: {TN_GHG_CO2: import_grid}
+TN_GHG_N2O: {TN_GHG_N2O: import_grid}
+TN_GHG_CH4: {TN_GHG_CH4: import_grid}
+BB_CO: {BB_CO: import_grid} #recipe
+BB_N: {BB_N: import_grid} #recipe
+BB_SO: {BB_SO: import_grid} #recipe
+BB_AER: [{BB_AER_BC: import_grid}, {BB_AER_OC: import_grid}] #recipe (add)
+ANTHNT_NO: {ANTHNT_NO: import_grid} #recipe
+ANTHNT_CO: {ANTHNT_CO: import_grid} #recipe
+ANTHNT_SO2: {ANTHNT_SO2: import_grid} #recipe
+ANTHNT_AER: [{ANTHNT_AER_BC: import_grid}, {ANTHNT_AER_OC: import_grid}] #recipe (add)
+ROAD_NO: {ROAD_NO: import_grid}
+ROAD_AER_BC: {ROAD_AER_BC: import_grid}
+SHIP_NO: {SHIP_NO: import_grid} #recipe
+SHIP_SO2: {SHIP_SO2: import_grid} #recipe
+SHIP_AER_BC: {SHIP_AER_B: import_grid}C #recipe
+airc_NO: {airc_NO: import_grid} #recipe
+VOLC_SO2_SO2: {VOLC_SO2_SO2: import_grid} #recipe
+
+#tracers
+MP_S_ave: {MP_S_ave: tracer_pdef_gp}
+MP_CFCl3_ave: {MP_CFCl3_ave: tracer_pdef_gp}
+MP_NH3_ave: {MP_NH3_ave: tracer_pdef_gp}
+MP_N2O_ave: {MP_N2O_ave: tracer_pdef_gp}
+MP_CO_ave: {MP_CO_ave: tracer_pdef_gp}
+MP_CH4_ave: {MP_CH4_ave: tracer_pdef_gp}
+MP_SO2_ave: {MP_SO2_ave: tracer_pdef_gp}
+MP_OH_ave: {MP_OH_ave: tracer_pdef_gp}
+MP_NO_ave: {MP_NO_ave: tracer_pdef_gp}
+MP_NO2_ave: {MP_NO2_ave: tracer_pdef_gp}
+MP_O3_ave: {MP_O3_ave: tracer_pdef_gp}
+MP_CO2_ave: {MP_CO2_ave: tracer_pdef_gp}
+MP_SO4mm_ave: [{MP_SO4mm_ns_ave: tracer_pdef_gp}, {MP_SO4mm_ks_ave: tracer_pdef_gp}, {MP_SO4mm_as_ave: tracer_pdef_gp}, {MP_SO4mm_cs_ave: tracer_pdef_gp}]  #aufaddieren zu total SO4mm
+MP_SS_ave: [{MP_SS_ks_ave: tracer_pdef_gp}, {MP_SS_as_ave: tracer_pdef_gp}, {MP_SS_cs_ave: tracer_pdef_gp}]  #aufaddieren zu total SS
+MP_BC_ave: [{MP_BC_ks_ave: tracer_pdef_gp}, {MP_BC_as_ave: tracer_pdef_gp}, {MP_BC_cs_ave: tracer_pdef_gp}, {MP_BC_ki_ave: tracer_pdef_gp}]  #alle BC aufaddieren zu total BC
+MP_DU_ave: [{MP_DU_as_ave: tracer_pdef_gp}, {MP_DU_cs_ave: tracer_pdef_gp}, {MP_DU_ai_ave: tracer_pdef_gp}, {MP_DU_ci_ave: tracer_pdef_gp}]  #aufaddieren zu total DU
+MP_ClOX_ave: {MP_ClOX_ave: tracer_pdef_gp}
+MP_NOX_ave: {MP_NOX_ave: tracer_pdef_gp}
+
+
