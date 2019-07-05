@@ -7,7 +7,7 @@ modeling_realm:    atmos
 ! Variable attributes:
 !----------------------------------
 standard_name:     
-units:             1.e-6
+units:             1.e-9
 cell_methods:      time: mean lat: mean longitude: mean
 cell_measures:     area: areacella
 long_name:         mole_fraction_of_methane_in_air
