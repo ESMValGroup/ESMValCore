@@ -31,7 +31,7 @@ def synda_search(variable):
     logger.debug('Result:\n%s', result.strip())
 
     files = (l.split()[-1] for l in result.split('\n') if l.startswith('new'))
-    files = select_files(files, variable['start_year'], variable['end_year'])
+    files = select_files(files, variable)
 
     # filter partially overlapping files
     intervals = {get_start_end_year(name): name for name in files}
