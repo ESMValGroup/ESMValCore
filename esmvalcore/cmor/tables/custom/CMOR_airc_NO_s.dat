@@ -10,7 +10,7 @@ standard_name:
 units:             kg(NO2) m-3 s-1
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         NOx Aircraft Anthropogenic Emissions 
+long_name:         NOx Aircraft Anthropogenic Emissions vertical sum
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
