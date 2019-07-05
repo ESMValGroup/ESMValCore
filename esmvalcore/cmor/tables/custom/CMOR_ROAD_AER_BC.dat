@@ -1,0 +1,19 @@
+ 19 lines (18 sloc) 493 Bytes
+SOURCE: CMIP6
+!============
+variable_entry:    ROAD_AER_BC
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     
+units:             kg m-2 s-1
+cell_measures:     area: areacella
+long_name:         Road Aer_BC flux
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time latitude longitude 
+type:              real
+!-----
