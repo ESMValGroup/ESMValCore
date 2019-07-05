@@ -6,7 +6,7 @@ from . import var_name_constraint
 
 def derive(cubes):
 	NOxcg_ave_cube = cubes.extract_strict(var_name_constraint('NOxcg_ave'))
-	NOxic_ave_cube = cubes.extract_strict(var_name_constraint('NOxic_ave')
+	NOxic_ave_cube = cubes.extract_strict(var_name_constraint('NOxic_ave'))
 	Noxcg_ave_sum = NOxcg_ave_cube.collapsed(['longitude','latitude'],iris.analysis.SUM)
 	Noxic_ave_sum = NOxic_ave_cube.collapsed(['longitude','latitude'],iris.analysis.SUM)
 	dt = cubes.attributes['dt']
