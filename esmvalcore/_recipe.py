@@ -603,6 +603,8 @@ def _get_cmorizer_options(variable):
 def _update_cmorizer_settings(settings, variable):
     """Get correct settings if CMORization for project is desired."""
     cmorize_options = _get_cmorizer_options(variable)
+    if cmorize_options is None:
+        return
     cmorize_dir = os.path.splitext(variable['filename'])[0] + '_cmorized'
     options = {
         'short_name': variable['short_name'],
@@ -616,6 +618,8 @@ def _update_cmorizer_settings(settings, variable):
 def _update_cmorizer_variable(variable):
     """Get correct variable entries if CMORization for project is desired."""
     cmorize_options = _get_cmorizer_options(variable)
+    if cmorize_options is None:
+        return
     variable['mapping'] = cmorize_options['var_mapping']
 
 
