@@ -1,6 +1,6 @@
 SOURCE: CMIP6
 !============
-variable_entry:    SHIP_SO2
+variable_entry:    SHIP_SO2_S
 !============
 modeling_realm:    atmos
 !----------------------------------
