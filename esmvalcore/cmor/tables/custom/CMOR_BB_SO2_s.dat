@@ -1,6 +1,6 @@
 SOURCE: CMIP6
 !============
-variable_entry:    BB_SO_S
+variable_entry:    BB_SO2_s
 !============
 modeling_realm:    atmos
 !----------------------------------
@@ -9,7 +9,7 @@ modeling_realm:    atmos
 standard_name:     
 units:             kg m-2 s-1
 cell_measures:     area: areacella
-long_name:         biomass_burning_carbon_flux of SO2
+long_name:         biomass_burning flux of SO2, vertical 
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
