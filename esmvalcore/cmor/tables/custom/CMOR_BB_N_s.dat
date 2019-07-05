@@ -1,0 +1,18 @@
+SOURCE: CMIP6
+!============
+variable_entry:    BB_N_s
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     
+units:             kg(NO) m-2 s-1
+cell_measures:     area: areacella
+long_name:         biomass_burning_carbon_flux of NO
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time latitude longitude 
+type:              real
+!-----
