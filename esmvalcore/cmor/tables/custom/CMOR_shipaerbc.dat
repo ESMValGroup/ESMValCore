@@ -1,6 +1,6 @@
 SOURCE: CMIP6
 !============
-variable_entry:    shipaerbc
+variable_entry:    SHIP_AER_BC_s
 !============
 modeling_realm:    atmos
 !----------------------------------
@@ -8,11 +8,11 @@ modeling_realm:    atmos
 !----------------------------------
 standard_name:     
 units:             kg m-2 s-1
-FillValue:	9.96921e+36f 
-missing_value:	9.96921e+36f 
-mmig_input_file: 	/pool/data/MESSY/DATA/MESSy2/./raw/offemis/CMIP6/CMIP6v6.1_DLR1.0_DECK_ship_aerosol_175001-201412.nc
-mmig_variable_name:	BC_flux 
-mmig_event_name:	SHIP_AER
-heights:	45,140
+cell_measures:     area: areacella
+long_name:         Ship Aer Bc flux
 !----------------------------------
-!
+! Additional variable information:
+!----------------------------------
+dimensions:        time latitude longitude 
+type:              real
+!-----
