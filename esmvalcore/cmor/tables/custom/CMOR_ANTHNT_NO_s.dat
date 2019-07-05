@@ -9,7 +9,7 @@ modeling_realm:    atmos
 standard_name:     
 units:             kg(NO2) m-2 s-1
 cell_measures:     area: areacella
-long_name:         biomass_burning_carbon_flux of NOx
+long_name:         Anthropogenic flux of NO, vertical sum
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
