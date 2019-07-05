@@ -8,7 +8,6 @@ modeling_realm:    atmos
 !----------------------------------
 standard_name:     
 units:             kg(NO) m-2 s-1
-cell_methods:      time: mean
 cell_measures:     area: areacella
 long_name:         ship emission flux of NO, vertical sum
 !----------------------------------
