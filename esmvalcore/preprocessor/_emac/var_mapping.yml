@@ -40,18 +40,18 @@ TN_GHG_CH4: {TN_GHG_CH4: import_grid}
 BB_CO_s: {BB_CO: import_grid} #recipe
 BB_N_s: {BB_N: import_grid} #recipe
 BB_SO_S: {BB_SO: import_grid} #recipe
-BB_AER_TOT_s: {BB_AER_BC: import_grid, BB_AER_OC: import_grid} #recipe (add)
+BB_AER_TC_s: {BB_AER_BC: import_grid, BB_AER_OC: import_grid} #recipe (add)
 ANTHNT_NO_s: {ANTHNT_NO: import_grid} #recipe
 ANTHNT_CO_s: {ANTHNT_CO: import_grid} #recipe
 ANTHNT_SO2_s: {ANTHNT_SO2: import_grid} #recipe
-ANTHNT_AER_TOT_s: [{ANTHNT_AER_BC: import_grid}, {ANTHNT_AER_OC: import_grid}] #recipe (add)
+ANTHNT_AER_TC_s: [{ANTHNT_AER_BC: import_grid}, {ANTHNT_AER_OC: import_grid}] #recipe (add)
 ROAD_NO: {ROAD_NO: import_grid}
 ROAD_AER_BC: {ROAD_AER_BC: import_grid}
 SHIP_NO_s: {SHIP_NO: import_grid} #recipe
 SHIP_SO2_S: {SHIP_SO2: import_grid} #recipe
 SHIP_AER_BC_s: {SHIP_AER_B: import_grid} #recipe
 airc_NO_s: {airc_NO: import_grid} #recipe
-VOLC_SO2_SO2_s: {VOLC_SO2_SO2: import_grid} #recipe
+VOLC_SO2_s: {VOLC_SO2_SO2: import_grid} #recipe
 
 #tracers
 MP_S: {MP_S_ave: tracer_pdef_gp}
@@ -72,5 +72,3 @@ MP_BC_tot: {MP_BC_ks_ave: tracer_pdef_gp, MP_BC_as_ave: tracer_pdef_gp, MP_BC_cs
 MP_DU_tot: {MP_DU_as_ave: tracer_pdef_gp, MP_DU_cs_ave: tracer_pdef_gp, MP_DU_ai_ave: tracer_pdef_gp, MP_DU_ci_ave: tracer_pdef_gp}  #aufaddieren zu total DU
 MP_ClOX: {MP_ClOX_ave: tracer_pdef_gp}
 MP_NOX: {MP_NOX_ave: tracer_pdef_gp}
-
-
