@@ -1,6 +1,6 @@
 SOURCE: CMIP6
 !============
-variable_entry:    VOLC_SO2_SO2_s
+variable_entry:    VOLC_SO2_s
 !============
 modeling_realm:    atmos
 !----------------------------------
