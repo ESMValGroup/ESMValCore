@@ -582,11 +582,11 @@ def _match_products(products, variables):
     return grouped_products
 
 
-def _update_cmorizer_settings(settings, variable):
-    """Get correct settings if CMORization for project is desired."""
+def _get_cmorizer_options(variable):
+    """Get options if CMORization is desired"""
     cfg = get_project_config(variable['project'])
     if 'cmorize' not in cfg:
-        return
+        return None
     project = variable['project']
     cmorize_options = cfg['cmorize']
     if 'cmorizer' not in cmorize_options:
@@ -597,8 +597,14 @@ def _update_cmorizer_settings(settings, variable):
         raise ValueError(
             f"Project {project} uses 'cmorize', but 'var_mapping' is not "
             f"specified")
+    return cmorize_options
 
-    # Update settings
+
+def _update_cmorizer_settings(settings, variable):
+    """Get correct settings if CMORization for project is desired."""
+    cmorize_options = _get_cmorizer_options(variable)
+    if cmorize_options is None:
+        return
     cmorize_dir = os.path.splitext(variable['filename'])[0] + '_cmorized'
     options = {
         'short_name': variable['short_name'],
@@ -608,7 +614,12 @@ def _update_cmorizer_settings(settings, variable):
     }
     settings['cmorize'] = dict(options)
 
-    # Update variable
+
+def _update_cmorizer_variable(variable):
+    """Get correct variable entries if CMORization for project is desired."""
+    cmorize_options = _get_cmorizer_options(variable)
+    if cmorize_options is None:
+        return
     variable['mapping'] = cmorize_options['var_mapping']
 
 
@@ -752,10 +763,14 @@ def _get_derive_input_variables(variables, config_user):
 
     for variable in variables:
         group_prefix = variable['variable_group'] + '_derive_input_'
-        if not variable.get('force_derivation') and get_input_filelist(
+        if 'mapping' in variable:
+            available_files = []
+        else:
+            available_files = get_input_filelist(
                 variable=variable,
                 rootpath=config_user['rootpath'],
-                drs=config_user['drs']):
+                drs=config_user['drs'])
+        if not variable.get('force_derivation') and available_files:
             # No need to derive, just process normally up to derive step
             var = deepcopy(variable)
             append(group_prefix, var)
@@ -784,6 +799,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
                                 config_user.get('max_datasets'))
     for variable in variables:
         _add_cmor_info(variable)
+        _update_cmorizer_variable(variable)
     # Create preprocessor task(s)
     derive_tasks = []
     if variable.get('derive'):

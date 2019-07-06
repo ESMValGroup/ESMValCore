@@ -87,8 +87,8 @@ def get_start_end_year(filename, variable):
     elif len(dates) == 2:
         start_year, end_year = int(dates[0][:4]), int(dates[1][:4])
     else:
-        raise ValueError('Name {0} dates do not match a recognized '
-                         'pattern'.format(filename))
+        raise ValueError(
+            f'Name {name} dates do not match a recognized pattern')
 
     return start_year, end_year
 
@@ -103,10 +103,7 @@ def select_files(filenames, variable):
     selection = []
     for filename in filenames:
         start, end = get_start_end_year(filename, variable)
-        correct_years = start <= end_year
-        if end is not None:
-            correct_years = correct_years and end >= start_year
-        if correct_years:
+        if start <= end_year and end >= start_year:
             selection.append(filename)
     return selection
 
@@ -259,6 +256,7 @@ def _find_input_files(variable, rootpath, drs, fx_var=None):
 def load_mapping(variable):
     """Load variable mapping for CMORizer preprocessor."""
     path = variable['mapping']
+    path = os.path.expanduser(path)
     if not os.path.isabs(path):
         root = os.path.dirname(os.path.realpath(__file__))
         path = os.path.join(root, 'preprocessor', path)
