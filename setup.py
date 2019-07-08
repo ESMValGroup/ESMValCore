@@ -64,6 +64,12 @@ REQUIREMENTS = {
         'yamllint',
         'yapf',
     ],
+    # Interactive dependencies
+    # Use pip install -e .[interactive] to include jupyter lab, 
+    # which facilitates usage of ESMValCore from a notebook or iPython shell
+    'interactive': [
+        'jupyterlab',
+    ],
 }
 
 
@@ -171,6 +177,7 @@ setup(
     tests_require=REQUIREMENTS['test'],
     extras_require={
         'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
+        'interactive': REQUIREMENTS['interactive']
     },
     entry_points={
         'console_scripts': [
