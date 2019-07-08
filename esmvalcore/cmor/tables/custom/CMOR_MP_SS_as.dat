@@ -1,0 +1,18 @@
+SOURCE: CMIP6
+!============
+variable_entry:    MP_SS_as
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg
+long_name:         positive mass of SS_as
+comment:           positive mass of SS_as in kg
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+!----------------------------------
+!

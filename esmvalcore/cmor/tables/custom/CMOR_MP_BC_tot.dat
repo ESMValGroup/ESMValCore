@@ -1,0 +1,18 @@
+SOURCE: CMIP6
+!============
+variable_entry:    MP_BC_tot
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg
+long_name:         positive mass of BC_tot
+comment:           positive mass of BC_tot in kg
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+!----------------------------------
+!

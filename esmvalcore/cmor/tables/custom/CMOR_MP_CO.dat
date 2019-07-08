@@ -1,0 +1,18 @@
+SOURCE: CMIP6
+!============
+variable_entry:    MP_CO
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg
+long_name:         positive mass of CO
+comment:           positive mass of CO in kg
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+!----------------------------------
+!
