@@ -110,6 +110,6 @@ class TestConcatenate(unittest.TestCase):
         for idx in range(3):
             self.raw_cubes[idx].attributes = identical_attrs
             self.raw_cubes[idx].attributes.update(differing_attrs[idx])
-        _io._fix_cube_attributes(self.raw_cubes)  # noqa
+        _io.fix_cube_attributes(self.raw_cubes)  # noqa
         for cube in self.raw_cubes:
             self.assertTrue(cube.attributes == resulting_attrs)

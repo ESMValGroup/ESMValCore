@@ -6,7 +6,7 @@ import os
 logger = logging.getLogger(__name__)
 
 
-def cmorize(in_files, short_name, var_mapping, output_dir, cmorizer):
+def cmorize(in_files, variable, var_mapping, output_dir, cmorizer):
     """Use project-specific CMORizer and CMORizer data."""
     cmorizer = os.path.expanduser(cmorizer)
     if not os.path.isabs(cmorizer):
@@ -27,5 +27,4 @@ def cmorize(in_files, short_name, var_mapping, output_dir, cmorizer):
             f"CMORizer {cmorizer} does not contain a function called "
             f"'cmorize'")
     logger.debug("Successfully loaded CMORizer %s", cmorizer)
-    return cmorizer_module.cmorize(in_files, short_name, var_mapping,
-                                   output_dir)
+    return cmorizer_module.cmorize(in_files, variable, var_mapping, output_dir)

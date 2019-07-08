@@ -106,6 +106,7 @@ def _add_cmor_info(variable, override=False):
         logger.warning("Unknown CMOR table %s", variable['cmor_table'])
 
     derive = variable.get('derive', False)
+    custom_cmor_table = variable.get('custom_cmor_table', False)
     # Copy the following keys from CMOR table
     cmor_keys = [
         'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
@@ -116,6 +117,10 @@ def _add_cmor_info(variable, override=False):
     table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name)
 
     if derive and table_entry is None:
+        custom_table = CMOR_TABLES['custom']
+        table_entry = custom_table.get_variable(mip, short_name)
+
+    if custom_cmor_table and table_entry is None:
         custom_table = CMOR_TABLES['custom']
         table_entry = custom_table.get_variable(mip, short_name)
 
@@ -600,17 +605,19 @@ def _get_cmorizer_options(variable):
     return cmorize_options
 
 
-def _update_cmorizer_settings(settings, variable):
+def _update_cmorizer_settings(settings, variable, derive=False):
     """Get correct settings if CMORization for project is desired."""
+    if derive:
+        return
     cmorize_options = _get_cmorizer_options(variable)
     if cmorize_options is None:
         return
     cmorize_dir = os.path.splitext(variable['filename'])[0] + '_cmorized'
     options = {
-        'short_name': variable['short_name'],
-        'cmorizer': cmorize_options['cmorizer'],
+        'variable': deepcopy(variable),
         'var_mapping': cmorize_options['var_mapping'],
         'output_dir': cmorize_dir,
+        'cmorizer': cmorize_options['cmorizer'],
     }
     settings['cmorize'] = dict(options)
 
@@ -641,7 +648,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         settings = _get_default_settings(
             variable, config_user, derive='derive' in profile)
         _apply_preprocessor_profile(settings, profile)
-        _update_cmorizer_settings(settings=settings, variable=variable)
+        _update_cmorizer_settings(
+            settings=settings, variable=variable, derive='derive' in profile)
         _update_multi_dataset_settings(variable, settings)
         _update_target_levels(
             variable=variable,
