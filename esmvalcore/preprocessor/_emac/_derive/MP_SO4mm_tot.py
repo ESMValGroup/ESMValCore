@@ -1,5 +1,5 @@
 
-"""Derivation of sum over all sulfate aerosol tracers."""
+"""Derivation of sum over all sulfate aerosol tracers"""
 
 from . import var_name_constraint
 

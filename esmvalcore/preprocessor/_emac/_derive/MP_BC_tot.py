@@ -1,4 +1,4 @@
-"""Derivation of variable `BC_tot`."""
+"""Derivation of sum over black carbon tracers"""
 
 from . import var_name_constraint
 

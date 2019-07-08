@@ -1,4 +1,4 @@
-"""Derivation of variable `DU_tot`."""
+"""Derivation of sum over all dust tracers"""
 
 from . import var_name_constraint
 

@@ -1,4 +1,4 @@
-"""Derivation of variable `SS_tot`."""
+"""Derivation of sum over all sea salt tracers"""
 
 from . import var_name_constraint
 def derive(cubes):
