@@ -15,5 +15,5 @@ long_name:         Sum of Natural Anthropogenic CO (summed over all levels)
 ! Additional variable information:
 !----------------------------------
 dimensions:        longitude latitude time
-out_name:          rluscs
+out_name:          ANTHNT_CO_s
 type:              real
