@@ -1,6 +1,9 @@
-"""Derivation of variable `np`."""
+"""Derivation of variable `lnox`."""
 
-"""The variable 'np'
+"""The variable 'lnox' (NOx production from lightning) is not a CMOR variable."""
+"""It is derived from the two EMAC variables 'NOxcg_ave' and 'NOxic_ave'."""
+"""(following the recipe provided by P. Jöckel in a personal communication)"""
+
 
 import iris
 import iris.analysis
@@ -12,5 +15,5 @@ def derive(cubes):
 	Noxcg_ave_sum = NOxcg_ave_cube.collapsed(['longitude','latitude'],iris.analysis.SUM)
 	Noxic_ave_sum = NOxic_ave_cube.collapsed(['longitude','latitude'],iris.analysis.SUM)
 	dt = NOxcg_ave_cube.attributes['GCM_timestep']
-	np_cube = (Noxcg_ave_sum+ Noxic_ave_sum)/dt*65*24*3600*1e9
-	return np_cube
+	lnox_cube = (Noxcg_ave_sum+ Noxic_ave_sum)/dt*65*24*3600*1e9
+	return lnox_cube
