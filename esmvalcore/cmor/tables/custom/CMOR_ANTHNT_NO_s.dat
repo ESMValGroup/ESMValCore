@@ -7,11 +7,11 @@ modeling_realm:    atmos
 ! Variable attributes:
 !----------------------------------
 standard_name:     
-units:             kg(NO2) m-2 s-1
+units:             kg m-2 s-1
 cell_methods:      time: mean
 cell_measures:     area: areacella
 long_name:         Sum of Natural Anthropogenic NO 
-comment:           Summation over all levels
+comment:           Summation over all levels; units are given in kg(NO2) m-2 s-1
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
