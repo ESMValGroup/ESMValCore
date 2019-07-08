@@ -2,6 +2,7 @@
 
 """The variable 'clt' (total cloud fraction) is stored in the EMAC variable 'aclcov_ave',"""
 """and needs to be multiplied with 100. to represent the CMOR standard."""
+"""(following the EMAC CMIP6 recipes)"""
 
 from . import var_name_constraint
 
