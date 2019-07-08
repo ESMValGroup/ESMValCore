@@ -1,0 +1,22 @@
+SOURCE: CMIP6
+!============
+variable_entry:    ANTHNT_NO_s
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     
+units:             kg(NO2) m-2 s-1
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Sum of Natural Anthropogenic NO 
+comment:           Summation over all levels
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          ANTHNT_NO_s
+type:              real
+!----------------------------------
+!
