@@ -1,5 +1,7 @@
 """Derivation of variable `np`."""
 
+"""The variable 'np'
+
 import iris
 import iris.analysis
 from . import var_name_constraint
