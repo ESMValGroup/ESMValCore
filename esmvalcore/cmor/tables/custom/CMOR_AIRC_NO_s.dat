@@ -1,6 +1,6 @@
 SOURCE: CMIP6
 !============
-variable_entry:    airc_NO_s
+variable_entry:    AIRC_NO_s
 !============
 modeling_realm:    atmos
 !----------------------------------
@@ -16,7 +16,7 @@ comment:           Integrated over all levels, considering the level thickness; 
 ! Additional variable information:
 !----------------------------------
 dimensions:        longitude latitude time
-out_name:          airc_NO_s
+out_name:          AIRC_NO_s
 type:              real
 !----------------------------------
 !
