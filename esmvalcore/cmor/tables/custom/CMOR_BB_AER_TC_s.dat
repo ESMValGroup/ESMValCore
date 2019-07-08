@@ -7,7 +7,6 @@ modeling_realm:    atmos
 ! Variable attributes:
 !----------------------------------
 standard_name:     
-long_name:         biomass_burning_carbon_flux
 units:             kg m-2 s-1
 cell_methods:      time: mean
 cell_measures:     area: areacella
