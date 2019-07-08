@@ -2,7 +2,8 @@
 
 """The variable 'rlds' (Surface Downwelling Longwave Radiation) is combined from """
 """the two EMAC variables: 'flxtbot_ave' and 'tradsu_ave'."""
-"""(following)"""
+"""(following the recipe from the DKRZ CMIP6 Data Request WebGUI)"""
+"""(https://c6dreq.dkrz.de/)"""
 
 
 from . import var_name_constraint
