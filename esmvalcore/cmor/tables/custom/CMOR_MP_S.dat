@@ -8,7 +8,7 @@ modeling_realm:    atmos
 !----------------------------------
 standard_name:
 units:             kg
-long_name:         positive mass of S
+long_name:         total mass of S
 comment:           positive mass of S in kg
 !----------------------------------
 ! Additional variable information:

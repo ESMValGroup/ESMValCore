@@ -8,7 +8,7 @@ modeling_realm:    atmos
 !----------------------------------
 standard_name:
 units:             kg
-long_name:         positive mass of DU_tot
+long_name:         total mass of mineral dust (sum of all aerosol modes)
 comment:           positive mass of DU_tot in kg
 !----------------------------------
 ! Additional variable information:

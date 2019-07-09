@@ -8,8 +8,8 @@ modeling_realm:    atmos
 !----------------------------------
 standard_name:
 units:             kg
-long_name:         positive mass of CFCl3
-comment:           positive mass flux of CFCl3
+long_name:         total mass of CFCl3 (CFC-11)
+comment:           positive mass of CFCl3
 !----------------------------------
 ! Additional variable information:
 !----------------------------------

@@ -8,7 +8,7 @@ modeling_realm:    atmos
 !----------------------------------
 standard_name:
 units:             kg
-long_name:         positive mass of SS_as
+long_name:         total mass of sea salt (mode as)
 comment:           positive mass of SS_as in kg
 !----------------------------------
 ! Additional variable information:

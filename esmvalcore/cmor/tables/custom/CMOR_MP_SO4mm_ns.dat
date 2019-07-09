@@ -8,7 +8,7 @@ modeling_realm:    atmos
 !----------------------------------
 standard_name:
 units:             kg
-long_name:         positive mass of SO4mm_ns
+long_name:         total mass of aerosol sulfate (mode ns)
 comment:           positive mass of SO4mm_ns in kg
 !----------------------------------
 ! Additional variable information:

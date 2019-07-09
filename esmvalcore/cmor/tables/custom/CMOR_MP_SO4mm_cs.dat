@@ -8,8 +8,8 @@ modeling_realm:    atmos
 !----------------------------------
 standard_name:
 units:             kg
-long_name:         negative mass of SO4mm_cs
-comment:           negative mass of SO4mm_cs in kg
+long_name:         total mass of aerosol sulfate (mode cs)
+comment:           positive mass of SO4mm_cs in kg
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
