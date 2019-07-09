@@ -1,8 +1,10 @@
 """Derivation of variable `SHIP_NO_s`."""
 
-"""The variable 'SHIP_NO' is an EMAC specific variable that is used """
-"""as monitoring variable. It is vertically resolved, but was summed """
-"""up over all levels for easier plotting. """
+"""The variable 'SHIP_NO_s' is an EMAC variable that is used """
+"""for monitoring EMAC output. It is here summed over all """
+"""available levels. """
+"""The variable is stored in the EMAC CMIP6 channel 'import_grid'. """
+"""SHIP_NO_s: Ship NO, summed """
 
 import iris
 import iris.analysis
