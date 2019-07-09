@@ -4,7 +4,7 @@
 """for monitoring EMAC output. It is here summed over all """
 """available levels. """
 """The variable is stored in the EMAC CMIP6 channel 'import_grid'. """
-"""ANTHNT_CO_s: Natural Anthropogenic CO, summed """
+"""ANTHNT_CO_s: Anthropogenic CO, summed """
 
 
 import iris
