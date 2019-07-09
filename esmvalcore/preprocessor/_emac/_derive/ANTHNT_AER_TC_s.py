@@ -1,6 +1,14 @@
 """Derivation of variable `ANTHNT_AER_TC_s`."""
 
-"""  """
+"""The variable 'ANTHNT_AER_TC_s' is an EMAC variable that is used """
+"""for monitoring EMAC output. It is a combination/summation of the """
+"""EMAC variables 'ANTHNT_AER_BC' and 'ANTHNT_AER_OC'. """
+"""The latter two variables are stored in the EMAC CMIP6 channel """
+"""'import_grid'. """
+"""ANTHNT_AER_TC_s: Natural Anthropogenic Aerosol Total Carbon, summed """
+"""ANTHNT_AER_BC: Natural Anthropogenic Aerosol Black Carbon """
+"""ANTHNT_AER_OC: Natural Anthropogenic Aerosol Organic Carbon """
+
 
 import iris
 import iris.analysis
