@@ -9,7 +9,7 @@ modeling_realm:    atmos
 standard_name:
 units:             kg
 long_name:         total mass of mineral dust (mode ci)
-comment:       	 positive mass of DU_ci in kg
+comment:           positive mass of DU_ci in kg
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
