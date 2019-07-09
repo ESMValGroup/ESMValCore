@@ -5,9 +5,9 @@
 """EMAC variables 'ANTHNT_AER_BC' and 'ANTHNT_AER_OC'. """
 """The latter two variables are stored in the EMAC CMIP6 channel """
 """'import_grid'. """
-"""ANTHNT_AER_TC_s: Natural Anthropogenic Aerosol Total Carbon, summed """
-"""ANTHNT_AER_BC: Natural Anthropogenic Aerosol Black Carbon """
-"""ANTHNT_AER_OC: Natural Anthropogenic Aerosol Organic Carbon """
+"""ANTHNT_AER_TC_s: Anthropogenic Aerosol Total Carbon, summed """
+"""ANTHNT_AER_BC: Anthropogenic Aerosol Black Carbon """
+"""ANTHNT_AER_OC: Anthropogenic Aerosol Organic Carbon """
 
 
 import iris
