@@ -10,13 +10,13 @@ documentation:
     - bock_ls
 
   maintainer:
-    - broe_bj
+    - laue_ax
 
   references:
     - acknow_project
 
   projects:
-    - esmval
+    - cmip6dicad
 
 datasets:
 {% for dataset in datasets%}
@@ -41,6 +41,9 @@ diagnostics:
     variables:
       siconca:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
         
   glob_timeseries_sithick:
     description: Timeseries of global mean sea ice thickness.
@@ -51,6 +54,9 @@ diagnostics:
     variables:
       sithick:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
         
   glob_timeseries_tosga:
     description: Timeseries of global mean sea surface temperature.
@@ -61,3 +67,6 @@ diagnostics:
     variables:
       tosga:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py

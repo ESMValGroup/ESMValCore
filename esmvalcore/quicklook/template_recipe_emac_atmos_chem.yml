@@ -10,13 +10,13 @@ documentation:
     - bock_ls
 
   maintainer:
-    - broe_bj
+    - laue_ax
 
   references:
     - acknow_project
 
   projects:
-    - esmval
+    - cmip6dicad
 
 datasets:
 {% for dataset in datasets%}
@@ -41,6 +41,9 @@ diagnostics:
     variables:
       co2mass:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
         
   glob_timeseries_np:
     description: Timeseries of global mean lightening NOx production.
@@ -51,6 +54,9 @@ diagnostics:
     variables:
       np:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
         
   glob_timeseries_toz:
     description: Timeseries of global mean ozone column.
@@ -61,6 +67,9 @@ diagnostics:
     variables:
       toz:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_S:
     description: Timeseries of global mean S.
@@ -71,6 +80,9 @@ diagnostics:
     variables:
       MP_S:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_CFCl3:
     description: Timeseries of global mean CFCl3.
@@ -81,6 +93,9 @@ diagnostics:
     variables:
       MP_CFCl3:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_NH3:
     description: Timeseries of global mean NH3.
@@ -91,6 +106,9 @@ diagnostics:
     variables:
       MP_NH3:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_N2O:
     description: Timeseries of global mean N2O.
@@ -101,6 +119,9 @@ diagnostics:
     variables:
       MP_N2O:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_CO:
     description: Timeseries of global mean CO.
@@ -111,6 +132,9 @@ diagnostics:
     variables:
       MP_CO:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_CH4:
     description: Timeseries of global mean CH4.
@@ -121,6 +145,9 @@ diagnostics:
     variables:
       MP_CH4:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_SO2:
     description: Timeseries of global mean SO2.
@@ -131,6 +158,9 @@ diagnostics:
     variables:
       MP_SO2:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_OH:
     description: Timeseries of global mean OH.
@@ -141,6 +171,9 @@ diagnostics:
     variables:
       MP_OH:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_NO:
     description: Timeseries of global mean NO.
@@ -151,6 +184,9 @@ diagnostics:
     variables:
       MP_NO:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_NO2:
     description: Timeseries of global mean NO2.
@@ -161,6 +197,9 @@ diagnostics:
     variables:
       MP_NO2:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_O3:
     description: Timeseries of global mean O3.
@@ -171,6 +210,9 @@ diagnostics:
     variables:
       MP_O3:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_CO2:
     description: Timeseries of global mean CO2.
@@ -181,6 +223,9 @@ diagnostics:
     variables:
       MP_CO2:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_SO4mm_tot:
     description: Timeseries of global mean SO4mm_tot.
@@ -191,6 +236,9 @@ diagnostics:
     variables:
       MP_SO4mm_tot:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_SS_tot:
     description: Timeseries of global mean SS_tot.
@@ -201,6 +249,9 @@ diagnostics:
     variables:
       MP_SS_tot:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_BC_tot:
     description: Timeseries of global mean BC_tot.
@@ -211,6 +262,9 @@ diagnostics:
     variables:
       MP_BC_tot:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_DU_tot:
     description: Timeseries of global mean DU_tot.
@@ -221,6 +275,9 @@ diagnostics:
     variables:
       MP_DU_tot:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_ClOX:
     description: Timeseries of global mean ClOX.
@@ -231,6 +288,9 @@ diagnostics:
     variables:
       MP_ClOX:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
 
   glob_timeseries_MP_NOX:
     description: Timeseries of global mean NOX.
@@ -241,3 +301,6 @@ diagnostics:
     variables:
       MP_NOX:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
