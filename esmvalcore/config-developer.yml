@@ -276,7 +276,8 @@ EMAC:
   date_prefix_regex: '^.{0,15}'
   cmorize:
     # Paths relative to esmvaltool.preprocessor
-    # Also accepts absolute paths (starting with '/')
+    # Also accepts absolute paths (starting with '/' or '~')
     cmorizer: '_emac/_cmorizer.py'
-    var_mapping: '_emac/var_mapping.yml'
+#    var_mapping: '_emac/var_mapping.yml'
+    var_mapping: '~/my_mapping.yml'
     light_cmorizer: true
