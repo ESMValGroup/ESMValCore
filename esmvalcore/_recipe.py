@@ -612,11 +612,9 @@ def _update_cmorizer_settings(settings, variable, derive=False):
     cmorize_options = _get_cmorizer_options(variable)
     if cmorize_options is None:
         return
-    cmorize_dir = os.path.splitext(variable['filename'])[0] + '_cmorized'
     options = {
         'variable': deepcopy(variable),
         'var_mapping': cmorize_options['var_mapping'],
-        'output_dir': cmorize_dir,
         'cmorizer': cmorize_options['cmorizer'],
     }
     settings['cmorize'] = dict(options)
