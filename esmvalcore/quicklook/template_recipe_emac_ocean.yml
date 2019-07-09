@@ -1,0 +1,63 @@
+# ESMValTool
+# recipe_python.yml
+---
+documentation:
+  description: |
+    Template for quicklook recipe for ocean.
+
+  authors:
+    - broe_bj
+    - bock_ls
+
+  maintainer:
+    - broe_bj
+
+  references:
+    - acknow_project
+
+  projects:
+    - esmval
+
+datasets:
+{% for dataset in datasets%}
+    - {{ dataset }}
+{% endfor %}
+
+preprocessors:
+
+  prep_zon:
+    zonal_means:
+      coordinate: longitude
+      mean_type: mean
+
+diagnostics:
+
+  glob_timeseries_siconca:
+    description: Timeseries of global mean sea ice concentration.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      siconca:
+        preprocessor: prep_zon
+        
+  glob_timeseries_sithick:
+    description: Timeseries of global mean sea ice thickness.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      sithick:
+        preprocessor: prep_zon
+        
+  glob_timeseries_tosga:
+    description: Timeseries of global mean sea surface temperature.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      tosga:
+        preprocessor: prep_zon

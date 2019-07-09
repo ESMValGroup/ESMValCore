@@ -1,0 +1,203 @@
+# ESMValTool
+# recipe_python.yml
+---
+documentation:
+  description: |
+    Template for quicklook recipe for atmosphere dynamics.
+
+  authors:
+    - broe_bj
+    - bock_ls
+
+  maintainer:
+    - broe_bj
+
+  references:
+    - acknow_project
+
+  projects:
+    - esmval
+
+datasets:
+{% for dataset in datasets%}
+    - {{ dataset }}
+{% endfor %}
+
+preprocessors:
+
+  prep_zon:
+    zonal_means:
+      coordinate: longitude
+      mean_type: mean
+
+diagnostics:
+
+  glob_timeseries_clivi:
+    description: Timeseries of global mean ice water path.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      clivi:
+        preprocessor: prep_zon
+        
+  glob_timeseries_clt:
+    description: Timeseries of global mean total cloud coverage.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      clt:
+        preprocessor: prep_zon
+        
+  glob_timeseries_clwvi:
+    description: Timeseries of global mean water path.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      clivi:
+        preprocessor: prep_zon
+        
+  glob_timeseries_evspsbl:
+    description: Timeseries of global mean evaporation.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      evspsbl:
+        preprocessor: prep_zon
+        
+  glob_timeseries_hfns:
+    description: Timeseries of global mean surface net heat flux.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      hfns:
+        preprocessor: prep_zon
+        
+  glob_timeseries_pr:
+    description: Timeseries of global mean precipitation.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      pr:
+        preprocessor: prep_zon
+        
+  glob_timeseries_prc:
+    description: Timeseries of global mean convective precipitation.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      prc:
+        preprocessor: prep_zon
+        
+  glob_timeseries_prl:
+    description: Timeseries of global mean large-scale precipitation.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      prl:
+        preprocessor: prep_zon
+        
+  glob_timeseries_prsn:
+    description: Timeseries of global mean snow fall.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      prsn:
+        preprocessor: prep_zon
+        
+  glob_timeseries_prw:
+    description: Timeseries of global mean water vapor content.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      prw:
+        preprocessor: prep_zon
+
+  glob_timeseries_rlns:
+    description: Timeseries of global mean net longwave radiation (surface).
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      rlns:
+        preprocessor: prep_zon
+        
+  glob_timeseries_rlut:
+    description: Timeseries of global mean outgoing longwave radiation (TOA).
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      rlut:
+        preprocessor: prep_zon
+
+  glob_timeseries_rsns:
+    description: Timeseries of global mean net solar radiation (surface).
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      rsns:
+        preprocessor: prep_zon
+        
+  glob_timeseries_rsnt:
+    description: Timeseries of global mean net solar radiation (TOA).
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      rsnt:
+        preprocessor: prep_zon
+        
+  glob_timeseries_rtmt:
+    description: Timeseries of global mean radiation budget (TOA).
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      rtmt:
+        preprocessor: prep_zon
+        
+  glob_timeseries_tas:
+    description: Timeseries of global mean surface temperature.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      tas:
+        preprocessor: prep_zon
+        
+  glob_timeseries_ts:
+    description: Timeseries of global mean 2-m temperature.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ts:
+        preprocessor: prep_zon
