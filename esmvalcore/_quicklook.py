@@ -52,7 +52,9 @@ def run():
     # TODO: remove hard coding
     cfg = read_config_user_file('/home/bjoern/dev/config/config-user_BB.yml',
                                 'RECIPE')
+    logging.basicConfig(filename=os.path.join(cfg['quicklook_output_dir'],'logfile.log'),level=logging.INFO, format='%(asctime)s %(message)s')
     create_recipes(cfg, 1900, 1903)
+    logging.info("Simulation {0} computed for {1}-{2}".format(cfg['dataset'], 1900, 1903))
 
 
 if __name__ == "__main__":
