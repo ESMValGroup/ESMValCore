@@ -49,7 +49,9 @@ def read_config_user_file(config_file, recipe_name):
         'profile_diagnostic': False,
         'config_developer_file': None,
         'drs': {},
-        'quicklook': {'active': False},
+        'quicklook': {
+            'active': False
+        },
     }
 
     for key in defaults:
@@ -63,9 +65,9 @@ def read_config_user_file(config_file, recipe_name):
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
- 
+
     if cfg['quicklook']['active']:
-       cfg['quicklook']['output_dir'] = _normalize_path(
+        cfg['quicklook']['output_dir'] = _normalize_path(
             cfg['quicklook']['output_dir'])
         cfg['quicklook']['recipe_dir'] = _normalize_path(
             cfg['quicklook']['recipe_dir'])
@@ -146,8 +148,8 @@ def read_config_developer_file(cfg_file=None):
 def configure_logging(cfg_file=None, output=None, console_log_level=None):
     """Set up logging."""
     if cfg_file is None:
-        cfg_file = os.path.join(
-            os.path.dirname(__file__), 'config-logging.yml')
+        cfg_file = os.path.join(os.path.dirname(__file__),
+                                'config-logging.yml')
 
     if output is None:
         output = os.getcwd()
@@ -199,8 +201,7 @@ def replace_mip_fx(fx_file):
     return new_mip
 
 
-TAGS_CONFIG_FILE = os.path.join(
-    DIAGNOSTICS_PATH, 'config-references.yml')
+TAGS_CONFIG_FILE = os.path.join(DIAGNOSTICS_PATH, 'config-references.yml')
 
 
 def _load_tags(filename=TAGS_CONFIG_FILE):
