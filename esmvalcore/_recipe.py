@@ -1025,6 +1025,7 @@ class Recipe:
                     'write_netcdf',
                     'profile_diagnostic',
                     'auxiliary_data_dir',
+                    'quicklook',
             ):
                 settings[key] = self._cfg[key]
 

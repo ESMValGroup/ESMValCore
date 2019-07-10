@@ -49,6 +49,7 @@ def read_config_user_file(config_file, recipe_name):
         'profile_diagnostic': False,
         'config_developer_file': None,
         'drs': {},
+        'quicklook': {'active': False},
     }
 
     for key in defaults:
@@ -61,8 +62,13 @@ def read_config_user_file(config_file, recipe_name):
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
 
-    cfg['config_developer_file'] = _normalize_path(
-        cfg['config_developer_file'])
+    if cfg['quicklook']['active']:
+        cfg['config_developer_file'] = _normalize_path(
+            cfg['config_developer_file'])
+        cfg['quicklook']['output_dir'] = _normalize_path(
+            cfg['quicklook']['output_dir'])
+        cfg['quicklook']['recipe_dir'] = _normalize_path(
+            cfg['quicklook']['recipe_dir'])
 
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
