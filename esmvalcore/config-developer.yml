@@ -279,5 +279,4 @@ EMAC:
     # Paths relative to esmvaltool.preprocessor
     # Also accepts absolute paths (starting with '/' or '~')
     cmorizer: '_emac/_cmorizer.py'
-#    var_mapping: '_emac/var_mapping.yml'
-    var_mapping: '~/my_mapping.yml'
+    var_mapping: '_emac/var_mapping.yml'

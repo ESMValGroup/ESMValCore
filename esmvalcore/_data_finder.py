@@ -280,6 +280,7 @@ def get_input_filelist(variable, rootpath, drs):
             var = dict(variable)
             var['channel'] = channel
             files.extend(_find_input_files(var, rootpath, drs))
+        files = list(set(files))
     else:
         files = _find_input_files(variable, rootpath, drs)
     files = select_files(files, variable)

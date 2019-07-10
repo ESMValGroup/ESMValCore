@@ -20,8 +20,8 @@ class TestConcatenate(unittest.TestCase):
         third_coord = coord.copy([5, 6])
         self.raw_cubes = []
         self.raw_cubes.append(
-            Cube([1, 2], var_name='sample', dim_coords_and_dims=((coord,
-                                                                  0), )))
+            Cube([1, 2], var_name='sample',
+                 dim_coords_and_dims=((coord, 0), )))
         self.raw_cubes.append(
             Cube([3, 4],
                  var_name='sample',
@@ -34,8 +34,9 @@ class TestConcatenate(unittest.TestCase):
     def test_concatenate(self):
         """Test concatenation of two cubes."""
         concatenated = _io.concatenate(self.raw_cubes)
-        self.assertTrue((concatenated.coord('coord').points == np.array(
-            [1, 2, 3, 4, 5, 6])).all())
+        self.assertTrue(
+            (concatenated.coord('coord').points == np.array([1, 2, 3, 4, 5,
+                                                             6])).all())
 
     def test_fail_with_duplicates(self):
         """Test exception raised if two cubes are overlapping."""
@@ -70,22 +71,25 @@ class TestConcatenate(unittest.TestCase):
                 'new_int': 0,
                 'new_str': 'hello',
                 'new_nparray': np.arange(3),
+                'new_float': 3.14,
                 'mix': np.arange(2),
             },
             {
-                'new_int': 1,
+                'new_int': 0,
                 'new_str': 'world',
                 'new_list': [1, 1, 2],
                 'new_tuple': (0, 1),
                 'new_dict': {
                     0: 'zero',
                 },
+                'new_float': 5.0,
                 'mix': {
                     1: 'one',
                 },
             },
             {
-                'new_str': '!',
+                'new_int': 1,
+                'new_str': 'world',
                 'new_list': [1, 1, 2, 3],
                 'new_tuple': (1, 2, 3),
                 'new_dict': {
@@ -93,17 +97,19 @@ class TestConcatenate(unittest.TestCase):
                     1: 'one',
                 },
                 'new_nparray': np.arange(2),
+                'new_float': 3.14,
                 'mix': False,
             },
         ]
         resulting_attrs = {
-            'new_int': '0;1',
-            'new_str': 'hello;world;!',
-            'new_nparray': '[0 1 2];[0 1]',
-            'new_list': '[1, 1, 2];[1, 1, 2, 3]',
-            'new_tuple': '(0, 1);(1, 2, 3)',
-            'new_dict': "{0: 'zero'};{0: 'zeroo', 1: 'one'}",
-            'mix': "[0 1];{1: 'one'};False",
+            'new_int': '0|1',
+            'new_str': 'hello|world',
+            'new_nparray': '[0 1 2]|[0 1]',
+            'new_list': '[1, 1, 2]|[1, 1, 2, 3]',
+            'new_tuple': '(0, 1)|(1, 2, 3)',
+            'new_dict': "{0: 'zero'}|{0: 'zeroo', 1: 'one'}",
+            'new_float': '3.14|5.0',
+            'mix': "[0 1]|{1: 'one'}|False",
         }
         resulting_attrs.update(identical_attrs)
 

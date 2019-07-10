@@ -2,7 +2,7 @@
 #
 # cmor varname: {emac varname: channel}
 
-#awhea: {awhea: ?} 
+#awhea: {awhea: ?}
 clivi: {xivi_ave: Amon}
 clt: {aclcov_ave: Amon} #recipe
 clwvi: {xlvi_ave: Amon, xivi_ave: Amon} #recipe
@@ -13,7 +13,7 @@ hfls: {ahfl_ave: Amon}
 lnox: {NOxcg_ave: lnox_PaR_T_gp, NOxic_ave: lnox_PaR_T_gp} #recipe
 pr: {aprl_ave: Amon, aprc_ave: Amon, aprs_ave: Amon} #recipe
 prc: {aprc_ave: Amon}
-prl: {aprl_ave: Amon} #not cmor 
+prl: {aprl_ave: Amon} #not cmor
 prsn: {aprs_ave: Amon}
 prw: {qvi_ave: Amon}
 siconca: {seaice_ave: Amon}
@@ -31,7 +31,7 @@ rtmt: {flxttop_ave: Amon, flxstop_ave: Amon} #recipe
 tas: {temp2_ave: Amon}
 ts: {tsurf: Amon}
 tosga: {tosga_ave: Omon}
-toz: {toz: column}
+toz10hr: {toz: column}
 
 #forcings
 TN_GHG_CO2: {TN_GHG_CO2: import_grid}

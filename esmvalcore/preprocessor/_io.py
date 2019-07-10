@@ -69,8 +69,8 @@ def fix_cube_attributes(cubes):
             if attr not in attributes:
                 attributes[attr] = val
             else:
-                if not np.array_equal(val, attributes[attr]):
-                    attributes[attr] = '{};{}'.format(
+                if str(val) not in str(attributes[attr]):
+                    attributes[attr] = '{}|{}'.format(
                         str(attributes[attr]), str(val))
     for cube in cubes:
         cube.attributes = attributes
