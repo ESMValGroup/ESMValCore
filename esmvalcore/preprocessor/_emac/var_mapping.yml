@@ -2,7 +2,7 @@
 #
 # cmor varname: {emac varname: channel}
 
-#awhea: {awhea: ?} 
+awhea: {awhea_ave: Omon} 
 clivi: {xivi_ave: Amon}
 clt: {aclcov_ave: Amon} #recipe
 clwvi: {xlvi_ave: Amon, xivi_ave: Amon} #recipe
