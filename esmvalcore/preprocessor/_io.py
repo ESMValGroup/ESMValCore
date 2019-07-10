@@ -61,7 +61,7 @@ def load(file, callback=None):
     return raw_cubes
 
 
-def _fix_cube_attributes(cubes):
+def fix_cube_attributes(cubes):
     """Unify attributes of different cubes to allow concatenation."""
     attributes = {}
     for cube in cubes:
@@ -78,7 +78,7 @@ def _fix_cube_attributes(cubes):
 
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
-    _fix_cube_attributes(cubes)
+    fix_cube_attributes(cubes)
     try:
         cube = iris.cube.CubeList(cubes).concatenate_cube()
         return cube
