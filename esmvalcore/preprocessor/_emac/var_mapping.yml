@@ -10,7 +10,7 @@ co2mass: {MP_CO2_ave: tracer_pdef_gp}
 evspsbl: {evap_ave: Amon} #recipe
 hfss: {ahfs_ave: Amon}
 hfls: {ahfl_ave: Amon}
-np: {NOxcg_ave: lnox_PaR_T_gp, NOxic_ave: lnox_PaR_T_gp, dt: lnox_PaR_T_gp} #recipe
+lnox: {NOxcg_ave: lnox_PaR_T_gp, NOxic_ave: lnox_PaR_T_gp} #recipe
 pr: {aprl_ave: Amon, aprc_ave: Amon, aprs_ave: Amon} #recipe
 prc: {aprc_ave: Amon}
 prl: {aprl_ave: Amon} #not cmor 
@@ -44,14 +44,14 @@ BB_AER_TC_s: {BB_AER_BC: import_grid, BB_AER_OC: import_grid} #recipe (add)
 ANTHNT_NO_s: {ANTHNT_NO: import_grid} #recipe
 ANTHNT_CO_s: {ANTHNT_CO: import_grid} #recipe
 ANTHNT_SO2_s: {ANTHNT_SO2: import_grid} #recipe
-ANTHNT_AER_TC_s: [{ANTHNT_AER_BC: import_grid}, {ANTHNT_AER_OC: import_grid}] #recipe (add)
+ANTHNT_AER_TC_s: {ANTHNT_AER_BC: import_grid, ANTHNT_AER_OC: import_grid} #recipe (add)
 ROAD_NO: {ROAD_NO: import_grid}
 ROAD_AER_BC: {ROAD_AER_BC: import_grid}
 SHIP_NO_s: {SHIP_NO: import_grid} #recipe
 SHIP_SO2_S: {SHIP_SO2: import_grid} #recipe
 SHIP_AER_BC_s: {SHIP_AER_B: import_grid} #recipe
-airc_NO_s: {airc_NO: import_grid} #recipe
-VOLC_SO2_s: {VOLC_SO2_SO2: import_grid} #recipe
+AIRC_NO_s: {airc_NO: import_grid, aps: Amon, hyai: Amon, hybi: Amon} #recipe
+VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, aps: Amon, hyai: Amon, hybi: Amon} #recipe
 
 #tracers
 MP_S: {MP_S_ave: tracer_pdef_gp}
@@ -66,9 +66,9 @@ MP_NO: {MP_NO_ave: tracer_pdef_gp}
 MP_NO2: {MP_NO2_ave: tracer_pdef_gp}
 MP_O3: {MP_O3_ave: tracer_pdef_gp}
 MP_CO2: {MP_CO2_ave: tracer_pdef_gp}
-MP_SO4mm_tot: [{MP_SO4mm_ns_ave: tracer_pdef_gp}, {MP_SO4mm_ks_ave: tracer_pdef_gp}, {MP_SO4mm_as_ave: tracer_pdef_gp}, {MP_SO4mm_cs_ave: tracer_pdef_gp}]  #aufaddieren zu total SO4mm
-MP_SS_tot: {MP_SS_ks_ave: tracer_pdef_gp, MP_SS_as_ave: tracer_pdef_gp, MP_SS_cs_ave: tracer_pdef_gp}  #aufaddieren zu total SS
-MP_BC_tot: {MP_BC_ks_ave: tracer_pdef_gp, MP_BC_as_ave: tracer_pdef_gp, MP_BC_cs_ave: tracer_pdef_gp, MP_BC_ki_ave: tracer_pdef_gp}  #alle BC aufaddieren zu total BC
-MP_DU_tot: {MP_DU_as_ave: tracer_pdef_gp, MP_DU_cs_ave: tracer_pdef_gp, MP_DU_ai_ave: tracer_pdef_gp, MP_DU_ci_ave: tracer_pdef_gp}  #aufaddieren zu total DU
+MP_SO4mm_tot: {MP_SO4mm_ns_ave: tracer_pdef_gp, MP_SO4mm_ks_ave: tracer_pdef_gp, MP_SO4mm_as_ave: tracer_pdef_gp, MP_SO4mm_cs_ave: tracer_pdef_gp}  #calculate total SO4mm
+MP_SS_tot: {MP_SS_ks_ave: tracer_pdef_gp, MP_SS_as_ave: tracer_pdef_gp, MP_SS_cs_ave: tracer_pdef_gp}  #calculate total SS
+MP_BC_tot: {MP_BC_ks_ave: tracer_pdef_gp, MP_BC_as_ave: tracer_pdef_gp, MP_BC_cs_ave: tracer_pdef_gp, MP_BC_ki_ave: tracer_pdef_gp}  #calculate total BC
+MP_DU_tot: {MP_DU_as_ave: tracer_pdef_gp, MP_DU_cs_ave: tracer_pdef_gp, MP_DU_ai_ave: tracer_pdef_gp, MP_DU_ci_ave: tracer_pdef_gp}  #calculate total DU
 MP_ClOX: {MP_ClOX_ave: tracer_pdef_gp}
 MP_NOX: {MP_NOX_ave: tracer_pdef_gp}
