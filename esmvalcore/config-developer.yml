@@ -268,6 +268,7 @@ ana4mips:
   cmor_type: 'CMIP5'
 
 EMAC:
+  cmor_strict: false
   input_dir:
     default: '[dataset]/[channel]'
   input_file: '[dataset]*[channel]*.nc'
@@ -280,4 +281,3 @@ EMAC:
     cmorizer: '_emac/_cmorizer.py'
 #    var_mapping: '_emac/var_mapping.yml'
     var_mapping: '~/my_mapping.yml'
-    light_cmorizer: true

@@ -10,7 +10,6 @@ from cf_units import Unit
 from dask import array as da
 
 from esmvalcore import __version__ as version
-from esmvalcore._config import get_tag_value
 
 logger = logging.getLogger(__name__)
 
@@ -40,11 +39,11 @@ def cmorize(cubes, variable, var_mapping, cmorizer):
     return cmorizer_module.cmorize(cubes, variable, var_mapping)
 
 
-def add_height2m(cube):
-    """Add scalar coordinate 'height' with value of 2m."""
-    logger.info("Adding height coordinate (2m)")
+def add_scalar_height_coord(cube, height=2.0):
+    """Add scalar coordinate 'height' with value of `height`m."""
+    logger.info("Adding height coordinate (%sm)", height)
     height_coord = iris.coords.AuxCoord(
-        2.0,
+        height,
         var_name='height',
         standard_name='height',
         long_name='height',
@@ -136,38 +135,22 @@ def flip_dim_coord(cube, coord_name):
     coord = cube.coord(coord_name, dim_coords=True)
     coord_idx = cube.coord_dims(coord)[0]
     coord.points = np.flip(coord.points)
-    coord.bounds = np.flip(coord.bounds, axis=0)
+    if coord.bounds is not None:
+        coord.bounds = np.flip(coord.bounds, axis=0)
     cube.data = da.flip(cube.core_data(), axis=coord_idx)
 
 
-def save_variable(cube, var, outdir, attrs, **kwargs):
-    """Saver function."""
-    # CMOR standard
-    cube_time = cube.coord('time')
-    reftime = Unit(cube_time.units.origin, cube_time.units.calendar)
-    dates = reftime.num2date(cube_time.points[[0, -1]])
-    if len(cube_time.points) == 1:
-        year = str(dates[0].year)
-        time_suffix = '-'.join([year + '01', year + '12'])
-    else:
-        date1 = str(dates[0].year) + '%02d' % dates[0].month
-        date2 = str(dates[1].year) + '%02d' % dates[1].month
-        time_suffix = '-'.join([date1, date2])
-
-    file_name = '_'.join([
-        'OBS',
-        attrs['dataset_id'],
-        attrs['modeling_realm'],
-        attrs['version'],
-        attrs['mip'],
-        var,
-        time_suffix,
-    ]) + '.nc'
-    file_path = os.path.join(outdir, file_name)
-    logger.info('Saving: %s', file_path)
-    status = 'lazy' if cube.has_lazy_data() else 'realized'
-    logger.info('Cube has %s data [lazy is preferred]', status)
-    iris.save(cube, file_path, fill_value=1e20, **kwargs)
+def is_increasing(cube, coord_name):
+    """Check if coordinate of cube is increasing."""
+    coord_points = cube.coord(coord_name, dim_coords=True).points
+    if len(coord_points) < 2:
+        logger.warning(
+            "Cannot check if coordinate '%s' is increasing, it only contains "
+            "%i elements", coord_name, len(coord_points))
+        return None
+    if coord_points[1] > coord_points[0]:
+        return True
+    return False
 
 
 def set_global_atts(cube, variable):

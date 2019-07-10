@@ -6,8 +6,11 @@ from cf_units import Unit
 
 from esmvalcore._data_finder import load_mapping
 from esmvalcore.cmor.table import CMOR_TABLES
-from esmvalcore.preprocessor._cmorize import fix_var_metadata, fix_coords, \
-    convert_timeunits, set_global_atts
+from esmvalcore.preprocessor._cmorize import (fix_var_metadata, fix_coords,
+                                              convert_timeunits,
+                                              set_global_atts,
+                                              add_scalar_height_coord,
+                                              is_increasing, flip_dim_coord)
 from esmvalcore.preprocessor._emac._derive import (
     var_name_constraint, get_derive_function)
 from esmvalcore.preprocessor._io import fix_cube_attributes
@@ -92,6 +95,12 @@ def _fix_metadata(cube, variable, var_info):
     fix_coords(cube)
     convert_timeunits(cube, 1950)
     set_global_atts(cube, variable)
+    if 'height2m' in var_info.dimensions:
+        add_scalar_height_coord(cube, 2.0)
+    if 'height10m' in var_info.dimensions:
+        add_scalar_height_coord(cube, 10.0)
+    if not is_increasing(cube, 'latitude'):
+        flip_dim_coord(cube, 'latitude')
 
 
 def _get_var_info(variable):
@@ -100,9 +109,7 @@ def _get_var_info(variable):
     short_name = variable['short_name']
     table_entry = CMOR_TABLES[variable['project']].get_variable(mip,
                                                                 short_name)
-    if table_entry is not None:
-        return table_entry
-    if 'derive' in variable or 'custom_cmor_table' in variable:
+    if table_entry is None and 'derive' in variable:
         table_entry = CMOR_TABLES['custom'].get_variable(mip, short_name)
     if table_entry is None:
         raise ValueError(
@@ -128,15 +135,7 @@ def _unify_metadata(cubes, var_name=None):
 
 
 def cmorize(cubes, variable, var_mapping):
-    """CMORize EMAC data.
-
-    Note
-    ----
-    At the moment, this is only a "light" CMORizer, i.e. the option
-    'light_cmorizer' has to be set in `config-developer.yml` or the CMOR checks
-    of the preprocessor will fail.
-
-    """
+    """CMORize EMAC data."""
     project = variable['project']
     short_name = variable['short_name']
     var_info = _get_var_info(variable)

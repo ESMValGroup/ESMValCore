@@ -106,7 +106,6 @@ def _add_cmor_info(variable, override=False):
         logger.warning("Unknown CMOR table %s", variable['cmor_table'])
 
     derive = variable.get('derive', False)
-    custom_cmor_table = variable.get('custom_cmor_table', False)
     # Copy the following keys from CMOR table
     cmor_keys = [
         'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
@@ -117,10 +116,6 @@ def _add_cmor_info(variable, override=False):
     table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name)
 
     if derive and table_entry is None:
-        custom_table = CMOR_TABLES['custom']
-        table_entry = custom_table.get_variable(mip, short_name)
-
-    if custom_cmor_table and table_entry is None:
         custom_table = CMOR_TABLES['custom']
         table_entry = custom_table.get_variable(mip, short_name)
 
