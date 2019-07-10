@@ -20,8 +20,6 @@ import cf_units
 import iris
 import numpy as np
 
-from .._config import use_legacy_iris
-
 logger = logging.getLogger(__name__)
 
 
@@ -151,14 +149,7 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
 
 def _datetime_to_int_days(cube):
     """Return list of int(days) converted from cube datetime cells."""
-    if use_legacy_iris():
-        time_cells = [
-            cube.coord('time').units.num2date(cell.point)
-            for cell in cube.coord('time').cells()
-        ]
-    else:
-        time_cells = [cell.point for cell in cube.coord('time').cells()]
-
+    time_cells = [cell.point for cell in cube.coord('time').cells()]
     time_unit = cube.coord('time').units.name
     time_offset = _get_time_offset(time_unit)
 
@@ -300,7 +291,43 @@ def _assemble_full_data(cubes, statistic):
 
 
 def multi_model_statistics(products, span, output_products, statistics):
-    """Compute multi-model mean and median."""
+    """
+    Compute multi-model statistics.
+
+    Multimodel statistics computed along the time axis. Can be
+    computed across a common overlap in time (set span: overlap)
+    or across the full length in time of each model (set span: full).
+    Restrictive compuation is also available by excluding any set of
+    models that the user will not want to include in the statistics
+    (set exclude: [excluded models list]).
+
+    Restrictions needed by the input data:
+    - model datasets must have consistent shapes,
+    - higher dimesnional data is not supported (ie dims higher than four:
+    time, vertical axis, two horizontal axes).
+
+    Parameters
+    ----------
+    products: list
+        list of data products to be used in multimodel stat computation;
+        cube attribute of product is the data cube for computing the stats.
+    span: str
+        overlap or full; if overlap stas are computed on common time-span;
+        if full stats are computed on full time spans.
+    output_products: dict
+        dictionary of output products.
+    statistics: str
+        statistical measure to be computed (mean or median).
+    Returns
+    -------
+    list
+        list of data products containing the multimodel stats computed.
+    Raises
+    ------
+    ValueError
+        If span is neither overlap nor full.
+
+    """
     logger.debug('Multimodel statistics: computing: %s', statistics)
     if len(products) < 2:
         logger.info("Single dataset in list: will not compute statistics.")

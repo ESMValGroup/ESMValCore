@@ -6,15 +6,14 @@ from copy import deepcopy
 
 import iris
 import numpy as np
-import six
 import stratify
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 
+from ..cmor.fix import fix_file, fix_metadata
+from ..cmor.table import CMOR_TABLES
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
-from ..cmor.fix import fix_file, fix_metadata
-from ..cmor.table import CMOR_TABLES
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -55,7 +54,25 @@ VERTICAL_SCHEMES = ('linear', 'nearest',
 
 
 def parse_cell_spec(spec):
-    """Parse an MxN cell specification string."""
+    """
+    Parse an MxN cell specification string.
+
+    Parameters
+    ----------
+    spec: str
+
+    Returns
+    -------
+    tuple
+        tuple of (float, float) of parsed (lon, lat)
+
+    Raises
+    ------
+    ValueError
+        if the MxN cell specification is malformed.
+    ValueError
+        invalid longitude and latitude delta in cell specification.
+    """
     cell_match = _CELL_SPEC.match(spec)
     if cell_match is None:
         emsg = 'Invalid MxN cell specification for grid, got {!r}.'
@@ -202,7 +219,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         emsg = 'Unknown regridding scheme, got {!r}.'
         raise ValueError(emsg.format(scheme))
 
-    if isinstance(target_grid, six.string_types):
+    if isinstance(target_grid, str):
         if os.path.isfile(target_grid):
             target_grid = iris.load_cube(target_grid)
         else:

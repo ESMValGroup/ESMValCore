@@ -60,7 +60,6 @@ class DerivedVariable(DerivedVariableBase):
         toz_cube = toz_cube / MW_O3 * AVOGADRO_CONST
         toz_cube.units = toz_cube.units / MW_O3_UNIT * AVOGADRO_CONST_UNIT
         toz_cube.convert_units(DOBSON_UNIT)
-        toz_cube.data = np.ma.array(toz_cube.data, dtype=np.dtype('float32'))
 
         return toz_cube
 
@@ -77,7 +76,7 @@ def _pressure_level_widths(tro3_cube, ps_cube, top_limit=0.0):
             `Cube` containing `mole_fraction_of_ozone_in_air`.
         ps_cube : iris.cube.Cube
             `Cube` containing `surface_air_pressure`.
-        top_limit : double
+        top_limit : float
             Pressure in Pa.
 
     Returns
@@ -105,7 +104,7 @@ def _create_pressure_array(tro3_cube, ps_cube, top_limit):
     pressure limit.
     """
     # Create 4D array filled with pressure level values
-    p_levels = tro3_cube.coord('air_pressure').points
+    p_levels = tro3_cube.coord('air_pressure').points.astype(np.float32)
     p_4d_array = iris.util.broadcast_to_shape(p_levels, tro3_cube.shape, [1])
 
     # Create 4d array filled with surface pressure values
@@ -116,7 +115,7 @@ def _create_pressure_array(tro3_cube, ps_cube, top_limit):
     pressure_4d = np.where((ps_4d_array - p_4d_array) < 0, np.NaN, p_4d_array)
 
     # Make top_limit last pressure level
-    top_limit_array = np.ones(ps_cube.shape) * top_limit
+    top_limit_array = np.full(ps_cube.shape, top_limit, dtype=np.float32)
     data = top_limit_array[:, np.newaxis, :, :]
     pressure_4d = np.concatenate((pressure_4d, data), axis=1)
 
@@ -149,16 +148,16 @@ def _p_level_widths(array):
     contains two elements less.
 
     >>> _p_level_widths(np.array([1020, 1000, 700, 500, 5]))
-    array([170., 250., 595.])
+    array([170., 250., 595.], dtype=float32)
 
     >>> _p_level_widths(np.array([990, np.NaN, 700, 500, 5]))
-    array([  0., 390., 595.])
+    array([  0., 390., 595.], dtype=float32)
     """
     surface_pressure = array[0]
     top_limit = array[-1]
     array = array[1:-1]
 
-    p_level_widths = np.ones(array.shape) * np.NAN
+    p_level_widths = np.full(array.shape, np.NAN, dtype=np.float32)
 
     last_pressure_level = len(array) - 1
     for i, val in enumerate(array):
