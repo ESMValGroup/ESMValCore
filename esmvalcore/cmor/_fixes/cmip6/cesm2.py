@@ -3,7 +3,7 @@ from ..fix import Fix
 from ..shared import add_height_coord
 
 
-class tas(Fix):
+class Tas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
