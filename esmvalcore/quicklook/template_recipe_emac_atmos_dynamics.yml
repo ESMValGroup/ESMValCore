@@ -44,6 +44,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_clt:
     description: Timeseries of global mean total cloud coverage.
@@ -67,6 +69,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_evspsbl:
     description: Timeseries of global mean evaporation.
@@ -80,6 +84,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_hfns:
     description: Timeseries of global mean surface net heat flux.
@@ -93,6 +99,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_pr:
     description: Timeseries of global mean precipitation.
@@ -106,6 +114,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_prc:
     description: Timeseries of global mean convective precipitation.
@@ -119,6 +129,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_prl:
     description: Timeseries of global mean large-scale precipitation.
@@ -132,6 +144,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_prsn:
     description: Timeseries of global mean snow fall.
@@ -145,6 +159,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_prw:
     description: Timeseries of global mean water vapor content.
@@ -158,6 +174,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
 
   glob_timeseries_rlns:
     description: Timeseries of global mean net longwave radiation (surface).
@@ -171,6 +189,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_rlut:
     description: Timeseries of global mean outgoing longwave radiation (TOA).
@@ -184,6 +204,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
 
   glob_timeseries_rsns:
     description: Timeseries of global mean net solar radiation (surface).
@@ -197,6 +219,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_rsnt:
     description: Timeseries of global mean net solar radiation (TOA).
@@ -210,6 +234,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_rtmt:
     description: Timeseries of global mean radiation budget (TOA).
@@ -223,6 +249,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_tas:
     description: Timeseries of global mean surface temperature.
@@ -236,6 +264,8 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_ts:
     description: Timeseries of global mean 2-m temperature.
@@ -249,3 +279,5 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
