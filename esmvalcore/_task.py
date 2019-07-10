@@ -530,6 +530,7 @@ class DiagnosticTask(BaseTask):
             'write_ncl_interface',
             'write_plots',
             'work_dir',
+            'quicklook',
         )
         attrs = {
             'script_file': self.script,

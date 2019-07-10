@@ -10,6 +10,7 @@ from cf_units import Unit
 from dask import array as da
 
 from esmvalcore import __version__ as version
+from esmvalcore.cmor.table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +43,12 @@ def cmorize(cubes, variable, var_mapping, cmorizer):
 def add_scalar_height_coord(cube, height=2.0):
     """Add scalar coordinate 'height' with value of `height`m."""
     logger.info("Adding height coordinate (%sm)", height)
-    height_coord = iris.coords.AuxCoord(
-        height,
-        var_name='height',
-        standard_name='height',
-        long_name='height',
-        units=Unit('m'),
-        attributes={'positive': 'up'})
+    height_coord = iris.coords.AuxCoord(height,
+                                        var_name='height',
+                                        standard_name='height',
+                                        long_name='height',
+                                        units=Unit('m'),
+                                        attributes={'positive': 'up'})
     cube.add_aux_coord(height_coord, ())
 
 
@@ -92,11 +92,13 @@ def fix_coords(cube):
                 cube.attributes['geospatial_lon_max'] = 360.
                 nlon = len(cube.coord('longitude').points)
                 _roll_cube_data(cube, int(nlon / 2), -1)
+            cube_coord.coord_system = None
 
         # fix latitude
         if cube_coord.var_name == 'lat':
             logger.info("Fixing latitude")
             _fix_bounds(cube, cube.coord('latitude'))
+            cube_coord.coord_system = None
 
         # fix depth
         if cube_coord.var_name == 'lev':
@@ -107,10 +109,6 @@ def fix_coords(cube):
         if cube_coord.var_name == 'air_pressure':
             logger.info("Fixing air pressure")
             _fix_bounds(cube, cube.coord('air_pressure'))
-
-    # remove CS
-    cube.coord('latitude').coord_system = None
-    cube.coord('longitude').coord_system = None
 
     return cube
 
@@ -140,6 +138,21 @@ def flip_dim_coord(cube, coord_name):
     cube.data = da.flip(cube.core_data(), axis=coord_idx)
 
 
+def get_var_info(variable):
+    """Get variable information from correct CMOR table."""
+    mip = variable['mip']
+    short_name = variable['short_name']
+    table_entry = CMOR_TABLES[variable['project']].get_variable(
+        mip, short_name)
+    if table_entry is None and 'derive' in variable:
+        table_entry = CMOR_TABLES['custom'].get_variable(mip, short_name)
+    if table_entry is None:
+        raise ValueError(
+            f"Unable to load CMOR table for variable '{short_name}' with mip "
+            f"'{mip}' (including custom tables)")
+    return table_entry
+
+
 def is_increasing(cube, coord_name):
     """Check if coordinate of cube is increasing."""
     coord_points = cube.coord(coord_name, dim_coords=True).points
@@ -153,7 +166,7 @@ def is_increasing(cube, coord_name):
     return False
 
 
-def set_global_atts(cube, variable):
+def set_global_atts(cube, variable, var_info):
     """Complete the cmorized file with global metadata."""
     logger.info("Setting global metadata")
     timestamp = datetime.datetime.utcnow()
@@ -166,7 +179,10 @@ def set_global_atts(cube, variable):
         'project': variable['project'],
         'mip': variable['mip'],
         'dataset_id': variable['dataset'],
+        'frequency': var_info.frequency,
     }
+    if hasattr(var_info, 'modeling_realm'):
+        attrs['modeling_realm'] = var_info.modeling_realm
     cube.attributes.update(attrs)
 
 
