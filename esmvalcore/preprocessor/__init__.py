@@ -31,12 +31,12 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     'download',
-    # CMORization
-    'cmorize',
     # File reformatting/CMORization
     'fix_file',
     # Load cubes from file
     'load',
+    # Project-specific CMORization
+    'cmorize',
     # Derive variable
     'derive',
     # Metadata reformatting/CMORization

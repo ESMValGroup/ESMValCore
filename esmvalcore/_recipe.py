@@ -600,17 +600,17 @@ def _get_cmorizer_options(variable):
     return cmorize_options
 
 
-def _update_cmorizer_settings(settings, variable):
+def _update_cmorizer_settings(settings, variable, derive=False):
     """Get correct settings if CMORization for project is desired."""
+    if derive:
+        return
     cmorize_options = _get_cmorizer_options(variable)
     if cmorize_options is None:
         return
-    cmorize_dir = os.path.splitext(variable['filename'])[0] + '_cmorized'
     options = {
-        'short_name': variable['short_name'],
-        'cmorizer': cmorize_options['cmorizer'],
+        'variable': deepcopy(variable),
         'var_mapping': cmorize_options['var_mapping'],
-        'output_dir': cmorize_dir,
+        'cmorizer': cmorize_options['cmorizer'],
     }
     settings['cmorize'] = dict(options)
 
@@ -641,7 +641,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         settings = _get_default_settings(
             variable, config_user, derive='derive' in profile)
         _apply_preprocessor_profile(settings, profile)
-        _update_cmorizer_settings(settings=settings, variable=variable)
+        _update_cmorizer_settings(
+            settings=settings, variable=variable, derive='derive' in profile)
         _update_multi_dataset_settings(variable, settings)
         _update_target_levels(
             variable=variable,
