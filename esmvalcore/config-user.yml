@@ -47,3 +47,14 @@ rootpath:
 # See config-developer.yml for definitions.
 drs:
   CMIP5: default
+# Quicklook
+quicklook:
+  active: True
+  output_dir: /path/to/persistent/output/dir
+  recipe_dir: /path/to/templates/of/recipes
+  recipes:
+    - atmos_chem
+    - atmos_dynamics
+    - ocean
+    - forcings
+
