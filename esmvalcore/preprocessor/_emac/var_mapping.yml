@@ -50,8 +50,8 @@ ROAD_AER_BC: {ROAD_AER_BC: import_grid}
 SHIP_NO_s: {SHIP_NO: import_grid} #recipe
 SHIP_SO2_S: {SHIP_SO2: import_grid} #recipe
 SHIP_AER_BC_s: {SHIP_AER_B: import_grid} #recipe
-AIRC_NO_s: {airc_NO: import_grid, geopot_ave: Amon, geosp_ave: Amon} #recipe
-VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, geopot_ave: Amon, geosp_ave: Amon} #recipe
+AIRC_NO_s: {airc_NO: import_grid, aps: Amon, hyai: Amon, hybi: Amon} #recipe
+VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, aps: Amon, hyai: Amon, hybi: Amon} #recipe
 
 #tracers
 MP_S: {MP_S_ave: tracer_pdef_gp}
