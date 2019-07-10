@@ -40,7 +40,6 @@ diagnostics:
       - atmos
     variables:
       co2mass:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -53,7 +52,6 @@ diagnostics:
       - atmos
     variables:
       np:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -79,7 +77,6 @@ diagnostics:
       - atmos
     variables:
       MP_S:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -92,7 +89,6 @@ diagnostics:
       - atmos
     variables:
       MP_CFCl3:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -105,7 +101,6 @@ diagnostics:
       - atmos
     variables:
       MP_NH3:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -118,7 +113,6 @@ diagnostics:
       - atmos
     variables:
       MP_N2O:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -131,7 +125,6 @@ diagnostics:
       - atmos
     variables:
       MP_CO:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -144,7 +137,6 @@ diagnostics:
       - atmos
     variables:
       MP_CH4:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -157,7 +149,6 @@ diagnostics:
       - atmos
     variables:
       MP_SO2:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -170,7 +161,6 @@ diagnostics:
       - atmos
     variables:
       MP_OH:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -183,7 +173,6 @@ diagnostics:
       - atmos
     variables:
       MP_NO:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -196,7 +185,6 @@ diagnostics:
       - atmos
     variables:
       MP_NO2:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -209,7 +197,6 @@ diagnostics:
       - atmos
     variables:
       MP_O3:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -222,7 +209,6 @@ diagnostics:
       - atmos
     variables:
       MP_CO2:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -235,7 +221,6 @@ diagnostics:
       - atmos
     variables:
       MP_SO4mm_tot:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -248,7 +233,6 @@ diagnostics:
       - atmos
     variables:
       MP_SS_tot:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -261,7 +245,6 @@ diagnostics:
       - atmos
     variables:
       MP_BC_tot:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -274,7 +257,6 @@ diagnostics:
       - atmos
     variables:
       MP_DU_tot:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -287,7 +269,6 @@ diagnostics:
       - atmos
     variables:
       MP_ClOX:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -300,7 +281,6 @@ diagnostics:
       - atmos
     variables:
       MP_NOX:
-        preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
