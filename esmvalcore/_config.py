@@ -69,6 +69,8 @@ def read_config_user_file(config_file, recipe_name):
             cfg['quicklook']['output_dir'])
         cfg['quicklook']['recipe_dir'] = _normalize_path(
             cfg['quicklook']['recipe_dir'])
+        cfg['save_intermediary_cubes'] = False
+        cfg['remove_preproc_dir'] = False
 
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
