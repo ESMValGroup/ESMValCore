@@ -10,7 +10,7 @@ co2mass: {MP_CO2_ave: tracer_pdef_gp}
 evspsbl: {evap_ave: Amon} #recipe
 hfss: {ahfs_ave: Amon}
 hfls: {ahfl_ave: Amon}
-np: {NOxcg_ave: lnox_PaR_T_gp, NOxic_ave: lnox_PaR_T_gp, dt: lnox_PaR_T_gp} #recipe
+lnox: {NOxcg_ave: lnox_PaR_T_gp, NOxic_ave: lnox_PaR_T_gp} #recipe
 pr: {aprl_ave: Amon, aprc_ave: Amon, aprs_ave: Amon} #recipe
 prc: {aprc_ave: Amon}
 prl: {aprl_ave: Amon} #not cmor 
