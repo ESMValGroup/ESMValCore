@@ -11,6 +11,7 @@ class TestCleanup(unittest.TestCase):
     """Tests for :func:`esmvalcore.preprocessor._io.cleanup`"""
 
     def setUp(self):
+        """Prepare tests."""
         self.temp_paths = []
         descriptor, temp_file = tempfile.mkstemp('.nc')
         os.close(descriptor)
