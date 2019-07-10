@@ -3,8 +3,8 @@ import iris
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Tas
+from esmvalcore.cmor.fix import Fix
 
 
 @pytest.fixture

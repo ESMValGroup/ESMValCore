@@ -1,4 +1,3 @@
-
 """Fixes for NorESM1-ME model."""
 from ..fix import Fix
 from ..shared import round_coordinates

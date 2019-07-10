@@ -5,8 +5,8 @@ import iris
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.miroc5 import Sftof, Tas
+from esmvalcore.cmor.fix import Fix
 
 
 class TestSftof(unittest.TestCase):
@@ -19,8 +19,8 @@ class TestSftof(unittest.TestCase):
 
     def test_get(self):
         """Test fix get"""
-        self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'MIROC5', 'sftof'), [Sftof()])
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'sftof'),
+                             [Sftof()])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -43,8 +43,7 @@ class TestTas(unittest.TestCase):
 
     def test_get(self):
         """Test fix get"""
-        self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'MIROC5', 'tas'), [Tas()])
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'tas'), [Tas()])
 
     def test_fix_metadata(self):
         """Test metadata fix."""
