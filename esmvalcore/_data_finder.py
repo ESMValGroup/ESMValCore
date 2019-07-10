@@ -9,6 +9,8 @@ import logging
 import os
 import re
 
+import yaml
+
 from ._config import get_project_config, replace_mip_fx
 from .cmor.table import CMOR_TABLES
 
@@ -29,7 +31,7 @@ def find_files(dirnames, filenames):
     return result
 
 
-def get_start_end_year(filename):
+def get_start_end_year(filename, variable):
     """Get the start and end year from a file name.
 
     This works for filenames matching
@@ -43,10 +45,21 @@ def get_start_end_year(filename):
     YYYY*[-,_]YYYY*[-,_]*.*
       or
     YYYY*[-,_]*[-,_]YYYY*.* (Does this make sense? Is this worth catching?)
-    """
-    name = os.path.splitext(filename)[0]
+      or
+    project specific formatting (preprocess filename prior to data extraction
+    using `date_prefix_regex` or `date_prefix_tags`).
 
-    filename = name.split(os.sep)[-1]
+
+    """
+    name = os.path.basename(filename)
+    filename = os.path.splitext(name)[0]
+    cfg = get_project_config(variable['project'])
+    if cfg.get('date_prefix_regex'):
+        filename = re.sub(cfg['date_prefix_regex'], '', filename)
+    if cfg.get('date_prefix_tabs'):
+        pattern = _replace_tags(cfg['date_prefix_tabs'], variable)
+        filename = filename.replace(pattern, '')
+
     filename_list = [elem.split('-') for elem in filename.split('_')]
     filename_list = [elem for sublist in filename_list for elem in sublist]
 
@@ -74,20 +87,22 @@ def get_start_end_year(filename):
     elif len(dates) == 2:
         start_year, end_year = int(dates[0][:4]), int(dates[1][:4])
     else:
-        raise ValueError('Name {0} dates do not match a recognized '
-                         'pattern'.format(name))
+        raise ValueError(
+            f'Name {name} dates do not match a recognized pattern')
 
     return start_year, end_year
 
 
-def select_files(filenames, start_year, end_year):
+def select_files(filenames, variable):
     """Select files containing data between start_year and end_year.
 
     This works for filenames matching *_YYYY*-YYYY*.* or *_YYYY*.*
     """
+    start_year = variable['start_year']
+    end_year = variable['end_year']
     selection = []
     for filename in filenames:
-        start, end = get_start_end_year(filename)
+        start, end = get_start_end_year(filename, variable)
         if start <= end_year and end >= start_year:
             selection.append(filename)
     return selection
@@ -238,10 +253,37 @@ def _find_input_files(variable, rootpath, drs, fx_var=None):
     return files
 
 
+def load_mapping(variable):
+    """Load variable mapping for CMORizer preprocessor."""
+    path = variable['mapping']
+    path = os.path.expanduser(path)
+    if not os.path.isabs(path):
+        root = os.path.dirname(os.path.realpath(__file__))
+        path = os.path.join(root, 'preprocessor', path)
+    with open(path, 'r') as file:
+        mapping = yaml.safe_load(file)
+    short_name = variable['short_name']
+    if short_name not in mapping:
+        raise ValueError(
+            f"Mapping {path} for project {variable['project']} does not "
+            f"contain variable '{short_name}'")
+    logger.debug("Loading variable mapping %s for variable '%s'", path,
+                 short_name)
+    return mapping[short_name]
+
+
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
-    files = _find_input_files(variable, rootpath, drs)
-    files = select_files(files, variable['start_year'], variable['end_year'])
+    if 'mapping' in variable:
+        mapping = load_mapping(variable)
+        files = []
+        for channel in mapping.values():
+            var = dict(variable)
+            var['channel'] = channel
+            files.extend(_find_input_files(var, rootpath, drs))
+    else:
+        files = _find_input_files(variable, rootpath, drs)
+    files = select_files(files, variable)
     return files
 
 
