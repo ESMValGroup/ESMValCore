@@ -16,7 +16,7 @@ prc: {aprc_ave: Amon}
 prl: {aprl_ave: Amon} #not cmor
 prsn: {aprs_ave: Amon}
 prw: {qvi_ave: Amon}
-siconca: {seaice_ave: Amon}
+siconc: {seaice_ave: Amon}
 sithick: {siced_ave: Amon}
 rlds: {flxtbot_ave: Amon, tradsu_ave: Amon} #recipe
 rlus: {tradsu_ave: Amon}
@@ -29,7 +29,7 @@ rsut: {srad0u_ave: Amon}
 rsutcs: {flxusftop_ave: Amon}
 rtmt: {flxttop_ave: Amon, flxstop_ave: Amon} #recipe
 tas: {temp2_ave: Amon}
-ts: {tsurf: Amon}
+ts: {tsurf_ave: Amon}
 tosga: {tosga_ave: Omon}
 toz10hr: {toz: column}
 

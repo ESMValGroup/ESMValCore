@@ -9,7 +9,7 @@ from . import var_name_constraint
 
 def derive(cubes):
     rtmt_cube = cubes.extract_strict(
-        var_name_constraint('flxltop_ave')) + cubes.extract_strict(
+        var_name_constraint('flxttop_ave')) + cubes.extract_strict(
             var_name_constraint('flxstop_ave'))
 
     return rtmt_cube
