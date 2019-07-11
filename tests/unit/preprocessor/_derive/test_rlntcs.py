@@ -18,6 +18,6 @@ def cubes():
 def test_rlntcs_calculation(cubes):
     derived_var = rlntcs.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
-    np.testing.assert_allclose(
-        out_cube.data, np.array([[-1.0, -2.0], [0.0, 2.0]]))
+    np.testing.assert_allclose(out_cube.data,
+                               np.array([[-1.0, -2.0], [0.0, 2.0]]))
     assert out_cube.attributes['positive'] == 'down'
