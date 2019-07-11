@@ -42,11 +42,11 @@ def read_cmor_tables(cfg_developer):
             default = custom
         if cmor_type == 'CMIP5':
             CMOR_TABLES[table] = CMIP5Info(
-                table_path, default=default,
+                table_path, default=default, strict=cmor_strict,
             )
         elif cmor_type == 'CMIP6':
             CMOR_TABLES[table] = CMIP6Info(
-                table_path, default=default,
+                table_path, default=default, strict=cmor_strict,
             )
 
 
@@ -69,13 +69,14 @@ class CMIP6Info(object):
         'tro3': 'o3',
     }
 
-    def __init__(self, cmor_tables_path, default=None):
+    def __init__(self, cmor_tables_path, default=None, strict=True):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
         self.default = default
 
         self.tables = {}
+        self.strict = strict
 
         self._load_coordinates()
         for json_file in glob.glob(os.path.join(self._cmor_folder, '*.json')):
@@ -183,6 +184,10 @@ class CMIP6Info(object):
             if short_name in CMIP6Info._CMIP_5to6_varname:
                 new_short_name = CMIP6Info._CMIP_5to6_varname[short_name]
                 return self.get_variable(table, new_short_name)
+            if not self.strict:
+                for table in self.tables.values():
+                    if short_name in table:
+                        return table[short_name]
             if self.default:
                 return self.default.get_variable(table, short_name)
             return None
@@ -407,7 +412,7 @@ class CMIP5Info(object):
 
     """
 
-    def __init__(self, cmor_tables_path, default=None):
+    def __init__(self, cmor_tables_path, default=None, strict=True):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
@@ -418,6 +423,7 @@ class CMIP5Info(object):
         self.tables = {}
         self.coords = {}
         self.default = default
+        self.strict = strict
         self._current_table = None
         self._last_line_read = None
 
@@ -555,6 +561,10 @@ class CMIP5Info(object):
 
         """
         var_info = self.tables.get(table, {}).get(short_name, None)
+        if not var_info and not self.strict:
+            for table in self.tables.values():
+                if short_name in table:
+                    return table[short_name]
         if not var_info and self.default:
             return self.default.get_variable(table, short_name)
         return var_info
