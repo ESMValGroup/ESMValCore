@@ -18,6 +18,9 @@ class TestCMIP6Info(unittest.TestCase):
         """
         cls.variables_info = CMIP6Info('cmip6', default=CustomInfo())
 
+    def setUp(self):
+        self.variables_info.strict = True
+
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
         cwd = os.path.dirname(os.path.realpath(__file__))
@@ -38,7 +41,7 @@ class TestCMIP6Info(unittest.TestCase):
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
+        self.assertIsNone(self.variables_info.get_variable('Omon', 'ta'))
 
     def test_aermon_ta_fail_if_strict(self):
         """Get ta fails with Omon if strict."""
