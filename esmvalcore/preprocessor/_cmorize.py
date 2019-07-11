@@ -54,7 +54,6 @@ def add_scalar_height_coord(cube, height=2.0):
 
 def convert_timeunits(cube, start_year):
     """Convert time axis from malformed Year 0."""
-    # TODO any more weird cases?
     if cube.coord('time').units == 'months since 0000-01-01 00:00:00':
         real_unit = 'months since {}-01-01 00:00:00'.format(str(start_year))
     elif cube.coord('time').units == 'days since 0000-01-01 00:00:00':
@@ -119,8 +118,8 @@ def fix_var_metadata(cube, var_info):
         cube.standard_name = var_info.standard_name
     except ValueError:
         cube.standard_name = None
-        logger.warning("Got invalid standard_name '%s' for variable '%s'",
-                       var_info.standard_name, var_info.short_name)
+        logger.debug("Got invalid standard_name '%s' for variable '%s'",
+                     var_info.standard_name, var_info.short_name)
     cube.var_name = var_info.short_name
     cube.long_name = var_info.long_name
     _set_units(cube, var_info.units)

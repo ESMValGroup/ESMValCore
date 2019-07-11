@@ -1,4 +1,4 @@
-"""CMORize EMAC data."""
+"""Cmorize EMAC data."""
 import logging
 
 import iris
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 INVALID_UNITS = {
     'kg/m**2s': 'kg m-2 s-1',
+    'kg(NO2) m-2 s-1': 'kg m-2 s-1',
 }
 
 
@@ -121,7 +122,7 @@ def _unify_metadata(cubes, var_name=None):
 
 
 def cmorize(cubes, variable, var_mapping):
-    """CMORize EMAC data."""
+    """Cmorize EMAC data."""
     project = variable['project']
     short_name = variable['short_name']
     var_info = get_var_info(variable)
