@@ -61,7 +61,7 @@ def load(file, callback=None):
     return raw_cubes
 
 
-def _fix_cube_attributes(cubes):
+def fix_cube_attributes(cubes):
     """Unify attributes of different cubes to allow concatenation."""
     attributes = {}
     for cube in cubes:
@@ -69,8 +69,8 @@ def _fix_cube_attributes(cubes):
             if attr not in attributes:
                 attributes[attr] = val
             else:
-                if not np.array_equal(val, attributes[attr]):
-                    attributes[attr] = '{};{}'.format(
+                if str(val) not in str(attributes[attr]):
+                    attributes[attr] = '{}|{}'.format(
                         str(attributes[attr]), str(val))
     for cube in cubes:
         cube.attributes = attributes
@@ -78,7 +78,7 @@ def _fix_cube_attributes(cubes):
 
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
-    _fix_cube_attributes(cubes)
+    fix_cube_attributes(cubes)
     try:
         cube = iris.cube.CubeList(cubes).concatenate_cube()
         return cube

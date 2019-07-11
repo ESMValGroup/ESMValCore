@@ -1,0 +1,23 @@
+SOURCE: CMIP6
+!============
+variable_entry:    lnox
+!============
+modeling_realm:    atmos
+frequency:         10hr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         total NOx lightning emissions
+comment:           sum of cloud-to-ground (GC) and intra-cloud (IC); given in kg(N)
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          lnox
+type:              real
+!----------------------------------
+!

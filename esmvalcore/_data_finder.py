@@ -253,20 +253,18 @@ def _find_input_files(variable, rootpath, drs, fx_var=None):
     return files
 
 
-def load_mapping(variable):
+def load_mapping(short_name, project, mapping_file):
     """Load variable mapping for CMORizer preprocessor."""
-    path = variable['mapping']
-    path = os.path.expanduser(path)
+    path = os.path.expanduser(mapping_file)
     if not os.path.isabs(path):
         root = os.path.dirname(os.path.realpath(__file__))
         path = os.path.join(root, 'preprocessor', path)
     with open(path, 'r') as file:
         mapping = yaml.safe_load(file)
-    short_name = variable['short_name']
     if short_name not in mapping:
         raise ValueError(
-            f"Mapping {path} for project {variable['project']} does not "
-            f"contain variable '{short_name}'")
+            f"Mapping {path} for project {project} does not contain variable "
+            f"'{short_name}'")
     logger.debug("Loading variable mapping %s for variable '%s'", path,
                  short_name)
     return mapping[short_name]
@@ -275,12 +273,14 @@ def load_mapping(variable):
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
     if 'mapping' in variable:
-        mapping = load_mapping(variable)
+        mapping = load_mapping(variable['short_name'], variable['project'],
+                               variable['mapping'])
         files = []
         for channel in mapping.values():
             var = dict(variable)
             var['channel'] = channel
             files.extend(_find_input_files(var, rootpath, drs))
+        files = list(set(files))
     else:
         files = _find_input_files(variable, rootpath, drs)
     files = select_files(files, variable)

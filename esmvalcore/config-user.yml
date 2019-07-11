@@ -48,13 +48,13 @@ rootpath:
 drs:
   CMIP5: default
 
-# Quicklook mode
-quicklook_mode: false
-quicklook_output_dir: /path/to/persistent/output
-quicklook_recipe_dir: /path/to/recipe/templates
-quicklook_recipes:
-  - atmosphere
-  - ocean
-  - forcing
-  - technical
-
+# Quicklook
+quicklook:
+  active: True
+  output_dir: /path/to/persistent/output/dir
+  recipe_dir: /path/to/templates/of/recipes
+  recipes:
+    - atmos_chem
+    - atmos_dynamics
+    - ocean
+    - forcings

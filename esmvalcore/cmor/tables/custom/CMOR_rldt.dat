@@ -1,0 +1,23 @@
+SOURCE: CMIP5
+!============
+variable_entry:    rldt
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     
+units:             W m-2
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         TOA Incident Longwave Radiation
+comment:           Longwave radiation incident at the top of the atmosphere
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          rldt
+type:              real
+positive:          down
+!----------------------------------
+!
