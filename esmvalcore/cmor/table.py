@@ -122,7 +122,14 @@ class CMIP6Info(object):
                 coord.generic_level = True
                 coord.axis = 'Z'
             else:
-                coord = self.coords[dimension]
+                try:
+                    coord = self.coords[dimension]
+                except KeyError:
+                    logger.exception(
+                        'Can not find dimension %s for variable %s',
+                        dimension, var
+                    )
+                    raise
 
             axis = coord.axis
             if not axis:
