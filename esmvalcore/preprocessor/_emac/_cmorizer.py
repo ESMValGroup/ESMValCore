@@ -5,14 +5,13 @@ import iris
 from cf_units import Unit
 
 from esmvalcore._data_finder import load_mapping
-from esmvalcore.cmor.table import CMOR_TABLES
-from esmvalcore.preprocessor._cmorize import (fix_var_metadata, fix_coords,
-                                              convert_timeunits,
-                                              set_global_atts,
-                                              add_scalar_height_coord,
-                                              is_increasing, flip_dim_coord)
-from esmvalcore.preprocessor._emac._derive import (
-    var_name_constraint, get_derive_function)
+from esmvalcore.preprocessor._cmorize import (add_scalar_height_coord,
+                                              convert_timeunits, fix_coords,
+                                              fix_var_metadata, flip_dim_coord,
+                                              get_var_info, is_increasing,
+                                              set_global_atts)
+from esmvalcore.preprocessor._emac._derive import (get_derive_function,
+                                                   var_name_constraint)
 from esmvalcore.preprocessor._io import fix_cube_attributes
 
 logger = logging.getLogger(__name__)
@@ -65,9 +64,8 @@ def _extract_cubes(cubes, short_name, project, mapping_file):
         cube = _concatenate(cubes, var_name)
         if cube is None:
             raise ValueError(
-                f"{project} CMORization of '{short_name}' failed, the cubes\n"
-                f"{cubes}\ndo not contain the necessary variable "
-                f"'{var_name}'")
+                f"{project} CMORization of '{short_name}' failed, input cubes "
+                f"do not contain the necessary variable '{var_name}'")
         out_cubes.append(cube)
     return out_cubes
 
@@ -94,28 +92,16 @@ def _fix_metadata(cube, variable, var_info):
     fix_var_metadata(cube, var_info)
     fix_coords(cube)
     convert_timeunits(cube, 1950)
-    set_global_atts(cube, variable)
+    set_global_atts(cube, variable, var_info)
     if 'height2m' in var_info.dimensions:
         add_scalar_height_coord(cube, 2.0)
     if 'height10m' in var_info.dimensions:
         add_scalar_height_coord(cube, 10.0)
-    if not is_increasing(cube, 'latitude'):
-        flip_dim_coord(cube, 'latitude')
-
-
-def _get_var_info(variable):
-    """Get variable information from correct CMOR table."""
-    mip = variable['mip']
-    short_name = variable['short_name']
-    table_entry = CMOR_TABLES[variable['project']].get_variable(mip,
-                                                                short_name)
-    if table_entry is None and 'derive' in variable:
-        table_entry = CMOR_TABLES['custom'].get_variable(mip, short_name)
-    if table_entry is None:
-        raise ValueError(
-            f"Unable to load CMOR table for variable '{short_name}' with mip "
-            f"'{mip}' (including custom tables)")
-    return table_entry
+    try:
+        if not is_increasing(cube, 'latitude'):
+            flip_dim_coord(cube, 'latitude')
+    except iris.exceptions.CoordinateNotFoundError:
+        pass
 
 
 def _unify_metadata(cubes, var_name=None):
@@ -138,7 +124,7 @@ def cmorize(cubes, variable, var_mapping):
     """CMORize EMAC data."""
     project = variable['project']
     short_name = variable['short_name']
-    var_info = _get_var_info(variable)
+    var_info = get_var_info(variable)
 
     # Extract only necessary variables
     cubes = _extract_cubes(cubes, short_name, project, var_mapping)
