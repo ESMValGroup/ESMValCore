@@ -3,19 +3,27 @@ import iris
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.shared import add_height_coord, round_coordinates
+from esmvalcore.cmor._fixes.shared import (add_scalar_height_coord,
+                                           round_coordinates)
 
 DIM_COORD = iris.coords.DimCoord([3.141592],
                                  bounds=[[1.23, 4.567891011]],
                                  standard_name='latitude')
 CUBE_1 = iris.cube.Cube([1.0], standard_name='air_temperature')
 CUBE_2 = iris.cube.Cube([3.0], dim_coords_and_dims=[(DIM_COORD, 0)])
-CUBES_TEST_HEIGHT = [CUBE_1, CUBE_2]
+TEST_ADD_SCALAR_HEIGHT = [
+    (CUBE_1.copy(), None),
+    (CUBE_1.copy(), 5.0),
+    (CUBE_2.copy(), None),
+    (CUBE_2.copy(), 100.0),
+]
 
 
-@pytest.mark.parametrize('cube_in', CUBES_TEST_HEIGHT)
-def test_add_height_coord(cube_in):
-    height_coord = iris.coords.AuxCoord(2.0,
+@pytest.mark.parametrize('cube_in,height', TEST_ADD_SCALAR_HEIGHT)
+def test_add_scalar_height_coord(cube_in, height):
+    if height is None:
+        height = 2.0
+    height_coord = iris.coords.AuxCoord(height,
                                         var_name='height',
                                         standard_name='height',
                                         long_name='height',
@@ -23,7 +31,10 @@ def test_add_height_coord(cube_in):
                                         attributes={'positive': 'up'})
     with pytest.raises(iris.exceptions.CoordinateNotFoundError):
         cube_in.coord('height')
-    cube_out = add_height_coord(cube_in)
+    if height == 2.0:
+        cube_out = add_scalar_height_coord(cube_in)
+    else:
+        cube_out = add_scalar_height_coord(cube_in, height)
     assert cube_out is cube_in
     coord = cube_in.coord('height')
     assert coord == height_coord
