@@ -193,7 +193,7 @@ class CMIP6Info(object):
                 return self.get_variable(table, new_short_name)
             if not self.strict:
                 for table_vars in self.tables.values():
-                    if short_name in table:
+                    if short_name in table_vars:
                         return table_vars[short_name]
             if self.default:
                 return self.default.get_variable(table, short_name)
