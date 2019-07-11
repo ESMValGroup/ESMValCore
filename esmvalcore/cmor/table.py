@@ -61,6 +61,13 @@ class CMIP6Info(object):
     cmor_tables_path: basestring
         Path to the folder containing the Tables folder with the json files
 
+    default: object
+        Default table to look variables on if not found
+
+    strict: bool
+        If False, will look for a variable in other tables if it can not be
+        found in the requested one
+
     """
 
     _CMIP_5to6_varname = {
@@ -185,9 +192,9 @@ class CMIP6Info(object):
                 new_short_name = CMIP6Info._CMIP_5to6_varname[short_name]
                 return self.get_variable(table, new_short_name)
             if not self.strict:
-                for table in self.tables.values():
+                for table_vars in self.tables.values():
                     if short_name in table:
-                        return table[short_name]
+                        return table_vars[short_name]
             if self.default:
                 return self.default.get_variable(table, short_name)
             return None
@@ -409,6 +416,13 @@ class CMIP5Info(object):
     ----------
     cmor_tables_path: basestring
        Path to the folder containing the Tables folder with the json files
+
+    default: object
+        Default table to look variables on if not found
+
+    strict: bool
+        If False, will look for a variable in other tables if it can not be
+        found in the requested one
 
     """
 

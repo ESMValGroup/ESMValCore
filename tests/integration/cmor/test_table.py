@@ -40,11 +40,11 @@ class TestCMIP6Info(unittest.TestCase):
         """Get none if a variable is not in the given table."""
         self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
 
-    def test_get_variable_aermon_ta_fail_if_strict(self):
+    def test_aermon_ta_fail_if_strict(self):
         """Get ta fails with Omon if strict."""
         self.assertIsNone(self.variables_info.get_variable('Omon', 'ta'))
 
-    def test_get_variable_aermon_ta_succes_if_strict(self):
+    def test_aermon_ta_succes_if_strict(self):
         """Get ta does not fail with AERMonZ if not strict."""
         self.variables_info.strict = False
         var = self.variables_info.get_variable('Omon', 'ta')
@@ -116,11 +116,11 @@ class TestCMIP5Info(unittest.TestCase):
         """Get none if a variable is not in the given table."""
         self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
 
-    def test_get_variable_aermon_ta_fail_if_strict(self):
+    def test_aermon_ta_fail_if_strict(self):
         """Get ta fails with AERMonZ if strict."""
         self.assertIsNone(self.variables_info.get_variable('AERmonZ', 'ta'))
 
-    def test_get_variable_aermon_ta_succes_if_strict(self):
+    def test_aermon_ta_succes_if_strict(self):
         """Get ta does not fail with AERMonZ if not strict."""
         self.variables_info.strict = False
         var = self.variables_info.get_variable('AERmonZ', 'ta')
