@@ -3,10 +3,11 @@ SOURCE: CMIP6
 variable_entry:    SHIP_AER_BC_s
 !============
 modeling_realm:    atmos
+frequency:         10hr
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     
+standard_name:
 units:             kg m-2 s-1
 cell_methods:      time: mean
 cell_measures:     area: areacella
