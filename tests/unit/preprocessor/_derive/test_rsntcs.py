@@ -21,5 +21,6 @@ def cubes():
 def test_rsntcs_calculation(cubes):
     derived_var = rsntcs.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
-    assert np.array_equal(out_cube.data, np.array([[-4.0, 3.2], [-0.8, 1.0]]))
+    np.testing.assert_allclose(
+        out_cube.data, np.array([[-4.0, 3.2], [-0.8, 1.0]]))
     assert out_cube.attributes['positive'] == 'down'
