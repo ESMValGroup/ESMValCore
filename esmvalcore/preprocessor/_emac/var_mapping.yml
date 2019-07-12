@@ -38,8 +38,8 @@ TN_GHG_CO2: {TN_GHG_CO2: import_grid}
 TN_GHG_N2O: {TN_GHG_N2O: import_grid}
 TN_GHG_CH4: {TN_GHG_CH4: import_grid}
 BB_CO_s: {BB_CO: import_grid} #recipe
-BB_N_s: {BB_N: import_grid} #recipe
-BB_SO2_s: {BB_SO: import_grid} #recipe
+BB_NO_s: {BB_NO: import_grid} #recipe
+BB_SO2_s: {BB_SO2: import_grid} #recipe
 BB_AER_TC_s: {BB_AER_BC: import_grid, BB_AER_OC: import_grid} #recipe (add)
 ANTHNT_NO_s: {ANTHNT_NO: import_grid} #recipe
 ANTHNT_CO_s: {ANTHNT_CO: import_grid} #recipe
