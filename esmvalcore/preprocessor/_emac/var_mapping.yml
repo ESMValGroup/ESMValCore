@@ -30,7 +30,7 @@ rsutcs: {flxusftop_ave: Amon}
 rtmt: {flxttop_ave: Amon, flxstop_ave: Amon} #recipe
 tas: {temp2_ave: Amon}
 ts: {tsurf_ave: Amon}
-tosga: {tosga_ave: Omon}
+tosga: {tho_ave: Omon}
 toz10hr: {toz: column}
 
 #forcings
