@@ -50,7 +50,7 @@ drs:
 
 # Quicklook
 quicklook:
-  active: True
+  active: true
   output_dir: /path/to/persistent/output/dir
   recipe_dir: /path/to/templates/of/recipes
   recipes:

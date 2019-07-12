@@ -56,9 +56,9 @@ def read_config_user_file(config_file, recipe_name):
 
     for key in defaults:
         if key not in cfg:
-            logger.info(
-                "No %s specification in config file, "
-                "defaulting to %s", key, defaults[key])
+            print(
+                f"INFO: No '{key}' specification in config file, defaulting "
+                f"to '{defaults[key]}'")
             cfg[key] = defaults[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
@@ -66,11 +66,18 @@ def read_config_user_file(config_file, recipe_name):
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
 
+    # Quicklook feature
     if cfg['quicklook']['active']:
-        cfg['quicklook']['output_dir'] = _normalize_path(
-            cfg['quicklook']['output_dir'])
-        cfg['quicklook']['recipe_dir'] = _normalize_path(
-            cfg['quicklook']['recipe_dir'])
+        print("INFO: Using ESMValTool in quicklook mode")
+        quicklook_opts = cfg['quicklook']
+        for opt in ('output_dir', 'recipe_dir'):
+            if opt not in quicklook_opts:
+                print(
+                    f"WARNING: Quicklook mode is enabled but no '{opt}' "
+                    f"given, defaulting to {cfg['output_dir']}")
+                quicklook_opts[opt] = cfg['output_dir']
+            else:
+                quicklook_opts[opt] = _normalize_path(quicklook_opts[opt])
         cfg['save_intermediary_cubes'] = False
         cfg['remove_preproc_dir'] = True
 

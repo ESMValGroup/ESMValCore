@@ -313,10 +313,18 @@ def get_output_file(variable, preproc_dir):
         variable = dict(variable)
         variable['exp'] = '-'.join(variable['exp'])
 
+    # Get output directory in the desired form
+    if 'output_dir' in cfg:
+        sub_dirs = _replace_tags(cfg['output_dir'], variable)[0]
+        sub_dirs = sub_dirs.format(**variable)
+    else:
+        sub_dirs = os.path.join(variable['diagnostic'],
+                                variable['variable_group'])
+
+    # Create output file
     outfile = os.path.join(
         preproc_dir,
-        variable['diagnostic'],
-        variable['variable_group'],
+        sub_dirs,
         _replace_tags(cfg['output_file'], variable)[0] + '.nc',
     )
 
@@ -325,10 +333,17 @@ def get_output_file(variable, preproc_dir):
 
 def get_statistic_output_file(variable, preproc_dir):
     """Get multi model statistic filename depending on settings."""
+    cfg = get_project_config(variable['project'])
+
+    # Get output directory in the desired form
+    if 'output_dir' in cfg:
+        sub_dirs = _replace_tags(cfg['output_dir'], variable)[0]
+    else:
+        sub_dirs = os.path.join('{diagnostic}', '{variable_group}')
+
     template = os.path.join(
         preproc_dir,
-        '{diagnostic}',
-        '{variable_group}',
+        sub_dirs,
         '{dataset}_{mip}_{short_name}_{start_year}-{end_year}.nc',
     )
 
