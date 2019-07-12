@@ -19,9 +19,7 @@ documentation:
     - cmip6dicad
 
 datasets:
-{% for dataset in datasets%}
     - {{ dataset }}
-{% endfor %}
 
 preprocessors:
 

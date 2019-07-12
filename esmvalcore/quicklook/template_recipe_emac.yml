@@ -18,9 +18,7 @@ documentation:
     - esmval
 
 datasets:
-{% for dataset in datasets%}
     - {{ dataset }}
-{% endfor %}
 
 preprocessors:
 
