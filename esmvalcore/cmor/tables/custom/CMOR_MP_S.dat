@@ -3,6 +3,7 @@ SOURCE: CMIP6
 variable_entry:    MP_S
 !============
 modeling_realm:    atmos
+frequency:         10hr
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
@@ -13,6 +14,6 @@ comment:           positive mass of S in kg
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
-dimensions:        time	
+dimensions:        time
 !----------------------------------
 !
