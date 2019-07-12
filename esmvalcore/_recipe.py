@@ -623,14 +623,25 @@ def _update_cmorizer_variable(variable):
     variable['mapping'] = cmorize_options['var_mapping']
 
 
+def _update_quicklook_settings(settings, config_user):
+    """Get correct settings for quicklook mode."""
+    if config_user['quicklook']['active']:
+        settings['save']['concatenate'] = True
+
+
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user):
     """Get preprocessor product definitions for a set of datasets."""
     products = set()
 
+    # Change output directory for quicklook feature
+    if config_user['quicklook']['active']:
+        out_dir = config_user['quicklook']['output_dir']
+    else:
+        out_dir = config_user['preproc_dir']
+
     for variable in variables:
-        variable['filename'] = get_output_file(variable,
-                                               config_user['preproc_dir'])
+        variable['filename'] = get_output_file(variable, out_dir)
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
@@ -643,6 +654,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         _apply_preprocessor_profile(settings, profile)
         _update_cmorizer_settings(
             settings=settings, variable=variable, derive='derive' in profile)
+        _update_quicklook_settings(settings, config_user)
         _update_multi_dataset_settings(variable, settings)
         _update_target_levels(
             variable=variable,

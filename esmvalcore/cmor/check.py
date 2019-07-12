@@ -409,54 +409,10 @@ class CMORCheck():
             simplified_cal = self._simplify_calendar(coord.units.calendar)
             coord.units = cf_units.Unit(coord.units.origin, simplified_cal)
 
-        tol = 0.001
-        intervals = {'dec': (3600, 3660), 'day': (1, 1)}
-        if self.frequency == 'mon':
-            for i in range(len(coord.points) - 1):
-                first = coord.cell(i).point
-                second = coord.cell(i + 1).point
-                second_month = first.month + 1
-                second_year = first.year
-                if second_month == 13:
-                    second_month = 1
-                    second_year += 1
-                if second_month != second.month or \
-                   second_year != second.year:
-                    msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, self.frequency)
-                    break
-        elif self.frequency == 'yr':
-            for i in range(len(coord.points) - 1):
-                first = coord.cell(i).point
-                second = coord.cell(i + 1).point
-                second_month = first.month + 1
-                if first.year + 1 != second.year:
-                    msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, self.frequency)
-                    break
-        else:
-            if self.frequency in intervals:
-                interval = intervals[self.frequency]
-                target_interval = (interval[0] - tol, interval[1] + tol)
-            elif self.frequency.endswith('hr'):
-                frequency = self.frequency[:-2]
-                if frequency == 'sub':
-                    frequency = 1.0 / 24
-                    target_interval = (-tol, frequency + tol)
-                else:
-                    frequency = float(frequency) / 24
-                    target_interval = (frequency - tol, frequency + tol)
-            else:
-                msg = '{}: Frequency {} not supported by checker'
-                self.report_error(msg, var_name, self.frequency)
-                return
-            for i in range(len(coord.points) - 1):
-                interval = coord.points[i + 1] - coord.points[i]
-                if (interval < target_interval[0]
-                        or interval > target_interval[1]):
-                    msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, self.frequency)
-                    break
+        # Check frequency
+        (successful, msg) = check_frequency(coord, self.frequency)
+        if not successful:
+            self.report_error(msg, var_name, self.frequency)
 
     @staticmethod
     def _simplify_calendar(calendar):
@@ -640,3 +596,52 @@ def cmor_check(cube, cmor_table, mip, short_name, frequency):
     cmor_check_metadata(cube, cmor_table, mip, short_name, frequency)
     cmor_check_data(cube, cmor_table, mip, short_name, frequency)
     return cube
+
+
+def check_frequency(coord, frequency):
+    """Check frequency of time coordinate."""
+    tol = 0.001
+    intervals = {'dec': (3600, 3660), 'day': (1, 1)}
+    if frequency == 'mon':
+        for i in range(len(coord.points) - 1):
+            first = coord.cell(i).point
+            second = coord.cell(i + 1).point
+            second_month = first.month + 1
+            second_year = first.year
+            if second_month == 13:
+                second_month = 1
+                second_year += 1
+            if second_month != second.month or \
+                second_year != second.year:
+                msg = '{}: Frequency {} does not match input data'
+                return (False, msg)
+    elif frequency == 'yr':
+        for i in range(len(coord.points) - 1):
+            first = coord.cell(i).point
+            second = coord.cell(i + 1).point
+            second_month = first.month + 1
+            if first.year + 1 != second.year:
+                msg = '{}: Frequency {} does not match input data'
+                return (False, msg)
+    else:
+        if frequency in intervals:
+            interval = intervals[frequency]
+            target_interval = (interval[0] - tol, interval[1] + tol)
+        elif frequency.endswith('hr'):
+            hours = frequency[:-2]
+            if hours == 'sub':
+                hours = 1.0 / 24
+                target_interval = (-tol, hours + tol)
+            else:
+                hours = float(hours) / 24
+                target_interval = (hours - tol, hours + tol)
+        else:
+            msg = '{}: Frequency {} not supported by checker'
+            return (False, msg)
+        for i in range(len(coord.points) - 1):
+            interval = coord.points[i + 1] - coord.points[i]
+            if (interval < target_interval[0]
+                or interval > target_interval[1]):
+                msg = '{}: Frequency {} does not match input data'
+                return (False, msg)
+    return (True, '')
