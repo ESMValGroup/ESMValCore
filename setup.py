@@ -29,6 +29,7 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cf-units',
+        'dask[array]',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numba',
