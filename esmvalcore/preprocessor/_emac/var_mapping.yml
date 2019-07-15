@@ -24,8 +24,8 @@ rlut: {flxttop_ave: Amon}
 rlutcs: {flxtftop_ave: Amon}
 rsds: {flxsbot_ave: Amon, sradsu_ave: Amon} #recipe
 rsdt: {flxstop_ave: Amon, srad0u_ave: Amon} #recipe
-rsus: {sradsu_ave: Amon}
-rsut: {srad0u_ave: Amon}
+rsus: {sradsu_ave: Amon} #recipe
+rsut: {srad0u_ave: Amon} #recipe
 rsutcs: {flxusftop_ave: Amon}
 rtmt: {flxttop_ave: Amon, flxstop_ave: Amon} #recipe
 tas: {temp2_ave: Amon}
