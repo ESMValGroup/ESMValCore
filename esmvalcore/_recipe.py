@@ -940,7 +940,56 @@ class Recipe:
             preprocessor_output[variable_group] = \
                 self._initialize_variables(raw_variable, raw_datasets)
 
+        self._set_alias(preprocessor_output)
+
         return preprocessor_output
+
+    def _set_alias(self, preprocessor_output):
+        info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
+        datasets_info = set()
+        for variable in preprocessor_output.values():
+            for dataset in variable:
+                alias = tuple(dataset.get(key, None) for key in info_keys)
+                datasets_info.add(alias)
+                if 'alias' not in dataset:
+                    dataset['alias'] = alias
+
+        alias = dict()
+        for info in datasets_info:
+            alias[info] = []
+
+        datasets_info = list(datasets_info)
+
+        def _get_next_alias(datasets_info, x):
+            if x >= len(info_keys):
+                return
+            key_values = set(info[x] for info in datasets_info)
+            if len(key_values) == 1:
+                for info in iter(datasets_info):
+                    alias[info].append(None)
+            else:
+                for info in datasets_info:
+                    alias[info].append(info[x])
+            for key in key_values:
+                _get_next_alias(
+                    [info for info in datasets_info if info[x] == key],
+                    x + 1
+                )
+
+        _get_next_alias(datasets_info, 0)
+
+        for info in datasets_info:
+            alias[info] = '_'.join(
+                [str(value) for value in alias[info] if value is not None]
+            )
+            if not alias[info]:
+                alias[info] = info[info_keys.index('dataset')]
+
+        for variable in preprocessor_output.values():
+            for dataset in variable:
+                dataset['alias'] = alias.get(
+                    dataset['alias'], dataset['alias']
+                )
 
     def _initialize_scripts(self, diagnostic_name, raw_scripts,
                             variable_names):
