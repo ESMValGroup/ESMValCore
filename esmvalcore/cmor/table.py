@@ -76,6 +76,7 @@ class CMIP6Info(object):
         self.default = default
 
         self.tables = {}
+        self.var_to_freq = {}
 
         self._load_coordinates()
         for json_file in glob.glob(os.path.join(self._cmor_folder, '*.json')):
@@ -98,22 +99,26 @@ class CMIP6Info(object):
                 return
             table = TableInfo()
             header = raw_data['Header']
-            table.name = header['table_id'][6:].split('_')[-1]
+            table.name = header['table_id'].split(' ')[-1]
             self.tables[table.name] = table
 
             generic_levels = header['generic_levels'].split()
             table.frequency = header.get('frequency', '')
-            table.realm = header.get('realm', '')
+            self.var_to_freq[table.name] = {}
 
             for var_name, var_data in raw_data['variable_entry'].items():
                 var = VariableInfo('CMIP6', var_name)
-                if 'frequency' in var_data:
-                    var.frequency = var_data['frequency']
-                else:
-                    var.frequency = table.frequency
-                var.read_json(var_data)
+                var.read_json(var_data, table.frequency)
                 self._assign_dimensions(var, generic_levels)
                 table[var_name] = var
+                self.var_to_freq[table.name][var_name] = var.frequency
+
+            if not table.frequency:
+                from collections import Counter
+                var_freqs = (var.frequency for var in table.values())
+                table_freq, _ = Counter(var_freqs).most_common(1)[0]
+                table.frequency = table_freq
+            self.tables[table.name] = table
 
     def _assign_dimensions(self, var, generic_levels):
         for dimension in var.dimensions:
@@ -191,7 +196,12 @@ class CMIP6Info(object):
                 new_short_name = CMIP6Info._CMIP_5to6_varname[short_name]
                 return self.get_variable(table, new_short_name)
             if self.default:
-                return self.default.get_variable(table, short_name)
+                var_info = self.default.get_variable(table, short_name)
+                if var_info is None:
+                    return None
+                var_info = var_info.copy()
+                var_info.frequency = self.tables[table].frequency
+                return var_info
             return None
 
     @staticmethod
@@ -224,7 +234,7 @@ class JsonInfo(object):
     def __init__(self):
         self._json_data = {}
 
-    def _read_json_variable(self, parameter):
+    def _read_json_variable(self, parameter, default=''):
         """
         Read a json parameter in json_data.
 
@@ -240,7 +250,7 @@ class JsonInfo(object):
 
         """
         if parameter not in self._json_data:
-            return ''
+            return default
         return str(self._json_data[parameter])
 
     def _read_json_list_variable(self, parameter):
@@ -304,7 +314,18 @@ class VariableInfo(JsonInfo):
 
         self._json_data = None
 
-    def read_json(self, json_data):
+    def copy(self):
+        """
+        Returns a shalow copy of VariableInfo
+        Returns
+        -------
+        VariableInfo
+           Shallow copy of this object
+        """
+        from copy import copy
+        return copy(self)
+
+    def read_json(self, json_data, default_freq=''):
         """
         Read variable information from json.
 
@@ -315,6 +336,9 @@ class VariableInfo(JsonInfo):
         json_data: dict
             dictionary created by the json reader containing
             variable information
+
+        default_freq: str
+            Default frequency to use if it is not defined at variable level
 
         """
         self._json_data = json_data
@@ -327,6 +351,7 @@ class VariableInfo(JsonInfo):
         self.positive = self._read_json_variable('positive')
         self.modeling_realm = \
             self._read_json_variable('modeling_realm').split()
+        self.frequency = self._read_json_variable('frequency', default_freq)
 
         self.dimensions = self._read_json_variable('dimensions').split()
 
@@ -563,7 +588,11 @@ class CMIP5Info(object):
         """
         var_info = self.tables.get(table, {}).get(short_name, None)
         if not var_info and self.default:
-            return self.default.get_variable(table, short_name)
+            var_info = self.default.get_variable(table, short_name)
+            if var_info is None:
+                return None
+            var_info = var_info.copy()
+            var_info.frequency = self.tables[table].frequency
         return var_info
 
 
@@ -583,6 +612,7 @@ class CustomInfo(CMIP5Info):
         cwd = os.path.dirname(os.path.realpath(__file__))
         self._cmor_folder = os.path.join(cwd, 'tables', 'custom')
         self.tables = {}
+        self.var_to_freq = {}
         table = TableInfo()
         table.name = 'custom'
         self.tables[table.name] = table
