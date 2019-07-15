@@ -19,13 +19,13 @@ prw: {qvi_ave: Amon}
 siconca: {seaice_ave: Amon}
 sithick: {siced_ave: Amon}
 rlds: {flxtbot_ave: Amon, tradsu_ave: Amon} #recipe
-rlus: {tradsu_ave: Amon}
+rlus: {tradsu_ave: Amon} #recipe
 rlut: {flxttop_ave: Amon}
 rlutcs: {flxtftop_ave: Amon}
 rsds: {flxsbot_ave: Amon, sradsu_ave: Amon} #recipe
 rsdt: {flxstop_ave: Amon, srad0u_ave: Amon} #recipe
-rsus: {sradsu_ave: Amon}
-rsut: {srad0u_ave: Amon}
+rsus: {sradsu_ave: Amon} #recipe
+rsut: {srad0u_ave: Amon} #recipe
 rsutcs: {flxusftop_ave: Amon}
 rtmt: {flxttop_ave: Amon, flxstop_ave: Amon} #recipe
 tas: {temp2_ave: Amon}
