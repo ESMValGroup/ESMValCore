@@ -779,6 +779,37 @@ def _get_derive_input_variables(variables, config_user):
     return derive_input
 
 
+def _get_fx_input_variables(variables):
+    """Determine the input sets of fx vars needed for masking or others."""
+    fx_input = {}
+
+    def append(group_prefix, var):
+        """Append variable `var` to an fx input group."""
+        group = group_prefix + var['short_name']
+        var['variable_group'] = group
+        if group not in fx_input:
+            fx_input[group] = []
+        fx_input[group].append(var)
+
+    # figure out which of variables is fx variable
+    fx_variables = [
+        var for var in variables if 'fxvar' in var and var['fxvar']
+    ]
+    # figure out which variable needs fx variables
+    needs_fx_variables = [
+        var for var in variables if 'needs_fxvar' in var and var['need_fxvar']
+    ]
+
+    for variable in needs_fx_variables:
+        group_prefix = variable['variable_group'] + '_fx_input_'
+        # Process fx input data needed by variable
+        for var in fx_variables:
+            _augment(var, variable)
+            append(group_prefix, var)
+
+    return fx_input
+
+
 def _get_preprocessor_task(variables, profiles, config_user, task_name):
     """Create preprocessor task(s) for a set of datasets."""
     # First set up the preprocessor profile
@@ -814,9 +845,25 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
                 name=derive_name)
             derive_tasks.append(task)
 
-    # don't do time gating for fx variables
-    if variables[0]['frequency'] == 'fx':
-        profile['extract_time'] = False
+    # treat fx variables and the variables they need them
+    fx_tasks = []
+    if variable.get('needs_fxvar'):
+        # Create tasks to prepare the input data for the fx var addition
+        fx_input = _get_fx_input_variables(variables, config_user)
+        fx_profile = profile
+        fx_profile['extract_time'] = False
+
+        for fx_variables in fx_input.values():
+            for fx_variable in fx_variables:
+                _add_cmor_info(fx_variable, override=True)
+            fx_name = task_name.split(
+                TASKSEP)[0] + TASKSEP + fx_variables[0]['variable_group']
+            task = _get_single_preprocessor_task(
+                fx_variables,
+                fx_profile,
+                config_user,
+                name=derive_name)
+            fx_tasks.append(task)
 
     # Create (final) preprocessor task
     task = _get_single_preprocessor_task(
