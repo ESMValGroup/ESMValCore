@@ -98,11 +98,11 @@ def get_args():
         nargs='*',
         help="Only run the named diagnostics from the recipe.")
     parser.add_argument(
-        '--dataset',
+        '--quicklook',
+        metavar='SIMULATION-ID'
         type=str,
         help=
-        'Only available in quicklook mode. '
-        +'Set identifier for individual simulation.')
+        'Sets quicklook mode by setting identifier for individual simulation.')
     parser.add_argument(
         '--start-year',
         type=int,
@@ -113,17 +113,16 @@ def get_args():
     args = parser.parse_args()
     return args
 
-
-def main(args):
-    """Define the `esmvaltool` program."""
-    recipe = args.recipe
+def _check_recipe_path(recipe):
     if not os.path.exists(recipe):
         installed_recipe = os.path.join(
             DIAGNOSTICS_PATH, 'recipes', recipe)
         if os.path.exists(installed_recipe):
             recipe = installed_recipe
-    recipe = os.path.abspath(os.path.expandvars(os.path.expanduser(recipe)))
+    return os.path.abspath(os.path.expandvars(os.path.expanduser(recipe)))
 
+def main(args):
+    """Define the `esmvaltool` program."""
     config_file = os.path.abspath(
         os.path.expandvars(os.path.expanduser(args.config_file)))
 
@@ -131,8 +130,13 @@ def main(args):
     if not os.path.exists(config_file):
         print("ERROR: config file {} does not exist".format(config_file))
 
-    recipe_name = os.path.splitext(os.path.basename(recipe))[0]
-    cfg = read_config_user_file(config_file, recipe_name)
+    if args.quicklook:
+        cfg = read_config_user_file(config_file, 'quicklook')
+        recipe = _check_recipe_path(generate_recipe(cfg))
+    else:
+        recipe = _check_recipe_path(args.recipe)
+        recipe_name = os.path.splitext(os.path.basename(recipe))[0]
+        cfg = read_config_user_file(config_file, recipe_name)
 
     # Create run dir
     if os.path.exists(cfg['run_dir']):
@@ -149,6 +153,12 @@ def main(args):
 
     logger.info("Using config file %s", config_file)
     logger.info("Writing program log files to:\n%s", "\n".join(log_files))
+
+    if 'quicklook' in cfg.keys() and cfg['quicklook']['active']:
+        cfg['quicklook']['dataset-id'] = args.dataset
+        if args.start-year and args.end-year:
+            cfg['quicklook']['start'] = args.start-year
+            cfg['quicklook']['end'] = args.end-year
 
     cfg['skip-nonexistent'] = args.skip_nonexistent
     cfg['diagnostics'] = {
