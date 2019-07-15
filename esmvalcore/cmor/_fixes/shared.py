@@ -1,8 +1,8 @@
 """Shared functions for fixes."""
 import logging
 
+import dask.array as da
 import iris
-import numpy as np
 from cf_units import Unit
 
 logger = logging.getLogger(__name__)
@@ -25,6 +25,8 @@ def round_coordinates(cubes, decimals=5):
     """Round all dimensional coordinates of all cubes."""
     for cube in cubes:
         for coord in cube.coords(dim_coords=True):
-            for attr in ('points', 'bounds'):
-                setattr(coord, attr, np.round(getattr(coord, attr), decimals))
+            coord.points = da.round(da.asarray(coord.core_points()), decimals)
+            if coord.bounds is not None:
+                coord.bounds = da.round(da.asarray(coord.core_bounds()),
+                                        decimals)
     return cubes

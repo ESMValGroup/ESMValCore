@@ -40,12 +40,17 @@ def test_add_scalar_height_coord(cube_in, height):
     assert coord == height_coord
 
 
+DIM_COORD_NB = iris.coords.DimCoord([3.1415], standard_name='latitude')
+CUBE_3 = iris.cube.Cube([5.0], dim_coords_and_dims=[(DIM_COORD_NB, 0)])
 COORD_3_DEC = DIM_COORD.copy([3.142], [[1.23, 4.568]])
 COORD_5_DEC = DIM_COORD.copy([3.14159], [[1.23, 4.56789]])
+COORD_NB_3_DEC = DIM_COORD_NB.copy([3.142])
 TEST_ROUND = [
     (iris.cube.CubeList([CUBE_2]), None, [COORD_5_DEC]),
+    (iris.cube.CubeList([CUBE_3]), None, [DIM_COORD_NB]),
     (iris.cube.CubeList([CUBE_1, CUBE_2]), 3, [None, COORD_3_DEC]),
     (iris.cube.CubeList([CUBE_2, CUBE_2]), 3, [COORD_3_DEC, COORD_3_DEC]),
+    (iris.cube.CubeList([CUBE_2, CUBE_3]), 3, [COORD_3_DEC, COORD_NB_3_DEC]),
 ]
 
 
