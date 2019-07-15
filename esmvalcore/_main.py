@@ -97,6 +97,19 @@ def get_args():
         '--diagnostics',
         nargs='*',
         help="Only run the named diagnostics from the recipe.")
+    parser.add_argument(
+        '--dataset',
+        type=str,
+        help=
+        'Only available in quicklook mode. '
+        +'Set identifier for individual simulation.')
+    parser.add_argument(
+        '--start-year',
+        type=int,
+        help='Only available in quicklook mode. Set start year.')
+    parser.add_argument('--end-year',
+                        type=int,
+                        help='Only available in quicklook mode. Set end year.')
     args = parser.parse_args()
     return args
 
