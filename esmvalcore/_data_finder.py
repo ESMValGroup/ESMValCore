@@ -5,6 +5,7 @@
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
 import fnmatch
+import importlib.util
 import logging
 import os
 import re
@@ -15,6 +16,32 @@ from ._config import get_project_config, replace_mip_fx
 from .cmor.table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
+
+
+def get_custom_data_finder(variable):
+    """Get project-specific extensions for data finder module."""
+    if 'data_finder' not in variable:
+        return None
+    data_finder = variable['data_finder']
+    data_finder = os.path.expanduser(data_finder)
+    if not os.path.isabs(data_finder):
+        root = os.path.dirname(os.path.realpath(__file__))
+        data_finder = os.path.join(root, 'preprocessor', data_finder)
+    try:
+        spec = importlib.util.spec_from_file_location('data_finder',
+                                                      data_finder)
+        data_finder_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(data_finder_module)
+    except Exception as exc:
+        logger.warning(
+            "Custom data finder '%s' given in 'config-developer.yml' for "
+            "project '%s' cannot not be loaded: %s", data_finder,
+            variable['project'], str(exc))
+        return None
+    logger.debug(
+        "Using custom data finder module extension '%s' for project '%s'",
+        data_finder, variable['project'])
+    return data_finder_module
 
 
 def find_files(dirnames, filenames):
@@ -46,19 +73,22 @@ def get_start_end_year(filename, variable):
       or
     YYYY*[-,_]*[-,_]YYYY*.* (Does this make sense? Is this worth catching?)
       or
-    project specific formatting (preprocess filename prior to data extraction
-    using `date_prefix_regex` or `date_prefix_tags`).
-
+    project specific formatting (needs function `preprocess_filename_for_years`
+    in file given by `data_finder` key in `config-developer.yml`).
 
     """
     name = os.path.basename(filename)
     filename = os.path.splitext(name)[0]
-    cfg = get_project_config(variable['project'])
-    if cfg.get('date_prefix_regex'):
-        filename = re.sub(cfg['date_prefix_regex'], '', filename)
-    if cfg.get('date_prefix_tabs'):
-        pattern = _replace_tags(cfg['date_prefix_tabs'], variable)
-        filename = filename.replace(pattern, '')
+
+    # Preprocess filename if necessary
+    custom_data_finder = get_custom_data_finder(variable)
+    if (custom_data_finder is not None and hasattr(
+            custom_data_finder, 'preprocess_filename_for_years')):
+        logger.info(
+            "Using custom data finder function 'preprocess_filename_for_"
+            "years' for project '%s'", variable['project'])
+        filename = custom_data_finder.preprocess_filename_for_years(filename,
+                                                                    variable)
 
     filename_list = [elem.split('-') for elem in filename.split('_')]
     filename_list = [elem for sublist in filename_list for elem in sublist]
@@ -253,7 +283,7 @@ def _find_input_files(variable, rootpath, drs, fx_var=None):
     return files
 
 
-def load_mapping(short_name, project, mapping_file):
+def load_var_mapping(short_name, project, mapping_file):
     """Load variable mapping for CMORizer preprocessor."""
     path = os.path.expanduser(mapping_file)
     if not os.path.isabs(path):
@@ -272,15 +302,13 @@ def load_mapping(short_name, project, mapping_file):
 
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
-    if 'mapping' in variable:
-        mapping = load_mapping(variable['short_name'], variable['project'],
-                               variable['mapping'])
-        files = []
-        for channel in mapping.values():
-            var = dict(variable)
-            var['channel'] = channel
-            files.extend(_find_input_files(var, rootpath, drs))
-        files = list(set(files))
+    custom_data_finder = get_custom_data_finder(variable)
+    if (custom_data_finder is not None and hasattr(custom_data_finder,
+                                                   'get_input_filelist')):
+        logger.debug(
+            "Using custom data finder function 'get_input_filelist' for "
+            "project '%s'", variable['project'])
+        files = custom_data_finder.get_input_filelist(variable, rootpath, drs)
     else:
         files = _find_input_files(variable, rootpath, drs)
     files = select_files(files, variable)

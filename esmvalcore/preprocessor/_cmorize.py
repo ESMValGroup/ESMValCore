@@ -3,6 +3,7 @@ import datetime
 import importlib.util
 import logging
 import os
+import re
 
 import iris
 import numpy as np
@@ -13,6 +14,10 @@ from esmvalcore import __version__ as version
 from esmvalcore.cmor.table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
+
+INVALID_UNITS = {
+    'kg/m**2s': 'kg m-2 s-1',
+}
 
 
 def cmorize(cubes, variable, var_mapping, cmorizer):
@@ -27,9 +32,10 @@ def cmorize(cubes, variable, var_mapping, cmorizer):
         spec.loader.exec_module(cmorizer_module)
     except Exception:
         logger.error(
-            "CMORizer %s given in 'config-developer.yml' is not a valid "
-            "CMORizer, make sure that it exists and that it contains a "
-            "function called 'cmorize'", cmorizer)
+            "CMORizer '%s' given in 'config-developer.yml' for project '%s' "
+            "is not a valid CMORizer, make sure that it exists and that it "
+            "contains a function called 'cmorize'", cmorizer,
+            variable['project'])
         raise
     if not hasattr(cmorizer_module, 'cmorize'):
         raise ValueError(
@@ -110,6 +116,31 @@ def fix_coords(cube):
             _fix_bounds(cube, cube.coord('air_pressure'))
 
     return cube
+
+
+def fix_invalid_units(cubes):
+    """Fix invalid units."""
+    for cube in cubes:
+        attributes = cube.attributes
+        if 'invalid_units' in attributes:
+            units = attributes['invalid_units']
+
+            # Fix kg(x) cases
+            if 'kg(' in units:
+                units = re.sub(r'\((.*?)\)', '', units)
+
+            # Fix other cases
+            units = INVALID_UNITS.get(units, units)
+            units = units.replace('**', '^')
+
+            # Replace it
+            try:
+                cube.units = Unit(units)
+            except ValueError:
+                logger.warning("Could not fix invalid units '%s'",
+                               attributes['invalid_units'])
+            else:
+                attributes.pop('invalid_units')
 
 
 def fix_var_metadata(cube, var_info):

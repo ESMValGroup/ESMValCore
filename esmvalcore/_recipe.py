@@ -620,7 +620,9 @@ def _update_cmorizer_variable(variable):
     cmorize_options = _get_cmorizer_options(variable)
     if cmorize_options is None:
         return
-    variable['mapping'] = cmorize_options['var_mapping']
+    if 'data_finder' in cmorize_options:
+        variable['data_finder'] = cmorize_options['data_finder']
+    variable['var_mapping'] = cmorize_options['var_mapping']
 
 
 def _update_quicklook_settings(settings, config_user):
@@ -776,7 +778,7 @@ def _get_derive_input_variables(variables, config_user):
 
     for variable in variables:
         group_prefix = variable['variable_group'] + '_derive_input_'
-        if 'mapping' in variable:
+        if 'var_mapping' in variable:
             available_files = []
         else:
             available_files = get_input_filelist(
