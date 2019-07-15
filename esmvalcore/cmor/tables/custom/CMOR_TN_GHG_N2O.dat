@@ -3,10 +3,11 @@ SOURCE: CMIP6
 variable_entry:    TN_GHG_N2O
 !============
 modeling_realm:    atmos
+frequency:         10hr
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     
+standard_name:
 units:             1.e-9
 cell_methods:      time: mean
 cell_measures:     area: areacella

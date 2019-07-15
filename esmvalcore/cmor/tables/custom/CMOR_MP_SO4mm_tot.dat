@@ -3,6 +3,7 @@ SOURCE: CMIP6
 variable_entry:    MP_SO4mm_tot
 !============
 modeling_realm:    atmos
+frequency:         10hr
 !----------------------------------
 ! Variable attributes:
 !----------------------------------

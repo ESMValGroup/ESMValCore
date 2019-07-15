@@ -1,0 +1,23 @@
+SOURCE: CMIP6
+!============
+variable_entry:    co2mass
+!============
+modeling_realm:    atmos
+frequency:         10hr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     atmosphere_mass_of_carbon_dioxide
+units:             kg
+cell_methods:      area: time: mean
+cell_measures:
+long_name:         Total Atmospheric Mass of CO2
+comment:           Total atmospheric mass of Carbon Dioxide
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+out_name:          co2mass
+type:              real
+!----------------------------------
+!

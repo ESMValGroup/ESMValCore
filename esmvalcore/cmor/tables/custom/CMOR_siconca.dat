@@ -1,0 +1,21 @@
+SOURCE: CMIP5
+!============
+variable_entry:    siconca
+!============
+modeling_realm:    seaIce
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     sea_ice_area_fraction
+units:             %
+cell_methods:      area: time: mean
+cell_measures:     area: areacella
+long_name:         Sea Ice Area Fraction (Atmospheric Grid)
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          siconca
+type:              real
+!----------------------------------
+!

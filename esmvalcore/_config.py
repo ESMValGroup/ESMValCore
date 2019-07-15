@@ -49,20 +49,37 @@ def read_config_user_file(config_file, recipe_name):
         'profile_diagnostic': False,
         'config_developer_file': None,
         'drs': {},
+        'quicklook': {
+            'active': False
+        },
     }
 
     for key in defaults:
         if key not in cfg:
-            logger.info(
-                "No %s specification in config file, "
-                "defaulting to %s", key, defaults[key])
+            print(
+                f"INFO: No '{key}' specification in config file, defaulting "
+                f"to '{defaults[key]}'")
             cfg[key] = defaults[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
-
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
+
+    # Quicklook feature
+    if cfg['quicklook']['active']:
+        print("INFO: Using ESMValTool in quicklook mode")
+        quicklook_opts = cfg['quicklook']
+        for opt in ('output_dir', 'recipe_dir'):
+            if opt not in quicklook_opts:
+                print(
+                    f"WARNING: Quicklook mode is enabled but no '{opt}' "
+                    f"given, defaulting to {cfg['output_dir']}")
+                quicklook_opts[opt] = cfg['output_dir']
+            else:
+                quicklook_opts[opt] = _normalize_path(quicklook_opts[opt])
+        cfg['save_intermediary_cubes'] = False
+        cfg['remove_preproc_dir'] = True
 
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
@@ -138,8 +155,8 @@ def read_config_developer_file(cfg_file=None):
 def configure_logging(cfg_file=None, output=None, console_log_level=None):
     """Set up logging."""
     if cfg_file is None:
-        cfg_file = os.path.join(
-            os.path.dirname(__file__), 'config-logging.yml')
+        cfg_file = os.path.join(os.path.dirname(__file__),
+                                'config-logging.yml')
 
     if output is None:
         output = os.getcwd()
@@ -191,8 +208,7 @@ def replace_mip_fx(fx_file):
     return new_mip
 
 
-TAGS_CONFIG_FILE = os.path.join(
-    DIAGNOSTICS_PATH, 'config-references.yml')
+TAGS_CONFIG_FILE = os.path.join(DIAGNOSTICS_PATH, 'config-references.yml')
 
 
 def _load_tags(filename=TAGS_CONFIG_FILE):

@@ -1,16 +1,19 @@
 """Functions for loading and saving cubes."""
 import copy
+import datetime
 import logging
 import os
 import shutil
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from itertools import groupby
 
-import numpy as np
 import iris
+import iris.coord_categorisation
 import iris.exceptions
 import yaml
+from cf_units import Unit
 
+from esmvalcore.cmor.check import check_frequency
 from .._task import write_ncl_settings
 
 logger = logging.getLogger(__name__)
@@ -24,6 +27,8 @@ VARIABLE_KEYS = {
     'reference_dataset',
     'alternative_dataset',
 }
+
+TimeRange = namedtuple('TimeRange', ['start', 'end'])
 
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
@@ -61,7 +66,7 @@ def load(file, callback=None):
     return raw_cubes
 
 
-def _fix_cube_attributes(cubes):
+def fix_cube_attributes(cubes):
     """Unify attributes of different cubes to allow concatenation."""
     attributes = {}
     for cube in cubes:
@@ -69,8 +74,8 @@ def _fix_cube_attributes(cubes):
             if attr not in attributes:
                 attributes[attr] = val
             else:
-                if not np.array_equal(val, attributes[attr]):
-                    attributes[attr] = '{};{}'.format(
+                if str(val) not in str(attributes[attr]):
+                    attributes[attr] = '{}|{}'.format(
                         str(attributes[attr]), str(val))
     for cube in cubes:
         cube.attributes = attributes
@@ -78,7 +83,7 @@ def _fix_cube_attributes(cubes):
 
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
-    _fix_cube_attributes(cubes)
+    fix_cube_attributes(cubes)
     try:
         cube = iris.cube.CubeList(cubes).concatenate_cube()
         return cube
@@ -89,8 +94,166 @@ def concatenate(cubes):
             logger.error(cube)
         raise ex
 
+def _add_aux_time_coords(cube):
+    """Add auxiliary time coordinates to cube."""
+    coords = [coord.name() for coord in cube.aux_coords]
+    if 'day_of_month' not in coords:
+        iris.coord_categorisation.add_day_of_month(cube, 'time')
+    if 'day_of_year' not in coords:
+        iris.coord_categorisation.add_day_of_year(cube, 'time')
+    if 'month_number' not in coords:
+        iris.coord_categorisation.add_month_number(cube, 'time')
+    if 'year' not in coords:
+        iris.coord_categorisation.add_year(cube, 'time')
 
-def save(cubes, filename, optimize_access='', compress=False, **kwargs):
+
+def _extract_time_range(cube):
+    """Extract time range of a cube."""
+    time_coord = cube.coord('time')
+    start = time_coord.units.num2date(time_coord.points[0])
+    end = time_coord.units.num2date(time_coord.points[-1])
+    return TimeRange(start=start, end=end)
+
+
+def _to_iris_partial_datetime(time_object):
+    """"Convert :mod:`datetime` object to :mod:`iris.time.PartialDateTime`."""
+    return iris.time.PartialDateTime(
+        year=time_object.year,
+        month=time_object.month,
+        day=time_object.day,
+        hour=time_object.hour,
+        minute=time_object.minute,
+        second=time_object.second,
+        microsecond=time_object.microsecond,
+    )
+
+
+def _fix_cube_metadata(cubes):
+    """Fix metadata of cubes prior to concatenation."""
+    fix_cube_attributes(cubes)
+
+    # Auxiliary time units
+    for cube in cubes:
+        time_idx = cube.coord_dims('time')
+        for coord in cube.coords(dim_coords=False,
+                                 contains_dimension=time_idx[0]):
+            cube.remove_coord(coord)
+
+    # Units of latitude and longitude
+    degrees_units = Unit('degrees')
+    for cube in cubes:
+        for coord in cube.coords():
+            if coord.units == degrees_units:
+                coord.units = degrees_units
+                if coord.name() == 'longitude':
+                    coord.circular = True
+
+
+def _realize_cube(cube):
+    """Realize cube to memory in order to avoid loss of data."""
+    cube.data
+    for coord in cube.coords():
+        coord.points
+        coord.bounds
+
+
+def _concatenate_along_time(old_cube, new_cube):
+    """Check consistency and concatenate two cubes along time dimension."""
+    old_time_range = _extract_time_range(old_cube)
+    new_time_range = _extract_time_range(new_cube)
+
+    # Check if time ranges overlap
+    latest_start = max(old_time_range.start, new_time_range.start)
+    earliest_end = min(old_time_range.end, new_time_range.end)
+    delta = earliest_end - latest_start
+    if delta > datetime.timedelta():
+        logger.warning(
+            "Old and new cubes overlap in time dimension, got %s for old cube "
+            "and %s for new cube", old_time_range, new_time_range)
+        start = _to_iris_partial_datetime(new_time_range[0])
+        end = _to_iris_partial_datetime(new_time_range[1])
+        time_constraint = iris.Constraint(
+            time=lambda cell: cell.point < start or cell.point > end)
+        old_cube = old_cube.extract(time_constraint)
+        if old_cube is None:
+            logger.warning("Overwriting all data of old cube with new cube")
+            return new_cube
+        else:
+            logger.warning(
+                "Overwriting parts of old cube with data of new cube")
+
+    # Build final cube and realize data to avoid data loss
+    cubes = iris.cube.CubeList([old_cube, new_cube])
+    _fix_cube_metadata(cubes)
+    final_cube = cubes.concatenate_cube(check_aux_coords=False)
+    _add_aux_time_coords(final_cube)
+    _realize_cube(final_cube)
+
+    # Check time frequencies (i.e. if data is missing)
+    if 'frequency' in final_cube.attributes:
+        time_coord = final_cube.coord('time')
+        frequency = final_cube.attributes['frequency']
+        (successful, msg) = check_frequency(time_coord, frequency)
+        if not successful:
+            logger.warning(
+                msg.format(final_cube.summary(shorten=True), frequency))
+            logger.warning(
+                "Frequency check of final cube was not successful, the cube "
+                "might not be contiguous")
+    else:
+        logger.warning(
+            "Could not check if final cube is contiguous, cube attributes do "
+            "not contain 'frequency'")
+
+    return final_cube
+
+
+def _save_new_cube_individually(cubes, kwargs, msg):
+    """Save new cube individually in concatenation mode in case of errors."""
+    kwargs = dict(kwargs)
+    now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    kwargs['target'] = kwargs['target'].replace('.nc', f'_{now}.nc')
+    logger.warning(msg)
+    logger.warning("Saving cubes %s to %s", cubes, kwargs['target'])
+    iris.save(cubes, **kwargs)
+
+
+def _concatenate_output(cubes, filename, **kwargs):
+    """Concatenate cubes to already existing output."""
+    logger.debug("Saving cubes in concatenation mode")
+    if not os.path.isfile(filename):
+        logger.debug(
+            "File %s does not exits yet, saving cubes %s", filename, cubes)
+        iris.save(cubes, **kwargs)
+        return
+    if len(cubes) > 1:
+        msg = (f"Saving cubes in concatenation mode is not possible for "
+               f"CubeLists with more than one element, got {len(cubes)}")
+        return _save_new_cube_individually(cubes, kwargs, msg)
+
+    # If file exists, check for consistency and concatenate
+    old_cubes = iris.load(filename)
+    if len(old_cubes) > 1:
+        msg = (f"Saving cubes in concatenation mode is not possible if old "
+               f"file at {filename} contains a CubeList with more than one "
+               f"element, got {len(cubes)}")
+        return _save_new_cube_individually(cubes, kwargs, msg)
+
+    # Consistency check and concatenation
+    try:
+        new_cube = _concatenate_along_time(old_cubes[0], cubes[0])
+    except Exception as exc:
+        msg = f"Could not concatenate old and new cube along time: {str(exc)}"
+        return _save_new_cube_individually(cubes, kwargs, msg)
+
+    #  Save final cube
+    logger.info("Successfully concatenated cube %s to %s",
+                new_cube.summary(shorten=True), filename)
+    iris.save(new_cube, **kwargs)
+
+
+def save(cubes, filename, optimize_access='', compress=False,
+         concatenate=False, **kwargs):
     """
     Save iris cubes to file.
 
@@ -114,6 +277,10 @@ def save(cubes, filename, optimize_access='', compress=False, **kwargs):
     compress: bool, optional
         Use NetCDF internal compression.
 
+    concatenate: bool, optional
+        Concatenate cubes to already existent output if possible (used in
+        quicklook mode).
+
     Returns
     -------
     str
@@ -124,18 +291,12 @@ def save(cubes, filename, optimize_access='', compress=False, **kwargs):
     kwargs['target'] = filename
     kwargs['zlib'] = compress
 
+    # Check if directory exits and create it if necessary
     dirname = os.path.dirname(filename)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    if (os.path.exists(filename)
-            and all(cube.has_lazy_data() for cube in cubes)):
-        logger.debug(
-            "Not saving cubes %s to %s to avoid data loss. "
-            "The cube is probably unchanged.", cubes, filename)
-        return filename
-
-    logger.debug("Saving cubes %s to %s", cubes, filename)
+    # Configure keyword arguments
     if optimize_access:
         cube = cubes[0]
         if optimize_access == 'map':
@@ -153,8 +314,21 @@ def save(cubes, filename, optimize_access='', compress=False, **kwargs):
         kwargs['chunksizes'] = tuple(
             length if index in dims else 1
             for index, length in enumerate(cube.shape))
-
     kwargs['fill_value'] = GLOBAL_FILL_VALUE
+
+    # Concatenate output if desired
+    if concatenate:
+        _concatenate_output(cubes, filename, **kwargs)
+        return filename
+
+    # Save file regularly
+    if (os.path.exists(filename)
+        and all(cube.has_lazy_data() for cube in cubes)):
+        logger.debug(
+            "Not saving cubes %s to %s to avoid data loss. "
+            "The cube is probably unchanged.", cubes, filename)
+        return filename
+    logger.debug("Saving cubes %s to %s", cubes, filename)
     iris.save(cubes, **kwargs)
 
     return filename

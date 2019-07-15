@@ -1,18 +1,16 @@
-"""Derivation of variable `BB_NO_s`."""
-"""The variable 'BB_NO_s' is an EMAC variable that is used """
-"""for monitoring EMAC output. It is here summed over all """
-"""available levels. """
-"""The variable is stored in the EMAC CMIP6 channel 'import_grid'. """
-"""BB_NO_s: Biomass Burning NO, summed """
+"""Derivation of variable `BB_NO_s`.
 
-import iris
-import iris.analysis
-from . import var_name_constraint
+The variable 'BB_NO_s' is an EMAC variable that is used for monitoring EMAC
+output. It is here summed over all available levels. The variable is stored in
+the EMAC CMIP6 channel 'import_grid'.
+
+BB_NO_s: Biomass Burning NO, summed.
+
+"""
+
+from ._shared import sum_over_level
 
 
 def derive(cubes):
-    cube1 = cubes.extract_strict(var_name_constraint('BB_NO'))
-    z_coord = cube1.coords(dimensions=1)
-    z_coord_name = z_coord[0].name()
-    output_cube = cube1.collapsed(z_coord_name, iris.analysis.SUM)
-    return output_cube
+    """Derive `BB_NO_s`."""
+    return sum_over_level(cubes, ['BB_NO'])

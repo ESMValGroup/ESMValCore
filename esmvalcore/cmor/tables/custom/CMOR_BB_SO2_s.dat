@@ -3,14 +3,15 @@ SOURCE: CMIP6
 variable_entry:    BB_SO2_s
 !============
 modeling_realm:    atmos
+frequency:         10hr
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     
+standard_name:
 units:             kg m-2 s-1
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         Sum of Natural Anthropogenic SO2 
+long_name:         Sum of Natural Anthropogenic SO2
 comment:           Summed over all levels
 !----------------------------------
 ! Additional variable information:

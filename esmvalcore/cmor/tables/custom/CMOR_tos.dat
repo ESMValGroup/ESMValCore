@@ -1,0 +1,23 @@
+SOURCE: CMIP6
+!============
+variable_entry:    tos
+!============
+modeling_realm:    ocean
+frequency:         10hr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     sea_surface_temperature
+units:             K
+cell_methods:      area: mean where sea time: mean
+cell_measures:     area: areacello
+long_name:         Sea Surface Temperature
+comment:           temperature of liquid ocean.  Note that the correct standard_name for this variable is 'sea_surface_temperature', not 'surface_temperature', but this was discovered too late to correct. To maintain consistency across CMIP5 models, the wrong standard_name will continue to be used.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          tos
+type:              real
+!----------------------------------
+!

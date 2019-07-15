@@ -1,0 +1,267 @@
+# ESMValTool
+# recipe_python.yml
+---
+documentation:
+  description: |
+    Template for quicklook recipe for forcings.
+
+  authors:
+    - broe_bj
+    - bock_ls
+
+  maintainer:
+    - laue_ax
+
+  references:
+    - acknow_project
+
+  projects:
+    - cmip6dicad
+
+datasets:
+{% for dataset in datasets%}
+    - {{ dataset }}
+{% endfor %}
+
+preprocessors:
+
+  prep_zon:
+    zonal_means:
+      coordinate: longitude
+      mean_type: mean
+
+diagnostics:
+
+  glob_timeseries_TN_GHG_CO2:
+    description: Timeseries of global mean CO2.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      TN_GHG_CO2:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+        
+  glob_timeseries_TN_GHG_N2O:
+    description: Timeseries of global mean N2O.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      TN_GHG_N2O:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+        
+  glob_timeseries_TN_GHG_CH4:
+    description: Timeseries of global mean CH4.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      TN_GHG_CH4:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+        
+  glob_timeseries_BB_CO_s:
+    description: Timeseries of global mean biomass burning CO.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      BB_CO_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+        
+  glob_timeseries_BB_N_s:
+    description: Timeseries of global mean biomass burning N.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      BB_N_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+        
+  glob_timeseries_BB_SO_s:
+    description: Timeseries of global mean biomass burning SO.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      BB_SO_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+        
+  glob_timeseries_BB_AER_TC_s:
+    description: Timeseries of global mean biomass burning total carbon.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      BB_AER_TC_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+        
+  glob_timeseries_ANTHNT_NO_s:
+    description: Timeseries of global mean anthropogenic NO.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ANTHNT_NO_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_ANTHNT_CO_s:
+    description: Timeseries of global mean anthropogenic CO.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ANTHNT_CO_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_ANTHNT_SO2_s:
+    description: Timeseries of global mean anthropogenic SO2.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ANTHNT_SO2_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_ANTHNT_AER_TC_s:
+    description: Timeseries of global mean anthropogenic total carbon.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ANTHNT_AER_TC_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_ROAD_NO:
+    description: Timeseries of global mean road traffic NO.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ANTHNT_ROAD_NO:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_ROAD_AER_BC:
+    description: Timeseries of global mean road traffic black carbon.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ANTHNT_ROAD_AER_BC:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_SHIP_NO_s:
+    description: Timeseries of global mean ship NO.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ANTHNT_SHIP_NO_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_SHIP_SO2_s:
+    description: Timeseries of global mean ship SO2.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ANTHNT_SHIP_SO2_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_SHIP_AER_BC_s:
+    description: Timeseries of global mean ship black carbon.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      ANTHNT_SHIP_AER_BC_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_AIRC_NO_s:
+    description: Timeseries of global mean air traffic NO.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      AIRC_NO_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+
+  glob_timeseries_VOLC_SO2_s:
+    description: Timeseries of global mean volcanic SO2.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      VOLC_SO2_s:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
