@@ -40,7 +40,7 @@ def create_recipe(cfg):
     with open(os.path.join(recipe_dir, 'general.yml')) as stream:
         out = {**yaml.load(stream, Loader=yaml.FullLoader)}
 
-    out['diagnostics'] = d
+    out['diagnostics'] = all_diagnostics
     out['datasets'] = [{
         'dataset': 'EMAC',
         'project': 'EMAC',
