@@ -132,6 +132,13 @@ def main(args):
 
     if args.quicklook:
         cfg = read_config_user_file(config_file, 'quicklook')
+        if 'quicklook' in cfg.keys() and cfg['quicklook']['active']:
+            cfg['quicklook']['dataset-id'] = args.dataset
+            if args.start-year and args.end-year:
+                cfg['quicklook']['start'] = args.start-year
+                cfg['quicklook']['end'] = args.end-year
+        else:
+            print("ERROR: Check the quicklook settings in configuration file")
         recipe = _check_recipe_path(generate_recipe(cfg))
     else:
         recipe = _check_recipe_path(args.recipe)
@@ -153,12 +160,6 @@ def main(args):
 
     logger.info("Using config file %s", config_file)
     logger.info("Writing program log files to:\n%s", "\n".join(log_files))
-
-    if 'quicklook' in cfg.keys() and cfg['quicklook']['active']:
-        cfg['quicklook']['dataset-id'] = args.dataset
-        if args.start-year and args.end-year:
-            cfg['quicklook']['start'] = args.start-year
-            cfg['quicklook']['end'] = args.end-year
 
     cfg['skip-nonexistent'] = args.skip_nonexistent
     cfg['diagnostics'] = {
