@@ -33,7 +33,7 @@ def _concatenate(cubes, var_name):
 
 def _derive(cubes, short_name):
     """Derive variable if necessary."""
-    _unify_metadata(cubes)
+    cube_attributes = _unify_metadata(cubes)
     derive = get_derive_function(short_name)
     if derive is None:
         logger.debug("Deriving '%s' without special function", short_name)
@@ -47,6 +47,7 @@ def _derive(cubes, short_name):
         logger.debug("Deriving '%s' using derivation function", short_name)
         cube = derive(cubes)
     cube.var_name = short_name
+    cube.attributes = cube_attributes
     return cube
 
 
@@ -86,7 +87,7 @@ def _fix_metadata(cube, variable, var_info):
 def _unify_metadata(cubes, var_name=None):
     """Unify metadata of cubes."""
     if not cubes:
-        return
+        return {}
     fix_invalid_units(cubes)
     fix_cube_attributes(cubes)
     attributes = cubes[0].attributes
@@ -97,6 +98,7 @@ def _unify_metadata(cubes, var_name=None):
         cube.attributes = attributes
         if var_name is not None:
             cube.var_name = var_name
+    return attributes
 
 
 def cmorize(cubes, variable, var_mapping):
