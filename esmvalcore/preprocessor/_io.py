@@ -94,6 +94,7 @@ def concatenate(cubes):
             logger.error(cube)
         raise ex
 
+
 def _add_aux_time_coords(cube):
     """Add auxiliary time coordinates to cube."""
     coords = [coord.name() for coord in cube.aux_coords]
@@ -116,7 +117,7 @@ def _extract_time_range(cube):
 
 
 def _to_iris_partial_datetime(time_object):
-    """"Convert :mod:`datetime` object to :mod:`iris.time.PartialDateTime`."""
+    """Convert :mod:`datetime` object to :mod:`iris.time.PartialDateTime`."""
     return iris.time.PartialDateTime(
         year=time_object.year,
         month=time_object.month,
@@ -178,9 +179,7 @@ def _concatenate_along_time(old_cube, new_cube):
         if old_cube is None:
             logger.warning("Overwriting all data of old cube with new cube")
             return new_cube
-        else:
-            logger.warning(
-                "Overwriting parts of old cube with data of new cube")
+        logger.warning("Overwriting parts of old cube with data of new cube")
 
     # Build final cube and realize data to avoid data loss
     cubes = iris.cube.CubeList([old_cube, new_cube])
@@ -191,9 +190,9 @@ def _concatenate_along_time(old_cube, new_cube):
 
     # Check time frequencies (i.e. if data is missing)
     if 'frequency' in final_cube.attributes:
-        time_coord = final_cube.coord('time')
         frequency = final_cube.attributes['frequency']
-        (successful, msg) = check_frequency(time_coord, frequency)
+        (successful, msg) = check_frequency(final_cube.coord('time'),
+                                            frequency)
         if not successful:
             logger.warning(
                 msg.format(final_cube.summary(shorten=True), frequency))
@@ -205,6 +204,9 @@ def _concatenate_along_time(old_cube, new_cube):
             "Could not check if final cube is contiguous, cube attributes do "
             "not contain 'frequency'")
 
+    # Fix time attributes
+    final_cube.attributes['start_year'] = final_cube.coord('year').points[0]
+    final_cube.attributes['end_year'] = final_cube.coord('year').points[-1]
     return final_cube
 
 
@@ -225,7 +227,7 @@ def _concatenate_output(cubes, filename, **kwargs):
         logger.debug(
             "File %s does not exits yet, saving cubes %s", filename, cubes)
         iris.save(cubes, **kwargs)
-        return
+        return None
     if len(cubes) > 1:
         msg = (f"Saving cubes in concatenation mode is not possible for "
                f"CubeLists with more than one element, got {len(cubes)}")
@@ -250,10 +252,11 @@ def _concatenate_output(cubes, filename, **kwargs):
     logger.info("Successfully concatenated cube %s to %s",
                 new_cube.summary(shorten=True), filename)
     iris.save(new_cube, **kwargs)
+    return None
 
 
 def save(cubes, filename, optimize_access='', compress=False,
-         concatenate=False, **kwargs):
+         concatenate_output=False, **kwargs):
     """
     Save iris cubes to file.
 
@@ -277,7 +280,7 @@ def save(cubes, filename, optimize_access='', compress=False,
     compress: bool, optional
         Use NetCDF internal compression.
 
-    concatenate: bool, optional
+    concatenate_output: bool, optional
         Concatenate cubes to already existent output if possible (used in
         quicklook mode).
 
@@ -317,13 +320,13 @@ def save(cubes, filename, optimize_access='', compress=False,
     kwargs['fill_value'] = GLOBAL_FILL_VALUE
 
     # Concatenate output if desired
-    if concatenate:
+    if concatenate_output:
         _concatenate_output(cubes, filename, **kwargs)
         return filename
 
     # Save file regularly
     if (os.path.exists(filename)
-        and all(cube.has_lazy_data() for cube in cubes)):
+            and all(cube.has_lazy_data() for cube in cubes)):
         logger.debug(
             "Not saving cubes %s to %s to avoid data loss. "
             "The cube is probably unchanged.", cubes, filename)

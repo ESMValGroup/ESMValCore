@@ -583,7 +583,7 @@ def _match_products(products, variables):
 
 
 def _get_cmorizer_options(variable):
-    """Get options if CMORization is desired"""
+    """Get options if CMORization is desired."""
     cfg = get_project_config(variable['project'])
     if 'cmorize' not in cfg:
         return None
@@ -628,7 +628,7 @@ def _update_cmorizer_variable(variable):
 def _update_quicklook_settings(settings, config_user):
     """Get correct settings for quicklook mode."""
     if config_user['quicklook']['active']:
-        settings['save']['concatenate'] = True
+        settings['save']['concatenate_output'] = True
 
 
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
