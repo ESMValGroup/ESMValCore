@@ -64,7 +64,10 @@ def get_args():
     parser = argparse.ArgumentParser(
         description=HEADER,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('recipe', help='Path or name of the yaml recipe file')
+    parser.add_argument('recipe',
+                        nargs='?',
+                        default='None',
+                        help='Path or name of the yaml recipe file')
     parser.add_argument('-v',
                         '--version',
                         action='version',
