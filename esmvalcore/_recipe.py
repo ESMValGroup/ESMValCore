@@ -362,23 +362,6 @@ def _get_default_settings(variable, config_user, derive=False):
     return settings
 
 
-def get_input_fx_filelist(variable, rootpath, drs):
-    """Return a dict with fx vars keys and full file paths values."""
-    fx_files_dict = {}
-    for fx_var_dict in variable['fx_files']:
-        fx_var = _add_fxvar_keys(fx_var_dict, variable)
-        fx_files = get_input_filelist(
-            variable=fx_var,
-            rootpath=rootpath,
-            drs=drs)
-        if fx_files:
-            fx_files_dict[fx_var['short_name']] = fx_files[0]
-        else:
-            fx_files_dict[fx_var['short_name']] = None
-
-    return fx_files_dict
-
-
 def _add_fxvar_keys(fx_var_dict, variable):
     """Add keys specific to fx variable to use get_input_filelist."""
     fx_variable = dict(variable)
@@ -410,7 +393,7 @@ def _update_fx_settings(settings, variable, config_user):
             if 'fx_files' in var:
                 _augment(var, variable)
                 fx_files.update(
-                    get_input_fx_filelist(
+                    get_input_filelist(
                         variable=var,
                         rootpath=config_user['rootpath'],
                         drs=config_user['drs']))
@@ -418,18 +401,21 @@ def _update_fx_settings(settings, variable, config_user):
 
     # update for landsea
     if 'mask_landsea' in settings:
+        fx_files_dict = {}
         # Configure ingestion of land/sea masks
         logger.debug('Getting fx mask settings now...')
-
         settings['mask_landsea']['fx_files'] = []
-
         var = dict(variable)
-        var['fx_files'] = [{'short_name': 'sftlf'}, {'short_name': 'sftof'}]
-        fx_files_dict = get_input_fx_filelist(
-            variable=var,
-            rootpath=config_user['rootpath'],
-            drs=config_user['drs'])
-
+        if var['project'] == 'CMIP5':
+            fx_var = _add_fxvar_keys({'short_name': 'sftlf', 'mip': 'fx'}, var)
+        fx_files_dict['sftlf'] = get_output_file(fx_var,
+                                                 config_user['preproc_dir'],
+                                                 masking=True)
+        if var['project'] == 'CMIP5':
+            fx_var = _add_fxvar_keys({'short_name': 'sftof', 'mip': 'fx'}, var)
+        fx_files_dict['sftof'] = get_output_file(fx_var,
+                                                 config_user['preproc_dir'],
+                                                 masking=True)
         # allow both sftlf and sftof
         if fx_files_dict['sftlf']:
             settings['mask_landsea']['fx_files'].append(fx_files_dict['sftlf'])
@@ -438,17 +424,11 @@ def _update_fx_settings(settings, variable, config_user):
 
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')
-
         settings['mask_landseaice']['fx_files'] = []
-
         var = dict(variable)
-        var['fx_files'] = [{'short_name': 'sftgif'}]
-        fx_files_dict = get_input_fx_filelist(
-            variable=var,
-            rootpath=config_user['rootpath'],
-            drs=config_user['drs'])
-
         # allow sftgif (only, for now)
+        fx_files_dict['sftgif'] = get_output_file(var,
+                                                  config_user['preproc_dir'])
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
@@ -457,10 +437,8 @@ def _update_fx_settings(settings, variable, config_user):
         if settings.get(step, {}).get('fx_files'):
             var = dict(variable)
             var['fx_files'] = settings.get(step, {}).get('fx_files')
-            fx_files_dict = get_input_fx_filelist(
-                variable=var,
-                rootpath=config_user['rootpath'],
-                drs=config_user['drs'])
+            fx_files_dict = get_output_file(var,
+                                            config_user['preproc_dir'])
             settings[step]['fx_files'] = fx_files_dict
 
 
@@ -649,7 +627,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             settings=settings,
             config_user=config_user)
         _update_fx_settings(
-            settings=settings, variable=variable, config_user=config_user)
+            settings=settings, variable=variable,
+            config_user=config_user)
         _update_target_grid(
             variable=variable,
             variables=variables,
@@ -674,28 +653,57 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     return products
 
 
+def _remove_temporal_preprocs(profile):
+    """Remove all temporal operations on fx variables."""
+    fx_profile = profile
+    if 'mask_landsea' in profile:
+        fx_profile['mask_landsea'] = False
+    if 'mask_landseaice' in profile:
+        fx_profile['mask_landseaice'] = False
+    if 'seasonal_mean' in profile:
+        fx_profile['seasonal_mean'] = False
+    return fx_profile
+
+
 def _get_single_preprocessor_task(variables,
                                   profile,
                                   config_user,
                                   name,
                                   ancestor_tasks=None):
-    """Create preprocessor tasks for a set of datasets."""
+    """Create preprocessor tasks for a set of datasets w/ special case fx."""
     if ancestor_tasks is None:
         ancestor_tasks = []
     order = _extract_preprocessor_order(profile)
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
-    products = _get_preprocessor_products(
-        variables=variables,
-        profile=profile,
-        order=order,
-        ancestor_products=ancestor_products,
-        config_user=config_user,
-    )
+
+    products = []
+    for variable in variables:
+        if variable['frequency'] != 'fx':
+            product = list(_get_preprocessor_products(
+                variables=[variable],
+                profile=profile,
+                order=order,
+                ancestor_products=ancestor_products,
+                config_user=config_user,
+            ))[0]
+        else:
+            fx_profile = profile
+            fx_profile['extract_time'] = False
+            fx_profile = _remove_temporal_preprocs(profile)
+            product = list(_get_preprocessor_products(
+                variables=[variable],
+                profile=fx_profile,
+                order=order,
+                ancestor_products=None,
+                config_user=config_user,
+            ))[0]
+        products.append(product)
 
     if not products:
         raise RecipeError(
             "Did not find any input data for task {}".format(name))
 
+    # fx variable task
     task = PreprocessingTask(
         products=products,
         ancestors=ancestor_tasks,
@@ -779,37 +787,6 @@ def _get_derive_input_variables(variables, config_user):
     return derive_input
 
 
-def _get_fx_input_variables(variables):
-    """Determine the input sets of fx vars needed for masking or others."""
-    fx_input = {}
-
-    def append(group_prefix, var):
-        """Append variable `var` to an fx input group."""
-        group = group_prefix + var['short_name']
-        var['variable_group'] = group
-        if group not in fx_input:
-            fx_input[group] = []
-        fx_input[group].append(var)
-
-    # figure out which of variables is fx variable
-    fx_variables = [
-        var for var in variables if 'fxvar' in var and var['fxvar']
-    ]
-    # figure out which variable needs fx variables
-    needs_fx_variables = [
-        var for var in variables if 'needs_fxvar' in var and var['need_fxvar']
-    ]
-
-    for variable in needs_fx_variables:
-        group_prefix = variable['variable_group'] + '_fx_input_'
-        # Process fx input data needed by variable
-        for var in fx_variables:
-            _augment(var, variable)
-            append(group_prefix, var)
-
-    return fx_input
-
-
 def _get_preprocessor_task(variables, profiles, config_user, task_name):
     """Create preprocessor task(s) for a set of datasets."""
     # First set up the preprocessor profile
@@ -844,26 +821,6 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
                 config_user,
                 name=derive_name)
             derive_tasks.append(task)
-
-    # treat fx variables and the variables they need them
-    fx_tasks = []
-    if variable.get('needs_fxvar'):
-        # Create tasks to prepare the input data for the fx var addition
-        fx_input = _get_fx_input_variables(variables, config_user)
-        fx_profile = profile
-        fx_profile['extract_time'] = False
-
-        for fx_variables in fx_input.values():
-            for fx_variable in fx_variables:
-                _add_cmor_info(fx_variable, override=True)
-            fx_name = task_name.split(
-                TASKSEP)[0] + TASKSEP + fx_variables[0]['variable_group']
-            task = _get_single_preprocessor_task(
-                fx_variables,
-                fx_profile,
-                config_user,
-                name=derive_name)
-            fx_tasks.append(task)
 
     # Create (final) preprocessor task
     task = _get_single_preprocessor_task(
@@ -997,17 +954,6 @@ class Recipe:
             if institute:
                 variable['institute'] = institute
             check.variable(variable, required_keys)
-            if 'fx_files' in variable:
-                for fx_file_dict in variable['fx_files']:
-                    DATASET_KEYS.add(fx_file_dict['short_name'])
-                # Get the fx files
-                variable['fx_files'] = get_input_fx_filelist(
-                    variable=variable,
-                    rootpath=self._cfg['rootpath'],
-                    drs=self._cfg['drs'])
-                logger.info("Using fx files for var %s of dataset %s:\n%s",
-                            variable['short_name'], variable['dataset'],
-                            variable['fx_files'])
 
         return variables
 
