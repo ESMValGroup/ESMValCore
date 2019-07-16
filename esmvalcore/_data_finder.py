@@ -84,7 +84,7 @@ def get_start_end_year(filename, variable):
     custom_data_finder = get_custom_data_finder(variable)
     if (custom_data_finder is not None and hasattr(
             custom_data_finder, 'preprocess_filename_for_years')):
-        logger.info(
+        logger.debug(
             "Using custom data finder function 'preprocess_filename_for_"
             "years' for project '%s'", variable['project'])
         filename = custom_data_finder.preprocess_filename_for_years(filename,
