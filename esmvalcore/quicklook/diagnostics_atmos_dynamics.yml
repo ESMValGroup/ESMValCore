@@ -24,6 +24,11 @@ diagnostics:
     variables:
       clt:
         preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
   glob_timeseries_clwvi:
     description: Timeseries of global mean water path.
