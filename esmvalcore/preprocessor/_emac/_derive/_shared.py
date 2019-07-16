@@ -35,13 +35,15 @@ def sum_over_level(cubes, var_names, level_idx=1):
 
 def integrate_vertically(cubes,
                          var_name,
+                         scale_factor=1.0,
                          height_var='geopot_ave',
                          height_idx=1):
     """Vertical integration.
 
     Calculate vertical integral over desired variable (on model levels) by
     multiplying each vertical value with layer thickness (m) and summing up all
-    vertical levels.
+    vertical levels. If necessary, the input cube is scaled (e.g. to fix wrong
+    units).
 
     Note
     ----
@@ -51,6 +53,9 @@ def integrate_vertically(cubes,
     """
     cube = cubes.extract_strict(var_name_constraint(var_name))
     height_cube = cubes.extract_strict(var_name_constraint(height_var))
+
+    # Scale cube
+    cube *= scale_factor
 
     # Calculate monthly means for both cubes
     iris.coord_categorisation.add_categorised_coord(cube, 'year_month', 'time',
