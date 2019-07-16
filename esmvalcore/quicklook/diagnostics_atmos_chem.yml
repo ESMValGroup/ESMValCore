@@ -1,33 +1,3 @@
-# ESMValTool
-# recipe_python.yml
----
-documentation:
-  description: |
-    Template for quicklook recipe for atmosphere chemistry.
-
-  authors:
-    - broe_bj
-    - bock_ls
-
-  maintainer:
-    - laue_ax
-
-  references:
-    - acknow_project
-
-  projects:
-    - cmip6dicad
-
-datasets:
-    - {{ dataset }}
-
-preprocessors:
-
-  prep_zon:
-    zonal_means:
-      coordinate: longitude
-      mean_type: mean
-
 diagnostics:
 
   glob_timeseries_co2mass:

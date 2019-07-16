@@ -1,265 +1,251 @@
-# ESMValTool
-# recipe_python.yml
----
-documentation:
-  description: |
-    Template for quicklook recipe for forcings.
-
-  authors:
-    - broe_bj
-    - bock_ls
-
-  maintainer:
-    - laue_ax
-
-  references:
-    - acknow_project
-
-  projects:
-    - cmip6dicad
-
-datasets:
-    - {{ dataset }}
-
-preprocessors:
-
-  prep_zon:
-    zonal_means:
-      coordinate: longitude
-      mean_type: mean
-
 diagnostics:
 
-  glob_timeseries_TN_GHG_CO2:
-    description: Timeseries of global mean CO2.
+  glob_timeseries_clivi:
+    description: Timeseries of global mean ice water path.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      TN_GHG_CO2:
+      clivi:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
-  glob_timeseries_TN_GHG_N2O:
-    description: Timeseries of global mean N2O.
+  glob_timeseries_clt:
+    description: Timeseries of global mean total cloud coverage.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      TN_GHG_N2O:
+      clt:
         preprocessor: prep_zon
-    scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
         
-  glob_timeseries_TN_GHG_CH4:
-    description: Timeseries of global mean CH4.
+  glob_timeseries_clwvi:
+    description: Timeseries of global mean water path.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      TN_GHG_CH4:
+      clivi:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
-  glob_timeseries_BB_CO_s:
-    description: Timeseries of global mean biomass burning CO.
+  glob_timeseries_evspsbl:
+    description: Timeseries of global mean evaporation.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      BB_CO_s:
+      evspsbl:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
-  glob_timeseries_BB_N_s:
-    description: Timeseries of global mean biomass burning N.
+  glob_timeseries_hfns:
+    description: Timeseries of global mean surface net heat flux.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      BB_N_s:
+      hfns:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
-  glob_timeseries_BB_SO_s:
-    description: Timeseries of global mean biomass burning SO.
+  glob_timeseries_pr:
+    description: Timeseries of global mean precipitation.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      BB_SO_s:
+      pr:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
-  glob_timeseries_BB_AER_TC_s:
-    description: Timeseries of global mean biomass burning total carbon.
+  glob_timeseries_prc:
+    description: Timeseries of global mean convective precipitation.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      BB_AER_TC_s:
+      prc:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
         
-  glob_timeseries_ANTHNT_NO_s:
-    description: Timeseries of global mean anthropogenic NO.
+  glob_timeseries_prl:
+    description: Timeseries of global mean large-scale precipitation.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      ANTHNT_NO_s:
+      prl:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
+        
+  glob_timeseries_prsn:
+    description: Timeseries of global mean snow fall.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      prsn:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
+        
+  glob_timeseries_prw:
+    description: Timeseries of global mean water vapor content.
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      prw:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
 
-  glob_timeseries_ANTHNT_CO_s:
-    description: Timeseries of global mean anthropogenic CO.
+  glob_timeseries_rlns:
+    description: Timeseries of global mean net longwave radiation (surface).
     themes:
       - phys
     realms:
       - atmos
     variables:
-      ANTHNT_CO_s:
+      rlns:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
+        
+  glob_timeseries_rlut:
+    description: Timeseries of global mean outgoing longwave radiation (TOA).
+    themes:
+      - phys
+    realms:
+      - atmos
+    variables:
+      rlut:
+        preprocessor: prep_zon
+    scripts:
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
 
-  glob_timeseries_ANTHNT_SO2_s:
-    description: Timeseries of global mean anthropogenic SO2.
+  glob_timeseries_rsns:
+    description: Timeseries of global mean net solar radiation (surface).
     themes:
       - phys
     realms:
       - atmos
     variables:
-      ANTHNT_SO2_s:
+      rsns:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
-
-  glob_timeseries_ANTHNT_AER_TC_s:
-    description: Timeseries of global mean anthropogenic total carbon.
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
+        
+  glob_timeseries_rsnt:
+    description: Timeseries of global mean net solar radiation (TOA).
     themes:
       - phys
     realms:
       - atmos
     variables:
-      ANTHNT_AER_TC_s:
+      rsnt:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
-
-  glob_timeseries_ROAD_NO:
-    description: Timeseries of global mean road traffic NO.
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
+        
+  glob_timeseries_rtmt:
+    description: Timeseries of global mean radiation budget (TOA).
     themes:
       - phys
     realms:
       - atmos
     variables:
-      ANTHNT_ROAD_NO:
+      rtmt:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
-
-  glob_timeseries_ROAD_AER_BC:
-    description: Timeseries of global mean road traffic black carbon.
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
+        
+  glob_timeseries_tas:
+    description: Timeseries of global mean surface temperature.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      ANTHNT_ROAD_AER_BC:
+      tas:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
-
-  glob_timeseries_SHIP_NO_s:
-    description: Timeseries of global mean ship NO.
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
+        
+  glob_timeseries_ts:
+    description: Timeseries of global mean 2-m temperature.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      ANTHNT_SHIP_NO_s:
+      ts:
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
-
-  glob_timeseries_SHIP_SO2_s:
-    description: Timeseries of global mean ship SO2.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
-      ANTHNT_SHIP_SO2_s:
-        preprocessor: prep_zon
-    scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
-
-  glob_timeseries_SHIP_AER_BC_s:
-    description: Timeseries of global mean ship black carbon.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
-      ANTHNT_SHIP_AER_BC_s:
-        preprocessor: prep_zon
-    scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
-
-  glob_timeseries_AIRC_NO_s:
-    description: Timeseries of global mean air traffic NO.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
-      AIRC_NO_s:
-        preprocessor: prep_zon
-    scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
-
-  glob_timeseries_VOLC_SO2_s:
-    description: Timeseries of global mean volcanic SO2.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
-      VOLC_SO2_s:
-        preprocessor: prep_zon
-    scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
