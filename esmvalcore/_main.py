@@ -41,6 +41,7 @@ from . import __version__
 from ._config import configure_logging, read_config_user_file, DIAGNOSTICS_PATH
 from ._recipe import TASKSEP, read_recipe_file
 from ._task import resource_usage_logger
+from ._quicklook import create_recipes
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -132,14 +133,14 @@ def main(args):
 
     if args.quicklook:
         cfg = read_config_user_file(config_file, 'quicklook')
-        if 'quicklook' in cfg.keys() and cfg['quicklook']['active']:
+        if 'quicklook' in cfg.keys() and cfg['quicklook'].get('active', False):
             cfg['quicklook']['dataset-id'] = args.dataset
             if args.start-year and args.end-year:
                 cfg['quicklook']['start'] = args.start-year
                 cfg['quicklook']['end'] = args.end-year
         else:
             print("ERROR: Check the quicklook settings in configuration file")
-        recipe = _check_recipe_path(generate_recipe(cfg))
+        recipe = _check_recipe_path(create_recipe(cfg))
     else:
         recipe = _check_recipe_path(args.recipe)
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
