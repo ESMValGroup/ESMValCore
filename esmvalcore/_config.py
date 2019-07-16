@@ -4,7 +4,7 @@ import logging
 import logging.config
 import os
 import time
-
+from pathlib import Path
 import yaml
 
 from .cmor.table import read_cmor_tables
@@ -56,9 +56,8 @@ def read_config_user_file(config_file, recipe_name):
 
     for key in defaults:
         if key not in cfg:
-            print(
-                f"INFO: No '{key}' specification in config file, defaulting "
-                f"to '{defaults[key]}'")
+            print(f"INFO: No '{key}' specification in config file, defaulting "
+                  f"to '{defaults[key]}'")
             cfg[key] = defaults[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
@@ -70,12 +69,18 @@ def read_config_user_file(config_file, recipe_name):
     if cfg['quicklook']['active']:
         print("INFO: Using ESMValTool in quicklook mode")
         quicklook_opts = cfg['quicklook']
-        for opt in ('output_dir', 'recipe_dir'):
+        quicklook_defaults = {
+            'output_dir':
+            cfg['output_dir'],
+            'recipe_dir':
+            _normalize_path(
+                Path(__file__).parent.joinpath('quicklook').resolve())
+        }
+        for opt, default in quicklook_defaults.items():
             if opt not in quicklook_opts:
-                print(
-                    f"WARNING: Quicklook mode is enabled but no '{opt}' "
-                    f"given, defaulting to {cfg['output_dir']}")
-                quicklook_opts[opt] = cfg['output_dir']
+                print(f"WARNING: Quicklook mode is enabled but no '{opt}' "
+                      f"given, defaulting to {default}")
+                quicklook_opts[opt] = default
             else:
                 quicklook_opts[opt] = _normalize_path(quicklook_opts[opt])
         cfg['save_intermediary_cubes'] = False
