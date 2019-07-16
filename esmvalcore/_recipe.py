@@ -113,11 +113,7 @@ def _add_cmor_info(variable, override=False):
     cmor_table = variable['cmor_table']
     mip = variable['mip']
     short_name = variable['short_name']
-    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name)
-
-    if derive and table_entry is None:
-        custom_table = CMOR_TABLES['custom']
-        table_entry = custom_table.get_variable(mip, short_name)
+    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name, derive)
 
     if table_entry is None:
         raise RecipeError(

@@ -34,20 +34,12 @@ def read_cmor_tables(cfg_developer):
         cmor_type = project.get('cmor_type', 'CMIP5')
         table_path = project.get('cmor_tables', cmor_type.lower())
         table_path = os.path.expandvars(os.path.expanduser(table_path))
-
         cmor_strict = project.get('cmor_strict', True)
-        if cmor_strict:
-            default = None
-        else:
-            default = custom
+
         if cmor_type == 'CMIP5':
-            CMOR_TABLES[table] = CMIP5Info(
-                table_path, default=default,
-            )
+            CMOR_TABLES[table] = CMIP5Info(table_path, custom, cmor_strict)
         elif cmor_type == 'CMIP6':
-            CMOR_TABLES[table] = CMIP6Info(
-                table_path, default=default,
-            )
+            CMOR_TABLES[table] = CMIP6Info(table_path, custom, cmor_strict)
 
 
 class CMIP6Info(object):
@@ -69,11 +61,12 @@ class CMIP6Info(object):
         'tro3': 'o3',
     }
 
-    def __init__(self, cmor_tables_path, default=None):
+    def __init__(self, cmor_tables_path, default, strict):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
         self.default = default
+        self.strict = strict
 
         self.tables = {}
         self.var_to_freq = {}
@@ -171,7 +164,7 @@ class CMIP6Info(object):
         """
         return self.tables.get(table)
 
-    def get_variable(self, table, short_name):
+    def get_variable(self, table, short_name, derived=False):
         """
         Search and return the variable info.
 
@@ -181,6 +174,8 @@ class CMIP6Info(object):
             Table name
         short_name: basestring
             Variable's short name
+        derived: bool, optional
+            Variable is derived. Info retrieval is less strict
 
         Returns
         -------
@@ -194,8 +189,8 @@ class CMIP6Info(object):
         except KeyError:
             if short_name in CMIP6Info._CMIP_5to6_varname:
                 new_short_name = CMIP6Info._CMIP_5to6_varname[short_name]
-                return self.get_variable(table, new_short_name)
-            if self.default:
+                return self.get_variable(table, new_short_name, derived)
+            if not self.strict or derived:
                 var_info = self.default.get_variable(table, short_name)
                 if var_info is None:
                     return None
@@ -439,7 +434,7 @@ class CMIP5Info(object):
 
     """
 
-    def __init__(self, cmor_tables_path, default=None):
+    def __init__(self, cmor_tables_path, default, strict):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
@@ -447,6 +442,7 @@ class CMIP5Info(object):
             raise OSError(errno.ENOTDIR, "CMOR tables path is not a directory",
                           self._cmor_folder)
 
+        self.strict = strict
         self.tables = {}
         self.coords = {}
         self.default = default
@@ -568,7 +564,7 @@ class CMIP5Info(object):
         """
         return self.tables.get(table)
 
-    def get_variable(self, table, short_name):
+    def get_variable(self, table, short_name, derived=False):
         """
         Search and return the variable info.
 
@@ -578,6 +574,8 @@ class CMIP5Info(object):
             Table name
         short_name: basestring
             Variable's short name
+        derived: bool, optional
+            Variable is derived. Info retrieval is less strict
 
         Returns
         -------
@@ -587,13 +585,16 @@ class CMIP5Info(object):
 
         """
         var_info = self.tables.get(table, {}).get(short_name, None)
-        if not var_info and self.default:
-            var_info = self.default.get_variable(table, short_name)
+        if var_info:
+            return var_info
+        if derived or not self.strict:
+            var_info = self.default.get_variable(table, short_name, derived)
             if var_info is None:
                 return None
             var_info = var_info.copy()
             var_info.frequency = self.tables[table].frequency
-        return var_info
+            return var_info
+        return None
 
 
 class CustomInfo(CMIP5Info):
@@ -645,7 +646,7 @@ class CustomInfo(CMIP5Info):
         """
         return self.tables.get(table)
 
-    def get_variable(self, table, short_name):
+    def get_variable(self, table, short_name, derived=False):
         """
         Search and return the variable info.
 
@@ -655,6 +656,8 @@ class CustomInfo(CMIP5Info):
             Table name
         short_name: basestring
             Variable's short name
+        derived: bool, optional
+            Variable is derived. Info retrieval is less strict
 
         Returns
         -------

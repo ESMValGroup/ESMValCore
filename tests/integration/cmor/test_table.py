@@ -16,7 +16,12 @@ class TestCMIP6Info(unittest.TestCase):
 
         We read CMIP6Info once to keep tests times manageable
         """
-        cls.variables_info = CMIP6Info('cmip6', default=CustomInfo())
+        cls.variables_info = CMIP6Info(
+            'cmip6', default=CustomInfo(), strict=True
+        )
+
+    def setUp(self):
+        self.variables_info.strict = True
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
@@ -24,7 +29,7 @@ class TestCMIP6Info(unittest.TestCase):
         cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
                                         'cmor', 'tables', 'cmip6')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP6Info(cmor_tables_path)
+        CMIP6Info(cmor_tables_path, default=None, strict=False)
 
     def test_get_table_frequency(self):
         """Test get table frequency"""
@@ -46,6 +51,7 @@ class TestCMIP6Info(unittest.TestCase):
 
     def test_get_variable_from_custom(self):
         """Get a variable from default."""
+        self.variables_info.strict = False
         var = self.variables_info.get_variable('Amon', 'swcre')
         self.assertEqual(var.short_name, 'swcre')
         self.assertEqual(var.frequency, 'mon')
@@ -71,7 +77,8 @@ class Testobs4mipsInfo(unittest.TestCase):
         """
         cls.variables_info = CMIP6Info(
             cmor_tables_path='obs4mips',
-            default=CustomInfo()
+            default=CustomInfo(),
+            strict=False,
         )
 
     def test_get_table_frequency(self):
@@ -87,7 +94,7 @@ class Testobs4mipsInfo(unittest.TestCase):
         cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
                                         'cmor', 'tables', 'cmip6')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP6Info(cmor_tables_path)
+        CMIP6Info(cmor_tables_path, None, True)
 
     def test_get_variable_ndvi(self):
         """Get ndviStderr variable. Note table name obs4MIPs_[mip]"""
@@ -121,7 +128,10 @@ class TestCMIP5Info(unittest.TestCase):
 
         We read CMIP5Info once to keep testing times manageable
         """
-        cls.variables_info = CMIP5Info('cmip5', default=CustomInfo())
+        cls.variables_info = CMIP5Info('cmip5', CustomInfo(), False)
+
+    def setUp(self):
+        self.variables_info.strict = True
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
@@ -129,7 +139,7 @@ class TestCMIP5Info(unittest.TestCase):
         cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
                                         'cmor', 'tables', 'cmip5')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP5Info(cmor_tables_path)
+        CMIP5Info(cmor_tables_path, None, True)
 
     def test_get_variable_tas(self):
         """Get tas variable."""
@@ -138,6 +148,7 @@ class TestCMIP5Info(unittest.TestCase):
 
     def test_get_variable_from_custom(self):
         """Get a variable from default."""
+        self.variables_info.strict = False
         var = self.variables_info.get_variable('Amon', 'swcre')
         self.assertEqual(var.short_name, 'swcre')
         self.assertEqual(var.frequency, 'mon')
