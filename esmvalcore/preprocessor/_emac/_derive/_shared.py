@@ -10,7 +10,7 @@ STANDARD_GRAVITY = 9.81
 STANDARD_GRAVITY_UNITS = Unit('m s-2')
 
 
-def sum_over_level(cubes, var_names, level_idx=1):
+def sum_over_level(cubes, var_names, scale_factor=1.0, level_idx=1):
     """Perform sum over level coordinate."""
     cube = None
     for var_name in var_names:
@@ -18,6 +18,9 @@ def sum_over_level(cubes, var_names, level_idx=1):
             cube = cubes.extract_strict(var_name_constraint(var_name))
         else:
             cube += cubes.extract_strict(var_name_constraint(var_name))
+
+    # Scale cube
+    cube *= scale_factor
 
     # Get correct coordinate
     lev_coords = cube.coords(dimensions=level_idx, dim_coords=True)

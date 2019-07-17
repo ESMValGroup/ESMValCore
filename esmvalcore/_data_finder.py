@@ -294,7 +294,7 @@ def load_var_mapping(short_name, project, mapping_file):
     if short_name not in mapping:
         raise ValueError(
             f"Mapping {path} for project {project} does not contain variable "
-            f"'{short_name}'")
+            f"'{short_name}' (maybe you forgot 'derive: true' in recipe?)")
     logger.debug("Loading variable mapping %s for variable '%s'", path,
                  short_name)
     return mapping[short_name]

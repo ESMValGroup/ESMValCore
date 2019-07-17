@@ -27,6 +27,35 @@ def find_diagnostics():
 DIAGNOSTICS_PATH = find_diagnostics()
 
 
+def _process_quicklook_settings(cfg):
+    """Process quicklook settings."""
+    if not cfg['quicklook']['active']:
+        return
+    print("INFO: Using ESMValTool in quicklook mode")
+    quicklook_opts = cfg['quicklook']
+
+    # Output dirs
+    for opt in ('plot_dir', 'preproc_dir', 'work_dir'):
+        if opt not in quicklook_opts:
+            quicklook_opts[opt] = os.path.join(cfg['output_dir'], opt)
+            print(
+                f"WARNING: Quicklook mode is enabled but no '{opt}' "
+                f"given, defaulting to {quicklook_opts[opt]}")
+        else:
+            quicklook_opts[opt] = _normalize_path(quicklook_opts[opt])
+
+    # Recipe dir
+    if 'recipe_dir' not in quicklook_opts:
+        quicklook_opts['recipe_dir'] = _normalize_path(
+            Path(__file__).parent.joinpath('quicklook').resolve())
+        print(
+            f"WARNING: Quicklook mode is enabled but no 'recipe_dir' "
+            f"given, defaulting to {quicklook_opts['recipe_dir']}")
+
+    # Do not remove preproc directory
+    cfg['remove_preproc_dir'] = False
+
+
 def read_config_user_file(config_file, recipe_name):
     """Read config user file and store settings in a dictionary."""
     with open(config_file, 'r') as file:
@@ -65,27 +94,6 @@ def read_config_user_file(config_file, recipe_name):
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
 
-    # Quicklook feature
-    if cfg['quicklook']['active']:
-        print("INFO: Using ESMValTool in quicklook mode")
-        quicklook_opts = cfg['quicklook']
-        quicklook_defaults = {
-            'output_dir':
-            cfg['output_dir'],
-            'recipe_dir':
-            _normalize_path(
-                Path(__file__).parent.joinpath('quicklook').resolve())
-        }
-        for opt, default in quicklook_defaults.items():
-            if opt not in quicklook_opts:
-                print(f"WARNING: Quicklook mode is enabled but no '{opt}' "
-                      f"given, defaulting to {default}")
-                quicklook_opts[opt] = default
-            else:
-                quicklook_opts[opt] = _normalize_path(quicklook_opts[opt])
-        cfg['save_intermediary_cubes'] = False
-        cfg['remove_preproc_dir'] = True
-
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
         if isinstance(root, str):
@@ -98,11 +106,19 @@ def read_config_user_file(config_file, recipe_name):
     new_subdir = '_'.join((recipe_name, now))
     cfg['output_dir'] = os.path.join(cfg['output_dir'], new_subdir)
 
+    # Process quicklook settings
+    _process_quicklook_settings(cfg)
+
     # create subdirectories
-    cfg['preproc_dir'] = os.path.join(cfg['output_dir'], 'preproc')
-    cfg['work_dir'] = os.path.join(cfg['output_dir'], 'work')
-    cfg['plot_dir'] = os.path.join(cfg['output_dir'], 'plots')
     cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
+    if cfg['quicklook']['active']:
+        cfg['preproc_dir'] = cfg['quicklook']['preproc_dir']
+        cfg['work_dir'] = cfg['quicklook']['work_dir']
+        cfg['plot_dir'] = cfg['quicklook']['plot_dir']
+    else:
+        cfg['preproc_dir'] = os.path.join(cfg['output_dir'], 'preproc')
+        cfg['work_dir'] = os.path.join(cfg['output_dir'], 'work')
+        cfg['plot_dir'] = os.path.join(cfg['output_dir'], 'plots')
 
     # Save user configuration in global variable
     for key, value in cfg.items():
