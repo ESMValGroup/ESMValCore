@@ -636,14 +636,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     """Get preprocessor product definitions for a set of datasets."""
     products = set()
 
-    # Change output directory for quicklook feature
-    if config_user['quicklook']['active']:
-        out_dir = config_user['quicklook']['output_dir']
-    else:
-        out_dir = config_user['preproc_dir']
-
     for variable in variables:
-        variable['filename'] = get_output_file(variable, out_dir)
+        variable['filename'] = get_output_file(variable,
+                                               config_user['preproc_dir'])
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
