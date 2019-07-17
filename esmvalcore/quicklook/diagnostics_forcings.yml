@@ -1,3 +1,15 @@
+GLOB_TIMESERIES: &glob_timeseries
+  glob_timeseries:
+    script: quicklooks/global_timeseries.py
+
+ALL_TIMESERIES: &all_timeseries
+  glob_timeseries:
+    script: quicklooks/global_timeseries.py
+  zon_timeseries:
+    script: quicklooks/zonal_timeseries.py
+    ancestors: ['*/glob_timeseries']
+
+
 diagnostics:
 
   glob_timeseries_TN_GHG_CO2:
@@ -11,8 +23,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_TN_GHG_N2O:
     description: Timeseries of global mean N2O.
@@ -25,8 +36,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_TN_GHG_CH4:
     description: Timeseries of global mean CH4.
@@ -39,8 +49,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_BB_CO_s:
     description: Timeseries of global mean biomass burning CO.
@@ -53,8 +62,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_BB_NO_s:
     description: Timeseries of global mean biomass burning N.
@@ -67,8 +75,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_BB_SO2_s:
     description: Timeseries of global mean biomass burning SO.
@@ -81,8 +88,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_BB_AER_TC_s:
     description: Timeseries of global mean biomass burning total carbon.
@@ -95,8 +101,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_ANTHNT_NO_s:
     description: Timeseries of global mean anthropogenic NO.
@@ -109,8 +114,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_ANTHNT_CO_s:
     description: Timeseries of global mean anthropogenic CO.
@@ -123,8 +127,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_ANTHNT_SO2_s:
     description: Timeseries of global mean anthropogenic SO2.
@@ -137,8 +140,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_ANTHNT_AER_TC_s:
     description: Timeseries of global mean anthropogenic total carbon.
@@ -151,8 +153,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_ROAD_NO:
     description: Timeseries of global mean road traffic NO.
@@ -165,8 +166,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_ROAD_AER_BC:
     description: Timeseries of global mean road traffic black carbon.
@@ -179,8 +179,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_SHIP_NO_s:
     description: Timeseries of global mean ship NO.
@@ -193,8 +192,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_SHIP_SO2_s:
     description: Timeseries of global mean ship SO2.
@@ -207,8 +205,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_SHIP_AER_BC_s:
     description: Timeseries of global mean ship black carbon.
@@ -221,8 +218,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_AIRC_NO_s:
     description: Timeseries of global mean air traffic NO.
@@ -235,8 +231,7 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_VOLC_SO2_s:
     description: Timeseries of global mean volcanic SO2.
@@ -249,5 +244,4 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries

@@ -1,3 +1,15 @@
+GLOB_TIMESERIES: &glob_timeseries
+  glob_timeseries:
+    script: quicklooks/global_timeseries.py
+
+ALL_TIMESERIES: &all_timeseries
+  glob_timeseries:
+    script: quicklooks/global_timeseries.py
+  zon_timeseries:
+    script: quicklooks/zonal_timeseries.py
+    ancestors: ['*/glob_timeseries']
+
+
 diagnostics:
 
   glob_timeseries_co2mass:
@@ -10,8 +22,7 @@ diagnostics:
       co2mass:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_lnox:
     description: Timeseries of global mean lightning NOx production.
@@ -23,8 +34,7 @@ diagnostics:
       lnox:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_toz10hr:
     description: Timeseries of global mean ozone column.
@@ -37,10 +47,7 @@ diagnostics:
         preprocessor: prep_zon
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
-      zon_timeseries:
-        script: quicklooks/zonal_timeseries.py
+      <<: *all_timeseries
 
   glob_timeseries_MP_S:
     description: Timeseries of global mean S.
@@ -52,8 +59,7 @@ diagnostics:
       MP_S:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_CFCl3:
     description: Timeseries of global mean CFCl3.
@@ -65,8 +71,7 @@ diagnostics:
       MP_CFCl3:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_NH3:
     description: Timeseries of global mean NH3.
@@ -78,8 +83,7 @@ diagnostics:
       MP_NH3:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_N2O:
     description: Timeseries of global mean N2O.
@@ -91,8 +95,7 @@ diagnostics:
       MP_N2O:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_CO:
     description: Timeseries of global mean CO.
@@ -104,8 +107,7 @@ diagnostics:
       MP_CO:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_CH4:
     description: Timeseries of global mean CH4.
@@ -117,8 +119,7 @@ diagnostics:
       MP_CH4:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_SO2:
     description: Timeseries of global mean SO2.
@@ -130,8 +131,7 @@ diagnostics:
       MP_SO2:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_OH:
     description: Timeseries of global mean OH.
@@ -143,8 +143,7 @@ diagnostics:
       MP_OH:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_NO:
     description: Timeseries of global mean NO.
@@ -156,8 +155,7 @@ diagnostics:
       MP_NO:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_NO2:
     description: Timeseries of global mean NO2.
@@ -169,8 +167,7 @@ diagnostics:
       MP_NO2:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_O3:
     description: Timeseries of global mean O3.
@@ -182,8 +179,7 @@ diagnostics:
       MP_O3:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_CO2:
     description: Timeseries of global mean CO2.
@@ -195,8 +191,7 @@ diagnostics:
       MP_CO2:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_SO4mm_tot:
     description: Timeseries of global mean SO4mm_tot.
@@ -208,8 +203,7 @@ diagnostics:
       MP_SO4mm_tot:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_SS_tot:
     description: Timeseries of global mean SS_tot.
@@ -221,8 +215,7 @@ diagnostics:
       MP_SS_tot:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_BC_tot:
     description: Timeseries of global mean BC_tot.
@@ -234,8 +227,7 @@ diagnostics:
       MP_BC_tot:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_DU_tot:
     description: Timeseries of global mean DU_tot.
@@ -247,8 +239,7 @@ diagnostics:
       MP_DU_tot:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_ClOX:
     description: Timeseries of global mean ClOX.
@@ -260,8 +251,7 @@ diagnostics:
       MP_ClOX:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries
 
   glob_timeseries_MP_NOX:
     description: Timeseries of global mean NOX.
@@ -273,5 +263,4 @@ diagnostics:
       MP_NOX:
         mip: custom
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+      <<: *glob_timeseries

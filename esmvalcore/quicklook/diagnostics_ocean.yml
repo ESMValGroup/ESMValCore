@@ -1,3 +1,15 @@
+GLOB_TIMESERIES: &glob_timeseries
+  glob_timeseries:
+    script: quicklooks/global_timeseries.py
+
+ALL_TIMESERIES: &all_timeseries
+  glob_timeseries:
+    script: quicklooks/global_timeseries.py
+  zon_timeseries:
+    script: quicklooks/zonal_timeseries.py
+    ancestors: ['*/glob_timeseries']
+
+
 diagnostics:
 
   glob_timeseries_awhea:
@@ -11,10 +23,7 @@ diagnostics:
         mip: Omon
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
-      zon_timeseries:
-        script: quicklooks/zonal_timeseries.py
+      <<: *all_timeseries
 
   glob_timeseries_siconca:
     description: Timeseries of global mean sea ice concentration.
@@ -27,10 +36,7 @@ diagnostics:
         mip: Amon
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
-      zon_timeseries:
-        script: quicklooks/zonal_timeseries.py
+      <<: *all_timeseries
 
   glob_timeseries_sithick:
     description: Timeseries of global mean sea ice thickness.
@@ -43,10 +49,7 @@ diagnostics:
         mip: SImon
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
-      zon_timeseries:
-        script: quicklooks/zonal_timeseries.py
+      <<: *all_timeseries
 
   glob_timeseries_tos:
     description: Timeseries of sea surface temperature.
@@ -59,7 +62,4 @@ diagnostics:
         mip: custom
         preprocessor: prep_zon
     scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
-      zon_timeseries:
-        script: quicklooks/zonal_timeseries.py
+      <<: *all_timeseries
