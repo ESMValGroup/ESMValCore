@@ -396,6 +396,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
         elif fx_varname == 'sftof':
             fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
                                      var)
+        # TODO check this is the correct mip
         elif fx_varname == 'sftgif':
             fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Efx'},
                                      var)
@@ -693,28 +694,25 @@ def _get_single_preprocessor_task(variables,
     order = _extract_preprocessor_order(profile)
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
 
-    products = []
-    for variable in variables:
-        if variable['frequency'] != 'fx':
-            product = list(_get_preprocessor_products(
-                variables=[variable],
-                profile=profile,
-                order=order,
-                ancestor_products=ancestor_products,
-                config_user=config_user,
-            ))[0]
-        else:
-            fx_profile = _remove_temporal_preprocs(profile)
-            # not do time extraction; this is a default preproc
-            fx_profile['extract_time'] = False
-            product = list(_get_preprocessor_products(
-                variables=[variable],
-                profile=fx_profile,
-                order=order,
-                ancestor_products=None,
-                config_user=config_user,
-            ))[0]
-        products.append(product)
+    if variables[0]['frequency'] != 'fx':
+        products = list(_get_preprocessor_products(
+            variables=variables,
+            profile=profile,
+            order=order,
+            ancestor_products=ancestor_products,
+            config_user=config_user,
+        ))
+    else:
+        fx_profile = _remove_temporal_preprocs(profile)
+        # not do time extraction; this is a default preproc
+        fx_profile['extract_time'] = False
+        products = list(_get_preprocessor_products(
+            variables=variables,
+            profile=fx_profile,
+            order=order,
+            ancestor_products=None,
+            config_user=config_user,
+        ))
 
     if not products:
         raise RecipeError(
