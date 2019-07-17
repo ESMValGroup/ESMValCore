@@ -1,24 +1,15 @@
-"""
-Creates recipes for EMAC simulation.
+"""Creates recipes for EMAC simulation."""
 
-"""
-
-import datetime
-import glob
 import logging
 import os
-import re
-from pathlib import Path, PurePath
 
 import yaml
-
-from ._config import (get_project_config, read_config_developer_file,
-                      read_config_user_file)
 
 logger = logging.getLogger(__name__)
 
 
 def create_recipe(cfg):
+    """Create recipe for quicklook mode and return its path."""
     start = cfg['quicklook'].get('start')
     end = cfg['quicklook'].get('end')
     # TODO: We should rename "recipes" to "diagnostics" in this context
