@@ -79,6 +79,7 @@ def fix_cube_attributes(cubes):
                         str(attributes[attr]), str(val))
     for cube in cubes:
         cube.attributes = attributes
+    return attributes
 
 
 def concatenate(cubes):

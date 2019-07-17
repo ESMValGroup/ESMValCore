@@ -7,6 +7,8 @@ from pathlib import Path
 
 import iris
 
+from .._io import fix_cube_attributes
+
 logger = logging.getLogger(__name__)
 
 
@@ -106,9 +108,11 @@ def derive(cubes,
                     "Requested fx variable '%s' for derivation of "
                     "'%s' not found", fx_var, short_name)
 
-    # Derive variable
+    # Unify attributes and derive variable
+    attributes = fix_cube_attributes(cubes)
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
     cube = DerivedVariable().calculate(cubes)
+    cube.attributes = attributes
 
     # Set standard attributes
     cube.var_name = short_name
