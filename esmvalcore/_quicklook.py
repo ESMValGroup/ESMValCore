@@ -24,11 +24,11 @@ def create_recipe(cfg):
     # TODO: We should rename "recipes" to "diagnostics" in this context
     recipes = cfg['quicklook'].get('recipes')
     run_id = cfg['quicklook'].get('dataset-id')
-    output_dir = os.path.join(cfg['quicklook'].get('output_dir'), run_id)
+    preproc_dir = os.path.join(cfg['quicklook']['preproc_dir'], run_id)
     recipe_dir = cfg['quicklook'].get('recipe_dir')
 
-    logger.debug("Creating directory %s", output_dir)
-    os.makedirs(output_dir, exist_ok=True)
+    logger.debug("Creating directory %s", preproc_dir)
+    os.makedirs(preproc_dir, exist_ok=True)
     all_diagnostics = dict()
     for recipe in recipes:
         recipe_name = 'diagnostics_{0}.yml'.format(recipe)
@@ -47,8 +47,8 @@ def create_recipe(cfg):
         'start_year': start,
         'end_year': end
     }]
-    path_to_recipe = os.path.join(output_dir, 'recipe_quicklook.yml')
+    path_to_recipe = os.path.join(preproc_dir, 'recipe_quicklook.yml')
     with open(path_to_recipe, 'w') as stream:
-        logger.debug("Writing %s to  %s", recipe_name, output_dir)
+        logger.debug("Writing %s to %s", recipe_name, preproc_dir)
         stream.write(yaml.dump(out))
     return path_to_recipe
