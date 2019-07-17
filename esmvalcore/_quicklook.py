@@ -42,9 +42,8 @@ def create_recipe(cfg):
 
     out['diagnostics'] = all_diagnostics
     out['datasets'] = [{
-        'dataset': 'EMAC',
+        'dataset': run_id,
         'project': 'EMAC',
-        'exp': run_id,
         'start_year': start,
         'end_year': end
     }]
