@@ -8,9 +8,15 @@ ANTHNT_NO_s: Anthropogenic NO, summed.
 
 """
 
+from scipy.constants import N_A
+
 from ._shared import sum_over_level
 
 
 def derive(cubes):
-    """Derive `BB_CO_s`."""
-    return sum_over_level(cubes, ['ANTHNT_NO'])
+    """Derive `ANTHNT_NO_s`."""
+    molar_mass_no2 = 46.0055  # g mol-1
+    mass_per_molecule_no2 = molar_mass_no2 / N_A * 1e-3  # kg
+    return sum_over_level(cubes,
+                          'ANTHNT_NO',
+                          scale_factor=mass_per_molecule_no2)
