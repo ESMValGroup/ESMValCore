@@ -199,7 +199,7 @@ def _ordered_safe_dump(data, stream):
     return yaml.dump(data, stream, _OrderedDumper)
 
 
-def write_metadata(products, write_ncl=False):
+def write_metadata(products, write_ncl=False, profile=None):
     """Write product metadata to file."""
     output_files = []
     for output_dir, prods in groupby(products,
@@ -217,6 +217,11 @@ def write_metadata(products, write_ncl=False):
                 product.attributes = dict(product.attributes)
                 product.attributes['exp'] = '-'.join(product.attributes['exp'])
             metadata[product.filename] = product.attributes
+        if profile:
+            metadata['preprocessing_profile'] = {}
+            logger.debug("Adding preprocessing profile to metadata file.")
+            for step in profile:
+                metadata['preprocessing_profile'][step] = profile[step]
 
         output_filename = os.path.join(output_dir, 'metadata.yml')
         output_files.append(output_filename)
