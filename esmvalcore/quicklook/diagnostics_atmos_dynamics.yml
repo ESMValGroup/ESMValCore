@@ -8,6 +8,7 @@ diagnostics:
       - atmos
     variables:
       clivi:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -23,6 +24,7 @@ diagnostics:
       - atmos
     variables:
       clt:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -38,7 +40,8 @@ diagnostics:
       - atmos
     variables:
       clivi:
-        preprocessor: prep_zon
+         mip: Amon
+         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -53,7 +56,8 @@ diagnostics:
       - atmos
     variables:
       evspsbl:
-        preprocessor: prep_zon
+         mip: Amon
+         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
@@ -68,6 +72,7 @@ diagnostics:
       - atmos
     variables:
       hfns:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -83,6 +88,7 @@ diagnostics:
       - atmos
     variables:
       pr:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -98,6 +104,7 @@ diagnostics:
       - atmos
     variables:
       prc:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -113,6 +120,7 @@ diagnostics:
       - atmos
     variables:
       prl:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -128,6 +136,7 @@ diagnostics:
       - atmos
     variables:
       prsn:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -143,6 +152,7 @@ diagnostics:
       - atmos
     variables:
       prw:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -158,6 +168,7 @@ diagnostics:
       - atmos
     variables:
       rlns:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -173,6 +184,7 @@ diagnostics:
       - atmos
     variables:
       rlut:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -188,6 +200,7 @@ diagnostics:
       - atmos
     variables:
       rsns:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -203,6 +216,7 @@ diagnostics:
       - atmos
     variables:
       rsnt:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -218,6 +232,7 @@ diagnostics:
       - atmos
     variables:
       rtmt:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -233,6 +248,7 @@ diagnostics:
       - atmos
     variables:
       tas:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -248,6 +264,7 @@ diagnostics:
       - atmos
     variables:
       ts:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:

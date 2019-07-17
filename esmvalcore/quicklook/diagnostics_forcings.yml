@@ -8,6 +8,7 @@ diagnostics:
       - atmos
     variables:
       TN_GHG_CO2:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -21,6 +22,7 @@ diagnostics:
       - atmos
     variables:
       TN_GHG_N2O:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -34,6 +36,7 @@ diagnostics:
       - atmos
     variables:
       TN_GHG_CH4:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -47,32 +50,35 @@ diagnostics:
       - atmos
     variables:
       BB_CO_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
         
-  glob_timeseries_BB_N_s:
+  glob_timeseries_BB_NO_s:
     description: Timeseries of global mean biomass burning N.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      BB_N_s:
+      BB_NO_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
         
-  glob_timeseries_BB_SO_s:
+  glob_timeseries_BB_SO2_s:
     description: Timeseries of global mean biomass burning SO.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      BB_SO_s:
+      BB_SO2_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -86,6 +92,7 @@ diagnostics:
       - atmos
     variables:
       BB_AER_TC_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -99,6 +106,7 @@ diagnostics:
       - atmos
     variables:
       ANTHNT_NO_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -112,6 +120,7 @@ diagnostics:
       - atmos
     variables:
       ANTHNT_CO_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -125,6 +134,7 @@ diagnostics:
       - atmos
     variables:
       ANTHNT_SO2_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -138,6 +148,7 @@ diagnostics:
       - atmos
     variables:
       ANTHNT_AER_TC_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -151,6 +162,7 @@ diagnostics:
       - atmos
     variables:
       ANTHNT_ROAD_NO:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -164,6 +176,7 @@ diagnostics:
       - atmos
     variables:
       ANTHNT_ROAD_AER_BC:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -177,6 +190,7 @@ diagnostics:
       - atmos
     variables:
       ANTHNT_SHIP_NO_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -190,6 +204,7 @@ diagnostics:
       - atmos
     variables:
       ANTHNT_SHIP_SO2_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -203,6 +218,7 @@ diagnostics:
       - atmos
     variables:
       ANTHNT_SHIP_AER_BC_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -216,6 +232,7 @@ diagnostics:
       - atmos
     variables:
       AIRC_NO_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -229,6 +246,7 @@ diagnostics:
       - atmos
     variables:
       VOLC_SO2_s:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:

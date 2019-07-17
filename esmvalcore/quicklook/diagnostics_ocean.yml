@@ -8,6 +8,7 @@ diagnostics:
       - atmos
     variables:
       awhea:
+        mip: Omon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -23,6 +24,7 @@ diagnostics:
       - atmos
     variables:
       siconca:
+        mip: Amon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -38,6 +40,7 @@ diagnostics:
       - atmos
     variables:
       sithick:
+        mip: SImon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
@@ -53,6 +56,7 @@ diagnostics:
       - atmos
     variables:
       tosga:
+        mip: Omon
         preprocessor: prep_zon
     scripts:
       glob_timeseries:
