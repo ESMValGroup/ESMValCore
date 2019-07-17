@@ -384,6 +384,28 @@ def _add_fxvar_keys(fx_var_dict, variable):
     return fx_variable
 
 
+def _get_correct_fx_file(variable, fx_varname, config_user):
+    """Wrapper to standard file getter to recover the correct fx file."""
+    var = dict(variable)
+    if var['project'] == 'CMIP5':
+        fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
+    elif var['project'] == 'CMIP6':
+        if fx_varname == 'sftlf':
+            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
+                                     var)
+        elif fx_varname == 'sftof':
+            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
+                                     var)
+        elif fx_varname == 'sftgif':
+            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Efx'},
+                                     var)
+    fx_files = get_input_filelist(variable=fx_var,
+                                  rootpath=config_user['rootpath'],
+                                  drs=config_user['drs'])[0]
+
+    return fx_files
+
+
 def _update_fx_settings(settings, variable, config_user):
     """Find and set the FX derive/mask settings."""
     # update for derive
@@ -392,11 +414,9 @@ def _update_fx_settings(settings, variable, config_user):
         for var in get_required(variable['short_name']):
             if 'fx_files' in var:
                 _augment(var, variable)
-                fx_files.update(
-                    get_input_filelist(
-                        variable=var,
-                        rootpath=config_user['rootpath'],
-                        drs=config_user['drs']))
+                for fxvar in var['fx_files']:
+                    fx_files[fxvar] = _get_correct_fx_file(var, fxvar,
+                                                           config_user)
         settings['derive']['fx_files'] = fx_files
 
     # update for landsea
@@ -405,17 +425,9 @@ def _update_fx_settings(settings, variable, config_user):
         # Configure ingestion of land/sea masks
         logger.debug('Getting fx mask settings now...')
         settings['mask_landsea']['fx_files'] = []
-        var = dict(variable)
-        if var['project'] == 'CMIP5':
-            fx_var = _add_fxvar_keys({'short_name': 'sftlf', 'mip': 'fx'}, var)
-        fx_files_dict['sftlf'] = get_output_file(fx_var,
-                                                 config_user['preproc_dir'],
-                                                 masking=True)
-        if var['project'] == 'CMIP5':
-            fx_var = _add_fxvar_keys({'short_name': 'sftof', 'mip': 'fx'}, var)
-        fx_files_dict['sftof'] = get_output_file(fx_var,
-                                                 config_user['preproc_dir'],
-                                                 masking=True)
+        fx_files_dict = {
+            'sftlf': _get_correct_fx_file(variable, 'sftlf', config_user),
+            'sftof': _get_correct_fx_file(variable, 'sftof', config_user)}
         # allow both sftlf and sftof
         if fx_files_dict['sftlf']:
             settings['mask_landsea']['fx_files'].append(fx_files_dict['sftlf'])
@@ -425,10 +437,8 @@ def _update_fx_settings(settings, variable, config_user):
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')
         settings['mask_landseaice']['fx_files'] = []
-        var = dict(variable)
-        # allow sftgif (only, for now)
-        fx_files_dict['sftgif'] = get_output_file(var,
-                                                  config_user['preproc_dir'])
+        fx_files_dict = {
+            'sftgif': _get_correct_fx_file(variable, 'sftgif', config_user)}
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
@@ -437,8 +447,9 @@ def _update_fx_settings(settings, variable, config_user):
         if settings.get(step, {}).get('fx_files'):
             var = dict(variable)
             var['fx_files'] = settings.get(step, {}).get('fx_files')
-            fx_files_dict = get_output_file(var,
-                                            config_user['preproc_dir'])
+            fx_files_dict = {
+                fxvar: _get_correct_fx_file(variable, fxvar, config_user)
+                for fxvar in var['fx_files']}
             settings[step]['fx_files'] = fx_files_dict
 
 
@@ -656,12 +667,18 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
 def _remove_temporal_preprocs(profile):
     """Remove all temporal operations on fx variables."""
     fx_profile = profile
-    if 'mask_landsea' in profile:
-        fx_profile['mask_landsea'] = False
-    if 'mask_landseaice' in profile:
-        fx_profile['mask_landseaice'] = False
-    if 'seasonal_mean' in profile:
-        fx_profile['seasonal_mean'] = False
+    temporal_preprocs = [
+        'extract_season',
+        'extract_month',
+        'annual_mean',
+        'seasonal_mean',
+        'time_average',
+        'regrid_time',
+    ]
+    for temporal_preproc in temporal_preprocs:
+        if temporal_preproc in profile:
+            fx_profile[temporal_preproc] = False
+
     return fx_profile
 
 
@@ -687,9 +704,9 @@ def _get_single_preprocessor_task(variables,
                 config_user=config_user,
             ))[0]
         else:
-            fx_profile = profile
-            fx_profile['extract_time'] = False
             fx_profile = _remove_temporal_preprocs(profile)
+            # not do time extraction; this is a default preproc
+            fx_profile['extract_time'] = False
             product = list(_get_preprocessor_products(
                 variables=[variable],
                 profile=fx_profile,
