@@ -51,7 +51,9 @@ drs:
 # Quicklook
 quicklook:
   active: true
-  output_dir: /path/to/persistent/output/dir
+  plot_dir: /path/to/persistent/plot/dir
+  preproc_dir: /path/to/persistent/preproc/dir
+  work_dir: /path/to/persistent/work/dir
   recipe_dir: /path/to/templates/of/recipes
   recipes:
     - atmos_chem

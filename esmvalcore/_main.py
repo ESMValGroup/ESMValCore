@@ -245,5 +245,5 @@ def run():
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
             logger.info("set remove_preproc_dir to false in config")
-            shutil.rmtree(conf["preproc_dir"], ignore_errors=True)
+            shutil.rmtree(conf["preproc_dir"])
         logger.info("Run was successful")
