@@ -348,6 +348,7 @@ class PreprocessingTask(BaseTask):
             order=DEFAULT_ORDER,
             debug=None,
             write_ncl_interface=False,
+            profile=None,
     ):
         """Initialize"""
         super(PreprocessingTask, self).__init__(ancestors=ancestors, name=name)
@@ -356,6 +357,7 @@ class PreprocessingTask(BaseTask):
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
+        self.profile = profile
 
     def _intialize_product_provenance(self):
         """Initialize product provenance."""
@@ -398,7 +400,8 @@ class PreprocessingTask(BaseTask):
         for product in self.products:
             product.close()
         metadata_files = write_metadata(self.products,
-                                        self.write_ncl_interface)
+                                        self.write_ncl_interface,
+                                        self.profile)
         return metadata_files
 
     def __str__(self):
