@@ -161,7 +161,7 @@ diagnostics:
     realms:
       - atmos
     variables:
-      ANTHNT_ROAD_NO:
+      ROAD_NO:
         mip: custom
         preprocessor: prep_zon
     scripts:
@@ -175,7 +175,7 @@ diagnostics:
     realms:
       - atmos
     variables:
-      ANTHNT_ROAD_AER_BC:
+      ROAD_AER_BC:
         mip: custom
         preprocessor: prep_zon
     scripts:
@@ -189,7 +189,7 @@ diagnostics:
     realms:
       - atmos
     variables:
-      ANTHNT_SHIP_NO_s:
+      SHIP_NO_s:
         mip: custom
         preprocessor: prep_zon
     scripts:
@@ -203,7 +203,7 @@ diagnostics:
     realms:
       - atmos
     variables:
-      ANTHNT_SHIP_SO2_s:
+      SHIP_SO2_s:
         mip: custom
         preprocessor: prep_zon
     scripts:
@@ -217,7 +217,7 @@ diagnostics:
     realms:
       - atmos
     variables:
-      ANTHNT_SHIP_AER_BC_s:
+      SHIP_AER_BC_s:
         mip: custom
         preprocessor: prep_zon
     scripts:
