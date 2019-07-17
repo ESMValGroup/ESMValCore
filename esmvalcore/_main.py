@@ -97,12 +97,11 @@ def get_args():
     parser.add_argument('--diagnostics',
                         nargs='*',
                         help="Only run the named diagnostics from the recipe.")
-    parser.add_argument(
-        '--quicklook',
-        metavar='SIMULATION-ID',
-        type=str,
-        help=
-        'Sets quicklook mode by setting identifier for individual simulation.')
+    parser.add_argument('--quicklook',
+                        metavar='SIMULATION-ID',
+                        type=str,
+                        help='Sets quicklook mode by setting identifier for ' +
+                        'individual simulation.')
     parser.add_argument(
         '--startyear',
         type=int,
