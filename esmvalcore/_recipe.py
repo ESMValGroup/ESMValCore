@@ -718,7 +718,6 @@ def _get_single_preprocessor_task(variables,
         raise RecipeError(
             "Did not find any input data for task {}".format(name))
 
-    # fx variable task
     task = PreprocessingTask(
         products=products,
         ancestors=ancestor_tasks,
