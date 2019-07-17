@@ -12,28 +12,28 @@ diagnostics:
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
-        
-  glob_timeseries_np:
-    description: Timeseries of global mean lightening NOx production.
+
+  glob_timeseries_lnox:
+    description: Timeseries of global mean lightning NOx production.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      np:
+      lnox:
         mip: custom
     scripts:
       glob_timeseries:
         script: quicklooks/global_timeseries.py
-        
-  glob_timeseries_toz:
+
+  glob_timeseries_toz10hr:
     description: Timeseries of global mean ozone column.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      toz:
+      toz10hr:
         preprocessor: prep_zon
         mip: custom
     scripts:

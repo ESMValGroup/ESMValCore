@@ -1,7 +1,7 @@
 diagnostics:
 
   glob_timeseries_awhea:
-    description: Timeseries of mean net surface heat flux over open water 
+    description: Timeseries of mean net surface heat flux over open water
     themes:
       - phys
     realms:
@@ -31,7 +31,7 @@ diagnostics:
         script: quicklooks/global_timeseries.py
       zon_timeseries:
         script: quicklooks/zonal_timeseries.py
-        
+
   glob_timeseries_sithick:
     description: Timeseries of global mean sea ice thickness.
     themes:
@@ -47,16 +47,16 @@ diagnostics:
         script: quicklooks/global_timeseries.py
       zon_timeseries:
         script: quicklooks/zonal_timeseries.py
-        
-  glob_timeseries_tosga:
-    description: Timeseries of global mean sea surface temperature.
+
+  glob_timeseries_tos:
+    description: Timeseries of sea surface temperature.
     themes:
       - phys
     realms:
       - atmos
     variables:
-      tosga:
-        mip: Omon
+      tos:
+        mip: custom
         preprocessor: prep_zon
     scripts:
       glob_timeseries:

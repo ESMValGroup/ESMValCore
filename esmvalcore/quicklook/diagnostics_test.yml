@@ -1,7 +1,7 @@
 diagnostics:
 
   glob_timeseries_awhea:
-    description: Timeseries of mean net surface heat flux over open water 
+    description: Timeseries of mean net surface heat flux over open water
     themes:
       - phys
     realms:
