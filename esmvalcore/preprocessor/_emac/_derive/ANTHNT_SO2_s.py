@@ -8,9 +8,15 @@ ANTHNT_SO2_s: Anthropogenic SO2, summed.
 
 """
 
+from scipy.constants import N_A
+
 from ._shared import sum_over_level
 
 
 def derive(cubes):
-    """Derive `BB_CO_s`."""
-    return sum_over_level(cubes, ['ANTHNT_SO2'])
+    """Derive `ANTHNT_SO2_s`."""
+    molar_mass_so2 = 64.066  # g mol-1
+    mass_per_molecule_so2 = molar_mass_so2 / N_A * 1e-3  # kg
+    return sum_over_level(cubes,
+                          'ANTHNT_SO2',
+                          scale_factor=mass_per_molecule_so2)

@@ -5,9 +5,10 @@ output. It is here integrated over all available levels (with the help of the
 field 'geopot_ave'). The variable is stored in the EMAC CMIP6 channel
 'import_grid'.
 
-VOLC_SO2_s: Aircraft NO, summed.
+VOLC_SO2_s: Volcanic SO2, summed.
 
 """
+
 from scipy.constants import N_A
 
 from ._shared import integrate_vertically
