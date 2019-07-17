@@ -1,23 +1,21 @@
 SOURCE: CMIP6
 !============
-variable_entry:    ANTHNT_NO_s
+variable_entry:    hfns
 !============
 modeling_realm:    atmos
-frequency:         10hr
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:
-units:             kg m-2 s-1
+standard_name:     surface_net_heat_flux
+units:             W m-2
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         Sum of Anthropogenic NO
-comment:           Summation over all levels; units are given in kg(NO2) m-2 s-1
+long_name:         Surface Net Heat Flux
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
 dimensions:        longitude latitude time
-out_name:          ANTHNT_NO_s
+out_name:          hfns
 type:              real
+positive:          up
 !----------------------------------
-!
