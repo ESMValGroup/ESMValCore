@@ -26,7 +26,7 @@ def test_get_required_with_fx():
 
     reference = [{
         'short_name': 'nbp',
-        'fx_files': [{'short_name': 'sftlf'}],
+        'fx_files': ['sftlf'],
     }]
 
     assert variables == reference
