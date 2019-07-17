@@ -17,6 +17,5 @@ def derive(cubes):
     """Derive `ANTHNT_CO_s`."""
     molar_mass_co = 28.0101  # g mol-1
     mass_per_molecule_co = molar_mass_co / N_A * 1e-3  # kg
-    return sum_over_level(cubes,
-                          'ANTHNT_CO',
+    return sum_over_level(cubes, ['ANTHNT_CO'],
                           scale_factor=mass_per_molecule_co)

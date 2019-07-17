@@ -9,9 +9,12 @@ Fix wrong units in input file.
 
 from scipy.constants import N_A
 
+from . import var_name_constraint
+
 
 def derive(cubes):
     """Derive `ROAD_NO`."""
     molar_mass_no2 = 46.0055  # g mol-1
     mass_per_molecule_no2 = molar_mass_no2 / N_A * 1e-3  # kg
-    return mass_per_molecule_no2 * cubes
+    cube = cubes.extract_strict(var_name_constraint('ROAD_NO'))
+    return mass_per_molecule_no2 * cube

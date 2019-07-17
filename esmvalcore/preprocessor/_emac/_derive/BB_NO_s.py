@@ -17,4 +17,4 @@ def derive(cubes):
     """Derive `BB_NO_s`."""
     molar_mass_no2 = 46.0055  # g mol-1
     mass_per_molecule_no2 = molar_mass_no2 / N_A * 1e-3  # kg
-    return sum_over_level(cubes, 'BB_NO', scale_factor=mass_per_molecule_no2)
+    return sum_over_level(cubes, ['BB_NO'], scale_factor=mass_per_molecule_no2)
