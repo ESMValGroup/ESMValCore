@@ -1,8 +1,8 @@
-
 """Fixes for MIROC5 model."""
 from dask import array as da
 
 from ..fix import Fix
+from ..shared import round_coordinates
 
 
 class Sftof(Fix):
@@ -106,3 +106,25 @@ class Msftmyz(Fix):
         """
         cube.data = da.ma.masked_equal(cube.core_data(), 0.)
         return cube
+
+
+class Tas(Fix):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata.
+
+        Some coordinate points vary for different files of this dataset (for
+        different time range). This fix removes these inaccuracies by rounding
+        the coordinates.
+
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        return round_coordinates(cubes)
