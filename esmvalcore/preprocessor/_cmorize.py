@@ -48,7 +48,7 @@ def cmorize(cubes, variable, var_mapping, cmorizer):
 
 def add_scalar_height_coord(cube, height=2.0):
     """Add scalar coordinate 'height' with value of `height`m."""
-    logger.info("Adding height coordinate (%sm)", height)
+    logger.debug("Adding height coordinate (%sm)", height)
     height_coord = iris.coords.AuxCoord(height,
                                         var_name='height',
                                         standard_name='height',
@@ -80,14 +80,14 @@ def fix_coords(cube):
     for cube_coord in cube.coords():
         # fix time
         if cube_coord.var_name == 'time':
-            logger.info("Fixing time")
+            logger.debug("Fixing time")
             cube_coord.convert_units(
                 Unit('days since 1950-1-1 00:00:00', calendar='gregorian'))
             _fix_bounds(cube, cube_coord)
 
         # fix longitude
         if cube_coord.var_name == 'lon':
-            logger.info("Fixing longitude")
+            logger.debug("Fixing longitude")
             if cube_coord.points[0] < 0. and cube_coord.points[-1] < 181.:
                 cube_coord.points = cube_coord.points + 180.
                 _fix_bounds(cube, cube_coord)
@@ -100,18 +100,18 @@ def fix_coords(cube):
 
         # fix latitude
         if cube_coord.var_name == 'lat':
-            logger.info("Fixing latitude")
+            logger.debug("Fixing latitude")
             _fix_bounds(cube, cube_coord)
             cube_coord.coord_system = None
 
         # fix depth
         if cube_coord.var_name == 'lev':
-            logger.info("Fixing level coordinate")
+            logger.debug("Fixing level coordinate")
             _fix_bounds(cube, cube_coord)
 
         # fix air_pressure
         if cube_coord.var_name == 'air_pressure':
-            logger.info("Fixing air pressure")
+            logger.debug("Fixing air pressure")
             _fix_bounds(cube, cube_coord)
 
     return cube
@@ -158,7 +158,7 @@ def fix_var_metadata(cube, var_info):
 
 def flip_dim_coord(cube, coord_name):
     """Flip (reverse) dimensional coordinate of cube."""
-    logger.info("Flipping dimensional coordinate '%s'", coord_name)
+    logger.debug("Flipping dimensional coordinate '%s'", coord_name)
     coord = cube.coord(coord_name, dim_coords=True)
     coord_idx = cube.coord_dims(coord)[0]
     coord.points = np.flip(coord.points)
@@ -197,7 +197,7 @@ def is_increasing(cube, coord_name):
 
 def set_global_atts(cube, variable, var_info):
     """Complete the cmorized file with global metadata."""
-    logger.info("Setting global metadata")
+    logger.debug("Setting global metadata")
 
     # Set variable attributes
     attrs = {}
