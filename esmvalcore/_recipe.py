@@ -787,6 +787,7 @@ class Recipe:
     """Recipe object."""
 
     info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
+    """List of keys to be used to compose the alias, ordered by priority"""
 
     def __init__(self,
                  raw_recipe,
@@ -947,6 +948,49 @@ class Recipe:
         return preprocessor_output
 
     def _set_alias(self, preprocessor_output):
+        """Add unique alias for datasets
+
+        Generates a unique alias for each dataset that will be shared by all
+        variables. Tries to make it as small as possible to make it useful for
+        plot legends, filenames and such
+
+        It is composed using the keys in Recipe.info_keys that differ from
+        dataset to dataset. Once a diverging key is found, others are added
+        to the alias only if the previous ones where not enough to fully
+        identify the dataset.
+
+        Function will not modify alias if it is manually added to the recipe
+        but it will use the dataset info to compute the others
+
+        Examples:
+
+        - {project: CMIP5, model: EC-Earth, ensemble: r1i1p1}
+        - {project: CMIP6, model: EC-Earth, ensemble: r1i1p1f1}
+        will generate alias 'CMIP5' and 'CMIP6'
+
+        - {project: CMIP5, model: EC-Earth, experiment: historical}
+        - {project: CMIP5, model: MPI-ESM, experiment: piControl}
+        will generate alias 'EC-Earth,' and 'MPI-ESM'
+
+        - {project: CMIP5, model: EC-Earth, experiment: historical}
+        - {project: CMIP5, model: EC-Earth, experiment: piControl}
+        will generate alias 'historical' and 'piControl'
+
+        - {project: CMIP5, model: EC-Earth, experiment: historical}
+        - {project: CMIP6, model: EC-Earth, experiment: historical}
+        - {project: CMIP5, model: MPI-ESM, experiment: historical}
+        - {project: CMIP6, model: MPI-ESM experiment: historical}
+        will generate alias 'CMIP5_EC-EARTH', 'CMIP6_EC-EARTH', 'CMIP5_MPI-ESM'
+        and 'CMIP6_MPI-ESM'
+
+        - {project: CMIP5, model: EC-Earth, experiment: historical}
+        will generate alias 'EC-Earth'
+
+        Parameters
+        ----------
+        preprocessor_output : dict
+            preprocessor output dictionary
+        """
         datasets_info = set()
         for variable in preprocessor_output.values():
             for dataset in variable:
