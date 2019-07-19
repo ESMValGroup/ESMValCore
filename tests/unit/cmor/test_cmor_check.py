@@ -160,6 +160,38 @@ class TestCMORCheck(unittest.TestCase):
         iris.coord_categorisation.add_year(self.cube, 'time')
         self._check_cube()
 
+    def test_check_bad_standard_name_auto_fix(self):
+        """Test check pass for a bad standard_name with automatic fixes."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.standard_name = 'wind_speed'
+        self._check_cube(automatic_fixes=True)
+        self._check_cube()
+
+    def test_check_bad_standard_name(self):
+        """Test check fails for a bad short_name."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.standard_name = 'wind_speed'
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_bad_long_name_auto_fix(self):
+        """Test check pass for a bad standard_name with automatic fixes."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.long_name = 'bad_name'
+        self._check_cube(automatic_fixes=True)
+        self._check_cube()
+
+    def test_check_bad_long_name_auto_fix_report_warning(self):
+        """Test check pass for a bad standard_name with automatic fixes."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.long_name = 'bad_name'
+        self._check_warnings_on_metadata(automatic_fixes=True)
+
+    def test_check_bad_long_name(self):
+        """Test check fails for a bad short_name."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.long_name = 'bad_name'
+        self._check_fails_in_metadata()
+
     def test_check_with_unit_conversion(self):
         """Test check succeeds for a good cube requiring unit conversion."""
         self.cube.units = 'days'
@@ -369,6 +401,17 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.coord('time').units = 'K'
         self._check_fails_in_metadata(automatic_fixes=True)
 
+    def test_time_non_monotonic(self):
+        """Test automatic fix fail for non monotonic times."""
+        time = self.cube.coord('time')
+        points = numpy.array(time.points)
+        points[-1] = points[0]
+        dims = self.cube.coord_dims(time)
+        self.cube.remove_coord(time)
+        time = iris.coords.AuxCoord.from_coord(time)
+        self.cube.add_aux_coord(time.copy(points), dims)
+        self._check_fails_in_metadata(automatic_fixes=True)
+
     def test_bad_standard_name(self):
         """Fail if coordinates have bad standard names at metadata step."""
         self.cube.coord('time').standard_name = 'region'
@@ -382,11 +425,6 @@ class TestCMORCheck(unittest.TestCase):
     def test_bad_data_units(self):
         """Fail if data has bad units at metadata step."""
         self.cube.units = 'hPa'
-        self._check_fails_in_metadata()
-
-    def test_bad_data_standard_name(self):
-        """Fail if data have bad standard_name at metadata step."""
-        self.cube.standard_name = 'wind_speed'
         self._check_fails_in_metadata()
 
     def test_bad_positive(self):
