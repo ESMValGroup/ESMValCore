@@ -1,4 +1,4 @@
-"""Integration tests for the variable_info module"""
+"""Integration tests for the variable_info module."""
 
 import os
 import unittest
