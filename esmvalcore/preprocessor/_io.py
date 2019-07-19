@@ -211,11 +211,16 @@ def _concatenate_along_time(old_cube, new_cube):
     return final_cube
 
 
+def _create_new_filename(filename):
+    """Create new filename by appending time stamp."""
+    now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    return filename.replace('.nc', f'_{now}.nc')
+
+
 def _save_new_cube_individually(cubes, kwargs, msg):
     """Save new cube individually in concatenation mode in case of errors."""
     kwargs = dict(kwargs)
-    now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    kwargs['target'] = kwargs['target'].replace('.nc', f'_{now}.nc')
+    kwargs['target'] = _create_new_filename(kwargs['target'])
     logger.warning(msg)
     logger.warning("Saving cubes %s to %s", cubes, kwargs['target'])
     iris.save(cubes, **kwargs)
@@ -235,7 +240,19 @@ def _concatenate_output(cubes, filename, **kwargs):
         return _save_new_cube_individually(cubes, kwargs, msg)
 
     # If file exists, check for consistency and concatenate
-    old_cubes = iris.load(filename)
+    try:
+        old_cubes = iris.load(filename)
+    except Exception as exc:
+        new_filename = _create_new_filename(filename)
+        os.rename(filename, new_filename)
+        logger.warning(
+            "Saving cubes in concatenation mode is not possible, existing "
+            "file %s appears to be corrupt: %s", filename, str(exc))
+        logger.warning(
+            "Moving existing file to %s and saving new cubes to %s",
+            new_filename, filename)
+        iris.save(cubes, **kwargs)
+        return None
     if len(old_cubes) > 1:
         msg = (f"Saving cubes in concatenation mode is not possible if old "
                f"file at {filename} contains a CubeList with more than one "
