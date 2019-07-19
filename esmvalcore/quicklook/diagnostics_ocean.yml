@@ -1,7 +1,8 @@
 diagnostics:
 
   glob_timeseries_ocean:
-    description: Timeseries of ocean variables:
+    description: Timeseries of ocean variables.
+    themes:
       - phys
     realms:
       - atmos
