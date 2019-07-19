@@ -419,10 +419,18 @@ class CMORCheck():
     def _check_time_coord(self):
         """Check time coordinate."""
         try:
-            coord = self._cube.coord('time', dim_coords=True)  # , axis='T')
-            var_name = coord.var_name
+            coord = self._cube.coord('time', dim_coords=True)
         except iris.exceptions.CoordinateNotFoundError:
-            return
+            try:
+                coord = self._cube.coord('time')
+            except iris.exceptions.CoordinateNotFoundError:
+                return
+
+        var_name = coord.var_name
+        if not coord.is_monotonic():
+            self.report_error(
+                'Time coordinate for var {} is not monotonic', var_name
+            )
 
         if not coord.units.is_time_reference():
             self.report_error(self._does_msg, var_name,
