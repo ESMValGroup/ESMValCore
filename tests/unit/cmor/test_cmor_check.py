@@ -349,6 +349,8 @@ class TestCMORCheck(unittest.TestCase):
         self._check_cube()
         assert (self.cube.coord('time').units.origin ==
                 'days since 1850-1-1 00:00:00')
+        assert self.cube.attributes['parent_time_units'] == 'days since ' \
+                                                            '1850-1-1 00:00:00'
         assert self.cube.attributes['branch_time_in_parent'] == 0.
         assert self.cube.attributes['branch_time_in_child'] == 3652.
 
