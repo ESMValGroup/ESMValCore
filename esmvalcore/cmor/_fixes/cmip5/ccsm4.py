@@ -1,18 +1,17 @@
 """Fixes for CCSM4 model."""
-
-import numpy as np
-
 from ..fix import Fix
+from ..shared import round_coordinates
 
 
 class Rlut(Fix):
     """Fixes for rlut."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix data.
+        """Fix data.
 
-        Fixes discrepancy between declared units and real units
+        Some coordinate points vary for different files of this dataset (for
+        different time range). This fix removes these inaccuracies by rounding
+        the coordinates.
 
         Parameters
         ----------
@@ -23,11 +22,7 @@ class Rlut(Fix):
         iris.cube.Cube
 
         """
-        cube = self.get_cube_from_list(cubes)
-        lat = cube.coord('latitude')
-        lat.points = np.round(lat.points, 3)
-        lat.bounds = np.round(lat.bounds, 3)
-        return cubes
+        return round_coordinates(cubes, 3)
 
 
 class Rlutcs(Rlut):
