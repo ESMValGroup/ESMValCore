@@ -25,3 +25,16 @@ preprocessors:
       coordinate: longitude
       mean_type: mean
 
+GLOB_TIMESERIES: &glob_timeseries
+  glob_timeseries:
+    script: quicklooks/global_timeseries.py
+
+ALL_TIMESERIES: &all_timeseries
+  glob_timeseries:
+    script: quicklooks/global_timeseries.py
+  zon_timeseries:
+    script: quicklooks/zonal_timeseries.py
+    ancestors: ['*/glob_timeseries']
+
+
+
