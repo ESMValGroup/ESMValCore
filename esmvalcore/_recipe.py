@@ -787,7 +787,7 @@ class Recipe:
     """Recipe object."""
 
     info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
-    """List of keys to be used to compose the alias, ordered by priority"""
+    """List of keys to be used to compose the alias, ordered by priority."""
 
     def __init__(self,
                  raw_recipe,
@@ -948,7 +948,8 @@ class Recipe:
         return preprocessor_output
 
     def _set_alias(self, preprocessor_output):
-        """Add unique alias for datasets
+        """
+        Add unique alias for datasets.
 
         Generates a unique alias for each dataset that will be shared by all
         variables. Tries to make it as small as possible to make it useful for
