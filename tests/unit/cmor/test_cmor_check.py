@@ -164,7 +164,7 @@ class TestCMORCheck(unittest.TestCase):
         """Test check pass for a bad standard_name with automatic fixes."""
         self.cube = self.get_cube(self.var_info)
         self.cube.standard_name = 'wind_speed'
-        self._check_cube(automatic_fixes=True)
+        self._check_cube(automatic_fixes=True, warnings_as_errors=False)
         self._check_cube()
 
     def test_check_bad_standard_name(self):
@@ -177,7 +177,7 @@ class TestCMORCheck(unittest.TestCase):
         """Test check pass for a bad standard_name with automatic fixes."""
         self.cube = self.get_cube(self.var_info)
         self.cube.long_name = 'bad_name'
-        self._check_cube(automatic_fixes=True)
+        self._check_cube(automatic_fixes=True, warnings_as_errors=False)
         self._check_cube()
 
     def test_check_bad_long_name_auto_fix_report_warning(self):
