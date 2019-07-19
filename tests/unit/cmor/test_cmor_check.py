@@ -385,6 +385,17 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.coord('time').units = 'K'
         self._check_fails_in_metadata(automatic_fixes=True)
 
+    def test_time_non_monotonic(self):
+        """Test automatic fix fail for non monotonic times."""
+        time = self.cube.coord('time')
+        points = numpy.array(time.points)
+        points[-1] = points[0]
+        dims = self.cube.coord_dims(time)
+        self.cube.remove_coord(time)
+        time = iris.coords.AuxCoord.from_coord(time)
+        self.cube.add_aux_coord(time.copy(points), dims)
+        self._check_fails_in_metadata(automatic_fixes=True)
+
     def test_bad_standard_name(self):
         """Fail if coordinates have bad standard names at metadata step."""
         self.cube.coord('time').standard_name = 'region'
