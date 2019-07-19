@@ -427,8 +427,7 @@ class CMORCheck():
                 branch_parent = 'branch_time_in_parent'
                 if branch_parent in attrs:
                     attrs[branch_parent] = parent_units.convert(
-                        attrs[branch_parent], coord.units
-                        )
+                        attrs[branch_parent], coord.units)
 
         tol = 0.001
         intervals = {'dec': (3600, 3660), 'day': (1, 1)}
