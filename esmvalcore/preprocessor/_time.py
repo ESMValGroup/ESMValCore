@@ -5,6 +5,7 @@ constructing seasonal and area averages.
 """
 import datetime
 import logging
+from warnings import filterwarnings
 
 import cf_units
 import iris
@@ -13,13 +14,25 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+# Ignore warnings about missing bounds where those are not required
+for _coord in (
+        'clim_season',
+        'day_of_year',
+        'day_of_month',
+        'month_number',
+        'season_year',
+        'year',
+):
+    filterwarnings(
+        'ignore',
+        "Collapsing a non-contiguous coordinate. "
+        f"Metadata may not be fully descriptive for '{_coord}'.",
+        category=UserWarning,
+        module='iris',
+    )
 
-def extract_time(cube,
-                 start_year,
-                 start_month,
-                 start_day,
-                 end_year,
-                 end_month,
+
+def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
                  end_day):
     """
     Extract a time range from a cube.
@@ -62,8 +75,8 @@ def extract_time(cube,
             start_day = 30
         if end_day > 30:
             end_day = 30
-    start_date = datetime.datetime(
-        int(start_year), int(start_month), int(start_day))
+    start_date = datetime.datetime(int(start_year), int(start_month),
+                                   int(start_day))
     end_date = datetime.datetime(int(end_year), int(end_month), int(end_day))
 
     t_1 = time_units.date2num(start_date)
@@ -109,8 +122,9 @@ def extract_season(cube, season):
     if not cube.coords('clim_season'):
         iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
     if not cube.coords('season_year'):
-        iris.coord_categorisation.add_season_year(
-            cube, 'time', name='season_year')
+        iris.coord_categorisation.add_season_year(cube,
+                                                  'time',
+                                                  name='season_year')
     return cube.extract(iris.Constraint(clim_season=season.lower()))
 
 
@@ -204,8 +218,9 @@ def seasonal_mean(cube):
     if not cube.coords('clim_season'):
         iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
     if not cube.coords('season_year'):
-        iris.coord_categorisation.add_season_year(
-            cube, 'time', name='season_year')
+        iris.coord_categorisation.add_season_year(cube,
+                                                  'time',
+                                                  name='season_year')
     cube = cube.aggregated_by(['clim_season', 'season_year'],
                               iris.analysis.MEAN)
 
@@ -286,10 +301,12 @@ def regrid_time(cube, frequency):
             cube.remove_coord(auxcoord)
 
     # re-add the converted aux coords
-    iris.coord_categorisation.add_day_of_month(
-        cube, cube.coord('time'), name='day_of_month')
-    iris.coord_categorisation.add_day_of_year(
-        cube, cube.coord('time'), name='day_of_year')
+    iris.coord_categorisation.add_day_of_month(cube,
+                                               cube.coord('time'),
+                                               name='day_of_month')
+    iris.coord_categorisation.add_day_of_year(cube,
+                                              cube.coord('time'),
+                                              name='day_of_year')
 
     return cube
 
