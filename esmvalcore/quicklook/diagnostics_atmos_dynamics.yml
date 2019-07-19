@@ -63,4 +63,8 @@ diagnostics:
         mip: Amon
         preprocessor: prep_zon
     scripts:
-      <<: *all_timeseries
+      glob_timeseries:
+        script: quicklooks/global_timeseries.py
+      zon_timeseries:
+        script: quicklooks/zonal_timeseries.py
+        ancestors: ['*/glob_timeseries']
