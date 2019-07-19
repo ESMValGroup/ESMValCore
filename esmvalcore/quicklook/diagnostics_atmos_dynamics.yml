@@ -12,8 +12,8 @@ ALL_TIMESERIES: &all_timeseries
 
 diagnostics:
 
-  glob_timeseries_clivi:
-    description: Timeseries of global mean ice water path.
+  glob_timeseries_atmos_dyn:
+    description: Timeseries of atmospheric dynamic variable .
     themes:
       - phys
     realms:
@@ -22,215 +22,55 @@ diagnostics:
       clivi:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_clt:
-    description: Timeseries of global mean total cloud coverage.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       clt:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_clwvi:
-    description: Timeseries of global mean water path.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       clwvi:
          mip: Amon
          preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_evspsbl:
-    description: Timeseries of global mean evaporation.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       evspsbl:
          mip: Amon
          preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_hfns:
-    description: Timeseries of global mean surface net heat flux.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       hfns:
         mip: Amon
         preprocessor: prep_zon
         derive: true
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_pr:
-    description: Timeseries of global mean precipitation.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       pr:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_prc:
-    description: Timeseries of global mean convective precipitation.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       prc:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_prl:
-    description: Timeseries of global mean large-scale precipitation.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       prl:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_prsn:
-    description: Timeseries of global mean snow fall.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       prsn:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_prw:
-    description: Timeseries of global mean water vapor content.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       prw:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_rlns:
-    description: Timeseries of global mean net longwave radiation (surface).
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       rlns:
         mip: Amon
         preprocessor: prep_zon
         derive: true
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_rlut:
-    description: Timeseries of global mean outgoing longwave radiation (TOA).
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       rlut:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_rsns:
-    description: Timeseries of global mean net solar radiation (surface).
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       rsns:
         mip: Amon
         preprocessor: prep_zon
         derive: true
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_rsnt:
-    description: Timeseries of global mean net solar radiation (TOA).
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       rsnt:
         mip: Amon
         preprocessor: prep_zon
         derive: true
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_rtmt:
-    description: Timeseries of global mean radiation budget (TOA).
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       rtmt:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_tas:
-    description: Timeseries of global mean surface temperature.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       tas:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_ts:
-    description: Timeseries of global mean 2-m temperature.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       ts:
         mip: Amon
         preprocessor: prep_zon

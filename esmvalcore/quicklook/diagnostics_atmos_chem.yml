@@ -12,8 +12,8 @@ ALL_TIMESERIES: &all_timeseries
 
 diagnostics:
 
-  glob_timeseries_co2mass:
-    description: Timeseries of global mean CO2 mass.
+  glob_timeseries_atmos_chem:
+    description: Timeseries of atmospheric chem.
     themes:
       - phys
     realms:
@@ -21,245 +21,45 @@ diagnostics:
     variables:
       co2mass:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_lnox:
-    description: Timeseries of global mean lightning NOx production.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       lnox:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_toz10hr:
-    description: Timeseries of global mean ozone column.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       toz10hr:
         preprocessor: prep_zon
         mip: custom
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_MP_S:
-    description: Timeseries of global mean S.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_S:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_CFCl3:
-    description: Timeseries of global mean CFCl3.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_CFCl3:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_NH3:
-    description: Timeseries of global mean NH3.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_NH3:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_N2O:
-    description: Timeseries of global mean N2O.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_N2O:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_CO:
-    description: Timeseries of global mean CO.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_CO:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_CH4:
-    description: Timeseries of global mean CH4.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_CH4:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_SO2:
-    description: Timeseries of global mean SO2.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_SO2:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_OH:
-    description: Timeseries of global mean OH.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_OH:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_NO:
-    description: Timeseries of global mean NO.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_NO:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_NO2:
-    description: Timeseries of global mean NO2.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_NO2:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_O3:
-    description: Timeseries of global mean O3.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_O3:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_CO2:
-    description: Timeseries of global mean CO2.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_CO2:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_SO4mm_tot:
-    description: Timeseries of global mean SO4mm_tot.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_SO4mm_tot:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_SS_tot:
-    description: Timeseries of global mean SS_tot.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_SS_tot:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_BC_tot:
-    description: Timeseries of global mean BC_tot.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_BC_tot:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_DU_tot:
-    description: Timeseries of global mean DU_tot.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_DU_tot:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_ClOX:
-    description: Timeseries of global mean ClOX.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_ClOX:
         mip: custom
-    scripts:
-      <<: *glob_timeseries
-
-  glob_timeseries_MP_NOX:
-    description: Timeseries of global mean NOX.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       MP_NOX:
         mip: custom
     scripts:

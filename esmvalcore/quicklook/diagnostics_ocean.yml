@@ -12,9 +12,8 @@ ALL_TIMESERIES: &all_timeseries
 
 diagnostics:
 
-  glob_timeseries_awhea:
-    description: Timeseries of mean net surface heat flux over open water
-    themes:
+  glob_timeseries_ocean:
+    description: Timeseries of ocean variables:
       - phys
     realms:
       - atmos
@@ -22,42 +21,12 @@ diagnostics:
       awhea:
         mip: Omon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_siconca:
-    description: Timeseries of global mean sea ice concentration.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       siconca:
         mip: Amon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_sithick:
-    description: Timeseries of global mean sea ice thickness.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       sithick:
         mip: SImon
         preprocessor: prep_zon
-    scripts:
-      <<: *all_timeseries
-
-  glob_timeseries_tos:
-    description: Timeseries of sea surface temperature.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
       tos:
         mip: custom
         preprocessor: prep_zon
