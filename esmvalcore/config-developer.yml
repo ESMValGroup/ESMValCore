@@ -286,3 +286,6 @@ EMAC:
     cmorizer: '_emac/_cmorizer.py'
     data_finder: '_emac/_data_finder.py'
     var_mapping: '_emac/var_mapping.yml'
+  ignore_warnings:
+    load:
+      - {message: 'Ignoring netCDF variable .* invalid units .*', module: iris}
