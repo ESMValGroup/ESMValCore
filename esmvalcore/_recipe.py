@@ -631,6 +631,16 @@ def _update_quicklook_settings(settings, config_user):
         settings['save']['concatenate_output'] = True
 
 
+def _update_warning_settings(project, settings):
+    """Get warning settings (project-specific)."""
+    cfg = get_project_config(project)
+    if 'ignore_warnings' not in cfg:
+        return
+    for (step, ignored_warnings) in cfg['ignore_warnings'].items():
+        if step in settings:
+            settings[step]['ignore_warnings'] = ignored_warnings
+
+
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user):
     """Get preprocessor product definitions for a set of datasets."""
@@ -666,6 +676,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             settings=settings,
             config_user=config_user)
         _update_regrid_time(variable, settings)
+        _update_warning_settings(variable['project'], settings)
         ancestors = grouped_ancestors.get(variable['filename'])
         if not ancestors:
             ancestors = _get_input_files(variable, config_user)

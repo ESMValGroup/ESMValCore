@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 import shutil
+import warnings
 from collections import OrderedDict, namedtuple
 from itertools import groupby
 
@@ -55,10 +56,17 @@ def concatenate_callback(raw_cube, field, _):
                 coord.units = units
 
 
-def load(file, callback=None):
+def load(file, callback=None, ignore_warnings=None):
     """Load iris cubes from files."""
     logger.debug("Loading:\n%s", file)
-    raw_cubes = iris.load_raw(file, callback=callback)
+    if ignore_warnings is not None:
+        with warnings.catch_warnings():
+            for warning_kwargs in ignore_warnings:
+                warning_kwargs.setdefault('action', 'ignore')
+                warnings.filterwarnings(**warning_kwargs)
+            raw_cubes = iris.load_raw(file, callback=callback)
+    else:
+        raw_cubes = iris.load_raw(file, callback=callback)
     if not raw_cubes:
         raise Exception('Can not load cubes from {0}'.format(file))
     for cube in raw_cubes:
