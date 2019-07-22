@@ -178,9 +178,35 @@ class CMORCheck():
         # Check standard_name
         if self._cmor_var.standard_name:
             if self._cube.standard_name != self._cmor_var.standard_name:
-                self.report_error(
-                    self._attr_msg, self._cube.var_name, 'standard_name',
-                    self._cmor_var.standard_name, self._cube.standard_name)
+                if self.automatic_fixes:
+                    self.report_warning(
+                        'Standard name for %s changed from %s to %s',
+                        self._cube.var_name,
+                        self._cube.standard_name,
+                        self._cmor_var.standard_name
+                    )
+                    self._cube.standard_name = self._cmor_var.standard_name
+                else:
+                    self.report_error(
+                        self._attr_msg, self._cube.var_name, 'standard_name',
+                        self._cmor_var.standard_name, self._cube.standard_name
+                    )
+        # Check long_name
+        if self._cmor_var.long_name:
+            if self._cube.long_name != self._cmor_var.long_name:
+                if self.automatic_fixes:
+                    self.report_warning(
+                        'Long name for %s changed from %s to %s',
+                        self._cube.var_name,
+                        self._cube.long_name,
+                        self._cmor_var.long_name
+                    )
+                    self._cube.long_name = self._cmor_var.long_name
+                else:
+                    self.report_error(
+                        self._attr_msg, self._cube.var_name, 'long_name',
+                        self._cmor_var.long_name, self._cube.long_name
+                    )
 
         # Check units
         if (self.automatic_fixes and self._cube.attributes.get(
@@ -393,10 +419,18 @@ class CMORCheck():
     def _check_time_coord(self):
         """Check time coordinate."""
         try:
-            coord = self._cube.coord('time', dim_coords=True)  # , axis='T')
-            var_name = coord.var_name
+            coord = self._cube.coord('time', dim_coords=True)
         except iris.exceptions.CoordinateNotFoundError:
-            return
+            try:
+                coord = self._cube.coord('time')
+            except iris.exceptions.CoordinateNotFoundError:
+                return
+
+        var_name = coord.var_name
+        if not coord.is_monotonic():
+            self.report_error(
+                'Time coordinate for var {} is not monotonic', var_name
+            )
 
         if not coord.units.is_time_reference():
             self.report_error(self._does_msg, var_name,

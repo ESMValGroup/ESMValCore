@@ -8,16 +8,16 @@ from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
 
 
 class TestFixFile(unittest.TestCase):
-    """Fix file tests"""
+    """Fix file tests."""
 
     def setUp(self):
-        """Prepare for testing"""
+        """Prepare for testing."""
         self.filename = 'filename'
         self.mock_fix = mock.Mock()
         self.mock_fix.fix_file.return_value = 'new_filename'
 
     def test_fix(self):
-        """Check that the returned fix is applied"""
+        """Check that the returned fix is applied."""
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                 return_value=[self.mock_fix]):
@@ -27,7 +27,7 @@ class TestFixFile(unittest.TestCase):
             self.assertEqual(file_returned, 'new_filename')
 
     def test_nofix(self):
-        """Check that the same file is returned if no fix is available"""
+        """Check that the same file is returned if no fix is available."""
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes', return_value=[]):
             file_returned = fix_file('filename', 'short_name', 'project',
@@ -36,10 +36,10 @@ class TestFixFile(unittest.TestCase):
 
 
 class TestGetCube(unittest.TestCase):
-    """Test get cube by var_name method"""
+    """Test get cube by var_name method."""
 
     def setUp(self):
-        """Prepare for testing"""
+        """Prepare for testing."""
         self.cube_1 = mock.Mock()
         self.cube_1.var_name = 'cube1'
         self.cube_2 = mock.Mock()
@@ -48,7 +48,7 @@ class TestGetCube(unittest.TestCase):
         self.fix = Fix()
 
     def test_get_first_cube(self):
-        """Test selecting first cube"""
+        """Test selecting first cube."""
         self.assertIs(self.cube_1,
                       self.fix.get_cube_from_list(self.cubes, "cube1"))
 
@@ -63,8 +63,8 @@ class TestGetCube(unittest.TestCase):
             self.fix.get_cube_from_list(self.cubes)
 
     def test_get_default(self):
-        """Check that the default raises (Fix is a cube)."""
-        self.cube_1.var_name = 'Fix'
+        """Check that the default return the cube (fix is a cube)."""
+        self.cube_1.var_name = 'fix'
         self.assertIs(self.cube_1, self.fix.get_cube_from_list(self.cubes))
 
 
@@ -73,12 +73,18 @@ class TestFixMetadata(unittest.TestCase):
 
     def setUp(self):
         """Prepare for testing."""
-        self.cube = mock.Mock()
-        self.cube.attributes = {'source_file': 'source_file'}
-        self.fixed_cube = mock.Mock()
-        self.fixed_cube.attributes = {'source_file': 'source_file'}
+
+        self.cube = self._create_mock_cube()
+        self.fixed_cube = self._create_mock_cube()
         self.mock_fix = mock.Mock()
         self.mock_fix.fix_metadata.return_value = [self.fixed_cube]
+
+    @staticmethod
+    def _create_mock_cube(var_name='short_name'):
+        cube = mock.Mock()
+        cube.var_name = var_name
+        cube.attributes = {'source_file': 'source_file'}
+        return cube
 
     def test_fix(self):
         """Check that the returned fix is applied."""
@@ -98,6 +104,33 @@ class TestFixMetadata(unittest.TestCase):
                                          'model')[0]
             self.assertTrue(cube_returned is self.cube)
             self.assertTrue(cube_returned is not self.fixed_cube)
+
+    def test_select_var(self):
+        """Check that the same cube is returned if no fix is available."""
+        with mock.patch(
+                'esmvalcore.cmor._fixes.fix.Fix.get_fixes', return_value=[]):
+            cube_returned = fix_metadata(
+                [self.cube, self._create_mock_cube('extra')],
+                'short_name',
+                'project',
+                'model'
+            )[0]
+            self.assertTrue(cube_returned is self.cube)
+
+    def test_select_var_failed_if_bad_var_name(self):
+        """Check that the same cube is returned if no fix is available."""
+        with mock.patch(
+                'esmvalcore.cmor._fixes.fix.Fix.get_fixes', return_value=[]):
+            with self.assertRaises(ValueError):
+                fix_metadata(
+                    [
+                        self._create_mock_cube('not_me'),
+                        self._create_mock_cube('me_neither')
+                    ],
+                    'short_name',
+                    'project',
+                    'model'
+                )
 
     def test_cmor_checker_called(self):
         """Check that the cmor check is done."""
@@ -151,7 +184,7 @@ class TestFixData(unittest.TestCase):
             self.assertTrue(cube_returned is not self.fixed_cube)
 
     def test_cmor_checker_called(self):
-        """Check that the cmor check is done"""
+        """Check that the cmor check is done."""
         checker = mock.Mock()
         checker.return_value = mock.Mock()
         with mock.patch(

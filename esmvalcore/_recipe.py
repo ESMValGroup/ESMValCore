@@ -786,6 +786,9 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
 class Recipe:
     """Recipe object."""
 
+    info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
+    """List of keys to be used to compose the alias, ordered by priority."""
+
     def __init__(self,
                  raw_recipe,
                  config_user,
@@ -940,7 +943,100 @@ class Recipe:
             preprocessor_output[variable_group] = \
                 self._initialize_variables(raw_variable, raw_datasets)
 
+        self._set_alias(preprocessor_output)
+
         return preprocessor_output
+
+    def _set_alias(self, preprocessor_output):
+        """
+        Add unique alias for datasets.
+
+        Generates a unique alias for each dataset that will be shared by all
+        variables. Tries to make it as small as possible to make it useful for
+        plot legends, filenames and such
+
+        It is composed using the keys in Recipe.info_keys that differ from
+        dataset to dataset. Once a diverging key is found, others are added
+        to the alias only if the previous ones where not enough to fully
+        identify the dataset.
+
+        Function will not modify alias if it is manually added to the recipe
+        but it will use the dataset info to compute the others
+
+        Examples:
+
+        - {project: CMIP5, model: EC-Earth, ensemble: r1i1p1}
+        - {project: CMIP6, model: EC-Earth, ensemble: r1i1p1f1}
+        will generate alias 'CMIP5' and 'CMIP6'
+
+        - {project: CMIP5, model: EC-Earth, experiment: historical}
+        - {project: CMIP5, model: MPI-ESM, experiment: piControl}
+        will generate alias 'EC-Earth,' and 'MPI-ESM'
+
+        - {project: CMIP5, model: EC-Earth, experiment: historical}
+        - {project: CMIP5, model: EC-Earth, experiment: piControl}
+        will generate alias 'historical' and 'piControl'
+
+        - {project: CMIP5, model: EC-Earth, experiment: historical}
+        - {project: CMIP6, model: EC-Earth, experiment: historical}
+        - {project: CMIP5, model: MPI-ESM, experiment: historical}
+        - {project: CMIP6, model: MPI-ESM experiment: historical}
+        will generate alias 'CMIP5_EC-EARTH', 'CMIP6_EC-EARTH', 'CMIP5_MPI-ESM'
+        and 'CMIP6_MPI-ESM'
+
+        - {project: CMIP5, model: EC-Earth, experiment: historical}
+        will generate alias 'EC-Earth'
+
+        Parameters
+        ----------
+        preprocessor_output : dict
+            preprocessor output dictionary
+        """
+        datasets_info = set()
+        for variable in preprocessor_output.values():
+            for dataset in variable:
+                alias = tuple(dataset.get(key, None) for key in self.info_keys)
+                datasets_info.add(alias)
+                if 'alias' not in dataset:
+                    dataset['alias'] = alias
+
+        alias = dict()
+        for info in datasets_info:
+            alias[info] = []
+
+        datasets_info = list(datasets_info)
+        self._get_next_alias(alias, datasets_info, 0)
+
+        for info in datasets_info:
+            alias[info] = '_'.join(
+                [str(value) for value in alias[info] if value is not None]
+            )
+            if not alias[info]:
+                alias[info] = info[self.info_keys.index('dataset')]
+
+        for variable in preprocessor_output.values():
+            for dataset in variable:
+                dataset['alias'] = alias.get(
+                    dataset['alias'], dataset['alias']
+                )
+
+    @classmethod
+    def _get_next_alias(cls, alias, datasets_info, i):
+        if i >= len(cls.info_keys):
+            return
+        key_values = set(info[i] for info in datasets_info)
+        if len(key_values) == 1:
+            for info in iter(datasets_info):
+                alias[info].append(None)
+        else:
+            for info in datasets_info:
+                alias[info].append(info[i])
+        for key in key_values:
+            cls._get_next_alias(
+                alias,
+                [info for info in datasets_info if info[i] == key],
+                i + 1
+            )
 
     def _initialize_scripts(self, diagnostic_name, raw_scripts,
                             variable_names):
