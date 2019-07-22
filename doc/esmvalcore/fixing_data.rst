@@ -122,20 +122,20 @@ is fixed on the fly and, hopefully, your recipe will run free of errors.
 Sometimes other errors can appear after you fix the first one because they were
 hidden by it. In our case, the latitude coordinate could have bad units or
 values outside the valid range for example. Just extend your fix to address those
-errors and keep going
+errors.
 
 Finishing
 ---------
 
 Chances are that you are not the only one that wants to use that dataset and
-variable. Other users will be very grateful to have your fixes available as
+variable. Other users could take advantage of your fixes as
 soon as possible. Please, create a separated pull request for the fix and
 submit it.
 
 It will also be very helpful if you just scan a couple of other variables from
 the same dataset and check if they share this error. In case that you find that
 it is a general one, you can change the fix name to ``AllVars`` so it gets
-executed for the full dataset. If you find that this is shared only by
+executed for all variables in the dataset. If you find that this is shared only by
 a handful of similar vars you can just make the fix for those new vars derive
 from the one you just created:
 
@@ -176,16 +176,16 @@ from the one you just created:
 Common errors
 =============
 
-Our example covered one of the most common cases: variables / coordinates that
+The above example covers one of the most common cases: variables / coordinates that
 have names that do not match the expected. But there are some others that use
-to appear frequently. This section will describe them
+to appear frequently. This section describes the most common cases.
 
 Bad units declared
 ------------------
 
-Is quite common that a variable declares to be using some units but the data
-is stored in another. This can be solved ovwerwriting the units attribute
-with the real data units.
+It is quite common that a variable declares to be using some units but the data
+is stored in another. This can be solved by overwriting the units attribute
+with the actual data units.
 
 .. code-block:: python
 
@@ -197,17 +197,17 @@ with the real data units.
 
 Detecting this error can be tricky if the units are similar enough. It also
 has a good chance of going undetected until you notice strange results in
-your diagnostic
+your diagnostic.
 
 
 Coordinates missing
 -------------------
 
 Another common error is to have missing coordinates. Usually it just means
-that the file does not follow the CF-conventions and Iris can not interpret it.
+that the file does not follow the CF-conventions and Iris can therefore not interpret it.
 
 If this is the case, you should see a warning from the ESMValTool about
-discarding somecubes in the fix metadata step. Just before that warning you
+discarding some cubes in the fix metadata step. Just before that warning you
 should see the full list of cubes as read by Iris. If that list contains your
 missing coordinate you can create a fix for this model:
 
