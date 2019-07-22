@@ -66,15 +66,6 @@ def _process_quicklook_settings(cfg):
             f"WARNING: Quicklook mode is enabled but no 'logger' is not "
             f"given, defaulting to {quicklook_opts['logger']}")
     quicklook_opts['logger'] = _normalize_path(quicklook_opts['logger'])
-    formatter = logging.Formatter(
-        '%(asctime)s UTC [%(process)d] %(levelname)-7s %(message)s')
-    logging.Formatter.converter = time.gmtime
-    handler = logging.FileHandler(quicklook_opts['logger'], mode='a')
-    handler.setFormatter(formatter)
-    ql_logger = get_ql_logger()
-    ql_logger.setLevel(logging.DEBUG)
-    ql_logger.addHandler(handler)
-    ql_logger.propagate = False
 
     # Do not remove preproc directory
     cfg['remove_preproc_dir'] = False
@@ -223,6 +214,19 @@ def configure_logging(cfg_file=None, output=None, console_log_level=None):
     logging.config.dictConfig(cfg)
     logging.Formatter.converter = time.gmtime
     logging.captureWarnings(True)
+
+    # Quicklook logger
+    if CFG_USER['quicklook']['active']:
+        formatter = logging.Formatter(
+            '%(asctime)s UTC [%(process)d] %(levelname)-7s %(message)s')
+        logging.Formatter.converter = time.gmtime
+        handler = logging.FileHandler(CFG_USER['quicklook']['logger'],
+                                      mode='a')
+        handler.setFormatter(formatter)
+        ql_logger = get_ql_logger()
+        ql_logger.setLevel(logging.DEBUG)
+        ql_logger.addHandler(handler)
+        ql_logger.propagate = False
 
     return log_files
 
