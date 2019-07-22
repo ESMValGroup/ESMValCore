@@ -34,7 +34,7 @@ Fixing a dataset
 ================
 
 To illustrate the process of creating a fix we are going to construct a new
-one from scratch for a fictional dataset. We need to fix a CMIP7 model
+one from scratch for a fictional dataset. We need to fix a CMIPX model
 called PERFECT-MODEL that is reporting a missing latitude coordinate for
 variable tas.
 
@@ -57,7 +57,7 @@ coordinates. In our example it looks like this:
             month_number                             x              -              -
             year                                     x              -              -
         Attributes:
-            {'cmor_table': 'CMIP7', 'mip': 'Amon', 'short_name': 'tas', 'frequency': 'mon'})
+            {'cmor_table': 'CMIPX', 'mip': 'Amon', 'short_name': 'tas', 'frequency': 'mon'})
 
 
 So now the mistake is clear: the latitude coordinate is badly named and the
@@ -67,7 +67,7 @@ Create the fix
 --------------
 
 We start by creating the module file. In our example the path will be
-``esmvaltool/cmor/_fixes/CMIP7/PERFECT_MODEL.py``. If it already exists
+``esmvaltool/cmor/_fixes/CMIPX/PERFECT_MODEL.py``. If it already exists
 just add the class to the file, there is no limit in the number of fixes
 we can have in any given file.
 
