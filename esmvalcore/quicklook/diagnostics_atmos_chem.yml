@@ -1,55 +1,53 @@
-diagnostics:
-
-  glob_timeseries_atmos_chem:
-    description: Timeseries of atmospheric chem.
-    themes:
-      - phys
-    realms:
-      - atmos
-    variables:
-      co2mass:
-        mip: custom
-      lnox:
-        mip: custom
-      toz10hr:
-        preprocessor: prep_zon
-        mip: custom
-      MP_S:
-        mip: custom
-      MP_CFCl3:
-        mip: custom
-      MP_NH3:
-        mip: custom
-      MP_N2O:
-        mip: custom
-      MP_CO:
-        mip: custom
-      MP_CH4:
-        mip: custom
-      MP_SO2:
-        mip: custom
-      MP_OH:
-        mip: custom
-      MP_NO:
-        mip: custom
-      MP_NO2:
-        mip: custom
-      MP_O3:
-        mip: custom
-      MP_CO2:
-        mip: custom
-      MP_SO4mm_tot:
-        mip: custom
-      MP_SS_tot:
-        mip: custom
-      MP_BC_tot:
-        mip: custom
-      MP_DU_tot:
-        mip: custom
-      MP_ClOX:
-        mip: custom
-      MP_NOX:
-        mip: custom
-    scripts:
-      glob_timeseries:
-        script: quicklooks/global_timeseries.py
+glob_timeseries_atmos_chem_{run_id}:
+  description: Timeseries of atmospheric chem.
+  themes:
+    - phys
+  realms:
+    - atmos
+  variables:
+    co2mass:
+      mip: custom
+    lnox:
+      mip: custom
+    toz10hr:
+      preprocessor: prep_zon
+      mip: custom
+    MP_S:
+      mip: custom
+    MP_CFCl3:
+      mip: custom
+    MP_NH3:
+      mip: custom
+    MP_N2O:
+      mip: custom
+    MP_CO:
+      mip: custom
+    MP_CH4:
+      mip: custom
+    MP_SO2:
+      mip: custom
+    MP_OH:
+      mip: custom
+    MP_NO:
+      mip: custom
+    MP_NO2:
+      mip: custom
+    MP_O3:
+      mip: custom
+    MP_CO2:
+      mip: custom
+    MP_SO4mm_tot:
+      mip: custom
+    MP_SS_tot:
+      mip: custom
+    MP_BC_tot:
+      mip: custom
+    MP_DU_tot:
+      mip: custom
+    MP_ClOX:
+      mip: custom
+    MP_NOX:
+      mip: custom
+  scripts:
+    glob_timeseries:
+      script: quicklooks/global_timeseries.py
