@@ -10,9 +10,8 @@ the metadata describing the dataset and/or in the actual data.
 Typical examples of such errors are missing or wrong attributes (e.g.
 attribute ''units'' says 1e-9 but data are actually in 1e-6), missing or
 mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
-coordinate bounds like ''lat_bnds'') or problems with the actual data (e.g. the time
-coordinate variable or cloud liquid water only instead of sum of
-liquid + ice as specified).
+coordinate bounds like ''lat_bnds'') or problems with the actual data
+(e.g. cloud liquid water only instead of sum of liquid + ice as specified by the CMIP data request).
 
 The ESMValTool can apply on the fly fixes to data sets that have
 known errors that can be fixed automatically.
@@ -80,13 +79,13 @@ Fix class:
   reaching the checks.
 
 - ``fix_metadata`` : you want to change something in the cube that is not
-  the data.
+  the data (e.g variable or coordinate names, data units).
 
 - ``fix_data``: you need to fix the data. Beware: coordinates data values are
-  part of the metadata
+  part of the metadata.
 
 In our case we need to rename the coordinate ``altitude`` to ``latitude``,
-so we will implement the ``fix_metadata`` method
+so we will implement the ``fix_metadata`` method:
 
 .. code-block:: python
 
@@ -117,12 +116,12 @@ so we will implement the ``fix_metadata`` method
             latitude.standard_name = 'latitude'
             latitude.long_name = 'latitude'
 
-And that's all. The next time you run ESMValTool you will find that the error
+This will fix the error. The next time you run ESMValTool you will find that the error
 is fixed on the fly and, hopefully, your recipe will run free of errors.
 
 Sometimes other errors can appear after you fix the first one because they were
-hidden by it. In our case,  the latitude coordinate could have bad units or
-values outside the valid range for example. Just extend your fix to fix those
+hidden by it. In our case, the latitude coordinate could have bad units or
+values outside the valid range for example. Just extend your fix to address those
 errors and keep going
 
 Finishing
