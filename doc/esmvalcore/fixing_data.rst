@@ -44,9 +44,20 @@ Check the output
 Next to the error message, you should see some info about the iris cube: size,
 coordinates. In our example it looks like this:
 
-.. code-block:: python
+.. code-block::
 
-   cube output with latitude called altitude
+    air_temperature/ (K) (time: 312; altitude: 90; longitude: 180)
+        Dimension coordinates:
+            time                                     x              -              -
+            altitude                                 -              x              -
+            longitude                                -              -              x
+        Auxiliary coordinates:
+            day_of_month                             x              -              -
+            day_of_year                              x              -              -
+            month_number                             x              -              -
+            year                                     x              -              -
+        Attributes:
+            {'cmor_table': 'CMIP7', 'mip': 'Amon', 'short_name': 'tas', 'frequency': 'mon'})
 
 
 So now the mistake is clear: the latitude coordinate is badly named and the
@@ -213,19 +224,18 @@ missing coordinate you can create a fix for this model:
 
 .. code-block:: bash
 
-      def fix_metadata(self, cubes):
-          coord_cube = cubes.extract_strict('COORDINATE_NAME')
-          # Usually this will correspond to an auxiliary coordinate
-          # because the most common error is to forget adding it to the
-          # coordinates attribute
-          coord = iris.coords.AuxCoord(
-              coord_cube.data,
-              var_name = coord_cube.var_name,
-              standard_name = coord_cube.standard_name,
-              long_name = coord_cube.long_name,
-              units = coord_cube.units,
-              attributes =
-          }
+    def fix_metadata(self, cubes):
+        coord_cube = cubes.extract_strict('COORDINATE_NAME')
+        # Usually this will correspond to an auxiliary coordinate
+        # because the most common error is to forget adding it to the
+        # coordinates attribute
+        coord = iris.coords.AuxCoord(
+            coord_cube.data,
+            var_name=coord_cube.var_name,
+            standard_name=coord_cube.standard_name,
+            long_name=coord_cube.long_name,
+            units=coord_cube.units,
+        }
 
-          # It may also have bounds as another cube
-          coord.bounds = cubes.extract_strict('BOUNDS_NAME').data
+        # It may also have bounds as another cube
+        coord.bounds = cubes.extract_strict('BOUNDS_NAME').data
