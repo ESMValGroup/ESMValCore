@@ -4,7 +4,6 @@ import logging
 import logging.config
 import os
 import time
-from pathlib import Path
 import yaml
 
 from .cmor.table import read_cmor_tables
@@ -27,6 +26,11 @@ def find_diagnostics():
 DIAGNOSTICS_PATH = find_diagnostics()
 
 
+def get_ql_logger():
+    """Return quicklook logger instance."""
+    return logging.getLogger('quicklook')
+
+
 def _process_quicklook_settings(cfg):
     """Process quicklook settings."""
     if not cfg['quicklook']['active']:
@@ -46,11 +50,31 @@ def _process_quicklook_settings(cfg):
 
     # Recipe dir
     if 'recipe_dir' not in quicklook_opts:
-        quicklook_opts['recipe_dir'] = _normalize_path(
-            Path(__file__).parent.joinpath('quicklook').resolve())
+        quicklook_opts['recipe_dir'] = os.path.join(
+            os.path.dirname(__file__), 'quicklook')
         print(
             f"WARNING: Quicklook mode is enabled but no 'recipe_dir' "
             f"given, defaulting to {quicklook_opts['recipe_dir']}")
+    quicklook_opts['recipe_dir'] = _normalize_path(
+        quicklook_opts['recipe_dir'])
+
+    # Setup Logger
+    if 'logger' not in quicklook_opts:
+        quicklook_opts['logger'] = os.path.join(
+            cfg['run_dir'], 'quicklook.log')
+        print(
+            f"WARNING: Quicklook mode is enabled but no 'logger' is not "
+            f"given, defaulting to {quicklook_opts['logger']}")
+    quicklook_opts['logger'] = _normalize_path(quicklook_opts['logger'])
+    formatter = logging.Formatter(
+        '%(asctime)s UTC [%(process)d] %(levelname)-7s %(message)s')
+    logging.Formatter.converter = time.gmtime
+    handler = logging.FileHandler(quicklook_opts['logger'], mode='a')
+    handler.setFormatter(formatter)
+    ql_logger = get_ql_logger()
+    ql_logger.setLevel(logging.DEBUG)
+    ql_logger.addHandler(handler)
+    ql_logger.propagate = False
 
     # Do not remove preproc directory
     cfg['remove_preproc_dir'] = False
@@ -105,12 +129,12 @@ def read_config_user_file(config_file, recipe_name):
     now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     new_subdir = '_'.join((recipe_name, now))
     cfg['output_dir'] = os.path.join(cfg['output_dir'], new_subdir)
+    cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
 
     # Process quicklook settings
     _process_quicklook_settings(cfg)
 
     # create subdirectories
-    cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
     if cfg['quicklook']['active']:
         cfg['preproc_dir'] = cfg['quicklook']['preproc_dir']
         cfg['work_dir'] = cfg['quicklook']['work_dir']

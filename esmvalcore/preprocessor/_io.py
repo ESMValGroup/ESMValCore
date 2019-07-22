@@ -15,6 +15,7 @@ import yaml
 from cf_units import Unit
 
 from esmvalcore.cmor.check import check_frequency
+from esmvalcore.quicklook._logging import ql_info, ql_warning
 from .._task import write_ncl_settings
 
 logger = logging.getLogger(__name__)
@@ -167,28 +168,38 @@ def _realize_cube(cube):
         coord.bounds
 
 
-def _concatenate_along_time(old_cube, new_cube):
+def _concatenate_along_time(old_cube, new_cube, descr=None):
     """Check consistency and concatenate two cubes along time dimension."""
     old_time_range = _extract_time_range(old_cube)
     new_time_range = _extract_time_range(new_cube)
 
+    # Extended logger message
+    if descr is not None:
+        descr = f'File {descr}: '
+    else:
+        descr = ''
+
     # Check if time ranges overlap
     latest_start = max(old_time_range.start, new_time_range.start)
     earliest_end = min(old_time_range.end, new_time_range.end)
-    delta = earliest_end - latest_start
-    if delta > datetime.timedelta():
-        logger.warning(
-            "Old and new cubes overlap in time dimension, got %s for old cube "
-            "and %s for new cube", old_time_range, new_time_range)
+    if earliest_end - latest_start > datetime.timedelta():
+        ql_info(
+            logger,
+            "%sOld and new cubes overlap in time dimension, got %s for old "
+            "cube and %s for new cube", descr, old_time_range, new_time_range)
         start = _to_iris_partial_datetime(new_time_range[0])
         end = _to_iris_partial_datetime(new_time_range[1])
         time_constraint = iris.Constraint(
             time=lambda cell: cell.point < start or cell.point > end)
         old_cube = old_cube.extract(time_constraint)
         if old_cube is None:
-            logger.warning("Overwriting all data of old cube with new cube")
+            ql_info(
+                logger,
+                "%sOverwriting all data of old cube with new cube", descr)
             return new_cube
-        logger.warning("Overwriting parts of old cube with data of new cube")
+        ql_info(
+            logger,
+            "%sOverwriting parts of old cube with data of new cube", descr)
 
     # Build final cube and realize data to avoid data loss
     cubes = iris.cube.CubeList([old_cube, new_cube])
@@ -203,15 +214,18 @@ def _concatenate_along_time(old_cube, new_cube):
         (successful, msg) = check_frequency(final_cube.coord('time'),
                                             frequency)
         if not successful:
-            logger.warning(
+            ql_warning(
+                logger,
                 msg.format(final_cube.summary(shorten=True), frequency))
-            logger.warning(
-                "Frequency check of final cube was not successful, the cube "
-                "might not be contiguous")
+            ql_warning(
+                logger,
+                "%sFrequency check of final cube was not successful, the cube "
+                "might not be contiguous", descr)
     else:
-        logger.warning(
-            "Could not check if final cube is contiguous, cube attributes do "
-            "not contain 'frequency'")
+        ql_warning(
+            logger,
+            "%sCould not check if final cube is contiguous, cube attributes "
+            "do not contain 'frequency'", descr)
 
     # Fix time attributes
     final_cube.attributes['start_year'] = final_cube.coord('year').points[0]
@@ -219,18 +233,32 @@ def _concatenate_along_time(old_cube, new_cube):
     return final_cube
 
 
-def _create_new_filename(filename):
+def _create_new_filename(filename, years=None):
     """Create new filename by appending time stamp."""
     now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    return filename.replace('.nc', f'_{now}.nc')
+    if years is not None:
+        years = '-'.join(years)
+        filename = filename.replace('.nc', f'_{years}.nc')
+    return filename.replace('.nc', f'_{now}.nc.FAILED')
 
 
 def _save_new_cube_individually(cubes, kwargs, msg):
     """Save new cube individually in concatenation mode in case of errors."""
+    years = []
+    if cubes:
+        start_year = cubes[0].attributes.get('start_year')
+        end_year = cubes[0].attributes.get('end_year')
+        if start_year is not None:
+            years.append(str(start_year))
+        if end_year is not None:
+            years.append(str(end_year))
+    if not years:
+        years = None
     kwargs = dict(kwargs)
-    kwargs['target'] = _create_new_filename(kwargs['target'])
-    logger.warning(msg)
-    logger.warning("Saving cubes %s to %s", cubes, kwargs['target'])
+    kwargs['target'] = _create_new_filename(kwargs['target'], years=years)
+    kwargs['saver'] = 'nc'
+    ql_warning(logger, msg)
+    ql_warning(logger, "Saving cubes %s to %s", cubes, kwargs['target'])
     iris.save(cubes, **kwargs)
 
 
@@ -253,10 +281,12 @@ def _concatenate_output(cubes, filename, **kwargs):
     except Exception as exc:
         new_filename = _create_new_filename(filename)
         os.rename(filename, new_filename)
-        logger.warning(
+        ql_warning(
+            logger,
             "Saving cubes in concatenation mode is not possible, existing "
             "file %s appears to be corrupt: %s", filename, str(exc))
-        logger.warning(
+        ql_warning(
+            logger,
             "Moving existing file to %s and saving new cubes to %s",
             new_filename, filename)
         iris.save(cubes, **kwargs)
@@ -269,7 +299,7 @@ def _concatenate_output(cubes, filename, **kwargs):
 
     # Consistency check and concatenation
     try:
-        new_cube = _concatenate_along_time(old_cubes[0], cubes[0])
+        new_cube = _concatenate_along_time(old_cubes[0], cubes[0], filename)
     except Exception as exc:
         msg = f"Could not concatenate old and new cube along time: {str(exc)}"
         return _save_new_cube_individually(cubes, kwargs, msg)

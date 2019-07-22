@@ -51,6 +51,7 @@ drs:
 # Quicklook
 quicklook:
   active: true
+  logger: /path/to/persistent/logger_file.log
   plot_dir: /path/to/persistent/plot/dir
   preproc_dir: /path/to/persistent/preproc/dir
   work_dir: /path/to/persistent/work/dir

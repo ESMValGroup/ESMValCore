@@ -1,19 +1,28 @@
 """Logging module for quicklook operations."""
-import logging
-
-from esmvalcore._config import get_config_user_file
+from esmvalcore._config import get_config_user_file, get_ql_logger
 
 
-def setup_quicklook_logger():
-    """Initialize quicklook logger instance."""
+def _ql_log(msg, log_level, *args):
+    """Log to quicklook logger if enabled."""
     cfg = get_config_user_file()
-    formatter = logging.Formatter(
-        '%(asctime)s UTC [%(process)d] %(levelname)-7s %(message)s')
-    # handler = logging.FileHandler(log_file)
-    # handler.setFormatter(formatter)
-    #
-    # logger = logging.getLogger(name)
-    # logger.setLevel(level)
-    # logger.addHandler(handler)
-    #
-    # return logger
+    if cfg['quicklook']['active']:
+        ql_logger = get_ql_logger()
+        getattr(ql_logger, log_level)(msg, *args)
+
+
+def ql_info(logger, msg, *args):
+    """Log info to regular loggers and quicklook logger if enabled."""
+    logger.info(msg, *args)
+    _ql_log(msg, 'info', *args)
+
+
+def ql_warning(logger, msg, *args):
+    """Log warning to regular loggers and quicklook logger if enabled."""
+    logger.warning(msg, *args)
+    _ql_log(msg, 'warning', *args)
+
+
+def ql_error(logger, msg, *args):
+    """Log error to regular loggers and quicklook logger if enabled."""
+    logger.error(msg, *args)
+    _ql_log(msg, 'error', *args)
