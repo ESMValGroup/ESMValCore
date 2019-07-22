@@ -1,4 +1,3 @@
-
 """Fixes for GFDL CM3 model."""
 from ..fix import Fix
 
@@ -31,3 +30,25 @@ class Sftof(Fix):
         cube *= 100
         cube.metadata = metadata
         return cube
+
+
+class Tos(Fix):
+    """Fixes for tos"""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix metadata.
+
+        Fixes wrong standard_name.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        self.get_cube_from_list(cubes).standard_name = 'sea_surface_temperature'
+        return cubes

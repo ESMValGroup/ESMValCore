@@ -55,3 +55,25 @@ class Co2(Fix):
         cube *= 1e6
         cube.metadata = metadata
         return cube
+
+
+class Tos(Fix):
+    """Fixes for tos."""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix metadata.
+
+        Fixes wrong standard_name.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        self.get_cube_from_list(cubes).standard_name = 'sea_surface_temperature'
+        return cubes
