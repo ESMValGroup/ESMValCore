@@ -1,6 +1,6 @@
 diagnostics:
 
-  glob_timeseries_focrings:
+  glob_timeseries_forcings:
     description: Timeseries of forcings (emissions and prescribed trace gas concentrations).
     themes:
       - phys
