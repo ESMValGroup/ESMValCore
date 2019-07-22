@@ -143,14 +143,14 @@ def _fix_cube_metadata(cubes):
     """Fix metadata of cubes prior to concatenation."""
     fix_cube_attributes(cubes)
 
-    # Auxiliary time units
+    # Remove auxiliary time units
     for cube in cubes:
         time_idx = cube.coord_dims('time')
         for coord in cube.coords(dim_coords=False,
                                  contains_dimension=time_idx[0]):
             cube.remove_coord(coord)
 
-    # Units of latitude and longitude
+    # Fix degrees units
     degrees_units = Unit('degrees')
     for cube in cubes:
         for coord in cube.coords():
@@ -173,7 +173,7 @@ def _concatenate_along_time(old_cube, new_cube, descr=None):
     old_time_range = _extract_time_range(old_cube)
     new_time_range = _extract_time_range(new_cube)
 
-    # Extended logger message
+    # Extend logger message
     if descr is not None:
         descr = f'File {descr}: '
     else:
@@ -214,8 +214,7 @@ def _concatenate_along_time(old_cube, new_cube, descr=None):
         (successful, msg) = check_frequency(final_cube.coord('time'),
                                             frequency)
         if not successful:
-            ql_warning(
-                logger,
+            logger.warning(
                 msg.format(final_cube.summary(shorten=True), frequency))
             ql_warning(
                 logger,
@@ -242,16 +241,14 @@ def _create_new_filename(filename, years=None):
     return filename.replace('.nc', f'_{now}.nc.FAILED')
 
 
-def _save_new_cube_individually(cubes, kwargs, msg):
+def _save_new_cube_individually(cubes, kwargs, msg, start_year=None,
+                                end_year=None):
     """Save new cube individually in concatenation mode in case of errors."""
     years = []
-    if cubes:
-        start_year = cubes[0].attributes.get('start_year')
-        end_year = cubes[0].attributes.get('end_year')
-        if start_year is not None:
-            years.append(str(start_year))
-        if end_year is not None:
-            years.append(str(end_year))
+    if start_year is not None:
+        years.append(str(start_year))
+    if end_year is not None:
+        years.append(str(end_year))
     if not years:
         years = None
     kwargs = dict(kwargs)
@@ -265,6 +262,11 @@ def _save_new_cube_individually(cubes, kwargs, msg):
 def _concatenate_output(cubes, filename, **kwargs):
     """Concatenate cubes to already existing output."""
     logger.debug("Saving cubes in concatenation mode")
+    if not cubes:
+        ql_warning(logger, "Cannot save %s, got empty CubeList", filename)
+        return None
+    new_start_year = cubes[0].attributes.get('start_year')
+    new_end_year = cubes[0].attributes.get('end_year')
     if not os.path.isfile(filename):
         logger.debug(
             "File %s does not exits yet, saving cubes %s", filename, cubes)
@@ -273,7 +275,8 @@ def _concatenate_output(cubes, filename, **kwargs):
     if len(cubes) > 1:
         msg = (f"Saving cubes in concatenation mode is not possible for "
                f"CubeLists with more than one element, got {len(cubes)}")
-        return _save_new_cube_individually(cubes, kwargs, msg)
+        return _save_new_cube_individually(cubes, kwargs, msg, new_start_year,
+                                           new_end_year)
 
     # If file exists, check for consistency and concatenate
     try:
@@ -295,14 +298,16 @@ def _concatenate_output(cubes, filename, **kwargs):
         msg = (f"Saving cubes in concatenation mode is not possible if old "
                f"file at {filename} contains a CubeList with more than one "
                f"element, got {len(cubes)}")
-        return _save_new_cube_individually(cubes, kwargs, msg)
+        return _save_new_cube_individually(cubes, kwargs, msg, new_start_year,
+                                           new_end_year)
 
     # Consistency check and concatenation
     try:
         new_cube = _concatenate_along_time(old_cubes[0], cubes[0], filename)
     except Exception as exc:
         msg = f"Could not concatenate old and new cube along time: {str(exc)}"
-        return _save_new_cube_individually(cubes, kwargs, msg)
+        return _save_new_cube_individually(cubes, kwargs, msg, new_start_year,
+                                           new_end_year)
 
     #  Save final cube
     logger.info("Successfully concatenated cube %s to %s",
