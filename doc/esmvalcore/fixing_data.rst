@@ -5,31 +5,31 @@ Dataset fixes
 *************
 
 Some (model) datasets contain (known) errors that would normally prevent them
-from being processed correctly with the ESMValTool. The errors can be in
-the metadata describing the dataset and / or in the actual data.
+from being processed correctly by the ESMValTool. The errors can be in
+the metadata describing the dataset and/or in the actual data.
 Typical examples of such errors are missing or wrong attributes (e.g.
 attribute ''units'' says 1e-9 but data are actually in 1e-6), missing or
 mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
-variable ''lat_bnds'') or problems with the actual data (e.g. the time
+coordinate bounds like ''lat_bnds'') or problems with the actual data (e.g. the time
 coordinate variable or cloud liquid water only instead of sum of
 liquid + ice as specified).
 
-The ESMValTool can automatically apply on the fly fixes to data sets that have
-known errors that can be fixed.
+The ESMValTool can apply on the fly fixes to data sets that have
+known errors that can be fixed automatically.
 
 Fix structure
 =============
 
-Fixes are clases stored in ``esmvaltool/cmor/_fixes/[PROJECT]/[DATASET].py``
+Fixes are Python classes stored in ``esmvaltool/cmor/_fixes/[PROJECT]/[DATASET].py``
 that derive from :class:`esmvalcore.cmor._fixes.fix.Fix` and
-named after the short name of the variable they fix. You can use the name
+are named after the short name of the variable they fix. You can use the name
 ``AllVars`` if you want the fix to be applied to the whole dataset
 
 .. warning::
     Be careful to replace any ``-`` with ``_`` in your dataset name.
-    We need this replacement to have proper python module names
+    We need this replacement to have proper python module names.
 
-They are automatically loaded and applied when the dataset is preprocessed.
+The fixes are automatically loaded and applied when the dataset is preprocessed.
 
 Fixing a dataset
 ================
@@ -51,7 +51,7 @@ coordinates. In our example it looks like this:
 
 
 So now the mistake is clear: the latitude coordinate is badly named and the
-fix should just rename it
+fix should just rename it.
 
 Create the fix
 --------------
@@ -59,7 +59,7 @@ Create the fix
 We start by creating the module file. In our example the path will be
 ``esmvaltool/cmor/_fixes/CMIP7/PERFECT_MODEL.py``. If it already exists
 just add the class to the file, there is no limit in the number of fixes
-we can have in any given file
+we can have in any given file.
 
 Then we have to create the class for the fix deriving from
 :class:`esmvalcore.cmor._fixes.Fix`
@@ -72,12 +72,12 @@ Then we have to create the class for the fix deriving from
     class tas(Fix):
          """Fixes for tas variable.""""
 
-And now we must choose the method to use between the ones offered by the
+Next we must choose the method to use between the ones offered by the
 Fix class:
 
 - ``fix_file`` : should be used only to fix errors that prevent data loading.
-  As a rule of thumb, you should only use it you are not even
-  reaching the checks
+  As a rule of thumb, you should only use it if the execution halts before
+  reaching the checks.
 
 - ``fix_metadata`` : you want to change something in the cube that is not
   the data.
