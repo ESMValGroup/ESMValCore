@@ -60,13 +60,14 @@ Datasets
 
 The datasets section includes:
 
-- dataset name
+- Dataset name
 - Project (CMIP5 or 6, observations...)
-- experiment (historical/ RCP8.5 etc...)
+- Activity (CMIP6 only, sometimes it can be deduced automatically)
+- Experiment (historical/ RCP8.5 etc...)
 - Ensemble member
 - The time range
 - The model grid, gn or gr, (CMIP6 only).
-
+- Dataset alias. If not specified, a unique alias will be created
 For example, a datasets section could be:
 
 .. code-block:: yaml
