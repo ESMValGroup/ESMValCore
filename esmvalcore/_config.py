@@ -53,17 +53,17 @@ def _process_quicklook_settings(cfg):
         quicklook_opts['recipe_dir'] = os.path.join(
             os.path.dirname(__file__), 'quicklook')
         print(
-            f"WARNING: Quicklook mode is enabled but no 'recipe_dir' "
+            f"WARNING: Quicklook mode is enabled but 'recipe_dir' is not "
             f"given, defaulting to {quicklook_opts['recipe_dir']}")
     quicklook_opts['recipe_dir'] = _normalize_path(
         quicklook_opts['recipe_dir'])
 
-    # Setup Logger
+    # Quicklook log file
     if 'logger' not in quicklook_opts:
         quicklook_opts['logger'] = os.path.join(
             cfg['run_dir'], 'quicklook.log')
         print(
-            f"WARNING: Quicklook mode is enabled but no 'logger' is not "
+            f"WARNING: Quicklook mode is enabled but 'logger' is not "
             f"given, defaulting to {quicklook_opts['logger']}")
     quicklook_opts['logger'] = _normalize_path(quicklook_opts['logger'])
 
