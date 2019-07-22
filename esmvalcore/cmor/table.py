@@ -73,7 +73,7 @@ class CMIP6Info(object):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
-        if 'obs4mips' not in cmor_tables_path:
+        if glob.glob(os.path.join(self._cmor_folder, '*_CV.json')):
             self._load_controlled_vocabulary()
         self.default = default
 
@@ -146,19 +146,25 @@ class CMIP6Info(object):
     def _load_controlled_vocabulary(self):
         self.activities = {}
         self.institutes = {}
-        json_file = os.path.join(self._cmor_folder, 'CMIP6_CV.json')
-        with open(json_file) as inf:
-            table_data = json.loads(inf.read())
+        for json_file in glob.glob(
+                os.path.join(self._cmor_folder, '*_CV.json')):
+            with open(json_file) as inf:
+                table_data = json.loads(inf.read())
+                try:
+                    exps = table_data['CV']['experiment_id']
+                    for exp_id in exps:
+                        activity = exps[exp_id]['activity_id']
+                        self.activities[exp_id] = activity
+                except (KeyError, AttributeError):
+                    pass
 
-            exps = table_data['CV']['experiment_id']
-            for exp_id in exps.keys():
-                activity = exps[exp_id]['activity_id']
-                self.activities[exp_id] = activity
-
-            sources = table_data['CV']['source_id']
-            for source_id in sources.keys():
-                institution = sources[source_id]['institution_id']
-                self.institutes[source_id] = institution
+                try:
+                    sources = table_data['CV']['source_id']
+                    for source_id in sources:
+                        institution = sources[source_id]['institution_id']
+                        self.institutes[source_id] = institution
+                except (KeyError, AttributeError):
+                    pass
 
     def get_table(self, table):
         """

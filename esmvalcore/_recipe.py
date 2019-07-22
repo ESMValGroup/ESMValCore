@@ -903,8 +903,9 @@ class Recipe:
             institute = get_institutes(variable)
             if institute:
                 variable['institute'] = institute
-            if 'CMIP6' in variable['project']:
-                variable['activity'] = get_activity(variable)
+            activity = get_activity(variable)
+            if activity:
+                variable['activity'] = activity
             check.variable(variable, required_keys)
             if 'fx_files' in variable:
                 for fx_file in variable['fx_files']:

@@ -176,16 +176,21 @@ def get_institutes(variable):
     dataset = variable['dataset']
     project = variable['project']
     logger.debug("Retrieving institutes for dataset %s", dataset)
-    if project in 'CMIP6':
-        return CMOR_TABLES['CMIP6'].institutes[dataset]
+    try:
+        return CMOR_TABLES[project].institutes[dataset]
+    except (KeyError, AttributeError):
+        pass
     return CFG.get(project, {}).get('institutes', {}).get(dataset, [])
 
 
 def get_activity(variable):
     """Return the activity given the experiment name in CMIP6."""
-    exp = variable['exp']
-    logger.debug("Retrieving activity_id for experiment %s", exp)
-    return CMOR_TABLES['CMIP6'].activities[exp]
+    try:
+        exp = variable['exp']
+        logger.debug("Retrieving activity_id for experiment %s", exp)
+        return CMOR_TABLES['CMIP6'].activities[exp]
+    except (KeyError, AttributeError):
+        return None
 
 
 def replace_mip_fx(fx_file):
