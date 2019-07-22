@@ -50,5 +50,6 @@ class Tos(Fix):
         iris.cube.Cube
 
         """
-        self.get_cube_from_list(cubes).standard_name = 'sea_surface_temperature'
+        cube = self.get_cube_from_list(cubes)
+        cube.standard_name = 'sea_surface_temperature'
         return cubes
