@@ -1,7 +1,7 @@
 diagnostics:
 
-  glob_timeseries_TN_GHG_CO2:
-    description: Timeseries of global mean CO2.
+  glob_timeseries_forcings:
+    description: Timeseries of forcings (emissions and prescribed trace gas concentrations).
     themes:
       - phys
     realms:
