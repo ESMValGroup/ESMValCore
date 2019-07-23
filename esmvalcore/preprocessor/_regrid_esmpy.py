@@ -6,17 +6,18 @@ import iris
 import numpy as np
 
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
+from esmvalcore.cmor._fixes.CORDEX.Cordex_boundaries_guessing import CordexFix
 
 
 ESMF_MANAGER = ESMF.Manager(debug=False)
 
 ESMF_LON, ESMF_LAT = 0, 1
 
-ESMF_REGRID_METHODS = {
-    'linear': ESMF.RegridMethod.BILINEAR,
-    'area_weighted': ESMF.RegridMethod.CONSERVE,
-    'nearest': ESMF.RegridMethod.NEAREST_STOD,
-}
+#ESMF_REGRID_METHODS = {
+#    'linear': ESMF.RegridMethod.BILINEAR,
+#    'area_weighted': ESMF.RegridMethod.CONSERVE,
+#    'nearest': ESMF.RegridMethod.NEAREST_STOD,
+#}
 
 MASK_REGRIDDING_MASK_VALUE = {
     ESMF.RegridMethod.BILINEAR: np.array([1]),
@@ -24,13 +25,13 @@ MASK_REGRIDDING_MASK_VALUE = {
     ESMF.RegridMethod.NEAREST_STOD: np.array([]),
 }
 
-# ESMF_REGRID_METHODS = {
-#     'bilinear': ESMF.RegridMethod.BILINEAR,
-#     'patch': ESMF.RegridMethod.PATCH,
-#     'conserve': ESMF.RegridMethod.CONSERVE,
-#     'nearest_stod': ESMF.RegridMethod.NEAREST_STOD,
-#     'nearest_dtos': ESMF.RegridMethod.NEAREST_DTOS,
-# }
+ESMF_REGRID_METHODS = {
+     'bilinear': ESMF.RegridMethod.BILINEAR,
+     'patch': ESMF.RegridMethod.PATCH,
+     'conserve': ESMF.RegridMethod.CONSERVE,
+     'nearest_stod': ESMF.RegridMethod.NEAREST_STOD,
+     'nearest_dtos': ESMF.RegridMethod.NEAREST_DTOS,
+}
 
 
 def cf_2d_bounds_to_esmpy_corners(bounds, circular):
@@ -101,7 +102,7 @@ def get_grid(esmpy_lat, esmpy_lon,
     return grid
 
 
-def is_lon_circular(lon):
+def is_lon_circular(lon, cube):
     """Determine if longitudes are circular."""
     if isinstance(lon, iris.coords.DimCoord):
         circular = lon.circular
@@ -109,8 +110,15 @@ def is_lon_circular(lon):
         if lon.ndim == 1:
             seam = lon.bounds[-1, 1] - lon.bounds[0, 0]
         elif lon.ndim == 2:
-            seam = (lon.bounds[1:-1, -1, (1, 2)]
-                    - lon.bounds[1:-1, 0, (0, 3)])
+            try:
+                seam = (lon.bounds[1:-1, -1, (1, 2)] - lon.bounds[1:-1, 0, (0, 3)])
+
+            except:
+                object = CordexFix()
+                cube = object.fix_data(cube)
+                lon = cube.coord('longitude')
+                seam = (lon.bounds[1:-1, -1, (1, 2)] - lon.bounds[1:-1, 0, (0, 3)])
+
         else:
             raise NotImplementedError('AuxCoord longitude is higher '
                                       'dimensional than 2d. Giving up.')
@@ -125,7 +133,7 @@ def cube_to_empty_field(cube):
     """Build an empty ESMF field from a cube."""
     lat = cube.coord('latitude')
     lon = cube.coord('longitude')
-    circular = is_lon_circular(lon)
+    circular = is_lon_circular(lon, cube)
     esmpy_coords = coords_iris_to_esmpy(lat, lon, circular)
     grid = get_grid(*esmpy_coords, circular=circular)
     field = ESMF.Field(grid,

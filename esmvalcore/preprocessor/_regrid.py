@@ -8,6 +8,7 @@ import iris
 import numpy as np
 import stratify
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
+from iris import coord_systems
 
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
@@ -249,6 +250,20 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             if coords:
                 [coord] = coords
                 cube.remove_coord(coord)
+
+    # we first define the name of the coordinate system for the target grid in order to avoid iris problems with the
+    # coordinate system given by WGS84.
+    if target_grid.coord_system() == None:
+        target_grid.coord('latitude').coord_system = iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
+                                                                         semi_minor_axis=6356752.31424)
+        target_grid.coord('longitude').coord_system = iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
+                                                                         semi_minor_axis=6356752.31424)
+
+    if cube.coord_system() == None:
+        cube.coord('latitude').coord_system = iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
+                                                                         semi_minor_axis=6356752.31424)
+        cube.coord('longitude').coord_system = iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
+                                                                         semi_minor_axis=6356752.31424)
 
     # Perform the horizontal regridding.
     if _attempt_irregular_regridding(cube, scheme):
