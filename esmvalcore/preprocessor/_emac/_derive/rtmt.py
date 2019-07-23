@@ -1,5 +1,6 @@
 """Derivation of variable `rtmt`."""
-"""The variable 'rtmt' (Net Downward Flux at Top of Model) is a combination of """
+"""The variable 'rtmt' (Net Downward Flux at Top of Model) is"""
+"""a combination of """
 """the two EMAC variables: 'flxttop_ave' and 'flxstop_ave'. """
 """(following the recipe from the DKRZ CMIP6 Data Request WebGUI) """
 """(https://c6dreq.dkrz.de/) """

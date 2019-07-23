@@ -13,3 +13,4 @@ def derive(cubes):
             var_name_constraint('srad0u_ave'))
 
     return rsdt_cube
+
