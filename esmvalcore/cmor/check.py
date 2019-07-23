@@ -454,9 +454,7 @@ class CMORCheck():
             if parent_time in attrs:
                 parent_units = cf_units.Unit(attrs[parent_time],
                                              simplified_cal)
-                attrs[parent_time] = cf_units.Unit(
-                    'days since 1850-1-1 00:00:00',
-                    calendar=coord.units.calendar)
+                attrs[parent_time] = 'days since 1850-1-1 00:00:00'
 
                 branch_parent = 'branch_time_in_parent'
                 if branch_parent in attrs:
