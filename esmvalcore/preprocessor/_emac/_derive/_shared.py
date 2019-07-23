@@ -82,6 +82,12 @@ def integrate_vertically(cubes,
     height_coord = cube.coord(dimensions=height_idx)
     cube = cube.collapsed(height_coord, iris.analysis.SUM)
 
+    # Fix cell_methods
+    height_var = ('level'
+                  if height_coord.var_name is None else height_coord.var_name)
+    cell_method = iris.coords.CellMethod(method='sum', coords=height_var)
+    cube.cell_methods = (cell_method, )
+
     return cube
 
 

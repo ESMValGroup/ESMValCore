@@ -288,3 +288,4 @@ EMAC:
   ignore_warnings:
     load:
       - {message: 'Ignoring netCDF variable .* invalid units .*', module: iris}
+      - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}

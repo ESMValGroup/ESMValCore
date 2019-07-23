@@ -16,6 +16,7 @@ from cf_units import Unit
 
 from esmvalcore.cmor.check import check_frequency
 from esmvalcore.quicklook._logging import ql_info, ql_warning
+
 from .._task import write_ncl_settings
 
 logger = logging.getLogger(__name__)
@@ -84,8 +85,8 @@ def fix_cube_attributes(cubes):
                 attributes[attr] = val
             else:
                 if str(val) not in str(attributes[attr]):
-                    attributes[attr] = '{}|{}'.format(
-                        str(attributes[attr]), str(val))
+                    attributes[attr] = '{}|{}'.format(str(attributes[attr]),
+                                                      str(val))
     for cube in cubes:
         cube.attributes = attributes
     return attributes
@@ -150,7 +151,7 @@ def _fix_cube_metadata(cubes):
                                  contains_dimension=time_idx[0]):
             cube.remove_coord(coord)
 
-    # Fix degrees units
+    # Fix coordinate units
     degrees_units = Unit('degrees')
     for cube in cubes:
         for coord in cube.coords():
@@ -158,6 +159,8 @@ def _fix_cube_metadata(cubes):
                 coord.units = degrees_units
                 if coord.name() == 'longitude':
                     coord.circular = True
+            if 'invalid_units' in coord.attributes:
+                coord.units = Unit('unknown')
 
 
 def _realize_cube(cube):
@@ -193,13 +196,11 @@ def _concatenate_along_time(old_cube, new_cube, descr=None):
             time=lambda cell: cell.point < start or cell.point > end)
         old_cube = old_cube.extract(time_constraint)
         if old_cube is None:
-            ql_info(
-                logger,
-                "%sOverwriting all data of old cube with new cube", descr)
+            ql_info(logger, "%sOverwriting all data of old cube with new cube",
+                    descr)
             return new_cube
-        ql_info(
-            logger,
-            "%sOverwriting parts of old cube with data of new cube", descr)
+        ql_info(logger,
+                "%sOverwriting parts of old cube with data of new cube", descr)
 
     # Build final cube and realize data to avoid data loss
     cubes = iris.cube.CubeList([old_cube, new_cube])
@@ -241,7 +242,10 @@ def _create_new_filename(filename, years=None):
     return filename.replace('.nc', f'_{now}.nc.FAILED')
 
 
-def _save_new_cube_individually(cubes, kwargs, msg, start_year=None,
+def _save_new_cube_individually(cubes,
+                                kwargs,
+                                msg,
+                                start_year=None,
                                 end_year=None):
     """Save new cube individually in concatenation mode in case of errors."""
     years = []
@@ -268,8 +272,8 @@ def _concatenate_output(cubes, filename, **kwargs):
     new_start_year = cubes[0].attributes.get('start_year')
     new_end_year = cubes[0].attributes.get('end_year')
     if not os.path.isfile(filename):
-        logger.debug(
-            "File %s does not exits yet, saving cubes %s", filename, cubes)
+        logger.debug("File %s does not exits yet, saving cubes %s", filename,
+                     cubes)
         iris.save(cubes, **kwargs)
         return None
     if len(cubes) > 1:
@@ -288,10 +292,9 @@ def _concatenate_output(cubes, filename, **kwargs):
             logger,
             "Saving cubes in concatenation mode is not possible, existing "
             "file %s appears to be corrupt: %s", filename, str(exc))
-        ql_warning(
-            logger,
-            "Moving existing file to %s and saving new cubes to %s",
-            new_filename, filename)
+        ql_warning(logger,
+                   "Moving existing file to %s and saving new cubes to %s",
+                   new_filename, filename)
         iris.save(cubes, **kwargs)
         return None
     if len(old_cubes) > 1:
@@ -316,8 +319,12 @@ def _concatenate_output(cubes, filename, **kwargs):
     return None
 
 
-def save(cubes, filename, optimize_access='', compress=False,
-         concatenate_output=False, **kwargs):
+def save(cubes,
+         filename,
+         optimize_access='',
+         compress=False,
+         concatenate_output=False,
+         **kwargs):
     """
     Save iris cubes to file.
 
@@ -440,8 +447,8 @@ def _ordered_safe_dump(data, stream):
 def write_metadata(products, write_ncl=False):
     """Write product metadata to file."""
     output_files = []
-    for output_dir, prods in groupby(products,
-                                     lambda p: os.path.dirname(p.filename)):
+    for output_dir, prods in groupby(
+            products, lambda p: os.path.dirname(p.filename)):
         sorted_products = sorted(
             prods,
             key=lambda p: (
@@ -487,8 +494,8 @@ def _write_ncl_metadata(output_dir, metadata):
         dataset_info = {}
         info['dataset_info'].append(dataset_info)
         for key in variable:
-            dataset_specific = any(
-                variable[key] != var.get(key, object()) for var in variables)
+            dataset_specific = any(variable[key] != var.get(key, object())
+                                   for var in variables)
             if ((dataset_specific or key in DATASET_KEYS)
                     and key not in VARIABLE_KEYS):
                 dataset_info[key] = variable[key]
