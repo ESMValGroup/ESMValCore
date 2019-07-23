@@ -12,8 +12,6 @@ glob_timeseries_atmos_chem_{run_id}:
     toz10hr:
       preprocessor: prep_zon
       mip: custom
-    MP_S:
-      mip: custom
     MP_CFCl3:
       mip: custom
     MP_NH3:
@@ -33,8 +31,6 @@ glob_timeseries_atmos_chem_{run_id}:
     MP_NO2:
       mip: custom
     MP_O3:
-      mip: custom
-    MP_CO2:
       mip: custom
     MP_SO4mm_tot:
       mip: custom
