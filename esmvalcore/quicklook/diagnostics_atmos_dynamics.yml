@@ -1,6 +1,7 @@
 glob_timeseries_atmos_dyn_{run_id}:
   description: Timeseries of atmospheric dynamic variable .
   themes:
+    - atmDyn
     - phys
   realms:
     - atmos

@@ -1,9 +1,13 @@
 glob_timeseries_atmos_chem_{run_id}:
   description: Timeseries of atmospheric chem.
   themes:
-    - phys
+    - aerosols
+    - chem
+    - ghg
   realms:
     - atmos
+    - aerosol
+    - atmosChem
   variables:
     co2mass:
       mip: custom

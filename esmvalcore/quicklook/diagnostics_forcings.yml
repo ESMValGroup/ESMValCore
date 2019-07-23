@@ -1,9 +1,13 @@
 glob_timeseries_forcings_{run_id}:
   description: Timeseries of forcings (emissions and prescribed trace gas concentrations).
   themes:
-    - phys
+    - aerosols
+    - chem
+    - ghg
   realms:
     - atmos
+    - aerosol
+    - atmosChem
   variables:
     TN_GHG_CO2:
       mip: custom

@@ -3,7 +3,8 @@ glob_timeseries_ocean_{run_id}:
   themes:
     - phys
   realms:
-    - atmos
+    - ocean
+    - seaIce
   variables:
     awhea:
       mip: Omon
