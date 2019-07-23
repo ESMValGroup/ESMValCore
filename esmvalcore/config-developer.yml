@@ -215,3 +215,11 @@ EMAC:
   input_file: ''
   output_file: '{dataset}_{ensemble}_{short_name}'
   cmor_type: 'CMIP5'
+
+CORDEX:
+  input_dir:
+    default: '/'
+    drs1: '[project]/[product]/[Domain]/[Institution]/[GCMModelName]/[CMIP5ExperimentName]/[CMIP5EnsembleMember]/[RCMModelName]/[RCMVersionID]/[Frequency]/[VariableName]'
+  input_file: '[short_name]_[dataset]_[gcminstitute]_[exp]_[ensemble]_[rcmmodelname]_[version]_[mip]_*.nc'
+  output_file: '[short_name]_[dataset]_[exp]_[ensemble]_[version]_[mip]_[start_year]-[end_year]'
+  cmor_type: 'CMIP5'
