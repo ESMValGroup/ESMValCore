@@ -646,7 +646,7 @@ def check_frequency(coord, frequency):
                 second_month = 1
                 second_year += 1
             if second_month != second.month or \
-                second_year != second.year:
+                    second_year != second.year:
                 msg = '{}: Frequency {} does not match input data'
                 return (False, msg)
     elif frequency == 'yr':
@@ -675,7 +675,7 @@ def check_frequency(coord, frequency):
         for i in range(len(coord.points) - 1):
             interval = coord.points[i + 1] - coord.points[i]
             if (interval < target_interval[0]
-                or interval > target_interval[1]):
+                    or interval > target_interval[1]):
                 msg = '{}: Frequency {} does not match input data'
                 return (False, msg)
     return (True, '')
