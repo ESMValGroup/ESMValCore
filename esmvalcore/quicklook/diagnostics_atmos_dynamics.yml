@@ -1,5 +1,5 @@
 glob_timeseries_atmos_dyn_{run_id}:
-  description: Timeseries of atmospheric dynamic variable .
+  description: Timeseries of atmospheric dynamics variables.
   themes:
     - atmDyn
     - phys
@@ -38,7 +38,7 @@ glob_timeseries_atmos_dyn_{run_id}:
     prsn:
       mip: Amon
       preprocessor: prep_zon
-      plot_units: mm day-1
+      plot_units: kg day-1
     prw:
       mip: Amon
       preprocessor: prep_zon
