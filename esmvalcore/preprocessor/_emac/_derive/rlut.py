@@ -11,6 +11,6 @@ from . import var_name_constraint
 
 
 def derive(cubes):
-    """Derive `rlus`."""
+    """Derive `rlut`."""
     rlut_cube = -1.0 * cubes.extract_strict(var_name_constraint('flxttop_ave'))
     return rlut_cube
