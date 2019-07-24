@@ -175,14 +175,14 @@ def tile_grid_areas(cube, fx_files):
     # Use dash.array.stack to tile areacello.
     elif cube.ndim == 4 and grid_areas.ndim == 2:
         for shape in [1, 0]:
-            ga = [grid_areas for itr in range(cube.shape[shape])]
-            grid_areas = da.stack(ga, axis=0)
+            grida = [grid_areas for itr in range(cube.shape[shape])]
+            grid_areas = da.stack(grida, axis=0)
     elif cube.ndim == 4 and grid_areas.ndim == 3:
-        ga = [grid_areas for itr in range(cube.shape[0])]
-        grid_areas = da.stack(ga, axis=0)
+        grida = [grid_areas for itr in range(cube.shape[0])]
+        grid_areas = da.stack(grida, axis=0)
     elif cube.ndim == 3 and grid_areas.ndim == 2:
-        ga = [grid_areas for itr in range(cube.shape[0])]
-        grid_areas = da.stack(ga, axis=0)
+        grida = [grid_areas for itr in range(cube.shape[0])]
+        grid_areas = da.stack(grida, axis=0)
     else:
         raise ValueError('Grid and dataset number of dimensions not '
                          'recognised: {} and {}.'
