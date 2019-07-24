@@ -303,8 +303,6 @@ def regrid_time(cube, frequency):
             for t in time_c
         ]
 
-    # TODO add correct handling of hourly data
-    # this is a bit more complicated since it can be 3h, 6h etc
     cube.coord('time').points = [
         cube.coord('time').units.date2num(cl)
         for cl in cube.coord('time').cells
