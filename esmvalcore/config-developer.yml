@@ -277,7 +277,6 @@ EMAC:
   input_dir:
     default: '[dataset]/[channel]'
   input_file: '[dataset]*[channel].nc'
-  output_dir: '{variable_group}/[dataset]'
   output_file: '[dataset]_[short_name]'
   cmor_type: 'CMIP6'
   cmorize:
@@ -289,3 +288,4 @@ EMAC:
   ignore_warnings:
     load:
       - {message: 'Ignoring netCDF variable .* invalid units .*', module: iris}
+      - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}

@@ -41,6 +41,7 @@ from . import __version__
 from ._config import configure_logging, read_config_user_file, DIAGNOSTICS_PATH
 from ._recipe import TASKSEP, read_recipe_file
 from ._task import resource_usage_logger
+from ._quicklook import create_recipe
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -63,18 +64,20 @@ def get_args():
     parser = argparse.ArgumentParser(
         description=HEADER,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('recipe', help='Path or name of the yaml recipe file')
-    parser.add_argument(
-        '-v',
-        '--version',
-        action='version',
-        version=__version__,
-        help="return ESMValTool's version number and exit")
-    parser.add_argument(
-        '-c',
-        '--config-file',
-        default=os.path.join(os.path.dirname(__file__), 'config-user.yml'),
-        help='Config file')
+    parser.add_argument('recipe',
+                        nargs='?',
+                        default='None',
+                        help='Path or name of the yaml recipe file')
+    parser.add_argument('-v',
+                        '--version',
+                        action='version',
+                        version=__version__,
+                        help="return ESMValTool's version number and exit")
+    parser.add_argument('-c',
+                        '--config-file',
+                        default=os.path.join(os.path.dirname(__file__),
+                                             'config-user.yml'),
+                        help='Config file')
     parser.add_argument(
         '-s',
         '--synda-download',
@@ -85,32 +88,41 @@ def get_args():
         '--max-datasets',
         type=int,
         help='Try to limit the number of datasets used to MAX_DATASETS.')
+    parser.add_argument('--max-years',
+                        type=int,
+                        help='Limit the number of years to MAX_YEARS.')
+    parser.add_argument('--skip-nonexistent',
+                        action='store_true',
+                        help="Skip datasets that cannot be found.")
+    parser.add_argument('--diagnostics',
+                        nargs='*',
+                        help="Only run the named diagnostics from the recipe.")
+    parser.add_argument('--quicklook',
+                        metavar='SIMULATION-ID',
+                        type=str,
+                        help='Sets quicklook mode by setting identifier for ' +
+                        'individual simulation.')
     parser.add_argument(
-        '--max-years',
+        '--startyear',
         type=int,
-        help='Limit the number of years to MAX_YEARS.')
-    parser.add_argument(
-        '--skip-nonexistent',
-        action='store_true',
-        help="Skip datasets that cannot be found.")
-    parser.add_argument(
-        '--diagnostics',
-        nargs='*',
-        help="Only run the named diagnostics from the recipe.")
+        help='Only available in quicklook mode. Set start year.')
+    parser.add_argument('--endyear',
+                        type=int,
+                        help='Only available in quicklook mode. Set end year.')
     args = parser.parse_args()
     return args
 
 
-def main(args):
-    """Define the `esmvaltool` program."""
-    recipe = args.recipe
+def _check_recipe_path(recipe):
     if not os.path.exists(recipe):
-        installed_recipe = os.path.join(
-            DIAGNOSTICS_PATH, 'recipes', recipe)
+        installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
         if os.path.exists(installed_recipe):
             recipe = installed_recipe
-    recipe = os.path.abspath(os.path.expandvars(os.path.expanduser(recipe)))
+    return os.path.abspath(os.path.expandvars(os.path.expanduser(recipe)))
 
+
+def main(args):
+    """Define the `esmvaltool` program."""
     config_file = os.path.abspath(
         os.path.expandvars(os.path.expanduser(args.config_file)))
 
@@ -118,8 +130,20 @@ def main(args):
     if not os.path.exists(config_file):
         print("ERROR: config file {} does not exist".format(config_file))
 
-    recipe_name = os.path.splitext(os.path.basename(recipe))[0]
-    cfg = read_config_user_file(config_file, recipe_name)
+    if args.quicklook:
+        cfg = read_config_user_file(config_file, 'quicklook')
+        if 'quicklook' in cfg.keys() and cfg['quicklook'].get('active', False):
+            cfg['quicklook']['dataset-id'] = args.quicklook
+            if args.startyear and args.endyear:
+                cfg['quicklook']['start'] = args.startyear
+                cfg['quicklook']['end'] = args.endyear
+        else:
+            print("ERROR: Check the quicklook settings in configuration file")
+        recipe = _check_recipe_path(create_recipe(cfg))
+    else:
+        recipe = _check_recipe_path(args.recipe)
+        recipe_name = os.path.splitext(os.path.basename(recipe))[0]
+        cfg = read_config_user_file(config_file, recipe_name)
 
     # Create run dir
     if os.path.exists(cfg['run_dir']):
@@ -128,8 +152,8 @@ def main(args):
     os.makedirs(cfg['run_dir'])
 
     # configure logging
-    log_files = configure_logging(
-        output=cfg['run_dir'], console_log_level=cfg['log_level'])
+    log_files = configure_logging(output=cfg['run_dir'],
+                                  console_log_level=cfg['log_level'])
 
     # log header
     logger.info(HEADER)

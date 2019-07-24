@@ -1125,6 +1125,7 @@ class Recipe:
                     id_glob = diagnostic_name + TASKSEP + id_glob
                 ancestors.append(id_glob)
             settings['recipe'] = self._filename
+            settings['diagnostic'] = diagnostic_name
             settings['version'] = __version__
             settings['script'] = script_name
             # Add output dirs to settings

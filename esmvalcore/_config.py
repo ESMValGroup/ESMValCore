@@ -4,7 +4,6 @@ import logging
 import logging.config
 import os
 import time
-
 import yaml
 
 from .cmor.table import read_cmor_tables
@@ -25,6 +24,11 @@ def find_diagnostics():
 
 
 DIAGNOSTICS_PATH = find_diagnostics()
+
+
+def get_ql_logger():
+    """Return quicklook logger instance."""
+    return logging.getLogger('quicklook')
 
 
 def _process_quicklook_settings(cfg):
@@ -49,8 +53,19 @@ def _process_quicklook_settings(cfg):
         quicklook_opts['recipe_dir'] = os.path.join(
             os.path.dirname(__file__), 'quicklook')
         print(
-            f"WARNING: Quicklook mode is enabled but no 'recipe_dir' "
+            f"WARNING: Quicklook mode is enabled but 'recipe_dir' is not "
             f"given, defaulting to {quicklook_opts['recipe_dir']}")
+    quicklook_opts['recipe_dir'] = _normalize_path(
+        quicklook_opts['recipe_dir'])
+
+    # Quicklook log file
+    if 'logger' not in quicklook_opts:
+        quicklook_opts['logger'] = os.path.join(
+            cfg['run_dir'], 'quicklook.log')
+        print(
+            f"WARNING: Quicklook mode is enabled but 'logger' is not "
+            f"given, defaulting to {quicklook_opts['logger']}")
+    quicklook_opts['logger'] = _normalize_path(quicklook_opts['logger'])
 
     # Do not remove preproc directory
     cfg['remove_preproc_dir'] = False
@@ -85,9 +100,8 @@ def read_config_user_file(config_file, recipe_name):
 
     for key in defaults:
         if key not in cfg:
-            print(
-                f"INFO: No '{key}' specification in config file, defaulting "
-                f"to '{defaults[key]}'")
+            print(f"INFO: No '{key}' specification in config file, defaulting "
+                  f"to '{defaults[key]}'")
             cfg[key] = defaults[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
@@ -106,12 +120,12 @@ def read_config_user_file(config_file, recipe_name):
     now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     new_subdir = '_'.join((recipe_name, now))
     cfg['output_dir'] = os.path.join(cfg['output_dir'], new_subdir)
+    cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
 
     # Process quicklook settings
     _process_quicklook_settings(cfg)
 
     # create subdirectories
-    cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
     if cfg['quicklook']['active']:
         cfg['preproc_dir'] = cfg['quicklook']['preproc_dir']
         cfg['work_dir'] = cfg['quicklook']['work_dir']
@@ -200,6 +214,19 @@ def configure_logging(cfg_file=None, output=None, console_log_level=None):
     logging.config.dictConfig(cfg)
     logging.Formatter.converter = time.gmtime
     logging.captureWarnings(True)
+
+    # Quicklook logger
+    if CFG_USER['quicklook']['active']:
+        formatter = logging.Formatter(
+            '%(asctime)s UTC [%(process)d] %(levelname)-7s %(message)s')
+        logging.Formatter.converter = time.gmtime
+        handler = logging.FileHandler(CFG_USER['quicklook']['logger'],
+                                      mode='a')
+        handler.setFormatter(formatter)
+        ql_logger = get_ql_logger()
+        ql_logger.setLevel(logging.DEBUG)
+        ql_logger.addHandler(handler)
+        ql_logger.propagate = False
 
     return log_files
 
