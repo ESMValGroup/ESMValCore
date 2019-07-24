@@ -6,7 +6,7 @@ from scipy.ndimage import map_coordinates
 from ..fix import Fix
 
 
-class Tos(Fix):
+class CordexFix(Fix):
     """Fixes for tos."""
 
     def fix_data(self, cube):
@@ -31,8 +31,8 @@ class Tos(Fix):
             rlat, np.arange(len(rlat)), k=1)
         rlon_to_idx = InterpolatedUnivariateSpline(
             rlon, np.arange(len(rlon)), k=1)
-        rlat_idx_bnds = rlat_to_idx(cube.coord('grid_latitude').bounds())
-        rlon_idx_bnds = rlon_to_idx(cube.coord('grid_longitude').bounds())
+        rlat_idx_bnds = rlat_to_idx(cube.coord('grid_latitude')._guess_bounds())
+        rlon_idx_bnds = rlon_to_idx(cube.coord('grid_longitude')._guess_bounds())
 
         # Calculate latitude/longitude vertices by interpolation
         lat_vertices = []

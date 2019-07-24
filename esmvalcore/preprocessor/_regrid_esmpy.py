@@ -6,7 +6,7 @@ import iris
 import numpy as np
 
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
-from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1 import Tos
+from esmvalcore.cmor._fixes.CORDEX.Cordex_boundaries_guessing import CordexFix
 
 
 ESMF_MANAGER = ESMF.Manager(debug=False)
@@ -114,7 +114,7 @@ def is_lon_circular(lon, cube):
                 seam = (lon.bounds[1:-1, -1, (1, 2)] - lon.bounds[1:-1, 0, (0, 3)])
 
             except:
-                object = Tos()
+                object = CordexFix()
                 cube = object.fix_data(cube)
                 lon = cube.coord('longitude')
                 seam = (lon.bounds[1:-1, -1, (1, 2)] - lon.bounds[1:-1, 0, (0, 3)])

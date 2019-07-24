@@ -254,13 +254,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     # we first define the name of the coordinate system for the target grid in order to avoid iris problems with the
     # coordinate system given by WGS84.
     if target_grid.coord_system() == None:
-        target_grid.coord('latitude').coord_system =  iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
+        target_grid.coord('latitude').coord_system = iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
                                                                          semi_minor_axis=6356752.31424)
         target_grid.coord('longitude').coord_system = iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
                                                                          semi_minor_axis=6356752.31424)
 
     if cube.coord_system() == None:
-        cube.coord('latitude').coord_system =  iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
+        cube.coord('latitude').coord_system = iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
                                                                          semi_minor_axis=6356752.31424)
         cube.coord('longitude').coord_system = iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
                                                                          semi_minor_axis=6356752.31424)

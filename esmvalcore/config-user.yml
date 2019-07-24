@@ -42,7 +42,7 @@ rootpath:
   OBS: ~/obs_inputpath
   RAWOBS: ~/rawobs_inputpath
   default: ~/default_inputpath
-  CORDEX: /predictia/Data/c3s512/data/era5
+  CORDEX: ~/default_inputpath
 
 # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
