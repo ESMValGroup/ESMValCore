@@ -304,8 +304,9 @@ See also :func:`esmvalcore.preprocessor.annual_mean`.
 This function aligns the time points of each component dataset to allow the
 subtraction of two Iris cubes from different datasets. The operation makes the
 datasets time points common and sets common calendars; it also resets the time
-bounds and auxiliary coordinates to reflect the artifically shifted time
-points. The current implementation works only for monthly and daily data.
+bounds and auxiliary coordinates to reflect the artificially shifted time
+points. The current implementation works for monthly, daily, 6 hourly, 3
+hourly and hourly data.
         
 See also :func:`esmvalcore.preprocessor.regrid_time`.
 
