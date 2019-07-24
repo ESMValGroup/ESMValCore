@@ -260,7 +260,7 @@ def regrid_time(cube, frequency):
     cube: iris.cube.Cube
         input cube.
     frequency: str
-        data frequency: mon or day
+        data frequency: mon, day, 1hr, 3hr or 6hr
 
     Returns
     -------
@@ -283,6 +283,26 @@ def regrid_time(cube, frequency):
         cube.coord('time').cells = [
             datetime.datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
         ]
+    elif frequency == '1hr':
+        cube.coord('time').cells = [
+            datetime.datetime(t.year, t.month, t.day, t.hour, 0, 0)
+            for t in time_c
+        ]
+    elif frequency == '3hr':
+        cube.coord('time').cells = [
+            datetime.datetime(
+                t.year, t.month, t.day, t.hour - t.hour % 3, 0, 0
+            )
+            for t in time_c
+        ]
+    elif frequency == '6hr':
+        cube.coord('time').cells = [
+            datetime.datetime(
+                t.year, t.month, t.day, t.hour - t.hour % 6, 0, 0
+            )
+            for t in time_c
+        ]
+
     # TODO add correct handling of hourly data
     # this is a bit more complicated since it can be 3h, 6h etc
     cube.coord('time').points = [
