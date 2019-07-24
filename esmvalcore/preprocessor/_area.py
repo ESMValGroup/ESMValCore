@@ -71,9 +71,9 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     mask = np.ma.array(cube.data).mask
     mask += np.ma.masked_where(lats < start_latitude, lats).mask
     mask += np.ma.masked_where(lats > end_latitude, lats).mask
-    mask += np.ma.masked_where(lons > start_longitude, lons).mask
+    mask += np.ma.masked_where(lons < start_longitude, lons).mask
     mask += np.ma.masked_where(lons > end_longitude, lons).mask
-    cube.data = np.ma.masked_where(mask, cube.data)
+    cube.data = da.ma.masked_array(data=cube.data, mask=mask)
     return cube
 
 
