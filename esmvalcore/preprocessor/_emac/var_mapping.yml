@@ -11,6 +11,7 @@ evspsbl: {evap_ave: Amon} #recipe
 hfss: {ahfs_ave: Amon}
 hfls: {ahfl_ave: Amon}
 lnox: {NOxcg_ave: lnox_PaR_T_gp, NOxic_ave: lnox_PaR_T_gp} #recipe
+od550aer: {aot_opt_TOT_550_total_ave: AERmon}
 pr: {aprl_ave: Amon, aprc_ave: Amon, aprs_ave: Amon} #recipe
 prc: {aprc_ave: Amon}
 prl: {aprl_ave: Amon} #not cmor
