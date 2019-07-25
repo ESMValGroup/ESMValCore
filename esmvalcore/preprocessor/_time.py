@@ -252,15 +252,16 @@ def regrid_time(cube, frequency):
 
     Operations on time units, calendars, time points and auxiliary
     coordinates so that any cube from cubes can be subtracted from any
-    other cube from cubes. Currently this function supports only monthly
-    (frequency=mon) and daily (frequency=day) data time frequencies.
+    other cube from cubes. Currently this function supports monthly
+    (frequency=mon), daily (frequency=day), 6-hourly (frequency=6hr),
+    3-hourly (frequency=3hr) and hourly (frequency=1hr) data time frequencies.
 
     Parameters
     ----------
     cube: iris.cube.Cube
         input cube.
     frequency: str
-        data frequency: mon or day
+        data frequency: mon, day, 1hr, 3hr or 6hr
 
     Returns
     -------
@@ -283,8 +284,26 @@ def regrid_time(cube, frequency):
         cube.coord('time').cells = [
             datetime.datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
         ]
-    # TODO add correct handling of hourly data
-    # this is a bit more complicated since it can be 3h, 6h etc
+    elif frequency == '1hr':
+        cube.coord('time').cells = [
+            datetime.datetime(t.year, t.month, t.day, t.hour, 0, 0)
+            for t in time_c
+        ]
+    elif frequency == '3hr':
+        cube.coord('time').cells = [
+            datetime.datetime(
+                t.year, t.month, t.day, t.hour - t.hour % 3, 0, 0
+            )
+            for t in time_c
+        ]
+    elif frequency == '6hr':
+        cube.coord('time').cells = [
+            datetime.datetime(
+                t.year, t.month, t.day, t.hour - t.hour % 6, 0, 0
+            )
+            for t in time_c
+        ]
+
     cube.coord('time').points = [
         cube.coord('time').units.date2num(cl)
         for cl in cube.coord('time').cells
