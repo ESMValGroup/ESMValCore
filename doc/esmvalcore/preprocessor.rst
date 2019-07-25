@@ -306,7 +306,9 @@ subtraction of two Iris cubes from different datasets. The operation makes the
 datasets time points common and sets common calendars; it also resets the time
 bounds and auxiliary coordinates to reflect the artificially shifted time
 points. The current implementation works for monthly, daily, 6 hourly, 3
-hourly and hourly data.
+hourly and hourly data. It takes a string representing the data frequency as
+an input argument:
+* frequency: mon, day, 1hr, 3hr, or 6hr 
         
 See also :func:`esmvalcore.preprocessor.regrid_time`.
 
