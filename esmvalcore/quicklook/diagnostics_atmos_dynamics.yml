@@ -15,6 +15,9 @@ glob_timeseries_atmos_dyn_{run_id}:
     clwvi:
        mip: Amon
        preprocessor: prep_zon
+    cod_sw_b01:
+       mip: custom
+       preprocessor: prep_zon 
     evspsbl:
        mip: Amon
        preprocessor: prep_zon
