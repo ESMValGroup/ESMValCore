@@ -84,10 +84,10 @@ class Test(tests.Test):
                                       dim_coords_and_dims=self.coords_spec)
         result_land = mask_landsea(new_cube_land, ['sftlf_test.nc'],
                                    'land',
-                                   always_use_ne_masks=True)
+                                   always_use_ne_mask=True)
         result_sea = mask_landsea(new_cube_sea, ['sftlf_test.nc'],
                                   'sea',
-                                  always_use_ne_masks=True)
+                                  always_use_ne_mask=True)
 
         # Bear in mind all points are in the ocean
         np.ma.set_fill_value(result_land.data, 1e+20)

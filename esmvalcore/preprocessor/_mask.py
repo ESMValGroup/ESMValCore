@@ -86,7 +86,7 @@ def _apply_fx_mask(fx_mask, var_data):
     return var_data
 
 
-def mask_landsea(cube, fx_files, mask_out, always_use_ne_masks=False):
+def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
     """
     Mask out either land mass or sea (oceans, seas and lakes).
 
@@ -106,7 +106,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_masks=False):
     mask_out: str
         either "land" to mask out land mass or "sea" to mask out seas.
 
-    always_use_ne_masks: bool, optional (default: False)
+    always_use_ne_mask: bool, optional (default: False)
         always apply Natural Earths mask, regardless if fx files are available
         or not.
 
@@ -131,7 +131,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_masks=False):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
-    if fx_files and not always_use_ne_masks:
+    if fx_files and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
             fx_root = os.path.basename(fx_file).split('_')[0]
