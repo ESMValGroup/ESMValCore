@@ -1,0 +1,23 @@
+SOURCE: CMIP6
+!============
+variable_entry:    cod_sw_b01
+!============
+modeling_realm:    atmos
+frequency:         mon
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             1
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         cloud optical depth averaged over shortwave band 01
+comment:           averaged over cloudy and cloud-free time steps
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          cod_sw_b01
+type:              real
+!----------------------------------
+!

@@ -9,6 +9,9 @@ glob_timeseries_atmos_chem_{run_id}:
     - aerosol
     - atmosChem
   variables:
+    od550aer:
+      mip: AERmon
+      preprocessor: prep_zon
     co2mass:
       mip: custom
     lnox:
