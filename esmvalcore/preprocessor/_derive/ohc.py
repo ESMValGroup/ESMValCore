@@ -16,17 +16,13 @@ class DerivedVariable(DerivedVariableBase):
     required = [
         {
             'short_name': 'thetao',
-            'field': 'TO3M',
             'fx_files': [
                 'volcello',
             ],
         },
     ]
 
-    def calculate(
-            self,
-            cubes,
-    ):
+    def calculate(self, cubes):
         """
         Compute ocean heat content.
 
@@ -56,7 +52,7 @@ class DerivedVariable(DerivedVariableBase):
         cube.remove_coord('month_number')
         cube.remove_coord('year')
         t_coord = cube.coord('time')
-        cube.remove_coord('time')
+        cube.remove_coord(t_coord)
         new_cube = cube * volume
         new_cube *= RHO_CP
         new_cube.add_dim_coord(t_coord, 0)
