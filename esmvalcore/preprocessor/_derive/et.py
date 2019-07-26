@@ -13,7 +13,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `et`."""
 
     # Required variables
-    required = [{'short_name': 'hfls', 'mip': Amon}]
+    required = [{'short_name': 'hfls', 'mip': 'Amon'}]
 
     @staticmethod
     def calculate(cubes):
