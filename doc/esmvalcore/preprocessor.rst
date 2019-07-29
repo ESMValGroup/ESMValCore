@@ -4,6 +4,21 @@
 Preprocessor
 ************
 
+In this section, each of the preprocessor modules is described in detail
+following the default order in which they are applied:
+
+* `Variable derivation`_.
+* `CMOR check and dataset-specific fixes`_.
+* `Vertical interpolation`_.
+* `Land/Sea/Ice masking`_.
+* `Horizontal regridding`_.
+* `Masking of missing values`_.
+* `Multi-model statistics`_.
+* `Time operations`_.
+* `Area operations`_.
+* `Volume operations`_.
+* `Unit conversion`_.
+
 Overview
 ========
 
