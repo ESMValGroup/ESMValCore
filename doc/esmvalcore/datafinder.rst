@@ -7,8 +7,8 @@ Data finder
 Overview
 ========
 Data discovery and retrieval is the first step in any evaluation process; ESMValTool
-uses a `semi-automated` data finding mechanism performed by the ``_data_finder.py`` module
-with inputs from both the user configuration file and the recipe file. The reason why the data
+uses a `semi-automated` data finding mechanism with inputs from both the user configuration file
+and the recipe file. The reason why the data
 finder module is `semi`-automated is that the user will have to provide the tool with a set
 of parameters related to the data needed; the reason why it is semi-`automated` is that once
 these parameters have been provided, the tool will automatically find the right data. We will
