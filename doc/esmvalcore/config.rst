@@ -21,7 +21,7 @@ User configuration file
 =======================
 
 The ``config-user.yml`` is one of the two files the user needs to provide to the
-``esmvaltool`` executable at run time, the second being the recipe_.
+``esmvaltool`` executable at run time, the second being the :ref:`recipe`.
 
 The ``config-user.yml`` configuration file contains all the global level
 information needed by ESMValTool. ``config-user.yml`` can be reused as many times the
@@ -142,7 +142,7 @@ files if they can not be downloaded at runtime.
    **Note on data finding sections of the config-user file.**
 
    A detailed explanation of the data finding-related sections of the ``config-user.yml``
-   (``rootpath`` and ``drs``) is presented in config-user-rootpath_ and config-user-drs_
+   (``rootpath`` and ``drs``) is presented in :ref:`config-user-rootpath` and :ref:`config-user-drs`
    in the Data Finder section; these sections relate directly to the data finding capabilities
    of ESMValTool and are very important to be understood by the user.
 
@@ -156,7 +156,7 @@ key projects (CMIP5, CMIP6) on several key machines (BADC, CP4CDS, DKRZ, ETHZ,
 SMHI, BSC) - CMIP data is stored as part of the Earth System Grid Federation (ESGF)
 and the standards for file naming and paths to files are set out by CMOR and DRS.
 For a detailed description of these standards and their adoption in ESMValTool,
-we refer the user to CMOR-DRS_ section where we relate these standards to the data retrieval
+we refer the user to :ref:`CMOR-DRS` section where we relate these standards to the data retrieval
 mechanism built-in ESMValTool.
 
 The data directory structure of the CMIP projects is set up differently
@@ -190,7 +190,7 @@ The resulting real path would look something like this:
     MOHC/HadGEM2-CC/rcp85/mon/ocean/Omon/r1i1p1/latest/tos
 
 Again, for a more in-depth description this process, as part of the data retrieval mechanism,
-please see CMOR-DRS_.
+please see :ref:`CMOR-DRS`.
 
 .. _config-ref:
 
