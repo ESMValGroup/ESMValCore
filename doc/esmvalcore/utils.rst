@@ -18,6 +18,6 @@ encountered this language before. The key information about this format is:
 - the syntax is relatively straightforward
 - indentation matters a lot (like ``Python``)!
 - yaml is case sensitive
-- a yaml tutorial is available `here <https://learnxinyminutes.com/docs/yaml/>`_
-- a yaml quick reference card is available `here <https://yaml.org/refcard.html>`_
-- ESMValTool uses the ``yamllint`` linter `tool <http://www.yamllint.com>`_
+- have a look at this `yaml tutorial <https://learnxinyminutes.com/docs/yaml/>`_
+- have a look at this `yaml quick reference card <https://yaml.org/refcard.html>`_
+- ESMValTool uses the `yamllint <http://www.yamllint.com>`_ linter tool.
