@@ -693,25 +693,18 @@ def _get_single_preprocessor_task(variables,
     order = _extract_preprocessor_order(profile)
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
 
-    if variables[0]['frequency'] != 'fx':
-        products = _get_preprocessor_products(
-            variables=variables,
-            profile=profile,
-            order=order,
-            ancestor_products=ancestor_products,
-            config_user=config_user,
-        )
-    else:
-        fx_profile = _remove_temporal_preprocs(profile)
-        # not do time extraction; this is a default preproc
-        fx_profile['extract_time'] = False
-        products = _get_preprocessor_products(
-            variables=variables,
-            profile=fx_profile,
-            order=order,
-            ancestor_products=None,
-            config_user=config_user,
-        )
+    if variables[0]['frequency'] == 'fx':
+        profile = _remove_temporal_preprocs(profile)
+        profile['extract_time'] = False
+        ancestor_products = None
+
+    products = _get_preprocessor_products(
+        variables=variables,
+        profile=profile,
+        order=order,
+        ancestor_products=ancestor_products,
+        config_user=config_user,
+    )
 
     if not products:
         raise RecipeError(
