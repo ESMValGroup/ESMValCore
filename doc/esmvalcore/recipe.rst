@@ -26,10 +26,10 @@ Recipe section: ``documentation``
 
 The documentation section includes:
 
-- The recipe's author's user name (``authors``, as they appaer in ``config-references.yml`` config-ref_)
+- The recipe's author's user name (``authors``, as they appaer in ``config-references.yml`` :ref:`config-ref`)
 - A description of the recipe (``description``, written in MarkDown format)
-- A list of scientific references (``references`` , as they appaer in ``config-references.yml`` config-ref_)
-- the project or projects associated with the recipe (``projects``, as they appaer in ``config-references.yml`` config-ref_)
+- A list of scientific references (``references`` , as they appaer in ``config-references.yml`` :ref:`config-ref`)
+- the project or projects associated with the recipe (``projects``, as they appaer in ``config-references.yml`` :ref:`config-ref`)
 
 For example, please see the documentation section from the recipe:
 ``recipes/recipe_ocean_amoc.yml``:
@@ -111,8 +111,8 @@ Each preprocessor section includes:
 - The order that the preprocesor steps are applied can also be specified using the ``custom_order`` preprocesor function.
 
 The following snippet is an example of a preprocessor named ``prep_map`` that contains
-multiple preprocessing steps (regrid_ with two arguments, time_average_ with no arguments
-and multi_model_statistics_ with two arguments):
+multiple preprocessing steps (:ref:`Horizontal regridding` with two arguments, :ref:`Time operations` with no arguments
+and :ref:`Multi-model statistics` with two arguments):
 
 .. code-block:: yaml
 
@@ -132,7 +132,7 @@ and multi_model_statistics_ with two arguments):
 
    In this case no ``preprocessors`` section is needed;
    the workflow will apply a ``default`` preprocessor consisting of only
-   basic operations like: loading data, applying CMOR checks and fixes (cmor-checks-fixes_)
+   basic operations like: loading data, applying CMOR checks and fixes (:ref:`CMOR check and dataset-specific fixes`)
    and saving the data to disk (if needed).
 
 .. _Diagnostics:
