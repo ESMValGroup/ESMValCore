@@ -120,7 +120,7 @@ Explaining ``config-user/rootpath:``
 
     CMIP6: /badc/cmip6/data/CMIP6/CMIP
 
-  Example for a mix of CMIP6 root path pointing to the ESGF node on CEDA-Jasmin (formerly known as BADC)
+  Example for a mix of CMIP6 root path pointing to the ESGF node on CEDA-Jasmin
   and a user-specific data repository for extra data:
 
   .. code-block:: yaml
