@@ -15,14 +15,13 @@ There are several configuration files in ESMValTool:
   formatting;
 * ``config-references.yml``: stores information on diagnostic authors and scientific
   journals references;
-* ``config-logging.yml``: stores information on logging (duh!).
+* ``config-logging.yml``: stores information on logging.
 
 User configuration file
 =======================
 
 The ``config-user.yml`` is one of the two files the user needs to provide to the
-``esmvaltool`` executable at run time, the second being ``recipe.yml`` (named accordingly
-as per the specific diagnostic/recipe used).
+``esmvaltool`` executable at run time, the second being the recipe_.
 
 The ``config-user.yml`` configuration file contains all the global level
 information needed by ESMValTool. ``config-user.yml`` can be reused as many times the
@@ -99,7 +98,7 @@ in a commented line above each option:
   drs:
     CMIP5: default
 
-Most of these settings are fairly self-explanatory, ie:
+Most of these settings are fairly self-explanatory, e.g.:
 
 .. code-block:: yaml
 
@@ -108,9 +107,9 @@ Most of these settings are fairly self-explanatory, ie:
   # Diagnositcs write NetCDF files? [true]/false
   write_netcdf: true
 
-The ``write_plots`` setting is used to inform ESMValTool about your preference
-for saving figures. Similarly, the ``write_netcdf`` setting is a boolean which
-turns on or off the writing of netCDF files.
+The ``write_plots`` setting is used to inform ESMValTool diagnostics about your preference
+for creating figures. Similarly, the ``write_netcdf`` setting is a boolean which
+turns on or off the writing of netCDF files by the diagnostic scripts.
 
 .. code-block:: yaml
 
@@ -118,14 +117,18 @@ turns on or off the writing of netCDF files.
   auxiliary_data_dir: ~/auxiliary_data
 
 The ``auxiliary_data_dir`` setting is the path to place any required
-additional auxiliary data files. This method was necessary because certain
+additional auxiliary data files. This is necessary because certain
 Python toolkits such as cartopy will attempt to download data files at run
 time, typically geographic data files such as coastlines or land surface maps.
 This can fail if the machine does not have access to the wider internet. This
 location allows us to tell cartopy (and other similar tools) where to find the
-files if they can not be downloaded at runtime. To reiterate, this setting is
-not for model or observational datasets, rather it is for data files used in
-plotting such as coastline descriptions and so on.
+files if they can not be downloaded at runtime.
+
+.. warning::
+
+   This setting is not for model or observational datasets,
+   rather it is for data files used in
+   plotting such as coastline descriptions and so on.
 
 .. note::
 
@@ -152,11 +155,11 @@ This configuration file describes the file system structure for several
 key projects (CMIP5, CMIP6) on several key machines (BADC, CP4CDS, DKRZ, ETHZ,
 SMHI, BSC) - CMIP data is stored as part of the Earth System Grid Federation (ESGF)
 and the standards for file naming and paths to files are set out by CMOR and DRS.
-For a detailed description of these standards and how the impact on the use in ESMValTool
+For a detailed description of these standards and their adoption in ESMValTool,
 we refer the user to CMOR-DRS_ section where we relate these standards to the data retrieval
 mechanism built-in ESMValTool.
 
-The data directory structure of the CMIP5/6 projects is set up differently
+The data directory structure of the CMIP projects is set up differently
 at each site. The following code snippet is an example of several paths
 descriptions for the CMIP5 at various sites:
 
@@ -179,7 +182,7 @@ As an example, the CMIP5 file path on BADC would be:
         [institute]/[dataset ]/[exp]/[frequency]/[modeling_realm]/[mip]/[ensemble]/latest/[short_name]
 
 When loading these files, ESMValTool replaces the placeholders ``[item]`` with actual
-values supplied for by the information form ``config-user.yml`` and ``recipe.yml``.
+values supplied for by the user in ``config-user.yml`` and ``recipe.yml``.
 The resulting real path would look something like this:
 
 .. code-block:: bash
