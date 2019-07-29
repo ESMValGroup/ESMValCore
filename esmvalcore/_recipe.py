@@ -395,9 +395,9 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
         elif fx_varname == 'sftof':
             fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
                                      var)
-        # TODO check this is the correct mip
+        # TODO allow availability for multiple mip's for sftgif
         elif fx_varname == 'sftgif':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Efx'},
+            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
                                      var)
     fx_files = get_input_filelist(variable=fx_var,
                                   rootpath=config_user['rootpath'],
