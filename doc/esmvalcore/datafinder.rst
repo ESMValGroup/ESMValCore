@@ -23,15 +23,15 @@ CMIP data is widely available via the Earth System Grid Federation (`ESGF <https
 and is accessible to users either via dowload from the ESGF portal or through the ESGF data nodes hosted
 by large computing facilities (like CEDA-Jasmin, DKRZ etc). This data adheres to, among other standards,
 the DRS and Controlled Vocabulary standard for naming files and structured paths; the `DRS <https://www.ecmwf.int/sites/default/files/elibrary/2014/13713-data-reference-syntax-governing-standards-within-climate-research-data-archived-esgf.pdf>`_
-ensures that files and paths to them are named according to a standardized convention. An example of this
-convention, and also used by ESMValTool for file discovery and data retrieval can be seen here:
+ensures that files and paths to them are named according to a standardized convention. Examples of this
+convention, also used by ESMValTool for file discovery and data retrieval, include:
 
 * CMIP6 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[grid]_[start-date]-[end-date].nc``
 * CMIP5 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[start-date]-[end-date].nc``
 * OBS file: ``[project]_[dataset_name]_[type]_[version]_[mip]_[short_name]_[start-date]-[end-date].nc``
 
 and similar standards exist for the standard paths (input directories); for the ESGF data nodes,
-these paths differ slightly, an example is given below:
+these paths differ slightly, for example:
 
 * CMIP6 path for BADC: ``ROOT-BADC/[institute]/[dataset_name]/[experiment]/[ensemble]/[mip]/
   [variable_short_name]/[grid]``;
@@ -45,14 +45,14 @@ Data retrieval
 Data retrieval in ESMValTool has two main aspects from the user's point of view:
 
 * data can be found by the tool, subject to availability on disk;
-* it is the user's responsibility to set the corect data retrieval parameters;
+* it is the user's responsibility to set the correct data retrieval parameters;
 
 The first point is self-explanatory: if the user runs the tool on a machine that has access to a data
 repository or multiple data repositories, then ESMValTool will look for and find the avaialble data requested
 by the user.
 
-The second point underlines the fact that the user has full control over what type and the amount of data they
-need for their analyses. Setting the data retrieval parameters is explained below:
+The second point underlines the fact that the user has full control over what type and the amount of data is
+needed for the analyses. Setting the data retrieval parameters is explained below:
 
 Setting the correct root paths
 ------------------------------
@@ -75,7 +75,7 @@ parameter the user tells the tool what type of root paths they need the data fro
    drs:
      CMIP6: BADC
 
-will tell the tool that the user needs data from a repository structured according to the BADC DRS structure `ie`
+will tell the tool that the user needs data from a repository structured according to the BADC DRS structure ie
 
 ``ROOT/[institute]/[dataset_name]/[experiment]/[ensemble]/[mip]/[variable_short_name]/[grid]``;
 
@@ -114,7 +114,7 @@ Explaining ``config-user/rootpath:``
 
     CMIP5: /badc/cmip5/data/cmip5/output1
 
-  Example for a CMIP6 root path pointing to the ESGF node on CEDA-Jasmin (formerly known as BADC):
+  Example for a CMIP6 root path pointing to the ESGF node on CEDA-Jasmin:
 
   .. code-block:: yaml
 
