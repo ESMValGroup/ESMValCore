@@ -7,15 +7,15 @@ Recipe
 Overview
 ========
 
-After ``config-user.yml``, the ``recipe.yml`` file the second the user inputted file
-to ESMValTool at each run time point. Rceipes contain the data and data analysis
-information and instructions needed to run the diagnostic(s), as well as specific
-diagnostic-related instructions.
+After ``config-user.yml``, the ``recipe.yml`` is the second file the user needs
+to pass to ``esmvaltool`` as command line option, at each run time point.
+Recipes contain the data and data analysis information and instructions needed
+to run the diagnostic(s), as well as specific diagnostic-related instructions.
 
-Broadly, recipes contain information on the user who wrote the
-recipe file, the datasets which need to be run, the preprocessors that need to be
+Broadly, recipes contain a general section summarizing the provenance and functionality of the
+diagnostics, the datasets which need to be run, the preprocessors that need to be
 applied, and the diagnostics which need to be run over the preprocessed data.
-This information is provided to ESMValTool in for main recipe sections:
+This information is provided to ESMValTool in four main recipe sections:
 Documentation_, Datasets_, Preprocessors_ and Diagnostics_,
 respectively.
 
@@ -28,7 +28,6 @@ The documentation section includes:
 
 - The recipe's author's user name (``authors``, as they appaer in ``config-references.yml`` config-ref_)
 - A description of the recipe (``description``, written in MarkDown format)
-- The user name of the maintainer (``maintainer``, as they appaer in ``config-references.yml`` config-ref_)
 - A list of scientific references (``references`` , as they appaer in ``config-references.yml`` config-ref_)
 - the project or projects associated with the recipe (``projects``, as they appaer in ``config-references.yml`` config-ref_)
 
@@ -62,8 +61,7 @@ For example, please see the documentation section from the recipe:
 
    Note that the authors, projects, and references will need to be included in the
    ``config-references.yml`` file. The author name uses the format:
-   ``surname_name``. For instance, Joe Pesci would be: ``authors: - pesci_joe``.
-   Also note that Joe Pesci does not appreciate you calling him ``funny``.
+   ``surname_name``. For instance, John Doe would be: ``authors: - doe_john``.
    For a first-time user that does not yet have their name added to ``config-references.yml``
    a run of an already-made recipe or running with no author name is possible.
 
@@ -103,13 +101,13 @@ Recipe section: ``preprocessors``
 =================================
 
 The preprocessor section of the recipe includes one or more preprocesors, each
-of which may execute one or several preprocessor steps.
+of which may call the execution of one or several preprocessor functions.
 
 Each preprocessor section includes:
 
-- A preprocessor name (any name, one yaml tab (2 spaces) under ``preprocessors``);
-- A list of preprocesor steps to be executed (choose from the API, each one yaml tab (2 spaces) under preprocessor name)
-- Any or none arguments given to the preprocessor steps (one yaml tab (2 spaces) under preprocessor step name)
+- A preprocessor name (any name, under ``preprocessors``);
+- A list of preprocesor steps to be executed (choose from the API);
+- Any or none arguments given to the preprocessor steps;
 - The order that the preprocesor steps are applied can also be specified using the ``custom_order`` preprocesor function.
 
 The following snippet is an example of a preprocessor named ``prep_map`` that contains
@@ -152,9 +150,10 @@ have:
 - The diagnostics can also include an optional ``additional_datasets`` section.
 
 The ``additional_datasets`` can add datasets beyond those listed in the the
-Datasets_ section. This is useful if specific datasets need to be linked with
-a specific diagnostic. The ``additional_datasets`` can be used to add variable
-specific datasets. This is also a good way to add observational datasets.
+Datasets_ section. This is useful if specific datasets need to be used only by
+a specific diagnostic. The ``additional_datasets`` can also be used to add variable
+specific datasets. This is also a good way to add observational
+datasets, which are usually variable specific.
 
 Running a simple diagnostic
 ---------------------------
@@ -216,7 +215,7 @@ is run in Python, NCL etc). Here is an example of such groups of arguments:
         obs_models: [ERA-Interim]  # list to hold models that are NOT for metrics but for obs operations
         additional_metrics: [ERA-Interim, inmcm4]  # list to hold additional datasets for metrics
 
-In this example, apart from the pointer to the diagnostic script ``script: autoassess/autoassess_area_base.py``,
+In this example, apart from specifying the diagnostic script ``script: autoassess/autoassess_area_base.py``,
 we pass a suite of parameters to be used by the script (``area``, ``control_model`` etc). These parameters are
 stored in key-value pairs in the diagnostic configuration file, an interface file that can be used by importing
 the ``run_diagnostic`` utility:
@@ -258,7 +257,7 @@ passing the absolute path to the diagnostic:
     diagnostics:
 
     myFirstDiag:
-      description: Joe Pesci wrote a funny diagnostic
+      description: John Doe wrote a funny diagnostic
       variables:
         tos: # Temperature at the ocean surface
           preprocessor: prep_map
