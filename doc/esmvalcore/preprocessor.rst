@@ -7,17 +7,17 @@ Preprocessor
 In this section, each of the preprocessor modules is described in detail
 following the default order in which they are applied:
 
-* `Variable derivation`_.
-* `CMOR check and dataset-specific fixes`_.
-* `Vertical interpolation`_.
-* `Land/Sea/Ice masking`_.
-* `Horizontal regridding`_.
-* `Masking of missing values`_.
-* `Multi-model statistics`_.
-* `Time operations`_.
-* `Area operations`_.
-* `Volume operations`_.
-* `Unit conversion`_.
+* :ref:`Variable derivation`
+* :ref:`CMOR check and dataset-specific fixes`
+* :ref:`Vertical interpolation`
+* :ref:`Land/Sea/Ice masking`
+* :ref:`Horizontal regridding`
+* :ref:`Masking of missing values`
+* :ref:`Multi-model statistics`
+* :ref:`Time operations`
+* :ref:`Area operations`
+* :ref:`Volume operations`
+* :ref:`Unit conversion`
 
 Overview
 ========
@@ -73,6 +73,8 @@ Features of the ESMValTool Climate data pre-processor are:
 * Multimodel statistics
 * and many more
 
+.. _Variable derivation:
+
 Variable derivation
 ===================
 The variable derivation module allows to derive variables which are not in the
@@ -109,6 +111,17 @@ The required arguments for this module are two boolean switches:
 
 See also :func:`esmvalcore.preprocessor.derive`.
 
+
+.. _CMOR check and dataset-specific fixes:
+
+CMORization and dataset-specific fixes
+======================================
+.. warning::
+
+   Section to be added by Javier ``CMORMAN`` Vegas-Regidor
+
+
+.. _time operations:
 
 Time manipulation
 =================
@@ -218,6 +231,9 @@ unless a custom ``frequency`` is set manually by the user in recipe.
 
 See also :func:`esmvalcore.preprocessor.regrid_time`.
 
+
+.. _area operations:
+
 Area manipulation
 =================
 The ``_area.py`` module contains the following preprocessor functions:
@@ -286,6 +302,8 @@ matches the named regions against the requested string.
 
 See also :func:`esmvalcore.preprocessor.extract_named_regions`.
 
+
+.. _volume operations:
 
 Volume manipulation
 ===================
@@ -373,13 +391,8 @@ but it may be necceasiry for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 
-.. _cmor-checks-fixes:
 
-CMORization and dataset-specific fixes
-======================================
-.. warning::
-
-   Section to be added by Javier ``CMORMAN`` Vegas-Regidor
+.. _Vertical interpolation:
 
 Vertical interpolation
 ======================
@@ -466,6 +479,9 @@ are used: although these are not model-specific, they represent a good
 approximation since they have a much higher resolution than most of the models
 and they are regularly updated with changing geographical features.
 
+
+.. _land/sea/ice masking:
+
 Land-sea masking
 ----------------
 
@@ -548,6 +564,9 @@ the ``config`` diagnostic variable items e.g.:
         sftlf_file = attributes['fx_files']['sftlf']
         areacello_file = attributes['fx_files']['areacello']
 
+
+.. _masking of missing values:
+
 Missing values masks
 --------------------
 
@@ -612,7 +631,7 @@ masking or the pair ``minimum`, ``maximum`` for interval masking.
 
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related functions.
 
-.. _regrid:
+.. _Horizontal regridding:
 
 Horizontal regridding
 =====================
@@ -722,7 +741,7 @@ See also :func:`esmvalcore.preprocessor.regrid`
    of up to ``0.5x0.5`` degrees should not produce any memory-related issues, but be advised that
    for resolutions of ``< 0.5`` degrees the regridding becomes very slow and will use a lot of memory.
 
-.. _multi_model_statistics:
+.. _multi-model statistics:
 
 Multi-model statistics
 ======================
@@ -802,6 +821,8 @@ could be estimated by multiplying the number of datasets by the average file siz
 this memory intake is high but also assumes that all data is fully realized in memory; this aspect
 will gradually change and the amount of realized data will decrease with the increase of ``dask`` use.
 
+
+.. _unit conversion:
 
 Unit conversion
 ===============
