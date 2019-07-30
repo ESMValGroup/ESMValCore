@@ -10,25 +10,27 @@ Overview
 There are several configuration files in ESMValTool:
 
 * ``config-user.yml``: sets a number of user-specific options like desired
-  graphical output format, root paths to data etc. 
-* ``config-developer.yml``: sets a number of standardized file-naming and paths to data
-  formatting;
-* ``config-references.yml``: stores information on diagnostic authors and scientific
-  journals references;
+  graphical output format, root paths to data, etc.;
+* ``config-developer.yml``: sets a number of standardized file-naming and paths
+  to data formatting;
+* ``config-references.yml``: stores information on diagnostic authors and
+  scientific journals references;
 * ``config-logging.yml``: stores information on logging.
 
 User configuration file
 =======================
 
-The ``config-user.yml`` is one of the two files the user needs to provide to the
-``esmvaltool`` executable at run time, the second being the :ref:`recipe`.
+The ``config-user.yml`` is one of the two files the user needs to provide as
+input arguments to the ``esmvaltool`` executable at run time, the second being
+the :ref:`recipe`.
 
 The ``config-user.yml`` configuration file contains all the global level
-information needed by ESMValTool. ``config-user.yml`` can be reused as many times the
-user needs to before changing any of the options stored in it. This file is essentially
-the gateway between the user and the machine-specific instructions to ``esmvaltool``.
-The following shows the default settings from the ``config-user.yml`` file with explanations
-in a commented line above each option:
+information needed by ESMValTool. It can be reused as many times the user needs
+to before changing any of the options stored in it. This file is essentially
+the gateway between the user and the machine-specific instructions to
+``esmvaltool``. The following shows the default settings from the
+``config-user.yml`` file with explanations in a commented line above each
+option:
 
 .. code-block:: yaml
 
@@ -107,9 +109,10 @@ Most of these settings are fairly self-explanatory, e.g.:
   # Diagnositcs write NetCDF files? [true]/false
   write_netcdf: true
 
-The ``write_plots`` setting is used to inform ESMValTool diagnostics about your preference
-for creating figures. Similarly, the ``write_netcdf`` setting is a boolean which
-turns on or off the writing of netCDF files by the diagnostic scripts.
+The ``write_plots`` setting is used to inform ESMValTool diagnostics about your
+preference for creating figures. Similarly, the ``write_netcdf`` setting is a
+boolean which turns on or off the writing of netCDF files by the diagnostic
+scripts.
 
 .. code-block:: yaml
 
@@ -118,33 +121,29 @@ turns on or off the writing of netCDF files by the diagnostic scripts.
 
 The ``auxiliary_data_dir`` setting is the path to place any required
 additional auxiliary data files. This is necessary because certain
-Python toolkits such as cartopy will attempt to download data files at run
+Python toolkits, such as cartopy, will attempt to download data files at run
 time, typically geographic data files such as coastlines or land surface maps.
 This can fail if the machine does not have access to the wider internet. This
-location allows us to tell cartopy (and other similar tools) where to find the
-files if they can not be downloaded at runtime.
+location allows the user to specify where to find such files if they can not be
+downloaded at runtime.
 
 .. warning::
 
-   This setting is not for model or observational datasets,
-   rather it is for data files used in
-   plotting such as coastline descriptions and so on.
+   This setting is not for model or observational datasets, rather it is for
+   data files used in plotting such as coastline descriptions and so on.
+
+A detailed explanation of the data finding-related sections of the
+``config-user.yml`` (``rootpath`` and ``drs``) is presented in the
+:ref:`data-retrieval` section. This section relates directly to the data
+finding capabilities  of ESMValTool and are very important to be understood by
+the user.
 
 .. note::
 
-   **Pro Tip: working with multiple config-user files.**
+   You choose your config.yml file at run time, so you could have several of
+   them available with different purposes. One for formalised run, one for
+   debugging, etc.
 
-   You choose your config.yml file at run time, so you could have several
-   available with different purposes. One for formalised run, one for debugging, etc.
-
-.. note::
-
-   **Note on data finding sections of the config-user file.**
-
-   A detailed explanation of the data finding-related sections of the ``config-user.yml``
-   (``rootpath`` and ``drs``) is presented in :ref:`config-user-rootpath` and :ref:`config-user-drs`
-   in the Data Finder section; these sections relate directly to the data finding capabilities
-   of ESMValTool and are very important to be understood by the user.
 
 .. _config-developer:
 
@@ -152,16 +151,16 @@ Developer configuration file
 ============================
 
 This configuration file describes the file system structure for several
-key projects (CMIP5, CMIP6) on several key machines (BADC, CP4CDS, DKRZ, ETHZ,
-SMHI, BSC) - CMIP data is stored as part of the Earth System Grid Federation (ESGF)
-and the standards for file naming and paths to files are set out by CMOR and DRS.
-For a detailed description of these standards and their adoption in ESMValTool,
-we refer the user to :ref:`CMOR-DRS` section where we relate these standards to the data retrieval
-mechanism built-in ESMValTool.
+key projects (CMIP5, CMIP6, OBS) on several key machines (BADC, CP4CDS, DKRZ,
+ETHZ, SMHI, BSC). CMIP data is stored as part of the Earth System Grid
+Federation (ESGF) and the standards for file naming and paths to files are set
+out by CMOR and DRS. For a detailed description of these standards and their
+adoption in ESMValTool, we refer the user to :ref:`CMOR-DRS` section where we
+relate these standards to the data retrieval mechanism of the ESMValTool.
 
 The data directory structure of the CMIP projects is set up differently
 at each site. The following code snippet is an example of several paths
-descriptions for the CMIP5 at various sites:
+descriptions for the CMIP5 adopted at various sites:
 
 .. code-block:: yaml
 
@@ -181,28 +180,29 @@ As an example, the CMIP5 file path on BADC would be:
 
         [institute]/[dataset ]/[exp]/[frequency]/[modeling_realm]/[mip]/[ensemble]/latest/[short_name]
 
-When loading these files, ESMValTool replaces the placeholders ``[item]`` with actual
-values supplied for by the user in ``config-user.yml`` and ``recipe.yml``.
-The resulting real path would look something like this:
+When loading these files, ESMValTool replaces the placeholders ``[item]`` with
+actual values supplied for by the user in ``config-user.yml`` and
+``recipe.yml``. The resulting real path would look something like this:
 
-.. code-block:: bash
+.. code-block::
 
     MOHC/HadGEM2-CC/rcp85/mon/ocean/Omon/r1i1p1/latest/tos
 
-Again, for a more in-depth description this process, as part of the data retrieval mechanism,
-please see :ref:`CMOR-DRS`.
+Again, for a more in-depth description this process, as part of the data
+retrieval mechanism, please see :ref:`CMOR-DRS`.
 
 .. _config-ref:
 
 References configuration file
 =============================
 
-The ``config-references.yml`` file is the full list of ESMValTool authors,
-references and projects. Each author, project and reference in the documentation
-section of a recipe needs to be in this file in the relevant section.
+The ``config-references.yml`` file contains the list of ESMValTool authors,
+references and projects. Each author, project and reference referred to in the
+documentation section of a recipe needs to be in this file in the relevant
+section.
 
-For instance, the recipe ``recipe_ocean_example.yml`` file contains the following
-documentation section:
+For instance, the recipe ``recipe_ocean_example.yml`` file contains the
+following documentation section:
 
 .. code-block:: yaml
 
@@ -220,8 +220,9 @@ documentation section:
       - ukesm
 
 
-All four items here are named people, references and projects listed in the
+These four items here are named people, references and projects listed in the
 ``config-references.yml`` file.
+
 
 Logging configuration file
 ==========================
