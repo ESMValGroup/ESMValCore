@@ -9,6 +9,7 @@ import logging
 import iris
 from dask import array as da
 import numpy as np
+from ._shared import get_iris_analysis_operation, weighted_operators
 
 logger = logging.getLogger(__name__)
 
@@ -77,43 +78,53 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     return cube
 
 
-def get_iris_analysis_operation(operator):
+def zonal_statistics(cube, operator, fx_files=None):
     """
-    Determine the iris analysis operator from a string.
+    Get zonal statistics.
 
-    Map string to functional operator.
+    Function that applies a statistical operation along the zonal
+    dimension. The resulting cube will typicallly have dimensions:
+    (time, z, latitude'). This function can be used to apply several different
+    operations in the horizonal plane: mean, standard deviation, median,
+    variance, minimum and maximum. These options are specified using the
+    `operator` argument and the following key word arguments are accepted:
+
+    +------------+--------------------------------------------------+
+    | `mean`     | Area weighted mean.                              |
+    +------------+--------------------------------------------------+
+    | `median`   | Median (not area weighted)                       |
+    +------------+--------------------------------------------------+
+    | `std_dev`  | Standard Deviation (not area weighted)           |
+    +------------+--------------------------------------------------+
+    | `variance` | Variance (not area weighted)                     |
+    +------------+--------------------------------------------------+
+    | `min`:     | Minimum value                                    |
+    +------------+--------------------------------------------------+
+    | `max`      | Maximum value                                    |
+    +------------+--------------------------------------------------+
 
     Parameters
     ----------
+    cube: iris.cube.Cube
+        input cube.
     operator: str
-        A named operator.
-
+        Type of analysis to use, from iris.analysis.
+    fx_files: dict
+        dictionary of field:filename for the fx_files
     Returns
     -------
-        function: A function from iris.analysis
-
-    Raises
-    ------
-    ValueError
-        operator not in allowed operators list.
-        allowed operators: mean, median, std_dev, variance, min, max
+    iris.cube.Cube
     """
-    operators = ['mean', 'median', 'std_dev', 'variance', 'min', 'max']
-    operator = operator.lower()
-    if operator not in operators:
-        raise ValueError("operator {} not recognised. "
-                         "Accepted values are: {}."
-                         "".format(operator, ', '.join(operators)))
-    operation = getattr(iris.analysis, operator.upper())
-    return operation
+    return zonal_meridional_statistics(cube, operator, 'longitude',
+                                       fx_files=fx_files)
 
 
-def zonal_means(cube, coordinate, mean_type):
+def meridional_statistics(cube, operator, fx_files=None):
     """
-    Get zonal means.
+    Get meridional statistics.
 
-    Function that returns zonal means along a coordinate `coordinate`;
-    the type of mean is controlled by mean_type variable (string):
+    Function that applies and operator inb the meridional direction.
+    The operation is provided by the operator variable (string).
     - 'mean' -> MEAN
     - 'median' -> MEDIAN
     - 'std_dev' -> STD_DEV
@@ -121,21 +132,91 @@ def zonal_means(cube, coordinate, mean_type):
     - 'min' -> MIN
     - 'max' -> MAX
 
+      This function can be used to apply
+      several different operations in the horizonal plane: mean, standard
+      deviation, median variance, minimum and maximum. These options are
+      specified using the `operator` argument and the following key word
+      arguments:
+
+      +------------+--------------------------------------------------+
+      | `mean`     | Area weighted mean.                              |
+      +------------+--------------------------------------------------+
+      | `median`   | Median (not area weighted)                       |
+      +------------+--------------------------------------------------+
+      | `std_dev`  | Standard Deviation (not area weighted)           |
+      +------------+--------------------------------------------------+
+      | `variance` | Variance (not area weighted)                     |
+      +------------+--------------------------------------------------+
+      | `min`:     | Minimum value                                    |
+      +------------+--------------------------------------------------+
+      | `max`      | Maximum value                                    |
+      +------------+--------------------------------------------------+
+
     Parameters
     ----------
     cube: iris.cube.Cube
         input cube.
-    coordinate: str
-        name of coordinate to make mean.
-    mean_type: str
+    operator: str
         Type of analysis to use, from iris.analysis.
 
     Returns
     -------
     iris.cube.Cube
     """
-    operation = get_iris_analysis_operation(mean_type)
-    return cube.collapsed(coordinate, operation)
+    return zonal_meridional_statistics(cube, operator, 'latitude',
+                                       fx_files=fx_files)
+
+
+def zonal_meridional_statistics(cube, operator, coord, fx_files=None):
+    """
+    Function to calculate either the zonal or meriodinal statistics.
+
+    The zonal and meriodinal statistics calculations are very similar, so they
+    are writen as wrappers to this function which does the work. The only
+    difference between them is which dimension to apply to iris operator:
+    Longitude (Zonal) or Latitude (Meridional). This choice is provided by the
+    coord variable.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+    operator: str
+        Type of analysis to use, from iris.analysis.
+    coord: str
+        Longitude (Zonal) or Latitude (Meridional)
+    Returns
+    -------
+    iris.cube.Cube
+    """
+
+    if cube.coord('latitude').points.ndim == 2:
+        logger.error(
+            'Zonal & meridional statistics only work with regular grids. '
+            'Please consider using the regrid preprocessor function to '
+            'convert this data to a regular grid. ')
+        raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
+
+    # Load iris operation.
+    operation = get_iris_analysis_operation(operator)
+
+    # Load fx files
+    grid_volume_found = False
+    grid_volume = None
+    if fx_files:
+        for key, fx_file in fx_files.items():
+            if fx_file is None:
+                continue
+            logger.info('Attempting to load %s from file: %s', key, fx_file)
+            fx_cube = iris.load_cube(fx_file)
+
+            grid_volume = fx_cube.data
+            grid_volume_found = True
+
+    if grid_volume_found and operator.lower() in weighted_operators:
+        return cube.collapsed(coord, operation, weights=grid_volume)
+
+    return cube.collapsed(coord, operation)
 
 
 def tile_grid_areas(cube, fx_files):
@@ -190,7 +271,6 @@ def tile_grid_areas(cube, fx_files):
     return grid_areas
 
 
-# get the area average
 def area_statistics(cube, operator, fx_files=None):
     """
     Apply a statistical operator in the horizontal direction.

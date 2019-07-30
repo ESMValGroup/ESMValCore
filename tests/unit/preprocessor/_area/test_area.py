@@ -8,11 +8,12 @@ from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor._area import (
-    area_statistics, extract_named_regions, extract_region)
+    area_statistics, extract_named_regions, extract_region,
+    zonal_statistics, meridional_statistics)
 
 
 class Test(tests.Test):
-    """Test class for the :func:`esmvalcore.preprocessor._area_pp` module."""
+    """Test class for the :func:`esmvalcore.preprocessor._area` module."""
 
     def setUp(self):
         """Prepare tests."""
@@ -32,6 +33,7 @@ class Test(tests.Test):
                                     coord_system=self.coord_sys)
         coords_spec = [(lats, 0), (lons, 1)]
         self.grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+        self.areacello = {'areacello': [iris.cube.Cube(data, dim_coords_and_dims=coords_spec), ]}
 
         ndata = np.ones((6, 6))
         nlons = iris.coords.DimCoord(
@@ -50,41 +52,20 @@ class Test(tests.Test):
         self.negative_grid = iris.cube.Cube(
             ndata, dim_coords_and_dims=coords_spec)
 
-    def test_area_statistics_mean(self):
-        """Test for area average of a 2D field."""
-        result = area_statistics(self.grid, 'mean')
+    # Area statistics tests
+    def test_area_statistics(self):
+        """Test for area statistics of a 2D field."""
+        result = area_statistics(self.grid, 'mean', fx_files=self.areacello)
         expected = np.array([1.])
         self.assertArrayEqual(result.data, expected)
-
-    def test_area_statistics_min(self):
-        """Test for area average of a 2D field."""
-        result = area_statistics(self.grid, 'min')
-        expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
-
-    def test_area_statistics_max(self):
-        """Test for area average of a 2D field."""
-        result = area_statistics(self.grid, 'max')
-        expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
-
-    def test_area_statistics_median(self):
-        """Test for area average of a 2D field."""
-        result = area_statistics(self.grid, 'median')
-        expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
-
-    def test_area_statistics_std_dev(self):
-        """Test for area average of a 2D field."""
-        result = area_statistics(self.grid, 'std_dev')
-        expected = np.array([0.])
-        self.assertArrayEqual(result.data, expected)
-
-    def test_area_statistics_variance(self):
-        """Test for area average of a 2D field."""
-        result = area_statistics(self.grid, 'variance')
-        expected = np.array([0.])
-        self.assertArrayEqual(result.data, expected)
+        for operator in ['median', 'min', 'max']:
+            result = area_statistics(self.grid, operator)
+            expected = np.array([1.])
+            self.assertArrayEqual(result.data, expected)
+        for operator in ['std', 'var', ]:
+            result = area_statistics(self.grid, operator)
+            expected = np.array([0.])
+            self.assertArrayEqual(result.data, expected)
 
     def test_area_statistics_neg_lon(self):
         """Test for area average of a 2D field."""
@@ -92,6 +73,40 @@ class Test(tests.Test):
         expected = np.array([1.])
         self.assertArrayEqual(result.data, expected)
 
+    # Zonal statistics tests
+    def test_zonal_statistics(self):
+        """Test for zonal statistics of a 2D field."""
+        result = zonal_statistics(self.grid, 'mean', fx_files=self.areacello)
+        expected = np.array([1.])
+        self.assertArrayEqual(result.data, expected)
+
+        for operator in ['median', 'min', 'max']:
+            result = zonal_statistics(self.grid, operator)
+            expected = np.array([1., 1., 1., 1., 1.])
+            self.assertArrayEqual(result.data, expected)
+        for operator in ['std', 'var', ]:
+            result = zonal_statistics(self.grid, operator)
+            expected = np.array([0., 0., 0., 0., 0.])
+            self.assertArrayEqual(result.data, expected)
+
+    # Meriodinal statistics tests
+    def test_meridonal_statistics(self):
+        """Test for meridonal statistics of a 2D field."""
+        result = meridional_statistics(self.grid, 'mean',
+                                       fx_files=self.areacello)
+        expected = np.array([1.])
+        self.assertArrayEqual(result.data, expected)
+
+        for operator in ['median', 'min', 'max']:
+            result = meridional_statistics(self.grid, operator)
+            expected = np.array([1., 1., 1., 1., 1.])
+            self.assertArrayEqual(result.data, expected)
+        for operator in ['std', 'var', ]:
+            result = meridional_statistics(self.grid, operator)
+            expected = np.array([0., 0., 0., 0., 0.])
+            self.assertArrayEqual(result.data, expected)
+
+    # Extract region tests
     def test_extract_region(self):
         """Test for extracting a region from a 2D field."""
         result = extract_region(self.grid, 1.5, 2.5, 1.5, 2.5)
