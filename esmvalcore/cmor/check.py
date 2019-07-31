@@ -452,8 +452,16 @@ class CMORCheck():
 
             parent_time = 'parent_time_units'
             if parent_time in attrs:
-                parent_units = cf_units.Unit(attrs[parent_time],
-                                             simplified_cal)
+                parent_units = attrs[parent_time]
+
+                # For some models, parent_time_units are given as
+                # days since YYYY-MM-dd-hh-mm-ss
+                units_split = parent_units.split('-')
+                if len(units_split) > 3:
+                    parent_units = ('-'.join(units_split[:3]) + ' ' +
+                                    ':'.join(units_split[3:]))
+
+                parent_units = cf_units.Unit(parent_units, simplified_cal)
                 attrs[parent_time] = 'days since 1850-1-1 00:00:00'
 
                 branch_parent = 'branch_time_in_parent'
