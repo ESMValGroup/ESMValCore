@@ -188,7 +188,7 @@ actual values supplied for by the user in ``config-user.yml`` and
 
     MOHC/HadGEM2-CC/rcp85/mon/ocean/Omon/r1i1p1/latest/tos
 
-Again, for a more in-depth description this process, as part of the data
+Again, for a more in-depth description of this process, as part of the data
 retrieval mechanism, please see :ref:`CMOR-DRS`.
 
 .. _config-ref:
