@@ -8,13 +8,12 @@ Overview
 ========
 Data discovery and retrieval is the first step in any evaluation process;
 ESMValTool uses a `semi-automated` data finding mechanism with inputs from both
-the user configuration file and the recipe file. The reason why the data finder
-module is `semi`-automated is that the user will have to provide the tool with
-a set of parameters related to the data needed; the reason why it is
-semi-`automated` is that once these parameters have been provided, the tool
-will automatically find the right data. We will detail below the data finding
-and retrieval process and the inputs the user needs to specify, giving examples
-on how to use the data finding routine under different scenarios.
+the user configuration file and the recipe file: this means that the user will
+have to provide the tool with a set of parameters related to the data needed
+and once these parameters have been provided, the tool will automatically find
+the right data. We will detail below the data finding and retrieval process and
+the input the user needs to specify, giving examples on how to use the data
+finding routine under different scenarios.
 
 .. _CMOR-DRS:
 
@@ -108,7 +107,7 @@ The snippet
 
 is another way to retrieve data from a ``ROOT`` directory that has no DRS-like
 structure; ``default`` indicates that the data lies in a directory that
-contains all the files without any structire.
+contains all the files without any structure.
 
 .. note::
    When using ``CMIP6: default`` or ``CMIP5: default`` it is important to
@@ -143,7 +142,7 @@ Explaining ``config-user/rootpath:``
 
   .. code-block:: yaml
 
-    CMIP6: [/badc/cmip6/data/CMIP6/CMIP, /home/users/joepesci/cmip_data]
+    CMIP6: [/badc/cmip6/data/CMIP6/CMIP, /home/users/johndoe/cmip_data]
 
 * ``OBS``: this is the `root` path(s) to where the observational datasets are
   stored; again, this could be a single path or a list of paths, just like for
@@ -246,6 +245,7 @@ CMOR-DRS_ are used again and the file will be automatically found:
 
 ``/group_workspaces/jasmin4/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc``
 
-Note that for observational data for ``drs: default`` the ``default`` directory
-must contain a sub-directory:
-``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``).
+Since observational data are organized in Tiers depending on their level of
+public availability, the ``default`` directory must be structured accordingly
+with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
+``drs: default``.

@@ -117,8 +117,9 @@ Each preprocessor section includes:
 
 The following snippet is an example of a preprocessor named ``prep_map`` that
 contains multiple preprocessing steps (:ref:`Horizontal regridding` with two
-arguments, :ref:`Time operations` with no arguments and :ref:`Multi-model
-statistics` with two arguments):
+arguments, :ref:`Time operations` with no arguments (i.e., calcualting the
+average over the time dimension) and :ref:`Multi-model statistics` with two
+arguments):
 
 .. code-block:: yaml
 

@@ -72,7 +72,7 @@ option:
   save_intermediary_cubes: false
 
   # Remove the preproc dir if all fine
-  # this option true will remove ALL preprocessor files
+  # if this option is set to "true", ALL preprocessor files will be removed
   # CAUTION when using: if you need those files, set it to false
   remove_preproc_dir: true
 

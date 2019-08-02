@@ -34,7 +34,7 @@ Overview
    standardizable data analysis functions as possible so that the diagnostics can
    focus on the specific scientific tasks they carry. The preprocessor is linked
    to the diagnostics library and the diagnostic execution is seamlessly performed
-   after the preprocessor has completed the its steps. The benefit of having a
+   after the preprocessor has completed its steps. The benefit of having a
    preprocessing unit separate from the diagnostics library include:
 
    * ease of integration of new preprocessing routines;
@@ -59,7 +59,7 @@ Each of the preprocessor operations is written in a dedicated python module and
 all of them receive and return an Iris `cube
 <https://scitools.org.uk/iris/docs/v2.0/iris/iris/cube.html>`_ , working
 sequentially on the data with no interactions between them. The order in which
-the preprocessor operations is applied is set by default in order to minimize
+the preprocessor operations is applied is set by default to minimize
 the loss of information due to, for example, temporal and spatial subsetting or
 multi-model averaging. Nevertheless, the user is free to change such order to
 address specific scientific requirements, but keeping in mind that some
@@ -88,8 +88,8 @@ it and to provide the corresponding CMOR table. This is to guarantee the proper
 metadata definition is attached to the derived data. Such custom CMOR tables
 are collected as part of the `ESMValTool core package
 <https://github.com/ESMValGroup/ESMValCore>`_. By default, the variable
-derivation will be applied only if not already available in the input data, but
-the derivation can be forced by setting the appropriate flag.
+derivation will be applied only if the variable is not already available in the
+input data, but the derivation can be forced by setting the appropriate flag.
 
 .. code-block:: yaml
 
@@ -236,7 +236,7 @@ and requires only one argument: ``mask_out``: either ``land`` or ``sea``.
 
 The preprocessor automatically retrieves the corresponding mask (``fx: stfof``
 in this case) and applies it so that sea-covered grid cells are set to
-missing. Conversely, it retrieves the ``fx: sftlf`` mask when land need to be
+missing. Conversely, it retrieves the ``fx: sftlf`` mask when land needs to be
 masked out, respectively. If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
@@ -272,9 +272,9 @@ Mask files
 
 At the core of the land/sea/ice masking in the preprocessor are the mask files
 (whether it be fx type or Natural Earth type of files); these files (bar
-Natural Earth) can be retrived and used in the diagnostic phase as well or
-solely. By specifying the ``fx_files:`` key in the variable in diagnostic in
-the recipe, and populating it with a list of desired files e.g.:
+Natural Earth) can be retrived and used in the diagnostic phase as well. By
+specifying the ``fx_files:`` key in the variable in diagnostic in the recipe,
+and populating it with a list of desired files e.g.:
 
 .. code-block:: yaml
 
@@ -284,7 +284,7 @@ the recipe, and populating it with a list of desired files e.g.:
           fx_files: [sftlf, sftof, sftgif, areacello, areacella]
 
 Such a recipe will automatically retrieve all the ``fx_files: [sftlf, sftof,
-sftgif, areacello, areacella]``-type fx files for each of the variables that
+sftgif, areacello, areacella]``-type fx files for each of the variables they
 are needed for and then, in the diagnostic phase, these mask files will be
 available for the developer to use them as they need to. The `fx_files`
 attribute of the big `variable` nested dictionary that gets passed to the
@@ -305,10 +305,10 @@ Missing values masks
 
 Missing (masked) values can be a nuisance especially when dealing with
 multimodel ensembles and having to compute multimodel statistics; different
-numbers of missing data from dataset to datest may introduce biases and
+numbers of missing data from dataset to dataset may introduce biases and
 artifically assign more weight to the datasets that have less missing
 data. This is handled in ESMValTool via the missing values masks: two types of
-such masks are available: one for the multimodel case and another for the
+such masks are available, one for the multimodel case and another for the
 single model case. 
 
 The multimodel missing values mask (``mask_fillvalues``) is a preprocessor step
@@ -494,13 +494,14 @@ See also :func:`esmvalcore.preprocessor.regrid`
 Multi-model statistics
 ======================
 Computing multi-model statistics is an integral part of model analysis and
-evaluation: individual models display a variety of biases depedning on model
+evaluation: individual models display a variety of biases depending on model
 set-up, initial conditions, forcings and implementation; comparing model data
 to observational data, these biases have a significanly lower statistical
 impact when using a multi-model ensemble. ESMValTool has the capability of
 computing a number of multi-model statistical measures: using the preprocessor
 module ``multi_model_statistics`` will enable the user to ask for either a
-multi-model ``mean`` and/or ``median`` with a set of argument parameters passed to ``multi_model_statistics``.
+multi-model ``mean`` and/or ``median`` with a set of argument parameters passed
+to ``multi_model_statistics``.
 
 Multimodel statistics in ESMValTool are computed along the time axis, and as
 such, can be computed across a common overlap in time (by specifying ``span:
@@ -512,7 +513,7 @@ the user will not want to include in the statistics (by setting ``exclude:
 [excluded models list]`` argument). The implementation has a few restrictions
 that apply to the input data: model datasets must have consistent shapes, and
 from a statistical point of view, this is needed since weights are not yet
-implemented; also higher dimesnional data is not supported (ie anything with
+implemented; also higher dimensional data is not supported (i.e. anything with
 dimensionality higher than four: time, vertical axis, two horizontal axes).
 
 .. code-block:: yaml
@@ -604,7 +605,7 @@ See also :func:`esmvalcore.preprocessor.extract_month`.
 ``time_average``
 ----------------
 
-This functions takes the weighted average over the time dimension. This
+This function takes the weighted average over the time dimension. This
 function requires no arguments and removes the time dimension of the cube.
 
 See also :func:`esmvalcore.preprocessor.time_average`.
@@ -634,13 +635,13 @@ See also :func:`esmvalcore.preprocessor.annual_mean`.
 ``regrid_time``
 ---------------
 
-This function aligns the time points of each component dataset so that the
-dataset Iris cubes can be subtracted. The operation makes the datasets time
-points common and sets common calendars; it also resets the time bounds and
-auxiliary coordinates to reflect the artifically shifted time points. Current
-implementation for monthly and daily data; the ``frequency`` is set
-automatically from the variable CMOR table unless a custom ``frequency`` is set
-manually by the user in recipe.
+This function aligns the time points of each component dataset so that the Iris
+cubes from different datasets can be subtracted. The operation makes the
+datasets time points common and sets common calendars; it also resets the time
+bounds and auxiliary coordinates to reflect the artifically shifted time
+points. Current implementation for monthly and daily data; the ``frequency`` is
+set automatically from the variable CMOR table unless a custom ``frequency`` is
+set manually by the user in recipe.
 
 See also :func:`esmvalcore.preprocessor.regrid_time`.
 
@@ -710,7 +711,7 @@ See also :func:`esmvalcore.preprocessor.area_statistics`.
 ``extract_named_regions``
 -------------------------
 
-This function extract a specific named region from the data. This function
+This function extracts a specific named region from the data. This function
 takes the following argument: ``regions`` which is either a string or a list
 of strings of named regions. Note that the dataset must have a ``region``
 cooordinate which includes a list of strings as values. This function then
@@ -765,9 +766,9 @@ See also :func:`esmvalcore.preprocessor.volume_statistics`.
 ``depth_integration``
 ---------------------
 
-This function integrate over the depth dimension. This function does a weighted
-sum along the `z`-coordinate, and removes the `z` direction of the output
-cube. This preprocessor takes no arguments.
+This function integrates over the depth dimension. This function does a
+weighted sum along the `z`-coordinate, and removes the `z` direction of the
+output cube. This preprocessor takes no arguments.
 
 See also :func:`esmvalcore.preprocessor.depth_integration`.
 
@@ -775,7 +776,7 @@ See also :func:`esmvalcore.preprocessor.depth_integration`.
 ``extract_transect``
 --------------------
 
-This function extract data along a line of constant latitude or longitude.
+This function extracts data along a line of constant latitude or longitude.
 This function takes two arguments, although only one is strictly required.
 The two arguments are ``latitude`` and ``longitude``. One of these arguments
 needs to be set to a float, and the other can then be either ignored or set to
@@ -804,7 +805,7 @@ a cube which has extrapolated the data of the cube to those points, and
 ``number_points`` is not needed.
 
 Note that this function uses the expensive ``interpolate`` method from
-``Iris.analysis.trajectory``, but it may be necceasiry for irregular grids.
+``Iris.analysis.trajectory``, but it may be neccesary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 
@@ -864,7 +865,7 @@ where
 
 ``Mm = 1.5 x (N - 2)`` GB
 
-As a thumb rule, the maximum required memory at a certain time, when meeding
+As a rule of thumb, the maximum required memory at a certain time for
 multimodel analysis could be estimated by multiplying the number of datasets by
 the average file size of all the datasets; this memory intake is high but also
 assumes that all data is fully realized in memory; this aspect will gradually
