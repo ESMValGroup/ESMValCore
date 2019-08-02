@@ -639,7 +639,7 @@ def _run_tasks_parallel(tasks, max_parallel_tasks=None):
         # Handle completed tasks
         ready = {t for t in running if running[t].ready()}
         for task in ready:
-            _copy_results(task, future)
+            _copy_results(task, running[task])
             running.pop(task)
 
         # Wait if there are still tasks running
