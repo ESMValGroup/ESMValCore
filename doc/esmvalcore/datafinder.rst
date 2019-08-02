@@ -212,16 +212,22 @@ The tool will then use the root path ``/badc/cmip6/data/CMIP6/CMIP`` and the
 dataset information and will assemble the full DRS path using information from
 CMOR-DRS_ and establish the path to the files as:
 
-``/badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon``
+.. code-block::
+
+  /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon
 
 then look for variable ``ta`` and specifically the latest version of the data
 file: 
 
-``/badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/``
+.. code-block::
+
+  /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/
 
 and finally, using the file naming definition from CMOR-DRS_ find the file:
 
-``/badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/ta_Amon_UKESM1-0-LL_historical_r1i1p1f2_gn_195001-201412.nc``
+.. code-block::
+
+  /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/ta_Amon_UKESM1-0-LL_historical_r1i1p1f2_gn_195001-201412.nc
 
 .. _observations:
 
@@ -243,7 +249,9 @@ and the dataset:
 in ``recipe.yml`` in ``datasets`` or ``additional_datasets``, the rules set in
 CMOR-DRS_ are used again and the file will be automatically found:
 
-``/group_workspaces/jasmin4/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc``
+.. code-block::
+
+  /group_workspaces/jasmin4/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
 
 Since observational data are organized in Tiers depending on their level of
 public availability, the ``default`` directory must be structured accordingly

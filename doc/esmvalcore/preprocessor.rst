@@ -86,7 +86,7 @@ comparison with the observations.
 To contribute a new derived variable, it is also necessary to define a name for
 it and to provide the corresponding CMOR table. This is to guarantee the proper
 metadata definition is attached to the derived data. Such custom CMOR tables
-are collected as part of the `ESMValTool core package
+are collected as part of the `ESMValCore package
 <https://github.com/ESMValGroup/ESMValCore>`_. By default, the variable
 derivation will be applied only if the variable is not already available in the
 input data, but the derivation can be forced by setting the appropriate flag.
@@ -385,8 +385,9 @@ difference is that interpolation is based on sample data points, while
 regridding is based on the horizontal grid of another cube (the reference
 grid). 
 
-The underlying regridding mechanism in ESMValTool uses ``cube.regrid()`` method
-from Iris, so we point the reader to its documentation: `cube.regrid() <https://scitools.org.uk/Iris/docs/latest/Iris/Iris/cube.html#Iris.cube.Cube.regrid>`_.
+The underlying regridding mechanism in ESMValTool uses the `cube.regrid()
+<https://scitools.org.uk/iris/docs/latest/iris/iris/cube.html#iris.cube.Cube.regrid>`_
+from Iris.
 
 The use of the horizontal regridding functionality is flexible depending on
 what type of reference grid and what interpolation scheme is preferred. Below
@@ -532,11 +533,11 @@ see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
    Note that the multimodel array operations, albeit performed in
    per-time/per-horizontal level loops to save memory, could, however, be
    rather memory-intensive (since they are not performed lazily as
-   yet). Section MemoryUse_ details the memory intake for different run
-   scenarios, but as a thumb rule, for the multimodel preprocessor, the
-   expected maximum memory intake could be approximated as the number of
-   datasets multiplied by the average size in memory for one dataset.
-
+   yet). The Section on :ref:`Memory use` details the memory intake
+   for different run scenarios, but as a thumb rule, for the multimodel
+   preprocessor, the expected maximum memory intake could be approximated as
+   the number of datasets multiplied by the average size in memory for one
+   dataset. 
 
 .. _time operations:
 
@@ -832,7 +833,7 @@ will guarantee homogeneous input for the diagnostics.
 See also :func:`esmvalcore.preprocessor.convert_units`.
 
 
-.. _MemoryUse:
+.. _Memory use:
 
 Information on maximum memory required
 ======================================
