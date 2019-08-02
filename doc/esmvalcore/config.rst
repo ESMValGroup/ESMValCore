@@ -141,7 +141,7 @@ the user.
 .. note::
 
    You choose your config.yml file at run time, so you could have several of
-   them available with different purposes. One for formalised run, one for
+   them available with different purposes. One for a formalised run, another for
    debugging, etc.
 
 
