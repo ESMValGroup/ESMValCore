@@ -140,7 +140,7 @@ the user.
 
 .. note::
 
-   You choose your config.yml file at run time, so you could have several of
+   You choose your ``config-user.yml`` file at run time, so you could have several of
    them available with different purposes. One for a formalised run, another for
    debugging, etc.
 
