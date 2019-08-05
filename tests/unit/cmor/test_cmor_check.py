@@ -121,6 +121,13 @@ class TestCMORCheck(unittest.TestCase):
         sys.stdout = stdout
         self.assertEqual(output, 'WARNING: New error: something failed')
 
+    def test_report_debug_message(self):
+        """"Test report debug message function"""
+        checker = CMORCheck(self.cube, self.var_info)
+        self.assertFalse(checker.has_debug_messages())
+        checker.report_debug_message('New debug message')
+        self.assertTrue(checker.has_debug_messages())
+
     def test_check(self):
         """Test checks succeeds for a good cube"""
         self._check_cube()
@@ -232,6 +239,11 @@ class TestCMORCheck(unittest.TestCase):
         checker = CMORCheck(self.cube, self.var_info)
         checker.check_metadata()
         self.assertTrue(checker.has_warnings())
+
+    def _check_debug_messages_on_metadata(self):
+        checker = CMORCheck(self.cube, self.var_info)
+        checker.check_metadata()
+        self.assertTrue(checker.has_debug_messages())
 
     def test_non_requested(self):
         """
@@ -378,7 +390,7 @@ class TestCMORCheck(unittest.TestCase):
             ),
             (1, 2)
         )
-        self._check_warnings_on_metadata()
+        self._check_debug_messages_on_metadata()
 
     def test_bad_out_name_multidim_longitude(self):
         """Warning if multidimensional lon has bad var_name at metadata"""
@@ -393,7 +405,7 @@ class TestCMORCheck(unittest.TestCase):
             ),
             (1, 2)
         )
-        self._check_warnings_on_metadata()
+        self._check_debug_messages_on_metadata()
 
     def test_bad_out_name_onedim_latitude(self):
         """Warning if onedimensional lat has bad var_name at metadata"""
@@ -634,7 +646,7 @@ class TestCMORCheck(unittest.TestCase):
                 extra_values = np.linspace(
                     len(requested), valid_min, 20 - len(requested))
             else:
-                extra_values = numpy.linspace(
+                extra_values = np.linspace(
                     len(requested), valid_max, 20 - len(requested))
 
             for j in range(len(requested), 20):
