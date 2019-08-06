@@ -10,7 +10,7 @@ standard_name:
 units:             1
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         Difference in surface albedo for vegetation cover transition from forest to crops and grasses
+long_name:         Difference in Surface Albedo for Vegetation Cover Transition from Forest to Crops and Grasses
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
