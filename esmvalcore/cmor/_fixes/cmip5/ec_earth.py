@@ -1,5 +1,6 @@
-
 """Fixes for EC-Earth model."""
+from dask import array as da
+
 from ..fix import Fix
 
 
@@ -48,4 +49,26 @@ class Sftlf(Fix):
         metadata = cube.metadata
         cube *= 100
         cube.metadata = metadata
+        return cube
+
+
+class Tos(Fix):
+    """Fixes for tos."""
+
+    def fix_data(self, cube):
+        """
+        Fix tos data.
+
+        Fixes mask
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        cube.data = da.ma.masked_equal(cube.core_data(), 273.15)
         return cube
