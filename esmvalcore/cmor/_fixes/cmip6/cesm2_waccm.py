@@ -26,6 +26,9 @@ class Ua(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
+        dim_coords = [coord.name() for coord in cube.coords(dim_coords=True)]
+        if 'time' in dim_coords:
+            return cubes
         coord = cube.coord('time')
         idx_sorted = np.argsort(coord.points)
         coord.points = coord.points[idx_sorted]
