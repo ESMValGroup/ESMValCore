@@ -17,6 +17,7 @@ from tests.unit.preprocessor._regrid import _make_cube
 
 class Test(tests.Test):
     def setUp(self):
+        """Prepare tests."""
         shape = (3, 2, 2)
         data = np.arange(np.prod(shape)).reshape(shape)
         self.cube = _make_cube(data)
