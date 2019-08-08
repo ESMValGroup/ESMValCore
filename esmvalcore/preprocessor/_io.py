@@ -5,10 +5,11 @@ import os
 import shutil
 from collections import OrderedDict
 from itertools import groupby
+from warnings import catch_warnings, filterwarnings
 
-import numpy as np
 import iris
 import iris.exceptions
+import numpy as np
 import yaml
 
 from .._task import write_ncl_settings
@@ -53,7 +54,14 @@ def concatenate_callback(raw_cube, field, _):
 def load(file, callback=None):
     """Load iris cubes from files."""
     logger.debug("Loading:\n%s", file)
-    raw_cubes = iris.load_raw(file, callback=callback)
+    with catch_warnings():
+        filterwarnings(
+            'ignore',
+            message="Missing CF-netCDF measure variable .*",
+            category=UserWarning,
+            module='iris',
+        )
+        raw_cubes = iris.load_raw(file, callback=callback)
     if not raw_cubes:
         raise Exception('Can not load cubes from {0}'.format(file))
     for cube in raw_cubes:
@@ -70,8 +78,8 @@ def _fix_cube_attributes(cubes):
                 attributes[attr] = val
             else:
                 if not np.array_equal(val, attributes[attr]):
-                    attributes[attr] = '{};{}'.format(
-                        str(attributes[attr]), str(val))
+                    attributes[attr] = '{};{}'.format(str(attributes[attr]),
+                                                      str(val))
     for cube in cubes:
         cube.attributes = attributes
 
@@ -187,7 +195,6 @@ def cleanup(files, remove=None):
 
 def _ordered_safe_dump(data, stream):
     """Write data containing OrderedDicts to yaml file."""
-
     class _OrderedDumper(yaml.SafeDumper):
         pass
 
@@ -249,8 +256,8 @@ def _write_ncl_metadata(output_dir, metadata):
         dataset_info = {}
         info['dataset_info'].append(dataset_info)
         for key in variable:
-            dataset_specific = any(
-                variable[key] != var.get(key, object()) for var in variables)
+            dataset_specific = any(variable[key] != var.get(key, object())
+                                   for var in variables)
             if ((dataset_specific or key in DATASET_KEYS)
                     and key not in VARIABLE_KEYS):
                 dataset_info[key] = variable[key]
