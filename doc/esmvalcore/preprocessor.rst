@@ -22,7 +22,7 @@ following the default order in which they are applied:
 Overview
 ========
 
-.. 
+..
    ESMValTool is a modular ``Python 3.6+`` software package possesing capabilities
    of executing a large number of diagnostic routines that can be written in a
    number of programming languages (Python, NCL, R, Julia). The modular nature
@@ -111,9 +111,55 @@ See also :func:`esmvalcore.preprocessor.derive`.
 
 CMORization and dataset-specific fixes
 ======================================
-.. warning::
 
-   Section to be added.
+Data checking
+-------------
+
+Data preprocessed by ESMValTool is automatically checked against its cmor
+definition. To reduce the impact of this check while maintaing it as realiable
+as possible, it is splitted in two parts: one will check the metadata and will
+be done just after loading and concatenating the data and the other one will
+check the data itself and will be applied after all extracting operations are
+applied to reduce the amount of data to process.
+
+Checks include, but are not limited to:
+
+   - Requested coordinates are present and comply with their definition.
+   - Correctness of variable names, units and other metadata.
+   - Compliance with the valid minimum and maximum values allowed if defined.
+
+The most relevant (i.e. a missing coordinate) will raise an error while others
+(i.e an incorrect long name) will be reported as a warning.
+
+Somo of those issues will be fixed automatically by the tool, including the
+following:
+
+    - Incorrect standard or long names.
+    - Incorrect units, if they can be converted to the correct ones.
+    - Direction of coordinates.
+    - Automatic clipping of longitude to 0 - 360 interval.
+
+
+Dataset specific fixes
+----------------------
+
+Sometimes, the checker will detect errors that it can not fix by itself.
+ESMValTool deals with those issues by applying specific fixes for those
+dataset that require them. Fixes are applied at three different preprocessor
+steps:
+
+    - fix_file: apply fixes directly to a copy of the file. Only fixes that allow
+      iris to load the file are applied here.
+
+    - fix_metadata: metadata fixes are done just before concatenating the cubes
+      loaded from different files in the final one. Automatic metadata fixes
+      are also applied at this step.
+
+    - fix_data: data fixes are applied just prior to checking the data.
+      Automatic data fixes are also applied at this step.
+
+To get an overview on data fixes and how to implement new ones, please go to
+:ref:`fixing_data`.
 
 
 .. _Vertical interpolation:
@@ -180,7 +226,7 @@ extract the levels and vertically regrid onto the vertical levels of
    The extrapolation mode is controlled by the `extrapolation_mode`
    keyword. For the available interpolation schemes available in Iris, the
    extrapolation_mode keyword must be one of:
- 
+
         * ``extrapolate``: the extrapolation points will be calculated by
 	  extending the gradient of the closest two points;
         * ``error``: a ``ValueError`` exception will be raised, notifying an
@@ -290,7 +336,7 @@ available for the developer to use them as they need to. The `fx_files`
 attribute of the big `variable` nested dictionary that gets passed to the
 diagnostic is, in turn, a dictionary on its own, and members of it can be
 accessed in the diagnostic through a simple loop over the ``config`` diagnostic
-variable items e.g.: 
+variable items e.g.:
 
 .. code-block::
 
@@ -309,14 +355,14 @@ numbers of missing data from dataset to dataset may introduce biases and
 artifically assign more weight to the datasets that have less missing
 data. This is handled in ESMValTool via the missing values masks: two types of
 such masks are available, one for the multimodel case and another for the
-single model case. 
+single model case.
 
 The multimodel missing values mask (``mask_fillvalues``) is a preprocessor step
 that usually comes after all the single-model steps (regridding, area selection
 etc) have been performed; in a nutshell, it combines missing values masks from
 individual models into a multimodel missing values mask; the individual model
 masks are built according to common criteria: the user chooses a time window in
-which missing data points are counted, and if the number of missing data points 
+which missing data points are counted, and if the number of missing data points
 relative to the number of total data points in a window is less than a chosen
 fractional theshold, the window is discarded i.e. all the points in the window
 are masked (set to missing).
@@ -383,7 +429,7 @@ conceptually a very similar process to interpolation (in fact, the regridder
 engine uses interpolation and extrapolation, with various schemes). The primary
 difference is that interpolation is based on sample data points, while
 regridding is based on the horizontal grid of another cube (the reference
-grid). 
+grid).
 
 The underlying regridding mechanism in ESMValTool uses the `cube.regrid()
 <https://scitools.org.uk/iris/docs/latest/iris/iris/cube.html#iris.cube.Cube.regrid>`_
@@ -391,7 +437,7 @@ from Iris.
 
 The use of the horizontal regridding functionality is flexible depending on
 what type of reference grid and what interpolation scheme is preferred. Below
-we show a few examples. 
+we show a few examples.
 
 Regridding on a reference dataset grid
 --------------------------------------
@@ -425,7 +471,7 @@ cell specification is oftentimes used when operating on localized data.
           scheme: nearest
 
 In this case the ``NearestNeighbour`` interpolation scheme is used (see below
-for scheme definitions). 
+for scheme definitions).
 
 When using a ``MxN`` type of grid it is possible to offset the grid cell
 centrepoints using the `lat_offset` and ``lon_offset`` arguments:
@@ -507,7 +553,7 @@ to ``multi_model_statistics``.
 Multimodel statistics in ESMValTool are computed along the time axis, and as
 such, can be computed across a common overlap in time (by specifying ``span:
 overlap`` argument) or across the full length in time of each model (by
-specifying ``span: full`` argument). 
+specifying ``span: full`` argument).
 
 Restrictive computation is also available by excluding  any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
@@ -537,7 +583,7 @@ see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
    for different run scenarios, but as a thumb rule, for the multimodel
    preprocessor, the expected maximum memory intake could be approximated as
    the number of datasets multiplied by the average size in memory for one
-   dataset. 
+   dataset.
 
 .. _time operations:
 
@@ -654,7 +700,7 @@ Area manipulation
 The ``_area.py`` module contains the following preprocessor functions:
 
 * ``extract_region``: Extract a region from a cube based on ``lat/lon``
-  corners. 
+  corners.
 * ``zonal_means``: Calculates the zonal or meridional means.
 * ``area_statistics``: Calculates the average value over a region.
 * ``extract_named_regions``: Extract a specific region from in the region
@@ -756,7 +802,7 @@ This function calculates the volume-weighted average across three dimensions,
 but maintains the time dimension.
 
 This function takes the argument: ``operator``, which defines the operation to
-apply over the volume. 
+apply over the volume.
 
 No depth coordinate is required as this is determined by Iris. This function
 works best when the ``fx_files`` provide the cell volume.
