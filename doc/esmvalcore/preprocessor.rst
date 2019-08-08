@@ -22,7 +22,7 @@ following the default order in which they are applied:
 Overview
 ========
 
-.. 
+..
    ESMValTool is a modular ``Python 3.6+`` software package possesing capabilities
    of executing a large number of diagnostic routines that can be written in a
    number of programming languages (Python, NCL, R, Julia). The modular nature
@@ -180,7 +180,7 @@ extract the levels and vertically regrid onto the vertical levels of
    The extrapolation mode is controlled by the `extrapolation_mode`
    keyword. For the available interpolation schemes available in Iris, the
    extrapolation_mode keyword must be one of:
- 
+
         * ``extrapolate``: the extrapolation points will be calculated by
 	  extending the gradient of the closest two points;
         * ``error``: a ``ValueError`` exception will be raised, notifying an
@@ -290,7 +290,7 @@ available for the developer to use them as they need to. The `fx_files`
 attribute of the big `variable` nested dictionary that gets passed to the
 diagnostic is, in turn, a dictionary on its own, and members of it can be
 accessed in the diagnostic through a simple loop over the ``config`` diagnostic
-variable items e.g.: 
+variable items e.g.:
 
 .. code-block::
 
@@ -309,14 +309,14 @@ numbers of missing data from dataset to dataset may introduce biases and
 artifically assign more weight to the datasets that have less missing
 data. This is handled in ESMValTool via the missing values masks: two types of
 such masks are available, one for the multimodel case and another for the
-single model case. 
+single model case.
 
 The multimodel missing values mask (``mask_fillvalues``) is a preprocessor step
 that usually comes after all the single-model steps (regridding, area selection
 etc) have been performed; in a nutshell, it combines missing values masks from
 individual models into a multimodel missing values mask; the individual model
 masks are built according to common criteria: the user chooses a time window in
-which missing data points are counted, and if the number of missing data points 
+which missing data points are counted, and if the number of missing data points
 relative to the number of total data points in a window is less than a chosen
 fractional theshold, the window is discarded i.e. all the points in the window
 are masked (set to missing).
@@ -383,7 +383,7 @@ conceptually a very similar process to interpolation (in fact, the regridder
 engine uses interpolation and extrapolation, with various schemes). The primary
 difference is that interpolation is based on sample data points, while
 regridding is based on the horizontal grid of another cube (the reference
-grid). 
+grid).
 
 The underlying regridding mechanism in ESMValTool uses the `cube.regrid()
 <https://scitools.org.uk/iris/docs/latest/iris/iris/cube.html#iris.cube.Cube.regrid>`_
@@ -391,7 +391,7 @@ from Iris.
 
 The use of the horizontal regridding functionality is flexible depending on
 what type of reference grid and what interpolation scheme is preferred. Below
-we show a few examples. 
+we show a few examples.
 
 Regridding on a reference dataset grid
 --------------------------------------
@@ -425,7 +425,7 @@ cell specification is oftentimes used when operating on localized data.
           scheme: nearest
 
 In this case the ``NearestNeighbour`` interpolation scheme is used (see below
-for scheme definitions). 
+for scheme definitions).
 
 When using a ``MxN`` type of grid it is possible to offset the grid cell
 centrepoints using the `lat_offset` and ``lon_offset`` arguments:
@@ -507,7 +507,7 @@ to ``multi_model_statistics``.
 Multimodel statistics in ESMValTool are computed along the time axis, and as
 such, can be computed across a common overlap in time (by specifying ``span:
 overlap`` argument) or across the full length in time of each model (by
-specifying ``span: full`` argument). 
+specifying ``span: full`` argument).
 
 Restrictive computation is also available by excluding  any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
@@ -537,7 +537,7 @@ see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
    for different run scenarios, but as a thumb rule, for the multimodel
    preprocessor, the expected maximum memory intake could be approximated as
    the number of datasets multiplied by the average size in memory for one
-   dataset. 
+   dataset.
 
 .. _time operations:
 
@@ -545,15 +545,37 @@ Time manipulation
 =================
 The ``_time.py`` module contains the following preprocessor functions:
 
-* ``extract_time``: Extract a time range from an Iris ``cube``.
-* ``extract_season``: Extract only the times that occur within a specific
-  season.
-* ``extract_month``: Extract only the times that occur within a specific month.
-* ``time_average``: Take the weighted average over the time dimension.
-* ``seasonal_mean``: Produces a mean for each season (DJF, MAM, JJA, SON)
-* ``annual_mean``: Produces an annual or decadal mean.
-* ``regrid_time``: Aligns the time axis of each dataset to have common time
+* extract_time_: Extract a time range from a cube.
+* extract_season: Extract only the times that occur within a specific season.
+* extract_month_: Extract only the times that occur within a specific month.
+* daily_statistics_: Compute statistics for each day
+* monthly_statistics_: Compute statistics for each month
+* seasonal_statistics_: Compute statistics for each season
+* annual_statistics_: Compute statistics for each year
+* decadal_statistics_: Compute statistics for each decade
+* climate_statistics_: Compute statistics for the full period
+* regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
+
+Statistics functions are applied by default in the order they appear in the
+list. For example, the following example applied to hourly data will retrieve
+the minimum values for the full period (by season) of the monthly mean of the
+daily maximum of any given variable.
+
+.. code-block:: yaml
+
+    daily_statistics:
+      operator: max
+
+    monthly_statistics:
+      operator: mean
+
+    climate_statistics:
+      operator: min
+      period: season
+
+
+.. _extract_time:
 
 ``extract_time``
 ----------------
@@ -575,6 +597,8 @@ will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_time`.
 
+.. _extract_season:
+
 ``extract_season``
 ------------------
 
@@ -592,6 +616,8 @@ the seasonal_mean function, below.
 
 See also :func:`esmvalcore.preprocessor.extract_season`.
 
+.. _extract_month:
+
 ``extract_month``
 -----------------
 
@@ -601,37 +627,123 @@ between 1 and 12 as the named month string will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_month`.
 
-.. _time_average:
+.. _daily_statistics:
 
-``time_average``
-----------------
+``daily_statistics``
+--------------------
 
-This function takes the weighted average over the time dimension. This
-function requires no arguments and removes the time dimension of the cube.
+This function produces statistics for each day in the dataset.
 
-See also :func:`esmvalcore.preprocessor.time_average`.
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
 
-``seasonal_mean``
------------------
+See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
-This function produces a seasonal mean for each season (DJF, MAM, JJA, SON).
-Note that this function will not check for missing time points. For instance,
-if you are looking at the DJF field, but your datasets starts on January 1st,
-the first DJF field will only contain data from January and February.
+.. _monthly_statistics:
+
+``monthly_statistics``
+----------------------
+
+This function produces statistics for each month in the dataset.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.monthly_statistics`.
+
+.. _seasonal_statistics:
+
+``seasonal_statistics``
+-----------------------
+
+This function produces statistics for each season (DJF, MAM, JJA, SON) in the
+dataset. Note that this function will not check for missing time points.
+For instance, if you are looking at the DJF field, but your datasets
+starts on January 1st, the first DJF field will only contain data
+from January and February.
 
 We recommend using the extract_time to start the dataset from the following
 December and remove such biased initial datapoints.
 
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
+
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
-``annual_mean``
----------------
+.. _annual_statistics:
 
-This function produces an annual or a decadal mean. The only argument is the
-decadal boolean switch. When this switch is set to true, this function
-will output the decadal averages.
+``annual_statistics``
+---------------------
 
-See also :func:`esmvalcore.preprocessor.annual_mean`.
+This function produces statistics for each year.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.annual_statistics`.
+
+.. _decadal_statistics:
+
+``decadal_statistics``
+----------------------
+
+This function produces statistics for each decade.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'variance', 'min' and 'max'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.decadal_statistics`.
+
+.. _climate_statistics:
+``climate_statistics``
+----------------------
+
+This function produces statistics for the whole dataset. It can produce scalars
+(if the full period is chosen) or daily, monthly or seasonal statics.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean', 'median', 'std_dev',
+      'variance', 'min' and 'max'. Default is 'mean'
+
+    * period: define the granularity of the statistics: get values for the
+      full period, for each month or day of year.
+      Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
+      'mon', 'daily', 'day'. Default is 'full'
+
+Examples:
+    * Monthly climatology:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+                operator: mean
+                period: month
+
+    * Daily maximum for the full period:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+                operator: max
+                period: day
+
+    * Minimum value in the period:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+                operator: min
+                period: full
+
+See also :func:`esmvalcore.preprocessor.climate_statistics`.
+
+
+.. _regrid_time:
 
 ``regrid_time``
 ---------------
@@ -654,7 +766,7 @@ Area manipulation
 The ``_area.py`` module contains the following preprocessor functions:
 
 * ``extract_region``: Extract a region from a cube based on ``lat/lon``
-  corners. 
+  corners.
 * ``zonal_means``: Calculates the zonal or meridional means.
 * ``area_statistics``: Calculates the average value over a region.
 * ``extract_named_regions``: Extract a specific region from in the region
@@ -756,7 +868,7 @@ This function calculates the volume-weighted average across three dimensions,
 but maintains the time dimension.
 
 This function takes the argument: ``operator``, which defines the operation to
-apply over the volume. 
+apply over the volume.
 
 No depth coordinate is required as this is determined by Iris. This function
 works best when the ``fx_files`` provide the cell volume.
