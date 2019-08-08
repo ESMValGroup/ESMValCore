@@ -1005,7 +1005,6 @@ class Recipe:
             except TypeError:
                 return str(obj)
 
-
         for variable in preprocessor_output.values():
             for dataset in variable:
                 alias = tuple(

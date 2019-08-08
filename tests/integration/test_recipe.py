@@ -790,7 +790,6 @@ def test_diagnostic_task_provenance(
 
 
 def test_concatenation(tmp_path, patched_datafinder, config_user):
-
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -805,8 +804,12 @@ def test_concatenation(tmp_path, patched_datafinder, config_user):
                 tier: 2
                 version: latest
                 additional_datasets:
-                  - {dataset: GFDL-CM3,  ensemble: r1i1p1, exp: [historical, rcp85]}
-                  - {dataset: GFDL-CM3,  ensemble: r1i1p1, exp: historical}
+                  - dataset: GFDL-CM3
+                    ensemble: r1i1p1
+                    exp: [historical, rcp85]
+                  - dataset: GFDL-CM3
+                    ensemble: r1i1p1
+                    exp: historical
             scripts: null
         """)
 
