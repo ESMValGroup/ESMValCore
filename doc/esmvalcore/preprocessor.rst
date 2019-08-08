@@ -700,6 +700,7 @@ Parameters:
 See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 
 .. _climate_statistics:
+
 ``climate_statistics``
 ----------------------
 
