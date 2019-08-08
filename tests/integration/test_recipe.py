@@ -789,7 +789,7 @@ def test_diagnostic_task_provenance(
     assert os.path.exists(prefix + '.svg')
 
 
-def test_alias_generation(tmp_path, patched_datafinder, config_user):
+def test_concatenation(tmp_path, patched_datafinder, config_user):
 
     content = dedent("""
         diagnostics:
@@ -798,7 +798,6 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
               ta:
                 project: CMIP5
                 mip: Amon
-                exp: historical
                 start_year: 2000
                 end_year: 2005
                 grid: gn
@@ -806,15 +805,8 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                 tier: 2
                 version: latest
                 additional_datasets:
-                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
-                  - {dataset: EC-EARTH,  ensemble: r1i1p1}
-                  - {dataset: EC-EARTH,  ensemble: r2i1p1}
-                  - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: custom_alias}
-                  - {project: OBS, dataset: ERA-Interim,  version: 1}
-                  - {project: OBS, dataset: ERA-Interim,  version: 2}
-                  - {project: CMIP6, dataset: GFDL-CM3,  ensemble: r1i1p1}
-                  - {project: CMIP6, dataset: EC-EARTH,  ensemble: r1i1p1}
-                  - {project: CMIP6, dataset: HADGEM,  ensemble: r1i1p1}
+                  - {dataset: GFDL-CM3,  ensemble: r1i1p1, exp: [historical, rcp85]}
+                  - {dataset: GFDL-CM3,  ensemble: r1i1p1, exp: historical}
             scripts: null
         """)
 
@@ -823,25 +815,7 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
     diag = recipe.diagnostics['diagnostic_name']
     var = diag['preprocessor_output']['ta']
     for dataset in var:
-        if dataset['project'] == 'CMIP5':
-            if dataset['dataset'] == 'GFDL-CM3':
-                assert dataset['alias'] == 'CMIP5_GFDL-CM3'
-            else:
-                if dataset['ensemble'] == 'r1i1p1':
-                    assert dataset['alias'] == 'CMIP5_EC-EARTH_r1i1p1'
-                elif dataset['ensemble'] == 'r2i1p1':
-                    assert dataset['alias'] == 'CMIP5_EC-EARTH_r2i1p1'
-                else:
-                    assert dataset['alias'] == 'custom_alias'
-        elif dataset['project'] == 'CMIP6':
-            if dataset['dataset'] == 'GFDL-CM3':
-                assert dataset['alias'] == 'CMIP6_GFDL-CM3'
-            elif dataset['dataset'] == 'EC-EARTH':
-                assert dataset['alias'] == 'CMIP6_EC-EARTH'
-            else:
-                assert dataset['alias'] == 'CMIP6_HADGEM'
+        if dataset['exp'] == 'historical':
+            assert dataset['alias'] == 'historical'
         else:
-            if dataset['version'] == 1:
-                assert dataset['alias'] == 'OBS_1'
-            else:
-                assert dataset['alias'] == 'OBS_2'
+            assert dataset['alias'] == 'historical-rcp85'
