@@ -997,7 +997,7 @@ class Recipe:
         """
         datasets_info = set()
 
-        def key_str(obj):
+        def _key_str(obj):
             if isinstance(obj, str):
                 return obj
             try:
@@ -1008,7 +1008,7 @@ class Recipe:
         for variable in preprocessor_output.values():
             for dataset in variable:
                 alias = tuple(
-                    key_str(dataset.get(key, None)) for key in self.info_keys
+                    _key_str(dataset.get(key, None)) for key in self.info_keys
                 )
                 datasets_info.add(alias)
                 if 'alias' not in dataset:
