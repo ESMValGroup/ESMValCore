@@ -4,6 +4,8 @@ CMOR information reader for ESMValTool.
 Read variable information from CMOR 2 and CMOR 3 tables and make it easily
 available for the other components of ESMValTool
 """
+from functools import total_ordering
+import copy
 import errno
 import glob
 import json
@@ -191,13 +193,24 @@ class CMIP6Info(object):
             if short_name in CMIP6Info._CMIP_5to6_varname:
                 new_short_name = CMIP6Info._CMIP_5to6_varname[short_name]
                 return self.get_variable(table, new_short_name)
+
+            var_info = None
             if not self.strict:
-                for table_vars in self.tables.values():
+                for table_vars in sorted(self.tables.values()):
                     if short_name in table_vars:
-                        return table_vars[short_name]
-            if self.default:
-                return self.default.get_variable(table, short_name)
-            return None
+                        var_info = table_vars[short_name]
+                        break
+
+            if not var_info and self.default:
+                var_info = self.default.get_variable(table, short_name)
+
+            if var_info:
+                mip_info = self.get_table(table)
+                if mip_info:
+                    var_info = var_info.copy()
+                    var_info.frequency = mip_info.frequency
+
+            return var_info
 
     @staticmethod
     def _is_table(table_data):
@@ -208,6 +221,7 @@ class CMIP6Info(object):
         return True
 
 
+@total_ordering
 class TableInfo(dict):
     """Container class for storing a CMOR table."""
 
@@ -217,6 +231,18 @@ class TableInfo(dict):
         self.name = ''
         self.frequency = ''
         self.realm = ''
+
+    def __eq__(self, other):
+        return (self.name, self.frequency, self.realm) == \
+            (other.name, other.frequency, other.realm)
+
+    def __ne__(self, other):
+        return (self.name, self.frequency, self.realm) != \
+            (other.name, other.frequency, other.realm)
+
+    def __lt__(self, other):
+        return (self.name, self.frequency, self.realm) < \
+            (other.name, other.frequency, other.realm)
 
 
 class JsonInfo(object):
@@ -308,6 +334,9 @@ class VariableInfo(JsonInfo):
         """Coordinates"""
 
         self._json_data = None
+
+    def copy(self):
+        return copy.copy(self)
 
     def read_json(self, json_data):
         """
@@ -576,11 +605,17 @@ class CMIP5Info(object):
         """
         var_info = self.tables.get(table, {}).get(short_name, None)
         if not var_info and not self.strict:
-            for table in self.tables.values():
-                if short_name in table:
-                    return table[short_name]
+            for table_vars in sorted(self.tables.values()):
+                if short_name in table_vars:
+                    var_info = table_vars[short_name]
+                    break
         if not var_info and self.default:
-            return self.default.get_variable(table, short_name)
+            var_info = self.default.get_variable(table, short_name)
+        if var_info:
+            mip_info = self.get_table(table)
+            var_info.copy()
+            if mip_info:
+                var_info.frequency = mip_info.frequency
         return var_info
 
 
