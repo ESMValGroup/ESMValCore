@@ -84,7 +84,7 @@ data specifications:
 - ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
 - time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``)
 - model grid (native grid ``grid: gn`` or regridded grid ``grid: gr``, for
-  CMIP6 data only). 
+  CMIP6 data only).
 
 For example, a datasets section could be:
 
@@ -128,7 +128,8 @@ arguments):
         regrid:
           target_grid: 1x1
           scheme: linear
-        time_average:
+        climate_statistics:
+          operator: mean
         multi_model_statistics:
           span: overlap
           statistics: [mean ]
@@ -189,7 +190,7 @@ key are provided, then the key in the datasets section will take precedence
 over the keys in variables section. For many recipes it makes more sense to
 define the ``start_year`` and ``end_year`` items in the variable section,
 because the diagnostic script assumes that all the data has the same time
-range. 
+range.
 
 Note that the path to the script provided in the `script` option should be
 either the absolute path to the script, or the path relative to the
@@ -273,7 +274,7 @@ This way the user may test a new diagnostic thoroughly before committing to the
 GitHub repository and including it in the ESMValTool diagnostics library.
 
 Re-using parameters from one ``script`` to another
--------------------------------------------------- 
+--------------------------------------------------
 Due to ``yaml`` features it is possible to recycle entire diagnostics sections
 for use with other diagnostics. Here is an example:
 
