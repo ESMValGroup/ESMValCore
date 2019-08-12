@@ -336,6 +336,14 @@ class VariableInfo(JsonInfo):
         self._json_data = None
 
     def copy(self):
+        """
+        Return a shalow copy of VariableInfo.
+
+        Returns
+        -------
+        VariableInfo
+           Shallow copy of this object
+        """
         return copy.copy(self)
 
     def read_json(self, json_data):
