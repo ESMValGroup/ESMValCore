@@ -311,7 +311,8 @@ class VariableInfo(JsonInfo):
 
     def copy(self):
         """
-        Returns a shalow copy of VariableInfo
+        Return a shalow copy of VariableInfo.
+
         Returns
         -------
         VariableInfo
