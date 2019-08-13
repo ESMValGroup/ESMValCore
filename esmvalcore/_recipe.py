@@ -628,7 +628,7 @@ def _update_cmorizer_variable(variable):
 def _update_quicklook_settings(variable, settings, config_user):
     """Get correct settings for quicklook mode."""
     if config_user['quicklook']['active']:
-        if 'derive_input' in variable['variable_group']
+        if 'derive_input' in variable['variable_group']:
             settings['save']['force_saving'] = True
         else:
             settings['save']['concatenate_output'] = True
