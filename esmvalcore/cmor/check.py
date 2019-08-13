@@ -436,12 +436,30 @@ class CMORCheck():
             self.report_error(self._does_msg, var_name,
                               'have time reference units')
         else:
+            old_units = coord.units
             coord.convert_units(
                 cf_units.Unit(
-                    'days since 1950-1-1 00:00:00',
+                    'days since 1850-1-1 00:00:00',
                     calendar=coord.units.calendar))
             simplified_cal = self._simplify_calendar(coord.units.calendar)
             coord.units = cf_units.Unit(coord.units.origin, simplified_cal)
+
+            attrs = self._cube.attributes
+            branch_child = 'branch_time_in_child'
+            if branch_child in attrs:
+                attrs[branch_child] = old_units.convert(attrs[branch_child],
+                                                        coord.units)
+
+            parent_time = 'parent_time_units'
+            if parent_time in attrs:
+                parent_units = cf_units.Unit(attrs[parent_time],
+                                             simplified_cal)
+                attrs[parent_time] = 'days since 1850-1-1 00:00:00'
+
+                branch_parent = 'branch_time_in_parent'
+                if branch_parent in attrs:
+                    attrs[branch_parent] = parent_units.convert(
+                        attrs[branch_parent], coord.units)
 
         # Check frequency
         (successful, msg) = check_frequency(coord, self.frequency)

@@ -61,13 +61,17 @@ def concatenate_callback(raw_cube, field, _):
 def load(file, callback=None, ignore_warnings=None):
     """Load iris cubes from files."""
     logger.debug("Loading:\n%s", file)
-    if ignore_warnings is not None:
-        with warnings.catch_warnings():
-            for warning_kwargs in ignore_warnings:
-                warning_kwargs.setdefault('action', 'ignore')
-                warnings.filterwarnings(**warning_kwargs)
-            raw_cubes = iris.load_raw(file, callback=callback)
-    else:
+    if ignore_warnings is None:
+        ignore_warnings = []
+    ignore_warnings.append({
+        'message': 'Missing CF-netCDF measure variable .*',
+        'category': UserWarning,
+        'module': 'iris',
+    })
+    with warnings.catch_warnings():
+        for warning_kwargs in ignore_warnings:
+            warning_kwargs.setdefault('action', 'ignore')
+            warnings.filterwarnings(**warning_kwargs)
         raw_cubes = iris.load_raw(file, callback=callback)
     if not raw_cubes:
         raise Exception('Can not load cubes from {0}'.format(file))
@@ -437,7 +441,6 @@ def cleanup(files, remove=None):
 
 def _ordered_safe_dump(data, stream):
     """Write data containing OrderedDicts to yaml file."""
-
     class _OrderedDumper(yaml.SafeDumper):
         pass
 
