@@ -324,6 +324,7 @@ def save(cubes,
          optimize_access='',
          compress=False,
          concatenate_output=False,
+         force_saving=False,
          **kwargs):
     """
     Save iris cubes to file.
@@ -351,6 +352,9 @@ def save(cubes,
     concatenate_output: bool, optional
         Concatenate cubes to already existent output if possible (used in
         quicklook mode).
+
+    force_saving: bool, optional
+        Force saving of cubes (risk loss of data).
 
     Returns
     -------
@@ -393,8 +397,9 @@ def save(cubes,
         return filename
 
     # Save file regularly
-    if (os.path.exists(filename)
-            and all(cube.has_lazy_data() for cube in cubes)):
+    if all([os.path.exists(filename),
+            all(cube.has_lazy_data() for cube in cubes),
+            not force_saving]):
         logger.debug(
             "Not saving cubes %s to %s to avoid data loss. "
             "The cube is probably unchanged.", cubes, filename)

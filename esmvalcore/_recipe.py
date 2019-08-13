@@ -625,10 +625,13 @@ def _update_cmorizer_variable(variable):
     variable['var_mapping'] = cmorize_options['var_mapping']
 
 
-def _update_quicklook_settings(settings, config_user):
+def _update_quicklook_settings(variable, settings, config_user):
     """Get correct settings for quicklook mode."""
     if config_user['quicklook']['active']:
-        settings['save']['concatenate_output'] = True
+        if 'derive_input' in variable['variable_group']
+            settings['save']['force_saving'] = True
+        else:
+            settings['save']['concatenate_output'] = True
 
 
 def _update_warning_settings(project, settings):
@@ -661,7 +664,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         _apply_preprocessor_profile(settings, profile)
         _update_cmorizer_settings(
             settings=settings, variable=variable, derive='derive' in profile)
-        _update_quicklook_settings(settings, config_user)
+        _update_quicklook_settings(variable, settings, config_user)
         _update_multi_dataset_settings(variable, settings)
         _update_target_levels(
             variable=variable,
