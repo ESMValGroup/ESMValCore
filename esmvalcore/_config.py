@@ -66,6 +66,10 @@ def _process_quicklook_settings(cfg):
             f"WARNING: Quicklook mode is enabled but 'logger' is not "
             f"given, defaulting to {quicklook_opts['logger']}")
     quicklook_opts['logger'] = _normalize_path(quicklook_opts['logger'])
+    log_dir = os.path.dirname(quicklook_opts['logger'])
+    if not os.path.isdir(log_dir):
+        os.makedirs(log_dir)
+        print(f"INFO: Created directory for quicklook logger '{log_dir}'")
 
     # Do not remove preproc directory
     cfg['remove_preproc_dir'] = False

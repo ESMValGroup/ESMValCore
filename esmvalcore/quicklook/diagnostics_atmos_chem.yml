@@ -51,6 +51,3 @@ glob_timeseries_atmos_chem_{run_id}:
       mip: custom
     MP_NOX:
       mip: custom
-  scripts:
-    glob_timeseries:
-      script: quicklooks/global_timeseries.py

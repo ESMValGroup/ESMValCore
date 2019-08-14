@@ -17,7 +17,7 @@ glob_timeseries_atmos_dyn_{run_id}:
        preprocessor: prep_zon
     cod_sw_b01:
        mip: custom
-       preprocessor: prep_zon 
+       preprocessor: prep_zon
     evspsbl:
        mip: Amon
        preprocessor: prep_zon
@@ -69,9 +69,3 @@ glob_timeseries_atmos_dyn_{run_id}:
     ts:
       mip: Amon
       preprocessor: prep_zon
-  scripts:
-    glob_timeseries:
-      script: quicklooks/global_timeseries.py
-    zon_timeseries:
-      script: quicklooks/zonal_timeseries.py
-      ancestors: ['*/glob_timeseries']

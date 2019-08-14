@@ -102,10 +102,16 @@ def get_args():
                         type=str,
                         help='Sets quicklook mode by setting identifier for ' +
                         'individual simulation.')
-    parser.add_argument(
-        '--startyear',
-        type=int,
-        help='Only available in quicklook mode. Set start year.')
+    parser.add_argument('--multi-run-plots',
+                        action='store_true',
+                        help="Only available in quicklook mode. Create plots "
+                        "containing multiple runs. Scans whole quicklook "
+                        "directory. Ignores 'SIMULATION-ID', 'startyear' and "
+                        "'endyear' settings.")
+    parser.add_argument('--startyear',
+                        type=int,
+                        help='Only available in quicklook mode. Set start '
+                        'year.')
     parser.add_argument('--endyear',
                         type=int,
                         help='Only available in quicklook mode. Set end year.')
@@ -132,11 +138,15 @@ def main(args):
 
     if args.quicklook:
         cfg = read_config_user_file(config_file, 'quicklook')
-        if 'quicklook' in cfg.keys() and cfg['quicklook'].get('active', False):
+        if cfg['quicklook']['active']:
             cfg['quicklook']['dataset-id'] = args.quicklook
-            if args.startyear and args.endyear:
-                cfg['quicklook']['start'] = args.startyear
-                cfg['quicklook']['end'] = args.endyear
+            for arg in ('startyear', 'endyear'):
+                if getattr(args, arg) is None:
+                    raise ValueError(
+                        f"Argument '--{arg}' is necessary in quicklook mode")
+            cfg['quicklook']['start'] = args.startyear
+            cfg['quicklook']['end'] = args.endyear
+            cfg['quicklook']['multi_run_plots'] = args.multi_run_plots
         else:
             print("ERROR: Check the quicklook settings in configuration file")
         recipe = _check_recipe_path(create_recipe(cfg))

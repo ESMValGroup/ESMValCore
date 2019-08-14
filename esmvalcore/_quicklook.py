@@ -1,46 +1,76 @@
 """Creates recipes for EMAC simulation."""
 
-import logging
 import os
 
 import yaml
 
-logger = logging.getLogger(__name__)
+
+def _get_multi_plot_diags(plot_scripts):
+    """Get diagnostic to plot multiple datasets in one plot."""
+    for script_body in plot_scripts:
+        script_body['multi_dataset_plot'] = True
+        script_body['read_all_available_datasets'] = True
+    diag = {
+        'description': 'Plot multiple runs in one plot',
+        'scripts': plot_scripts,
+    }
+    return {'multi_run_plots': diag}
 
 
-def create_recipe(cfg):
-    """Create recipe for quicklook mode and return its path."""
-    print("Creating quicklook recipe")
-    start = cfg['quicklook'].get('start')
-    end = cfg['quicklook'].get('end')
-    # TODO: We should rename "recipes" to "diagnostics" in this context
-    recipes = cfg['quicklook'].get('recipes')
-    run_id = cfg['quicklook'].get('dataset-id')
-    preproc_dir = os.path.join(cfg['quicklook']['preproc_dir'], run_id)
-    recipe_dir = cfg['quicklook'].get('recipe_dir')
-
-    logger.debug("Creating directory %s", preproc_dir)
-    os.makedirs(preproc_dir, exist_ok=True)
+def _get_single_plot_diags(recipe_dir, recipes, plot_scripts, run_id):
+    """Get desired single plot diagnostics."""
     all_diagnostics = {}
     for recipe in recipes:
         recipe_name = f'diagnostics_{recipe}.yml'
         with open(os.path.join(recipe_dir, recipe_name)) as stream:
             diagnostics = yaml.load(stream, Loader=yaml.FullLoader)
-            for (diag_name, diag_content) in diagnostics.items():
-                diag_name = diag_name.format(run_id=run_id)
-                all_diagnostics[diag_name] = diag_content
+        for (diag_name, diag_content) in diagnostics.items():
+            diag_name = diag_name.format(run_id=run_id)
+            diag_content['scripts'] = plot_scripts
+            all_diagnostics[diag_name] = diag_content
+    return all_diagnostics
+
+
+def create_recipe(cfg):
+    """Create recipe for quicklook mode and return its path."""
+    print("INFO: Creating quicklook recipe")
+    opts = cfg['quicklook']
+    # TODO: We should rename "recipes" to "diagnostics" in this context
+    recipes = opts.get('recipes', [])
+    run_id = opts['dataset-id']
+    preproc_dir = os.path.join(opts['preproc_dir'], run_id)
+    recipe_dir = opts['recipe_dir']
+    if not os.path.isdir(preproc_dir):
+        os.makedirs(preproc_dir)
+        print(f"INFO: Created non-existent recipe directory '{preproc_dir}'")
+
+    # Get plot scripts
+    with open(os.path.join(recipe_dir, 'plot_scripts.yml')) as stream:
+        plot_scripts = yaml.load(stream, Loader=yaml.FullLoader)
+
+    # Get diagnostics
+    if opts['multi_run_plots']:
+        all_diagnostics = _get_multi_plot_diags(plot_scripts)
+    else:
+        all_diagnostics = _get_single_plot_diags(recipe_dir, recipes,
+                                                 plot_scripts, run_id)
+
+    # Get Header
     with open(os.path.join(recipe_dir, 'general.yml')) as stream:
         out = yaml.load(stream, Loader=yaml.FullLoader)
 
-    out['diagnostics'] = all_diagnostics
+    # Create recipe
     out['datasets'] = [{
         'dataset': run_id,
         'project': 'EMAC',
-        'start_year': start,
-        'end_year': end
+        'start_year': opts['start'],
+        'end_year': opts['end'],
     }]
+    out['diagnostics'] = all_diagnostics
+
+    # Write recipe
     path_to_recipe = os.path.join(preproc_dir, 'recipe_quicklook.yml')
     with open(path_to_recipe, 'w') as stream:
-        logger.debug("Writing %s to %s", recipe_name, preproc_dir)
         stream.write(yaml.dump(out))
+    print(f"INFO: Wrote quicklook recipe '{path_to_recipe}'")
     return path_to_recipe

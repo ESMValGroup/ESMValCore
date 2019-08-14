@@ -63,6 +63,3 @@ glob_timeseries_forcings_{run_id}:
     VOLC_SO2_s:
       mip: custom
       preprocessor: prep_zon
-  scripts:
-    glob_timeseries:
-      script: quicklooks/global_timeseries.py
