@@ -58,7 +58,7 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
 
     if cube.coord('latitude').ndim == 1:
         # Iris check if any point of the cell is inside the region
-        # To check only the center, ignore_bounds must be set to 
+        # To check only the center, ignore_bounds must be set to
         # True (default) is False
         region_subset = cube.intersection(
             longitude=(start_longitude, end_longitude),
