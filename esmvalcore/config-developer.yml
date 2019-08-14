@@ -289,3 +289,4 @@ EMAC:
     load:
       - {message: 'Ignoring netCDF variable .* invalid units .*', module: iris}
       - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
+      - {message: 'WARNING: _FillValue not used since it\ncannot be safely cast to variable data type', module: iris}
