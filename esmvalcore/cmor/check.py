@@ -345,8 +345,7 @@ class CMORCheck():
                     self.report_error(self._attr_msg, var_name, 'units',
                                       cmor.units, coord.units)
         self._check_coord_values(cmor, coord, var_name)
-        if not self.automatic_fixes:
-            self._check_coord_monotonicity_and_direction(cmor, coord, var_name)
+        self._check_coord_monotonicity_and_direction(cmor, coord, var_name)
 
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
