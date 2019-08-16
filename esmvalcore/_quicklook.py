@@ -7,7 +7,7 @@ import yaml
 
 def _get_multi_plot_diags(plot_scripts):
     """Get diagnostic to plot multiple datasets in one plot."""
-    for script_body in plot_scripts:
+    for script_body in plot_scripts.values():
         script_body['multi_dataset_plot'] = True
         script_body['read_all_available_datasets'] = True
     diag = {
