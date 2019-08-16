@@ -38,9 +38,6 @@ def get_custom_data_finder(variable):
             "project '%s' cannot not be loaded: %s", data_finder,
             variable['project'], str(exc))
         return None
-    logger.debug(
-        "Using custom data finder module extension '%s' for project '%s'",
-        data_finder, variable['project'])
     return data_finder_module
 
 
@@ -84,9 +81,6 @@ def get_start_end_year(filename, variable):
     custom_data_finder = get_custom_data_finder(variable)
     if (custom_data_finder is not None and hasattr(
             custom_data_finder, 'preprocess_filename_for_years')):
-        logger.debug(
-            "Using custom data finder function 'preprocess_filename_for_"
-            "years' for project '%s'", variable['project'])
         filename = custom_data_finder.preprocess_filename_for_years(filename,
                                                                     variable)
 
@@ -305,9 +299,6 @@ def get_input_filelist(variable, rootpath, drs):
     custom_data_finder = get_custom_data_finder(variable)
     if (custom_data_finder is not None and hasattr(custom_data_finder,
                                                    'get_input_filelist')):
-        logger.debug(
-            "Using custom data finder function 'get_input_filelist' for "
-            "project '%s'", variable['project'])
         files = custom_data_finder.get_input_filelist(variable, rootpath, drs)
     else:
         files = _find_input_files(variable, rootpath, drs)

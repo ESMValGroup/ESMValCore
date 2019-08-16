@@ -5,7 +5,7 @@ import logging
 import os
 import shutil
 import warnings
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from itertools import groupby
 
 import iris
@@ -30,8 +30,6 @@ VARIABLE_KEYS = {
     'reference_dataset',
     'alternative_dataset',
 }
-
-TimeRange = namedtuple('TimeRange', ['start', 'end'])
 
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
@@ -123,36 +121,17 @@ def _add_aux_time_coords(cube):
         iris.coord_categorisation.add_year(cube, 'time')
 
 
-def _extract_time_range(cube):
-    """Extract time range of a cube."""
-    time_coord = cube.coord('time')
-    start = time_coord.units.num2date(time_coord.points[0])
-    end = time_coord.units.num2date(time_coord.points[-1])
-    return TimeRange(start=start, end=end)
-
-
-def _to_iris_partial_datetime(time_object):
-    """Convert :mod:`datetime` object to :mod:`iris.time.PartialDateTime`."""
-    return iris.time.PartialDateTime(
-        year=time_object.year,
-        month=time_object.month,
-        day=time_object.day,
-        hour=time_object.hour,
-        minute=time_object.minute,
-        second=time_object.second,
-        microsecond=time_object.microsecond,
-    )
-
-
 def _fix_cube_metadata(cubes):
     """Fix metadata of cubes prior to concatenation."""
     fix_cube_attributes(cubes)
 
-    # Remove auxiliary time units
+    # Remove temporal auxiliary coordinates
     for cube in cubes:
         time_idx = cube.coord_dims('time')
+        if time_idx:
+            time_idx = time_idx[0]
         for coord in cube.coords(dim_coords=False,
-                                 contains_dimension=time_idx[0]):
+                                 contains_dimension=time_idx):
             cube.remove_coord(coord)
 
     # Fix coordinate units
@@ -175,10 +154,25 @@ def _realize_cube(cube):
         coord.bounds
 
 
+def _get_cube_dict(cube):
+    """Get dictionary of cubes (values) with respective years (keys)."""
+    cubes = {}
+    try:
+        cube.remove_coord('year')
+    except iris.exceptions.CoordinateNotFoundError:
+        pass
+    iris.coord_categorisation.add_year(cube, 'time')
+    years = set(cube.coord('year').points)
+    for year in years:
+        single_year_cube = cube.extract(iris.Constraint(year=year))
+        cubes[year] = single_year_cube
+    return cubes
+
+
 def _concatenate_along_time(old_cube, new_cube, descr=None):
     """Check consistency and concatenate two cubes along time dimension."""
-    old_time_range = _extract_time_range(old_cube)
-    new_time_range = _extract_time_range(new_cube)
+    old_cube_dict = _get_cube_dict(old_cube)
+    new_cube_dict = _get_cube_dict(new_cube)
 
     # Extend logger message
     if descr is not None:
@@ -187,27 +181,18 @@ def _concatenate_along_time(old_cube, new_cube, descr=None):
         descr = ''
 
     # Check if time ranges overlap
-    latest_start = max(old_time_range.start, new_time_range.start)
-    earliest_end = min(old_time_range.end, new_time_range.end)
-    if earliest_end - latest_start > datetime.timedelta():
+    old_time_range = set(old_cube_dict.keys())
+    new_time_range = set(new_cube_dict.keys())
+    intersection = old_time_range & new_time_range
+    if intersection:
         ql_info(
-            logger,
-            "%sOld and new cubes overlap in time dimension, got %s for old "
-            "cube and %s for new cube", descr, old_time_range, new_time_range)
-        start = _to_iris_partial_datetime(new_time_range[0])
-        end = _to_iris_partial_datetime(new_time_range[1])
-        time_constraint = iris.Constraint(
-            time=lambda cell: cell.point < start or cell.point > end)
-        old_cube = old_cube.extract(time_constraint)
-        if old_cube is None:
-            ql_info(logger, "%sOverwriting all data of old cube with new cube",
-                    descr)
-            return new_cube
-        ql_info(logger,
-                "%sOverwriting parts of old cube with data of new cube", descr)
+            logger, "%sTime ranges for old and new files overlap for the "
+            "years %s, overwriting old data of those years", descr,
+            list(intersection))
+    old_cube_dict.update(new_cube_dict)
 
     # Build final cube and realize data to avoid data loss
-    cubes = iris.cube.CubeList([old_cube, new_cube])
+    cubes = iris.cube.CubeList(list(old_cube_dict.values()))
     _fix_cube_metadata(cubes)
     final_cube = cubes.concatenate_cube(check_aux_coords=False)
     _add_aux_time_coords(final_cube)
@@ -401,9 +386,10 @@ def save(cubes,
         return filename
 
     # Save file regularly
-    if all([os.path.exists(filename),
-            all(cube.has_lazy_data() for cube in cubes),
-            not force_saving]):
+    if all([
+            os.path.exists(filename),
+            all(cube.has_lazy_data() for cube in cubes), not force_saving
+    ]):
         logger.debug(
             "Not saving cubes %s to %s to avoid data loss. "
             "The cube is probably unchanged.", cubes, filename)
@@ -455,8 +441,8 @@ def _ordered_safe_dump(data, stream):
 def write_metadata(products, write_ncl=False):
     """Write product metadata to file."""
     output_files = []
-    for output_dir, prods in groupby(
-            products, lambda p: os.path.dirname(p.filename)):
+    for output_dir, prods in groupby(products,
+                                     lambda p: os.path.dirname(p.filename)):
         sorted_products = sorted(
             prods,
             key=lambda p: (

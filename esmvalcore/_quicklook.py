@@ -44,29 +44,26 @@ def create_recipe(cfg):
         os.makedirs(preproc_dir)
         print(f"INFO: Created non-existent recipe directory '{preproc_dir}'")
 
-    # Get plot scripts
-    with open(os.path.join(recipe_dir, 'plot_scripts.yml')) as stream:
-        plot_scripts = yaml.load(stream, Loader=yaml.FullLoader)
-
-    # Get diagnostics
-    if opts['multi_run_plots']:
-        all_diagnostics = _get_multi_plot_diags(plot_scripts)
-    else:
-        all_diagnostics = _get_single_plot_diags(recipe_dir, recipes,
-                                                 plot_scripts, run_id)
-
     # Get Header
     with open(os.path.join(recipe_dir, 'general.yml')) as stream:
         out = yaml.load(stream, Loader=yaml.FullLoader)
 
-    # Create recipe
-    out['datasets'] = [{
-        'dataset': run_id,
-        'project': 'EMAC',
-        'start_year': opts['start'],
-        'end_year': opts['end'],
-    }]
-    out['diagnostics'] = all_diagnostics
+    # Get plot scripts
+    with open(os.path.join(recipe_dir, 'plot_scripts.yml')) as stream:
+        plot_scripts = yaml.load(stream, Loader=yaml.FullLoader)
+
+    # Get diagnostics and datasets
+    if opts['multi_run_plots']:
+        out['diagnostics'] = _get_multi_plot_diags(plot_scripts)
+    else:
+        out['diagnostics'] = _get_single_plot_diags(recipe_dir, recipes,
+                                                    plot_scripts, run_id)
+        out['datasets'] = [{
+            'dataset': run_id,
+            'project': 'EMAC',
+            'start_year': opts['start'],
+            'end_year': opts['end'],
+        }]
 
     # Write recipe
     path_to_recipe = os.path.join(preproc_dir, 'recipe_quicklook.yml')
