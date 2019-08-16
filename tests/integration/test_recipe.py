@@ -713,7 +713,7 @@ def test_diagnostic_task_provenance(
         patched_datafinder,
         monkeypatch,
         config_user,
-        ):
+):
     monkeypatch.setattr(esmvalcore._config, 'TAGS', TAGS)
     monkeypatch.setattr(esmvalcore._recipe, 'TAGS', TAGS)
     monkeypatch.setattr(esmvalcore._task, 'TAGS', TAGS)
@@ -790,7 +790,6 @@ def test_diagnostic_task_provenance(
 
 
 def test_alias_generation(tmp_path, patched_datafinder, config_user):
-
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -809,14 +808,15 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                   - {dataset: GFDL-CM3,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r2i1p1}
-                  - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: custom_alias}
+                  - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: my_alias}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
-                  - {project: CMIP6, dataset: GFDL-CM3,  ensemble: r1i1p1}
-                  - {project: CMIP6, dataset: EC-EARTH,  ensemble: r1i1p1}
-                  - {project: CMIP6, dataset: HADGEM,  ensemble: r1i1p1}
+                  - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1}
+                  - {project: CMIP6, activity: CMP, dataset: GF2, ensemble: r1}
+                  - {project: CMIP6, activity: HRMP, dataset: EC, ensemble: r1}
+                  - {project: CMIP6, activity: HRMP, dataset: HA, ensemble: r1}
             scripts: null
-        """)
+        """)  # noqa:
 
     recipe = get_recipe(tmp_path, content, config_user)
     assert len(recipe.diagnostics) == 1
@@ -832,14 +832,16 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                 elif dataset['ensemble'] == 'r2i1p1':
                     assert dataset['alias'] == 'CMIP5_EC-EARTH_r2i1p1'
                 else:
-                    assert dataset['alias'] == 'custom_alias'
+                    assert dataset['alias'] == 'my_alias'
         elif dataset['project'] == 'CMIP6':
-            if dataset['dataset'] == 'GFDL-CM3':
-                assert dataset['alias'] == 'CMIP6_GFDL-CM3'
-            elif dataset['dataset'] == 'EC-EARTH':
-                assert dataset['alias'] == 'CMIP6_EC-EARTH'
+            if dataset['dataset'] == 'GF3':
+                assert dataset['alias'] == 'CMIP6_CMP_GF3'
+            elif dataset['dataset'] == 'GF2':
+                assert dataset['alias'] == 'CMIP6_CMP_GF2'
+            elif dataset['dataset'] == 'EC':
+                assert dataset['alias'] == 'CMIP6_HRMP_EC'
             else:
-                assert dataset['alias'] == 'CMIP6_HADGEM'
+                assert dataset['alias'] == 'CMIP6_HRMP_HA'
         else:
             if dataset['version'] == 1:
                 assert dataset['alias'] == 'OBS_1'
