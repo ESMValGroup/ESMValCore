@@ -906,8 +906,6 @@ class Recipe:
             variable = deepcopy(raw_variable)
             variable.update(dataset)
 
-
-
             variable['recipe_dataset_index'] = index
             if ('cmor_table' not in variable
                     and variable.get('project') in CMOR_TABLES):

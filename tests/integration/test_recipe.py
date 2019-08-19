@@ -712,8 +712,7 @@ def test_diagnostic_task_provenance(
         tmp_path,
         patched_datafinder,
         monkeypatch,
-        config_user,
-    ):
+        config_user,):
     monkeypatch.setattr(esmvalcore._config, 'TAGS', TAGS)
     monkeypatch.setattr(esmvalcore._recipe, 'TAGS', TAGS)
     monkeypatch.setattr(esmvalcore._task, 'TAGS', TAGS)
