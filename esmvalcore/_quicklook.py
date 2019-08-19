@@ -37,7 +37,12 @@ def create_recipe(cfg):
     opts = cfg['quicklook']
     # TODO: We should rename "recipes" to "diagnostics" in this context
     recipes = opts.get('recipes', [])
-    run_id = opts['dataset-id']
+    if opts['dataset-id'] is True:
+        multi_run_plots = True
+        run_id = 'multi-run-plots'
+    else:
+        multi_run_plots = False
+        run_id = opts['dataset-id']
     preproc_dir = os.path.join(opts['preproc_dir'], run_id)
     recipe_dir = opts['recipe_dir']
     if not os.path.isdir(preproc_dir):
@@ -53,7 +58,7 @@ def create_recipe(cfg):
         plot_scripts = yaml.load(stream, Loader=yaml.FullLoader)
 
     # Get diagnostics and datasets
-    if opts['multi_run_plots']:
+    if multi_run_plots:
         out['diagnostics'] = _get_multi_plot_diags(plot_scripts)
     else:
         out['diagnostics'] = _get_single_plot_diags(recipe_dir, recipes,

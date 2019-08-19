@@ -98,16 +98,15 @@ def get_args():
                         nargs='*',
                         help="Only run the named diagnostics from the recipe.")
     parser.add_argument('--quicklook',
+                        nargs='?',
                         metavar='SIMULATION-ID',
+                        default=False,
+                        const=True,
                         type=str,
                         help='Sets quicklook mode by setting identifier for ' +
-                        'individual simulation.')
-    parser.add_argument('--multi-run-plots',
-                        action='store_true',
-                        help="Only available in quicklook mode. Create plots "
-                        "containing multiple runs. Scans whole quicklook "
-                        "directory. Ignores 'SIMULATION-ID', 'startyear' and "
-                        "'endyear' settings.")
+                        'individual simulation. If no simulation is '
+                        'specified, scan whole quicklook directory and create '
+                        'multi-run plots.')
     parser.add_argument('--startyear',
                         type=int,
                         help='Only available in quicklook mode. Set start '
@@ -127,6 +126,27 @@ def _check_recipe_path(recipe):
     return os.path.abspath(os.path.expandvars(os.path.expanduser(recipe)))
 
 
+def _get_quicklook_recipe(args, config_file):
+    """Create recipe in case of quicklook mode."""
+    cfg = read_config_user_file(config_file, 'quicklook')
+    if not cfg['quicklook']['active']:
+        raise ValueError(
+            "Using the option '--quicklook' is only possible if the "
+            "quicklook mode is active in 'config-user.yml' (set "
+            "'active: true' in the section 'quicklook')")
+    cfg['quicklook']['dataset-id'] = args.quicklook
+    if args.quicklook is not True:
+        for arg in ('startyear', 'endyear'):
+            if getattr(args, arg) is None:
+                raise ValueError(
+                    f"Argument '--{arg}' is necessary if a SIMULATION-ID "
+                    f"is specified as the '--quicklook' argument")
+        cfg['quicklook']['start'] = args.startyear
+        cfg['quicklook']['end'] = args.endyear
+    recipe = _check_recipe_path(create_recipe(cfg))
+    return (recipe, cfg)
+
+
 def main(args):
     """Define the `esmvaltool` program."""
     config_file = os.path.abspath(
@@ -136,21 +156,9 @@ def main(args):
     if not os.path.exists(config_file):
         print("ERROR: config file {} does not exist".format(config_file))
 
+    # Quicklook settings
     if args.quicklook:
-        cfg = read_config_user_file(config_file, 'quicklook')
-        if cfg['quicklook']['active']:
-            cfg['quicklook']['dataset-id'] = args.quicklook
-            cfg['quicklook']['multi_run_plots'] = args.multi_run_plots
-            if not args.multi_run_plots:
-                for arg in ('startyear', 'endyear'):
-                    if getattr(args, arg) is None:
-                        raise ValueError(f"Argument '--{arg}' is necessary "
-                                         f"in quicklook mode")
-                cfg['quicklook']['start'] = args.startyear
-                cfg['quicklook']['end'] = args.endyear
-        else:
-            print("ERROR: Check the quicklook settings in configuration file")
-        recipe = _check_recipe_path(create_recipe(cfg))
+        (recipe, cfg) = _get_quicklook_recipe(args, config_file)
     else:
         recipe = _check_recipe_path(args.recipe)
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
