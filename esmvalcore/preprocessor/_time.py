@@ -9,6 +9,7 @@ from warnings import filterwarnings
 
 import cf_units
 import iris
+import iris.util
 import iris.coord_categorisation
 import numpy as np
 
@@ -411,26 +412,91 @@ def climate_statistics(cube, operator='mean', period='full'):
             cube = cube.collapsed('time', operator_method)
         return cube
 
-    clim_coord = 'clim_coord'
     if period in ['daily', 'day']:
-        iris.coord_categorisation.add_day_of_year(
-            cube, 'time', name=clim_coord
-        )
+        iris.coord_categorisation.add_day_of_year(cube, 'time')
+        clim_coord = 'day_of_year'
     elif period in ['monthly', 'month', 'mon']:
-        iris.coord_categorisation.add_month_number(
-            cube, 'time', name=clim_coord
-        )
+        iris.coord_categorisation.add_month_number(cube, 'time')
+        clim_coord = 'month_number'
     elif period in ['seasonal', 'season']:
-        iris.coord_categorisation.add_season(
-            cube, 'time', name=clim_coord
-        )
+        iris.coord_categorisation.add_season_number(cube, 'time')
+        iris.coord_categorisation.add_season(cube, 'time')
+        clim_coord = 'season_number'
     else:
         raise ValueError(
             'Climate_statistics does not support period %s' % period
         )
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(clim_coord, operator)
-    cube.remove_coord(clim_coord)
+    cube.remove_coord('time')
+    iris.util.promote_aux_coord_to_dim_coord(cube, clim_coord)
+    return cube
+
+
+def anomalies(cube, period):
+    """
+    Compute anomalies using a mean with the specified granularity.
+
+    Computes anomalies based on daily, monthly, seasonal or yearly means for
+    the full available period
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+
+    period: str, optional
+        Period to compute the statistic over.
+        Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
+        'mon', 'daily', 'day'
+
+    Returns
+    -------
+    iris.cube.Cube
+        Monthly statistics cube
+    """
+
+    reference = climate_statistics(cube, period=period)
+    if period in ['full']:
+        return cube - reference
+    elif period in ['daily', 'day']:
+        if not cube.coords('day_of_year'):
+            iris.coord_categorisation.add_day_of_year(cube, 'time')
+        if not reference.coords('day_of_year'):
+            iris.coord_categorisation.add_day_of_year(reference, 'time')
+        cube_coord = cube.coord('day_of_year')
+        ref_coord = reference.coord('day_of_year')
+    elif period in ['monthly', 'month', 'mon']:
+        if not cube.coords('month_number'):
+            iris.coord_categorisation.add_month_number(cube, 'time')
+        if not reference.coords('month_number'):
+            iris.coord_categorisation.add_month_number(reference, 'time')
+        cube_coord = cube.coord('month_number')
+        ref_coord = reference.coord('month_number')
+    elif period in ['seasonal', 'season']:
+        if not cube.coords('season_number'):
+            iris.coord_categorisation.add_season_number(cube, 'time')
+        if not reference.coords('season_number'):
+            iris.coord_categorisation.add_season_number(reference, 'time')
+        cube_coord = cube.coord('season_number')
+        ref_coord = reference.coord('season_number')
+    else:
+        raise ValueError('Period %s not supported')
+
+    data = cube.core_data()
+    cube_time = cube.coord('time')
+    ref = {}
+    for ref_slice in reference.slices_over(ref_coord):
+        ref[ref_slice.coord(ref_coord).points[0]] = np.ravel(
+            ref_slice.core_data())
+
+    for i in range(cube_time.shape[0]):
+        time = cube_time.points[i]
+        indexes = cube_time.points == time
+        indexes = np.ones_like(data, dtype=bool) * indexes
+        data[indexes] = data[indexes] - ref[cube_coord.points[i]]
+
+    cube = cube.copy(data)
     return cube
 
 
