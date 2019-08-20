@@ -98,22 +98,23 @@ def get_args():
                         nargs='*',
                         help="Only run the named diagnostics from the recipe.")
     parser.add_argument('--quicklook',
-                        nargs='?',
+                        nargs='+',
                         metavar='SIMULATION-ID',
-                        default=False,
-                        const=True,
                         type=str,
                         help='Sets quicklook mode by setting identifier for ' +
-                        'individual simulation. If no simulation is '
-                        'specified, scan whole quicklook directory and create '
-                        'multi-run plots.')
+                        'individual simulation(s). If multiple simulations '
+                        'are given, produce multi-run plots for all given '
+                        'runs.')
     parser.add_argument('--startyear',
                         type=int,
                         help='Only available in quicklook mode. Set start '
-                        'year.')
+                        'year. Only necessary if exactly one SIMULATION-ID is '
+                        'given.')
     parser.add_argument('--endyear',
                         type=int,
-                        help='Only available in quicklook mode. Set end year.')
+                        help='Only available in quicklook mode. Set end year. '
+                        'Only necessary if exactly one SIMULATION-ID is '
+                        'given')
     args = parser.parse_args()
     return args
 
@@ -134,8 +135,8 @@ def _get_quicklook_recipe(args, config_file):
             "Using the option '--quicklook' is only possible if the "
             "quicklook mode is active in 'config-user.yml' (set "
             "'active: true' in the section 'quicklook')")
-    cfg['quicklook']['dataset-id'] = args.quicklook
-    if args.quicklook is not True:
+    cfg['quicklook']['dataset-ids'] = args.quicklook
+    if len(args.quicklook) < 2:
         for arg in ('startyear', 'endyear'):
             if getattr(args, arg) is None:
                 raise ValueError(
@@ -157,7 +158,7 @@ def main(args):
         print("ERROR: config file {} does not exist".format(config_file))
 
     # Quicklook settings
-    if args.quicklook:
+    if args.quicklook is not None:
         (recipe, cfg) = _get_quicklook_recipe(args, config_file)
     else:
         recipe = _check_recipe_path(args.recipe)
