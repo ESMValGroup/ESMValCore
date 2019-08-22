@@ -12,6 +12,7 @@ import iris
 import iris.util
 import iris.coord_categorisation
 import numpy as np
+import dask.array as da
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
@@ -487,7 +488,7 @@ def anomalies(cube, period):
     cube_time = cube.coord('time')
     ref = {}
     for ref_slice in reference.slices_over(ref_coord):
-        ref[ref_slice.coord(ref_coord).points[0]] = np.ravel(
+        ref[ref_slice.coord(ref_coord).points[0]] = da.ravel(
             ref_slice.core_data())
     cube_coord_dim = cube.coord_dims(cube_coord)[0]
     for i in range(cube_time.shape[0]):
