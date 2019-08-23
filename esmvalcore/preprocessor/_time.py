@@ -246,7 +246,7 @@ def seasonal_statistics(cube, operator='mean'):
     """
     Compute seasonal statistics.
 
-    Chunks time in 3-month periods and computes means over them;
+    Chunks time in 3-month periods and computes statistics over them;
 
     Parameters
     ----------
