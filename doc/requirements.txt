@@ -1,0 +1,10 @@
+dask[array]
+netCDF4
+numba
+numpy
+pillow
+prov[dot]
+pyyaml
+scipy
+shapely
+yamale

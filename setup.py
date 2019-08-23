@@ -29,6 +29,7 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cf-units',
+        'dask[array]',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numba',
@@ -44,10 +45,8 @@ REQUIREMENTS = {
     # Execute 'python setup.py test' to run tests
     'test': [
         'easytest',
-        # TODO: add dummydata package, see environment.yml
         'mock',
         'nose',
-        'pycodestyle',
         'pytest>=3.9',
         'pytest-cov',
         'pytest-env',
@@ -59,10 +58,7 @@ REQUIREMENTS = {
     # Use pip install -e .[develop] to install in development mode
     'develop': [
         'isort',
-        'prospector[with_pyroma]',
-        'pycodestyle',
-        'pydocstyle',
-        'pylint',
+        'prospector[with_pyroma]!=1.1.6.3,!=1.1.6.4',
         'sphinx',
         'sphinx_rtd_theme',
         'vmprof',
@@ -156,7 +152,7 @@ with open('README.md') as readme:
 setup(
     name='ESMValCore',
     version=__version__,
-    description='Earth System Models eValuation Core',
+    description='Earth System Models eValuation Tool Core',
     long_description=README,
     url='https://www.esmvaltool.org',
     download_url='https://github.com/ESMValGroup/ESMValCore',
@@ -174,7 +170,9 @@ setup(
     setup_requires=REQUIREMENTS['setup'],
     install_requires=REQUIREMENTS['install'],
     tests_require=REQUIREMENTS['test'],
-    extras_require={'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test']},
+    extras_require={
+        'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
+    },
     entry_points={
         'console_scripts': [
             'esmvaltool = esmvalcore._main:run',

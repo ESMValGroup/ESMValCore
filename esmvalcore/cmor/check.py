@@ -178,9 +178,35 @@ class CMORCheck():
         # Check standard_name
         if self._cmor_var.standard_name:
             if self._cube.standard_name != self._cmor_var.standard_name:
-                self.report_error(
-                    self._attr_msg, self._cube.var_name, 'standard_name',
-                    self._cmor_var.standard_name, self._cube.standard_name)
+                if self.automatic_fixes:
+                    self.report_warning(
+                        'Standard name for %s changed from %s to %s',
+                        self._cube.var_name,
+                        self._cube.standard_name,
+                        self._cmor_var.standard_name
+                    )
+                    self._cube.standard_name = self._cmor_var.standard_name
+                else:
+                    self.report_error(
+                        self._attr_msg, self._cube.var_name, 'standard_name',
+                        self._cmor_var.standard_name, self._cube.standard_name
+                    )
+        # Check long_name
+        if self._cmor_var.long_name:
+            if self._cube.long_name != self._cmor_var.long_name:
+                if self.automatic_fixes:
+                    self.report_warning(
+                        'Long name for %s changed from %s to %s',
+                        self._cube.var_name,
+                        self._cube.long_name,
+                        self._cmor_var.long_name
+                    )
+                    self._cube.long_name = self._cmor_var.long_name
+                else:
+                    self.report_error(
+                        self._attr_msg, self._cube.var_name, 'long_name',
+                        self._cmor_var.long_name, self._cube.long_name
+                    )
 
         # Check units
         if (self.automatic_fixes and self._cube.attributes.get(
@@ -319,8 +345,7 @@ class CMORCheck():
                     self.report_error(self._attr_msg, var_name, 'units',
                                       cmor.units, coord.units)
         self._check_coord_values(cmor, coord, var_name)
-        if not self.automatic_fixes:
-            self._check_coord_monotonicity_and_direction(cmor, coord, var_name)
+        self._check_coord_monotonicity_and_direction(cmor, coord, var_name)
 
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
@@ -393,21 +418,47 @@ class CMORCheck():
     def _check_time_coord(self):
         """Check time coordinate."""
         try:
-            coord = self._cube.coord('time', dim_coords=True)  # , axis='T')
-            var_name = coord.var_name
+            coord = self._cube.coord('time', dim_coords=True)
         except iris.exceptions.CoordinateNotFoundError:
-            return
+            try:
+                coord = self._cube.coord('time')
+            except iris.exceptions.CoordinateNotFoundError:
+                return
+
+        var_name = coord.var_name
+        if not coord.is_monotonic():
+            self.report_error(
+                'Time coordinate for var {} is not monotonic', var_name
+            )
 
         if not coord.units.is_time_reference():
             self.report_error(self._does_msg, var_name,
                               'have time reference units')
         else:
+            old_units = coord.units
             coord.convert_units(
                 cf_units.Unit(
-                    'days since 1950-1-1 00:00:00',
+                    'days since 1850-1-1 00:00:00',
                     calendar=coord.units.calendar))
             simplified_cal = self._simplify_calendar(coord.units.calendar)
             coord.units = cf_units.Unit(coord.units.origin, simplified_cal)
+
+            attrs = self._cube.attributes
+            branch_child = 'branch_time_in_child'
+            if branch_child in attrs:
+                attrs[branch_child] = old_units.convert(attrs[branch_child],
+                                                        coord.units)
+
+            parent_time = 'parent_time_units'
+            if parent_time in attrs:
+                parent_units = cf_units.Unit(attrs[parent_time],
+                                             simplified_cal)
+                attrs[parent_time] = 'days since 1850-1-1 00:00:00'
+
+                branch_parent = 'branch_time_in_parent'
+                if branch_parent in attrs:
+                    attrs[branch_parent] = parent_units.convert(
+                        attrs[branch_parent], coord.units)
 
         tol = 0.001
         intervals = {'dec': (3600, 3660), 'day': (1, 1)}
