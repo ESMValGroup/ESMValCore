@@ -1,7 +1,6 @@
 """Tests for the fixes of CESM2."""
 import iris
 import pytest
-from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cmip6.hadgem3_gc31_ll import AllVars
 from esmvalcore.cmor.fix import Fix

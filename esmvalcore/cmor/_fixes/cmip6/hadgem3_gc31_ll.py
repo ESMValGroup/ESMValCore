@@ -1,5 +1,6 @@
 from ..fix import Fix
 
+
 class AllVars(Fix):
     """Fixes for tas."""
 
@@ -17,10 +18,10 @@ class AllVars(Fix):
 
         """
         parent_units = 'parent_time_units'
+        bad_value = 'days since 1850-01-01-00-00-00'
         for cube in cubes:
             try:
-                if (cube.attributes[parent_units] ==
-                    'days since 1850-01-01-00-00-00'):
+                if cube.attributes[parent_units] == bad_value:
                     cube.attributes[parent_units] = 'days since 1850-01-01'
             except AttributeError:
                 pass
