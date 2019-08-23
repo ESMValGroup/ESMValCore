@@ -960,6 +960,9 @@ class Recipe:
         to the alias only if the previous ones where not enough to fully
         identify the dataset.
 
+        If key values are not strings, they will be joint using '-' if they
+        are iterables or replaced by they string representation if they are not
+
         Function will not modify alias if it is manually added to the recipe
         but it will use the dataset info to compute the others
 
@@ -993,9 +996,20 @@ class Recipe:
             preprocessor output dictionary
         """
         datasets_info = set()
+
+        def _key_str(obj):
+            if isinstance(obj, str):
+                return obj
+            try:
+                return '-'.join(obj)
+            except TypeError:
+                return str(obj)
+
         for variable in preprocessor_output.values():
             for dataset in variable:
-                alias = tuple(dataset.get(key, None) for key in self.info_keys)
+                alias = tuple(
+                    _key_str(dataset.get(key, None)) for key in self.info_keys
+                )
                 datasets_info.add(alias)
                 if 'alias' not in dataset:
                     dataset['alias'] = alias
