@@ -319,7 +319,7 @@ class CMORCheck():
                                 coordinate.name,
                                 coord.var_name,
                                 coordinate.out_name,
-                                )
+                            )
                     except iris.exceptions.CoordinateNotFoundError:
                         self.report_error(self._does_msg, coordinate.name,
                                           'exist')

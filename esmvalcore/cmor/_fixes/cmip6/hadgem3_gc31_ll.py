@@ -6,7 +6,7 @@ class AllVars(Fix):
 
     def fix_metadata(self, cubes):
         """
-        Fix parent time units
+        Fix parent time units.
 
         Parameters
         ----------
