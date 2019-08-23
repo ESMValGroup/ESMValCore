@@ -152,7 +152,7 @@ with open('README.md') as readme:
 setup(
     name='ESMValCore',
     version=__version__,
-    description='Earth System Models eValuation Core',
+    description='Earth System Models eValuation Tool Core',
     long_description=README,
     url='https://www.esmvaltool.org',
     download_url='https://github.com/ESMValGroup/ESMValCore',
