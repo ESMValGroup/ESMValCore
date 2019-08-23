@@ -323,6 +323,36 @@ class TestCMIP3Info(unittest.TestCase):
         self.assertEqual(var.frequency, '')
 
 
+class TestCORDEXInfo(unittest.TestCase):
+    """Test for the CORDEX info class."""
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Set up tests.
+
+        We read CORDEX once to keep testing times manageable
+        """
+        cls.variables_info = CMIP5Info('cordex', default=CustomInfo())
+
+    def test_custom_tables_location(self):
+        """Test constructor with custom tables location."""
+        cwd = os.path.dirname(os.path.realpath(__file__))
+        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
+                                        'cmor', 'tables', 'cordex')
+        cmor_tables_path = os.path.abspath(cmor_tables_path)
+        CMIP5Info(cmor_tables_path)
+
+    def test_get_variable_tas(self):
+        """Get tas variable."""
+        var = self.variables_info.get_variable('mon', 'tas')
+        self.assertEqual(var.short_name, 'tas')
+
+    def test_get_bad_variable(self):
+        """Get none if a variable is not in the given table."""
+        self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
+
+
 class TestCustomInfo(unittest.TestCase):
     """Test for the custom info class."""
 
