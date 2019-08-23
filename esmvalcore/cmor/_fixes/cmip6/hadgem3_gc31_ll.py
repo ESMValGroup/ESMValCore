@@ -1,8 +1,9 @@
+"""Fixes for CMIP6 HadGEM-GC31-LL."""
 from ..fix import Fix
 
 
 class AllVars(Fix):
-    """Fixes for tas."""
+    """Fixes for all vars."""
 
     def fix_metadata(self, cubes):
         """
