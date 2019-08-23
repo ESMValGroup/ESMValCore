@@ -38,7 +38,7 @@ class TestCMIP6Info(unittest.TestCase):
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable('Omon', 'ta'))
+        self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
 
 
 class Testobs4mipsInfo(unittest.TestCase):
@@ -71,7 +71,7 @@ class Testobs4mipsInfo(unittest.TestCase):
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable('Omon', 'ta'))
+        self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
 
 
 class TestCMIP5Info(unittest.TestCase):
@@ -101,7 +101,7 @@ class TestCMIP5Info(unittest.TestCase):
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable('Omon', 'ta'))
+        self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
 
 
 class TestCustomInfo(unittest.TestCase):
