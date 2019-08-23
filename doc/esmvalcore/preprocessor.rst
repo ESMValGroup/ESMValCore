@@ -546,7 +546,7 @@ Time manipulation
 The ``_time.py`` module contains the following preprocessor functions:
 
 * extract_time_: Extract a time range from a cube.
-* extract_season: Extract only the times that occur within a specific season.
+* extract_season_: Extract only the times that occur within a specific season.
 * extract_month_: Extract only the times that occur within a specific month.
 * daily_statistics_: Compute statistics for each day
 * monthly_statistics_: Compute statistics for each month

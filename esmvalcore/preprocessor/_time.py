@@ -30,7 +30,7 @@ for _coord in (
     filterwarnings(
         'ignore',
         "Collapsing a non-contiguous coordinate. "
-        f"Metadata may not be fully descriptive for '{_coord}'.",
+        f"Metadata may not be fully descriptive for '{0}'.".format(_coord),
         category=UserWarning,
         module='iris',
     )
@@ -215,7 +215,7 @@ def monthly_statistics(cube, operator='mean'):
     """
     Compute monthly statistics.
 
-    Chunks time in monthly periods and computes means over them;
+    Chunks time in monthly periods and computes statistics over them;
 
     Parameters
     ----------
@@ -317,10 +317,8 @@ def annual_statistics(cube, operator='mean'):
     Returns
     -------
     iris.cube.Cube
-        Annual mean cube
+        Annual statistics cube
     """
-    # time_weights = get_time_weights(cube)
-
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
 
@@ -352,10 +350,8 @@ def decadal_statistics(cube, operator='mean'):
     Returns
     -------
     iris.cube.Cube
-        Annual mean cube
+        Decadal statistics cube
     """
-    # time_weights = get_time_weights(cube)
-
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
 
@@ -377,8 +373,8 @@ def climate_statistics(cube, operator='mean', period='full'):
     """
     Compute climate statistics with the specified granularity.
 
-    Computes daily, monthly, seasonal or yearly statistics for the
-    full available period
+    Computes statistics for the whole dataset. It is possible to get them for
+    the full period or with the data griouped by day, month or season
 
     Parameters
     ----------
@@ -456,33 +452,12 @@ def anomalies(cube, period):
     iris.cube.Cube
         Monthly statistics cube
     """
-
     reference = climate_statistics(cube, period=period)
     if period in ['full']:
         return cube - reference
-    elif period in ['daily', 'day']:
-        if not cube.coords('day_of_year'):
-            iris.coord_categorisation.add_day_of_year(cube, 'time')
-        if not reference.coords('day_of_year'):
-            iris.coord_categorisation.add_day_of_year(reference, 'time')
-        cube_coord = cube.coord('day_of_year')
-        ref_coord = reference.coord('day_of_year')
-    elif period in ['monthly', 'month', 'mon']:
-        if not cube.coords('month_number'):
-            iris.coord_categorisation.add_month_number(cube, 'time')
-        if not reference.coords('month_number'):
-            iris.coord_categorisation.add_month_number(reference, 'time')
-        cube_coord = cube.coord('month_number')
-        ref_coord = reference.coord('month_number')
-    elif period in ['seasonal', 'season']:
-        if not cube.coords('season_number'):
-            iris.coord_categorisation.add_season_number(cube, 'time')
-        if not reference.coords('season_number'):
-            iris.coord_categorisation.add_season_number(reference, 'time')
-        cube_coord = cube.coord('season_number')
-        ref_coord = reference.coord('season_number')
-    else:
-        raise ValueError('Period %s not supported')
+
+    cube_coord = _get_period_coord(cube, period)
+    ref_coord = _get_period_coord(reference, period)
 
     data = cube.core_data()
     cube_time = cube.coord('time')
@@ -502,6 +477,20 @@ def anomalies(cube, period):
     cube = cube.copy(data)
     return cube
 
+def _get_period_coord(cube, period):
+    if period in ['daily', 'day']:
+        if not cube.coords('day_of_year'):
+            iris.coord_categorisation.add_day_of_year(cube, 'time')
+        return cube.coord('day_of_year')
+    elif period in ['monthly', 'month', 'mon']:
+        if not cube.coords('month_number'):
+            iris.coord_categorisation.add_month_number(cube, 'time')
+        return cube.coord('month_number')
+    elif period in ['seasonal', 'season']:
+        if not cube.coords('season_number'):
+            iris.coord_categorisation.add_season_number(cube, 'time')
+        return cube.coord('season_number')
+    raise ValueError('Period %s not supported')
 
 def regrid_time(cube, frequency):
     """
