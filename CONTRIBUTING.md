@@ -2,7 +2,7 @@
 
 If you would like to contribute a new diagnostic and recipe or a new feature, please discuss your idea with the development team before getting started, to avoid double work and/or disappointment later. A good way to do this is to open an [issue on GitHub](https://github.com/ESMValGroup/ESMValTool/issues). This is also a good way to get help.
 
-If you have a bug to report, please do so using the [issues tab on the ESMValTool Core github repository](https://github.com/ESMValGroup/ESMValCore/issues).
+If you have a bug to report, please do so using the [issues tab on the ESMValCore github repository](https://github.com/ESMValGroup/ESMValCore/issues).
 
 To get started developing, follow the instructions below. More detailed instructions can be found in the [manual](https://esmvaltool.readthedocs.io) under Developer's Guide.
 
@@ -11,7 +11,7 @@ To install in development mode, follow these instructions.
   - [Download and install conda](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html) (this should be done even if the system in use already has a preinstalled version of conda, as problems have been reported with NCL when using such a version)
   - To make the `conda` command availble, add `source <prefix>/etc/profile.d/conda.sh` to your `.bashrc` file and restart your shell. If using (t)csh shell, add `source <prefix>/etc/profile.d/conda.csh` to your `.cshrc`/`.tcshrc` file instead.
   - Update conda: `conda update -y conda`
-  - Clone the ESMValTool Core Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
+  - Clone the ESMValCore Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
   - Go to the source code directory: `cd ESMValCore`
   - Create the esmvaltool conda environment `conda env create --name esmvaltool --file environment.yml`
   - Activate the esmvaltool environment: `conda activate esmvaltool`
@@ -72,7 +72,7 @@ It is recommended that you open a pull request early, as this will cause CircleC
 
 You can view the results of the automatic checks below your pull request. If one of the tests shows a red cross instead of a green approval sign, please click the link and try to solve the issue. Note that this kind of automated checks make it easier to review code, but they are not flawless, so occasionally Codacy will report false positives.
 
-### Contributing to the ESMValTool Core package
+### Contributing to the ESMValCore package
 Contributions to the core of ESMValTool should
   - Go into the public repository.
   - Preferably be covered by unit tests. Unit tests are mandatory for new preprocessor functions or modifications to existing functions. If you do not know how to start with writing unit tests, let us know in a comment on the pull request and a core development team member will try to help you get started.
