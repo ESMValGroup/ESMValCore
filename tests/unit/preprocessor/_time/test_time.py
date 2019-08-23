@@ -277,6 +277,149 @@ class TestRegridTimeDaily(tests.Test):
         self.assertArrayEqual(diff_cube.data, expected)
 
 
+class TestRegridTime6Hourly(tests.Test):
+    """Tests for regrid_time with 6-hourly frequency."""
+
+    def setUp(self):
+        """Prepare tests"""
+        self.cube_1 = _create_sample_cube()
+        self.cube_2 = _create_sample_cube()
+        self.cube_2.data = self.cube_2.data * 2.
+        self.cube_1.remove_coord('time')
+        self.cube_2.remove_coord('time')
+        self.cube_1.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(10. * 6. + 5., 34. * 6. + 5., 6.),
+                standard_name='time',
+                units=Unit(
+                    'hours since 1950-01-01 00:00:00', calendar='360_day'),
+            ),
+            0,
+        )
+        self.cube_2.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(10. * 6. + 2., 34. * 6. + 2., 6.),
+                standard_name='time',
+                units=Unit(
+                    'hours since 1950-01-01 00:00:00', calendar='360_day'),
+            ),
+            0,
+        )
+        print(self.cube_1)
+        add_auxiliary_coordinate([self.cube_1, self.cube_2])
+
+    def test_regrid_time_6hour(self):
+        """Test changes to cubes."""
+        # test 6-hourly
+        newcube_1 = regrid_time(self.cube_1, frequency='6hr')
+        newcube_2 = regrid_time(self.cube_2, frequency='6hr')
+        # no changes to core data
+        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
+        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        # no changes to number of coords and aux_coords
+        assert len(newcube_1.coords()) == len(self.cube_1.coords())
+        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
+        # test difference; also diff is zero
+        expected = self.cube_1.data
+        diff_cube = newcube_2 - newcube_1
+        self.assertArrayEqual(diff_cube.data, expected)
+
+
+class TestRegridTime3Hourly(tests.Test):
+    """Tests for regrid_time with 3-hourly frequency."""
+
+    def setUp(self):
+        """Prepare tests"""
+        self.cube_1 = _create_sample_cube()
+        self.cube_2 = _create_sample_cube()
+        self.cube_2.data = self.cube_2.data * 2.
+        self.cube_1.remove_coord('time')
+        self.cube_2.remove_coord('time')
+        self.cube_1.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(17. * 180. + 40., 41. * 180. + 40., 180.),
+                standard_name='time',
+                units=Unit(
+                    'minutes since 1950-01-01 00:00:00', calendar='360_day'),
+            ),
+            0,
+        )
+        self.cube_2.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(17. * 180. + 150., 41. * 180. + 150., 180.),
+                standard_name='time',
+                units=Unit(
+                    'minutes since 1950-01-01 00:00:00', calendar='360_day'),
+            ),
+            0,
+        )
+        print(self.cube_1)
+        add_auxiliary_coordinate([self.cube_1, self.cube_2])
+
+    def test_regrid_time_3hour(self):
+        """Test changes to cubes."""
+        # test 3-hourly
+        newcube_1 = regrid_time(self.cube_1, frequency='3hr')
+        newcube_2 = regrid_time(self.cube_2, frequency='3hr')
+        # no changes to core data
+        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
+        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        # no changes to number of coords and aux_coords
+        assert len(newcube_1.coords()) == len(self.cube_1.coords())
+        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
+        # test difference; also diff is zero
+        expected = self.cube_1.data
+        diff_cube = newcube_2 - newcube_1
+        self.assertArrayEqual(diff_cube.data, expected)
+
+
+class TestRegridTime1Hourly(tests.Test):
+    """Tests for regrid_time with hourly frequency."""
+
+    def setUp(self):
+        """Prepare tests"""
+        self.cube_1 = _create_sample_cube()
+        self.cube_2 = _create_sample_cube()
+        self.cube_2.data = self.cube_2.data * 2.
+        self.cube_1.remove_coord('time')
+        self.cube_2.remove_coord('time')
+        self.cube_1.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(14. * 60. + 6., 38. * 60. + 6., 60.),
+                standard_name='time',
+                units=Unit(
+                    'minutes since 1950-01-01 00:00:00', calendar='360_day'),
+            ),
+            0,
+        )
+        self.cube_2.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(14. * 60. + 34., 38. * 60. + 34., 60.),
+                standard_name='time',
+                units=Unit(
+                    'minutes since 1950-01-01 00:00:00', calendar='360_day'),
+            ),
+            0,
+        )
+        add_auxiliary_coordinate([self.cube_1, self.cube_2])
+
+    def test_regrid_time_hour(self):
+        """Test changes to cubes."""
+        # test hourly
+        newcube_1 = regrid_time(self.cube_1, frequency='1hr')
+        newcube_2 = regrid_time(self.cube_2, frequency='1hr')
+        # no changes to core data
+        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
+        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        # no changes to number of coords and aux_coords
+        assert len(newcube_1.coords()) == len(self.cube_1.coords())
+        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
+        # test difference; also diff is zero
+        expected = self.cube_1.data
+        diff_cube = newcube_2 - newcube_1
+        self.assertArrayEqual(diff_cube.data, expected)
+
+
 def make_time_series(number_years=2):
     """Make a cube with time only dimension."""
     times = np.array([i * 30 + 15 for i in range(0, 12 * number_years, 1)])
