@@ -8,6 +8,7 @@ import fnmatch
 import logging
 import os
 import re
+import glob
 
 from ._config import get_project_config, replace_mip_fx
 from .cmor.table import CMOR_TABLES
@@ -209,9 +210,12 @@ def _find_input_dirs(variable, rootpath, drs, fx_var=None):
         for base_path in root:
             dirname = os.path.join(base_path, dirname_template)
             dirname = _resolve_latestversion(dirname)
-            if os.path.exists(dirname):
-                logger.debug("Found %s", dirname)
-                dirnames.append(dirname)
+            matches = glob.glob(dirname)
+            matches = [match for match in matches if os.path.isdir(match)]
+            if matches:
+                for match in matches:
+                    logger.debug("Found %s", match)
+                    dirnames.append(match)
             else:
                 logger.debug("Skipping non-existent %s", dirname)
 
