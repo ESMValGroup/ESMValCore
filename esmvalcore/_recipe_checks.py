@@ -121,3 +121,20 @@ def tasks_valid(tasks):
                 if product.filename in filenames:
                     raise ValueError(msg.format(product.filename))
                 filenames.add(product.filename)
+
+
+def check_for_temporal_preprocs(profile):
+    """Check for temporal operations on fx variables."""
+    temporal_preprocs = [
+        'extract_season',
+        'extract_month',
+        'annual_mean',
+        'seasonal_mean',
+        'time_average',
+        'regrid_time',
+    ]
+    temp_preprocs = [
+        preproc for preproc in profile if preproc in temporal_preprocs]
+    raise RecipeError(
+        "Time coordinate preprocessor step {} not permitted on fx vars \
+         please remove them from recipe.".format(", ".join(temp_preprocs)))
