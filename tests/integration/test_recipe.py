@@ -311,6 +311,87 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
     assert product.settings == defaults
 
 
+def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              sftlf:
+                project: CMIP5
+                mip: fx
+                exp: historical
+                ensemble: r0i0p0
+                start_year: 2000
+                end_year: 2005
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    preproc_dir = os.path.dirname(product.filename)
+    assert preproc_dir.startswith(str(tmp_path))
+
+    fix_dir = os.path.join(
+        preproc_dir,
+        'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_2000-2005_fixed')
+
+    defaults = {
+        'load': {
+            'callback': concatenate_callback,
+        },
+        'concatenate': {},
+        'fix_file': {
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'sftlf',
+            'output_dir': fix_dir,
+        },
+        'fix_data': {
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'sftlf',
+            'cmor_table': 'CMIP5',
+            'mip': 'fx',
+            'frequency': 'fx',
+        },
+        'fix_metadata': {
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'sftlf',
+            'cmor_table': 'CMIP5',
+            'mip': 'fx',
+            'frequency': 'fx',
+        },
+        'cmor_check_metadata': {
+            'cmor_table': 'CMIP5',
+            'mip': 'fx',
+            'short_name': 'sftlf',
+            'frequency': 'fx',
+        },
+        'cmor_check_data': {
+            'cmor_table': 'CMIP5',
+            'mip': 'fx',
+            'short_name': 'sftlf',
+            'frequency': 'fx',
+        },
+        'cleanup': {
+            'remove': [fix_dir]
+        },
+        'save': {
+            'compress': False,
+            'filename': product.filename,
+        }
+    }
+    assert product.settings == defaults
+
+
 def test_empty_variable(tmp_path, patched_datafinder, config_user):
     """Test that it is possible to specify all information in the dataset."""
     content = dedent("""
