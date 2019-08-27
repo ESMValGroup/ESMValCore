@@ -1,0 +1,23 @@
+SOURCE: CCMI1
+!============
+variable_entry:    sithick
+!============
+modeling_realm:    seaIce
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     sea_ice_thickness
+units:             m
+cell_methods:      area: time: mean where sea_ice (comment: mask=siconc)
+cell_measures:     area: areacella
+long_name:         Sea Ice Thickness
+comment:           Actual (floe) thickness of sea ice (NOT volume divided by grid area as was done in CMIP5)
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+valid_min:
+valid_max:
+!----------------------------------
+!
