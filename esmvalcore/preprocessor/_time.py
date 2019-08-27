@@ -477,6 +477,7 @@ def anomalies(cube, period):
     cube = cube.copy(data)
     return cube
 
+
 def _get_period_coord(cube, period):
     if period in ['daily', 'day']:
         if not cube.coords('day_of_year'):
@@ -491,6 +492,7 @@ def _get_period_coord(cube, period):
             iris.coord_categorisation.add_season_number(cube, 'time')
         return cube.coord('season_number')
     raise ValueError('Period %s not supported')
+
 
 def regrid_time(cube, frequency):
     """
