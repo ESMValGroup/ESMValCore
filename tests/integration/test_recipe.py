@@ -224,6 +224,41 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
         assert task.settings['custom_setting'] == 1
 
 
+def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):
+    script = tmp_path / 'diagnostic.py'
+    script.write_text('')
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        preprocessors:
+          preprocessor_name:
+            extract_season:
+              season: MAM
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              sftlf:
+                preprocessor: preprocessor_name
+                project: CMIP5
+                mip: fx
+                exp: historical
+                ensemble: r0i0p0
+                start_year: 1999
+                end_year: 2002
+                additional_datasets:
+                  - dataset: MPI-ESM-LR
+            scripts: null
+        """)
+    rec_err = "Time coordinate preprocessor step extract_season \
+              not permitted on fx vars \
+              please remove them from recipe."
+    with pytest.raises(Exception) as rec_err_exp:
+        get_recipe(tmp_path, content, config_user)
+        assert rec_err == rec_err_exp
+
+
 def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
 
     content = dedent("""
