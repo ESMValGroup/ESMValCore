@@ -135,6 +135,7 @@ def check_for_temporal_preprocs(profile):
     ]
     temp_preprocs = [
         preproc for preproc in profile if preproc in temporal_preprocs]
-    raise RecipeError(
-        "Time coordinate preprocessor step {} not permitted on fx vars \
-         please remove them from recipe.".format(", ".join(temp_preprocs)))
+    if temp_preprocs:
+        raise RecipeError(
+            "Time coordinate preprocessor step {} not permitted on fx vars \
+            please remove them from recipe.".format(", ".join(temp_preprocs)))
