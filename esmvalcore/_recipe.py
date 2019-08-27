@@ -664,24 +664,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     return products
 
 
-def _remove_temporal_preprocs(profile):
-    """Remove all temporal operations on fx variables."""
-    fx_profile = profile
-    temporal_preprocs = [
-        'extract_season',
-        'extract_month',
-        'annual_mean',
-        'seasonal_mean',
-        'time_average',
-        'regrid_time',
-    ]
-    for temporal_preproc in temporal_preprocs:
-        if temporal_preproc in profile:
-            fx_profile[temporal_preproc] = False
-
-    return fx_profile
-
-
 def _get_single_preprocessor_task(variables,
                                   profile,
                                   config_user,
@@ -694,7 +676,7 @@ def _get_single_preprocessor_task(variables,
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
 
     if variables[0]['frequency'] == 'fx':
-        profile = _remove_temporal_preprocs(profile)
+        check.check_for_temporal_preprocs(profile)
         profile['extract_time'] = False
         ancestor_products = None
 
@@ -1012,7 +994,7 @@ class Recipe:
         but it will use the dataset info to compute the others
 
         Examples:
-
+        --------
         - {project: CMIP5, model: EC-Earth, ensemble: r1i1p1}
         - {project: CMIP6, model: EC-Earth, ensemble: r1i1p1f1}
         will generate alias 'CMIP5' and 'CMIP6'
@@ -1035,7 +1017,7 @@ class Recipe:
         - {project: CMIP5, model: EC-Earth, experiment: historical}
         will generate alias 'EC-Earth'
 
-        Parameters
+        Parameters:
         ----------
         preprocessor_output : dict
             preprocessor output dictionary
