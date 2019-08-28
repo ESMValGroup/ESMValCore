@@ -1,4 +1,4 @@
-# ESMValTool Core package
+# ESMValCore package
 
 [![Documentation Status](https://readthedocs.org/projects/esmvaltool/badge/?version=version2_development)](https://esmvaltool.readthedocs.io/en/version2_development/?badge=version2_development)
 [![DOIBadge](https://img.shields.io/badge/DOI-10.17874%2Fac8548f0315-blue.svg)](https://doi.org/10.17874/ac8548f0315)
@@ -9,7 +9,7 @@
 [![Docker Build Status](https://img.shields.io/docker/build/esmvalgroup/esmvaltool.svg)](https://hub.docker.com/r/esmvalgroup/esmvaltool/)
 [![Anaconda-Server Badge](https://anaconda.org/esmvalgroup/esmvalcore/badges/installer/conda.svg)](https://conda.anaconda.org/esmvalgroup)
 
-ESMValTool Core: core functionalities for the ESMValTool, a community
+ESMValCore: core functionalities for the ESMValTool, a community
 diagnostic and performance metrics tool for routine evaluation of Earth System
 Models in CMIP.
 
@@ -21,7 +21,7 @@ The Anaconda package can be found on [ESMValGroup Anaconda Channel.](https://ana
 
 If you already have
 [Anaconda installed](https://conda.io/projects/conda/en/latest/user-guide/install/index.html),
-you can install ESMValTool Core by running:
+you can install ESMValCore by running:
 
     conda install -c esmvalgroup -c conda-forge esmvalcore
 
@@ -29,11 +29,11 @@ you can install ESMValTool Core by running:
 
 If you need the very latest features, please see
 [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/development/CONTRIBUTING.md)
-for instructions on installing ESMValTool Core from source.
+for instructions on installing ESMValCore from source.
 
-## Using ESMValTool Core as a Python library
+## Using ESMValCore as a Python library
 
-The ESMValTool Core package provides various functions for:
+The ESMValCore package provides various functions for:
 
 -   Finding data in a directory structure typically used for CMIP data
 
