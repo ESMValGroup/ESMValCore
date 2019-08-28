@@ -30,7 +30,7 @@ for _coord in (
     filterwarnings(
         'ignore',
         "Collapsing a non-contiguous coordinate. "
-        f"Metadata may not be fully descriptive for '{0}'.".format(_coord),
+        "Metadata may not be fully descriptive for '{0}'.".format(_coord),
         category=UserWarning,
         module='iris',
     )
@@ -374,7 +374,7 @@ def climate_statistics(cube, operator='mean', period='full'):
     Compute climate statistics with the specified granularity.
 
     Computes statistics for the whole dataset. It is possible to get them for
-    the full period or with the data griouped by day, month or season
+    the full period or with the data grouped by day, month or season
 
     Parameters
     ----------
