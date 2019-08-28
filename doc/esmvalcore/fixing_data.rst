@@ -1,4 +1,4 @@
-.. fixing_data:
+.. _fixing_data:
 
 *************
 Dataset fixes

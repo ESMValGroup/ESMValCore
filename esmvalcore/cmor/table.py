@@ -65,8 +65,10 @@ class CMIP6Info(object):
 
     _CMIP_5to6_varname = {
         'sic': 'siconc',
-        'sit': 'sithick',
+        'sit': 'sivol',
         'tro3': 'o3',
+        'usi': 'siu',
+        'vsi': 'siv',
     }
 
     def __init__(self, cmor_tables_path, default=None):
