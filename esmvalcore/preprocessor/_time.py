@@ -193,8 +193,7 @@ def daily_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
-        'max'
+        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
 
     Returns
     -------
@@ -224,8 +223,7 @@ def monthly_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
-        'max'
+        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
 
     Returns
     -------
@@ -255,8 +253,7 @@ def seasonal_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
-        'max'
+        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
 
     Returns
     -------
@@ -311,8 +308,7 @@ def annual_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
-        'max'
+        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
 
     Returns
     -------
@@ -344,8 +340,7 @@ def decadal_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
-        'max'
+        Available operators: 'mean', 'median', 'std_dev', min', 'max'
 
     Returns
     -------
@@ -383,8 +378,7 @@ def climate_statistics(cube, operator='mean', period='full'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'variance', 'min',
-        'max'
+        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
 
     period: str, optional
         Period to compute the statistic over.
@@ -409,20 +403,7 @@ def climate_statistics(cube, operator='mean', period='full'):
             cube = cube.collapsed('time', operator_method)
         return cube
 
-    if period in ['daily', 'day']:
-        iris.coord_categorisation.add_day_of_year(cube, 'time')
-        clim_coord = 'day_of_year'
-    elif period in ['monthly', 'month', 'mon']:
-        iris.coord_categorisation.add_month_number(cube, 'time')
-        clim_coord = 'month_number'
-    elif period in ['seasonal', 'season']:
-        iris.coord_categorisation.add_season_number(cube, 'time')
-        iris.coord_categorisation.add_season(cube, 'time')
-        clim_coord = 'season_number'
-    else:
-        raise ValueError(
-            'Climate_statistics does not support period %s' % period
-        )
+    clim_coord = _get_period_coord(cube, period)
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(clim_coord, operator)
     cube.remove_coord('time')
