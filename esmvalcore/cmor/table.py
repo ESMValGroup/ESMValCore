@@ -84,7 +84,7 @@ class CMIP6Info(object):
             try:
                 self._load_table(json_file)
             except Exception:
-                msg = "Exception raised when loading %s" % json_file
+                msg = f"Exception raised when loading {json_file}"
                 # Logger may not be ready at this stage
                 if logger.handlers:
                     logger.error(msg)
