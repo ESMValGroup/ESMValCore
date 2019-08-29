@@ -10,10 +10,9 @@ missing values masking.
 import logging
 import os
 
-import numpy as np
-
 import cartopy.io.shapereader as shpreader
 import iris
+import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
@@ -87,7 +86,7 @@ def _apply_fx_mask(fx_mask, var_data):
     return var_data
 
 
-def mask_landsea(cube, fx_files, mask_out):
+def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
     """
     Mask out either land mass or sea (oceans, seas and lakes).
 
@@ -106,6 +105,10 @@ def mask_landsea(cube, fx_files, mask_out):
 
     mask_out: str
         either "land" to mask out land mass or "sea" to mask out seas.
+
+    always_use_ne_mask: bool, optional (default: False)
+        always apply Natural Earths mask, regardless if fx files are available
+        or not.
 
     Returns
     -------
@@ -128,7 +131,7 @@ def mask_landsea(cube, fx_files, mask_out):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
-    if fx_files:
+    if fx_files and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
             fx_root = os.path.basename(fx_file).split('_')[0]
@@ -267,9 +270,11 @@ def _mask_with_shp(cube, shapefilename):
     y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
 
     # Build mask with vectorization
-    if len(cube.data.shape) == 3:
+    if cube.ndim == 2:
+        mask = shp_vect.contains(region, x_p_180, y_p_90)
+    elif cube.ndim == 3:
         mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
-    elif len(cube.data.shape) == 4:
+    elif cube.ndim == 4:
         mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
 
     # Then apply the mask
@@ -327,8 +332,10 @@ def count_spells(data, threshold, axis, spell_length):
     # if you want overlapping windows set the step to be m*spell_length
     # where m is a float
     ###############################################################
-    hit_windows = rolling_window(
-        data_hits, window=spell_length, step=spell_length, axis=axis)
+    hit_windows = rolling_window(data_hits,
+                                 window=spell_length,
+                                 step=spell_length,
+                                 axis=axis)
     # Find the windows "full of True-s" (along the added 'window axis').
     full_windows = np.all(hit_windows, axis=axis + 1)
     # Count points fulfilling the condition (along the time axis).
@@ -543,12 +550,15 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
     counts_threshold = int(max_counts_per_time_window * threshold_fraction)
 
     # Make an aggregator
-    spell_count = Aggregator(
-        'spell_count', count_spells, units_func=lambda units: 1)
+    spell_count = Aggregator('spell_count',
+                             count_spells,
+                             units_func=lambda units: 1)
 
     # Calculate the statistic.
-    counts_windowed_cube = cube.collapsed(
-        'time', spell_count, threshold=min_value, spell_length=time_window)
+    counts_windowed_cube = cube.collapsed('time',
+                                          spell_count,
+                                          threshold=min_value,
+                                          spell_length=time_window)
 
     # Create mask
     mask = counts_windowed_cube.data < counts_threshold
