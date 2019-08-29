@@ -148,15 +148,18 @@ ESMValTool deals with those issues by applying specific fixes for those
 datasets that require them. Fixes are applied at three different preprocessor
 steps:
 
-    - fix_file: apply fixes directly to a copy of the file. Only fixes that allow
-      iris to load the file are applied here.
+    - fix_file: apply fixes directly to a copy of the file. Copying the files
+      is costly, so only errors that prevent Iris to load the file are fixed
+      here. See :func:`esmvalcore.preprocessor.fix_file`
 
     - fix_metadata: metadata fixes are done just before concatenating the cubes
       loaded from different files in the final one. Automatic metadata fixes
-      are also applied at this step.
+      are also applied at this step. See
+      :func:`esmvalcore.preprocessor.fix_metadata`
 
-    - fix_data: data fixes are applied just prior to checking the data.
-      Automatic data fixes are also applied at this step.
+    - fix_data: data fixes are applied before starting any operation that will
+      alter the data itself. Automatic data fixes are also applied at this step.
+      See :func:`esmvalcore.preprocessor.fix_data`
 
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
