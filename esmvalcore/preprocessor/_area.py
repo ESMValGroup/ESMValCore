@@ -8,7 +8,6 @@ import logging
 
 import iris
 from dask import array as da
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -57,24 +56,20 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     start_latitude = float(start_latitude)
     end_latitude = float(end_latitude)
 
-    # Regular grid
     if cube.coord('latitude').ndim == 1:
         region_subset = cube.intersection(
             longitude=(start_longitude, end_longitude),
             latitude=(start_latitude, end_latitude))
         region_subset = region_subset.intersection(longitude=(0., 360.))
         return region_subset
-
-    # Irregular grids - not lazy.
+    # irregular grids
     lats = cube.coord('latitude').points
     lons = cube.coord('longitude').points
-    mask = np.ma.array(cube.data).mask
-    mask += np.ma.masked_where(lats < start_latitude, lats).mask
-    mask += np.ma.masked_where(lats > end_latitude, lats).mask
-    mask += np.ma.masked_where(lons < start_longitude, lons).mask
-    mask += np.ma.masked_where(lons > end_longitude, lons).mask
-    cube.data = da.ma.masked_array(data=cube.data, mask=mask)
-    return cube
+    select_lats = start_latitude < lats < end_latitude
+    select_lons = start_longitude < lons < end_longitude
+    selection = select_lats & select_lons
+    data = da.ma.masked_where(~selection, cube.core_data())
+    return cube.copy(data)
 
 
 def get_iris_analysis_operation(operator):
@@ -161,32 +156,19 @@ def tile_grid_areas(cube, fx_files):
                 continue
             logger.info('Attempting to load %s from file: %s', key, fx_file)
             fx_cube = iris.load_cube(fx_file)
+
             grid_areas = fx_cube.core_data()
-    else:
-        return None
-
-    if grid_areas.shape != cube.shape[-2:]:
-        raise ValueError('Fx area {} and dataset {} shapes do not match.'
-                         ''.format(grid_areas.shape, cube.shape))
-
-    if cube.ndim == grid_areas.ndim:
-        return grid_areas
-
-    # Use dash.array.stack to tile areacello.
-    elif cube.ndim == 4 and grid_areas.ndim == 2:
-        for shape in [1, 0]:
-            grida = [grid_areas for itr in range(cube.shape[shape])]
-            grid_areas = da.stack(grida, axis=0)
-    elif cube.ndim == 4 and grid_areas.ndim == 3:
-        grida = [grid_areas for itr in range(cube.shape[0])]
-        grid_areas = da.stack(grida, axis=0)
-    elif cube.ndim == 3 and grid_areas.ndim == 2:
-        grida = [grid_areas for itr in range(cube.shape[0])]
-        grid_areas = da.stack(grida, axis=0)
-    else:
-        raise ValueError('Grid and dataset number of dimensions not '
-                         'recognised: {} and {}.'
-                         ''.format(cube.ndim, grid_areas.ndim))
+            if cube.ndim == 4 and grid_areas.ndim == 2:
+                grid_areas = da.tile(grid_areas,
+                                     [cube.shape[0], cube.shape[1], 1, 1])
+            elif cube.ndim == 4 and grid_areas.ndim == 3:
+                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
+            elif cube.ndim == 3 and grid_areas.ndim == 2:
+                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
+            else:
+                raise ValueError('Grid and dataset number of dimensions not '
+                                 'recognised: {} and {}.'
+                                 ''.format(cube.ndim, grid_areas.ndim))
     return grid_areas
 
 
@@ -264,7 +246,7 @@ def area_statistics(cube, operator, fx_files=None):
     if operator == 'mean':
         return cube.collapsed(coord_names,
                               operation,
-                              weights=np.array(grid_areas))
+                              weights=grid_areas)
 
     # Many IRIS analysis functions do not accept weights arguments.
     return cube.collapsed(coord_names, operation)
