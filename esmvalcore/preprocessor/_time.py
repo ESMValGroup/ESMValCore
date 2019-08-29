@@ -407,7 +407,7 @@ def climate_statistics(cube, operator='mean', period='full'):
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(clim_coord, operator)
     cube.remove_coord('time')
-    iris.util.promote_aux_coord_to_dim_coord(cube, clim_coord)
+    iris.util.promote_aux_coord_to_dim_coord(cube, clim_coord.name())
     return cube
 
 
