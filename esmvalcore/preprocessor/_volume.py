@@ -260,13 +260,12 @@ def volume_statistics(
                 layer_vol = np.ma.masked_where(
                     cube[time_itr, z_itr].data.mask,
                     grid_volume[time_itr, z_itr]).sum()
+
             except AttributeError:
                 # ####
                 # No mask in the cube data.
                 layer_vol = grid_volume.sum()
             depth_volume.append(layer_vol)
-
-        column = np.ma.masked_invalid(column)
         # ####
         # Calculate weighted mean over the water volumn
         result.append(np.average(column, weights=depth_volume))
