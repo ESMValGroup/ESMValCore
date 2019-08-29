@@ -117,7 +117,7 @@ Data checking
 
 Data preprocessed by ESMValTool is automatically checked against its cmor
 definition. To reduce the impact of this check while maintaing it as realiable
-as possible, it is splitted in two parts: one will check the metadata and will
+as possible, it is split in two parts: one will check the metadata and will
 be done just after loading and concatenating the data and the other one will
 check the data itself and will be applied after all extracting operations are
 applied to reduce the amount of data to process.
@@ -131,7 +131,7 @@ Checks include, but are not limited to:
 The most relevant (i.e. a missing coordinate) will raise an error while others
 (i.e an incorrect long name) will be reported as a warning.
 
-Somo of those issues will be fixed automatically by the tool, including the
+Some of those issues will be fixed automatically by the tool, including the
 following:
 
     - Incorrect standard or long names.
@@ -145,7 +145,7 @@ Dataset specific fixes
 
 Sometimes, the checker will detect errors that it can not fix by itself.
 ESMValTool deals with those issues by applying specific fixes for those
-dataset that require them. Fixes are applied at three different preprocessor
+datasets that require them. Fixes are applied at three different preprocessor
 steps:
 
     - fix_file: apply fixes directly to a copy of the file. Only fixes that allow
