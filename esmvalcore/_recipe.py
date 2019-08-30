@@ -484,7 +484,10 @@ def _get_input_files(variable, config_user):
                 '\n'.join(input_files))
     if (not config_user.get('skip-nonexistent')
             or variable['dataset'] == variable.get('reference_dataset')):
-        check.data_availability(input_files, variable)
+        if variable['frequency'] != 'fx':
+            # check only if we are not dealing with fx variables;
+            # it is ok to have an empty list for fx vars
+            check.data_availability(input_files, variable)
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
