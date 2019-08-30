@@ -10,6 +10,7 @@ from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
                     zonal_means)
 from ._derive import derive
+from ._detrend import detrend
 from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
@@ -68,6 +69,7 @@ __all__ = [
     'extract_transect',
     # 'average_zone': average_zone,
     # 'cross_section': cross_section,
+    'detrend',
     'multi_model_statistics',
     # Grid-point operations
     'extract_named_regions',
