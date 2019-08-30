@@ -816,8 +816,8 @@ See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 Detrend
 =======
 
-ESMValTool also support detrending along any dimension using
-through the preprocessor function 'detrend'.
+ESMValTool also supports detrending along any dimension using
+the preprocessor function 'detrend'.
 This function has two parameters:
 
 * ``dimension``: dimension to apply detrend on. Default: "time"

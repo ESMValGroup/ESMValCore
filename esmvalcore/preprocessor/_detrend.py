@@ -1,4 +1,4 @@
-"""Preprocessor functions that remove trends from the data"""
+"""Preprocessor functions that remove trends from the data."""
 import logging
 
 import dask.array as da
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def detrend(cube, dimension='time', method='linear'):
     """
-    Detrend data along a given dimension
+    Detrend data along a given dimension.
 
     Parameters
     ----------
@@ -18,7 +18,8 @@ def detrend(cube, dimension='time', method='linear'):
     dimension: str
         Dimension to detrend
     method: str
-        Method to detrend. Available: linear, constant
+        Method to detrend. Available: linear, constant. See documentation of
+        'scipy.signal.detrend' for details
 
     Returns
     -------
