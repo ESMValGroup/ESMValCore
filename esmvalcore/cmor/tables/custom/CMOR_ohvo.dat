@@ -1,0 +1,24 @@
+SOURCE: CMIP5
+generic_levels:    olevel
+!============
+variable_entry:    ohvo
+!============
+modeling_realm:    ocean
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             J m-2 s-1
+cell_methods:
+cell_measures:     area: areacello
+long_name:         Vertical ocean heat transport
+comment:
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time olevel
+type:              real
+valid_min:
+valid_max:
+!----------------------------------
+!
