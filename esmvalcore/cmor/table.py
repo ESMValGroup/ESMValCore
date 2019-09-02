@@ -83,7 +83,16 @@ class CMIP6Info(object):
         for json_file in glob.glob(os.path.join(self._cmor_folder, '*.json')):
             if 'CV_test' in json_file or 'grids' in json_file:
                 continue
-            self._load_table(json_file)
+            try:
+                self._load_table(json_file)
+            except Exception:
+                msg = f"Exception raised when loading {json_file}"
+                # Logger may not be ready at this stage
+                if logger.handlers:
+                    logger.error(msg)
+                else:
+                    print(msg)
+                raise
 
     @staticmethod
     def _get_cmor_path(cmor_tables_path):
@@ -91,7 +100,11 @@ class CMIP6Info(object):
             return cmor_tables_path
         cwd = os.path.dirname(os.path.realpath(__file__))
         cmor_tables_path = os.path.join(cwd, 'tables', cmor_tables_path)
-        return cmor_tables_path
+        if os.path.isdir(cmor_tables_path):
+            return cmor_tables_path
+        raise ValueError(
+            'CMOR tables not found in {}'.format(cmor_tables_path)
+        )
 
     def _load_table(self, json_file):
         with open(json_file) as inf:
