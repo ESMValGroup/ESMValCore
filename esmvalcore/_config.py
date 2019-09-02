@@ -190,10 +190,7 @@ def get_activity(variable):
         exp = variable['exp']
         logger.debug("Retrieving activity_id for experiment %s", exp)
         if isinstance(exp, list):
-            activities = []
-            for value in exp:
-                activities.append(CMOR_TABLES[project].activities[value])
-            return activities
+            return [CMOR_TABLES[project].activities[value] for value in exp]
         return CMOR_TABLES[project].activities[exp]
     except (KeyError, AttributeError):
         return None
