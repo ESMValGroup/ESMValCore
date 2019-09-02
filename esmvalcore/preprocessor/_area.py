@@ -6,7 +6,11 @@ selecting geographical regions; constructing area averages; etc.
 """
 import logging
 
+import fiona
 import iris
+import numpy as np
+import shapely
+import shapely.ops
 from dask import array as da
 
 logger = logging.getLogger(__name__)
@@ -57,9 +61,10 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     end_latitude = float(end_latitude)
 
     if cube.coord('latitude').ndim == 1:
-        region_subset = cube.intersection(
-            longitude=(start_longitude, end_longitude),
-            latitude=(start_latitude, end_latitude))
+        region_subset = cube.intersection(longitude=(start_longitude,
+                                                     end_longitude),
+                                          latitude=(start_latitude,
+                                                    end_latitude))
         region_subset = region_subset.intersection(longitude=(0., 360.))
         return region_subset
     # irregular grids
@@ -244,9 +249,7 @@ def area_statistics(cube, operator, fx_files=None):
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
     if operator == 'mean':
-        return cube.collapsed(coord_names,
-                              operation,
-                              weights=grid_areas)
+        return cube.collapsed(coord_names, operation, weights=grid_areas)
 
     # Many IRIS analysis functions do not accept weights arguments.
     return cube.collapsed(coord_names, operation)
@@ -295,3 +298,83 @@ def extract_named_regions(cube, regions):
     constraints = iris.Constraint(region=lambda r: r in regions)
     cube = cube.extract(constraint=constraints)
     return cube
+
+
+def extract_shape(cube, shapefile, method='contains', clip=True):
+    """Extract a region defined by a shapefile.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+       input cube.
+    shapefile: str
+        A shapefile defining the region(s) to extract.
+    method: str
+        Select all points contained by the shape ('contains') or
+        select a single representative point ('representative').
+    clip: bool
+        Clip the resulting cube ('true') or not ('false').
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube containing the extracted region.
+
+    """
+    if method not in {'contains', 'nearest'}:
+        raise ValueError(
+            "Invalid value for `method`. Choose from 'containts', 'nearest'.")
+    lon_coord = cube.coord(axis='X')
+    lat_coord = cube.coord(axis='Y')
+    with fiona.open(shapefile) as geometries:
+        if clip and lon_coord.ndim == 1 and lat_coord.ndim == 1:
+            (
+                start_longitude,
+                start_latitude,
+                end_longitude,
+                end_latitude,
+            ) = geometries.bounds
+            lon_bound = lon_coord.core_bounds()[0]
+            lon_step = lon_bound[1] - lon_bound[0]
+            start_longitude -= lon_step
+            end_longitude += lon_step
+            lat_bound = lat_coord.core_bounds()[0]
+            lat_step = lat_bound[1] - lat_bound[0]
+            start_latitude -= lat_step
+            end_latitude += lat_step
+            cube = extract_region(cube, start_longitude, end_longitude,
+                                  start_latitude, end_latitude)
+            lon_coord = cube.coord(axis='X')
+            lat_coord = cube.coord(axis='Y')
+
+
+#         mask = rasterio.features.geometry_mask(
+#             geometries,
+#             cube.shape[1:3],
+#             transform=rasterio.features.IDENTITY,
+#             all_touched=True,
+#             invert=True)
+        lon = lon_coord.points
+        lat = lat_coord.points
+        if lon_coord.ndim == 1 and lat_coord.ndim == 1:
+            lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+
+        selection = np.zeros(lat.shape, dtype=bool)
+        for item in geometries:
+            shape = shapely.geometry.shape(item['geometry'])
+            if method == 'contains':
+                select = shapely.vectorized.contains(shape, lon, lat)
+            if method == 'nearest' or not select.any():
+                representative_point = shape.representative_point()
+                points = shapely.geometry.MultiPoint(
+                    np.stack((lon.flat, lat.flat), axis=1))
+                nearest_point = shapely.ops.nearest_points(
+                    points, representative_point)[0]
+                nearest_lon, nearest_lat = nearest_point.coords[0]
+                select = (lon == nearest_lon) & (lat == nearest_lat)
+            selection |= select
+
+        # print('selecting', np.sum(selection), 'points')
+        selection = da.broadcast_to(selection, cube.shape)
+        cube.data = da.ma.masked_where(~selection, cube.core_data())
+        return cube

@@ -8,7 +8,7 @@ from iris.cube import Cube
 from .._provenance import TrackedFile
 from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
-                    zonal_means)
+                    extract_shape, zonal_means)
 from ._derive import derive
 from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
@@ -63,6 +63,7 @@ __all__ = [
     'mask_outside_range',
     # Region selection
     'extract_region',
+    'extract_shape',
     'extract_volume',
     'extract_trajectory',
     'extract_transect',
