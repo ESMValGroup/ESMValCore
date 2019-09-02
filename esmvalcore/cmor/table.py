@@ -4,6 +4,8 @@ CMOR information reader for ESMValTool.
 Read variable information from CMOR 2 and CMOR 3 tables and make it easily
 available for the other components of ESMValTool
 """
+from functools import total_ordering
+import copy
 import errno
 import glob
 import json
@@ -37,9 +39,13 @@ def read_cmor_tables(cfg_developer):
         cmor_strict = project.get('cmor_strict', True)
 
         if cmor_type == 'CMIP5':
-            CMOR_TABLES[table] = CMIP5Info(table_path, custom, cmor_strict)
+            CMOR_TABLES[table] = CMIP5Info(
+                table_path, default=custom, strict=cmor_strict,
+            )
         elif cmor_type == 'CMIP6':
-            CMOR_TABLES[table] = CMIP6Info(table_path, custom, cmor_strict)
+            CMOR_TABLES[table] = CMIP6Info(
+                table_path, default=custom, strict=cmor_strict,
+            )
 
 
 class CMIP6Info(object):
@@ -53,15 +59,24 @@ class CMIP6Info(object):
     cmor_tables_path: basestring
         Path to the folder containing the Tables folder with the json files
 
+    default: object
+        Default table to look variables on if not found
+
+    strict: bool
+        If False, will look for a variable in other tables if it can not be
+        found in the requested one
+
     """
 
     _CMIP_5to6_varname = {
         'sic': 'siconc',
-        'sit': 'sithick',
+        'sit': 'sivol',
         'tro3': 'o3',
+        'usi': 'siu',
+        'vsi': 'siv',
     }
 
-    def __init__(self, cmor_tables_path, default, strict):
+    def __init__(self, cmor_tables_path, default=None, strict=True):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
@@ -70,12 +85,22 @@ class CMIP6Info(object):
 
         self.tables = {}
         self.var_to_freq = {}
+        self.strict = strict
 
         self._load_coordinates()
         for json_file in glob.glob(os.path.join(self._cmor_folder, '*.json')):
             if 'CV_test' in json_file or 'grids' in json_file:
                 continue
-            self._load_table(json_file)
+            try:
+                self._load_table(json_file)
+            except Exception:
+                msg = f"Exception raised when loading {json_file}"
+                # Logger may not be ready at this stage
+                if logger.handlers:
+                    logger.error(msg)
+                else:
+                    print(msg)
+                raise
 
     @staticmethod
     def _get_cmor_path(cmor_tables_path):
@@ -83,7 +108,11 @@ class CMIP6Info(object):
             return cmor_tables_path
         cwd = os.path.dirname(os.path.realpath(__file__))
         cmor_tables_path = os.path.join(cwd, 'tables', cmor_tables_path)
-        return cmor_tables_path
+        if os.path.isdir(cmor_tables_path):
+            return cmor_tables_path
+        raise ValueError(
+            'CMOR tables not found in {}'.format(cmor_tables_path)
+        )
 
     def _load_table(self, json_file):
         with open(json_file) as inf:
@@ -190,14 +219,23 @@ class CMIP6Info(object):
             if short_name in CMIP6Info._CMIP_5to6_varname:
                 new_short_name = CMIP6Info._CMIP_5to6_varname[short_name]
                 return self.get_variable(table, new_short_name, derived)
-            if not self.strict or derived:
+
+            var_info = None
+            if not self.strict:
+                for table_vars in sorted(self.tables.values()):
+                    if short_name in table_vars:
+                        var_info = table_vars[short_name]
+                        break
+            if not var_info and (not self.strict or derived):
                 var_info = self.default.get_variable(table, short_name)
-                if var_info is None:
-                    return None
-                var_info = var_info.copy()
-                var_info.frequency = self.tables[table].frequency
-                return var_info
-            return None
+
+            if var_info:
+                mip_info = self.get_table(table)
+                if mip_info:
+                    var_info = var_info.copy()
+                    var_info.frequency = mip_info.frequency
+
+            return var_info
 
     @staticmethod
     def _is_table(table_data):
@@ -208,6 +246,7 @@ class CMIP6Info(object):
         return True
 
 
+@total_ordering
 class TableInfo(dict):
     """Container class for storing a CMOR table."""
 
@@ -217,6 +256,18 @@ class TableInfo(dict):
         self.name = ''
         self.frequency = ''
         self.realm = ''
+
+    def __eq__(self, other):
+        return (self.name, self.frequency, self.realm) == \
+            (other.name, other.frequency, other.realm)
+
+    def __ne__(self, other):
+        return (self.name, self.frequency, self.realm) != \
+            (other.name, other.frequency, other.realm)
+
+    def __lt__(self, other):
+        return (self.name, self.frequency, self.realm) < \
+            (other.name, other.frequency, other.realm)
 
 
 class JsonInfo(object):
@@ -318,10 +369,9 @@ class VariableInfo(JsonInfo):
         VariableInfo
            Shallow copy of this object
         """
-        from copy import copy
-        return copy(self)
+        return copy.copy(self)
 
-    def read_json(self, json_data, default_freq=''):
+    def read_json(self, json_data, default_freq):
         """
         Read variable information from json.
 
@@ -433,9 +483,16 @@ class CMIP5Info(object):
     cmor_tables_path: basestring
        Path to the folder containing the Tables folder with the json files
 
+    default: object
+        Default table to look variables on if not found
+
+    strict: bool
+        If False, will look for a variable in other tables if it can not be
+        found in the requested one
+
     """
 
-    def __init__(self, cmor_tables_path, default, strict):
+    def __init__(self, cmor_tables_path, default=None, strict=True):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
@@ -447,6 +504,7 @@ class CMIP5Info(object):
         self.tables = {}
         self.coords = {}
         self.default = default
+        self.strict = strict
         self._current_table = None
         self._last_line_read = None
 
@@ -588,14 +646,20 @@ class CMIP5Info(object):
         var_info = self.tables.get(table, {}).get(short_name, None)
         if var_info:
             return var_info
-        if derived or not self.strict:
-            var_info = self.default.get_variable(table, short_name, derived)
-            if var_info is None:
-                return None
-            var_info = var_info.copy()
-            var_info.frequency = self.tables[table].frequency
-            return var_info
-        return None
+        if not self.strict:
+            for table_vars in sorted(self.tables.values()):
+                if short_name in table_vars:
+                    var_info = table_vars[short_name]
+                    break
+        if not var_info and (derived or not self.strict):
+            var_info = self.default.get_variable(table, short_name)
+
+        if var_info:
+            mip_info = self.get_table(table)
+            var_info.copy()
+            if mip_info:
+                var_info.frequency = mip_info.frequency
+        return var_info
 
 
 class CustomInfo(CMIP5Info):

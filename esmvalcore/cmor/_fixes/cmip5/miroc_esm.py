@@ -1,6 +1,5 @@
-
 """Fixes for MIROC ESM model."""
-import cf_units
+
 from iris.coords import DimCoord
 from iris.exceptions import CoordinateNotFoundError
 
@@ -50,29 +49,6 @@ class Co2(Fix):
 
         """
         self.get_cube_from_list(cubes).units = '1.0e-6'
-        return cubes
-
-
-class Gpp(Fix):
-    """Fixes for gpp."""
-
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
-
-        Fixes error in cube units
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        # Fixing the metadata, automatic unit conversion should do the trick
-        self.get_cube_from_list(cubes).units = cf_units.Unit('g m-2 day-1')
         return cubes
 
 

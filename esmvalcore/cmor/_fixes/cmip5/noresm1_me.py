@@ -1,9 +1,6 @@
-
 """Fixes for NorESM1-ME model."""
-
-import numpy as np
-
 from ..fix import Fix
+from ..shared import round_coordinates
 
 
 class Tas(Fix):
@@ -25,8 +22,4 @@ class Tas(Fix):
         iris.cube.CubeList
 
         """
-        for cube in cubes:
-            for coord in cube.coords(dim_coords=True):
-                for attr in ('points', 'bounds'):
-                    setattr(coord, attr, np.round(getattr(coord, attr), 12))
-        return cubes
+        return round_coordinates(cubes, 12)
