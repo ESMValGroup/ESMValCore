@@ -21,8 +21,9 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """
-        Compute horizontal ocean heat transport from horizontal velocity and
-        potential temperatura.
+        Compute horizontal ocean heat transport.
+
+        From horizontal velocity and potential temperature.
 
         Arguments
         ----
