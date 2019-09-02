@@ -845,3 +845,38 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                 assert dataset['alias'] == 'OBS_1'
             else:
                 assert dataset['alias'] == 'OBS_2'
+
+
+def test_concatenation(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                start_year: 2000
+                end_year: 2005
+                grid: gn
+                type: reanaly
+                tier: 2
+                version: latest
+                additional_datasets:
+                  - dataset: GFDL-CM3
+                    ensemble: r1i1p1
+                    exp: [historical, rcp85]
+                  - dataset: GFDL-CM3
+                    ensemble: r1i1p1
+                    exp: historical
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    assert len(recipe.diagnostics) == 1
+    diag = recipe.diagnostics['diagnostic_name']
+    var = diag['preprocessor_output']['ta']
+    for dataset in var:
+        if dataset['exp'] == 'historical':
+            assert dataset['alias'] == 'historical'
+        else:
+            assert dataset['alias'] == 'historical-rcp85'

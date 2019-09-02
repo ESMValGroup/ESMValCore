@@ -18,6 +18,9 @@ class TestCMIP6Info(unittest.TestCase):
         """
         cls.variables_info = CMIP6Info('cmip6', default=CustomInfo())
 
+    def setUp(self):
+        self.variables_info.strict = True
+
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
         cwd = os.path.dirname(os.path.realpath(__file__))
@@ -38,7 +41,25 @@ class TestCMIP6Info(unittest.TestCase):
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
+        self.assertIsNone(self.variables_info.get_variable('Omon', 'ta'))
+
+    def test_omon_ta_fail_if_strict(self):
+        """Get ta fails with Omon if strict."""
+        self.assertIsNone(self.variables_info.get_variable('Omon', 'ta'))
+
+    def test_omon_ta_succes_if_strict(self):
+        """Get ta does not fail with AERMonZ if not strict."""
+        self.variables_info.strict = False
+        var = self.variables_info.get_variable('Omon', 'ta')
+        self.assertEqual(var.short_name, 'ta')
+        self.assertEqual(var.frequency, 'mon')
+
+    def test_omon_toz_succes_if_strict(self):
+        """Get troz does not fail with Omon if not strict."""
+        self.variables_info.strict = False
+        var = self.variables_info.get_variable('Omon', 'toz')
+        self.assertEqual(var.short_name, 'toz')
+        self.assertEqual(var.frequency, 'mon')
 
 
 class Testobs4mipsInfo(unittest.TestCase):
@@ -86,6 +107,9 @@ class TestCMIP5Info(unittest.TestCase):
         """
         cls.variables_info = CMIP5Info('cmip5', default=CustomInfo())
 
+    def setUp(self):
+        self.variables_info.strict = True
+
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
         cwd = os.path.dirname(os.path.realpath(__file__))
@@ -102,6 +126,24 @@ class TestCMIP5Info(unittest.TestCase):
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
         self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
+
+    def test_aermon_ta_fail_if_strict(self):
+        """Get ta fails with AERMonZ if strict."""
+        self.assertIsNone(self.variables_info.get_variable('Omon', 'ta'))
+
+    def test_aermon_ta_succes_if_strict(self):
+        """Get ta does not fail with Omon if not strict."""
+        self.variables_info.strict = False
+        var = self.variables_info.get_variable('Omon', 'ta')
+        self.assertEqual(var.short_name, 'ta')
+        self.assertEqual(var.frequency, 'mon')
+
+    def test_omon_toz_succes_if_strict(self):
+        """Get troz does not fail with Omon if not strict."""
+        self.variables_info.strict = False
+        var = self.variables_info.get_variable('Omon', 'toz')
+        self.assertEqual(var.short_name, 'toz')
+        self.assertEqual(var.frequency, 'mon')
 
 
 class TestCustomInfo(unittest.TestCase):

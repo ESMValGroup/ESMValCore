@@ -1,4 +1,4 @@
-.. fixing_data:
+.. _fixing_data:
 
 *************
 Dataset fixes
@@ -126,6 +126,7 @@ so we will implement the ``fix_metadata`` method:
             latitude.short_name = 'lat'
             latitude.standard_name = 'latitude'
             latitude.long_name = 'latitude'
+            return cubes
 
 This will fix the error. The next time you run ESMValTool you will find that the error
 is fixed on the fly and, hopefully, your recipe will run free of errors.
@@ -178,6 +179,7 @@ from the one you just created:
             latitude.short_name = 'lat'
             latitude.standard_name = 'latitude'
             latitude.long_name = 'latitude'
+            return cubes
 
 
     class ps(tas):
@@ -239,3 +241,7 @@ missing coordinate you can create a fix for this model:
 
         # It may also have bounds as another cube
         coord.bounds = cubes.extract_strict('BOUNDS_NAME').data
+
+        data_cube = cubes.extract_strict('VAR_NAME')
+        data_cube.add_aux_coord(coord, DIMENSIONS_INDEX_TUPLE)
+        return [data_cube]

@@ -8,7 +8,7 @@ import iris
 import iris.coord_categorisation
 import iris.coords
 import iris.util
-import numpy
+import numpy as np
 from cf_units import Unit
 
 from esmvalcore.cmor.check import CMORCheck, CMORCheckError
@@ -121,6 +121,13 @@ class TestCMORCheck(unittest.TestCase):
         output = sys.stdout.getvalue().strip()
         sys.stdout = stdout
         self.assertEqual(output, 'WARNING: New error: something failed')
+
+    def test_report_debug_message(self):
+        """"Test report debug message function"""
+        checker = CMORCheck(self.cube, self.var_info)
+        self.assertFalse(checker.has_debug_messages())
+        checker.report_debug_message('New debug message')
+        self.assertTrue(checker.has_debug_messages())
 
     def test_check(self):
         """Test checks succeeds for a good cube."""
@@ -267,6 +274,11 @@ class TestCMORCheck(unittest.TestCase):
         checker.check_metadata()
         self.assertTrue(checker.has_warnings())
 
+    def _check_debug_messages_on_metadata(self):
+        checker = CMORCheck(self.cube, self.var_info)
+        checker.check_metadata()
+        self.assertTrue(checker.has_debug_messages())
+
     def test_non_requested(self):
         """
         Warning if requested values are not present.
@@ -275,7 +287,7 @@ class TestCMORCheck(unittest.TestCase):
         for a coordinate are not correct in the metadata step
         """
         coord = self.cube.coord('air_pressure')
-        values = numpy.linspace(0, 40, len(coord.points))
+        values = np.linspace(0, 40, len(coord.points))
         self._update_coordinate_values(self.cube, coord, values)
         checker = CMORCheck(self.cube, self.var_info)
         checker.check_metadata()
@@ -284,8 +296,11 @@ class TestCMORCheck(unittest.TestCase):
     def test_non_increasing(self):
         """Fail in metadata if increasing coordinate is decreasing."""
         coord = self.cube.coord('latitude')
-        values = numpy.linspace(coord.points[-1], coord.points[0],
-                                len(coord.points))
+        values = np.linspace(
+            coord.points[-1],
+            coord.points[0],
+            len(coord.points)
+        )
         self._update_coordinate_values(self.cube, coord, values)
         self._check_fails_in_metadata()
 
@@ -305,7 +320,7 @@ class TestCMORCheck(unittest.TestCase):
         self.assertEqual(self.cube.data.item(tuple(index)), 70)
         self.assertEqual(self.cube.data[0, 0, 0, 0, 0], 50)
         cube_points = self.cube.coord('latitude').points
-        reference = numpy.linspace(90, -90, 20, endpoint=True)
+        reference = np.linspace(90, -90, 20, endpoint=True)
         for index in range(20):
             self.assertTrue(
                 iris.util.approx_equal(cube_points[index], reference[index]))
@@ -328,16 +343,22 @@ class TestCMORCheck(unittest.TestCase):
     def test_not_valid_min(self):
         """Fail if coordinate values below valid_min."""
         coord = self.cube.coord('latitude')
-        values = numpy.linspace(coord.points[0] - 1, coord.points[-1],
-                                len(coord.points))
+        values = np.linspace(
+            coord.points[0] - 1,
+            coord.points[-1],
+            len(coord.points)
+        )
         self._update_coordinate_values(self.cube, coord, values)
         self._check_fails_in_metadata()
 
     def test_not_valid_max(self):
         """Fail if coordinate values above valid_max."""
         coord = self.cube.coord('latitude')
-        values = numpy.linspace(coord.points[0], coord.points[-1] + 1,
-                                len(coord.points))
+        values = np.linspace(
+            coord.points[0],
+            coord.points[-1] + 1,
+            len(coord.points)
+        )
         self._update_coordinate_values(self.cube, coord, values)
         self._check_fails_in_metadata()
 
@@ -411,7 +432,7 @@ class TestCMORCheck(unittest.TestCase):
     def test_time_non_monotonic(self):
         """Test automatic fix fail for non monotonic times."""
         time = self.cube.coord('time')
-        points = numpy.array(time.points)
+        points = np.array(time.points)
         points[-1] = points[0]
         dims = self.cube.coord_dims(time)
         self.cube.remove_coord(time)
@@ -422,6 +443,54 @@ class TestCMORCheck(unittest.TestCase):
     def test_bad_standard_name(self):
         """Fail if coordinates have bad standard names at metadata step."""
         self.cube.coord('time').standard_name = 'region'
+        self._check_fails_in_metadata()
+
+    def test_bad_out_name_multidim_latitude(self):
+        """Warning if multidimensional lat has bad var_name at metadata"""
+        self.var_info.table_type = 'CMIP6'
+        self.cube.remove_coord('latitude')
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                np.reshape(np.linspace(-90, 90, num=20*20), (20, 20)),
+                var_name='bad_name',
+                standard_name='latitude',
+                units='degrees_north'
+            ),
+            (1, 2)
+        )
+        self._check_debug_messages_on_metadata()
+
+    def test_bad_out_name_multidim_longitude(self):
+        """Warning if multidimensional lon has bad var_name at metadata"""
+        self.var_info.table_type = 'CMIP6'
+        self.cube.remove_coord('longitude')
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                np.reshape(np.linspace(-90, 90, num=20*20), (20, 20)),
+                var_name='bad_name',
+                standard_name='longitude',
+                units='degrees_east'
+            ),
+            (1, 2)
+        )
+        self._check_debug_messages_on_metadata()
+
+    def test_bad_out_name_onedim_latitude(self):
+        """Warning if onedimensional lat has bad var_name at metadata"""
+        self.var_info.table_type = 'CMIP6'
+        self.cube.coord('latitude').var_name = 'bad_name'
+        self._check_fails_in_metadata()
+
+    def test_bad_out_name_onedim_longitude(self):
+        """Warning if onedimensional lon has bad var_name at metadata"""
+        self.var_info.table_type = 'CMIP6'
+        self.cube.coord('longitude').var_name = 'bad_name'
+        self._check_fails_in_metadata()
+
+    def test_bad_out_name_other(self):
+        """Warning if general coordinate has bad var_name at metadata"""
+        self.var_info.table_type = 'CMIP6'
+        self.cube.coord('time').var_name = 'bad_name'
         self._check_fails_in_metadata()
 
     def test_bad_out_name(self):
@@ -449,7 +518,7 @@ class TestCMORCheck(unittest.TestCase):
         """Fail at metadata if frequency (day) not matches data frequency."""
         self.cube = self.get_cube(self.var_info, frequency='mon')
         time = self.cube.coord('time')
-        points = numpy.array(time.points)
+        points = np.array(time.points)
         points[1] = points[1] + 12
         dims = self.cube.coord_dims(time)
         self.cube.remove_coord(time)
@@ -533,7 +602,7 @@ class TestCMORCheck(unittest.TestCase):
                 scalar_coords.append(coord)
 
         valid_min, valid_max = self._get_valid_limits(var_info)
-        var_data = (numpy.ones(len(coords) * [20], 'f') *
+        var_data = (np.ones(len(coords) * [20], 'f') *
                     (valid_min + (valid_max - valid_min) / 2))
 
         if var_info.units == 'psu':
@@ -628,22 +697,22 @@ class TestCMORCheck(unittest.TestCase):
         decreasing = dim_spec.stored_direction == 'decreasing'
         endpoint = not dim_spec.standard_name == 'longitude'
         if decreasing:
-            values = numpy.linspace(
+            values = np.linspace(
                 valid_max, valid_min, 20, endpoint=endpoint)
         else:
-            values = numpy.linspace(
+            values = np.linspace(
                 valid_min, valid_max, 20, endpoint=endpoint)
-        values = numpy.array(values)
+        values = np.array(values)
         if dim_spec.requested:
             requested = [float(val) for val in dim_spec.requested]
             requested.sort(reverse=decreasing)
             for j, request in enumerate(requested):
                 values[j] = request
             if decreasing:
-                extra_values = numpy.linspace(
+                extra_values = np.linspace(
                     len(requested), valid_min, 20 - len(requested))
             else:
-                extra_values = numpy.linspace(
+                extra_values = np.linspace(
                     len(requested), valid_max, 20 - len(requested))
 
             for j in range(len(requested), 20):
@@ -664,7 +733,7 @@ class TestCMORCheck(unittest.TestCase):
             raise Exception('Frequency {} not supported'.format(frequency))
         start = 0
         end = start + delta * 20
-        return numpy.arange(start, end, step=delta)
+        return np.arange(start, end, step=delta)
 
 
 if __name__ == "__main__":
