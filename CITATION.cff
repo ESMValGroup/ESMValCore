@@ -12,6 +12,7 @@ authors:
     affiliation: "DLR, Germany"
     family-names: Bock
     given-names: Lisa
+    orcid: "https://orcid.org/0000-0001-7058-5938"
   -
     affiliation: "DLR, Germany"
     family-names: Broetz
@@ -28,6 +29,7 @@ authors:
     affiliation: "NLeSC, Netherlands"
     family-names: Drost
     given-names: Niels
+    orcid: "https://orcid.org/0000-0001-9795-7981"
   -
     affiliation: "MetOffice, UK"
     family-names: Earnshaw
@@ -36,18 +38,22 @@ authors:
     affiliation: "DLR, Germany"
     family-names: Eyring
     given-names: Veronika
+    orcid: "https://orcid.org/0000-0002-6887-4885"
   -
     affiliation: "DLR, Germany"
     family-names: Hassler
     given-names: Birgit
+    orcid: "https://orcid.org/0000-0003-2724-709X"
   -
     affiliation: "AWI, Germany"
     family-names: Koldunov
     given-names: Nikolay
+    orcid: "https://orcid.org/0000-0002-3365-8146"
   -
     affiliation: "DLR, Germany"
     family-names: Lauer
     given-names: Axel
+    orcid: "https://orcid.org/0000-0002-9270-1044"
   -
     affiliation: "MetOffice, UK"
     family-names: Little
@@ -61,14 +67,17 @@ authors:
     name-particle: de
     family-names: Mora
     given-names: Lee
+    orcid: "https://orcid.org/0000-0002-5080-3149"
   -
     affiliation: "URead, UK"
     family-names: Predoi
     given-names: Valeriu
+    orcid: "https://orcid.org/0000-0002-9729-6578"
   -
     affiliation: "DLR, Germany"
     family-names: Righi
     given-names: Mattia
+    orcid: "https://orcid.org/0000-0003-3827-5950"
   -
     affiliation: "DLR, Germany"
     family-names: Schlund
@@ -77,6 +86,7 @@ authors:
     affiliation: "BSC, Spain"
     family-names: Vegas-Regidor
     given-names: Javier
+    orcid: "https://orcid.org/0000-0003-0096-4291"
   -
     affiliation: "SMHI, Sweden"
     family-names: Zimmermann
