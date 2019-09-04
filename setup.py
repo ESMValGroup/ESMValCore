@@ -156,7 +156,7 @@ class RunLinter(CustomCommand):
 setup(
     name='ESMValCore',
     version=__version__,
-    authors=read_authors('CITATION.cff'),
+    author=read_authors('CITATION.cff'),
     description='Earth System Models eValuation Tool Core',
     long_description=Path('README.md').read_text(),
     url='https://www.esmvaltool.org',
