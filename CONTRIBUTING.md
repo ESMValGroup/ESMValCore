@@ -73,8 +73,14 @@ It is recommended that you open a pull request early, as this will cause CircleC
 You can view the results of the automatic checks below your pull request. If one of the tests shows a red cross instead of a green approval sign, please click the link and try to solve the issue. Note that this kind of automated checks make it easier to review code, but they are not flawless, so occasionally Codacy will report false positives.
 
 ### Contributing to the ESMValCore package
-Contributions to the core of ESMValTool should
-  - Go into the public repository.
+Contributions to ESMValCore should
   - Preferably be covered by unit tests. Unit tests are mandatory for new preprocessor functions or modifications to existing functions. If you do not know how to start with writing unit tests, let us know in a comment on the pull request and a core development team member will try to help you get started.
- - Be accompanied by appropriate documentation.
- - Introduce no new issues on Codacy (but note that style issues reported in unit test code are not worth the effort of fixing).
+  - Be accompanied by appropriate documentation.
+  - Introduce no new issues on Codacy.
+
+### List of authors
+If you make a (significant) contribution to ESMValCore, please add your name to the list of authors in CITATION.cff and regenerate the file .zenodo.json by running the command
+```
+pip install cffconvert
+cffconvert --ignore-suspect-keys --outputformat zenodo --outfile .zenodo.json
+```

@@ -1,0 +1,86 @@
+{
+    "creators": [
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Andela, Bouwe",
+            "orcid": "0000-0001-9005-8940"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Bock, Lisa"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Broetz, Bjoern"
+        },
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Diblen, Faruk"
+        },
+        {
+            "affiliation": "MetOffice, UK",
+            "name": "Dreyer, Laura"
+        },
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Drost, Niels"
+        },
+        {
+            "affiliation": "MetOffice, UK",
+            "name": "Earnshaw, Paul"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Eyring, Veronika"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Hassler, Birgit"
+        },
+        {
+            "affiliation": "AWI, Germany",
+            "name": "Koldunov, Nikolay"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Lauer, Axel"
+        },
+        {
+            "affiliation": "MetOffice, UK",
+            "name": "Little, Bill"
+        },
+        {
+            "affiliation": "BSC, Spain",
+            "name": "Loosveldt-Tomas, Saskia"
+        },
+        {
+            "affiliation": "PML, UK",
+            "name": "de Mora, Lee"
+        },
+        {
+            "affiliation": "URead, UK",
+            "name": "Predoi, Valeriu"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Righi, Mattia"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Schlund, Manuel"
+        },
+        {
+            "affiliation": "BSC, Spain",
+            "name": "Vegas-Regidor, Javier"
+        },
+        {
+            "affiliation": "SMHI, Sweden",
+            "name": "Zimmermann, Klaus"
+        }
+    ],
+    "description": "\"ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.\"\n",
+    "license": {
+        "id": "Apache-2.0"
+    },
+    "title": "ESMValCore"
+}
