@@ -38,7 +38,6 @@ requirements:
     - libunwind  # specifically for Python3.7+
     - graphviz
     - iris>=2.2
-    - matplotlib<3,>=2  # required by iris
     - python-stratify
     # Normally installed via pip:
     - cf-units
@@ -52,7 +51,7 @@ requirements:
     - psutil
     - pydot
     - pyyaml
-    - yamale  # in esmvalgroup and birdhouse channel
+    - yamale  # in esmvalgroup channel
 
 test:
   # TODO: add unit tests? This seems to require installing the tests
@@ -68,5 +67,5 @@ about:
   home: https://www.esmvaltool.org
   license: Apache License, Version 2.0
   license_file: LICENSE
-  summary: "ESMValCore: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP."
-  description: "ESMValCore: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP."
+  summary: "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts."
+  description: "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts."
