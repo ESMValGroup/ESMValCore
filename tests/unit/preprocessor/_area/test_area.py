@@ -3,12 +3,14 @@
 import unittest
 
 import iris
+import fiona
 import numpy as np
 from cf_units import Unit
+from shapely.geometry import mapping, Polygon
 
 import tests
 from esmvalcore.preprocessor._area import (
-    area_statistics, extract_named_regions, extract_region)
+    area_statistics, extract_named_regions, extract_region, _clip_geometries)
 
 
 class Test(tests.Test):
@@ -49,6 +51,35 @@ class Test(tests.Test):
         coords_spec = [(nlats, 0), (nlons, 1)]
         self.negative_grid = iris.cube.Cube(
             ndata, dim_coords_and_dims=coords_spec)
+
+        # Define polygons to test extract_shape
+        poly1 = Polygon([(1.5, 2.2),
+                        (2.4, 1.2),
+                        (3.6, 4.8)])
+        poly2 = Polygon([(1.5, 1.2),
+                        (1.8, 1.1),
+                        (1.2, 1.6)])
+
+        # Define a polygon feature geometry with one attribute
+        schema = {
+            'geometry': 'Polygon',
+            'properties': {'id': 'int'},
+        }
+
+        # Write a new Shapefile
+        with fiona.open('test_shape1.shp', 'w', 'ESRI Shapefile', schema) as c:
+            # If there are multiple geometries, put the "for" loop here
+            c.write({
+                'geometry': mapping(poly1),
+                'properties': {'id': 1},
+            })
+
+        with fiona.open('test_shape2.shp', 'w', 'ESRI Shapefile', schema) as c:
+            # If there are multiple geometries, put the "for" loop here
+            c.write({
+                'geometry': mapping(poly2),
+                'properties': {'id': 2},
+            })
 
     def test_area_statistics_mean(self):
         """Test for area average of a 2D field."""
@@ -145,6 +176,19 @@ class Test(tests.Test):
             extract_named_regions(region_cube, 'reg_A')
             extract_named_regions(region_cube, ['region1', 'reg_A'])
 
+    def test_clip_geometries(self):
+        """Test for extracting a region by shape."""
+        # Here's an example Shapely geometry
+
+        with fiona.open('test_shape1.shp') as geometries:
+            result = _clip_geometries(self.grid, geometries)
+            expected = np.ones((5, 5))
+            self.assertArrayEqual(result.data, expected)
+
+        with fiona.open('test_shape2.shp') as geometries:
+            result = _clip_geometries(self.grid, geometries)
+            expected = np.ones((3, 3))
+            self.assertArrayEqual(result.data, expected)
 
 if __name__ == '__main__':
     unittest.main()

@@ -300,6 +300,31 @@ def extract_named_regions(cube, regions):
     return cube
 
 
+def _clip_geometries(cube, geometries):
+    """Clips cube to only include the regions in geometries"""
+    lon_coord = cube.coord(axis='X')
+    lat_coord = cube.coord(axis='Y')
+    if lon_coord.ndim == 1 and lat_coord.ndim == 1:
+        (
+            start_longitude,
+            start_latitude,
+            end_longitude,
+            end_latitude,
+        ) = geometries.bounds
+        lon_bound = lon_coord.core_bounds()[0]
+        lon_step = lon_bound[1] - lon_bound[0]
+        start_longitude -= lon_step
+        end_longitude += lon_step
+        lat_bound = lat_coord.core_bounds()[0]
+        lat_step = lat_bound[1] - lat_bound[0]
+        start_latitude -= lat_step
+        end_latitude += lat_step
+        cube = extract_region(cube, start_longitude, end_longitude,
+                              start_latitude, end_latitude)
+
+    return cube
+
+
 def extract_shape(cube, shapefile, method='contains', clip=True):
     """Extract a region defined by a shapefile.
 
@@ -311,7 +336,7 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
         A shapefile defining the region(s) to extract.
     method: str
         Select all points contained by the shape ('contains') or
-        select a single representative point ('representative').
+        select a single representative point ('nearest').
     clip: bool
         Clip the resulting cube ('true') or not ('false').
 
@@ -323,30 +348,13 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
     """
     if method not in {'contains', 'nearest'}:
         raise ValueError(
-            "Invalid value for `method`. Choose from 'containts', 'nearest'.")
-    lon_coord = cube.coord(axis='X')
-    lat_coord = cube.coord(axis='Y')
-    with fiona.open(shapefile) as geometries:
-        if clip and lon_coord.ndim == 1 and lat_coord.ndim == 1:
-            (
-                start_longitude,
-                start_latitude,
-                end_longitude,
-                end_latitude,
-            ) = geometries.bounds
-            lon_bound = lon_coord.core_bounds()[0]
-            lon_step = lon_bound[1] - lon_bound[0]
-            start_longitude -= lon_step
-            end_longitude += lon_step
-            lat_bound = lat_coord.core_bounds()[0]
-            lat_step = lat_bound[1] - lat_bound[0]
-            start_latitude -= lat_step
-            end_latitude += lat_step
-            cube = extract_region(cube, start_longitude, end_longitude,
-                                  start_latitude, end_latitude)
-            lon_coord = cube.coord(axis='X')
-            lat_coord = cube.coord(axis='Y')
+            "Invalid value for `method`. Choose from 'contains', 'nearest'.")
 
+    with fiona.open(shapefile) as geometries:
+        if clip:
+            cube = _clip_geometries(cube, geometries)
+        lon_coord = cube.coord(axis='X')
+        lat_coord = cube.coord(axis='Y')
 
 #         mask = rasterio.features.geometry_mask(
 #             geometries,
