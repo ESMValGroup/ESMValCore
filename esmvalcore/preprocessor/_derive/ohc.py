@@ -47,13 +47,21 @@ class DerivedVariable(DerivedVariableBase):
         # 2. multiply with each other and with cprho0
         # some juggling with coordinates needed since Iris is very
         # restrictive in this regard
-        cube.remove_coord('day_of_month')
-        cube.remove_coord('day_of_year')
-        cube.remove_coord('month_number')
-        cube.remove_coord('year')
-        t_coord = cube.coord('time')
-        cube.remove_coord(t_coord)
+        t_coord_dims = cube.coord_dims('time')
+        assert len(t_coord_dims) == 1
+        t_coord_dim = t_coord_dims[0]
+        dim_coords = [(coord, cube.coord_dims(coord)[0])
+                      for coord in cube.coords(contains_dimension=t_coord_dim,
+                                               dim_coords=True)]
+        aux_coords = [(coord, cube.coord_dims(coord))
+                      for coord in cube.coords(contains_dimension=t_coord_dim,
+                                               dim_coords=False)]
+        for coord, dims in dim_coords + aux_coords:
+            cube.remove_coord(coord)
         new_cube = cube * volume
         new_cube *= RHO_CP
-        new_cube.add_dim_coord(t_coord, 0)
+        for coord, dim in dim_coords:
+            new_cube.add_dim_coord(coord, dim)
+        for coord, dims in aux_coords:
+            new_cube.add_aux_coord(coord, dims)
         return new_cube
