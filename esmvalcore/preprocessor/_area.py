@@ -13,8 +13,6 @@ import shapely
 import shapely.ops
 from dask import array as da
 
-from _mask import _mask_with_shp
-
 logger = logging.getLogger(__name__)
 
 
@@ -77,38 +75,6 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     selection = select_lats & select_lons
     data = da.ma.masked_where(~selection, cube.core_data())
     return cube.copy(data)
-
-
-def _get_bbox_from_shp(shapefile):
-    return
-
-
-def extract_shape(cube, shapefilename, crop=True):
-    """
-    Extract a shapefile specified region from a cube.
-
-    Function that subsets a cube
-
-    Parameters
-    ----------
-    cube: iris.cube.Cube
-        input data cube.
-
-    shapefilename: str
-        path to the shapefile.
-
-    crop: bool, optional (default: True)
-        minimize the size of the resulting cube to the bounds of the shape.
-    """
-    if crop:
-        bbox = _get_bbox_from_shp(shapefilename)
-        cube = cube.intersection(bbox)
-
-    cube = _mask_with_shp(cube, shapefilename)
-    #not sure whether we can (and should) actually use the _mask_with_shp
-    #function as it is built for land/sea masks for the full world map 
-
-    return cube
 
 
 def get_iris_analysis_operation(operator):
