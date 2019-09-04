@@ -8,7 +8,7 @@ STD_NAME = 'soil_carbon_content'
 
 
 @mock.patch.object(cSoil_grid, 'grid_area_correction', autospec=True)
-def test_cSoil_grid_calculation(mock_grid_area_correction):
+def test_csoil_grid_calculation(mock_grid_area_correction):
     """Test calculation of `cSoil_grid."""
     derived_var = cSoil_grid.DerivedVariable()
     derived_var.calculate(CUBES)

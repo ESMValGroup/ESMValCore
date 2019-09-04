@@ -8,7 +8,7 @@ STD_NAME = 'vegetation_carbon_content'
 
 
 @mock.patch.object(cVeg_grid, 'grid_area_correction', autospec=True)
-def test_cVeg_grid_calculation(mock_grid_area_correction):
+def test_cveg_grid_calculation(mock_grid_area_correction):
     """Test calculation of `cVeg_grid."""
     derived_var = cVeg_grid.DerivedVariable()
     derived_var.calculate(CUBES)
