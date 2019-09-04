@@ -51,7 +51,7 @@ jobs:
             conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
-            conda install -yS r-base r-yaml julia ncl -c conda-forge
+            conda install -yS r-base r-yaml ncl -c conda-forge
             pip install . > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
@@ -120,6 +120,7 @@ jobs:
             conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
+            conda install -yS r-base r-yaml ncl -c conda-forge
             pip install -e .[develop] > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
