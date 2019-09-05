@@ -24,10 +24,10 @@ def test_get_required_with_fx():
 
     variables = get_required('nbp_grid')
 
-    reference = [{
-        'short_name': 'nbp',
-        'fx_files': ['sftlf'],
-    }]
+    reference = [
+        {'short_name': 'nbp'},
+        {'short_name': 'sftlf', 'mip': 'fx'},
+    ]
 
     assert variables == reference
 
