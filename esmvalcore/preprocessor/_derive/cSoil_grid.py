@@ -8,7 +8,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `cSoil_grid`."""
 
     # Required variables
-    required = [{'short_name': 'cSoil', 'fx_files': ['sftlf']}]
+    required = [{'short_name': 'cSoil'}, {'short_name': 'sftlf', 'mip': 'fx'}]
 
     @staticmethod
     def calculate(cubes):
