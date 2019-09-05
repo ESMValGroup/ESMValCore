@@ -409,6 +409,28 @@ class TestCMORCheck(unittest.TestCase):
         assert self.cube.attributes['branch_time_in_parent'] == 0.
         assert self.cube.attributes['branch_time_in_child'] == 3652.
 
+    def test_time_units_no_parent_exp(self):
+        """Test non-conversion of time units attributes for no parent exps."""
+        self.cube.coord('time').units = 'days since 1860-1-1 00:00:00'
+        self.cube.attributes['parent_time_units'] = 'no parent'
+        self.cube.attributes['branch_time_in_parent'] = 0.
+        self.cube.attributes['branch_time_in_child'] = 0.
+        self._check_cube()
+        assert (self.cube.coord('time').units.origin ==
+                'days since 1850-1-1 00:00:00')
+        assert self.cube.attributes['parent_time_units'] == 'no parent'
+        assert self.cube.attributes['branch_time_in_parent'] == 0.
+        assert self.cube.attributes['branch_time_in_child'] == 0.
+
+    def test_wrong_parent_time_unit(self):
+        """Test fail for wrong parent time units."""
+        self.cube.coord('time').units = 'days since 1860-1-1 00:00:00'
+        self.cube.attributes['parent_time_units'] = 'days since ' \
+                                                    '1860-1-1-00-00-00'
+        self.cube.attributes['branch_time_in_parent'] = 0.
+        self.cube.attributes['branch_time_in_child'] = 0.
+        self._check_fails_in_metadata()
+
     def test_time_automatic_fix_failed(self):
         """Test automatic fix fail for incompatible time units."""
         self.cube.coord('time').units = 'K'
