@@ -336,7 +336,7 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
         A shapefile defining the region(s) to extract.
     method: str
         Select all points contained by the shape ('contains') or
-        select a single representative point ('nearest').
+        select a single representative point ('representative').
     clip: bool
         Clip the resulting cube ('true') or not ('false').
 
@@ -346,9 +346,10 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
         Cube containing the extracted region.
 
     """
-    if method not in {'contains', 'nearest'}:
+    if method not in {'contains', 'representative'}:
         raise ValueError(
-            "Invalid value for `method`. Choose from 'contains', 'nearest'.")
+            "Invalid value for `method`. Choose from 'contains', ",
+            "'representative'.")
 
     with fiona.open(shapefile) as geometries:
         if clip:
@@ -372,7 +373,8 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
             shape = shapely.geometry.shape(item['geometry'])
             if method == 'contains':
                 select = shapely.vectorized.contains(shape, lon, lat)
-            if method == 'nearest' or not select.any():
+                print('select: ', select)
+            if method == 'representative' or not select.any():
                 representative_point = shape.representative_point()
                 points = shapely.geometry.MultiPoint(
                     np.stack((lon.flat, lat.flat), axis=1))

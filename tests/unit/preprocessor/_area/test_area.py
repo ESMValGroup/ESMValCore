@@ -4,13 +4,15 @@ import unittest
 
 import iris
 import fiona
+import pytest
 import numpy as np
 from cf_units import Unit
 from shapely.geometry import mapping, Polygon
 
 import tests
 from esmvalcore.preprocessor._area import (
-    area_statistics, extract_named_regions, extract_region, _clip_geometries)
+    area_statistics, extract_named_regions, extract_region, extract_shape,
+    _clip_geometries)
 
 
 class Test(tests.Test):
@@ -51,35 +53,6 @@ class Test(tests.Test):
         coords_spec = [(nlats, 0), (nlons, 1)]
         self.negative_grid = iris.cube.Cube(
             ndata, dim_coords_and_dims=coords_spec)
-
-        # Define polygons to test extract_shape
-        poly1 = Polygon([(1.5, 2.2),
-                        (2.4, 1.2),
-                        (3.6, 4.8)])
-        poly2 = Polygon([(1.5, 1.2),
-                        (1.8, 1.1),
-                        (1.2, 1.6)])
-
-        # Define a polygon feature geometry with one attribute
-        schema = {
-            'geometry': 'Polygon',
-            'properties': {'id': 'int'},
-        }
-
-        # Write a new Shapefile
-        with fiona.open('test_shape1.shp', 'w', 'ESRI Shapefile', schema) as c:
-            # If there are multiple geometries, put the "for" loop here
-            c.write({
-                'geometry': mapping(poly1),
-                'properties': {'id': 1},
-            })
-
-        with fiona.open('test_shape2.shp', 'w', 'ESRI Shapefile', schema) as c:
-            # If there are multiple geometries, put the "for" loop here
-            c.write({
-                'geometry': mapping(poly2),
-                'properties': {'id': 2},
-            })
 
     def test_area_statistics_mean(self):
         """Test for area average of a 2D field."""
@@ -176,19 +149,87 @@ class Test(tests.Test):
             extract_named_regions(region_cube, 'reg_A')
             extract_named_regions(region_cube, ['region1', 'reg_A'])
 
-    def test_clip_geometries(self):
-        """Test for extracting a region by shape."""
-        # Here's an example Shapely geometry
 
-        with fiona.open('test_shape1.shp') as geometries:
-            result = _clip_geometries(self.grid, geometries)
-            expected = np.ones((5, 5))
-            self.assertArrayEqual(result.data, expected)
+@pytest.fixture
+def make_testcube():
+    coord_sys = iris.coord_systems.GeogCS(
+        iris.fileformats.pp.EARTH_RADIUS)
+    data = np.ones((5, 5))
+    lons = iris.coords.DimCoord(
+        [i + .5 for i in range(5)],
+        standard_name='longitude',
+        bounds=[[i, i + 1.] for i in range(5)],  # [0,1] to [4,5]
+        units='degrees_east',
+        coord_system=coord_sys)
+    lats = iris.coords.DimCoord([i + .5 for i in range(5)],
+                                standard_name='latitude',
+                                bounds=[[i, i + 1.] for i in range(5)],
+                                units='degrees_north',
+                                coord_system=coord_sys)
+    coords_spec = [(lats, 0), (lons, 1)]
+    return iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
 
-        with fiona.open('test_shape2.shp') as geometries:
-            result = _clip_geometries(self.grid, geometries)
-            expected = np.ones((3, 3))
-            self.assertArrayEqual(result.data, expected)
+
+@pytest.fixture(params=[(1, 1), (2, 2), (1, 3)])
+def square_shape(request, tmp_path):
+    # Define polygons to test extract_shape
+    slat = request.param[0]
+    slon = request.param[1]
+    polyg = Polygon([(1.0, 1.0 + slat),
+                     (1.0, 1.0),
+                     (1.0 + slon, 1.0),
+                     (1.0 + slon, 1.0 + slat)])
+
+    # Define a polygon feature geometry with one attribute
+    schema = {
+        'geometry': 'Polygon',
+        'properties': {'id': 'int'},
+    }
+
+    # Write a new Shapefile
+    with fiona.open(tmp_path / 'test_shape.shp',
+                    'w', 'ESRI Shapefile', schema) as c:
+        # If there are multiple geometries, put the "for" loop here
+        c.write({
+            'geometry': mapping(polyg),
+            'properties': {'id': 123},
+        })
+    vals = np.ones((min(slat + 2, 5), min(slon + 2, 5)))
+    mask = vals.copy()
+    mask[1:1+slat, 1:1+slon] = 0
+    return np.ma.masked_array(vals, mask)
+
+
+def test_clip_geometries(make_testcube, square_shape, tmp_path):
+    """Test for clipping a cube by shape bounds."""
+    with fiona.open(tmp_path / 'test_shape.shp') as geometries:
+        result = _clip_geometries(make_testcube, geometries)
+        expected = square_shape.data
+        np.testing.assert_array_equal(result.data, expected)
+
+
+# def test_extract_shape(self):
+#     """Test for extracting a region with shapefile"""
+#     result1 = extract_shape(self.grid, 'test_shape1.shp')
+#     print(result1.data.mask)
+#     vals1 = np.ones((5, 5))
+#     mask = [[1, 1, 1, 1, 1],
+#             [1, 1, 1, 1, 1],
+#             [1, 1, 0, 1, 1],
+#             [1, 0, 0, 0, 1],
+#             [1, 0, 0, 1, 1]]
+#     expected1 = np.ma.masked_array(vals1, mask)
+#     self.assertArrayEqual(result1.data, expected1)
+#     self.assertArrayEqual(result1.data.mask, expected1.mask)
+
+#     result2 = extract_shape(self.grid, 'test_shape2.shp')
+#     print(result2.data.mask)
+#     vals2 = np.ones((3, 3))
+#     mask2 = [[1, 1, 1], [1, 0, 1], [1, 1, 1]]
+#     expected2 = np.ma.masked_array(vals2, mask2)
+#     self.assertArrayEqual(result2.data, expected2)
+#     self.assertArrayEqual(result2.data.mask, expected2.mask)
+
 
 if __name__ == '__main__':
     unittest.main()
