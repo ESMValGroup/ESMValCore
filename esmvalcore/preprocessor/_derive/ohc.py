@@ -56,12 +56,12 @@ class DerivedVariable(DerivedVariableBase):
             t_coord_dim = t_coord_dims[0]
             dim_coords = [(coord, cube.coord_dims(coord)[0])
                           for coord in cube.coords(
-                                  contains_dimension=t_coord_dim,
-                                  dim_coords=True)]
+                              contains_dimension=t_coord_dim,
+                              dim_coords=True)]
             aux_coords = [(coord, cube.coord_dims(coord))
                           for coord in cube.coords(
-                                  contains_dimension=t_coord_dim,
-                                  dim_coords=False)]
+                              contains_dimension=t_coord_dim,
+                              dim_coords=False)]
             for coord, dims in dim_coords + aux_coords:
                 cube.remove_coord(coord)
         new_cube = cube * volume
