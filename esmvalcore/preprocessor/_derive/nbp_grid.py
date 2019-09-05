@@ -7,10 +7,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `nbp_grid`."""
 
     # Required variables
-    required = [{
-        'short_name': 'nbp',
-        'fx_files': ['sftlf'],
-    }]
+    required = [{'short_name': 'nbp'}, {'short_name': 'sftlf', 'mip': 'fx'}]
 
     @staticmethod
     def calculate(cubes):
