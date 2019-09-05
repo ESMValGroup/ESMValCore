@@ -22,22 +22,23 @@ build:
   # Increment the build number when building a new conda package of the same
   # esmvalcore version, reset to 0 when building a new version.
   number: 0
+  noarch: python
   script: |
       python setup.py install --single-version-externally-managed --record=/tmp/record.txt
 
 requirements:
   build:
     - git
-    - python {{ python }}
+    - python>=3.6
     # Normally installed via pip:
     - pytest-runner
     - setuptools_scm
   run:
     # esmvaltool
-    - python
+    - python>=3.6
     - libunwind  # specifically for Python3.7+
     - graphviz
-    - iris>=2.2
+    - iris>=2.2.1
     - python-stratify
     # Normally installed via pip:
     - cf-units
