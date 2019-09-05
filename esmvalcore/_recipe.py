@@ -407,18 +407,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
 
 
 def _update_fx_settings(settings, variable, config_user):
-    """Find and set the FX derive/mask settings."""
-    # update for derive
-    if 'derive' in settings:
-        fx_files = {}
-        for var in get_required(variable['short_name']):
-            if 'fx_files' in var:
-                _augment(var, variable)
-                for fxvar in var['fx_files']:
-                    fx_files[fxvar] = _get_correct_fx_file(var, fxvar,
-                                                           config_user)
-        settings['derive']['fx_files'] = fx_files
-
+    """Find and set the FX mask settings."""
     # update for landsea
     if 'mask_landsea' in settings:
         fx_files_dict = {}
@@ -774,7 +763,8 @@ def _get_derive_input_variables(variables, config_user):
             for var in get_required(variable['short_name']):
                 _augment(var, variable)
                 append(group_prefix, var)
-
+    # _get_correct_fx_file(var, fxvar,
+    # config_user)
     return derive_input
 
 
