@@ -727,7 +727,7 @@ def test_derive_with_fx(tmp_path, patched_datafinder, config_user):
     task = recipe.tasks.pop()
 
     assert task.name == 'diagnostic_name' + TASKSEP + 'nbp_grid'
-    assert len(task.ancestors) == 1
+    assert len(task.ancestors) == 2
     ancestor = [t for t in task.ancestors][0]
     assert ancestor.name == 'diagnostic_name/nbp_grid_derive_input_nbp'
 
@@ -736,9 +736,6 @@ def test_derive_with_fx(tmp_path, patched_datafinder, config_user):
     product = task.products.pop()
     assert 'derive' in product.settings
     assert product.attributes['short_name'] == 'nbp_grid'
-    assert 'fx_files' in product.settings['derive']
-    assert 'sftlf' in product.settings['derive']['fx_files']
-    assert product.settings['derive']['fx_files']['sftlf'] is not None
 
     assert len(ancestor.products) == 1
     ancestor_product = ancestor.products.pop()
