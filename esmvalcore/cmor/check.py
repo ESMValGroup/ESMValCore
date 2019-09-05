@@ -495,9 +495,9 @@ class CMORCheck():
                 if attrs[parent_time] in 'no parent':
                     pass
                 else:
-                    self.report_error('Attribute parent_time_unit has ' \
-                        'a wrong format and cannot be read by cf_units')
-
+                    self.report_error('Attribute parent_time_unit has '
+                                      'a wrong format and cannot be read by'
+                                      'cf_units')
 
         tol = 0.001
         intervals = {'dec': (3600, 3660), 'day': (1, 1)}
