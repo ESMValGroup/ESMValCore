@@ -6,7 +6,7 @@ from esmvalcore.preprocessor._derive import get_required
 
 def test_get_required():
 
-    variables = get_required('alb')
+    variables = get_required('alb', 'CMIP5')
 
     reference = [
         {
@@ -22,7 +22,7 @@ def test_get_required():
 
 def test_get_required_with_fx():
 
-    variables = get_required('nbp_grid')
+    variables = get_required('nbp_grid', 'CMIP5')
 
     reference = [
         {'short_name': 'nbp'},
