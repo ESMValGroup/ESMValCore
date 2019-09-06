@@ -23,15 +23,18 @@ DOBSON_UNIT = cf_units.Unit('2.69e20 m^-2')
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `toz`."""
 
-    # Required variables
-    required = [
-        {
-            'short_name': 'tro3'
-        },
-        {
-            'short_name': 'ps'
-        },
-    ]
+    @staticmethod
+    def required(project):
+        # Required variables
+        required = [
+            {
+                'short_name': 'tro3'
+            },
+            {
+                'short_name': 'ps'
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):
