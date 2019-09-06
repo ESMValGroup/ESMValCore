@@ -511,7 +511,16 @@ class CMIP5Info(object):
         for table_file in glob.glob(os.path.join(self._cmor_folder, '*')):
             if '_grids' in table_file:
                 continue
-            self._load_table(table_file)
+            try:
+                self._load_table(table_file)
+            except Exception:
+                msg = f"Exception raised when loading {table_file}"
+                # Logger may not be ready at this stage
+                if logger.handlers:
+                    logger.error(msg)
+                else:
+                    print(msg)
+                raise
 
     @staticmethod
     def _get_cmor_path(cmor_tables_path):
@@ -691,7 +700,16 @@ class CustomInfo(CMIP5Info):
         for dat_file in glob.glob(os.path.join(self._cmor_folder, '*.dat')):
             if dat_file == self._coordinates_file:
                 continue
-            self._read_table_file(dat_file, self.tables['custom'])
+            try:
+                self._read_table_file(dat_file, self.tables['custom'])
+            except Exception:
+                msg = f"Exception raised when loading {dat_file}"
+                # Logger may not be ready at this stage
+                if logger.handlers:
+                    logger.error(msg)
+                else:
+                    print(msg)
+                raise
 
     def get_table(self, table):
         """
