@@ -119,7 +119,7 @@ DEFAULT_DOCUMENTATION = dedent("""
     documentation:
       description: This is a test recipe.
       authors:
-        - ande_bo
+        - andela_bouwe
       references:
         - contact_authors
         - acknow_project
@@ -749,7 +749,7 @@ def simulate_diagnostic_run(diagnostic_task):
         'statistics': ['mean', 'var'],
         'domains': ['trop', 'et'],
         'plot_types': ['zonal'],
-        'authors': ['ande_bo'],
+        'authors': ['andela_bouwe'],
         'references': ['acknow_project'],
         'ancestors': input_files,
     }
@@ -767,7 +767,7 @@ def simulate_diagnostic_run(diagnostic_task):
 
 TAGS = {
     'authors': {
-        'ande_bo': {
+        'andela_bouwe': {
             'name': 'Bouwe Andela',
         },
     },

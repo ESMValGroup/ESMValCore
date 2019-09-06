@@ -83,9 +83,9 @@ class TestCMIP6Info(unittest.TestCase):
         self.assertEqual(var.frequency, 'mon')
 
     def test_get_institute_from_source(self):
-        """Get institution for source ACCESS-1-0"""
-        institute = self.variables_info.institutes['ACCESS-1-0']
-        self.assertListEqual(institute, ['CSIRO-BOM'])
+        """Get institution for source ACCESS-CM2"""
+        institute = self.variables_info.institutes['ACCESS-CM2']
+        self.assertListEqual(institute, ['CSIRO-ARCCSS-BoM'])
 
     def test_get_activity_from_exp(self):
         """Get activity for experiment 1pctCO2"""
