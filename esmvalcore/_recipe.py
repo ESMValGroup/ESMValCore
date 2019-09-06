@@ -10,7 +10,7 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import TAGS, get_institutes, replace_tags
+from ._config import TAGS, get_institutes, get_activity, replace_tags
 from ._data_finder import (get_input_filelist, get_input_fx_filelist,
                            get_output_file, get_statistic_output_file)
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -113,20 +113,12 @@ def _add_cmor_info(variable, override=False):
     cmor_table = variable['cmor_table']
     mip = variable['mip']
     short_name = variable['short_name']
-    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name)
-
-    if derive and table_entry is None:
-        custom_table = CMOR_TABLES['custom']
-        table_entry = custom_table.get_variable(mip, short_name)
+    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name, derive)
 
     if table_entry is None:
         raise RecipeError(
             "Unable to load CMOR table '{}' for variable '{}' with mip '{}'".
             format(cmor_table, short_name, mip))
-
-    mip_info = CMOR_TABLES[cmor_table].get_table(mip)
-    if mip_info:
-        table_entry.frequency = mip_info.frequency
 
     for key in cmor_keys:
         if key not in variable or override:
@@ -906,6 +898,9 @@ class Recipe:
             institute = get_institutes(variable)
             if institute:
                 variable['institute'] = institute
+            activity = get_activity(variable)
+            if activity:
+                variable['activity'] = activity
             check.variable(variable, required_keys)
             if 'fx_files' in variable:
                 for fx_file in variable['fx_files']:
@@ -960,6 +955,9 @@ class Recipe:
         to the alias only if the previous ones where not enough to fully
         identify the dataset.
 
+        If key values are not strings, they will be joint using '-' if they
+        are iterables or replaced by they string representation if they are not
+
         Function will not modify alias if it is manually added to the recipe
         but it will use the dataset info to compute the others
 
@@ -993,9 +991,20 @@ class Recipe:
             preprocessor output dictionary
         """
         datasets_info = set()
+
+        def _key_str(obj):
+            if isinstance(obj, str):
+                return obj
+            try:
+                return '-'.join(obj)
+            except TypeError:
+                return str(obj)
+
         for variable in preprocessor_output.values():
             for dataset in variable:
-                alias = tuple(dataset.get(key, None) for key in self.info_keys)
+                alias = tuple(
+                    _key_str(dataset.get(key, None)) for key in self.info_keys
+                )
                 datasets_info.add(alias)
                 if 'alias' not in dataset:
                     dataset['alias'] = alias
