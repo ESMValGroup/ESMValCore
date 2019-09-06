@@ -10,6 +10,7 @@
 import os
 import re
 import sys
+from pathlib import Path
 
 from setuptools import Command, setup
 
@@ -68,9 +69,18 @@ REQUIREMENTS = {
 }
 
 
+def read_authors(citation_file):
+    """Read the list of authors from .cff file."""
+    authors = re.findall(
+        r'family-names: (.*)$\s*given-names: (.*)',
+        Path(citation_file).read_text(),
+        re.MULTILINE,
+    )
+    return ', '.join(' '.join(author[::-1]) for author in authors)
+
+
 def discover_python_files(paths, ignore):
     """Discover Python files."""
-
     def _ignore(path):
         """Return True if `path` should be ignored, False otherwise."""
         return any(re.match(pattern, path) for pattern in ignore)
@@ -88,7 +98,6 @@ def discover_python_files(paths, ignore):
 
 class CustomCommand(Command):
     """Custom Command class."""
-
     def install_deps_temp(self):
         """Try to temporarily install packages needed to run the command."""
         if self.distribution.install_requires:
@@ -105,10 +114,8 @@ class RunLinter(CustomCommand):
 
     def initialize_options(self):
         """Do nothing."""
-
     def finalize_options(self):
         """Do nothing."""
-
     def run(self):
         """Run prospector and generate a report."""
         check_paths = PACKAGES + [
@@ -146,23 +153,32 @@ class RunLinter(CustomCommand):
         sys.exit(errno)
 
 
-with open('README.md') as readme:
-    README = readme.read()
-
 setup(
     name='ESMValCore',
     version=__version__,
+    author=read_authors('CITATION.cff'),
     description='Earth System Models eValuation Tool Core',
-    long_description=README,
+    long_description=Path('README.md').read_text(),
     url='https://www.esmvaltool.org',
     download_url='https://github.com/ESMValGroup/ESMValCore',
     license='Apache License, Version 2.0',
     classifiers=[
+        'Development Status :: 4 - Beta',
         'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
+        'Natural Language :: English',
+        'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Scientific/Engineering :: Atmospheric Science',
+        'Topic :: Scientific/Engineering :: GIS',
+        'Topic :: Scientific/Engineering :: Hydrology',
+        'Topic :: Scientific/Engineering :: Physics'
+        'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     packages=PACKAGES,
     # Include all version controlled files
