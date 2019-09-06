@@ -239,7 +239,8 @@ def _dataset_to_file(variable, config_user):
         rootpath=config_user['rootpath'],
         drs=config_user['drs'])
     if not files and variable.get('derive'):
-        first_required = get_required(variable['short_name'])[0]
+        first_required = get_required(variable['short_name'],
+                                      variable['project'])[0]
         _augment(first_required, variable)
         files = get_input_filelist(
             variable=first_required,
@@ -760,7 +761,9 @@ def _get_derive_input_variables(variables, config_user):
             append(group_prefix, var)
         else:
             # Process input data needed to derive variable
-            for var in get_required(variable['short_name']):
+            required_vars = get_required(variable['short_name'],
+                                         variable['project'])
+            for var in required_vars:
                 _augment(var, variable)
                 append(group_prefix, var)
     # _get_correct_fx_file(var, fxvar,
