@@ -15,6 +15,7 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def required(project):
+        """Declare the variables needed for derivation."""
         # Required variables
         required = [
             {

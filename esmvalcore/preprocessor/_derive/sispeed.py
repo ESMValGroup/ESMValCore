@@ -13,11 +13,15 @@ logger = logging.getLogger(__name__)
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sispeed`."""
 
-    # Required variables
-    required = [
-        {'short_name': 'usi', },
-        {'short_name': 'vsi', }
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        # Required variables
+        required = [
+            {'short_name': 'usi', },
+            {'short_name': 'vsi', }
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):
