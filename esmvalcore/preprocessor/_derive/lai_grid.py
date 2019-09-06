@@ -7,8 +7,17 @@ from ._shared import grid_area_correction
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `lai_grid`."""
 
-    # Required variables
-    required = [{'short_name': 'lai', 'fx_files': ['sftlf']}]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        # Required variables
+        if project == 'CMIP5':
+            required = [{'short_name': 'lai'},
+                        {'short_name': 'sftlf', 'mip': 'fx'}]
+        elif project == 'CMIP6':
+            required = [{'short_name': 'lai'},
+                        {'short_name': 'sftlf', 'mip': 'fx'}]
+        return required
 
     @staticmethod
     def calculate(cubes):

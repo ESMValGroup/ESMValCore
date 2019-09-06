@@ -6,11 +6,19 @@ from ._shared import grid_area_correction
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `fgco2_grid`."""
 
-    # Required variables
-    required = [{
-        'short_name': 'fgco2',
-        'fx_files': ['sftof', 'sftlf'],
-    }]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        # Required variables
+        if project == 'CMIP5':
+            required = [{'short_name': 'fgco2'},
+                        {'short_name': 'sftlf', 'mip': 'fx'},
+                        {'short_name': 'sftof', 'mip': 'fx'}]
+        elif project == 'CMIP6':
+            required = [{'short_name': 'fgco2'},
+                        {'short_name': 'sftlf', 'mip': 'fx'},
+                        {'short_name': 'sftof', 'mip': 'Ofx'}]
+        return required
 
     @staticmethod
     def calculate(cubes):

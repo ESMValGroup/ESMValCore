@@ -8,6 +8,7 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def required(project):
+        """Declare the variables needed for derivation."""
         # Required variables
         if project == 'CMIP5':
             required = [{'short_name': 'nbp'},
