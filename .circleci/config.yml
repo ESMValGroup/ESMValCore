@@ -184,7 +184,9 @@ workflows:
   commit:
     jobs:
       - test
-      - install
+      - install:
+          requires:
+            - test
       - documentation
   nightly:
     triggers:
