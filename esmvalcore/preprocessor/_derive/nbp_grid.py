@@ -6,8 +6,16 @@ from ._shared import grid_area_correction
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `nbp_grid`."""
 
-    # Required variables
-    required = [{'short_name': 'nbp'}, {'short_name': 'sftlf', 'mip': 'fx'}]
+    @staticmethod
+    def required(project):
+        # Required variables
+        if project == 'CMIP5':
+            required = [{'short_name': 'nbp'},
+                        {'short_name': 'sftlf', 'mip': 'fx'}]
+        elif project == 'CMIP6':
+            required = [{'short_name': 'nbp'},
+                        {'short_name': 'sftlf', 'mip': 'fx'}]
+        return required
 
     @staticmethod
     def calculate(cubes):
