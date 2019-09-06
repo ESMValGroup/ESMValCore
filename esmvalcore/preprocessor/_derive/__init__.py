@@ -34,7 +34,7 @@ ALL_DERIVED_VARIABLES = _get_all_derived_variables()
 __all__ = list(ALL_DERIVED_VARIABLES)
 
 
-def get_required(short_name):
+def get_required(short_name, project):
     """Return all required variables for derivation.
 
     Get all information (at least `short_name`) required for derivation.
@@ -43,6 +43,8 @@ def get_required(short_name):
     ----------
     short_name : str
         `short_name` of the variable to derive.
+    project : str
+        `project` of the variable to derive.
 
     Returns
     -------
@@ -51,7 +53,7 @@ def get_required(short_name):
 
     """
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
-    variables = deepcopy(DerivedVariable().required)
+    variables = deepcopy(DerivedVariable().required(project))
     return variables
 
 
