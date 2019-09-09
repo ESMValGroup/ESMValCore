@@ -17,6 +17,7 @@ following the default order in which they are applied:
 * :ref:`Time operations`
 * :ref:`Area operations`
 * :ref:`Volume operations`
+* :ref:`Detrend`
 * :ref:`Unit conversion`
 
 Overview
@@ -858,6 +859,28 @@ Note that this function uses the expensive ``interpolate`` method from
 ``Iris.analysis.trajectory``, but it may be neccesary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
+
+.. _detrend:
+
+Detrend
+=======
+
+ESMValTool also supports detrending along any dimension using
+the preprocessor function 'detrend'.
+This function has two parameters:
+
+* ``dimension``: dimension to apply detrend on. Default: "time"
+* ``method``: It can be ``linear`` or ``constant``. Default: ``linear``
+
+If method is ``linear``, detrend will calculate the linear trend along the
+selected axis and substract it to the data. For example, this can be used to
+remove the linear trend caused by climate change on some variables is selected
+dimension is time.
+
+If method is ``constant``, detrend will compute the mean along that dimension
+and substract it from the data
+
+See also :func:`esmvalcore.preprocessor.detrend`.
 
 .. _unit conversion:
 
