@@ -170,7 +170,7 @@ def make_testcube():
     return iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
 
 
-@pytest.fixture(params=[(1, 1), (2, 2), (1, 3)])
+@pytest.fixture(params=[(2, 2), (1, 3), (9, 2), (0.1, 0.2)])
 def square_shape(request, tmp_path):
     # Define polygons to test extract_shape
     slat = request.param[0]
@@ -189,11 +189,12 @@ def square_shape(request, tmp_path):
     # Write a new Shapefile
     with fiona.open(tmp_path / 'test_shape.shp',
                     'w', 'ESRI Shapefile', schema) as c:
-        # If there are multiple geometries, put the "for" loop here
         c.write({
             'geometry': mapping(polyg),
             'properties': {'id': 123},
         })
+    # Make corresponding expected masked array
+    (slat, slon) = np.ceil([slat, slon]).astype(int)
     vals = np.ones((min(slat + 2, 5), min(slon + 2, 5)))
     mask = vals.copy()
     mask[1:1+slat, 1:1+slon] = 0
@@ -205,31 +206,15 @@ def test_clip_geometries(make_testcube, square_shape, tmp_path):
     with fiona.open(tmp_path / 'test_shape.shp') as geometries:
         result = _clip_geometries(make_testcube, geometries)
         expected = square_shape.data
-        print(result.data)
         np.testing.assert_array_equal(result.data, expected)
 
 
-# def test_extract_shape(amke_testcube, square_shape, tmp_path):
-#     """Test for extracting a region with shapefile"""
-#     result1 = extract_shape(self.grid, 'test_shape1.shp')
-#     print(result1.data.mask)
-#     vals1 = np.ones((5, 5))
-#     mask = [[1, 1, 1, 1, 1],
-#             [1, 1, 1, 1, 1],
-#             [1, 1, 0, 1, 1],
-#             [1, 0, 0, 0, 1],
-#             [1, 0, 0, 1, 1]]
-#     expected1 = np.ma.masked_array(vals1, mask)
-#     self.assertArrayEqual(result1.data, expected1)
-#     self.assertArrayEqual(result1.data.mask, expected1.mask)
-
-#     result2 = extract_shape(self.grid, 'test_shape2.shp')
-#     print(result2.data.mask)
-#     vals2 = np.ones((3, 3))
-#     mask2 = [[1, 1, 1], [1, 0, 1], [1, 1, 1]]
-#     expected2 = np.ma.masked_array(vals2, mask2)
-#     self.assertArrayEqual(result2.data, expected2)
-#     self.assertArrayEqual(result2.data.mask, expected2.mask)
+def test_extract_shape(make_testcube, square_shape, tmp_path):
+    """Test for extracting a region with shapefile"""
+    result = extract_shape(make_testcube, tmp_path / 'test_shape.shp')
+    expected = square_shape
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
 
 
 if __name__ == '__main__':

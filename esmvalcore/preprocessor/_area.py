@@ -305,7 +305,7 @@ def extract_named_regions(cube, regions):
 
 
 def _clip_geometries(cube, geometries):
-    """Clips cube to only include the regions in geometries"""
+    """Clips cube to only include the geometries and padding"""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
     if lon_coord.ndim == 1 and lat_coord.ndim == 1:
@@ -315,6 +315,7 @@ def _clip_geometries(cube, geometries):
             end_longitude,
             end_latitude,
         ) = geometries.bounds
+        # add a padding of one cell around the clipped cube
         lon_bound = lon_coord.core_bounds()[0]
         lon_step = lon_bound[1] - lon_bound[0]
         start_longitude -= lon_step
@@ -323,7 +324,6 @@ def _clip_geometries(cube, geometries):
         lat_step = lat_bound[1] - lat_bound[0]
         start_latitude -= lat_step
         end_latitude += lat_step
-        print(geometries.bounds)
         cube = extract_region(cube, start_longitude, end_longitude,
                               start_latitude, end_latitude)
 
@@ -377,9 +377,10 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
         for item in geometries:
             shape = shapely.geometry.shape(item['geometry'])
             if method == 'contains':
+                print("contains")
                 select = shapely.vectorized.contains(shape, lon, lat)
-                print('select: ', select)
             if method == 'representative' or not select.any():
+                print("representative")
                 representative_point = shape.representative_point()
                 points = shapely.geometry.MultiPoint(
                     np.stack((lon.flat, lat.flat), axis=1))
@@ -389,7 +390,6 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
                 select = (lon == nearest_lon) & (lat == nearest_lat)
             selection |= select
 
-        # print('selecting', np.sum(selection), 'points')
         selection = da.broadcast_to(selection, cube.shape)
         cube.data = da.ma.masked_where(~selection, cube.core_data())
         return cube
