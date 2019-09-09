@@ -205,10 +205,11 @@ def test_clip_geometries(make_testcube, square_shape, tmp_path):
     with fiona.open(tmp_path / 'test_shape.shp') as geometries:
         result = _clip_geometries(make_testcube, geometries)
         expected = square_shape.data
+        print(result.data)
         np.testing.assert_array_equal(result.data, expected)
 
 
-# def test_extract_shape(self):
+# def test_extract_shape(amke_testcube, square_shape, tmp_path):
 #     """Test for extracting a region with shapefile"""
 #     result1 = extract_shape(self.grid, 'test_shape1.shp')
 #     print(result1.data.mask)

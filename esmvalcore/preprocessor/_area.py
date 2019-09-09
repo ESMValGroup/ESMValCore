@@ -62,9 +62,13 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
 
     if cube.coord('latitude').ndim == 1:
         region_subset = cube.intersection(longitude=(start_longitude,
-                                                     end_longitude),
+                                                     end_longitude,
+                                                     True,
+                                                     False,),
                                           latitude=(start_latitude,
-                                                    end_latitude))
+                                                    end_latitude,
+                                                    True,
+                                                    False,),)
         region_subset = region_subset.intersection(longitude=(0., 360.))
         return region_subset
     # irregular grids
@@ -319,6 +323,7 @@ def _clip_geometries(cube, geometries):
         lat_step = lat_bound[1] - lat_bound[0]
         start_latitude -= lat_step
         end_latitude += lat_step
+        print(geometries.bounds)
         cube = extract_region(cube, start_longitude, end_longitude,
                               start_latitude, end_latitude)
 
