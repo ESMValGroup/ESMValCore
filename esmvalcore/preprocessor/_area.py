@@ -362,12 +362,6 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
         lon_coord = cube.coord(axis='X')
         lat_coord = cube.coord(axis='Y')
 
-#         mask = rasterio.features.geometry_mask(
-#             geometries,
-#             cube.shape[1:3],
-#             transform=rasterio.features.IDENTITY,
-#             all_touched=True,
-#             invert=True)
         lon = lon_coord.points
         lat = lat_coord.points
         if lon_coord.ndim == 1 and lat_coord.ndim == 1:
@@ -377,10 +371,8 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
         for item in geometries:
             shape = shapely.geometry.shape(item['geometry'])
             if method == 'contains':
-                print("contains")
                 select = shapely.vectorized.contains(shape, lon, lat)
             if method == 'representative' or not select.any():
-                print("representative")
                 representative_point = shape.representative_point()
                 points = shapely.geometry.MultiPoint(
                     np.stack((lon.flat, lat.flat), axis=1))
