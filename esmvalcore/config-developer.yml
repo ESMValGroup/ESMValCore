@@ -19,6 +19,7 @@
 ---
 
 CMIP6:
+  cmor_strict: true
   input_dir:
     default: '/'
     BADC: '[activity]/[institute]/[dataset]/[exp]/[ensemble]/[mip]/[short_name]/[grid]/[latestversion]'
@@ -141,7 +142,7 @@ OBS:
   cmor_type: 'CMIP5'
 
 obs4mips:
-  cmor_strict: false
+  cmor_strict: true
   input_dir:
     default: 'Tier[tier]/[dataset]'
     RCAST: '/'
@@ -162,6 +163,7 @@ ana4mips:
   input_file: '[short_name]_[mip]_[type]_[dataset]_*.nc'
   output_file: '[project]_[mip]_[type]_[dataset]_[short_name]_[start_year]-[end_year]'
   cmor_type: 'CMIP5'
+  # TODO: add cmor_path and table and set cmor_strict to true
 
 EMAC:
   input_dir:
