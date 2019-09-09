@@ -113,20 +113,12 @@ def _add_cmor_info(variable, override=False):
     cmor_table = variable['cmor_table']
     mip = variable['mip']
     short_name = variable['short_name']
-    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name)
-
-    if derive and table_entry is None:
-        custom_table = CMOR_TABLES['custom']
-        table_entry = custom_table.get_variable(mip, short_name)
+    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name, derive)
 
     if table_entry is None:
         raise RecipeError(
             "Unable to load CMOR table '{}' for variable '{}' with mip '{}'".
             format(cmor_table, short_name, mip))
-
-    mip_info = CMOR_TABLES[cmor_table].get_table(mip)
-    if mip_info:
-        table_entry.frequency = mip_info.frequency
 
     for key in cmor_keys:
         if key not in variable or override:
@@ -947,6 +939,9 @@ class Recipe:
             institute = get_institutes(variable)
             if institute:
                 variable['institute'] = institute
+            activity = get_activity(variable)
+            if activity:
+                variable['activity'] = activity
             check.variable(variable, required_keys)
 
         return variables

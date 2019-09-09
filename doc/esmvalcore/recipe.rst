@@ -84,7 +84,7 @@ data specifications:
 - ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
 - time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``)
 - model grid (native grid ``grid: gn`` or regridded grid ``grid: gr``, for
-  CMIP6 data only). 
+  CMIP6 data only).
 
 For example, a datasets section could be:
 
@@ -95,6 +95,21 @@ For example, a datasets section could be:
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
 
+It is possible to define the experiment as a list to concatenate two experiments.
+Here it is an example concatenating the `historical` experiment with `rcp85`
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: CanESM2, project: CMIP5, exp: [historical, rcp85] ensemble: r1i1p1, start_year: 2001, end_year: 2004}
+
+It is also possible to define the ensemble as a list, although it is useful only
+case the two experiments have different ensemble names
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: CanESM2, project: CMIP5, exp: [historical, rcp85] ensemble: [r1i1p1, r1i2p1], start_year: 2001, end_year: 2004}
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
@@ -128,7 +143,8 @@ arguments):
         regrid:
           target_grid: 1x1
           scheme: linear
-        time_average:
+        climate_statistics:
+          operator: mean
         multi_model_statistics:
           span: overlap
           statistics: [mean ]
@@ -189,7 +205,7 @@ key are provided, then the key in the datasets section will take precedence
 over the keys in variables section. For many recipes it makes more sense to
 define the ``start_year`` and ``end_year`` items in the variable section,
 because the diagnostic script assumes that all the data has the same time
-range. 
+range.
 
 Note that the path to the script provided in the `script` option should be
 either the absolute path to the script, or the path relative to the
@@ -273,7 +289,7 @@ This way the user may test a new diagnostic thoroughly before committing to the
 GitHub repository and including it in the ESMValTool diagnostics library.
 
 Re-using parameters from one ``script`` to another
--------------------------------------------------- 
+--------------------------------------------------
 Due to ``yaml`` features it is possible to recycle entire diagnostics sections
 for use with other diagnostics. Here is an example:
 

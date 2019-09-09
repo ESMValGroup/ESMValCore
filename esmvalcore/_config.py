@@ -7,7 +7,7 @@ import time
 
 import yaml
 
-from .cmor.table import read_cmor_tables
+from .cmor.table import read_cmor_tables, CMOR_TABLES
 
 logger = logging.getLogger(__name__)
 
@@ -172,11 +172,28 @@ def get_project_config(project):
 
 
 def get_institutes(variable):
-    """Return the institutes given the dataset name in CMIP5."""
+    """Return the institutes given the dataset name in CMIP5 and CMIP6."""
     dataset = variable['dataset']
     project = variable['project']
     logger.debug("Retrieving institutes for dataset %s", dataset)
+    try:
+        return CMOR_TABLES[project].institutes[dataset]
+    except (KeyError, AttributeError):
+        pass
     return CFG.get(project, {}).get('institutes', {}).get(dataset, [])
+
+
+def get_activity(variable):
+    """Return the activity given the experiment name in CMIP6."""
+    project = variable['project']
+    try:
+        exp = variable['exp']
+        logger.debug("Retrieving activity_id for experiment %s", exp)
+        if isinstance(exp, list):
+            return [CMOR_TABLES[project].activities[value] for value in exp]
+        return CMOR_TABLES[project].activities[exp]
+    except (KeyError, AttributeError):
+        return None
 
 
 TAGS_CONFIG_FILE = os.path.join(
