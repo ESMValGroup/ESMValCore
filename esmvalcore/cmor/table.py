@@ -125,9 +125,7 @@ class CMIP6Info(object):
                 return
             table = TableInfo()
             header = raw_data['Header']
-            logger.debug(header['table_id'])
             table.name = header['table_id'].split(' ')[-1]
-            logger.debug(table.name)
             self.tables[table.name] = table
 
             generic_levels = header['generic_levels'].split()
@@ -223,9 +221,6 @@ class CMIP6Info(object):
         try:
             return self.tables[table]
         except KeyError:
-            print(self.default_table_prefix)
-            print(''.join((self.default_table_prefix, table)))
-            print(self.tables.keys())
             return self.tables.get(''.join((self.default_table_prefix, table)))
 
     def get_variable(self, table_name, short_name, derived=False):
