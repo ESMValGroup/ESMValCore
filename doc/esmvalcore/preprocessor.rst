@@ -708,12 +708,12 @@ The ``_area.py`` module contains the following preprocessor functions:
 * ``area_statistics``: Calculates the average value over a region.
 * ``extract_named_regions``: Extract a specific region from in the region
   cooordinate.
-
+* ``extract_shape``: Extract a region defined by a shapefile. 
 
 ``extract_region``
 ------------------
 
-This function masks data outside a rectagular region requested. The boundairies
+This function clips the data to a rectangular region. The boundaries
 of the region are provided as latitude and longitude coordinates in the
 arguments:
 
@@ -722,7 +722,8 @@ arguments:
 * ``start_latitude``
 * ``end_latitude``
 
-Note that this function can only be used to extract a rectangular region.
+Note that this function can only be used to extract a rectangular region. Use
+``extract_shape`` to extract any other shaped region from a shapefile.
 
 See also :func:`esmvalcore.preprocessor.extract_region`.
 
@@ -768,6 +769,26 @@ cooordinate which includes a list of strings as values. This function then
 matches the named regions against the requested string.
 
 See also :func:`esmvalcore.preprocessor.extract_named_regions`.
+
+
+``extract_shape``
+-------------------------
+
+This function extracts a shape or a representative point for this shape from
+the data. The data outside the selected point(s) will be masked. The data can
+also be clipped to a rectangular region around the shape. This function takes
+the following arguments:
+
+* ``shapefile``: the shapefile containing the geometry of the region to be
+  extracted
+* ``method``: the method to select the region, selecting either all points
+  contained by the shape or one representative point
+* ``clip``: whether to mask the original data set or to clip to a minimal
+  rectangular region containing the shape
+
+Note: if the shape's geometry falls within a single grid cell, a representative point will be selected
+
+See also :func:`esmvalcore.preprocessor.extract_shape`.
 
 
 .. _volume operations:

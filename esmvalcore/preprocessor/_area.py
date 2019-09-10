@@ -305,7 +305,7 @@ def extract_named_regions(cube, regions):
 
 
 def _clip_geometries(cube, geometries):
-    """Clips cube to only include the geometries and padding"""
+    """Clip cube to only include the geometries and padding."""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
     if lon_coord.ndim == 1 and lat_coord.ndim == 1:
