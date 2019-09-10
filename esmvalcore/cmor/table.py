@@ -37,6 +37,7 @@ def read_cmor_tables(cfg_developer):
         table_path = project.get('cmor_path', cmor_type.lower())
         table_path = os.path.expandvars(os.path.expanduser(table_path))
         cmor_strict = project.get('cmor_strict', True)
+        default_table_prefix = project.get('cmor_default_table_prefix', '')
 
         if cmor_type == 'CMIP5':
             CMOR_TABLES[table] = CMIP5Info(
@@ -45,6 +46,7 @@ def read_cmor_tables(cfg_developer):
         elif cmor_type == 'CMIP6':
             CMOR_TABLES[table] = CMIP6Info(
                 table_path, default=custom, strict=cmor_strict,
+                default_table_prefix=default_table_prefix
             )
 
 
