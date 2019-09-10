@@ -510,6 +510,16 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.add_dim_coord(time.copy(points), dims)
         self._check_cube(frequency='mon')
 
+    def test_check_pt_freq(self):
+        """Test checks succeeds for a good Pt frequency."""
+        self.var_info.frequency = 'dayPt'
+        self._check_cube()
+
+    def test_check_pt_lowercase_freq(self):
+        """Test checks succeeds for a good Pt frequency."""
+        self.var_info.frequency = 'daypt'
+        self._check_cube()
+
     def test_bad_frequency_day(self):
         """Fail at metadata if frequency (day) not matches data frequency."""
         self.cube = self.get_cube(self.var_info, frequency='mon')
