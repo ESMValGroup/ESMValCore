@@ -10,7 +10,7 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import TAGS, get_institutes, replace_tags
+from ._config import TAGS, get_institutes, get_activity, replace_tags
 from ._data_finder import (get_input_filelist, get_input_fx_filelist,
                            get_output_file, get_statistic_output_file)
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -113,14 +113,7 @@ def _add_cmor_info(variable, override=False):
     cmor_table = variable['cmor_table']
     mip = variable['mip']
     short_name = variable['short_name']
-    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name)
-
-    if derive and table_entry is None:
-        custom_table = CMOR_TABLES['custom']
-        table_entry = custom_table.get_variable(mip, short_name)
-        table_entry.copy()
-        mip_info = CMOR_TABLES[cmor_table].get_table(mip)
-        table_entry.frequency = mip_info.frequency
+    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name, derive)
 
     if table_entry is None:
         raise RecipeError(
@@ -905,6 +898,9 @@ class Recipe:
             institute = get_institutes(variable)
             if institute:
                 variable['institute'] = institute
+            activity = get_activity(variable)
+            if activity:
+                variable['activity'] = activity
             check.variable(variable, required_keys)
             if 'fx_files' in variable:
                 for fx_file in variable['fx_files']:

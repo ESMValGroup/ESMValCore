@@ -1,7 +1,9 @@
+import iris
 from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor import derive
 from esmvalcore.preprocessor._derive import get_required
+from esmvalcore.preprocessor._derive.csoil_grid import DerivedVariable
 
 
 def test_get_required():
@@ -67,3 +69,32 @@ def test_derive_noop():
 
     print(cube)
     assert cube is alb
+
+
+def test_derive_mixed_case_with_fx(tmp_path, monkeypatch):
+
+    short_name = 'cSoil_grid'
+    long_name = 'Carbon Mass in Soil Pool relative to grid cell area'
+    units = 'kg m-2'
+
+    csoil_cube = Cube([])
+    fx_cube = Cube([])
+    fx_cube.var_name = 'sftlf'
+    fx_file = str(tmp_path / 'sftlf_file.nc')
+    iris.save(fx_cube, target=fx_file)
+
+    def mock_calculate(self, cubes):
+        assert len(cubes) == 2
+        assert cubes[0] == csoil_cube
+        assert cubes[1].var_name == fx_cube.var_name
+        return Cube([])
+
+    monkeypatch.setattr(DerivedVariable, 'calculate', mock_calculate)
+
+    derive(
+        [csoil_cube],
+        short_name,
+        long_name,
+        units,
+        fx_files={'sftlf': fx_file},
+    )
