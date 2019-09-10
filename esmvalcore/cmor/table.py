@@ -76,7 +76,8 @@ class CMIP6Info(object):
         'vsi': 'siv',
     }
 
-    def __init__(self, cmor_tables_path, default=None, strict=True):
+    def __init__(self, cmor_tables_path, default=None, strict=True,
+                 default_table_prefix=''):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
@@ -84,6 +85,7 @@ class CMIP6Info(object):
             self._load_controlled_vocabulary()
         self.default = default
         self.strict = strict
+        self.default_table_prefix = default_table_prefix
 
         self.tables = {}
         self.var_to_freq = {}
@@ -123,7 +125,9 @@ class CMIP6Info(object):
                 return
             table = TableInfo()
             header = raw_data['Header']
+            logger.debug(header['table_id'])
             table.name = header['table_id'].split(' ')[-1]
+            logger.debug(table.name)
             self.tables[table.name] = table
 
             generic_levels = header['generic_levels'].split()
@@ -216,15 +220,21 @@ class CMIP6Info(object):
             found, returns None if not
 
         """
-        return self.tables.get(table)
+        try:
+            return self.tables[table]
+        except KeyError:
+            print(self.default_table_prefix)
+            print(''.join((self.default_table_prefix, table)))
+            print(self.tables.keys())
+            return self.tables.get(''.join((self.default_table_prefix, table)))
 
-    def get_variable(self, table, short_name, derived=False):
+    def get_variable(self, table_name, short_name, derived=False):
         """
         Search and return the variable info.
 
         Parameters
         ----------
-        table: basestring
+        table_name: basestring
             Table name
         short_name: basestring
             Variable's short name
@@ -238,29 +248,33 @@ class CMIP6Info(object):
             found, returns None if not
 
         """
-        try:
-            return self.tables[table][short_name]
-        except KeyError:
-            if short_name in CMIP6Info._CMIP_5to6_varname:
-                new_short_name = CMIP6Info._CMIP_5to6_varname[short_name]
-                return self.get_variable(table, new_short_name, derived)
+        table = self.get_table(table_name)
+        if table:
+            try:
+                return table[short_name]
+            except KeyError:
+                pass
 
-            var_info = None
-            if not self.strict:
-                for table_vars in sorted(self.tables.values()):
-                    if short_name in table_vars:
-                        var_info = table_vars[short_name]
-                        break
-            if not var_info and (not self.strict or derived):
-                var_info = self.default.get_variable(table, short_name)
+        if short_name in CMIP6Info._CMIP_5to6_varname:
+            new_short_name = CMIP6Info._CMIP_5to6_varname[short_name]
+            return self.get_variable(table_name, new_short_name, derived)
 
-            if var_info:
-                mip_info = self.get_table(table)
-                if mip_info:
-                    var_info = var_info.copy()
-                    var_info.frequency = mip_info.frequency
+        var_info = None
+        if not self.strict:
+            for table_vars in sorted(self.tables.values()):
+                if short_name in table_vars:
+                    var_info = table_vars[short_name]
+                    break
+        if not var_info and (not self.strict or derived):
+            var_info = self.default.get_variable(table_name, short_name)
 
-            return var_info
+        if var_info:
+            mip_info = self.get_table(table_name)
+            if mip_info:
+                var_info = var_info.copy()
+                var_info.frequency = mip_info.frequency
+
+        return var_info
 
     @staticmethod
     def _is_table(table_data):
