@@ -56,11 +56,12 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     # irregular grids
     lats = cube.coord('latitude').points
     lons = cube.coord('longitude').points
-    select_lats = start_latitude < lats < end_latitude
-    select_lons = start_longitude < lons < end_longitude
+    select_lats = (start_latitude < lats) & (lats < end_latitude)
+    select_lons = (start_longitude < lons) & (lons < end_longitude)
     selection = select_lats & select_lons
-    data = da.ma.masked_where(~selection, cube.core_data())
-    return cube.copy(data)
+    selection = da.broadcast_to(selection, cube.shape)
+    cube.data = da.ma.masked_where(~selection, cube.core_data())
+    return cube
 
 
 def zonal_means(cube, coordinate, mean_type):

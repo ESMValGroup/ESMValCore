@@ -4,6 +4,7 @@ import unittest
 
 import iris
 import numpy as np
+import pytest
 from cf_units import Unit
 
 import tests
@@ -144,6 +145,79 @@ class Test(tests.Test):
         with self.assertRaises(ValueError):
             extract_named_regions(region_cube, 'reg_A')
             extract_named_regions(region_cube, ['region1', 'reg_A'])
+
+
+@pytest.fixture
+def irregular_grid_cube():
+    """Create test cube on irregular grid."""
+    # Define grid and data
+    data = np.arange(9, dtype=np.float32).reshape((3, 3))
+    lats = np.array(
+        [
+            [0.0, 0.0, 0.1],
+            [1.0, 1.1, 1.2],
+            [2.0, 2.1, 2.0],
+        ],
+        dtype=np.float64,
+    )
+    lons = np.array(
+        [
+            [0, 1, 2],
+            [0, 1, 2],
+            [0, 1, 2],
+        ],
+        dtype=np.float64,
+    )
+
+    # Construct cube
+    nlat = iris.coords.DimCoord(range(data.shape[0]), var_name='nlat')
+    nlon = iris.coords.DimCoord(range(data.shape[1]), var_name='nlon')
+    lat = iris.coords.AuxCoord(lats,
+                               var_name='lat',
+                               standard_name='latitude',
+                               units='degrees')
+    lon = iris.coords.AuxCoord(lons,
+                               var_name='lon',
+                               standard_name='longitude',
+                               units='degrees')
+    dim_coord_spec = [
+        (nlat, 0),
+        (nlon, 1),
+    ]
+    aux_coord_spec = [
+        (lat, [0, 1]),
+        (lon, [0, 1]),
+    ]
+    cube = iris.cube.Cube(
+        data,
+        var_name='tos',
+        units='K',
+        dim_coords_and_dims=dim_coord_spec,
+        aux_coords_and_dims=aux_coord_spec,
+    )
+    return cube
+
+
+def test_extract_region_irregular(irregular_grid_cube):
+    """Test `extract_region` with data on an irregular grid."""
+    cube = extract_region(
+        irregular_grid_cube,
+        start_latitude=0.5,
+        end_latitude=3,
+        start_longitude=0.5,
+        end_longitude=1.5,
+    )
+    data = np.arange(9, dtype=np.float32).reshape((3, 3))
+    mask = np.array(
+        [
+            [True, True, True],
+            [True, False, True],
+            [True, False, True],
+        ],
+        dtype=bool,
+    )
+    np.testing.assert_array_equal(cube.data.data, data)
+    np.testing.assert_array_equal(cube.data.mask, mask)
 
 
 if __name__ == '__main__':
