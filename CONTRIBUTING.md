@@ -21,7 +21,10 @@ To install in development mode, follow these instructions.
   - If you log into a cluster or other device via `ssh` and your origin machine sends the `locale` environment via the `ssh` connection, make sure the environment is set correctly, specifically `LANG` and `LC_ALL` are set correctly (for GB English UTF-8 encoding these variables must be set to `en_GB.UTF-8`; you can set them by adding `export LANG=en_GB.UTF-8` and `export LC_ALL=en_GB.UTF-8` in your origin or login machines' `.profile`)
 
 ## Getting started on MacOS OSX-64
-At the moment the conda package for `esmvalcore` is only Linux (`linux-64`), so to install on a MacOS you will have to perform a slightly different installation procedure:
+To install on a MacOS you will have to perform the following installation procedure:
+
+**WARNING**
+The Mac OSX installation is not being continuously tested via CircleCI! If you notice any problems please report them on GitHub.
 
   - Download and install Anaconda [for OSX](https://repo.anaconda.com/archive/Anaconda3-2019.07-MacOSX-x86_64.sh)(install by e.g. `bash Anaconda3-2019.07-MacOSX-x86_64.sh` or whatever the installer is called);
   - Answer yes when, at the end of the installation, Anaconda asks you to initialize the installation in your `.bash_profile`;
