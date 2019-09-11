@@ -9,28 +9,29 @@ To get started developing, follow the instructions below. More detailed instruct
 ## Getting started
 To install in development mode, follow these instructions.
 
-- [Download and install conda](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html) (this should be done even if the system in use already has a preinstalled version of conda, as problems have been reported with NCL when using such a version)
-- To make the `conda` command availble, add `source <prefix>/etc/profile.d/conda.sh` to your `.bashrc` file and restart your shell. If using (t)csh shell, add `source <prefix>/etc/profile.d/conda.csh` to your `.cshrc`/`.tcshrc` file instead.
-- Update conda: `conda update -y conda`
-- Clone the ESMValTool Core Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
-- Go to the source code directory: `cd ESMValCore`
-- Create the esmvaltool conda environment `conda env create --name esmvaltool --file environment.yml`
-- Activate the esmvaltool environment: `conda activate esmvaltool`
-- Install in development mode: `pip install -e '.[develop]'`. If you are installing behind a proxy that does not trust the usual pip-urls you can declare them with the option `--trusted-host`, e.g. `pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]`
-- Test that your installation was succesful by running `esmvaltool -h`.
-- If you log into a cluster or other device via `ssh` and your origin machine sends the `locale` environment via the `ssh` connection, make sure the environment is set correctly, specifically `LANG` and `LC_ALL` are set correctly (for GB English UTF-8 encoding these variables must be set to `en_GB.UTF-8`; you can set them by adding `export LANG=en_GB.UTF-8` and `export LC_ALL=en_GB.UTF-8` in your origin or login machines' `.profile`)
+  - [Download and install conda](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html) (this should be done even if the system in use already has a preinstalled version of conda, as problems have been reported with NCL when using such a version)
+  - To make the `conda` command availble, add `source <prefix>/etc/profile.d/conda.sh` to your `.bashrc` file and restart your shell. If using (t)csh shell, add `source <prefix>/etc/profile.d/conda.csh` to your `.cshrc`/`.tcshrc` file instead.
+  - Update conda: `conda update -y conda`
+  - Clone the ESMValTool Core Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
+  - Go to the source code directory: `cd ESMValCore`
+  - Create the esmvaltool conda environment `conda env create --name esmvaltool --file environment.yml`
+  - Activate the esmvaltool environment: `conda activate esmvaltool`
+  - Install in development mode: `pip install -e '.[develop]'`. If you are installing behind a proxy that does not trust the usual pip-urls you can declare them with the option `--trusted-host`, e.g. `pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]`
+  - Test that your installation was succesful by running `esmvaltool -h`.
+  - If you log into a cluster or other device via `ssh` and your origin machine sends the `locale` environment via the `ssh` connection, make sure the environment is set correctly, specifically `LANG` and `LC_ALL` are set correctly (for GB English UTF-8 encoding these variables must be set to `en_GB.UTF-8`; you can set them by adding `export LANG=en_GB.UTF-8` and `export LC_ALL=en_GB.UTF-8` in your origin or login machines' `.profile`)
 
 ## Getting started on MacOS OSX-64
 At the moment the conda package for `esmvalcore` is only Linux (`linux-64`), so to install on a MacOS you will have to perform a slightly different installation procedure:
 
-- Download and install Anaconda [for OSX](https://repo.anaconda.com/archive/Anaconda3-2019.07-MacOSX-x86_64.sh)(install by e.g. `bash Anaconda3-2019.07-MacOSX-x86_64.sh` or whatever the installer is called);
-- Answer yes when, at the end of the installation, Anaconda asks you to initialize the installation in your `.bash_profile`;
-- Clone the ESMValTool Core Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
-- Go to the source code directory: `cd ESMValCore`
-- Use the `environment-osx.yml` file to create the conda viartual environment, as explained above for a Linux installation: `conda env create -n esmvaltool -f environment-osx.yml`
-- Activate the esmvaltool environment: `conda activate esmvaltool`
-- Install in development mode: `pip install -e '.[develop]'`. If you are installing behind a proxy that does not trust the usual pip-urls you can declare them with the option `--trusted-host`, e.g. `pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]`
-- Test that your installation was succesful by running `esmvaltool -h`.
+  - Download and install Anaconda [for OSX](https://repo.anaconda.com/archive/Anaconda3-2019.07-MacOSX-x86_64.sh)(install by e.g. `bash Anaconda3-2019.07-MacOSX-x86_64.sh` or whatever the installer is called);
+  - Answer yes when, at the end of the installation, Anaconda asks you to initialize the installation in your `.bash_profile`;
+  - Clone the ESMValTool Core Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
+  - Go to the source code directory: `cd ESMValCore`
+  - Use the `environment.yml` file to create the conda viartual environment, as explained above for a Linux installation: `conda env create -n esmvaltool -f environment.yml`
+  - Activate the esmvaltool environment: `conda activate esmvaltool`
+  - Install in development mode: `pip install -e '.[develop]'`. If you are installing behind a proxy that does not trust the usual pip-urls you can declare them with the option `--trusted-host`, e.g. `pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]`
+  - Test that your installation was succesful by running `esmvaltool -h`.
+  - Note that the installation instructions are identical to the Linux installation due to the package being architecture agnostic (specified by the `noarch` label).
 
 ## Running tests
 Go to the directory where the repository is cloned and run `python setup.py test --addopts --installation`. Tests will also be run automatically by [CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore).
@@ -87,7 +88,7 @@ You can view the results of the automatic checks below your pull request. If one
 
 ### Contributing to the ESMValCore package
 Contributions to the core of ESMValTool should
-- Go into the public repository.
-- Preferably be covered by unit tests. Unit tests are mandatory for new preprocessor functions or modifications to existing functions. If you do not know how to start with writing unit tests, let us know in a comment on the pull request and a core development team member will try to help you get started.
-- Be accompanied by appropriate documentation.
-- Introduce no new issues on Codacy (but note that style issues reported in unit test code are not worth the effort of fixing).
+  - Go into the public repository.
+  - Preferably be covered by unit tests. Unit tests are mandatory for new preprocessor functions or modifications to existing functions. If you do not know how to start with writing unit tests, let us know in a comment on the pull request and a core development team member will try to help you get started.
+  - Be accompanied by appropriate documentation.
+  - Introduce no new issues on Codacy (but note that style issues reported in unit test code are not worth the effort of fixing).
