@@ -107,6 +107,7 @@ class Testobs4mipsInfo(unittest.TestCase):
             cmor_tables_path='obs4mips',
             default=CustomInfo(),
             strict=True,
+            default_table_prefix='obs4MIPs_'
         )
 
     def setUp(self):
@@ -132,6 +133,18 @@ class Testobs4mipsInfo(unittest.TestCase):
         var = self.variables_info.get_variable('obs4MIPs_monStderr',
                                                'ndviStderr')
         self.assertEqual(var.short_name, 'ndviStderr')
+        self.assertEqual(var.frequency, 'mon')
+
+    def test_get_variable_hus(self):
+        """Get hus variable."""
+        var = self.variables_info.get_variable('obs4MIPs_Amon', 'hus')
+        self.assertEqual(var.short_name, 'hus')
+        self.assertEqual(var.frequency, 'mon')
+
+    def test_get_variable_hus_default_prefix(self):
+        """Get hus variable."""
+        var = self.variables_info.get_variable('Amon', 'hus')
+        self.assertEqual(var.short_name, 'hus')
         self.assertEqual(var.frequency, 'mon')
 
     def test_get_variable_from_custom(self):
