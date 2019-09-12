@@ -173,6 +173,30 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
 
     return cube
 
+def mask_glaciated(cube, mask_out):
+    # Dict to store the Natural Earth masks
+    cwd = os.path.dirname(__file__)
+    # read glaciated shapefile
+    shapefiles = {
+        'glaciated': os.path.join(cwd, 'ne_masks/ne_10m_glaciated_areas.shp'),
+    }
+
+    if mask_out == 'nonglaciated':
+        msg = (f"Masking out nonglaciated areas is not implemented yet.")
+        raise NotImplementedError(msg)
+        
+    if cube.coord('longitude').points.ndim < 2:
+        logger.info("BAS Applying mask")
+        cube = _mask_with_shp(cube, shapefiles[mask_out])
+        logger.debug(
+            "Applying glaciated areas mask from Natural Earth"
+            " shapefile: \n%s", shapefiles[mask_out])
+    else:
+        msg = (f"Use of shapefiles with irregular grids not "
+               f"yet implemented, land-sea mask not applied.")
+        raise ValueError(msg)
+
+    return cube
 
 def mask_landseaice(cube, fx_files, mask_out):
     """
@@ -282,6 +306,10 @@ def _mask_with_shp(cube, shapefilename):
         cube.data.mask |= mask
     else:
         cube.data = np.ma.masked_array(cube.data, mask)
+    import matplotlib.pyplot as plt
+    plt.clf()
+    plt.imshow(cube.data.mask[0,:,:])
+    plt.savefig('/home/crezees/tmp/mask.png')
 
     return cube
 

@@ -15,8 +15,8 @@ from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
 from ._mask import (mask_above_threshold, mask_below_threshold,
-                    mask_fillvalues, mask_inside_range, mask_landsea,
-                    mask_landseaice, mask_outside_range)
+                    mask_fillvalues, mask_glaciated, mask_inside_range,
+                    mask_landsea, mask_landseaice, mask_outside_range)
 from ._multimodel import multi_model_statistics
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
@@ -57,6 +57,8 @@ __all__ = [
     'mask_landsea',
     # Mask landseaice, sftgif only
     'mask_landseaice',
+    # Mask glaciated, mask_out=glaciated only
+    'mask_glaciated',
     # Regridding
     'regrid',
     # Masking missing values
