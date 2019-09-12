@@ -251,6 +251,7 @@ def _get_geometries_from_shp(shapefilename):
     """Get the mask geometry out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
     geometries = [contour for contour in reader.geometries()]
+    geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
     return geometries
 
 
@@ -292,7 +293,7 @@ def _mask_with_shp(cube, shapefilename):
     y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
 
     # Build mask with vectorization
-    for region in regions:
+    for region in regions[0:10]:
         if cube.ndim == 2:
             mask = shp_vect.contains(region, x_p_180, y_p_90)
         elif cube.ndim == 3:
