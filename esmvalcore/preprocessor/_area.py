@@ -48,16 +48,21 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     end_latitude = float(end_latitude)
 
     if cube.coord('latitude').ndim == 1:
+        # Iris check if any point of the cell is inside the region
+        # To check only the center, ignore_bounds must be set to
+        # True (default) is False
         region_subset = cube.intersection(
             longitude=(start_longitude, end_longitude),
-            latitude=(start_latitude, end_latitude))
+            latitude=(start_latitude, end_latitude),
+            ignore_bounds=True,
+        )
         region_subset = region_subset.intersection(longitude=(0., 360.))
         return region_subset
     # irregular grids
     lats = cube.coord('latitude').points
     lons = cube.coord('longitude').points
-    select_lats = start_latitude < lats < end_latitude
-    select_lons = start_longitude < lons < end_longitude
+    select_lats = start_latitude <= lats <= end_latitude
+    select_lons = start_longitude <= lons <= end_longitude
     selection = select_lats & select_lons
     data = da.ma.masked_where(~selection, cube.core_data())
     return cube.copy(data)
