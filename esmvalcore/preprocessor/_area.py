@@ -12,7 +12,8 @@ import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
-from ._shared import guess_bounds, get_iris_analysis_operation
+
+from ._shared import get_iris_analysis_operation, guess_bounds
 
 logger = logging.getLogger(__name__)
 
@@ -290,8 +291,22 @@ def _clip_geometries(cube, geometries):
     return cube
 
 
+def _select_representative_point(shape, lon, lat):
+    """Select a representative point for `shape` from `lon` and `lat`."""
+    representative_point = shape.representative_point()
+    points = shapely.geometry.MultiPoint(np.stack((lon.flat, lat.flat),
+                                                  axis=1))
+    nearest_point = shapely.ops.nearest_points(points, representative_point)[0]
+    nearest_lon, nearest_lat = nearest_point.coords[0]
+    select = (lon == nearest_lon) & (lat == nearest_lat)
+    return select
+
+
 def extract_shape(cube, shapefile, method='contains', clip=True):
     """Extract a region defined by a shapefile.
+
+    Note that this function does not work for shapes crossing the
+    prime meridian or poles.
 
     Parameters
     ----------
@@ -299,11 +314,14 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
        input cube.
     shapefile: str
         A shapefile defining the region(s) to extract.
-    method: str
+    method: str, optional
         Select all points contained by the shape ('contains') or
-        select a single representative point ('representative').
-    clip: bool
-        Clip the resulting cube ('true') or not ('false').
+        select a single representative point ('representative'). If not
+        a single grid point is contained by the shape, 'representative'
+        will always be used.
+    clip: bool, optional
+        Clip the resulting cube ('true') or not ('false') using
+        `extract_region`.
 
     Returns
     -------
@@ -333,13 +351,7 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
             if method == 'contains':
                 select = shapely.vectorized.contains(shape, lon, lat)
             if method == 'representative' or not select.any():
-                representative_point = shape.representative_point()
-                points = shapely.geometry.MultiPoint(
-                    np.stack((lon.flat, lat.flat), axis=1))
-                nearest_point = shapely.ops.nearest_points(
-                    points, representative_point)[0]
-                nearest_lon, nearest_lat = nearest_point.coords[0]
-                select = (lon == nearest_lon) & (lat == nearest_lat)
+                select = _select_representative_point(shape, lon, lat)
             selection |= select
 
         selection = da.broadcast_to(selection, cube.shape)

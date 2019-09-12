@@ -854,12 +854,12 @@ The ``_area.py`` module contains the following preprocessor functions:
 * ``area_statistics``: Calculates the average value over a region.
 * ``extract_named_regions``: Extract a specific region from in the region
   cooordinate.
-* ``extract_shape``: Extract a region defined by a shapefile. 
+* ``extract_shape``: Extract a region defined by a shapefile.
 
 ``extract_region``
 ------------------
 
-This function clips the data to a rectangular region. The boundaries
+This function masks data outside a rectagular region requested. The boundairies
 of the region are provided as latitude and longitude coordinates in the
 arguments:
 
@@ -921,18 +921,18 @@ See also :func:`esmvalcore.preprocessor.extract_named_regions`.
 -------------------------
 
 This function extracts a shape or a representative point for this shape from
-the data. The data outside the selected point(s) will be masked. The data can
-also be clipped to a rectangular region around the shape. This function takes
-the following arguments:
+the data. This function takes the following arguments:
 
-* ``shapefile``: the shapefile containing the geometry of the region to be
-  extracted
+* ``shapefile``: path to the shapefile containing the geometry of the region to be
+  extracted. This path can be relative to ``auxiliary_data_dir`` defined in
+  config-user.yml.
 * ``method``: the method to select the region, selecting either all points
-  contained by the shape or one representative point
-* ``clip``: whether to mask the original data set or to clip to a minimal
-  rectangular region containing the shape
-
-Note: if the shape's geometry falls within a single grid cell, a representative point will be selected
+  contained by the shape (``contains``) or one representative point
+  (``representative``). If not a single grid point is contained in the shape,
+  a representative point will be selected.
+* ``clip``: by default the data will be clipped to a minimal rectangular
+  region containing the shape. Set to ``false`` to only mask data outside the
+  shape.
 
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
