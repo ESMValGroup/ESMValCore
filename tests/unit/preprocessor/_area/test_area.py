@@ -9,12 +9,14 @@ from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor._area import (
-    area_statistics, extract_named_regions, extract_region)
+    area_statistics,
+    extract_named_regions,
+    extract_region,
+)
 
 
 class Test(tests.Test):
     """Test class for the :func:`esmvalcore.preprocessor._area_pp` module."""
-
     def setUp(self):
         """Prepare tests."""
         self.coord_sys = iris.coord_systems.GeogCS(
@@ -26,11 +28,13 @@ class Test(tests.Test):
             bounds=[[i, i + 1.] for i in range(5)],  # [0,1] to [4,5]
             units='degrees_east',
             coord_system=self.coord_sys)
-        lats = iris.coords.DimCoord([i + .5 for i in range(5)],
-                                    standard_name='latitude',
-                                    bounds=[[i, i + 1.] for i in range(5)],
-                                    units='degrees_north',
-                                    coord_system=self.coord_sys)
+        lats = iris.coords.DimCoord(
+            [i + .5 for i in range(5)],
+            standard_name='latitude',
+            bounds=[[i, i + 1.] for i in range(5)],
+            units='degrees_north',
+            coord_system=self.coord_sys,
+        )
         coords_spec = [(lats, 0), (lons, 1)]
         self.grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
 
@@ -46,10 +50,11 @@ class Test(tests.Test):
             standard_name='latitude',
             bounds=[[i - 3., i - 2.] for i in range(6)],
             units='degrees_north',
-            coord_system=self.coord_sys)
+            coord_system=self.coord_sys,
+        )
         coords_spec = [(nlats, 0), (nlons, 1)]
-        self.negative_grid = iris.cube.Cube(
-            ndata, dim_coords_and_dims=coords_spec)
+        self.negative_grid = iris.cube.Cube(ndata,
+                                            dim_coords_and_dims=coords_spec)
 
     def test_area_statistics_mean(self):
         """Test for area average of a 2D field."""
@@ -116,7 +121,8 @@ class Test(tests.Test):
             times,
             bounds=bounds,
             standard_name='time',
-            units=Unit('days since 1950-01-01', calendar='gregorian'))
+            units=Unit('days since 1950-01-01', calendar='gregorian'),
+        )
 
         regions = ['region1', 'region2', 'region3']
         region = iris.coords.AuxCoord(
@@ -129,7 +135,8 @@ class Test(tests.Test):
         region_cube = iris.cube.Cube(
             data,
             dim_coords_and_dims=[(time, 0)],
-            aux_coords_and_dims=[(region, 1)])
+            aux_coords_and_dims=[(region, 1)],
+        )
 
         # test string region
         result1 = extract_named_regions(region_cube, 'region1')
@@ -151,7 +158,7 @@ class Test(tests.Test):
 def irregular_grid_cube():
     """Create test cube on irregular grid."""
     # Define grid and data
-    data = np.arange(9, dtype=np.float32).reshape((3, 3))
+    data = np.arange(18, dtype=np.float32).reshape((2, 3, 3))
     lats = np.array(
         [
             [0.0, 0.0, 0.1],
@@ -169,9 +176,14 @@ def irregular_grid_cube():
         dtype=np.float64,
     )
 
+    times = iris.coords.DimCoord(np.array([10, 20], dtype=np.float64),
+                                 standard_name='time',
+                                 units=Unit('days since 1950-01-01',
+                                            calendar='gregorian'))
+
     # Construct cube
-    nlat = iris.coords.DimCoord(range(data.shape[0]), var_name='nlat')
-    nlon = iris.coords.DimCoord(range(data.shape[1]), var_name='nlon')
+    nlat = iris.coords.DimCoord(range(data.shape[1]), var_name='nlat')
+    nlon = iris.coords.DimCoord(range(data.shape[2]), var_name='nlon')
     lat = iris.coords.AuxCoord(lats,
                                var_name='lat',
                                standard_name='latitude',
@@ -181,12 +193,13 @@ def irregular_grid_cube():
                                standard_name='longitude',
                                units='degrees')
     dim_coord_spec = [
-        (nlat, 0),
-        (nlon, 1),
+        (times, 0),
+        (nlat, 1),
+        (nlon, 2),
     ]
     aux_coord_spec = [
-        (lat, [0, 1]),
-        (lon, [0, 1]),
+        (lat, [1, 2]),
+        (lon, [1, 2]),
     ]
     cube = iris.cube.Cube(
         data,
@@ -198,26 +211,57 @@ def irregular_grid_cube():
     return cube
 
 
-def test_extract_region_irregular(irregular_grid_cube):
+IRREGULAR_TEST_CASES = [
+    {
+        'region': (0.5, 1.5, 0.5, 3),
+        'mask': np.array(
+            [
+                [False],
+                [False],
+            ],
+            dtype=bool,
+        ),
+        'data': np.arange(18, dtype=np.float32).reshape((2, 3, 3))[:, 1:3, 1:2]
+    },
+    {
+        'region': (1, 2, 1, 2),
+        'mask': np.array(
+            [
+                [False, False],
+                [True, False],
+            ],
+            dtype=bool,
+        ),
+        'data': np.arange(18, dtype=np.float32).reshape((2, 3, 3))[:, 1:3, 1:3]
+    },
+    {
+        'region': (-0.5, 4, 0, 0.5),
+        'mask': np.array(
+            [
+                [False, False, False],
+            ],
+            dtype=bool,
+        ),
+        'data': np.arange(18, dtype=np.float32).reshape((2, 3, 3))[:, :1, :]
+    },
+]
+
+
+@pytest.mark.parametrize('case', IRREGULAR_TEST_CASES)
+def test_extract_region_irregular(irregular_grid_cube, case):
     """Test `extract_region` with data on an irregular grid."""
+    start_lon, end_lon, start_lat, end_lat = case['region']
     cube = extract_region(
         irregular_grid_cube,
-        start_latitude=0.5,
-        end_latitude=3,
-        start_longitude=0.5,
-        end_longitude=1.5,
+        start_longitude=start_lon,
+        end_longitude=end_lon,
+        start_latitude=start_lat,
+        end_latitude=end_lat,
     )
-    data = np.arange(9, dtype=np.float32).reshape((3, 3))
-    mask = np.array(
-        [
-            [True, True, True],
-            [True, False, True],
-            [True, False, True],
-        ],
-        dtype=bool,
-    )
-    np.testing.assert_array_equal(cube.data.data, data)
-    np.testing.assert_array_equal(cube.data.mask, mask)
+
+    for i in range(2):
+        np.testing.assert_array_equal(cube.data[i].mask, case['mask'])
+    np.testing.assert_array_equal(cube.data.data, case['data'])
 
 
 if __name__ == '__main__':

@@ -8,7 +8,8 @@ import logging
 
 import iris
 from dask import array as da
-from ._shared import guess_bounds, get_iris_analysis_operation
+
+from ._shared import get_iris_analysis_operation, guess_bounds
 
 logger = logging.getLogger(__name__)
 
@@ -50,17 +51,29 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     if cube.coord('latitude').ndim == 1:
         region_subset = cube.intersection(
             longitude=(start_longitude, end_longitude),
-            latitude=(start_latitude, end_latitude))
+            latitude=(start_latitude, end_latitude),
+        )
         region_subset = region_subset.intersection(longitude=(0., 360.))
         return region_subset
-    # irregular grids
+    # Irregular grids
+    # Select coordinates inside the region
     lats = cube.coord('latitude').points
     lons = cube.coord('longitude').points
-    select_lats = (start_latitude < lats) & (lats < end_latitude)
-    select_lons = (start_longitude < lons) & (lons < end_longitude)
+    select_lats = (start_latitude <= lats) & (lats <= end_latitude)
+    select_lons = (start_longitude <= lons) & (lons <= end_longitude)
     selection = select_lats & select_lons
-    selection = da.broadcast_to(selection, cube.shape)
-    cube.data = da.ma.masked_where(~selection, cube.core_data())
+    # Crop the selection, but keep rectangular shape
+    i_range, j_range = selection.nonzero()
+    if not len(i_range):
+        raise ValueError("No data points available in selected region")
+    i_min, i_max = i_range.min(), i_range.max()
+    j_min, j_max = j_range.min(), j_range.max()
+    i_slice, j_slice = slice(i_min, i_max + 1), slice(j_min, j_max + 1)
+    cube = cube[..., i_slice, j_slice]
+    selection = selection[i_slice, j_slice]
+    # Mask remaining coordinates outside region
+    mask = da.broadcast_to(~selection, cube.shape)
+    cube.data = da.ma.masked_where(mask, cube.core_data())
     return cube
 
 
@@ -205,9 +218,7 @@ def area_statistics(cube, operator, fx_files=None):
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
     if operator == 'mean':
-        return cube.collapsed(coord_names,
-                              operation,
-                              weights=grid_areas)
+        return cube.collapsed(coord_names, operation, weights=grid_areas)
 
     # Many IRIS analysis functions do not accept weights arguments.
     return cube.collapsed(coord_names, operation)
