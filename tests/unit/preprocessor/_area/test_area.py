@@ -192,7 +192,7 @@ def write_shapefile(shape, path):
         })
 
 
-@pytest.fixture(params=[(2, 2), (1, 3), (9, 2), (0.1, 0.2)])
+@pytest.fixture(params=[(2, 2), (1, 3), (9, 2)])
 def square_shape(request, tmp_path):
     # Define polygons to test extract_shape
     slat = request.param[0]
