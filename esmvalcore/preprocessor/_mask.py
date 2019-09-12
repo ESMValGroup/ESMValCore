@@ -186,7 +186,6 @@ def mask_glaciated(cube, mask_out):
         raise NotImplementedError(msg)
         
     if cube.coord('longitude').points.ndim < 2:
-        logger.info("BAS Applying mask")
         cube = _mask_with_shp(cube, shapefiles[mask_out])
         logger.debug(
             "Applying glaciated areas mask from Natural Earth"
@@ -248,12 +247,11 @@ def mask_landseaice(cube, fx_files, mask_out):
     return cube
 
 
-def _get_geometry_from_shp(shapefilename):
+def _get_geometries_from_shp(shapefilename):
     """Get the mask geometry out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
-    # Index 0 grabs the lowest resolution mask (no zoom)
-    main_geom = [contour for contour in reader.geometries()][0]
-    return main_geom
+    geometries = [contour for contour in reader.geometries()]
+    return geometries
 
 
 def _mask_with_shp(cube, shapefilename):
@@ -267,7 +265,7 @@ def _mask_with_shp(cube, shapefilename):
     in the shapefile (this is done via shapefle vectorization and is fast).
     """
     # Create the region
-    region = _get_geometry_from_shp(shapefilename)
+    regions = _get_geometries_from_shp(shapefilename)
 
     # Create a mask for the data
     mask = np.zeros(cube.shape, dtype=bool)
@@ -294,22 +292,19 @@ def _mask_with_shp(cube, shapefilename):
     y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
 
     # Build mask with vectorization
-    if cube.ndim == 2:
-        mask = shp_vect.contains(region, x_p_180, y_p_90)
-    elif cube.ndim == 3:
-        mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
-    elif cube.ndim == 4:
-        mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
+    for region in regions:
+        if cube.ndim == 2:
+            mask = shp_vect.contains(region, x_p_180, y_p_90)
+        elif cube.ndim == 3:
+            mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
+        elif cube.ndim == 4:
+            mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
 
-    # Then apply the mask
-    if isinstance(cube.data, np.ma.MaskedArray):
-        cube.data.mask |= mask
-    else:
-        cube.data = np.ma.masked_array(cube.data, mask)
-    import matplotlib.pyplot as plt
-    plt.clf()
-    plt.imshow(cube.data.mask[0,:,:])
-    plt.savefig('/home/crezees/tmp/mask.png')
+        # Then apply the mask
+        if isinstance(cube.data, np.ma.MaskedArray):
+            cube.data.mask |= mask
+        else:
+            cube.data = np.ma.masked_array(cube.data, mask)
 
     return cube
 
