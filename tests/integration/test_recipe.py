@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
 
@@ -9,6 +10,7 @@ from mock import create_autospec
 
 import esmvalcore
 from esmvalcore._recipe import TASKSEP, read_recipe_file
+from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
@@ -1087,3 +1089,71 @@ def test_concatenation(tmp_path, patched_datafinder, config_user):
             assert dataset['alias'] == 'historical'
         else:
             assert dataset['alias'] == 'historical-rcp85'
+
+
+def test_extract_shape(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          test:
+            extract_shape:
+              shapefile: test.shp
+
+        diagnostics:
+          test:
+            variables:
+              ta:
+                preprocessor: test
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: GFDL-CM3}
+            scripts: null
+        """)
+
+    # Create shapefile
+    shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
+    shapefile.parent.mkdir(parents=True, exist_ok=True)
+    shapefile.touch()
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert product.settings['extract_shape']['shapefile'] == str(shapefile)
+
+
+@pytest.mark.parametrize('invalid_arg', ['crop', 'shapefile', 'method'])
+def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
+                              invalid_arg):
+    content = dedent(f"""
+        preprocessors:
+          test:
+            extract_shape:
+              {invalid_arg}: x
+
+        diagnostics:
+          test:
+            variables:
+              ta:
+                preprocessor: test
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  -
+                      dataset: GFDL-CM3
+            scripts: null
+        """)
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, config_user)
+        assert 'extract_shape' in exc.value
+        assert invalid_arg in exc.value

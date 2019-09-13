@@ -495,7 +495,10 @@ class CMORCheck():
 
         tol = 0.001
         intervals = {'dec': (3600, 3660), 'day': (1, 1)}
-        if self.frequency == 'mon':
+        freq = self.frequency
+        if freq.lower().endswith('pt'):
+            freq = freq[:-2]
+        if freq == 'mon':
             for i in range(len(coord.points) - 1):
                 first = coord.cell(i).point
                 second = coord.cell(i + 1).point
@@ -507,23 +510,23 @@ class CMORCheck():
                 if second_month != second.month or \
                    second_year != second.year:
                     msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, self.frequency)
+                    self.report_error(msg, var_name, freq)
                     break
-        elif self.frequency == 'yr':
+        elif freq == 'yr':
             for i in range(len(coord.points) - 1):
                 first = coord.cell(i).point
                 second = coord.cell(i + 1).point
                 second_month = first.month + 1
                 if first.year + 1 != second.year:
                     msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, self.frequency)
+                    self.report_error(msg, var_name, freq)
                     break
         else:
-            if self.frequency in intervals:
-                interval = intervals[self.frequency]
+            if freq in intervals:
+                interval = intervals[freq]
                 target_interval = (interval[0] - tol, interval[1] + tol)
-            elif self.frequency.endswith('hr'):
-                frequency = self.frequency[:-2]
+            elif freq.endswith('hr'):
+                frequency = freq[:-2]
                 if frequency == 'sub':
                     frequency = 1.0 / 24
                     target_interval = (-tol, frequency + tol)
@@ -532,14 +535,14 @@ class CMORCheck():
                     target_interval = (frequency - tol, frequency + tol)
             else:
                 msg = '{}: Frequency {} not supported by checker'
-                self.report_error(msg, var_name, self.frequency)
+                self.report_error(msg, var_name, freq)
                 return
             for i in range(len(coord.points) - 1):
                 interval = coord.points[i + 1] - coord.points[i]
                 if (interval < target_interval[0]
                         or interval > target_interval[1]):
                     msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, self.frequency)
+                    self.report_error(msg, var_name, freq)
                     break
 
     @staticmethod
