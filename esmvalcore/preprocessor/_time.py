@@ -125,13 +125,13 @@ def extract_season(cube, season):
         data cube for specified season.
     """
     if not season.lower() in ('djf', 'mam', 'jja', 'son'):
-        allmonths = 'jfmamjjasond'*2
+        allmonths = 'jfmamjjasond' * 2
         if season.lower() not in allmonths:
             raise ValueError(
                 f"Unable to extract Season {season} "
                 f"combination of month not possible.")
         sstart = allmonths.index(season.lower())
-        res_season = allmonths[sstart+len(season):sstart+12]
+        res_season = allmonths[sstart + len(season) : sstart + 12]
         custom_seasons = [season.lower(), res_season]
         if not cube.coords('clim_season_custom'):
             iris.coord_categorisation.add_season(cube, 'time',
@@ -139,13 +139,14 @@ def extract_season(cube, season):
                                                  seasons=custom_seasons)
         if not cube.coords('custom_season_year'):
             iris.coord_categorisation.add_season_year(cube,
-                                                      'time',
-                                                      name='custom_season_year',
-                                                      seasons=custom_seasons)
+                                                    'time',
+                                                    name='custom_season_year',
+                                                    seasons=custom_seasons)
         return cube.extract(iris.Constraint(clim_season_custom=season.lower()))
     else:
         if not cube.coords('clim_season'):
-            iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
+            iris.coord_categorisation.add_season(cube, 'time',
+                                                 name='clim_season')
         if not cube.coords('season_year'):
             iris.coord_categorisation.add_season_year(cube,
                                                       'time',
