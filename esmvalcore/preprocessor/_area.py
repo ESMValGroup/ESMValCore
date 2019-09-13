@@ -315,18 +315,21 @@ def extract_shape(cube, shapefile, method='contains', crop=True):
     shapefile: str
         A shapefile defining the region(s) to extract.
     method: str, optional
-        Select all points contained by the shape ('contains') or
-        select a single representative point ('representative'). If not
-        a single grid point is contained by the shape, 'representative'
-        will always be used.
+        Select all points contained by the shape or select a single
+        representative point. Choose either 'contains' or 'representative'.
+        If 'contains' is used, but not a single grid point is contained by the
+        shape, a representative point will selected.
     crop: bool, optional
-        Clip the resulting cube ('true') or not ('false') using
-        `extract_region`.
+        Crop the resulting cube using `extract_region()`.
 
     Returns
     -------
     iris.cube.Cube
         Cube containing the extracted region.
+
+    See Also
+    --------
+    extract_region : Extract a region from a cube.
 
     """
     if method not in {'contains', 'representative'}:
