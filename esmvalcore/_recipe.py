@@ -413,18 +413,9 @@ def _update_fx_settings(settings, variable, config_user):
         for var in get_required(variable['short_name']):
             if 'fx_files' in var:
                 _augment(var, variable)
-<<<<<<< HEAD
                 for fxvar in var['fx_files']:
                     fx_files[fxvar] = _get_correct_fx_file(var, fxvar,
                                                            config_user)
-=======
-                fx_files.update(
-                    get_input_fx_filelist(
-                        variable=var,
-                        rootpath=config_user['rootpath'],
-                        drs=config_user['drs'],
-                    ))
->>>>>>> development
         settings['derive']['fx_files'] = fx_files
 
     # update for landsea
@@ -433,21 +424,10 @@ def _update_fx_settings(settings, variable, config_user):
         # Configure ingestion of land/sea masks
         logger.debug('Getting fx mask settings now...')
         settings['mask_landsea']['fx_files'] = []
-<<<<<<< HEAD
         fx_files_dict = {
             'sftlf': _get_correct_fx_file(variable, 'sftlf', config_user),
             'sftof': _get_correct_fx_file(variable, 'sftof', config_user)}
-=======
 
-        var = dict(variable)
-        var['fx_files'] = ['sftlf', 'sftof']
-        fx_files_dict = get_input_fx_filelist(
-            variable=var,
-            rootpath=config_user['rootpath'],
-            drs=config_user['drs'],
-        )
-
->>>>>>> development
         # allow both sftlf and sftof
         if fx_files_dict['sftlf']:
             settings['mask_landsea']['fx_files'].append(fx_files_dict['sftlf'])
@@ -457,21 +437,8 @@ def _update_fx_settings(settings, variable, config_user):
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')
         settings['mask_landseaice']['fx_files'] = []
-<<<<<<< HEAD
         fx_files_dict = {
             'sftgif': _get_correct_fx_file(variable, 'sftgif', config_user)}
-=======
-
-        var = dict(variable)
-        var['fx_files'] = ['sftgif']
-        fx_files_dict = get_input_fx_filelist(
-            variable=var,
-            rootpath=config_user['rootpath'],
-            drs=config_user['drs'],
-        )
-
-        # allow sftgif (only, for now)
->>>>>>> development
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
@@ -690,15 +657,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_extract_shape(settings, config_user)
         _update_fx_settings(
-<<<<<<< HEAD
             settings=settings, variable=variable,
             config_user=config_user)
-=======
-            settings=settings,
-            variable=variable,
-            config_user=config_user,
-        )
->>>>>>> development
         _update_target_grid(
             variable=variable,
             variables=variables,
