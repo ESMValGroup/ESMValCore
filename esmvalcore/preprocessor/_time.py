@@ -138,18 +138,15 @@ def extract_season(cube, season):
                                                  name='clim_season_custom',
                                                  seasons=custom_seasons)
         if not cube.coords('custom_season_year'):
-            iris.coord_categorisation.add_season_year(cube,
-                                                    'time',
-                                                    name='custom_season_year',
-                                                    seasons=custom_seasons)
+            iris.coord_categorisation.add_season_year(
+                cube, 'time', name='custom_season_year',
+                seasons=custom_seasons)
         return cube.extract(iris.Constraint(clim_season_custom=season.lower()))
     else:
         if not cube.coords('clim_season'):
-            iris.coord_categorisation.add_season(cube, 'time',
-                                                 name='clim_season')
+            iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
         if not cube.coords('season_year'):
-            iris.coord_categorisation.add_season_year(cube,
-                                                      'time',
+            iris.coord_categorisation.add_season_year(cube, 'time',
                                                       name='season_year')
         return cube.extract(iris.Constraint(clim_season=season.lower()))
 
