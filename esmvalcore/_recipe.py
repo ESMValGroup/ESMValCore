@@ -914,6 +914,9 @@ class Recipe:
             variable = deepcopy(raw_variable)
             variable.update(dataset)
             variable['recipe_dataset_index'] = index
+            # preserve the MIP from RAW in variable object
+            if 'mip' in raw_variable:
+                variable['mip'] = raw_variable['mip']
             if ('cmor_table' not in variable
                     and variable.get('project') in CMOR_TABLES):
                 variable['cmor_table'] = variable['project']
