@@ -31,6 +31,7 @@ REQUIREMENTS = {
     'install': [
         'cf-units',
         'dask[array]',
+        'fiona',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numba',
@@ -39,6 +40,7 @@ REQUIREMENTS = {
         'psutil',
         'pyyaml',
         'scitools-iris>=2.2',
+        'shapely[vectorized]',
         'stratify',
         'yamale',
     ],
