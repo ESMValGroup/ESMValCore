@@ -154,8 +154,139 @@ class Test(tests.Test):
             extract_named_regions(region_cube, ['region1', 'reg_A'])
 
 
+def create_irregular_grid_cube(data, lons, lats):
+    """Create test cube on irregular grid."""
+    nlat = iris.coords.DimCoord(range(data.shape[0]), var_name='nlat')
+    nlon = iris.coords.DimCoord(range(data.shape[1]), var_name='nlon')
+    lat = iris.coords.AuxCoord(lats,
+                               var_name='lat',
+                               standard_name='latitude',
+                               units='degrees')
+    lon = iris.coords.AuxCoord(lons,
+                               var_name='lon',
+                               standard_name='longitude',
+                               units='degrees')
+    dim_coord_spec = [
+        (nlat, 0),
+        (nlon, 1),
+    ]
+    aux_coord_spec = [
+        (lat, [0, 1]),
+        (lon, [0, 1]),
+    ]
+    cube = iris.cube.Cube(
+        data,
+        var_name='tos',
+        units='K',
+        dim_coords_and_dims=dim_coord_spec,
+        aux_coords_and_dims=aux_coord_spec,
+    )
+    return cube
+
+
+IRREGULAR_EXTRACT_REGION_TESTS = [
+    {
+        'region': (10, 360, 0, 90),
+        'mask':
+        np.array(
+            [
+                [True, True, True],
+                [True, True, False],
+                [True, False, False],
+            ],
+            dtype=bool,
+        ),
+    },
+    {
+        'region': (200, 10, -90, -60),
+        'mask':
+        np.array(
+            [
+                [False, True, False],
+                [True, True, True],
+                [True, True, True],
+            ],
+            dtype=bool,
+        ),
+    },
+    {
+        'region': (-150, 50, 50, -50),
+        'mask':
+        np.array(
+            [
+                [False, True, False],
+                [True, True, True],
+                [False, True, False],
+            ],
+            dtype=bool,
+        ),
+    },
+    {
+        'region': (0, 0, -100, 0),
+        'raises': "Invalid start_latitude: -100."
+    },
+    {
+        'region': (0, 0, 0, 100),
+        'raises': "Invalid end_latitude: -100."
+    },
+]
+
+
+@pytest.fixture
+def irregular_extract_region_cube():
+    """Create a test cube on an irregular grid to test `extract_region`."""
+    data = np.arange(9, dtype=np.float32).reshape((3, 3))
+    lons = np.array(
+        [
+            [0, 120, 240],
+            [0, 120, 240],
+            [0, 120, 240],
+        ],
+        dtype=np.float64,
+    )
+    lats = np.array(
+        [
+            [-60, -61., -60],
+            [0, -1, 0],
+            [60, 60, 60],
+        ],
+        dtype=np.float64,
+    )
+    cube = create_irregular_grid_cube(data, lons, lats)
+    return cube
+
+
+@pytest.mark.parametrize('case', IRREGULAR_EXTRACT_REGION_TESTS)
+def test_extract_region_irregular(irregular_extract_region_cube, case):
+    """Test `extract_region` with data on an irregular grid."""
+    start_lon, end_lon, start_lat, end_lat = case['region']
+    if 'raises' not in case:
+        cube = extract_region(
+            irregular_extract_region_cube,
+            start_longitude=start_lon,
+            end_longitude=end_lon,
+            start_latitude=start_lat,
+            end_latitude=end_lat,
+        )
+
+        data = np.arange(9, dtype=np.float32).reshape((3, 3))
+        np.testing.assert_array_equal(cube.data.mask, case['mask'])
+        np.testing.assert_array_equal(cube.data.data, data)
+    else:
+        with pytest.raises(ValueError) as exc:
+            extract_region(
+                irregular_extract_region_cube,
+                start_longitude=start_lon,
+                end_longitude=end_lon,
+                start_latitude=start_lat,
+                end_latitude=end_lat,
+            )
+            assert exc.value == case['raises']
+
+
 @pytest.fixture
 def make_testcube():
+    """Create a test cube on a Cartesian grid."""
     coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
     data = np.ones((5, 5))
     lons = iris.coords.DimCoord(
@@ -174,6 +305,7 @@ def make_testcube():
 
 
 def write_shapefile(shape, path):
+    """Write a shape to a shapefile."""
     # Define a polygon feature geometry with one attribute
     schema = {
         'geometry': 'Polygon',
@@ -239,9 +371,8 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
 
 
 @pytest.fixture
-def irregular_grid_cube():
-    """Create test cube on irregular grid."""
-    # Define grid and data
+def irreg_extract_shape_cube():
+    """Create a test cube on an irregular grid to test `extract_shape`."""
     data = np.arange(9, dtype=np.float32).reshape((3, 3))
     lats = np.array(
         [
@@ -259,38 +390,12 @@ def irregular_grid_cube():
         ],
         dtype=np.float64,
     )
-
-    # Construct cube
-    nlat = iris.coords.DimCoord(range(data.shape[0]), var_name='nlat')
-    nlon = iris.coords.DimCoord(range(data.shape[1]), var_name='nlon')
-    lat = iris.coords.AuxCoord(lats,
-                               var_name='lat',
-                               standard_name='latitude',
-                               units='degrees')
-    lon = iris.coords.AuxCoord(lons,
-                               var_name='lon',
-                               standard_name='longitude',
-                               units='degrees')
-    dim_coord_spec = [
-        (nlat, 0),
-        (nlon, 1),
-    ]
-    aux_coord_spec = [
-        (lat, [0, 1]),
-        (lon, [0, 1]),
-    ]
-    cube = iris.cube.Cube(
-        data,
-        var_name='tos',
-        units='K',
-        dim_coords_and_dims=dim_coord_spec,
-        aux_coords_and_dims=aux_coord_spec,
-    )
+    cube = create_irregular_grid_cube(data, lons, lats)
     return cube
 
 
 @pytest.mark.parametrize('method', ['contains', 'representative'])
-def test_extract_shape_irregular(irregular_grid_cube, tmp_path, method):
+def test_extract_shape_irregular(irreg_extract_shape_cube, tmp_path, method):
     """Test `extract_shape` with a cube on an irregular grid."""
     # Points are (lon, lat)
     shape = Polygon([
@@ -303,7 +408,7 @@ def test_extract_shape_irregular(irregular_grid_cube, tmp_path, method):
     shapefile = tmp_path / 'shapefile.shp'
     write_shapefile(shape, shapefile)
 
-    cube = extract_shape(irregular_grid_cube, shapefile, method)
+    cube = extract_shape(irreg_extract_shape_cube, shapefile, method)
 
     data = np.arange(9, dtype=np.float32).reshape((3, 3))
     mask = np.array(
