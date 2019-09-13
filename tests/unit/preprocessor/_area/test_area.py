@@ -10,7 +10,7 @@ from cf_units import Unit
 from shapely.geometry import Polygon, mapping
 
 import tests
-from esmvalcore.preprocessor._area import (_crop_geometries, area_statistics,
+from esmvalcore.preprocessor._area import (_crop_cube, area_statistics,
                                            extract_named_regions,
                                            extract_region, extract_shape)
 
@@ -213,10 +213,10 @@ def square_shape(request, tmp_path):
     return np.ma.masked_array(vals, mask)
 
 
-def test_crop_geometries(make_testcube, square_shape, tmp_path):
+def test_crop_cube(make_testcube, square_shape, tmp_path):
     """Test for cropping a cube by shape bounds."""
     with fiona.open(tmp_path / 'test_shape.shp') as geometries:
-        result = _crop_geometries(make_testcube, geometries)
+        result = _crop_cube(make_testcube, *geometries.bounds)
         expected = square_shape.data
         np.testing.assert_array_equal(result.data, expected)
 

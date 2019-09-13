@@ -890,7 +890,7 @@ See also :func:`esmvalcore.preprocessor.extract_named_regions`.
 -------------------------
 
 Extract a shape or a representative point for this shape from
-the data. This function takes the following arguments:
+the data.
 
 Parameters:
 	* ``shapefile``: path to the shapefile containing the geometry of the region to be
@@ -902,7 +902,7 @@ Parameters:
 	  in the shape, a representative point will be selected.
 	* ``crop``: by default extract_region_ will be used to crop the data to a
 	  minimal rectangular region containing the shape. Set to ``false`` to only
-	  mask data outside the shape.
+	  mask data outside the shape. Data on irregular grids will not be cropped.
 
 Examples:
     * Extract the shape of the river Elbe from a shapefile:

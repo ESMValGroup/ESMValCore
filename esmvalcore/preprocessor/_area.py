@@ -265,17 +265,12 @@ def extract_named_regions(cube, regions):
     return cube
 
 
-def _crop_geometries(cube, geometries):
-    """Clip cube to only include the geometries and padding."""
+def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
+               end_latitude):
+    """Crop cubes on a cartesian grid."""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
     if lon_coord.ndim == 1 and lat_coord.ndim == 1:
-        (
-            start_longitude,
-            start_latitude,
-            end_longitude,
-            end_latitude,
-        ) = geometries.bounds
         # add a padding of one cell around the cropped cube
         lon_bound = lon_coord.core_bounds()[0]
         lon_step = lon_bound[1] - lon_bound[0]
@@ -320,7 +315,8 @@ def extract_shape(cube, shapefile, method='contains', crop=True):
         If 'contains' is used, but not a single grid point is contained by the
         shape, a representative point will selected.
     crop: bool, optional
-        Crop the resulting cube using `extract_region()`.
+        Crop the resulting cube using `extract_region()`. Note that data on
+        irregular grids will not be cropped.
 
     Returns
     -------
@@ -339,7 +335,7 @@ def extract_shape(cube, shapefile, method='contains', crop=True):
 
     with fiona.open(shapefile) as geometries:
         if crop:
-            cube = _crop_geometries(cube, geometries)
+            cube = _crop_cube(cube, *geometries.bounds)
         lon_coord = cube.coord(axis='X')
         lat_coord = cube.coord(axis='Y')
 
