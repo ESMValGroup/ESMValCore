@@ -121,6 +121,7 @@ def tasks_valid(tasks):
 
 
 def extract_shape(settings):
+    """Check that `extract_shape` arguments are valid."""
     shapefile = settings.get('shapefile', '')
     if not os.path.exists(shapefile):
         raise RecipeError("In preprocessor function `extract_shape`: "
