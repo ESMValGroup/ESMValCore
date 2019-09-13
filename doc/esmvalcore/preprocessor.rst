@@ -809,7 +809,6 @@ Parameters:
       'mon', 'daily', 'day'. Default is 'full'
 
 Examples:
-
     * Anomalies from the monthly climatology:
 
         .. code-block:: yaml
@@ -846,14 +845,15 @@ See also :func:`esmvalcore.preprocessor.regrid_time`.
 
 Area manipulation
 =================
-The ``_area.py`` module contains the following preprocessor functions:
+The area manipulation module contains the following preprocessor functions:
 
-* ``extract_region``: Extract a region from a cube based on ``lat/lon``
+* extract_region_: Extract a region from a cube based on ``lat/lon``
   corners.
-* ``zonal_means``: Calculates the zonal or meridional means.
-* ``area_statistics``: Calculates the average value over a region.
-* ``extract_named_regions``: Extract a specific region from in the region
+* extract_named_regions_: Extract a specific region from in the region
   cooordinate.
+* extract_shape_: Extract a region defined by a shapefile.
+* zonal_means_: Calculates the zonal or meridional means.
+* area_statistics_: Calculates the average value over a region.
 
 
 ``extract_region``
@@ -868,9 +868,52 @@ arguments:
 * ``start_latitude``
 * ``end_latitude``
 
-Note that this function can only be used to extract a rectangular region.
+Note that this function can only be used to extract a rectangular region. Use
+``extract_shape`` to extract any other shaped region from a shapefile.
 
 See also :func:`esmvalcore.preprocessor.extract_region`.
+
+
+``extract_named_regions``
+-------------------------
+
+This function extracts a specific named region from the data. This function
+takes the following argument: ``regions`` which is either a string or a list
+of strings of named regions. Note that the dataset must have a ``region``
+cooordinate which includes a list of strings as values. This function then
+matches the named regions against the requested string.
+
+See also :func:`esmvalcore.preprocessor.extract_named_regions`.
+
+
+``extract_shape``
+-------------------------
+
+Extract a shape or a representative point for this shape from
+the data.
+
+Parameters:
+	* ``shapefile``: path to the shapefile containing the geometry of the region to be
+	  extracted. This path can be relative to ``auxiliary_data_dir`` defined in
+	  the :ref:`user configuration file`.
+	* ``method``: the method to select the region, selecting either all points
+	  contained by the shape or a single representative point. Choose either
+	  'contains' or 'representative'. If not a single grid point is contained
+	  in the shape, a representative point will be selected.
+	* ``crop``: by default extract_region_ will be used to crop the data to a
+	  minimal rectangular region containing the shape. Set to ``false`` to only
+	  mask data outside the shape. Data on irregular grids will not be cropped.
+
+Examples:
+    * Extract the shape of the river Elbe from a shapefile:
+
+        .. code-block:: yaml
+
+            extract_shape:
+              shapefile: Elbe.shp
+              method: contains
+
+See also :func:`esmvalcore.preprocessor.extract_shape`.
 
 
 ``zonal_means``
@@ -902,18 +945,6 @@ region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
-
-
-``extract_named_regions``
--------------------------
-
-This function extracts a specific named region from the data. This function
-takes the following argument: ``regions`` which is either a string or a list
-of strings of named regions. Note that the dataset must have a ``region``
-cooordinate which includes a list of strings as values. This function then
-matches the named regions against the requested string.
-
-See also :func:`esmvalcore.preprocessor.extract_named_regions`.
 
 
 .. _volume operations:
