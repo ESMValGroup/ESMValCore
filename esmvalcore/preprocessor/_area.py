@@ -8,7 +8,8 @@ import logging
 
 import iris
 from dask import array as da
-from ._shared import guess_bounds, get_iris_analysis_operation
+
+from ._shared import get_iris_analysis_operation, guess_bounds
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +42,10 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     iris.cube.Cube
         smaller cube.
     """
-    # Converts Negative longitudes to 0 -> 360. standard
-    start_longitude = float(start_longitude)
-    end_longitude = float(end_longitude)
-    start_latitude = float(start_latitude)
-    end_latitude = float(end_latitude)
-
+    if abs(start_latitude) > 90.:
+        raise ValueError(f"Invalid start_latitude: {start_latitude}")
+    if abs(end_latitude) > 90.:
+        raise ValueError(f"Invalid end_latitude: {end_latitude}")
     if cube.coord('latitude').ndim == 1:
         # Iris check if any point of the cell is inside the region
         # To check only the center, ignore_bounds must be set to
@@ -58,11 +57,25 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
         )
         region_subset = region_subset.intersection(longitude=(0., 360.))
         return region_subset
-    # irregular grids
+    # Irregular grids
     lats = cube.coord('latitude').points
     lons = cube.coord('longitude').points
-    select_lats = (start_latitude <= lats) & (lats <= end_latitude)
-    select_lons = (start_longitude <= lons) & (lons <= end_longitude)
+    # Convert longitudes to valid range
+    if start_longitude != 360.:
+        start_longitude %= 360.
+    if end_longitude != 360.:
+        end_longitude %= 360.
+
+    if start_longitude <= end_longitude:
+        select_lons = (lons >= start_longitude) & (lons <= end_longitude)
+    else:
+        select_lons = (lons >= start_longitude) | (lons <= end_longitude)
+
+    if start_latitude <= end_latitude:
+        select_lats = (lats >= start_latitude) & (lats <= end_latitude)
+    else:
+        select_lats = (lats >= start_latitude) | (lats <= end_latitude)
+
     selection = select_lats & select_lons
     selection = da.broadcast_to(selection, cube.shape)
     cube.data = da.ma.masked_where(~selection, cube.core_data())

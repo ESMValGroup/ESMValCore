@@ -152,19 +152,19 @@ def irregular_grid_cube():
     """Create test cube on irregular grid."""
     # Define grid and data
     data = np.arange(9, dtype=np.float32).reshape((3, 3))
-    lats = np.array(
+    lons = np.array(
         [
-            [0.0, 0.0, 0.1],
-            [1.0, 1.1, 1.2],
-            [2.0, 2.1, 2.0],
+            [0, 120, 240],
+            [0, 120, 240],
+            [0, 120, 240],
         ],
         dtype=np.float64,
     )
-    lons = np.array(
+    lats = np.array(
         [
-            [0, 1, 2],
-            [0, 1, 2],
-            [0, 1, 2],
+            [-60, -61., -60],
+            [0, -1, 0],
+            [60, 60, 60],
         ],
         dtype=np.float64,
     )
@@ -198,26 +198,80 @@ def irregular_grid_cube():
     return cube
 
 
-def test_extract_region_irregular(irregular_grid_cube):
+IRREGULAR_TEST_CASES = [
+    {
+        'region': (10, 360, 0, 90),
+        'mask':
+        np.array(
+            [
+                [True, True, True],
+                [True, True, False],
+                [True, False, False],
+            ],
+            dtype=bool,
+        ),
+    },
+    {
+        'region': (200, 10, -90, -60),
+        'mask':
+        np.array(
+            [
+                [False, True, False],
+                [True, True, True],
+                [True, True, True],
+            ],
+            dtype=bool,
+        ),
+    },
+    {
+        'region': (-150, 50, 50, -50),
+        'mask':
+        np.array(
+            [
+                [False, True, False],
+                [True, True, True],
+                [False, True, False],
+            ],
+            dtype=bool,
+        ),
+    },
+    {
+        'region': (0, 0, -100, 0),
+        'raises': "Invalid start_latitude: -100."
+    },
+    {
+        'region': (0, 0, 0, 100),
+        'raises': "Invalid end_latitude: -100."
+    },
+]
+
+
+@pytest.mark.parametrize('case', IRREGULAR_TEST_CASES)
+def test_extract_region_irregular(irregular_grid_cube, case):
     """Test `extract_region` with data on an irregular grid."""
-    cube = extract_region(
-        irregular_grid_cube,
-        start_latitude=0.5,
-        end_latitude=3,
-        start_longitude=0.5,
-        end_longitude=1.5,
-    )
-    data = np.arange(9, dtype=np.float32).reshape((3, 3))
-    mask = np.array(
-        [
-            [True, True, True],
-            [True, False, True],
-            [True, False, True],
-        ],
-        dtype=bool,
-    )
-    np.testing.assert_array_equal(cube.data.data, data)
-    np.testing.assert_array_equal(cube.data.mask, mask)
+    start_lon, end_lon, start_lat, end_lat = case['region']
+    if 'raises' not in case:
+        cube = extract_region(
+            irregular_grid_cube,
+            start_longitude=start_lon,
+            end_longitude=end_lon,
+            start_latitude=start_lat,
+            end_latitude=end_lat,
+        )
+
+        data = np.arange(9, dtype=np.float32).reshape((3, 3))
+        np.testing.assert_array_equal(cube.data.mask, case['mask'])
+        np.testing.assert_array_equal(cube.data.data, data)
+    else:
+        with pytest.raises(ValueError) as exc:
+            extract_region(
+                irregular_grid_cube,
+                start_longitude=start_lon,
+                end_longitude=end_lon,
+                start_latitude=start_lat,
+                end_latitude=end_lat,
+            )
+            assert exc.value == case['raises']
 
 
 if __name__ == '__main__':
