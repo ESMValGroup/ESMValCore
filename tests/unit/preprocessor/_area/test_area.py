@@ -10,7 +10,7 @@ from cf_units import Unit
 from shapely.geometry import Polygon, mapping
 
 import tests
-from esmvalcore.preprocessor._area import (_clip_geometries, area_statistics,
+from esmvalcore.preprocessor._area import (_crop_geometries, area_statistics,
                                            extract_named_regions,
                                            extract_region, extract_shape)
 
@@ -213,27 +213,27 @@ def square_shape(request, tmp_path):
     return np.ma.masked_array(vals, mask)
 
 
-def test_clip_geometries(make_testcube, square_shape, tmp_path):
-    """Test for clipping a cube by shape bounds."""
+def test_crop_geometries(make_testcube, square_shape, tmp_path):
+    """Test for cropping a cube by shape bounds."""
     with fiona.open(tmp_path / 'test_shape.shp') as geometries:
-        result = _clip_geometries(make_testcube, geometries)
+        result = _crop_geometries(make_testcube, geometries)
         expected = square_shape.data
         np.testing.assert_array_equal(result.data, expected)
 
 
-@pytest.mark.parametrize('clip', [True, False])
-def test_extract_shape(make_testcube, square_shape, tmp_path, clip):
+@pytest.mark.parametrize('crop', [True, False])
+def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
     """Test for extracting a region with shapefile"""
     expected = square_shape
-    if not clip:
-        # If clipping is not used, embed expected in the original test array
+    if not crop:
+        # If cropping is not used, embed expected in the original test array
         original = np.ma.ones((5, 5))
         original.mask = np.ones_like(original, dtype=bool)
         original[:expected.shape[0], :expected.shape[1]] = expected
         expected = original
     result = extract_shape(make_testcube,
                            tmp_path / 'test_shape.shp',
-                           clip=clip)
+                           crop=crop)
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 

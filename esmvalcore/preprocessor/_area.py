@@ -265,7 +265,7 @@ def extract_named_regions(cube, regions):
     return cube
 
 
-def _clip_geometries(cube, geometries):
+def _crop_geometries(cube, geometries):
     """Clip cube to only include the geometries and padding."""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
@@ -276,7 +276,7 @@ def _clip_geometries(cube, geometries):
             end_longitude,
             end_latitude,
         ) = geometries.bounds
-        # add a padding of one cell around the clipped cube
+        # add a padding of one cell around the cropped cube
         lon_bound = lon_coord.core_bounds()[0]
         lon_step = lon_bound[1] - lon_bound[0]
         start_longitude -= lon_step
@@ -302,7 +302,7 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
-def extract_shape(cube, shapefile, method='contains', clip=True):
+def extract_shape(cube, shapefile, method='contains', crop=True):
     """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
@@ -319,7 +319,7 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
         select a single representative point ('representative'). If not
         a single grid point is contained by the shape, 'representative'
         will always be used.
-    clip: bool, optional
+    crop: bool, optional
         Clip the resulting cube ('true') or not ('false') using
         `extract_region`.
 
@@ -335,8 +335,8 @@ def extract_shape(cube, shapefile, method='contains', clip=True):
             "'representative'.")
 
     with fiona.open(shapefile) as geometries:
-        if clip:
-            cube = _clip_geometries(cube, geometries)
+        if crop:
+            cube = _crop_geometries(cube, geometries)
         lon_coord = cube.coord(axis='X')
         lat_coord = cube.coord(axis='Y')
 

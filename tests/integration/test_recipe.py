@@ -1012,7 +1012,7 @@ def test_extract_shape(tmp_path, patched_datafinder, config_user):
     assert product.settings['extract_shape']['shapefile'] == str(shapefile)
 
 
-@pytest.mark.parametrize('invalid_arg', ['clip', 'shapefile', 'method'])
+@pytest.mark.parametrize('invalid_arg', ['crop', 'shapefile', 'method'])
 def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
                               invalid_arg):
     content = dedent(f"""

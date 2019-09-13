@@ -930,7 +930,7 @@ the data. This function takes the following arguments:
   contained by the shape (``contains``) or one representative point
   (``representative``). If not a single grid point is contained in the shape,
   a representative point will be selected.
-* ``clip``: by default the data will be clipped to a minimal rectangular
+* ``crop``: by default the data will be cropped to a minimal rectangular
   region containing the shape. Set to ``false`` to only mask data outside the
   shape.
 
