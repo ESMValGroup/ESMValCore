@@ -39,6 +39,22 @@ def ncl_version():
                           "a recipe containing NCL scripts.")
 
 
+def r_installation():
+    """Check the R installation."""
+    rscript = which('Rscript')
+    if not rscript:
+        raise RecipeError("Recipe contains R scripts, but cannot find "
+                          "an R installation.")
+
+
+def julia_installation():
+    """Check the Julia installation."""
+    rscript = which('julia')
+    if not rscript:
+        raise RecipeError("Recipe contains Julia scripts, but cannot find "
+                          "a Julia installation.")
+
+
 def recipe_with_schema(filename):
     """Check if the recipe content matches schema."""
     schema_file = os.path.join(os.path.dirname(__file__), 'recipe_schema.yml')

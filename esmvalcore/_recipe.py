@@ -818,6 +818,7 @@ class Recipe:
 
     info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
     """List of keys to be used to compose the alias, ordered by priority."""
+
     def __init__(self,
                  raw_recipe,
                  config_user,
@@ -827,6 +828,8 @@ class Recipe:
         self._cfg = deepcopy(config_user)
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
+        self._need_r(raw_recipe['diagnostics'])
+        self._need_julia(raw_recipe['diagnostics'])
         self._filename = os.path.basename(recipe_file)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
@@ -849,6 +852,39 @@ class Recipe:
                     logger.info("NCL script detected, checking NCL version")
                     check.ncl_version()
                     return True
+
+        return False
+
+    @staticmethod
+    def _need_r(raw_diagnostics):
+        if not raw_diagnostics:
+            return False
+        for diagnostic in raw_diagnostics.values():
+            if not diagnostic.get('scripts'):
+                continue
+            for script in diagnostic['scripts'].values():
+                if script.get('script', '').lower().endswith('.r'):
+                    logger.info("R script detected, checking R installation")
+                    check.r_installation()
+                    return True
+
+        return False
+
+    @staticmethod
+    def _need_julia(raw_diagnostics):
+        if not raw_diagnostics:
+            return False
+        for diagnostic in raw_diagnostics.values():
+            if not diagnostic.get('scripts'):
+                continue
+            for script in diagnostic['scripts'].values():
+                if script.get('script', '').lower().endswith('.jl'):
+                    logger.info(
+                        "Julia script detected, checking Julia installation"
+                    )
+                    check.julia_installation()
+                    return True
+
         return False
 
     def _initalize_provenance(self, raw_documentation):
