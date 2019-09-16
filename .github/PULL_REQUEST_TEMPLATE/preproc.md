@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-Before you start, read [contributing.md](https://github.com/ESMValGroup/ESMValTool/blob/version2_development/CONTRIBUTING.md).
+Before you start, read [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValTool/blob/version2_development/CONTRIBUTING.md).
 If you are making a dataset fix, first read the [documentation](https://esmvaltool.readthedocs.io/projects/esmvalcore/en/latest/esmvalcore/fixing_data.html).
 
 **Tasks**
