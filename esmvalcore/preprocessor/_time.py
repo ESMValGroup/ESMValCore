@@ -131,7 +131,7 @@ def extract_season(cube, season):
                 f"Unable to extract Season {season} "
                 f"combination of month not possible.")
         sstart = allmonths.index(season.lower())
-        res_season = allmonths[sstart + len(season) : sstart + 12]
+        res_season = allmonths[sstart + len(season): sstart + 12]
         custom_seasons = [season.lower(), res_season]
         if not cube.coords('clim_season_custom'):
             iris.coord_categorisation.add_season(cube, 'time',
@@ -144,7 +144,8 @@ def extract_season(cube, season):
         return cube.extract(iris.Constraint(clim_season_custom=season.lower()))
     else:
         if not cube.coords('clim_season'):
-            iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
+            iris.coord_categorisation.add_season(
+                cube, 'time', name='clim_season')
         if not cube.coords('season_year'):
             iris.coord_categorisation.add_season_year(cube, 'time',
                                                       name='season_year')
@@ -259,7 +260,8 @@ def monthly_statistics(cube, operator='mean'):
     return cube
 
 
-def seasonal_statistics(cube, operator='mean'):
+def seasonal_statistics(cube, operator='mean',
+                        seasons=('djf', 'mam', 'jja', 'son')):
     """
     Compute seasonal statistics.
 
@@ -280,18 +282,24 @@ def seasonal_statistics(cube, operator='mean'):
         Seasonal statistic cube
     """
     if not cube.coords('clim_season'):
-        iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
+        iris.coord_categorisation.add_season(
+            cube, 'time', name='clim_season', seasons=seasons
+        )
     if not cube.coords('season_year'):
         iris.coord_categorisation.add_season_year(
-            cube, 'time', name='season_year')
+            cube, 'time', name='season_year', seasons=seasons
+        )
 
     operator = get_iris_analysis_operation(operator)
 
     cube = cube.aggregated_by(['clim_season', 'season_year'],
                               operator)
 
+    if any(len(season) != 3 for season in seasons):
+        return cube
+
     # CMOR Units are days so we are safe to operate on days
-    # Ranging on [90, 92] days makes this calendar-independent
+    # Ranging on [89, 92] days makes this calendar-independent
     def spans_three_months(time):
         """
         Check for three months.
@@ -306,7 +314,7 @@ def seasonal_statistics(cube, operator='mean'):
         bool
             truth statement if time bounds are 90+2 days.
         """
-        return 90 <= (time.bound[1] - time.bound[0]).days <= 92
+        return 89 <= (time.bound[1] - time.bound[0]).days <= 92
 
     three_months_bound = iris.Constraint(time=spans_three_months)
     return cube.extract(three_months_bound)
@@ -383,7 +391,8 @@ def decadal_statistics(cube, operator='mean'):
     return cube.aggregated_by('decade', operator)
 
 
-def climate_statistics(cube, operator='mean', period='full'):
+def climate_statistics(cube, operator='mean', period='full',
+                       seasons=('djf', 'mam', 'jja', 'son')):
     """
     Compute climate statistics with the specified granularity.
 
@@ -404,6 +413,9 @@ def climate_statistics(cube, operator='mean', period='full'):
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
         'mon', 'daily', 'day'
 
+    seasons: list(str), optional
+        Seasons to use if needed. Default to ('djf', 'mam', 'jja', 'son')
+
     Returns
     -------
     iris.cube.Cube
@@ -422,7 +434,7 @@ def climate_statistics(cube, operator='mean', period='full'):
             cube = cube.collapsed('time', operator_method)
         return cube
 
-    clim_coord = _get_period_coord(cube, period)
+    clim_coord = _get_period_coord(cube, period, seasons)
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(clim_coord, operator)
     cube.remove_coord('time')
@@ -430,7 +442,7 @@ def climate_statistics(cube, operator='mean', period='full'):
     return cube
 
 
-def anomalies(cube, period):
+def anomalies(cube, period, seasons=('djf', 'mam', 'jja', 'son')):
     """
     Compute anomalies using a mean with the specified granularity.
 
@@ -447,6 +459,9 @@ def anomalies(cube, period):
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
         'mon', 'daily', 'day'
 
+    seasons: list(str), optional
+        Seasons to use if needed. Default to ('djf', 'mam', 'jja', 'son')
+
     Returns
     -------
     iris.cube.Cube
@@ -456,8 +471,8 @@ def anomalies(cube, period):
     if period in ['full']:
         return cube - reference
 
-    cube_coord = _get_period_coord(cube, period)
-    ref_coord = _get_period_coord(reference, period)
+    cube_coord = _get_period_coord(cube, period, seasons)
+    ref_coord = _get_period_coord(reference, period, seasons)
 
     data = cube.core_data()
     cube_time = cube.coord('time')
@@ -478,7 +493,7 @@ def anomalies(cube, period):
     return cube
 
 
-def _get_period_coord(cube, period):
+def _get_period_coord(cube, period, seasons):
     if period in ['daily', 'day']:
         if not cube.coords('day_of_year'):
             iris.coord_categorisation.add_day_of_year(cube, 'time')
@@ -489,7 +504,9 @@ def _get_period_coord(cube, period):
         return cube.coord('month_number')
     elif period in ['seasonal', 'season']:
         if not cube.coords('season_number'):
-            iris.coord_categorisation.add_season_number(cube, 'time')
+            iris.coord_categorisation.add_season_number(
+                cube, 'time', seasons=seasons
+            )
         return cube.coord('season_number')
     raise ValueError('Period %s not supported')
 

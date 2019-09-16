@@ -140,6 +140,13 @@ class TestExtractSeason(tests.Test):
             np.array([9, 10, 11, 9, 10, 11]),
             sliced.coord('month_number').points)
 
+    def test_get_jf(self):
+        """Test function for custom seasons"""
+        sliced = extract_season(self.cube, 'jf')
+        assert_array_equal(
+            np.array([1, 2, 1, 2]),
+            sliced.coord('month_number').points)
+
 
 class TestClimatology(tests.Test):
     """Test class for :func:`esmvalcore.preprocessor._time.climatology`"""
@@ -198,6 +205,21 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='mean', period='season')
         expected = np.array([1., 1., 1.])
+        assert_array_equal(result.data, expected)
+
+    def test_custom_season_climatology(self):
+        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        data = np.ones((8, ))
+        times = np.array([15, 45, 74, 105, 135, 166, 195, 225])
+        bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
+                           [151, 181], [181, 212], [212, 243]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(
+            cube, operator='mean', period='season',
+            seasons=('jfmamj', 'jasond')
+        )
+        expected = np.array([1., 1.])
         assert_array_equal(result.data, expected)
 
     def test_monthly(self):
@@ -784,6 +806,28 @@ def test_anomalies(period):
             result.data,
             np.array([[zeros, anom], [anom, zeros]])
         )
+    assert_array_equal(result.coord('time').points, cube.coord('time').points)
+
+
+def test_anomalies_custom_season():
+    cube = make_map_data(number_years=2)
+    result = anomalies(cube, 'season', seasons=('jfmamj', 'jasond'))
+    anom = np.concatenate((
+        np.arange(-314.5, -255),
+        np.arange(-224.5, -135),
+        np.arange(-224.5, -135),
+        np.arange(-224.5, -135),
+        np.arange(15.5, 105),
+        np.arange(135.5, 225),
+        np.arange(135.5, 225),
+        np.arange(135.5, 225),
+        np.arange(375.5, 405),
+    ))
+    zeros = np.zeros_like(anom)
+    assert_array_equal(
+        result.data,
+        np.array([[zeros, anom], [anom, zeros]])
+    )
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
 
 
