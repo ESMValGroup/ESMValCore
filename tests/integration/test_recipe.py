@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
 
@@ -9,6 +10,7 @@ from mock import create_autospec
 
 import esmvalcore
 from esmvalcore._recipe import TASKSEP, read_recipe_file
+from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
@@ -119,7 +121,7 @@ DEFAULT_DOCUMENTATION = dedent("""
     documentation:
       description: This is a test recipe.
       authors:
-        - ande_bo
+        - andela_bouwe
       references:
         - contact_authors
         - acknow_project
@@ -338,6 +340,97 @@ def test_empty_variable(tmp_path, patched_datafinder, config_user):
     assert product.attributes['dataset'] == 'CanESM2'
 
 
+def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
+                                     config_user):
+    """Test that required information is automatically added for CMIP5."""
+    content = dedent("""
+        diagnostics:
+          test:
+            additional_datasets:
+              - dataset: CanESM2
+                project: CMIP5
+                mip: 3hr
+                exp: historical
+                start_year: 2000
+                end_year: 2001
+                ensemble: r1i1p1
+            variables:
+              pr:
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
+
+    reference = {
+        'dataset': 'CanESM2',
+        'diagnostic': 'test',
+        'end_year': 2001,
+        'ensemble': 'r1i1p1',
+        'exp': 'historical',
+        'frequency': '3hr',
+        'institute': ['CCCma'],
+        'long_name': 'Precipitation',
+        'mip': '3hr',
+        'modeling_realm': ['atmos'],
+        'preprocessor': 'default',
+        'project': 'CMIP5',
+        'short_name': 'pr',
+        'standard_name': 'precipitation_flux',
+        'start_year': 2000,
+        'units': 'kg m-2 s-1',
+    }
+    for key in reference:
+        assert variable[key] == reference[key]
+
+
+def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
+                                     config_user):
+    """Test that required information is automatically added for CMIP6."""
+    content = dedent("""
+        diagnostics:
+          test:
+            additional_datasets:
+              - dataset: HadGEM3-GC31-LL
+                project: CMIP6
+                mip: 3hr
+                exp: historical
+                start_year: 2000
+                end_year: 2001
+                ensemble: r2i1p1f1
+                grid: gn
+            variables:
+              pr:
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
+
+    reference = {
+        'activity': ['CMIP'],
+        'dataset': 'HadGEM3-GC31-LL',
+        'diagnostic': 'test',
+        'end_year': 2001,
+        'ensemble': 'r2i1p1f1',
+        'exp': 'historical',
+        'frequency': '3hr',
+        'grid': 'gn',
+        'institute': ['MOHC'],
+        'long_name': 'Precipitation',
+        'mip': '3hr',
+        'modeling_realm': ['atmos'],
+        'preprocessor': 'default',
+        'project': 'CMIP6',
+        'short_name': 'pr',
+        'standard_name': 'precipitation_flux',
+        'start_year': 2000,
+        'units': 'kg m-2 s-1',
+    }
+    for key in reference:
+        assert variable[key] == reference[key]
+
+
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,
                            monkeypatch):
 
@@ -395,10 +488,10 @@ def test_reference_dataset(tmp_path, patched_datafinder, config_user,
     task = next(t for t in recipe.tasks
                 if t.name == 'diagnostic_name' + TASKSEP + 'ta')
     assert len(task.products) == 2
-    product = next(
-        p for p in task.products if p.attributes['dataset'] == 'GFDL-CM3')
-    reference = next(
-        p for p in task.products if p.attributes['dataset'] == 'MPI-ESM-LR')
+    product = next(p for p in task.products
+                   if p.attributes['dataset'] == 'GFDL-CM3')
+    reference = next(p for p in task.products
+                     if p.attributes['dataset'] == 'MPI-ESM-LR')
 
     assert product.settings['regrid']['target_grid'] == reference.files[0]
     assert product.settings['extract_levels']['levels'] == levels
@@ -409,7 +502,7 @@ def test_reference_dataset(tmp_path, patched_datafinder, config_user,
         'CMIP5',
         'MPI-ESM-LR',
         'ta',
-        fix_dir
+        fix_dir,
     )
 
     assert 'regrid' not in reference.settings
@@ -658,7 +751,7 @@ def simulate_diagnostic_run(diagnostic_task):
         'statistics': ['mean', 'var'],
         'domains': ['trop', 'et'],
         'plot_types': ['zonal'],
-        'authors': ['ande_bo'],
+        'authors': ['andela_bouwe'],
         'references': ['acknow_project'],
         'ancestors': input_files,
     }
@@ -676,7 +769,7 @@ def simulate_diagnostic_run(diagnostic_task):
 
 TAGS = {
     'authors': {
-        'ande_bo': {
+        'andela_bouwe': {
             'name': 'Bouwe Andela',
         },
     },
@@ -713,7 +806,7 @@ def test_diagnostic_task_provenance(
         patched_datafinder,
         monkeypatch,
         config_user,
-        ):
+):
     monkeypatch.setattr(esmvalcore._config, 'TAGS', TAGS)
     monkeypatch.setattr(esmvalcore._recipe, 'TAGS', TAGS)
     monkeypatch.setattr(esmvalcore._task, 'TAGS', TAGS)
@@ -762,8 +855,8 @@ def test_diagnostic_task_provenance(
 
     # Check that diagnostic script tags have been added
     for key in ('statistics', 'domains', 'authors', 'references'):
-        assert product.attributes[key] == tuple(
-            TAGS[key][k] for k in record[key])
+        assert product.attributes[key] == tuple(TAGS[key][k]
+                                                for k in record[key])
 
     # Check that recipe diagnostic tags have been added
     src = yaml.safe_load(DEFAULT_DOCUMENTATION + content)
@@ -880,3 +973,71 @@ def test_concatenation(tmp_path, patched_datafinder, config_user):
             assert dataset['alias'] == 'historical'
         else:
             assert dataset['alias'] == 'historical-rcp85'
+
+
+def test_extract_shape(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          test:
+            extract_shape:
+              shapefile: test.shp
+
+        diagnostics:
+          test:
+            variables:
+              ta:
+                preprocessor: test
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: GFDL-CM3}
+            scripts: null
+        """)
+
+    # Create shapefile
+    shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
+    shapefile.parent.mkdir(parents=True, exist_ok=True)
+    shapefile.touch()
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert product.settings['extract_shape']['shapefile'] == str(shapefile)
+
+
+@pytest.mark.parametrize('invalid_arg', ['crop', 'shapefile', 'method'])
+def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
+                              invalid_arg):
+    content = dedent(f"""
+        preprocessors:
+          test:
+            extract_shape:
+              {invalid_arg}: x
+
+        diagnostics:
+          test:
+            variables:
+              ta:
+                preprocessor: test
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  -
+                      dataset: GFDL-CM3
+            scripts: null
+        """)
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, config_user)
+        assert 'extract_shape' in exc.value
+        assert invalid_arg in exc.value

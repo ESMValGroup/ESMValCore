@@ -1,9 +1,9 @@
 # cmip6-cmor-tables
 
-## Data Request 01.00.30 (March 11, 2019)
+Note:
+----
+Only `CMOR` and `PrePARE` should use the `JSON` file of concatenated `CMIP6` Control Vocabulary [CMIP6_CV.json](https://github.com/PCMDI/cmip6-cmor-tables/blob/master/Tables/CMIP6_CV.json) found in this repository.  
 
-Source is https://github.com/PCMDI/cmip6-cmor-tables
+All other software should get the CV's directly from the [WCRP](https://github.com/WCRP-CMIP/CMIP6_CVs) repository. 
 
-- branch: 01.00.30
-- commit: c9089bf17e81d5dcc41a839e8299cee69da890d3
-
+CMIP6 Data Request can be found in the following [mip tables](http://clipc-services.ceda.ac.uk/dreq/index/miptable.html).
