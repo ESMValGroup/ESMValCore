@@ -2,6 +2,7 @@
 from dask import array as da
 
 from ..fix import Fix
+from ..shared import add_scalar_height_coord
 
 
 class Sic(Fix):
@@ -72,3 +73,32 @@ class Tos(Fix):
         """
         cube.data = da.ma.masked_equal(cube.core_data(), 273.15)
         return cube
+
+
+class Tas(Fix):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix potentially missing scalar dimension.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+
+        for cube in cubes:
+            coord_names = [coord.var_name for coord in cube.coords()]
+            if 'height' not in coord_names:
+                add_scalar_height_coord(cube)
+
+            if cube.coord('time').long_name is None:
+                cube.coord('time').long_name = 'time'
+
+        return cubes
