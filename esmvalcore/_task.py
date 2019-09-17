@@ -268,6 +268,7 @@ class DiagnosticTask(BaseTask):
         """Create a an executable command from script."""
         diagnostics_root = os.path.join(
             DIAGNOSTICS_PATH, 'diag_scripts')
+        script = os.path.expandvars(os.path.expanduser(script))
         script_file = os.path.abspath(os.path.join(diagnostics_root, script))
 
         if not os.path.isfile(script_file):
