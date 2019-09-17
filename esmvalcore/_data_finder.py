@@ -97,9 +97,7 @@ def select_files(filenames, start_year, end_year):
 def _replace_tags(path, variable, fx_var=None):
     """Replace tags in the config-developer's file with actual values."""
     path = path.strip('/')
-
-    tlist = re.findall(r'\[([^]]*)\]', path)
-
+    tlist = re.findall(r'{([^}]*)}', path)
     paths = [path]
     for tag in tlist:
         original_tag = tag
@@ -116,7 +114,7 @@ def _replace_tags(path, variable, fx_var=None):
                            "your recipe entry".format(tag, variable))
 
         paths = _replace_tag(paths, original_tag, replacewith)
-
+    print(paths)
     return paths
 
 
@@ -129,7 +127,7 @@ def _replace_tag(paths, tag, replacewith):
             result.extend(_replace_tag(paths, tag, item))
     else:
         text = _apply_caps(str(replacewith), lower, upper)
-        result.extend(p.replace('[' + tag + ']', text) for p in paths)
+        result.extend(p.replace('{' + tag + '}', text) for p in paths)
     return result
 
 
@@ -155,11 +153,11 @@ def _apply_caps(original, lower, upper):
 
 def _resolve_latestversion(dirname_template):
     """Resolve the 'latestversion' tag."""
-    if '[latestversion]' not in dirname_template:
+    if '{latestversion}' not in dirname_template:
         return dirname_template
 
     # Find latest version
-    part1, part2 = dirname_template.split('[latestversion]')
+    part1, part2 = dirname_template.split('{latestversion}')
     part2 = part2.lstrip(os.sep)
     if os.path.exists(part1):
         versions = os.listdir(part1)
