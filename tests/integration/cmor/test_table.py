@@ -16,7 +16,9 @@ class TestCMIP6Info(unittest.TestCase):
 
         We read CMIP6Info once to keep tests times manageable
         """
-        cls.variables_info = CMIP6Info('cmip6', default=CustomInfo())
+        cls.variables_info = CMIP6Info(
+            'cmip6', default=CustomInfo(), strict=True
+        )
 
     def setUp(self):
         self.variables_info.strict = True
@@ -27,7 +29,15 @@ class TestCMIP6Info(unittest.TestCase):
         cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
                                         'cmor', 'tables', 'cmip6')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP6Info(cmor_tables_path)
+        CMIP6Info(cmor_tables_path, default=None, strict=False)
+
+    def test_get_table_frequency(self):
+        """Test get table frequency"""
+        self.assertEqual(
+            self.variables_info.get_table('Amon').frequency,
+            'mon'
+        )
+        self.assertEqual(self.variables_info.get_table('day').frequency, 'day')
 
     def test_get_variable_tas(self):
         """Get tas variable."""
@@ -38,6 +48,17 @@ class TestCMIP6Info(unittest.TestCase):
         """Get a variable from a known alias."""
         var = self.variables_info.get_variable('SImon', 'sic')
         self.assertEqual(var.short_name, 'siconc')
+
+    def test_get_variable_from_custom(self):
+        """Get a variable from default."""
+        self.variables_info.strict = False
+        var = self.variables_info.get_variable('Amon', 'swcre')
+        self.assertEqual(var.short_name, 'swcre')
+        self.assertEqual(var.frequency, 'mon')
+
+        var = self.variables_info.get_variable('day', 'swcre')
+        self.assertEqual(var.short_name, 'swcre')
+        self.assertEqual(var.frequency, 'day')
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
@@ -61,6 +82,16 @@ class TestCMIP6Info(unittest.TestCase):
         self.assertEqual(var.short_name, 'toz')
         self.assertEqual(var.frequency, 'mon')
 
+    def test_get_institute_from_source(self):
+        """Get institution for source ACCESS-CM2"""
+        institute = self.variables_info.institutes['ACCESS-CM2']
+        self.assertListEqual(institute, ['CSIRO-ARCCSS-BoM'])
+
+    def test_get_activity_from_exp(self):
+        """Get activity for experiment 1pctCO2"""
+        activity = self.variables_info.activities['1pctCO2']
+        self.assertListEqual(activity, ['CMIP'])
+
 
 class Testobs4mipsInfo(unittest.TestCase):
     """Test for the obs$mips info class."""
@@ -74,7 +105,19 @@ class Testobs4mipsInfo(unittest.TestCase):
         """
         cls.variables_info = CMIP6Info(
             cmor_tables_path='obs4mips',
-            default=CustomInfo()
+            default=CustomInfo(),
+            strict=True,
+            default_table_prefix='obs4MIPs_'
+        )
+
+    def setUp(self):
+        self.variables_info.strict = True
+
+    def test_get_table_frequency(self):
+        """Test get table frequency"""
+        self.assertEqual(
+            self.variables_info.get_table('obs4MIPs_monStderr').frequency,
+            'mon'
         )
 
     def test_custom_tables_location(self):
@@ -83,12 +126,40 @@ class Testobs4mipsInfo(unittest.TestCase):
         cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
                                         'cmor', 'tables', 'cmip6')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP6Info(cmor_tables_path)
+        CMIP6Info(cmor_tables_path, None, True)
 
-    def test_get_variable_tas(self):
-        """Get tas variable."""
-        var = self.variables_info.get_variable('monStderr', 'ndviStderr')
+    def test_get_variable_ndvi(self):
+        """Get ndviStderr variable. Note table name obs4MIPs_[mip]"""
+        var = self.variables_info.get_variable('obs4MIPs_monStderr',
+                                               'ndviStderr')
         self.assertEqual(var.short_name, 'ndviStderr')
+        self.assertEqual(var.frequency, 'mon')
+
+    def test_get_variable_hus(self):
+        """Get hus variable."""
+        var = self.variables_info.get_variable('obs4MIPs_Amon', 'hus')
+        self.assertEqual(var.short_name, 'hus')
+        self.assertEqual(var.frequency, 'mon')
+
+    def test_get_variable_hus_default_prefix(self):
+        """Get hus variable."""
+        var = self.variables_info.get_variable('Amon', 'hus')
+        self.assertEqual(var.short_name, 'hus')
+        self.assertEqual(var.frequency, 'mon')
+
+    def test_get_variable_from_custom(self):
+        """Get a variable from default."""
+        var = self.variables_info.get_variable(
+            'obs4MIPs_Amon', 'swcre', derived=True
+        )
+        self.assertEqual(var.short_name, 'swcre')
+        self.assertEqual(var.frequency, 'mon')
+
+        var = self.variables_info.get_variable(
+            'obs4MIPs_Aday', 'swcre', derived=True
+        )
+        self.assertEqual(var.short_name, 'swcre')
+        self.assertEqual(var.frequency, 'day')
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
@@ -105,7 +176,7 @@ class TestCMIP5Info(unittest.TestCase):
 
         We read CMIP5Info once to keep testing times manageable
         """
-        cls.variables_info = CMIP5Info('cmip5', default=CustomInfo())
+        cls.variables_info = CMIP5Info('cmip5', CustomInfo(), strict=True)
 
     def setUp(self):
         self.variables_info.strict = True
@@ -116,12 +187,23 @@ class TestCMIP5Info(unittest.TestCase):
         cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
                                         'cmor', 'tables', 'cmip5')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CMIP5Info(cmor_tables_path)
+        CMIP5Info(cmor_tables_path, None, True)
 
     def test_get_variable_tas(self):
         """Get tas variable."""
         var = self.variables_info.get_variable('Amon', 'tas')
         self.assertEqual(var.short_name, 'tas')
+
+    def test_get_variable_from_custom(self):
+        """Get a variable from default."""
+        self.variables_info.strict = False
+        var = self.variables_info.get_variable('Amon', 'swcre')
+        self.assertEqual(var.short_name, 'swcre')
+        self.assertEqual(var.frequency, 'mon')
+
+        var = self.variables_info.get_variable('day', 'swcre')
+        self.assertEqual(var.short_name, 'swcre')
+        self.assertEqual(var.frequency, 'day')
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""

@@ -17,6 +17,7 @@ following the default order in which they are applied:
 * :ref:`Time operations`
 * :ref:`Area operations`
 * :ref:`Volume operations`
+* :ref:`Detrend`
 * :ref:`Unit conversion`
 
 Overview
@@ -594,15 +595,38 @@ Time manipulation
 =================
 The ``_time.py`` module contains the following preprocessor functions:
 
-* ``extract_time``: Extract a time range from an Iris ``cube``.
-* ``extract_season``: Extract only the times that occur within a specific
-  season.
-* ``extract_month``: Extract only the times that occur within a specific month.
-* ``time_average``: Take the weighted average over the time dimension.
-* ``seasonal_mean``: Produces a mean for each season (DJF, MAM, JJA, SON)
-* ``annual_mean``: Produces an annual or decadal mean.
-* ``regrid_time``: Aligns the time axis of each dataset to have common time
+* extract_time_: Extract a time range from a cube.
+* extract_season_: Extract only the times that occur within a specific season.
+* extract_month_: Extract only the times that occur within a specific month.
+* daily_statistics_: Compute statistics for each day
+* monthly_statistics_: Compute statistics for each month
+* seasonal_statistics_: Compute statistics for each season
+* annual_statistics_: Compute statistics for each year
+* decadal_statistics_: Compute statistics for each decade
+* climate_statistics_: Compute statistics for the full period
+* anomalies_: Compute anomalies
+* regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
+
+Statistics functions are applied by default in the order they appear in the
+list. For example, the following example applied to hourly data will retrieve
+the minimum values for the full period (by season) of the monthly mean of the
+daily maximum of any given variable.
+
+.. code-block:: yaml
+
+    daily_statistics:
+      operator: max
+
+    monthly_statistics:
+      operator: mean
+
+    climate_statistics:
+      operator: min
+      period: season
+
+
+.. _extract_time:
 
 ``extract_time``
 ----------------
@@ -624,6 +648,8 @@ will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_time`.
 
+.. _extract_season:
+
 ``extract_season``
 ------------------
 
@@ -641,6 +667,8 @@ the seasonal_mean function, below.
 
 See also :func:`esmvalcore.preprocessor.extract_season`.
 
+.. _extract_month:
+
 ``extract_month``
 -----------------
 
@@ -650,37 +678,154 @@ between 1 and 12 as the named month string will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_month`.
 
-.. _time_average:
+.. _daily_statistics:
 
-``time_average``
-----------------
+``daily_statistics``
+--------------------
 
-This function takes the weighted average over the time dimension. This
-function requires no arguments and removes the time dimension of the cube.
+This function produces statistics for each day in the dataset.
 
-See also :func:`esmvalcore.preprocessor.time_average`.
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
 
-``seasonal_mean``
------------------
+See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
-This function produces a seasonal mean for each season (DJF, MAM, JJA, SON).
-Note that this function will not check for missing time points. For instance,
-if you are looking at the DJF field, but your datasets starts on January 1st,
-the first DJF field will only contain data from January and February.
+.. _monthly_statistics:
+
+``monthly_statistics``
+----------------------
+
+This function produces statistics for each month in the dataset.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.monthly_statistics`.
+
+.. _seasonal_statistics:
+
+``seasonal_statistics``
+-----------------------
+
+This function produces statistics for each season (DJF, MAM, JJA, SON) in the
+dataset. Note that this function will not check for missing time points.
+For instance, if you are looking at the DJF field, but your datasets
+starts on January 1st, the first DJF field will only contain data
+from January and February.
 
 We recommend using the extract_time to start the dataset from the following
 December and remove such biased initial datapoints.
 
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
+
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
-``annual_mean``
----------------
+.. _annual_statistics:
 
-This function produces an annual or a decadal mean. The only argument is the
-decadal boolean switch. When this switch is set to true, this function
-will output the decadal averages.
+``annual_statistics``
+---------------------
 
-See also :func:`esmvalcore.preprocessor.annual_mean`.
+This function produces statistics for each year.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.annual_statistics`.
+
+.. _decadal_statistics:
+
+``decadal_statistics``
+----------------------
+
+This function produces statistics for each decade.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.decadal_statistics`.
+
+.. _climate_statistics:
+
+``climate_statistics``
+----------------------
+
+This function produces statistics for the whole dataset. It can produce scalars
+(if the full period is chosen) or daily, monthly or seasonal statics.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean', 'median', 'std_dev',
+      'min' and 'max'. Default is 'mean'
+
+    * period: define the granularity of the statistics: get values for the
+      full period, for each month or day of year.
+      Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
+      'mon', 'daily', 'day'. Default is 'full'
+
+Examples:
+    * Monthly climatology:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+                operator: mean
+                period: month
+
+    * Daily maximum for the full period:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+                operator: max
+                period: day
+
+    * Minimum value in the period:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+                operator: min
+                period: full
+
+See also :func:`esmvalcore.preprocessor.climate_statistics`.
+
+.. _anomalies:
+
+``anomalies``
+----------------------
+
+This function computes the anomalies for the whole dataset. It can compute
+anomalies from the full, seasonal, monthly and daily climatologies.
+
+Parameters:
+    * period: define the granularity of the climatology to use:
+      full period, seasonal, monthly or daily.
+      Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
+      'mon', 'daily', 'day'. Default is 'full'
+
+Examples:
+    * Anomalies from the monthly climatology:
+
+        .. code-block:: yaml
+
+            anomalies:
+                period: month
+
+    * Anomalies from the full period climatology:
+
+        .. code-block:: yaml
+
+            anomalies:
+
+See also :func:`esmvalcore.preprocessor.anomalies`.
+
+
+.. _regrid_time:
 
 ``regrid_time``
 ---------------
@@ -700,14 +845,15 @@ See also :func:`esmvalcore.preprocessor.regrid_time`.
 
 Area manipulation
 =================
-The ``_area.py`` module contains the following preprocessor functions:
+The area manipulation module contains the following preprocessor functions:
 
-* ``extract_region``: Extract a region from a cube based on ``lat/lon``
+* extract_region_: Extract a region from a cube based on ``lat/lon``
   corners.
-* ``zonal_means``: Calculates the zonal or meridional means.
-* ``area_statistics``: Calculates the average value over a region.
-* ``extract_named_regions``: Extract a specific region from in the region
+* extract_named_regions_: Extract a specific region from in the region
   cooordinate.
+* extract_shape_: Extract a region defined by a shapefile.
+* zonal_means_: Calculates the zonal or meridional means.
+* area_statistics_: Calculates the average value over a region.
 
 
 ``extract_region``
@@ -722,9 +868,52 @@ arguments:
 * ``start_latitude``
 * ``end_latitude``
 
-Note that this function can only be used to extract a rectangular region.
+Note that this function can only be used to extract a rectangular region. Use
+``extract_shape`` to extract any other shaped region from a shapefile.
 
 See also :func:`esmvalcore.preprocessor.extract_region`.
+
+
+``extract_named_regions``
+-------------------------
+
+This function extracts a specific named region from the data. This function
+takes the following argument: ``regions`` which is either a string or a list
+of strings of named regions. Note that the dataset must have a ``region``
+cooordinate which includes a list of strings as values. This function then
+matches the named regions against the requested string.
+
+See also :func:`esmvalcore.preprocessor.extract_named_regions`.
+
+
+``extract_shape``
+-------------------------
+
+Extract a shape or a representative point for this shape from
+the data.
+
+Parameters:
+	* ``shapefile``: path to the shapefile containing the geometry of the region to be
+	  extracted. This path can be relative to ``auxiliary_data_dir`` defined in
+	  the :ref:`user configuration file`.
+	* ``method``: the method to select the region, selecting either all points
+	  contained by the shape or a single representative point. Choose either
+	  'contains' or 'representative'. If not a single grid point is contained
+	  in the shape, a representative point will be selected.
+	* ``crop``: by default extract_region_ will be used to crop the data to a
+	  minimal rectangular region containing the shape. Set to ``false`` to only
+	  mask data outside the shape. Data on irregular grids will not be cropped.
+
+Examples:
+    * Extract the shape of the river Elbe from a shapefile:
+
+        .. code-block:: yaml
+
+            extract_shape:
+              shapefile: Elbe.shp
+              method: contains
+
+See also :func:`esmvalcore.preprocessor.extract_shape`.
 
 
 ``zonal_means``
@@ -756,18 +945,6 @@ region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
-
-
-``extract_named_regions``
--------------------------
-
-This function extracts a specific named region from the data. This function
-takes the following argument: ``regions`` which is either a string or a list
-of strings of named regions. Note that the dataset must have a ``region``
-cooordinate which includes a list of strings as values. This function then
-matches the named regions against the requested string.
-
-See also :func:`esmvalcore.preprocessor.extract_named_regions`.
 
 
 .. _volume operations:
@@ -858,6 +1035,28 @@ Note that this function uses the expensive ``interpolate`` method from
 ``Iris.analysis.trajectory``, but it may be neccesary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
+
+.. _detrend:
+
+Detrend
+=======
+
+ESMValTool also supports detrending along any dimension using
+the preprocessor function 'detrend'.
+This function has two parameters:
+
+* ``dimension``: dimension to apply detrend on. Default: "time"
+* ``method``: It can be ``linear`` or ``constant``. Default: ``linear``
+
+If method is ``linear``, detrend will calculate the linear trend along the
+selected axis and substract it to the data. For example, this can be used to
+remove the linear trend caused by climate change on some variables is selected
+dimension is time.
+
+If method is ``constant``, detrend will compute the mean along that dimension
+and substract it from the data
+
+See also :func:`esmvalcore.preprocessor.detrend`.
 
 .. _unit conversion:
 
