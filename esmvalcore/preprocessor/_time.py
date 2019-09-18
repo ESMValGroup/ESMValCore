@@ -364,6 +364,30 @@ def decadal_statistics(cube, operator='mean'):
     return cube.aggregated_by('decade', operator)
 
 
+def standardize(cube, period='full'):
+    """
+    Standardize the input data with the specified granularity
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+
+    period: str, optional
+        Period for computing mean and standard deviation
+        Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
+        'mon', 'daily', 'day'
+
+    Returns
+    -------
+    iris.cube.Cube
+        Standardized cube
+
+    """
+    cube_anomalies = anomalies(cube, operator='mean', period=period)
+    return cube_anomalies / climate_statistics(cube, operator='std_dev', period=period)
+
+
 def climate_statistics(cube, operator='mean', period='full'):
     """
     Compute climate statistics with the specified granularity.
