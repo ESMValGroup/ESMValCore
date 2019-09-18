@@ -4,7 +4,7 @@ If you would like to contribute a new diagnostic and recipe or a new feature, pl
 
 If you have a bug to report, please do so using the [issues tab on the ESMValCore github repository](https://github.com/ESMValGroup/ESMValCore/issues).
 
-To get started developing, follow the instructions below. More detailed instructions can be found in the [manual](https://esmvaltool.readthedocs.io) under Developer's Guide.
+To get started developing, follow the instructions below. If you are contributing fixes for a model/dataset, you can find extra instructions [here](https://esmvaltool.readthedocs.io/projects/esmvalcore/en/latest/esmvalcore/fixing_data.html).
 
 ## Getting started
 
@@ -65,6 +65,7 @@ Please use `yamllint` to check that your YAML files do not contain mistakes.
 ### What should be documented
 
 Any code documentation that is visible on [readthedocs](https://esmvaltool.readthedocs.io) should be well written and adhere to the standards for documentation for the respective language. Note that there is no need to write extensive documentation for functions that are not visible on readthedocs. However, adding a one line docstring describing what a function does is always a good idea.
+When making changes/introducing a new preprocessor function, also update the [preprocessor documentation](https://esmvaltool.readthedocs.io/projects/esmvalcore/en/latest/esmvalcore/preprocessor.html).
 
 ### How to build the documentation locally
 
