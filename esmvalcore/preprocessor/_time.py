@@ -365,8 +365,11 @@ def decadal_statistics(cube, operator='mean'):
 
 
 def standardize(cube, period='full'):
-    """
-    Standardize the input data with the specified granularity
+    """Standardize the input data with the specified granularity.
+
+    This function standardizes the input data by dividing the anomalies
+    (x-mean(x)) through the standard deviation where both anomalies and
+    standard deviation are calculated over the specified period.
 
     Parameters
     ----------
@@ -383,9 +386,28 @@ def standardize(cube, period='full'):
     iris.cube.Cube
         Standardized cube
 
+
+    See Also
+    --------
+        anomalies
+        climate_statistics
     """
-    cube_anomalies = anomalies(cube, operator='mean', period=period)
-    return cube_anomalies / climate_statistics(cube, operator='std_dev', period=period)
+    cube_anomalies = anomalies(cube, period)
+    cube_stddev = climate_statistics(cube, operator='std_dev', period=period)
+
+    if period == 'full':
+        cube.data = cube_anomalies.data / cube_stddev.data
+    elif period in  ['season', 'seasonal', 'monthly',
+                     'month', 'mon', 'daily', 'day']:
+        ratio = [i / j for i, j in
+                 zip(cube_anomalies.shape, cube_stddev.shape)]
+        # This will raise an error if the length of the cube their time axes
+        # are not multiples of each other or if other shapes are not equal
+        if not all([ratio[0] % 1 == 0] + [i == 1 for i in ratio[1:]]):
+            raise ValueError("Can not safely apply preprocessor to this data")
+        reps = tuple([int(i) for i in ratio])
+        cube.data = cube_anomalies.data / np.tile(cube_stddev.data, reps)
+    return cube
 
 
 def climate_statistics(cube, operator='mean', period='full'):
