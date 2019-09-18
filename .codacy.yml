@@ -19,7 +19,7 @@ engines:
         python_version: 3
 
 exclude_paths: [
-    'doc/sphinx/**',
+    'doc/conf.py',
     'esmvaltool/cmor/tables/**',
     'tests/**'
 ]

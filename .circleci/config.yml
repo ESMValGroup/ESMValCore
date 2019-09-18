@@ -51,7 +51,7 @@ jobs:
             conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
-            conda install -yS r-base r-yaml julia ncl -c conda-forge
+            conda install -yS r-base r-yaml ncl -c conda-forge
             pip install . > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
@@ -77,6 +77,33 @@ jobs:
             pip install codacy-coverage
             python-codacy-coverage -r test-reports/coverage.xml
 
+  documentation:
+    # Test building documentation
+    working_directory: /doc
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - restore_cache:
+          key: documentation-{{ .Branch }}
+      - run:
+          command: |
+            mkdir /logs
+            # Install
+            pip install -r doc/requirements.txt > /logs/install.txt 2>&1
+            pip install sphinx sphinx_rtd_theme >> /logs/install.txt 2>&1
+            # Log versions
+            dpkg -l > /logs/versions.txt
+            pip freeze > /logs/requirements.txt
+            # Test building documentation
+            MPLBACKEND=Agg python setup.py build_sphinx --warning-is-error
+      - save_cache:
+          key: documentation-{{ .Branch }}
+          paths:
+            - ".eggs"
+      - store_artifacts:
+          path: /logs
+
   develop:
     # Test development installation
     working_directory: /develop
@@ -93,6 +120,7 @@ jobs:
             conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
+            conda install -yS r-base r-yaml ncl -c conda-forge
             pip install -e .[develop] > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
@@ -101,32 +129,6 @@ jobs:
             # Test installation
             esmvaltool -h
             python setup.py test --addopts --installation
-      - store_artifacts:
-          path: /logs
-
-  doc:
-    # Test building documentation
-    working_directory: /doc
-    docker:
-      - image: continuumio/miniconda3
-    steps:
-      - checkout
-      - run:
-          command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            set -x
-            mkdir /logs
-            # Install
-            conda update -y conda > /logs/conda.txt 2>&1
-            conda env update >> /logs/conda.txt 2>&1
-            set +x; conda activate esmvaltool; set -x
-            pip install -e .[develop] > /logs/install.txt 2>&1
-            # Log versions
-            dpkg -l > /logs/versions.txt
-            conda env export > /logs/environment.yml
-            pip freeze > /logs/requirements.txt
-            # Test building documentation
-            python setup.py build_sphinx
       - store_artifacts:
           path: /logs
 
@@ -144,18 +146,12 @@ jobs:
             # Install prerequisites
             mkdir /logs
             conda update -y conda > /logs/conda_base.txt 2>&1
-            conda install -y conda-build conda-verify >> /logs/conda_base.txt 2>&1
+            conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export -n base > /logs/build_environment.yml
             # Build conda package
-            conda build . -c conda-forge -c birdhouse > /logs/build_log.txt
-            # Install conda package
-            conda create -y --name esmvaltool > /logs/conda_esmvaltool.txt 2>&1
-            set +x; conda activate esmvaltool; set -x
-            conda install -y esmvaltool --use-local -c conda-forge
-            conda env export > /logs/test_environment.yml
-            esmvaltool -h
+            conda build . -c conda-forge -c esmvalgroup > /logs/build_log.txt
       - store_artifacts:
           path: /logs
 
@@ -181,15 +177,17 @@ jobs:
             conda env export > /logs/environment.yml
             # Test installation
             esmvaltool -h
-            ncl -V
-            cdo --version
+            python -c 'from esmvalcore import *; print(__version__)'
 
 workflows:
   version: 2
   commit:
     jobs:
       - test
-      - install
+      - install:
+          requires:
+            - test
+      - documentation
   nightly:
     triggers:
       - schedule:
@@ -202,7 +200,7 @@ workflows:
     jobs:
       - test
       - install
+      - documentation
       - develop
-      - doc
       - conda_build
       - conda_install

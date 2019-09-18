@@ -18,18 +18,18 @@ class TestFix(unittest.TestCase):
         shutil.rmtree(self.temp_folder)
 
     def test_get_fix(self):
-        from esmvalcore.cmor._fixes.CMIP5.CanESM2 import fgco2
+        from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CanESM2', 'fgco2'), [fgco2()])
+            Fix.get_fixes('CMIP5', 'CanESM2', 'fgco2'), [FgCo2()])
 
     def test_get_fixes_with_replace(self):
-        from esmvalcore.cmor._fixes.CMIP5.BNU_ESM import ch4
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'ch4'), [ch4()])
+        from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'ch4'), [Ch4()])
 
     def test_get_fixes_with_generic(self):
-        from esmvalcore.cmor._fixes.CMIP5.CESM1_BGC import co2
+        from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Co2
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'co2'), [co2()])
+            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'co2'), [Co2()])
 
     def test_get_fix_no_project(self):
         self.assertListEqual(
