@@ -226,8 +226,10 @@ class BaseTask:
                 input_files.extend(task.run())
             logger.info("Starting task %s in process [%s]", self.name,
                         os.getpid())
+            start = datetime.datetime.now()
             self.output_files = self._run(input_files)
-            logger.info("Successfully completed task %s", self.name)
+            logger.info("Successfully completed task %s in %s",
+                        self.name, datetime.datetime.now() - start)
 
         return self.output_files
 
