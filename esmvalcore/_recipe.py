@@ -1183,13 +1183,9 @@ class Recipe:
                     script=script_cfg['script'],
                     output_dir=script_cfg['output_dir'],
                     settings=script_cfg['settings'],
-<<<<<<< HEAD
-                    name=task_name)
-                task.priority = priority
-=======
                     name=task_name,
                 )
->>>>>>> development
+                task.priority = priority
                 tasks.add(task)
                 priority += 1
 
