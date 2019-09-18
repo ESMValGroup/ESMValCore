@@ -191,7 +191,7 @@ class CMIP6Info(object):
                 try:
                     exps = table_data['CV']['experiment_id']
                     for exp_id in exps:
-                        activity = exps[exp_id]['activity_id']
+                        activity = exps[exp_id]['activity_id'][0].split(' ')
                         self.activities[exp_id] = activity
                 except (KeyError, AttributeError):
                     pass
