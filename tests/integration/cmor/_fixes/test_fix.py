@@ -22,6 +22,11 @@ class TestFix(unittest.TestCase):
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'CanESM2', 'fgco2'), [FgCo2()])
 
+    def test_get_fix_case_insensitive(self):
+        from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'CanESM2', 'fgCo2'), [FgCo2()])
+
     def test_get_fixes_with_replace(self):
         from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'ch4'), [Ch4()])
