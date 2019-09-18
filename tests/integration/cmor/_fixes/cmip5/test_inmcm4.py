@@ -1,10 +1,6 @@
 """Tests for inmcm4 fixes."""
-import os
-import shutil
-import tempfile
 import unittest
 
-import iris
 from iris.cube import Cube
 from cf_units import Unit
 
@@ -59,26 +55,15 @@ class TestNbp(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='nbp')
         self.fix = Nbp()
-        self.temp_folder = tempfile.mkdtemp()
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'INMCM4', 'nbp'), [Nbp()])
 
-    def tearDown(self):
-        """Delete temp folder."""
-        shutil.rmtree(self.temp_folder)
-
-    def test_fix_file(self):
+    def test_fix_metadata(self):
         """Test fix on nbp files to set standard_name."""
-        temp_handler, temp_path = tempfile.mkstemp('.nc', dir=self.temp_folder)
-        os.close(temp_handler)
-        output_dir = os.path.join(self.temp_folder, 'fixed')
-
-        iris.save(self.cube, temp_path)
-        new_path = self.fix.fix_file(temp_path, output_dir)
-        new_cube = iris.load_cube(new_path)
+        new_cube = self.fix.fix_metadata([self.cube])[0]
         self.assertEqual(
             new_cube.standard_name,
             'surface_net_downward_mass_flux_of_carbon_dioxide_'

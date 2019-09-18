@@ -1,5 +1,6 @@
-
 """Fixes for CESM1-BGC model."""
+
+from dask import array as da
 
 from ..fix import Fix
 
@@ -8,8 +9,7 @@ class Co2(Fix):
     """Fixes for co2 variable."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -26,3 +26,24 @@ class Co2(Fix):
         cube *= 28.966 / 44.0
         cube.metadata = metadata
         return cube
+
+
+class Nbp(Fix):
+    """Fixes for nbp variable."""
+
+    def fix_data(self, cube):
+        """Fix data.
+
+        Fix missing values.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        data = da.ma.masked_equal(cube.core_data(), 1.0e33)
+        return cube.copy(data)
