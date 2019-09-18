@@ -155,10 +155,13 @@ def _special_name_to_dataset(variable, special_name):
 
 def _update_target_levels(variable, variables, settings, config_user):
     """Replace the target levels dataset name with a filename if needed."""
-    levels = settings.get('extract_levels', {}).get('levels')
+    if 'extract_levels' not in settings:
+        return
+    check.extract_levels(settings['extract_levels'], variable)
+
+    levels = settings['extract_levels'].get('levels')
     if not levels:
         return
-
     levels = _special_name_to_dataset(variable, levels)
 
     # If levels is a dataset name, replace it by a dict with a 'dataset' entry

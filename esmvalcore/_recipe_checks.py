@@ -7,6 +7,7 @@ import yamale
 
 from ._data_finder import get_start_end_year
 from ._task import get_flattened_tasks, which
+from .cmor.table import CMOR_TABLES
 from .preprocessor import PreprocessingTask
 
 logger = logging.getLogger(__name__)
@@ -138,3 +139,19 @@ def extract_shape(settings):
                 f"In preprocessor function `extract_shape`: Invalid value "
                 f"'{value}' for argument '{key}', choose from "
                 "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))
+
+
+def extract_levels(settings, variable):
+    short_name = variable['short_name']
+    table_entry = CMOR_TABLES[variable['cmor_table']].get_variable(
+        variable['mip'],
+        short_name,
+        variable.get('derive', False),
+    )
+    for coordinate in table_entry.coordinates.values():
+        if coordinate.axis == 'Z':
+            break
+    else:
+        raise RecipeError(
+            "In preprocessor function `extract_levels`: no vertical "
+            f"coordinate defined for variable '{short_name}'")
