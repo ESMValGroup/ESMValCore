@@ -400,7 +400,11 @@ class DiagnosticTask(BaseTask):
         """Start the diagnostic script."""
         logger.info("Running command %s", cmd)
         logger.debug("in environment\n%s", pprint.pformat(env))
-        cwd = self.settings['run_dir']
+        if 'tmp_dir' in self.settings:
+            cwd = self.settings['tmp_dir']
+            os.makedirs(cwd)
+        else:
+            cwd = self.settings['run_dir']
         logger.debug("in current working directory: %s", cwd)
         logger.info("Writing output to %s", self.output_dir)
         logger.info("Writing plots to %s", self.settings['plot_dir'])
@@ -607,17 +611,24 @@ def _run_tasks_sequential(tasks):
 
 def _run_tasks_parallel(tasks, max_parallel_tasks=None):
     """Run tasks in parallel."""
+    logger.info("Running tasks using at most %s processes",
+                max_parallel_tasks or cpu_count())
+
+    with Pool(processes=max_parallel_tasks) as pool:
+        _run_tasks_with_pool(tasks, pool)
+        pool.close()
+        pool.join()
+
+
+def _run_tasks_with_pool(tasks, pool):
+    """Run tasks in parallel."""
     scheduled = get_flattened_tasks(tasks)
     running = []
     results = []
 
     n_scheduled, n_running = len(scheduled), len(running)
     n_tasks = n_scheduled
-
-    pool = Pool(processes=max_parallel_tasks)
-
-    logger.info("Running %s tasks using at most %s processes", n_tasks,
-                max_parallel_tasks or cpu_count())
+    logger.info("Running %s tasks", n_tasks)
 
     def done(task):
         """Assume a task is done if it not scheduled or running."""
@@ -661,9 +672,6 @@ def _run_tasks_parallel(tasks, max_parallel_tasks=None):
                 "Progress: %s tasks running or queued, %s tasks waiting for "
                 "ancestors, %s/%s done", n_running, n_scheduled, n_done,
                 n_tasks)
-
-    pool.close()
-    pool.join()
 
 
 def _run_task(task):

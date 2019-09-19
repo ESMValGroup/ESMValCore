@@ -1103,9 +1103,12 @@ class Recipe:
             settings['version'] = __version__
             settings['script'] = script_name
             # Add output dirs to settings
+            subdir = os.path.join(diagnostic_name, script_name)
             for dir_name in ('run_dir', 'plot_dir', 'work_dir'):
-                settings[dir_name] = os.path.join(self._cfg[dir_name],
-                                                  diagnostic_name, script_name)
+                settings[dir_name] = os.path.join(self._cfg[dir_name], subdir)
+            if 'tmp_dir' in self._cfg:
+                settings['tmp_dir'] = os.path.join(self._cfg['tmp_dir'],
+                                                   subdir)
             # Copy other settings
             if self._cfg['write_ncl_interface']:
                 settings['exit_on_ncl_warning'] = self._cfg['exit_on_warning']

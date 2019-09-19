@@ -30,16 +30,17 @@ http://esmvaltool.readthedocs.io. Have fun!
 import argparse
 import datetime
 import errno
-import glob
 import logging
 import os
 import shutil
 import sys
+from copy import deepcopy
 from multiprocessing import cpu_count
 
 from . import __version__
-from ._config import configure_logging, read_config_user_file, DIAGNOSTICS_PATH
+from ._config import DIAGNOSTICS_PATH, configure_logging, read_config_user_file
 from ._recipe import TASKSEP, read_recipe_file
+from ._recipe_checks import RecipeError
 from ._task import resource_usage_logger
 
 # set up logging
@@ -63,53 +64,69 @@ def get_args():
     parser = argparse.ArgumentParser(
         description=HEADER,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('recipe', help='Path or name of the yaml recipe file')
+    parser.add_argument(
+        'recipes',
+        help='Path or name of the yaml recipe file(s)',
+        nargs='+',
+    )
     parser.add_argument(
         '-v',
         '--version',
         action='version',
         version=__version__,
-        help="return ESMValTool's version number and exit")
+        help="return ESMValTool's version number and exit",
+    )
     parser.add_argument(
         '-c',
         '--config-file',
         default=os.path.join(os.path.dirname(__file__), 'config-user.yml'),
-        help='Config file')
+        help='Config file',
+    )
     parser.add_argument(
         '-s',
         '--synda-download',
         action='store_true',
         help='Download input data using synda. This requires a working '
         'synda installation.')
+    parser.add_argument('--exit-on-error',
+                        action='store_true',
+                        help='Exit immediately when a recipe fails to run.')
     parser.add_argument(
         '--max-datasets',
         type=int,
-        help='Try to limit the number of datasets used to MAX_DATASETS.')
+        help='Try to limit the number of datasets used to MAX_DATASETS.',
+    )
     parser.add_argument(
         '--max-years',
         type=int,
-        help='Limit the number of years to MAX_YEARS.')
+        help='Limit the number of years to MAX_YEARS.',
+    )
     parser.add_argument(
         '--skip-nonexistent',
         action='store_true',
-        help="Skip datasets that cannot be found.")
+        help="Skip datasets that cannot be found.",
+    )
     parser.add_argument(
         '--diagnostics',
         nargs='*',
-        help="Only run the named diagnostics from the recipe.")
+        help="Only run the named diagnostics from the recipe.",
+    )
     args = parser.parse_args()
     return args
 
 
-def main(args):
+def configure(args):
     """Define the `esmvaltool` program."""
-    recipe = args.recipe
-    if not os.path.exists(recipe):
-        installed_recipe = os.path.join(
-            DIAGNOSTICS_PATH, 'recipes', recipe)
-        if os.path.exists(installed_recipe):
-            recipe = installed_recipe
-    recipe = os.path.abspath(os.path.expandvars(os.path.expanduser(recipe)))
+    recipes = []
+    for recipe in args.recipes:
+        if not os.path.exists(recipe):
+            installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes',
+                                            recipe)
+            if os.path.exists(installed_recipe):
+                recipe = installed_recipe
+        recipe = os.path.abspath(os.path.expandvars(
+            os.path.expanduser(recipe)))
+        recipes.append(recipe)
 
     config_file = os.path.abspath(
         os.path.expandvars(os.path.expanduser(args.config_file)))
@@ -118,24 +135,7 @@ def main(args):
     if not os.path.exists(config_file):
         print("ERROR: config file {} does not exist".format(config_file))
 
-    recipe_name = os.path.splitext(os.path.basename(recipe))[0]
-    cfg = read_config_user_file(config_file, recipe_name)
-
-    # Create run dir
-    if os.path.exists(cfg['run_dir']):
-        print("ERROR: run_dir {} already exists, aborting to "
-              "prevent data loss".format(cfg['output_dir']))
-    os.makedirs(cfg['run_dir'])
-
-    # configure logging
-    log_files = configure_logging(
-        output=cfg['run_dir'], console_log_level=cfg['log_level'])
-
-    # log header
-    logger.info(HEADER)
-
-    logger.info("Using config file %s", config_file)
-    logger.info("Writing program log files to:\n%s", "\n".join(log_files))
+    cfg = read_config_user_file(config_file)
 
     cfg['skip-nonexistent'] = args.skip_nonexistent
     cfg['diagnostics'] = {
@@ -143,6 +143,7 @@ def main(args):
         for pattern in args.diagnostics or ()
     }
     cfg['synda_download'] = args.synda_download
+    cfg['exit_on_error'] = args.exit_on_error
     for limit in ('max_datasets', 'max_years'):
         value = getattr(args, limit)
         if value is not None:
@@ -151,42 +152,97 @@ def main(args):
                     limit.replace('_', '-')))
             cfg[limit] = value
 
-    resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
-    with resource_usage_logger(pid=os.getpid(), filename=resource_log):
-        process_recipe(recipe_file=recipe, config_user=cfg)
+    return cfg, recipes
+
+
+def configure_recipe_paths(cfg, recipe):
+    """Create a copy of cfg with recipe specific paths."""
+    cfg = deepcopy(cfg)
+
+    # insert a directory date_time_recipe_usertag in the output paths
+    recipe_name = os.path.splitext(os.path.basename(recipe))[0]
+    now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    subdir = '_'.join((recipe_name, now))
+    cfg['output_dir'] = os.path.join(cfg['output_dir'], subdir)
+    if 'tmp_dir' in cfg:
+        cfg['tmp_dir'] = os.path.join(cfg['tmp_dir'], subdir)
+
+    # Define directories
+    if 'tmp_dir' in cfg and cfg['remove_preproc_dir']:
+        cfg['preproc_dir'] = os.path.join(cfg['tmp_dir'], 'preproc')
+    else:
+        cfg['preproc_dir'] = os.path.join(cfg['output_dir'], 'preproc')
+    cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
+    cfg['work_dir'] = os.path.join(cfg['output_dir'], 'work')
+    cfg['plot_dir'] = os.path.join(cfg['output_dir'], 'plots')
+
     return cfg
 
 
-def process_recipe(recipe_file, config_user):
+def _run_recipe(recipe_file, cfg):
+    """Run the recipe."""
+    # Create output dir
+    output_dir = cfg['output_dir']
+    try:
+        os.makedirs(output_dir)
+    except OSError:
+        print(f"ERROR: output_dir {output_dir} already exists, aborting to "
+              "prevent data loss")
+        raise
+
+    if 'tmp_dir' in cfg:
+        tmp_dir = cfg['tmp_dir']
+        try:
+            os.makedirs(tmp_dir)
+        except OSError:
+            print(f"ERROR: tmp_dir {tmp_dir} already exists, aborting to "
+                  "prevent data loss")
+            raise
+
+    # configure logging
+    log_files = configure_logging(output=cfg['output_dir'],
+                                  console_log_level=cfg['log_level'])
+
+    # log header
+    logger.info(HEADER)
+    logger.info("Starting the Earth System Model Evaluation Tool v%s",
+                __version__)
+    logger.info("Writing log files to:\n%s", "\n".join(log_files))
+
+    resource_log = os.path.join(cfg['output_dir'], 'resource_usage.txt')
+    with resource_usage_logger(pid=os.getpid(), filename=resource_log):
+        process_recipe(recipe_file, cfg)
+
+
+def process_recipe(recipe_file, cfg):
     """Process recipe."""
     if not os.path.isfile(recipe_file):
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
                       recipe_file)
 
-    timestamp1 = datetime.datetime.utcnow()
-    timestamp_format = "%Y-%m-%d %H:%M:%S"
-
-    logger.info(
-        "Starting the Earth System Model Evaluation Tool v%s at time: %s UTC",
-        __version__, timestamp1.strftime(timestamp_format))
+    start = datetime.datetime.utcnow()
+    logger.info("Started running recipe %s at %s UTC", recipe_file, start)
 
     logger.info(70 * "-")
-    logger.info("RECIPE   = %s", recipe_file)
-    logger.info("RUNDIR     = %s", config_user['run_dir'])
-    logger.info("WORKDIR    = %s", config_user["work_dir"])
-    logger.info("PREPROCDIR = %s", config_user["preproc_dir"])
-    logger.info("PLOTDIR    = %s", config_user["plot_dir"])
+    logger.info("Recipe file = %s", recipe_file)
+    logger.info("output_dir  = %s", cfg["output_dir"])
+    logger.info("work_dir    = %s", cfg["work_dir"])
+    logger.info("plot_dir    = %s", cfg["plot_dir"])
+    logger.info("run_dir     = %s", cfg['run_dir'])
+    logger.info("preproc_dir = %s", cfg["preproc_dir"])
+
     logger.info(70 * "-")
 
     logger.info("Running tasks using at most %s processes",
-                config_user['max_parallel_tasks'] or cpu_count())
+                cfg['max_parallel_tasks'] or cpu_count())
 
     logger.info(
         "If your system hangs during execution, it may not have enough "
-        "memory for keeping this number of tasks in memory. In that case, "
-        "try reducing 'max_parallel_tasks' in your user configuration file.")
+        "memory for keeping this number of tasks in memory.")
+    logger.info("In that case, try reducing 'max_parallel_tasks' in your user "
+                "configuration file.")
 
-    if config_user['compress_netcdf']:
+    if cfg['compress_netcdf']:
         logger.warning(
             "You have enabled NetCDF compression. Accesing .nc files can be "
             "much slower than expected if your access pattern does not match "
@@ -196,54 +252,73 @@ def process_recipe(recipe_file, config_user):
             "NetCDF compression.")
 
     # copy recipe to run_dir for future reference
-    shutil.copy2(recipe_file, config_user['run_dir'])
+    shutil.copy2(recipe_file, cfg['output_dir'])
 
     # parse recipe
-    recipe = read_recipe_file(recipe_file, config_user)
+    recipe = read_recipe_file(recipe_file, cfg)
     logger.debug("Recipe summary:\n%s", recipe)
 
     # run
     recipe.run()
 
-    # End time timing
-    timestamp2 = datetime.datetime.utcnow()
-    logger.info(
-        "Ending the Earth System Model Evaluation Tool v%s at time: %s UTC",
-        __version__, timestamp2.strftime(timestamp_format))
-    logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
+    if cfg["remove_preproc_dir"]:
+        logger.info("Removing preproc_dir %s containing preprocessed data",
+                    cfg['preproc_dir'])
+        logger.info("If this data is further needed, set remove_preproc_dir "
+                    "to false in user configuration file.")
+        shutil.rmtree(cfg["preproc_dir"])
 
-    # Remind the user about reference/acknowledgement file
-    out_refs = glob.glob(
-        os.path.join(config_user['output_dir'], '*', '*',
-                     'references-acknowledgements.txt'))
-    logger.info(
-        "For the required references/acknowledgements of these "
-        "diagnostics see:\n%s", '\n'.join(out_refs))
+    # End time timing
+    logger.info("Successfully ran recipe %s in %s", recipe_file,
+                datetime.datetime.utcnow() - start)
 
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
     args = get_args()
-    try:
-        conf = main(args)
-    except:  # noqa
-        if not logger.handlers:
-            # Add a logging handler if main failed to do so.
-            logging.basicConfig()
-        logger.exception(
-            "Program terminated abnormally, see stack trace "
-            "below for more information",
-            exc_info=True)
-        logger.info(
-            "If you suspect this is a bug or need help, please open an issue "
-            "on https://github.com/ESMValGroup/ESMValTool/issues and attach "
-            "the run/recipe_*.yml and run/main_log_debug.txt files from the "
-            "output directory.")
+    cfg, recipes = configure(args)
+    errors = []
+
+    for recipe_file in recipes:
+        success = True
+        recipe_cfg = configure_recipe_paths(cfg, recipe_file)
+        try:
+            _run_recipe(recipe_file, recipe_cfg)
+        except RecipeError as exc:
+            logger.error("An error occurred in recipe %s", recipe_file)
+            logger.error("%s", exc)
+            logger.debug("RecipeError:", exc_info=True)
+            success = False
+        except:  # noqa
+            if not logger.handlers:
+                # Add a logging handler if main failed to do so.
+                logging.basicConfig()
+            logger.exception(
+                "Program terminated abnormally, see stack trace "
+                "below for more information",
+                exc_info=True)
+            logger.info(
+                "If you suspect this is a bug or need help, please open an "
+                "issue on https://github.com/ESMValGroup/ESMValTool/issues "
+                "and attach the files: %s and main_log_debug.txt from "
+                "directory %s", os.path.basename(recipe_file),
+                recipe_cfg['output_dir'])
+            success = False
+        finally:
+            if 'tmp_dir' in recipe_cfg:
+                logger.info("Removing tmp_dir %s", recipe_cfg['tmp_dir'])
+                shutil.rmtree(recipe_cfg['tmp_dir'], ignore_errors=True)
+
+        if success:
+            logger.info("Successfully completed recipe %s", recipe_file)
+        else:
+            logger.error("Failed to run recipe %s", recipe_file)
+            errors.append(recipe_file)
+            if cfg['exit_on_error']:
+                break
+
+    if errors:
+        logger.error("Error(s) occurred in recipe(s):\n%s", '\n'.join(errors))
         sys.exit(1)
     else:
-        if conf["remove_preproc_dir"]:
-            logger.info("Removing preproc containing preprocessed data")
-            logger.info("If this data is further needed, then")
-            logger.info("set remove_preproc_dir to false in config")
-            shutil.rmtree(conf["preproc_dir"])
         logger.info("Run was successful")

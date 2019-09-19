@@ -9,6 +9,7 @@ import yaml
 from mock import create_autospec
 
 import esmvalcore
+from esmvalcore._main import configure_recipe_paths
 from esmvalcore._recipe import TASKSEP, read_recipe_file
 from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
@@ -62,7 +63,7 @@ DEFAULT_PREPROCESSOR_STEPS = (
 @pytest.fixture
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
-    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test')
+    cfg = esmvalcore._config.read_config_user_file(filename)
     cfg['synda_download'] = False
     return cfg
 
@@ -137,7 +138,8 @@ def get_recipe(tempdir, content, cfg):
     content = str(DEFAULT_DOCUMENTATION + content)
     recipe_file.write_text(content)
 
-    recipe = read_recipe_file(str(recipe_file), cfg)
+    recipe_cfg = configure_recipe_paths(cfg, recipe_file)
+    recipe = read_recipe_file(str(recipe_file), recipe_cfg)
 
     return recipe
 

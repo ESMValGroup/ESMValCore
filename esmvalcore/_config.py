@@ -1,5 +1,4 @@
 """ESMValTool configuration."""
-import datetime
 import logging
 import logging.config
 import os
@@ -7,12 +6,11 @@ import time
 
 import yaml
 
-from .cmor.table import read_cmor_tables, CMOR_TABLES
+from .cmor.table import CMOR_TABLES, read_cmor_tables
 
 logger = logging.getLogger(__name__)
 
 CFG = {}
-CFG_USER = {}
 
 
 def find_diagnostics():
@@ -27,7 +25,7 @@ def find_diagnostics():
 DIAGNOSTICS_PATH = find_diagnostics()
 
 
-def read_config_user_file(config_file, recipe_name):
+def read_config_user_file(config_file):
     """Read config user file and store settings in a dictionary."""
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
@@ -42,6 +40,7 @@ def read_config_user_file(config_file, recipe_name):
         'output_file_type': 'ps',
         'output_dir': './output_dir',
         'auxiliary_data_dir': './auxiliary_data',
+        'tmp_dir': None,
         'save_intermediary_cubes': False,
         'remove_preproc_dir': False,
         'max_parallel_tasks': 1,
@@ -59,6 +58,10 @@ def read_config_user_file(config_file, recipe_name):
             cfg[key] = defaults[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
+    if cfg['tmp_dir'] is None:
+        cfg.pop('tmp_dir')
+    else:
+        cfg['tmp_dir'] = _normalize_path(cfg['tmp_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
 
     cfg['config_developer_file'] = _normalize_path(
@@ -71,33 +74,14 @@ def read_config_user_file(config_file, recipe_name):
         else:
             cfg['rootpath'][key] = [_normalize_path(path) for path in root]
 
-    # insert a directory date_time_recipe_usertag in the output paths
-    now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    new_subdir = '_'.join((recipe_name, now))
-    cfg['output_dir'] = os.path.join(cfg['output_dir'], new_subdir)
-
-    # create subdirectories
-    cfg['preproc_dir'] = os.path.join(cfg['output_dir'], 'preproc')
-    cfg['work_dir'] = os.path.join(cfg['output_dir'], 'work')
-    cfg['plot_dir'] = os.path.join(cfg['output_dir'], 'plots')
-    cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
-
-    # Save user configuration in global variable
-    for key, value in cfg.items():
-        CFG_USER[key] = value
-
     # Read developer configuration file
+    # TODO: read default file on module load and relead if custom?
     cfg_developer = read_config_developer_file(cfg['config_developer_file'])
     for key, value in cfg_developer.items():
         CFG[key] = value
     read_cmor_tables(CFG)
 
     return cfg
-
-
-def get_config_user_file():
-    """Return user configuration dictionary."""
-    return CFG_USER
 
 
 def _normalize_path(path):
@@ -138,8 +122,8 @@ def read_config_developer_file(cfg_file=None):
 def configure_logging(cfg_file=None, output=None, console_log_level=None):
     """Set up logging."""
     if cfg_file is None:
-        cfg_file = os.path.join(
-            os.path.dirname(__file__), 'config-logging.yml')
+        cfg_file = os.path.join(os.path.dirname(__file__),
+                                'config-logging.yml')
 
     if output is None:
         output = os.getcwd()
@@ -208,8 +192,7 @@ def replace_mip_fx(fx_file):
     return new_mip
 
 
-TAGS_CONFIG_FILE = os.path.join(
-    DIAGNOSTICS_PATH, 'config-references.yml')
+TAGS_CONFIG_FILE = os.path.join(DIAGNOSTICS_PATH, 'config-references.yml')
 
 
 def _load_tags(filename=TAGS_CONFIG_FILE):
