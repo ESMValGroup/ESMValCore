@@ -116,13 +116,10 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
 
     # no plevs
     if len(template_cube.shape) == 3:
-        lons = template_cube.coord('longitude')
         cspec = [(times, 0), (lats, 1), (lons, 2)]
     # plevs
     elif len(template_cube.shape) == 4:
         plev = template_cube.coord('air_pressure')
-        lats = template_cube.coord('latitude')
-        lons = template_cube.coord('longitude')
         cspec = [(times, 0), (plev, 1), (lats, 2), (lons, 3)]
     elif len(template_cube.shape) == 1:
         cspec = [
