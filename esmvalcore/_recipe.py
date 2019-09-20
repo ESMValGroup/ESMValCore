@@ -905,7 +905,7 @@ class Recipe:
         Expansion only support ensembles defined as strings, not lists
         """
         expanded = []
-        regex = re.compile(r'\[\d+:\d+\]')
+        regex = re.compile(r'\(\d+:\d+\)')
         for variable in variables:
             ensemble = variable.get('ensemble', "")
             if not isinstance(ensemble, str):

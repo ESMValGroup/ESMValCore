@@ -984,7 +984,7 @@ def test_ensemble_expansion(tmp_path, patched_datafinder, config_user):
                 project: CMIP5
                 mip: Amon
                 exp: historical
-                ensemble: r[1:3]i1p1
+                ensemble: r(1:3)i1p1
                 start_year: 2000
                 end_year: 2005
                 grid: gn
