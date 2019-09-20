@@ -117,3 +117,27 @@ class ua(Fix):
             plev.var_name = 'plev'
 
         return cubes
+
+class sfcWind(Fix):
+    """ Fixes for sfcWind """
+
+    def fix_metadata(self, cubes):
+        """
+        Fix metadata.
+
+        Adds missing height2m coordinate.
+
+        Parameters
+        ----------
+        cube: iris.cube.CubeList
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            add_scalar_height_coord(cube, height=10.0)
+
+        return cubes
+        
