@@ -114,7 +114,6 @@ def _replace_tags(path, variable, fx_var=None):
                            "your recipe entry".format(tag, variable))
 
         paths = _replace_tag(paths, original_tag, replacewith)
-    print(paths)
     return paths
 
 
