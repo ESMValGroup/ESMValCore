@@ -112,12 +112,15 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     coord_names.extend([c.standard_name for c in template_cube.coords()])
     if 'latitude' in coord_names:
         lats = template_cube.coord('latitude')
+    else:
+        lats = None
     if 'longitude' in coord_names:
         lons = template_cube.coord('longitude')
+    else:
+        lons = None
 
     # no plevs
     if len(template_cube.shape) == 3:
-
         cspec = [(times, 0), (lats, 1), (lons, 2)]
     # plevs
     elif len(template_cube.shape) == 4:
