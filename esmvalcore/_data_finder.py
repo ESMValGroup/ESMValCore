@@ -9,6 +9,8 @@ import logging
 import os
 import re
 
+import iris
+
 from ._config import get_project_config, replace_mip_fx
 from .cmor.table import CMOR_TABLES
 
@@ -79,7 +81,7 @@ def get_start_end_year(filename):
         try:
             cubes = iris.load(filename)
         except OSError:
-           raise ValueError('File {0} can not be read'.format(filename))
+            raise ValueError('File {0} can not be read'.format(filename))
 
         for cube in cubes:
             logger.debug(cube)
