@@ -5,6 +5,7 @@ import logging
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
+from ._shared import _var_name_constraint
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +33,10 @@ class DerivedVariable(DerivedVariableBase):
         these cases, the input `clwvi` cube is just returned.
 
         """
-        clwvi_cube = cubes.extract_strict(
-            Constraint(name='atmosphere_cloud_condensed_water_content'))
-        clivi_cube = cubes.extract_strict(
-            Constraint(name='atmosphere_cloud_ice_content'))
+        # CMIP5 and CMIP6 names are slightly different, so use
+        # variable name instead to extract cubes
+        clwvi_cube = cubes.extract_strict(_var_name_constraint('clwvi'))
+        clivi_cube = cubes.extract_strict(_var_name_constraint('clivi'))
 
         dataset = clwvi_cube.attributes.get('model_id')
         project = clwvi_cube.attributes.get('project_id')
