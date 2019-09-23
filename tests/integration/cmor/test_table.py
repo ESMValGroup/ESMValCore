@@ -261,11 +261,11 @@ class TestCMIP3Info(unittest.TestCase):
         self.variables_info.strict = False
         var = self.variables_info.get_variable('A1', 'swcre')
         self.assertEqual(var.short_name, 'swcre')
-        self.assertEqual(var.frequency, 'mon')
+        self.assertEqual(var.frequency, '')
 
         var = self.variables_info.get_variable('day', 'swcre')
         self.assertEqual(var.short_name, 'swcre')
-        self.assertEqual(var.frequency, 'day')
+        self.assertEqual(var.frequency, '')
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
@@ -280,14 +280,14 @@ class TestCMIP3Info(unittest.TestCase):
         self.variables_info.strict = False
         var = self.variables_info.get_variable('O1', 'ta')
         self.assertEqual(var.short_name, 'ta')
-        self.assertEqual(var.frequency, 'mon')
+        self.assertEqual(var.frequency, '')
 
     def test_omon_toz_succes_if_strict(self):
         """Get troz does not fail with Omon if not strict."""
         self.variables_info.strict = False
         var = self.variables_info.get_variable('O1', 'toz')
         self.assertEqual(var.short_name, 'toz')
-        self.assertEqual(var.frequency, 'mon')
+        self.assertEqual(var.frequency, '')
 
 
 class TestCustomInfo(unittest.TestCase):
