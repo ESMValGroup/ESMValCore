@@ -46,8 +46,8 @@ def get_start_end_year(filename):
     """
     name = os.path.splitext(filename)[0]
 
-    filename = name.split(os.sep)[-1]
-    filename_list = [elem.split('-') for elem in filename.split('_')]
+    name = name.split(os.sep)[-1]
+    filename_list = [elem.split('-') for elem in name.split('_')]
     filename_list = [elem for sublist in filename_list for elem in sublist]
 
     pos_ydates = [elem.isdigit() and len(elem) >= 4 for elem in filename_list]
@@ -67,16 +67,35 @@ def get_start_end_year(filename):
         filename_list[ind] for ind, _ in enumerate(pos_ydates)
         if pos_ydates_r[ind] or pos_ydates_l[ind]
     ]
-
+    start_year = None
+    end_year = None
     if len(dates) == 1:
         start_year = int(dates[0][:4])
         end_year = start_year
     elif len(dates) == 2:
         start_year, end_year = int(dates[0][:4]), int(dates[1][:4])
     else:
-        raise ValueError('Name {0} dates do not match a recognized '
-                         'pattern'.format(name))
+        # Slower than just parsing the name
+        try:
+            cubes = iris.load(filename)
+        except OSError:
+           raise ValueError('File {0} can not be read'.format(filename))
 
+        for cube in cubes:
+            logger.debug(cube)
+            try:
+                time = cube.coord('time')
+            except iris.exceptions.CoordinateNotFoundError:
+                continue
+            start_year = time.cell(0).point.year
+            end_year = time.cell(-1).point.year
+            break
+
+    if not start_year or not end_year:
+        raise ValueError(
+            'File {0} dates do not match a recognized pattern and time can '
+            'not be readed from the file'.format(filename)
+        )
     return start_year, end_year
 
 
