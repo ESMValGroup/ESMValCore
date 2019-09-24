@@ -72,8 +72,6 @@ class DerivedVariable(DerivedVariableBase):
             'GISS-E2-1-G',
             'GISS-E2-1-H',
         ]
-        logger.info("*** dataset = %s", dataset)
-        logger.info("*** project = %s", project)
         affected_projects = ["CMIP5", "CMIP5_ETHZ", "CMIP6"]
         if (project in affected_projects and dataset in bad_datasets):
             logger.info(
