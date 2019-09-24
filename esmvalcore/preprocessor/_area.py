@@ -310,7 +310,7 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
-def extract_shape(cube, shapefile, method='contains', crop=True):
+def extract_shape(cube, shapefile, method='contains', crop=True, decomposed=False):
     """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
@@ -357,15 +357,33 @@ def extract_shape(cube, shapefile, method='contains', crop=True):
         if lon_coord.ndim == 1 and lat_coord.ndim == 1:
             lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
 
-        selection = np.zeros(lat.shape, dtype=bool)
+        if decomposed:
+            cubelist=iris.cube.CubeList()
+        else:
+            selection = np.zeros(lat.shape, dtype=bool)
+
         for item in geometries:
             shape = shapely.geometry.shape(item['geometry'])
             if method == 'contains':
                 select = shapely.vectorized.contains(shape, lon, lat)
             if method == 'representative' or not select.any():
                 select = _select_representative_point(shape, lon, lat)
-            selection |= select
 
-        selection = da.broadcast_to(selection, cube.shape)
-        cube.data = da.ma.masked_where(~selection, cube.core_data())
-        return cube
+            if decomposed:
+                cc=cube.copy()
+                coord=iris.coords.AuxCoord(int(item['properties']['ID']), units='no_unit', long_name="catchment_ID")
+                cc.add_aux_coord(coord)
+                
+                select = da.broadcast_to(select, cc.shape)
+                cc.data = da.ma.masked_where(~select, cc.core_data())
+                cubelist.append(cc)
+            else:
+                selection |= select
+
+        if decomposed:
+            cube=cubelist.merge()[0]
+        else:
+            selection = da.broadcast_to(selection, cube.shape)
+            cube.data = da.ma.masked_where(~selection, cube.core_data())
+            
+    return cube
