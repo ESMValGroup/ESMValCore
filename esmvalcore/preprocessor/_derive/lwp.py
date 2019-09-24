@@ -2,8 +2,6 @@
 
 import logging
 
-from iris import Constraint
-
 from ._baseclass import DerivedVariableBase
 from ._shared import _var_name_constraint
 
