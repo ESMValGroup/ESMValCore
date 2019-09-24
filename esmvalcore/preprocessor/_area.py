@@ -330,6 +330,9 @@ def extract_shape(cube, shapefile, method='contains', crop=True, decomposed=Fals
     crop: bool, optional
         Crop the resulting cube using `extract_region()`. Note that data on
         irregular grids will not be cropped.
+    decomposed: bool, optional
+        whether or not to retain the sub shapes of the shapefile in the output.
+        If this is set to True, the output cube has a dimension for the sub shapes.
 
     Returns
     -------
