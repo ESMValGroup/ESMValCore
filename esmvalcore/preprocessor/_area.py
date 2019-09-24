@@ -6,9 +6,14 @@ selecting geographical regions; constructing area averages; etc.
 """
 import logging
 
+import fiona
 import iris
+import numpy as np
+import shapely
+import shapely.ops
 from dask import array as da
-from ._shared import guess_bounds, get_iris_analysis_operation
+
+from ._shared import get_iris_analysis_operation, guess_bounds
 
 logger = logging.getLogger(__name__)
 
@@ -41,26 +46,44 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     iris.cube.Cube
         smaller cube.
     """
-    # Converts Negative longitudes to 0 -> 360. standard
-    start_longitude = float(start_longitude)
-    end_longitude = float(end_longitude)
-    start_latitude = float(start_latitude)
-    end_latitude = float(end_latitude)
-
+    if abs(start_latitude) > 90.:
+        raise ValueError(f"Invalid start_latitude: {start_latitude}")
+    if abs(end_latitude) > 90.:
+        raise ValueError(f"Invalid end_latitude: {end_latitude}")
     if cube.coord('latitude').ndim == 1:
+        # Iris check if any point of the cell is inside the region
+        # To check only the center, ignore_bounds must be set to
+        # True (default) is False
         region_subset = cube.intersection(
             longitude=(start_longitude, end_longitude),
-            latitude=(start_latitude, end_latitude))
+            latitude=(start_latitude, end_latitude),
+            ignore_bounds=True,
+        )
         region_subset = region_subset.intersection(longitude=(0., 360.))
         return region_subset
-    # irregular grids
+    # Irregular grids
     lats = cube.coord('latitude').points
     lons = cube.coord('longitude').points
-    select_lats = start_latitude < lats < end_latitude
-    select_lons = start_longitude < lons < end_longitude
+    # Convert longitudes to valid range
+    if start_longitude != 360.:
+        start_longitude %= 360.
+    if end_longitude != 360.:
+        end_longitude %= 360.
+
+    if start_longitude <= end_longitude:
+        select_lons = (lons >= start_longitude) & (lons <= end_longitude)
+    else:
+        select_lons = (lons >= start_longitude) | (lons <= end_longitude)
+
+    if start_latitude <= end_latitude:
+        select_lats = (lats >= start_latitude) & (lats <= end_latitude)
+    else:
+        select_lats = (lats >= start_latitude) | (lats <= end_latitude)
+
     selection = select_lats & select_lons
-    data = da.ma.masked_where(~selection, cube.core_data())
-    return cube.copy(data)
+    selection = da.broadcast_to(selection, cube.shape)
+    cube.data = da.ma.masked_where(~selection, cube.core_data())
+    return cube
 
 
 def zonal_means(cube, coordinate, mean_type):
@@ -204,9 +227,7 @@ def area_statistics(cube, operator, fx_files=None):
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
     if operator == 'mean':
-        return cube.collapsed(coord_names,
-                              operation,
-                              weights=grid_areas)
+        return cube.collapsed(coord_names, operation, weights=grid_areas)
 
     # Many IRIS analysis functions do not accept weights arguments.
     return cube.collapsed(coord_names, operation)
@@ -255,3 +276,96 @@ def extract_named_regions(cube, regions):
     constraints = iris.Constraint(region=lambda r: r in regions)
     cube = cube.extract(constraint=constraints)
     return cube
+
+
+def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
+               end_latitude):
+    """Crop cubes on a cartesian grid."""
+    lon_coord = cube.coord(axis='X')
+    lat_coord = cube.coord(axis='Y')
+    if lon_coord.ndim == 1 and lat_coord.ndim == 1:
+        # add a padding of one cell around the cropped cube
+        lon_bound = lon_coord.core_bounds()[0]
+        lon_step = lon_bound[1] - lon_bound[0]
+        start_longitude -= lon_step
+        end_longitude += lon_step
+        lat_bound = lat_coord.core_bounds()[0]
+        lat_step = lat_bound[1] - lat_bound[0]
+        start_latitude -= lat_step
+        end_latitude += lat_step
+        cube = extract_region(cube, start_longitude, end_longitude,
+                              start_latitude, end_latitude)
+
+    return cube
+
+
+def _select_representative_point(shape, lon, lat):
+    """Select a representative point for `shape` from `lon` and `lat`."""
+    representative_point = shape.representative_point()
+    points = shapely.geometry.MultiPoint(np.stack((lon.flat, lat.flat),
+                                                  axis=1))
+    nearest_point = shapely.ops.nearest_points(points, representative_point)[0]
+    nearest_lon, nearest_lat = nearest_point.coords[0]
+    select = (lon == nearest_lon) & (lat == nearest_lat)
+    return select
+
+
+def extract_shape(cube, shapefile, method='contains', crop=True):
+    """Extract a region defined by a shapefile.
+
+    Note that this function does not work for shapes crossing the
+    prime meridian or poles.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+       input cube.
+    shapefile: str
+        A shapefile defining the region(s) to extract.
+    method: str, optional
+        Select all points contained by the shape or select a single
+        representative point. Choose either 'contains' or 'representative'.
+        If 'contains' is used, but not a single grid point is contained by the
+        shape, a representative point will selected.
+    crop: bool, optional
+        Crop the resulting cube using `extract_region()`. Note that data on
+        irregular grids will not be cropped.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube containing the extracted region.
+
+    See Also
+    --------
+    extract_region : Extract a region from a cube.
+
+    """
+    if method not in {'contains', 'representative'}:
+        raise ValueError(
+            "Invalid value for `method`. Choose from 'contains', ",
+            "'representative'.")
+
+    with fiona.open(shapefile) as geometries:
+        if crop:
+            cube = _crop_cube(cube, *geometries.bounds)
+        lon_coord = cube.coord(axis='X')
+        lat_coord = cube.coord(axis='Y')
+
+        lon = lon_coord.points
+        lat = lat_coord.points
+        if lon_coord.ndim == 1 and lat_coord.ndim == 1:
+            lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+
+        selection = np.zeros(lat.shape, dtype=bool)
+        for item in geometries:
+            shape = shapely.geometry.shape(item['geometry'])
+            if method == 'contains':
+                select = shapely.vectorized.contains(shape, lon, lat)
+            if method == 'representative' or not select.any():
+                select = _select_representative_point(shape, lon, lat)
+            selection |= select
+
+        selection = da.broadcast_to(selection, cube.shape)
+        cube.data = da.ma.masked_where(~selection, cube.core_data())
+        return cube

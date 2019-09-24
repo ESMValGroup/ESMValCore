@@ -8,7 +8,7 @@ from iris.cube import Cube
 from .._provenance import TrackedFile
 from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
-                    zonal_means)
+                    extract_shape, zonal_means)
 from ._derive import derive
 from ._detrend import detrend
 from ._download import download
@@ -69,6 +69,7 @@ __all__ = [
     'mask_outside_range',
     # Region selection
     'extract_region',
+    'extract_shape',
     'extract_volume',
     'extract_trajectory',
     'extract_transect',
@@ -362,9 +363,8 @@ class PreprocessingTask(BaseTask):
             write_ncl_interface=False,
     ):
         """Initialize"""
-        super(PreprocessingTask, self).__init__(ancestors=ancestors, name=name)
         _check_multi_model_settings(products)
-        self.products = set(products)
+        super().__init__(ancestors=ancestors, name=name, products=products)
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
