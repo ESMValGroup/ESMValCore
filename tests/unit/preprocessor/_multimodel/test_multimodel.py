@@ -58,11 +58,13 @@ class Test(tests.Test):
                                       attributes={'positive': 'down'})
         lons = iris.coords.DimCoord([1.5, 2.5],
                                     standard_name='longitude',
+                                    long_name='longitude',
                                     bounds=[[1., 2.], [2., 3.]],
                                     units='degrees_east',
                                     coord_system=coord_sys)
         lats = iris.coords.DimCoord([1.5, 2.5],
                                     standard_name='latitude',
+                                    long_name='latitude',
                                     bounds=[[1., 2.], [2., 3.]],
                                     units='degrees_north',
                                     coord_system=coord_sys)
