@@ -41,11 +41,11 @@ class DerivedVariable(DerivedVariableBase):
         #   - CMIP5: model_id and project_id
         #   - CMIP6: source_id and mip_era
         project = clwvi_cube.attributes.get('project_id')
-        if project: # CMIP5
-          dataset = clwvi_cube.attributes.get('model_id')
-        else: # CMIP6
-          project = clwvi_cube.attributes.get('mip_era')
-          dataset = clwvi_cube.attributes.get('source_id')
+        if project:
+            dataset = clwvi_cube.attributes.get('model_id')
+        else:
+            project = clwvi_cube.attributes.get('mip_era')
+            dataset = clwvi_cube.attributes.get('source_id')
 
         # Should we check that the model_id/project_id are the same on both
         # cubes?
