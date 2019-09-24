@@ -36,8 +36,17 @@ class DerivedVariable(DerivedVariableBase):
         clwvi_cube = cubes.extract_strict(_var_name_constraint('clwvi'))
         clivi_cube = cubes.extract_strict(_var_name_constraint('clivi'))
 
-        dataset = clwvi_cube.attributes.get('model_id')
+        # CMIP5 and CMIP6 have different global attributes that we use
+        # to determine model name and project name:
+        #   - CMIP5: model_id and project_id
+        #   - CMIP6: source_id and mip_era
         project = clwvi_cube.attributes.get('project_id')
+        if project: # CMIP5
+          dataset = clwvi_cube.attributes.get('model_id')
+        else: # CMIP6
+          project = clwvi_cube.attributes.get('mip_era')
+          dataset = clwvi_cube.attributes.get('source_id')
+
         # Should we check that the model_id/project_id are the same on both
         # cubes?
 
@@ -59,8 +68,14 @@ class DerivedVariable(DerivedVariableBase):
             'MPI-ESM-MR',
             'MPI-ESM-LR',
             'MPI-ESM-P',
+            'CAMS-CSM1-0',
+            'GISS-E2-1-G',
+            'GISS-E2-1-H',
         ]
-        if (project in ["CMIP5", "CMIP5_ETHZ"] and dataset in bad_datasets):
+        logger.info("*** dataset = %s", dataset)
+        logger.info("*** project = %s", project)
+        affected_projects = ["CMIP5", "CMIP5_ETHZ", "CMIP6"]
+        if (project in affected_projects and dataset in bad_datasets):
             logger.info(
                 "Assuming that variable clwvi from %s dataset %s "
                 "contains only liquid water", project, dataset)
