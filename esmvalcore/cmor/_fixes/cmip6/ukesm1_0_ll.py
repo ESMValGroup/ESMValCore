@@ -5,7 +5,6 @@
 
 from ..fix import Fix
 
-
 class allvars(Fix):
     """Fixes for all vars."""
 
@@ -22,15 +21,17 @@ class allvars(Fix):
         -------
         iris.cube.CubeList
         """
-        assert 0
+        parent_units = 'parent_time_units'
+        bad_value = 'days since 1850-01-01-00-00-00'
+        for cube in cubelist:
+            try:
+                if cube.attributes[parent_units] == bad_value:
+                    cube.attributes[parent_units] = 'days since 1850-01-01'
+            except AttributeError:
+                pass
         for cube in cubelist:
             lats = cube.coord('latitude')
             lons = cube.coord('longitude')
             lats.var_name = 'lat'
             lons.var_name = 'lon'
-
-            time = cube.coord('latitude')
-            if time.units == 'days since 1850-01-01-00-00-00':
-                time.units = 'days since 1850-01-01:00-00-00'
-
         return cubelist
