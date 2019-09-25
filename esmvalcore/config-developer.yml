@@ -155,7 +155,7 @@ CMIP3:
     'CCSM3': ['NCAR']
     'PCM': ['NCAR']
     'MIROC3-2-HI': ['NIES']
-    ' MIROC3-2-MED': ['NIES']
+    'MIROC3-2-MED': ['NIES']
     'HADCM3': ['UKMO']
     'HADGEM1': ['UKMO']
 
