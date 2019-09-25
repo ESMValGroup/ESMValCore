@@ -141,7 +141,6 @@ CMIP3:
     'CM3': ['CNRM', 'INM']
     'MK3': ['CSIRO']
     'MK3-5': ['CSIRO']
-    'CM3': ['CNRM']
     'CM2': ['GFDL']
     'CM2-1': ['GFDL']
     'ECHAM4': ['INGV']
