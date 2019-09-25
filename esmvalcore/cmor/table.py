@@ -737,6 +737,13 @@ class CMIP3Info(CMIP5Info):
             self.coords[dim] = coord
         super()._read_table_file(table_file, table)
 
+    def _read_coordinate(self, value):
+        coord = super()._read_coordinate(value)
+        if not coord.out_name:
+            coord.out_name = coord.name
+            coord.var_name = coord.name
+        return coord
+
 
 class CustomInfo(CMIP5Info):
     """
