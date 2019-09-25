@@ -114,6 +114,31 @@ CMIP3:
   input_file: '[short_name]*.nc'
   output_file: '[project]_[dataset]_[mip]_[exp]_[ensemble]_[short_name]_[start_year]-[end_year]'
   cmor_type: 'CMIP3'
+  institutes:
+    'BCM2': ['BCCR']
+    'CGCM3-1-T47': ['CCCMA']
+    'CGCM3-1-T63': ['CCCMA']
+    'BCC-CM1': ['CMA']
+    'CM3': ['CNRM', 'INM']
+    'MK3': ['CSIRO']
+    'MK3-5': ['CSIRO']
+    'CM3': ['CNRM']
+    'CM2': ['GFDL']
+    'CM2-1': ['GFDL']
+    'ECHAM4': ['INGV']
+    'CM4': ['IPSL']
+    'FGOALS-G1-0': ['LASG']
+    'ECHO-G': ['MIUB-KMA']
+    'ECHAM5': ['MPIM']
+    'GISS-AOM': ['NASA']
+    'GISS-EH': ['NASA']
+    'GISS-ER': ['NASA']
+    'CCSM3': ['NCAR']
+    'PCM': ['NCAR']
+    'MIROC3-2-HI': ['NIES']
+    ' MIROC3-2-MED': ['NIES']
+    'HADCM3': ['UKMO']
+    'HADGEM1': ['UKMO']
 
 OBS:
   cmor_strict: false
