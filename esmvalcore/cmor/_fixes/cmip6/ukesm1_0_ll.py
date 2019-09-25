@@ -29,9 +29,4 @@ class allvars(Fix):
                     cube.attributes[parent_units] = 'days since 1850-01-01'
             except AttributeError:
                 pass
-        for cube in cubelist:
-            lats = cube.coord('latitude')
-            lons = cube.coord('longitude')
-            lats.var_name = 'lat'
-            lons.var_name = 'lon'
         return cubelist
