@@ -131,7 +131,7 @@ CMIP3:
     BADC: '[institute]/[dataset]/[exp]/[frequency]/[modeling_realm]/[short_name]/[ensemble]/[latestversion]'
     DKRZ: '[exp]/[modeling_realm]/[frequency]/[short_name]/[dataset]/[ensemble]'
   input_file: '[short_name]*.nc'
-  output_file: '[project]_[dataset]_[mip]_[exp]_[ensemble]_[short_name]_[start_year]-[end_year]'
+  output_file: '[project]_[institute]_[dataset]_[mip]_[exp]_[ensemble]_[short_name]_[start_year]-[end_year]'
   cmor_type: 'CMIP3'
   institutes:
     'BCM2': ['BCCR']
