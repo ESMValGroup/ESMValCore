@@ -194,6 +194,19 @@ class TestCMIP5Info(unittest.TestCase):
         var = self.variables_info.get_variable('Amon', 'tas')
         self.assertEqual(var.short_name, 'tas')
 
+    def test_get_variable_zg(self):
+        """Get zg variable."""
+        var = self.variables_info.get_variable('Amon', 'zg')
+        self.assertEqual(var.short_name, 'zg')
+        self.assertEqual(
+            var.coordinates['plevs'].requested,
+            [
+                '100000.', '92500.', '85000.', '70000.', '60000.', '50000.',
+                '40000.', '30000.', '25000.', '20000.', '15000.', '10000.',
+                '7000.', '5000.', '3000.', '2000.', '1000.'
+            ]
+        )
+
     def test_get_variable_from_custom(self):
         """Get a variable from default."""
         self.variables_info.strict = False
@@ -255,6 +268,19 @@ class TestCMIP3Info(unittest.TestCase):
         """Get tas variable."""
         var = self.variables_info.get_variable('A1', 'tas')
         self.assertEqual(var.short_name, 'tas')
+
+    def test_get_variable_zg(self):
+        """Get zg variable."""
+        var = self.variables_info.get_variable('A1', 'zg')
+        self.assertEqual(var.short_name, 'zg')
+        self.assertEqual(
+            var.coordinates['pressure'].requested,
+            [
+                '100000.', '92500.', '85000.', '70000.', '60000.', '50000.',
+                '40000.', '30000.', '25000.', '20000.', '15000.', '10000.',
+                '7000.', '5000.', '3000.', '2000.', '1000.'
+            ]
+        )
 
     def test_get_variable_from_custom(self):
         """Get a variable from default."""

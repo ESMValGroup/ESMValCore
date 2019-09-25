@@ -633,7 +633,9 @@ class CMIP5Info(object):
             if key in ('variable_entry', 'axis_entry'):
                 return coord
             if key == 'requested':
-                coord.requested = value.split(' ')
+                coord.requested.extend(
+                    (val for val in value.split(' ') if val)
+                )
                 continue
             if hasattr(coord, key):
                 setattr(coord, key, value)
