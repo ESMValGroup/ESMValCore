@@ -310,7 +310,8 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
-def extract_shape(cube, shapefile, method='contains', crop=True, decomposed=False):
+def extract_shape(cube, shapefile, method='contains', crop=True,
+                  decomposed=False):
     """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
@@ -332,7 +333,8 @@ def extract_shape(cube, shapefile, method='contains', crop=True, decomposed=Fals
         irregular grids will not be cropped.
     decomposed: bool, optional
         whether or not to retain the sub shapes of the shapefile in the output.
-        If this is set to True, the output cube has a dimension for the sub shapes.
+        If this is set to True, the output cube has a dimension for the sub
+        shapes.
 
     Returns
     -------
@@ -361,7 +363,7 @@ def extract_shape(cube, shapefile, method='contains', crop=True, decomposed=Fals
             lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
 
         if decomposed:
-            cubelist=iris.cube.CubeList()
+            cubelist = iris.cube.CubeList()
         else:
             selection = np.zeros(lat.shape, dtype=bool)
 
@@ -373,10 +375,14 @@ def extract_shape(cube, shapefile, method='contains', crop=True, decomposed=Fals
                 select = _select_representative_point(shape, lon, lat)
 
             if decomposed:
-                cc=cube.copy()
-                coord=iris.coords.AuxCoord(int(item['properties']['ID']), units='no_unit', long_name="catchment_ID")
+                cc = cube.copy()
+                coord = iris.coords.AuxCoord(
+                    int(item['properties']['ID']),
+                    units='no_unit',
+                    long_name="catchment_ID"
+                )
                 cc.add_aux_coord(coord)
-                
+
                 select = da.broadcast_to(select, cc.shape)
                 cc.data = da.ma.masked_where(~select, cc.core_data())
                 cubelist.append(cc)
@@ -384,9 +390,9 @@ def extract_shape(cube, shapefile, method='contains', crop=True, decomposed=Fals
                 selection |= select
 
         if decomposed:
-            cube=cubelist.merge()[0]
+            cube = cubelist.merge()[0]
         else:
             selection = da.broadcast_to(selection, cube.shape)
             cube.data = da.ma.masked_where(~selection, cube.core_data())
-            
+
     return cube
