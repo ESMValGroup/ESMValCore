@@ -12,6 +12,7 @@ import iris.exceptions
 import numpy as np
 import yaml
 
+from esmvalcore.preprocessor._time import extract_time
 from .._task import write_ncl_settings
 
 logger = logging.getLogger(__name__)
@@ -90,16 +91,15 @@ def concatenate(cubes):
     concatenated = iris.cube.CubeList(cubes).concatenate()
     if len(concatenated) == 1:
         return concatenated[0]
-    else:
-        if len(cubes) == 2:
-            if cubes[0].coord('time').points[0] <= \
+    if len(cubes) == 2:
+        if cubes[0].coord('time').points[0] <= \
                 cubes[0].coord('time').points[0]:
-                cubes = [cubes[0], cubes[1]]
-            else:
-                cubes = [cubes[1], cubes[0]]
-        concatenated = _concatenate_two_overlapping_cubes(cubes)
-        if len(concatenated) == 1:
-            return concatenated
+            cubes = [cubes[0], cubes[1]]
+        else:
+            cubes = [cubes[1], cubes[0]]
+    concatenated = _concatenate_two_overlapping_cubes(cubes)
+    if len(concatenated) == 1:
+        return concatenated
     logger.error('Can not concatenate cubes into a single one.')
     logger.error('Resulting cubes:')
     for cube in concatenated:
@@ -290,7 +290,7 @@ def _concatenate_two_overlapping_cubes(cubes):
     """Concatenate time-overlapping cubes (two cubes only)."""
     c1 = cubes[0]
     c2 = cubes[1]
-    common_time_points = [t for t in c1.coord('time').points \
+    common_time_points = [t for t in c1.coord('time').points
                           if t in c2.coord('time').points]
     if common_time_points:
         time_units = c1.coord('time').units
@@ -303,18 +303,12 @@ def _concatenate_two_overlapping_cubes(cubes):
         c1start_year = time_units.num2date(common_time_points[0]).year
         c1start_month = time_units.num2date(c1.coord('time').points[0]).month
         c1start_day = time_units.num2date(c1.coord('time').points[0]).day
-        c1end_year = time_units.num2date(c1.coord('time').points[-1]).year
-        c1end_month = time_units.num2date(c1.coord('time').points[-1]).month
-        c1end_day = time_units.num2date(c1.coord('time').points[-1]).day
-        c2start_year = time_units.num2date(c2.coord('time').points[0]).year
-        c2start_month = time_units.num2date(c2.coord('time').points[0]).month
-        c2start_day = time_units.num2date(c2.coord('time').points[0]).day
         c2end_year = time_units.num2date(c2.coord('time').points[-1]).year
         c2end_month = time_units.num2date(c2.coord('time').points[-1]).month
         c2end_day = time_units.num2date(c2.coord('time').points[-1]).day
         overlap_data = extract_time(c1, cstart_year, cstart_month,
-                                cstart_day, cend_year, cend_month,
-                                cend_day)
+                                    cstart_day, cend_year, cend_month,
+                                    cend_day)
 
         # c1 is to the left of c2
         if c1.coord('time').points[0] < c2.coord('time').points[0]:
@@ -327,7 +321,7 @@ def _concatenate_two_overlapping_cubes(cubes):
             cubes = iris.cube.CubeList([c1_delta, overlap_data, c2_delta])
             try:
                 cube = iris.cube.CubeList(cubes).concatenate_cube()
-                return cube
+                return [cube]
             except iris.exceptions.ConcatenateError as ex:
                 logger.error('Can not concatenate cubes: %s', ex)
                 logger.error('Cubes:')
@@ -341,7 +335,7 @@ def _concatenate_two_overlapping_cubes(cubes):
             cubes = iris.cube.CubeList([overlap_data, c2_delta])
             try:
                 cube = iris.cube.CubeList(cubes).concatenate_cube()
-                return cube
+                return [cube]
             except iris.exceptions.ConcatenateError as ex:
                 logger.error('Can not concatenate cubes: %s', ex)
                 logger.error('Cubes:')
