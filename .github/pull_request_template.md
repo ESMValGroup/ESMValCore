@@ -1,13 +1,3 @@
-* * *
-
-name: Core contribution
-about:
-title: ''
-labels: ''
-assignees: ''
-
-* * *
-
 Before you start, please read [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValTool/blob/version2_development/CONTRIBUTING.md).
 
 **Tasks**
