@@ -91,16 +91,23 @@ def concatenate(cubes):
     concatenated = iris.cube.CubeList(cubes).concatenate()
     if len(concatenated) == 1:
         return concatenated[0]
-    if len(cubes) == 2:
-        if 'time' in [crd.standard_name for crd in cubes[0].coords()]:
-            if cubes[0].coord('time').points[0] <= \
-                    cubes[0].coord('time').points[0]:
-                cubes = [cubes[0], cubes[1]]
+    if len(concatenated) == 2:
+        print('Manage overlap')
+        try:
+            time_1 = concatenated[0].coord('time')
+            time_2 = concatenated[1].coord('time')
+        except iris.exceptions.CoordinateNotFoundError:
+            pass
+        else:
+            print('Order cubes')
+            if time_1.points[0] <= time_2.points[0]:
+                cubes = [concatenated[0], concatenated[1]]
             else:
-                cubes = [cubes[1], cubes[0]]
+                cubes = [concatenated[1], concatenated[0]]
+            print('Manage overlapping')
             concatenated = _concatenate_two_overlapping_cubes(cubes)
             if len(concatenated) == 1:
-                return concatenated
+                return concatenated[0]
     logger.error('Can not concatenate cubes into a single one.')
     logger.error('Resulting cubes:')
     for cube in concatenated:
@@ -291,40 +298,24 @@ def _concatenate_two_overlapping_cubes(cubes):
     """Concatenate time-overlapping cubes (two cubes only)."""
     c1 = cubes[0]
     c2 = cubes[1]
-    common_time_points = [t for t in c1.coord('time').points
-                          if t in c2.coord('time').points]
+    time_1 = c1.coord('time')
+    time_2 = c2.coord('time')
+    time_units = c1.coord('time').units
+    common_time_points = [
+        time_units.num2date(t) for t in time_1.points
+        if t in time_2.points
+    ]
+    print(common_time_points)
     if common_time_points:
-        time_units = c1.coord('time').units
-        cstart_year = time_units.num2date(common_time_points[0]).year
-        cstart_month = time_units.num2date(common_time_points[0]).month
-        cstart_day = time_units.num2date(common_time_points[0]).day
-        cend_year = time_units.num2date(common_time_points[-1]).year
-        cend_month = time_units.num2date(common_time_points[-1]).month
-        cend_day = time_units.num2date(common_time_points[-1]).day
-        c1start_year = time_units.num2date(common_time_points[0]).year
-        c1start_month = time_units.num2date(c1.coord('time').points[0]).month
-        c1start_day = time_units.num2date(c1.coord('time').points[0]).day
-        c2end_year = time_units.num2date(c2.coord('time').points[-1]).year
-        c2end_month = time_units.num2date(c2.coord('time').points[-1]).month
-        c2end_day = time_units.num2date(c2.coord('time').points[-1]).day
-        overlap_data = extract_time(c1, cstart_year, cstart_month,
-                                    cstart_day, cend_year, cend_month,
-                                    cend_day)
+        data_start = time_1.cell(0).point
+        start_overlap = common_time_points[0]
 
-        # c1 is to the left of c2
-        if c1.coord('time').points[0] < c2.coord('time').points[0]:
-            c1_delta = extract_time(c1, c1start_year, c1start_month,
-                                    c1start_day, cstart_year, cstart_month,
-                                    cstart_day)
-            c2_delta = extract_time(c2, cend_year, cend_month,
-                                    cend_day, c2end_year, c2end_month,
-                                    c2end_day)
-            cubes = iris.cube.CubeList([c1_delta, overlap_data, c2_delta])
-        elif c1.coord('time').points[0] == c2.coord('time').points[0]:
-            c2_delta = extract_time(c2, cend_year, cend_month,
-                                    cend_day, c2end_year, c2end_month,
-                                    c2end_day)
-            cubes = iris.cube.CubeList([overlap_data, c2_delta])
+        c1_delta = extract_time(
+            c1,
+            data_start.year, data_start.month, data_start.day,
+            start_overlap.year, start_overlap.month, start_overlap.day
+        )
+        cubes = iris.cube.CubeList([c1_delta, c2])
         try:
             cube = iris.cube.CubeList(cubes).concatenate_cube()
             return [cube]

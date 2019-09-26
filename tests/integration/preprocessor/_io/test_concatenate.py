@@ -14,27 +14,40 @@ class TestConcatenate(unittest.TestCase):
 
     def setUp(self):
         """Start tests."""
-        coord = DimCoord([1, 2], var_name='coord')
-        second_coord = coord.copy([3, 4])
-        third_coord = coord.copy([5, 6])
+        self._model_coord = DimCoord(
+            [1., 2.], var_name='time', standard_name='time',
+            units='days since 1950-01-01'
+        )
         self.raw_cubes = []
+        self._add_cube([1., 2.], [1., 2.])
+        self._add_cube([3., 4.], [3., 4.])
+        self._add_cube([5., 6.], [5., 6.])
+
+    def _add_cube(self, data, coord):
         self.raw_cubes.append(
-            Cube([1, 2], var_name='sample', dim_coords_and_dims=((coord,
-                                                                  0), )))
-        self.raw_cubes.append(
-            Cube([3, 4],
+            Cube(data,
                  var_name='sample',
-                 dim_coords_and_dims=((second_coord, 0), )))
-        self.raw_cubes.append(
-            Cube([5, 6],
-                 var_name='sample',
-                 dim_coords_and_dims=((third_coord, 0), )))
+                 dim_coords_and_dims=((self._model_coord.copy(coord), 0), )
+                 )
+        )
 
     def test_concatenate(self):
         """Test concatenation of two cubes."""
         concatenated = _io.concatenate(self.raw_cubes)
-        self.assertTrue((concatenated.coord('coord').points == np.array(
+        self.assertTrue((concatenated.coord('time').points == np.array(
             [1, 2, 3, 4, 5, 6])).all())
+
+    def test_concatenate_with_overlap(self):
+        self._add_cube([6.5, 7.5], [6., 7.])
+        concatenated = _io.concatenate(self.raw_cubes)
+        self.assertTrue(np.allclose(
+            concatenated.coord('time').points,
+            np.array([1., 2., 3., 4., 5., 6., 7.])
+        ))
+        self.assertTrue(np.allclose(
+            concatenated.data,
+            np.array([1., 2., 3., 4., 5., 6.5, 7.5])
+        ))
 
     def test_fail_with_duplicates(self):
         """Test exception raised if two cubes are overlapping."""
