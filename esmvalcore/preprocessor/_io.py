@@ -92,19 +92,16 @@ def concatenate(cubes):
     if len(concatenated) == 1:
         return concatenated[0]
     if len(concatenated) == 2:
-        print('Manage overlap')
         try:
             time_1 = concatenated[0].coord('time')
             time_2 = concatenated[1].coord('time')
         except iris.exceptions.CoordinateNotFoundError:
             pass
         else:
-            print('Order cubes')
             if time_1.points[0] <= time_2.points[0]:
                 cubes = [concatenated[0], concatenated[1]]
             else:
                 cubes = [concatenated[1], concatenated[0]]
-            print('Manage overlapping')
             concatenated = _concatenate_two_overlapping_cubes(cubes)
             if len(concatenated) == 1:
                 return concatenated[0]
