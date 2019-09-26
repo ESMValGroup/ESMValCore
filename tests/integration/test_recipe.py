@@ -93,11 +93,15 @@ def patched_datafinder(tmp_path, monkeypatch):
         # Any occurrence of [something] in filename should have
         # been replaced before this function is called.
         for filename in filenames:
-            assert '[' not in filename
+            assert '{' not in filename
 
         filename = filenames[0]
         filename = str(tmp_path / 'input' / filename)
         filenames = []
+        if filename.endswith('[_.]*nc'):
+            # Restore when we support filenames with no dates
+            # filenames.append(filename.replace('[_.]*nc', '.nc'))
+            filename = filename.replace('[_.]*nc', '_*.nc')
         if filename.endswith('*.nc'):
             filename = filename[:-len('*.nc')]
             intervals = [
@@ -110,8 +114,8 @@ def patched_datafinder(tmp_path, monkeypatch):
         else:
             filenames.append(filename)
 
-        for file in filenames:
-            create_test_file(file, next(tracking_id))
+        for filename in filenames:
+            create_test_file(filename, next(tracking_id))
         return filenames
 
     monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
