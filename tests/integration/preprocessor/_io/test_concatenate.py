@@ -38,6 +38,7 @@ class TestConcatenate(unittest.TestCase):
             [1, 2, 3, 4, 5, 6])).all())
 
     def test_concatenate_with_overlap(self):
+        """Test concatenation of time overalapping cubes"""
         self._add_cube([6.5, 7.5], [6., 7.])
         concatenated = _io.concatenate(self.raw_cubes)
         self.assertTrue(np.allclose(

@@ -293,26 +293,21 @@ def _write_ncl_metadata(output_dir, metadata):
 
 def _concatenate_two_overlapping_cubes(cubes):
     """Concatenate time-overlapping cubes (two cubes only)."""
-    c1 = cubes[0]
-    c2 = cubes[1]
-    time_1 = c1.coord('time')
-    time_2 = c2.coord('time')
-    time_units = c1.coord('time').units
-    common_time_points = [
-        time_units.num2date(t) for t in time_1.points
-        if t in time_2.points
-    ]
-    print(common_time_points)
-    if common_time_points:
+    time_1 = cubes[0].coord('time')
+    time_2 = cubes[1].coord('time')
+    start_overlap = next(
+        (time_1.units.num2date(t) for t in time_1.points
+         if t in time_2.points),
+        None
+    )
+    if start_overlap:
         data_start = time_1.cell(0).point
-        start_overlap = common_time_points[0]
-
         c1_delta = extract_time(
-            c1,
+            cubes[0],
             data_start.year, data_start.month, data_start.day,
             start_overlap.year, start_overlap.month, start_overlap.day
         )
-        cubes = iris.cube.CubeList([c1_delta, c2])
+        cubes = iris.cube.CubeList([c1_delta, cubes[1]])
         try:
             cube = iris.cube.CubeList(cubes).concatenate_cube()
             return [cube]
