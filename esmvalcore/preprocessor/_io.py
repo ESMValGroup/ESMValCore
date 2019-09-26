@@ -90,6 +90,16 @@ def concatenate(cubes):
     concatenated = iris.cube.CubeList(cubes).concatenate()
     if len(concatenated) == 1:
         return concatenated[0]
+    else:
+        if len(cubes) == 2:
+            if cubes[0].coord('time').points[0] <= \
+                cubes[0].coord('time').points[0]:
+                cubes = [cubes[0], cubes[1]]
+            else:
+                cubes = [cubes[1], cubes[0]]
+        concatenated = _concatenate_two_overlapping_cubes(cubes)
+        if len(concatenated) == 1:
+            return concatenated
     logger.error('Can not concatenate cubes into a single one.')
     logger.error('Resulting cubes:')
     for cube in concatenated:
@@ -274,3 +284,69 @@ def _write_ncl_metadata(output_dir, metadata):
     write_ncl_settings(info, filename)
 
     return filename
+
+
+def _concatenate_two_overlapping_cubes(cubes):
+    """Concatenate time-overlapping cubes (two cubes only)."""
+    c1 = cubes[0]
+    c2 = cubes[1]
+    common_time_points = [t for t in c1.coord('time').points \
+                          if t in c2.coord('time').points]
+    if common_time_points:
+        time_units = c1.coord('time').units
+        cstart_year = time_units.num2date(common_time_points[0]).year
+        cstart_month = time_units.num2date(common_time_points[0]).month
+        cstart_day = time_units.num2date(common_time_points[0]).day
+        cend_year = time_units.num2date(common_time_points[-1]).year
+        cend_month = time_units.num2date(common_time_points[-1]).month
+        cend_day = time_units.num2date(common_time_points[-1]).day
+        c1start_year = time_units.num2date(common_time_points[0]).year
+        c1start_month = time_units.num2date(c1.coord('time').points[0]).month
+        c1start_day = time_units.num2date(c1.coord('time').points[0]).day
+        c1end_year = time_units.num2date(c1.coord('time').points[-1]).year
+        c1end_month = time_units.num2date(c1.coord('time').points[-1]).month
+        c1end_day = time_units.num2date(c1.coord('time').points[-1]).day
+        c2start_year = time_units.num2date(c2.coord('time').points[0]).year
+        c2start_month = time_units.num2date(c2.coord('time').points[0]).month
+        c2start_day = time_units.num2date(c2.coord('time').points[0]).day
+        c2end_year = time_units.num2date(c2.coord('time').points[-1]).year
+        c2end_month = time_units.num2date(c2.coord('time').points[-1]).month
+        c2end_day = time_units.num2date(c2.coord('time').points[-1]).day
+        overlap_data = extract_time(c1, cstart_year, cstart_month,
+                                cstart_day, cend_year, cend_month,
+                                cend_day)
+
+        # c1 is to the left of c2
+        if c1.coord('time').points[0] < c2.coord('time').points[0]:
+            c1_delta = extract_time(c1, c1start_year, c1start_month,
+                                    c1start_day, cstart_year, cstart_month,
+                                    cstart_day)
+            c2_delta = extract_time(c2, cend_year, cend_month,
+                                    cend_day, c2end_year, c2end_month,
+                                    c2end_day)
+            cubes = iris.cube.CubeList([c1_delta, overlap_data, c2_delta])
+            try:
+                cube = iris.cube.CubeList(cubes).concatenate_cube()
+                return cube
+            except iris.exceptions.ConcatenateError as ex:
+                logger.error('Can not concatenate cubes: %s', ex)
+                logger.error('Cubes:')
+                for cube in cubes:
+                    logger.error(cube)
+                raise ex
+        elif c1.coord('time').points[0] == c2.coord('time').points[0]:
+            c2_delta = extract_time(c2, cend_year, cend_month,
+                                    cend_day, c2end_year, c2end_month,
+                                    c2end_day)
+            cubes = iris.cube.CubeList([overlap_data, c2_delta])
+            try:
+                cube = iris.cube.CubeList(cubes).concatenate_cube()
+                return cube
+            except iris.exceptions.ConcatenateError as ex:
+                logger.error('Can not concatenate cubes: %s', ex)
+                logger.error('Cubes:')
+                for cube in cubes:
+                    logger.error(cube)
+                raise ex
+    else:
+        return cubes
