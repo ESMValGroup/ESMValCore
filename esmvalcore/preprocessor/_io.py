@@ -92,14 +92,15 @@ def concatenate(cubes):
     if len(concatenated) == 1:
         return concatenated[0]
     if len(cubes) == 2:
-        if cubes[0].coord('time').points[0] <= \
-                cubes[0].coord('time').points[0]:
-            cubes = [cubes[0], cubes[1]]
-        else:
-            cubes = [cubes[1], cubes[0]]
-    concatenated = _concatenate_two_overlapping_cubes(cubes)
-    if len(concatenated) == 1:
-        return concatenated
+        if 'time' in [crd.standard_name for crd in cubes[0].coords()]:
+            if cubes[0].coord('time').points[0] <= \
+                    cubes[0].coord('time').points[0]:
+                cubes = [cubes[0], cubes[1]]
+            else:
+                cubes = [cubes[1], cubes[0]]
+            concatenated = _concatenate_two_overlapping_cubes(cubes)
+            if len(concatenated) == 1:
+                return concatenated
     logger.error('Can not concatenate cubes into a single one.')
     logger.error('Resulting cubes:')
     for cube in concatenated:
@@ -319,28 +320,19 @@ def _concatenate_two_overlapping_cubes(cubes):
                                     cend_day, c2end_year, c2end_month,
                                     c2end_day)
             cubes = iris.cube.CubeList([c1_delta, overlap_data, c2_delta])
-            try:
-                cube = iris.cube.CubeList(cubes).concatenate_cube()
-                return [cube]
-            except iris.exceptions.ConcatenateError as ex:
-                logger.error('Can not concatenate cubes: %s', ex)
-                logger.error('Cubes:')
-                for cube in cubes:
-                    logger.error(cube)
-                raise ex
         elif c1.coord('time').points[0] == c2.coord('time').points[0]:
             c2_delta = extract_time(c2, cend_year, cend_month,
                                     cend_day, c2end_year, c2end_month,
                                     c2end_day)
             cubes = iris.cube.CubeList([overlap_data, c2_delta])
-            try:
-                cube = iris.cube.CubeList(cubes).concatenate_cube()
-                return [cube]
-            except iris.exceptions.ConcatenateError as ex:
-                logger.error('Can not concatenate cubes: %s', ex)
-                logger.error('Cubes:')
-                for cube in cubes:
-                    logger.error(cube)
-                raise ex
+        try:
+            cube = iris.cube.CubeList(cubes).concatenate_cube()
+            return [cube]
+        except iris.exceptions.ConcatenateError as ex:
+            logger.error('Can not concatenate cubes: %s', ex)
+            logger.error('Cubes:')
+            for cube in cubes:
+                logger.error(cube)
+            raise ex
     else:
         return cubes
