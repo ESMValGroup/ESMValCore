@@ -91,7 +91,7 @@ def concatenate(cubes):
     concatenated = iris.cube.CubeList(cubes).concatenate()
     if len(concatenated) == 1:
         return concatenated[0]
-    if len(concatenated) == 2:
+    if len(concatenated) == 2 and concatenated[0] != concatenated[1]:
         try:
             time_1 = concatenated[0].coord('time')
             time_2 = concatenated[1].coord('time')
@@ -293,29 +293,51 @@ def _write_ncl_metadata(output_dir, metadata):
 
 def _concatenate_two_overlapping_cubes(cubes):
     """Concatenate time-overlapping cubes (two cubes only)."""
+    # get time end points
     time_1 = cubes[0].coord('time')
     time_2 = cubes[1].coord('time')
-    start_overlap = next(
-        (time_1.units.num2date(t) for t in time_1.points
-         if t in time_2.points),
-        None
-    )
-    if start_overlap:
-        data_start = time_1.cell(0).point
-        c1_delta = extract_time(
-            cubes[0],
-            data_start.year, data_start.month, data_start.day,
-            start_overlap.year, start_overlap.month, start_overlap.day
-        )
-        cubes = iris.cube.CubeList([c1_delta, cubes[1]])
-        try:
-            cube = iris.cube.CubeList(cubes).concatenate_cube()
-            return [cube]
-        except iris.exceptions.ConcatenateError as ex:
-            logger.error('Can not concatenate cubes: %s', ex)
-            logger.error('Cubes:')
-            for cube in cubes:
-                logger.error(cube)
-            raise ex
+    data_start_1 = time_1.cell(0).point
+    data_start_2 = time_2.cell(0).point
+    data_end_1 = time_1.cell(-1).point
+    data_end_2 = time_2.cell(-1).point
+
+    # remember we have arranged [cube1, cube2]
+    # so that cube1.start <= cube2.start
+
+    # case 1: both cubes start at the same time
+    if data_start_1 == data_start_2:
+        if data_end_1 < data_end_2:
+            cubes = [cubes[1]]
+        else:
+            cubes = [cubes[0]]
+
+    # case 2: cube1 starts before cube2
     else:
-        return cubes
+        # find time overlap, if any
+        start_overlap = next(
+            (time_1.units.num2date(t) for t in time_1.points
+             if t in time_2.points),
+            None
+        )
+        # case 2.1: cube1 ends before cube2
+        if start_overlap and data_end_1 <= data_end_2:
+            c1_delta = extract_time(
+                cubes[0],
+                data_start_1.year, data_start_1.month, data_start_1.day,
+                start_overlap.year, start_overlap.month, start_overlap.day
+            )
+            cubes = iris.cube.CubeList([c1_delta, cubes[1]])
+            try:
+                cubes = [iris.cube.CubeList(cubes).concatenate_cube()]
+            except iris.exceptions.ConcatenateError as ex:
+                logger.error('Can not concatenate cubes: %s', ex)
+                logger.error('Cubes:')
+                for cube in cubes:
+                    logger.error(cube)
+                raise ex
+        # case 2.2: cube1 ends after cube2
+        if start_overlap and data_end_1 > data_end_2:
+            cubes = [cubes[0]]
+        # case 2.3: there is no overlap: return original cubes
+
+    return cubes
