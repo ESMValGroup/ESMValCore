@@ -50,12 +50,6 @@ class TestConcatenate(unittest.TestCase):
             np.array([1., 2., 3., 4., 5., 6.5, 7.5])
         ))
 
-    def test_fail_with_duplicates(self):
-        """Test exception raised if two cubes are overlapping."""
-        self.raw_cubes.append(self.raw_cubes[0].copy())
-        with self.assertRaises(ValueError):
-            _io.concatenate(self.raw_cubes)
-
     def test_fail_metadata_differs(self):
         """Test exception raised if two cubes have different metadata."""
         self.raw_cubes[0].units = 'm'
