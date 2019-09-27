@@ -142,14 +142,13 @@ def extract_season(cube, season):
                 cube, 'time', name='custom_season_year',
                 seasons=custom_seasons)
         return cube.extract(iris.Constraint(clim_season_custom=season.lower()))
-    else:
-        if not cube.coords('clim_season'):
-            iris.coord_categorisation.add_season(
-                cube, 'time', name='clim_season')
-        if not cube.coords('season_year'):
-            iris.coord_categorisation.add_season_year(cube, 'time',
-                                                      name='season_year')
-        return cube.extract(iris.Constraint(clim_season=season.lower()))
+    if not cube.coords('clim_season'):
+        iris.coord_categorisation.add_season(
+            cube, 'time', name='clim_season')
+    if not cube.coords('season_year'):
+        iris.coord_categorisation.add_season_year(cube, 'time',
+                                                  name='season_year')
+    return cube.extract(iris.Constraint(clim_season=season.lower()))
 
 
 def extract_month(cube, month):
@@ -265,7 +264,7 @@ def seasonal_statistics(cube, operator='mean',
     """
     Compute seasonal statistics.
 
-    Chunks time in 3-month periods and computes statistics over them;
+    Chunks time seasons and computes statistics over them;
 
     Parameters
     ----------
