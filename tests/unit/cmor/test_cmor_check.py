@@ -429,7 +429,9 @@ class TestCMORCheck(unittest.TestCase):
                                                     '1860-1-1-00-00-00'
         self.cube.attributes['branch_time_in_parent'] = 0.
         self.cube.attributes['branch_time_in_child'] = 0.
-        self._check_fails_in_metadata()
+        self._check_warnings_on_metadata()
+        assert self.cube.attributes['branch_time_in_parent'] == 0.
+        assert self.cube.attributes['branch_time_in_child'] == 0
 
     def test_time_automatic_fix_failed(self):
         """Test automatic fix fail for incompatible time units."""
