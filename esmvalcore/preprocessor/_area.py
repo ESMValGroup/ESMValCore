@@ -367,7 +367,7 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
         else:
             selection = np.zeros(lat.shape, dtype=bool)
 
-        for item in geometries:
+        for i,item in enumerate(geometries):
             shape = shapely.geometry.shape(item['geometry'])
             if method == 'contains':
                 select = shapely.vectorized.contains(shape, lon, lat)
@@ -375,11 +375,18 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
                 select = _select_representative_point(shape, lon, lat)
 
             if decomposed:
+                if 'ID' in item['properties']:
+                    id_=int(item['properties']['ID'])
+                elif 'id' in int(item['properties']['id']):
+                    id_=int(item['properties']['id'])
+                else:
+                    id_=i
+
                 cc = cube.copy()
                 coord = iris.coords.AuxCoord(
-                    int(item['properties']['ID']),
+                    id_,
                     units='no_unit',
-                    long_name="catchment_ID"
+                    long_name="shape_id"
                 )
                 cc.add_aux_coord(coord)
 
@@ -390,7 +397,7 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
                 selection |= select
 
         if decomposed:
-            cube = cubelist.merge()[0]
+            cube = cubelist.merge_cube()
         else:
             selection = da.broadcast_to(selection, cube.shape)
             cube.data = da.ma.masked_where(~selection, cube.core_data())
