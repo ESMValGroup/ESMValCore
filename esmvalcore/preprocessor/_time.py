@@ -86,7 +86,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     t_1 = time_units.date2num(start_date)
     t_2 = time_units.date2num(end_date)
     constraint = iris.Constraint(
-        time=lambda t: t_1 < time_units.date2num(t.point) < t_2)
+        time=lambda t: t_1 <= time_units.date2num(t.point) < t_2)
 
     cube_slice = cube.extract(constraint)
     if cube_slice is None:
