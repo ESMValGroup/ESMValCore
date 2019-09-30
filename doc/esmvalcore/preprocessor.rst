@@ -893,10 +893,10 @@ Extract a shape or a representative point for this shape from
 the data.
 
 Parameters:
-	* ``shapefile``: path to the shapefile containing the geometry of the region to be
-	  extracted. If the file contains multiple shapes behaviour depends on the 
-    decomposed parameter. This path can be relative to ``auxiliary_data_dir`` 
-    defined in the :ref:`user configuration file`.
+  * ``shapefile``: path to the shapefile containing the geometry of the 
+    region to be extracted. If the file contains multiple shapes behaviour 
+    depends on the decomposed parameter. This path can be relative to 
+    ``auxiliary_data_dir`` defined in the :ref:`user configuration file`.
 	* ``method``: the method to select the region, selecting either all points
 	  contained by the shape or a single representative point. Choose either
 	  'contains' or 'representative'. If not a single grid point is contained
