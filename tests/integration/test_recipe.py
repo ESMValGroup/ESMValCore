@@ -99,7 +99,7 @@ def patched_datafinder(tmp_path, monkeypatch):
         filename = str(tmp_path / 'input' / filename)
         filenames = []
         if filename.endswith('*.nc'):
-            filename = filename[:-len('*.nc')]
+            filename = filename[:-len('*.nc')] + '_'
             intervals = [
                 '1990_1999',
                 '2000_2009',
@@ -226,6 +226,41 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
         assert task.settings['custom_setting'] == 1
 
 
+def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):
+    script = tmp_path / 'diagnostic.py'
+    script.write_text('')
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        preprocessors:
+          preprocessor_name:
+            extract_season:
+              season: MAM
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              sftlf:
+                preprocessor: preprocessor_name
+                project: CMIP5
+                mip: fx
+                exp: historical
+                ensemble: r0i0p0
+                start_year: 1999
+                end_year: 2002
+                additional_datasets:
+                  - dataset: MPI-ESM-LR
+            scripts: null
+        """)
+    rec_err = "Time coordinate preprocessor step extract_season \
+              not permitted on fx vars \
+              please remove them from recipe."
+    with pytest.raises(Exception) as rec_err_exp:
+        get_recipe(tmp_path, content, config_user)
+        assert rec_err == rec_err_exp
+
+
 def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
 
     content = dedent("""
@@ -301,6 +336,87 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'mip': 'Oyr',
             'short_name': 'chl',
             'frequency': 'yr',
+        },
+        'cleanup': {
+            'remove': [fix_dir]
+        },
+        'save': {
+            'compress': False,
+            'filename': product.filename,
+        }
+    }
+    assert product.settings == defaults
+
+
+def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              sftlf:
+                project: CMIP5
+                mip: fx
+                exp: historical
+                ensemble: r0i0p0
+                start_year: 2000
+                end_year: 2005
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    preproc_dir = os.path.dirname(product.filename)
+    assert preproc_dir.startswith(str(tmp_path))
+
+    fix_dir = os.path.join(
+        preproc_dir,
+        'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_2000-2005_fixed')
+
+    defaults = {
+        'load': {
+            'callback': concatenate_callback,
+        },
+        'concatenate': {},
+        'fix_file': {
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'sftlf',
+            'output_dir': fix_dir,
+        },
+        'fix_data': {
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'sftlf',
+            'cmor_table': 'CMIP5',
+            'mip': 'fx',
+            'frequency': 'fx',
+        },
+        'fix_metadata': {
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'sftlf',
+            'cmor_table': 'CMIP5',
+            'mip': 'fx',
+            'frequency': 'fx',
+        },
+        'cmor_check_metadata': {
+            'cmor_table': 'CMIP5',
+            'mip': 'fx',
+            'short_name': 'sftlf',
+            'frequency': 'fx',
+        },
+        'cmor_check_data': {
+            'cmor_table': 'CMIP5',
+            'mip': 'fx',
+            'short_name': 'sftlf',
+            'frequency': 'fx',
         },
         'cleanup': {
             'remove': [fix_dir]
