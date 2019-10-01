@@ -524,7 +524,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
 
     reference = {
-        'activity': ['CMIP'],
+        'activity': 'CMIP',
         'dataset': 'HadGEM3-GC31-LL',
         'diagnostic': 'test',
         'end_year': 2001,
