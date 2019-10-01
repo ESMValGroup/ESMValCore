@@ -137,7 +137,7 @@ class Fix(object):
         """
         project = project.replace('-', '_').lower()
         dataset = dataset.replace('-', '_').lower()
-        variable = variable.replace('-', '_')
+        variable = variable.replace('-', '_').lower()
 
         fixes = []
         try:

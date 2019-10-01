@@ -167,7 +167,7 @@ arguments):
           operator: mean
         multi_model_statistics:
           span: overlap
-          statistics: [mean ]
+          statistics: [mean]
 
 .. note::
 
@@ -181,20 +181,138 @@ arguments):
 Recipe section: ``diagnostics``
 ===============================
 
-The diagnostics section includes one or more diagnostics. Each diagnostics will
-include:
+The diagnostics section includes one or more diagnostics. Each diagnostic
+section will include:
 
-- a list of which variables to load;
-- a description of the variables (optional);
-- the preprocessor to be applied to each variable;
-- the script to be run;
+- the variable(s) to preprocess, including the preprocessor to be applied to each variable;
+- the diagnostic script(s) to be run;
+- a description of the diagnostic and lists of themes and realms that it applies to;
 - an optional ``additional_datasets`` section.
 
-The ``additional_datasets`` can add datasets beyond those listed in the the
-Datasets_ section. This is useful if specific datasets need to be used only by
-a specific diagnostic. The ``additional_datasets`` can also be used to add
-variable specific datasets. This is also a good way to add observational
-datasets, which are usually variable-specific.
+The diagnostics section defines tasks
+-------------------------------------
+The diagnostic section(s) define the tasks that will be executed when running the recipe.
+For each variable a preprocesing task will be defined and for each diagnostic script a
+diagnostic task will be defined. If variables need to be derived
+from other variables, a preprocessing task for each of the variables
+needed to derive that variable will be defined as well. These tasks can be viewed
+in the main_log_debug.txt file that is produced every run. Each task has a unique
+name that defines the subdirectory where the results of that task are stored. Task
+names start with the name of the diagnostic section followed by a '/' and then
+the name of the variable section for a preprocessing task or the name of the diagnostic
+script section for a diagnostic task.
+
+A (simplified) example diagnostics section could look like
+
+.. code-block:: yaml
+
+  diagnostics:
+    diagnostic_name:
+      description: Air temperature tutorial diagnostic.
+      themes:
+        - phys
+      realms:
+        - atmos
+      variables:
+        variable_name:
+          short_name: ta
+          preprocessor: preprocessor_name
+          mip: Amon
+      scripts:
+        script_name:
+          script: examples/diagnostic.py
+
+
+Note that the example recipe above contains a single diagnostic section
+called ``diagnostic_name`` and will result in two tasks:
+
+- a preprocessing task called ``diagnostic_name/variable_name`` that will preprocess
+  air temperature data for each dataset in the Datasets_ section of the recipe (not shown).
+- a diagnostic task called ``diagnostic_name/script_name``
+
+The path to the script provided in the ``script`` option should be
+either the absolute path to the script, or the path relative to the
+``esmvaltool/diag_scripts`` directory.
+
+Ancestor tasks
+--------------
+Some tasks require the result of other tasks to be ready before they can start,
+e.g. a diagnostic script needs the preprocessed variable data to start. Thus
+each tasks has zero or more ancestor tasks. By default, each diagnostic task
+in a diagnostic section has all variable preprocessing tasks in that same section
+as ancestors. However, this can be changed using the ``ancestors`` keyword. Note
+that wildcard expansion can be used to define ancestors.
+
+.. code-block:: yaml
+
+  diagnostics:
+    diagnostic_1:
+      variables:
+        airtemp:
+          short_name: ta
+          preprocessor: preprocessor_name
+          mip: Amon
+      scripts:
+        script_a:
+          script: diagnostic_a.py
+    diagnostic_2:
+      variables:
+        precip:
+          short_name: pr
+          preprocessor: preprocessor_name
+          mip: Amon
+      scripts:
+        script_b:
+          script: diagnostic_b.py
+          ancestors: [diagnostic_1/script_a, precip]
+
+
+The example recipe above will result in four tasks:
+
+- a preprocessing task called ``diagnostic_1/airtemp``
+- a diagnostic task called ``diagnostic_1/script_a``
+- a preprocessing task called ``diagnostic_2/precip``
+- a diagnostic task called ``diagnostic_2/script_b``
+
+the preprocessing tasks do not have any ancestors, while the diagnostic_a.py
+script will receive the preprocessed air temperature data
+(has ancestor ``diagnostic_1/airtemp``) and the diagnostic_b.py
+script will receive the results of diagnostic_a.py and the preprocessed precipitation
+data (has ancestors ``diagnostic_1/script_a`` and ``diagnostic_2/precip``).
+
+Task priority
+-------------
+Tasks are assigned a priority, with tasks appearing earlier on in the recipe
+getting higher priority. The tasks will be executed sequentially or in parellel,
+depending on the setting of ``max_parallel_tasks`` in the :ref:`user configuration file`.
+When there are fewer than ``max_parallel_tasks`` running, tasks will be started
+according to their priority. For obvious reasons, only tasks that are not waiting for
+ancestor tasks can be started. This feature makes it possible to
+reduce the processing time of recipes with many tasks, by placing tasks that
+take relatively long near the top of the recipe. Of course this only works when
+settings ``max_parallel_tasks`` to a value larger than 1. The current priority
+and run time of individual tasks can be seen in the log messages shown when
+running the tool (a lower number means higher priority).
+
+Variable and dataset definitions
+--------------------------------
+To define a variable/dataset combination that corresponds to an actual
+variable from a dataset, the keys in each variable section
+are combined with the keys of each dataset definition. If two versions of the same
+key are provided, then the key in the datasets section will take precedence
+over the keys in variables section. For many recipes it makes more sense to
+define the ``start_year`` and ``end_year`` items in the variable section,
+because the diagnostic script assumes that all the data has the same time
+range.
+
+Diagnostic and variable specific datasets
+-----------------------------------------
+The ``additional_datasets`` option can be used to add datasets beyond those
+listed in the Datasets_ section. This is useful if specific datasets need to
+be used only by a specific diagnostic or variable, i.e. it can be added both
+at diagnostic level, where it will apply to all variables in that diagnostic
+section or at individual variable level. For example, this can be a good way
+to add observational datasets, which are usually variable-specific.
 
 Running a simple diagnostic
 ---------------------------
@@ -219,22 +337,9 @@ map scipt, ``ocean/diagnostic_maps.py``.
         Global_Ocean_Surface_regrid_map:
           script: ocean/diagnostic_maps.py
 
-To define a variable/dataset combination, the keys in the diagnostic section
-are combined with the keys from datasets section. If two versions of the same
-key are provided, then the key in the datasets section will take precedence
-over the keys in variables section. For many recipes it makes more sense to
-define the ``start_year`` and ``end_year`` items in the variable section,
-because the diagnostic script assumes that all the data has the same time
-range.
-
-Note that the path to the script provided in the `script` option should be
-either the absolute path to the script, or the path relative to the
-``esmvaltool/diag_scripts`` directory.
-
-
-Passing arguments to a diagnostic
----------------------------------
-The ``diagnostics`` section may include a lot of arguments that can be used by
+Passing arguments to a diagnostic script
+----------------------------------------
+The diagnostic script section(s) may include custom arguments that can be used by
 the diagnostic script; these arguments are stored at runtime in a dictionary
 that is then made available to the diagnostic script via the interface link,
 independent of the language the diagnostic script is written in. Here is an
