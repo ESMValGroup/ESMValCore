@@ -377,7 +377,7 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
             if decomposed:
                 if 'ID' in item['properties']:
                     id_ = int(item['properties']['ID'])
-                elif 'id' in int(item['properties']['id']):
+                elif 'id' in item['properties']['id']:
                     id_ = int(item['properties']['id'])
                 else:
                     id_ = i
