@@ -8411,7 +8411,7 @@
             },
             "ssp370":{
                 "activity_id":[
-                    "ScenarioMIP AerChemMIP"
+                    "ScenarioMIP"
                 ],
                 "additional_allowed_model_components":[
                     "AER",
