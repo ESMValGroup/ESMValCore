@@ -206,6 +206,42 @@ class TestClimatology(tests.Test):
         expected = np.array([1.])
         assert_array_equal(result.data, expected)
 
+    def test_time_sum(self):
+        """Test for time sum of a 1D field."""
+        data = np.ones((3))
+        data[1] = 2.0
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='sum')
+        expected = np.array([120.])
+        assert_array_equal(result.data, expected)
+
+    def test_time_sum_uneven(self):
+        """Test for time sum of a 1D field with uneven time boundaries."""
+        data = np.array([1., 5.])
+        times = np.array([5., 25.])
+        bounds = np.array([[0., 1.], [1., 4.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='sum')
+        expected = np.array([16.0])
+        assert_array_equal(result.data, expected)
+
+    def test_time_sum_365_day(self):
+        """Test for time sum of a realisitc time axis and 365 day calendar"""
+        data = np.ones((6, ))
+        data[3] = 2.0
+        times = np.array([15, 45, 74, 105, 135, 166])
+        bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
+                           [151, 181]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='sum')
+        expected = np.array([211.])
+        assert_array_equal(result.data, expected)
+
     def test_season_climatology(self):
         """Test for time avg of a realisitc time axis and 365 day calendar"""
         data = np.ones((6, ))
@@ -340,6 +376,16 @@ class TestSeasonalStatistics(tests.Test):
         expected = np.array([4., 7., 10.])
         assert_array_equal(result.data, expected)
 
+    def test_season_sum(self):
+        """Test for season sum of a 1D field."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+
+        result = seasonal_statistics(cube, 'sum')
+        expected = np.array([9., 18., 27.])
+        assert_array_equal(result.data, expected)
+
 
 class TestMonthlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`"""
@@ -400,6 +446,16 @@ class TestMonthlyStatistics(tests.Test):
         expected = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23])
         assert_array_equal(result.data, expected)
 
+    def test_sum(self):
+        """Test sum of a 1D field."""
+        data = np.arange(24)
+        times = np.arange(7, 360, 15)
+        cube = self._create_cube(data, times)
+
+        result = monthly_statistics(cube, 'sum')
+        expected = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45])
+        assert_array_equal(result.data, expected)
+
 
 class TestDailyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`"""
@@ -452,6 +508,16 @@ class TestDailyStatistics(tests.Test):
 
         result = daily_statistics(cube, 'max')
         expected = np.array([3., 7.])
+        assert_array_equal(result.data, expected)
+
+    def test_sum(self):
+        """Test sum of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = daily_statistics(cube, 'sum')
+        expected = np.array([6., 22.])
         assert_array_equal(result.data, expected)
 
 
