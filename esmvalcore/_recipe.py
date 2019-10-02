@@ -2,6 +2,7 @@
 import fnmatch
 import logging
 import os
+import re
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -851,6 +852,7 @@ class Recipe:
 
     info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
     """List of keys to be used to compose the alias, ordered by priority."""
+
     def __init__(self,
                  raw_recipe,
                  config_user,
@@ -927,9 +929,32 @@ class Recipe:
         for dataset in datasets:
             for key in dataset:
                 DATASET_KEYS.add(key)
-
-        check.duplicate_datasets(datasets)
         return datasets
+
+    @staticmethod
+    def _expand_ensemble(variables):
+        """
+        Expand ensemble members to multiple datasets
+
+        Expansion only support ensembles defined as strings, not lists
+        """
+        expanded = []
+        regex = re.compile(r'\(\d+:\d+\)')
+        for variable in variables:
+            ensemble = variable.get('ensemble', "")
+            if not isinstance(ensemble, str):
+                expanded.append(variable)
+                continue
+            match = regex.search(ensemble)
+            if not match:
+                expanded.append(variable)
+                continue
+            start, end = match.group(0)[1: -1].split(':')
+            for i in range(int(start), int(end) + 1):
+                expand = deepcopy(variable)
+                expand['ensemble'] = regex.sub(str(i), ensemble, 1)
+                expanded.append(expand)
+        return expanded
 
     def _initialize_variables(self, raw_variable, raw_datasets):
         """Define variables for all datasets."""
@@ -938,10 +963,12 @@ class Recipe:
         raw_variable = deepcopy(raw_variable)
         datasets = self._initialize_datasets(
             raw_datasets + raw_variable.pop('additional_datasets', []))
+        check.duplicate_datasets(datasets)
 
         for index, dataset in enumerate(datasets):
             variable = deepcopy(raw_variable)
             variable.update(dataset)
+
             variable['recipe_dataset_index'] = index
             if ('cmor_table' not in variable
                     and variable.get('project') in CMOR_TABLES):
@@ -972,7 +999,7 @@ class Recipe:
             if activity:
                 variable['activity'] = activity
             check.variable(variable, required_keys)
-
+        variables = self._expand_ensemble(variables)
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,

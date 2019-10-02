@@ -1091,6 +1091,37 @@ def test_concatenation(tmp_path, patched_datafinder, config_user):
             assert dataset['alias'] == 'historical-rcp85'
 
 
+def test_ensemble_expansion(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r(1:3)i1p1
+                start_year: 2000
+                end_year: 2005
+                grid: gn
+                type: reanaly
+                tier: 2
+                version: latest
+                additional_datasets:
+                  - {dataset: GFDL-CM3}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    assert len(recipe.diagnostics) == 1
+    diag = recipe.diagnostics['diagnostic_name']
+    var = diag['preprocessor_output']['ta']
+    assert len(var) == 3
+    assert var[0]['ensemble'] == 'r1i1p1'
+    assert var[1]['ensemble'] == 'r2i1p1'
+    assert var[2]['ensemble'] == 'r3i1p1'
+
+
 def test_extract_shape(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
@@ -1113,7 +1144,6 @@ def test_extract_shape(tmp_path, patched_datafinder, config_user):
                   - {dataset: GFDL-CM3}
             scripts: null
         """)
-
     # Create shapefile
     shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
     shapefile.parent.mkdir(parents=True, exist_ok=True)
