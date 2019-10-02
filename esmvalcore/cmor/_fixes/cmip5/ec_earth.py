@@ -94,8 +94,7 @@ class Tas(Fix):
         """
 
         for cube in cubes:
-            coord_names = [coord.var_name for coord in cube.coords()]
-            if 'height' not in coord_names:
+            if not cube.coords(var_name='height'):
                 add_scalar_height_coord(cube)
 
             if cube.coord('time').long_name is None:
