@@ -255,11 +255,6 @@ def _write_ncl_metadata(output_dir, metadata):
     """Write NCL metadata files to output_dir."""
     variables = [copy.deepcopy(v) for v in metadata.values()]
 
-    for variable in variables:
-        fx_files = variable.pop('fx_files', {})
-        for fx_type in fx_files:
-            variable[fx_type] = fx_files[fx_type]
-
     info = {'input_file_info': variables}
 
     # Split input_file_info into dataset and variable properties
