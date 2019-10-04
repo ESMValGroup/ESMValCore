@@ -1,7 +1,7 @@
 """Derivation of variable `vegFrac`."""
 
-from ._baseclass import DerivedVariableBase
 import iris
+from ._baseclass import DerivedVariableBase
 
 
 class DerivedVariable(DerivedVariableBase):
