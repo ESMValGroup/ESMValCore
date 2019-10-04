@@ -91,18 +91,14 @@ def concatenate(cubes):
     concatenated = iris.cube.CubeList(cubes).concatenate()
     if len(concatenated) == 1:
         return concatenated[0]
-    if len(concatenated) == 2 and concatenated[0] != concatenated[1]:
+    if len(concatenated) == 2:
         try:
-            time_1 = concatenated[0].coord('time')
-            time_2 = concatenated[1].coord('time')
+            concatenated[0].coord('time')
+            concatenated[1].coord('time')
         except iris.exceptions.CoordinateNotFoundError:
             pass
         else:
-            if time_1.points[0] <= time_2.points[0]:
-                cubes = [concatenated[0], concatenated[1]]
-            else:
-                cubes = [concatenated[1], concatenated[0]]
-            concatenated = _concatenate_two_overlapping_cubes(cubes)
+            concatenated = _concatenate_two_overlapping_cubes(concatenated)
             if len(concatenated) == 1:
                 return concatenated[0]
     logger.error('Can not concatenate cubes into a single one.')
@@ -293,6 +289,12 @@ def _write_ncl_metadata(output_dir, metadata):
 
 def _concatenate_two_overlapping_cubes(cubes):
     """Concatenate time-overlapping cubes (two cubes only)."""
+    # we arrange [cube1, cube2] so that cube1.start <= cube2.start
+    if cubes[0].coord('time').points[0] <= cubes[1].coord('time').points[0]:
+        cubes = [cubes[0], cubes[1]]
+    else:
+        cubes = [cubes[1], cubes[0]]
+
     # get time end points
     time_1 = cubes[0].coord('time')
     time_2 = cubes[1].coord('time')
@@ -301,10 +303,7 @@ def _concatenate_two_overlapping_cubes(cubes):
     data_end_1 = time_1.cell(-1).point
     data_end_2 = time_2.cell(-1).point
 
-    # remember we have arranged [cube1, cube2]
-    # so that cube1.start <= cube2.start
-
-    # case 1: both cubes start at the same time
+    # case 1: both cubes start at the same time -> return longer cube
     if data_start_1 == data_start_2:
         if data_end_1 < data_end_2:
             cubes = [cubes[1]]
@@ -319,7 +318,7 @@ def _concatenate_two_overlapping_cubes(cubes):
              if t in time_2.points),
             None
         )
-        # case 2.1: cube1 ends before cube2
+        # case 2.1: cube1 ends before cube2 -> use full cube2 and shorten cube1
         if start_overlap and data_end_1 <= data_end_2:
             c1_delta = extract_time(
                 cubes[0],
@@ -335,7 +334,7 @@ def _concatenate_two_overlapping_cubes(cubes):
                 for cube in cubes:
                     logger.error(cube)
                 raise ex
-        # case 2.2: cube1 ends after cube2
+        # case 2.2: cube1 ends after cube2 -> return cube1
         if start_overlap and data_end_1 > data_end_2:
             cubes = [cubes[0]]
         # case 2.3: there is no overlap: return original cubes
