@@ -139,3 +139,23 @@ def check_for_temporal_preprocs(profile):
         raise RecipeError(
             "Time coordinate preprocessor step {} not permitted on fx vars \
             please remove them from recipe.".format(", ".join(temp_preprocs)))
+
+
+def extract_shape(settings):
+    """Check that `extract_shape` arguments are valid."""
+    shapefile = settings.get('shapefile', '')
+    if not os.path.exists(shapefile):
+        raise RecipeError("In preprocessor function `extract_shape`: "
+                          f"Unable to find 'shapefile: {shapefile}'")
+
+    valid = {
+        'method': {'contains', 'representative'},
+        'crop': {True, False},
+    }
+    for key in valid:
+        value = settings.get(key)
+        if not (value is None or value in valid[key]):
+            raise RecipeError(
+                f"In preprocessor function `extract_shape`: Invalid value "
+                f"'{value}' for argument '{key}', choose from "
+                "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))

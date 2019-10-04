@@ -17,6 +17,9 @@ There are several configuration files in ESMValTool:
   scientific journals references;
 * ``config-logging.yml``: stores information on logging.
 
+
+.. _user configuration file:
+
 User configuration file
 =======================
 

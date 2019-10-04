@@ -90,7 +90,7 @@ def derive(cubes,
     cubes = iris.cube.CubeList(cubes)
 
     # Derive variable
-    DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
+    DerivedVariable = ALL_DERIVED_VARIABLES[short_name.lower()]  # noqa: N806
     cube = DerivedVariable().calculate(cubes)
 
     # Set standard attributes

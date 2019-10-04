@@ -13,6 +13,7 @@ def write_config_user_file(dirname):
     config_file = dirname / 'config-user.yml'
     cfg = {
         'output_dir': str(dirname / 'output_dir'),
+        'auxiliary_data_dir': str(dirname / 'extra_data'),
         'rootpath': {
             'default': str(dirname / 'input_dir'),
         },
@@ -122,7 +123,7 @@ def test_diagnostic_run(tmp_path, script_file, script):
     recipe = dedent("""
         documentation:
           description: Recipe with no data.
-          authors: [ande_bo]
+          authors: [andela_bouwe]
 
         diagnostics:
           diagnostic_name:
