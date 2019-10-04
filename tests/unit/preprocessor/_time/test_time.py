@@ -408,7 +408,7 @@ class TestMonthlyStatistics(tests.Test):
 
         result = monthly_statistics(cube, 'mean')
         expected = np.array([
-            0.5,  2.5,  4.5,  6.5,  8.5, 10.5, 12.5, 14.5,
+            0.5, 2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5,
             16.5, 18.5, 20.5, 22.5
         ])
         assert_array_equal(result.data, expected)
@@ -777,6 +777,20 @@ def test_annual_average(existing_coord):
 
 
 @pytest.mark.parametrize('existing_coord', [True, False])
+def test_annual_sum(existing_coord):
+    """Test for annual sum."""
+    cube = make_time_series(number_years=2)
+    if existing_coord:
+        iris.coord_categorisation.add_year(cube, 'time')
+
+    result = annual_statistics(cube, 'sum')
+    expected = np.array([12., 12.])
+    assert_array_equal(result.data, expected)
+    expected_time = np.array([180., 540.])
+    assert_array_equal(result.coord('time').points, expected_time)
+
+
+@pytest.mark.parametrize('existing_coord', [True, False])
 def test_decadal_average(existing_coord):
     """Test for decadal average."""
     cube = make_time_series(number_years=20)
@@ -792,6 +806,27 @@ def test_decadal_average(existing_coord):
 
     result = decadal_statistics(cube)
     expected = np.array([1., 1.])
+    assert_array_equal(result.data, expected)
+    expected_time = np.array([1800., 5400.])
+    assert_array_equal(result.coord('time').points, expected_time)
+
+
+@pytest.mark.parametrize('existing_coord', [True, False])
+def test_decadal_sum(existing_coord):
+    """Test for decadal average."""
+    cube = make_time_series(number_years=20)
+    if existing_coord:
+
+        def get_decade(coord, value):
+            """Callback function to get decades from cube."""
+            date = coord.units.num2date(value)
+            return date.year - date.year % 10
+
+        iris.coord_categorisation.add_categorised_coord(
+            cube, 'decade', 'time', get_decade)
+
+    result = decadal_statistics(cube, 'sum')
+    expected = np.array([120., 120.])
     assert_array_equal(result.data, expected)
     expected_time = np.array([1800., 5400.])
     assert_array_equal(result.coord('time').points, expected_time)
