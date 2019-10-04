@@ -51,7 +51,7 @@ jobs:
             conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
-            conda install -yS r-base r-yaml julia ncl -c conda-forge
+            conda install -yS r-base r-yaml ncl -c conda-forge
             pip install . > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
@@ -74,8 +74,14 @@ jobs:
       - run:
           when: always
           command: |
-            pip install codacy-coverage
-            python-codacy-coverage -r test-reports/coverage.xml
+            if [[ -v CODACY_PROJECT_TOKEN ]]
+            then
+              echo Uploading coverage report
+              pip install codacy-coverage
+              python-codacy-coverage -r test-reports/coverage.xml
+            else
+              echo Not uploading coverage report
+            fi
 
   documentation:
     # Test building documentation
@@ -120,6 +126,7 @@ jobs:
             conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
+            conda install -yS r-base r-yaml ncl -c conda-forge
             pip install -e .[develop] > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
@@ -183,7 +190,9 @@ workflows:
   commit:
     jobs:
       - test
-      - install
+      - install:
+          requires:
+            - test
       - documentation
   nightly:
     triggers:

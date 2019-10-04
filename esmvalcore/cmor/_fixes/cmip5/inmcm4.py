@@ -56,36 +56,25 @@ class Lai(Fix):
 class Nbp(Fix):
     """Fixes for nbp."""
 
-    def fix_file(self, filepath, output_dir):
+    def fix_metadata(self, cubes):
         """
-        Apply fixes to the files prior to creating the cube.
-
-        Should be used only to fix errors that prevent loading or can
-        not be fixed in the cube (i.e. those related with missing_value
-        and _FillValue or missing standard_name).
+        Fix missing scalar dimension.
 
         Parameters
         ----------
-        filepath: basestring
-            file to fix.
-        output_dir: basestring
-            path to the folder to store the fix files, if required.
+        cubes: iris CubeList
+            List of cubes to fix
 
         Returns
         -------
-        basestring
-            Path to the corrected file. It can be different from the original
-            filepath if a fix has been applied, but if not it should be the
-            original filepath.
+        iris.cube.CubeList
 
         """
-        new_path = Fix.get_fixed_filepath(output_dir, filepath)
-        cube = iris.load_cube(filepath)
-        cube.standard_name = ('surface_net_downward_mass_flux_of_carbon_'
-                              'dioxide_expressed_as_carbon_due_to_all_land_'
-                              'processes')
-        iris.save(cube, new_path)
-        return new_path
+        cubes[0].standard_name = (
+            'surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_'
+            'carbon_due_to_all_land_processes'
+        )
+        return cubes
 
 
 class BaresoilFrac(Fix):
