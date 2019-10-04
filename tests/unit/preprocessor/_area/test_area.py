@@ -86,6 +86,13 @@ class Test(tests.Test):
         expected = np.array([0.])
         self.assertArrayEqual(result.data, expected)
 
+    def test_area_statistics_sum(self):
+        """Test for sum of a 2D field."""
+        result = area_statistics(self.grid, 'sum')
+        grid_areas = iris.analysis.cartography.area_weights(self.grid)
+        expected = np.sum(grid_areas)
+        self.assertArrayEqual(result.data, expected)
+
     def test_area_statistics_variance(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'variance')
