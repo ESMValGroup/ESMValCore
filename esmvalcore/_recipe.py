@@ -388,7 +388,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     var = dict(variable)
     # return empty if using OBS
     # TODO what with OBS data that actually have fx files? Are there any?
-    if var['project'] == 'OBS':
+    if var['project'] in ['OBS', 'OBS6']:
         return None
     if var['project'] == 'CMIP5':
         fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
