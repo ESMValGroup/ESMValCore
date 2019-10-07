@@ -1,8 +1,8 @@
-"""Tests for the fixes of HadGEM3-GC31-LL."""
+"""Tests for the fixes of UKESM1-0-LL."""
 import iris
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.hadgem3_gc31_ll import AllVars
+from esmvalcore.cmor._fixes.cmip6.ukesm1_0_ll import AllVars
 from esmvalcore.cmor.fix import Fix
 
 
@@ -14,7 +14,7 @@ def sample_cubes():
 
 
 def test_get_tas_fix():
-    fix = Fix.get_fixes('CMIP6', 'HadGEM3-GC31-LL', 'tas')
+    fix = Fix.get_fixes('CMIP6', 'UKESM1-0-LL', 'tas')
     assert fix == [AllVars()]
 
 
