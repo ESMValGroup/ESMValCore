@@ -429,6 +429,7 @@ def anomalies(cube, period):
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
         'mon', 'daily', 'day'
 
+
     Returns
     -------
     iris.cube.Cube
