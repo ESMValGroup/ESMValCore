@@ -408,6 +408,10 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     if fx_files:
         fx_files = fx_files[0]
 
+    logger.info("Using fx files for masking for %s of dataset %s:\n%s",
+                fx_var['short_name'], fx_var['dataset'],
+                fx_files)
+
     return fx_files
 
 
