@@ -403,7 +403,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
                                      var)
     fx_files = get_input_filelist(variable=fx_var,
                                   rootpath=config_user['rootpath'],
-                                  drs=config_user['drs'])[0]
+                                  drs=config_user['drs'])
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
