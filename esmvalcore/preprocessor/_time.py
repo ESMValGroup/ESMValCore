@@ -463,7 +463,7 @@ def standardize(cube, period='full'):
     """Standardize the input data with the specified granularity.
 
     This function standardizes the input data. It calculates the anomalies
-    (x-mean(x)) and divides them through the standard deviation where both
+    (x-mean(x)) and divides them by the standard deviation where both
     anomalies and standard deviation are calculated over the specified period.
 
     Parameters
@@ -499,7 +499,9 @@ def standardize(cube, period='full'):
         # This will raise an error if the length of the cube their time axes
         # are not multiples of each other or if other shapes are not equal
         if not all([ratio[0] % 1 == 0] + [i == 1 for i in ratio[1:]]):
-            raise ValueError("Can not safely apply preprocessor to this data")
+            raise ValueError("Cannot safely apply preprocessor to this dataset,\
+                              since the full time period of this dataset is not\
+                              a multiple of the period '%s'.",period)
         reps = tuple([int(i) for i in ratio])
         cube.data = cube_anomalies.data / np.tile(cube_stddev.data, reps)
     return cube
