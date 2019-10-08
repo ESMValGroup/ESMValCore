@@ -492,8 +492,8 @@ def standardize(cube, period='full'):
 
     if period == 'full':
         cube.data = cube_anomalies.data / cube_stddev.data
-    elif period in  ['season', 'seasonal', 'monthly',
-                     'month', 'mon', 'daily', 'day']:
+    elif period in ['season', 'seasonal', 'monthly',
+                    'month', 'mon', 'daily', 'day']:
         ratio = [i / j for i, j in
                  zip(cube_anomalies.shape, cube_stddev.shape)]
         # This will raise an error if the length of the cube their time axes

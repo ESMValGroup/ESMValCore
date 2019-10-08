@@ -23,7 +23,7 @@ from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
 from ._regrid import extract_levels, regrid
 from ._time import (extract_month, extract_season, extract_time, regrid_time,
                     daily_statistics, monthly_statistics, seasonal_statistics,
-                    annual_statistics, decadal_statistics, climate_statistics, 
+                    annual_statistics, decadal_statistics, climate_statistics,
                     anomalies, standardize)
 
 from ._units import convert_units
