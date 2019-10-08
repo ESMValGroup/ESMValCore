@@ -25,7 +25,7 @@ CMIP6:
     BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
     DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
-  input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}_*.nc'
+  input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
   cmor_type: 'CMIP6'
 
@@ -40,7 +40,7 @@ CMIP5:
     SMHI: '{dataset}/{ensemble}/{exp}/{frequency}'
     RCAST: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
     BSC: '{type}/{project}/{exp}/{dataset.lower}'
-  input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_*.nc'
+  input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
   institutes:
     'ACCESS1-0': ['CSIRO-BOM']
@@ -126,10 +126,6 @@ OBS6:
   input_file:
     default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_*.nc'
     BSC: '{short_name}_*.nc'
-  input_fx_dir:
-    default: 'Tier{tier}/{dataset}'
-  input_fx_file:
-    default: '{project}_{dataset}_{type}_{version}_fx_{fx_var}.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_{start_year}-{end_year}'
   cmor_type: 'CMIP6'
 
