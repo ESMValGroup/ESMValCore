@@ -360,9 +360,8 @@ class PreprocessingTask(BaseTask):
             write_ncl_interface=False,
     ):
         """Initialize"""
-        super(PreprocessingTask, self).__init__(ancestors=ancestors, name=name)
         _check_multi_model_settings(products)
-        self.products = set(products)
+        super().__init__(ancestors=ancestors, name=name, products=products)
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
