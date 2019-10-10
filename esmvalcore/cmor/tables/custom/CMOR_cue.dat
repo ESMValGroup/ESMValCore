@@ -1,0 +1,22 @@
+SOURCE: CMIP6
+!============
+variable_entry:    cue
+!============
+modeling_realm:    land
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             %
+cell_methods:      time: mean area: where land
+cell_measures:     area: areacella
+long_name:         Carbon Use Efficiency
+comment:           Ratio of npp to gpp.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          cue
+type:              real
+!----------------------------------
+!
