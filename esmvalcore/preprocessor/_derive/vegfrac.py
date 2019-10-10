@@ -19,4 +19,4 @@ class DerivedVariable(DerivedVariableBase):
             iris.Constraint(name='area_fraction'))
 
         baresoilfrac_cube.data = 1. - baresoilfrac_cube.data
-        return baresoilFrac_cube
+        return baresoilfrac_cube
