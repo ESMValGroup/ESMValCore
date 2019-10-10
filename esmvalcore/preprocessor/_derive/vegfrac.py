@@ -18,5 +18,5 @@ class DerivedVariable(DerivedVariableBase):
         baresoilfrac_cube = cubes.extract_strict(
             iris.Constraint(name='area_fraction'))
 
-        baresoilfrac_cube.data = 1. - baresoilfrac_cube.data
+        baresoilfrac_cube = -1. * baresoilfrac_cube + 1.
         return baresoilfrac_cube
