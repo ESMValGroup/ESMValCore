@@ -21,44 +21,56 @@ class TestVariableInfo(unittest.TestCase):
     def test_read_empty_dictionary(self):
         """Test read empty dict."""
         info = VariableInfo('table_type', 'var')
-        info.read_json({})
+        info.read_json({}, '')
         self.assertEqual('', info.standard_name)
 
     def test_read_standard_name(self):
         """Test standard_name."""
         info = VariableInfo('table_type', 'var')
-        info.read_json({'standard_name': self.value})
+        info.read_json({'standard_name': self.value}, '')
         self.assertEqual(info.standard_name, self.value)
 
     def test_read_long_name(self):
         """Test long_name."""
         info = VariableInfo('table_type', 'var')
-        info.read_json({'long_name': self.value})
+        info.read_json({'long_name': self.value}, '')
         self.assertEqual(info.long_name, self.value)
 
     def test_read_units(self):
         """Test units."""
         info = VariableInfo('table_type', 'var')
-        info.read_json({'units': self.value})
+        info.read_json({'units': self.value}, '')
         self.assertEqual(info.units, self.value)
 
     def test_read_valid_min(self):
         """Test valid_min."""
         info = VariableInfo('table_type', 'var')
-        info.read_json({'valid_min': self.value})
+        info.read_json({'valid_min': self.value}, '')
         self.assertEqual(info.valid_min, self.value)
 
     def test_read_valid_max(self):
         """Test valid_max."""
         info = VariableInfo('table_type', 'var')
-        info.read_json({'valid_max': self.value})
+        info.read_json({'valid_max': self.value}, '')
         self.assertEqual(info.valid_max, self.value)
 
     def test_read_positive(self):
         """Test positive."""
         info = VariableInfo('table_type', 'var')
-        info.read_json({'positive': self.value})
+        info.read_json({'positive': self.value}, '')
         self.assertEqual(info.positive, self.value)
+
+    def test_read_frequency(self):
+        """Test positive."""
+        info = VariableInfo('table_type', 'var')
+        info.read_json({'frequency': self.value}, '')
+        self.assertEqual(info.frequency, self.value)
+
+    def test_read_default_frequency(self):
+        """Test positive."""
+        info = VariableInfo('table_type', 'var')
+        info.read_json({}, self.value)
+        self.assertEqual(info.frequency, self.value)
 
 
 class TestCoordinateInfo(unittest.TestCase):

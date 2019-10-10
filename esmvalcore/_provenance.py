@@ -18,9 +18,9 @@ ESMVALTOOL_URI_PREFIX = 'https://www.esmvaltool.org/'
 
 def update_without_duplicating(bundle, other):
     """Add new records from other provenance bundle."""
-    for record in other.records:
-        if record not in bundle.records:
-            bundle.add_record(record)
+    new_records = set(other.records) - set(bundle.records)
+    for record in new_records:
+        bundle.add_record(record)
 
 
 def create_namespace(provenance, namespace):
