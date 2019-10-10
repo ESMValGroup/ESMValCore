@@ -15,11 +15,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute Carbon Use Efficiency.
-
         """
         gpp_cube = cubes.extract_strict(
             iris.Constraint(short_name='gpp'))
-        et_cube = cubes.extract_strict(
-            iris.Constraint(short_name='et'))
+        npp_cube = cubes.extract_strict(
+            iris.Constraint(short_name='npp'))
 
-        return et_cube/gpp_cube
+        return npp_cube/gpp_cube
