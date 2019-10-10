@@ -15,7 +15,7 @@ class DerivedVariable(DerivedVariableBase):
         """Compute vegetation fraction from bare soil fraction.
 
         """
-        baresoilFrac_cube = cubes.extract_strict(
+        baresoilfrac_cube = cubes.extract_strict(
             iris.Constraint(name='area_fraction'))
 
         baresoilfrac_cube.data = 1. - baresoilfrac_cube.data
