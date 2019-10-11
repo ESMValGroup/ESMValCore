@@ -477,21 +477,32 @@ class CMORCheck():
             coord.units = cf_units.Unit(coord.units.origin, simplified_cal)
 
             attrs = self._cube.attributes
-            branch_child = 'branch_time_in_child'
-            if branch_child in attrs:
-                attrs[branch_child] = old_units.convert(attrs[branch_child],
-                                                        coord.units)
 
             parent_time = 'parent_time_units'
             if parent_time in attrs:
-                parent_units = cf_units.Unit(attrs[parent_time],
-                                             simplified_cal)
-                attrs[parent_time] = 'days since 1850-1-1 00:00:00'
-
-                branch_parent = 'branch_time_in_parent'
-                if branch_parent in attrs:
-                    attrs[branch_parent] = parent_units.convert(
-                        attrs[branch_parent], coord.units)
+                if attrs[parent_time] in 'no parent':
+                    pass
+                else:
+                    try:
+                        parent_units = cf_units.Unit(attrs[parent_time],
+                                                     simplified_cal)
+                    except ValueError:
+                        self.report_warning('Attribute parent_time_units has '
+                                            'a wrong format and cannot be '
+                                            'read by cf_units. A fix needs to '
+                                            'be added to convert properly '
+                                            'attributes branch_time_in_parent '
+                                            'and branch_time_in_child.')
+                    else:
+                        attrs[parent_time] = 'days since 1850-1-1 00:00:00'
+                        branch_parent = 'branch_time_in_parent'
+                        if branch_parent in attrs:
+                            attrs[branch_parent] = parent_units.convert(
+                                attrs[branch_parent], coord.units)
+                        branch_child = 'branch_time_in_child'
+                        if branch_child in attrs:
+                            attrs[branch_child] = old_units.convert(
+                                attrs[branch_child], coord.units)
 
         tol = 0.001
         intervals = {'dec': (3600, 3660), 'day': (1, 1)}
