@@ -921,7 +921,7 @@ variable_entry: tas
 standard_name:   air_temperature
 units:           K
 cell_methods:    time: mean
-long_name:       Surface Air Temperature
+long_name:       Near-Surface Air Temperature
 !----------------------------------
 !
 ! Additional variable information:
