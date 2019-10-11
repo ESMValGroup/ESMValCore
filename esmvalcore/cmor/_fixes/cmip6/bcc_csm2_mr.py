@@ -7,7 +7,7 @@ from iris.coords import DimCoord
 from ..fix import Fix
 
 
-class allvars(Fix):
+class AllVars(Fix):
     """Common fixes to all vars"""
 
     def fix_metadata(self, cubes):
@@ -42,13 +42,12 @@ class allvars(Fix):
             idx_zeros = np.where(time_data == 0.0)[0]
             time_diff = (time_units.num2date(time_data[1]) -
                          time_units.num2date(time_data[0]))
-            days = time_diff.days
 
             for idx in idx_zeros:
                 if idx == 0:
                     continue
                 correct_time = time_units.num2date(time_data[idx - 1])
-                if days <= 31 and days >= 28:  # assume monthly time steps
+                if 28 <= time_diff.days <= 31:  # assume monthly time steps
                     new_month = correct_time.month + 1
                     new_year = correct_time.year
                     if new_month > 12:

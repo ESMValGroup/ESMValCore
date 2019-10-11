@@ -1,5 +1,4 @@
 # pylint: disable=invalid-name, no-self-use, too-few-public-methods
-"""Fixes for BCC-ESM1."""
+"""Fixes for BCC-ESM1 (same as for BCC-CSM2-MR)."""
 
-from ..fix import Fix
-from .bcc_csm2_mr import allvars
+from .bcc_csm2_mr import AllVars
