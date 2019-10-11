@@ -63,12 +63,18 @@ def load_raw_recipe(filename):
     return raw_recipe
 
 
-def read_recipe_file(filename, config_user, initialize_tasks=True):
+def read_recipe_file(filename, config_user,
+                     data_dry_check, compliance_dry_check,
+                     initialize_tasks=True):
     """Read a recipe from file."""
     raw_recipe = load_raw_recipe(filename)
+    dry_check = False
+    if data_dry_check or compliance_dry_check:
+        dry_check = True
     return Recipe(raw_recipe,
                   config_user,
                   initialize_tasks,
+                  dry_check=dry_check,
                   recipe_file=filename)
 
 
@@ -866,6 +872,7 @@ class Recipe:
                  raw_recipe,
                  config_user,
                  initialize_tasks=True,
+                 dry_check=False,
                  recipe_file=None):
         """Parse a recipe file into an object."""
         self._cfg = deepcopy(config_user)
@@ -880,6 +887,7 @@ class Recipe:
         self.entity = self._initalize_provenance(
             raw_recipe.get('documentation', {}))
         self.tasks = self.initialize_tasks() if initialize_tasks else None
+        self.dry_tasks = self.initialize_dry_tasks() if dry_check else None
 
     @staticmethod
     def _need_ncl(raw_diagnostics):
@@ -1276,11 +1284,48 @@ class Recipe:
         # Return smallest possible set of tasks
         return get_independent_tasks(tasks)
 
+    def initialize_dry_tasks(self):
+        """Define dry checker tasks in recipe."""
+        logger.info("Creating dry check tasks from recipe")
+        tasks = set()
+
+        priority = 0
+        for diagnostic_name, diagnostic in self.diagnostics.items():
+            logger.info("Creating dry check tasks for diagnostic %s",
+                        diagnostic_name)
+
+            # Create the checking tasks
+            for variable_group in diagnostic['preprocessor_output']:
+                task_name = diagnostic_name + TASKSEP + variable_group
+                logger.info("Creating preprocessor task %s", task_name)
+                task = _get_dry_check_task(
+                    variables=diagnostic['preprocessor_output']
+                    [variable_group],
+                    profiles=self._preprocessors,
+                    config_user=self._cfg,
+                    task_name=task_name,
+                )
+                for task0 in task.flatten():
+                    task0.priority = priority
+                tasks.add(task)
+                priority += 1
+
+        tasks = get_flattened_tasks(tasks)
+        logger.info("These tasks will be executed: %s",
+                    ', '.join(t.name for t in tasks))
+
+        # Return smallest possible set of tasks
+        return get_independent_tasks(tasks)
+
     def __str__(self):
         """Get human readable summary."""
         return '\n\n'.join(str(task) for task in self.tasks)
 
     def run(self):
         """Run all tasks in the recipe."""
-        run_tasks(self.tasks,
-                  max_parallel_tasks=self._cfg['max_parallel_tasks'])
+        if dry_check:
+            run_tasks(self.dry_tasks,
+                      max_parallel_tasks=self._cfg['max_parallel_tasks'])
+        else:
+            run_tasks(self.tasks,
+                      max_parallel_tasks=self._cfg['max_parallel_tasks'])
