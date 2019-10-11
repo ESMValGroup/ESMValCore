@@ -142,6 +142,7 @@ def main(args):
     logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
     cfg['skip-nonexistent'] = args.skip_nonexistent
+    cfg['dry-run'] = args.dry_run
     cfg['diagnostics'] = {
         pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
         for pattern in args.diagnostics or ()
