@@ -862,6 +862,14 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     return task
 
 
+def _get_dry_check_task(variables, profiles, config_user, task_name)
+    """Create a dry check task."""
+    profile = deepcopy(profiles[variables[0]['preprocessor']])
+    variables = _limit_datasets(variables, profile,
+                                config_user.get('max_datasets'))
+    for variable in variables:
+        _add_cmor_info(variable)
+
 class Recipe:
     """Recipe object."""
 
