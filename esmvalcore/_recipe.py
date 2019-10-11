@@ -500,7 +500,8 @@ def _get_input_files(variable, config_user):
                 '\n'.join(input_files))
     if (not config_user.get('skip-nonexistent')
             or variable['dataset'] == variable.get('reference_dataset')):
-        check.data_availability(input_files, variable)
+        if not config_user.get('dry-run'):
+            check.data_availability(input_files, variable)
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
@@ -684,8 +685,10 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         ancestors = grouped_ancestors.get(variable['filename'])
         if not ancestors:
             ancestors = _get_input_files(variable, config_user)
-            if config_user.get('skip-nonexistent') and not ancestors:
-                logger.info("Skipping: no data found for %s", variable)
+            if config_user.get('skip-nonexistent') \
+                or config_user.get('dry-run') and not ancestors:
+                logger.info("MISSING DATA: Skipping: no data found for %s",
+                            variable)
                 continue
         product = PreprocessorFile(
             attributes=variable,
