@@ -64,12 +64,11 @@ def load_raw_recipe(filename):
 
 
 def read_recipe_file(filename, config_user,
-                     data_dry_check, compliance_dry_check,
-                     initialize_tasks=True):
+                     dry_run, initialize_tasks=True):
     """Read a recipe from file."""
     raw_recipe = load_raw_recipe(filename)
     dry_check = False
-    if data_dry_check or compliance_dry_check:
+    if dry_run:
         dry_check = True
     return Recipe(raw_recipe,
                   config_user,
@@ -862,13 +861,23 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     return task
 
 
-def _get_dry_check_task(variables, profiles, config_user, task_name)
+def _get_dry_check_task(variables, profiles, config_user, task_name):
     """Create a dry check task."""
-    profile = deepcopy(profiles[variables[0]['preprocessor']])
-    variables = _limit_datasets(variables, profile,
-                                config_user.get('max_datasets'))
+    basic_profile = deepcopy(profiles['default'])
     for variable in variables:
         _add_cmor_info(variable)
+
+    # Create simple dry-run preprocessor task
+    task = _get_single_preprocessor_task(
+        variables,
+        basic_profile,
+        config_user,
+        ancestor_tasks=[],
+        name=task_name,
+    )
+
+    return task
+
 
 class Recipe:
     """Recipe object."""
@@ -895,6 +904,7 @@ class Recipe:
         self.entity = self._initalize_provenance(
             raw_recipe.get('documentation', {}))
         self.tasks = self.initialize_tasks() if initialize_tasks else None
+        self.dry_check = dry_check
         self.dry_tasks = self.initialize_dry_tasks() if dry_check else None
 
     @staticmethod
@@ -1322,6 +1332,10 @@ class Recipe:
         logger.info("These tasks will be executed: %s",
                     ', '.join(t.name for t in tasks))
 
+        # Initialize task provenance
+        for task in tasks:
+            task.initialize_provenance(self.entity)
+
         # Return smallest possible set of tasks
         return get_independent_tasks(tasks)
 
@@ -1331,7 +1345,7 @@ class Recipe:
 
     def run(self):
         """Run all tasks in the recipe."""
-        if dry_check:
+        if self.dry_check:
             run_tasks(self.dry_tasks,
                       max_parallel_tasks=self._cfg['max_parallel_tasks'])
         else:
