@@ -377,6 +377,8 @@ def _add_fxvar_keys(fx_var_dict, variable):
         fx_variable['grid'] = variable['grid']
         if 'mip' in fx_var_dict:
             fx_variable['mip'] = fx_var_dict['mip']
+    elif fx_variable['project'] in ['OBS', 'OBS6']:
+        fx_variable['mip'] = 'fx'
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
 
@@ -386,7 +388,7 @@ def _add_fxvar_keys(fx_var_dict, variable):
 def _get_correct_fx_file(variable, fx_varname, config_user):
     """Wrapper to standard file getter to recover the correct fx file."""
     var = dict(variable)
-    if var['project'] == 'CMIP5':
+    if var['project'] in ['CMIP5', 'OBS', 'OBS6']:
         fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
     elif var['project'] == 'CMIP6':
         if fx_varname == 'sftlf':
@@ -401,7 +403,14 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
                                      var)
     fx_files = get_input_filelist(variable=fx_var,
                                   rootpath=config_user['rootpath'],
-                                  drs=config_user['drs'])[0]
+                                  drs=config_user['drs'])
+    # allow for empty lists corrected for by NE masks
+    if fx_files:
+        fx_files = fx_files[0]
+
+    logger.info("Using fx files for masking for %s of dataset %s:\n%s",
+                fx_var['short_name'], fx_var['dataset'],
+                fx_files)
 
     return fx_files
 
