@@ -31,11 +31,12 @@ class allvars(Fix):
                 continue
 
             # if time variable is monotonic, there is nothing to do
+
             if old_time.is_monotonic():
                 continue
 
             time_units = old_time.units
-            time_data = old_time.points
+            time_data = old_time.points.copy()
 
             idx_zeros = np.where(time_data == 0.0)[0]
             time_diff = (time_units.num2date(time_data[1]) -
@@ -51,14 +52,15 @@ class allvars(Fix):
                                                     1)
                 else:  # use "time[1] - time[0]" as step
                     new_time = correct_time + time_diff
-                old_time.points[idx] = time_units.date2num(new_time)
+                time_data[idx] = time_units.date2num(new_time)
+
+            new_time = old_time.copy(points=time_data)
 
             # create new time bounds
-            old_time.bounds = None
-            old_time.guess_bounds()
+            new_time.bounds = None
+            new_time.guess_bounds()
 
-            # replace time coordinate with "repaired" values
-            new_time = iris.coords.DimCoord.from_coord(old_time)
+            # replace time coordinate with repaired values
             time_idx = cube.coord_dims(old_time)
             cube.remove_coord('time')
             cube.add_dim_coord(new_time, time_idx)
