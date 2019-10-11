@@ -64,16 +64,13 @@ def load_raw_recipe(filename):
 
 
 def read_recipe_file(filename, config_user,
-                     dry_run, initialize_tasks=True):
+                     dry_run=False, initialize_tasks=True):
     """Read a recipe from file."""
     raw_recipe = load_raw_recipe(filename)
-    dry_check = False
-    if dry_run:
-        dry_check = True
     return Recipe(raw_recipe,
                   config_user,
                   initialize_tasks,
-                  dry_check=dry_check,
+                  dry_check=dry_run,
                   recipe_file=filename)
 
 
@@ -686,7 +683,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         if not ancestors:
             ancestors = _get_input_files(variable, config_user)
             if config_user.get('skip-nonexistent') \
-                or config_user.get('dry-run') and not ancestors:
+                    or config_user.get('dry-run') and not ancestors:
                 logger.info("MISSING DATA: Skipping: no data found for %s",
                             variable)
                 continue
