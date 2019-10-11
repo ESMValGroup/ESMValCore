@@ -2,6 +2,7 @@
 """Fixes for BCC-CSM2-MR."""
 import numpy as np
 import iris
+from iris.coords import DimCoord
 
 from ..fix import Fix
 
@@ -48,16 +49,28 @@ class allvars(Fix):
                     continue
                 correct_time = time_units.num2date(time_data[idx - 1])
                 if days <= 31 and days >= 28:  # assume monthly time steps
-                    new_time = correct_time.replace(month=correct_time.month +
-                                                    1)
+                    new_month = correct_time.month + 1
+                    new_year = correct_time.year
+                    if new_month > 12:
+                        new_month = 1
+                        new_year = new_year + 1
+                    new_time = correct_time.replace(month=new_month,
+                                                    year=new_year)
                 else:  # use "time[1] - time[0]" as step
                     new_time = correct_time + time_diff
                 time_data[idx] = time_units.date2num(new_time)
 
-            new_time = old_time.copy(points=time_data)
+            # create new time variable with fixed data points
+            new_time = DimCoord(time_data,
+                                standard_name=old_time.standard_name,
+                                long_name=old_time.long_name,
+                                var_name=old_time.var_name,
+                                units=old_time.units,
+                                bounds=None,
+                                attributes=old_time.attributes,
+                                coord_system=old_time.coord_system)
 
             # create new time bounds
-            new_time.bounds = None
             new_time.guess_bounds()
 
             # replace time coordinate with repaired values

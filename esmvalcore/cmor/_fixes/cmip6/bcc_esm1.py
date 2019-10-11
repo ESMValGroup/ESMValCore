@@ -2,4 +2,4 @@
 """Fixes for BCC-ESM1."""
 
 from ..fix import Fix
-from .BCC_CSM2_MR import allvars
+from .bcc_csm2_mr import allvars
