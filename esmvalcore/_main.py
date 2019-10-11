@@ -98,13 +98,9 @@ def get_args():
         nargs='*',
         help="Only run the named diagnostics from the recipe.")
     parser.add_argument(
-        '--check-data-availability',
+        '--dry-run',
         action='store_true',
-        help="Check data availability and return a report.")
-    parser.add_argument(
-        '--check-data-compliance',
-        action='store_true',
-        help="Check data CMOR compliance and return a report.")
+        help="Check data and CMOR compliance and return a report.")
     args = parser.parse_args()
     return args
 
@@ -160,18 +156,15 @@ def main(args):
             cfg[limit] = value
 
     resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
-    data_dry_check = args.check_data_availability
-    compliance_dry_check = args.check_data_compliance
+    dry_run = args.dry_run
     with resource_usage_logger(pid=os.getpid(), filename=resource_log):
         process_recipe(recipe_file=recipe,
                        config_user=cfg,
-                       data_dry_check=data_dry_check,
-                       compliance_dry_check=compliance_dry_check)
+                       dry_run=dry_run)
     return cfg
 
 
-def process_recipe(recipe_file, config_user,
-                   data_dry_check, compliance_dry_check):
+def process_recipe(recipe_file, config_user, dry_run):
     """Process recipe."""
     if not os.path.isfile(recipe_file):
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
@@ -213,8 +206,7 @@ def process_recipe(recipe_file, config_user,
     shutil.copy2(recipe_file, config_user['run_dir'])
 
     # parse recipe
-    recipe = read_recipe_file(recipe_file, config_user,
-                              data_dry_check, compliance_dry_check)
+    recipe = read_recipe_file(recipe_file, config_user, dry_run)
     logger.debug("Recipe summary:\n%s", recipe)
 
     # run
