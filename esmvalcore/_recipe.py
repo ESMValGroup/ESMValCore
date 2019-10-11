@@ -813,7 +813,8 @@ def _get_derive_input_variables(variables, config_user):
     return derive_input
 
 
-def _get_preprocessor_task(variables, profiles, config_user, task_name):
+def _get_preprocessor_task(variables, profiles,
+                           config_user, task_name, dry_check):
     """Create preprocessor task(s) for a set of datasets."""
     # First set up the preprocessor profile
     variable = variables[0]
@@ -822,7 +823,10 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
         raise RecipeError(
             "Unknown preprocessor {} in variable {} of diagnostic {}".format(
                 preproc_name, variable['short_name'], variable['diagnostic']))
-    profile = deepcopy(profiles[variable['preprocessor']])
+    if not dry_check:
+        profile = deepcopy(profiles[variable['preprocessor']])
+    else:
+        profile = deepcopy(profiles['default'])
     logger.info("Creating preprocessor '%s' task for variable '%s'",
                 variable['preprocessor'], variable['short_name'])
     variables = _limit_datasets(variables, profile,
@@ -861,24 +865,6 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     return task
 
 
-def _get_dry_check_task(variables, profiles, config_user, task_name):
-    """Create a dry check task."""
-    basic_profile = deepcopy(profiles['default'])
-    for variable in variables:
-        _add_cmor_info(variable)
-
-    # Create simple dry-run preprocessor task
-    task = _get_single_preprocessor_task(
-        variables,
-        basic_profile,
-        config_user,
-        ancestor_tasks=[],
-        name=task_name,
-    )
-
-    return task
-
-
 class Recipe:
     """Recipe object."""
 
@@ -903,9 +889,8 @@ class Recipe:
             raw_recipe['diagnostics'], raw_recipe.get('datasets', []))
         self.entity = self._initalize_provenance(
             raw_recipe.get('documentation', {}))
-        self.tasks = self.initialize_tasks() if initialize_tasks else None
         self.dry_check = dry_check
-        self.dry_tasks = self.initialize_dry_tasks() if dry_check else None
+        self.tasks = self.initialize_tasks() if initialize_tasks else None
 
     @staticmethod
     def _need_ncl(raw_diagnostics):
@@ -1253,6 +1238,7 @@ class Recipe:
                     profiles=self._preprocessors,
                     config_user=self._cfg,
                     task_name=task_name,
+                    dry_check=self.dry_check,
                 )
                 for task0 in task.flatten():
                     task0.priority = priority
@@ -1260,18 +1246,19 @@ class Recipe:
                 priority += 1
 
             # Create diagnostic tasks
-            for script_name, script_cfg in diagnostic['scripts'].items():
-                task_name = diagnostic_name + TASKSEP + script_name
-                logger.info("Creating diagnostic task %s", task_name)
-                task = DiagnosticTask(
-                    script=script_cfg['script'],
-                    output_dir=script_cfg['output_dir'],
-                    settings=script_cfg['settings'],
-                    name=task_name,
-                )
-                task.priority = priority
-                tasks.add(task)
-                priority += 1
+            if not self.dry_check:
+                for script_name, script_cfg in diagnostic['scripts'].items():
+                    task_name = diagnostic_name + TASKSEP + script_name
+                    logger.info("Creating diagnostic task %s", task_name)
+                    task = DiagnosticTask(
+                        script=script_cfg['script'],
+                        output_dir=script_cfg['output_dir'],
+                        settings=script_cfg['settings'],
+                        name=task_name,
+                    )
+                    task.priority = priority
+                    tasks.add(task)
+                    priority += 1
 
         check.tasks_valid(tasks)
 
@@ -1302,52 +1289,11 @@ class Recipe:
         # Return smallest possible set of tasks
         return get_independent_tasks(tasks)
 
-    def initialize_dry_tasks(self):
-        """Define dry checker tasks in recipe."""
-        logger.info("Creating dry check tasks from recipe")
-        tasks = set()
-
-        priority = 0
-        for diagnostic_name, diagnostic in self.diagnostics.items():
-            logger.info("Creating dry check tasks for diagnostic %s",
-                        diagnostic_name)
-
-            # Create the checking tasks
-            for variable_group in diagnostic['preprocessor_output']:
-                task_name = diagnostic_name + TASKSEP + variable_group
-                logger.info("Creating preprocessor task %s", task_name)
-                task = _get_dry_check_task(
-                    variables=diagnostic['preprocessor_output']
-                    [variable_group],
-                    profiles=self._preprocessors,
-                    config_user=self._cfg,
-                    task_name=task_name,
-                )
-                for task0 in task.flatten():
-                    task0.priority = priority
-                tasks.add(task)
-                priority += 1
-
-        tasks = get_flattened_tasks(tasks)
-        logger.info("These tasks will be executed: %s",
-                    ', '.join(t.name for t in tasks))
-
-        # Initialize task provenance
-        for task in tasks:
-            task.initialize_provenance(self.entity)
-
-        # Return smallest possible set of tasks
-        return get_independent_tasks(tasks)
-
     def __str__(self):
         """Get human readable summary."""
         return '\n\n'.join(str(task) for task in self.tasks)
 
     def run(self):
         """Run all tasks in the recipe."""
-        if self.dry_check:
-            run_tasks(self.dry_tasks,
-                      max_parallel_tasks=self._cfg['max_parallel_tasks'])
-        else:
-            run_tasks(self.tasks,
-                      max_parallel_tasks=self._cfg['max_parallel_tasks'])
+        run_tasks(self.tasks,
+                  max_parallel_tasks=self._cfg['max_parallel_tasks'])
