@@ -130,7 +130,7 @@ OBS6:
   cmor_type: 'CMIP6'
 
 obs4mips:
-  cmor_strict: true
+  cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}'
     RCAST: '/'
