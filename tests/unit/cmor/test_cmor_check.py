@@ -178,6 +178,18 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.standard_name = 'wind_speed'
         self._check_fails_in_metadata(automatic_fixes=False)
 
+    def test_check_bad_standard_name_no_raise(self):
+        """Test check fails for a bad short_name."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.standard_name = 'wind_speed'
+        checker = CMORCheck(
+            self.cube,
+            self.var_info,
+            automatic_fixes=False,
+            raise_exception=False,
+        )
+        self.assertIsNone(checker.check_metadata())
+
     def test_check_bad_long_name_auto_fix(self):
         """Test check pass for a bad standard_name with automatic fixes."""
         self.cube = self.get_cube(self.var_info)

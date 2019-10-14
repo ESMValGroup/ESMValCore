@@ -57,10 +57,12 @@ class CMORCheck():
                  var_info,
                  frequency=None,
                  fail_on_error=False,
+                 raise_exception=True,
                  automatic_fixes=False):
 
         self._cube = cube
         self._failerr = fail_on_error
+        self._raise_exception = raise_exception
         self._errors = list()
         self._warnings = list()
         self._debug_messages = list()
@@ -104,13 +106,16 @@ class CMORCheck():
 
         self.report_debug_messages(logger)
         self.report_warnings(logger)
-        self.report_errors()
+        self.report_errors(logger)
 
         if self.frequency != 'fx':
             self._add_auxiliar_time_coordinates()
-        return self._cube
+        if self.has_errors():
+            return None
+        else:
+            return self._cube
 
-    def report_errors(self):
+    def report_errors(self, logger):
         """Report detected errors.
 
         Raises
@@ -123,7 +128,10 @@ class CMORCheck():
             msg = 'There were errors in variable {}:\n{}\nin cube:\n{}'
             msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
                              self._cube)
-            raise CMORCheckError(msg)
+            if self._raise_exception:
+                raise CMORCheckError(msg)
+            logger.error(msg)
+
 
     def report_warnings(self, logger):
         """Report detected warnings to the given logger.
@@ -179,7 +187,7 @@ class CMORCheck():
         self._check_coords_data()
 
         self.report_warnings(logger)
-        self.report_errors()
+        self.report_errors(logger)
         return self._cube
 
     def _check_fill_value(self):
@@ -668,6 +676,7 @@ def _get_cmor_checker(table,
                       short_name,
                       frequency,
                       fail_on_error=True,
+                      raise_exception=True,
                       automatic_fixes=False):
     """Get a CMOR checker/fixer."""
     if table not in CMOR_TABLES:
@@ -687,6 +696,7 @@ def _get_cmor_checker(table,
             var_info,
             frequency=frequency,
             fail_on_error=fail_on_error,
+            raise_exception=raise_exception,
             automatic_fixes=automatic_fixes)
 
     return _checker
