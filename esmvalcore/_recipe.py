@@ -358,7 +358,7 @@ def _get_default_settings(variable, config_user, derive=False):
         }
 
     # Configure saving cubes to file
-    if not config_user['dry-run']:
+    if 'dry-run' not in config_user:
         settings['save'] = {'compress': config_user['compress_netcdf']}
     else:
         settings['save'] = {'filename': 'dry-run'}
