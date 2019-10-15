@@ -12,16 +12,21 @@ RHO_CP = iris.coords.AuxCoord(4.09169e+6, units=Unit('kg m-3 J kg-1 K-1'))
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `ohc`."""
 
-    # Required variables
-    required = [
-        {
-            'short_name': 'thetao',
-            'fx_files': [
-                'volcello',
-            ],
-        },
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        # Required variables
+        if project == 'CMIP5':
+            required = [{'short_name': 'gpp'},
+                        {'short_name': 'volcello', 'mip': 'fx'}]
+        elif project == 'CMIP6':
+            required = [{'short_name': 'gpp'},
+                        {'short_name': 'volcello', 'mip': 'Ofx'}]
+        else project in  ['OBS', 'OBS6']:
+            required = [{'short_name': 'gpp'},
+                    {'short_name': 'volcello', 'mip': 'fx'}]
 
+        return required
     def calculate(self, cubes):
         """
         Compute ocean heat content.
