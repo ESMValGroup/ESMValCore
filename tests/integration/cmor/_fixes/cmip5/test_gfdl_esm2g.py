@@ -2,13 +2,14 @@
 import unittest
 
 import iris
+from iris.cube import Cube
 import mock
 import pytest
 from cf_units import Unit
-
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import (_get_and_remove, AllVars,
-                                                     Co2, FgCo2, Usi, Vsi)
+                                                     Co2, FgCo2, Usi, Vsi,
+                                                     Areacello)
 
 CUBE_1 = iris.cube.Cube([1.0], long_name='to_be_rm')
 CUBE_2 = iris.cube.Cube([1.0], long_name='not_to_be_rm')
@@ -113,3 +114,31 @@ class TestVsi(unittest.TestCase):
         """Test metadata fix."""
         cube = self.fix.fix_metadata([self.cube])[0]
         self.assertEqual(cube.standard_name, 'sea_ice_y_velocity')
+
+
+class TestAreacello(unittest.TestCase):
+    """Test sftof fixes."""
+
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = Cube([1.0], var_name='areacello', units='m-2')
+        self.fix = Areacello()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'areacello'),
+            [AllVars(), Areacello()])
+
+    def test_fix_metadata(self):
+        """Test data fix."""
+        cube = self.fix.fix_metadata((self.cube,))[0]
+        self.assertEqual(cube.data[0], 1.0)
+        self.assertEqual(cube.units, Unit('m2'))
+
+    def test_fix_data(self):
+        """Test data fix."""
+        self.cube.units = 'm2'
+        cube = self.fix.fix_metadata((self.cube,))[0]
+        self.assertEqual(cube.data[0], 1.0)
+        self.assertEqual(cube.units, Unit('m2'))
