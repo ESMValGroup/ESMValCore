@@ -827,6 +827,7 @@ def _get_preprocessor_task(variables, profiles,
         profile = deepcopy(profiles[variable['preprocessor']])
     else:
         profile = deepcopy(profiles['default'])
+        profile['save'] = False
     logger.info("Creating preprocessor '%s' task for variable '%s'",
                 variable['preprocessor'], variable['short_name'])
     variables = _limit_datasets(variables, profile,
