@@ -358,7 +358,10 @@ def _get_default_settings(variable, config_user, derive=False):
         }
 
     # Configure saving cubes to file
-    settings['save'] = {'compress': config_user['compress_netcdf']}
+    if not config_user['dry-run']:
+        settings['save'] = {'compress': config_user['compress_netcdf']}
+    else:
+        settings['save'] = {'filename': 'dry-run'}
 
     return settings
 
@@ -827,7 +830,6 @@ def _get_preprocessor_task(variables, profiles,
         profile = deepcopy(profiles[variable['preprocessor']])
     else:
         profile = deepcopy(profiles['default'])
-        profile['save'] = False
     logger.info("Creating preprocessor '%s' task for variable '%s'",
                 variable['preprocessor'], variable['short_name'])
     variables = _limit_datasets(variables, profile,
