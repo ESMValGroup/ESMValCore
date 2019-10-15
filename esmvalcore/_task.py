@@ -84,9 +84,9 @@ def _get_resource_usage(process, start_time, children=True):
                     proc.memory_info().rss / gigabyte,
                     proc.memory_percent(),
                     (proc.io_counters().read_bytes / gigabyte
-                        if counters_available else float('nan')),
+                     if counters_available else float('nan')),
                     (proc.io_counters().write_bytes / gigabyte
-                        if counters_available else float('nan')),
+                     if counters_available else float('nan')),
                 ]
         except (OSError, psutil.AccessDenied, psutil.NoSuchProcess):
             # Try again if an error occurs because some process died
