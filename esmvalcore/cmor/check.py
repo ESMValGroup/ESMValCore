@@ -132,7 +132,6 @@ class CMORCheck():
                 raise CMORCheckError(msg)
             logger.error(msg)
 
-
     def report_warnings(self, logger):
         """Report detected warnings to the given logger.
 
