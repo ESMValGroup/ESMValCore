@@ -251,7 +251,10 @@ class PreprocessorFile(TrackedFile):
         self.settings = copy.deepcopy(settings)
         if 'save' not in self.settings:
             self.settings['save'] = {}
-        if self.settings['save']['filename'] != 'dry-run':
+        if 'filename' in self.settings['save']:
+            if self.settings['save']['filename'] != 'dry-run':
+                self.settings['save']['filename'] = self.filename
+        else:
             self.settings['save']['filename'] = self.filename
 
         self.files = [a.filename for a in ancestors or ()]
