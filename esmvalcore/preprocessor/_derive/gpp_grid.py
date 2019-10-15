@@ -17,6 +17,10 @@ class DerivedVariable(DerivedVariableBase):
         elif project == 'CMIP6':
             required = [{'short_name': 'gpp'},
                         {'short_name': 'sftlf', 'mip': 'fx'}]
+        else project in  ['OBS', 'OBS6']:
+            required = [{'short_name': 'gpp'},
+                    {'short_name': 'sftlf', 'mip': 'fx'}]
+
         return required
 
     @staticmethod
