@@ -16,18 +16,19 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):
         """Declare the variables needed for derivation."""
         # Required variables
-        if project == 'CMIP5':
-            required = [{'short_name': 'gpp'},
-                        {'short_name': 'volcello', 'mip': 'fx'}]
-        elif project == 'CMIP6':
-            required = [{'short_name': 'gpp'},
-                        {'short_name': 'volcello', 'mip': 'Ofx'}]
-        else project in  ['OBS', 'OBS6']:
-            required = [{'short_name': 'gpp'},
-                    {'short_name': 'volcello', 'mip': 'fx'}]
-
+        required = [
+            {'short_name': 'gpp'},
+            {'short_name': 'volcello', 'mip': 'fx'},
+        ]
+        if project == 'CMIP6':
+            required = [
+                {'short_name': 'gpp'},
+                {'short_name': 'volcello', 'mip': 'Ofx'},
+            ]
         return required
-    def calculate(self, cubes):
+
+    @staticmethod
+    def calculate(cubes):
         """
         Compute ocean heat content.
 
