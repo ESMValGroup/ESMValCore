@@ -801,8 +801,7 @@ def _get_derive_input_variables(variables, config_user):
             for var in required_vars:
                 _augment(var, variable)
                 append(group_prefix, var)
-    # _get_correct_fx_file(var, fxvar,
-    # config_user)
+
     return derive_input
 
 
