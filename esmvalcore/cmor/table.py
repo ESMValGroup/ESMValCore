@@ -746,6 +746,12 @@ class CMIP3Info(CMIP5Info):
             coord.var_name = coord.name
         return coord
 
+    def _read_variable(self, short_name, frequency):
+        var = super()._read_variable(short_name, frequency)
+        var.modeling_realm = None
+        var.frequency = None
+        return var
+
 
 class CustomInfo(CMIP5Info):
     """
