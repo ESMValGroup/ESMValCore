@@ -19,7 +19,7 @@ jobs:
           # Update/Create Conda environment and run tests
           command: |
             . /opt/conda/etc/profile.d/conda.sh
-            conda update -y conda
+            # conda update -y conda
             conda env update
             conda activate esmvaltool
             python setup.py test
@@ -48,7 +48,7 @@ jobs:
             set -x
             mkdir /logs
             # Install
-            conda update -y conda > /logs/conda.txt 2>&1
+            # conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
             conda install -yS r-base r-yaml ncl -c conda-forge
@@ -123,7 +123,7 @@ jobs:
             set -x
             mkdir /logs
             # Install
-            conda update -y conda > /logs/conda.txt 2>&1
+            # conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
             conda install -yS r-base r-yaml ncl -c conda-forge
@@ -151,7 +151,7 @@ jobs:
             set -x
             # Install prerequisites
             mkdir /logs
-            conda update -y conda > /logs/conda_base.txt 2>&1
+            # conda update -y conda > /logs/conda_base.txt 2>&1
             conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
@@ -173,7 +173,7 @@ jobs:
             set -x
             # Install prerequisites
             mkdir /logs
-            conda update -y conda > /logs/conda.txt 2>&1
+            # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
             conda create -y --name esmvaltool
             set +x; conda activate esmvaltool; set -x
