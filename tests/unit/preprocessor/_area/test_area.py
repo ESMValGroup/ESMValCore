@@ -401,37 +401,6 @@ def irreg_extract_shape_cube():
     return cube
 
 
-@pytest.mark.parametrize('method', ['contains', 'representative'])
-def test_extract_shape_irregular(irreg_extract_shape_cube, tmp_path, method):
-    """Test `extract_shape` with a cube on an irregular grid."""
-    # Points are (lon, lat)
-    shape = Polygon([
-        (0.5, 0.5),
-        (0.5, 3.0),
-        (1.5, 3.0),
-        (1.5, 0.5),
-    ])
-
-    shapefile = tmp_path / 'shapefile.shp'
-    write_shapefile(shape, shapefile)
-
-    cube = extract_shape(irreg_extract_shape_cube, shapefile, method)
-
-    data = np.arange(9, dtype=np.float32).reshape((3, 3))
-    mask = np.array(
-        [
-            [True, True, True],
-            [True, False, True],
-            [True, False, True],
-        ],
-        dtype=bool,
-    )
-    if method == 'representative':
-        mask[1, 1] = True
-    np.testing.assert_array_equal(cube.data, data)
-    np.testing.assert_array_equal(cube.data.mask, mask)
-
-
 def test_extract_shape_wrong_method_raises():
     with pytest.raises(ValueError) as exc:
         extract_shape(iris.cube.Cube([]), 'test.shp', method='wrong')
