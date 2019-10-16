@@ -48,18 +48,12 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     iris.cube.Cube
         smaller cube.
     """
-    # Converts Negative longitudes to 0 -> 360. standard
-    start_longitude = float(start_longitude)
-    end_longitude = float(end_longitude)
-    start_latitude = float(start_latitude)
-    end_latitude = float(end_latitude)
-
-    # Regular grid
     if abs(start_latitude) > 90.:
         raise ValueError(f"Invalid start_latitude: {start_latitude}")
     if abs(end_latitude) > 90.:
         raise ValueError(f"Invalid end_latitude: {end_latitude}")
 
+    # Regular grid
     if cube.coord('latitude').ndim == 1:
         # Iris check if any point of the cell is inside the region
         # To check only the center, ignore_bounds must be set to
@@ -72,33 +66,6 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
         region_subset = region_subset.intersection(longitude=(0., 360.))
         return region_subset
 
-    # Irregular grids - not lazy.
-    lats = cube.coord('latitude').points
-    lons = cube.coord('longitude').points
-    mask = np.ma.array(cube.data).mask
-    mask += np.ma.masked_where(lats < start_latitude, lats).mask
-    mask += np.ma.masked_where(lats > end_latitude, lats).mask
-    mask += np.ma.masked_where(lons < start_longitude, lons).mask
-    mask += np.ma.masked_where(lons > end_longitude, lons).mask
-    cube.data = da.ma.masked_array(data=cube.data, mask=mask)
-    return cube
-
-
-def get_iris_analysis_operation(operator):
-    """
-    Determine the iris analysis operator from a string.
-
-    Map string to functional operator.
-
-    Parameters
-    ----------
-    operator: str
-        A named operator.
-
-    Returns
-    -------
-        function: A function from iris.analysis
-=======
     # Irregular grids
     lats = cube.coord('latitude').points
     lons = cube.coord('longitude').points
@@ -117,7 +84,6 @@ def get_iris_analysis_operation(operator):
         select_lats = (lats >= start_latitude) & (lats <= end_latitude)
     else:
         select_lats = (lats >= start_latitude) | (lats <= end_latitude)
->>>>>>> remotes/origin/development
 
     selection = select_lats & select_lons
     selection = da.broadcast_to(selection, cube.shape)
@@ -191,7 +157,7 @@ def tile_grid_areas(cube, fx_files):
         return grid_areas
 
     # Use dash.array.stack to tile areacello.
-    elif cube.ndim == 4 and grid_areas.ndim == 2:
+    if cube.ndim == 4 and grid_areas.ndim == 2:
         for shape in [1, 0]:
             grida = [grid_areas for itr in range(cube.shape[shape])]
             grid_areas = da.stack(grida, axis=0)
@@ -282,15 +248,8 @@ def area_statistics(cube, operator, fx_files=None):
     # TODO: implement weighted stdev, median, s var when available in iris.
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
-<<<<<<< HEAD
-    if operator == 'mean':
-        return cube.collapsed(coord_names,
-                              operation,
-                              weights=np.array(grid_areas))
-=======
     if operator_accept_weights(operator):
         return cube.collapsed(coord_names, operation, weights=grid_areas)
->>>>>>> remotes/origin/development
 
     # Many IRIS analysis functions do not accept weights arguments.
     return cube.collapsed(coord_names, operation)
