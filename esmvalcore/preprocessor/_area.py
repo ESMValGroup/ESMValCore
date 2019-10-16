@@ -358,6 +358,10 @@ def extract_shape(cube, shapefile, method='contains', crop=True):
         if cube.coord('longitude').points.ndim < 2:
             x_p, y_p = np.meshgrid(cube.coord(axis='X').points,
                                    cube.coord(axis='Y').points, copy=False)
+        else:
+            msg = (f"2D grids are suboptimally masked with "
+                   f"Natural Earth shapefile masks. Exiting.")
+            raise ValueError(msg)
 
         # Wrap around longitude coordinate to match data
         x_p_180 = np.where(x_p >= 180., x_p - 360., x_p)
