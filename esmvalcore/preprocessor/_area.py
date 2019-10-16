@@ -354,21 +354,26 @@ def extract_shape(cube, shapefile, method='contains', crop=True):
     with fiona.open(shapefile) as geometries:
         if crop:
             cube = _crop_cube(cube, *geometries.bounds)
-        lon_coord = cube.coord(axis='X')
-        lat_coord = cube.coord(axis='Y')
 
-        lon = lon_coord.points
-        lat = lat_coord.points
-        if lon_coord.ndim == 1 and lat_coord.ndim == 1:
-            lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+        if cube.coord('longitude').points.ndim < 2:
+            x_p, y_p = np.meshgrid(cube.coord(axis='X').points,
+                                   cube.coord(axis='Y').points, copy=False)
 
-        selection = np.zeros(lat.shape, dtype=bool)
+        # Wrap around longitude coordinate to match data
+        x_p_180 = np.where(x_p >= 180., x_p - 360., x_p)
+        # the NE mask has no points at x = -180 and y = +/-90
+        # so we will fool it and apply the mask at (-179, -89, 89) instead
+        x_p_180 = np.where(x_p_180 == -180., x_p_180 + 1., x_p_180)
+        y_p_0 = np.where(y_p == -90., y_p + 1., y_p)
+        y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
+
+        selection = np.zeros(x_p_180.shape, dtype=bool)
         for item in geometries:
             shape = shapely.geometry.shape(item['geometry'])
             if method == 'contains':
-                select = shapely.vectorized.contains(shape, lon, lat)
+                select = shapely.vectorized.contains(shape, x_p_180, y_p_90)
             if method == 'representative' or not select.any():
-                select = _select_representative_point(shape, lon, lat)
+                select = _select_representative_point(shape, x_p_180, y_p_90)
             selection |= select
 
         selection = da.broadcast_to(selection, cube.shape)
