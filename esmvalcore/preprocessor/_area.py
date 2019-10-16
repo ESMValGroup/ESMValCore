@@ -13,7 +13,8 @@ import shapely
 import shapely.ops
 from dask import array as da
 
-from ._shared import get_iris_analysis_operation, guess_bounds
+from ._shared import (get_iris_analysis_operation, guess_bounds,
+                      operator_accept_weights)
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,7 @@ def zonal_means(cube, coordinate, mean_type):
     - 'mean' -> MEAN
     - 'median' -> MEDIAN
     - 'std_dev' -> STD_DEV
+    - 'sum' -> SUM
     - 'variance' -> VARIANCE
     - 'min' -> MIN
     - 'max' -> MAX
@@ -176,6 +178,8 @@ def area_statistics(cube, operator, fx_files=None):
     +------------+--------------------------------------------------+
     | `std_dev`  | Standard Deviation (not area weighted)           |
     +------------+--------------------------------------------------+
+    | `sum`      | Area weighted sum.                               |
+    +------------+--------------------------------------------------+
     | `variance` | Variance (not area weighted)                     |
     +------------+--------------------------------------------------+
     | `min`:     | Minimum value                                    |
@@ -188,7 +192,8 @@ def area_statistics(cube, operator, fx_files=None):
         cube: iris.cube.Cube
             Input cube.
         operator: str
-            The operation, options: mean, median, min, max, std_dev, variance
+            The operation, options: mean, median, min, max, std_dev, sum,
+            variance
         fx_files: dict
             dictionary of field:filename for the fx_files
 
@@ -226,7 +231,7 @@ def area_statistics(cube, operator, fx_files=None):
     # TODO: implement weighted stdev, median, s var when available in iris.
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
-    if operator == 'mean':
+    if operator_accept_weights(operator):
         return cube.collapsed(coord_names, operation, weights=grid_areas)
 
     # Many IRIS analysis functions do not accept weights arguments.

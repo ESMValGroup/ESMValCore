@@ -2,6 +2,7 @@
 import fnmatch
 import logging
 import os
+import re
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -11,8 +12,8 @@ from netCDF4 import Dataset
 from . import __version__
 from . import _recipe_checks as check
 from ._config import TAGS, get_activity, get_institutes, replace_tags
-from ._data_finder import (get_input_filelist, get_input_fx_filelist,
-                           get_output_file, get_statistic_output_file)
+from ._data_finder import (get_input_filelist, get_output_file,
+                           get_statistic_output_file)
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
@@ -360,6 +361,60 @@ def _get_default_settings(variable, config_user, derive=False):
     return settings
 
 
+def _add_fxvar_keys(fx_var_dict, variable):
+    """Add keys specific to fx variable to use get_input_filelist."""
+    fx_variable = dict(variable)
+
+    # set variable names
+    fx_variable['variable_group'] = fx_var_dict['short_name']
+    fx_variable['short_name'] = fx_var_dict['short_name']
+
+    # specificities of project
+    if fx_variable['project'] == 'CMIP5':
+        fx_variable['mip'] = 'fx'
+        fx_variable['ensemble'] = 'r0i0p0'
+    elif fx_variable['project'] == 'CMIP6':
+        fx_variable['grid'] = variable['grid']
+        if 'mip' in fx_var_dict:
+            fx_variable['mip'] = fx_var_dict['mip']
+    elif fx_variable['project'] in ['OBS', 'OBS6']:
+        fx_variable['mip'] = 'fx'
+    # add missing cmor info
+    _add_cmor_info(fx_variable, override=True)
+
+    return fx_variable
+
+
+def _get_correct_fx_file(variable, fx_varname, config_user):
+    """Wrapper to standard file getter to recover the correct fx file."""
+    var = dict(variable)
+    if var['project'] in ['CMIP5', 'OBS', 'OBS6']:
+        fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
+    elif var['project'] == 'CMIP6':
+        if fx_varname == 'sftlf':
+            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
+                                     var)
+        elif fx_varname == 'sftof':
+            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
+                                     var)
+        # TODO allow availability for multiple mip's for sftgif
+        elif fx_varname == 'sftgif':
+            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
+                                     var)
+    fx_files = get_input_filelist(variable=fx_var,
+                                  rootpath=config_user['rootpath'],
+                                  drs=config_user['drs'])
+    # allow for empty lists corrected for by NE masks
+    if fx_files:
+        fx_files = fx_files[0]
+
+    logger.info("Using fx files for masking for %s of dataset %s:\n%s",
+                fx_var['short_name'], fx_var['dataset'],
+                fx_files)
+
+    return fx_files
+
+
 def _update_fx_settings(settings, variable, config_user):
     """Find and set the FX derive/mask settings."""
     # update for derive
@@ -368,28 +423,20 @@ def _update_fx_settings(settings, variable, config_user):
         for var in get_required(variable['short_name']):
             if 'fx_files' in var:
                 _augment(var, variable)
-                fx_files.update(
-                    get_input_fx_filelist(
-                        variable=var,
-                        rootpath=config_user['rootpath'],
-                        drs=config_user['drs'],
-                    ))
+                for fxvar in var['fx_files']:
+                    fx_files[fxvar] = _get_correct_fx_file(var, fxvar,
+                                                           config_user)
         settings['derive']['fx_files'] = fx_files
 
     # update for landsea
     if 'mask_landsea' in settings:
+        fx_files_dict = {}
         # Configure ingestion of land/sea masks
         logger.debug('Getting fx mask settings now...')
-
         settings['mask_landsea']['fx_files'] = []
-
-        var = dict(variable)
-        var['fx_files'] = ['sftlf', 'sftof']
-        fx_files_dict = get_input_fx_filelist(
-            variable=var,
-            rootpath=config_user['rootpath'],
-            drs=config_user['drs'],
-        )
+        fx_files_dict = {
+            'sftlf': _get_correct_fx_file(variable, 'sftlf', config_user),
+            'sftof': _get_correct_fx_file(variable, 'sftof', config_user)}
 
         # allow both sftlf and sftof
         if fx_files_dict['sftlf']:
@@ -399,29 +446,21 @@ def _update_fx_settings(settings, variable, config_user):
 
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')
-
         settings['mask_landseaice']['fx_files'] = []
-
-        var = dict(variable)
-        var['fx_files'] = ['sftgif']
-        fx_files_dict = get_input_fx_filelist(
-            variable=var,
-            rootpath=config_user['rootpath'],
-            drs=config_user['drs'],
-        )
-
-        # allow sftgif (only, for now)
+        fx_files_dict = {
+            'sftgif': _get_correct_fx_file(variable, 'sftgif', config_user)}
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
 
     for step in ('area_statistics', 'volume_statistics'):
         if settings.get(step, {}).get('fx_files'):
-            settings[step]['fx_files'] = get_input_fx_filelist(
-                variable=variable,
-                rootpath=config_user['rootpath'],
-                drs=config_user['drs'],
-            )
+            var = dict(variable)
+            var['fx_files'] = settings.get(step, {}).get('fx_files')
+            fx_files_dict = {
+                fxvar: _get_correct_fx_file(variable, fxvar, config_user)
+                for fxvar in var['fx_files']}
+            settings[step]['fx_files'] = fx_files_dict
 
 
 def _read_attributes(filename):
@@ -628,10 +667,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_extract_shape(settings, config_user)
         _update_fx_settings(
-            settings=settings,
-            variable=variable,
-            config_user=config_user,
-        )
+            settings=settings, variable=variable,
+            config_user=config_user)
         _update_target_grid(
             variable=variable,
             variables=variables,
@@ -665,11 +702,17 @@ def _get_single_preprocessor_task(variables,
                                   config_user,
                                   name,
                                   ancestor_tasks=None):
-    """Create preprocessor tasks for a set of datasets."""
+    """Create preprocessor tasks for a set of datasets w/ special case fx."""
     if ancestor_tasks is None:
         ancestor_tasks = []
     order = _extract_preprocessor_order(profile)
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
+
+    if variables[0]['frequency'] == 'fx':
+        profile['extract_time'] = False
+        check.check_for_temporal_preprocs(profile)
+        ancestor_products = None
+
     products = _get_preprocessor_products(
         variables=variables,
         profile=profile,
@@ -818,6 +861,7 @@ class Recipe:
 
     info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
     """List of keys to be used to compose the alias, ordered by priority."""
+
     def __init__(self,
                  raw_recipe,
                  config_user,
@@ -894,9 +938,32 @@ class Recipe:
         for dataset in datasets:
             for key in dataset:
                 DATASET_KEYS.add(key)
-
-        check.duplicate_datasets(datasets)
         return datasets
+
+    @staticmethod
+    def _expand_ensemble(variables):
+        """
+        Expand ensemble members to multiple datasets
+
+        Expansion only support ensembles defined as strings, not lists
+        """
+        expanded = []
+        regex = re.compile(r'\(\d+:\d+\)')
+        for variable in variables:
+            ensemble = variable.get('ensemble', "")
+            if not isinstance(ensemble, str):
+                expanded.append(variable)
+                continue
+            match = regex.search(ensemble)
+            if not match:
+                expanded.append(variable)
+                continue
+            start, end = match.group(0)[1: -1].split(':')
+            for i in range(int(start), int(end) + 1):
+                expand = deepcopy(variable)
+                expand['ensemble'] = regex.sub(str(i), ensemble, 1)
+                expanded.append(expand)
+        return expanded
 
     def _initialize_variables(self, raw_variable, raw_datasets):
         """Define variables for all datasets."""
@@ -905,10 +972,12 @@ class Recipe:
         raw_variable = deepcopy(raw_variable)
         datasets = self._initialize_datasets(
             raw_datasets + raw_variable.pop('additional_datasets', []))
+        check.duplicate_datasets(datasets)
 
         for index, dataset in enumerate(datasets):
             variable = deepcopy(raw_variable)
             variable.update(dataset)
+
             variable['recipe_dataset_index'] = index
             if ('cmor_table' not in variable
                     and variable.get('project') in CMOR_TABLES):
@@ -939,18 +1008,7 @@ class Recipe:
             if activity:
                 variable['activity'] = activity
             check.variable(variable, required_keys)
-            if 'fx_files' in variable:
-                for fx_file in variable['fx_files']:
-                    DATASET_KEYS.add(fx_file)
-                # Get the fx files
-                variable['fx_files'] = get_input_fx_filelist(
-                    variable=variable,
-                    rootpath=self._cfg['rootpath'],
-                    drs=self._cfg['drs'])
-                logger.info("Using fx files for var %s of dataset %s:\n%s",
-                            variable['short_name'], variable['dataset'],
-                            variable['fx_files'])
-
+        variables = self._expand_ensemble(variables)
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
@@ -999,7 +1057,7 @@ class Recipe:
         but it will use the dataset info to compute the others
 
         Examples:
-
+        --------
         - {project: CMIP5, model: EC-Earth, ensemble: r1i1p1}
         - {project: CMIP6, model: EC-Earth, ensemble: r1i1p1f1}
         will generate alias 'CMIP5' and 'CMIP6'
@@ -1022,7 +1080,7 @@ class Recipe:
         - {project: CMIP5, model: EC-Earth, experiment: historical}
         will generate alias 'EC-Earth'
 
-        Parameters
+        Parameters:
         ----------
         preprocessor_output : dict
             preprocessor output dictionary
