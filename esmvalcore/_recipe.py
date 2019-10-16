@@ -403,9 +403,8 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
             fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
                                      var)
     else:
-        raise NotImplementedError("Project %s not \
-                                  supported with fx \
-                                  variables" % var["project"])
+        raise RecipeError(
+            f"Project {var['project']} not supported with fx variables")
 
     fx_files = get_input_filelist(variable=fx_var,
                                   rootpath=config_user['rootpath'],
