@@ -674,8 +674,18 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         ancestors = grouped_ancestors.get(variable['filename'])
         if not ancestors:
             ancestors = _get_input_files(variable, config_user)
+            from pprint import pprint
+            pprint(variable)
             if config_user.get('skip-nonexistent') and not ancestors:
                 logger.info("Skipping: no data found for %s", variable)
+                continue
+            if all([not ancestors,
+                    'OBS' in variable['project'],
+                    variable['frequency'] == 'fx']):
+                logger.warning(
+                    "fx variable '%s' for %s dataset '%s' not found",
+                    variable['short_name'], variable['project'],
+                    variable['dataset'])
                 continue
         product = PreprocessorFile(
             attributes=variable,

@@ -93,11 +93,6 @@ def variable(var, required_keys):
 def data_availability(input_files, var):
     """Check if the required input data is available."""
     if not input_files:
-        if 'OBS' in var['project'] and var['frequency'] == 'fx':
-            logger.warning(
-                "fx variable '%s' for %s dataset '%s' not found",
-                var['short_name'], var['project'], var['dataset'])
-            return
         raise RecipeError("No input files found for variable {}".format(var))
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))

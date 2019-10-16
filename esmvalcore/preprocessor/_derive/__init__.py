@@ -52,6 +52,10 @@ def get_required(short_name, project):
         List of dictionaries (including at least the key `short_name`).
 
     """
+    if short_name not in ALL_DERIVED_VARIABLES:
+        raise NotImplementedError(
+            f"Cannot derive variable '{short_name}', no derivation script "
+            f"available")
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
     variables = deepcopy(DerivedVariable().required(project))
     return variables
