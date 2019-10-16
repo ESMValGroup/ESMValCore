@@ -223,7 +223,9 @@ def zonal_meridional_statistics(cube, operator, coord, fx_files=None):
 
 def load_fx_files(fx_files):
     """
-    Load the fx_files.
+    Load the fx_files data.
+
+    Assumes that there is only one fx_file requested.
 
     Parameters
     ----------
@@ -241,7 +243,8 @@ def load_fx_files(fx_files):
         logger.info('Attempting to load %s from file: %s', key, fx_file)
         fx_cube = iris.load_cube(fx_file)
         fx_data = fx_cube.core_data()
-    return fx_data
+        return fx_data
+    return None
 
 
 def tile_grid_areas(cube, grid_areas):
@@ -349,7 +352,18 @@ def area_statistics(cube, operator, fx_files=None):
         if input data cube has different shape than grid area weights
     """
     coord_names = ['longitude', 'latitude']
+    operation = get_iris_analysis_operation(operator)
 
+    # Many IRIS analysis functions do not accept weights arguments
+    # and some operators do not require fx files.
+    if operator not in weighted_operators:
+        return cube.collapsed(coord_names, operation)
+
+
+    if fx_files == None:
+        raise ValueError("Operator {} requires fx_files. ".format(operator))
+
+    # All weighted operators need FX files:
     if not fx_files and cube.coord('latitude').points.ndim == 2 and \
         operator in weighted_operators:
         logger.error(
@@ -357,32 +371,23 @@ def area_statistics(cube, operator, fx_files=None):
         raise ValueError('Fx_file needed to calculate weighted area'
                          'statitics.')
 
-    if operator in weighted_operators and fx_files == None:
-        raise ValueError("Operator {} requires fx_files. ".format(operator))
-
-    if fx_files:
-        grid_areas = load_fx_files(fx_files)
-        grid_areas = tile_grid_areas(cube, grid_areas)
-        if cube.shape != grid_areas.shape:
-            raise ValueError('Cube shape ({}) doesn`t match grid area shape '
-                             '({})'.format(cube.shape, grid_areas.shape))
+    grid_areas = load_fx_files(fx_files)
+    grid_areas = tile_grid_areas(cube, grid_areas)
+    if cube.shape != grid_areas.shape:
+        raise ValueError('Cube shape ({}) doesn`t match grid area shape '
+                         '({})'.format(cube.shape, grid_areas.shape))
 
     #if grid_areas is None or not grid_areas.any():
 #        cube = _guess_bounds(cube, coord_names)
 #        grid_areas = iris.analysis.cartography.area_weights(cube)
 #        logger.info('Calculated grid area shape: %s', grid_areas.shape)
 
-    operation = get_iris_analysis_operation(operator)
-
     # TODO: implement weighted stdev, median, s var when available in iris.
     # See iris issue: https://github.com/SciTools/iris/issues/3208
-    if operator in weighted_operators:
-        return cube.collapsed(coord_names,
-                              operation,
-                              weights=np.array(grid_areas))
+    return cube.collapsed(coord_names,
+                          operation,
+                          weights=np.array(grid_areas))
 
-    # Many IRIS analysis functions do not accept weights arguments.
-    return cube.collapsed(coord_names, operation)
 
 
 def extract_named_regions(cube, regions):

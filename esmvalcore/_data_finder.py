@@ -214,7 +214,7 @@ def _find_input_dirs(variable, rootpath, drs, fx_var=None):
                 dirnames.append(dirname)
             else:
                 logger.debug("Skipping non-existent %s", dirname)
-
+                # assert 0
     return dirnames
 
 
@@ -227,7 +227,7 @@ def _get_filenames_glob(variable, drs, fx_var=None):
 
 
 def _find_input_files(variable, rootpath, drs, fx_var=None):
-    logger.debug("Looking for input %sfiles for variable %s of dataset %s",
+    logger.debug("_find_input_files: Looking for input %sfiles for variable %s of dataset %s",
                  fx_var + ' fx ' if fx_var else '', variable['short_name'],
                  variable['dataset'])
 
@@ -248,6 +248,7 @@ def get_input_filelist(variable, rootpath, drs):
 def get_input_fx_filelist(variable, rootpath, drs):
     """Return a dict with the full path to fx input files."""
     fx_files = {}
+    print('get_input_fx_filelist',variable, rootpath, drs)
     for fx_var in variable['fx_files']:
         var = dict(variable)
         var['mip'] = replace_mip_fx(fx_var)
@@ -255,10 +256,14 @@ def get_input_fx_filelist(variable, rootpath, drs):
         var['frequency'] = table.frequency
         realm = getattr(table.get(var['short_name']), 'modeling_realm', None)
         var['modeling_realm'] = realm if realm else table.realm
+        # Ocean Biogeochemistry does not have dedicated fx files.
+        if var['modeling_realm'] == ['ocnBgchem',]:
+            var['modeling_realm'] = ['ocean',]
+        print('var', var)
 
         files = _find_input_files(var, rootpath, drs, fx_var)
         fx_files[fx_var] = files[0] if files else None
-
+        print('get_input_fx_filelist:', fx_var,  var['modeling_realm'])
     return fx_files
 
 

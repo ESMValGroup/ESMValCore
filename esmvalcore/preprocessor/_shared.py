@@ -9,8 +9,8 @@ import iris
 
 logger = logging.getLogger(__name__)
 
-allowed_operators = ['mean', 'median', 'std_dev', 'variance', 'min', 'max']
-weighted_operators = ['mean',]
+allowed_operators = ['mean', 'median', 'std_dev', 'variance', 'min', 'max', 'sum']
+weighted_operators = ['mean','sum', ]
 
 
 def get_iris_analysis_operation(operator):
