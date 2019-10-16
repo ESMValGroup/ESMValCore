@@ -12,7 +12,7 @@ class DerivedVariable(DerivedVariableBase):
         # Required variables
         required = [
             {'short_name': 'nbp'},
-            {'short_name': 'sftlf', 'mip': 'fx'},
+            {'short_name': 'sftlf', 'mip': 'fx', 'optional': True},
         ]
         return required
 

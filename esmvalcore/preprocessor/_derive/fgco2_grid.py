@@ -12,14 +12,14 @@ class DerivedVariable(DerivedVariableBase):
         # Required variables
         required = [
             {'short_name': 'fgco2'},
-            {'short_name': 'sftlf', 'mip': 'fx'},
-            {'short_name': 'sftof', 'mip': 'fx'},
+            {'short_name': 'sftlf', 'mip': 'fx', 'optional': True},
+            {'short_name': 'sftof', 'mip': 'fx', 'optional': True},
         ]
         if project == 'CMIP6':
             required = [
                 {'short_name': 'fgco2'},
-                {'short_name': 'sftlf', 'mip': 'fx'},
-                {'short_name': 'sftof', 'mip': 'Ofx'},
+                {'short_name': 'sftlf', 'mip': 'fx', 'optional': True},
+                {'short_name': 'sftof', 'mip': 'Ofx', 'optional': True},
             ]
         return required
 

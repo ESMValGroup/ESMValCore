@@ -93,6 +93,8 @@ def variable(var, required_keys):
 def data_availability(input_files, var):
     """Check if the required input data is available."""
     if not input_files:
+        if var.get('optional'):
+            return
         raise RecipeError("No input files found for variable {}".format(var))
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))
