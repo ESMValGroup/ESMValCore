@@ -5,7 +5,6 @@ from abc import abstractmethod
 class DerivedVariableBase:
     """Base class for derived variables."""
 
-    @property
     @staticmethod
     @abstractmethod
     def required():
