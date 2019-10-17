@@ -251,11 +251,7 @@ class PreprocessorFile(TrackedFile):
         self.settings = copy.deepcopy(settings)
         if 'save' not in self.settings:
             self.settings['save'] = {}
-        if 'filename' in self.settings['save']:
-            if self.settings['save']['filename'] != 'dry-run':
-                self.settings['save']['filename'] = self.filename
-        else:
-            self.settings['save']['filename'] = self.filename
+        self.settings['save']['filename'] = self.filename
 
         self.files = [a.filename for a in ancestors or ()]
 
@@ -302,8 +298,7 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
-        if self._cubes is not None and \
-                self.settings['save']['filename'] != 'dry-run':
+        if self._cubes is not None and 'dryrun' not in self.settings['save']:
             self.files = preprocess(self._cubes, 'save',
                                     **self.settings['save'])
             self.files = preprocess(self.files, 'cleanup',
@@ -411,9 +406,11 @@ class PreprocessingTask(BaseTask):
 
         for product in self.products:
             product.close()
-        metadata_files = write_metadata(self.products,
-                                        self.write_ncl_interface)
-        return metadata_files
+        input_products = [p for p in self.products if step in p.settings]
+        if 'dryrun' not in input_products[0].settings['save']:
+            metadata_files = write_metadata(self.products,
+                                            self.write_ncl_interface)
+            return metadata_files
 
     def __str__(self):
         """Get human readable description."""
