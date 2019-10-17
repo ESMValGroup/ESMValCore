@@ -14,16 +14,17 @@ def cubes():
                                  units='kg m-2',
                                  standard_name='soil_carbon_content')
 
-    c_veg_cube = iris.cube.Cube([[10.0, 20.0 ],
+    c_veg_cube = iris.cube.Cube([[10.0, 20.0],
                                  [50.0, 100.0]],
                                 units='kg m-2',
                                 standard_name='vegetation_carbon_content')
     return iris.cube.CubeList([c_soil_cube, c_veg_cube])
 
 
-def test_et_calculation(cubes):
+def test_ctotal_calculation(cubes):
     derived_var = ctotal.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
     np.testing.assert_allclose(
-        out_cube.data, np.array([[11.0, 22.0], [50.0, 120.0]]))
+        out_cube.data, np.array([[11.0, 22.0],
+                                 [50.0, 120.0]]))
     assert out_cube.units == Unit('kg m-2')
