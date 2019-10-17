@@ -84,6 +84,45 @@ the ozone 3D field. In this case, a derivation function is provided to
 vertically integrate the ozone and obtain total column ozone for direct
 comparison with the observations.
 
+All derivations scripts are located in
+`ESMValCore/esmvalcore/preprocessor/_derive/
+<https://github.com/ESMValGroup/ESMValCore/tree/development/esmvalcore/preprocessor/_derive>`_.
+A typical example looks like this:
+
+.. code-block:: py
+
+   """Derivation of variable `dummy`."""
+   from ._baseclass import DerivedVariableBase
+
+
+   class DerivedVariable(DerivedVariableBase):
+       """Derivation of variable `dummy`."""
+
+       @staticmethod
+       def required(project):
+           """Declare the variables needed for derivation."""
+           required = [
+               {'short_name': 'var_a'},
+               {'short_name': 'var_b', 'mip': 'fx', 'optional': True},
+           ]
+           return required
+
+       @staticmethod
+       def calculate(cubes):
+           """Compute `dummy`."""
+
+           # `cubes` is a CubeList containing all required variables.
+           cube = do_something_with(cubes)
+
+           # Return single cube at the end
+           return cube
+
+Note that you can also declare a required variable as ``optional``, which allows
+the skipping of this particular variable during data extraction. For example,
+this is useful for `fx` variables which are often not available for
+observational datasets. Otherwise, the tool will fail if not all required
+variables are available for all datasets.
+
 To contribute a new derived variable, it is also necessary to define a name for
 it and to provide the corresponding CMOR table. This is to guarantee the proper
 metadata definition is attached to the derived data. Such custom CMOR tables
