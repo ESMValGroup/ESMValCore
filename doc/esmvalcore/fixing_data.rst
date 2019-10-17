@@ -16,6 +16,14 @@ coordinate bounds like ''lat_bnds'') or problems with the actual data
 The ESMValTool can apply on the fly fixes to data sets that have
 known errors that can be fixed automatically.
 
+Discovering potential issues with the data
+==========================================
+
+You can run `esmvaltool` in a dry run mode by applying the `--dry-run` command line option: that will
+run the data finding module and the CMOR checks and fixes modules and anything that is not fixed on the fly
+will result in an exception that is logged to `main_log.txt`; you can check those potential issues
+and follow up with implementing the needed fixes as described below.
+
 Fix structure
 =============
 
