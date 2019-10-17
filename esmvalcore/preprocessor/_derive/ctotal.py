@@ -25,11 +25,8 @@ class DerivedVariable(DerivedVariableBase):
             Constraint(name='soil_carbon_content'))
         c_veg_cube = cubes.extract_strict(
             Constraint(name='vegetation_carbon_content'))
-
         c_total_cube = c_soil_cube + c_veg_cube
-
-        # c_total.var_name = 'ctotal'
-        c_total_cube.standard_name = None 
+        c_total_cube.standard_name = None
         c_total_cube.long_name = 'Total Carbon Stock'
         c_total_cube.units = c_soil_cube.units
         return c_total_cube
