@@ -28,5 +28,5 @@ class DerivedVariable(DerivedVariableBase):
         c_total_cube = c_soil_cube + c_veg_cube
         c_total_cube.standard_name = None
         c_total_cube.long_name = 'Total Carbon Stock'
-        c_total_cube.units = c_soil_cube.units
+#        c_total_cube.units = c_soil_cube.units
         return c_total_cube
