@@ -187,7 +187,7 @@ When loading these files, ESMValTool replaces the placeholders ``[item]`` with
 actual values supplied for by the user in ``config-user.yml`` and
 ``recipe.yml``. The resulting real path would look something like this:
 
-.. code-block::
+.. code-block:: bash
 
     MOHC/HadGEM2-CC/rcp85/mon/ocean/Omon/r1i1p1/latest/tos
 

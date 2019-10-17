@@ -218,6 +218,20 @@ extract the levels and vertically regrid onto the vertical levels of
           # levels: {dataset: ERA-Interim, coordinate: air_pressure}
           scheme: linear_horizontal_extrapolate_vertical
 
+By default, vertical interpolation is performed in the dimension coordinate of
+the z axis. If you want to use another coordinate (for example, ``air_pressure``'
+in variables that are provided in model levels and not pressure levels) you can
+override that automatic choice by providing the name of the desired coordinate:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_select_levels_from_dataset:
+        extract_levels:
+          levels: ERA-Interim
+          scheme: linear_horizontal_extrapolate_vertical
+          coordinate: air_pressure
+
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
 
@@ -342,7 +356,7 @@ diagnostic is, in turn, a dictionary on its own, and members of it can be
 accessed in the diagnostic through a simple loop over the ``config`` diagnostic
 variable items e.g.:
 
-.. code-block::
+.. code-block:: python
 
     for filename, attributes in config['input_data'].items():
         sftlf_file = attributes['fx_files']['sftlf']

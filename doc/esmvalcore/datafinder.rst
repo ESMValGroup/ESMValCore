@@ -50,7 +50,7 @@ section.
 Data retrieval
 ==============
 Data retrieval in ESMValTool has two main aspects from the user's point of
-view: 
+view:
 
 * data can be found by the tool, subject to availability on disk;
 * it is the user's responsibility to set the correct data retrieval parameters;
@@ -73,7 +73,7 @@ set the paths are ``rootpath`` and ``drs``. ``rootpath`` contains pointers to
 of directory structure the root paths are structured by. It is important to
 first discuss the ``drs`` parameter: as we've seen in the previous section, the
 DRS as a standard is used for both file naming conventions and for directory
-structures. 
+structures.
 
 .. _config-user-drs:
 
@@ -81,7 +81,7 @@ Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``
 ---------------------------------------------------------------------
 Whreas ESMValTool will **always** use the CMOR standard for file naming (please
 refer above), by setting the ``drs`` parameter the user tells the tool what
-type of root paths they need the data from, e.g.: 
+type of root paths they need the data from, e.g.:
 
   .. code-block:: yaml
 
@@ -156,7 +156,7 @@ Explaining ``config-user/rootpath:``
 * ``default``: this is the `root` path(s) to where files are stored without any
   DRS-like directory structure; in a nutshell, this is a single directory that
   should contain all the files needed by the run, without any sub-directory
-  structure. 
+  structure.
 
 * ``RAWOBS``: this is the `root` path(s) to where the raw observational data
   files are stored; this is used by ``cmorize_obs``.
@@ -168,7 +168,7 @@ information on the specific datasets that are needed for the analysis. This
 information, together with the CMOR convention for naming files (see CMOR-DRS_)
 will allow the tool to search and find the right files. The specific
 datasets are listed in any recipe, under either the ``datasets`` and/or
-``additional_datasets`` sections, e.g. 
+``additional_datasets`` sections, e.g.
 
 .. code-block:: yaml
 
@@ -212,20 +212,20 @@ The tool will then use the root path ``/badc/cmip6/data/CMIP6/CMIP`` and the
 dataset information and will assemble the full DRS path using information from
 CMOR-DRS_ and establish the path to the files as:
 
-.. code-block::
+.. code-block:: bash
 
   /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon
 
 then look for variable ``ta`` and specifically the latest version of the data
-file: 
+file:
 
-.. code-block::
+.. code-block:: bash
 
   /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/
 
 and finally, using the file naming definition from CMOR-DRS_ find the file:
 
-.. code-block::
+.. code-block:: bash
 
   /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/ta_Amon_UKESM1-0-LL_historical_r1i1p1f2_gn_195001-201412.nc
 
