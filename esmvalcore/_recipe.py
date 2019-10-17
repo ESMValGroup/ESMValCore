@@ -1269,7 +1269,8 @@ class Recipe:
         check.tasks_valid(tasks)
 
         # Resolve diagnostic ancestors
-        self._resolve_diagnostic_ancestors(tasks)
+        if not self.dry_check:
+            self._resolve_diagnostic_ancestors(tasks)
 
         # Select only requested tasks
         tasks = get_flattened_tasks(tasks)
