@@ -414,6 +414,8 @@ class DiagnosticTask(BaseTask):
             rerun_msg += ' '.join('{}="{}"'.format(k, env[k]) for k in env
                                   if k not in os.environ)
         rerun_msg += ' ' + ' '.join(cmd)
+        if cmd[1].endswith('.py'):
+            rerun_msg = rerun_msg.replace('.py', '.py -i', 1)
         logger.info("To re-run this diagnostic script, run:\n%s", rerun_msg)
 
         try:
