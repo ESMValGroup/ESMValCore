@@ -259,7 +259,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _create_cube(src_cube, data, levels):
+def _create_cube(src_cube, data, src_levels, levels, ):
     """
     Generate a new cube with the interpolated data.
 
@@ -291,8 +291,8 @@ def _create_cube(src_cube, data, levels):
 
     """
     # Get the source cube vertical coordinate and associated dimension.
-    src_levels = src_cube.coord(axis='z', dim_coords=True)
-    z_dim, = src_cube.coord_dims(src_levels)
+    z_coord = src_cube.coord(axis='z', dim_coords=True)
+    z_dim, = src_cube.coord_dims(z_coord)
 
     if data.shape[z_dim] != levels.size:
         emsg = ('Mismatch between data and levels for data dimension {!r}, '
@@ -341,20 +341,23 @@ def _create_cube(src_cube, data, levels):
     return result
 
 
-def _vertical_interpolate(cube, levels, interpolation, extrapolation):
+def _vertical_interpolate(cube, src_levels, levels, interpolation,
+                          extrapolation):
     """Perform vertical interpolation."""
     # Determine the source levels and axis for vertical interpolation.
-    src_levels = cube.coord(axis='z', dim_coords=True)
-    z_axis, = cube.coord_dims(src_levels)
+    z_axis, = cube.coord_dims(cube.coord(axis='z', dim_coords=True))
 
     # Broadcast the 1d source cube vertical coordinate to fully
     # describe the spatial extent that will be interpolated.
-    broadcast_shape = cube.shape[z_axis:]
-    reshape = [1] * len(broadcast_shape)
-    reshape[0] = cube.shape[z_axis]
-    src_levels_reshaped = src_levels.points.reshape(reshape)
-    src_levels_broadcast = np.broadcast_to(src_levels_reshaped,
-                                           broadcast_shape)
+    if src_levels.shape != cube.shape:
+        broadcast_shape = cube.shape[z_axis:]
+        reshape = [1] * len(broadcast_shape)
+        reshape[0] = cube.shape[z_axis]
+        src_levels_reshaped = src_levels.points.reshape(reshape)
+        src_levels_broadcast = np.broadcast_to(
+            src_levels_reshaped, broadcast_shape)
+    else:
+        src_levels_broadcast = src_levels.points
 
     # force mask onto data as nan's
     if np.ma.is_masked(cube.data):
@@ -377,10 +380,10 @@ def _vertical_interpolate(cube, levels, interpolation, extrapolation):
         new_data = np.ma.array(new_data, mask=mask, fill_value=_MDI)
 
     # Construct the resulting cube with the interpolated data.
-    return _create_cube(cube, new_data, levels.astype(float))
+    return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
-def extract_levels(cube, levels, scheme):
+def extract_levels(cube, levels, scheme, coordinate=None):
     """
     Perform vertical interpolation.
 
@@ -398,6 +401,8 @@ def extract_levels(cube, levels, scheme):
         'nearest',
         'nearest_horizontal_extrapolate_vertical',
         'linear_horizontal_extrapolate_vertical'.
+    coordinate :  optional str
+        The coordinate to interpolate
 
     Returns
     -------
@@ -427,14 +432,18 @@ def extract_levels(cube, levels, scheme):
     levels = np.array(levels, ndmin=1)
 
     # Get the source cube vertical coordinate, if available.
-    src_levels = cube.coord(axis='z', dim_coords=True)
+    if coordinate:
+        src_levels = cube.coord(coordinate)
+    else:
+        src_levels = cube.coord(axis='z', dim_coords=True)
 
     if (src_levels.shape == levels.shape
             and np.allclose(src_levels.points, levels)):
         # Only perform vertical extraction/interploation if the source
         # and target levels are not "similar" enough.
         result = cube
-    elif set(levels).issubset(set(src_levels.points)):
+    elif len(src_levels.shape) == 1 and \
+         set(levels).issubset(set(src_levels.points)):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
         coord_values = {name: lambda cell: cell.point in set(levels)}
@@ -446,7 +455,8 @@ def extract_levels(cube, levels, scheme):
             raise ValueError(emsg.format(list(levels), name))
     else:
         # As a last resort, perform vertical interpolation.
-        result = _vertical_interpolate(cube, levels, scheme, extrap_scheme)
+        result = _vertical_interpolate(
+            cube, src_levels, levels, scheme, extrap_scheme)
 
     return result
 
