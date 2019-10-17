@@ -5,21 +5,40 @@ from ._shared import grid_area_correction
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `fgco2_grid`."""
-
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        # Required variables
+
         required = [
-            {'short_name': 'fgco2'},
-            {'short_name': 'sftlf', 'mip': 'fx', 'optional': True},
-            {'short_name': 'sftof', 'mip': 'fx', 'optional': True},
+            {
+                'short_name': 'fgco2'
+            },
+            {
+                'short_name': 'sftlf',
+                'mip': 'fx',
+                'optional': True
+            },
+            {
+                'short_name': 'sftof',
+                'mip': 'fx',
+                'optional': True
+            },
         ]
         if project == 'CMIP6':
             required = [
-                {'short_name': 'fgco2'},
-                {'short_name': 'sftlf', 'mip': 'fx', 'optional': True},
-                {'short_name': 'sftof', 'mip': 'Ofx', 'optional': True},
+                {
+                    'short_name': 'fgco2'
+                },
+                {
+                    'short_name': 'sftlf',
+                    'mip': 'fx',
+                    'optional': True
+                },
+                {
+                    'short_name': 'sftof',
+                    'mip': 'Ofx',
+                    'optional': True
+                },
             ]
         return required
 

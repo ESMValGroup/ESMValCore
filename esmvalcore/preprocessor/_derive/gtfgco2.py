@@ -44,19 +44,30 @@ def calculate_total_flux(fgco2_cube, cube_area):
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `gtfgco2`."""
-
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        # Required variables
+
         required = [
-            {'short_name': 'fgco2', 'mip': 'Omon'},
-            {'short_name': 'areacello', 'mip': 'fx'},
+            {
+                'short_name': 'fgco2',
+                'mip': 'Omon'
+            },
+            {
+                'short_name': 'areacello',
+                'mip': 'fx'
+            },
         ]
         if project == 'CMIP6':
             required = [
-                {'short_name': 'fgco2', 'mip': 'Omon'},
-                {'short_name': 'areacello', 'mip': 'Ofx'},
+                {
+                    'short_name': 'fgco2',
+                    'mip': 'Omon'
+                },
+                {
+                    'short_name': 'areacello',
+                    'mip': 'Ofx'
+                },
             ]
         return required
 

@@ -61,11 +61,7 @@ def get_required(short_name, project):
     return variables
 
 
-def derive(cubes,
-           short_name,
-           long_name,
-           units,
-           standard_name=None):
+def derive(cubes, short_name, long_name, units, standard_name=None):
     """Derive variable.
 
     Parameters

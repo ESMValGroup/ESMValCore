@@ -6,14 +6,19 @@ from ._shared import grid_area_correction
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `lai_grid`."""
-
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        # Required variables
+
         required = [
-            {'short_name': 'lai'},
-            {'short_name': 'sftlf', 'mip': 'fx', 'optional': True},
+            {
+                'short_name': 'lai'
+            },
+            {
+                'short_name': 'sftlf',
+                'mip': 'fx',
+                'optional': True
+            },
         ]
         return required
 

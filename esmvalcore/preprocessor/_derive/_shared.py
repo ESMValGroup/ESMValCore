@@ -73,8 +73,9 @@ def grid_area_correction(cubes, standard_name, ocean_var=False):
     """Correct (flux) variable defined relative to land/sea area."""
     cube = cubes.extract_strict(Constraint(name=standard_name))
     core_data = cube.core_data()
-    land_fraction = _get_land_fraction(
-        cubes, standard_name, derive_from_ocean_fraction=ocean_var)
+    land_fraction = _get_land_fraction(cubes,
+                                       standard_name,
+                                       derive_from_ocean_fraction=ocean_var)
     if land_fraction is not None:
         if ocean_var:
             land_fraction = 1.0 - land_fraction

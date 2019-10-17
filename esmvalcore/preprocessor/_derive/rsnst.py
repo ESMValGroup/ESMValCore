@@ -11,16 +11,23 @@ from ._baseclass import DerivedVariableBase
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `rsnst`."""
-
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        # Required variables
+
         required = [
-            {'short_name': 'rsds'},
-            {'short_name': 'rsdt'},
-            {'short_name': 'rsus'},
-            {'short_name': 'rsut'},
+            {
+                'short_name': 'rsds'
+            },
+            {
+                'short_name': 'rsdt'
+            },
+            {
+                'short_name': 'rsus'
+            },
+            {
+                'short_name': 'rsut'
+            },
         ]
         return required
 

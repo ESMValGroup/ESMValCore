@@ -11,11 +11,10 @@ logger = logging.getLogger(__name__)
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `lwp`."""
-
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        # Required variables
+
         required = [
             {
                 'short_name': 'clwvi'
