@@ -247,8 +247,11 @@ def _dataset_to_file(variable, config_user):
                 "data", variable['short_name'])
             selected_var = required_vars[0]
         _augment(selected_var, variable)
+        _add_cmor_info(selected_var, override=True)
         files = _get_input_files(selected_var, config_user)
-    check.data_availability(files, variable)
+        check.data_availability(files, selected_var)
+    else:
+        check.data_availability(files, variable)
     return files[0]
 
 
@@ -803,6 +806,7 @@ def _get_derive_input_variables(variables, config_user):
                                          variable['project'])
             for var in required_vars:
                 _augment(var, variable)
+                _add_cmor_info(var, override=True)
                 files = _get_input_files(var, config_user)
                 if var.get('optional') and not files:
                     logger.info(
