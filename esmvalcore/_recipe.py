@@ -232,20 +232,22 @@ def _augment(base, update):
 
 def _dataset_to_file(variable, config_user):
     """Find the first file belonging to dataset from variable info."""
-    files = get_input_filelist(
-        variable=variable,
-        rootpath=config_user['rootpath'],
-        drs=config_user['drs'],
-    )
+    files = _get_input_files(variable, config_user)
     if not files and variable.get('derive'):
-        first_required = get_required(variable['short_name'],
-                                      variable['project'])[0]
-        _augment(first_required, variable)
-        files = get_input_filelist(
-            variable=first_required,
-            rootpath=config_user['rootpath'],
-            drs=config_user['drs'],
-        )
+        required_vars = get_required(variable['short_name'],
+                                     variable['project'])
+        for required_var in required_vars:
+            if not required_var.get('optional'):
+                selected_var = required_var
+                break
+        else:
+            logger.warning(
+                "All required variables for the derivation of '%s' are marked "
+                "as 'optional', this might cause errors due to unavailable "
+                "data", variable['short_name'])
+            selected_var = required_vars[0]
+        _augment(selected_var, variable)
+        files = _get_input_files(selected_var, config_user)
     check.data_availability(files, variable)
     return files[0]
 
@@ -406,9 +408,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
         raise RecipeError(
             f"Project {var['project']} not supported with fx variables")
 
-    fx_files = get_input_filelist(variable=fx_var,
-                                  rootpath=config_user['rootpath'],
-                                  drs=config_user['drs'])
+    fx_files = _get_input_files(fx_var, config_user)
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
@@ -471,18 +471,23 @@ def _read_attributes(filename):
 
 
 def _get_input_files(variable, config_user):
-    """Get the input files for a single dataset."""
-    # Find input files locally.
+    """Get the input files for a single dataset (locally and via download)."""
     input_files = get_input_filelist(
         variable=variable,
         rootpath=config_user['rootpath'],
-        drs=config_user['drs'],
-    )
+        drs=config_user['drs'])
 
     # Set up downloading using synda if requested.
     # Do not download if files are already available locally.
     if config_user['synda_download'] and not input_files:
         input_files = synda_search(variable)
+
+    return input_files
+
+
+def _get_ancestors(variable, config_user):
+    """Get the input files for a single dataset and setup provenance."""
+    input_files = _get_input_files(variable, config_user)
 
     logger.info("Using input files for variable %s of dataset %s:\n%s",
                 variable['short_name'], variable['dataset'],
@@ -672,14 +677,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         _update_regrid_time(variable, settings)
         ancestors = grouped_ancestors.get(variable['filename'])
         if not ancestors:
-            ancestors = _get_input_files(variable, config_user)
+            ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') and not ancestors:
                 logger.info("Skipping: no data found for %s", variable)
-                continue
-            if variable.get('optional') and not ancestors:
-                logger.info(
-                    "Skipping: no data found for %s which is marked as "
-                    "'optional'", variable)
                 continue
         product = PreprocessorFile(
             attributes=variable,
@@ -791,10 +791,9 @@ def _get_derive_input_variables(variables, config_user):
 
     for variable in variables:
         group_prefix = variable['variable_group'] + '_derive_input_'
-        if not variable.get('force_derivation') and get_input_filelist(
-                variable=variable,
-                rootpath=config_user['rootpath'],
-                drs=config_user['drs']):
+        if not variable.get('force_derivation') and _get_input_files(
+                variable,
+                config_user):
             # No need to derive, just process normally up to derive step
             var = deepcopy(variable)
             append(group_prefix, var)
@@ -804,8 +803,16 @@ def _get_derive_input_variables(variables, config_user):
                                          variable['project'])
             for var in required_vars:
                 _augment(var, variable)
-                append(group_prefix, var)
+                files = _get_input_files(var, config_user)
+                if var.get('optional') and not files:
+                    logger.info(
+                        "Skipping: no data found for %s which is marked as "
+                        "'optional'", var)
+                else:
+                    append(group_prefix, var)
 
+    # An empty derive_input (due to all variables marked as 'optional' is
+    # handled at a later step
     return derive_input
 
 
