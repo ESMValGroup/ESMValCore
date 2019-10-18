@@ -35,4 +35,4 @@ class DerivedVariable(DerivedVariableBase):
         coastal regions.
 
         """
-        return grid_area_correction(cubes, 'leaf_area_index')
+        return grid_area_correction(cubes, 'lai')

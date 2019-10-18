@@ -55,7 +55,4 @@ class DerivedVariable(DerivedVariableBase):
         coastal regions.
 
         """
-        return grid_area_correction(
-            cubes,
-            'surface_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon',
-            ocean_var=True)
+        return grid_area_correction(cubes, 'fgco2', ocean_var=True)

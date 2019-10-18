@@ -35,5 +35,4 @@ class DerivedVariable(DerivedVariableBase):
         coastal regions.
 
         """
-        return grid_area_correction(cubes,
-                                    'gross_primary_productivity_of_carbon')
+        return grid_area_correction(cubes, 'gpp')
