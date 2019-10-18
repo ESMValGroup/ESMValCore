@@ -237,21 +237,13 @@ def _dataset_to_file(variable, config_user):
         required_vars = get_required(variable['short_name'],
                                      variable['project'])
         for required_var in required_vars:
-            if not required_var.get('optional'):
-                selected_var = required_var
+            _augment(required_var, variable)
+            _add_cmor_info(required_var, override=True)
+            files = _get_input_files(required_var, config_user)
+            if files:
+                variable = required_var
                 break
-        else:
-            logger.warning(
-                "All required variables for the derivation of '%s' are marked "
-                "as 'optional', this might cause errors due to unavailable "
-                "data", variable['short_name'])
-            selected_var = required_vars[0]
-        _augment(selected_var, variable)
-        _add_cmor_info(selected_var, override=True)
-        files = _get_input_files(selected_var, config_user)
-        check.data_availability(files, selected_var)
-    else:
-        check.data_availability(files, variable)
+    check.data_availability(files, variable)
     return files[0]
 
 
