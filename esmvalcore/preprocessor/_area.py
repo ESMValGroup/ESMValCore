@@ -387,17 +387,17 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
                 else:
                     id_ = i
 
-                cc = cube.copy()
+                _cube = cube.copy()
                 coord = iris.coords.AuxCoord(
                     id_,
                     units='no_unit',
                     long_name="shape_id"
                 )
-                cc.add_aux_coord(coord)
+                _cube.add_aux_coord(coord)
 
-                select = da.broadcast_to(select, cc.shape)
-                cc.data = da.ma.masked_where(~select, cc.core_data())
-                cubelist.append(cc)
+                select = da.broadcast_to(select, _cube.shape)
+                _cube.data = da.ma.masked_where(~select, _cube.core_data())
+                cubelist.append(_cube)
             else:
                 selection |= select
 
