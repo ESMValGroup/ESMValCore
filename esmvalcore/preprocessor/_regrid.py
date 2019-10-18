@@ -4,10 +4,11 @@ import os
 import re
 from copy import deepcopy
 
-import iris
 import numpy as np
 import stratify
+import iris
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
+from iris.util import broadcast_to_shape
 
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
@@ -349,15 +350,8 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
     # Broadcast the 1d source cube vertical coordinate to fully
     # describe the spatial extent that will be interpolated.
-    if src_levels.shape != cube.shape:
-        broadcast_shape = cube.shape[z_axis:]
-        reshape = [1] * len(broadcast_shape)
-        reshape[0] = cube.shape[z_axis]
-        src_levels_reshaped = src_levels.points.reshape(reshape)
-        src_levels_broadcast = np.broadcast_to(
-            src_levels_reshaped, broadcast_shape)
-    else:
-        src_levels_broadcast = src_levels.points
+    src_levels_broadcast = broadcast_to_shape(
+        src_levels.points, cube.shape, cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
     if np.ma.is_masked(cube.data):
@@ -443,7 +437,7 @@ def extract_levels(cube, levels, scheme, coordinate=None):
         # and target levels are not "similar" enough.
         result = cube
     elif len(src_levels.shape) == 1 and \
-         set(levels).issubset(set(src_levels.points)):
+            set(levels).issubset(set(src_levels.points)):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
         coord_values = {name: lambda cell: cell.point in set(levels)}
