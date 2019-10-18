@@ -356,7 +356,7 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
             "Invalid value for `method`. Choose from 'contains', ",
             "'representative'.")
 
-    geometries=fiona.open(shapefile)
+    geometries = fiona.open(shapefile)
 
     if crop:
         cube = _crop_cube(cube, *geometries.bounds)
