@@ -356,21 +356,46 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
             "Invalid value for `method`. Choose from 'contains', ",
             "'representative'.")
 
-    with fiona.open(shapefile) as geometries:
-        if crop:
-            cube = _crop_cube(cube, *geometries.bounds)
-        lon_coord = cube.coord(axis='X')
-        lat_coord = cube.coord(axis='Y')
+    geometries=fiona.open(shapefile)
 
-        lon = lon_coord.points
-        lat = lat_coord.points
-        if lon_coord.ndim == 1 and lat_coord.ndim == 1:
-            lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+    if crop:
+        cube = _crop_cube(cube, *geometries.bounds)
 
-        if decomposed:
-            cubelist = iris.cube.CubeList()
-        else:
-            selection = np.zeros(lat.shape, dtype=bool)
+    lon = cube.coord(axis='X').points
+    lat = cube.coord(axis='Y').points
+    if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
+        lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+
+    if decomposed:
+        cubelist = iris.cube.CubeList()
+        for i, item in enumerate(geometries):
+            shape = shapely.geometry.shape(item['geometry'])
+            if method == 'contains':
+                select = shapely.vectorized.contains(shape, lon, lat)
+            if method == 'representative' or not select.any():
+                select = _select_representative_point(shape, lon, lat)
+            if 'ID' in item['properties']:
+                id_ = int(item['properties']['ID'])
+            elif 'id' in item['properties']:
+                id_ = int(item['properties']['id'])
+            else:
+                id_ = i
+
+            _cube = cube.copy()
+            coord = iris.coords.AuxCoord(
+                id_,
+                units='no_unit',
+                long_name="shape_id"
+            )
+            _cube.add_aux_coord(coord)
+
+            select = da.broadcast_to(select, _cube.shape)
+            _cube.data = da.ma.masked_where(~select, _cube.core_data())
+            cubelist.append(_cube)
+
+        cube = cubelist.merge_cube()
+    else:
+        selection = np.zeros(lat.shape, dtype=bool)
 
         for i, item in enumerate(geometries):
             shape = shapely.geometry.shape(item['geometry'])
@@ -379,32 +404,11 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
             if method == 'representative' or not select.any():
                 select = _select_representative_point(shape, lon, lat)
 
-            if decomposed:
-                if 'ID' in item['properties']:
-                    id_ = int(item['properties']['ID'])
-                elif 'id' in item['properties']:
-                    id_ = int(item['properties']['id'])
-                else:
-                    id_ = i
+            selection |= select
 
-                _cube = cube.copy()
-                coord = iris.coords.AuxCoord(
-                    id_,
-                    units='no_unit',
-                    long_name="shape_id"
-                )
-                _cube.add_aux_coord(coord)
+        selection = da.broadcast_to(selection, cube.shape)
+        cube.data = da.ma.masked_where(~selection, cube.core_data())
 
-                select = da.broadcast_to(select, _cube.shape)
-                _cube.data = da.ma.masked_where(~select, _cube.core_data())
-                cubelist.append(_cube)
-            else:
-                selection |= select
-
-        if decomposed:
-            cube = cubelist.merge_cube()
-        else:
-            selection = da.broadcast_to(selection, cube.shape)
-            cube.data = da.ma.masked_where(~selection, cube.core_data())
+    geometries.close()
 
     return cube
