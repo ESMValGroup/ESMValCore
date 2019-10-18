@@ -2,9 +2,10 @@
 import copy
 import logging
 import os
-
 from netCDF4 import Dataset
 from PIL import Image
+from PIL import ImageFile
+from PIL import PngImagePlugin
 from PIL.PngImagePlugin import PngInfo
 from prov.dot import prov_to_dot
 from prov.model import ProvDocument
@@ -12,7 +13,9 @@ from prov.model import ProvDocument
 from ._version import __version__
 
 logger = logging.getLogger(__name__)
-
+PngImagePlugin.MAX_TEXT_CHUNK=PngImagePlugin.MAX_TEXT_CHUNK*10
+ImageFile.SAFEBLOCK = ImageFile.SAFEBLOCK*10
+PngImagePlugin.MAX_TEXT_MEMORY = PngImagePlugin.MAX_TEXT_MEMORY*10
 ESMVALTOOL_URI_PREFIX = 'https://www.esmvaltool.org/'
 
 
@@ -228,6 +231,11 @@ class TrackedFile(object):
         }
         for key, value in attributes.items():
             pnginfo.add_text(exif_tags.get(key, key), value, zip=True)
+        logger.info("KEVIN PNG")
+        logger.info(filename)
+        PngImagePlugin.MAX_TEXT_CHUNK=PngImagePlugin.MAX_TEXT_CHUNK*10
+        ImageFile.SAFEBLOCK = ImageFile.SAFEBLOCK*10
+        PngImagePlugin.MAX_TEXT_MEMORY = PngImagePlugin.MAX_TEXT_MEMORY*10
         with Image.open(filename) as image:
             image.save(filename, pnginfo=pnginfo)
 

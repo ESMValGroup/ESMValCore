@@ -75,6 +75,7 @@ class CMIP6Info(object):
         'sit': 'sivol',
         'tro3': 'o3',
         'usi': 'siu',
+        'msftmyz':'msftmz',
         'vsi': 'siv',
     }
 

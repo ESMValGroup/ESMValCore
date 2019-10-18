@@ -263,7 +263,9 @@ def _write_ncl_metadata(output_dir, metadata):
                 dataset_info[key] = variable[key]
             else:
                 variable_info[key] = variable[key]
-
+    logger.info("KEVIN")
+    logger.info(variable_info)
+    variable_info.setdefault('short_name', variable_info['variable_group'])
     filename = os.path.join(output_dir,
                             variable_info['short_name'] + '_info.ncl')
     write_ncl_settings(info, filename)

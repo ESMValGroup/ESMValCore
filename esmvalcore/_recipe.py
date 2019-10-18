@@ -194,14 +194,19 @@ def _update_target_grid(variable, variables, settings, config_user):
         return
 
     grid = _special_name_to_dataset(variable, grid)
+    logger.info("KEVIN current ref grid %s", grid)
+    logger.info("KEVIN variable-datasets used %s", ";".join([ v['dataset'] for v in variables]))
 
-    if variable['dataset'] == grid:
+    if variable['dataset'] == grid: 
+        logger.info("KEVIN check1")
         del settings['regrid']
     elif any(grid == v['dataset'] for v in variables):
+        logger.info("KEVIN check2")
         settings['regrid']['target_grid'] = _dataset_to_file(
             _get_dataset_info(grid, variables), config_user)
     else:
         # Check that MxN grid spec is correct
+        logger.info("KEVIN check3")
         parse_cell_spec(settings['regrid']['target_grid'])
 
 
