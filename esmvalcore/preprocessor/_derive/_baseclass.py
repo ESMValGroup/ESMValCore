@@ -4,10 +4,12 @@ from abc import abstractmethod
 
 class DerivedVariableBase:
     """Base class for derived variables."""
+
     @staticmethod
     @abstractmethod
-    def required():
-        """List of required variables for derivation."""
+    def required(project):
+        """Declare the variables needed for derivation."""
+
     @staticmethod
     @abstractmethod
     def calculate(cubes):
