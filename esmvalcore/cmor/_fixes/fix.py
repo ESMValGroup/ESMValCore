@@ -151,7 +151,9 @@ class Fix(object):
                     fixes.append(classes[fix_name]())
                 except KeyError:
                     pass
-        else:
+        except ImportError:
+            pass
+        try:
             fixes_module = importlib.import_module(
             'esmvalcore.cmor._fixes.{0}.{1}'.format(project, dataset))
 
