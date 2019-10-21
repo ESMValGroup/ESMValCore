@@ -7,13 +7,11 @@ class Abs550aer(Fix):
     """Fixes for abs550aer"""
     def fix_metadata(self, cubes):
         """
-        Fix missing scalar dimension lamdba550nm
-        
+        Fix missing scalar dimension lambda550nm
         Parameters
         ----------
         cubes: iris CubeList
             List of cubes to fix
-        
         Returns
         -------
         iris.cube.CubeList
@@ -25,7 +23,10 @@ class Abs550aer(Fix):
                                          units='nm',
                                          bounds=None)
         for cube in cubes:
-            cube.add_aux_coord(lambda550nm)
+            try:
+                cube.add_aux_coord(lambda550nm)
+            except ValueError:
+                pass
         return cubes
 
 class Od550aer(Fix):
@@ -33,12 +34,10 @@ class Od550aer(Fix):
     def fix_metadata(self, cubes):
         """
         Fix missing scalar dimension lambda550nm
-        
         Parameters
         ----------
         cubes: iris CubeList
             List of cubes to fix
-        
         Returns
         -------
         iris.cube.CubeList
@@ -50,19 +49,21 @@ class Od550aer(Fix):
                                          units='nm',
                                          bounds=None)
         for cube in cubes:
-            cube.add_aux_coord(lambda550nm)
+            try:
+                cube.add_aux_coord(lambda550nm)
+            except ValueError:
+                pass
         return cubes
+
 class Od550lt1aer(Fix):
     """Fixes for od550lt1aer"""
     def fix_metadata(self, cubes):
         """
         Fix missing scalar dimension lambda550nm
-        
         Parameters
         ----------
         cubes: iris CubeList
             List of cubes to fix
-        
         Returns
         -------
         iris.cube.CubeList
@@ -74,5 +75,8 @@ class Od550lt1aer(Fix):
                                          units='nm',
                                          bounds=None)
         for cube in cubes:
-            cube.add_aux_coord(lambda550nm)
+            try:
+                cube.add_aux_coord(lambda550nm)
+            except ValueError:
+                pass
         return cubes
