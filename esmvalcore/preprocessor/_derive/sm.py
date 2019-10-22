@@ -3,7 +3,7 @@
 import cf_units
 import numpy as np
 from iris import Constraint
-
+from ._shared import _var_name_constraint
 from ._baseclass import DerivedVariableBase
 
 
@@ -25,7 +25,7 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         mrsos_cube = cubes.extract_strict(
-            Constraint(name='moisture_content_of_soil_layer'))
+            _var_name_constraint('mrsos'))
 
         depth = mrsos_cube.coord('depth').bounds.astype(np.float32)
         layer_thickness = depth[..., 1] - depth[..., 0]
