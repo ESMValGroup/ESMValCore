@@ -1,7 +1,6 @@
 """Fixes for CESM2 model."""
 from ..fix import Fix
-from ..shared import (add_scalar_height_coord, add_scalar_height_coord_10,
-                      add_scalar_typeland_coord)
+from ..shared import (add_scalar_height_coord, add_scalar_height_coord_10)
 
 
 class Tas(Fix):
