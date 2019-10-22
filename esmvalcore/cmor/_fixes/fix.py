@@ -153,8 +153,8 @@ class Fix(object):
                     pass
         except ImportError:
             pass
-        #if we did not find a fix in esmvalcore.cmor._fixes.PROJECT.DATASET
-        #we look in the esmvalcore.cmor._fixes.PROJECT.alldatasets
+        #we look in the esmvalcore.cmor._fixes.PROJECT.alldatasets if they are
+        #more fixes to apply
         try:
             fixes_module = importlib.import_module(
             'esmvalcore.cmor._fixes.{0}.{1}'.format(project,'alldatasets'))

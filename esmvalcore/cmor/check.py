@@ -299,6 +299,10 @@ class CMORCheck():
                         )
                 except iris.exceptions.CoordinateNotFoundError:
                     try:
+                        print("HELLO")
+                        print(coordinate.standard_name)
+                        print(coordinate)
+                        print(self._cube.coords())
                         coord = self._cube.coord(coordinate.standard_name)
                         if self._cmor_var.table_type in 'CMIP6' and \
                            coord.ndim > 1 and \

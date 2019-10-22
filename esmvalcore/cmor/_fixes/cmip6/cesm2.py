@@ -5,21 +5,31 @@ import iris
 
 
 class Tas(Fix):
-    """Fixes for tas."""
+    """Fixes for tas"""
     def fix_metadata(self, cubes):
-        """Add height (2m) coordinate.
-
+        """
+        Fix missing scalar dimension height2m
+        
         Parameters
         ----------
-        cube : iris.cube.CubeList
-
+        cubes: iris CubeList
+            List of cubes to fix
+        
         Returns
         -------
-        iris.cube.Cube
-
+        iris.cube.CubeList
         """
-        cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord(cube)
+        height2m = iris.coords.AuxCoord(2.0,
+                                        standard_name='height',
+                                        long_name='height',
+                                        var_name='height',
+                                        units='m',
+                                        bounds=None)
+        for cube in cubes:
+            try:
+                cube.coord("height")
+            except iris.exceptions.CoordinateNotFoundError:
+                cube.add_aux_coord(height2m)
         return cubes
 
 
