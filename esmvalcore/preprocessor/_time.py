@@ -438,6 +438,7 @@ def anomalies(cube, period, standardize=False):
     iris.cube.Cube
         Anomalies cube
     """
+    cube.data
     reference = climate_statistics(cube, period=period)
     if period in ['full']:
         return cube - reference
@@ -463,16 +464,20 @@ def anomalies(cube, period, standardize=False):
 
     # Standardize the results if requested
     if standardize:
-        cube_stddev = climate_statistics(cube, operator='std_dev', period=period)
+        cube_stddev = climate_statistics(cube,
+                                         operator='std_dev',
+                                         period=period)
         assert cube.ndim == cube_stddev.ndim
         ratio = [i / j for i, j in
                  zip(cube.shape, cube_stddev.shape)]
         # This will raise an error if the length of the cube their time axes
         # are not multiples of each other or if other shapes are not equal
         if not all([ratio[0] % 1 == 0] + [i == 1 for i in ratio[1:]]):
-            raise ValueError("Cannot safely apply preprocessor to this dataset,\
-                              since the full time period of this dataset is not\
-                              a multiple of the period '%s'.",period)
+            raise ValueError(
+                "Cannot safely apply preprocessor to this dataset,\
+                since the full time period of this dataset is not\
+                a multiple of the period {0}".format(period)
+            )
         reps = tuple([int(i) for i in ratio])
         cube.data = cube.data / np.tile(cube_stddev.data, reps)
 
