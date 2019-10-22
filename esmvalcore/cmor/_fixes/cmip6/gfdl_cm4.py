@@ -1,6 +1,6 @@
 """Fixes for CESM2 model."""
 from ..fix import Fix
-from ..shared import (add_scalar_height_coord, add_scalar_height_coord_10)
+from ..shared import add_scalar_height_coord
 
 
 class Tas(Fix):
@@ -19,7 +19,7 @@ class Tas(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord(cube)
+        add_scalar_height_coord(cube, 10.0)
         return cubes
 
 
@@ -39,7 +39,7 @@ class Uas(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord_10(cube)
+        add_scalar_height_coord(cube, 10.0)
         return cubes
 
 
@@ -59,5 +59,5 @@ class Vas(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord_10(cube)
+        add_scalar_height_coord(cube, 10.0)
         return cubes
