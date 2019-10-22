@@ -21,6 +21,31 @@ def add_scalar_height_coord(cube, height=2.0):
     return cube
 
 
+def add_scalar_height_coord_10(cube, height=10.0):
+    """Add scalar coordinate 'height' with value of `height`m."""
+    logger.debug("Adding height coordinate (%sm)", height)
+    height_coord = iris.coords.AuxCoord(height,
+                                        var_name='height',
+                                        standard_name='height',
+                                        long_name='height',
+                                        units=Unit('m'),
+                                        attributes={'positive': 'up'})
+    cube.add_aux_coord(height_coord, ())
+    return cube
+
+
+def add_scalar_typeland_coord(cube, value='default'):
+    """Add scalar coordinate 'typeland' with value of `value`."""
+    logger.debug("Adding typeland coordinate (%s)", value)
+    typeland_coord = iris.coords.AuxCoord(value,
+                                          var_name='type',
+                                          standard_name='area_type',
+                                          long_name='Land area type',
+                                          units=Unit('no unit'))
+    cube.add_aux_coord(typeland_coord, ())
+    return cube
+
+
 def round_coordinates(cubes, decimals=5):
     """Round all dimensional coordinates of all cubes."""
     for cube in cubes:
