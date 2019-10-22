@@ -25,7 +25,7 @@ class Tas(Fix):
 
 
 class Uas(Fix):
-    """Fixes for tas."""
+    """Fixes for uas."""
 
     def fix_metadata(self, cubes):
         """
@@ -46,7 +46,7 @@ class Uas(Fix):
 
 
 class Vas(Fix):
-    """Fixes for tas."""
+    """Fixes for vas."""
 
     def fix_metadata(self, cubes):
         """
