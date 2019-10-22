@@ -7,7 +7,8 @@ class Tas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """Add height (2m) coordinate.
+        """
+        Add height (2m) coordinate.
 
         Parameters
         ----------
@@ -27,7 +28,8 @@ class Uas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """Add height (10m) coordinate.
+        """
+        Add height (10m) coordinate.
 
         Parameters
         ----------
@@ -47,7 +49,8 @@ class Vas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """Add height (10m) coordinate.
+        """
+        Add height (10m) coordinate.
 
         Parameters
         ----------
