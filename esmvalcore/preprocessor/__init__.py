@@ -91,7 +91,6 @@ __all__ = [
     'decadal_statistics',
     'climate_statistics',
     'anomalies',
-    'standardize',
     'regrid_time',
     'cmor_check_data',
     'convert_units',
