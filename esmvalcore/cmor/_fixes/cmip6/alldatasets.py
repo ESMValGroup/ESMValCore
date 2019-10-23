@@ -24,9 +24,9 @@ class Abs550aer(Fix):
                                          bounds=None)
         for cube in cubes:
             try:
+                cube.coord(standard_name="radiation_wavelength")
+            except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(lambda550nm)
-            except ValueError:
-                pass
         return cubes
 
 class Od550aer(Fix):
@@ -50,9 +50,9 @@ class Od550aer(Fix):
                                          bounds=None)
         for cube in cubes:
             try:
+                cube.coord(standard_name="radiation_wavelength")
+            except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(lambda550nm)
-            except ValueError:
-                pass
         return cubes
 
 class Od550lt1aer(Fix):
@@ -76,9 +76,9 @@ class Od550lt1aer(Fix):
                                          bounds=None)
         for cube in cubes:
             try:
+                cube.coord(standard_name="radiation_wavelength")
+            except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(lambda550nm)
-            except ValueError:
-                pass
         return cubes
 
 class Mrsos(Fix):
@@ -105,4 +105,29 @@ class Mrsos(Fix):
                 cube.coord("depth")
             except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(sdepth1)
+        return cubes
+class Siconc(Fix):
+    """Fixes for siconc"""
+    def fix_metadata(self, cubes):
+        """
+        Fix missing scalar dimension sdepth1
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        typesi = iris.coords.AuxCoord("sea_ice",
+                                         standard_name='area_type',
+                                         long_name='Sea Ice area type',
+                                         var_name='type',
+                                         units='',
+                                         bounds=None)
+        for cube in cubes:
+            try:
+                cube.coord(standard_name="area_type")
+            except iris.exceptions.CoordinateNotFoundError:
+                cube.add_aux_coord(typesi)
         return cubes
