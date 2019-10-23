@@ -903,7 +903,7 @@ def test_derive_with_fx_ohc_fail(tmp_path,
             scripts: null
         """)
     with pytest.raises(RecipeError):
-        recipe = get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, config_user)
 
 
 def test_derive_with_fx_nbp_grid(tmp_path,
