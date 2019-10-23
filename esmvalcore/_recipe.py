@@ -375,7 +375,7 @@ def _add_fxvar_keys(fx_var_dict, variable):
         fx_variable['grid'] = variable['grid']
         if 'mip' in fx_var_dict:
             fx_variable['mip'] = fx_var_dict['mip']
-    elif fx_variable['project'] in ['OBS', 'OBS6']:
+    elif fx_variable['project'] in ['OBS', 'OBS6', 'obs4mips']:
         fx_variable['mip'] = 'fx'
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
@@ -385,7 +385,7 @@ def _add_fxvar_keys(fx_var_dict, variable):
 def _get_correct_fx_file(variable, fx_varname, config_user):
     """Wrapper to standard file getter to recover the correct fx file."""
     var = dict(variable)
-    if var['project'] in ['CMIP5', 'OBS', 'OBS6']:
+    if var['project'] in ['CMIP5', 'OBS', 'OBS6', 'obs4mips']:
         fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
     elif var['project'] == 'CMIP6':
         if fx_varname == 'sftlf':
@@ -422,15 +422,13 @@ def _update_fx_settings(settings, variable, config_user):
         # Configure ingestion of land/sea masks
         logger.debug('Getting fx mask settings now...')
         settings['mask_landsea']['fx_files'] = []
-        fx_files_dict = {
-            'sftlf': _get_correct_fx_file(variable, 'sftlf', config_user),
-            'sftof': _get_correct_fx_file(variable, 'sftof', config_user)}
-
-        # allow both sftlf and sftof
-        if fx_files_dict['sftlf']:
-            settings['mask_landsea']['fx_files'].append(fx_files_dict['sftlf'])
-        if fx_files_dict['sftof']:
-            settings['mask_landsea']['fx_files'].append(fx_files_dict['sftof'])
+        fx_vars = ['sftlf']
+        if variable['project'] != 'obs4mips':
+            fx_vars.append('sftof')
+        for fx_var in fx_vars:
+            fx_files = _get_correct_fx_file(variable, fx_var, config_user)
+            if fx_files:
+                settings['mask_landsea']['fx_files'].append(fx_files)
 
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')

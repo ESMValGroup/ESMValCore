@@ -105,7 +105,6 @@ def _get_filenames(root_path, filenames, tracking_id):
     return filenames
 
 
-
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
     def tracking_ids(i=0):
@@ -920,7 +919,7 @@ def test_derive_with_fx_ohc_fail(tmp_path,
             scripts: null
         """)
     with pytest.raises(RecipeError):
-        recipe = get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, config_user)
 
 
 def test_derive_with_optional_var(tmp_path,
