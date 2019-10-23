@@ -149,6 +149,22 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
     monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
 
 
+@pytest.fixture
+def patched_tas_derivation(monkeypatch):
+
+    def get_required(short_name, _):
+        if short_name != 'tas':
+            assert False
+        required = [
+            {'short_name': 'pr'},
+            {'short_name': 'areacella', 'mip': 'fx', 'optional': True},
+        ]
+        return required
+
+    monkeypatch.setattr(
+        esmvalcore._recipe, 'get_required', get_required)
+
+
 DEFAULT_DOCUMENTATION = dedent("""
     documentation:
       description: This is a test recipe.
@@ -907,16 +923,16 @@ def test_derive_with_fx_ohc_fail(tmp_path,
         recipe = get_recipe(tmp_path, content, config_user)
 
 
-def test_derive_with_fx_nbp_grid(tmp_path,
-                                 patched_failing_datafinder,
-                                 config_user):
-    """The fx variable needed for nbp_grid is declared as 'optional'."""
+def test_derive_with_optional_var(tmp_path,
+                                  patched_datafinder,
+                                  patched_tas_derivation,
+                                  config_user):
     content = dedent("""
         diagnostics:
           diagnostic_name:
             variables:
-              nbp_grid:
-                mip: Lmon
+              tas:
+                mip: Amon
                 exp: historical
                 start_year: 2000
                 end_year: 2005
@@ -936,22 +952,75 @@ def test_derive_with_fx_nbp_grid(tmp_path,
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'nbp_grid'
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
 
     # Check products
     all_product_files = []
     assert len(task.products) == 3
     for product in task.products:
         assert 'derive' in product.settings
-        assert product.attributes['short_name'] == 'nbp_grid'
+        assert product.attributes['short_name'] == 'tas'
+        all_product_files.extend(product.files)
+
+    # Check ancestors
+    assert len(task.ancestors) == 2
+    assert task.ancestors[0].name == (
+        'diagnostic_name/tas_derive_input_pr')
+    assert task.ancestors[1].name == (
+        'diagnostic_name/tas_derive_input_areacella')
+    for ancestor_product in task.ancestors[0].products:
+        assert ancestor_product.attributes['short_name'] == 'pr'
+        assert ancestor_product.filename in all_product_files
+    for ancestor_product in task.ancestors[1].products:
+        assert ancestor_product.attributes['short_name'] == 'areacella'
+        assert ancestor_product.filename in all_product_files
+
+
+def test_derive_with_optional_var_nodata(tmp_path,
+                                         patched_failing_datafinder,
+                                         patched_tas_derivation,
+                                         config_user):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                derive: true
+                force_derivation: true
+                additional_datasets:
+                  - {dataset: GFDL-CM3, ensemble: r1i1p1,   project: CMIP5}
+                  - {dataset: GFDL-CM4, ensemble: r1i1p1f1, project: CMIP6,
+                     grid: gr1}
+                  - {dataset: TEST, project: OBS, type: reanaly, version: 1,
+                     tier: 1}
+
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
+
+    # Check products
+    all_product_files = []
+    assert len(task.products) == 3
+    for product in task.products:
+        assert 'derive' in product.settings
+        assert product.attributes['short_name'] == 'tas'
         all_product_files.extend(product.files)
 
     # Check ancestors
     assert len(task.ancestors) == 1
     assert task.ancestors[0].name == (
-        'diagnostic_name/nbp_grid_derive_input_nbp')
+        'diagnostic_name/tas_derive_input_pr')
     for ancestor_product in task.ancestors[0].products:
-        assert ancestor_product.attributes['short_name'] == 'nbp'
+        assert ancestor_product.attributes['short_name'] == 'pr'
         assert ancestor_product.filename in all_product_files
 
 
@@ -1303,3 +1372,48 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
         get_recipe(tmp_path, content, config_user)
         assert 'extract_shape' in exc.value
         assert invalid_arg in exc.value
+
+
+def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
+
+    content = dedent("""
+        preprocessors:
+          landfrac_weighting:
+            weighting_landsea_fraction:
+              area_type: land
+              strict: true
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landfrac_weighting
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+    print(recipe)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+
+    # Check weighting
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert 'weighting_landsea_fraction' in product.settings
+    settings = product.settings['weighting_landsea_fraction']
+    assert len(settings) == 3
+    assert settings['area_type'] == 'land'
+    assert settings['strict']
+    assert isinstance(settings['fx_files'], dict)
+    assert settings['fx_files'].get('sftlf')
+    assert settings['fx_files'].get('sftof')

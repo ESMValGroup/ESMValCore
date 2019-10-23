@@ -379,7 +379,6 @@ def _add_fxvar_keys(fx_var_dict, variable):
         fx_variable['mip'] = 'fx'
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
-
     return fx_variable
 
 
@@ -441,6 +440,13 @@ def _update_fx_settings(settings, variable, config_user):
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
+
+    if 'weighting_landsea_fraction' in settings:
+        logger.debug("Getting fx files for landsea fraction weighting now...")
+        settings['weighting_landsea_fraction']['fx_files'] = {
+            'sftlf': _get_correct_fx_file(variable, 'sftlf', config_user),
+            'sftof': _get_correct_fx_file(variable, 'sftof', config_user),
+        }
 
     for step in ('area_statistics', 'volume_statistics'):
         if settings.get(step, {}).get('fx_files'):

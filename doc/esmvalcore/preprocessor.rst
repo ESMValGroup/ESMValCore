@@ -10,6 +10,7 @@ following the default order in which they are applied:
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
 * :ref:`Vertical interpolation`
+* :ref:`Weighting`
 * :ref:`Land/Sea/Ice masking`
 * :ref:`Horizontal regridding`
 * :ref:`Masking of missing values`
@@ -242,6 +243,50 @@ extract the levels and vertically regrid onto the vertical levels of
 	  source data is not a ``MaskedArray``; or
         * ``nanmask``: if the source data is a MaskedArray the extrapolation
 	  points will be masked, otherwise they will be set to NaN.
+
+
+.. _weighting:
+
+Weighting
+=========
+
+.. _land/sea fraction weighting:
+
+Land/sea fraction weighting
+---------------------------
+
+This preprocessor allows weighting of data by land or sea fractions. In other
+words, this function multiplies the given input field by a fraction from 0-1 to
+account for the fact that not all grid points are completely land/sea.
+
+The application of this is very important for most carbon cycle variables (and
+other land surface outputs), which are e.g. reported in units of
+:math:`kgC~m^{-2}`. This actually refers to 'per square meter of land/sea' and
+NOT 'per square meter of gridbox'. In order to integrate these globally or
+regionally one has to both area-weight the quantity but also weight by the
+land/sea fraction.
+
+For example, to weight an input field with the land fraction, use the following
+preprocessor:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_weighting:
+        weighting_landsea_fraction:
+          area_type: land
+          strict: true
+
+Allowed arguments for the keyword ``area_type`` are ``land`` (fraction is 1.0
+for grid cells with only land surface, 0.0 for grid cells with only sea surface
+and values in between 0.0 and 1.0 for coastal regions) and ``sea`` (1.0 for
+sea, 0.0 for land, in between for coastal regions). The optional argument
+``strict`` defines the behavior of this function in case the weighting was not
+possible (due to missing data or incompatible shapes). In the case of
+``strict: true`` (default), it fails, in the case of ``strict: false``, it does
+not apply the weighting and prints a debug message.
+
+See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
 
 .. _masking:
