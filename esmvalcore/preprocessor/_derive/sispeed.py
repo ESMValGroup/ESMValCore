@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sispeed`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [{
             'short_name': 'usi',
         }, {
@@ -29,7 +29,7 @@ class DerivedVariable(DerivedVariableBase):
         Compute sispeed module from velocity components siu and siv.
 
         Arguments
-        ----
+        ---------
             cubes: cubelist containing velocity components.
 
         Returns

@@ -8,10 +8,10 @@ from ._shared import cloud_area_fraction
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `cllmtisccp`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [{'short_name': 'clisccp'}]
         return required
 

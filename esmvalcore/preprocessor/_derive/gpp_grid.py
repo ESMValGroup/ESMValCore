@@ -6,10 +6,10 @@ from ._shared import grid_area_correction
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `gpp_grid`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [
             {
                 'short_name': 'gpp'

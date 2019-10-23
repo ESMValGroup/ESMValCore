@@ -13,9 +13,7 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def calculate(cubes):
-        """Compute vegetation fraction from bare soil fraction.
-
-        """
+        """Compute vegetation fraction from bare soil fraction."""
         baresoilfrac_cube = cubes.extract_strict(
             iris.Constraint(name='area_fraction'))
 
