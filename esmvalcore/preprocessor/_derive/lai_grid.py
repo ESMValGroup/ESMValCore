@@ -6,9 +6,21 @@ from ._shared import grid_area_correction
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `lai_grid`."""
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
 
-    # Required variables
-    required = [{'short_name': 'lai', 'fx_files': ['sftlf']}]
+        required = [
+            {
+                'short_name': 'lai'
+            },
+            {
+                'short_name': 'sftlf',
+                'mip': 'fx',
+                'optional': True
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -23,4 +35,4 @@ class DerivedVariable(DerivedVariableBase):
         coastal regions.
 
         """
-        return grid_area_correction(cubes, 'leaf_area_index')
+        return grid_area_correction(cubes, 'lai')

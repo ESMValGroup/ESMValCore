@@ -6,9 +6,21 @@ from ._shared import grid_area_correction
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `gpp_grid`."""
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
 
-    # Required variables
-    required = [{'short_name': 'gpp', 'fx_files': ['sftlf']}]
+        required = [
+            {
+                'short_name': 'gpp'
+            },
+            {
+                'short_name': 'sftlf',
+                'mip': 'fx',
+                'optional': True
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -23,5 +35,4 @@ class DerivedVariable(DerivedVariableBase):
         coastal regions.
 
         """
-        return grid_area_correction(cubes,
-                                    'gross_primary_productivity_of_carbon')
+        return grid_area_correction(cubes, 'gpp')

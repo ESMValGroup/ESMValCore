@@ -6,9 +6,21 @@ from ._shared import grid_area_correction
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `cVeg_grid`."""
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
 
-    # Required variables
-    required = [{'short_name': 'cVeg', 'fx_files': ['sftlf']}]
+        required = [
+            {
+                'short_name': 'cVeg'
+            },
+            {
+                'short_name': 'sftlf',
+                'mip': 'fx',
+                'optional': True
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -23,4 +35,4 @@ class DerivedVariable(DerivedVariableBase):
         coastal regions.
 
         """
-        return grid_area_correction(cubes, 'vegetation_carbon_content')
+        return grid_area_correction(cubes, 'cVeg')

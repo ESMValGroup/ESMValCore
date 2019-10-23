@@ -12,12 +12,16 @@ logger = logging.getLogger(__name__)
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sispeed`."""
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
 
-    # Required variables
-    required = [
-        {'short_name': 'usi', },
-        {'short_name': 'vsi', }
-    ]
+        required = [{
+            'short_name': 'usi',
+        }, {
+            'short_name': 'vsi',
+        }]
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -47,25 +51,20 @@ class DerivedVariable(DerivedVariableBase):
             logger.warning(
                 'Coordinates for sea ice velocity components differ. '
                 'Changing y component latitude and longitude to match the '
-                'coordinates of x component'
-            )
+                'coordinates of x component')
             siv.remove_coord('latitude')
             siv.remove_coord('longitude')
 
             if isinstance(siu.coord('latitude'), DimCoord):
-                siv.add_dim_coord(
-                    siu.coord('latitude'), siu.coord_dims('latitude')
-                )
-                siv.add_dim_coord(
-                    siu.coord('longitude'), siu.coord_dims('longitude')
-                )
+                siv.add_dim_coord(siu.coord('latitude'),
+                                  siu.coord_dims('latitude'))
+                siv.add_dim_coord(siu.coord('longitude'),
+                                  siu.coord_dims('longitude'))
             else:
-                siv.add_aux_coord(
-                    siu.coord('latitude'), siu.coord_dims('latitude')
-                )
-                siv.add_aux_coord(
-                    siu.coord('longitude'), siu.coord_dims('longitude')
-                )
+                siv.add_aux_coord(siu.coord('latitude'),
+                                  siu.coord_dims('latitude'))
+                siv.add_aux_coord(siu.coord('longitude'),
+                                  siu.coord_dims('longitude'))
             return DerivedVariable._get_speed(siu, siv)
 
     @staticmethod
@@ -79,4 +78,4 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def _get_speed(siu, siv):
-        return (siu ** 2 + siv ** 2) ** 0.5
+        return (siu**2 + siv**2)**0.5
