@@ -1,4 +1,4 @@
-"""Fixes for CESM2 model."""
+"""Fixes for GFDL-CM4 model."""
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
