@@ -380,7 +380,7 @@ def _add_fxvar_keys(fx_var_dict, variable):
         fx_variable['grid'] = variable['grid']
         if 'mip' in fx_var_dict:
             fx_variable['mip'] = fx_var_dict['mip']
-    elif fx_variable['project'] in ['OBS', 'OBS6']:
+    elif fx_variable['project'] in ['OBS', 'OBS6', 'obs4mips']:
         fx_variable['mip'] = 'fx'
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
@@ -391,7 +391,7 @@ def _add_fxvar_keys(fx_var_dict, variable):
 def _get_correct_fx_file(variable, fx_varname, config_user):
     """Wrapper to standard file getter to recover the correct fx file."""
     var = dict(variable)
-    if var['project'] in ['CMIP5', 'OBS', 'OBS6']:
+    if var['project'] in ['CMIP5', 'OBS', 'OBS6', 'obs4mips']:
         fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
     elif var['project'] == 'CMIP6':
         if fx_varname == 'sftlf':
