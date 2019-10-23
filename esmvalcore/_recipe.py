@@ -430,7 +430,7 @@ def _update_fx_settings(settings, variable, config_user):
         # allow both sftlf and sftof
         if fx_files_dict['sftlf']:
             settings['mask_landsea']['fx_files'].append(fx_files_dict['sftlf'])
-        if fx_files_dict['sftof']:
+        if fx_files_dict['sftof'] and variable['project'] != 'obs4mips':
             settings['mask_landsea']['fx_files'].append(fx_files_dict['sftof'])
 
     if 'mask_landseaice' in settings:
