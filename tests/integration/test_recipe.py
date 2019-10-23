@@ -105,7 +105,6 @@ def _get_filenames(root_path, filenames, tracking_id):
     return filenames
 
 
-
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
     def tracking_ids(i=0):
