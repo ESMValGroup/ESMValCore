@@ -80,6 +80,32 @@ def create_test_file(filename, tracking_id=None):
     iris.save(cube, filename)
 
 
+def _get_filenames(root_path, filenames, tracking_id):
+    filename = filenames[0]
+    filename = str(root_path / 'input' / filename)
+    filenames = []
+    if filename.endswith('[_.]*nc'):
+        # Restore when we support filenames with no dates
+        # filenames.append(filename.replace('[_.]*nc', '.nc'))
+        filename = filename.replace('[_.]*nc', '_*.nc')
+    if filename.endswith('*.nc'):
+        filename = filename[:-len('*.nc')] + '_'
+        intervals = [
+            '1990_1999',
+            '2000_2009',
+            '2010_2019',
+        ]
+        for interval in intervals:
+            filenames.append(filename + interval + '.nc')
+    else:
+        filenames.append(filename)
+
+    for filename in filenames:
+        create_test_file(filename, next(tracking_id))
+    return filenames
+
+
+
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
     def tracking_ids(i=0):
@@ -94,29 +120,31 @@ def patched_datafinder(tmp_path, monkeypatch):
         # been replaced before this function is called.
         for filename in filenames:
             assert '{' not in filename
+        return _get_filenames(tmp_path, filenames, tracking_id)
 
-        filename = filenames[0]
-        filename = str(tmp_path / 'input' / filename)
-        filenames = []
-        if filename.endswith('[_.]*nc'):
-            # Restore when we support filenames with no dates
-            # filenames.append(filename.replace('[_.]*nc', '.nc'))
-            filename = filename.replace('[_.]*nc', '_*.nc')
-        if filename.endswith('*.nc'):
-            filename = filename[:-len('*.nc')] + '_'
-            intervals = [
-                '1990_1999',
-                '2000_2009',
-                '2010_2019',
-            ]
-            for interval in intervals:
-                filenames.append(filename + interval + '.nc')
-        else:
-            filenames.append(filename)
+    monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
 
+
+@pytest.fixture
+def patched_failing_datafinder(tmp_path, monkeypatch):
+    def tracking_ids(i=0):
+        while True:
+            yield i
+            i += 1
+
+    tracking_id = tracking_ids()
+
+    def find_files(_, filenames):
+        # Any occurrence of [something] in filename should have
+        # been replaced before this function is called.
         for filename in filenames:
-            create_test_file(filename, next(tracking_id))
-        return filenames
+            assert '{' not in filename
+
+        # Fail for fx variables
+        for filename in filenames:
+            if 'fx_' in filename:
+                return []
+        return _get_filenames(tmp_path, filenames, tracking_id)
 
     monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
 
@@ -798,14 +826,96 @@ def test_derive_not_needed(tmp_path, patched_datafinder, config_user):
         assert fix not in product.settings
 
 
-def test_derive_with_fx(tmp_path, patched_datafinder, config_user):
+def test_derive_with_fx_ohc(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ohc:
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                derive: true
+                force_derivation: true
+                additional_datasets:
+                  - {dataset: GFDL-CM3, ensemble: r1i1p1,   project: CMIP5}
+                  - {dataset: GFDL-CM4, ensemble: r1i1p1f1, project: CMIP6,
+                     grid: gr1}
+                  - {dataset: TEST, project: OBS, type: reanaly, version: 1,
+                     tier: 1}
 
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'ohc'
+
+    # Check products
+    all_product_files = []
+    assert len(task.products) == 3
+    for product in task.products:
+        assert 'derive' in product.settings
+        assert product.attributes['short_name'] == 'ohc'
+        all_product_files.extend(product.files)
+
+    # Check ancestors
+    assert len(task.ancestors) == 2
+    assert task.ancestors[0].name == (
+        'diagnostic_name/ohc_derive_input_thetao')
+    assert task.ancestors[1].name == (
+        'diagnostic_name/ohc_derive_input_volcello')
+    for ancestor_product in task.ancestors[0].products:
+        assert ancestor_product.attributes['short_name'] == 'thetao'
+        assert ancestor_product.filename in all_product_files
+    for ancestor_product in task.ancestors[1].products:
+        assert ancestor_product.attributes['short_name'] == 'volcello'
+        if ancestor_product.attributes['project'] == 'CMIP6':
+            assert ancestor_product.attributes['mip'] == 'Ofx'
+        else:
+            assert ancestor_product.attributes['mip'] == 'fx'
+        assert ancestor_product.filename in all_product_files
+
+
+def test_derive_with_fx_ohc_fail(tmp_path,
+                                 patched_failing_datafinder,
+                                 config_user):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ohc:
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                derive: true
+                force_derivation: true
+                additional_datasets:
+                  - {dataset: GFDL-CM3, ensemble: r1i1p1,   project: CMIP5}
+                  - {dataset: GFDL-CM4, ensemble: r1i1p1f1, project: CMIP6,
+                     grid: gr1}
+                  - {dataset: TEST, project: OBS, type: reanaly, version: 1,
+                     tier: 1}
+
+            scripts: null
+        """)
+    with pytest.raises(RecipeError):
+        recipe = get_recipe(tmp_path, content, config_user)
+
+
+def test_derive_with_fx_nbp_grid(tmp_path,
+                                 patched_failing_datafinder,
+                                 config_user):
+    """The fx variable needed for nbp_grid is declared as 'optional'."""
     content = dedent("""
         diagnostics:
           diagnostic_name:
             variables:
               nbp_grid:
-                project: CMIP5
                 mip: Lmon
                 exp: historical
                 start_year: 2000
@@ -813,31 +923,36 @@ def test_derive_with_fx(tmp_path, patched_datafinder, config_user):
                 derive: true
                 force_derivation: true
                 additional_datasets:
-                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
+                  - {dataset: GFDL-CM3, ensemble: r1i1p1,   project: CMIP5}
+                  - {dataset: GFDL-CM4, ensemble: r1i1p1f1, project: CMIP6,
+                     grid: gr1}
+                  - {dataset: TEST, project: OBS, type: reanaly, version: 1,
+                     tier: 1}
+
             scripts: null
         """)
-
     recipe = get_recipe(tmp_path, content, config_user)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-
     assert task.name == 'diagnostic_name' + TASKSEP + 'nbp_grid'
-    assert len(task.ancestors) == 2
-    ancestor = [t for t in task.ancestors][0]
-    assert ancestor.name == 'diagnostic_name/nbp_grid_derive_input_nbp'
 
-    # Check product content of tasks
-    assert len(task.products) == 1
-    product = task.products.pop()
-    assert 'derive' in product.settings
-    assert product.attributes['short_name'] == 'nbp_grid'
+    # Check products
+    all_product_files = []
+    assert len(task.products) == 3
+    for product in task.products:
+        assert 'derive' in product.settings
+        assert product.attributes['short_name'] == 'nbp_grid'
+        all_product_files.extend(product.files)
 
-    assert len(ancestor.products) == 1
-    ancestor_product = ancestor.products.pop()
-    assert ancestor_product.filename in product.files
-    assert ancestor_product.attributes['short_name'] == 'nbp'
+    # Check ancestors
+    assert len(task.ancestors) == 1
+    assert task.ancestors[0].name == (
+        'diagnostic_name/nbp_grid_derive_input_nbp')
+    for ancestor_product in task.ancestors[0].products:
+        assert ancestor_product.attributes['short_name'] == 'nbp'
+        assert ancestor_product.filename in all_product_files
 
 
 def get_plot_filename(basename, cfg):
