@@ -20,7 +20,7 @@ class Tas(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord(cube, 10.0)
+        add_scalar_height_coord(cube, 2.0)
         return cubes
 
 
