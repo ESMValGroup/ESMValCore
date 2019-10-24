@@ -267,7 +267,7 @@ regionally one has to weight by both the surface quantity and the
 land/sea fraction.
 
 For example, to weight an input field with the land fraction, the following
-preprocessor:
+preprocessor can be used:
 
 .. code-block:: yaml
 
