@@ -277,7 +277,7 @@ preprocessor can be used:
           area_type: land
           strict: true
 
-Allowed arguments for the keyword ``area_type`` are ``land`` (fraction is 1.0
+Allowed arguments for the keyword ``area_type`` are ``land`` (fraction is 1
 for grid cells with only land surface, 0.0 for grid cells with only sea surface
 and values in between 0.0 and 1.0 for coastal regions) and ``sea`` (1.0 for
 sea, 0.0 for land, in between for coastal regions). The optional argument
