@@ -263,7 +263,7 @@ The application of this preprocessor is very important for most carbon cycle var
 other land surface outputs), which are e.g. reported in units of
 :math:`kgC~m^{-2}`. Here, the surface unit actually refers to 'square meter of land/sea' and
 NOT 'square meter of gridbox'. In order to integrate these globally or
-regionally one has to both area-weight the quantity but also weight by the
+regionally one has to weight by both the surface quantity and the
 land/sea fraction.
 
 For example, to weight an input field with the land fraction, use the following
