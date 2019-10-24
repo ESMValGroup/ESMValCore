@@ -12,17 +12,32 @@ RHO_CP = iris.coords.AuxCoord(4.09169e+6, units=Unit('kg m-3 J kg-1 K-1'))
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `ohc`."""
 
-    # Required variables
-    required = [
-        {
-            'short_name': 'thetao',
-            'fx_files': [
-                'volcello',
-            ],
-        },
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [
+            {
+                'short_name': 'thetao'
+            },
+            {
+                'short_name': 'volcello',
+                'mip': 'fx'
+            },
+        ]
+        if project == 'CMIP6':
+            required = [
+                {
+                    'short_name': 'thetao'
+                },
+                {
+                    'short_name': 'volcello',
+                    'mip': 'Ofx'
+                },
+            ]
+        return required
 
-    def calculate(self, cubes):
+    @staticmethod
+    def calculate(cubes):
         """
         Compute ocean heat content.
 
@@ -35,7 +50,7 @@ class DerivedVariable(DerivedVariableBase):
            input cube.
 
         Returns
-        ---------
+        -------
         iris.cube.Cube
               Output OHC cube.
         """
@@ -56,12 +71,12 @@ class DerivedVariable(DerivedVariableBase):
             t_coord_dim = t_coord_dims[0]
             dim_coords = [(coord, cube.coord_dims(coord)[0])
                           for coord in cube.coords(
-                              contains_dimension=t_coord_dim,
-                              dim_coords=True)]
-            aux_coords = [(coord, cube.coord_dims(coord))
-                          for coord in cube.coords(
-                              contains_dimension=t_coord_dim,
-                              dim_coords=False)]
+                              contains_dimension=t_coord_dim, dim_coords=True)]
+            aux_coords = [
+                (coord, cube.coord_dims(coord))
+                for coord in cube.coords(contains_dimension=t_coord_dim,
+                                         dim_coords=False)
+            ]
             for coord, dims in dim_coords + aux_coords:
                 cube.remove_coord(coord)
         new_cube = cube * volume
