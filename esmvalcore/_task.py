@@ -230,7 +230,10 @@ class BaseTask:
             logger.info("Starting task %s in process [%s]", self.name,
                         os.getpid())
             start = datetime.datetime.now()
-            self.output_files = self._run(input_files)
+            # skip tasks that have ancestors but no files (eg dryrun)
+            if (self.ancestors and input_files) or \
+                    (not self.ancestors and not input_files):
+                self.output_files = self._run(input_files)
             runtime = datetime.datetime.now() - start
             logger.info("Successfully completed task %s (priority %s) in %s",
                         self.name, self.priority, runtime)
