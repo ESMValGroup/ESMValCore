@@ -47,6 +47,11 @@ FX_FILES = OrderedDict([
     ('sftlf', 'not/a/real/path'),
     ('sftof', 'i/was/mocked'),
 ])
+WRONG_FX_FILES = OrderedDict([
+    ('wrong', 'test'),
+    ('sftlf', 'not/a/real/path'),
+    ('sftof', 'i/was/mocked'),
+])
 
 LAND_FRACTION = [
     (CUBE_3, {}, [], None, ["No fx files given"]),
@@ -59,6 +64,13 @@ LAND_FRACTION = [
     (CUBE_3, O_FX_FILES, [CUBE_SFTOF], None,
      ["'sftlf' not found", "not broadcastable"]),
     (CUBE_3, FX_FILES, [CUBE_SFTLF, CUBE_SFTOF], FRAC_SFTLF, []),
+    (CUBE_3, {'wrong': 'a'}, [CUBE_SFTLF], None,
+     ["expected 'sftlf' or 'sftof'"]),
+    (CUBE_3, {'wrong': 'a'}, [CUBE_SFTOF], None, ["not broadcastable"]),
+    (CUBE_3, WRONG_FX_FILES, [CUBE_SFTLF, CUBE_SFTLF, CUBE_SFTOF], FRAC_SFTLF,
+     ["expected 'sftlf' or 'sftof'"]),
+    (CUBE_3, WRONG_FX_FILES, [CUBE_SFTOF, CUBE_SFTLF, CUBE_SFTOF], FRAC_SFTLF,
+     ["not broadcastable"]),
     (CUBE_4, {}, [], None, ["No fx files given"]),
     (CUBE_4, {'sftlf': []}, [], None, ["'sftlf' not found"]),
     (CUBE_4, {'sftlf': 'a'}, [CUBE_SFTLF], None, ["not broadcastable"]),
@@ -70,6 +82,13 @@ LAND_FRACTION = [
     (CUBE_4, O_FX_FILES, [CUBE_SFTOF], FRAC_SFTOF, ["'sftlf' not found"]),
     (CUBE_4, FX_FILES, [CUBE_SFTLF, CUBE_SFTOF], FRAC_SFTOF,
      ["not broadcastable"]),
+    (CUBE_4, {'wrong': 'a'}, [CUBE_SFTLF], None, ["not broadcastable"]),
+    (CUBE_4, {'wrong': 'a'}, [CUBE_SFTOF], None,
+     ["expected 'sftlf' or 'sftof'"]),
+    (CUBE_4, WRONG_FX_FILES, [CUBE_SFTLF, CUBE_SFTLF, CUBE_SFTOF], FRAC_SFTOF,
+     ["not broadcastable", "not broadcastable"]),
+    (CUBE_4, WRONG_FX_FILES, [CUBE_SFTOF, CUBE_SFTLF, CUBE_SFTOF], FRAC_SFTOF,
+     ["expected 'sftlf' or 'sftof'", "not broadcastable"]),
 ]
 
 

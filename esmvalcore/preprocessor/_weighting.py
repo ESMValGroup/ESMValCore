@@ -74,11 +74,11 @@ def weighting_landsea_fraction(cube, fx_files, area_type, strict=True):
 
     Raises
     ------
-    ValueError
-        If `strict` is `True` and weighting fails (e.g. due to missing fx
-        files or non-broadcastable shapes).
     TypeError
-        `area_type` is not `'land'` or `'sea'`.
+        ``area_type`` is not ``'land'`` or ``'sea'``.
+    ValueError
+        If ``strict`` is ``True`` and weighting fails (e.g. due to missing fx
+        files or non-broadcastable shapes).
 
     """
     if area_type not in ('land', 'sea'):
