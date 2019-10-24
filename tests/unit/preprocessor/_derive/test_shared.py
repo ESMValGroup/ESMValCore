@@ -9,7 +9,7 @@ from cf_units import Unit
 
 import esmvalcore.preprocessor._derive._shared as shared
 
-O_NAME = 'sea_surface_temperature'
+O_NAME = 'tos'
 L_NAME = 'air_temperature'
 SFTOF_CUBE = iris.cube.Cube(
     [100.0, 0.0, 50.0, 70.0],
@@ -25,15 +25,15 @@ SFTLF_CUBE = iris.cube.Cube(
 )
 O_CUBE_1 = iris.cube.Cube(
     [1.0, 2.0, -1.0, 2.0],
-    standard_name=O_NAME,
+    var_name=O_NAME,
 )
 O_CUBE_2 = iris.cube.Cube(
     [1.0, -1.0, 3.0],
-    standard_name=O_NAME,
+    var_name=O_NAME,
 )
 L_CUBE = iris.cube.Cube(
     [10.0, 20.0, 0.0],
-    standard_name=L_NAME,
+    var_name=L_NAME,
 )
 FRAC_O = np.array([0.0, 1.0, 0.5, 0.3])
 FRAC_L = np.array([0.1, 0.0, 1.0])
@@ -56,11 +56,11 @@ GET_LAND_FRACTION = [
 ]
 
 
-@pytest.mark.parametrize('cubes,std_name,ocean_var,out', GET_LAND_FRACTION)
-def test_get_land_fraction(cubes, std_name, ocean_var, out):
+@pytest.mark.parametrize('cubes,var_name,ocean_var,out', GET_LAND_FRACTION)
+def test_get_land_fraction(cubes, var_name, ocean_var, out):
     """Test retrieving of land fraction from list of cubes."""
     land_fraction = shared._get_land_fraction(
-        cubes, std_name, derive_from_ocean_fraction=ocean_var)
+        cubes, var_name, derive_from_ocean_fraction=ocean_var)
     if land_fraction is None or out is None:
         assert land_fraction is out
         return
@@ -134,10 +134,10 @@ CUBES_GRID_AREA_CORRECTION = [
 ]
 
 
-@pytest.mark.parametrize('cubes,std_name,ocean_var,out',
+@pytest.mark.parametrize('cubes,var_name,ocean_var,out',
                          CUBES_GRID_AREA_CORRECTION)
-def test_grid_area_correction(cubes, std_name, ocean_var, out):
+def test_grid_area_correction(cubes, var_name, ocean_var, out):
     """Test grid area correction."""
     cubes = copy.deepcopy(cubes)
-    cube = shared.grid_area_correction(cubes, std_name, ocean_var=ocean_var)
+    cube = shared.grid_area_correction(cubes, var_name, ocean_var=ocean_var)
     assert cube == out
