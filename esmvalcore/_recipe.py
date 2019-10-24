@@ -679,7 +679,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         _update_regrid_time(variable, settings)
         ancestors = grouped_ancestors.get(variable['filename'])
         if not ancestors:
-            ancestors = _get_input_files(variable, config_user)
+            ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') \
                     or config_user.get('dry-run') and not ancestors:
                 logger.info("MISSING DATA: Skipping: no data found for %s",
