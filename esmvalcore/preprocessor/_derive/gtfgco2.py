@@ -44,10 +44,10 @@ def calculate_total_flux(fgco2_cube, cube_area):
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `gtfgco2`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [
             {
                 'short_name': 'fgco2',

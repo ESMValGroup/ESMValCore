@@ -11,10 +11,10 @@ LATENT_HEAT_VAPORIZATION = 2.465E6
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `et`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [{'short_name': 'hfls', 'mip': 'Amon'}]
         return required
 
