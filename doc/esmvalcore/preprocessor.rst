@@ -261,7 +261,7 @@ account for the fact that not all grid points are completely land- or sea-covere
 
 The application of this preprocessor is very important for most carbon cycle variables (and
 other land surface outputs), which are e.g. reported in units of
-:math:`kgC~m^{-2}`. This actually refers to 'per square meter of land/sea' and
+:math:`kgC~m^{-2}`. Here, the surface unit actually refers to 'square meter of land/sea' and
 NOT 'per square meter of gridbox'. In order to integrate these globally or
 regionally one has to both area-weight the quantity but also weight by the
 land/sea fraction.
