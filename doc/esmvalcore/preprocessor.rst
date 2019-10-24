@@ -266,7 +266,7 @@ NOT 'square meter of gridbox'. In order to integrate these globally or
 regionally one has to weight by both the surface quantity and the
 land/sea fraction.
 
-For example, to weight an input field with the land fraction, use the following
+For example, to weight an input field with the land fraction, the following
 preprocessor:
 
 .. code-block:: yaml
