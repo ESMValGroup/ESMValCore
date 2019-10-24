@@ -245,7 +245,8 @@ def _dataset_to_file(variable, config_user):
             if files:
                 variable = required_var
                 break
-    check.data_availability(files, variable)
+    dryrun = config_user.get('dry-run')
+    check.data_availability(files, variable, dryrun=dryrun)
     return files[0]
 
 
@@ -495,8 +496,8 @@ def _get_ancestors(variable, config_user):
                 '\n'.join(input_files))
     if (not config_user.get('skip-nonexistent')
             or variable['dataset'] == variable.get('reference_dataset')):
-        if not config_user.get('dry-run'):
-            check.data_availability(input_files, variable)
+        dryrun = config_user.get('dry-run')
+        check.data_availability(input_files, variable, dryrun=dryrun)
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
