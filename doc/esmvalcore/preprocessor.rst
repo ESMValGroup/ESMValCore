@@ -259,7 +259,7 @@ This preprocessor allows weighting of data by land or sea fractions. In other
 words, this function multiplies the given input field by a fraction in the range 0-1 to
 account for the fact that not all grid points are completely land- or sea-covered.
 
-The application of this is very important for most carbon cycle variables (and
+The application of this preprocessor is very important for most carbon cycle variables (and
 other land surface outputs), which are e.g. reported in units of
 :math:`kgC~m^{-2}`. This actually refers to 'per square meter of land/sea' and
 NOT 'per square meter of gridbox'. In order to integrate these globally or
