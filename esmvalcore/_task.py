@@ -223,7 +223,10 @@ class BaseTask:
             if input_files is None:
                 input_files = []
             for task in self.ancestors:
-                input_files.extend(task.run())
+                out_file = task.run()
+                # dryrun outputs no physical run output file
+                if out_file:
+                    input_files.extend(out_file)
             logger.info("Starting task %s in process [%s]", self.name,
                         os.getpid())
             start = datetime.datetime.now()
