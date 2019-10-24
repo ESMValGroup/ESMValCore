@@ -90,10 +90,16 @@ def variable(var, required_keys):
                 missing, var.get('short_name'), var.get('diagnostic')))
 
 
-def data_availability(input_files, var):
+def data_availability(input_files, var, dryrun=False):
     """Check if the required input data is available."""
     if not input_files:
-        raise RecipeError("No input files found for variable {}".format(var))
+        if not dryrun:
+            raise RecipeError("No input files found for \
+                              variable {}".format(var))
+        else:
+            logger.info("MISSING DATA: Skipping: \
+                        no data found for {}".format(var))
+            return
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))
     available_years = set()
@@ -105,10 +111,16 @@ def data_availability(input_files, var):
 
         missing_years = required_years - available_years
         if missing_years:
-            raise RecipeError(
-                "No input data available for years {} in files {}".format(
-                    ", ".join(str(year) for year in missing_years),
-                    input_files))
+            if not dryrun:
+                raise RecipeError(
+                    "No input data available for years {} in files {}".format(
+                        ", ".join(str(year) for year in missing_years),
+                        input_files))
+            else:
+                logger.info(
+                    "MISSING DATA for years {} in files {}".format(
+                        ", ".join(str(year) for year in missing_years),
+                        input_files))
 
 
 def tasks_valid(tasks):
