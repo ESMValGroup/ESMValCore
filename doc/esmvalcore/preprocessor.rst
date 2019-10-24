@@ -279,7 +279,7 @@ preprocessor can be used:
 
 Allowed arguments for the keyword ``area_type`` are ``land`` (fraction is 1
 for grid cells with only land surface, 0 for grid cells with only sea surface
-and values in between 0.0 and 1.0 for coastal regions) and ``sea`` (1.0 for
+and values in between 0 and 1 for coastal regions) and ``sea`` (1 for
 sea, 0.0 for land, in between for coastal regions). The optional argument
 ``strict`` defines the behavior of this function in case the weighting was not
 possible (due to missing data or incompatible shapes). In the case of
