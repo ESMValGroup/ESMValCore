@@ -725,21 +725,25 @@ def _get_single_preprocessor_task(variables,
         config_user=config_user,
     )
 
-    if not products:
+    if not products and not config_user.get('dry-run'):
         raise RecipeError(
             "Did not find any input data for task {}".format(name))
 
-    task = PreprocessingTask(
-        products=products,
-        ancestors=ancestor_tasks,
-        name=name,
-        order=order,
-        debug=config_user['save_intermediary_cubes'],
-        write_ncl_interface=config_user['write_ncl_interface'],
-    )
+    if not products and config_user.get('dry-run'):
+        task = []
+    else:
+        task = PreprocessingTask(
+            products=products,
+            ancestors=ancestor_tasks,
+            name=name,
+            order=order,
+            debug=config_user['save_intermediary_cubes'],
+            write_ncl_interface=config_user['write_ncl_interface'],
+        )
 
-    logger.info("PreprocessingTask %s created. It will create the files:\n%s",
-                task.name, '\n'.join(p.filename for p in task.products))
+        logger.info("PreprocessingTask %s created. \
+                    It will create the files:\n%s",
+                    task.name, '\n'.join(p.filename for p in task.products))
 
     return task
 
@@ -1249,10 +1253,11 @@ class Recipe:
                     task_name=task_name,
                     dry_check=self.dry_check,
                 )
-                for task0 in task.flatten():
-                    task0.priority = priority
-                tasks.add(task)
-                priority += 1
+                if task:
+                    for task0 in task.flatten():
+                        task0.priority = priority
+                    tasks.add(task)
+                    priority += 1
 
             # Create diagnostic tasks
             if not self.dry_check:
