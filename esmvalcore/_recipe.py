@@ -414,21 +414,24 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     return fx_files
 
 
+def _get_landsea_fraction_fx_dict(variable, config_user):
+    """Get dict of available ``sftlf`` and ``sftof`` variables."""
+    fx_dict = {}
+    fx_vars = ['sftlf']
+    if variable['project'] != 'obs4mips':
+        fx_vars.append('sftof')
+    for fx_var in fx_vars:
+        fx_dict[fx_var] = _get_correct_fx_file(variable, fx_var, config_user)
+    return fx_dict
+
+
 def _update_fx_settings(settings, variable, config_user):
     """Find and set the FX mask settings."""
-    # update for landsea
     if 'mask_landsea' in settings:
-        fx_files_dict = {}
-        # Configure ingestion of land/sea masks
         logger.debug('Getting fx mask settings now...')
-        settings['mask_landsea']['fx_files'] = []
-        fx_vars = ['sftlf']
-        if variable['project'] != 'obs4mips':
-            fx_vars.append('sftof')
-        for fx_var in fx_vars:
-            fx_files = _get_correct_fx_file(variable, fx_var, config_user)
-            if fx_files:
-                settings['mask_landsea']['fx_files'].append(fx_files)
+        fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
+        fx_list = [fx_file for fx_file in fx_dict.values() if fx_file]
+        settings['mask_landsea']['fx_files'] = fx_list
 
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')
@@ -441,10 +444,8 @@ def _update_fx_settings(settings, variable, config_user):
 
     if 'weighting_landsea_fraction' in settings:
         logger.debug("Getting fx files for landsea fraction weighting now...")
-        settings['weighting_landsea_fraction']['fx_files'] = {
-            'sftlf': _get_correct_fx_file(variable, 'sftlf', config_user),
-            'sftof': _get_correct_fx_file(variable, 'sftof', config_user),
-        }
+        fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
+        settings['weighting_landsea_fraction']['fx_files'] = fx_dict
 
     for step in ('area_statistics', 'volume_statistics'):
         if settings.get(step, {}).get('fx_files'):

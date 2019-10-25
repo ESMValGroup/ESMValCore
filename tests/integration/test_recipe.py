@@ -139,9 +139,11 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
         for filename in filenames:
             assert '{' not in filename
 
-        # Fail for fx variables
+        # Fail for specified fx variables
         for filename in filenames:
             if 'fx_' in filename:
+                return []
+            if 'sftlf' in filename:
                 return []
         return _get_filenames(tmp_path, filenames, tracking_id)
 
@@ -1395,10 +1397,11 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
+                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                     tier: 1}
             scripts: null
         """)
     recipe = get_recipe(tmp_path, content, config_user)
-    print(recipe)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -1406,13 +1409,165 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
     assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
 
     # Check weighting
-    assert len(task.products) == 1
-    product = task.products.pop()
-    assert 'weighting_landsea_fraction' in product.settings
-    settings = product.settings['weighting_landsea_fraction']
-    assert len(settings) == 3
-    assert settings['area_type'] == 'land'
-    assert settings['strict']
-    assert isinstance(settings['fx_files'], dict)
-    assert settings['fx_files'].get('sftlf')
-    assert settings['fx_files'].get('sftof')
+    assert len(task.products) == 2
+    for product in task.products:
+        assert 'weighting_landsea_fraction' in product.settings
+        settings = product.settings['weighting_landsea_fraction']
+        assert len(settings) == 3
+        assert settings['area_type'] == 'land'
+        assert settings['strict']
+        fx_files = settings['fx_files']
+        assert isinstance(fx_files, dict)
+        if product.attributes['project'] == 'obs4mips':
+            assert len(fx_files) == 1
+            assert fx_files.get('sftlf')
+        else:
+            assert len(fx_files) == 2
+            assert fx_files.get('sftlf')
+            assert fx_files.get('sftof')
+
+
+def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
+                                          config_user):
+
+    content = dedent("""
+        preprocessors:
+          landfrac_weighting:
+            weighting_landsea_fraction:
+              area_type: land
+              strict: true
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landfrac_weighting
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                     tier: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+
+    # Check weighting
+    assert len(task.products) == 2
+    for product in task.products:
+        assert 'weighting_landsea_fraction' in product.settings
+        settings = product.settings['weighting_landsea_fraction']
+        assert len(settings) == 3
+        assert settings['area_type'] == 'land'
+        assert settings['strict']
+        fx_files = settings['fx_files']
+        assert isinstance(fx_files, dict)
+        if product.attributes['project'] == 'obs4mips':
+            assert len(fx_files) == 1
+            assert fx_files['sftlf'] == []
+        else:
+            assert len(fx_files) == 2
+            assert fx_files['sftlf'] == []
+            assert fx_files['sftof'] == []
+
+
+def test_landmask(tmp_path, patched_datafinder, config_user):
+
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                     tier: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+
+    # Check weighting
+    assert len(task.products) == 2
+    for product in task.products:
+        assert 'mask_landsea' in product.settings
+        settings = product.settings['mask_landsea']
+        assert len(settings) == 2
+        assert settings['mask_out'] == 'sea'
+        fx_files = settings['fx_files']
+        assert isinstance(fx_files, list)
+        if product.attributes['project'] == 'obs4mips':
+            assert len(fx_files) == 1
+        else:
+            assert len(fx_files) == 2
+
+
+def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
+
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              always_use_ne_mask: true
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                     tier: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+
+    # Check weighting
+    assert len(task.products) == 2
+    for product in task.products:
+        assert 'mask_landsea' in product.settings
+        settings = product.settings['mask_landsea']
+        assert len(settings) == 3
+        assert settings['mask_out'] == 'sea'
+        assert settings['always_use_ne_mask'] is True
+        fx_files = settings['fx_files']
+        assert isinstance(fx_files, list)
+        assert fx_files == []
