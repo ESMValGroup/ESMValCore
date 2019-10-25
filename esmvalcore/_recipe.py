@@ -683,8 +683,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') \
                     or config_user.get('dry-run') and not ancestors:
-                logger.info("MISSING DATA: Skipping: no data found for %s",
-                            variable)
+                logger.info("Skipping: no data found for %s", variable)
                 continue
         product = PreprocessorFile(
             attributes=variable,
