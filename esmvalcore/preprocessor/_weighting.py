@@ -9,9 +9,11 @@ logger = logging.getLogger(__name__)
 
 def _get_land_fraction(cube, fx_files):
     """Extract land fraction as :mod:`dask.array`."""
+    land_fraction = None
     errors = []
     if not fx_files:
         errors.append("No fx files given.")
+        return (land_fraction, errors)
     for (fx_var, fx_path) in fx_files.items():
         if not fx_path:
             errors.append(f"File for '{fx_var}' not found.")
@@ -32,8 +34,6 @@ def _get_land_fraction(cube, fx_files):
         errors.append(
             f"Cannot calculate land fraction from '{fx_var}', expected "
             f"'sftlf' or 'sftof'.")
-    else:
-        land_fraction = None
     return (land_fraction, errors)
 
 
@@ -60,7 +60,7 @@ def weighting_landsea_fraction(cube, fx_files, area_type, strict=True):
         Data cube to be weighted.
     fx_files : dict
         Dictionary holding ``var_name`` (keys) and full paths (values) to the
-        fx files.
+        fx files as ``str`` or empty ``list`` (if not available).
     area_type : str
         Use land (``'land'``) or sea (``'sea'``) fraction for weighting.
     strict : bool, optional (default: True)
@@ -86,18 +86,15 @@ def weighting_landsea_fraction(cube, fx_files, area_type, strict=True):
             f"Expected 'land' or 'sea' for area_type, got '{area_type}'")
     (land_fraction, errors) = _get_land_fraction(cube, fx_files)
     if land_fraction is None:
+        msg = (f"Weighting of '{cube.var_name}' with '{area_type}' fraction "
+               f"failed because of the following errors: {' '.join(errors)}")
         if strict:
-            raise ValueError(
-                f"Weighting with land/sea fraction is not possible, the "
-                f"following errors occured: {' '.join(errors)}")
-        logger.debug(
-            "Weighting of '%s' with '%s' fraction not possible because of "
-            "the following problems: %s", cube.var_name, area_type,
-            " ".join(errors))
+            raise ValueError(msg)
+        logger.warning(msg)
         return cube
     core_data = cube.core_data()
     if area_type == 'land':
         cube.data = core_data * land_fraction
-    if area_type == 'sea':
+    elif area_type == 'sea':
         cube.data = core_data * (1.0 - land_fraction)
     return cube
