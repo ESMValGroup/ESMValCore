@@ -602,6 +602,10 @@ def timeseries_filter(cube, window, span):
     keyword argument. A weighted sum is required because the magnitude of
     the weights are just as important as their relative sizes.
 
+    See also the `iris rolling window 
+    <https://scitools.org.uk/iris/docs/v2.0/iris/iris/
+    cube.html#iris.cube.Cube.rolling_window>`_
+
     Parameters
     ----------
     cube: iris.cube.Cube
@@ -614,8 +618,8 @@ def timeseries_filter(cube, window, span):
 
     Returns
     -------
-    list:
-        List of floats representing the weights.
+    iris.cube.Cube
+        cube time-filtered using `rolling_window`.
 
     Raises
     ------
