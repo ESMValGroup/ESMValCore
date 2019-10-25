@@ -22,7 +22,9 @@ Discovering potential issues with the data
 You can run `esmvaltool` in a dry run mode by applying the `--dry-run` command line option: that will
 run the data finding module and the CMOR checks and fixes modules and anything that is not fixed on the fly
 will result in an exception that is logged to `main_log.txt`; you can check those potential issues
-and follow up with implementing the needed fixes as described below.
+and follow up with implementing the needed fixes as described below. This feature works fully only with
+`max_parallel_tasks: 1` in `config-user.yml`; however, it is very fast so even limited on a single thread
+it should take much less time than running the full recipe.
 
 Fix structure
 =============
