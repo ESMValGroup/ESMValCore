@@ -11,6 +11,7 @@ import cf_units
 import dask.array as da
 import iris
 import iris.coord_categorisation
+import iris.exceptions
 import iris.util
 import numpy as np
 
@@ -551,5 +552,89 @@ def regrid_time(cube, frequency):
     iris.coord_categorisation.add_day_of_year(cube,
                                               cube.coord('time'),
                                               name='day_of_year')
+
+    return cube
+
+
+def low_pass_weights(window, cutoff):
+    """
+    Calculate weights for a low pass Lanczos filter.
+
+    Method borrowed from
+    https://scitools.org.uk/iris/docs/latest/examples/General/
+    SOI_filtering.html?highlight=running%20mean
+
+    Parameters
+    ----------
+    window: int
+        The length of the filter window.
+    cutoff: float
+        The cutoff frequency in inverse time steps.
+
+    Returns
+    -------
+    list:
+        List of floats representing the weights.
+    """
+    order = ((window - 1) // 2) + 1
+    nwts = 2 * order + 1
+    w = np.zeros([nwts])
+    n = nwts // 2
+    w[n] = 2 * cutoff
+    k = np.arange(1., n)
+    sigma = np.sin(np.pi * k / n) * n / (np.pi * k)
+    firstfactor = np.sin(2. * np.pi * cutoff * k) / (np.pi * k)
+    w[(n - 1):0:-1] = firstfactor * sigma
+    w[(n + 1):-1] = firstfactor * sigma
+
+    return w[1:-1]
+
+
+def timeseries_filter(cube, window, span):
+    """
+    Apply a timeseries filter.
+
+    Method borrowed from
+    https://scitools.org.uk/iris/docs/latest/examples/General/
+    SOI_filtering.html?highlight=running%20mean
+
+    Apply each filter using the rolling_window method used with the weights
+    keyword argument. A weighted sum is required because the magnitude of
+    the weights are just as important as their relative sizes.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+    window: int
+        The length of the filter window.
+    span: int
+        Number of months/days (depending on data frequency) on which
+        weights should be computed e.g. 2-yearly: span = 24 (24 months).
+
+    Returns
+    -------
+    list:
+        List of floats representing the weights.
+
+    Raises
+    ------
+    iris.exceptions.CoordinateNotFoundError:
+        Cube does not have time coordinate.
+    """
+    try:
+        cube.coord('time')
+    except iris.exceptions.CoordinateNotFoundError:
+        err = "Cube {} does not have time coordinate".format(cube)
+        raise err
+
+    # Construct weights depending on frequency
+    wgts = low_pass_weights(window, 1. / span)
+
+    # Apply filter
+    cube = cube.rolling_window('time',
+                               iris.analysis.SUM,
+                               len(wgts),
+                               weights=wgts)
 
     return cube
