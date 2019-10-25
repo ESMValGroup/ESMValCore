@@ -5,11 +5,33 @@ from abc import abstractmethod
 class DerivedVariableBase:
     """Base class for derived variables."""
 
-    @property
     @staticmethod
     @abstractmethod
-    def required():
-        """List of required variables for derivation."""
+    def required(project):
+        """Return required variables for derivation.
+
+        This method needs to be overridden in the child class belonging to the
+        desired variable to derive.
+
+        Note
+        ----
+        It is possible to declare a required variable as `optional=True`, which
+        allows the skipping of this particular variable during data extraction.
+        For example, this is useful for fx variables which are often not
+        available for observational datasets. Otherwise, the tool will fail if
+        not all required variables are available for all datasets.
+
+        Parameters
+        ----------
+        project : str
+            Project of the dataset for which the desired variable is derived.
+
+        Returns
+        -------
+        list of dict
+            List of variable metadata.
+
+        """
 
     @staticmethod
     @abstractmethod

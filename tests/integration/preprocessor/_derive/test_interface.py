@@ -1,4 +1,3 @@
-import iris
 from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor import derive
@@ -8,7 +7,7 @@ from esmvalcore.preprocessor._derive.csoil_grid import DerivedVariable
 
 def test_get_required():
 
-    variables = get_required('alb')
+    variables = get_required('alb', 'CMIP5')
 
     reference = [
         {
@@ -24,12 +23,12 @@ def test_get_required():
 
 def test_get_required_with_fx():
 
-    variables = get_required('nbp_grid')
+    variables = get_required('nbp_grid', 'CMIP5')
 
-    reference = [{
-        'short_name': 'nbp',
-        'fx_files': ['sftlf'],
-    }]
+    reference = [
+        {'short_name': 'nbp'},
+        {'short_name': 'sftlf', 'mip': 'fx', 'optional': True},
+    ]
 
     assert variables == reference
 
@@ -78,15 +77,10 @@ def test_derive_mixed_case_with_fx(tmp_path, monkeypatch):
     units = 'kg m-2'
 
     csoil_cube = Cube([])
-    fx_cube = Cube([])
-    fx_cube.var_name = 'sftlf'
-    fx_file = str(tmp_path / 'sftlf_file.nc')
-    iris.save(fx_cube, target=fx_file)
 
     def mock_calculate(self, cubes):
-        assert len(cubes) == 2
+        assert len(cubes) == 1
         assert cubes[0] == csoil_cube
-        assert cubes[1].var_name == fx_cube.var_name
         return Cube([])
 
     monkeypatch.setattr(DerivedVariable, 'calculate', mock_calculate)
@@ -96,5 +90,4 @@ def test_derive_mixed_case_with_fx(tmp_path, monkeypatch):
         short_name,
         long_name,
         units,
-        fx_files={'sftlf': fx_file},
     )

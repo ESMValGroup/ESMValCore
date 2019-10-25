@@ -6,11 +6,41 @@ from ._shared import grid_area_correction
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `fgco2_grid`."""
 
-    # Required variables
-    required = [{
-        'short_name': 'fgco2',
-        'fx_files': ['sftof', 'sftlf'],
-    }]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [
+            {
+                'short_name': 'fgco2'
+            },
+            {
+                'short_name': 'sftlf',
+                'mip': 'fx',
+                'optional': True
+            },
+            {
+                'short_name': 'sftof',
+                'mip': 'fx',
+                'optional': True
+            },
+        ]
+        if project == 'CMIP6':
+            required = [
+                {
+                    'short_name': 'fgco2'
+                },
+                {
+                    'short_name': 'sftlf',
+                    'mip': 'fx',
+                    'optional': True
+                },
+                {
+                    'short_name': 'sftof',
+                    'mip': 'Ofx',
+                    'optional': True
+                },
+            ]
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -25,7 +55,4 @@ class DerivedVariable(DerivedVariableBase):
         coastal regions.
 
         """
-        return grid_area_correction(
-            cubes,
-            'surface_downward_mass_flux_of_carbon_dioxide_expressed_as_carbon',
-            ocean_var=True)
+        return grid_area_correction(cubes, 'fgco2', ocean_var=True)

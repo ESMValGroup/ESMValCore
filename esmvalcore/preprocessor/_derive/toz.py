@@ -23,15 +23,18 @@ DOBSON_UNIT = cf_units.Unit('2.69e20 m^-2')
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `toz`."""
 
-    # Required variables
-    required = [
-        {
-            'short_name': 'tro3'
-        },
-        {
-            'short_name': 'ps'
-        },
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [
+            {
+                'short_name': 'tro3'
+            },
+            {
+                'short_name': 'ps'
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -48,10 +51,11 @@ class DerivedVariable(DerivedVariableBase):
         ps_cube = cubes.extract_strict(
             iris.Constraint(name='surface_air_pressure'))
 
-        p_layer_widths = _pressure_level_widths(
-            tro3_cube, ps_cube, top_limit=0.0)
-        toz_cube = (
-            tro3_cube * p_layer_widths / STANDARD_GRAVITY * MW_O3 / MW_AIR)
+        p_layer_widths = _pressure_level_widths(tro3_cube,
+                                                ps_cube,
+                                                top_limit=0.0)
+        toz_cube = (tro3_cube * p_layer_widths / STANDARD_GRAVITY * MW_O3 /
+                    MW_AIR)
         toz_cube = toz_cube.collapsed('air_pressure', iris.analysis.SUM)
         toz_cube.units = (tro3_cube.units * p_layer_widths.units /
                           STANDARD_GRAVITY_UNIT * MW_O3_UNIT / MW_AIR_UNIT)
