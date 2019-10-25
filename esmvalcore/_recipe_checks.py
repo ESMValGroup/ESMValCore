@@ -97,7 +97,7 @@ def data_availability(input_files, var, dryrun=False):
             raise RecipeError("No input files found for \
                               variable {}".format(var))
         else:
-            logger.info("MISSING DATA: Skipping: \
+            logger.info("DRYRUN: MISSING DATA: \
                         no data found for {}".format(var))
             return
 
@@ -118,7 +118,7 @@ def data_availability(input_files, var, dryrun=False):
                         input_files))
             else:
                 logger.info(
-                    "MISSING DATA for years {} in files {}".format(
+                    "DRYRUN: MISSING DATA for years {} in files {}".format(
                         ", ".join(str(year) for year in missing_years),
                         input_files))
 
