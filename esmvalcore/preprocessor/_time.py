@@ -560,9 +560,9 @@ def low_pass_weights(window, cutoff):
     """
     Calculate weights for a low pass Lanczos filter.
 
-    Method borrowed from
-    https://scitools.org.uk/iris/docs/latest/examples/General/
-    SOI_filtering.html?highlight=running%20mean
+    Method borrowed from `iris example
+    <https://scitools.org.uk/iris/docs/latest/examples/General/
+    SOI_filtering.html?highlight=running%20mean>`_
 
     Parameters
     ----------
@@ -594,9 +594,9 @@ def timeseries_filter(cube, window, span):
     """
     Apply a timeseries filter.
 
-    Method borrowed from
-    https://scitools.org.uk/iris/docs/latest/examples/General/
-    SOI_filtering.html?highlight=running%20mean
+    Method borrowed from `iris example
+    <https://scitools.org.uk/iris/docs/latest/examples/General/
+    SOI_filtering.html?highlight=running%20mean>`_
 
     Apply each filter using the rolling_window method used with the weights
     keyword argument. A weighted sum is required because the magnitude of
