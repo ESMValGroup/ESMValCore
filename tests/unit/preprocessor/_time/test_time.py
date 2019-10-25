@@ -5,7 +5,7 @@ import pytest
 import tests
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from cf_units import Unit
 import iris
@@ -17,7 +17,7 @@ from esmvalcore.preprocessor._time import (
     extract_month, extract_season, extract_time,
     regrid_time,
     decadal_statistics, annual_statistics, seasonal_statistics,
-    monthly_statistics, daily_statistics,
+    monthly_statistics, daily_statistics, timeseries_filter,
     climate_statistics, anomalies
 )
 
@@ -744,6 +744,26 @@ class TestRegridTime1Hourly(tests.Test):
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
         self.assertArrayEqual(diff_cube.data, expected)
+
+
+class TestTimeseriesFilter(tests.Test):
+    """Tests for regrid_time with hourly frequency."""
+
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = _create_sample_cube()
+
+    def test_timeseries_filter(self):
+        """Test timeseries_filter func."""
+        filtered_cube = timeseries_filter(self.cube, 7, 14)
+        expected_data = np.array(
+            [2.44824568, 3.0603071, 3.67236852, 4.28442994, 4.89649137,
+             5.50855279, 6.12061421, 6.73267563, 7.34473705, 7.95679847,
+             8.56885989, 9.18092131, 9.79298273, 10.40504415, 11.01710557,
+             11.62916699, 12.24122841, 12.85328983]
+        )
+        assert_array_almost_equal(filtered_cube.data, expected_data)
+        assert len(filtered_cube.coord('time').points) == 18
 
 
 def make_time_series(number_years=2):
