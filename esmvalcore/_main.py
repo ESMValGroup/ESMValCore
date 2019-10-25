@@ -100,7 +100,10 @@ def get_args():
     parser.add_argument(
         '--dry-run',
         action='store_true',
-        help="Check data and CMOR compliance and return a report.")
+        help="Check data and CMOR compliance and return a report. \
+             This feature works fully only with max_parallel_tasks: 1 \
+             in config-user.yml; however, it is very fast so even on \
+             a single thread it should take much less time.")
     args = parser.parse_args()
     return args
 
