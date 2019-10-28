@@ -755,7 +755,9 @@ class TestTimeseriesFilter(tests.Test):
 
     def test_timeseries_filter_simple(self):
         """Test timeseries_filter func."""
-        filtered_cube = timeseries_filter(self.cube, 7, 14)
+        filtered_cube = timeseries_filter(self.cube, 7, 14,
+                                          filter_type='lowpass',
+                                          filter_stats='sum')
         expected_data = np.array(
             [2.44824568, 3.0603071, 3.67236852, 4.28442994, 4.89649137,
              5.50855279, 6.12061421, 6.73267563, 7.34473705, 7.95679847,
