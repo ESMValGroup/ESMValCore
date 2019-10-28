@@ -634,7 +634,7 @@ def timeseries_filter(cube, window, span,
     iris.exceptions.CoordinateNotFoundError:
         Cube does not have time coordinate.
     NotImplementedError:
-        If filter_type is not 'lowpass'.
+        If filter_type is not implemented.
     """
     try:
         cube.coord('time')
