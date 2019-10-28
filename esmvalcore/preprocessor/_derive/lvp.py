@@ -12,12 +12,21 @@ from ._baseclass import DerivedVariableBase
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `lvp`."""
 
-    # Required variables
-    required = [
-        {'short_name': 'hfls'},
-        {'short_name': 'pr'},
-        {'short_name': 'evspsbl'},
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [
+            {
+                'short_name': 'hfls'
+            },
+            {
+                'short_name': 'pr'
+            },
+            {
+                'short_name': 'evspsbl'
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):

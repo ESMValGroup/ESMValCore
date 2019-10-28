@@ -8,9 +8,9 @@ from iris import Constraint
 logger = logging.getLogger(__name__)
 
 
-def _get_land_fraction(cubes, standard_name, derive_from_ocean_fraction=False):
+def _get_land_fraction(cubes, var_name, derive_from_ocean_fraction=False):
     """Extract land fraction as :mod:`dask.array`."""
-    cube = cubes.extract_strict(Constraint(name=standard_name))
+    cube = cubes.extract_strict(_var_name_constraint(var_name))
     if derive_from_ocean_fraction:
         fx_vars = ['sftof', 'sftlf']
     else:
@@ -24,18 +24,18 @@ def _get_land_fraction(cubes, standard_name, derive_from_ocean_fraction=False):
         except iris.exceptions.ConstraintMismatchError:
             logger.debug(
                 "Cannot correct cube '%s' with '%s', fx file not found",
-                standard_name, fx_var)
+                var_name, fx_var)
         else:
             if not _shape_is_broadcastable(fx_cube.shape, cube.shape):
                 logger.debug("Cannot broadcast fx cube '%s' to cube '%s'",
-                             fx_var, standard_name)
+                             fx_var, var_name)
             else:
                 if fx_var == 'sftof':
                     land_fraction = 1.0 - fx_cube.core_data() / 100.0
                 else:
                     land_fraction = fx_cube.core_data() / 100.0
                 logger.debug("Using fx cube '%s' to fix '%s'", fx_var,
-                             standard_name)
+                             var_name)
     return land_fraction
 
 
@@ -69,12 +69,13 @@ def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
     return new_cube
 
 
-def grid_area_correction(cubes, standard_name, ocean_var=False):
+def grid_area_correction(cubes, var_name, ocean_var=False):
     """Correct (flux) variable defined relative to land/sea area."""
-    cube = cubes.extract_strict(Constraint(name=standard_name))
+    cube = cubes.extract_strict(_var_name_constraint(var_name))
     core_data = cube.core_data()
-    land_fraction = _get_land_fraction(
-        cubes, standard_name, derive_from_ocean_fraction=ocean_var)
+    land_fraction = _get_land_fraction(cubes,
+                                       var_name,
+                                       derive_from_ocean_fraction=ocean_var)
     if land_fraction is not None:
         if ocean_var:
             land_fraction = 1.0 - land_fraction
