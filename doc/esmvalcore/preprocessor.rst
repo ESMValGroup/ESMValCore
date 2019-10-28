@@ -105,7 +105,9 @@ The required arguments for this module are two boolean switches:
 * ``force_derivation``: force variable derivation even if the variable is
   directly available in the input data.
 
-See also :func:`esmvalcore.preprocessor.derive`.
+See also :func:`esmvalcore.preprocessor.derive`. To get an overview on
+derivation scripts and how to implement new ones, please go to
+:ref:`derivation`.
 
 
 .. _CMOR check and dataset-specific fixes:
