@@ -753,7 +753,7 @@ class TestTimeseriesFilter(tests.Test):
         """Prepare tests."""
         self.cube = _create_sample_cube()
 
-    def test_timeseries_filter(self):
+    def test_timeseries_filter_simple(self):
         """Test timeseries_filter func."""
         filtered_cube = timeseries_filter(self.cube, 7, 14)
         expected_data = np.array(
@@ -764,6 +764,23 @@ class TestTimeseriesFilter(tests.Test):
         )
         assert_array_almost_equal(filtered_cube.data, expected_data)
         assert len(filtered_cube.coord('time').points) == 18
+
+    def test_timeseries_filter_timecoord(self):
+        """Test a not implemnted filter."""
+        import iris.exceptions
+        new_cube = self.cube.copy()
+        new_cube.remove_coord(new_cube.coord('time'))
+        with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
+            timeseries_filter(new_cube, 7, 14,
+                              filter_type='lowpass',
+                              filter_stats='sum')
+
+    def test_timeseries_filter_implemented(self):
+        """Test a not implemnted filter."""
+        with self.assertRaises(NotImplementedError):
+            timeseries_filter(self.cube, 7, 14,
+                              filter_type='bypass',
+                              filter_stats='sum')
 
 
 def make_time_series(number_years=2):
