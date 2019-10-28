@@ -39,8 +39,31 @@ class AllVars(Fix):
         for cube in cubes:
             if cube.name() == 'cell_area':
                 continue
+
             cube.add_aux_coord(cell_area, cube.coord_dims('latitude'))
             cube.coord('latitude').var_name = 'lat'
             cube.coord('longitude').var_name = 'lon'
             new_list.append(cube)
         return CubeList(new_list)
+
+
+class zostoga(Fix):
+    """Fixes for zostoga."""
+
+    def fix_metadata(self, cube):
+        """
+        Fix zostoga by removing unity length coordinates.
+
+        Parameters
+        ----------
+        cube: iris cube
+            cube to fix
+
+        Returns
+        -------
+        iris.cube
+
+        """
+#        assert 0
+
+        return cube

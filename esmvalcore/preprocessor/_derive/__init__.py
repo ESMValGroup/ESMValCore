@@ -54,6 +54,8 @@ def get_required(short_name):
     """
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
     variables = deepcopy(DerivedVariable().required)
+    print('getting required:', short_name, variables)
+    # assert 0
     return variables
 
 

@@ -9,7 +9,12 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `amoc`."""
 
     # Required variables
-    required = [{'short_name': 'msftmyz', 'mip': 'Omon'}]
+    required = [{'short_name': 'msftmyz', 'derive': True}]
+
+    # note that msftmyz was superceded by msftyz in CMIP6.
+    # This is set in esmvalcore/cmor/table.py
+#    required = [{'short_name': 'msftmyz', 'project': 'CMIP5'}, ]
+                #{'short_name': 'msftyz', 'project': 'CMIP6'}]
 
     @staticmethod
     def calculate(cubes):
@@ -26,9 +31,17 @@ class DerivedVariable(DerivedVariableBase):
               Output AMOC cube.
         """
         # 0. Load the msftmyz cube.
-        cube = cubes.extract_strict(
-            iris.Constraint(
-                name='ocean_meridional_overturning_mass_streamfunction'))
+        assert 0
+        if cube.name()=='ocean_y_overturning_mass_streamfunction':
+            cube = cubes.extract_strict(
+                iris.Constraint(
+                    name='ocean_y_overturning_mass_streamfunction'))
+        else:
+            cube = cubes.extract_strict(
+                iris.Constraint(
+                    name='ocean_meridional_overturning_mass_streamfunction'))
+        print(cube.name())
+        assert 0
 
         # 1: find the relevant region
         atlantic_region = 'atlantic_arctic_ocean'
