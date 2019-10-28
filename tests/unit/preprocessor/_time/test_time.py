@@ -766,7 +766,7 @@ class TestTimeseriesFilter(tests.Test):
         assert len(filtered_cube.coord('time').points) == 18
 
     def test_timeseries_filter_timecoord(self):
-        """Test a not implemnted filter."""
+        """Test missing time axis."""
         import iris.exceptions
         new_cube = self.cube.copy()
         new_cube.remove_coord(new_cube.coord('time'))
