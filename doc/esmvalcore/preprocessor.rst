@@ -609,6 +609,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * anomalies_: Compute anomalies
 * regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
+* timeseries_filter_: Allows application of a filter to the time-series data.
 
 Statistics functions are applied by default in the order they appear in the
 list. For example, the following example applied to hourly data will retrieve
@@ -842,6 +843,21 @@ set manually by the user in recipe.
 
 See also :func:`esmvalcore.preprocessor.regrid_time`.
 
+
+.. _timeseries_filter:
+
+``timeseries_filter``
+---------------------
+
+This function allows the user to apply a filter to the timeseries data. This filter may be
+of the user's choice (currently only the ``low-pass`` Lanczos filter is implemented); the
+implementation is inspired by this `iris example
+<https://scitools.org.uk/iris/docs/latest/examples/General/
+SOI_filtering.html?highlight=running%20mean>`_ and uses aggregation via a
+`rolling window <https://scitools.org.uk/iris/docs/v2.0/iris/iris/cube.html#iris.cube.Cube.rolling_window>`_.
+
+See also :func:`esmvalcore.preprocessor.low_pass_weights`.
+See also :func:`esmvalcore.preprocessor.timeseries_filter`.
 
 .. _area operations:
 
