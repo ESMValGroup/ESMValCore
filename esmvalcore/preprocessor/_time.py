@@ -612,10 +612,11 @@ def timeseries_filter(cube, window, span,
     cube: iris.cube.Cube
         input cube.
     window: int
-        The length of the filter window.
+        The length of the filter window (in units of cube time coordinate).
     span: int
         Number of months/days (depending on data frequency) on which
-        weights should be computed e.g. 2-yearly: span = 24 (24 months).
+        weights should be computed e.g. 2-yearly: span = 24 (2 x 12 months).
+        Span should have same units as cube time coordinate.
     filter_type: str, optional
         Type of filter to be applied; default 'lowpass'.
         Available types: 'lowpass'.
@@ -638,8 +639,8 @@ def timeseries_filter(cube, window, span,
     try:
         cube.coord('time')
     except iris.exceptions.CoordinateNotFoundError:
-        err = "Cube {} does not have time coordinate".format(cube)
-        raise err
+        logger.error("Cube %s does not have time coordinate", cube)
+        raise
 
     # Construct weights depending on frequency
     # TODO implement more filters!
