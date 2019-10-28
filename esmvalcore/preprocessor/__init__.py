@@ -23,8 +23,8 @@ from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
 from ._regrid import extract_levels, regrid
 from ._time import (extract_month, extract_season, extract_time, regrid_time,
                     daily_statistics, monthly_statistics, seasonal_statistics,
-                    annual_statistics, decadal_statistics, standardize,
-                    climate_statistics, anomalies)
+                    annual_statistics, decadal_statistics, climate_statistics,
+                    anomalies)
 
 from ._units import convert_units
 from ._volume import (volume_statistics, depth_integration, extract_trajectory,
