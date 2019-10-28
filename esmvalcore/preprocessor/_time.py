@@ -590,7 +590,8 @@ def low_pass_weights(window, cutoff):
     return w[1:-1]
 
 
-def timeseries_filter(cube, window, span):
+def timeseries_filter(cube, window, span,
+                      filter_type='lowpass', filter_stats='sum'):
     """
     Apply a timeseries filter.
 
@@ -615,16 +616,24 @@ def timeseries_filter(cube, window, span):
     span: int
         Number of months/days (depending on data frequency) on which
         weights should be computed e.g. 2-yearly: span = 24 (24 months).
+    filter_type: str, optional
+        Type of filter to be applied; default 'lowpass'.
+        Available types: 'lowpass'.
+    filter_stats: str, optional
+        Type of statistic to aggregate on the rolling window; default 'sum'.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
 
     Returns
     -------
     iris.cube.Cube
-        cube time-filtered using `rolling_window`.
+        cube time-filtered using 'rolling_window'.
 
     Raises
     ------
     iris.exceptions.CoordinateNotFoundError:
         Cube does not have time coordinate.
+    NotImplementedError:
+        If filter_type is not 'lowpass'.
     """
     try:
         cube.coord('time')
@@ -633,11 +642,19 @@ def timeseries_filter(cube, window, span):
         raise err
 
     # Construct weights depending on frequency
-    wgts = low_pass_weights(window, 1. / span)
+    # TODO implement more filters!
+    supported_filters = ['lowpass', ]
+    if filter_type in supported_filters:
+        if filter_type == 'lowpass':
+            wgts = low_pass_weights(window, 1. / span)
+    else:
+        raise NotImplementedError(
+            "Filter type {} not implemented".format(filter_type))
 
     # Apply filter
+    aggregation_operator = get_iris_analysis_operation(filter_stats)
     cube = cube.rolling_window('time',
-                               iris.analysis.SUM,
+                               aggregation_operator,
                                len(wgts),
                                weights=wgts)
 
