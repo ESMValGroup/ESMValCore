@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def find_files(dirnames, filenames):
     """Find files matching filenames in dirnames."""
-    logger.debug("Looking for files matching %s in %s", filenames, dirnames)
+    logger.info("Looking for files matching %s in %s", filenames, dirnames)
 
     result = []
     for dirname in dirnames:
@@ -230,6 +230,21 @@ def _find_input_files(variable, rootpath, drs):
     return files
 
 
+def _filter_newest_files(input_files):
+    """Filter input files to get newest files if duplicates."""
+    if not len(input_files) > 1:
+        return input_files
+    else:
+        unique_newest_files = []
+        base_files = [os.path.basename(file) for file in input_files]
+        unique_base_files = list(set(base_files))
+        for unique_file in unique_base_files:
+            matches = fnmatch.filter(input_files, '*' + unique_file)
+            newest_match = max(matches, key=os.path.getctime)
+            unique_newest_files.append(newest_match)
+        return unique_newest_files
+
+
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
     # change ensemble to fixed r0i0p0 for fx variables
@@ -241,7 +256,7 @@ def get_input_filelist(variable, rootpath, drs):
     if variable['frequency'] != 'fx':
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
-    return files
+    return _filter_newest_files(files)
 
 
 def get_output_file(variable, preproc_dir):
