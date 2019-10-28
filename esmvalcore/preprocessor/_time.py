@@ -650,7 +650,9 @@ def timeseries_filter(cube, window, span,
             wgts = low_pass_weights(window, 1. / span)
     else:
         raise NotImplementedError(
-            "Filter type {} not implemented, please choose one of {}".format(filter_type, ", ".join(supported_filters)))
+            "Filter type {} not implemented, \
+            please choose one of {}".format(filter_type,
+                                            ", ".join(supported_filters)))
 
     # Apply filter
     aggregation_operator = get_iris_analysis_operation(filter_stats)
