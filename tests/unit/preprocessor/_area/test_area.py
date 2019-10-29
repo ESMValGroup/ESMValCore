@@ -406,8 +406,9 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
 
 
 @pytest.mark.parametrize('crop', [True, False])
+@pytest.mark.parametrize('decomposed', [True, False])
 def test_extract_composite_shape(make_testcube, square_composite_shape,
-                                 tmp_path, crop):
+                                 tmp_path, crop, decomposed):
     """Test for extracting a region with shapefile"""
     expected = square_composite_shape
     if not crop:
@@ -417,12 +418,15 @@ def test_extract_composite_shape(make_testcube, square_composite_shape,
         original[:, :expected.shape[1], :expected.shape[2]] = expected
         expected = original
 
-    if expected.shape[0] == 1:
-        expected = expected[0, :, :]
+    if not decomposed or expected.shape[0] == 1:
+        # this detour is necessary, otherwise the data will not agree
+        data = expected.data.max(axis=0)
+        mask = expected.max(axis=0).mask
+        expected = np.ma.masked_array(data=data, mask=mask)
 
     result = extract_shape(make_testcube,
                            tmp_path / 'test_shape.shp',
-                           crop=crop, decomposed=True)
+                           crop=crop, decomposed=decomposed)
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
