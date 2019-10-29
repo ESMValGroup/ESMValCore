@@ -314,14 +314,16 @@ def _select_representative_point(shape, lon, lat):
     select = (lon == nearest_lon) & (lat == nearest_lat)
     return select
 
-def _get_masks_from_geomtries(geometries, lon, lat, method='contains' , decomposed=False):
+
+def _get_masks_from_geomtries(geometries, lon, lat,
+                              method='contains', decomposed=False):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
             "Invalid value for `method`. Choose from 'contains', ",
             "'representative'.")
 
-    selections=dict()
+    selections = dict()
 
     for i, item in enumerate(geometries):
         shape = shapely.geometry.shape(item['geometry'])
@@ -336,14 +338,14 @@ def _get_masks_from_geomtries(geometries, lon, lat, method='contains' , decompos
         else:
             id_ = i
 
-        selections[id_]=~select
+        selections[id_] = select
 
-    if not decomposed and len(selections)>1:
+    if not decomposed and len(selections) > 1:
         selection = np.zeros(lat.shape, dtype=bool)
         for id_, select in selections.items():
             selection |= select
-  
-        selections = {0 : selection}
+
+        selections = {0: selection}
 
     return selections
 
@@ -395,11 +397,12 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
     if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
         lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
 
-    selections = _get_masks_from_geomtries(geometries, lon, lat, 
-                                           method=method, decomposed=decomposed)
+    selections = _get_masks_from_geomtries(geometries, lon, lat,
+                                           method=method,
+                                           decomposed=decomposed)
 
     geometries.close()
-  
+
     cubelist = iris.cube.CubeList()
 
     for id_, select in selections.items():
@@ -413,9 +416,9 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
         )
 
         select = da.broadcast_to(select, _cube.shape)
-        _cube.data = da.ma.masked_where(select, _cube.core_data())
+        _cube.data = da.ma.masked_where(~select, _cube.core_data())
         cubelist.append(_cube)
 
     cube = cubelist.merge_cube()
-    
+
     return cube
