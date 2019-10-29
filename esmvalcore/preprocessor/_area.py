@@ -316,7 +316,7 @@ def _select_representative_point(shape, lon, lat):
 
 
 def _get_masks_from_geometries(geometries, lon, lat,
-                              method='contains', decomposed=False):
+                               method='contains', decomposed=False):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
