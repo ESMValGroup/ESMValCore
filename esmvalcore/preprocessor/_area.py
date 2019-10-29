@@ -315,7 +315,7 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
-def _get_masks_from_geomtries(geometries, lon, lat,
+def _get_masks_from_geometries(geometries, lon, lat,
                               method='contains', decomposed=False):
 
     if method not in {'contains', 'representative'}:
@@ -397,9 +397,9 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
     if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
         lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
 
-    selections = _get_masks_from_geomtries(geometries, lon, lat,
-                                           method=method,
-                                           decomposed=decomposed)
+    selections = _get_masks_from_geometries(geometries, lon, lat,
+                                            method=method,
+                                            decomposed=decomposed)
 
     geometries.close()
 
