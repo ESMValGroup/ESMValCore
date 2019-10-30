@@ -391,12 +391,12 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
 
         if crop:
             cube = _crop_cube(cube, *geometries.bounds)
-    
+
         lon = cube.coord(axis='X').points
         lat = cube.coord(axis='Y').points
         if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
             lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
-    
+
         selections = _get_masks_from_geometries(geometries, lon, lat,
                                                 method=method,
                                                 decomposed=decomposed)
