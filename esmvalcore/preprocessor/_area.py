@@ -342,7 +342,7 @@ def _get_masks_from_geometries(geometries, lon, lat,
 
     if not decomposed and len(selections) > 1:
         selection = np.zeros(lat.shape, dtype=bool)
-        for id_, select in selections.items():
+        for select in selections.values():
             selection |= select
 
         selections = {0: selection}
@@ -387,21 +387,19 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
 
     """
 
-    geometries = fiona.open(shapefile)
+    with fiona.open(shapefile) as geometries:
 
-    if crop:
-        cube = _crop_cube(cube, *geometries.bounds)
-
-    lon = cube.coord(axis='X').points
-    lat = cube.coord(axis='Y').points
-    if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
-        lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
-
-    selections = _get_masks_from_geometries(geometries, lon, lat,
-                                            method=method,
-                                            decomposed=decomposed)
-
-    geometries.close()
+        if crop:
+            cube = _crop_cube(cube, *geometries.bounds)
+    
+        lon = cube.coord(axis='X').points
+        lat = cube.coord(axis='Y').points
+        if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
+            lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+    
+        selections = _get_masks_from_geometries(geometries, lon, lat,
+                                                method=method,
+                                                decomposed=decomposed)
 
     cubelist = iris.cube.CubeList()
 
