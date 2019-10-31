@@ -476,7 +476,7 @@ def anomalies(cube, period, standardize=False):
             raise ValueError(
                 "Cannot safely apply preprocessor to this dataset, "
                 "since the full time period of this dataset is not "
-                a multiple of the period {0}".format(period)
+                f"a multiple of the period '{period}'"
             )
         reps = tuple([int(i) for i in ratio])
         cube.data = cube.data / np.tile(cube_stddev.data, reps)
