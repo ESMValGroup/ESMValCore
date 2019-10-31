@@ -481,7 +481,7 @@ def regrid_time(cube, frequency):
     Operations on time units, time points and auxiliary
     coordinates so that any cube from cubes can be subtracted from any
     other cube from cubes. Currently this function supports
-    yearly (frequency=year), monthly (frequency=mon),
+    yearly (frequency=yr), monthly (frequency=mon),
     daily (frequency=day), 6-hourly (frequency=6hr),
     3-hourly (frequency=3hr) and hourly (frequency=1hr) data time frequencies.
 
