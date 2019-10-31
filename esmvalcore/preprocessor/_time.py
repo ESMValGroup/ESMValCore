@@ -475,7 +475,7 @@ def anomalies(cube, period, standardize=False):
         if not all([ratio[0] % 1 == 0] + [i == 1 for i in ratio[1:]]):
             raise ValueError(
                 "Cannot safely apply preprocessor to this dataset, "
-                since the full time period of this dataset is not\
+                "since the full time period of this dataset is not "
                 a multiple of the period {0}".format(period)
             )
         reps = tuple([int(i) for i in ratio])
