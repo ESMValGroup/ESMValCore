@@ -474,7 +474,7 @@ def anomalies(cube, period, standardize=False):
         # are not multiples of each other or if other shapes are not equal
         if not all([ratio[0] % 1 == 0] + [i == 1 for i in ratio[1:]]):
             raise ValueError(
-                "Cannot safely apply preprocessor to this dataset,\
+                "Cannot safely apply preprocessor to this dataset, "
                 since the full time period of this dataset is not\
                 a multiple of the period {0}".format(period)
             )
