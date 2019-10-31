@@ -22,10 +22,10 @@ DOBSON_UNIT = cf_units.Unit('2.69e20 m^-2')
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `toz`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [
             {
                 'short_name': 'tro3'

@@ -7,10 +7,10 @@ from ._baseclass import DerivedVariableBase
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sithick`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [{
             'short_name': 'sit',
         }, {
@@ -28,7 +28,7 @@ class DerivedVariable(DerivedVariableBase):
         `sivol` and the real thickness is called `sithick`
 
         Arguments
-        ----
+        ---------
             cubes: cubelist containing volume and concentration components.
 
         Returns

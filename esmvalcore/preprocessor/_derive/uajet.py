@@ -13,10 +13,10 @@ PLEV = 85000
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `uajet`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [{'short_name': 'ua'}]
         return required
 

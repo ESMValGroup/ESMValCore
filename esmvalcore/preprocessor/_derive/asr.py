@@ -7,10 +7,10 @@ from ._baseclass import DerivedVariableBase
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `asr`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [{'short_name': 'rsdt'}, {'short_name': 'rsut'}]
         return required
 

@@ -11,10 +11,10 @@ RHO_CP = iris.coords.AuxCoord(4.09169e+6, units=Unit('kg m-3 J kg-1 K-1'))
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `ohc`."""
+
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [
             {
                 'short_name': 'thetao'
@@ -50,7 +50,7 @@ class DerivedVariable(DerivedVariableBase):
            input cube.
 
         Returns
-        ---------
+        -------
         iris.cube.Cube
               Output OHC cube.
         """
