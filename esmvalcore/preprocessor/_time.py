@@ -467,7 +467,11 @@ def anomalies(cube, period, standardize=False):
         cube_stddev = climate_statistics(cube,
                                          operator='std_dev',
                                          period=period)
-        assert cube.ndim == cube_stddev.ndim
+        if not cube.ndim == cube_stddev.ndim:
+            raise ValueError(
+                "Inconsistent dimensions between anomaly cube and "
+                f"standard deviation cube: {cube.ndim};{cube_stddev.ndim}"
+            )
         ratio = [i / j for i, j in
                  zip(cube.shape, cube_stddev.shape)]
         # This will raise an error if the length of the cube their time axes
