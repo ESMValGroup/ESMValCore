@@ -304,11 +304,8 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_file'] = dict(fix)
     settings['fix_file']['output_dir'] = fix_dir
     # Cube fixes
-    # Only supply mip if the CMOR check fixes are implemented.
-    if variable.get('cmor_table'):
-        fix['cmor_table'] = variable['cmor_table']
-        fix['mip'] = variable['mip']
-        fix['frequency'] = variable['frequency']
+    fix['mip'] = variable['mip']
+    fix['frequency'] = variable['frequency']
     settings['fix_data'] = dict(fix)
     settings['fix_metadata'] = dict(fix)
 

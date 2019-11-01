@@ -129,6 +129,15 @@ OBS6:
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_{start_year}-{end_year}'
   cmor_type: 'CMIP6'
 
+Native6:
+  cmor_strict: false
+  input_dir:
+    default: 'Tier{tier}/{dataset}'
+  input_file:
+    default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_{start_year}-{end_year}'
+  cmor_type: 'CMIP6'
+
 obs4mips:
   cmor_strict: false
   input_dir:

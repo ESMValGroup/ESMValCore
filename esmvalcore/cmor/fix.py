@@ -45,7 +45,7 @@ def fix_file(file, short_name, project, dataset, output_dir):
 
     """
     for fix in Fix.get_fixes(
-            project=project, dataset=dataset, variable=short_name):
+            project=project, dataset=dataset, mip='', short_name=short_name):
         file = fix.fix_file(file, output_dir)
     return file
 
@@ -54,8 +54,7 @@ def fix_metadata(cubes,
                  short_name,
                  project,
                  dataset,
-                 cmor_table=None,
-                 mip=None,
+                 mip='',
                  frequency=None):
     """
     Fix cube metadata if fixes are required and check it anyway.
@@ -75,9 +74,6 @@ def fix_metadata(cubes,
 
     dataset: str
 
-    cmor_table: str, optional
-        CMOR tables to use for the check, if available
-
     mip: str, optional
         Variable's MIP, if available
 
@@ -96,7 +92,7 @@ def fix_metadata(cubes,
 
     """
     fixes = Fix.get_fixes(
-        project=project, dataset=dataset, variable=short_name)
+        project=project, dataset=dataset, mip=mip, short_name=short_name)
     fixed_cubes = []
     by_file = defaultdict(list)
     for cube in cubes:
@@ -134,10 +130,10 @@ def fix_metadata(cubes,
         else:
             cube = cube_list[0]
 
-        if cmor_table and mip:
+        if mip:
             checker = _get_cmor_checker(
                 frequency=frequency,
-                table=cmor_table,
+                table=project,
                 mip=mip,
                 short_name=short_name,
                 fail_on_error=False,
@@ -152,8 +148,7 @@ def fix_data(cube,
              short_name,
              project,
              dataset,
-             cmor_table=None,
-             mip=None,
+             mip='',
              frequency=None):
     """
     Fix cube data if fixes add present and check it anyway.
@@ -196,12 +191,12 @@ def fix_data(cube,
 
     """
     for fix in Fix.get_fixes(
-            project=project, dataset=dataset, variable=short_name):
+            project=project, dataset=dataset, mip=mip, short_name=short_name):
         cube = fix.fix_data(cube)
-    if cmor_table and mip:
+    if mip:
         checker = _get_cmor_checker(
             frequency=frequency,
-            table=cmor_table,
+            table=project,
             mip=mip,
             short_name=short_name,
             fail_on_error=False,
