@@ -483,8 +483,9 @@ def anomalies(cube, period, standardize=False):
                 f"a multiple of the period '{period}'"
             )
         reps = tuple([int(i) for i in ratio])
-        cube.data = cube.core_data() / np.tile(cube_stddev.core_data(), reps)
-
+        cube.data = cube.core_data() / \
+            da.concatenate([cube_stddev.core_data()
+                            for _ in range(reps[0])], axis=0)
     return cube
 
 
