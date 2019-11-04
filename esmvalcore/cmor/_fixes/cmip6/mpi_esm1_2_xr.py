@@ -1,11 +1,11 @@
-"""Fixes for MPI-ESM1-2-XR model"""
+"""Fixes for MPI-ESM1-2-XR model."""
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
 
-class tas(Fix):
-    """ Fixes for tas """
+class Tas(Fix):
+    """Fixes for tas."""
 
     def fix_metadata(self, cubes):
         """
@@ -27,8 +27,10 @@ class tas(Fix):
 
         return cubes
 
-class ta(Fix):
-    """ Fixes for ta """
+
+class Ta(Fix):
+    """Fixes for ta."""
+
     def fix_metadata(self, cubes):
         """
         Fix metadata.
@@ -50,8 +52,10 @@ class ta(Fix):
 
         return cubes
 
-class va(Fix):
-    """ Fixes for va """
+
+class Va(Fix):
+    """Fixes for va."""
+
     def fix_metadata(self, cubes):
         """
         Fix metadata.
@@ -73,8 +77,10 @@ class va(Fix):
 
         return cubes
 
-class zg(Fix):
-    """ Fixes for zg """
+
+class Zg(Fix):
+    """Fixes for zg."""
+
     def fix_metadata(self, cubes):
         """
         Fix metadata.
@@ -96,8 +102,10 @@ class zg(Fix):
 
         return cubes
 
-class ua(Fix):
-    """ Fixes for ua """
+
+class Ua(Fix):
+    """Fixes for ua."""
+
     def fix_metadata(self, cubes):
         """
         Fix metadata.
@@ -119,8 +127,9 @@ class ua(Fix):
 
         return cubes
 
-class sfcWind(Fix):
-    """ Fixes for sfcWind """
+
+class SfcWind(Fix):
+    """Fixes for sfcWind."""
 
     def fix_metadata(self, cubes):
         """
