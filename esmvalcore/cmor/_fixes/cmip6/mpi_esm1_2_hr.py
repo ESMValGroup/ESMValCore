@@ -125,7 +125,7 @@ class sfcWind(Fix):
         """
         Fix metadata.
 
-        Adds missing height2m coordinate.
+        Adds missing height10m coordinate.
 
         Parameters
         ----------
@@ -140,4 +140,3 @@ class sfcWind(Fix):
             add_scalar_height_coord(cube, height=10.0)
 
         return cubes
-        
