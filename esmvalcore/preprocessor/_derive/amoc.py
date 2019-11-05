@@ -8,13 +8,14 @@ from ._baseclass import DerivedVariableBase
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `amoc`."""
 
-    # Required variables
-    required = [{'short_name': 'msftmyz', 'derive': True}]
-
-    # note that msftmyz was superceded by msftyz in CMIP6.
-    # This is set in esmvalcore/cmor/table.py
-#    required = [{'short_name': 'msftmyz', 'project': 'CMIP5'}, ]
-                #{'short_name': 'msftyz', 'project': 'CMIP6'}]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        if project == 'CMIP5':
+            required = [{'short_name': 'msftmyz'}]
+        if project == 'CMIP6':
+            required = [{'short_name': 'msftyz'}]
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -26,23 +27,31 @@ class DerivedVariable(DerivedVariableBase):
            input cube.
 
         Returns
-        ---------
+        -------
         iris.cube.Cube
               Output AMOC cube.
         """
-        # 0. Load the msftmyz cube.
-        assert 0
-        if cube.name()=='ocean_y_overturning_mass_streamfunction':
-            cube = cubes.extract_strict(
-                iris.Constraint(
-                    name='ocean_y_overturning_mass_streamfunction'))
-        else:
+        # 0. Load the msft* cube.
+        # cube = cubes.extract(
+        #     iris.Constraint(
+        #         name=['ocean_meridional_overturning_mass_streamfunction',
+        #               'ocean_y_overturning_mass_streamfunction']))
+
+        #project = ''
+        try:
             cube = cubes.extract_strict(
                 iris.Constraint(
                     name='ocean_meridional_overturning_mass_streamfunction'))
-        print(cube.name())
-        assert 0
+            lats = cube.coord('latitude').points
+            project = 'CMIP5'
+        except:
+            cube = cubes.extract_strict(
+                iris.Constraint(
+                    name='ocean_y_overturning_mass_streamfunction'))
+            lats = cube.coord('grid_latitude').points
+            project = 'CMIP6'
 
+#        print(cube)
         # 1: find the relevant region
         atlantic_region = 'atlantic_arctic_ocean'
         atl_constraint = iris.Constraint(region=atlantic_region)
@@ -53,11 +62,18 @@ class DerivedVariable(DerivedVariableBase):
         cube = cube.extract(constraint=depth_constraint)
 
         # 3: Find the latitude closest to 26N
+        print('3',cube)
+
         rapid_location = 26.5
-        lats = cube.coord('latitude').points
+        #lats = cube.coord('latitude').points
         rapid_index = np.argmin(np.abs(lats - rapid_location))
-        rapid_constraint = iris.Constraint(latitude=lats[rapid_index])
+        if project == 'CMIP5':
+            rapid_constraint = iris.Constraint(latitude=lats[rapid_index])
+        if project == 'CMIP6':
+            rapid_constraint = iris.Constraint(grid_latitude=lats[rapid_index])
+
         cube = cube.extract(constraint=rapid_constraint)
+        print('3.4',cube)
 
         # 4: find the maximum in the water column along the time axis.
         cube = cube.collapsed(

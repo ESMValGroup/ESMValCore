@@ -1,10 +1,6 @@
-"""Fixes for CMIP6 UKESM1-0-LL."""
-from .hadgem3_gc31_ll import AllVars as BaseAllVars
+"""Fixes for EC-Earth3-Veg."""
 from ..fix import Fix
-
-
-class AllVars(BaseAllVars):
-    """Fixes for all vars."""
+import cf_units
 
 class msftyz(Fix):
     """Fix msftyz."""
@@ -25,5 +21,4 @@ class msftyz(Fix):
         for cube in cubes:
             basin = cube.coord('region')
             basin.var_name = 'basin'
-
         return cubes
