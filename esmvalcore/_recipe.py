@@ -5,6 +5,7 @@ import os
 import re
 from collections import OrderedDict
 from copy import deepcopy
+from pprint import pformat
 
 import yaml
 from netCDF4 import Dataset
@@ -407,10 +408,6 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     if fx_files:
         fx_files = fx_files[0]
 
-    logger.info("Using fx files for masking for %s of dataset %s:\n%s",
-                fx_var['short_name'], fx_var['dataset'],
-                fx_files)
-
     return fx_files
 
 
@@ -427,11 +424,13 @@ def _get_landsea_fraction_fx_dict(variable, config_user):
 
 def _update_fx_settings(settings, variable, config_user):
     """Find and set the FX mask settings."""
+    msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
     if 'mask_landsea' in settings:
         logger.debug('Getting fx mask settings now...')
         fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
         fx_list = [fx_file for fx_file in fx_dict.values() if fx_file]
         settings['mask_landsea']['fx_files'] = fx_list
+        logger.info(msg, 'land/sea masking', pformat(fx_dict))
 
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')
@@ -441,11 +440,13 @@ def _update_fx_settings(settings, variable, config_user):
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
+        logger.info(msg, 'land/sea ice masking', pformat(fx_files_dict))
 
     if 'weighting_landsea_fraction' in settings:
         logger.debug("Getting fx files for landsea fraction weighting now...")
         fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
         settings['weighting_landsea_fraction']['fx_files'] = fx_dict
+        logger.info(msg, 'land/sea fraction weighting', pformat(fx_dict))
 
     for step in ('area_statistics', 'volume_statistics'):
         if settings.get(step, {}).get('fx_files'):
@@ -455,6 +456,7 @@ def _update_fx_settings(settings, variable, config_user):
                 fxvar: _get_correct_fx_file(variable, fxvar, config_user)
                 for fxvar in var['fx_files']}
             settings[step]['fx_files'] = fx_files_dict
+            logger.info(msg, step, pformat(fx_files_dict))
 
 
 def _read_attributes(filename):
