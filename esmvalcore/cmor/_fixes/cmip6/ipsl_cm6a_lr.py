@@ -68,40 +68,34 @@ class msftyz(Fix):
 
         """
         for cube in cubes:
+            # Change depth
+            depth = cube.coord('Vertical W levels')
+            depth.var_name = 'depth'
+
             # Rename latitude to grid_latitude
             gridlat = cube.coord('latitude')
             gridlat.var_name = 'rlat'
             gridlat.standard_name='grid_latitude'
             gridlat.units=cf_units.Unit('degrees')
             gridlat.long_name='Grid Latitude'
-            print(gridlat.points.shape)
-            #print(cube.dimensions)
 
             # Remove unity length longitude coordinate
-            cube = cube.collapsed('longitude', iris.analysis.MEAN)
-
-            #gridlat.points = gridlat.points.mean(axis=1)
-            print(gridlat.points.shape)
-        #     basin = iris.coords.AuxCoord(
-        #         1,
-        #         #points=['global_ocean', 'atlantic_arctic_ocean', 'indian_pacific_ocean'],
-        #         long_name='ocean basin',
-        #         units='1',
-        #         var_name='basin',
-        #         standard_name='region',
-        #         )
+            cube = iris.util.squeeze(cube)
+        #
+            basin = iris.coords.AuxCoord(
+                ['global_ocean', 'atlantic_arctic_ocean', 'indian_pacific_ocean'],
+                long_name='basin',
+                units='1',
+                var_name='basin',
+                standard_name='region',
+                )
         #    # basin.points = ['global_ocean', 'atlantic_arctic_ocean', 'indian_pacific_ocean']
-        #     cube.add_aux_coord(basin)
-        #     print(cube)
-            #assert 0
-            basin = cube.coord('Sub-basin mask (1=Global 2=Atlantic 3=Indo-Pacific)')
-            #basin.dtype = type('<U21')
-            #cube.add_aux_coord('region')
-            basin.standard_name='region'
-            # basin.units=Unit('1')
-            basin.long_name='ocean basin'
-            basin.var_name='basin'
-            print(basin)
-            #basin.points = np.array(['global_ocean', 'atlantic_arctic_ocean', 'indian_pacific_ocean'], dtype='U21')
+            cube = cube.add_aux_coord(basin, data_dims=3)
+            #coords = [c.name for c in cube.coords()]
+            #print(coords)
+
+            #print('region:', cube.coord('region'))
+            # print('basin:', cube.coord('basin'))
+            # assert 0
 
         return cubes

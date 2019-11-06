@@ -248,7 +248,6 @@ class CMIP6Info(object):
         """
         table = self.get_table(table_name)
         if table:
-            print("get_variable (251)", table)
             try:
                 return table[short_name]
             except KeyError:
@@ -256,7 +255,6 @@ class CMIP6Info(object):
 
         if short_name in CMIP6Info._CMIP_5to6_varname:
             new_short_name = CMIP6Info._CMIP_5to6_varname[short_name]
-            print("get_variable (259)",short_name, new_short_name)
             return self.get_variable(table_name, new_short_name, derived)
 
         var_info = None
@@ -691,9 +689,7 @@ class CMIP5Info(object):
             found, returns None if not
 
         """
-        print( table, short_name, derived)
         var_info = self.tables.get(table, {}).get(short_name, None)
-        print(var_info, self.strict)
         if var_info:
             return var_info
         if not self.strict:

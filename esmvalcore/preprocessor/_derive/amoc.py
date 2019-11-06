@@ -36,8 +36,6 @@ class DerivedVariable(DerivedVariableBase):
         #     iris.Constraint(
         #         name=['ocean_meridional_overturning_mass_streamfunction',
         #               'ocean_y_overturning_mass_streamfunction']))
-
-        #project = ''
         try:
             cube = cubes.extract_strict(
                 iris.Constraint(
@@ -51,11 +49,12 @@ class DerivedVariable(DerivedVariableBase):
             lats = cube.coord('grid_latitude').points
             project = 'CMIP6'
 
-#        print(cube)
+        print(lats, project)
         # 1: find the relevant region
         atlantic_region = 'atlantic_arctic_ocean'
         atl_constraint = iris.Constraint(region=atlantic_region)
         cube = cube.extract(constraint=atl_constraint)
+        print('2',cube)
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.)
@@ -71,7 +70,6 @@ class DerivedVariable(DerivedVariableBase):
             rapid_constraint = iris.Constraint(latitude=lats[rapid_index])
         if project == 'CMIP6':
             rapid_constraint = iris.Constraint(grid_latitude=lats[rapid_index])
-
         cube = cube.extract(constraint=rapid_constraint)
         print('3.4',cube)
 
