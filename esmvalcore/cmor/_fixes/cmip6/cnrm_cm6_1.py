@@ -77,7 +77,7 @@ new_lats = [-78.31010985, -78.12948353, -77.94582993, -77.75905569,
             71.30812349,  71.38640637,  71.45032307,  71.49904241,
             71.53102143,  71.53102144]
 
-            
+
 class msftyz(Fix):
     """Fix msftyz."""
 
@@ -101,7 +101,6 @@ class msftyz(Fix):
             gridlat.units=cf_units.Unit('degrees')
             gridlat.long_name='Grid Latitude'
             gridlat.points = new_lats
-            #print(gridlat.points)
             # These values are wrong - they are supposed to be latitude
             # values but they are actually y axis indices.
 

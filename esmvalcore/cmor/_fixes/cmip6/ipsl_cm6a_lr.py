@@ -67,10 +67,18 @@ class msftyz(Fix):
         iris.cube.CubeList
 
         """
-        for cube in cubes:
+        new_cubes = []
+        for i, cube in enumerate(cubes):
+            # Remove unity length longitude coordinate
+            # note that squeeze doesn't occur in place. cube is no longer
+            # the same cube as in the function argument `cubes`. 
+            cube = iris.util.squeeze(cube)
+
             # Change depth
             depth = cube.coord('Vertical W levels')
             depth.var_name = 'depth'
+            depth.standard_name = 'depth'
+            depth.long_name = 'depth'
 
             # Rename latitude to grid_latitude
             gridlat = cube.coord('latitude')
@@ -79,23 +87,22 @@ class msftyz(Fix):
             gridlat.units=cf_units.Unit('degrees')
             gridlat.long_name='Grid Latitude'
 
-            # Remove unity length longitude coordinate
-            cube = iris.util.squeeze(cube)
-        #
-            basin = iris.coords.AuxCoord(
-                ['global_ocean', 'atlantic_arctic_ocean', 'indian_pacific_ocean'],
-                long_name='basin',
-                units='1',
-                var_name='basin',
-                standard_name='region',
-                )
-        #    # basin.points = ['global_ocean', 'atlantic_arctic_ocean', 'indian_pacific_ocean']
-            cube = cube.add_aux_coord(basin, data_dims=3)
-            #coords = [c.name for c in cube.coords()]
-            #print(coords)
 
-            #print('region:', cube.coord('region'))
-            # print('basin:', cube.coord('basin'))
-            # assert 0
+            values = np.array(['global_ocean', 'atlantic_arctic_ocean',
+                               'indian_pacific_ocean'], dtype='<U21')
+            basin_coord = iris.coords.AuxCoord(
+                values,
+                standard_name=u'region',
+                units=cf_units.Unit('no_unit'),
+                long_name=u'ocean basin',
+                var_name='basin')
 
+            # remove the wrong sub-basin mask DimCoord.
+            cube.remove_coord(cube.coord("Sub-basin mask (1=Global 2=Atlantic 3=Indo-Pacific)"))
+
+            # Replace broken coord with correct one.
+            cube.add_aux_coord(basin_coord, data_dims=1)
+
+            # squeeze makes a duplicate of the cube, so it is no longer in cubes.
+            cubes[i] = cube
         return cubes

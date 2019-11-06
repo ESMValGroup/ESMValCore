@@ -32,37 +32,28 @@ class DerivedVariable(DerivedVariableBase):
               Output AMOC cube.
         """
         # 0. Load the msft* cube.
-        # cube = cubes.extract(
-        #     iris.Constraint(
-        #         name=['ocean_meridional_overturning_mass_streamfunction',
-        #               'ocean_y_overturning_mass_streamfunction']))
         try:
             cube = cubes.extract_strict(
                 iris.Constraint(
                     name='ocean_meridional_overturning_mass_streamfunction'))
-            lats = cube.coord('latitude').points
             project = 'CMIP5'
+            lats = cube.coord('latitude').points
         except:
             cube = cubes.extract_strict(
                 iris.Constraint(
                     name='ocean_y_overturning_mass_streamfunction'))
-            lats = cube.coord('grid_latitude').points
             project = 'CMIP6'
+            lats = cube.coord('grid_latitude').points
 
-        print(lats, project)
         # 1: find the relevant region
-        atlantic_region = 'atlantic_arctic_ocean'
-        atl_constraint = iris.Constraint(region=atlantic_region)
+        atl_constraint = iris.Constraint(region='atlantic_arctic_ocean')
         cube = cube.extract(constraint=atl_constraint)
-        print('2',cube)
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.)
         cube = cube.extract(constraint=depth_constraint)
 
         # 3: Find the latitude closest to 26N
-        print('3',cube)
-
         rapid_location = 26.5
         #lats = cube.coord('latitude').points
         rapid_index = np.argmin(np.abs(lats - rapid_location))
@@ -71,7 +62,6 @@ class DerivedVariable(DerivedVariableBase):
         if project == 'CMIP6':
             rapid_constraint = iris.Constraint(grid_latitude=lats[rapid_index])
         cube = cube.extract(constraint=rapid_constraint)
-        print('3.4',cube)
 
         # 4: find the maximum in the water column along the time axis.
         cube = cube.collapsed(

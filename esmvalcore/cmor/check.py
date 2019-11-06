@@ -279,7 +279,9 @@ class CMORCheck():
         # Check number of dimension coords matches rank
         if self._cube.ndim != rank:
             self.report_error(self._does_msg, self._cube.var_name,
-                              'match coordinate rank')
+                              ' '.join(['match coordinate rank (',
+                                        str(self._cube.ndim), '!=', str(rank),
+                                        ')']))
 
     def _check_dim_names(self):
         """Check dimension names."""
