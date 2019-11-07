@@ -26,7 +26,7 @@ supporting custom-made datasets that present problems, it is your resposability 
   - tier:
   - variable used:
   - data version:
-- Problem encountered (please describe what the actual problem is: e.g. wrong standard name):
+- Problems encountered (please describe what the actual problems are: e.g. wrong standard name, issue with dimensions):
 - Pointer to existing copy of data on ESGF node (it would be very useful if you could provide a physical
 fullpath to the file(s) that are causing the problem, e.g. on CEDA Jasmin or DKRZ):
 - Other notes and mentions:
