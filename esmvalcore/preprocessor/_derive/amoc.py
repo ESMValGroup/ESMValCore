@@ -14,7 +14,10 @@ class DerivedVariable(DerivedVariableBase):
         if project == 'CMIP5':
             required = [{'short_name': 'msftmyz'}]
         if project == 'CMIP6':
-            required = [{'short_name': 'msftyz'}]
+        #     required = [{'short_name': 'msftyz'}]
+            required = [{'short_name': 'msftyz', 'optional':True, },
+                        {'short_name': 'msftmz', 'optional':True, }]
+
         return required
 
     @staticmethod
@@ -36,13 +39,13 @@ class DerivedVariable(DerivedVariableBase):
             cube = cubes.extract_strict(
                 iris.Constraint(
                     name='ocean_meridional_overturning_mass_streamfunction'))
-            project = 'CMIP5'
+            meridional = True
             lats = cube.coord('latitude').points
         except:
             cube = cubes.extract_strict(
                 iris.Constraint(
                     name='ocean_y_overturning_mass_streamfunction'))
-            project = 'CMIP6'
+            meridional = False
             lats = cube.coord('grid_latitude').points
 
         # 1: find the relevant region
@@ -52,14 +55,17 @@ class DerivedVariable(DerivedVariableBase):
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.)
         cube = cube.extract(constraint=depth_constraint)
+        print(cube)
+
 
         # 3: Find the latitude closest to 26N
         rapid_location = 26.5
         #lats = cube.coord('latitude').points
         rapid_index = np.argmin(np.abs(lats - rapid_location))
-        if project == 'CMIP5':
+
+        if meridional:
             rapid_constraint = iris.Constraint(latitude=lats[rapid_index])
-        if project == 'CMIP6':
+        if not meridional:
             rapid_constraint = iris.Constraint(grid_latitude=lats[rapid_index])
         cube = cube.extract(constraint=rapid_constraint)
 
