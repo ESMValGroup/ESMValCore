@@ -28,7 +28,6 @@ CMIP6:
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
   institutes:
-    'CESM2-WACCM': ['NCAR']
     'MPI-ESM1-2-XR': ['MPI-M']
   cmor_type: 'CMIP6'
 
