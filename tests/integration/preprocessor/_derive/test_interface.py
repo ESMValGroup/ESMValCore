@@ -11,10 +11,10 @@ def test_get_required():
 
     reference = [
         {
-            'short_name': 'rsds',
+            'short_name': 'rsdscs',
         },
         {
-            'short_name': 'rsus',
+            'short_name': 'rsuscs',
         },
     ]
 
