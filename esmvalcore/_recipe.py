@@ -313,14 +313,15 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_metadata'] = dict(fix)
 
     # Configure time extraction
-    settings['extract_time'] = {
-        'start_year': variable['start_year'],
-        'end_year': variable['end_year'] + 1,
-        'start_month': 1,
-        'end_month': 1,
-        'start_day': 1,
-        'end_day': 1,
-    }
+    if 'start_year' in variable and 'end_year' in variable:
+        settings['extract_time'] = {
+            'start_year': variable['start_year'],
+            'end_year': variable['end_year'] + 1,
+            'start_month': 1,
+            'end_month': 1,
+            'start_day': 1,
+            'end_day': 1,
+        }
 
     if derive:
         settings['derive'] = {
@@ -701,7 +702,6 @@ def _get_single_preprocessor_task(variables,
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
 
     if variables[0]['frequency'] == 'fx':
-        profile['extract_time'] = False
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
@@ -995,12 +995,11 @@ class Recipe:
             'mip',
             'dataset',
             'project',
-            'start_year',
-            'end_year',
             'preprocessor',
             'diagnostic',
         }
-
+        if 'fx' not in raw_variable.get('mip', ''):
+            required_keys.update({'start_year', 'end_year'})
         for variable in variables:
             _update_from_others(variable, ['cmor_table', 'mip'], datasets)
             institute = get_institutes(variable)

@@ -257,9 +257,11 @@ def get_output_file(variable, preproc_dir):
         preproc_dir,
         variable['diagnostic'],
         variable['variable_group'],
-        _replace_tags(cfg['output_file'], variable)[0] + '.nc',
+        _replace_tags(cfg['output_file'], variable)[0],
     )
-
+    if variable['frequency'] != 'fx':
+        outfile += '_{start_year}-{end_year}'.format(**variable)
+    outfile += '.nc'
     return outfile
 
 
