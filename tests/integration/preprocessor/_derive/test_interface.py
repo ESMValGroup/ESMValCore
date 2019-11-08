@@ -42,9 +42,11 @@ def test_derive_nonstandard_nofx():
 
     rsdscs = Cube([2.])
     rsdscs.short_name = 'rsdscs'
+    rsdscs.var_name = rsdscs.short_name
 
     rsuscs = Cube([1.])
     rsuscs.short_name = 'rsuscs'
+    rsuscs.var_name = rsuscs.short_name
 
     cubes = CubeList([rsdscs, rsuscs])
 
