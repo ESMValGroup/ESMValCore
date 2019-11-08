@@ -1,7 +1,6 @@
 # YAML 1.2
 ---
-abstract: |
-    "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts."
+abstract: "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts."
 authors:
   -
     affiliation: "NLeSC, Netherlands"
@@ -93,11 +92,11 @@ authors:
     given-names: Klaus
 
 cff-version: "1.0.3"
-date-released: 2019-09-05
-doi: "10.0000/TODO"
+date-released: 2019-10-31
+doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.0.0b1"
+version: "v2.0.0b3"
 ...
