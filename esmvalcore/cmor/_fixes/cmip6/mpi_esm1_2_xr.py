@@ -1,152 +1,28 @@
 """Fixes for MPI-ESM1-2-XR model."""
 
-from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from .mpi_esm1_2_hr import Tas as BaseTas
+from .mpi_esm1_2_hr import Ta as BaseTa
+from .mpi_esm1_2_hr import SfcWind as BaseSfcWind
 
 
-class Tas(Fix):
+class Tas(BaseTas):
     """Fixes for tas."""
 
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
 
-        Adds missing height2m coordinate.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            add_scalar_height_coord(cube)
-
-        return cubes
-
-
-class Ta(Fix):
+class Ta(BaseTa):
     """Fixes for ta."""
 
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
-
-        Corrects plev coordinate var_name.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            plev = cube.coord('air_pressure')
-            plev.var_name = 'plev'
-
-        return cubes
-
-
-class Va(Fix):
+class Va(BaseTa):
     """Fixes for va."""
 
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
 
-        Corrects plev coordinate var_name.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            plev = cube.coord('air_pressure')
-            plev.var_name = 'plev'
-
-        return cubes
-
-
-class Zg(Fix):
+class Zg(BaseTa):
     """Fixes for zg."""
 
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
 
-        Corrects plev coordinate var_name.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            plev = cube.coord('air_pressure')
-            plev.var_name = 'plev'
-
-        return cubes
-
-
-class Ua(Fix):
+class Ua(BaseTa):
     """Fixes for ua."""
 
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
 
-        Corrects plev coordinate var_name.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            plev = cube.coord('air_pressure')
-            plev.var_name = 'plev'
-
-        return cubes
-
-
-class SfcWind(Fix):
+class SfcWind(BaseSfcWind):
     """Fixes for sfcWind."""
-
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
-
-        Adds missing height10m coordinate.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            add_scalar_height_coord(cube, height=10.0)
-
-        return cubes

@@ -9,8 +9,6 @@ class Tas(Fix):
 
     def fix_metadata(self, cubes):
         """
-        Fix metadata.
-
         Adds missing height2m coordinate.
 
         Parameters
@@ -33,8 +31,6 @@ class Ta(Fix):
 
     def fix_metadata(self, cubes):
         """
-        Fix metadata.
-
         Corrects plev coordinate var_name.
 
         Parameters
@@ -53,79 +49,16 @@ class Ta(Fix):
         return cubes
 
 
-class Va(Fix):
+class Va(Ta):
     """Fixes for va."""
 
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
 
-        Corrects plev coordinate var_name.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            plev = cube.coord('air_pressure')
-            plev.var_name = 'plev'
-
-        return cubes
-
-
-class Zg(Fix):
+class Zg(Ta):
     """Fixes for zg."""
 
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
 
-        Corrects plev coordinate var_name.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            plev = cube.coord('air_pressure')
-            plev.var_name = 'plev'
-
-        return cubes
-
-
-class Ua(Fix):
+class Ua(Ta):
     """Fixes for ua."""
-
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
-
-        Corrects plev coordinate var_name.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            plev = cube.coord('air_pressure')
-            plev.var_name = 'plev'
-
-        return cubes
 
 
 class SfcWind(Fix):
@@ -133,8 +66,6 @@ class SfcWind(Fix):
 
     def fix_metadata(self, cubes):
         """
-        Fix metadata.
-
         Adds missing height10m coordinate.
 
         Parameters
