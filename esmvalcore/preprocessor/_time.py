@@ -438,7 +438,6 @@ def anomalies(cube, period, standardize=False):
     iris.cube.Cube
         Anomalies cube
     """
-    cube.data
     reference = climate_statistics(cube, period=period)
     if period in ['full']:
         return cube - reference
@@ -447,15 +446,13 @@ def anomalies(cube, period, standardize=False):
     ref_coord = _get_period_coord(reference, period)
 
     data = cube.core_data()
-    cube_time = cube.coord('time')
     ref = {}
     for ref_slice in reference.slices_over(ref_coord):
         ref[ref_slice.coord(ref_coord).points[0]] = da.ravel(
             ref_slice.core_data())
     cube_coord_dim = cube.coord_dims(cube_coord)[0]
-    for i in range(cube_time.shape[0]):
-        time = cube_time.points[i]
-        indexes = cube_time.points == time
+    for i in range(cube.coord('time').shape[0]):
+        indexes = cube.coord('time').points == cube.coord('time').points[i]
         indexes = iris.util.broadcast_to_shape(indexes, data.shape,
                                                (cube_coord_dim, ))
         data[indexes] = data[indexes] - ref[cube_coord.points[i]]
