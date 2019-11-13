@@ -155,7 +155,11 @@ the user.
 Developer configuration file
 ============================
 
-Most users will not need to change this file, but it is useful to understand its content.
+Most users and diagnostic developers will not need to change this file,
+but it may be useful to understand its content.
+It will be installed along with ESMValCore and can also be viewed on GitHub:
+`esmvalcore/config-developer.yml
+<https://github.com/ESMValGroup/ESMValCore/blob/development/esmvalcore/config-developer.yml>`_.
 This configuration file describes the file system structure and CMOR tables for several
 key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
 ETHZ, SMHI, BSC). CMIP data is stored as part of the Earth System Grid
@@ -182,9 +186,10 @@ Example of the CMIP6 project configuration:
 Input file paths
 ----------------
 
-When looking for input files, ESMValCore replaces the placeholders ``[item]`` in
+When looking for input files, the ``esmvaltool`` command provided by
+ESMValCore replaces the placeholders ``[item]`` in
 ``input_dir`` and ``input_file`` with the values supplied in the recipe.
-ESMValTool will try to automatically fill in the values for institute, frequency,
+ESMValCore will try to automatically fill in the values for institute, frequency,
 and modeling_realm based on the information provided in the CMOR tables
 and/or ``config-developer.yml`` when reading the recipe. If this fails for some reason,
 these values can be provided in the recipe too.
