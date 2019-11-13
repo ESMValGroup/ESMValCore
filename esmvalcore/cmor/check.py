@@ -128,7 +128,7 @@ class CMORCheck():
 
         """
         if self.has_errors():
-            msg = 'There were errors in variable {}:\n{}\nin cube:\n{}'
+            msg = 'There are REGULAR CMOR errors in var {}:\n{}\nin cube:\n{}'
             msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
                              self._cube)
             if self._raise_exception:
@@ -137,13 +137,13 @@ class CMORCheck():
             if self._report_only_warning:
                 logger.warning(msg)
         if self.has_strict_errors():
-            msg = 'There were strict errors in variable {}:\n{}\nin cube:\n{}'
+            msg = 'There are STRICT CMOR errors in var {}:\n{}\nin cube:\n{}'
             msg = msg.format(
                 self._cube.var_name, '\n '.join(self._strict_errors),
                 self._cube)
             if self._raise_exception:
-                logger.error(msg)
                 raise CMORCheckError(msg)
+            logger.error(msg)
 
     def report_warnings(self, logger):
         """Report detected warnings to the given logger.
