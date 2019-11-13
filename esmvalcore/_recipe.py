@@ -334,12 +334,16 @@ def _get_default_settings(variable, config_user, derive=False):
         }
 
     # Configure CMOR metadata check
+    raise_exception = True
+    if 'dry-run' in config_user:
+        raise_exception = False
     if variable.get('cmor_table'):
         settings['cmor_check_metadata'] = {
             'cmor_table': variable['cmor_table'],
             'mip': variable['mip'],
             'short_name': variable['short_name'],
             'frequency': variable['frequency'],
+            'raise_exception': raise_exception,
         }
     # Configure final CMOR data check
     if variable.get('cmor_table'):
