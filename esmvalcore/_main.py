@@ -98,6 +98,15 @@ def get_args():
         '--diagnostics',
         nargs='*',
         help="Only run the named diagnostics from the recipe.")
+    parser.add_argument(
+        '--cmor-checks',
+        type=str,
+        action='store_true',
+        help="Metadata CMOR checks strictness; \
+             Optional: true; possible values: \
+             none: no checks performed \
+             relaxed: checks are performed but no errors raised; \
+             default: full checks and errors raised.")
     args = parser.parse_args()
     return args
 
@@ -143,6 +152,7 @@ def main(args):
         pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
         for pattern in args.diagnostics or ()
     }
+    cfg['cmor_checks_type'] = args.cmor_checks
     cfg['synda_download'] = args.synda_download
     for limit in ('max_datasets', 'max_years'):
         value = getattr(args, limit)
