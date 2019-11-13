@@ -333,14 +333,18 @@ def _get_default_settings(variable, config_user, derive=False):
     # Configure CMOR metadata check
     if variable.get('cmor_table'):
         raise_exception = True
+        report_only_warning = False
         if config_user['cmor_checks_type'] in ['none', 'relaxed']:
             raise_exception = False
+            if config_user['cmor_checks_type'] == 'relaxed':
+                report_only_warning = True
         settings['cmor_check_metadata'] = {
             'cmor_table': variable['cmor_table'],
             'mip': variable['mip'],
             'short_name': variable['short_name'],
             'frequency': variable['frequency'],
             'raise_exception': raise_exception,
+            'report_only_warning': report_only_warning,
         }
     # Configure final CMOR data check
     if variable.get('cmor_table'):
