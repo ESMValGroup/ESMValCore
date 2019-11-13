@@ -701,7 +701,8 @@ def _get_cmor_checker(table,
     return _checker
 
 
-def cmor_check_metadata(cube, cmor_table, mip, short_name, frequency):
+def cmor_check_metadata(cube, cmor_table, mip,
+                        short_name, frequency, raise_exception):
     """Check if metadata conforms to variable's CMOR definiton.
 
     None of the checks at this step will force the cube to load the data.
@@ -718,9 +719,14 @@ def cmor_check_metadata(cube, cmor_table, mip, short_name, frequency):
         Variable's short name.
     frequency: basestring
         Data frequency.
+    raise_exception: bool
+        Boolean operator that raises or not
+        the exception resulted from checker.
 
     """
-    checker = _get_cmor_checker(cmor_table, mip, short_name, frequency)
+    checker = _get_cmor_checker(cmor_table, mip,
+                                short_name, frequency,
+                                raise_exception=raise_exception)
     checker(cube).check_metadata()
     return cube
 
