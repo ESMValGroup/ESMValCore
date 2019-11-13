@@ -54,6 +54,12 @@ def _get_resource_usage(process, start_time, children=True):
     gigabyte = float(2**30)
     precision = [1, 1, None, 1, None, 3, 3]
     cache = {}
+    try:
+        process.io_counters()
+    except AttributeError:
+        counters_available = False
+    else:
+        counters_available = True
     while process.is_running():
         try:
             if children:
@@ -77,8 +83,10 @@ def _get_resource_usage(process, start_time, children=True):
                     proc.cpu_percent(),
                     proc.memory_info().rss / gigabyte,
                     proc.memory_percent(),
-                    proc.io_counters().read_bytes / gigabyte,
-                    proc.io_counters().write_bytes / gigabyte,
+                    (proc.io_counters().read_bytes / gigabyte
+                     if counters_available else float('nan')),
+                    (proc.io_counters().write_bytes / gigabyte
+                     if counters_available else float('nan')),
                 ]
         except (OSError, psutil.AccessDenied, psutil.NoSuchProcess):
             # Try again if an error occurs because some process died

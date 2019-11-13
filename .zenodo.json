@@ -88,7 +88,7 @@
             "name": "Zimmermann, Klaus"
         }
     ],
-    "description": "\"ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.\"\n",
+    "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
     "license": {
         "id": "Apache-2.0"
     },
