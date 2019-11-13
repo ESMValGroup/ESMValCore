@@ -361,6 +361,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'mip': 'Oyr',
             'short_name': 'chl',
             'frequency': 'yr',
+            'raise_exception': True,
         },
         'cmor_check_data': {
             'cmor_table': 'CMIP5',
@@ -442,6 +443,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'mip': 'fx',
             'short_name': 'sftlf',
             'frequency': 'fx',
+            'raise_exception': True,
         },
         'cmor_check_data': {
             'cmor_table': 'CMIP5',
