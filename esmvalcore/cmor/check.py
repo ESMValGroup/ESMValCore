@@ -58,12 +58,15 @@ class CMORCheck():
                  frequency=None,
                  fail_on_error=False,
                  raise_exception=True,
+                 report_only_warning=False,
                  automatic_fixes=False):
 
         self._cube = cube
         self._failerr = fail_on_error
         self._raise_exception = raise_exception
+        self._report_only_warning = report_only_warning
         self._errors = list()
+        self._strict_errors = list()
         self._warnings = list()
         self._debug_messages = list()
         self._cmor_var = var_info
@@ -129,8 +132,18 @@ class CMORCheck():
             msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
                              self._cube)
             if self._raise_exception:
+                logger.error(msg)
                 raise CMORCheckError(msg)
-            logger.error(msg)
+            if self._report_only_warning:
+                logger.warning(msg)
+        if self.has_strict_errors():
+            msg = 'There were strict errors in variable {}:\n{}\nin cube:\n{}'
+            msg = msg.format(
+                self._cube.var_name, '\n '.join(self._strict_errors),
+                self._cube)
+            if self._raise_exception:
+                logger.error(msg)
+                raise CMORCheckError(msg)
 
     def report_warnings(self, logger):
         """Report detected warnings to the given logger.
@@ -583,6 +596,17 @@ class CMORCheck():
         """
         return len(self._errors) > 0
 
+    def has_strict_errors(self):
+        """Check if there are reported errors of strict nature.
+
+        Returns
+        -------
+        bool:
+            True if there are pending errors, False otherwise.
+
+        """
+        return len(self._strict_errors) > 0
+
     def has_warnings(self):
         """Check if there are reported warnings.
 
@@ -623,6 +647,25 @@ class CMORCheck():
         if self._failerr:
             raise CMORCheckError(msg + '\nin cube:\n{}'.format(self._cube))
         self._errors.append(msg)
+
+    def report_strict_error(self, message, *args):
+        """Report a STRICT error.
+
+        If fail_on_error is set to True, raises automatically.
+        If fail_on_error is set to False, stores it for later reports.
+
+        Parameters
+        ----------
+        message: str: unicode
+            Message for the error.
+        *args:
+            arguments to format the message string.
+
+        """
+        msg = message.format(*args)
+        if self._failerr:
+            raise CMORCheckError(msg + '\nin cube:\n{}'.format(self._cube))
+        self._strict_errors.append(msg)
 
     def report_warning(self, message, *args):
         """Report a warning.
@@ -696,13 +739,15 @@ def _get_cmor_checker(table,
             frequency=frequency,
             fail_on_error=fail_on_error,
             raise_exception=raise_exception,
+            report_only_warning=report_only_warning,
             automatic_fixes=automatic_fixes)
 
     return _checker
 
 
 def cmor_check_metadata(cube, cmor_table, mip,
-                        short_name, frequency, raise_exception):
+                        short_name, frequency,
+                        raise_exception, report_only_warning):
     """Check if metadata conforms to variable's CMOR definiton.
 
     None of the checks at this step will force the cube to load the data.
@@ -726,7 +771,8 @@ def cmor_check_metadata(cube, cmor_table, mip,
     """
     checker = _get_cmor_checker(cmor_table, mip,
                                 short_name, frequency,
-                                raise_exception=raise_exception)
+                                raise_exception=raise_exception,
+                                report_only_warning=report_only_warning)
     checker(cube).check_metadata()
     return cube
 
