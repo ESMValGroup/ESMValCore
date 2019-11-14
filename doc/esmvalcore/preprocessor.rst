@@ -606,7 +606,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * annual_statistics_: Compute statistics for each year
 * decadal_statistics_: Compute statistics for each decade
 * climate_statistics_: Compute statistics for the full period
-* anomalies_: Compute anomalies
+* anomalies_: Compute (standardized) anomalies
 * regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
 
@@ -802,13 +802,16 @@ See also :func:`esmvalcore.preprocessor.climate_statistics`.
 ----------------------
 
 This function computes the anomalies for the whole dataset. It can compute
-anomalies from the full, seasonal, monthly and daily climatologies.
+anomalies from the full, seasonal, monthly and daily climatologies. Optionally
+standardized anomalies can be calculated.
 
 Parameters:
     * period: define the granularity of the climatology to use:
       full period, seasonal, monthly or daily.
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
+
+    * standardize: if True calculate standardized anomalies (default: False)
 
 Examples:
     * Anomalies from the monthly climatology:
@@ -818,11 +821,14 @@ Examples:
             anomalies:
                 period: month
 
-    * Anomalies from the full period climatology:
+    * Standardized anomalies from the full period climatology:
 
         .. code-block:: yaml
 
             anomalies:
+                standardize: True
+
+
 
 See also :func:`esmvalcore.preprocessor.anomalies`.
 
