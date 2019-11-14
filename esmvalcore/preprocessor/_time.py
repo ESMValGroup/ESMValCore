@@ -438,7 +438,6 @@ def anomalies(cube, period, standardize=False):
     iris.cube.Cube
         Anomalies cube
     """
-    cube.data
     reference = climate_statistics(cube, period=period)
     if period in ['full']:
         return cube - reference
@@ -447,40 +446,40 @@ def anomalies(cube, period, standardize=False):
     ref_coord = _get_period_coord(reference, period)
 
     data = cube.core_data()
-    cube_time = cube.coord('time')
     ref = {}
     for ref_slice in reference.slices_over(ref_coord):
         ref[ref_slice.coord(ref_coord).points[0]] = da.ravel(
             ref_slice.core_data())
     cube_coord_dim = cube.coord_dims(cube_coord)[0]
-    for i in range(cube_time.shape[0]):
-        time = cube_time.points[i]
-        indexes = cube_time.points == time
+    for i in range(cube.coord('time').shape[0]):
+        indexes = cube.coord('time').points == cube.coord('time').points[i]
         indexes = iris.util.broadcast_to_shape(indexes, data.shape,
                                                (cube_coord_dim, ))
         data[indexes] = data[indexes] - ref[cube_coord.points[i]]
 
     cube = cube.copy(data)
 
-    # Standardize the results if requested
+    # standardize the results if requested
     if standardize:
         cube_stddev = climate_statistics(cube,
                                          operator='std_dev',
                                          period=period)
-        assert cube.ndim == cube_stddev.ndim
-        ratio = [i / j for i, j in
-                 zip(cube.shape, cube_stddev.shape)]
-        # This will raise an error if the length of the cube their time axes
-        # are not multiples of each other or if other shapes are not equal
-        if not all([ratio[0] % 1 == 0] + [i == 1 for i in ratio[1:]]):
+        if not cube.ndim == cube_stddev.ndim:
             raise ValueError(
-                "Cannot safely apply preprocessor to this dataset,\
-                since the full time period of this dataset is not\
-                a multiple of the period {0}".format(period)
+                "Inconsistent dimensions between anomaly cube and "
+                f"standard deviation cube: {cube.ndim};{cube_stddev.ndim}"
             )
-        reps = tuple([int(i) for i in ratio])
-        cube.data = cube.data / np.tile(cube_stddev.data, reps)
-
+        tdim = cube.coord_dims('time')[0]
+        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
+        if not reps % 1 == 0:
+            raise ValueError(
+                "Cannot safely apply preprocessor to this dataset, "
+                "since the full time period of this dataset is not "
+                f"a multiple of the period '{period}'"
+            )
+        cube.data = cube.core_data() / \
+            da.concatenate([cube_stddev.core_data()
+                            for _ in range(int(reps))], axis=tdim)
     return cube
 
 
