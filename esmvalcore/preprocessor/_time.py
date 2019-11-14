@@ -469,18 +469,17 @@ def anomalies(cube, period, standardize=False):
                 "Inconsistent dimensions between anomaly cube and "
                 f"standard deviation cube: {cube.ndim};{cube_stddev.ndim}"
             )
-        ratio = [i / j for i, j in
-                 zip(cube.shape, cube_stddev.shape)]
-        if not ratio[0] % 1 == 0:
+        tdim = cube.coord_dims('time')[0]
+        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
+        if not reps % 1 == 0:
             raise ValueError(
                 "Cannot safely apply preprocessor to this dataset, "
                 "since the full time period of this dataset is not "
                 f"a multiple of the period '{period}'"
             )
-        reps = tuple([int(i) for i in ratio])
         cube.data = cube.core_data() / \
             da.concatenate([cube_stddev.core_data()
-                            for _ in range(reps[0])], axis=0)
+                            for _ in range(int(reps))], axis=tdim)
     return cube
 
 
