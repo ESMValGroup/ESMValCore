@@ -152,7 +152,7 @@ def main(args):
         pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
         for pattern in args.diagnostics or ()
     }
-    cfg['cmor_checks_type'] = args.cmor_checks
+    cfg['cmor_checks'] = args.cmor_checks
     cfg['synda_download'] = args.synda_download
     for limit in ('max_datasets', 'max_years'):
         value = getattr(args, limit)
