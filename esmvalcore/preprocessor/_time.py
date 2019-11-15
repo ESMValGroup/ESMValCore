@@ -500,7 +500,7 @@ def regrid_time(cube, frequency):
     # standardize time points
     time_c = [cell.point for cell in cube.coord('time').cells()]
     if frequency == 'yr':
-        cube.coord('time').cells = [
+        cells = [
             datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c
         ]
     elif frequency == 'mon':
