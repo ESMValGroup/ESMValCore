@@ -29,13 +29,13 @@ build:
 requirements:
   build:
     - git
-    - python>=3.6
+    - python>=3.6,<3.8
     # Normally installed via pip:
     - pytest-runner
     - setuptools_scm
   run:
     # esmvaltool
-    - python>=3.6
+    - python>=3.6,<3.8
     - libunwind  # specifically for Python3.7+
     - graphviz
     - iris>=2.2.1
