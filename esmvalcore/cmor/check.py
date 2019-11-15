@@ -719,6 +719,7 @@ def _get_cmor_checker(table,
                       frequency,
                       fail_on_error=True,
                       raise_exception=True,
+                      report_only_warning=False,
                       automatic_fixes=False):
     """Get a CMOR checker/fixer."""
     if table not in CMOR_TABLES:
