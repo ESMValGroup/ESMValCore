@@ -61,6 +61,26 @@ class TestConcatenate(unittest.TestCase):
             np.array([1., 2., 3., 4., 5., 6., 1000., 7000.])
         ))
 
+    def test_concatenate_with_overlap_same_start(self):
+        """Test a more generic case."""
+        cube1 = self.raw_cubes[0]
+        raw_cubes = [cube1, ]
+        time_coord = DimCoord(
+            [1., 7.], var_name='time', standard_name='time',
+            units='days since 1950-01-01'
+        )
+        raw_cubes.append(
+            Cube([33., 55.],
+                 var_name='sample',
+                 dim_coords_and_dims=((time_coord, 0), )
+                 )
+        )
+        concatenated = _io.concatenate(raw_cubes)
+        self.assertTrue(np.allclose(
+            concatenated.coord('time').points,
+            np.array([1., 7.])
+        ))
+
     def test_fail_on_calendar_concatenate_with_overlap(self):
         """Test fail of concatenation with overlap."""
         time_coord = DimCoord(
