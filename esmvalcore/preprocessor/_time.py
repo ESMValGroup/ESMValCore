@@ -169,15 +169,17 @@ def get_time_weights(cube):
     """
     time = cube.coord('time')
     time_thickness = time.bounds[..., 1] - time.bounds[..., 0]
+    time_weights = iris.util.iris.util.broadcast_to_shape(time_thickness, cube.shape, (0,))
+    return time_weights
 
     # The weights need to match the dimensionality of the cube.
-    slices = [None for i in cube.shape]
-    coord_dim = cube.coord_dims('time')[0]
-    slices[coord_dim] = slice(None)
-    time_thickness = np.abs(time_thickness[tuple(slices)])
-    ones = np.ones_like(cube.data)
-    time_weights = time_thickness * ones
-    return time_weights
+    #slices = [None for i in cube.shape]
+    #coord_dim = cube.coord_dims('time')[0]
+    #slices[coord_dim] = slice(None)
+    #time_thickness = np.abs(time_thickness[tuple(slices)])
+    #ones = da.ones(cube.data.shape)
+    #time_weights = time_thickness * ones
+    #return time_weights.compute()
 
 
 def daily_statistics(cube, operator='mean'):
@@ -397,9 +399,13 @@ def climate_statistics(cube, operator='mean', period='full'):
         operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
             time_weights = get_time_weights(cube)
-            cube = cube.collapsed('time',
-                                  operator_method,
-                                  weights=time_weights)
+            try: cube = cube.collapsed('time',
+                                       operator_method,
+                                       weights=time_weights)
+            except:
+                cube = cube.collapsed('time',
+                                      operator_method,)
+
         else:
             cube = cube.collapsed('time', operator_method)
         return cube
