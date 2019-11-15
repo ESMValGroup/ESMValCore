@@ -141,6 +141,8 @@ def fix_metadata(cubes,
                 mip=mip,
                 short_name=short_name,
                 fail_on_error=False,
+                raise_exception=False,
+                report_only_warning=False,
                 automatic_fixes=True)
             cube = checker(cube).check_metadata()
         cube.attributes.pop('source_file', None)
