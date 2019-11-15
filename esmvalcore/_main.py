@@ -102,6 +102,7 @@ def get_args():
         '--cmor-checks',
         type=str,
         choices=('none', 'relaxed', 'default'),
+        default='default',
         help="Metadata CMOR checks strictness; \
              Optional: true; possible values: \
              none: no checks performed \
