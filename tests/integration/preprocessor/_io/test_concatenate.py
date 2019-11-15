@@ -2,6 +2,7 @@
 
 import unittest
 
+from cf_units import Unit
 import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
@@ -49,6 +50,67 @@ class TestConcatenate(unittest.TestCase):
             concatenated.data,
             np.array([1., 2., 3., 4., 5., 6.5, 7.5])
         ))
+
+    def test_concatenate_with_overlap_2(self):
+        """Test a more generic case."""
+        self._add_cube([65., 75.], [3., 200.])
+        self._add_cube([65., 75.], [1000., 7000.])
+        concatenated = _io.concatenate(self.raw_cubes)
+        self.assertTrue(np.allclose(
+            concatenated.coord('time').points,
+            np.array([1., 2., 3., 4., 5., 6., 1000., 7000.])
+        ))
+
+    def test_fail_on_calendar_concatenate_with_overlap(self):
+        """Test fail of concatenation with overlap."""
+        time_coord = DimCoord(
+            [3., 7000.], var_name='time', standard_name='time',
+            units=Unit('days since 1950-01-01', calendar='360_day')
+        )
+        self.raw_cubes.append(
+            Cube([33., 55.],
+                 var_name='sample',
+                 dim_coords_and_dims=((time_coord, 0), )
+                 )
+        )
+        with self.assertRaises(TypeError):
+            _io.concatenate(self.raw_cubes)
+
+    def test_fail_on_units_concatenate_with_overlap(self):
+        """Test fail of concatenation with overlap."""
+        time_coord_1 = DimCoord(
+            [3., 7000.], var_name='time', standard_name='time',
+            units=Unit('days since 1950-01-01', calendar='360_day')
+        )
+        time_coord_2 = DimCoord(
+            [3., 9000.], var_name='time', standard_name='time',
+            units=Unit('days since 1950-01-01', calendar='360_day')
+        )
+        time_coord_3 = DimCoord(
+            [3., 9000.], var_name='time', standard_name='time',
+            units=Unit('days since 1850-01-01', calendar='360_day')
+        )
+        raw_cubes = []
+        raw_cubes.append(
+            Cube([33., 55.],
+                 var_name='sample',
+                 dim_coords_and_dims=((time_coord_1, 0), )
+                 )
+        )
+        raw_cubes.append(
+            Cube([33., 55.],
+                 var_name='sample',
+                 dim_coords_and_dims=((time_coord_2, 0), )
+                 )
+        )
+        raw_cubes.append(
+            Cube([33., 55.],
+                 var_name='sample',
+                 dim_coords_and_dims=((time_coord_3, 0), )
+                 )
+        )
+        with self.assertRaises(ValueError):
+            _io.concatenate(raw_cubes)
 
     def test_fail_metadata_differs(self):
         """Test exception raised if two cubes have different metadata."""
