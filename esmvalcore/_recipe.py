@@ -334,9 +334,10 @@ def _get_default_settings(variable, config_user, derive=False):
     if variable.get('cmor_table'):
         raise_exception = True
         report_only_warning = False
-        if config_user['cmor_checks'] in ['none', 'relaxed']:
+        cmor_check = config_user.get('cmor_checks', None)
+        if cmor_check in ['none', 'relaxed']:
             raise_exception = False
-            if config_user['cmor_checks'] == 'relaxed':
+            if cmor_check == 'relaxed':
                 report_only_warning = True
         settings['cmor_check_metadata'] = {
             'cmor_table': variable['cmor_table'],
