@@ -101,7 +101,7 @@ def get_args():
     parser.add_argument(
         '--cmor-checks',
         type=str,
-        action='store_true',
+        choices=('none', 'relaxed', 'default'),
         help="Metadata CMOR checks strictness; \
              Optional: true; possible values: \
              none: no checks performed \
