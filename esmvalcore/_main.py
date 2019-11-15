@@ -15,6 +15,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
   Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
   Manuel Schlund (DLR, Germany - manuel.schlund@dlr.de)
   Javier Vegas-Regidor (BSC, Spain - javier.vegas@bsc.es)
+  Klaus Zimmermann (SMHI, Sweden - klaus.zimmermann@smhi.se)
 
 For further help, please read the documentation at
 http://esmvaltool.readthedocs.io. Have fun!
