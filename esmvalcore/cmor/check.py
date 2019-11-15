@@ -66,7 +66,6 @@ class CMORCheck():
         self._raise_exception = raise_exception
         self._report_only_warning = report_only_warning
         self._errors = list()
-        self._strict_errors = list()
         self._warnings = list()
         self._debug_messages = list()
         self._cmor_var = var_info
@@ -109,7 +108,7 @@ class CMORCheck():
 
         self.report_debug_messages(logger)
         self.report_warnings(logger)
-        self.report_errors(logger)
+        self.report_errors()
 
         if self.frequency != 'fx':
             self._add_auxiliar_time_coordinates()
@@ -118,7 +117,7 @@ class CMORCheck():
         else:
             return self._cube
 
-    def report_errors(self, logger):
+    def report_errors(self):
         """Report detected errors.
 
         Raises
@@ -128,22 +127,10 @@ class CMORCheck():
 
         """
         if self.has_errors():
-            msg = 'There are REGULAR CMOR errors in var {}:\n{}\nin cube:\n{}'
+            msg = 'There were errors in variable {}:\n{}\nin cube:\n{}'
             msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
                              self._cube)
-            if self._raise_exception:
-                logger.error(msg)
-                raise CMORCheckError(msg)
-            if self._report_only_warning:
-                logger.warning(msg)
-        if self.has_strict_errors():
-            msg = 'There are STRICT CMOR errors in var {}:\n{}\nin cube:\n{}'
-            msg = msg.format(
-                self._cube.var_name, '\n '.join(self._strict_errors),
-                self._cube)
-            if self._raise_exception:
-                raise CMORCheckError(msg)
-            logger.error(msg)
+            raise CMORCheckError(msg)
 
     def report_warnings(self, logger):
         """Report detected warnings to the given logger.
@@ -199,7 +186,7 @@ class CMORCheck():
         self._check_coords_data()
 
         self.report_warnings(logger)
-        self.report_errors(logger)
+        self.report_errors()
         return self._cube
 
     def _check_fill_value(self):
@@ -224,7 +211,7 @@ class CMORCheck():
                     )
                     self._cube.standard_name = self._cmor_var.standard_name
                 else:
-                    self.report_error(
+                    self.report_strict_error(
                         self._attr_msg, self._cube.var_name, 'standard_name',
                         self._cmor_var.standard_name, self._cube.standard_name
                     )
@@ -240,7 +227,7 @@ class CMORCheck():
                     )
                     self._cube.long_name = self._cmor_var.long_name
                 else:
-                    self.report_error(
+                    self.report_strict_error(
                         self._attr_msg, self._cube.var_name, 'long_name',
                         self._cmor_var.long_name, self._cube.long_name
                     )
@@ -255,9 +242,9 @@ class CMORCheck():
             units = self._get_effective_units()
 
             if not self._cube.units.is_convertible(units):
-                self.report_error(f'Variable {self._cube.var_name} units '
-                                  f'{self._cube.units} can not be '
-                                  f'converted to {self._cmor_var.units}')
+                self.report_strict_error(f'Variable {self._cube.var_name} units '
+                                         f'{self._cube.units} can not be '
+                                         f'converted to {self._cmor_var.units}')
 
         # Check other variable attributes that match entries in cube.attributes
         attrs = ('positive', )
@@ -268,9 +255,9 @@ class CMORCheck():
                     self.report_warning('{}: attribute {} not present',
                                         self._cube.var_name, attr)
                 elif self._cube.attributes[attr] != attr_value:
-                    self.report_error(self._attr_msg, self._cube.var_name,
-                                      attr, attr_value,
-                                      self._cube.attributes[attr])
+                    self.report_strict_error(self._attr_msg, self._cube.var_name,
+                                             attr, attr_value,
+                                             self._cube.attributes[attr])
 
     def _get_effective_units(self):
         """Get effective units."""
@@ -334,9 +321,8 @@ class CMORCheck():
                             )
                             coord.var_name = coordinate.out_name
                         else:
-                            self.report_error(
+                            self.report_strict_error(
                                 'Coordinate {0} has var name {1}'
-                                'Coordinate {0} has var name {1} '
                                 'instead of {2}',
                                 coordinate.name,
                                 coord.var_name,
@@ -480,7 +466,7 @@ class CMORCheck():
 
         var_name = coord.var_name
         if not coord.is_monotonic():
-            self.report_error(
+            self.report_strict_error(
                 'Time coordinate for var {} is not monotonic', var_name
             )
 
@@ -541,7 +527,7 @@ class CMORCheck():
                 if second_month != second.month or \
                    second_year != second.year:
                     msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, freq)
+                    self.report_strict_error(msg, var_name, freq)
                     break
         elif freq == 'yr':
             for i in range(len(coord.points) - 1):
@@ -550,7 +536,7 @@ class CMORCheck():
                 second_month = first.month + 1
                 if first.year + 1 != second.year:
                     msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, freq)
+                    self.report_strict_error(msg, var_name, freq)
                     break
         else:
             if freq in intervals:
@@ -566,14 +552,14 @@ class CMORCheck():
                     target_interval = (frequency - tol, frequency + tol)
             else:
                 msg = '{}: Frequency {} not supported by checker'
-                self.report_error(msg, var_name, freq)
+                self.report_strict_error(msg, var_name, freq)
                 return
             for i in range(len(coord.points) - 1):
                 interval = coord.points[i + 1] - coord.points[i]
                 if (interval < target_interval[0]
                         or interval > target_interval[1]):
                     msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, freq)
+                    self.report_strict_error(msg, var_name, freq)
                     break
 
     @staticmethod
@@ -595,17 +581,6 @@ class CMORCheck():
 
         """
         return len(self._errors) > 0
-
-    def has_strict_errors(self):
-        """Check if there are reported errors of strict nature.
-
-        Returns
-        -------
-        bool:
-            True if there are pending errors, False otherwise.
-
-        """
-        return len(self._strict_errors) > 0
 
     def has_warnings(self):
         """Check if there are reported warnings.
@@ -650,9 +625,10 @@ class CMORCheck():
 
     def report_strict_error(self, message, *args):
         """Report a STRICT error.
-
-        If fail_on_error is set to True, raises automatically.
-        If fail_on_error is set to False, stores it for later reports.
+        If raise_exception is set to True and fail_on_error is set to True, raises automatically.
+        If raise_exception is set to True and fail_on_error is set to False, stores it for later reports.
+        If raise_exception is set to False and report_only_warning is set to True, go to report_warning.
+        If raise_exception is set to False and report_only_warning is set to False, do not report.
 
         Parameters
         ----------
@@ -663,9 +639,12 @@ class CMORCheck():
 
         """
         msg = message.format(*args)
-        if self._failerr:
-            raise CMORCheckError(msg + '\nin cube:\n{}'.format(self._cube))
-        self._strict_errors.append(msg)
+        if self._raise_exception:
+            if self._failerr:
+                raise CMORCheckError(msg + '\nin cube:\n{}'.format(self._cube))
+            self._errors.append(msg)
+        if self._report_only_warning:
+            self.report_warning(message, *args)
 
     def report_warning(self, message, *args):
         """Report a warning.
@@ -802,7 +781,9 @@ def cmor_check_data(cube, cmor_table, mip, short_name, frequency):
     return cube
 
 
-def cmor_check(cube, cmor_table, mip, short_name, frequency):
+def cmor_check(cube, cmor_table, mip, short_name, frequency,
+               raise_exception,
+               report_only_warning):
     """Check if cube conforms to variable's CMOR definiton.
 
     Equivalent to calling cmor_check_metadata and cmor_check_data
@@ -822,6 +803,8 @@ def cmor_check(cube, cmor_table, mip, short_name, frequency):
         Data frequency.
 
     """
-    cmor_check_metadata(cube, cmor_table, mip, short_name, frequency)
+    cmor_check_metadata(cube, cmor_table, mip, short_name, frequency,
+                        raise_exception=raise_exception,
+                        report_only_warning=report_only_warning)
     cmor_check_data(cube, cmor_table, mip, short_name, frequency)
     return cube
