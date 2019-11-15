@@ -27,6 +27,8 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """
         Compute sispeed module from velocity components siu and siv.
+        uis, vis: CMIP5 terms
+        siu, siv: CMIP6
 
         Arguments
         ---------

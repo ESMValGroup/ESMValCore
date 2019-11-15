@@ -11,7 +11,14 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [{'short_name': 'msftmyz', 'mip': 'Omon'}]
+        if project == 'CMIP5':
+            required = [{'short_name': 'msftmyz'}]
+        if project == 'CMIP6':
+        #     required = [{'short_name': 'msftyz'}]
+            required = [{'short_name': 'msftmyz', 'optional': True, },
+                        {'short_name': 'msftyz', 'optional': True, },
+                        {'short_name': 'msftmz', 'optional': True, }]
+
         return required
 
     @staticmethod
@@ -28,25 +35,39 @@ class DerivedVariable(DerivedVariableBase):
         iris.cube.Cube
               Output AMOC cube.
         """
-        # 0. Load the msftmyz cube.
-        cube = cubes.extract_strict(
-            iris.Constraint(
-                name='ocean_meridional_overturning_mass_streamfunction'))
+        # 0. Load the msft* cube.
+        try:
+            cube = cubes.extract_strict(
+                iris.Constraint(
+                    name='ocean_meridional_overturning_mass_streamfunction'))
+            meridional = True
+            lats = cube.coord('latitude').points
+        except:
+            cube = cubes.extract_strict(
+                iris.Constraint(
+                    name='ocean_y_overturning_mass_streamfunction'))
+            meridional = False
+            lats = cube.coord('grid_latitude').points
 
         # 1: find the relevant region
-        atlantic_region = 'atlantic_arctic_ocean'
-        atl_constraint = iris.Constraint(region=atlantic_region)
+        atl_constraint = iris.Constraint(region='atlantic_arctic_ocean')
         cube = cube.extract(constraint=atl_constraint)
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.)
         cube = cube.extract(constraint=depth_constraint)
+        print(cube)
+
 
         # 3: Find the latitude closest to 26N
         rapid_location = 26.5
-        lats = cube.coord('latitude').points
+        #lats = cube.coord('latitude').points
         rapid_index = np.argmin(np.abs(lats - rapid_location))
-        rapid_constraint = iris.Constraint(latitude=lats[rapid_index])
+
+        if meridional:
+            rapid_constraint = iris.Constraint(latitude=lats[rapid_index])
+        if not meridional:
+            rapid_constraint = iris.Constraint(grid_latitude=lats[rapid_index])
         cube = cube.extract(constraint=rapid_constraint)
 
         # 4: find the maximum in the water column along the time axis.

@@ -76,6 +76,7 @@ class CMIP6Info(object):
         'tro3': 'o3',
         'usi': 'siu',
         'vsi': 'siv',
+        'msftmyz': 'msftyz',
     }
 
     def __init__(self, cmor_tables_path, default=None, strict=True,

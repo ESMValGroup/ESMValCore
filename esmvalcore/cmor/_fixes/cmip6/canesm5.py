@@ -1,13 +1,9 @@
-"""Fixes for CMIP6 UKESM1-0-LL."""
-from .hadgem3_gc31_ll import AllVars as BaseAllVars
+"""Fixes for CMIP6 CanESM5."""
 from ..fix import Fix
 
 
-class AllVars(BaseAllVars):
-    """Fixes for all vars."""
-
-class msftyz(Fix):
-    """Fix msftyz."""
+class msftmz(Fix):
+    """Fix msftmz."""
 
     def fix_metadata(self, cubes):
         """

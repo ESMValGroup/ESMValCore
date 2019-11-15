@@ -504,14 +504,19 @@ def regrid_time(cube, frequency):
         cube with converted time axis and units.
     """
     # fix calendars
+    # standardize time points
+    time_c = [cell.point for cell in cube.coord('time').cells()]
+
     cube.coord('time').units = cf_units.Unit(
         cube.coord('time').units.origin,
         calendar='gregorian',
     )
 
-    # standardize time points
-    time_c = [cell.point for cell in cube.coord('time').cells()]
-    if frequency == 'mon':
+    if frequency == 'year':
+        cube.coord('time').cells = [
+            datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c
+        ]
+    elif frequency == 'mon':
         cube.coord('time').cells = [
             datetime.datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
         ]

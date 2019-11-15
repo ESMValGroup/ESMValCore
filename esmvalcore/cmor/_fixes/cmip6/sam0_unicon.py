@@ -1,13 +1,9 @@
-"""Fixes for CMIP6 UKESM1-0-LL."""
-from .hadgem3_gc31_ll import AllVars as BaseAllVars
+"""Fixes for CMIP6 SAM0-UNICON."""
 from ..fix import Fix
 
 
-class AllVars(BaseAllVars):
-    """Fixes for all vars."""
-
-class msftyz(Fix):
-    """Fix msftyz."""
+class msftmz(Fix):
+    """Fix msftmz."""
 
     def fix_metadata(self, cubes):
         """
@@ -25,5 +21,4 @@ class msftyz(Fix):
         for cube in cubes:
             basin = cube.coord('region')
             basin.var_name = 'basin'
-
         return cubes
