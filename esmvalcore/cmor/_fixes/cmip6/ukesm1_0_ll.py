@@ -1,6 +1,4 @@
 """Fixes for UKESM1-0-LL."""
-# import numpy as np
-# import iris
 
 from ..fix import Fix
 
