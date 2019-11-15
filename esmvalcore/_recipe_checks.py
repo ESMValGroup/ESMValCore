@@ -101,26 +101,29 @@ def data_availability(input_files, var, dryrun=False):
                         no data found for {}".format(var))
             return
 
+    # check time avail only for non-fx variables
+    if var['frequency'] == 'fx':
+        return
+
     required_years = set(range(var['start_year'], var['end_year'] + 1))
     available_years = set()
-    # check time avail only for non-fx variables
-    if var['frequency'] != 'fx':
-        for filename in input_files:
-            start, end = get_start_end_year(filename)
-            available_years.update(range(start, end + 1))
 
-        missing_years = required_years - available_years
-        if missing_years:
-            if not dryrun:
-                raise RecipeError(
-                    "No input data available for years {} in files {}".format(
-                        ", ".join(str(year) for year in missing_years),
-                        input_files))
-            else:
-                logger.info(
-                    "DRYRUN: MISSING DATA for years {} in files {}".format(
-                        ", ".join(str(year) for year in missing_years),
-                        input_files))
+    for filename in input_files:
+        start, end = get_start_end_year(filename)
+        available_years.update(range(start, end + 1))
+
+    missing_years = required_years - available_years
+    if missing_years:
+        if not dryrun:
+            raise RecipeError(
+                "No input data available for years {} in files {}".format(
+                    ", ".join(str(year) for year in missing_years),
+                    input_files))
+        else:
+            logger.info(
+                "DRYRUN: MISSING DATA for years {} in files {}".format(
+                    ", ".join(str(year) for year in missing_years),
+                    input_files))
 
 
 def tasks_valid(tasks):
