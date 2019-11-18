@@ -56,7 +56,9 @@ def fix_metadata(cubes,
                  dataset,
                  cmor_table=None,
                  mip=None,
-                 frequency=None):
+                 frequency=None,
+                 raise_exception=True,
+                 report_only_warning=False, ):
     """
     Fix cube metadata if fixes are required and check it anyway.
 
@@ -140,9 +142,9 @@ def fix_metadata(cubes,
                 table=cmor_table,
                 mip=mip,
                 short_name=short_name,
+                raise_exception=raise_exception,
+                report_only_warning=report_only_warning,
                 fail_on_error=False,
-                raise_exception=False,
-                report_only_warning=False,
                 automatic_fixes=True)
             cube = checker(cube).check_metadata()
         cube.attributes.pop('source_file', None)
@@ -156,7 +158,9 @@ def fix_data(cube,
              dataset,
              cmor_table=None,
              mip=None,
-             frequency=None):
+             frequency=None,
+             raise_exception=True,
+             report_only_warning=False, ):
     """
     Fix cube data if fixes add present and check it anyway.
 
