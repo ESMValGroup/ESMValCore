@@ -309,6 +309,15 @@ def _get_default_settings(variable, config_user, derive=False):
         fix['cmor_table'] = variable['cmor_table']
         fix['mip'] = variable['mip']
         fix['frequency'] = variable['frequency']
+        cmor_check = config_user.get('cmor_checks', None)
+        raise_exception = True
+        report_only_warning = False
+        if cmor_check in ['none', 'relaxed']:
+            raise_exception = False
+            if cmor_check == 'relaxed':
+                report_only_warning = True
+        fix['raise_exception'] = raise_exception
+        fix['report_only_warning'] = report_only_warning
     settings['fix_data'] = dict(fix)
     settings['fix_metadata'] = dict(fix)
 
@@ -339,6 +348,7 @@ def _get_default_settings(variable, config_user, derive=False):
             raise_exception = False
             if cmor_check == 'relaxed':
                 report_only_warning = True
+        print("RAISERECIPE", raise_exception)
         settings['cmor_check_metadata'] = {
             'cmor_table': variable['cmor_table'],
             'mip': variable['mip'],
