@@ -240,9 +240,10 @@ class CMORCheck():
             units = self._get_effective_units()
 
             if not self._cube.units.is_convertible(units):
-                self.report_strict_error(f'Variable {self._cube.var_name} units '
-                                         f'{self._cube.units} can not be '
-                                         f'converted to {self._cmor_var.units}')
+                self.report_strict_error(
+                    f'Variable {self._cube.var_name} units '
+                    f'{self._cube.units} can not be '
+                    f'converted to {self._cmor_var.units}')
 
         # Check other variable attributes that match entries in cube.attributes
         attrs = ('positive', )
@@ -253,9 +254,10 @@ class CMORCheck():
                     self.report_warning('{}: attribute {} not present',
                                         self._cube.var_name, attr)
                 elif self._cube.attributes[attr] != attr_value:
-                    self.report_strict_error(self._attr_msg, self._cube.var_name,
-                                             attr, attr_value,
-                                             self._cube.attributes[attr])
+                    self.report_strict_error(
+                        self._attr_msg, self._cube.var_name,
+                        attr, attr_value,
+                        self._cube.attributes[attr])
 
     def _get_effective_units(self):
         """Get effective units."""
@@ -623,10 +625,10 @@ class CMORCheck():
 
     def report_strict_error(self, message, *args):
         """Report a STRICT error.
-        If raise_exception is set to True and fail_on_error is set to True, raises automatically.
-        If raise_exception is set to True and fail_on_error is set to False, stores it for later reports.
-        If raise_exception is set to False and report_only_warning is set to True, go to report_warning.
-        If raise_exception is set to False and report_only_warning is set to False, do not report.
+        If raise_exception True and fail_on_error True, raises automatically.
+        If raise_exception True and fail_on_error False, stores it.
+        If raise_exception False and report_only_warning True report_warning.
+        If raise_exception False and report_only_warning False do not report.
 
         Parameters
         ----------
