@@ -348,7 +348,6 @@ def _get_default_settings(variable, config_user, derive=False):
             raise_exception = False
             if cmor_check == 'relaxed':
                 report_only_warning = True
-        print("RAISERECIPE", raise_exception)
         settings['cmor_check_metadata'] = {
             'cmor_table': variable['cmor_table'],
             'mip': variable['mip'],
