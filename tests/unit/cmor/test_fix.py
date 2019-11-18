@@ -149,7 +149,9 @@ class TestFixMetadata(unittest.TestCase):
                     frequency='frequency',
                     mip='mip',
                     short_name='short_name',
-                    table='cmor_table')
+                    table='cmor_table',
+                    raise_exception=True,
+                    report_only_warning=False)
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_metadata.assert_called_once_with()
 
