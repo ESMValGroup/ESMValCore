@@ -112,10 +112,7 @@ class CMORCheck():
 
         if self.frequency != 'fx':
             self._add_auxiliar_time_coordinates()
-        if self.has_errors():
-            return None
-        else:
-            return self._cube
+        return self._cube
 
     def report_errors(self):
         """Report detected errors.
@@ -130,7 +127,8 @@ class CMORCheck():
             msg = 'There were errors in variable {}:\n{}\nin cube:\n{}'
             msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
                              self._cube)
-            raise CMORCheckError(msg)
+            if self._raise_exception:
+                raise CMORCheckError(msg)
 
     def report_warnings(self, logger):
         """Report detected warnings to the given logger.
@@ -696,7 +694,7 @@ def _get_cmor_checker(table,
                       mip,
                       short_name,
                       frequency,
-                      fail_on_error=True,
+                      fail_on_error=False,
                       raise_exception=True,
                       report_only_warning=False,
                       automatic_fixes=False):
