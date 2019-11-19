@@ -26,7 +26,7 @@ CMIP6:
     DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
-  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP6'
 
 CMIP5:
@@ -41,7 +41,7 @@ CMIP5:
     RCAST: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
     BSC: '{type}/{project}/{exp}/{dataset.lower}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
-  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   institutes:
     'ACCESS1-0': ['CSIRO-BOM']
     'ACCESS1-3': ['CSIRO-BOM']
@@ -115,7 +115,7 @@ OBS:
     default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
     BSC: '{short_name}_*.nc'
     RCAST: '{short_name}_{mip}_{type}_{dataset}_*.nc'
-  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP5'
 
 OBS6:
@@ -126,7 +126,7 @@ OBS6:
   input_file:
     default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
     BSC: '{short_name}_*.nc'
-  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
 
 obs4mips:
@@ -135,7 +135,7 @@ obs4mips:
     default: 'Tier{tier}/{dataset}'
     RCAST: '/'
   input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
-  output_file: '{project}_{dataset}_{level}_{version}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_path: 'obs4mips'
   cmor_default_table_prefix: 'obs4MIPs_'
@@ -146,7 +146,7 @@ ana4mips:
     default: 'Tier{tier}/{dataset}'
     RCAST: '/'
   input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
-  output_file: '{project}_{mip}_{type}_{dataset}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{mip}_{type}_{dataset}_{short_name}'
   cmor_type: 'CMIP5'
   # TODO: add cmor_path and table and set cmor_strict to true
 
@@ -154,5 +154,5 @@ EMAC:
   input_dir:
     default: '{dataset}'
   input_file: ''
-  output_file: '{dataset}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  output_file: '{dataset}_{ensemble}_{short_name}'
   cmor_type: 'CMIP5'
