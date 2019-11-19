@@ -500,37 +500,36 @@ def regrid_time(cube, frequency):
     # standardize time points
     time_c = [cell.point for cell in cube.coord('time').cells()]
     if frequency == 'yr':
-        cells = [
+        time_cells = [
             datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c
         ]
     elif frequency == 'mon':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
         ]
     elif frequency == 'day':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
         ]
     elif frequency == '1hr':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, t.day, t.hour, 0, 0)
             for t in time_c
         ]
     elif frequency == '3hr':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 3, 0,
                               0) for t in time_c
         ]
     elif frequency == '6hr':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 6, 0,
                               0) for t in time_c
         ]
 
     cube.coord('time').points = [
         cube.coord('time').units.date2num(cl)
-        for cl in cube.coord('time').cells
-    ]
+        for cl in time_cells]
 
     # uniformize bounds
     cube.coord('time').bounds = None
