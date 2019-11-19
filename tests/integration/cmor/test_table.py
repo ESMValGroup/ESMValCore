@@ -106,12 +106,12 @@ class Testobs4mipsInfo(unittest.TestCase):
         cls.variables_info = CMIP6Info(
             cmor_tables_path='obs4mips',
             default=CustomInfo(),
-            strict=True,
+            strict=False,
             default_table_prefix='obs4MIPs_'
         )
 
     def setUp(self):
-        self.variables_info.strict = True
+        self.variables_info.strict = False
 
     def test_get_table_frequency(self):
         """Test get table frequency"""
@@ -128,7 +128,7 @@ class Testobs4mipsInfo(unittest.TestCase):
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP6Info(cmor_tables_path, None, True)
 
-    def test_get_variable_ndvi(self):
+    def test_get_variable_ndvistderr(self):
         """Get ndviStderr variable. Note table name obs4MIPs_[mip]"""
         var = self.variables_info.get_variable('obs4MIPs_monStderr',
                                                'ndviStderr')
@@ -148,6 +148,13 @@ class Testobs4mipsInfo(unittest.TestCase):
         self.assertEqual(var.frequency, 'mon')
 
     def test_get_variable_from_custom(self):
+        """Get prStderr variable. Note table name obs4MIPs_[mip]"""
+        var = self.variables_info.get_variable('obs4MIPs_monStderr',
+                                               'prStderr')
+        self.assertEqual(var.short_name, 'prStderr')
+        self.assertEqual(var.frequency, 'mon')
+
+    def test_get_variable_from_custom_deriving(self):
         """Get a variable from default."""
         var = self.variables_info.get_variable(
             'obs4MIPs_Amon', 'swcre', derived=True
@@ -163,7 +170,7 @@ class Testobs4mipsInfo(unittest.TestCase):
 
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
-        self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
+        self.assertIsNone(self.variables_info.get_variable('Omon', 'tras'))
 
 
 class TestCMIP5Info(unittest.TestCase):

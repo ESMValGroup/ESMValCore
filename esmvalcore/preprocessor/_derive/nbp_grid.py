@@ -6,11 +6,20 @@ from ._shared import grid_area_correction
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `nbp_grid`."""
 
-    # Required variables
-    required = [{
-        'short_name': 'nbp',
-        'fx_files': ['sftlf'],
-    }]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [
+            {
+                'short_name': 'nbp'
+            },
+            {
+                'short_name': 'sftlf',
+                'mip': 'fx',
+                'optional': True
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -25,7 +34,4 @@ class DerivedVariable(DerivedVariableBase):
         coastal regions.
 
         """
-        return grid_area_correction(
-            cubes,
-            'surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_'
-            'carbon_due_to_all_land_processes')
+        return grid_area_correction(cubes, 'nbp')
