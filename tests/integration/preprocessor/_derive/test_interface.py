@@ -11,10 +11,10 @@ def test_get_required():
 
     reference = [
         {
-            'short_name': 'rsds',
+            'short_name': 'rsdscs',
         },
         {
-            'short_name': 'rsus',
+            'short_name': 'rsuscs',
         },
     ]
 
@@ -40,13 +40,15 @@ def test_derive_nonstandard_nofx():
     units = 1
     standard_name = ''
 
-    rsds = Cube([2.])
-    rsds.standard_name = 'surface_downwelling_shortwave_flux_in_air'
+    rsdscs = Cube([2.])
+    rsdscs.short_name = 'rsdscs'
+    rsdscs.var_name = rsdscs.short_name
 
-    rsus = Cube([1.])
-    rsus.standard_name = 'surface_upwelling_shortwave_flux_in_air'
+    rsuscs = Cube([1.])
+    rsuscs.short_name = 'rsuscs'
+    rsuscs.var_name = rsuscs.short_name
 
-    cubes = CubeList([rsds, rsus])
+    cubes = CubeList([rsdscs, rsuscs])
 
     alb = derive(cubes, short_name, long_name, units, standard_name)
 
