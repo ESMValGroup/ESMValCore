@@ -257,3 +257,22 @@ Since observational data are organized in Tiers depending on their level of
 public availability, the ``default`` directory must be structured accordingly
 with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
 ``drs: default``.
+
+Data concatenation from multiple sources
+========================================
+
+Oftentimes data retrieving results in assembling a continuous data stream from
+multiple files or even, multiple experiments. The internal mechanism through which
+the assembly is done is via cube concatenation. One peculiarity of iris concatenation
+(see `iris cube concatenation <https://scitools.org.uk/iris/docs/latest/userguide/merge_and_concat.html>`_)
+is that it doesn't allow for concatenating time-overlapping cubes; this case is rather
+frequent with data from models overlapping in time, and is accounted for by a function that performs a
+flexible concatenation between two cubes, depending on the particular setup:
+
+* cubes overlap time: resulting cube is made up of the overlapping data plus left and
+right hand sides on each side of the overlapping data;
+* cubes don't overlap in time: data from the two cubes is bolted together;
+
+Note that two cube concatenation is the base operation of an iterative process of reducing multiple cubes
+from multiple data segments via cube concatenation ie if there is no time-overlapping data, the
+cubes concatenation is performed in one step.
