@@ -270,7 +270,7 @@ frequent with data from models overlapping in time, and is accounted for by a fu
 flexible concatenation between two cubes, depending on the particular setup:
 
 * cubes overlap time: resulting cube is made up of the overlapping data plus left and
-right hand sides on each side of the overlapping data;
+  right hand sides on each side of the overlapping data;
 * cubes don't overlap in time: data from the two cubes is bolted together;
 
 Note that two cube concatenation is the base operation of an iterative process of reducing multiple cubes
