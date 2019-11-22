@@ -11,6 +11,8 @@ import logging
 import iris
 import numpy as np
 
+from ._shared import make_1dim_coords
+
 logger = logging.getLogger(__name__)
 
 
@@ -147,10 +149,16 @@ def calculate_volume(cube):
     float
         grid volume.
     """
-    # ####
+    # check and fix for 2-dim coords
+    cube = make_1dim_coords(cube)
+
+    # #### main func
     # Load depth field and figure out which dim is which.
     depth = cube.coord(axis='z')
-    z_dim = cube.coord_dims(cube.coord(axis='z'))[0]
+    if cube.coord_dims(cube.coord(axis='z')):
+        z_dim = cube.coord_dims(cube.coord(axis='z'))[0]
+    else:
+        z_dim = 1
 
     # ####
     # Load z direction thickness
@@ -183,7 +191,8 @@ def volume_statistics(
         cube: iris.cube.Cube
             Input cube.
         operator: str
-            The operation to apply to the cube, options are: 'mean'.
+            The operation to apply to the cube, options are:
+            'mean', 'weightless_mean'.
         fx_files: dict
             dictionary of field:filename for the fx_files
 
@@ -224,6 +233,9 @@ def volume_statistics(
     if cube.data.ndim == 4 and grid_volume.ndim == 3:
         grid_volume = np.tile(grid_volume,
                               [cube_shape[0], 1, 1, 1])
+    # accunt for mismatch
+    if cube.data.ndim == 3 and grid_volume.ndim == 4:
+        grid_volume = grid_volume[0, ...]
 
     if cube.data.shape != grid_volume.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
@@ -251,6 +263,12 @@ def volume_statistics(
                      'longitude', 'latitude'],
                     iris.analysis.MEAN,
                     weights=grid_volume[time_itr, z_itr]).data
+            # Calculate weightless mean
+            elif operator == 'weightless_sum':
+                total = cube[time_itr, z_itr].collapsed(
+                    [cube.coord(axis='z'),
+                     'longitude', 'latitude'],
+                    iris.analysis.SUM).data
             else:
                 raise ValueError('Volume operator ({}) not '
                                  'recognised.'.format(operator))
@@ -282,7 +300,10 @@ def volume_statistics(
                                            'longitude', 'latitude'],
                                           iris.analysis.MEAN,
                                           weights=grid_volume[:2, :2], )
-
+    elif operator == 'weightless_sum':
+        src_cube = cube[:2, :2].collapsed([cube.coord(axis='z'),
+                                           'longitude', 'latitude'],
+                                          iris.analysis.SUM, )
     return _create_cube_time(src_cube, result, times)
 
 
