@@ -1,4 +1,6 @@
 """Fixes for GFDL-CM4 model."""
+import iris
+
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
