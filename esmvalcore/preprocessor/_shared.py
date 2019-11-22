@@ -7,6 +7,8 @@ import logging
 
 import iris
 import iris.analysis
+import numpy as np
+from cf_units import Unit
 
 logger = logging.getLogger(__name__)
 
@@ -67,3 +69,42 @@ def operator_accept_weights(operator):
 
     """
     return operator.lower() in ('mean', 'sum')
+
+
+def make_1dim_coords(cube):
+    """
+    Make lon/lat AuxCoords 1-dim for ocean data.
+
+    This function must be used before running
+    iris.analysis.cartography.area_weights().
+    """
+    # Process lat and lon if they are 2dim
+    if cube.coord("latitude").ndim > 1 and cube.coord("longitude").ndim > 1:
+        # get coordinate positional index
+        if len(cube.dim_coords) == 4:
+            lat_idx = 2
+            lon_idx = 3
+        elif len(cube.dim_coords) == 3:
+            lat_idx = 1
+            lon_idx = 2
+        elif len(cube.dim_coords) == 2:
+            lat_idx = 0
+            lon_idx = 1
+
+        # sort points and assign 1-dim arrays
+        lat_points = np.sort(cube.coord("latitude").points[:, 0])
+        lon_points = np.sort(cube.coord("longitude").points[0, :])
+        cube.remove_coord("latitude")
+        cube.remove_coord("longitude")
+        cube.add_aux_coord(
+            iris.coords.AuxCoord(lat_points,
+                                 standard_name='latitude',
+                                 units=Unit('degrees')), lat_idx)
+        cube.add_aux_coord(
+            iris.coords.AuxCoord(lon_points,
+                                 standard_name='longitude',
+                                 units=Unit('degrees')), lon_idx)
+        cube.coord('latitude').guess_bounds()
+        cube.coord('longitude').guess_bounds()
+
+    return cube
