@@ -14,7 +14,7 @@ import shapely.ops
 from dask import array as da
 
 from ._shared import (get_iris_analysis_operation, guess_bounds,
-                      operator_accept_weights)
+                      make_1dim_coords, operator_accept_weights)
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +209,8 @@ def area_statistics(cube, operator, fx_files=None):
     ValueError
         if input data cube has different shape than grid area weights
     """
+    # check for 2-dim coords
+    cube = make_1dim_coords(cube)
     grid_areas = tile_grid_areas(cube, fx_files)
 
     if not fx_files and cube.coord('latitude').points.ndim == 2:
