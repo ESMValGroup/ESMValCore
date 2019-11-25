@@ -127,8 +127,7 @@ class CMORCheck():
             msg = 'There were errors in variable {}:\n{}\nin cube:\n{}'
             msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
                              self._cube)
-            if self._raise_exception:
-                raise CMORCheckError(msg)
+            raise CMORCheckError(msg)
 
     def report_warnings(self, logger):
         """Report detected warnings to the given logger.
