@@ -3,6 +3,7 @@ from ..shared import add_scalar_height_coord
 from ..fix import Fix
 import iris
 
+
 class Abs550aer(Fix):
     """Fixes for abs550aer"""
     def fix_metadata(self, cubes):
@@ -16,18 +17,20 @@ class Abs550aer(Fix):
         -------
         iris.cube.CubeList
         """
-        lambda550nm = iris.coords.AuxCoord(550.0,
-                                         standard_name='radiation_wavelength',
-                                         long_name='Radiation Wavelength 550 nanometers',
-                                         var_name='wavelength',
-                                         units='nm',
-                                         bounds=None)
+        lambda550nm = iris.coords.AuxCoord(
+            550.0,
+            standard_name='radiation_wavelength',
+            long_name='Radiation Wavelength 550 nanometers',
+            var_name='wavelength',
+            units='nm',
+            bounds=None)
         for cube in cubes:
             try:
                 cube.coord(standard_name="radiation_wavelength")
             except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(lambda550nm)
         return cubes
+
 
 class Od550aer(Fix):
     """Fixes for od550aer"""
@@ -42,18 +45,20 @@ class Od550aer(Fix):
         -------
         iris.cube.CubeList
         """
-        lambda550nm = iris.coords.AuxCoord(550.0,
-                                         standard_name='radiation_wavelength',
-                                         long_name='Radiation Wavelength 550 nanometers',
-                                         var_name='wavelength',
-                                         units='nm',
-                                         bounds=None)
+        lambda550nm = iris.coords.AuxCoord(
+            550.0,
+            standard_name='radiation_wavelength',
+            long_name='Radiation Wavelength 550 nanometers',
+            var_name='wavelength',
+            units='nm',
+            bounds=None)
         for cube in cubes:
             try:
                 cube.coord(standard_name="radiation_wavelength")
             except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(lambda550nm)
         return cubes
+
 
 class Od550lt1aer(Fix):
     """Fixes for od550lt1aer"""
@@ -68,18 +73,20 @@ class Od550lt1aer(Fix):
         -------
         iris.cube.CubeList
         """
-        lambda550nm = iris.coords.AuxCoord(550.0,
-                                         standard_name='radiation_wavelength',
-                                         long_name='Radiation Wavelength 550 nanometers',
-                                         var_name='wavelength',
-                                         units='nm',
-                                         bounds=None)
+        lambda550nm = iris.coords.AuxCoord(
+            550.0,
+            standard_name='radiation_wavelength',
+            long_name='Radiation Wavelength 550 nanometers',
+            var_name='wavelength',
+            units='nm',
+            bounds=None)
         for cube in cubes:
             try:
                 cube.coord(standard_name="radiation_wavelength")
             except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(lambda550nm)
         return cubes
+
 
 class Mrsos(Fix):
     """Fixes for Mrsos"""
@@ -95,17 +102,19 @@ class Mrsos(Fix):
         iris.cube.CubeList
         """
         sdepth1 = iris.coords.AuxCoord(0.05,
-                                         standard_name='depth',
-                                         long_name='depth',
-                                         var_name='depth',
-                                         units='m',
-                                         bounds=[0.0, 0.1])
+                                       standard_name='depth',
+                                       long_name='depth',
+                                       var_name='depth',
+                                       units='m',
+                                       bounds=[0.0, 0.1])
         for cube in cubes:
             try:
                 cube.coord("depth")
             except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(sdepth1)
         return cubes
+
+
 class Siconc(Fix):
     """Fixes for siconc"""
     def fix_metadata(self, cubes):
@@ -120,28 +129,30 @@ class Siconc(Fix):
         iris.cube.CubeList
         """
         typesi = iris.coords.AuxCoord("sea_ice",
-                                         standard_name='area_type',
-                                         long_name='Sea Ice area type',
-                                         var_name='type',
-                                         units='',
-                                         bounds=None)
+                                      standard_name='area_type',
+                                      long_name='Sea Ice area type',
+                                      var_name='type',
+                                      units='',
+                                      bounds=None)
         for cube in cubes:
             try:
                 cube.coord(standard_name="area_type")
             except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(typesi)
         return cubes
+
+
 class Tas(Fix):
     """Fixes for tas"""
     def fix_metadata(self, cubes):
         """
         Fix missing scalar dimension height2m
-        
+
         Parameters
         ----------
         cubes: iris CubeList
             List of cubes to fix
-        
+
         Returns
         -------
         iris.cube.CubeList
@@ -159,3 +170,12 @@ class Tas(Fix):
                 cube.add_aux_coord(height2m)
         return cubes
 
+
+class Tasmin(Tas):
+    """Fixes for tasmin"""
+    pass
+
+
+class Tasmax(Tas):
+    """Fixes for tasmax"""
+    pass
