@@ -160,7 +160,7 @@ def _resolve_latestversion(dirname_template):
         versions.sort(reverse=True)
         for version in ['latest'] + versions:
             dirname = os.path.join(part1, version, part2)
-            if os.path.isdir(dirname):
+            if os.path.isdir(dirname) and len(os.listdir(dirname)) != 0:
                 return dirname
 
     return dirname_template

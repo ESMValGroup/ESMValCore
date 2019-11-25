@@ -131,3 +131,31 @@ class Siconc(Fix):
             except iris.exceptions.CoordinateNotFoundError:
                 cube.add_aux_coord(typesi)
         return cubes
+class Tas(Fix):
+    """Fixes for tas"""
+    def fix_metadata(self, cubes):
+        """
+        Fix missing scalar dimension height2m
+        
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+        
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        height2m = iris.coords.AuxCoord(2.0,
+                                        standard_name='height',
+                                        long_name='height',
+                                        var_name='height',
+                                        units='m',
+                                        bounds=None)
+        for cube in cubes:
+            try:
+                cube.coord("height")
+            except iris.exceptions.CoordinateNotFoundError:
+                cube.add_aux_coord(height2m)
+        return cubes
+
