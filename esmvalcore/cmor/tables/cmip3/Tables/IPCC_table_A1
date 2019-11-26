@@ -1538,7 +1538,7 @@ required: positive
 standard_name: toa_outgoing_longwave_flux
 units:         W m-2
 cell_methods:  time: mean
-long_name:     Outgoing Longwave Radiation
+long_name:     TOA Outgoing Longwave Radiation
 !----------------------------------
 !
 ! Additional variable information:
