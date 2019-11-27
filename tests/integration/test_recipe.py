@@ -390,8 +390,6 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
                 mip: fx
                 exp: historical
                 ensemble: r0i0p0
-                start_year: 2000
-                end_year: 2005
                 additional_datasets:
                   - {dataset: CanESM2}
             scripts: null
@@ -408,7 +406,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
 
     fix_dir = os.path.join(
         preproc_dir,
-        'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_2000-2005_fixed')
+        'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
 
     defaults = {
         'load': {
