@@ -269,8 +269,12 @@ is that it doesn't allow for concatenating time-overlapping cubes; this case is 
 frequent with data from models overlapping in time, and is accounted for by a function that performs a
 flexible concatenation between two cubes, depending on the particular setup:
 
-* cubes overlap time: resulting cube is made up of the overlapping data plus left and
-  right hand sides on each side of the overlapping data;
+* cubes overlap in time: resulting cube is made up of the overlapping data plus left and
+  right hand sides on each side of the overlapping data; note that in the case of the cubes
+  coming from different experiments the resulting concatenated cube will have composite data
+  made up from multiple experiments: assume [cube1: exp1, cube2: exp2] and cube1 starts before cube2,
+  and cube2 finishes after cube1, then the concatenated cube will be made up of cube2: exp2 plus the
+  section of cube1: exp1 that contains data not provided in cube2: exp2;
 * cubes don't overlap in time: data from the two cubes is bolted together;
 
 Note that two cube concatenation is the base operation of an iterative process of reducing multiple cubes
