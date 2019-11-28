@@ -6,6 +6,7 @@ from cf_units import Unit
 import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
+import iris.exceptions as Exc
 
 from esmvalcore.preprocessor import _io
 
@@ -79,6 +80,57 @@ class TestConcatenate(unittest.TestCase):
         self.assertTrue(np.allclose(
             concatenated.coord('time').points,
             np.array([1., 7.])
+        ))
+        raw_cubes.reverse()
+        concatenated = _io.concatenate(raw_cubes)
+        self.assertTrue(np.allclose(
+            concatenated.coord('time').points,
+            np.array([1., 7.])
+        ))
+
+    def test_concatenate_with_iris_exception(self):
+        """Test a more generic case."""
+        time_coord_1 = DimCoord(
+            [1.5, 5., 7.], var_name='time', standard_name='time',
+            units='days since 1950-01-01')
+        cube1 = Cube([33., 55., 77.],
+                     var_name='sample',
+                     dim_coords_and_dims=((time_coord_1, 0), ))
+        time_coord_2 = DimCoord(
+            [1., 5., 7.], var_name='time', standard_name='time',
+            units='days since 1950-01-01')
+        cube2 = Cube([33., 55., 77.],
+                     var_name='sample',
+                     dim_coords_and_dims=((time_coord_2, 0), ))
+        cubes_single_ovlp = [cube2, cube1]
+        with self.assertRaises(Exc.ConcatenateError):
+            _io.concatenate(cubes_single_ovlp)
+
+    def test_concatenate_with_order(self):
+        """Test a more generic case."""
+        time_coord_1 = DimCoord(
+            [1.5, 2., 5., 7.], var_name='time', standard_name='time',
+            units='days since 1950-01-01')
+        cube1 = Cube([33., 44., 55., 77.],
+                     var_name='sample',
+                     dim_coords_and_dims=((time_coord_1, 0), ))
+        time_coord_2 = DimCoord(
+            [1., 2., 5., 7., 100.], var_name='time', standard_name='time',
+            units='days since 1950-01-01')
+        cube2 = Cube([33., 44., 55., 77., 1000.],
+                     var_name='sample',
+                     dim_coords_and_dims=((time_coord_2, 0), ))
+        cubes_ordered = [cube2, cube1]
+        concatenated = _io.concatenate(cubes_ordered)
+        self.assertTrue(np.allclose(
+            concatenated.coord('time').points,
+            np.array([1., 2., 5., 7., 100.])
+        ))
+        cubes_reverse = [cube1, cube2]
+        concatenated = _io.concatenate(cubes_reverse)
+        self.assertTrue(np.allclose(
+            concatenated.coord('time').points,
+            np.array([1., 2., 5., 7., 100.])
         ))
 
     def test_fail_on_calendar_concatenate_with_overlap(self):
