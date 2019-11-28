@@ -423,6 +423,25 @@ def _get_landsea_fraction_fx_dict(variable, config_user):
     return fx_dict
 
 
+def _exclude_dataset(settings, variable, step):
+    """Exclude dataset from specific preprocessor step if requested."""
+    exclude = {
+        _special_name_to_dataset(variable, dataset)
+        for dataset in settings[step].pop('exclude', [])
+    }
+    if variable['dataset'] in exclude:
+        settings.pop(step)
+        logger.debug("Excluded dataset '%s' from preprocessor step '%s'",
+                     variable['dataset'], step)
+
+
+def _update_weighting_settings(settings, variable):
+    """Update settings for the weighting preprocessors."""
+    if 'weighting_landsea_fraction' not in settings:
+        return
+    _exclude_dataset(settings, variable, 'weighting_landsea_fraction')
+
+
 def _update_fx_settings(settings, variable, config_user):
     """Find and set the FX mask settings."""
     msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
@@ -561,12 +580,7 @@ def _update_multi_dataset_settings(variable, settings):
         if not settings.get(step):
             continue
         # Exclude dataset if requested
-        exclude = {
-            _special_name_to_dataset(variable, dataset)
-            for dataset in settings[step].pop('exclude', [])
-        }
-        if variable['dataset'] in exclude:
-            settings.pop(step)
+        _exclude_dataset(settings, variable, step)
 
 
 def _update_statistic_settings(products, order, preproc_dir):
@@ -668,6 +682,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             config_user=config_user,
         )
         _update_extract_shape(settings, config_user)
+        _update_weighting_settings(settings, variable)
         _update_fx_settings(
             settings=settings, variable=variable,
             config_user=config_user)
