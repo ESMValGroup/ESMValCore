@@ -1,4 +1,4 @@
-"""Derivation of variable `ohc`."""
+"""Derivation of variable `ohc_omon`."""
 import iris
 from iris import Constraint
 
@@ -31,7 +31,7 @@ class DerivedVariable(DerivedVariableBase):
                 },
                 {
                     'short_name': 'volcello',
-                    'mip': 'Ofx'
+                    'mip': 'Omon'
                 },
             ]
         return required

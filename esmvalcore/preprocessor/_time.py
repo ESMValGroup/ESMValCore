@@ -36,6 +36,13 @@ for _coord in (
     )
 
 
+def time_exists(cube):
+    """
+    Checks for the existance of a time coordinate.
+    """
+    time_exist = len(cube.coords('time'))
+    return bool(time_exist)
+
 def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
                  end_day):
     """
@@ -73,6 +80,10 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
         if time ranges are outside the cube time limits
 
     """
+
+    if not time_exists(cube):
+        return cube
+
     time_units = cube.coord('time').units
     if time_units.calendar == '360_day':
         if start_day > 30:
