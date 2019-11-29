@@ -11,7 +11,7 @@ RHO_CP = iris.coords.AuxCoord(4.09169e+6, units=Unit('kg m-3 J kg-1 K-1'))
 
 
 class DerivedVariable(DerivedVariableBase):
-    """Derivation of variable `ohc_ohx`."""
+    """Derivation of variable `ohc_ofx`."""
 
     @staticmethod
     def required(project):
