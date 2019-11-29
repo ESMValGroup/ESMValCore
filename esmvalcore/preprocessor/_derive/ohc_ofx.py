@@ -1,4 +1,4 @@
-"""Derivation of variable `ohc`."""
+"""Derivation of variable `ohc_ofx`."""
 import iris
 from iris import Constraint
 
@@ -11,7 +11,7 @@ RHO_CP = iris.coords.AuxCoord(4.09169e+6, units=Unit('kg m-3 J kg-1 K-1'))
 
 
 class DerivedVariable(DerivedVariableBase):
-    """Derivation of variable `ohc`."""
+    """Derivation of variable `ohc_ohx`."""
 
     @staticmethod
     def required(project):
@@ -30,15 +30,9 @@ class DerivedVariable(DerivedVariableBase):
                 {
                     'short_name': 'thetao'
                 },
-                #{
-                #    'short_name': 'volcello',
-                #    'mip': 'Ofx',
-                #     'optional': True
-                #},
                 {
                     'short_name': 'volcello',
-            #        'mip': 'Omon',
-             #       'optional': True
+                    'mip': 'Ofx',
                 },
 
             ]

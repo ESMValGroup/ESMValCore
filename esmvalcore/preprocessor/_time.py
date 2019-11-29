@@ -7,7 +7,6 @@ import datetime
 import logging
 from warnings import filterwarnings
 
-import cf_units
 import dask.array as da
 import iris
 import iris.coord_categorisation
@@ -73,6 +72,9 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
         if time ranges are outside the cube time limits
 
     """
+    time_exists = len(cube.coords('time'))
+    if not time_exists:
+        return cube
     time_units = cube.coord('time').units
     if time_units.calendar == '360_day':
         if start_day > 30:
@@ -485,10 +487,11 @@ def regrid_time(cube, frequency):
     """
     Align time axis for cubes so they can be subtracted.
 
-    Operations on time units, calendars, time points and auxiliary
+    Operations on time units, time points and auxiliary
     coordinates so that any cube from cubes can be subtracted from any
-    other cube from cubes. Currently this function supports monthly
-    (frequency=mon), daily (frequency=day), 6-hourly (frequency=6hr),
+    other cube from cubes. Currently this function supports
+    yearly (frequency=yr), monthly (frequency=mon),
+    daily (frequency=day), 6-hourly (frequency=6hr),
     3-hourly (frequency=3hr) and hourly (frequency=1hr) data time frequencies.
 
     Parameters
@@ -503,47 +506,41 @@ def regrid_time(cube, frequency):
     iris.cube.Cube
         cube with converted time axis and units.
     """
-    # fix calendars
     # standardize time points
     time_c = [cell.point for cell in cube.coord('time').cells()]
-
-    cube.coord('time').units = cf_units.Unit(
-        cube.coord('time').units.origin,
-        calendar='gregorian',
-    )
-
-    if frequency == 'year':
-        cube.coord('time').cells = [
+    if frequency in ['yr', 'year']:
+        time_cells = [
             datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c
         ]
     elif frequency == 'mon':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
         ]
     elif frequency == 'day':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
         ]
     elif frequency == '1hr':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, t.day, t.hour, 0, 0)
             for t in time_c
         ]
     elif frequency == '3hr':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 3, 0,
                               0) for t in time_c
         ]
     elif frequency == '6hr':
-        cube.coord('time').cells = [
+        time_cells = [
             datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 6, 0,
                               0) for t in time_c
         ]
+    else:
+        raise ValueError('The time frequency is not recognised: '+str(frequency))
 
     cube.coord('time').points = [
         cube.coord('time').units.date2num(cl)
-        for cl in cube.coord('time').cells
-    ]
+        for cl in time_cells]
 
     # uniformize bounds
     cube.coord('time').bounds = None
