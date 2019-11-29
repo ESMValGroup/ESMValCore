@@ -1557,7 +1557,7 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
             scripts: null
         """)
     with pytest.raises(RecipeError) as exc_info:
-         get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, config_user)
     assert str(exc_info.value) == (
         'Preprocessor landfrac_weighting uses alternative_dataset, but '
         'alternative_dataset is not defined for variable gpp of diagnostic '
