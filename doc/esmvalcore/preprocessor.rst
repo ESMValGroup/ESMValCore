@@ -275,16 +275,16 @@ preprocessor can be used:
       preproc_weighting:
         weighting_landsea_fraction:
           area_type: land
-          strict: true
+          exclude: ['CanESM2', 'reference_dataset']
 
 Allowed arguments for the keyword ``area_type`` are ``land`` (fraction is 1
 for grid cells with only land surface, 0 for grid cells with only sea surface
 and values in between 0 and 1 for coastal regions) and ``sea`` (1 for
 sea, 0 for land, in between for coastal regions). The optional argument
-``strict`` defines the behavior of this function in case the weighting was not
-possible (due to missing data or incompatible shapes). In the case of
-``strict: true`` (default), it fails, in the case of ``strict: false``, it does
-not apply the weighting and prints a debug message.
+``exclude`` allows to exclude specific datasets from this preprocessor, which
+is for example useful for climate models which do not offer land/sea fraction
+files. This arguments also accepts the special dataset specifiers
+``reference_dataset`` and ``alternative_dataset``.
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
