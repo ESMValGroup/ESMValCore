@@ -43,7 +43,7 @@ def _shape_is_broadcastable(shape_1, shape_2):
                for (m, n) in zip(shape_1[::-1], shape_2[::-1]))
 
 
-def weighting_landsea_fraction(cube, fx_files, area_type, strict=True):
+def weighting_landsea_fraction(cube, fx_files, area_type):
     """Weight fields using land or sea fraction.
 
     This preprocessor function weights a field with its corresponding land or
@@ -63,9 +63,6 @@ def weighting_landsea_fraction(cube, fx_files, area_type, strict=True):
         fx files as ``str`` or empty ``list`` (if not available).
     area_type : str
         Use land (``'land'``) or sea (``'sea'``) fraction for weighting.
-    strict : bool, optional (default: True)
-        If ``True``, fail if weighting was not possible (e.g. due to missing fx
-        files). If ``False``, do not apply the weighting if not possible.
 
     Returns
     -------
@@ -77,8 +74,8 @@ def weighting_landsea_fraction(cube, fx_files, area_type, strict=True):
     TypeError
         ``area_type`` is not ``'land'`` or ``'sea'``.
     ValueError
-        If ``strict`` is ``True`` and weighting fails (e.g. due to missing fx
-        files or non-broadcastable shapes).
+        Land/sea fraction variables ``sftlf`` or ``sftof`` not found or shape
+        of them is not broadcastable to ``cube``.
 
     """
     if area_type not in ('land', 'sea'):
@@ -86,12 +83,9 @@ def weighting_landsea_fraction(cube, fx_files, area_type, strict=True):
             f"Expected 'land' or 'sea' for area_type, got '{area_type}'")
     (land_fraction, errors) = _get_land_fraction(cube, fx_files)
     if land_fraction is None:
-        msg = (f"Weighting of '{cube.var_name}' with '{area_type}' fraction "
-               f"failed because of the following errors: {' '.join(errors)}")
-        if strict:
-            raise ValueError(msg)
-        logger.warning(msg)
-        return cube
+        raise ValueError(
+            f"Weighting of '{cube.var_name}' with '{area_type}' fraction "
+            f"failed because of the following errors: {' '.join(errors)}")
     core_data = cube.core_data()
     if area_type == 'land':
         cube.data = core_data * land_fraction

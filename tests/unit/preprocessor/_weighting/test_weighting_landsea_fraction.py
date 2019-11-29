@@ -153,68 +153,45 @@ CUBE_4_L = CUBE_4.copy([0.0, 2.0, -0.5, 0.6])
 CUBE_4_O = CUBE_4.copy([1.0, 0.0, -0.5, 1.4])
 
 WEIGHTING_LANDSEA_FRACTION = [
-    (CUBE_3, {}, 'land', True, ValueError),
-    (CUBE_3, {}, 'land', False, CUBE_3),
-    (CUBE_3, {}, 'sea', True, ValueError),
-    (CUBE_3, {}, 'sea', False, CUBE_3),
-    (CUBE_3, EMPTY_FX_FILES, 'land', True, ValueError),
-    (CUBE_3, EMPTY_FX_FILES, 'land', False, CUBE_3),
-    (CUBE_3, EMPTY_FX_FILES, 'sea', True, ValueError),
-    (CUBE_3, EMPTY_FX_FILES, 'sea', False, CUBE_3),
-    (CUBE_3, L_FX_FILES, 'land', True, CUBE_3_L),
-    (CUBE_3, L_FX_FILES, 'land', False, CUBE_3_L),
-    (CUBE_3, L_FX_FILES, 'sea', True, CUBE_3_O),
-    (CUBE_3, L_FX_FILES, 'sea', False, CUBE_3_O),
-    (CUBE_3, O_FX_FILES, 'land', True, ValueError),
-    (CUBE_3, O_FX_FILES, 'land', False, CUBE_3),
-    (CUBE_3, O_FX_FILES, 'sea', True, ValueError),
-    (CUBE_3, O_FX_FILES, 'sea', False, CUBE_3),
-    (CUBE_3, FX_FILES, 'land', True, CUBE_3_L),
-    (CUBE_3, FX_FILES, 'land', False, CUBE_3_L),
-    (CUBE_3, FX_FILES, 'sea', True, CUBE_3_O),
-    (CUBE_3, FX_FILES, 'sea', False, CUBE_3_O),
-    (CUBE_3, FX_FILES, 'wrong', True, TypeError),
-    (CUBE_3, FX_FILES, 'wrong', False, TypeError),
-    (CUBE_4, {}, 'land', True, ValueError),
-    (CUBE_4, {}, 'land', False, CUBE_4),
-    (CUBE_4, {}, 'sea', True, ValueError),
-    (CUBE_4, {}, 'sea', False, CUBE_4),
-    (CUBE_4, EMPTY_FX_FILES, 'land', True, ValueError),
-    (CUBE_4, EMPTY_FX_FILES, 'land', False, CUBE_4),
-    (CUBE_4, EMPTY_FX_FILES, 'sea', True, ValueError),
-    (CUBE_4, EMPTY_FX_FILES, 'sea', False, CUBE_4),
-    (CUBE_4, L_FX_FILES, 'land', True, ValueError),
-    (CUBE_4, L_FX_FILES, 'land', False, CUBE_4),
-    (CUBE_4, L_FX_FILES, 'sea', True, ValueError),
-    (CUBE_4, L_FX_FILES, 'sea', False, CUBE_4),
-    (CUBE_4, O_FX_FILES, 'land', True, CUBE_4_L),
-    (CUBE_4, O_FX_FILES, 'land', False, CUBE_4_L),
-    (CUBE_4, O_FX_FILES, 'sea', True, CUBE_4_O),
-    (CUBE_4, O_FX_FILES, 'sea', False, CUBE_4_O),
-    (CUBE_4, FX_FILES, 'land', True, CUBE_4_L),
-    (CUBE_4, FX_FILES, 'land', False, CUBE_4_L),
-    (CUBE_4, FX_FILES, 'sea', True, CUBE_4_O),
-    (CUBE_4, FX_FILES, 'sea', False, CUBE_4_O),
-    (CUBE_4, FX_FILES, 'wrong', True, TypeError),
-    (CUBE_4, FX_FILES, 'wrong', False, TypeError),
+    (CUBE_3, {}, 'land', ValueError),
+    (CUBE_3, {}, 'sea', ValueError),
+    (CUBE_3, EMPTY_FX_FILES, 'land', ValueError),
+    (CUBE_3, EMPTY_FX_FILES, 'sea', ValueError),
+    (CUBE_3, L_FX_FILES, 'land', CUBE_3_L),
+    (CUBE_3, L_FX_FILES, 'sea', CUBE_3_O),
+    (CUBE_3, O_FX_FILES, 'land', ValueError),
+    (CUBE_3, O_FX_FILES, 'sea', ValueError),
+    (CUBE_3, FX_FILES, 'land', CUBE_3_L),
+    (CUBE_3, FX_FILES, 'sea', CUBE_3_O),
+    (CUBE_3, FX_FILES, 'wrong', TypeError),
+    (CUBE_4, {}, 'land', ValueError),
+    (CUBE_4, {}, 'sea', ValueError),
+    (CUBE_4, EMPTY_FX_FILES, 'land', ValueError),
+    (CUBE_4, EMPTY_FX_FILES, 'sea', ValueError),
+    (CUBE_4, L_FX_FILES, 'land', ValueError),
+    (CUBE_4, L_FX_FILES, 'sea', ValueError),
+    (CUBE_4, O_FX_FILES, 'land', CUBE_4_L),
+    (CUBE_4, O_FX_FILES, 'sea', CUBE_4_O),
+    (CUBE_4, FX_FILES, 'land', CUBE_4_L),
+    (CUBE_4, FX_FILES, 'sea', CUBE_4_O),
+    (CUBE_4, FX_FILES, 'wrong', TypeError),
 ]
 
 
-@pytest.mark.parametrize('cube,fx_files,area_type,strict,out',
+@pytest.mark.parametrize('cube,fx_files,area_type,out',
                          WEIGHTING_LANDSEA_FRACTION)
 @mock.patch.object(weighting, 'iris', autospec=True)
 def test_weighting_landsea_fraction(mock_iris,
                                     cube,
                                     fx_files,
                                     area_type,
-                                    strict,
                                     out):
     """Test landsea fraction weighting preprocessor."""
     # Exceptions
     if isinstance(out, type):
         with pytest.raises(out):
             weighted_cube = weighting.weighting_landsea_fraction(
-                cube, fx_files, area_type, strict=strict)
+                cube, fx_files, area_type)
         return
 
     # Regular cases
@@ -225,7 +202,7 @@ def test_weighting_landsea_fraction(mock_iris,
         fx_cubes.append(CUBE_SFTOF)
     mock_iris.load_cube.side_effect = fx_cubes
     weighted_cube = weighting.weighting_landsea_fraction(
-        cube, fx_files, area_type, strict=strict)
+        cube, fx_files, area_type)
     assert weighted_cube == cube
     assert weighted_cube is cube
     mock_iris.reset_mock()
