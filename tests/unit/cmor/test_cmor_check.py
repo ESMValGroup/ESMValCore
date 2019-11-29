@@ -162,7 +162,6 @@ class TestCMORCheck(unittest.TestCase):
 
         self.cube = checker(self.cube).check_metadata()
 
-
     def test_check_with_month_number(self):
         """Test checks succeeds for a good cube with month number."""
         iris.coord_categorisation.add_month_number(self.cube, 'time')
@@ -347,8 +346,8 @@ class TestCMORCheck(unittest.TestCase):
         self.cube = self.get_cube(self.var_info)
         self.cube.standard_name = 'wind_speed'
         self._check_warnings_on_metadata(automatic_fixes=False,
-                                      raise_exception=False,
-                                      report_only_warning=True)
+                                         raise_exception=False,
+                                         report_only_warning=True)
 
     def test_check_bad_var_long_name_relaxed_flag(self):
         """Test check reports warning for a bad variable long_name with
@@ -488,8 +487,8 @@ class TestCMORCheck(unittest.TestCase):
         self.assertTrue(checker.has_warnings())
 
     def _check_no_reports_on_metadata(self, automatic_fixes=False,
-                                    raise_exception=False,
-                                    report_only_warning=False):
+                                      raise_exception=False,
+                                      report_only_warning=False):
         checker = CMORCheck(
             self.cube, self.var_info, automatic_fixes=automatic_fixes,
             raise_exception=raise_exception,
