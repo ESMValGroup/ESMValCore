@@ -1,0 +1,20 @@
+SOURCE: CMIP6
+!============
+variable_entry:    ohcgt_ofx
+!============
+modeling_realm:    ocean
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             J
+cell_methods:      time: mean 
+long_name:         Global Total Heat content 
+comment:           Heat content
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+type:              real
+!----------------------------------
+!

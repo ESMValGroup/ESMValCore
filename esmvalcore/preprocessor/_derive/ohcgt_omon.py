@@ -1,24 +1,24 @@
-"""Derivation of variable `ohc_omon`."""
+"""Derivation of variable `ohcgt`."""
 import iris
 from iris import Constraint
 
+from dask import array as da
 from cf_units import Unit
-
+import  numpy as np
 from ._baseclass import DerivedVariableBase
 
 RHO_CP = iris.coords.AuxCoord(4.09169e+6, units=Unit('kg m-3 J kg-1 K-1'))
 
 
 class DerivedVariable(DerivedVariableBase):
-    """Derivation of variable `ohc_omon`."""
+    """Derivation of variable `ohcgt`."""
 
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
         required = [
             {
-                'short_name': 'thetao'
+                'short_name': 'thetaoga'
             },
             {
                 'short_name': 'volcello',
@@ -32,8 +32,9 @@ class DerivedVariable(DerivedVariableBase):
                 },
                 {
                     'short_name': 'volcello',
-                    'mip': 'Omon'
+                    'mip': 'Omon',
                 },
+
             ]
         return required
 
@@ -57,7 +58,7 @@ class DerivedVariable(DerivedVariableBase):
         """
         # 1. Load the thetao and volcello cubes
         cube = cubes.extract_strict(
-            Constraint(cube_func=lambda c: c.var_name == 'thetao'))
+            Constraint(cube_func=lambda c: c.var_name == 'thetaoga'))
         volume = cubes.extract_strict(
             Constraint(cube_func=lambda c: c.var_name == 'volcello'))
         # 2. multiply with each other and with cprho0
@@ -80,11 +81,24 @@ class DerivedVariable(DerivedVariableBase):
             ]
             for coord, dims in dim_coords + aux_coords:
                 cube.remove_coord(coord)
-        new_cube = cube * volume
-        new_cube *= RHO_CP
+        volume = volume.data
+
+        if volume.ndim == 3:
+            volume = da.sum(volume.data)
+            volume = np.tile(volume, [cube.data.shape[0],])
+
+        elif volume.ndim == 4:
+            volume = da.sum(volume.data, axis=(1,2,3))
+
+        else:
+            print(cube.data.shape , 'does not match', volume.data.shape)
+            assert 0
+     
+        const = 4.09169e+6
+        cube.data = cube.data * volume * const 
         if time_coord_present:
             for coord, dim in dim_coords:
-                new_cube.add_dim_coord(coord, dim)
+                cube.add_dim_coord(coord, dim)
             for coord, dims in aux_coords:
-                new_cube.add_aux_coord(coord, dims)
-        return new_cube
+                cube.add_aux_coord(coord, dims)
+        return cube

@@ -1,16 +1,17 @@
-"""Derivation of variable `ohc`."""
+"""Derivation of variable `ohc_ofx`."""
 import iris
 from iris import Constraint
 
+from dask import array as da
 from cf_units import Unit
-
+import  numpy as np
 from ._baseclass import DerivedVariableBase
 
 RHO_CP = iris.coords.AuxCoord(4.09169e+6, units=Unit('kg m-3 J kg-1 K-1'))
 
 
 class DerivedVariable(DerivedVariableBase):
-    """Derivation of variable `ohc`."""
+    """Derivation of variable `ohc_ofx`."""
 
     @staticmethod
     def required(project):
@@ -31,8 +32,9 @@ class DerivedVariable(DerivedVariableBase):
                 },
                 {
                     'short_name': 'volcello',
-                    'mip': 'Ofx'
+                    'mip': 'Ofx',
                 },
+
             ]
         return required
 
@@ -79,11 +81,21 @@ class DerivedVariable(DerivedVariableBase):
             ]
             for coord, dims in dim_coords + aux_coords:
                 cube.remove_coord(coord)
-        new_cube = cube * volume
-        new_cube *= RHO_CP
+        if cube.data.shape == volume.data.shape:
+            cube.data = cube.data * volume.data
+        elif cube.ndim == 4 and volume.ndim == 3:
+            print('tiling', [cube.data.shape[0], 1, 1, 1])
+            volume = np.tile(volume.data, [cube.data.shape[0], 1, 1, 1])
+            cube.data = cube.data * volume.data
+        else:
+            print(cube.data.shape , 'does not match', volume.data.shape)
+            assert 0
+       
+        const = 4.09169e+6 
+        cube.data = cube.data * const # RHO_CP
         if time_coord_present:
             for coord, dim in dim_coords:
-                new_cube.add_dim_coord(coord, dim)
+                cube.add_dim_coord(coord, dim)
             for coord, dims in aux_coords:
-                new_cube.add_aux_coord(coord, dims)
-        return new_cube
+                cube.add_aux_coord(coord, dims)
+        return cube
