@@ -3,7 +3,7 @@ name: Dataset issue report
 about: Create a report about a problematic dataset
 title: 'Dataset problem: '
 labels: ''
-assignees: ''
+assignees: valeriupredoi, zklaus
 
 ---
 
@@ -30,6 +30,11 @@ supporting custom-made datasets that present problems, it is your resposability 
 - Pointer to existing copy of data on ESGF node (it would be very useful if you could provide a physical
 fullpath to the file(s) that are causing the problem, e.g. on CEDA Jasmin or DKRZ):
 - Other notes and mentions:
+
+**Assign the right people**
+If you are already a member of the ESMValTool GitHub project, please assign Valeriu Predoi (valeriupredoi) and
+Klaus Zimmermann (zklaus) to the issue. They will then check the issue raised and propagate it further to the
+data model developers.
 
 **Please attach**
   - The recipe that you are trying to run, you can find a copy in the `run` directory in the output directory
