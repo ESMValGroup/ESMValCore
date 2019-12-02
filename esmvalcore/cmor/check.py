@@ -630,8 +630,7 @@ class CMORCheck():
 
     def report_strict_error(self, message, *args):
         """Report a STRICT error.
-        If raise_exception True and fail_on_error True, raises automatically.
-        If raise_exception True and fail_on_error False, stores it.
+        If raise_exception True report error
         If raise_exception False and report_only_warning True report_warning.
         If raise_exception False and report_only_warning False do not report.
 
@@ -643,11 +642,8 @@ class CMORCheck():
             arguments to format the message string.
 
         """
-        msg = message.format(*args)
         if self._raise_exception:
-            if self._failerr:
-                raise CMORCheckError(msg + '\nin cube:\n{}'.format(self._cube))
-            self._errors.append(msg)
+            self.report_error(message, *args)
         if self._report_only_warning:
             self.report_warning(message, *args)
 

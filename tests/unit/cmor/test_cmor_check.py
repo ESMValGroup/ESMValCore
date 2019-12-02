@@ -449,7 +449,7 @@ class TestCMORCheck(unittest.TestCase):
 
     def test_check_missing_coord_relaxed_flag(self):
         """Test check reports warning for missing coord other than lat and lon
-        with --cmor-check strict"""
+        with --cmor-check relaxed"""
         self.cube = self.get_cube(self.var_info)
         self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
                                     }
