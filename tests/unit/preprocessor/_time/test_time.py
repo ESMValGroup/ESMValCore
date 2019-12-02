@@ -5,7 +5,7 @@ import pytest
 import tests
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_allclose
 
 from cf_units import Unit
 import iris
@@ -865,7 +865,15 @@ def test_anomalies(period, standardize):
     if period == 'full':
         anom = np.arange(-359.5, 360, 1)
         if standardize:
-            anom = None # TODO: add numpy array with correct values here
+            expected = (cube.data - np.mean(cube.data, axis=2, keepdims=True)) / np.std(cube.data, axis=2, keepdims=True) # TODO: add numpy array with correct values here
+            expected = np.ma.masked_invalid(expected)
+            assert_allclose(
+                result.data,
+                expected,
+                rtol = 1e-2,  # Note the pretty large tolerance, which is needed since 
+                atol = 0.0013 # there actually IS quite a difference !
+            )
+
         zeros = np.zeros_like(anom)
         assert_array_equal(
             result.data,
