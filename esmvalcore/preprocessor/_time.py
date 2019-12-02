@@ -442,16 +442,15 @@ def anomalies(cube, period, standardize=False):
     if period in ['full']:
         cube = cube - reference
         if standardize:
-             cube_stddev = climate_statistics(cube,
-                                         operator='std_dev',
-                                         period=period)
-             return cube / cube_stddev
+            cube_stddev = climate_statistics(
+                cube, operator='std_dev', period=period)
+            return cube / cube_stddev
         else:
-             return cube
+            return cube
 
     cube_coord = _get_period_coord(cube, period)
     ref_coord = _get_period_coord(reference, period)
-    
+
     data = cube.core_data()
     ref = {}
     for ref_slice in reference.slices_over(ref_coord):
@@ -463,7 +462,7 @@ def anomalies(cube, period, standardize=False):
         indexes = iris.util.broadcast_to_shape(indexes, data.shape,
                                                (cube_coord_dim, ))
         data[indexes] = data[indexes] - ref[cube_coord.points[i]]
-    
+
     cube = cube.copy(data)
 
     # standardize the results if requested
