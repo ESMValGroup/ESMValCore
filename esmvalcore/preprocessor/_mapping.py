@@ -120,8 +120,7 @@ def get_associated_coords(cube, dimensions):
     aux_coords = []
     for i in dims:
         coords = cube.coords(contains_dimension=i, dim_coords=False)
-        if coords:
-            aux_coords.append(coords[0])
+        aux_coords.extend(coords)
     return dim_coords, aux_coords
 
 
@@ -221,6 +220,8 @@ def map_slices(src, func, src_rep, dst_rep):
     res_shape = src_keep_spec[0] + dst_rep.shape
     dim_coords = src_keep_spec[1] + dst_rep.coords(dim_coords=True)
     dim_coords_and_dims = [(c, i) for i, c in enumerate(dim_coords)]
+    aux_coords_and_dims = [(c, src.coord_dims(c)) for c in src_keep_spec[2]]
+    aux_coords_and_dims += [(c, src.coord_dims(c)) for c in dst_rep.aux_coords]
     dst = iris.cube.Cube(
         data=get_empty_data(res_shape, dtype=src.dtype),
         standard_name=src.standard_name,
@@ -230,6 +231,7 @@ def map_slices(src, func, src_rep, dst_rep):
         attributes=src.attributes,
         cell_methods=src.cell_methods,
         dim_coords_and_dims=dim_coords_and_dims,
+        aux_coords_and_dims=aux_coords_and_dims,
     )
     for src_ind, dst_ind in index_iterator(src_slice_dims, src.shape):
         res = func(src[src_ind])

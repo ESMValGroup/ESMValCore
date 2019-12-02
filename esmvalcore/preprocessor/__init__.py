@@ -101,7 +101,7 @@ __all__ = [
 
 DEFAULT_ORDER = tuple(__all__)
 
-# The order of intial and final steps cannot be configured
+# The order of initial and final steps cannot be configured
 INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('fix_data') + 1]
 FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('cmor_check_data'):]
 
@@ -360,14 +360,13 @@ class PreprocessingTask(BaseTask):
             write_ncl_interface=False,
     ):
         """Initialize"""
-        super(PreprocessingTask, self).__init__(ancestors=ancestors, name=name)
         _check_multi_model_settings(products)
-        self.products = set(products)
+        super().__init__(ancestors=ancestors, name=name, products=products)
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
 
-    def _intialize_product_provenance(self):
+    def _initialize_product_provenance(self):
         """Initialize product provenance."""
         for product in self.products:
             product.initialize_provenance(self.activity)
@@ -383,7 +382,7 @@ class PreprocessingTask(BaseTask):
 
     def _run(self, _):
         """Run the preprocessor."""
-        self._intialize_product_provenance()
+        self._initialize_product_provenance()
 
         steps = {
             step

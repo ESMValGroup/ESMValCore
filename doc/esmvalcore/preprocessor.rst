@@ -105,7 +105,9 @@ The required arguments for this module are two boolean switches:
 * ``force_derivation``: force variable derivation even if the variable is
   directly available in the input data.
 
-See also :func:`esmvalcore.preprocessor.derive`.
+See also :func:`esmvalcore.preprocessor.derive`. To get an overview on
+derivation scripts and how to implement new ones, please go to
+:ref:`derivation`.
 
 
 .. _CMOR check and dataset-specific fixes:
@@ -687,7 +689,7 @@ This function produces statistics for each day in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
@@ -700,7 +702,7 @@ This function produces statistics for each month in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 
@@ -720,7 +722,7 @@ December and remove such biased initial datapoints.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
@@ -733,7 +735,7 @@ This function produces statistics for each year.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.annual_statistics`.
 
@@ -746,7 +748,7 @@ This function produces statistics for each decade.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min' and 'max'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 
@@ -759,8 +761,8 @@ This function produces statistics for the whole dataset. It can produce scalars
 (if the full period is chosen) or daily, monthly or seasonal statics.
 
 Parameters:
-    * operator: operation to apply. Accepted values are 'mean', 'median', 'std_dev',
-      'min' and 'max'. Default is 'mean'
+    * operator: operation to apply. Accepted values are 'mean', 'median',
+      'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
 
     * period: define the granularity of the statistics: get values for the
       full period, for each month or day of year.
@@ -924,8 +926,8 @@ named ``zonal_mean``, it can be used to apply several different operations in
 an zonal or meridional direction. This function takes two arguments:
 
 * ``coordinate``: Which direction to apply the operation: latitude or longitude
-* ``mean_type``: Which operation to apply: mean, std_dev, variance, median, min
-  or max
+* ``mean_type``: Which operation to apply: mean, std_dev, variance, median,
+  min, max or sum
 
 See also :func:`esmvalcore.preprocessor.zonal_means`.
 
