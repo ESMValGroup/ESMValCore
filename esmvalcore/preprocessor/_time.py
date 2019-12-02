@@ -440,11 +440,18 @@ def anomalies(cube, period, standardize=False):
     """
     reference = climate_statistics(cube, period=period)
     if period in ['full']:
-        return cube - reference
+        cube = cube - reference
+        if standardize:
+             cube_stddev = climate_statistics(cube,
+                                         operator='std_dev',
+                                         period=period)
+             return cube / cube_stddev
+        else:
+             return cube
 
     cube_coord = _get_period_coord(cube, period)
     ref_coord = _get_period_coord(reference, period)
-
+    
     data = cube.core_data()
     ref = {}
     for ref_slice in reference.slices_over(ref_coord):
@@ -456,7 +463,7 @@ def anomalies(cube, period, standardize=False):
         indexes = iris.util.broadcast_to_shape(indexes, data.shape,
                                                (cube_coord_dim, ))
         data[indexes] = data[indexes] - ref[cube_coord.points[i]]
-
+    
     cube = cube.copy(data)
 
     # standardize the results if requested
@@ -467,7 +474,7 @@ def anomalies(cube, period, standardize=False):
         if not cube.ndim == cube_stddev.ndim:
             raise ValueError(
                 "Inconsistent dimensions between anomaly cube and "
-                f"standard deviation cube: {cube.ndim};{cube_stddev.ndim}"
+                f"standard deviation cube: {cube.ndim} vs {cube_stddev.ndim}"
             )
         tdim = cube.coord_dims('time')[0]
         reps = cube.shape[tdim] / cube_stddev.shape[tdim]
@@ -496,7 +503,7 @@ def _get_period_coord(cube, period):
         if not cube.coords('season_number'):
             iris.coord_categorisation.add_season_number(cube, 'time')
         return cube.coord('season_number')
-    raise ValueError('Period %s not supported')
+    raise ValueError(f"Period '{period}' not supported")
 
 
 def regrid_time(cube, frequency):

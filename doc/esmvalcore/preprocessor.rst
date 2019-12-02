@@ -826,7 +826,7 @@ Examples:
         .. code-block:: yaml
 
             anomalies:
-                standardize: True
+                standardize: true
 
 
 
