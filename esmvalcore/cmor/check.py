@@ -328,8 +328,14 @@ class CMORCheck():
                                 coordinate.out_name,
                             )
                     except iris.exceptions.CoordinateNotFoundError:
-                        self.report_error(self._does_msg, coordinate.name,
-                                          'exist')
+                        if coordinate.standard_name in ['time', 'latitude',
+                                                        'longitude']:
+                            self.report_error(self._does_msg, coordinate.name,
+                                              'exist')
+                        else:
+                            self.report_strict_error(self._does_msg,
+                                                     coordinate.name,
+                                                     'exist')
 
     def _check_coords(self):
         """Check coordinates."""
