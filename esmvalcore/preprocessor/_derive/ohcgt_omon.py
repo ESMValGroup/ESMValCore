@@ -28,7 +28,7 @@ class DerivedVariable(DerivedVariableBase):
         if project == 'CMIP6':
             required = [
                 {
-                    'short_name': 'thetao'
+                    'short_name': 'thetaoga'
                 },
                 {
                     'short_name': 'volcello',
@@ -93,9 +93,9 @@ class DerivedVariable(DerivedVariableBase):
         else:
             print(cube.data.shape , 'does not match', volume.data.shape)
             assert 0
-     
+
         const = 4.09169e+6
-        cube.data = cube.data * volume * const 
+        cube.data = cube.data * volume * const
         if time_coord_present:
             for coord, dim in dim_coords:
                 cube.add_dim_coord(coord, dim)
