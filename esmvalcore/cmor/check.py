@@ -642,7 +642,7 @@ class CMORCheck():
                 self._logger.debug(msg)
             else:
                 self._debug_messages.append(msg)
-        elif level < self._check_level:
+        elif level < getattr(CheckLevels, self._check_level):
             if self._failerr:
                 self._logger.warning(msg)
             else:
