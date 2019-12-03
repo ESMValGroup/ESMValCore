@@ -245,3 +245,21 @@ missing coordinate you can create a fix for this model:
         data_cube = cubes.extract_strict('VAR_NAME')
         data_cube.add_aux_coord(coord, DIMENSIONS_INDEX_TUPLE)
         return [data_cube]
+
+
+Running the checker in different modes
+======================================
+
+Sometimes it is inconvenient to run with full CMOR checks on, since one may just want to
+run with a number of datasets that, albeit these having different issues, they need to be run as they
+are and the user is interested in the output regardless of CMOR irregularities. For this purpose
+there is an optional command line option `--check-level` that can take a number of values, listed
+below from the lowest level of strictness to the highest:
+
+- ``IGNORE_ALL``: all issues will be reported as debug messages only (in the debug logs, code will continue running,
+  this is the lowest level of strictness);
+- ``NEVER_FAIL``: all errors will be reported as warnings only (on screen and in the regular logs, code will continue running);
+- ``CRITICAL``: only fail if there are critical errors (warnings reported on screen and in regular logs, code will continue running, unless
+  a critical failure is encountered);
+- ``ERROR``: fail if there are any errors (DEFAULT); here errors are considered all CMOR check errors; this is the default behavior;
+- ``WARNING``: fail if there are any warnings, this is the highest level of strictness.
