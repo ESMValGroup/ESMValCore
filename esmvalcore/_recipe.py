@@ -309,15 +309,7 @@ def _get_default_settings(variable, config_user, derive=False):
         fix['cmor_table'] = variable['cmor_table']
         fix['mip'] = variable['mip']
         fix['frequency'] = variable['frequency']
-        cmor_check = config_user.get('cmor_checks', None)
-        raise_exception = True
-        report_only_warning = False
-        if cmor_check in ['none', 'relaxed']:
-            raise_exception = False
-            if cmor_check == 'relaxed':
-                report_only_warning = True
-        fix['raise_exception'] = raise_exception
-        fix['report_only_warning'] = report_only_warning
+        fix['check_level'] = config_user.get('check_level', None)
     settings['fix_data'] = dict(fix)
     settings['fix_metadata'] = dict(fix)
 
@@ -342,20 +334,12 @@ def _get_default_settings(variable, config_user, derive=False):
 
     # Configure CMOR metadata check
     if variable.get('cmor_table'):
-        raise_exception = True
-        report_only_warning = False
-        cmor_check = config_user.get('cmor_checks', None)
-        if cmor_check in ['none', 'relaxed']:
-            raise_exception = False
-            if cmor_check == 'relaxed':
-                report_only_warning = True
         settings['cmor_check_metadata'] = {
             'cmor_table': variable['cmor_table'],
             'mip': variable['mip'],
             'short_name': variable['short_name'],
             'frequency': variable['frequency'],
-            'raise_exception': raise_exception,
-            'report_only_warning': report_only_warning,
+            'check_level': config_user.get('check_level', None)
         }
     # Configure final CMOR data check
     if variable.get('cmor_table'):
@@ -364,6 +348,7 @@ def _get_default_settings(variable, config_user, derive=False):
             'mip': variable['mip'],
             'short_name': variable['short_name'],
             'frequency': variable['frequency'],
+            'check_level': config_user.get('check_level', None)
         }
 
     # Clean up fixed files

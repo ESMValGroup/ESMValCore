@@ -13,7 +13,7 @@ from collections import defaultdict
 from iris.cube import CubeList
 
 from ._fixes.fix import Fix
-from .check import _get_cmor_checker
+from .check import _get_cmor_checker, CheckLevels
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +57,7 @@ def fix_metadata(cubes,
                  cmor_table=None,
                  mip=None,
                  frequency=None,
-                 raise_exception=True,
-                 report_only_warning=False, ):
+                 check_level=CheckLevels.ERROR):
     """
     Fix cube metadata if fixes are required and check it anyway.
 
@@ -142,8 +141,7 @@ def fix_metadata(cubes,
                 table=cmor_table,
                 mip=mip,
                 short_name=short_name,
-                raise_exception=raise_exception,
-                report_only_warning=report_only_warning,
+                check_level=check_level,
                 fail_on_error=False,
                 automatic_fixes=True)
             cube = checker(cube).check_metadata()
@@ -159,8 +157,7 @@ def fix_data(cube,
              cmor_table=None,
              mip=None,
              frequency=None,
-             raise_exception=True,
-             report_only_warning=False, ):
+             check_level=CheckLevels.ERROR):
     """
     Fix cube data if fixes add present and check it anyway.
 

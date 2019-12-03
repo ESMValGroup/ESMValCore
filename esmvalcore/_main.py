@@ -42,6 +42,7 @@ from . import __version__
 from ._config import configure_logging, read_config_user_file, DIAGNOSTICS_PATH
 from ._recipe import TASKSEP, read_recipe_file
 from ._task import resource_usage_logger
+from .cmor.check import CheckLevels
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -99,15 +100,22 @@ def get_args():
         nargs='*',
         help="Only run the named diagnostics from the recipe.")
     parser.add_argument(
-        '--cmor-checks',
+        '--check-level',
         type=str,
-        choices=('none', 'relaxed', 'default'),
-        default='default',
-        help="Metadata CMOR checks strictness; \
-             Optional: true; possible values: \
-             none: no checks performed \
-             relaxed: checks are performed but no errors raised; \
-             default: full checks and errors raised.")
+        choices=[val.name for val in CheckLevels if val != CheckLevels.DEBUG],
+        default='ERROR',
+        help="""
+            Configure the severity of the errors that will make the CMOR check
+            fail.
+            Optional: true;
+            Possible values:
+            IGNORE_ALL: all issues will be reported as debug messages
+            NEVER_FAIL: all errors will be reported as warnings
+            CRITICAL: only fail if there are critical errors
+            ERROR: fail if there are any errors (DEFAULT)
+            WARNING: fail if there are any warnings
+        """
+    )
     args = parser.parse_args()
     return args
 
@@ -153,7 +161,7 @@ def main(args):
         pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
         for pattern in args.diagnostics or ()
     }
-    cfg['cmor_checks'] = args.cmor_checks
+    cfg['check_level'] = args.check_level
     cfg['synda_download'] = args.synda_download
     for limit in ('max_datasets', 'max_years'):
         value = getattr(args, limit)

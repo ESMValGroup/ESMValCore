@@ -5,6 +5,7 @@ import unittest
 import mock
 
 from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
+from esmvalcore.cmor.check import CheckLevels
 
 
 class TestFixFile(unittest.TestCase):
@@ -150,8 +151,7 @@ class TestFixMetadata(unittest.TestCase):
                     mip='mip',
                     short_name='short_name',
                     table='cmor_table',
-                    raise_exception=True,
-                    report_only_warning=False)
+                    check_level=CheckLevels.ERROR,)
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_metadata.assert_called_once_with()
 

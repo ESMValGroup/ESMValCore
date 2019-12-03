@@ -14,6 +14,7 @@ from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
+from esmvalcore.cmor.check import CheckLevels
 
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
@@ -333,24 +334,22 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'output_dir': fix_dir,
         },
         'fix_data': {
+            'check_level': None,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'frequency': 'yr',
-            'raise_exception': True,
-            'report_only_warning': False,
         },
         'fix_metadata': {
+            'check_level': None,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'frequency': 'yr',
-            'raise_exception': True,
-            'report_only_warning': False,
         },
         'extract_time': {
             'start_year': 2000,
@@ -361,14 +360,14 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'end_day': 1,
         },
         'cmor_check_metadata': {
+            'check_level': None,
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'short_name': 'chl',
             'frequency': 'yr',
-            'raise_exception': True,
-            'report_only_warning': False,
         },
         'cmor_check_data': {
+            'check_level': None,
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'short_name': 'chl',
@@ -426,34 +425,32 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'output_dir': fix_dir,
         },
         'fix_data': {
+            'check_level': None,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'sftlf',
             'cmor_table': 'CMIP5',
             'mip': 'fx',
             'frequency': 'fx',
-            'raise_exception': True,
-            'report_only_warning': False,
         },
         'fix_metadata': {
+            'check_level': None,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'sftlf',
             'cmor_table': 'CMIP5',
             'mip': 'fx',
             'frequency': 'fx',
-            'raise_exception': True,
-            'report_only_warning': False,
         },
         'cmor_check_metadata': {
+            'check_level': None,
             'cmor_table': 'CMIP5',
             'mip': 'fx',
             'short_name': 'sftlf',
             'frequency': 'fx',
-            'raise_exception': True,
-            'report_only_warning': False,
         },
         'cmor_check_data': {
+            'check_level': None,
             'cmor_table': 'CMIP5',
             'mip': 'fx',
             'short_name': 'sftlf',
