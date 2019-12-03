@@ -247,23 +247,46 @@ missing coordinate you can create a fix for this model:
         return [data_cube]
 
 
-Running the checker in different modes
-======================================
+Customizing checker strictness
+==============================
 
-Sometimes it is inconvenient to run with full CMOR checks on, since one may just want to
-run with a number of datasets that, albeit these having different issues, they need to be run as they
-are and the user is interested in the output regardless of CMOR irregularities. For this purpose
-there is an optional command line option `--check-level` that can take a number of values, listed
-below from the lowest level of strictness to the highest:
+The data checker classifies its issues using four different levels of
+severity. From highest to lowest:
 
-- ``IGNORE_ALL``: all issues will be reported as debug messages only (in the debug logs, code will continue running,
-  this is the lowest level of strictness); use this at your own risk and be advised that any preprocessor or diagnostic
-  failures due to data irregulariries can only be corrected for if the ``main_log_debug.txt`` is examined;
-- ``NEVER_FAIL``: all errors will be reported as warnings only (on screen and in the regular logs, code will continue running); use
-  this when you are willing to run with data that may have issues but you will monitor these issues via the warnings and
-  will contribute towards fixing whatever issue;
-- ``CRITICAL``: only fail if there are critical errors (warnings reported on screen and in regular logs, code will continue running, unless
-  a critical failure is encountered); this is a very useful case for identifying serious issues with the data and can be a
-  powerful tool to produce data fixes with a sense of priority ie it helps the user to prioritize what fixes they produce;
-- ``ERROR``: fail if there are any errors (DEFAULT); here errors are considered all CMOR check errors; this is the default behavior;
-- ``WARNING``: fail if there are any warnings, this is the highest level of strictness.
+ - ``CRITICAL``: issues that most of the time will have severe consequences
+
+ - ``ERROR``: issues that usually lead to unexpected errors, but can be safely
+    ignored sometimes
+
+ - ``WARNING``: something is not up to the standard but is unlikely to have
+    consequences later
+
+ - ``DEBUG``: any info that the checker wants to communicate. Regardless of
+    checker strictness, thos will always be reported as debug messages
+
+Users can have control about which levels of issues are interpreted as errors,
+and therefore make the checker fail or warnings or debug messages.
+For this purpose there is an optional command line option `--check-level`
+that can take a number of values, listed below from the lowest level of
+strictness to the highest:
+
+- ``IGNORE_ALL``: all issues, regardless of severity, will be reported as debug
+    messages only. Checker will never fail. Use this at your own risk and be
+    advised that any preprocessor or diagnostic failures due to data
+    irregulariries can only be corrected for if the ``main_log_debug.txt``
+    is examined.
+
+- ``NEVER_FAIL``: all issues, regardless of severity, will be reported as
+    warnings. Use this at your own risk
+
+- ``CRITICAL``: only CRITICAL issues are treated as errors. We recommend not to
+    relay on this mode, although it can be useful if there an errors preventing
+    the run that you are sure you can manage on the diagnostics or that will
+    not affect you
+
+- ``ERROR``: fail if there are any CRITICAL or ERROR issues (DEFAULT); Provides
+    a good measure of safety
+
+- ``WARNING``: fail if there are any warnings, this is the highest level of
+    strictness. Mostly useful for checking datasets that you have produced, to
+    be sure that future users will not be distracted by inoffensive warnings.
