@@ -712,14 +712,15 @@ class CMORCheck():
 
     def _add_auxiliary_time_coordinates(self):
         coords = [coord.name() for coord in self._cube.aux_coords]
-        if 'day_of_month' not in coords:
-            iris.coord_categorisation.add_day_of_month(self._cube, 'time')
-        if 'day_of_year' not in coords:
-            iris.coord_categorisation.add_day_of_year(self._cube, 'time')
-        if 'month_number' not in coords:
-            iris.coord_categorisation.add_month_number(self._cube, 'time')
-        if 'year' not in coords:
-            iris.coord_categorisation.add_year(self._cube, 'time')
+        if 'time' in coords:
+            if 'day_of_month' not in coords:
+                iris.coord_categorisation.add_day_of_month(self._cube, 'time')
+            if 'day_of_year' not in coords:
+                iris.coord_categorisation.add_day_of_year(self._cube, 'time')
+            if 'month_number' not in coords:
+                iris.coord_categorisation.add_month_number(self._cube, 'time')
+            if 'year' not in coords:
+                iris.coord_categorisation.add_year(self._cube, 'time')
 
 
 def _get_cmor_checker(table,
