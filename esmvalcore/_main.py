@@ -161,7 +161,7 @@ def main(args):
         pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
         for pattern in args.diagnostics or ()
     }
-    cfg['check_level'] = args.check_level
+    cfg['check_level'] = CheckLevels[args.check_level.upper()]
     cfg['synda_download'] = args.synda_download
     for limit in ('max_datasets', 'max_years'):
         value = getattr(args, limit)

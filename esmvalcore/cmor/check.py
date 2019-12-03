@@ -636,16 +636,13 @@ class CMORCheck():
             message
         """
         msg = message.format(*args)
-        actual_level = self._check_level
-        if isinstance(actual_level, str):
-            actual_level = getattr(CheckLevels, self._check_level)
         if (level == CheckLevels.DEBUG or
-                actual_level == CheckLevels.IGNORE_ALL):
+                self._check_level == CheckLevels.IGNORE_ALL):
             if self._failerr:
                 self._logger.debug(msg)
             else:
                 self._debug_messages.append(msg)
-        elif level < actual_level:
+        elif level < self._check_level:
             if self._failerr:
                 self._logger.warning(msg)
             else:
@@ -711,16 +708,19 @@ class CMORCheck():
         self.report(CheckLevels.DEBUG, message, *args)
 
     def _add_auxiliary_time_coordinates(self):
-        coords = [coord.name() for coord in self._cube.aux_coords]
-        if 'time' in coords:
-            if 'day_of_month' not in coords:
-                iris.coord_categorisation.add_day_of_month(self._cube, 'time')
-            if 'day_of_year' not in coords:
-                iris.coord_categorisation.add_day_of_year(self._cube, 'time')
-            if 'month_number' not in coords:
-                iris.coord_categorisation.add_month_number(self._cube, 'time')
-            if 'year' not in coords:
-                iris.coord_categorisation.add_year(self._cube, 'time')
+        try:
+            time = self._cube.coord('time')
+        except iris.exceptions.CoordinateNotFoundError:
+            return
+
+        if not self._cube.coords('day_of_month'):
+            iris.coord_categorisation.add_day_of_month(self._cube, time)
+        if not self._cube.coords('day_of_year'):
+            iris.coord_categorisation.add_day_of_year(self._cube, time)
+        if not self._cube.coords('month_number'):
+            iris.coord_categorisation.add_month_number(self._cube, time)
+        if not self._cube.coords('year'):
+            iris.coord_categorisation.add_year(self._cube, time)
 
 
 def _get_cmor_checker(table,
