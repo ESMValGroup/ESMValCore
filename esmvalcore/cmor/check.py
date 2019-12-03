@@ -636,13 +636,16 @@ class CMORCheck():
             message
         """
         msg = message.format(*args)
+        actual_level = self._check_level
+        if isinstance(actual_level, str):
+            actual_level = getattr(CheckLevels, self._check_level)
         if (level == CheckLevels.DEBUG or
-                self._check_level == CheckLevels.IGNORE_ALL):
+                actual_level == CheckLevels.IGNORE_ALL):
             if self._failerr:
                 self._logger.debug(msg)
             else:
                 self._debug_messages.append(msg)
-        elif level < getattr(CheckLevels, self._check_level):
+        elif level < actual_level:
             if self._failerr:
                 self._logger.warning(msg)
             else:
