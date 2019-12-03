@@ -618,6 +618,23 @@ class CMORCheck():
         return len(self._debug_messages) > 0
 
     def report(self, level, message, *args):
+        """Generic method to report a message from the checker
+
+        Parameters
+        ----------
+        level : CheckLevels
+            Message level
+        message : str
+            Message to report
+        args :
+            String format args for the message
+
+        Raises
+        ------
+        CMORCheckError
+            If fail on error is set, it is thrown when registering an error
+            message
+        """
         msg = message.format(*args)
         if (level == CheckLevels.DEBUG or
                 self._check_level == CheckLevels.IGNORE_ALL):
@@ -808,5 +825,6 @@ def cmor_check(cube, cmor_table, mip, short_name, frequency, check_level):
     """
     cmor_check_metadata(cube, cmor_table, mip, short_name, frequency,
                         check_level=check_level)
-    cmor_check_data(cube, cmor_table, mip, short_name, frequency)
+    cmor_check_data(cube, cmor_table, mip, short_name, frequency,
+                    check_level=check_level)
     return cube
