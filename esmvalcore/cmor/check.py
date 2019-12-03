@@ -115,7 +115,7 @@ class CMORCheck():
         self.report_errors()
 
         if self.frequency != 'fx':
-            self._add_auxiliar_time_coordinates()
+            self._add_auxiliary_time_coordinates()
 
         return self._cube
 
@@ -710,7 +710,7 @@ class CMORCheck():
         """
         self.report(CheckLevels.DEBUG, message, *args)
 
-    def _add_auxiliar_time_coordinates(self):
+    def _add_auxiliary_time_coordinates(self):
         coords = [coord.name() for coord in self._cube.aux_coords]
         if 'day_of_month' not in coords:
             iris.coord_categorisation.add_day_of_month(self._cube, 'time')
