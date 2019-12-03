@@ -29,6 +29,7 @@ from ._time import (extract_month, extract_season, extract_time, regrid_time,
 from ._units import convert_units
 from ._volume import (volume_statistics, depth_integration, extract_trajectory,
                       extract_transect, extract_volume)
+from ._weighting import weighting_landsea_fraction
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,8 @@ __all__ = [
     'fix_data',
     # Level extraction
     'extract_levels',
+    # Weighting
+    'weighting_landsea_fraction',
     # Mask landsea (fx or Natural Earth)
     'mask_landsea',
     # Mask landseaice, sftgif only
