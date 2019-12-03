@@ -15,16 +15,16 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-
-        required = [
-            {
-                'short_name': 'thetao'
-            },
-            {
-                'short_name': 'volcello',
-                'mip': 'fx'
-            },
-        ]
+        if project == 'CMIP5':
+            required = [
+                {
+                    'short_name': 'thetao'
+                },
+                {
+                    'short_name': 'volcello',
+                    'mip': 'fx'
+                },
+            ]
         if project == 'CMIP6':
             required = [
                 {
@@ -32,7 +32,7 @@ class DerivedVariable(DerivedVariableBase):
                 },
                 {
                     'short_name': 'volcello',
-                    'mip': 'Omon'
+                    'mip': 'Omon',
                 },
             ]
         return required

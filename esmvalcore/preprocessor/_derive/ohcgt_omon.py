@@ -33,8 +33,15 @@ class DerivedVariable(DerivedVariableBase):
                 {
                     'short_name': 'volcello',
                     'mip': 'Omon',
+                    'grid': 'gm',
+                    'optional': True,
                 },
-
+                {
+                    'short_name': 'volcello',
+                    'mip': 'Omon',
+                    'grid': 'gn',
+                    'optional': True,
+                },
             ]
         return required
 
@@ -61,6 +68,7 @@ class DerivedVariable(DerivedVariableBase):
             Constraint(cube_func=lambda c: c.var_name == 'thetaoga'))
         volume = cubes.extract_strict(
             Constraint(cube_func=lambda c: c.var_name == 'volcello'))
+
         # 2. multiply with each other and with cprho0
         # some juggling with coordinates needed since Iris is very
         # restrictive in this regard
