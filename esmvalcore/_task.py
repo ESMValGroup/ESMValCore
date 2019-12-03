@@ -437,7 +437,7 @@ class DiagnosticTask(BaseTask):
             if exc.errno == errno.ENOEXEC:
                 logger.error(
                     "Diagnostic script has its executable bit set, but is "
-                    "not executable. To fix this run:\nchmod -x %s", cmd[0])
+                    "not executable. To fix this run:\nchmod +x %s", cmd[0])
                 logger.error(
                     "You may also need to fix this in the git repository.")
             raise
