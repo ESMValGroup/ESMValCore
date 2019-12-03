@@ -198,6 +198,7 @@ class TestFixData(unittest.TestCase):
                          'cmor_table', 'mip', 'frequency')
                 get_mock.assert_called_once_with(
                     automatic_fixes=True,
+                    check_level=CheckLevels.ERROR,
                     fail_on_error=False,
                     frequency='frequency',
                     mip='mip',
