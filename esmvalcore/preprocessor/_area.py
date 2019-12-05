@@ -315,6 +315,25 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
+def _correct_coords_from_shapefile(cube, cmor_coords):
+    """Get correct lat and lon from shapefile."""
+    lon = cube.coord(axis='X').points
+    lat = cube.coord(axis='Y').points
+    if cube.coord(axis='X').ndim < 2:
+        lon, lat = np.meshgrid(lon, lat, copy=False)
+
+    if not cmor_coords:
+        # Wrap around longitude coordinate to match data
+        lon_180 = np.where(lon >= 180., lon - 360., lon)
+        # the NE mask has no points at x = -180 and y = +/-90
+        # so we will fool it and apply the mask at (-179, -89, 89) instead
+        lon = np.where(lon_180 == -180., lon_180 + 1., lon_180)
+        lat_0 = np.where(lat == -90., lat + 1., lat)
+        lat = np.where(lat_0 == 90., lat_0 - 1., lat_0)
+
+    return lon, lat
+
+
 def extract_shape(cube, shapefile, method='contains', crop=True):
     """Extract a region defined by a shapefile.
 
@@ -354,30 +373,18 @@ def extract_shape(cube, shapefile, method='contains', crop=True):
     with fiona.open(shapefile) as geometries:
         if crop:
             cube = _crop_cube(cube, *geometries.bounds)
+        cmor_coords = True
+        if geometries.bounds[0] < 0:
+            cmor_coords = False
+        lon, lat = _correct_coords_from_shapefile(cube, cmor_coords)
+        selection = np.zeros(lon.shape, dtype=bool)
 
-        if cube.coord('longitude').points.ndim < 2:
-            x_p, y_p = np.meshgrid(cube.coord(axis='X').points,
-                                   cube.coord(axis='Y').points, copy=False)
-        else:
-            msg = (f"2D grids are suboptimally masked with "
-                   f"Natural Earth shapefile masks. Exiting.")
-            raise ValueError(msg)
-
-        # Wrap around longitude coordinate to match data
-        x_p_180 = np.where(x_p >= 180., x_p - 360., x_p)
-        # the NE mask has no points at x = -180 and y = +/-90
-        # so we will fool it and apply the mask at (-179, -89, 89) instead
-        x_p_180 = np.where(x_p_180 == -180., x_p_180 + 1., x_p_180)
-        y_p_0 = np.where(y_p == -90., y_p + 1., y_p)
-        y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
-
-        selection = np.zeros(x_p_180.shape, dtype=bool)
-        for item in geometries:
-            shape = shapely.geometry.shape(item['geometry'])
+        for geom_item in geometries:
+            shape = shapely.geometry.shape(geom_item['geometry'])
             if method == 'contains':
-                select = shapely.vectorized.contains(shape, x_p_180, y_p_90)
+                select = shapely.vectorized.contains(shape, lon, lat)
             if method == 'representative' or not select.any():
-                select = _select_representative_point(shape, x_p_180, y_p_90)
+                select = _select_representative_point(shape, lon, lat)
             selection |= select
 
         selection = da.broadcast_to(selection, cube.shape)
