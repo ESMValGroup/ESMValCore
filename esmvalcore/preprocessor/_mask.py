@@ -154,7 +154,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
             logger.debug("Applying land-sea mask: sftof")
         else:
             if cube.coord('longitude').points.ndim < 2:
-                cube = _mask_with_shp(cube, shapefiles[mask_out])
+                cube = _mask_with_shp(cube, shapefiles[mask_out], 1)
                 logger.debug(
                     "Applying land-sea mask from Natural Earth"
                     " shapefile: \n%s", shapefiles[mask_out])
@@ -164,7 +164,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
                 raise ValueError(msg)
     else:
         if cube.coord('longitude').points.ndim < 2:
-            cube = _mask_with_shp(cube, shapefiles[mask_out])
+            cube = _mask_with_shp(cube, shapefiles[mask_out], 1)
             logger.debug(
                 "Applying land-sea mask from Natural Earth"
                 " shapefile: \n%s", shapefiles[mask_out])
@@ -226,15 +226,19 @@ def mask_landseaice(cube, fx_files, mask_out):
     return cube
 
 
-def _get_geometry_from_shp(shapefilename):
+def _get_geometries_from_shp(shapefilename):
     """Get the mask geometry out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
     # Index 0 grabs the lowest resolution mask (no zoom)
-    main_geom = [contour for contour in reader.geometries()][0]
-    return main_geom
+    geometries = [contour for contour in reader.geometries()]
+    if not geometries:
+        msg = "Could not find any geomtery in {}".format(shapefilename)
+        raise ValueError(msg)
+    geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
+    return geometries
 
 
-def _mask_with_shp(cube, shapefilename):
+def _mask_with_shp(cube, shapefilename, max_region_index):
     """
     Apply a Natural Earth land/sea mask.
 
@@ -245,7 +249,8 @@ def _mask_with_shp(cube, shapefilename):
     in the shapefile (this is done via shapefle vectorization and is fast).
     """
     # Create the region
-    region = _get_geometry_from_shp(shapefilename)
+    regions = _get_geometries_from_shp(shapefilename)
+    regions = regions[0:max_region_index]
 
     # Create a mask for the data
     mask = np.zeros(cube.shape, dtype=bool)
@@ -271,19 +276,20 @@ def _mask_with_shp(cube, shapefilename):
     y_p_0 = np.where(y_p == -90., y_p + 1., y_p)
     y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
 
-    # Build mask with vectorization
-    if cube.ndim == 2:
-        mask = shp_vect.contains(region, x_p_180, y_p_90)
-    elif cube.ndim == 3:
-        mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
-    elif cube.ndim == 4:
-        mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
+    for region in regions:
+        # Build mask with vectorization
+        if cube.ndim == 2:
+            mask = shp_vect.contains(region, x_p_180, y_p_90)
+        elif cube.ndim == 3:
+            mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
+        elif cube.ndim == 4:
+            mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
 
-    # Then apply the mask
-    if isinstance(cube.data, np.ma.MaskedArray):
-        cube.data.mask |= mask
-    else:
-        cube.data = np.ma.masked_array(cube.data, mask)
+        # Then apply the mask
+        if isinstance(cube.data, np.ma.MaskedArray):
+            cube.data.mask |= mask
+        else:
+            cube.data = np.ma.masked_array(cube.data, mask)
 
     return cube
 
