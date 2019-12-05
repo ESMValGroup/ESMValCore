@@ -232,7 +232,7 @@ def _get_geometries_from_shp(shapefilename):
     # Index 0 grabs the lowest resolution mask (no zoom)
     geometries = [contour for contour in reader.geometries()]
     if not geometries:
-        msg = "Could not find any geomtery in {}".format(shapefilename)
+        msg = "Could not find any geometry in {}".format(shapefilename)
         raise ValueError(msg)
     geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
     return geometries
