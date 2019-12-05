@@ -134,8 +134,10 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
     if fx_files and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
-            fx_root = os.path.basename(fx_file).split('_')[0]
-            fx_cubes[fx_root] = iris.load_cube(fx_file)
+            fxfile_members = os.path.basename(fx_file).split('_')
+            for fx_root in ['sftlf', 'sftof']:
+                if fx_root in fxfile_members:
+                    fx_cubes[fx_root] = iris.load_cube(fx_file)
 
         # preserve importance order: try stflf first then sftof
         if ('sftlf' in fx_cubes.keys()

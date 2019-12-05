@@ -10,6 +10,7 @@ following the default order in which they are applied:
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
 * :ref:`Vertical interpolation`
+* :ref:`Weighting`
 * :ref:`Land/Sea/Ice masking`
 * :ref:`Horizontal regridding`
 * :ref:`Masking of missing values`
@@ -105,7 +106,9 @@ The required arguments for this module are two boolean switches:
 * ``force_derivation``: force variable derivation even if the variable is
   directly available in the input data.
 
-See also :func:`esmvalcore.preprocessor.derive`.
+See also :func:`esmvalcore.preprocessor.derive`. To get an overview on
+derivation scripts and how to implement new ones, please go to
+:ref:`derivation`.
 
 
 .. _CMOR check and dataset-specific fixes:
@@ -240,6 +243,50 @@ extract the levels and vertically regrid onto the vertical levels of
 	  source data is not a ``MaskedArray``; or
         * ``nanmask``: if the source data is a MaskedArray the extrapolation
 	  points will be masked, otherwise they will be set to NaN.
+
+
+.. _weighting:
+
+Weighting
+=========
+
+.. _land/sea fraction weighting:
+
+Land/sea fraction weighting
+---------------------------
+
+This preprocessor allows weighting of data by land or sea fractions. In other
+words, this function multiplies the given input field by a fraction in the range 0-1 to
+account for the fact that not all grid points are completely land- or sea-covered.
+
+The application of this preprocessor is very important for most carbon cycle variables (and
+other land surface outputs), which are e.g. reported in units of
+:math:`kgC~m^{-2}`. Here, the surface unit actually refers to 'square meter of land/sea' and
+NOT 'square meter of gridbox'. In order to integrate these globally or
+regionally one has to weight by both the surface quantity and the
+land/sea fraction.
+
+For example, to weight an input field with the land fraction, the following
+preprocessor can be used:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_weighting:
+        weighting_landsea_fraction:
+          area_type: land
+          exclude: ['CanESM2', 'reference_dataset']
+
+Allowed arguments for the keyword ``area_type`` are ``land`` (fraction is 1
+for grid cells with only land surface, 0 for grid cells with only sea surface
+and values in between 0 and 1 for coastal regions) and ``sea`` (1 for
+sea, 0 for land, in between for coastal regions). The optional argument
+``exclude`` allows to exclude specific datasets from this preprocessor, which
+is for example useful for climate models which do not offer land/sea fraction
+files. This arguments also accepts the special dataset specifiers
+``reference_dataset`` and ``alternative_dataset``.
+
+See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
 
 .. _masking:

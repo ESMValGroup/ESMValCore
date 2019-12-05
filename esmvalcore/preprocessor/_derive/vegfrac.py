@@ -7,14 +7,13 @@ from ._baseclass import DerivedVariableBase
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `vegFrac`."""
 
-    # Required variables
-    required = [{'short_name': 'baresoilFrac', }]
+    required = [{
+        'short_name': 'baresoilFrac',
+    }]
 
     @staticmethod
     def calculate(cubes):
-        """Compute vegetation fraction from bare soil fraction.
-
-        """
+        """Compute vegetation fraction from bare soil fraction."""
         baresoilfrac_cube = cubes.extract_strict(
             iris.Constraint(name='area_fraction'))
 
