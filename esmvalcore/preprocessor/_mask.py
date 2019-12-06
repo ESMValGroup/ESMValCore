@@ -154,7 +154,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
             logger.debug("Applying land-sea mask: sftof")
         else:
             if cube.coord('longitude').points.ndim < 2:
-                cube = _mask_with_shp(cube, shapefiles[mask_out], [0]) # TODO: this index might be wrong without sorting!!!
+                cube = _mask_with_shp(cube, shapefiles[mask_out], [0])  # TODO: this index might be wrong without sorting!!!
                 logger.debug(
                     "Applying land-sea mask from Natural Earth"
                     " shapefile: \n%s", shapefiles[mask_out])
@@ -164,7 +164,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
                 raise ValueError(msg)
     else:
         if cube.coord('longitude').points.ndim < 2:
-            cube = _mask_with_shp(cube, shapefiles[mask_out], [0]) # TODO: this index might be wrong without sorting!!!
+            cube = _mask_with_shp(cube, shapefiles[mask_out], [0])  # TODO: this index might be wrong without sorting!!!
             logger.debug(
                 "Applying land-sea mask from Natural Earth"
                 " shapefile: \n%s", shapefiles[mask_out])
