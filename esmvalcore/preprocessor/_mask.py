@@ -154,7 +154,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
             logger.debug("Applying land-sea mask: sftof")
         else:
             if cube.coord('longitude').points.ndim < 2:
-                cube = _mask_with_shp(cube, shapefiles[mask_out], 1)
+                cube = _mask_with_shp(cube, shapefiles[mask_out], [0]) # TODO: this index might be wrong without sorting!!!
                 logger.debug(
                     "Applying land-sea mask from Natural Earth"
                     " shapefile: \n%s", shapefiles[mask_out])
@@ -164,7 +164,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
                 raise ValueError(msg)
     else:
         if cube.coord('longitude').points.ndim < 2:
-            cube = _mask_with_shp(cube, shapefiles[mask_out], 1)
+            cube = _mask_with_shp(cube, shapefiles[mask_out], [0]) # TODO: this index might be wrong without sorting!!!
             logger.debug(
                 "Applying land-sea mask from Natural Earth"
                 " shapefile: \n%s", shapefiles[mask_out])
@@ -227,30 +227,32 @@ def mask_landseaice(cube, fx_files, mask_out):
 
 
 def _get_geometries_from_shp(shapefilename):
-    """Get the mask geometry out from a shapefile."""
+    """Get the mask geometries out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
     # Index 0 grabs the lowest resolution mask (no zoom)
     geometries = [contour for contour in reader.geometries()]
     if not geometries:
         msg = "Could not find any geometry in {}".format(shapefilename)
         raise ValueError(msg)
-    geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
+    # I would leave out sorting to keep them as they are in the shapefile
+    # (This is more user friendly for custom shapes)
+    # geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
     return geometries
 
 
-def _mask_with_shp(cube, shapefilename, max_region_index):
+def _mask_with_shp(cube, shapefilename, region_indices):
     """
     Apply a Natural Earth land/sea mask.
 
     Apply a pre-made land or sea mask that is extracted form a
     Natural Earth shapefile (proprietary file format). The masking
     process is performed by checking if any given (x, y) point from
-    the data cube lies within the desired geometry (eg land, sea) stored
+    the data cube lies within the desired geometries (eg land, sea) stored
     in the shapefile (this is done via shapefle vectorization and is fast).
     """
     # Create the region
     regions = _get_geometries_from_shp(shapefilename)
-    regions = regions[0:max_region_index]
+    regions = [regions[ind] for ind in region_indices]
 
     # Create a mask for the data
     mask = np.zeros(cube.shape, dtype=bool)
