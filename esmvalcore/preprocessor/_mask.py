@@ -226,6 +226,33 @@ def mask_landseaice(cube, fx_files, mask_out):
     return cube
 
 def mask_glaciated(cube, mask_out):
+    """
+    Mask out glaciated areas
+
+    It applies a Natural Earth mask. Note that for computational reasons
+    only the 10 largest polygons are used for masking.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        data cube to be masked.
+
+    mask_out: str
+        "glaciated" to mask out glaciated areas
+
+    Returns
+    -------
+    iris.cube.Cube
+        Returns the masked iris cube.
+
+    Raises
+    ------
+    ValueError
+        Error raised if masking on irregular grids is attempted.
+        Irregular grids are not currently supported for masking
+        with Natural Earth shapefile masks.
+    """
+
     # Dict to store the Natural Earth masks
     cwd = os.path.dirname(__file__)
     # read glaciated shapefile
