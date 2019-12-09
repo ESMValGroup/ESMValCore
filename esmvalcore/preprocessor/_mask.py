@@ -12,10 +12,10 @@ import os
 
 import cartopy.io.shapereader as shpreader
 import iris
-import numpy as np
-import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
+import numpy as np
+import shapely.vectorized as shp_vect
 
 logger = logging.getLogger(__name__)
 
@@ -262,7 +262,7 @@ def mask_glaciated(cube, mask_out):
     }
     if mask_out == 'glaciated':
         cube = _mask_with_shp(cube, shapefiles[mask_out],
-                              [1859, 1860, 1861, 1857, 1858,\
+                              [1859, 1860, 1861, 1857, 1858,
                                1716, 1587, 1662, 1578, 1606, ]
                              )
         logger.debug(
