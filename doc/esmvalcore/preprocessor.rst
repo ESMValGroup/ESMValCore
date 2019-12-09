@@ -339,7 +339,7 @@ the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
 vectorized rasters). As mentioned above, the spatial resolution of the the
 Natural Earth masks are much higher than any typical global model (10m for
-land and 50m for ocean masks).
+land and glaciated areas and 50m for ocean masks).
 
 See also :func:`esmvalcore.preprocessor.mask_landsea`.
 
@@ -361,6 +361,23 @@ and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
 As in the case of ``mask_landsea``, the preprocessor automatically retrieves
 the ``fx_files: [sftgif]`` mask.
+
+See also :func:`esmvalcore.preprocessor.mask_landseaice`.
+
+Glaciated masking
+-----------------
+
+For masking out glaciated areas a Natural Earth shapefile is used. To mask
+glaciated areas out, ``mask_glaciated`` can be used:
+
+.. code-block:: yaml
+
+  preprocessors:
+    preproc_mask:
+      mask_glaciated:
+        mask_out: glaciated
+
+and it requires only one argument: ``mask_out``: only ``glaciated``.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
