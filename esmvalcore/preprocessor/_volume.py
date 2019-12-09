@@ -226,16 +226,18 @@ def volume_statistics(
             cube_shape = cube.data.shape
 
     if not grid_volume_found:
+        print("Volume-weighted mean can not be calculated without volume.")
+        assert 0
         grid_volume = calculate_volume(cube)
 
     # Check whether the dimensions are right.
-    if cube.data.ndim == 4 and grid_volume.ndim == 3:
-        grid_volume = np.tile(grid_volume,
-                              [cube_shape[0], 1, 1, 1])
+    #if cube.data.ndim == 4 and grid_volume.ndim == 3:
+    #    grid_volume = np.tile(grid_volume,
+    #                          [cube_shape[0], 1, 1, 1])
 
-    if cube.data.shape != grid_volume.shape:
-        raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
-                         '({})'.format(cube.data.shape, grid_volume.shape))
+    #if cube.data.shape != grid_volume.shape:
+    #    raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
+    #                     '({})'.format(cube.data.shape, grid_volume.shape))
 
     # #####
     # Calculate global volume weighted average
@@ -254,26 +256,28 @@ def volume_statistics(
             # ####
             # Calculate weighted mean for this time and layer
             if operator == 'mean':
+                if grid_volume.ndim == 3:
+                    volume = grid_volume[z_itr]
+                    layer_vol = np.ma.masked_where(
+                        cube[time_itr, z_itr].data.mask,
+                        grid_volume[z_itr]).sum()
+
+                elif grid_volume.ndim == 4:
+                    volume = grid_volume[time_itr, z_itr] 
+                    layer_vol = np.ma.masked_where(
+                        cube[time_itr, z_itr].data.mask,
+                        grid_volume[time_itr, z_itr]).sum()
+
                 total = cube[time_itr, z_itr].collapsed(
-                    [cube.coord(axis='z'),
-                     'longitude', 'latitude'],
+                    ['longitude', 'latitude'],
                     iris.analysis.MEAN,
-                    weights=grid_volume[time_itr, z_itr]).data
+                    weights=volume).data
             else:
                 raise ValueError('Volume operator ({}) not '
                                  'recognised.'.format(operator))
             column.append(total)
-
-            try:
-                layer_vol = np.ma.masked_where(
-                    cube[time_itr, z_itr].data.mask,
-                    grid_volume[time_itr, z_itr]).sum()
-
-            except AttributeError:
-                # ####
-                # No mask in the cube data.
-                layer_vol = grid_volume.sum()
             depth_volume.append(layer_vol)
+
         # ####
         # Calculate weighted mean over the water volumn
         result.append(np.average(column, weights=depth_volume))
