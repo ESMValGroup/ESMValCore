@@ -44,6 +44,12 @@ class TestCMIP6Info(unittest.TestCase):
         var = self.variables_info.get_variable('Amon', 'tas')
         self.assertEqual(var.short_name, 'tas')
 
+    def test_get_variable_different_out_name(self):
+        """Get tas variable."""
+        var = self.variables_info.get_variable('6hrPlevPt', 'zg7h')
+        self.assertEqual(var.short_name, 'zg')
+        self.assertEqual(var.var_name, 'zg7h')
+
     def test_get_variable_from_alias(self):
         """Get a variable from a known alias."""
         var = self.variables_info.get_variable('SImon', 'sic')
@@ -220,7 +226,7 @@ class TestCMIP5Info(unittest.TestCase):
         """Get ta fails with AERMonZ if strict."""
         self.assertIsNone(self.variables_info.get_variable('Omon', 'ta'))
 
-    def test_aermon_ta_succes_if_strict(self):
+    def test_aermon_ta_succes_if_not_strict(self):
         """Get ta does not fail with Omon if not strict."""
         self.variables_info.strict = False
         var = self.variables_info.get_variable('Omon', 'ta')

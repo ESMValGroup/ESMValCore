@@ -358,21 +358,23 @@ class JsonInfo(object):
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
 
-    def __init__(self, table_type, short_name):
+    def __init__(self, table_type, var_name):
         """
         Class to read and store variable information.
 
         Parameters
         ----------
-        short_name: str
-            variable's short name
+        var_name: str
+            variable's CMOR name
 
         """
         super(VariableInfo, self).__init__()
         self.table_type = table_type
         self.modeling_realm = []
         """Modeling realm"""
-        self.short_name = short_name
+        self.var_name = var_name
+        """CMOR's table name"""
+        self.short_name = var_name
         """Short name"""
         self.standard_name = ''
         """Standard name"""
@@ -425,6 +427,7 @@ class VariableInfo(JsonInfo):
         """
         self._json_data = json_data
 
+        self.short_name = self._read_json_variable('out_name')
         self.standard_name = self._read_json_variable('standard_name')
         self.long_name = self._read_json_variable('long_name')
         self.units = self._read_json_variable('units')
@@ -635,13 +638,15 @@ class CMIP5Info(object):
                 setattr(coord, key, value)
         return coord
 
-    def _read_variable(self, short_name, frequency):
-        var = VariableInfo('CMIP5', short_name)
+    def _read_variable(self, var_name, frequency):
+        var = VariableInfo('CMIP5', var_name)
         var.frequency = frequency
         while self._read_line():
             key, value = self._last_line_read
             if key in ('variable_entry', 'axis_entry'):
                 break
+            if key == 'out_name':
+                setattr(var, 'short_name', value)
             if key in ('dimensions', 'modeling_realm'):
                 setattr(var, key, value.split())
             elif hasattr(var, key):
