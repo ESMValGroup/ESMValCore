@@ -232,12 +232,7 @@ def mask_glaciated(cube, mask_out):
     shapefiles = {
         'glaciated': os.path.join(cwd, 'ne_masks/ne_10m_glaciated_areas.shp'),
     }
-
-    if mask_out == 'nonglaciated':
-        msg = (f"Masking out nonglaciated areas is not implemented yet.")
-        raise NotImplementedError(msg)
-        
-    if cube.coord('longitude').points.ndim < 2:
+    if mask_out == 'glaciated':
         cube = _mask_with_shp(cube, shapefiles[mask_out],
                              [1859, 1860, 1861, 1857, 1858,\
                               1716, 1587, 1662, 1578, 1606, ]
@@ -246,8 +241,7 @@ def mask_glaciated(cube, mask_out):
             "Applying glaciated areas mask from Natural Earth"
             " shapefile: \n%s", shapefiles[mask_out])
     else:
-        msg = (f"Use of shapefiles with irregular grids not "
-               f"yet implemented, land-sea mask not applied.")
+        msg = (f"Invalid argument mask_out: {mask_out}")
         raise ValueError(msg)
 
     return cube
