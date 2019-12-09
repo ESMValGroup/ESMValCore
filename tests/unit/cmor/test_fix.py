@@ -21,7 +21,7 @@ class TestFixFile(unittest.TestCase):
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                 return_value=[self.mock_fix]):
-            file_returned = fix_file('filename', 'short_name', 'project',
+            file_returned = fix_file('filename', 'var_name', 'project',
                                      'model', 'output_dir')
             self.assertNotEqual(file_returned, self.filename)
             self.assertEqual(file_returned, 'new_filename')
@@ -30,7 +30,7 @@ class TestFixFile(unittest.TestCase):
         """Check that the same file is returned if no fix is available."""
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes', return_value=[]):
-            file_returned = fix_file('filename', 'short_name', 'project',
+            file_returned = fix_file('filename', 'var_name', 'project',
                                      'model', 'output_dir')
             self.assertEqual(file_returned, self.filename)
 
@@ -80,9 +80,10 @@ class TestFixMetadata(unittest.TestCase):
         self.mock_fix.fix_metadata.return_value = [self.fixed_cube]
 
     @staticmethod
-    def _create_mock_cube(var_name='short_name'):
+    def _create_mock_cube(var_name='var_name'):
         cube = mock.Mock()
         cube.var_name = var_name
+        cube.short_name = var_name
         cube.attributes = {'source_file': 'source_file'}
         return cube
 
@@ -91,7 +92,7 @@ class TestFixMetadata(unittest.TestCase):
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                 return_value=[self.mock_fix]):
-            cube_returned = fix_metadata([self.cube], 'short_name', 'project',
+            cube_returned = fix_metadata([self.cube], 'var_name', 'project',
                                          'model')[0]
             self.assertTrue(cube_returned is not self.cube)
             self.assertTrue(cube_returned is self.fixed_cube)
@@ -100,7 +101,7 @@ class TestFixMetadata(unittest.TestCase):
         """Check that the same cube is returned if no fix is available."""
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes', return_value=[]):
-            cube_returned = fix_metadata([self.cube], 'short_name', 'project',
+            cube_returned = fix_metadata([self.cube], 'var_name', 'project',
                                          'model')[0]
             self.assertTrue(cube_returned is self.cube)
             self.assertTrue(cube_returned is not self.fixed_cube)
@@ -111,7 +112,7 @@ class TestFixMetadata(unittest.TestCase):
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes', return_value=[]):
             cube_returned = fix_metadata(
                 [self.cube, self._create_mock_cube('extra')],
-                'short_name',
+                'var_name',
                 'project',
                 'model'
             )[0]
@@ -127,7 +128,7 @@ class TestFixMetadata(unittest.TestCase):
                         self._create_mock_cube('not_me'),
                         self._create_mock_cube('me_neither')
                     ],
-                    'short_name',
+                    'var_name',
                     'project',
                     'model'
                 )
@@ -141,14 +142,14 @@ class TestFixMetadata(unittest.TestCase):
             with mock.patch(
                     'esmvalcore.cmor.fix._get_cmor_checker',
                     return_value=checker) as get_mock:
-                fix_metadata([self.cube], 'short_name', 'project', 'model',
+                fix_metadata([self.cube], 'var_name', 'project', 'model',
                              'cmor_table', 'mip', 'frequency')
                 get_mock.assert_called_once_with(
                     automatic_fixes=True,
                     fail_on_error=False,
                     frequency='frequency',
                     mip='mip',
-                    short_name='short_name',
+                    var_name='var_name',
                     table='cmor_table')
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_metadata.assert_called_once_with()
@@ -169,7 +170,7 @@ class TestFixData(unittest.TestCase):
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                 return_value=[self.mock_fix]):
-            cube_returned = fix_data(self.cube, 'short_name', 'project',
+            cube_returned = fix_data(self.cube, 'var_name', 'project',
                                      'model')
             self.assertTrue(cube_returned is not self.cube)
             self.assertTrue(cube_returned is self.fixed_cube)
@@ -178,7 +179,7 @@ class TestFixData(unittest.TestCase):
         """Check that the same cube is returned if no fix is available."""
         with mock.patch(
                 'esmvalcore.cmor._fixes.fix.Fix.get_fixes', return_value=[]):
-            cube_returned = fix_data(self.cube, 'short_name', 'project',
+            cube_returned = fix_data(self.cube, 'var_name', 'project',
                                      'model')
             self.assertTrue(cube_returned is self.cube)
             self.assertTrue(cube_returned is not self.fixed_cube)
@@ -192,14 +193,14 @@ class TestFixData(unittest.TestCase):
             with mock.patch(
                     'esmvalcore.cmor.fix._get_cmor_checker',
                     return_value=checker) as get_mock:
-                fix_data(self.cube, 'short_name', 'project', 'model',
+                fix_data(self.cube, 'var_name', 'project', 'model',
                          'cmor_table', 'mip', 'frequency')
                 get_mock.assert_called_once_with(
                     automatic_fixes=True,
                     fail_on_error=False,
                     frequency='frequency',
                     mip='mip',
-                    short_name='short_name',
+                    var_name='var_name',
                     table='cmor_table')
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_data.assert_called_once_with()

@@ -9,7 +9,7 @@ from ._shared import cloud_area_fraction
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `clltkisccp`."""
 
-    required = [{'short_name': 'clisccp'}]
+    required = [{'var_name': 'clisccp'}]
 
     @staticmethod
     def calculate(cubes):

@@ -111,17 +111,18 @@ def _add_cmor_info(variable, override=False):
     derive = variable.get('derive', False)
     # Copy the following keys from CMOR table
     cmor_keys = [
-        'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
+        'short_name', 'standard_name', 'long_name', 'units', 'modeling_realm',
+        'frequency'
     ]
     cmor_table = variable['cmor_table']
     mip = variable['mip']
-    short_name = variable['short_name']
-    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name, derive)
+    var_name = variable['var_name']
+    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, var_name, derive)
 
     if table_entry is None:
         raise RecipeError(
             "Unable to load CMOR table '{}' for variable '{}' with mip '{}'".
-            format(cmor_table, short_name, mip))
+            format(cmor_table, var_name, mip))
 
     for key in cmor_keys:
         if key not in variable or override:
@@ -147,7 +148,7 @@ def _special_name_to_dataset(variable, special_name):
                     variable['preprocessor'],
                     special_name,
                     special_name,
-                    variable['short_name'],
+                    variable['var_name'],
                     variable['diagnostic'],
                 ))
         special_name = variable[special_name]
@@ -184,7 +185,7 @@ def _update_target_levels(variable, variables, settings, config_user):
                 _dataset_to_file(variable_data, config_user)
             settings['extract_levels']['levels'] = get_reference_levels(
                 filename, variable_data['project'], dataset,
-                variable_data['short_name'],
+                variable_data['var_name'],
                 os.path.splitext(variable_data['filename'])[0] + '_fixed')
 
 
@@ -235,7 +236,7 @@ def _dataset_to_file(variable, config_user):
     """Find the first file belonging to dataset from variable info."""
     files = _get_input_files(variable, config_user)
     if not files and variable.get('derive'):
-        required_vars = get_required(variable['short_name'],
+        required_vars = get_required(variable['var_name'],
                                      variable['project'])
         for required_var in required_vars:
             _augment(required_var, variable)
@@ -298,7 +299,7 @@ def _get_default_settings(variable, config_user, derive=False):
     fix = {
         'project': variable['project'],
         'dataset': variable['dataset'],
-        'short_name': variable['short_name'],
+        'var_name': variable['var_name'],
     }
     # File fixes
     fix_dir = os.path.splitext(variable['filename'])[0] + '_fixed'
@@ -326,6 +327,7 @@ def _get_default_settings(variable, config_user, derive=False):
 
     if derive:
         settings['derive'] = {
+            'var_name': variable['var_name'],
             'short_name': variable['short_name'],
             'standard_name': variable['standard_name'],
             'long_name': variable['long_name'],
@@ -337,7 +339,7 @@ def _get_default_settings(variable, config_user, derive=False):
         settings['cmor_check_metadata'] = {
             'cmor_table': variable['cmor_table'],
             'mip': variable['mip'],
-            'short_name': variable['short_name'],
+            'var_name': variable['var_name'],
             'frequency': variable['frequency'],
         }
     # Configure final CMOR data check
@@ -345,7 +347,7 @@ def _get_default_settings(variable, config_user, derive=False):
         settings['cmor_check_data'] = {
             'cmor_table': variable['cmor_table'],
             'mip': variable['mip'],
-            'short_name': variable['short_name'],
+            'var_name': variable['var_name'],
             'frequency': variable['frequency'],
         }
 
@@ -366,8 +368,8 @@ def _add_fxvar_keys(fx_var_dict, variable):
     fx_variable = dict(variable)
 
     # set variable names
-    fx_variable['variable_group'] = fx_var_dict['short_name']
-    fx_variable['short_name'] = fx_var_dict['short_name']
+    fx_variable['variable_group'] = fx_var_dict['var_name']
+    fx_variable['var_name'] = fx_var_dict['var_name']
 
     # specificities of project
     if fx_variable['project'] == 'CMIP5':
@@ -388,17 +390,17 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     """Wrapper to standard file getter to recover the correct fx file."""
     var = dict(variable)
     if var['project'] in ['CMIP5', 'OBS', 'OBS6', 'obs4mips']:
-        fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
+        fx_var = _add_fxvar_keys({'var_name': fx_varname, 'mip': 'fx'}, var)
     elif var['project'] == 'CMIP6':
         if fx_varname == 'sftlf':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
+            fx_var = _add_fxvar_keys({'var_name': fx_varname, 'mip': 'fx'},
                                      var)
         elif fx_varname == 'sftof':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
+            fx_var = _add_fxvar_keys({'var_name': fx_varname, 'mip': 'Ofx'},
                                      var)
         # TODO allow availability for multiple mip's for sftgif
         elif fx_varname == 'sftgif':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
+            fx_var = _add_fxvar_keys({'var_name': fx_varname, 'mip': 'fx'},
                                      var)
     else:
         raise RecipeError(
@@ -512,7 +514,7 @@ def _get_ancestors(variable, config_user):
     input_files = _get_input_files(variable, config_user)
 
     logger.info("Using input files for variable %s of dataset %s:\n%s",
-                variable['short_name'], variable['dataset'],
+                variable['var_name'], variable['dataset'],
                 '\n'.join(input_files))
     if (not config_user.get('skip-nonexistent')
             or variable['dataset'] == variable.get('reference_dataset')):
@@ -800,7 +802,7 @@ def _get_derive_input_variables(variables, config_user):
 
     def append(group_prefix, var):
         """Append variable `var` to a derive input group."""
-        group = group_prefix + var['short_name']
+        group = group_prefix + var['var_name']
         var['variable_group'] = group
         if group not in derive_input:
             derive_input[group] = []
@@ -816,10 +818,12 @@ def _get_derive_input_variables(variables, config_user):
             append(group_prefix, var)
         else:
             # Process input data needed to derive variable
-            required_vars = get_required(variable['short_name'],
+            required_vars = get_required(variable['var_name'],
                                          variable['project'])
             for var in required_vars:
+                print('Before augment: ', var)
                 _augment(var, variable)
+                print('After augment: ', var)
                 _add_cmor_info(var, override=True)
                 files = _get_input_files(var, config_user)
                 if var.get('optional') and not files:
@@ -842,10 +846,10 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     if preproc_name not in profiles:
         raise RecipeError(
             "Unknown preprocessor {} in variable {} of diagnostic {}".format(
-                preproc_name, variable['short_name'], variable['diagnostic']))
+                preproc_name, variable['var_name'], variable['diagnostic']))
     profile = deepcopy(profiles[variable['preprocessor']])
     logger.info("Creating preprocessor '%s' task for variable '%s'",
-                variable['preprocessor'], variable['short_name'])
+                variable['preprocessor'], variable['var_name'])
     variables = _limit_datasets(variables, profile,
                                 config_user.get('max_datasets'))
     for variable in variables:
@@ -859,6 +863,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
 
         for derive_variables in derive_input.values():
             for derive_variable in derive_variables:
+                logger.info(derive_variable)
                 _add_cmor_info(derive_variable, override=True)
             derive_name = task_name.split(
                 TASKSEP)[0] + TASKSEP + derive_variables[0]['variable_group']
@@ -1015,7 +1020,7 @@ class Recipe:
             variables.append(variable)
 
         required_keys = {
-            'short_name',
+            'var_name',
             'mip',
             'dataset',
             'project',
@@ -1050,8 +1055,8 @@ class Recipe:
             else:
                 raw_variable = deepcopy(raw_variable)
             raw_variable['variable_group'] = variable_group
-            if 'short_name' not in raw_variable:
-                raw_variable['short_name'] = variable_group
+            if 'var_name' not in raw_variable:
+                raw_variable['var_name'] = variable_group
             raw_variable['diagnostic'] = diagnostic_name
             raw_variable['preprocessor'] = str(
                 raw_variable.get('preprocessor', 'default'))

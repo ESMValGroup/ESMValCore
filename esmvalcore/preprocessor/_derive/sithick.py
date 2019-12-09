@@ -12,9 +12,9 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):
         """Declare the variables needed for derivation."""
         required = [{
-            'short_name': 'sit',
+            'var_name': 'sit',
         }, {
-            'short_name': 'sic',
+            'var_name': 'sic',
         }]
         return required
 

@@ -34,15 +34,15 @@ ALL_DERIVED_VARIABLES = _get_all_derived_variables()
 __all__ = list(ALL_DERIVED_VARIABLES)
 
 
-def get_required(short_name, project):
+def get_required(var_name, project):
     """Return all required variables for derivation.
 
-    Get all information (at least `short_name`) required for derivation.
+    Get all information (at least `var_name`) required for derivation.
 
     Parameters
     ----------
-    short_name : str
-        `short_name` of the variable to derive.
+    var_name : str
+        name of the variable to derive.
     project : str
         `project` of the variable to derive.
 
@@ -52,16 +52,16 @@ def get_required(short_name, project):
         List of dictionaries (including at least the key `short_name`).
 
     """
-    if short_name not in ALL_DERIVED_VARIABLES:
+    if var_name not in ALL_DERIVED_VARIABLES:
         raise NotImplementedError(
-            f"Cannot derive variable '{short_name}', no derivation script "
+            f"Cannot derive variable '{var_name}', no derivation script "
             f"available")
-    DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
+    DerivedVariable = ALL_DERIVED_VARIABLES[var_name]  # noqa: N806
     variables = deepcopy(DerivedVariable().required(project))
     return variables
 
 
-def derive(cubes, short_name, long_name, units, standard_name=None):
+def derive(cubes, var_name, short_name, long_name, units, standard_name=None):
     """Derive variable.
 
     Parameters
@@ -69,8 +69,8 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
     cubes: iris.cube.CubeList
         Includes all the needed variables for derivation defined in
         :func:`get_required`.
-    short_name: str
-        short_name
+    var_name: str
+        var_name
     long_name: str
         long_name
     units: str
@@ -90,7 +90,7 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
     cubes = iris.cube.CubeList(cubes)
 
     # Derive variable
-    DerivedVariable = ALL_DERIVED_VARIABLES[short_name.lower()]  # noqa: N806
+    DerivedVariable = ALL_DERIVED_VARIABLES[var_name.lower()]  # noqa: N806
     cube = DerivedVariable().calculate(cubes)
 
     # Set standard attributes

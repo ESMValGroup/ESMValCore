@@ -173,7 +173,7 @@ class TestCMORCheck(unittest.TestCase):
         self._check_cube()
 
     def test_check_bad_standard_name(self):
-        """Test check fails for a bad short_name."""
+        """Test check fails for a bad var_name."""
         self.cube = self.get_cube(self.var_info)
         self.cube.standard_name = 'wind_speed'
         self._check_fails_in_metadata(automatic_fixes=False)
@@ -192,7 +192,7 @@ class TestCMORCheck(unittest.TestCase):
         self._check_warnings_on_metadata(automatic_fixes=True)
 
     def test_check_bad_long_name(self):
-        """Test check fails for a bad short_name."""
+        """Test check fails for a bad var_name."""
         self.cube = self.get_cube(self.var_info)
         self.cube.long_name = 'bad_name'
         self._check_fails_in_metadata()

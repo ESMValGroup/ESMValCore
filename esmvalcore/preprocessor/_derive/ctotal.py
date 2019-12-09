@@ -11,10 +11,10 @@ class DerivedVariable(DerivedVariableBase):
     # Required variables
     required = [
         {
-            'short_name': 'cVeg'
+            'var_name': 'cVeg'
         },
         {
-            'short_name': 'cSoil'
+            'var_name': 'cSoil'
         },
     ]
 

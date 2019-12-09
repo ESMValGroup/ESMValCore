@@ -13,10 +13,10 @@ class DerivedVariable(DerivedVariableBase):
         """Declare the variables needed for derivation."""
         required = [
             {
-                'short_name': 'rlut'
+                'var_name': 'rlut'
             },
             {
-                'short_name': 'rlutcs'
+                'var_name': 'rlutcs'
             },
         ]
         return required

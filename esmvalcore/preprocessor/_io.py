@@ -265,7 +265,7 @@ def _write_ncl_metadata(output_dir, metadata):
                 variable_info[key] = variable[key]
 
     filename = os.path.join(output_dir,
-                            variable_info['short_name'] + '_info.ncl')
+                            variable_info['var_name'] + '_info.ncl')
     write_ncl_settings(info, filename)
 
     return filename
