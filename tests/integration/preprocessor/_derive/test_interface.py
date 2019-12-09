@@ -11,10 +11,10 @@ def test_get_required():
 
     reference = [
         {
-            'short_name': 'rsdscs',
+            'var_name': 'rsdscs',
         },
         {
-            'short_name': 'rsuscs',
+            'var_name': 'rsuscs',
         },
     ]
 
@@ -26,8 +26,8 @@ def test_get_required_with_fx():
     variables = get_required('ohc', 'CMIP5')
 
     reference = [
-        {'short_name': 'thetao'},
-        {'short_name': 'volcello', 'mip': 'fx'},
+        {'var_name': 'thetao'},
+        {'var_name': 'volcello', 'mip': 'fx'},
     ]
 
     assert variables == reference
@@ -50,7 +50,7 @@ def test_derive_nonstandard_nofx():
 
     cubes = CubeList([rsdscs, rsuscs])
 
-    alb = derive(cubes, short_name, long_name, units, standard_name)
+    alb = derive(cubes, short_name, short_name, long_name, units, standard_name)
 
     print(alb)
     assert alb.var_name == short_name
@@ -66,7 +66,7 @@ def test_derive_noop():
     alb.long_name = 'albedo at the surface'
     alb.units = 1
 
-    cube = derive([alb], alb.var_name, alb.long_name, alb.units)
+    cube = derive([alb], alb.var_name, alb.var_name, alb.long_name, alb.units)
 
     print(cube)
     assert cube is alb
@@ -89,6 +89,7 @@ def test_derive_mixed_case_with_fx(tmp_path, monkeypatch):
 
     derive(
         [ohc_cube],
+        short_name,
         short_name,
         long_name,
         units,
