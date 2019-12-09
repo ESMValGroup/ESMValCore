@@ -821,9 +821,7 @@ def _get_derive_input_variables(variables, config_user):
             required_vars = get_required(variable['var_name'],
                                          variable['project'])
             for var in required_vars:
-                print('Before augment: ', var)
                 _augment(var, variable)
-                print('After augment: ', var)
                 _add_cmor_info(var, override=True)
                 files = _get_input_files(var, config_user)
                 if var.get('optional') and not files:
