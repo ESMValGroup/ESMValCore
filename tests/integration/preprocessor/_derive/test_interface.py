@@ -50,7 +50,8 @@ def test_derive_nonstandard_nofx():
 
     cubes = CubeList([rsdscs, rsuscs])
 
-    alb = derive(cubes, short_name, short_name, long_name, units, standard_name)
+    alb = derive(
+        cubes, short_name, short_name, long_name, units, standard_name)
 
     print(alb)
     assert alb.var_name == short_name
