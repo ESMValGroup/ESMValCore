@@ -336,7 +336,7 @@ class CMORCheck():
 
             # Get coordinate var_name as it exists!
             try:
-                coord = self._cube.coord(var_name=var_name, dim_coords=True)
+                coord = self._cube.coord(var_name=var_name)
             except iris.exceptions.CoordinateNotFoundError:
                 continue
 
@@ -382,6 +382,8 @@ class CMORCheck():
 
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
+        if coord.ndim > 1:
+            return
         if not coord.is_monotonic():
             self.report_error(self._is_msg, var_name, 'monotonic')
         if len(coord.points) == 1:
@@ -435,8 +437,23 @@ class CMORCheck():
                                       '> {} ='.format('valid_max'), valid_max)
 
         if l_fix_coord_value:
-            lon_extent = iris.coords.CoordExtent(coord, 0.0, 360., True, False)
-            self._cube = self._cube.intersection(lon_extent)
+            if coord.ndim == 1:
+                lon_extent = iris.coords.CoordExtent(
+                    coord, 0.0, 360., True, False)
+                self._cube = self._cube.intersection(lon_extent)
+            else:
+                new_lons = coord.points.copy()
+                new_bounds = coord.bounds.copy()
+                while new_lons.min() < 0:
+                    new_lons[new_lons < 0] += 360
+                    new_bounds[new_bounds < 0] += 360
+                while new_lons.max() > 360:
+                    new_lons[new_lons > 360] -= 360
+                    new_bounds[new_bounds > 360] -= 360
+                new_coord = coord.copy(new_lons, new_bounds)
+                dims = self._cube.coord_dims(coord)
+                self._cube.remove_coord(coord)
+                self._cube.add_aux_coord(new_coord, dims)
 
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
