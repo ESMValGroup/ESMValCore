@@ -18,6 +18,7 @@ from ._shared import (get_iris_analysis_operation, guess_bounds,
 
 logger = logging.getLogger(__name__)
 
+from iris.exceptions import CoordinateNotFoundError
 
 # slice cube over a restricted area (box)
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
@@ -350,6 +351,47 @@ def _get_masks_from_geometries(geometries, lon, lat,
     return selections
 
 
+def fix_coordinate_ordering(cube):
+    """ transpose the dimensions such that the order of dimension is
+    in standard order, ie:
+
+    [time] [shape_id] [other_coordinates] latitude longitude
+
+    where dimensions between brackets are optional.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+       input cube.
+    
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with dimensions transposed to standard order
+
+    """
+    try:
+        time_dim = cube.coord_dims('time')
+    except CoordinateNotFoundError:
+        time_dim = ()
+    try:
+        shape_dim = cube.coord_dims('shape_id')
+    except CoordinateNotFoundError:
+        shape_dim = ()
+
+    other = list(range(len(cube.shape)))
+    print(len(cube.shape))
+    for dim in [time_dim, shape_dim]:
+        for i in dim:
+            other.remove(i)
+    other = tuple(other)
+    
+    order = time_dim + shape_dim + other
+    print(len(order))
+
+    cube.transpose(new_order = order)
+    return cube
+
 def extract_shape(cube, shapefile, method='contains', crop=True,
                   decomposed=False):
     """Extract a region defined by a shapefile.
@@ -419,4 +461,4 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
 
     cube = cubelist.merge_cube()
 
-    return cube
+    return fix_coordinate_ordering(cube)
