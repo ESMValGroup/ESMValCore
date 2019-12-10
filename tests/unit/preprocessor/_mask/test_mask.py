@@ -11,9 +11,13 @@ from cf_units import Unit
 from esmvalcore.preprocessor._mask import (
     _apply_fx_mask, _check_dims,
     count_spells, _get_fx_mask,
-    mask_above_threshold, mask_below_threshold, mask_inside_range,
+    mask_above_threshold, mask_below_threshold,
+    mask_glaciated, mask_inside_range,
     mask_outside_range)
 
+def _assert_masked_array_equal(a, b):
+    assert_array_equal(a.data, b.data)
+    assert_array_equal(a.mask, b.mask)
 
 class Test(tests.Test):
     """Test class for _mask."""
@@ -22,14 +26,15 @@ class Test(tests.Test):
         """Prepare tests."""
         coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
         self.data2 = np.array([[0., 1.], [2., 3.]])
+        # Two points near the south pole and two points in the southern ocean
         lons2 = iris.coords.DimCoord([1.5, 2.5],
                                      standard_name='longitude',
                                      bounds=[[1., 2.], [2., 3.]],
                                      units='degrees_east',
                                      coord_system=coord_sys)
-        lats2 = iris.coords.DimCoord([1.5, 2.5],
+        lats2 = iris.coords.DimCoord([-89.5, -70],
                                      standard_name='latitude',
-                                     bounds=[[1., 2.], [2., 3.]],
+                                     bounds=[[-90., -89.], [-70.5, -69.5]],
                                      units='degrees_north',
                                      coord_system=coord_sys)
         coords_spec3 = [(lats2, 0), (lons2, 1)]
@@ -90,6 +95,13 @@ class Test(tests.Test):
         computed = _get_fx_mask(self.fx_data, 'landsea', 'sftgif')
         expected = np.array([True, False, True])
         assert_array_equal(expected, computed)
+
+    def test_mask_glaciated(self):
+        """Test to mask glaciated (NE mask)"""
+        result = mask_glaciated(self.arr, mask_out='glaciated')
+        expected = np.ma.masked_array(self.data2, mask=\
+                                      np.array([[True, True], [False, False]]))
+        _assert_masked_array_equal(result.data, expected)
 
     def test_mask_above_threshold(self):
         """Test to mask above a threshold."""
