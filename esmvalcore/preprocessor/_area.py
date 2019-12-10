@@ -380,14 +380,12 @@ def fix_coordinate_ordering(cube):
         shape_dim = ()
 
     other = list(range(len(cube.shape)))
-    print(len(cube.shape))
     for dim in [time_dim, shape_dim]:
         for i in dim:
             other.remove(i)
     other = tuple(other)
     
     order = time_dim + shape_dim + other
-    print(len(order))
 
     cube.transpose(new_order = order)
     return cube
