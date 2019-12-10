@@ -264,7 +264,7 @@ def mask_glaciated(cube, mask_out):
         cube = _mask_with_shp(cube, shapefiles[mask_out],
                               [1859, 1860, 1861, 1857, 1858,
                                1716, 1587, 1662, 1578, 1606, ]
-                             )
+                              )
         logger.debug(
             "Applying glaciated areas mask from Natural Earth"
             " shapefile: \n%s", shapefiles[mask_out])

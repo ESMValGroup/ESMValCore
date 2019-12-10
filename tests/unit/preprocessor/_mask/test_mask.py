@@ -15,9 +15,9 @@ from esmvalcore.preprocessor._mask import (
     mask_glaciated, mask_inside_range,
     mask_outside_range)
 
-def _assert_masked_array_equal(a, b):
-    assert_array_equal(a.data, b.data)
-    assert_array_equal(a.mask, b.mask)
+def _assert_masked_array_equal(masked_arr1, masked_arr2):
+    assert_array_equal(masked_arr1.data, masked_arr2.data)
+    assert_array_equal(masked_arr1.mask, masked_arr2.mask)
 
 class Test(tests.Test):
     """Test class for _mask."""

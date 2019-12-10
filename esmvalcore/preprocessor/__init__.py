@@ -15,20 +15,19 @@ from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
 from ._mask import (mask_above_threshold, mask_below_threshold,
-                    mask_fillvalues, mask_inside_range, mask_landsea,
-                    mask_glaciated, mask_landseaice, mask_outside_range)
+                    mask_fillvalues, mask_glaciated, mask_inside_range,
+                    mask_landsea, mask_landseaice, mask_outside_range)
 from ._multimodel import multi_model_statistics
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
 from ._regrid import extract_levels, regrid
-from ._time import (extract_month, extract_season, extract_time, regrid_time,
-                    daily_statistics, monthly_statistics, seasonal_statistics,
-                    annual_statistics, decadal_statistics,
-                    climate_statistics, anomalies)
-
+from ._time import (annual_statistics, anomalies, climate_statistics,
+                    daily_statistics, decadal_statistics, extract_month,
+                    extract_season, extract_time, monthly_statistics,
+                    regrid_time, seasonal_statistics)
 from ._units import convert_units
-from ._volume import (volume_statistics, depth_integration, extract_trajectory,
-                      extract_transect, extract_volume)
+from ._volume import (depth_integration, extract_trajectory, extract_transect,
+                      extract_volume, volume_statistics)
 from ._weighting import weighting_landsea_fraction
 
 logger = logging.getLogger(__name__)
@@ -58,6 +57,7 @@ __all__ = [
     'weighting_landsea_fraction',
     # Mask landsea (fx or Natural Earth)
     'mask_landsea',
+    # Natural Earth only
     'mask_glaciated',
     # Mask landseaice, sftgif only
     'mask_landseaice',
