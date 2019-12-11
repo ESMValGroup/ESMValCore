@@ -27,7 +27,7 @@ class DerivedVariable(DerivedVariableBase):
             },
         ]
         return required
-    
+
     @staticmethod
     def calculate(cubes):
         """
