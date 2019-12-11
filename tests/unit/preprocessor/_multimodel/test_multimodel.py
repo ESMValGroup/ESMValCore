@@ -109,13 +109,17 @@ class Test(tests.Test):
                                                  [0, 31], "mean")
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         assert_array_equal(comp_ovlap_mean.data, expected_ovlap_mean)
+        assert_array_equal(comp_ovlap_mean.data.mask,
+                           expected_ovlap_mean.mask)
 
     def test_assemble_full_data(self):
         """Test full data."""
         comp_full_mean = _assemble_full_data([self.cube1, self.cube2], "mean")
         expected_full_mean = np.ma.ones((2, 3, 2, 2))
-        expected_full_mean[1] = True
+        expected_full_mean.mask = np.zeros((2, 3, 2, 2))
+        expected_full_mean.mask[1] = True
         assert_array_equal(comp_full_mean.data, expected_full_mean)
+        assert_array_equal(comp_full_mean.data.mask, expected_full_mean.mask)
 
     def test_slice_cube(self):
         """Test slice cube."""
