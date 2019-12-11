@@ -221,12 +221,13 @@ def volume_statistics(
             logger.info('Attempting to load %s from file: %s', key, fx_file)
             fx_cube = iris.load_cube(fx_file)
 
-            grid_volume = fx_cube.data
+            grid_volume = fx_cube
             grid_volume_found = True
-            cube_shape = cube.data.shape
+            # cube_shape = cube.data.shape
 
     if not grid_volume_found:
         print("Volume-weighted mean can not be calculated without volume.")
+        print("fx_files:", fx_files, "\ngrid_volume:", grid_volume)
         assert 0
         grid_volume = calculate_volume(cube)
 
