@@ -96,18 +96,21 @@ class Test(tests.Test):
         result = mask_above_threshold(self.arr, 1.5)
         expected = np.ma.array(self.data2, mask=[[False, False], [True, True]])
         assert_array_equal(result.data, expected)
+        assert_array_equal(result.data.mask, expected.mask)
 
     def test_mask_below_threshold(self):
         """Test to mask below a threshold."""
         result = mask_below_threshold(self.arr, 1.5)
         expected = np.ma.array(self.data2, mask=[[True, True], [False, False]])
         assert_array_equal(result.data, expected)
+        assert_array_equal(result.data.mask, expected.mask)
 
     def test_mask_inside_range(self):
         """Test to mask inside a range."""
         result = mask_inside_range(self.arr, 0.5, 2.5)
         expected = np.ma.array(self.data2, mask=[[False, True], [True, False]])
         assert_array_equal(result.data, expected)
+        assert_array_equal(result.data.mask, expected.mask)
 
     def test_mask_outside_range(self):
         """Test to mask outside a range."""
