@@ -250,9 +250,8 @@ def mask_glaciated(cube, mask_out):
     Raises
     ------
     ValueError
-        Error raised if masking on irregular grids is attempted.
-        Irregular grids are not currently supported for masking
-        with Natural Earth shapefile masks.
+        Error raised if masking on irregular grids is attempted or if
+        mask_out has a wrong value.
     """
 
     # Dict to store the Natural Earth masks
@@ -265,7 +264,7 @@ def mask_glaciated(cube, mask_out):
         cube = _mask_with_shp(cube, shapefiles[mask_out],
                               [1859, 1860, 1861, 1857, 1858,
                                1716, 1587, 1662, 1578, 1606, ]
-                             )
+                              )
         logger.debug(
             "Applying glaciated areas mask from Natural Earth"
             " shapefile: \n%s", shapefiles[mask_out])
