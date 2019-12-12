@@ -15,6 +15,7 @@ from esmvalcore.preprocessor._mask import (
     mask_glaciated, mask_inside_range,
     mask_outside_range)
 
+
 class Test(tests.Test):
     """Test class for _mask."""
 
@@ -97,8 +98,8 @@ class Test(tests.Test):
         result = mask_glaciated(self.arr, mask_out='glaciated')
         expected = np.ma.masked_array(self.data2, mask=\
                                       np.array([[True, True], [False, False]]))
-        assert_array_equal(result.data, expected.data)
-        assert_array_equal(result.mask, expected.mask)
+        assert_array_equal(result.data.data, expected.data)
+        assert_array_equal(result.data.mask, expected.mask)
 
     def test_mask_above_threshold(self):
         """Test to mask above a threshold."""
