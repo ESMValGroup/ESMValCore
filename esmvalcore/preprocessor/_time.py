@@ -207,6 +207,14 @@ def daily_statistics(cube, operator='mean'):
 
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(['day_of_year', 'year'], operator)
+
+    # Correct the time coordinate
+    cube.coord('time').points = cube.coord('time').units.date2num([
+        cell.point.replace(hour=12, minute=0, second=0, microsecond=0)
+        for cell in cube.coord('time').cells()])
+
+    cube.coord('time').bounds = None
+    cube.coord('time').guess_bounds()
     return cube
 
 
@@ -237,6 +245,14 @@ def monthly_statistics(cube, operator='mean'):
 
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(['month_number', 'year'], operator)
+
+    # Correct the time coordinate
+    cube.coord('time').points = cube.coord('time').units.date2num([
+        cell.point.replace(day=15, hour=12, minute=0, second=0, microsecond=0)
+        for cell in cube.coord('time').cells()])
+
+    cube.coord('time').bounds = None
+    cube.coord('time').guess_bounds()
     return cube
 
 
