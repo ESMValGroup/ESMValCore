@@ -675,7 +675,8 @@ The ``_time.py`` module contains the following preprocessor functions:
 Statistics functions are applied by default in the order they appear in the
 list. For example, the following example applied to hourly data will retrieve
 the minimum values for the full period (by season) of the monthly mean of the
-daily maximum of any given variable.
+daily maximum of any given variable. The representative time for statistics
+is (hour=12:00) in daily periods and (day=15, hour=12:00) in monthly periods.
 
 .. code-block:: yaml
 

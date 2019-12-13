@@ -184,7 +184,9 @@ def daily_statistics(cube, operator='mean'):
     """
     Compute daily statistics.
 
-    Chunks time in daily periods and computes statistics over them;
+    Chunks time in daily periods and computes statistics over them.
+    The statistics are assigned to a specific time (hour=12:00) in
+    daily period;
 
     Parameters
     ----------
@@ -210,7 +212,7 @@ def daily_statistics(cube, operator='mean'):
 
     # Correct the time coordinate
     cube.coord('time').points = cube.coord('time').units.date2num([
-        cell.point.replace(hour=12, minute=0, second=0, microsecond=0)
+        cell.point.replace(hour=12, minute=0)
         for cell in cube.coord('time').cells()])
 
     cube.coord('time').bounds = None
@@ -222,7 +224,9 @@ def monthly_statistics(cube, operator='mean'):
     """
     Compute monthly statistics.
 
-    Chunks time in monthly periods and computes statistics over them;
+    Chunks time in monthly periods and computes statistics over them.
+    The statistics are assigned to a specific time (day=15, hour=12:00)
+    in monthly period;
 
     Parameters
     ----------
@@ -248,7 +252,7 @@ def monthly_statistics(cube, operator='mean'):
 
     # Correct the time coordinate
     cube.coord('time').points = cube.coord('time').units.date2num([
-        cell.point.replace(day=15, hour=12, minute=0, second=0, microsecond=0)
+        cell.point.replace(day=15, hour=12, minute=0)
         for cell in cube.coord('time').cells()])
 
     cube.coord('time').bounds = None
