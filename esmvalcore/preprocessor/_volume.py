@@ -261,18 +261,18 @@ def volume_statistics(
                     volume = grid_volume[z_itr]
                     layer_vol = np.ma.masked_where(
                         cube[time_itr, z_itr].data.mask,
-                        grid_volume[z_itr]).sum()
+                        grid_volume[z_itr].data).sum()
 
                 elif grid_volume.ndim == 4:
                     volume = grid_volume[time_itr, z_itr] 
                     layer_vol = np.ma.masked_where(
                         cube[time_itr, z_itr].data.mask,
-                        grid_volume[time_itr, z_itr]).sum()
+                        grid_volume[time_itr, z_itr].data).sum()
 
                 total = cube[time_itr, z_itr].collapsed(
                     ['longitude', 'latitude'],
                     iris.analysis.MEAN,
-                    weights=volume).data
+                    weights=volume.data).data
             else:
                 raise ValueError('Volume operator ({}) not '
                                  'recognised.'.format(operator))

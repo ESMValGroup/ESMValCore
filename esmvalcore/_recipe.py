@@ -407,8 +407,8 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
             else: 
                 fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
                                          var)
-
-
+       
+            print(fx_var, var['dataset'], var['mip'])
     else:
         raise RecipeError(
             f"Project {var['project']} not supported with fx variables")
@@ -417,7 +417,6 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
-
     return fx_files
 
 
