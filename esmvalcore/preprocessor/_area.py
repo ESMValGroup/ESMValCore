@@ -8,6 +8,8 @@ import logging
 
 import fiona
 import iris
+from iris.exceptions import CoordinateNotFoundError
+
 import numpy as np
 import shapely
 import shapely.ops
@@ -17,8 +19,6 @@ from ._shared import (get_iris_analysis_operation, guess_bounds,
                       operator_accept_weights)
 
 logger = logging.getLogger(__name__)
-
-from iris.exceptions import CoordinateNotFoundError
 
 # slice cube over a restricted area (box)
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
@@ -384,10 +384,10 @@ def fix_coordinate_ordering(cube):
         for i in dim:
             other.remove(i)
     other = tuple(other)
-    
+
     order = time_dim + shape_dim + other
 
-    cube.transpose(new_order = order)
+    cube.transpose(new_order=order)
     return cube
 
 def extract_shape(cube, shapefile, method='contains', crop=True,
