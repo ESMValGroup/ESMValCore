@@ -11,6 +11,7 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
+from pybtex.database import BibliographyData, Entry
 
 import psutil
 import yaml
@@ -573,6 +574,33 @@ class DiagnosticTask(BaseTask):
         logger.debug("Collecting provenance of task %s took %.1f seconds",
                      self.name,
                      time.time() - start)
+
+
+    def _write_citation_file(self):
+        """Write citation information provided from the recorded provenance."""
+        citation_file = os.path.join(self.settings['run_dir'],
+                                     'diagnostic_citation.bibtex')
+
+        # papers describing the diagnostic and recipe
+        bib_entry = BibliographyData({
+            'article-minimal': Entry('article', [
+                ('author', ''),
+                ('title', ''),
+                ('journal', ""),
+                ('year', ''),]),
+        })
+
+        # model data citation information
+
+        # observational data citation information
+
+        # esmvaltool and other scientific software citation
+
+        # scientific compute cluster citation information, if applicable
+
+        # save the file
+        bib_entry.to_string(citation_file, 'bibtex')
+
 
     def __str__(self):
         """Get human readable description."""
