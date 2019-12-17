@@ -363,7 +363,7 @@ def fix_coordinate_ordering(cube):
     ----------
     cube: iris.cube.Cube
        input cube.
-    
+
     Returns
     -------
     iris.cube.Cube
