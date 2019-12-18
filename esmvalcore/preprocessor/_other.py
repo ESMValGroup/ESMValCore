@@ -8,12 +8,12 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def set_to_range(cube, minimum, maximum):
+def clip(cube, minimum=None, maximum=None):
     """
-    Set values to the given range (clipping)
+    Clip values at a specified minimum and/or maximum value
 
-    Values lower than MINIMUM are set to MINIMUM and values
-    higher than MAXIMUM are set to MAXIMUM.
+    Values lower than minimum are set to minimum and values
+    higher than maximum are set to maximum.
 
     Parameters
     ----------

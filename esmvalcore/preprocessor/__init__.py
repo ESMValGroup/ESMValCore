@@ -18,7 +18,7 @@ from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_fillvalues, mask_glaciated, mask_inside_range,
                     mask_landsea, mask_landseaice, mask_outside_range)
 from ._multimodel import multi_model_statistics
-from ._other import set_to_range
+from ._other import clip
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
 from ._regrid import extract_levels, regrid
@@ -70,6 +70,8 @@ __all__ = [
     'mask_below_threshold',
     'mask_inside_range',
     'mask_outside_range',
+    # Other
+    'clip',
     # Region selection
     'extract_region',
     'extract_shape',
@@ -102,8 +104,6 @@ __all__ = [
     # Save to file
     'save',
     'cleanup',
-    # Other
-    'set_to_range',
 ]
 
 DEFAULT_ORDER = tuple(__all__)
