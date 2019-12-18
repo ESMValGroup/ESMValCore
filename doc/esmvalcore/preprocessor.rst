@@ -10,6 +10,7 @@ following the default order in which they are applied:
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
 * :ref:`Vertical interpolation`
+* :ref:`Weighting`
 * :ref:`Land/Sea/Ice masking`
 * :ref:`Horizontal regridding`
 * :ref:`Masking of missing values`
@@ -244,6 +245,50 @@ extract the levels and vertically regrid onto the vertical levels of
 	  points will be masked, otherwise they will be set to NaN.
 
 
+.. _weighting:
+
+Weighting
+=========
+
+.. _land/sea fraction weighting:
+
+Land/sea fraction weighting
+---------------------------
+
+This preprocessor allows weighting of data by land or sea fractions. In other
+words, this function multiplies the given input field by a fraction in the range 0-1 to
+account for the fact that not all grid points are completely land- or sea-covered.
+
+The application of this preprocessor is very important for most carbon cycle variables (and
+other land surface outputs), which are e.g. reported in units of
+:math:`kgC~m^{-2}`. Here, the surface unit actually refers to 'square meter of land/sea' and
+NOT 'square meter of gridbox'. In order to integrate these globally or
+regionally one has to weight by both the surface quantity and the
+land/sea fraction.
+
+For example, to weight an input field with the land fraction, the following
+preprocessor can be used:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_weighting:
+        weighting_landsea_fraction:
+          area_type: land
+          exclude: ['CanESM2', 'reference_dataset']
+
+Allowed arguments for the keyword ``area_type`` are ``land`` (fraction is 1
+for grid cells with only land surface, 0 for grid cells with only sea surface
+and values in between 0 and 1 for coastal regions) and ``sea`` (1 for
+sea, 0 for land, in between for coastal regions). The optional argument
+``exclude`` allows to exclude specific datasets from this preprocessor, which
+is for example useful for climate models which do not offer land/sea fraction
+files. This arguments also accepts the special dataset specifiers
+``reference_dataset`` and ``alternative_dataset``.
+
+See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
+
+
 .. _masking:
 
 Masking
@@ -294,7 +339,7 @@ the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
 vectorized rasters). As mentioned above, the spatial resolution of the the
 Natural Earth masks are much higher than any typical global model (10m for
-land and 50m for ocean masks).
+land and glaciated areas and 50m for ocean masks).
 
 See also :func:`esmvalcore.preprocessor.mask_landsea`.
 
@@ -316,6 +361,23 @@ and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
 As in the case of ``mask_landsea``, the preprocessor automatically retrieves
 the ``fx_files: [sftgif]`` mask.
+
+See also :func:`esmvalcore.preprocessor.mask_landseaice`.
+
+Glaciated masking
+-----------------
+
+For masking out glaciated areas a Natural Earth shapefile is used. To mask
+glaciated areas out, ``mask_glaciated`` can be used:
+
+.. code-block:: yaml
+
+  preprocessors:
+    preproc_mask:
+      mask_glaciated:
+        mask_out: glaciated
+
+and it requires only one argument: ``mask_out``: only ``glaciated``.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
