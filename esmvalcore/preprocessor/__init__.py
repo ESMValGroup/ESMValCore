@@ -102,6 +102,8 @@ __all__ = [
     # Save to file
     'save',
     'cleanup',
+    # Other
+    'set_to_range',
 ]
 
 DEFAULT_ORDER = tuple(__all__)
