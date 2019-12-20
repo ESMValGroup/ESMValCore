@@ -5,6 +5,7 @@ import os
 import re
 from collections import OrderedDict
 from copy import deepcopy
+from pprint import pformat
 
 import yaml
 from netCDF4 import Dataset
@@ -232,19 +233,17 @@ def _augment(base, update):
 
 def _dataset_to_file(variable, config_user):
     """Find the first file belonging to dataset from variable info."""
-    files = get_input_filelist(
-        variable=variable,
-        rootpath=config_user['rootpath'],
-        drs=config_user['drs'],
-    )
+    files = _get_input_files(variable, config_user)
     if not files and variable.get('derive'):
-        first_required = get_required(variable['short_name'])[0]
-        _augment(first_required, variable)
-        files = get_input_filelist(
-            variable=first_required,
-            rootpath=config_user['rootpath'],
-            drs=config_user['drs'],
-        )
+        required_vars = get_required(variable['short_name'],
+                                     variable['project'])
+        for required_var in required_vars:
+            _augment(required_var, variable)
+            _add_cmor_info(required_var, override=True)
+            files = _get_input_files(required_var, config_user)
+            if files:
+                variable = required_var
+                break
     check.data_availability(files, variable)
     return files[0]
 
@@ -315,14 +314,16 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_metadata'] = dict(fix)
 
     # Configure time extraction
-    settings['extract_time'] = {
-        'start_year': variable['start_year'],
-        'end_year': variable['end_year'] + 1,
-        'start_month': 1,
-        'end_month': 1,
-        'start_day': 1,
-        'end_day': 1,
-    }
+    if 'start_year' in variable and 'end_year' in variable \
+            and variable['frequency'] != 'fx':
+        settings['extract_time'] = {
+            'start_year': variable['start_year'],
+            'end_year': variable['end_year'] + 1,
+            'start_month': 1,
+            'end_month': 1,
+            'start_day': 1,
+            'end_day': 1,
+        }
 
     if derive:
         settings['derive'] = {
@@ -377,18 +378,17 @@ def _add_fxvar_keys(fx_var_dict, variable):
         fx_variable['grid'] = variable['grid']
         if 'mip' in fx_var_dict:
             fx_variable['mip'] = fx_var_dict['mip']
-    elif fx_variable['project'] in ['OBS', 'OBS6']:
+    elif fx_variable['project'] in ['OBS', 'OBS6', 'obs4mips']:
         fx_variable['mip'] = 'fx'
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
-
     return fx_variable
 
 
 def _get_correct_fx_file(variable, fx_varname, config_user):
     """Wrapper to standard file getter to recover the correct fx file."""
     var = dict(variable)
-    if var['project'] in ['CMIP5', 'OBS', 'OBS6']:
+    if var['project'] in ['CMIP5', 'OBS', 'OBS6', 'obs4mips']:
         fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
     elif var['project'] == 'CMIP6':
         if fx_varname == 'sftlf':
@@ -401,48 +401,57 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
         elif fx_varname == 'sftgif':
             fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
                                      var)
-    fx_files = get_input_filelist(variable=fx_var,
-                                  rootpath=config_user['rootpath'],
-                                  drs=config_user['drs'])
+    else:
+        raise RecipeError(
+            f"Project {var['project']} not supported with fx variables")
+
+    fx_files = _get_input_files(fx_var, config_user)
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
 
-    logger.info("Using fx files for masking for %s of dataset %s:\n%s",
-                fx_var['short_name'], fx_var['dataset'],
-                fx_files)
-
     return fx_files
 
 
+def _get_landsea_fraction_fx_dict(variable, config_user):
+    """Get dict of available ``sftlf`` and ``sftof`` variables."""
+    fx_dict = {}
+    fx_vars = ['sftlf']
+    if variable['project'] != 'obs4mips':
+        fx_vars.append('sftof')
+    for fx_var in fx_vars:
+        fx_dict[fx_var] = _get_correct_fx_file(variable, fx_var, config_user)
+    return fx_dict
+
+
+def _exclude_dataset(settings, variable, step):
+    """Exclude dataset from specific preprocessor step if requested."""
+    exclude = {
+        _special_name_to_dataset(variable, dataset)
+        for dataset in settings[step].pop('exclude', [])
+    }
+    if variable['dataset'] in exclude:
+        settings.pop(step)
+        logger.debug("Excluded dataset '%s' from preprocessor step '%s'",
+                     variable['dataset'], step)
+
+
+def _update_weighting_settings(settings, variable):
+    """Update settings for the weighting preprocessors."""
+    if 'weighting_landsea_fraction' not in settings:
+        return
+    _exclude_dataset(settings, variable, 'weighting_landsea_fraction')
+
+
 def _update_fx_settings(settings, variable, config_user):
-    """Find and set the FX derive/mask settings."""
-    # update for derive
-    if 'derive' in settings:
-        fx_files = {}
-        for var in get_required(variable['short_name']):
-            if 'fx_files' in var:
-                _augment(var, variable)
-                for fxvar in var['fx_files']:
-                    fx_files[fxvar] = _get_correct_fx_file(var, fxvar,
-                                                           config_user)
-        settings['derive']['fx_files'] = fx_files
-
-    # update for landsea
+    """Find and set the FX mask settings."""
+    msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
     if 'mask_landsea' in settings:
-        fx_files_dict = {}
-        # Configure ingestion of land/sea masks
         logger.debug('Getting fx mask settings now...')
-        settings['mask_landsea']['fx_files'] = []
-        fx_files_dict = {
-            'sftlf': _get_correct_fx_file(variable, 'sftlf', config_user),
-            'sftof': _get_correct_fx_file(variable, 'sftof', config_user)}
-
-        # allow both sftlf and sftof
-        if fx_files_dict['sftlf']:
-            settings['mask_landsea']['fx_files'].append(fx_files_dict['sftlf'])
-        if fx_files_dict['sftof']:
-            settings['mask_landsea']['fx_files'].append(fx_files_dict['sftof'])
+        fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
+        fx_list = [fx_file for fx_file in fx_dict.values() if fx_file]
+        settings['mask_landsea']['fx_files'] = fx_list
+        logger.info(msg, 'land/sea masking', pformat(fx_dict))
 
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')
@@ -452,6 +461,13 @@ def _update_fx_settings(settings, variable, config_user):
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
+        logger.info(msg, 'land/sea ice masking', pformat(fx_files_dict))
+
+    if 'weighting_landsea_fraction' in settings:
+        logger.debug("Getting fx files for landsea fraction weighting now...")
+        fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
+        settings['weighting_landsea_fraction']['fx_files'] = fx_dict
+        logger.info(msg, 'land/sea fraction weighting', pformat(fx_dict))
 
     for step in ('area_statistics', 'volume_statistics'):
         if settings.get(step, {}).get('fx_files'):
@@ -461,6 +477,7 @@ def _update_fx_settings(settings, variable, config_user):
                 fxvar: _get_correct_fx_file(variable, fxvar, config_user)
                 for fxvar in var['fx_files']}
             settings[step]['fx_files'] = fx_files_dict
+            logger.info(msg, step, pformat(fx_files_dict))
 
 
 def _read_attributes(filename):
@@ -477,18 +494,23 @@ def _read_attributes(filename):
 
 
 def _get_input_files(variable, config_user):
-    """Get the input files for a single dataset."""
-    # Find input files locally.
+    """Get the input files for a single dataset (locally and via download)."""
     input_files = get_input_filelist(
         variable=variable,
         rootpath=config_user['rootpath'],
-        drs=config_user['drs'],
-    )
+        drs=config_user['drs'])
 
     # Set up downloading using synda if requested.
     # Do not download if files are already available locally.
     if config_user['synda_download'] and not input_files:
         input_files = synda_search(variable)
+
+    return input_files
+
+
+def _get_ancestors(variable, config_user):
+    """Get the input files for a single dataset and setup provenance."""
+    input_files = _get_input_files(variable, config_user)
 
     logger.info("Using input files for variable %s of dataset %s:\n%s",
                 variable['short_name'], variable['dataset'],
@@ -559,12 +581,7 @@ def _update_multi_dataset_settings(variable, settings):
         if not settings.get(step):
             continue
         # Exclude dataset if requested
-        exclude = {
-            _special_name_to_dataset(variable, dataset)
-            for dataset in settings[step].pop('exclude', [])
-        }
-        if variable['dataset'] in exclude:
-            settings.pop(step)
+        _exclude_dataset(settings, variable, step)
 
 
 def _update_statistic_settings(products, order, preproc_dir):
@@ -666,6 +683,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             config_user=config_user,
         )
         _update_extract_shape(settings, config_user)
+        _update_weighting_settings(settings, variable)
         _update_fx_settings(
             settings=settings, variable=variable,
             config_user=config_user)
@@ -678,7 +696,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         _update_regrid_time(variable, settings)
         ancestors = grouped_ancestors.get(variable['filename'])
         if not ancestors:
-            ancestors = _get_input_files(variable, config_user)
+            ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') and not ancestors:
                 logger.info("Skipping: no data found for %s", variable)
                 continue
@@ -709,7 +727,6 @@ def _get_single_preprocessor_task(variables,
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
 
     if variables[0]['frequency'] == 'fx':
-        profile['extract_time'] = False
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
@@ -792,19 +809,29 @@ def _get_derive_input_variables(variables, config_user):
 
     for variable in variables:
         group_prefix = variable['variable_group'] + '_derive_input_'
-        if not variable.get('force_derivation') and get_input_filelist(
-                variable=variable,
-                rootpath=config_user['rootpath'],
-                drs=config_user['drs']):
+        if not variable.get('force_derivation') and _get_input_files(
+                variable,
+                config_user):
             # No need to derive, just process normally up to derive step
             var = deepcopy(variable)
             append(group_prefix, var)
         else:
             # Process input data needed to derive variable
-            for var in get_required(variable['short_name']):
+            required_vars = get_required(variable['short_name'],
+                                         variable['project'])
+            for var in required_vars:
                 _augment(var, variable)
-                append(group_prefix, var)
+                _add_cmor_info(var, override=True)
+                files = _get_input_files(var, config_user)
+                if var.get('optional') and not files:
+                    logger.info(
+                        "Skipping: no data found for %s which is marked as "
+                        "'optional'", var)
+                else:
+                    append(group_prefix, var)
 
+    # An empty derive_input (due to all variables marked as 'optional' is
+    # handled at a later step
     return derive_input
 
 
@@ -993,12 +1020,11 @@ class Recipe:
             'mip',
             'dataset',
             'project',
-            'start_year',
-            'end_year',
             'preprocessor',
             'diagnostic',
         }
-
+        if 'fx' not in raw_variable.get('mip', ''):
+            required_keys.update({'start_year', 'end_year'})
         for variable in variables:
             _update_from_others(variable, ['cmor_table', 'mip'], datasets)
             institute = get_institutes(variable)

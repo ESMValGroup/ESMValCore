@@ -28,8 +28,8 @@ class Co2(Fix):
         return cube
 
 
-class Nbp(Fix):
-    """Fixes for nbp variable."""
+class Gpp(Fix):
+    """Fixes for gpp variable."""
 
     def fix_data(self, cube):
         """Fix data.
@@ -47,3 +47,7 @@ class Nbp(Fix):
         """
         data = da.ma.masked_equal(cube.core_data(), 1.0e33)
         return cube.copy(data)
+
+
+class Nbp(Gpp):
+    """Fixes for nbp variable."""
