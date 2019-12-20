@@ -363,12 +363,9 @@ def square_composite_shape(request, tmp_path):
     nshape = request.param[2]
     polyg = []
     for n in range(nshape):
-        polyg.append(Polygon([
-            (1.0 + n, 1.0 + slat),
-            (1.0 + n, 1.0),
-            (1.0 + n + slon, 1.0),
-            (1.0 + n + slon, 1.0 + slat)
-            ]))
+        polyg.append(
+            Polygon([(1.0 + n, 1.0 + slat), (1.0 + n, 1.0),
+                     (1.0 + n + slon, 1.0), (1.0 + n + slon, 1.0 + slat)]))
     write_shapefile(polyg, tmp_path / 'test_shape.shp')
 
     # Make corresponding expected masked array
@@ -376,7 +373,7 @@ def square_composite_shape(request, tmp_path):
     vals = np.ones((nshape, min(slat + 2, 5), min(slon + 1 + nshape, 5)))
     mask = vals.copy()
     for n in range(nshape):
-        mask[n, 1: 1 + slat, 1 + n:1 + n + slon] = 0
+        mask[n, 1:1 + slat, 1 + n:1 + n + slon] = 0
     return np.ma.masked_array(vals, mask)
 
 
@@ -426,7 +423,8 @@ def test_extract_composite_shape(make_testcube, square_composite_shape,
 
     result = extract_shape(make_testcube,
                            tmp_path / 'test_shape.shp',
-                           crop=crop, decomposed=decomposed)
+                           crop=crop,
+                           decomposed=decomposed)
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 

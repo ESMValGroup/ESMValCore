@@ -8,17 +8,17 @@ import logging
 
 import fiona
 import iris
-from iris.exceptions import CoordinateNotFoundError
-
 import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
+from iris.exceptions import CoordinateNotFoundError
 
 from ._shared import (get_iris_analysis_operation, guess_bounds,
                       operator_accept_weights)
 
 logger = logging.getLogger(__name__)
+
 
 # slice cube over a restricted area (box)
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
@@ -316,8 +316,11 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
-def _get_masks_from_geometries(geometries, lon, lat,
-                               method='contains', decomposed=False):
+def _get_masks_from_geometries(geometries,
+                               lon,
+                               lat,
+                               method='contains',
+                               decomposed=False):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
@@ -390,7 +393,11 @@ def fix_coordinate_ordering(cube):
     cube.transpose(new_order=order)
     return cube
 
-def extract_shape(cube, shapefile, method='contains', crop=True,
+
+def extract_shape(cube,
+                  shapefile,
+                  method='contains',
+                  crop=True,
                   decomposed=False):
     """Extract a region defined by a shapefile.
 
@@ -437,7 +444,9 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
         if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
             lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
 
-        selections = _get_masks_from_geometries(geometries, lon, lat,
+        selections = _get_masks_from_geometries(geometries,
+                                                lon,
+                                                lat,
                                                 method=method,
                                                 decomposed=decomposed)
 
@@ -446,12 +455,7 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
     for id_, select in selections.items():
         _cube = cube.copy()
         _cube.add_aux_coord(
-            iris.coords.AuxCoord(
-                id_,
-                units='no_unit',
-                long_name="shape_id"
-            )
-        )
+            iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
 
         select = da.broadcast_to(select, _cube.shape)
         _cube.data = da.ma.masked_where(~select, _cube.core_data())
