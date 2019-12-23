@@ -88,9 +88,8 @@ def _fix_cube_attributes(cubes):
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
     _fix_cube_attributes(cubes)
+
     concatenated = iris.cube.CubeList(cubes).concatenate()
-    if len(concatenated) == 1:
-        return concatenated[0]
     if len(concatenated) == 2:
         try:
             concatenated[0].coord('time')
@@ -98,9 +97,11 @@ def concatenate(cubes):
         except iris.exceptions.CoordinateNotFoundError:
             pass
         else:
-            concatenated = _concatenate_two_overlapping_cubes(concatenated)
-            if len(concatenated) == 1:
-                return concatenated[0]
+            concatenated = _concatenate_overlapping_cubes(concatenated)
+
+    if len(concatenated) == 1:
+        return concatenated[0]
+
     logger.error('Can not concatenate cubes into a single one.')
     logger.error('Resulting cubes:')
     for cube in concatenated:
@@ -282,7 +283,7 @@ def _write_ncl_metadata(output_dir, metadata):
     return filename
 
 
-def _concatenate_two_overlapping_cubes(cubes):
+def _concatenate_overlapping_cubes(cubes):
     """Concatenate time-overlapping cubes (two cubes only)."""
     # we arrange [cube1, cube2] so that cube1.start <= cube2.start
     if cubes[0].coord('time').points[0] <= cubes[1].coord('time').points[0]:
