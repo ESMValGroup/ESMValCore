@@ -164,11 +164,7 @@ class CMIP6Info(object):
                     )
                     raise
 
-            axis = coord.axis
-            if not axis:
-                axis = 'none'
-
-            var.coordinates[axis] = coord
+            var.coordinates[dimension] = coord
 
     def _load_coordinates(self):
         self.coords = {}
