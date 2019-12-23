@@ -12,8 +12,8 @@ import iris.exceptions
 import numpy as np
 import yaml
 
-from esmvalcore.preprocessor._time import extract_time
 from .._task import write_ncl_settings
+from ._time import extract_time
 
 logger = logging.getLogger(__name__)
 
