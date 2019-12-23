@@ -17,7 +17,10 @@ def add_scalar_depth_coord(cube, depth=0.0):
                                        long_name='depth',
                                        units=Unit('m'),
                                        attributes={'positive': 'down'})
-    cube.add_aux_coord(depth_coord, ())
+    try:
+        cube.coord('depth')
+    except iris.exceptions.CoordinateNotFoundError:
+        cube.add_aux_coord(depth_coord, ())
     return cube
 
 
@@ -30,7 +33,10 @@ def add_scalar_height_coord(cube, height=2.0):
                                         long_name='height',
                                         units=Unit('m'),
                                         attributes={'positive': 'up'})
-    cube.add_aux_coord(height_coord, ())
+    try:
+        cube.coord('height')
+    except iris.exceptions.CoordinateNotFoundError:
+        cube.add_aux_coord(height_coord, ())
     return cube
 
 
@@ -42,7 +48,10 @@ def add_scalar_typeland_coord(cube, value='default'):
                                           standard_name='area_type',
                                           long_name='Land area type',
                                           units=Unit('no unit'))
-    cube.add_aux_coord(typeland_coord, ())
+    try:
+        cube.coord('area_type')
+    except iris.exceptions.CoordinateNotFoundError:
+        cube.add_aux_coord(typeland_coord, ())
     return cube
 
 
@@ -54,7 +63,10 @@ def add_scalar_typesea_coord(cube, value='default'):
                                          standard_name='area_type',
                                          long_name='Ocean area type',
                                          units=Unit('no unit'))
-    cube.add_aux_coord(typesea_coord, ())
+    try:
+        cube.coord('area_type')
+    except iris.exceptions.CoordinateNotFoundError:
+        cube.add_aux_coord(typesea_coord, ())
     return cube
 
 
