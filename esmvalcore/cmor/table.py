@@ -388,7 +388,11 @@ class VariableInfo(JsonInfo):
         self.dimensions = []
         """List of dimensions"""
         self.coordinates = {}
-        """Coordinates"""
+        """Coordinates
+
+        This is a dict with the names of the dimensions as keys and
+        CoordinateInfo objects as values.
+        """
 
         self._json_data = None
 
