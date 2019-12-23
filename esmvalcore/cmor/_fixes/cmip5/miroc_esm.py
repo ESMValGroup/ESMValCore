@@ -79,7 +79,7 @@ class AllVars(Fix):
                 plev = DimCoord.from_coord(old)
                 plev.var_name = 'plev'
                 plev.standard_name = 'air_pressure'
-                plev.long_name = 'Pressure '
+                plev.long_name = 'pressure'
                 cube.add_dim_coord(plev, dims)
             except CoordinateNotFoundError:
                 pass
