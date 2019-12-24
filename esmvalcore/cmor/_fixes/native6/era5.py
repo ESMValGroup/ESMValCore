@@ -6,7 +6,94 @@ from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
 
-class AllVars(Fix):
+class FixEra5(Fix):
+    """Fixes for ERA5 variables"""
+
+    @staticmethod
+    def _frequency(cube):
+        if not cube.coords(axis='T'):
+            return 'fx'
+        coord = cube.coord(axis='T')
+        if 27 < coord.points[1] - coord.points[0] < 32:
+            return 'monthly'
+        return 'hourly'
+
+class Accumulated(FixEra5):
+    """Fixes for accumulated variables."""
+
+    def _fix_frequency(self, cube):
+        if self._frequency(cube) == 'monthly':
+            cube.units = cube.units * 'd-1'
+        elif self._frequency(cube) == 'hourly':
+            cube.units = cube.units * 'h-1'
+        return cube
+
+class Hydrological(Accumulated):
+    """Fixes for accumulated hydrological variables."""
+
+    def _fix_units(self, cube):
+        cube.units = cube.units * 'kg m-3'
+        cube.data = cube.core_data() * 1000.
+
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            self._fix_frequency(cube)
+            self._fix_units(cube)
+        return cubes
+
+# radiation fixes: 'rls', 'rsds', 'rsdt', 'rss'
+
+class Radiation(Accumulated):
+    """Fixes for accumulated radiation variables."""
+
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            cube.attributes['positive'] = 'down'
+            self._fix_frequency(cube)
+        return cubes
+
+class Evspsbl(Hydrological):
+    """Fixes for evspsbl."""
+
+class Mrro(Hydrological):
+    """Fixes for evspsbl."""
+
+class Prsn(Hydrological):
+    """Fixes for evspsbl."""
+
+class Pr(Hydrological):
+    """Fixes for evspsbl."""
+
+class Evspsblpot(Hydrological):
+    """Fixes for evspsbl."""
+
+class Rss(Radiation):
+    """Fixes for Rss."""
+
+class Rsds(Radiation):
+    """Fixes for Rsds."""
+
+class Rsdt(Radiation):
+    """Fixes for Rsdt."""
+
+class Rls(Radiation):
+    """Fixes for Rls."""
+
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            cube.attributes['positive'] = 'down'
+        return cubes
+
+class Clt(Fix):
+    """Fixes for clt."""
+
+    def fix_metadata(self, cubes):
+        """Fix units."""
+        for cube in cubes:
+            cube.units = 1
+        return cubes   
+
+class AllVars(FixEra5):
     """Fixes for all variables."""
 
     def _fix_coordinates(self, cube):
@@ -43,18 +130,9 @@ class AllVars(Fix):
 
         return cube
 
-    @staticmethod
-    def _frequency(cube):
-        if not cube.coords(axis='T'):
-            return 'fx'
-        coord = cube.coord(axis='T')
-        if 27 < coord.points[1] - coord.points[0] < 32:
-            return 'monthly'
-        return 'hourly'
-
     def _fix_monthly_time_coord(self, cube):
         """Set the monthly time coordinates to the middle of the month."""
-        if self._frequency(cube) == 'mon':
+        if self._frequency(cube) == 'monthly':
             coord = cube.coord(axis='T')
             end = []
             for cell in coord.cells():
@@ -71,26 +149,13 @@ class AllVars(Fix):
 
     def _fix_units(self, cube):
         """Fix units."""
-        if cube.var_name == 'clt':
-            # Correct cloud cover units from (0 - 1) to 1
+        if cube.units == '(0 - 1)':
+            # Correct dimensionless units to 1 from ecmwf format '(0 - 1)'
             cube.units = 1
-        if cube.var_name in {'evspsbl', 'mrro', 'prsn', 'pr', 'evspsblpot'}:
+        if cube.units == 'm of water equivalent':
             # Correct units from m of water to kg of water per m2
             cube.units = 'kg m-2'
             cube.data = cube.core_data() * 1000.
-
-        if cube.var_name in {
-                'rss', 'rsds', 'rsdt', 'evspsbl', 'mrro', 'prsn', 'pr',
-                'evspsblpot'
-        }:
-            if self._frequency(cube) == 'monthly':
-                cube.units = cube.units * 'd-1'
-            elif self._frequency(cube) == 'hourly':
-                cube.units = cube.units * 'h-1'
-
-        if cube.var_name in {'rls', 'rsds', 'rsdt', 'rss'}:
-            # Radiation fluxes are positive in downward direction
-            cube.attributes['positive'] = 'down'
 
         cube.convert_units(self.vardef.units)
 
