@@ -279,6 +279,7 @@ class DiagnosticTask(BaseTask):
     def _initialize_cmd(self, script):
         """Create a an executable command from script."""
         diagnostics_root = os.path.join(DIAGNOSTICS_PATH, 'diag_scripts')
+        script = os.path.expanduser(script)
         script_file = os.path.abspath(os.path.join(diagnostics_root, script))
 
         if not os.path.isfile(script_file):
@@ -436,7 +437,7 @@ class DiagnosticTask(BaseTask):
             if exc.errno == errno.ENOEXEC:
                 logger.error(
                     "Diagnostic script has its executable bit set, but is "
-                    "not executable. To fix this run:\nchmod -x %s", cmd[0])
+                    "not executable. To fix this run:\nchmod +x %s", cmd[0])
                 logger.error(
                     "You may also need to fix this in the git repository.")
             raise
