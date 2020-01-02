@@ -28,70 +28,63 @@ class Accumulated(FixEra5):
             cube.units = cube.units * 'h-1'
         return cube
 
-class Hydrological(Accumulated):
-    """Fixes for accumulated hydrological variables."""
-
-    def _fix_units(self, cube):
-        cube.units = cube.units * 'kg m-3'
-        cube.data = cube.core_data() * 1000.
-
     def fix_metadata(self, cubes):
+        super.fix_metadata(cubes)
         for cube in cubes:
             self._fix_frequency(cube)
+        return cubes
+
+class Hydrological(FixEra5):
+    """Fixes for accumulated hydrological variables."""
+
+    @staticmethod
+    def _fix_units(cube):
+        cube.units = cube.units * 'kg m-3'
+        cube.data = cube.core_data() * 1000.
+        return cube
+
+    def fix_metadata(self, cubes):
+        super.fix_metadata(cubes)
+        for cube in cubes:
             self._fix_units(cube)
         return cubes
 
-# radiation fixes: 'rls', 'rsds', 'rsdt', 'rss'
-
-class Radiation(Accumulated):
+class Radiation(FixEra5):
     """Fixes for accumulated radiation variables."""
 
     def fix_metadata(self, cubes):
+        super.fix_metadata(cubes)
         for cube in cubes:
             cube.attributes['positive'] = 'down'
-            self._fix_frequency(cube)
         return cubes
 
-class Evspsbl(Hydrological):
+
+class Evspsbl(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
-class Mrro(Hydrological):
+class Mrro(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
-class Prsn(Hydrological):
+class Prsn(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
-class Pr(Hydrological):
+class Pr(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
-class Evspsblpot(Hydrological):
+class Evspsblpot(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
-class Rss(Radiation):
+class Rss(Radiation, Accumulated):
     """Fixes for Rss."""
 
-class Rsds(Radiation):
+class Rsds(Radiation, Accumulated):
     """Fixes for Rsds."""
 
-class Rsdt(Radiation):
+class Rsdt(Radiation, Accumulated):
     """Fixes for Rsdt."""
 
 class Rls(Radiation):
     """Fixes for Rls."""
-
-    def fix_metadata(self, cubes):
-        for cube in cubes:
-            cube.attributes['positive'] = 'down'
-        return cubes
-
-class Clt(Fix):
-    """Fixes for clt."""
-
-    def fix_metadata(self, cubes):
-        """Fix units."""
-        for cube in cubes:
-            cube.units = 1
-        return cubes   
 
 class AllVars(FixEra5):
     """Fixes for all variables."""
