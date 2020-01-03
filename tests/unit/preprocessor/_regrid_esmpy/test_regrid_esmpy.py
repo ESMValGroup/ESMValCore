@@ -107,12 +107,12 @@ class TestHelpers(tests.Test):
             lat_2d_pre_bounds[:-1, :-1], lat_2d_pre_bounds[:-1, 1:],
             lat_2d_pre_bounds[1:, 1:], lat_2d_pre_bounds[1:, :-1]
         ],
-                                 axis=2)
+            axis=2)
         lon_2d_bounds = np.stack([
             lon_2d_pre_bounds[:-1, :-1], lon_2d_pre_bounds[:-1, 1:],
             lon_2d_pre_bounds[1:, 1:], lon_2d_pre_bounds[1:, :-1]
         ],
-                                 axis=2)
+            axis=2)
         self.lat_1d = mock.Mock(
             iris.coords.DimCoord,
             standard_name='latitude',
@@ -254,6 +254,7 @@ class TestHelpers(tests.Test):
             coords=coords,
         )
         self.cube.__getitem__ = mock.Mock(return_value=self.cube)
+        self.cube.aux_coords = []
         self.unmasked_cube = mock.Mock(
             spec=iris.cube.Cube,
             dtype=np.float32,
@@ -612,6 +613,7 @@ class TestHelpers(tests.Test):
         mock_get_empty_data.return_value = mock.sentinel.empty_data
         src_rep = get_grid_representants(src, self.cube)[0]
         self.assertEqual(src, src_rep)
+        mock_cube.aux_coords = []
         mock_cube.assert_called_once_with(
             data=mock.sentinel.empty_data,
             standard_name=src.standard_name,
@@ -621,6 +623,7 @@ class TestHelpers(tests.Test):
             attributes=src.attributes,
             cell_methods=src.cell_methods,
             dim_coords_and_dims=[(self.depth, 0)],
+            aux_coords_and_dims=[],
         )
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.get_grid_representant',
@@ -631,6 +634,7 @@ class TestHelpers(tests.Test):
                                            mock_get_empty_data):
         """Test extraction of grid representants from 2 spatial d cube."""
         src = self.cube
+        mock_cube.aux_coords = []
         mock_get_empty_data.return_value = mock.sentinel.empty_data
         src_rep = get_grid_representants(src, self.cube)[0]
         self.assertEqual(src, src_rep)
@@ -643,6 +647,7 @@ class TestHelpers(tests.Test):
             attributes=src.attributes,
             cell_methods=src.cell_methods,
             dim_coords_and_dims=[],
+            aux_coords_and_dims=[],
         )
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.map_slices')

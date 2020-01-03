@@ -1,0 +1,102 @@
+# YAML 1.2
+---
+abstract: "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts."
+authors:
+  -
+    affiliation: "NLeSC, Netherlands"
+    family-names: Andela
+    given-names: Bouwe
+    orcid: "https://orcid.org/0000-0001-9005-8940"
+  -
+    affiliation: "DLR, Germany"
+    family-names: Bock
+    given-names: Lisa
+    orcid: "https://orcid.org/0000-0001-7058-5938"
+  -
+    affiliation: "DLR, Germany"
+    family-names: Broetz
+    given-names: Bjoern
+  -
+    affiliation: "NLeSC, Netherlands"
+    family-names: Diblen
+    given-names: Faruk
+  -
+    affiliation: "MetOffice, UK"
+    family-names: Dreyer
+    given-names: Laura
+  -
+    affiliation: "NLeSC, Netherlands"
+    family-names: Drost
+    given-names: Niels
+    orcid: "https://orcid.org/0000-0001-9795-7981"
+  -
+    affiliation: "MetOffice, UK"
+    family-names: Earnshaw
+    given-names: Paul
+  -
+    affiliation: "DLR, Germany"
+    family-names: Eyring
+    given-names: Veronika
+    orcid: "https://orcid.org/0000-0002-6887-4885"
+  -
+    affiliation: "DLR, Germany"
+    family-names: Hassler
+    given-names: Birgit
+    orcid: "https://orcid.org/0000-0003-2724-709X"
+  -
+    affiliation: "AWI, Germany"
+    family-names: Koldunov
+    given-names: Nikolay
+    orcid: "https://orcid.org/0000-0002-3365-8146"
+  -
+    affiliation: "DLR, Germany"
+    family-names: Lauer
+    given-names: Axel
+    orcid: "https://orcid.org/0000-0002-9270-1044"
+  -
+    affiliation: "MetOffice, UK"
+    family-names: Little
+    given-names: Bill
+  -
+    affiliation: "BSC, Spain"
+    family-names: Loosveldt-Tomas
+    given-names: Saskia
+  -
+    affiliation: "PML, UK"
+    name-particle: de
+    family-names: Mora
+    given-names: Lee
+    orcid: "https://orcid.org/0000-0002-5080-3149"
+  -
+    affiliation: "URead, UK"
+    family-names: Predoi
+    given-names: Valeriu
+    orcid: "https://orcid.org/0000-0002-9729-6578"
+  -
+    affiliation: "DLR, Germany"
+    family-names: Righi
+    given-names: Mattia
+    orcid: "https://orcid.org/0000-0003-3827-5950"
+  -
+    affiliation: "DLR, Germany"
+    family-names: Schlund
+    given-names: Manuel
+  -
+    affiliation: "BSC, Spain"
+    family-names: Vegas-Regidor
+    given-names: Javier
+    orcid: "https://orcid.org/0000-0003-0096-4291"
+  -
+    affiliation: "SMHI, Sweden"
+    family-names: Zimmermann
+    given-names: Klaus
+
+cff-version: "1.0.3"
+date-released: 2019-10-31
+doi: "10.5281/zenodo.3387139"
+license: "Apache-2.0"
+message: "If you use this software, please cite it using these metadata."
+repository-code: "https://github.com/ESMValGroup/ESMValCore/"
+title: ESMValCore
+version: "v2.0.0b3"
+...

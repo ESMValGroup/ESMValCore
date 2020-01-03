@@ -5,7 +5,7 @@
 # conda build . -c conda-forge -c esmvalgroup
 
 # Package version number
-{% set version = "2.0.0b0" %}
+{% set version = "2.0.0b3" %}
 
 package:
   name: esmvalcore
@@ -22,28 +22,29 @@ build:
   # Increment the build number when building a new conda package of the same
   # esmvalcore version, reset to 0 when building a new version.
   number: 0
+  noarch: python
   script: |
       python setup.py install --single-version-externally-managed --record=/tmp/record.txt
 
 requirements:
   build:
     - git
-    - python {{ python }}
+    - python>=3.6,<3.8
     # Normally installed via pip:
     - pytest-runner
     - setuptools_scm
   run:
     # esmvaltool
-    - python
+    - python>=3.6,<3.8
     - libunwind  # specifically for Python3.7+
     - graphviz
-    - iris>=2.2
-    - matplotlib<3,>=2  # required by iris
+    - iris>=2.2.1
     - python-stratify
     # Normally installed via pip:
     - cf-units
     - cython  # required by cf-units but not automatically installed
     - esmpy
+    - fiona
     - nc-time-axis
     - netCDF4
     - numba
@@ -52,7 +53,8 @@ requirements:
     - psutil
     - pydot
     - pyyaml
-    - yamale  # in esmvalgroup and birdhouse channel
+    - shapely
+    - yamale  # in esmvalgroup channel
 
 test:
   # TODO: add unit tests? This seems to require installing the tests
@@ -68,5 +70,5 @@ about:
   home: https://www.esmvaltool.org
   license: Apache License, Version 2.0
   license_file: LICENSE
-  summary: "ESMValTool Core: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP."
-  description: "ESMValTool Core: core functionalities for the ESMValTool, a community diagnostic and performance metrics tool for routine evaluation of Earth system models in CMIP."
+  summary: "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts."
+  description: "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts."

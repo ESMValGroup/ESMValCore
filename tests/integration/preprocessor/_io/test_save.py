@@ -17,6 +17,7 @@ class TestSave(unittest.TestCase):
     """Tests for :func:`esmvalcore.preprocessor.save`"""
 
     def setUp(self):
+        """Prepare tests."""
         self.temp_files = []
 
     def tearDown(self):

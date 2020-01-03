@@ -19,7 +19,7 @@ jobs:
           # Update/Create Conda environment and run tests
           command: |
             . /opt/conda/etc/profile.d/conda.sh
-            conda update -y conda
+            # conda update -y conda
             conda env update
             conda activate esmvaltool
             python setup.py test
@@ -48,10 +48,10 @@ jobs:
             set -x
             mkdir /logs
             # Install
-            conda update -y conda > /logs/conda.txt 2>&1
+            # conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
-            conda install -yS r-base r-yaml julia ncl -c conda-forge
+            conda install -yS r-base r-yaml ncl -c conda-forge
             pip install . > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
@@ -74,8 +74,41 @@ jobs:
       - run:
           when: always
           command: |
-            pip install codacy-coverage
-            python-codacy-coverage -r test-reports/coverage.xml
+            if [[ -v CODACY_PROJECT_TOKEN ]]
+            then
+              echo Uploading coverage report
+              pip install codacy-coverage
+              python-codacy-coverage -r test-reports/coverage.xml
+            else
+              echo Not uploading coverage report
+            fi
+
+  documentation:
+    # Test building documentation
+    working_directory: /doc
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - restore_cache:
+          key: documentation-{{ .Branch }}
+      - run:
+          command: |
+            mkdir /logs
+            # Install
+            pip install -r doc/requirements.txt > /logs/install.txt 2>&1
+            pip install sphinx sphinx_rtd_theme >> /logs/install.txt 2>&1
+            # Log versions
+            dpkg -l > /logs/versions.txt
+            pip freeze > /logs/requirements.txt
+            # Test building documentation
+            MPLBACKEND=Agg python setup.py build_sphinx --warning-is-error
+      - save_cache:
+          key: documentation-{{ .Branch }}
+          paths:
+            - ".eggs"
+      - store_artifacts:
+          path: /logs
 
   develop:
     # Test development installation
@@ -90,9 +123,10 @@ jobs:
             set -x
             mkdir /logs
             # Install
-            conda update -y conda > /logs/conda.txt 2>&1
+            # conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
+            conda install -yS r-base r-yaml ncl -c conda-forge
             pip install -e .[develop] > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
@@ -101,32 +135,6 @@ jobs:
             # Test installation
             esmvaltool -h
             python setup.py test --addopts --installation
-      - store_artifacts:
-          path: /logs
-
-  doc:
-    # Test building documentation
-    working_directory: /doc
-    docker:
-      - image: continuumio/miniconda3
-    steps:
-      - checkout
-      - run:
-          command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            set -x
-            mkdir /logs
-            # Install
-            conda update -y conda > /logs/conda.txt 2>&1
-            conda env update >> /logs/conda.txt 2>&1
-            set +x; conda activate esmvaltool; set -x
-            pip install -e .[develop] > /logs/install.txt 2>&1
-            # Log versions
-            dpkg -l > /logs/versions.txt
-            conda env export > /logs/environment.yml
-            pip freeze > /logs/requirements.txt
-            # Test building documentation
-            python setup.py build_sphinx
       - store_artifacts:
           path: /logs
 
@@ -143,7 +151,7 @@ jobs:
             set -x
             # Install prerequisites
             mkdir /logs
-            conda update -y conda > /logs/conda_base.txt 2>&1
+            # conda update -y conda > /logs/conda_base.txt 2>&1
             conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
@@ -165,7 +173,7 @@ jobs:
             set -x
             # Install prerequisites
             mkdir /logs
-            conda update -y conda > /logs/conda.txt 2>&1
+            # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
             conda create -y --name esmvaltool
             set +x; conda activate esmvaltool; set -x
@@ -182,7 +190,10 @@ workflows:
   commit:
     jobs:
       - test
-      - install
+      - install:
+          requires:
+            - test
+      - documentation
   nightly:
     triggers:
       - schedule:
@@ -195,7 +206,7 @@ workflows:
     jobs:
       - test
       - install
+      - documentation
       - develop
-      - doc
       - conda_build
       - conda_install

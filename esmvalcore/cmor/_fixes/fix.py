@@ -1,6 +1,7 @@
 """Contains the base class for dataset fixes"""
 import importlib
 import os
+import inspect
 
 
 class Fix(object):
@@ -76,7 +77,7 @@ class Fix(object):
             Variable's cube
         """
         if short_name is None:
-            short_name = self.__class__.__name__
+            short_name = self.__class__.__name__.lower()
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
@@ -102,10 +103,10 @@ class Fix(object):
         return cube
 
     def __eq__(self, other):
-        return type(self) == type(other)
+        return isinstance(self, other.__class__)
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self.__eq__(other)
 
     @staticmethod
     def get_fixes(project, dataset, variable):
@@ -134,18 +135,21 @@ class Fix(object):
         list(Fix)
             Fixes to apply for the given data
         """
-        project = project.replace('-', '_')
-        dataset = dataset.replace('-', '_')
-        variable = variable.replace('-', '_')
+        project = project.replace('-', '_').lower()
+        dataset = dataset.replace('-', '_').lower()
+        variable = variable.replace('-', '_').lower()
 
         fixes = []
         try:
             fixes_module = importlib.import_module(
                 'esmvalcore.cmor._fixes.{0}.{1}'.format(project, dataset))
+
+            classes = inspect.getmembers(fixes_module, inspect.isclass)
+            classes = dict((name.lower(), value) for name, value in classes)
             for fix_name in ('allvars', variable):
                 try:
-                    fixes.append(getattr(fixes_module, fix_name)())
-                except AttributeError:
+                    fixes.append(classes[fix_name]())
+                except KeyError:
                     pass
         except ImportError:
             pass

@@ -175,9 +175,12 @@ class Test(tests.Test):
                 self.time, self.z, self.src_latitude, self.src_longitude
             ]
             contains_dimension = kwargs.get('contains_dimension', None)
-            if contains_dimension is not None:
-                return [dim_coords_list[contains_dimension]]
             dim_coords = kwargs.get('dim_coords', None)
+            if contains_dimension is not None:
+                if dim_coords:
+                    return [dim_coords_list[contains_dimension]]
+                else:
+                    return []
             if dim_coords:
                 return dim_coords_list
             return [self.scalar_coord] + dim_coords_list
@@ -217,6 +220,7 @@ class Test(tests.Test):
             units=cf_units.Unit('K'),
             attributes={},
             cell_methods={},
+            aux_coords=[],
             __getitem__=lambda a, b: mock.sentinel.src_data,
         )
         self.src_repr = mock.Mock(
@@ -224,12 +228,14 @@ class Test(tests.Test):
             dtype=np.float32,
             coords=src_repr_coords,
             ndim=2,
+            aux_coords=[],
         )
         self.dst_repr = mock.Mock(
             spec=iris.cube.Cube,
             dtype=np.float32,
             coords=dst_repr_coords,
             shape=(2, 2),
+            aux_coords=[],
         )
 
     @mock.patch('esmvalcore.preprocessor._mapping.get_empty_data')
@@ -237,6 +243,7 @@ class Test(tests.Test):
     def test_map_slices(self, mock_cube, mock_get_empty_data):
         """Test map_slices."""
         mock_get_empty_data.return_value = mock.sentinel.empty_data
+        mock_cube.aux_coords = []
         dst = map_slices(self.src_cube, lambda s: np.ones((2, 2)),
                          self.src_repr, self.dst_repr)
         self.assertEqual(dst, mock_cube.return_value)
@@ -252,4 +259,5 @@ class Test(tests.Test):
             attributes=self.src_cube.attributes,
             cell_methods=self.src_cube.cell_methods,
             dim_coords_and_dims=dim_coords_and_dims,
+            aux_coords_and_dims=[],
         )
