@@ -44,6 +44,13 @@ class TestGetStartEndYear(unittest.TestCase):
         self.assertEqual(1980, start)
         self.assertEqual(1980, end)
 
+    def test_one_year_in_the_middle(self):
+        """Test parse files with one year in the middle"""
+        start, end = get_start_end_year(
+            'var_control-1950_whatever.nc')
+        self.assertEqual(1950, start)
+        self.assertEqual(1950, end)
+
     def test_full_dates_at_the_start(self):
         """Test parse files with two dates at the start"""
         start, end = get_start_end_year('19800101-19811231_var_whatever.nc')
@@ -53,6 +60,13 @@ class TestGetStartEndYear(unittest.TestCase):
     def test_one_fulldate_at_the_start(self):
         """Test parse files with one date at the start"""
         start, end = get_start_end_year('19800101_var_whatever.nc')
+        self.assertEqual(1980, start)
+        self.assertEqual(1980, end)
+        
+    def test_one_fulldate_in_the_middle(self):
+        """Test parse files with one date in the middle"""
+        start, end = get_start_end_year(
+            'var_control-19800101_whatever.nc')
         self.assertEqual(1980, start)
         self.assertEqual(1980, end)
 
