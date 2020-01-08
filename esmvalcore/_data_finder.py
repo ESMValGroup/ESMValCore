@@ -40,6 +40,10 @@ def get_start_end_year(filename):
     present (e.g. including a version number), we assume that the last
     number represents the date.
     """
+    # Strip only filename from full path (and discard extension?)
+    # filename = os.path.splitext(filename)[0]
+    filename = filename.split(os.sep)[-1]
+
     # Check for a block of two potential dates separated by _ or -
     daterange = re.findall(r'([0-9]{4,8}[-_][0-9]{4,8})', filename)
     if daterange:
@@ -48,6 +52,7 @@ def get_start_end_year(filename):
         end_year = end_date[:4]
     else:
         dates = re.findall(r'([0-9]{4,8})', filename)
+        print(dates)
         if not dates:
             raise ValueError('Name {0} does not match a recognized '
                              'pattern'.format(filename))
@@ -61,9 +66,6 @@ def get_start_end_year(filename):
             else:
                 raise ValueError('Name {0} does not match a recognized '
                                  'pattern'.format(filename))
-
-        # Interpret the first number as the single year
-        start_year = end_year = dates[0][:4]
 
     logger.debug("Found start_year %s and end_year %s", start_year, end_year)
     return int(start_year), int(end_year)
