@@ -105,8 +105,6 @@ class CMORCheck():
         self.report_warnings(logger)
         self.report_errors()
 
-        if self.frequency != 'fx':
-            self._add_auxiliar_time_coordinates()
         return self._cube
 
     def report_errors(self):
@@ -649,7 +647,6 @@ class CMORCheck():
         msg = message.format(*args)
         self._debug_messages.append(msg)
 
-    def _add_auxiliar_time_coordinates(self):
 
 def _get_cmor_checker(table,
                       mip,
