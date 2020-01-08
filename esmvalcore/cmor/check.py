@@ -80,8 +80,7 @@ class CMORCheck():
         homogenize some data:
 
             - Equivalent calendars will all default to the same name.
-            - Auxiliary coordinates year, month_number, day_of_month and
-              day_of_year will be added for the time axis.
+            - Time units will be set to days since 1850-01-01
 
         Raises
         ------
@@ -654,11 +653,8 @@ class CMORCheck():
         coords = [coord.name() for coord in self._cube.aux_coords]
         if 'day_of_month' not in coords:
             iris.coord_categorisation.add_day_of_month(self._cube, 'time')
-        if 'day_of_year' not in coords:
-            iris.coord_categorisation.add_day_of_year(self._cube, 'time')
         if 'month_number' not in coords:
             iris.coord_categorisation.add_month_number(self._cube, 'time')
-
 
 
 def _get_cmor_checker(table,
