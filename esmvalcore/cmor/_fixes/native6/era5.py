@@ -39,7 +39,7 @@ class Hydrological(FixEra5):
 
     @staticmethod
     def _fix_units(cube):
-        cube.units = cube.units * 'kg m-3'
+        cube.units = 'kg m-2'
         cube.data = cube.core_data() * 1000.
         return cube
 
@@ -57,7 +57,6 @@ class Radiation(FixEra5):
         for cube in cubes:
             cube.attributes['positive'] = 'down'
         return cubes
-
 
 class Evspsbl(Hydrological, Accumulated):
     """Fixes for evspsbl."""
@@ -143,11 +142,6 @@ class AllVars(FixEra5):
 
     def _fix_units(self, cube):
         """Fix units."""
-        if cube.units == 'm of water equivalent':
-            # Correct units from m of water to kg of water per m2
-            cube.units = 'kg m-2'
-            cube.data = cube.core_data() * 1000.
-
         cube.convert_units(self.vardef.units)
 
     def fix_metadata(self, cubes):
