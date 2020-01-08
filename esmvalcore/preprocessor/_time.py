@@ -200,13 +200,14 @@ def daily_statistics(cube, operator='mean'):
     iris.cube.Cube
         Daily statistics cube
     """
-    if not cube.coords('day_of_year'):
-        iris.coord_categorisation.add_day_of_year(cube, 'time')
-    if not cube.coords('year'):
-        iris.coord_categorisation.add_year(cube, 'time')
+    iris.coord_categorisation.add_day_of_year(cube, 'time')
+    iris.coord_categorisation.add_year(cube, 'time')
 
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(['day_of_year', 'year'], operator)
+
+    cube.remove_coord('day_of_year')
+    cube.remove_coord('year')
     return cube
 
 

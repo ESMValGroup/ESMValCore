@@ -658,8 +658,7 @@ class CMORCheck():
             iris.coord_categorisation.add_day_of_year(self._cube, 'time')
         if 'month_number' not in coords:
             iris.coord_categorisation.add_month_number(self._cube, 'time')
-        if 'year' not in coords:
-            iris.coord_categorisation.add_year(self._cube, 'time')
+
 
 
 def _get_cmor_checker(table,
