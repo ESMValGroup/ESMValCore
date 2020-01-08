@@ -133,8 +133,10 @@ native6:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}'
+    era5cli: 'Tier{tier}/{dataset}'
   input_file:
     default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
+    era5cli: 'era5_{era5_name}*{era5_freq}.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_{start_year}-{end_year}'
   cmor_type: 'CMIP6'
 

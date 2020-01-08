@@ -32,52 +32,41 @@ def find_files(dirnames, filenames):
 def get_start_end_year(filename):
     """Get the start and end year from a file name.
 
-    This works for filenames matching
-
-    *[-,_]YYYY*[-,_]YYYY*.*
-      or
-    *[-,_]YYYY*.*
-      or
-    YYYY*[-,_]*.*
-      or
-    YYYY*[-,_]YYYY*[-,_]*.*
-      or
-    YYYY*[-,_]*[-,_]YYYY*.* (Does this make sense? Is this worth catching?)
+    We assume that the filename *must* contain at least 1 year/date.
+    We look for four-to-eight-digit numbers.
+    If two potential dates are separated by either - or _,
+    we interpret this as the _daterange_ (startdate_enddate).
+    If no date range is present, but multiple potential dates are
+    present (e.g. including a version number), we assume that the last
+    number represents the date.
     """
-    name = os.path.splitext(filename)[0]
-
-    filename = name.split(os.sep)[-1]
-    filename_list = [elem.split('-') for elem in filename.split('_')]
-    filename_list = [elem for sublist in filename_list for elem in sublist]
-
-    pos_ydates = [elem.isdigit() and len(elem) >= 4 for elem in filename_list]
-    pos_ydates_l = list(pos_ydates)
-    pos_ydates_r = list(pos_ydates)
-
-    for ind, _ in enumerate(pos_ydates_l):
-        if ind != 0:
-            pos_ydates_l[ind] = (pos_ydates_l[ind - 1] and pos_ydates_l[ind])
-
-    for ind, _ in enumerate(pos_ydates_r):
-        if ind != 0:
-            pos_ydates_r[-ind - 1] = (pos_ydates_r[-ind]
-                                      and pos_ydates_r[-ind - 1])
-
-    dates = [
-        filename_list[ind] for ind, _ in enumerate(pos_ydates)
-        if pos_ydates_r[ind] or pos_ydates_l[ind]
-    ]
-
-    if len(dates) == 1:
-        start_year = int(dates[0][:4])
-        end_year = start_year
-    elif len(dates) == 2:
-        start_year, end_year = int(dates[0][:4]), int(dates[1][:4])
+    # Check for a block of two potential dates separated by _ or -
+    daterange = re.findall(r'([0-9]{4,8}[-_][0-9]{4,8})', filename)
+    if daterange:
+        start_date, end_date = re.findall(r'([0-9]{4,8})', daterange[0])
+        start_year = start_date[:4]
+        end_year = end_date[:4]
     else:
-        raise ValueError('Name {0} dates do not match a recognized '
-                         'pattern'.format(name))
+        dates = re.findall(r'([0-9]{4,8})', filename)
+        if not dates:
+            raise ValueError('Name {0} does not match a recognized '
+                             'pattern'.format(filename))
+        elif len(dates) == 1:
+            start_year = end_year = dates[0][:4]
+        else:
+            # Check for dates at start or end of filename
+            outerdates = re.findall(r'^[0-9]{4,8}|[0-9]{4,8}(?=\.)', filename)
+            if len(outerdates) == 1:
+                start_year = end_year = outerdates[0][:4]
+            else:
+                raise ValueError('Name {0} does not match a recognized '
+                                 'pattern'.format(filename))
 
-    return start_year, end_year
+        # Interpret the first number as the single year
+        start_year = end_year = dates[0][:4]
+
+    logger.debug("Found start_year %s and end_year %s", start_year, end_year)
+    return int(start_year), int(end_year)
 
 
 def select_files(filenames, start_year, end_year):
