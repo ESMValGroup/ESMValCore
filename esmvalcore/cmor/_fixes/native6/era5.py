@@ -29,13 +29,13 @@ class Accumulated(FixEra5):
         return cube
 
     def fix_metadata(self, cubes):
-        super.fix_metadata(cubes)
+        super().fix_metadata(cubes)
         for cube in cubes:
             self._fix_frequency(cube)
         return cubes
 
 class Hydrological(FixEra5):
-    """Fixes for accumulated hydrological variables."""
+    """Fixes for hydrological variables."""
 
     @staticmethod
     def _fix_units(cube):
@@ -44,7 +44,7 @@ class Hydrological(FixEra5):
         return cube
 
     def fix_metadata(self, cubes):
-        super.fix_metadata(cubes)
+        super().fix_metadata(cubes)
         for cube in cubes:
             self._fix_units(cube)
         return cubes
@@ -53,7 +53,7 @@ class Radiation(FixEra5):
     """Fixes for accumulated radiation variables."""
 
     def fix_metadata(self, cubes):
-        super.fix_metadata(cubes)
+        super().fix_metadata(cubes)
         for cube in cubes:
             cube.attributes['positive'] = 'down'
         return cubes
@@ -91,12 +91,14 @@ class AllVars(FixEra5):
 
     def _fix_coordinates(self, cube):
         """Fix coordinates."""
-        # Make latitude increasing
-        cube = cube[..., ::-1, :]
-
-        # Make pressure_levels decreasing
-        if cube.coords('pressure_level'):
-            cube = cube[:, ::-1, ...]
+        # Fix coordinate increasing direction
+        slices = []
+        for coord in cube.coords():
+            if coord.var_name in ('latitude', 'pressure_level'):
+                slices.append(slice(None, None, -1))
+            else:
+                slices.append(slice(None))
+        cube = cube[tuple(slices)]
 
         # Add scalar height coordinates
         if 'height2m' in self.vardef.dimensions:
@@ -104,20 +106,19 @@ class AllVars(FixEra5):
         if 'height10m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.)
 
-        for axis in 'T', 'X', 'Y', 'Z':
-            coord_def = self.vardef.coordinates.get(axis)
-            if coord_def:
-                coord = cube.coord(axis=axis)
-                if axis == 'T':
-                    coord.convert_units('days since 1850-1-1 00:00:00.0')
-                if axis == 'Z':
-                    coord.convert_units(coord_def.units)
-                coord.standard_name = coord_def.standard_name
-                coord.var_name = coord_def.out_name
-                coord.long_name = coord_def.long_name
-                coord.points = coord.core_points().astype('float64')
-                if len(coord.points) > 1:
-                    coord.guess_bounds()
+        # Fix coordinate units, dtypes and names
+        for coord_name, coord_def in self.vardef.coordinates.items():
+            coord = cube.coord(coord_name)
+            if coord_name == 'T':
+                coord.convert_units('days since 1850-1-1 00:00:00.0')
+            if coord_name == 'Z':
+                coord.convert_units(coord_def.units)
+            coord.standard_name = coord_def.standard_name
+            coord.var_name = coord_def.out_name
+            coord.long_name = coord_def.long_name
+            coord.points = coord.core_points().astype('float64')
+            if len(coord.points) > 1:
+                coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)
 
@@ -142,9 +143,6 @@ class AllVars(FixEra5):
 
     def _fix_units(self, cube):
         """Fix units."""
-        if cube.units == '(0 - 1)':
-            # Correct dimensionless units to 1 from ecmwf format '(0 - 1)'
-            cube.units = 1
         if cube.units == 'm of water equivalent':
             # Correct units from m of water to kg of water per m2
             cube.units = 'kg m-2'

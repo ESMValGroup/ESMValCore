@@ -129,7 +129,7 @@ OBS6:
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
 
-Native6:
+native6:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}'
