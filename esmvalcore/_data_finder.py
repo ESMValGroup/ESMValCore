@@ -41,17 +41,17 @@ def get_start_end_year(filename):
     number represents the date.
     """
     # Strip only filename from full path (and discard extension?)
-    # filename = os.path.splitext(filename)[0]
+    filename = os.path.splitext(filename)[0]
     filename = filename.split(os.sep)[-1]
 
     # Check for a block of two potential dates separated by _ or -
-    daterange = re.findall(r'([0-9]{4,8}[-_][0-9]{4,8})', filename)
+    daterange = re.findall(r'([0-9]{4,12}[-_][0-9]{4,12})', filename)
     if daterange:
-        start_date, end_date = re.findall(r'([0-9]{4,8})', daterange[0])
+        start_date, end_date = re.findall(r'([0-9]{4,12})', daterange[0])
         start_year = start_date[:4]
         end_year = end_date[:4]
     else:
-        dates = re.findall(r'([0-9]{4,8})', filename)
+        dates = re.findall(r'([0-9]{4,12})', filename)
         print(dates)
         if not dates:
             raise ValueError('Name {0} does not match a recognized '
@@ -60,7 +60,7 @@ def get_start_end_year(filename):
             start_year = end_year = dates[0][:4]
         else:
             # Check for dates at start or end of filename
-            outerdates = re.findall(r'^[0-9]{4,8}|[0-9]{4,8}(?=\.)', filename)
+            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', filename)
             if len(outerdates) == 1:
                 start_year = end_year = outerdates[0][:4]
             else:
