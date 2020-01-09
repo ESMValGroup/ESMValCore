@@ -8,45 +8,47 @@ from numpy.testing import assert_array_equal, assert_equal
 import iris
 import tests
 from cf_units import Unit
-from esmvalcore.preprocessor._mask import (
-    _apply_fx_mask, _check_dims,
-    count_spells, _get_fx_mask,
-    mask_above_threshold, mask_below_threshold, mask_inside_range,
-    mask_outside_range)
+from esmvalcore.preprocessor._mask import (_apply_fx_mask, _check_dims,
+                                           count_spells, _get_fx_mask,
+                                           mask_above_threshold,
+                                           mask_below_threshold,
+                                           mask_glaciated, mask_inside_range,
+                                           mask_outside_range)
 
 
 class Test(tests.Test):
     """Test class for _mask."""
-
     def setUp(self):
         """Prepare tests."""
         coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
         self.data2 = np.array([[0., 1.], [2., 3.]])
+        # Two points near the south pole and two points in the southern ocean
         lons2 = iris.coords.DimCoord([1.5, 2.5],
                                      standard_name='longitude',
                                      bounds=[[1., 2.], [2., 3.]],
                                      units='degrees_east',
                                      coord_system=coord_sys)
-        lats2 = iris.coords.DimCoord([1.5, 2.5],
+        lats2 = iris.coords.DimCoord([-89.5, -70],
                                      standard_name='latitude',
-                                     bounds=[[1., 2.], [2., 3.]],
+                                     bounds=[[-90., -89.], [-70.5, -69.5]],
                                      units='degrees_north',
                                      coord_system=coord_sys)
         coords_spec3 = [(lats2, 0), (lons2, 1)]
         self.arr = iris.cube.Cube(self.data2, dim_coords_and_dims=coords_spec3)
         self.time_cube = iris.cube.Cube(np.arange(1, 25),
-                                        var_name='co2', units='J')
+                                        var_name='co2',
+                                        units='J')
         self.time_cube.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(15., 720., 30.),
-                standard_name='time',
-                units=Unit('days since 1950-01-01 00:00:00',
-                           calendar='gregorian')), 0)
+            iris.coords.DimCoord(np.arange(15., 720., 30.),
+                                 standard_name='time',
+                                 units=Unit('days since 1950-01-01 00:00:00',
+                                            calendar='gregorian')), 0)
         self.fx_data = np.array([20., 60., 50.])
 
     def test_apply_fx_mask(self):
         """Test _apply_fx_mask func."""
-        dummy_fx_mask = np.ma.array([33., 22., 33.], mask=[True, False, True],
+        dummy_fx_mask = np.ma.array([33., 22., 33.],
+                                    mask=[True, False, True],
                                     fill_value=1e+20)
         app_mask = _apply_fx_mask(dummy_fx_mask,
                                   self.time_cube.data[0:3].astype('float64'))
@@ -90,6 +92,15 @@ class Test(tests.Test):
         computed = _get_fx_mask(self.fx_data, 'landsea', 'sftgif')
         expected = np.array([True, False, True])
         assert_array_equal(expected, computed)
+
+    def test_mask_glaciated(self):
+        """Test to mask glaciated (NE mask)"""
+        result = mask_glaciated(self.arr, mask_out='glaciated')
+        expected = np.ma.masked_array(self.data2,
+                                      mask=np.array([[True, True],
+                                                     [False, False]]))
+        assert_array_equal(result.data.data, expected.data)
+        assert_array_equal(result.data.mask, expected.mask)
 
     def test_mask_above_threshold(self):
         """Test to mask above a threshold."""

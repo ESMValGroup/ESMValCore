@@ -12,17 +12,21 @@ from ._baseclass import DerivedVariableBase
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `rlnstcs`."""
 
-    required = [
-        {
-            'cmor_name': 'rldscs'
-        },
-        {
-            'cmor_name': 'rlus'
-        },
-        {
-            'cmor_name': 'rlutcs'
-        },
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [
+            {
+                'cmor_name': 'rldscs'
+            },
+            {
+                'cmor_name': 'rlus'
+            },
+            {
+                'cmor_name': 'rlutcs'
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):

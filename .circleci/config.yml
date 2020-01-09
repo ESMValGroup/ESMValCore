@@ -201,7 +201,6 @@ workflows:
           filters:
             branches:
               only:
-                - development
                 - master
     jobs:
       - test

@@ -315,7 +315,8 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_metadata'] = dict(fix)
 
     # Configure time extraction
-    if 'start_year' in variable and 'end_year' in variable:
+    if 'start_year' in variable and 'end_year' in variable \
+            and variable['frequency'] != 'fx':
         settings['extract_time'] = {
             'start_year': variable['start_year'],
             'end_year': variable['end_year'] + 1,
