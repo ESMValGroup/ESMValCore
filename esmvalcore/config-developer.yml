@@ -64,6 +64,7 @@ CMIP5:
     'CNRM-CM5': ['CNRM-CERFACS']
     'CNRM-CM5-2': ['CNRM-CERFACS']
     'CSIRO-Mk3-6-0': ['CSIRO-QCCCE']
+    'CSIRO-Mk3L-1-2': ['CSIRO-QCCCE']
     'EC-EARTH': ['ICHEC']
     'FGOALS-g2': ['LASG-CESS']
     'FGOALS-gl': ['LASG-IAP']
