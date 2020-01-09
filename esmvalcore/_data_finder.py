@@ -93,10 +93,10 @@ def get_start_end_year(filename):
             end_year = time.cell(-1).point.year
             break
 
-    if not start_year or not end_year:
+    if start_year is None or end_year is None:
         raise ValueError(
             'File {0} dates do not match a recognized pattern and time can '
-            'not be readed from the file'.format(filename)
+            'not be read from the file'.format(filename)
         )
     return start_year, end_year
 
