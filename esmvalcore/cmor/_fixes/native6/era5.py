@@ -106,11 +106,12 @@ class AllVars(FixEra5):
             add_scalar_height_coord(cube, 10.)
 
         # Fix coordinate units, dtypes and names
-        for coord_name, coord_def in self.vardef.coordinates.items():
+        for coord_def in self.vardef.coordinates.values():
+            coord_name = coord_def.standard_name
             coord = cube.coord(coord_name)
-            if coord_name == 'T':
+            if coord_def.axis == 'T':
                 coord.convert_units('days since 1850-1-1 00:00:00.0')
-            if coord_name == 'Z':
+            if coord_def.axis == 'Z':
                 coord.convert_units(coord_def.units)
             coord.standard_name = coord_def.standard_name
             coord.var_name = coord_def.out_name
