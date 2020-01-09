@@ -8,7 +8,7 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `vegFrac`."""
 
     required = [{
-        'var_name': 'baresoilFrac',
+        'cmor_name': 'baresoilFrac',
     }]
 
     @staticmethod

@@ -17,20 +17,20 @@ class DerivedVariable(DerivedVariableBase):
         """Declare the variables needed for derivation."""
         required = [
             {
-                'var_name': 'thetao'
+                'cmor_name': 'thetao'
             },
             {
-                'var_name': 'volcello',
+                'cmor_name': 'volcello',
                 'mip': 'fx'
             },
         ]
         if project == 'CMIP6':
             required = [
                 {
-                    'var_name': 'thetao'
+                    'cmor_name': 'thetao'
                 },
                 {
-                    'var_name': 'volcello',
+                    'cmor_name': 'volcello',
                     'mip': 'Ofx'
                 },
             ]

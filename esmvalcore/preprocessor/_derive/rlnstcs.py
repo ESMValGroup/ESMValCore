@@ -14,13 +14,13 @@ class DerivedVariable(DerivedVariableBase):
 
     required = [
         {
-            'var_name': 'rldscs'
+            'cmor_name': 'rldscs'
         },
         {
-            'var_name': 'rlus'
+            'cmor_name': 'rlus'
         },
         {
-            'var_name': 'rlutcs'
+            'cmor_name': 'rlutcs'
         },
     ]
 

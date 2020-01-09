@@ -48,7 +48,7 @@ class TestCMIP6Info(unittest.TestCase):
         """Get tas variable."""
         var = self.variables_info.get_variable('6hrPlevPt', 'zg7h')
         self.assertEqual(var.short_name, 'zg')
-        self.assertEqual(var.var_name, 'zg7h')
+        self.assertEqual(var.cmor_name, 'zg7h')
 
     def test_get_variable_from_alias(self):
         """Get a variable from a known alias."""

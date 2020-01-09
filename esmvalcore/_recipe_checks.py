@@ -87,7 +87,7 @@ def variable(var, required_keys):
     if missing:
         raise RecipeError(
             "Missing keys {} from variable {} in diagnostic {}".format(
-                missing, var.get('var_name'), var.get('diagnostic')))
+                missing, var.get('cmor_name'), var.get('diagnostic')))
 
 
 def data_availability(input_files, var):

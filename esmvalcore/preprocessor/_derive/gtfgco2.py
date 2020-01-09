@@ -50,22 +50,22 @@ class DerivedVariable(DerivedVariableBase):
         """Declare the variables needed for derivation."""
         required = [
             {
-                'var_name': 'fgco2',
+                'cmor_name': 'fgco2',
                 'mip': 'Omon'
             },
             {
-                'var_name': 'areacello',
+                'cmor_name': 'areacello',
                 'mip': 'fx'
             },
         ]
         if project == 'CMIP6':
             required = [
                 {
-                    'var_name': 'fgco2',
+                    'cmor_name': 'fgco2',
                     'mip': 'Omon'
                 },
                 {
-                    'var_name': 'areacello',
+                    'cmor_name': 'areacello',
                     'mip': 'Ofx'
                 },
             ]

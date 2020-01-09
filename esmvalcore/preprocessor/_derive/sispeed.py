@@ -17,9 +17,9 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):
         """Declare the variables needed for derivation."""
         required = [{
-            'var_name': 'usi',
+            'cmor_name': 'usi',
         }, {
-            'var_name': 'vsi',
+            'cmor_name': 'vsi',
         }]
         return required
 

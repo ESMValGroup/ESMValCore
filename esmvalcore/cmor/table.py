@@ -358,13 +358,13 @@ class JsonInfo(object):
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
 
-    def __init__(self, table_type, var_name):
+    def __init__(self, table_type, cmor_name):
         """
         Class to read and store variable information.
 
         Parameters
         ----------
-        var_name: str
+        cmor_name: str
             variable's CMOR name
 
         """
@@ -372,9 +372,9 @@ class VariableInfo(JsonInfo):
         self.table_type = table_type
         self.modeling_realm = []
         """Modeling realm"""
-        self.var_name = var_name
+        self.cmor_name = cmor_name
         """CMOR's table name"""
-        self.short_name = var_name
+        self.short_name = cmor_name
         """Short name"""
         self.standard_name = ''
         """Standard name"""
@@ -638,8 +638,8 @@ class CMIP5Info(object):
                 setattr(coord, key, value)
         return coord
 
-    def _read_variable(self, var_name, frequency):
-        var = VariableInfo('CMIP5', var_name)
+    def _read_variable(self, cmor_name, frequency):
+        var = VariableInfo('CMIP5', cmor_name)
         var.frequency = frequency
         while self._read_line():
             key, value = self._last_line_read

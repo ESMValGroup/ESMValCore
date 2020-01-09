@@ -496,7 +496,7 @@ def get_cmor_levels(cmor_table, coordinate):
 def get_reference_levels(filename,
                          project,
                          dataset,
-                         var_name,
+                         cmor_name,
                          fix_dir):
     """Get level definition from a CMOR coordinate.
 
@@ -516,9 +516,9 @@ def get_reference_levels(filename,
         levels or the string is badly formatted.
 
     """
-    filename = fix_file(filename, var_name, project, dataset, fix_dir)
+    filename = fix_file(filename, cmor_name, project, dataset, fix_dir)
     cubes = load(filename, callback=concatenate_callback)
-    cubes = fix_metadata(cubes, var_name, project, dataset)
+    cubes = fix_metadata(cubes, cmor_name, project, dataset)
     cube = cubes[0]
     try:
         coord = cube.coord(axis='Z')

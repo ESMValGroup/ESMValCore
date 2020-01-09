@@ -31,7 +31,7 @@ MANDATORY_DATASET_KEYS = (
     'modeling_realm',
     'preprocessor',
     'project',
-    'var_name',
+    'cmor_name',
     'short_name',
     'standard_name',
     'start_year',
@@ -158,8 +158,8 @@ def patched_tas_derivation(monkeypatch):
         if short_name != 'tas':
             assert False
         required = [
-            {'var_name': 'pr'},
-            {'var_name': 'areacella', 'mip': 'fx', 'optional': True},
+            {'cmor_name': 'pr'},
+            {'cmor_name': 'areacella', 'mip': 'fx', 'optional': True},
         ]
         return required
 
@@ -244,7 +244,7 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
             for variable in variables:
                 for key in MANDATORY_DATASET_KEYS:
                     assert key in variable and variable[key]
-                assert variable_name == variable['var_name']
+                assert variable_name == variable['cmor_name']
 
     # Check that the correct tasks have been created
     variables = recipe.diagnostics['diagnostic_name']['preprocessor_output'][
@@ -348,13 +348,13 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
         'fix_file': {
             'project': 'CMIP5',
             'dataset': 'CanESM2',
-            'var_name': 'chl',
+            'cmor_name': 'chl',
             'output_dir': fix_dir,
         },
         'fix_data': {
             'project': 'CMIP5',
             'dataset': 'CanESM2',
-            'var_name': 'chl',
+            'cmor_name': 'chl',
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'frequency': 'yr',
@@ -362,7 +362,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
         'fix_metadata': {
             'project': 'CMIP5',
             'dataset': 'CanESM2',
-            'var_name': 'chl',
+            'cmor_name': 'chl',
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'frequency': 'yr',
@@ -378,13 +378,13 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
         'cmor_check_metadata': {
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
-            'var_name': 'chl',
+            'cmor_name': 'chl',
             'frequency': 'yr',
         },
         'cmor_check_data': {
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
-            'var_name': 'chl',
+            'cmor_name': 'chl',
             'frequency': 'yr',
         },
         'cleanup': {
@@ -435,13 +435,13 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
         'fix_file': {
             'project': 'CMIP5',
             'dataset': 'CanESM2',
-            'var_name': 'sftlf',
+            'cmor_name': 'sftlf',
             'output_dir': fix_dir,
         },
         'fix_data': {
             'project': 'CMIP5',
             'dataset': 'CanESM2',
-            'var_name': 'sftlf',
+            'cmor_name': 'sftlf',
             'cmor_table': 'CMIP5',
             'mip': 'fx',
             'frequency': 'fx',
@@ -449,7 +449,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
         'fix_metadata': {
             'project': 'CMIP5',
             'dataset': 'CanESM2',
-            'var_name': 'sftlf',
+            'cmor_name': 'sftlf',
             'cmor_table': 'CMIP5',
             'mip': 'fx',
             'frequency': 'fx',
@@ -457,13 +457,13 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
         'cmor_check_metadata': {
             'cmor_table': 'CMIP5',
             'mip': 'fx',
-            'var_name': 'sftlf',
+            'cmor_name': 'sftlf',
             'frequency': 'fx',
         },
         'cmor_check_data': {
             'cmor_table': 'CMIP5',
             'mip': 'fx',
-            'var_name': 'sftlf',
+            'cmor_name': 'sftlf',
             'frequency': 'fx',
         },
         'cleanup': {
@@ -500,7 +500,7 @@ def test_empty_variable(tmp_path, patched_datafinder, config_user):
     task = recipe.tasks.pop()
     assert len(task.products) == 1
     product = task.products.pop()
-    assert product.attributes['var_name'] == 'pr'
+    assert product.attributes['cmor_name'] == 'pr'
     assert product.attributes['dataset'] == 'CanESM2'
 
 
@@ -539,7 +539,7 @@ def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
         'modeling_realm': ['atmos'],
         'preprocessor': 'default',
         'project': 'CMIP5',
-        'var_name': 'pr',
+        'cmor_name': 'pr',
         'standard_name': 'precipitation_flux',
         'start_year': 2000,
         'units': 'kg m-2 s-1',
@@ -586,7 +586,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         'modeling_realm': ['atmos'],
         'preprocessor': 'default',
         'project': 'CMIP6',
-        'var_name': 'pr',
+        'cmor_name': 'pr',
         'standard_name': 'precipitation_flux',
         'start_year': 2000,
         'units': 'kg m-2 s-1',
@@ -715,7 +715,7 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
           diagnostic_name:
             variables:
               chl_default: &chl
-                var_name: chl
+                cmor_name: chl
                 preprocessor: default
                 project: CMIP5
                 mip: Oyr
@@ -782,13 +782,13 @@ def test_derive(tmp_path, patched_datafinder, config_user):
     assert len(task.products) == 1
     product = task.products.pop()
     assert 'derive' in product.settings
-    assert product.attributes['var_name'] == 'toz'
+    assert product.attributes['cmor_name'] == 'toz'
     assert product.files
 
     ps_product = next(p for a in task.ancestors for p in a.products
-                      if p.attributes['var_name'] == 'ps')
+                      if p.attributes['cmor_name'] == 'ps')
     tro3_product = next(p for a in task.ancestors for p in a.products
-                        if p.attributes['var_name'] == 'tro3')
+                        if p.attributes['cmor_name'] == 'tro3')
     assert ps_product.filename in product.files
     assert tro3_product.filename in product.files
 
@@ -826,13 +826,13 @@ def test_derive_not_needed(tmp_path, patched_datafinder, config_user):
     # Check product content of tasks
     assert len(task.products) == 1
     product = task.products.pop()
-    assert product.attributes['var_name'] == 'toz'
+    assert product.attributes['cmor_name'] == 'toz'
     assert 'derive' in product.settings
 
     assert len(ancestor.products) == 1
     ancestor_product = ancestor.products.pop()
     assert ancestor_product.filename in product.files
-    assert ancestor_product.attributes['var_name'] == 'toz'
+    assert ancestor_product.attributes['cmor_name'] == 'toz'
     assert 'derive' not in ancestor_product.settings
 
     # Check that fixes are applied just once
@@ -875,7 +875,7 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, config_user):
     assert len(task.products) == 3
     for product in task.products:
         assert 'derive' in product.settings
-        assert product.attributes['var_name'] == 'ohc'
+        assert product.attributes['cmor_name'] == 'ohc'
         all_product_files.extend(product.files)
 
     # Check ancestors
@@ -885,10 +885,10 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, config_user):
     assert task.ancestors[1].name == (
         'diagnostic_name/ohc_derive_input_volcello')
     for ancestor_product in task.ancestors[0].products:
-        assert ancestor_product.attributes['var_name'] == 'thetao'
+        assert ancestor_product.attributes['cmor_name'] == 'thetao'
         assert ancestor_product.filename in all_product_files
     for ancestor_product in task.ancestors[1].products:
-        assert ancestor_product.attributes['var_name'] == 'volcello'
+        assert ancestor_product.attributes['cmor_name'] == 'volcello'
         if ancestor_product.attributes['project'] == 'CMIP6':
             assert ancestor_product.attributes['mip'] == 'Ofx'
         else:
@@ -959,7 +959,7 @@ def test_derive_with_optional_var(tmp_path,
     assert len(task.products) == 3
     for product in task.products:
         assert 'derive' in product.settings
-        assert product.attributes['var_name'] == 'tas'
+        assert product.attributes['cmor_name'] == 'tas'
         all_product_files.extend(product.files)
 
     # Check ancestors
@@ -969,10 +969,10 @@ def test_derive_with_optional_var(tmp_path,
     assert task.ancestors[1].name == (
         'diagnostic_name/tas_derive_input_areacella')
     for ancestor_product in task.ancestors[0].products:
-        assert ancestor_product.attributes['var_name'] == 'pr'
+        assert ancestor_product.attributes['cmor_name'] == 'pr'
         assert ancestor_product.filename in all_product_files
     for ancestor_product in task.ancestors[1].products:
-        assert ancestor_product.attributes['var_name'] == 'areacella'
+        assert ancestor_product.attributes['cmor_name'] == 'areacella'
         assert ancestor_product.filename in all_product_files
 
 
@@ -1012,7 +1012,7 @@ def test_derive_with_optional_var_nodata(tmp_path,
     assert len(task.products) == 3
     for product in task.products:
         assert 'derive' in product.settings
-        assert product.attributes['var_name'] == 'tas'
+        assert product.attributes['cmor_name'] == 'tas'
         all_product_files.extend(product.files)
 
     # Check ancestors
@@ -1020,7 +1020,7 @@ def test_derive_with_optional_var_nodata(tmp_path,
     assert task.ancestors[0].name == (
         'diagnostic_name/tas_derive_input_pr')
     for ancestor_product in task.ancestors[0].products:
-        assert ancestor_product.attributes['var_name'] == 'pr'
+        assert ancestor_product.attributes['cmor_name'] == 'pr'
         assert ancestor_product.filename in all_product_files
 
 

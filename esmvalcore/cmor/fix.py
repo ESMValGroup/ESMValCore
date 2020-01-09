@@ -18,7 +18,7 @@ from .check import _get_cmor_checker
 logger = logging.getLogger(__name__)
 
 
-def fix_file(file, var_name, project, dataset, output_dir):
+def fix_file(file, cmor_name, project, dataset, output_dir):
     """
     Fix files before ESMValTool can load them.
 
@@ -31,7 +31,7 @@ def fix_file(file, var_name, project, dataset, output_dir):
     ----------
     file: str
         Path to the original file
-    var_name: str
+    cmor_name: str
         Variable's cmor name
     project: str
     dataset:str
@@ -45,13 +45,13 @@ def fix_file(file, var_name, project, dataset, output_dir):
 
     """
     for fix in Fix.get_fixes(
-            project=project, dataset=dataset, variable=var_name):
+            project=project, dataset=dataset, variable=cmor_name):
         file = fix.fix_file(file, output_dir)
     return file
 
 
 def fix_metadata(cubes,
-                 var_name,
+                 cmor_name,
                  project,
                  dataset,
                  cmor_table=None,
@@ -69,7 +69,7 @@ def fix_metadata(cubes,
     ----------
     cubes: iris.cube.CubeList
         Cubes to fix
-    var_name: str
+    cmor_name: str
         Variable's name
     project: str
 
@@ -96,7 +96,7 @@ def fix_metadata(cubes,
 
     """
     fixes = Fix.get_fixes(
-        project=project, dataset=dataset, variable=var_name)
+        project=project, dataset=dataset, variable=cmor_name)
     fixed_cubes = []
     by_file = defaultdict(list)
     for cube in cubes:
@@ -110,7 +110,7 @@ def fix_metadata(cubes,
         if len(cube_list) != 1:
             cube = None
             for raw_cube in cube_list:
-                if raw_cube.short_name == var_name:
+                if raw_cube.var_name == cmor_name:
                     cube = raw_cube
                     break
             if not cube:
@@ -118,7 +118,7 @@ def fix_metadata(cubes,
                     'More than one cube found for variable %s in %s:%s but '
                     'none of their var_names match the expected. \n'
                     'Full list of cubes encountered: %s' %
-                    (var_name, project, dataset, cube_list)
+                    (cmor_name, project, dataset, cube_list)
                 )
             logger.warning(
                 'Found variable %s in %s:%s, but there were other present in '
@@ -126,7 +126,7 @@ def fix_metadata(cubes,
                 '(cell area, latitude descriptions) that was not saved '
                 'properly. It is possible that errors appear further on '
                 'because of this. \nFull list of cubes encountered: %s',
-                var_name,
+                cmor_name,
                 project,
                 dataset,
                 cube_list
@@ -139,7 +139,7 @@ def fix_metadata(cubes,
                 frequency=frequency,
                 table=cmor_table,
                 mip=mip,
-                var_name=var_name,
+                cmor_name=cmor_name,
                 fail_on_error=False,
                 automatic_fixes=True)
             cube = checker(cube).check_metadata()
@@ -149,7 +149,7 @@ def fix_metadata(cubes,
 
 
 def fix_data(cube,
-             var_name,
+             cmor_name,
              project,
              dataset,
              cmor_table=None,
@@ -169,7 +169,7 @@ def fix_data(cube,
     ----------
     cube: iris.cube.Cube
         Cube to fix
-    var_name: str
+    cmor_name: str
         Variable's name
     project: str
 
@@ -196,14 +196,14 @@ def fix_data(cube,
 
     """
     for fix in Fix.get_fixes(
-            project=project, dataset=dataset, variable=var_name):
+            project=project, dataset=dataset, variable=cmor_name):
         cube = fix.fix_data(cube)
     if cmor_table and mip:
         checker = _get_cmor_checker(
             frequency=frequency,
             table=cmor_table,
             mip=mip,
-            var_name=var_name,
+            cmor_name=cmor_name,
             fail_on_error=False,
             automatic_fixes=True)
         cube = checker(cube).check_data()

@@ -11,7 +11,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [{'var_name': 'rsdt'}, {'var_name': 'rsut'}]
+        required = [{'cmor_name': 'rsdt'}, {'cmor_name': 'rsut'}]
         return required
 
     @staticmethod

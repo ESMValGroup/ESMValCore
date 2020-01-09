@@ -11,10 +11,10 @@ def test_get_required():
 
     reference = [
         {
-            'var_name': 'rsdscs',
+            'cmor_name': 'rsdscs',
         },
         {
-            'var_name': 'rsuscs',
+            'cmor_name': 'rsuscs',
         },
     ]
 
@@ -26,8 +26,8 @@ def test_get_required_with_fx():
     variables = get_required('ohc', 'CMIP5')
 
     reference = [
-        {'var_name': 'thetao'},
-        {'var_name': 'volcello', 'mip': 'fx'},
+        {'cmor_name': 'thetao'},
+        {'cmor_name': 'volcello', 'mip': 'fx'},
     ]
 
     assert variables == reference
