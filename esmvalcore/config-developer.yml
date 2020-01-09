@@ -137,7 +137,7 @@ native6:
   input_file:
     default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
     era5cli: 'era5_{era5_name}*{era5_freq}.nc'
-  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
 
 obs4mips:
