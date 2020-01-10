@@ -108,6 +108,11 @@ class AllVars(FixEra5):
         # Fix coordinate units, dtypes and names
         for coord_def in self.vardef.coordinates.values():
             coord_name = coord_def.standard_name
+        # TODO: After merging #413
+        # the 2 lines above simplify to:
+        # for coord_name, coord_def in self.vardef.coordinates.items():
+        # and coord_def.axis == 'T' changes to coord_name == 'time'
+        # NOTE: perhaps we need a mapping between ERA5 and cmor coordinate names
             coord = cube.coord(coord_name)
             if coord_def.axis == 'T':
                 coord.convert_units('days since 1850-1-1 00:00:00.0')
