@@ -200,13 +200,14 @@ def daily_statistics(cube, operator='mean'):
     iris.cube.Cube
         Daily statistics cube
     """
-    if not cube.coords('day_of_year'):
-        iris.coord_categorisation.add_day_of_year(cube, 'time')
-    if not cube.coords('year'):
-        iris.coord_categorisation.add_year(cube, 'time')
+    iris.coord_categorisation.add_day_of_year(cube, 'time')
+    iris.coord_categorisation.add_year(cube, 'time')
 
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(['day_of_year', 'year'], operator)
+
+    cube.remove_coord('day_of_year')
+    cube.remove_coord('year')
     return cube
 
 
@@ -406,10 +407,11 @@ def climate_statistics(cube, operator='mean', period='full'):
 
     clim_coord = _get_period_coord(cube, period)
     operator = get_iris_analysis_operation(operator)
-    cube = cube.aggregated_by(clim_coord, operator)
-    cube.remove_coord('time')
-    iris.util.promote_aux_coord_to_dim_coord(cube, clim_coord.name())
-    return cube
+    clim_cube = cube.aggregated_by(clim_coord, operator)
+    cube.remove_coord(clim_coord)
+    clim_cube.remove_coord('time')
+    iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
+    return clim_cube
 
 
 def anomalies(cube, period):
@@ -537,19 +539,5 @@ def regrid_time(cube, frequency):
     # uniformize bounds
     cube.coord('time').bounds = None
     cube.coord('time').guess_bounds()
-
-    # remove aux coords that will differ
-    reset_aux = ['day_of_month', 'day_of_year']
-    for auxcoord in cube.aux_coords:
-        if auxcoord.long_name in reset_aux:
-            cube.remove_coord(auxcoord)
-
-    # re-add the converted aux coords
-    iris.coord_categorisation.add_day_of_month(cube,
-                                               cube.coord('time'),
-                                               name='day_of_month')
-    iris.coord_categorisation.add_day_of_year(cube,
-                                              cube.coord('time'),
-                                              name='day_of_year')
 
     return cube
