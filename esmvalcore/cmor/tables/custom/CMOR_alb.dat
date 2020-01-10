@@ -11,6 +11,7 @@ units:             1
 cell_methods:      time: mean
 cell_measures:     area: areacella
 long_name:         albedo at the surface
+comment:           calculated from clear-sky fluxes
 !----------------------------------
 ! Additional variable information:
 !----------------------------------

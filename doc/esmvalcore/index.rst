@@ -11,4 +11,5 @@ ESMValCore
     Recipe <recipe>
     Preprocessor <preprocessor>
     Fixing data <fixing_data>
+    Deriving variables <derivation>
     Utilities <utils>

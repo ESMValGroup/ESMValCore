@@ -95,8 +95,13 @@ def data_availability(input_files, var):
     if not input_files:
         raise RecipeError("No input files found for variable {}".format(var))
 
+    # check time avail only for non-fx variables
+    if var['frequency'] == 'fx':
+        return
+
     required_years = set(range(var['start_year'], var['end_year'] + 1))
     available_years = set()
+
     for filename in input_files:
         start, end = get_start_end_year(filename)
         available_years.update(range(start, end + 1))
@@ -105,7 +110,8 @@ def data_availability(input_files, var):
     if missing_years:
         raise RecipeError(
             "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years), input_files))
+                ", ".join(str(year) for year in missing_years),
+                input_files))
 
 
 def tasks_valid(tasks):
@@ -118,3 +124,41 @@ def tasks_valid(tasks):
                 if product.filename in filenames:
                     raise ValueError(msg.format(product.filename))
                 filenames.add(product.filename)
+
+
+def check_for_temporal_preprocs(profile):
+    """Check for temporal operations on fx variables."""
+    temporal_preprocs = [
+        'extract_season',
+        'extract_month',
+        'annual_mean',
+        'seasonal_mean',
+        'time_average',
+        'regrid_time',
+    ]
+    temp_preprocs = [
+        preproc for preproc in profile if preproc in temporal_preprocs]
+    if temp_preprocs:
+        raise RecipeError(
+            "Time coordinate preprocessor step {} not permitted on fx vars \
+            please remove them from recipe.".format(", ".join(temp_preprocs)))
+
+
+def extract_shape(settings):
+    """Check that `extract_shape` arguments are valid."""
+    shapefile = settings.get('shapefile', '')
+    if not os.path.exists(shapefile):
+        raise RecipeError("In preprocessor function `extract_shape`: "
+                          f"Unable to find 'shapefile: {shapefile}'")
+
+    valid = {
+        'method': {'contains', 'representative'},
+        'crop': {True, False},
+    }
+    for key in valid:
+        value = settings.get(key)
+        if not (value is None or value in valid[key]):
+            raise RecipeError(
+                f"In preprocessor function `extract_shape`: Invalid value "
+                f"'{value}' for argument '{key}', choose from "
+                "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))

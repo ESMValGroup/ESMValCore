@@ -29,12 +29,12 @@ def read_cmor_tables(cfg_developer):
     """
     custom = CustomInfo()
     CMOR_TABLES['custom'] = custom
-
+    install_dir = os.path.dirname(os.path.realpath(__file__))
     for table in cfg_developer:
         project = cfg_developer[table]
-
         cmor_type = project.get('cmor_type', 'CMIP5')
-        table_path = project.get('cmor_path', cmor_type.lower())
+        default_path = os.path.join(install_dir, 'tables', cmor_type.lower())
+        table_path = project.get('cmor_path', default_path)
         table_path = os.path.expandvars(os.path.expanduser(table_path))
         cmor_strict = project.get('cmor_strict', True)
         default_table_prefix = project.get('cmor_default_table_prefix', '')
@@ -164,11 +164,7 @@ class CMIP6Info(object):
                     )
                     raise
 
-            axis = coord.axis
-            if not axis:
-                axis = 'none'
-
-            var.coordinates[axis] = coord
+            var.coordinates[dimension] = coord
 
     def _load_coordinates(self):
         self.coords = {}
@@ -191,7 +187,7 @@ class CMIP6Info(object):
                 try:
                     exps = table_data['CV']['experiment_id']
                     for exp_id in exps:
-                        activity = exps[exp_id]['activity_id']
+                        activity = exps[exp_id]['activity_id'][0].split(' ')
                         self.activities[exp_id] = activity
                 except (KeyError, AttributeError):
                     pass
@@ -392,7 +388,11 @@ class VariableInfo(JsonInfo):
         self.dimensions = []
         """List of dimensions"""
         self.coordinates = {}
-        """Coordinates"""
+        """Coordinates
+
+        This is a dict with the names of the dimensions as keys and
+        CoordinateInfo objects as values.
+        """
 
         self._json_data = None
 

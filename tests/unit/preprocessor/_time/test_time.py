@@ -36,13 +36,6 @@ def _create_sample_cube():
     return cube
 
 
-def add_auxiliary_coordinate(cubelist):
-    """Add AuxCoords to cubes in cubelist."""
-    for cube in cubelist:
-        iris.coord_categorisation.add_day_of_month(cube, cube.coord('time'))
-        iris.coord_categorisation.add_day_of_year(cube, cube.coord('time'))
-
-
 class TestExtractMonth(tests.Test):
     """Tests for extract_month."""
 
@@ -78,6 +71,24 @@ class TestTimeSlice(tests.Test):
         assert_array_equal(
             np.arange(1, 13, 1),
             sliced.coord('month_number').points)
+
+    def test_extract_time_limit(self):
+        """Test extract time when limits are included"""
+        cube = Cube(np.arange(0, 720), var_name='co2', units='J')
+        cube.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(0., 720., 1.),
+                standard_name='time',
+                units=Unit(
+                    'days since 1950-01-01 00:00:00', calendar='360_day'
+                ),
+            ),
+            0,
+        )
+        sliced = extract_time(cube, 1950, 1, 1, 1951, 1, 1)
+        assert_array_equal(
+            np.arange(0, 360),
+            sliced.coord('time').points)
 
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
@@ -186,6 +197,42 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='mean')
         expected = np.array([1.])
+        assert_array_equal(result.data, expected)
+
+    def test_time_sum(self):
+        """Test for time sum of a 1D field."""
+        data = np.ones((3))
+        data[1] = 2.0
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='sum')
+        expected = np.array([120.])
+        assert_array_equal(result.data, expected)
+
+    def test_time_sum_uneven(self):
+        """Test for time sum of a 1D field with uneven time boundaries."""
+        data = np.array([1., 5.])
+        times = np.array([5., 25.])
+        bounds = np.array([[0., 1.], [1., 4.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='sum')
+        expected = np.array([16.0])
+        assert_array_equal(result.data, expected)
+
+    def test_time_sum_365_day(self):
+        """Test for time sum of a realisitc time axis and 365 day calendar"""
+        data = np.ones((6, ))
+        data[3] = 2.0
+        times = np.array([15, 45, 74, 105, 135, 166])
+        bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
+                           [151, 181]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='sum')
+        expected = np.array([211.])
         assert_array_equal(result.data, expected)
 
     def test_season_climatology(self):
@@ -322,6 +369,16 @@ class TestSeasonalStatistics(tests.Test):
         expected = np.array([4., 7., 10.])
         assert_array_equal(result.data, expected)
 
+    def test_season_sum(self):
+        """Test for season sum of a 1D field."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+
+        result = seasonal_statistics(cube, 'sum')
+        expected = np.array([9., 18., 27.])
+        assert_array_equal(result.data, expected)
+
 
 class TestMonthlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`"""
@@ -344,7 +401,7 @@ class TestMonthlyStatistics(tests.Test):
 
         result = monthly_statistics(cube, 'mean')
         expected = np.array([
-            0.5,  2.5,  4.5,  6.5,  8.5, 10.5, 12.5, 14.5,
+            0.5, 2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5,
             16.5, 18.5, 20.5, 22.5
         ])
         assert_array_equal(result.data, expected)
@@ -380,6 +437,16 @@ class TestMonthlyStatistics(tests.Test):
 
         result = monthly_statistics(cube, 'max')
         expected = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23])
+        assert_array_equal(result.data, expected)
+
+    def test_sum(self):
+        """Test sum of a 1D field."""
+        data = np.arange(24)
+        times = np.arange(7, 360, 15)
+        cube = self._create_cube(data, times)
+
+        result = monthly_statistics(cube, 'sum')
+        expected = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45])
         assert_array_equal(result.data, expected)
 
 
@@ -436,6 +503,16 @@ class TestDailyStatistics(tests.Test):
         expected = np.array([3., 7.])
         assert_array_equal(result.data, expected)
 
+    def test_sum(self):
+        """Test sum of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = daily_statistics(cube, 'sum')
+        expected = np.array([6., 22.])
+        assert_array_equal(result.data, expected)
+
 
 class TestRegridTimeMonthly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
@@ -455,7 +532,6 @@ class TestRegridTimeMonthly(tests.Test):
             ),
             0,
         )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_mon(self):
         """Test changes to cubes."""
@@ -502,7 +578,6 @@ class TestRegridTimeDaily(tests.Test):
             ),
             0,
         )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_day(self):
         """Test changes to cubes."""
@@ -549,7 +624,6 @@ class TestRegridTime6Hourly(tests.Test):
             ),
             0,
         )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_6hour(self):
         """Test changes to cubes."""
@@ -596,7 +670,6 @@ class TestRegridTime3Hourly(tests.Test):
             ),
             0,
         )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_3hour(self):
         """Test changes to cubes."""
@@ -643,7 +716,6 @@ class TestRegridTime1Hourly(tests.Test):
             ),
             0,
         )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_hour(self):
         """Test changes to cubes."""
@@ -693,6 +765,20 @@ def test_annual_average(existing_coord):
 
 
 @pytest.mark.parametrize('existing_coord', [True, False])
+def test_annual_sum(existing_coord):
+    """Test for annual sum."""
+    cube = make_time_series(number_years=2)
+    if existing_coord:
+        iris.coord_categorisation.add_year(cube, 'time')
+
+    result = annual_statistics(cube, 'sum')
+    expected = np.array([12., 12.])
+    assert_array_equal(result.data, expected)
+    expected_time = np.array([180., 540.])
+    assert_array_equal(result.coord('time').points, expected_time)
+
+
+@pytest.mark.parametrize('existing_coord', [True, False])
 def test_decadal_average(existing_coord):
     """Test for decadal average."""
     cube = make_time_series(number_years=20)
@@ -708,6 +794,27 @@ def test_decadal_average(existing_coord):
 
     result = decadal_statistics(cube)
     expected = np.array([1., 1.])
+    assert_array_equal(result.data, expected)
+    expected_time = np.array([1800., 5400.])
+    assert_array_equal(result.coord('time').points, expected_time)
+
+
+@pytest.mark.parametrize('existing_coord', [True, False])
+def test_decadal_sum(existing_coord):
+    """Test for decadal average."""
+    cube = make_time_series(number_years=20)
+    if existing_coord:
+
+        def get_decade(coord, value):
+            """Callback function to get decades from cube."""
+            date = coord.units.num2date(value)
+            return date.year - date.year % 10
+
+        iris.coord_categorisation.add_categorised_coord(
+            cube, 'decade', 'time', get_decade)
+
+    result = decadal_statistics(cube, 'sum')
+    expected = np.array([120., 120.])
     assert_array_equal(result.data, expected)
     expected_time = np.array([1800., 5400.])
     assert_array_equal(result.coord('time').points, expected_time)

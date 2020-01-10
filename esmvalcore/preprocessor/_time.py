@@ -8,11 +8,11 @@ import logging
 from warnings import filterwarnings
 
 import cf_units
-import iris
-import iris.util
-import iris.coord_categorisation
-import numpy as np
 import dask.array as da
+import iris
+import iris.coord_categorisation
+import iris.util
+import numpy as np
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
@@ -86,7 +86,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     t_1 = time_units.date2num(start_date)
     t_2 = time_units.date2num(end_date)
     constraint = iris.Constraint(
-        time=lambda t: t_1 < time_units.date2num(t.point) < t_2)
+        time=lambda t: t_1 <= time_units.date2num(t.point) < t_2)
 
     cube_slice = cube.extract(constraint)
     if cube_slice is None:
@@ -193,20 +193,21 @@ def daily_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
 
     Returns
     -------
     iris.cube.Cube
         Daily statistics cube
     """
-    if not cube.coords('day_of_year'):
-        iris.coord_categorisation.add_day_of_year(cube, 'time')
-    if not cube.coords('year'):
-        iris.coord_categorisation.add_year(cube, 'time')
+    iris.coord_categorisation.add_day_of_year(cube, 'time')
+    iris.coord_categorisation.add_year(cube, 'time')
 
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(['day_of_year', 'year'], operator)
+
+    cube.remove_coord('day_of_year')
+    cube.remove_coord('year')
     return cube
 
 
@@ -223,7 +224,7 @@ def monthly_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
 
     Returns
     -------
@@ -253,7 +254,7 @@ def seasonal_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
 
     Returns
     -------
@@ -263,13 +264,13 @@ def seasonal_statistics(cube, operator='mean'):
     if not cube.coords('clim_season'):
         iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
     if not cube.coords('season_year'):
-        iris.coord_categorisation.add_season_year(
-            cube, 'time', name='season_year')
+        iris.coord_categorisation.add_season_year(cube,
+                                                  'time',
+                                                  name='season_year')
 
     operator = get_iris_analysis_operation(operator)
 
-    cube = cube.aggregated_by(['clim_season', 'season_year'],
-                              operator)
+    cube = cube.aggregated_by(['clim_season', 'season_year'], operator)
 
     # CMOR Units are days so we are safe to operate on days
     # Ranging on [90, 92] days makes this calendar-independent
@@ -308,7 +309,7 @@ def annual_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
 
     Returns
     -------
@@ -340,7 +341,7 @@ def decadal_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
 
     Returns
     -------
@@ -353,6 +354,7 @@ def decadal_statistics(cube, operator='mean'):
     operator = get_iris_analysis_operation(operator)
 
     if not cube.coords('decade'):
+
         def get_decade(coord, value):
             """Callback function to get decades from cube."""
             date = coord.units.num2date(value)
@@ -378,7 +380,7 @@ def climate_statistics(cube, operator='mean', period='full'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
 
     period: str, optional
         Period to compute the statistic over.
@@ -396,19 +398,20 @@ def climate_statistics(cube, operator='mean', period='full'):
         operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
             time_weights = get_time_weights(cube)
-            cube = cube.collapsed(
-                'time', operator_method, weights=time_weights
-            )
+            cube = cube.collapsed('time',
+                                  operator_method,
+                                  weights=time_weights)
         else:
             cube = cube.collapsed('time', operator_method)
         return cube
 
     clim_coord = _get_period_coord(cube, period)
     operator = get_iris_analysis_operation(operator)
-    cube = cube.aggregated_by(clim_coord, operator)
-    cube.remove_coord('time')
-    iris.util.promote_aux_coord_to_dim_coord(cube, clim_coord.name())
-    return cube
+    clim_cube = cube.aggregated_by(clim_coord, operator)
+    cube.remove_coord(clim_coord)
+    clim_cube.remove_coord('time')
+    iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
+    return clim_cube
 
 
 def anomalies(cube, period):
@@ -450,9 +453,8 @@ def anomalies(cube, period):
     for i in range(cube_time.shape[0]):
         time = cube_time.points[i]
         indexes = cube_time.points == time
-        indexes = iris.util.broadcast_to_shape(
-            indexes, data.shape, (cube_coord_dim, )
-        )
+        indexes = iris.util.broadcast_to_shape(indexes, data.shape,
+                                               (cube_coord_dim, ))
         data[indexes] = data[indexes] - ref[cube_coord.points[i]]
 
     cube = cube.copy(data)
@@ -520,17 +522,13 @@ def regrid_time(cube, frequency):
         ]
     elif frequency == '3hr':
         cube.coord('time').cells = [
-            datetime.datetime(
-                t.year, t.month, t.day, t.hour - t.hour % 3, 0, 0
-            )
-            for t in time_c
+            datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 3, 0,
+                              0) for t in time_c
         ]
     elif frequency == '6hr':
         cube.coord('time').cells = [
-            datetime.datetime(
-                t.year, t.month, t.day, t.hour - t.hour % 6, 0, 0
-            )
-            for t in time_c
+            datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 6, 0,
+                              0) for t in time_c
         ]
 
     cube.coord('time').points = [
@@ -541,19 +539,5 @@ def regrid_time(cube, frequency):
     # uniformize bounds
     cube.coord('time').bounds = None
     cube.coord('time').guess_bounds()
-
-    # remove aux coords that will differ
-    reset_aux = ['day_of_month', 'day_of_year']
-    for auxcoord in cube.aux_coords:
-        if auxcoord.long_name in reset_aux:
-            cube.remove_coord(auxcoord)
-
-    # re-add the converted aux coords
-    iris.coord_categorisation.add_day_of_month(cube,
-                                               cube.coord('time'),
-                                               name='day_of_month')
-    iris.coord_categorisation.add_day_of_year(cube,
-                                              cube.coord('time'),
-                                              name='day_of_year')
 
     return cube
