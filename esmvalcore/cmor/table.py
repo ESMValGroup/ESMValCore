@@ -11,6 +11,8 @@ import glob
 import json
 import logging
 import os
+import yaml
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,7 @@ CMOR_TABLES = {}
 """dict of str, obj: CMOR info objects."""
 
 
-def read_cmor_tables(cfg_developer):
+def read_cmor_tables(cfg_developer=None):
     """Read cmor tables required in the configuration.
 
     Parameters
@@ -27,7 +29,13 @@ def read_cmor_tables(cfg_developer):
         Parsed config-developer file
 
     """
+    if cfg_developer is None:
+        cfg_file = Path(__file__).parent.parent / 'config-developer.yml'
+        with cfg_file.open() as file:
+            cfg_developer = yaml.safe_load(file)
+
     custom = CustomInfo()
+    CMOR_TABLES.clear()
     CMOR_TABLES['custom'] = custom
 
     for table in cfg_developer:
@@ -48,6 +56,8 @@ def read_cmor_tables(cfg_developer):
                 table_path, default=custom, strict=cmor_strict,
                 default_table_prefix=default_table_prefix
             )
+
+
 
 
 class CMIP6Info(object):
@@ -169,6 +179,7 @@ class CMIP6Info(object):
                 axis = 'none'
 
             var.coordinates[axis] = coord
+
 
     def _load_coordinates(self):
         self.coords = {}
@@ -806,3 +817,5 @@ class CustomInfo(CMIP5Info):
                     continue
                 if not self._read_line():
                     return
+
+read_cmor_tables()

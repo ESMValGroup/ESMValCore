@@ -15,7 +15,7 @@ def tas_cubes():
 
 
 def test_get_tas_fix():
-    fix = Fix.get_fixes('CMIP6', 'CESM2', 'tas')
+    fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'tas')
     assert fix == [Tas()]
 
 
