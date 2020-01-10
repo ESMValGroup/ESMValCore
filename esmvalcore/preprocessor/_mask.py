@@ -12,10 +12,10 @@ import os
 
 import cartopy.io.shapereader as shpreader
 import iris
-import numpy as np
-import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
+import numpy as np
+import shapely.vectorized as shp_vect
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +154,9 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
             logger.debug("Applying land-sea mask: sftof")
         else:
             if cube.coord('longitude').points.ndim < 2:
-                cube = _mask_with_shp(cube, shapefiles[mask_out], [0, ])
+                cube = _mask_with_shp(cube, shapefiles[mask_out], [
+                    0,
+                ])
                 logger.debug(
                     "Applying land-sea mask from Natural Earth"
                     " shapefile: \n%s", shapefiles[mask_out])
@@ -164,7 +166,9 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
                 raise ValueError(msg)
     else:
         if cube.coord('longitude').points.ndim < 2:
-            cube = _mask_with_shp(cube, shapefiles[mask_out], [0, ])
+            cube = _mask_with_shp(cube, shapefiles[mask_out], [
+                0,
+            ])
             logger.debug(
                 "Applying land-sea mask from Natural Earth"
                 " shapefile: \n%s", shapefiles[mask_out])
@@ -221,6 +225,61 @@ def mask_landseaice(cube, fx_files, mask_out):
                 raise ValueError(msg)
     else:
         msg = "Landsea-ice mask could not be found. Stopping. "
+        raise ValueError(msg)
+
+    return cube
+
+
+def mask_glaciated(cube, mask_out):
+    """
+    Mask out glaciated areas.
+
+    It applies a Natural Earth mask. Note that for computational reasons
+    only the 10 largest polygons are used for masking.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        data cube to be masked.
+
+    mask_out: str
+        "glaciated" to mask out glaciated areas
+
+    Returns
+    -------
+    iris.cube.Cube
+        Returns the masked iris cube.
+
+    Raises
+    ------
+    ValueError
+        Error raised if masking on irregular grids is attempted or if
+        mask_out has a wrong value.
+    """
+    # Dict to store the Natural Earth masks
+    cwd = os.path.dirname(__file__)
+    # read glaciated shapefile
+    shapefiles = {
+        'glaciated': os.path.join(cwd, 'ne_masks/ne_10m_glaciated_areas.shp'),
+    }
+    if mask_out == 'glaciated':
+        cube = _mask_with_shp(cube, shapefiles[mask_out], [
+            1859,
+            1860,
+            1861,
+            1857,
+            1858,
+            1716,
+            1587,
+            1662,
+            1578,
+            1606,
+        ])
+        logger.debug(
+            "Applying glaciated areas mask from Natural Earth"
+            " shapefile: \n%s", shapefiles[mask_out])
+    else:
+        msg = (f"Invalid argument mask_out: {mask_out}")
         raise ValueError(msg)
 
     return cube

@@ -29,12 +29,12 @@ def read_cmor_tables(cfg_developer):
     """
     custom = CustomInfo()
     CMOR_TABLES['custom'] = custom
-
+    install_dir = os.path.dirname(os.path.realpath(__file__))
     for table in cfg_developer:
         project = cfg_developer[table]
-
         cmor_type = project.get('cmor_type', 'CMIP5')
-        table_path = project.get('cmor_path', cmor_type.lower())
+        default_path = os.path.join(install_dir, 'tables', cmor_type.lower())
+        table_path = project.get('cmor_path', default_path)
         table_path = os.path.expandvars(os.path.expanduser(table_path))
         cmor_strict = project.get('cmor_strict', True)
         default_table_prefix = project.get('cmor_default_table_prefix', '')
