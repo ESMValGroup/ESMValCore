@@ -254,6 +254,10 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     if _attempt_irregular_regridding(cube, scheme):
         cube = esmpy_regrid(cube, target_grid, scheme)
     else:
+        if not cube.coord('latitude').has_bounds():
+            cube.coord('latitude').guess_bounds()
+        if not cube.coord('longitude').has_bounds():
+            cube.coord('longitude').guess_bounds()
         cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
 
     return cube
