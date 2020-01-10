@@ -164,11 +164,7 @@ class CMIP6Info(object):
                     )
                     raise
 
-            axis = coord.axis
-            if not axis:
-                axis = 'none'
-
-            var.coordinates[axis] = coord
+            var.coordinates[dimension] = coord
 
     def _load_coordinates(self):
         self.coords = {}
@@ -392,7 +388,11 @@ class VariableInfo(JsonInfo):
         self.dimensions = []
         """List of dimensions"""
         self.coordinates = {}
-        """Coordinates"""
+        """Coordinates
+
+        This is a dict with the names of the dimensions as keys and
+        CoordinateInfo objects as values.
+        """
 
         self._json_data = None
 
