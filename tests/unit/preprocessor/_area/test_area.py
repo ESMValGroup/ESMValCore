@@ -312,7 +312,7 @@ def make_testcube():
     return iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
 
 
-def write_shapefile(shape, path):
+def write_shapefile(shape, path, negative_bounds=False):
     """Write (a) shape(s) to a shapefile."""
     # Define a polygon feature geometry with one attribute
     schema = {
@@ -327,12 +327,21 @@ def write_shapefile(shape, path):
     # Write a new Shapefile
     with fiona.open(path, 'w', 'ESRI Shapefile', schema) as file:
         for id_, s in enumerate(shape):
-            file.write({
-                'geometry': mapping(s),
-                'properties': {
-                    'id': id_
-                },
-            })
+            if not negative_bounds:
+                file.write({
+                    'geometry': mapping(s),
+                    'properties': {
+                        'id': id_
+                    },
+                })
+            else:
+                file.write({
+                    'geometry': mapping(s),
+                    'properties': {
+                        'id': id_
+                    },
+                    'bounds': [-180, 180, -90, 90],
+                })
 
 
 @pytest.fixture(params=[(2, 2), (1, 3), (9, 2)])
@@ -347,6 +356,8 @@ def square_shape(request, tmp_path):
         (1.0 + slon, 1.0 + slat),
     ])
     write_shapefile(polyg, tmp_path / 'test_shape.shp')
+    write_shapefile(polyg, tmp_path / 'test_shape_negative_bounds.shp',
+                    negative_bounds=True)
 
     # Make corresponding expected masked array
     (slat, slon) = np.ceil([slat, slon]).astype(int)
@@ -368,6 +379,8 @@ def square_composite_shape(request, tmp_path):
             Polygon([(1.0 + n, 1.0 + slat), (1.0 + n, 1.0),
                      (1.0 + n + slon, 1.0), (1.0 + n + slon, 1.0 + slat)]))
     write_shapefile(polyg, tmp_path / 'test_shape.shp')
+    write_shapefile(polyg, tmp_path / 'test_shape_negative_bounds.shp',
+                    negative_bounds=True)
 
     # Make corresponding expected masked array
     (slat, slon) = np.ceil([slat, slon]).astype(int)
@@ -404,6 +417,25 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
 
 
 @pytest.mark.parametrize('crop', [True, False])
+def test_extract_shape_negative_bounds(make_testcube,
+                                       square_shape, tmp_path, crop):
+    """Test for extr a reg with shapefile w/neg ie bound ie (-180, 180)."""
+    expected = square_shape
+    if not crop:
+        # If cropping is not used, embed expected in the original test array
+        original = np.ma.ones((5, 5))
+        original.mask = np.ones_like(original, dtype=bool)
+        original[:expected.shape[0], :expected.shape[1]] = expected
+        expected = original
+    negative_bounds_shapefile = tmp_path / 'test_shape_negative_bounds.shp'
+    result = extract_shape(make_testcube,
+                           negative_bounds_shapefile,
+                           crop=crop)
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+
+@pytest.mark.parametrize('crop', [True, False])
 @pytest.mark.parametrize('decomposed', [True, False])
 def test_extract_composite_shape(make_testcube, square_composite_shape,
                                  tmp_path, crop, decomposed):
@@ -424,6 +456,35 @@ def test_extract_composite_shape(make_testcube, square_composite_shape,
 
     result = extract_shape(make_testcube,
                            tmp_path / 'test_shape.shp',
+                           crop=crop,
+                           decomposed=decomposed)
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+
+@pytest.mark.parametrize('crop', [True, False])
+@pytest.mark.parametrize('decomposed', [True, False])
+def test_extract_composite_shape_negative_bounds(make_testcube,
+                                                 square_composite_shape,
+                                                 tmp_path, crop, decomposed):
+    """Test for extr a reg with shapefile w/neg bounds ie (-180, 180)."""
+    expected = square_composite_shape
+    if not crop:
+        # If cropping is not used, embed expected in the original test array
+        original = np.ma.ones((expected.shape[0], 5, 5))
+        original.mask = np.ones_like(original, dtype=bool)
+        original[:, :expected.shape[1], :expected.shape[2]] = expected
+        expected = original
+
+    if not decomposed or expected.shape[0] == 1:
+        # this detour is necessary, otherwise the data will not agree
+        data = expected.data.max(axis=0)
+        mask = expected.max(axis=0).mask
+        expected = np.ma.masked_array(data=data, mask=mask)
+
+    negative_bounds_shapefile = tmp_path / 'test_shape_negative_bounds.shp'
+    result = extract_shape(make_testcube,
+                           negative_bounds_shapefile,
                            crop=crop,
                            decomposed=decomposed)
     np.testing.assert_array_equal(result.data.data, expected.data)
