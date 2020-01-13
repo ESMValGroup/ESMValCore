@@ -1,4 +1,6 @@
 """Fixes for GFDL-CM4 model."""
+import iris
+
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
@@ -20,7 +22,10 @@ class Tas(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord(cube, 2.0)
+        try:
+            cube.coord('height')
+        except iris.exceptions.CoordinateNotFoundError:
+            add_scalar_height_coord(cube, 2.0)
         return cubes
 
 
