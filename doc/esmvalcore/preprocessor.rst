@@ -896,7 +896,7 @@ See also :func:`esmvalcore.preprocessor.anomalies`.
 
 This function aligns the time points of each component dataset so that the Iris
 cubes from different datasets can be subtracted. The operation makes the
-datasets time points common and sets common calendars; it also resets the time
+datasets time points common; it also resets the time
 bounds and auxiliary coordinates to reflect the artifically shifted time
 points. Current implementation for monthly and daily data; the ``frequency`` is
 set automatically from the variable CMOR table unless a custom ``frequency`` is
