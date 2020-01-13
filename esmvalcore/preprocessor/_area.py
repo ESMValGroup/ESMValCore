@@ -12,6 +12,7 @@ import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
+from iris.exceptions import CoordinateNotFoundError
 
 from ._shared import (get_iris_analysis_operation, guess_bounds,
                       operator_accept_weights)
@@ -334,8 +335,94 @@ def _correct_coords_from_shapefile(cube, cmor_coords):
     return lon, lat
 
 
-def extract_shape(cube, shapefile, method='contains', crop=True):
-    """Extract a region defined by a shapefile.
+def _get_masks_from_geometries(geometries,
+                               lon,
+                               lat,
+                               method='contains',
+                               decomposed=False):
+
+    if method not in {'contains', 'representative'}:
+        raise ValueError(
+            "Invalid value for `method`. Choose from 'contains', ",
+            "'representative'.")
+
+    selections = dict()
+
+    for i, item in enumerate(geometries):
+        shape = shapely.geometry.shape(item['geometry'])
+        if method == 'contains':
+            select = shapely.vectorized.contains(shape, lon, lat)
+        if method == 'representative' or not select.any():
+            select = _select_representative_point(shape, lon, lat)
+        if 'ID' in item['properties']:
+            id_ = int(item['properties']['ID'])
+        elif 'id' in item['properties']:
+            id_ = int(item['properties']['id'])
+        else:
+            id_ = i
+
+        selections[id_] = select
+
+    if not decomposed and len(selections) > 1:
+        selection = np.zeros(lat.shape, dtype=bool)
+        for select in selections.values():
+            selection |= select
+
+        selections = {0: selection}
+
+    return selections
+
+
+def fix_coordinate_ordering(cube):
+    """
+    Transpose the dimensions.
+
+    This is done such that the order of dimension is
+    in standard order, ie:
+
+    [time] [shape_id] [other_coordinates] latitude longitude
+
+    where dimensions between brackets are optional.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+       input cube.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with dimensions transposed to standard order
+
+    """
+    try:
+        time_dim = cube.coord_dims('time')
+    except CoordinateNotFoundError:
+        time_dim = ()
+    try:
+        shape_dim = cube.coord_dims('shape_id')
+    except CoordinateNotFoundError:
+        shape_dim = ()
+
+    other = list(range(len(cube.shape)))
+    for dim in [time_dim, shape_dim]:
+        for i in dim:
+            other.remove(i)
+    other = tuple(other)
+
+    order = time_dim + shape_dim + other
+
+    cube.transpose(new_order=order)
+    return cube
+
+
+def extract_shape(cube,
+                  shapefile,
+                  method='contains',
+                  crop=True,
+                  decomposed=False):
+    """
+    Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
     prime meridian or poles.
@@ -354,6 +441,10 @@ def extract_shape(cube, shapefile, method='contains', crop=True):
     crop: bool, optional
         Crop the resulting cube using `extract_region()`. Note that data on
         irregular grids will not be cropped.
+    decomposed: bool, optional
+        Whether or not to retain the sub shapes of the shapefile in the output.
+        If this is set to True, the output cube has a dimension for the sub
+        shapes.
 
     Returns
     -------
@@ -363,30 +454,34 @@ def extract_shape(cube, shapefile, method='contains', crop=True):
     See Also
     --------
     extract_region : Extract a region from a cube.
-
     """
-    if method not in {'contains', 'representative'}:
-        raise ValueError(
-            "Invalid value for `method`. Choose from 'contains', ",
-            "'representative'.")
-
     with fiona.open(shapefile) as geometries:
+
         if crop:
             cube = _crop_cube(cube, *geometries.bounds)
+
         cmor_coords = True
         if geometries.bounds[0] < 0:
             cmor_coords = False
         lon, lat = _correct_coords_from_shapefile(cube, cmor_coords)
-        selection = np.zeros(lon.shape, dtype=bool)
 
-        for geom_item in geometries:
-            shape = shapely.geometry.shape(geom_item['geometry'])
-            if method == 'contains':
-                select = shapely.vectorized.contains(shape, lon, lat)
-            if method == 'representative' or not select.any():
-                select = _select_representative_point(shape, lon, lat)
-            selection |= select
+        selections = _get_masks_from_geometries(geometries,
+                                                lon,
+                                                lat,
+                                                method=method,
+                                                decomposed=decomposed)
 
-        selection = da.broadcast_to(selection, cube.shape)
-        cube.data = da.ma.masked_where(~selection, cube.core_data())
-        return cube
+    cubelist = iris.cube.CubeList()
+
+    for id_, select in selections.items():
+        _cube = cube.copy()
+        _cube.add_aux_coord(
+            iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
+
+        select = da.broadcast_to(select, _cube.shape)
+        _cube.data = da.ma.masked_where(~select, _cube.core_data())
+        cubelist.append(_cube)
+
+    cube = cubelist.merge_cube()
+
+    return fix_coordinate_ordering(cube)

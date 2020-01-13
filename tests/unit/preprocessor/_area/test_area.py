@@ -313,7 +313,7 @@ def make_testcube():
 
 
 def write_shapefile(shape, path):
-    """Write a shape to a shapefile."""
+    """Write (a) shape(s) to a shapefile."""
     # Define a polygon feature geometry with one attribute
     schema = {
         'geometry': 'Polygon',
@@ -321,15 +321,18 @@ def write_shapefile(shape, path):
             'id': 'int'
         },
     }
+    if not isinstance(shape, list):
+        shape = [shape]
 
     # Write a new Shapefile
     with fiona.open(path, 'w', 'ESRI Shapefile', schema) as file:
-        file.write({
-            'geometry': mapping(shape),
-            'properties': {
-                'id': 123
-            },
-        })
+        for id_, s in enumerate(shape):
+            file.write({
+                'geometry': mapping(s),
+                'properties': {
+                    'id': id_
+                },
+            })
 
 
 @pytest.fixture(params=[(2, 2), (1, 3), (9, 2)])
@@ -350,6 +353,28 @@ def square_shape(request, tmp_path):
     vals = np.ones((min(slat + 2, 5), min(slon + 2, 5)))
     mask = vals.copy()
     mask[1:1 + slat, 1:1 + slon] = 0
+    return np.ma.masked_array(vals, mask)
+
+
+@pytest.fixture(params=[(2, 2, 1), (2, 2, 2), (1, 2, 3)])
+def square_composite_shape(request, tmp_path):
+    # Define polygons to test extract_shape
+    slat = request.param[0]
+    slon = request.param[1]
+    nshape = request.param[2]
+    polyg = []
+    for n in range(nshape):
+        polyg.append(
+            Polygon([(1.0 + n, 1.0 + slat), (1.0 + n, 1.0),
+                     (1.0 + n + slon, 1.0), (1.0 + n + slon, 1.0 + slat)]))
+    write_shapefile(polyg, tmp_path / 'test_shape.shp')
+
+    # Make corresponding expected masked array
+    (slat, slon) = np.ceil([slat, slon]).astype(int)
+    vals = np.ones((nshape, min(slat + 2, 5), min(slon + 1 + nshape, 5)))
+    mask = vals.copy()
+    for n in range(nshape):
+        mask[n, 1:1 + slat, 1 + n:1 + n + slon] = 0
     return np.ma.masked_array(vals, mask)
 
 
@@ -374,6 +399,33 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
     result = extract_shape(make_testcube,
                            tmp_path / 'test_shape.shp',
                            crop=crop)
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+
+@pytest.mark.parametrize('crop', [True, False])
+@pytest.mark.parametrize('decomposed', [True, False])
+def test_extract_composite_shape(make_testcube, square_composite_shape,
+                                 tmp_path, crop, decomposed):
+    """Test for extracting a region with shapefile"""
+    expected = square_composite_shape
+    if not crop:
+        # If cropping is not used, embed expected in the original test array
+        original = np.ma.ones((expected.shape[0], 5, 5))
+        original.mask = np.ones_like(original, dtype=bool)
+        original[:, :expected.shape[1], :expected.shape[2]] = expected
+        expected = original
+
+    if not decomposed or expected.shape[0] == 1:
+        # this detour is necessary, otherwise the data will not agree
+        data = expected.data.max(axis=0)
+        mask = expected.max(axis=0).mask
+        expected = np.ma.masked_array(data=data, mask=mask)
+
+    result = extract_shape(make_testcube,
+                           tmp_path / 'test_shape.shp',
+                           crop=crop,
+                           decomposed=decomposed)
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 

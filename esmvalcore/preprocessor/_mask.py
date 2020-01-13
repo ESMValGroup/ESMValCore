@@ -12,10 +12,10 @@ import os
 
 import cartopy.io.shapereader as shpreader
 import iris
-import numpy as np
-import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
+import numpy as np
+import shapely.vectorized as shp_vect
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
         Returns the masked iris cube.
 
     Raises
-    -------
+    ------
     ValueError
         Error raised if masking on irregular grids is attempted.
         Irregular grids are not currently supported for masking
@@ -154,7 +154,9 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
             logger.debug("Applying land-sea mask: sftof")
         else:
             if cube.coord('longitude').points.ndim < 2:
-                cube = _mask_with_shp(cube, shapefiles[mask_out])
+                cube = _mask_with_shp(cube, shapefiles[mask_out], [
+                    0,
+                ])
                 logger.debug(
                     "Applying land-sea mask from Natural Earth"
                     " shapefile: \n%s", shapefiles[mask_out])
@@ -164,7 +166,9 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
                 raise ValueError(msg)
     else:
         if cube.coord('longitude').points.ndim < 2:
-            cube = _mask_with_shp(cube, shapefiles[mask_out])
+            cube = _mask_with_shp(cube, shapefiles[mask_out], [
+                0,
+            ])
             logger.debug(
                 "Applying land-sea mask from Natural Earth"
                 " shapefile: \n%s", shapefiles[mask_out])
@@ -200,7 +204,7 @@ def mask_landseaice(cube, fx_files, mask_out):
         Returns the masked iris cube with either land or ice masked out.
 
     Raises
-    -------
+    ------
     ValueError
         Error raised if fx mask and data have different dimensions.
     ValueError
@@ -226,26 +230,93 @@ def mask_landseaice(cube, fx_files, mask_out):
     return cube
 
 
-def _get_geometry_from_shp(shapefilename):
-    """Get the mask geometry out from a shapefile."""
+def mask_glaciated(cube, mask_out):
+    """
+    Mask out glaciated areas.
+
+    It applies a Natural Earth mask. Note that for computational reasons
+    only the 10 largest polygons are used for masking.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        data cube to be masked.
+
+    mask_out: str
+        "glaciated" to mask out glaciated areas
+
+    Returns
+    -------
+    iris.cube.Cube
+        Returns the masked iris cube.
+
+    Raises
+    ------
+    ValueError
+        Error raised if masking on irregular grids is attempted or if
+        mask_out has a wrong value.
+    """
+    # Dict to store the Natural Earth masks
+    cwd = os.path.dirname(__file__)
+    # read glaciated shapefile
+    shapefiles = {
+        'glaciated': os.path.join(cwd, 'ne_masks/ne_10m_glaciated_areas.shp'),
+    }
+    if mask_out == 'glaciated':
+        cube = _mask_with_shp(cube, shapefiles[mask_out], [
+            1859,
+            1860,
+            1861,
+            1857,
+            1858,
+            1716,
+            1587,
+            1662,
+            1578,
+            1606,
+        ])
+        logger.debug(
+            "Applying glaciated areas mask from Natural Earth"
+            " shapefile: \n%s", shapefiles[mask_out])
+    else:
+        msg = (f"Invalid argument mask_out: {mask_out}")
+        raise ValueError(msg)
+
+    return cube
+
+
+def _get_geometries_from_shp(shapefilename):
+    """Get the mask geometries out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
     # Index 0 grabs the lowest resolution mask (no zoom)
-    main_geom = [contour for contour in reader.geometries()][0]
-    return main_geom
+    geometries = [contour for contour in reader.geometries()]
+    if not geometries:
+        msg = "Could not find any geometry in {}".format(shapefilename)
+        raise ValueError(msg)
+
+    # TODO might need this for a later, more enhanced, version
+    # geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
+
+    return geometries
 
 
-def _mask_with_shp(cube, shapefilename):
+def _mask_with_shp(cube, shapefilename, region_indices=None):
     """
     Apply a Natural Earth land/sea mask.
 
     Apply a pre-made land or sea mask that is extracted form a
     Natural Earth shapefile (proprietary file format). The masking
     process is performed by checking if any given (x, y) point from
-    the data cube lies within the desired geometry (eg land, sea) stored
+    the data cube lies within the desired geometries (eg land, sea) stored
     in the shapefile (this is done via shapefle vectorization and is fast).
+    region_indices is a list of indices that the user will want to index
+    the regions on (select a region by its index as it is listed in
+    the shapefile).
     """
     # Create the region
-    region = _get_geometry_from_shp(shapefilename)
+    regions = _get_geometries_from_shp(shapefilename)
+    if region_indices:
+        regions = [regions[idx] for idx in region_indices]
 
     # Create a mask for the data
     mask = np.zeros(cube.shape, dtype=bool)
@@ -271,19 +342,20 @@ def _mask_with_shp(cube, shapefilename):
     y_p_0 = np.where(y_p == -90., y_p + 1., y_p)
     y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
 
-    # Build mask with vectorization
-    if cube.ndim == 2:
-        mask = shp_vect.contains(region, x_p_180, y_p_90)
-    elif cube.ndim == 3:
-        mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
-    elif cube.ndim == 4:
-        mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
+    for region in regions:
+        # Build mask with vectorization
+        if cube.ndim == 2:
+            mask = shp_vect.contains(region, x_p_180, y_p_90)
+        elif cube.ndim == 3:
+            mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
+        elif cube.ndim == 4:
+            mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
 
-    # Then apply the mask
-    if isinstance(cube.data, np.ma.MaskedArray):
-        cube.data.mask |= mask
-    else:
-        cube.data = np.ma.masked_array(cube.data, mask)
+        # Then apply the mask
+        if isinstance(cube.data, np.ma.MaskedArray):
+            cube.data.mask |= mask
+        else:
+            cube.data = np.ma.masked_array(cube.data, mask)
 
     return cube
 
@@ -361,7 +433,7 @@ def mask_above_threshold(cube, threshold):
         threshold to be applied on input cube data.
 
     Returns
-    --------
+    -------
     iris.cube.Cube
         thresholded cube.
 
@@ -385,7 +457,7 @@ def mask_below_threshold(cube, threshold):
         threshold to be applied on input cube data.
 
     Returns
-    --------
+    -------
     iris.cube.Cube
         thresholded cube.
 
@@ -411,7 +483,7 @@ def mask_inside_range(cube, minimum, maximum):
         upper threshold to be applied on input cube data.
 
     Returns
-    --------
+    -------
     iris.cube.Cube
         thresholded cube.
 
@@ -437,7 +509,7 @@ def mask_outside_range(cube, minimum, maximum):
         upper threshold to be applied on input cube data.
 
     Returns
-    --------
+    -------
     iris.cube.Cube
         thresholded cube.
 
@@ -481,7 +553,7 @@ def mask_fillvalues(products,
         Masked iris cubes.
 
     Raises
-    -------
+    ------
     NotImplementedError
         Implementation missing for data with higher dimensionality than 4.
 
