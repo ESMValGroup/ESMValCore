@@ -206,6 +206,9 @@ def daily_statistics(cube, operator='mean'):
 
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(['day_of_year', 'year'], operator)
+
+    cube.remove_coord('day_of_year')
+    cube.remove_coord('year')
     return cube
 
 
@@ -405,9 +408,10 @@ def climate_statistics(cube, operator='mean', period='full'):
 
     clim_coord = _get_period_coord(cube, period)
     operator = get_iris_analysis_operation(operator)
-    cube = cube.aggregated_by(clim_coord, operator)
-    cube.remove_coord('time')
-    iris.util.promote_aux_coord_to_dim_coord(cube, clim_coord.name())
+    clim_cube = cube.aggregated_by(clim_coord, operator)
+    cube.remove_coord(clim_coord)
+    clim_cube.remove_coord('time')
+    iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
     return cube
 
 
