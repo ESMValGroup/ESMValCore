@@ -412,7 +412,7 @@ def climate_statistics(cube, operator='mean', period='full'):
     cube.remove_coord(clim_coord)
     clim_cube.remove_coord('time')
     iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
-    return cube
+    return clim_cube
 
 
 def anomalies(cube, period):
