@@ -270,7 +270,7 @@ def _limit_datasets(variables, profile, max_datasets=0):
             limited.append(variable)
 
     logger.info("Only considering %s",
-                ', '.join(v['dataset'] for v in limited))
+                ', '.join(v['alias'] for v in limited))
 
     return limited
 
