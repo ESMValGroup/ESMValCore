@@ -355,6 +355,7 @@ def square_shape(request, tmp_path):
         (1.0 + slon, 1.0),
         (1.0 + slon, 1.0 + slat),
     ])
+
     write_shapefile(polyg, tmp_path / 'test_shape.shp')
     write_shapefile(polyg, tmp_path / 'test_shape_negative_bounds.shp',
                     negative_bounds=True)
@@ -428,6 +429,31 @@ def test_extract_shape_negative_bounds(make_testcube,
         original[:expected.shape[0], :expected.shape[1]] = expected
         expected = original
     negative_bounds_shapefile = tmp_path / 'test_shape_negative_bounds.shp'
+    result = extract_shape(make_testcube,
+                           negative_bounds_shapefile,
+                           crop=crop)
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+
+def test_extract_shape_neg_lon(make_testcube, tmp_path, crop=False):
+    """Test for extr a reg with shapefile w/negative lon."""
+    (slat, slon) = (2, -2)
+    polyg = Polygon([
+        (1.0, 1.0 + slat),
+        (1.0, 1.0),
+        (1.0 + slon, 1.0),
+        (1.0 + slon, 1.0 + slat),
+    ])
+    write_shapefile(polyg, tmp_path / 'test_shape_negative_lon.shp',
+                    negative_bounds=True)
+
+    expected_data = np.ones((5, 5))
+    expected_mask = np.ones((5, 5))
+    expected_mask[1, 0] = False
+    expected_mask[2, 0] = False
+    expected = np.ma.array(expected_data, mask=expected_mask)
+    negative_bounds_shapefile = tmp_path / 'test_shape_negative_lon.shp'
     result = extract_shape(make_testcube,
                            negative_bounds_shapefile,
                            crop=crop)
