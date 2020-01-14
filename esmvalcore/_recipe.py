@@ -418,6 +418,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
+
     return fx_files
 
 
