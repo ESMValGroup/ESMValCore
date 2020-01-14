@@ -403,15 +403,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
                                      var)
         elif fx_varname == 'volcello':
             fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
-                                         var)
-
-        # elif fx_varname == 'volcello':
-        #     if var['dataset'] in ['UKESM1-0-LL', 'GFDL-CM4', 'HadGEM3-GC31-LL', ]:
-        #         fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': var['mip']},
-        #                                  var)
-        #     else:
-        #         fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
-        #                                  var)
+                                     var)
     else:
         raise RecipeError(
             f"Project {var['project']} not supported with fx variables")
