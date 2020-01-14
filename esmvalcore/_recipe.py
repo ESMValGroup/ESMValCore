@@ -415,6 +415,9 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
         fx_var['mip'] = var['mip']
         fx_files = _get_input_files(fx_var, config_user)
 
+    if not fx_files:
+        logger.warning("Unable to locate Fx files in Ofx or %s", var['mip'])
+
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
