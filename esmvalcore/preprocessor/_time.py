@@ -212,8 +212,10 @@ def daily_statistics(cube, operator='mean'):
     iris.cube.Cube
         Daily statistics cube
     """
-    iris.coord_categorisation.add_day_of_year(cube, 'time')
-    iris.coord_categorisation.add_year(cube, 'time')
+    if not cube.coords('day_of_year'):
+        iris.coord_categorisation.add_day_of_year(cube, 'time')
+    if not cube.coords('year'):
+        iris.coord_categorisation.add_year(cube, 'time')
 
     operator = get_iris_analysis_operation(operator)
     cube = cube.aggregated_by(['day_of_year', 'year'], operator)
@@ -555,5 +557,19 @@ def regrid_time(cube, frequency):
     # uniformize bounds
     cube.coord('time').bounds = None
     cube.coord('time').guess_bounds()
+
+    # remove aux coords that will differ
+    reset_aux = ['day_of_month', 'day_of_year']
+    for auxcoord in cube.aux_coords:
+        if auxcoord.long_name in reset_aux:
+            cube.remove_coord(auxcoord)
+
+    # re-add the converted aux coords
+    iris.coord_categorisation.add_day_of_month(cube,
+                                               cube.coord('time'),
+                                               name='day_of_month')
+    iris.coord_categorisation.add_day_of_year(cube,
+                                              cube.coord('time'),
+                                              name='day_of_year')
 
     return cube
