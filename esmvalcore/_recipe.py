@@ -405,11 +405,9 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
             if var['dataset'] in ['UKESM1-0-LL', 'GFDL-CM4', 'HadGEM3-GC31-LL', ]:
                 fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': var['mip']},
                                          var)
-            else: 
+            else:
                 fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
                                          var)
-       
-            print(fx_var, var['dataset'], var['mip'])
     else:
         raise RecipeError(
             f"Project {var['project']} not supported with fx variables")
