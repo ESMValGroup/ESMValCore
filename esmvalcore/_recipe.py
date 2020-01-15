@@ -1027,12 +1027,14 @@ class Recipe:
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
             _update_from_others(variable, ['cmor_table', 'mip'], datasets)
-            institute = get_institutes(variable)
-            if institute:
-                variable['institute'] = institute
-            activity = get_activity(variable)
-            if activity:
-                variable['activity'] = activity
+            if 'institute' not in variable:
+                institute = get_institutes(variable)
+                if institute:
+                    variable['institute'] = institute
+            if 'activity' not in variable:
+                activity = get_activity(variable)
+                if activity:
+                    variable['activity'] = activity
             check.variable(variable, required_keys)
         variables = self._expand_ensemble(variables)
         return variables
