@@ -1770,6 +1770,7 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
         else:
             assert False
 
+
 def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
@@ -1800,5 +1801,5 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
     msg = ("Requested fx variable 'wrong_fx_variable' for CMIP6 not "
            "available in any 'fx'-related CMOR table")
     with pytest.raises(RecipeError) as rec_err_exp:
-        recipe = get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, config_user)
         assert msg in rec_err_exp
