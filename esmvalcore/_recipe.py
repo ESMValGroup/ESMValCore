@@ -410,9 +410,6 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
             raise RecipeError(
                 f"Requested fx variable '{fx_varname}' for CMIP6 not "
                 f"available in any 'fx'-related CMOR table ({fx_mips})")
-        if fx_variable is None:
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': '=fx'},
-                                     var)
     else:
         raise RecipeError(
             f"Project {var['project']} not supported with fx variables")
