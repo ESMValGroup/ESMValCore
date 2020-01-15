@@ -386,20 +386,32 @@ def _add_fxvar_keys(fx_var_dict, variable):
 
 
 def _get_correct_fx_file(variable, fx_varname, config_user):
-    """Wrapper to standard file getter to recover the correct fx file."""
+    """Get paths to fx files."""
     var = dict(variable)
     if var['project'] in ['CMIP5', 'OBS', 'OBS6', 'obs4mips']:
         fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
     elif var['project'] == 'CMIP6':
-        if fx_varname == 'sftlf':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
-                                     var)
-        elif fx_varname == 'sftof':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
-                                     var)
-        # TODO allow availability for multiple mip's for sftgif
-        elif fx_varname == 'sftgif':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
+        cmor_table = CMOR_TABLES['CMIP6']
+        fx_mips = ['fx']  # Check if fx variable is in table 'fx' first
+        fx_mips.extend([key for key in cmor_table.tables if 'fx' in key and
+                        key != 'fx'])
+        for fx_mip in fx_mips:
+            fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
+            if fx_variable is not None:
+                # TODO allow availability for multiple mip's for certain vars
+                # (especially necessary for the (almost) identical tables
+                # IfxAnt and IfxGre)
+                fx_var = _add_fxvar_keys(
+                    {'short_name': fx_varname, 'mip': fx_mip}, var)
+                logger.debug("For fx variable '%s', found CMIP6 table '%s'",
+                             fx_varname, fx_mip)
+                break
+        else:
+            raise RecipeError(
+                f"Requested fx variable '{fx_varname}' for CMIP6 not "
+                f"available in any 'fx'-related CMOR table ({fx_mips})")
+        if fx_variable is None:
+            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': '=fx'},
                                      var)
     else:
         raise RecipeError(
