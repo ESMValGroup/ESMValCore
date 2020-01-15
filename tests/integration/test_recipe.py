@@ -1708,6 +1708,7 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
                'areacello',
                'clayfrac',
                'sftlf',
+               'sftgif',
                'sftof',
              ]
            mask_landsea:
@@ -1745,11 +1746,12 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     assert settings['operator'] == 'mean'
     fx_files = settings['fx_files']
     assert isinstance(fx_files, dict)
-    assert len(fx_files) == 5
+    assert len(fx_files) == 6
     assert '_fx_' in fx_files['areacella']
     assert '_Ofx_' in fx_files['areacello']
     assert 'Efx_' in fx_files['clayfrac']
     assert '_fx_' in fx_files['sftlf']
+    assert '_fx_' in fx_files['sftgif']
     assert '_Ofx_' in fx_files['sftof']
 
     # Check mask_landsea
