@@ -503,6 +503,52 @@ def test_empty_variable(tmp_path, patched_datafinder, config_user):
     assert product.attributes['dataset'] == 'CanESM2'
 
 
+def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder,
+                                     config_user):
+    """Test that required information is automatically added for CMIP5."""
+    content = dedent("""
+        diagnostics:
+          test:
+            additional_datasets:
+              - dataset: bccr_bcm2_0
+                project: CMIP3
+                mip: A1
+                frequency: mon
+                exp: historical
+                start_year: 2000
+                end_year: 2001
+                ensemble: r1i1p1
+                modeling_realm: atmos
+            variables:
+              zg:
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['test']['preprocessor_output']['zg'][0]
+
+    reference = {
+        'dataset': 'bccr_bcm2_0',
+        'diagnostic': 'test',
+        'end_year': 2001,
+        'ensemble': 'r1i1p1',
+        'exp': 'historical',
+        'frequency': 'mon',
+        'institute': ['BCCR'],
+        'long_name': 'Geopotential Height',
+        'mip': 'A1',
+        'modeling_realm': 'atmos',
+        'preprocessor': 'default',
+        'project': 'CMIP3',
+        'short_name': 'zg',
+        'standard_name': 'geopotential_height',
+        'start_year': 2000,
+        'units': 'm',
+    }
+    for key in reference:
+        assert variable[key] == reference[key]
+
+
 def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
                                      config_user):
     """Test that required information is automatically added for CMIP5."""

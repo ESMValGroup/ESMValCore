@@ -270,7 +270,7 @@ def _limit_datasets(variables, profile, max_datasets=0):
             limited.append(variable)
 
     logger.info("Only considering %s",
-                ', '.join(v['dataset'] for v in limited))
+                ', '.join(v['alias'] for v in limited))
 
     return limited
 
@@ -314,7 +314,8 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_metadata'] = dict(fix)
 
     # Configure time extraction
-    if 'start_year' in variable and 'end_year' in variable:
+    if 'start_year' in variable and 'end_year' in variable \
+            and variable['frequency'] != 'fx':
         settings['extract_time'] = {
             'start_year': variable['start_year'],
             'end_year': variable['end_year'] + 1,
@@ -1026,12 +1027,14 @@ class Recipe:
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
             _update_from_others(variable, ['cmor_table', 'mip'], datasets)
-            institute = get_institutes(variable)
-            if institute:
-                variable['institute'] = institute
-            activity = get_activity(variable)
-            if activity:
-                variable['activity'] = activity
+            if 'institute' not in variable:
+                institute = get_institutes(variable)
+                if institute:
+                    variable['institute'] = institute
+            if 'activity' not in variable:
+                activity = get_activity(variable)
+                if activity:
+                    variable['activity'] = activity
             check.variable(variable, required_keys)
         variables = self._expand_ensemble(variables)
         return variables

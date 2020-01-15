@@ -8,7 +8,7 @@ The variable derivation module allows to derive variables which are not in the
 CMIP standard data request using standard variables as input. All derivations
 scripts are located in
 `ESMValCore/esmvalcore/preprocessor/_derive/
-<https://github.com/ESMValGroup/ESMValCore/tree/development/esmvalcore/preprocessor/_derive>`_.
+<https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/preprocessor/_derive>`_.
 A typical example looks like this:
 
 .. code-block:: py
