@@ -16,7 +16,7 @@ from pybtex.database import BibliographyData, Entry
 import psutil
 import yaml
 
-from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
+from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags, get_tag_value
 from ._provenance import TrackedFile, get_task_provenance
 
 logger = logging.getLogger(__name__)
@@ -515,6 +515,7 @@ class DiagnosticTask(BaseTask):
         if returncode == 0:
             logger.debug("Script %s completed successfully", self.script)
             self._collect_provenance()
+            self._write_citation_file()
             return [self.output_dir]
 
         raise DiagnosticError(
@@ -585,18 +586,27 @@ class DiagnosticTask(BaseTask):
 
 
     def _write_citation_file(self):
-        """Write citation information provided from the recorded provenance."""
-        citation_file = os.path.join(self.settings['run_dir'],
-                                     'diagnostic_citation.bibtex')
+        """Write citation information provided by the recorded provenance."""
+        provenance_file = os.path.join(self.settings['run_dir'],
+                                       'diagnostic_provenance.yml')
+        with open(provenance_file, 'r') as file:
+            table = yaml.safe_load(file)
+        section = 'references'
+        reference_dict = {}
+        for filename, attributes in table.items():
+            for tag in attributes[section]:
+                reference_dict[tag] = get_tag_value(section, tag)
 
         # papers describing the diagnostic and recipe
-        bib_entry = BibliographyData({
-            'article-minimal': Entry('article', [
-                ('author', ''),
-                ('title', ''),
-                ('journal', ""),
-                ('year', ''),]),
-        })
+        bib_entry = {}
+        bib_fields = ['author', 'journal', 'volume', 'pages', 'doi', 'year']
+        for key in reference_dict:
+            reference = list(reference_dict[key].split(","))
+        # "[Last name] et al., [journal abbr.], [volume], [pages], doi:[doi], [year].
+            bib_entry.update({
+                key: Entry('article', list(zip(bib_fields, reference ))),
+            })
+        bib_data = BibliographyData(bib_entry)
 
         # model data citation information
 
@@ -607,7 +617,9 @@ class DiagnosticTask(BaseTask):
         # scientific compute cluster citation information, if applicable
 
         # save the file
-        bib_entry.to_string(citation_file, 'bibtex')
+        citation_file = os.path.join(self.settings['run_dir'],
+                                     'diagnostic_citation.bibtex')
+        bib_data.to_string(citation_file, 'bibtex')
 
 
     def __str__(self):
