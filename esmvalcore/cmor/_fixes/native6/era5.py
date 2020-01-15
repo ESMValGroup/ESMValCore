@@ -58,6 +58,20 @@ class Radiation(FixEra5):
             cube.attributes['positive'] = 'down'
         return cubes
 
+class Fx(FixERA5):
+    """Fixes for time invariant variables."""
+
+    def fix_metadata(self, cubes):
+        super().fix_metadata(cubes)
+        for cube in cubes:
+            if cube.var_name in ['zg', 'orog']:
+                # Divide by acceleration of gravity [m s-2],
+                # required for geopotential height, see:
+                # https://apps.ecmwf.int/codes/grib/param-db?id=129
+                cube.units = cube.units / 'm s-2'
+                cube.data = cube.core_data() / 9.80665
+        return cubes
+
 class Evspsbl(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
@@ -84,6 +98,9 @@ class Rsdt(Radiation, Accumulated):
 
 class Rls(Radiation):
     """Fixes for Rls."""
+
+class Orog(Fx):
+    """Fixes for orography"""
 
 class AllVars(FixEra5):
     """Fixes for all variables."""
