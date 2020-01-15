@@ -3,7 +3,6 @@
 import unittest
 
 import numpy as np
-from numpy.testing import assert_array_equal, assert_equal
 
 import iris
 import tests
@@ -14,6 +13,13 @@ from esmvalcore.preprocessor._mask import (_apply_fx_mask, _check_dims,
                                            mask_below_threshold,
                                            mask_glaciated, mask_inside_range,
                                            mask_outside_range)
+
+
+def assert_array_equal(a, b):
+    """Test for both data and mask in one go."""
+    np.testing.assert_array_equal(a, b)
+    if np.ma.isMaskedArray(a) and np.ma.isMaskedArray(b):
+        np.testing.assert_array_equal(a.mask, b.mask)
 
 
 class Test(tests.Test):
@@ -45,29 +51,37 @@ class Test(tests.Test):
                                             calendar='gregorian')), 0)
         self.fx_data = np.array([20., 60., 50.])
 
-    def test_apply_fx_mask(self):
+    def test_apply_fx_mask_on_nonmasked_data(self):
         """Test _apply_fx_mask func."""
-        dummy_fx_mask = np.ma.array([33., 22., 33.],
-                                    mask=[True, False, True],
-                                    fill_value=1e+20)
+        dummy_fx_mask = np.ma.array((True, False, True))
         app_mask = _apply_fx_mask(dummy_fx_mask,
                                   self.time_cube.data[0:3].astype('float64'))
         fixed_mask = np.ma.array(self.time_cube.data[0:3].astype('float64'),
-                                 mask=dummy_fx_mask.mask)
+                                 mask=dummy_fx_mask)
+        assert_array_equal(fixed_mask, app_mask)
+
+    def test_apply_fx_mask_on_masked_data(self):
+        """Test _apply_fx_mask func."""
+        dummy_fx_mask = np.ma.array((True, True, True))
+        masked_data = np.ma.array(self.time_cube.data[0:3].astype('float64'),
+                                  mask=np.ma.array((False, True, False)))
+        app_mask = _apply_fx_mask(dummy_fx_mask, masked_data)
+        fixed_mask = np.ma.array(self.time_cube.data[0:3].astype('float64'),
+                                 mask=dummy_fx_mask)
         assert_array_equal(fixed_mask, app_mask)
 
     def test_check_dims(self):
         """Test _check_dims func."""
         malformed_cube = self.arr[0]
-        assert_equal(True, _check_dims(self.arr, self.arr))
-        assert_equal(False, _check_dims(self.arr, malformed_cube))
+        np.testing.assert_equal(True, _check_dims(self.arr, self.arr))
+        np.testing.assert_equal(False, _check_dims(self.arr, malformed_cube))
 
     def test_count_spells(self):
         """Test count_spells func."""
         ref_spells = count_spells(self.time_cube.data, -1000., 0, 1)
-        assert_equal(24, ref_spells)
+        np.testing.assert_equal(24, ref_spells)
         ref_spells = count_spells(self.time_cube.data, -1000., 0, 2)
-        assert_equal(12, ref_spells)
+        np.testing.assert_equal(12, ref_spells)
 
     def test_get_fx_mask(self):
         """Test _get_fx_mask func."""
@@ -99,29 +113,25 @@ class Test(tests.Test):
         expected = np.ma.masked_array(self.data2,
                                       mask=np.array([[True, True],
                                                      [False, False]]))
-        assert_array_equal(result.data.data, expected.data)
-        assert_array_equal(result.data.mask, expected.mask)
+        assert_array_equal(result.data, expected)
 
     def test_mask_above_threshold(self):
         """Test to mask above a threshold."""
         result = mask_above_threshold(self.arr, 1.5)
         expected = np.ma.array(self.data2, mask=[[False, False], [True, True]])
         assert_array_equal(result.data, expected)
-        assert_array_equal(result.data.mask, expected.mask)
 
     def test_mask_below_threshold(self):
         """Test to mask below a threshold."""
         result = mask_below_threshold(self.arr, 1.5)
         expected = np.ma.array(self.data2, mask=[[True, True], [False, False]])
         assert_array_equal(result.data, expected)
-        assert_array_equal(result.data.mask, expected.mask)
 
     def test_mask_inside_range(self):
         """Test to mask inside a range."""
         result = mask_inside_range(self.arr, 0.5, 2.5)
         expected = np.ma.array(self.data2, mask=[[False, True], [True, False]])
         assert_array_equal(result.data, expected)
-        assert_array_equal(result.data.mask, expected.mask)
 
     def test_mask_outside_range(self):
         """Test to mask outside a range."""
