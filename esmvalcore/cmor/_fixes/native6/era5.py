@@ -122,25 +122,22 @@ class AllVars(FixEra5):
         if 'height10m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.)
 
-        # Fix coordinate units, dtypes and names
+
         for coord_def in self.vardef.coordinates.values():
-            coord_name = coord_def.standard_name
-        # TODO: After merging #413
-        # the 2 lines above simplify to:
-        # for coord_name, coord_def in self.vardef.coordinates.items():
-        # and coord_def.axis == 'T' changes to coord_name == 'time'
-        # NOTE: perhaps we need a mapping between ERA5 and cmor coordinate names
-            coord = cube.coord(coord_name)
-            if coord_def.axis == 'T':
+            axis = coord_def.axis
+            coord = cube.coord(axis=axis)
+            if axis == 'T':
                 coord.convert_units('days since 1850-1-1 00:00:00.0')
-            if coord_def.axis == 'Z':
+            if axis == 'Z':
                 coord.convert_units(coord_def.units)
             coord.standard_name = coord_def.standard_name
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype('float64')
-            if len(coord.points) > 1:
+            print(coord_def)
+            if len(coord.points) > 1 and coord_def.must_have_bounds == "yes":
                 coord.guess_bounds()
+
 
         self._fix_monthly_time_coord(cube)
 

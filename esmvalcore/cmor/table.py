@@ -496,6 +496,8 @@ class CoordinateInfo(JsonInfo):
         """Minimum allowed value"""
         self.valid_max = ""
         """Maximum allowed value"""
+        self.must_have_bounds = ""
+        """Whether bounds are required on this dimension"""
 
     def read_json(self, json_data):
         """
@@ -523,6 +525,7 @@ class CoordinateInfo(JsonInfo):
         self.valid_min = self._read_json_variable('valid_min')
         self.valid_max = self._read_json_variable('valid_max')
         self.requested = self._read_json_list_variable('requested')
+        self.must_have_bounds = self._read_json_variable('must_have_bounds')
 
 
 class CMIP5Info(object):
