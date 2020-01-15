@@ -81,7 +81,6 @@ class Test(tests.Test):
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([1.5, 5.5, 9.5])
         self.assertArrayEqual(result.data, expected)
-        self.assertArrayEqual(result.data.mask, expected.mask)
 
     def test_regrid__nearest(self):
         data = np.empty((1, 1))
@@ -120,7 +119,6 @@ class Test(tests.Test):
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([3, 7, 11])
         self.assertArrayEqual(result.data, expected)
-        self.assertArrayEqual(result.data.mask, expected.mask)
 
     def test_regrid__area_weighted(self):
         data = np.empty((1, 1))
