@@ -39,7 +39,7 @@ class Hydrological(FixEra5):
 
     @staticmethod
     def _fix_units(cube):
-        cube.units = 'kg m-2'
+        cube.units = 'kg m-2 s-1'
         cube.data = cube.core_data() * 1000.
         return cube
 
@@ -58,7 +58,7 @@ class Radiation(FixEra5):
             cube.attributes['positive'] = 'down'
         return cubes
 
-class Fx(FixERA5):
+class Fx(FixEra5):
     """Fixes for time invariant variables."""
 
     def fix_metadata(self, cubes):
