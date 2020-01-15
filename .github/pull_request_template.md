@@ -1,4 +1,4 @@
-Before you start, please read [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValTool/blob/version2_development/CONTRIBUTING.md).
+Before you start, please read [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/master/CONTRIBUTING.md).
 
 **Tasks**
 

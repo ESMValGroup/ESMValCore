@@ -1,6 +1,12 @@
 """Unit tests for :func:`esmvalcore._data_finder.regrid._stock_cube`"""
 
+<<<<<<< HEAD
 import pytest
+=======
+import unittest
+import os
+import tempfile
+>>>>>>> origin/master
 
 from esmvalcore._data_finder import get_start_end_year
 

@@ -10,6 +10,8 @@ import os
 import re
 import glob
 
+import iris
+
 from ._config import get_project_config
 
 logger = logging.getLogger(__name__)

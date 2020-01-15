@@ -64,6 +64,7 @@ CMIP5:
     'CNRM-CM5': ['CNRM-CERFACS']
     'CNRM-CM5-2': ['CNRM-CERFACS']
     'CSIRO-Mk3-6-0': ['CSIRO-QCCCE']
+    'CSIRO-Mk3L-1-2': ['CSIRO-QCCCE']
     'EC-EARTH': ['ICHEC']
     'FGOALS-g2': ['LASG-CESS']
     'FGOALS-gl': ['LASG-IAP']
@@ -104,6 +105,64 @@ CMIP5:
     'NICAM-09': ['NICAM']
     'NorESM1-M': ['NCC']
     'NorESM1-ME': ['NCC']
+
+CMIP3:
+  cmor_strict: true
+  input_dir:
+    default: '/'
+    BADC: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{latestversion}'
+    DKRZ: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
+  input_file: '{short_name}_*.nc'
+  output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  cmor_type: 'CMIP3'
+  institutes:
+    'bccr_bcm2_0': ['BCCR']
+    'cccma_cgcm3_1': ['CCCMA']
+    'cccma_cgcm3_1_t63': ['CCCMA']
+    'cnrm_cm3': ['CNRM']
+    'csiro_mk3_0': ['CSIRO']
+    'csiro_mk3_5': ['CSIRO']
+    'gfdl_cm2_0': ['GFDL']
+    'gfdl_cm2_1': ['GFDL']
+    'ingv_echam4': ['INGV']
+    'inmcm3_0': ['INM']
+    'ipsl_cm4': ['IPSL']
+    'iap_fgoals1_0_g': ['LASG']
+    'miub_echo_g': ['MIUB-KMA']
+    'mpi_echam5': ['MPIM']
+    'mri_cgcm2_3_2a': ['MRI']
+    'giss_aom': ['NASA']
+    'giss_model_e_h': ['NASA']
+    'giss_model_e_r': ['NASA']
+    'ncar_ccsm3_0': ['NCAR']
+    'ncar_pcm1': ['NCAR']
+    'miroc3_2_hires': ['NIES']
+    'miroc3_2_medres': ['NIES']
+    'ukmo_hadcm3': ['UKMO']
+    'ukmo_hadgem1': ['UKMO']
+    'BCM2': ['BCCR']
+    'CGCM3-1-T47': ['CCCMA']
+    'CGCM3-1-T63': ['CCCMA']
+    'BCC-CM1': ['CMA']
+    'CM3': ['CNRM', 'INM']
+    'MK3': ['CSIRO']
+    'MK3-5': ['CSIRO']
+    'CM2': ['GFDL']
+    'CM2-1': ['GFDL']
+    'ECHAM4': ['INGV']
+    'CM4': ['IPSL']
+    'FGOALS-G1-0': ['LASG']
+    'ECHO-G': ['MIUB-KMA']
+    'ECHAM5': ['MPIM']
+    'GISS-AOM': ['NASA']
+    'GISS-EH': ['NASA']
+    'GISS-ER': ['NASA']
+    'CCSM3': ['NCAR']
+    'PCM': ['NCAR']
+    'MIROC3-2-HI': ['NIES']
+    'MIROC3-2-MED': ['NIES']
+    'HADCM3': ['UKMO']
+    'HADGEM1': ['UKMO']
 
 OBS:
   cmor_strict: false
