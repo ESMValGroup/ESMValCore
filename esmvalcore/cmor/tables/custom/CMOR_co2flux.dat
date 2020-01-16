@@ -7,13 +7,13 @@ modeling_realm:    atmos
 ! Variable attributes:
 !----------------------------------
 standard_name:     mole_fraction_of_carbon_dioxide_in_air
-units:             PgC y-1
+units:             kg m-2 s-1
 cell_methods:      time: mean
 long_name:         Land plus Ocean Carbon Fluxes (nbp+fgco2)
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
-dimensions:        time
+dimensions:        longitude latitude time
 out_name:          co2flux
 type:              real
 !----------------------------------
