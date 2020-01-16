@@ -99,15 +99,25 @@ def zonal_statistics(cube, operator):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
 
     Returns
     -------
     iris.cube.Cube
-        Zonal statistics cube
+        Zonal statistics cube.
+
+    Raises
+    ------
+    ValueError
+        Error raised if computation on irregular grids is attempted.
+        Zonal statistics not yet implemented for irregular grids.
     """
-    operation = get_iris_analysis_operation(operator)
-    return cube.collapsed('longitude', operation)
+    if cube.coord('longitude').points.ndim < 2:
+        operation = get_iris_analysis_operation(operator)
+        return cube.collapsed('longitude', operation)
+    else:
+        msg = (f"Zonal statistics on irregular grids not yet implemnted")
+        raise ValueError(msg)
 
 
 def meridional_statistics(cube, operator):
@@ -121,15 +131,25 @@ def meridional_statistics(cube, operator):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
 
     Returns
     -------
     iris.cube.Cube
-        Meridional statistics cube
+        Meridional statistics cube.
+
+    Raises
+    ------
+    ValueError
+        Error raised if computation on irregular grids is attempted.
+        Zonal statistics not yet implemented for irregular grids.
     """
-    operation = get_iris_analysis_operation(operator)
-    return cube.collapsed('latitude', operation)
+    if cube.coord('latitude').points.ndim < 2:
+        operation = get_iris_analysis_operation(operator)
+        return cube.collapsed('latitude', operation)
+    else:
+        msg = (f"Meridional statistics on irregular grids not yet implemnted")
+        raise ValueError(msg)
 
 
 def tile_grid_areas(cube, fx_files):
