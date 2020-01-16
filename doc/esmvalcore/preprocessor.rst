@@ -987,7 +987,7 @@ See also :func:`esmvalcore.preprocessor.extract_shape`.
 
 
 ``zonal_statistics``
----------------
+--------------------
 
 The function calculates the zonal statistics by applying an operator along the longitude coordinate. This function takes one argument:
 
@@ -997,7 +997,7 @@ See also :func:`esmvalcore.preprocessor.zonal_means`.
 
 
 ``meridional_statistics``
----------------
+-------------------------
 
 The function calculates the meridional statistics by applying an operator along the latitude coordinate. This function takes one argument:
 
