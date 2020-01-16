@@ -385,36 +385,60 @@ def _add_fxvar_keys(fx_var_dict, variable):
     return fx_variable
 
 
+def _get_cmip6_fx_files(variable, fx_varname, config_user):
+    """Get fx files for CMIP6 (searching all possible mips)."""
+    # TODO: allow user to specify certain mip if desired
+    var = dict(variable)
+    cmor_table = CMOR_TABLES['CMIP6']
+
+    # Get all fx-related mips ('fx' always first, original mip last)
+    fx_mips = ['fx']
+    fx_mips.extend(
+        [key for key in cmor_table.tables if 'fx' in key and key != 'fx'])
+    fx_mips.append(variable['mip'])
+
+    # Search all mips for available variables
+    searched_mips = []
+    for fx_mip in fx_mips:
+        fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
+        if fx_variable is not None:
+            searched_mips.append(fx_mip)
+            fx_var = _add_fxvar_keys(
+                {'short_name': fx_varname, 'mip': fx_mip}, var)
+            logger.debug("For CMIP6 fx variable '%s', found table '%s'",
+                         fx_varname, fx_mip)
+            fx_files = _get_input_files(fx_var, config_user)
+
+            # If files found, return them
+            if fx_files:
+                logger.debug("Found CMIP6 fx variables '%s':\n%s",
+                             fx_varname, fx_files)
+                break
+    else:
+        # No files found
+        fx_files = []
+
+    # If fx variable was not found in any table, raise exception
+    if not searched_mips:
+        raise RecipeError(
+            f"Requested fx variable '{fx_varname}' for CMIP6 not available in "
+            f"any 'fx'-related CMOR table ({fx_mips})")
+
+    return fx_files
+
+
 def _get_correct_fx_file(variable, fx_varname, config_user):
     """Get paths to fx files."""
     var = dict(variable)
     if var['project'] in ['CMIP5', 'OBS', 'OBS6', 'obs4mips']:
         fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
+        fx_files = _get_input_files(fx_var, config_user)
     elif var['project'] == 'CMIP6':
-        cmor_table = CMOR_TABLES['CMIP6']
-        fx_mips = ['fx']  # Check if fx variable is in table 'fx' first
-        fx_mips.extend([key for key in cmor_table.tables if 'fx' in key and
-                        key != 'fx'])
-        for fx_mip in fx_mips:
-            fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
-            if fx_variable is not None:
-                # TODO allow availability for multiple mip's for certain vars
-                # (especially necessary for the (almost) identical tables
-                # IfxAnt and IfxGre)
-                fx_var = _add_fxvar_keys(
-                    {'short_name': fx_varname, 'mip': fx_mip}, var)
-                logger.debug("For fx variable '%s', found CMIP6 table '%s'",
-                             fx_varname, fx_mip)
-                break
-        else:
-            raise RecipeError(
-                f"Requested fx variable '{fx_varname}' for CMIP6 not "
-                f"available in any 'fx'-related CMOR table ({fx_mips})")
+        fx_files = _get_cmip6_fx_files(var, fx_varname, config_user)
     else:
         raise RecipeError(
             f"Project {var['project']} not supported with fx variables")
 
-    fx_files = _get_input_files(fx_var, config_user)
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
