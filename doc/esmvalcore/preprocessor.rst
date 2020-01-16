@@ -916,9 +916,9 @@ The area manipulation module contains the following preprocessor functions:
 * extract_named_regions_: Extract a specific region from in the region
   cooordinate.
 * extract_shape_: Extract a region defined by a shapefile.
-* zonal_statistics_: Calculates zonal statistics.
-* meridional_statistics_: Calculates meridional statistics.
-* area_statistics_: Calculates area statistics.
+* zonal_statistics_: Compute zonal statistics.
+* meridional_statistics_: Compute meridional statistics.
+* area_statistics_: Compute area statistics.
 
 
 ``extract_region``
