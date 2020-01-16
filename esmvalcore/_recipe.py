@@ -385,11 +385,11 @@ def _add_fxvar_keys(fx_var_dict, variable):
     return fx_variable
 
 
-def _get_cmip6_fx_files(variable, fx_varname, config_user):
-    """Get fx files for CMIP6 (searching all possible mips)."""
+def _get_correct_fx_file(variable, fx_varname, config_user):
+    """Get fx files (searching all possible mips)."""
     # TODO: allow user to specify certain mip if desired
     var = dict(variable)
-    cmor_table = CMOR_TABLES['CMIP6']
+    cmor_table = CMOR_TABLES[variable['project']]
 
     # Get all fx-related mips ('fx' always first, original mip last)
     fx_mips = ['fx']
@@ -423,21 +423,6 @@ def _get_cmip6_fx_files(variable, fx_varname, config_user):
         raise RecipeError(
             f"Requested fx variable '{fx_varname}' for CMIP6 not available in "
             f"any 'fx'-related CMOR table ({fx_mips})")
-
-    return fx_files
-
-
-def _get_correct_fx_file(variable, fx_varname, config_user):
-    """Get paths to fx files."""
-    var = dict(variable)
-    if var['project'] in ['CMIP5', 'OBS', 'OBS6', 'obs4mips']:
-        fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
-        fx_files = _get_input_files(fx_var, config_user)
-    elif var['project'] == 'CMIP6':
-        fx_files = _get_cmip6_fx_files(var, fx_varname, config_user)
-    else:
-        raise RecipeError(
-            f"Project {var['project']} not supported with fx variables")
 
     # allow for empty lists corrected for by NE masks
     if fx_files:
