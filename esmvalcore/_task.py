@@ -117,11 +117,11 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
                 file.write(msg)
                 time.sleep(interval)
                 if halt.is_set():
-                    logger.info('Maximum memory used (estimate): %.1f GB', max_mem)
                     logger.info(
-                        'Sampled every second. May be inaccurate if short but high'
-                        'spikes in memory consumption are present.'
-                    )
+                        'Maximum memory used (estimate): %.1f GB', max_mem)
+                    logger.info(
+                        'Sampled every second. May be inaccurate if short but '
+                        'high spikes in memory consumption are present.')
                     return
 
     thread = threading.Thread(target=_log_resource_usage)
