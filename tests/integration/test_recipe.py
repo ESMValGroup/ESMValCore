@@ -1956,6 +1956,34 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
     assert '_Omon_' not in fx_files['volcello']
 
 
+def test_wrong_project(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           volume_statistics:
+             operator: mean
+             fx_files: ['volcello']
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP7
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    with pytest.raises(ValueError) as wrong_proj:
+        get_recipe(tmp_path, content, config_user)
+        assert wrong_proj == "Project CMIP7 not in config-developer"
+
+
 def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
