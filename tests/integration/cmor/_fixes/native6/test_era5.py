@@ -21,11 +21,11 @@ def make_src_cubes(units, mip='E1hr'):
     # Adapt data and time coordinate for different mips
     data = np.arange(27).reshape(3, 3, 3)
     if mip == 'E1hr':
-        timestamps = [788928, 788929, 788930]
+        timestamps = [788928, 788929, 788930] # 3 consecutive hours
     elif mip == 'Amon':
-        timestamps = [788928, 789672, 790344]
+        timestamps = [788928, 789672, 790344] # 3 consecutive months
     elif mip == 'Fx':
-        timestamps = [788928]
+        timestamps = [788928]                 # 1 single timestamp
         data = np.arange(9).reshape(1, 3, 3)
 
     # Create coordinates
@@ -53,7 +53,7 @@ def make_src_cubes(units, mip='E1hr'):
         data,
         long_name='random_long_name',
         var_name='random_var_name',
-        units=Unit(units),
+        units=units,
         dim_coords_and_dims=[(time, 0), (latitude, 1), (longitude, 2)],
     )
     return iris.cube.CubeList([cube])
@@ -65,7 +65,7 @@ def make_target_cubes(project, mip, short_name):
     cmor_table = CMOR_TABLES[project]
     vardef = cmor_table.get_variable(mip, short_name)
 
-    # Determine dimensions of the cube and fill with dummy data
+    # Make up time dimension and data (shape)
     data = np.arange(27).reshape(3, 3, 3)[:, ::-1, :]
     bounds = None
     if mip == 'E1hr':
@@ -75,11 +75,11 @@ def make_target_cubes(project, mip, short_name):
                                [51134.0208333, 51134.0625],
                                [51134.0625, 51134.1041667]])
     elif mip == 'Amon':
-        timestamps = [51134.0, 51134.0416667, 51134.0833333]
+        timestamps = [51149.5, 51179.0, 51208.5]
         if not 'time1' in vardef.dimensions:
-            bounds = np.array([[51133.9791667, 51134.0208333],
-                               [51134.0208333, 51134.0625],
-                               [51134.0625, 51134.1041667]])
+            bounds = np.array([[51134.0, 51165.0],
+		                       [51165.0, 51193.0],
+		                       [51193.0, 51224.0]])
     elif mip == 'Fx':
         data = np.arange(9).reshape(1, 3, 3)[:, ::-1, :]
         timestamps = [51134.0]
@@ -141,29 +141,31 @@ def make_target_cubes(project, mip, short_name):
 
 variables = [
     # short_name, mip, era5_units, ndims
-    ['pr', 'E1hr', 'm', 3],
-    ['evspsbl', 'E1hr', 'm', 3],
-    ['mrro', 'E1hr', 'm', 3],
-    ['prsn', 'E1hr', 'm of water equivalent', 3],
-    ['evspsblpot', 'E1hr', 'm', 3],
-    ['rss', 'E1hr', 'J m**-2', 3],
-    ['rsds', 'E1hr', 'J m**-2', 3],
-    ['rsdt', 'E1hr', 'J m**-2', 3],
-    ['rls', 'E1hr', 'W m**-2', 3],  # variables with explicit fixes
-    ['uas', 'E1hr', 'm s**-1', 3],  # a variable without explicit fixes
-    ['pr', 'Amon', 'm', 3],  # a monthly variable
-    # ['ua', 'E1hr', 'm s**-1', 4], # a 4d variable (we decided not to do this now)
-    ['orog', 'Fx', 'm**2 s**-2', 2]  # a 2D variable (but keep time coord)
+    ['pr', 'E1hr', 'm'],
+    ['evspsbl', 'E1hr', 'm'],
+    ['mrro', 'E1hr', 'm'],
+    ['prsn', 'E1hr', 'm of water equivalent'],
+    ['evspsblpot', 'E1hr', 'm'],
+    ['rss', 'E1hr', 'J m**-2'],
+    ['rsds', 'E1hr', 'J m**-2'],
+    ['rsdt', 'E1hr', 'J m**-2'],
+    ['rls', 'E1hr', 'W m**-2'],  # variables with explicit fixes
+    ['uas', 'E1hr', 'm s**-1'],  # a variable without explicit fixes
+    ['pr', 'Amon', 'm'],  # a monthly variable
+    # ['ua', 'E1hr', 'm s**-1'], # a 4d variable (we decided not to do this now)
+    ['orog', 'Fx', 'm**2 s**-2']  # a 2D variable (but keep time coord)
 ]
 
 
 @pytest.mark.parametrize('variable', variables)
 def test_cmorization(variable):
     """Verify that cmorization results in the expected target cube."""
-    short_name, mip, era5_units, ndims = variable
+    short_name, mip, era5_units = variable
 
-    src_cubes = make_src_cubes(era5_units, mip='E1hr')
+    src_cubes = make_src_cubes(era5_units, mip=mip)
     target_cubes = make_target_cubes('native6', mip, short_name)
+
+    print(src_cubes[0].xml())
     out_cubes = fix_metadata(src_cubes, short_name, 'native6', 'era5', mip)
 
     print(out_cubes[0].xml())  # for testing purposes

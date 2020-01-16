@@ -61,17 +61,6 @@ class Radiation(FixEra5):
 class Fx(FixEra5):
     """Fixes for time invariant variables."""
 
-    def fix_metadata(self, cubes):
-        super().fix_metadata(cubes)
-        for cube in cubes:
-            if cube.var_name in ['zg', 'orog']:
-                # Divide by acceleration of gravity [m s-2],
-                # required for geopotential height, see:
-                # https://apps.ecmwf.int/codes/grib/param-db?id=129
-                cube.units = cube.units / 'm s-2'
-                cube.data = cube.core_data() / 9.80665
-        return cubes
-
 class Evspsbl(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
@@ -101,6 +90,21 @@ class Rls(Radiation):
 
 class Orog(Fx):
     """Fixes for orography"""
+
+    @staticmethod
+    def _fix_units(cube):
+        # Divide by acceleration of gravity [m s-2],
+        # required for geopotential height, see:
+        # https://apps.ecmwf.int/codes/grib/param-db?id=129
+        cube.units = cube.units / 'm s-2'
+        cube.data = cube.core_data() / 9.80665
+        return cube
+
+    def fix_metadata(self, cubes):
+        super().fix_metadata(cubes)
+        for cube in cubes:
+            self._fix_units(cube)
+        return cubes
 
 class AllVars(FixEra5):
     """Fixes for all variables."""
