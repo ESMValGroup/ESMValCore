@@ -745,7 +745,7 @@ def _get_single_preprocessor_task(variables,
     order = _extract_preprocessor_order(profile)
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
 
-    if variables[0]['frequency'] == 'fx':
+    if variables[0].get('frequency') == 'fx':
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
