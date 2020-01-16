@@ -15,13 +15,6 @@ from esmvalcore.preprocessor._mask import (_apply_fx_mask, _check_dims,
                                            mask_outside_range)
 
 
-def assert_array_equal(a, b):
-    """Test for both data and mask in one go."""
-    np.testing.assert_array_equal(a, b)
-    if np.ma.isMaskedArray(a) and np.ma.isMaskedArray(b):
-        np.testing.assert_array_equal(a.mask, b.mask)
-
-
 class Test(tests.Test):
     """Test class for _mask."""
     def setUp(self):
@@ -58,7 +51,7 @@ class Test(tests.Test):
                                   self.time_cube.data[0:3].astype('float64'))
         fixed_mask = np.ma.array(self.time_cube.data[0:3].astype('float64'),
                                  mask=dummy_fx_mask)
-        assert_array_equal(fixed_mask, app_mask)
+        self.assert_array_equal(fixed_mask, app_mask)
 
     def test_apply_fx_mask_on_masked_data(self):
         """Test _apply_fx_mask func."""
@@ -68,7 +61,7 @@ class Test(tests.Test):
         app_mask = _apply_fx_mask(dummy_fx_mask, masked_data)
         fixed_mask = np.ma.array(self.time_cube.data[0:3].astype('float64'),
                                  mask=dummy_fx_mask)
-        assert_array_equal(fixed_mask, app_mask)
+        self.assert_array_equal(fixed_mask, app_mask)
 
     def test_check_dims(self):
         """Test _check_dims func."""
@@ -88,24 +81,24 @@ class Test(tests.Test):
         # sftlf: land. sea
         computed = _get_fx_mask(self.fx_data, 'land', 'sftlf')
         expected = np.array([False, True, False])
-        assert_array_equal(expected, computed)
+        self.assert_array_equal(expected, computed)
         computed = _get_fx_mask(self.fx_data, 'sea', 'sftlf')
         expected = np.array([True, False, True])
-        assert_array_equal(expected, computed)
+        self.assert_array_equal(expected, computed)
         # sftof: land, sea
         computed = _get_fx_mask(self.fx_data, 'land', 'sftof')
         expected = np.array([True, False, False])
-        assert_array_equal(expected, computed)
+        self.assert_array_equal(expected, computed)
         computed = _get_fx_mask(self.fx_data, 'sea', 'sftof')
         expected = np.array([False, True, True])
-        assert_array_equal(expected, computed)
+        self.assert_array_equal(expected, computed)
         # sftgif: ice, landsea
         computed = _get_fx_mask(self.fx_data, 'ice', 'sftgif')
         expected = np.array([False, True, False])
-        assert_array_equal(expected, computed)
+        self.assert_array_equal(expected, computed)
         computed = _get_fx_mask(self.fx_data, 'landsea', 'sftgif')
         expected = np.array([True, False, True])
-        assert_array_equal(expected, computed)
+        self.assert_array_equal(expected, computed)
 
     def test_mask_glaciated(self):
         """Test to mask glaciated (NE mask)"""
@@ -113,31 +106,31 @@ class Test(tests.Test):
         expected = np.ma.masked_array(self.data2,
                                       mask=np.array([[True, True],
                                                      [False, False]]))
-        assert_array_equal(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_mask_above_threshold(self):
         """Test to mask above a threshold."""
         result = mask_above_threshold(self.arr, 1.5)
         expected = np.ma.array(self.data2, mask=[[False, False], [True, True]])
-        assert_array_equal(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_mask_below_threshold(self):
         """Test to mask below a threshold."""
         result = mask_below_threshold(self.arr, 1.5)
         expected = np.ma.array(self.data2, mask=[[True, True], [False, False]])
-        assert_array_equal(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_mask_inside_range(self):
         """Test to mask inside a range."""
         result = mask_inside_range(self.arr, 0.5, 2.5)
         expected = np.ma.array(self.data2, mask=[[False, True], [True, False]])
-        assert_array_equal(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_mask_outside_range(self):
         """Test to mask outside a range."""
         result = mask_outside_range(self.arr, 0.5, 2.5)
         expected = np.ma.array(self.data2, mask=[[True, False], [False, True]])
-        assert_array_equal(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
 
 if __name__ == '__main__':
