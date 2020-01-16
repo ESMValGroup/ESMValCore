@@ -119,7 +119,7 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
                 if halt.is_set():
                     logger.info('Maximum memory used (estimate): %.1f GB', max_mem)
                     logger.info(
-                        'Sampled every second. May be inaccurate if short but high
+                        'Sampled every second. May be inaccurate if short but high'
                         'spikes in memory consumption are present.'
                     )
                     return
