@@ -412,7 +412,7 @@ def _get_cmip6_fx_files(variable, fx_varname, config_user):
             # If files found, return them
             if fx_files:
                 logger.debug("Found CMIP6 fx variables '%s':\n%s",
-                             fx_varname, fx_files)
+                             fx_varname, pformat(fx_files))
                 break
     else:
         # No files found
