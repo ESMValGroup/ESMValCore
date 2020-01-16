@@ -389,7 +389,8 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     """Get fx files (searching all possible mips)."""
     # TODO: allow user to specify certain mip if desired
     var = dict(variable)
-    cmor_table = CMOR_TABLES[variable['project']]
+    var_project = variable['project']
+    cmor_table = CMOR_TABLES[var_project]
 
     # Get all fx-related mips ('fx' always first, original mip last)
     fx_mips = ['fx']
@@ -421,8 +422,8 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     # If fx variable was not found in any table, raise exception
     if not searched_mips:
         raise RecipeError(
-            f"Requested fx variable '{fx_varname}' for CMIP6 not available in "
-            f"any 'fx'-related CMOR table ({fx_mips})")
+            f"Requested fx variable '{fx_varname}' not available in "
+            f"any 'fx'-related CMOR table ({fx_mips}) for '{var_project}'")
 
     # allow for empty lists corrected for by NE masks
     if fx_files:
