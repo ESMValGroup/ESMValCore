@@ -88,35 +88,48 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     return cube
 
 
-def zonal_means(cube, coordinate, mean_type):
+def zonal_statistics(cube, operator):
     """
-    Get zonal means.
-
-    Function that returns zonal means along a coordinate `coordinate`;
-    the type of mean is controlled by mean_type variable (string):
-    - 'mean' -> MEAN
-    - 'median' -> MEDIAN
-    - 'std_dev' -> STD_DEV
-    - 'sum' -> SUM
-    - 'variance' -> VARIANCE
-    - 'min' -> MIN
-    - 'max' -> MAX
+    Compute zonal statistics.
 
     Parameters
     ----------
     cube: iris.cube.Cube
         input cube.
-    coordinate: str
-        name of coordinate to make mean.
-    mean_type: str
-        Type of analysis to use, from iris.analysis.
+
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
 
     Returns
     -------
     iris.cube.Cube
+        Zonal statistics cube
     """
-    operation = get_iris_analysis_operation(mean_type)
-    return cube.collapsed(coordinate, operation)
+    operation = get_iris_analysis_operation(operator)
+    return cube.collapsed('longitude', operation)
+
+
+def meridional_statistics(cube, operator):
+    """
+    Compute meridional statistics.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+
+    Returns
+    -------
+    iris.cube.Cube
+        Meridional statistics cube
+    """
+    operation = get_iris_analysis_operation(operator)
+    return cube.collapsed('latitude', operation)
 
 
 def tile_grid_areas(cube, fx_files):

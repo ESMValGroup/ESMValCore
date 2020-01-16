@@ -916,8 +916,9 @@ The area manipulation module contains the following preprocessor functions:
 * extract_named_regions_: Extract a specific region from in the region
   cooordinate.
 * extract_shape_: Extract a region defined by a shapefile.
-* zonal_means_: Calculates the zonal or meridional means.
-* area_statistics_: Calculates the average value over a region.
+* zonal_statistics_: Calculates zonal statistics.
+* meridional_statistics_: Calculates meridional statistics.
+* area_statistics_: Calculates area statistics.
 
 
 ``extract_region``
@@ -985,18 +986,24 @@ Examples:
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
 
-``zonal_means``
+``zonal_statistics``
 ---------------
 
-The function calculates the zonal or meridional means. While this function is
-named ``zonal_mean``, it can be used to apply several different operations in
-an zonal or meridional direction. This function takes two arguments:
+The function calculates the zonal statistics by applying an operator along the longitude coordinate. This function takes one argument:
 
-* ``coordinate``: Which direction to apply the operation: latitude or longitude
-* ``mean_type``: Which operation to apply: mean, std_dev, variance, median,
-  min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
 
 See also :func:`esmvalcore.preprocessor.zonal_means`.
+
+
+``meridional_statistics``
+---------------
+
+The function calculates the meridional statistics by applying an operator along the latitude coordinate. This function takes one argument:
+
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+
+See also :func:`esmvalcore.preprocessor.meridional_means`.
 
 
 ``area_statistics``
