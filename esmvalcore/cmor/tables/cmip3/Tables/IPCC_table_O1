@@ -1,0 +1,1079 @@
+cmor_version: 1.0         ! version of CMOR that can read this table
+cf_version:   1.0         ! version of CF that output conforms to
+project_id:   IPCC Fourth Assessment  ! project id
+table_id:     Table O1    ! table id
+table_date:   13 November 2004 ! date this table was constructed
+
+expt_id_ok:   'pre-industrial control experiment'
+expt_id_ok:   'present-day control experiment'
+expt_id_ok:   'climate of the 20th Century experiment (20C3M)'
+expt_id_ok:   'committed climate change experiment'  ! official name(s) of
+expt_id_ok:   'SRES A2 experiment'                   !  project's experiments
+expt_id_ok:   '720 ppm stabilization experiment (SRES A1B)'
+expt_id_ok:   '550 ppm stabilization experiment (SRES B1)'
+expt_id_ok:   '1%/year CO2 increase experiment (to doubling)'
+expt_id_ok:   '1%/year CO2 increase experiment (to quadrupling)'
+expt_id_ok:   'slab ocean control experiment'
+expt_id_ok:   '2xCO2 equilibrium experiment'
+expt_id_ok:   'AMIP experiment'
+
+magic_number: -1          ! used to check whether this file has been
+                          !   altered from the official version.
+                          !   should be set to number of non-blank
+                          !   characters in file.
+approx_interval:  30.     ! approximate spacing between successive time
+                          !   samples (in units of the output time
+                          !   coordinate), but this is ignored if set to 0.
+missing_value: 1.e20      ! value used to indicate a missing value
+                          !   in arrays output by netCDF as 32-bit IEEE
+                          !   floating-point numbers (float or real)
+
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+! SUBROUTINE ARGUMENT DEFAULT INFORMATION
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+!  set default specifications for subroutine arguments to:
+!     required/indeterminate/optional/ignored/forbidden
+!    (indeterminate may or may not be required information, but is not always
+!     required as an argument of the function call)
+!
+!
+!============
+subroutine_entry: cmor_axis
+!============
+!
+required: table axis_name units length coord_vals cell_bounds
+ignored: interval
+!
+!============
+subroutine_entry: cmor_variable
+!============
+!
+required: table table_entry units axis_ids
+indeterminate: missing_value
+optional: tolerance original_name history comment
+ignored: positive
+!
+!============
+subroutine_entry: cmor_write
+!============
+!
+required:  var_id data
+indeterminate: ntimes_passed time_vals time_bnds store_with
+optional: file_suffix
+!
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+! AXIS INFORMATION
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+! ??? what about climatology???
+! ??? what about model level data???
+!
+!
+!  TEMPLATE FOR AXES
+!
+!============
+!axis_entry:               ! (required)
+!============
+!
+!    Override default argument specifications for cmor_axis
+!------------
+!    acceptable arguments include units length coord_vals cell_bounds interval
+!required:                  ! (default: table axis_name units length
+!                                        coord_vals cell_bounds)
+!indeterminate:
+!optional:
+!ignored:                   ! (default: interval)
+!forbidden:
+!------------
+!
+! Axis attributes:
+!----------------------------------
+!standard_name:             ! (required)
+!units:                     ! (required)
+!axis:                      ! X, Y, Z, T (default: undeclared)
+!positive:                  ! up or down (default: undeclared)
+!long_name:                 ! (default: undeclared)
+!----------------------------------
+!
+! Additional axis information:
+!----------------------------------
+!out_name:                ! (default: same as axis_entry)
+!type:                    ! double (default), real, character, integer
+!stored_direction:        ! increasing (default) or decreasing
+!valid_min:               ! type: double precision (default: no check performed
+!valid_max:               ! type: double precision (default: no check performed
+!requested:               ! space-separated list of requested coordinates
+                          !       (default: undeclared)
+!bounds_requested:        ! space-separated list of requested coordinate bounds
+                          !       (default: undeclared)
+!tol_on_requests:         ! fractional tolerance for meeting request
+                          !  (default=1.e-3, which is used in the formula:
+                          !     eps =  MIN(( tol*interval between grid-points)
+                          !          and (1.e-3*tol*coordinate value)))
+!value:                   ! of scalar (singleton) dimension
+!bounds_values:           ! of scalar (singleton) dimension bounds
+!----------------------------------
+!
+!
+!  TEMPLATE FOR VARIABLES
+!
+!
+!============
+!variable_entry:                ! (required)
+!============
+!
+!    Override default argument specifications for cmor_variable
+!------------
+!        acceptable arguments include  file_suffix missing_value tolerance
+!                               original_name history comment positive
+!required:                   ! (default: table table_entry units axis_ids)
+!indeterminate:              ! (default: file_suffix missing_value)
+!optional:                   ! (default: original_name history comment)
+!ignored:                    ! (default: positive)
+!forbidden:
+!------------
+!
+! Variable attributes:
+!----------------------------------
+!standard_name:              ! (required)
+!units:                      ! (required)
+!cell_methods:               ! (default: undeclared)
+!long_name:                  ! (default: undeclared)
+!comment:                    ! (default: undeclared)
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+!dimensions:                 ! (required)  (scalar dimension(s) should appear
+                             !      last in list)
+!out_name:                   ! (default: variable_entry)
+!type:                       ! real (default), double, integer
+!positive:                   ! up or down (default: undeclared)
+!valid_min:                  ! type: real (default: no check performed)
+!valid_max:                  ! type: real (default: no check performed)
+!ok_min_mean_abs:            ! type: real (default: no check performed)
+!ok_max_mean_abs:            ! type: real (default: no check performed)
+!----------------------------------
+!
+
+!
+!============
+axis_entry: longitude
+!============
+!
+!------------
+!
+! Axis attributes:
+!----------------------------------
+standard_name:    longitude
+units:            degrees_east
+axis:             X
+long_name:        longitude
+!----------------------------------
+!
+! Additional axis information:
+!----------------------------------
+out_name:         lon
+valid_min:        0.           ! CMOR will add n*360 to input values
+                               ! (where n is an integer) to ensure
+                               !  longitudes are in proper range.  The
+                               !  data will also be rearranged
+                               !  appropriately.
+valid_max:        360.         !  see above comment.
+!----------------------------------
+!
+!
+!=============
+axis_entry: latitude
+!=============
+!
+! Axis attributes:
+!----------------------------------
+standard_name:    latitude
+units:            degrees_north
+axis:             Y
+long_name:        latitude
+!----------------------------------
+!
+! Additional axis information:
+!----------------------------------
+out_name:         lat
+valid_min:        -90.
+valid_max:        90.
+!----------------------------------
+!
+!
+!
+!
+!============
+axis_entry: time
+!============
+!
+!    Override default argument specifications for cmor_axis
+!------------
+optional: interval length
+indeterminate: coord_vals cell_bounds
+!------------
+!
+! Axis attributes:
+!----------------------------------
+standard_name:    time
+units:            days since ?
+axis:             T
+long_name:        time
+!
+!
+!============
+axis_entry: region
+!============
+!
+!    Override default argument specifications for cmor_axis
+!------------
+ignored: units cell_bounds
+!------------
+!
+! Axis attributes:
+!----------------------------------
+standard_name:    region
+long_name:        Ocean Basin
+!----------------------------------
+!
+! Additional axis information:
+!----------------------------------
+coords_attrib:    geo_region
+type:             character
+requested:        atlantic_ocean indian_ocean pacific_ocean global_ocean
+!----------------------------------
+!
+!
+!============
+axis_entry: depth
+!============
+!
+!    Override default argument specifications for cmor_axis
+!------------
+optional: cell_bounds
+!------------
+!
+! Axis attributes:
+!----------------------------------
+standard_name:    depth
+units:            m
+axis:             Z
+positive:         down
+long_name:         depth
+!----------------------------------
+!
+! Additional axis information:
+!----------------------------------
+out_name:         depth
+valid_min:        0.0
+valid_max:        8000.
+requested:          0.     10.   20.   30.   50.   75.  100.  125.  150.  200.
+requested:         250.   300.  400.  500.  600.  700.  800.  900. 1000. 1100.
+requested:         1200. 1300. 1400. 1500. 1750. 2000. 2500. 3000. 3500. 4000.
+requested:         4500. 5000. 5500.
+!----------------------------------
+!
+!
+!----------------------------------
+!
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+! VARIABLE INFORMATION
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+!
+!
+!
+! ***************************************************************
+!
+! IPCC Table O1a: Monthly-mean 1-d ocean data
+!
+! ***************************************************************
+!
+!
+!
+!============
+variable_entry: hfogo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_ocean_heat_transport
+units:           W
+cell_methods:    time: mean  longitude: sum
+long_name:       Northward Ocean Heat Transport
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       latitude region time
+valid_min:          -4.e16
+valid_max:          4.e16
+ok_min_mean_abs:    0.0
+ok_max_mean_abs:    4.e15
+!----------------------------------
+!
+!
+!
+!
+! ***************************************************************
+!
+! IPCC Table O1b: Monthly-mean 2-d ocean data
+!
+! ***************************************************************
+!
+!
+!
+!============
+variable_entry: stfmmc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   ocean_meridional_overturning_streamfunction
+units:           m3 s-1
+cell_methods:    time: mean
+long_name:       Meridional Overturning Streamfunction
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       latitude depth region time
+!----------------------------------
+!
+!
+!
+!
+! ***************************************************************
+!
+! IPCC Table O1c: Monthly-mean 2-d ocean or sea ice data
+!
+! ***************************************************************
+!
+!
+!
+!============
+variable_entry: zos
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   sea_surface_height_above_geoid
+units:           m
+cell_methods:    time: mean
+long_name:       Sea Surface Elevation
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+valid_min:        -100.
+valid_max:        100.
+ok_min_mean_abs:  -10.
+ok_max_mean_abs:  20.
+!----------------------------------
+!
+!
+!============
+variable_entry: zostoga
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   global_average_thermosteric_sea_level_change
+units:           m
+cell_methods:    time: mean
+long_name:       Global Mean Thermosteric Sea Level Change
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       time
+!----------------------------------
+!
+!
+!============
+variable_entry: zosga
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   global_average_sea_level_change
+units:           m
+cell_methods:    time: mean
+long_name:       Global Mean Sea Level Change
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       time
+!----------------------------------
+!
+!
+!============
+variable_entry: tos
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   sea_surface_temperature
+units:           K
+cell_methods:    time: mean
+long_name:       Sea Surface Temperature
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+valid_min:        265.
+valid_max:        320.
+ok_min_mean_abs:  278.
+ok_max_mean_abs:  298.
+!----------------------------------
+!
+!
+!============
+variable_entry: sic
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   sea_ice_area_fraction
+units:           %
+cell_methods:    time: mean
+long_name:       Sea Ice Concentration
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+valid_min:        0.
+valid_max:        100.
+ok_min_mean_abs:  0.1
+ok_max_mean_abs:  20.
+!----------------------------------
+!
+!
+!============
+variable_entry: sit
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   sea_ice_thickness
+units:           m
+cell_methods:    time: mean
+long_name:       Sea Ice Thickness
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+valid_min:        0.
+valid_max:        100.
+ok_min_mean_abs:  0.
+ok_max_mean_abs:  20.
+!----------------------------------
+!
+!
+!============
+variable_entry: usi
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   eastward_sea_ice_velocity
+units:           m s-1
+cell_methods:    time: mean
+long_name:       Eastward Sea Ice Velocity
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+valid_min:        -5.
+valid_max:        5.
+ok_min_mean_abs:  -5.
+ok_max_mean_abs:  5.
+!----------------------------------
+!
+!
+!============
+variable_entry: vsi
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_sea_ice_velocity
+units:           m s-1
+cell_methods:    time: mean
+long_name:       Northward Sea Ice Velocity
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+valid_min:        -5.
+valid_max:        5.
+ok_min_mean_abs:  -5.
+ok_max_mean_abs:  5.
+!----------------------------------
+!
+!
+!============
+variable_entry: wfo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   water_flux_into_ocean
+units:           kg m-2 s-1
+cell_methods:    time: mean
+long_name:       Water Flux Into Ocean
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: stfbarot
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   ocean_barotropic_streamfunction
+units:           m3 s-1
+cell_methods:    time: mean
+long_name:       Ocean Barotropic Streamfunction
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: hfcorr
+!============
+!
+!    Override default argument specifications for cmor_variable
+!------------
+required: positive
+!------------
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   heat_flux_correction_where_ocean
+units:           W m-2
+cell_methods:    time: mean
+long_name:       Heat FLux Correction
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+positive:         down
+!----------------------------------
+!
+!
+!============
+variable_entry: wfcorr
+!============
+!
+!    Override default argument specifications for cmor_variable
+!------------
+required: positive
+!------------
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   water_flux_correction_where_ocean
+units:           kg m-2 s-1
+cell_methods:    time: mean
+long_name:       Water FLux Correction
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+positive:         down
+!----------------------------------
+!
+!
+!============
+variable_entry: tauucorr
+!============
+!
+!    Override default argument specifications for cmor_variable
+!------------
+required: positive
+!------------
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   eastward_momentum_flux_correction_where_ocean
+units:           Pa
+cell_methods:    time: mean
+long_name:       Eastward Momentum Flux Correction
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+positive:         down
+!----------------------------------
+!
+!
+!============
+variable_entry: tauvcorr
+!============
+!
+!    Override default argument specifications for cmor_variable
+!------------
+required: positive
+!------------
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_momentum_flux_correction_where_ocean
+units:           Pa
+cell_methods:    time: mean
+long_name:       Northward Momentum Flux Correction
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+positive:         down
+!----------------------------------
+!
+!
+!
+!
+! ***************************************************************
+!
+! IPCC Table O1d: Time-independent 2-d ocean data
+!
+! ***************************************************************
+!
+!
+!
+!============
+variable_entry: zobt
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   sea_floor_depth_below_geoid
+units:           m
+long_name:       Sea Floor Depth
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude
+valid_min:        0.
+valid_max:        7000.
+ok_min_mean_abs:  100.
+ok_max_mean_abs:  6000.
+!----------------------------------
+!
+!
+!============
+variable_entry: qflux
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   prescribed_heat_flux_into_slab_ocean
+units:           W m-2
+cell_methods:    time: mean
+long_name:       Q-Flux
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude
+!----------------------------------
+!
+!
+!
+! ***************************************************************
+!
+! IPCC Table O1e: Monthly-mean 3-d ocean data
+!
+! ***************************************************************
+!
+!
+!
+!============
+variable_entry: so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   sea_water_salinity
+units:           1e-3
+cell_methods:    time: mean
+long_name:       Salinity
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude depth time
+!----------------------------------
+!
+!
+!============
+variable_entry: thetao
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   sea_water_potential_temperature
+units:           K
+cell_methods:    time: mean
+long_name:       Potential Temperature
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude depth time
+valid_min:        265.
+valid_max:        320.
+ok_min_mean_abs:  278.
+ok_max_mean_abs:  298.
+!----------------------------------
+!
+!
+!============
+variable_entry: rhopoto
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   sea_water_potential_density
+units:           kg m-3
+cell_methods:    time: mean
+long_name:       Potential Density
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude depth time
+!----------------------------------
+!
+!
+!============
+variable_entry: uo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   eastward_sea_water_velocity
+units:           m s-1
+cell_methods:    time: mean
+long_name:       Eastward Sea Water Velocity
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude depth time
+!----------------------------------
+!
+!
+!============
+variable_entry: vo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_sea_water_velocity
+units:           m s-1
+cell_methods:    time: mean
+long_name:       Northward Sea Water Velocity
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude depth time
+!----------------------------------
+!
+!
+!============
+variable_entry: wo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   upward_sea_water_velocity
+units:           m s-1
+cell_methods:    time: mean
+long_name:       Upward Sea Water Velocity
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude depth time
+!----------------------------------
+!
+!
+!
+!
+! ***************************************************************
+!
+! IPCC Table O1f: Monthly-mean 2-d and 3-d ocean fields
+!
+! ***************************************************************
+!
+!
+!
+!============
+variable_entry: zmlo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   ocean_mixed_layer_thickness
+units:           m
+cell_methods:    time: mean
+long_name:       Mixed Layer Thickness
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: htovdiff
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_ocean_heat_transport_due_to_diffusion
+units:           W
+cell_methods:    time: mean
+long_name:       Northward Diffusive Heat Transport by Ocean
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:      latitude region time
+!----------------------------------
+!
+!
+!============
+variable_entry: htovgyre
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_ocean_heat_transport_due_to_gyre
+units:           W
+cell_methods:    time: mean
+long_name:       Northward Gyre Heat Transport by Ocean
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:      latitude region time
+!----------------------------------
+!
+!
+!============
+variable_entry: htovovrt
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_ocean_heat_transport_due_to_overturning
+units:           W
+cell_methods:    time: mean
+long_name:       Northward Ocean Heat Transport by Overturning
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:      latitude region time
+!----------------------------------
+!
+!
+!============
+variable_entry: sltovdiff
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_ocean_salt_transport_due_to_diffusion
+units:           kg s-1
+cell_methods:    time: mean
+long_name:       Northward Diffusive Salt Transport by Ocean
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:      latitude region time
+!----------------------------------
+!
+!
+!============
+variable_entry: sltovgyre
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_ocean_salt_transport_due_to_gyre
+units:           kg s-1
+cell_methods:    time: mean
+long_name:       Northward Gyre Salt Transport by Ocean
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:      latitude region time
+!----------------------------------
+!
+!
+!============
+variable_entry: sltovovrt
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   northward_ocean_salt_transport_due_to_overturning
+units:           kg s-1
+cell_methods:    time: mean
+long_name:       Northward Ocean Salt Transport by Overturning
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:      latitude region time
+!----------------------------------
+!
+!
+!
+!
+! ***************************************************************
+!
+! IPCC Table O1g: Monthly-mean sea ice fields
+!
+! ***************************************************************
+!
+!
+!
+!============
+variable_entry: sbl
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   water_evaporation_flux_where_sea_ice
+units:           kg m-2 s-1
+cell_methods:    time: mean
+long_name:       Sublimation over Sea Ice
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: hfsib
+!============
+!
+!    Override default argument specifications for cmor_variable
+!------------
+required: positive
+!------------
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   upward_sea_ice_basal_heat_flux
+units:           W m-2
+cell_methods:    time: mean
+long_name:       Upward Heat Flux at Base of Sea Ice
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+positive:         up
+!----------------------------------
+!
+!
+!============
+variable_entry: sltfsib
+!============
+!
+!    Override default argument specifications for cmor_variable
+!------------
+required: positive
+!------------
+!
+! Variable attributes:
+!----------------------------------
+standard_name:   downward_sea_ice_basal_salt_flux
+units:           kg m-2 s-1
+cell_methods:    time: mean
+long_name:       Downward Salt Flux at Base of Sea Ice
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+positive:         down
+!----------------------------------
+!
+!
+!============
+variable_entry: seaarea
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: sea_area
+units:         m2
+long_name:     Sea Area
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude
+!----------------------------------
+!
+!
+!============
+variable_entry: oceanvol
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: ocean_volume
+units:         m3
+long_name:     Ocean Volume
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude depth
+!----------------------------------
+!

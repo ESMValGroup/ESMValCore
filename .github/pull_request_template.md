@@ -1,8 +1,9 @@
-Before you start, please read [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValTool/blob/version2_development/CONTRIBUTING.md).
+Before you start, please read [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/master/CONTRIBUTING.md).
 
 **Tasks**
 
 -   [ ] [Create an issue](https://github.com/ESMValGroup/ESMValCore/issues) to discuss what you are going to do, if you haven't done so already (and add the link at the bottom)
+-   [ ] This pull request has a descriptive title that can be used in a changelog
 -   [ ] Add unit tests
 -   [ ] Public functions should have a numpy-style docstring so they appear properly in the [API documentation](https://esmvaltool.readthedocs.io/projects/esmvalcore/en/latest/api/esmvalcore.html). For all other functions a one line docstring is sufficient.
 -   [ ] If writing a new/modified preprocessor function, please update the [documentation](https://esmvaltool.readthedocs.io/projects/esmvalcore/en/latest/esmvalcore/preprocessor.html)
