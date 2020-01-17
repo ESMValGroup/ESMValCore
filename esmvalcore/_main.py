@@ -31,7 +31,6 @@ http://esmvaltool.readthedocs.io. Have fun!
 import argparse
 import datetime
 import errno
-import glob
 import logging
 import os
 import shutil
