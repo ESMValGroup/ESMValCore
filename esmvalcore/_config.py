@@ -171,8 +171,7 @@ def get_project_config(project):
     if project in CFG:
         return CFG[project]
     else:
-        raise ValueError("Project '{}' not in config-developer.yml".format(
-            project))
+        raise ValueError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
