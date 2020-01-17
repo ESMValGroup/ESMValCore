@@ -213,14 +213,6 @@ def process_recipe(recipe_file, config_user):
         __version__, timestamp2.strftime(timestamp_format))
     logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
 
-    # Remind the user about reference/acknowledgement file
-    out_refs = glob.glob(
-        os.path.join(config_user['output_dir'], '*', '*',
-                     'references-acknowledgements.txt'))
-    logger.info(
-        "For the required references/acknowledgements of these "
-        "diagnostics see:\n%s", '\n'.join(out_refs))
-
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
