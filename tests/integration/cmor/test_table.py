@@ -3,7 +3,7 @@
 import os
 import unittest
 
-from esmvalcore.cmor.table import CMIP5Info, CMIP6Info, CustomInfo
+from esmvalcore.cmor.table import CMIP3Info, CMIP5Info, CMIP6Info, CustomInfo
 
 
 class TestCMIP6Info(unittest.TestCase):
@@ -207,6 +207,19 @@ class TestCMIP5Info(unittest.TestCase):
         var = self.variables_info.get_variable('Amon', 'tas')
         self.assertEqual(var.short_name, 'tas')
 
+    def test_get_variable_zg(self):
+        """Get zg variable."""
+        var = self.variables_info.get_variable('Amon', 'zg')
+        self.assertEqual(var.short_name, 'zg')
+        self.assertEqual(
+            var.coordinates['plevs'].requested,
+            [
+                '100000.', '92500.', '85000.', '70000.', '60000.', '50000.',
+                '40000.', '30000.', '25000.', '20000.', '15000.', '10000.',
+                '7000.', '5000.', '3000.', '2000.', '1000.'
+            ]
+        )
+
     def test_get_variable_from_custom(self):
         """Get a variable from default."""
         self.variables_info.strict = False
@@ -239,6 +252,81 @@ class TestCMIP5Info(unittest.TestCase):
         var = self.variables_info.get_variable('Omon', 'toz')
         self.assertEqual(var.short_name, 'toz')
         self.assertEqual(var.frequency, 'mon')
+
+
+class TestCMIP3Info(unittest.TestCase):
+    """Test for the CMIP5 info class."""
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Set up tests.
+
+        We read CMIP5Info once to keep testing times manageable
+        """
+        cls.variables_info = CMIP3Info('cmip3', CustomInfo(), strict=True)
+
+    def setUp(self):
+        self.variables_info.strict = True
+
+    def test_custom_tables_location(self):
+        """Test constructor with custom tables location."""
+        cwd = os.path.dirname(os.path.realpath(__file__))
+        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
+                                        'cmor', 'tables', 'cmip3')
+        cmor_tables_path = os.path.abspath(cmor_tables_path)
+        CMIP3Info(cmor_tables_path, None, True)
+
+    def test_get_variable_tas(self):
+        """Get tas variable."""
+        var = self.variables_info.get_variable('A1', 'tas')
+        self.assertEqual(var.short_name, 'tas')
+
+    def test_get_variable_zg(self):
+        """Get zg variable."""
+        var = self.variables_info.get_variable('A1', 'zg')
+        self.assertEqual(var.short_name, 'zg')
+        self.assertEqual(
+            var.coordinates['pressure'].requested,
+            [
+                '100000.', '92500.', '85000.', '70000.', '60000.', '50000.',
+                '40000.', '30000.', '25000.', '20000.', '15000.', '10000.',
+                '7000.', '5000.', '3000.', '2000.', '1000.'
+            ]
+        )
+
+    def test_get_variable_from_custom(self):
+        """Get a variable from default."""
+        self.variables_info.strict = False
+        var = self.variables_info.get_variable('A1', 'swcre')
+        self.assertEqual(var.short_name, 'swcre')
+        self.assertEqual(var.frequency, '')
+
+        var = self.variables_info.get_variable('day', 'swcre')
+        self.assertEqual(var.short_name, 'swcre')
+        self.assertEqual(var.frequency, '')
+
+    def test_get_bad_variable(self):
+        """Get none if a variable is not in the given table."""
+        self.assertIsNone(self.variables_info.get_variable('O1', 'tas'))
+
+    def test_aermon_ta_fail_if_strict(self):
+        """Get ta fails with AERMonZ if strict."""
+        self.assertIsNone(self.variables_info.get_variable('O1', 'ta'))
+
+    def test_aermon_ta_succes_if_strict(self):
+        """Get ta does not fail with Omon if not strict."""
+        self.variables_info.strict = False
+        var = self.variables_info.get_variable('O1', 'ta')
+        self.assertEqual(var.short_name, 'ta')
+        self.assertEqual(var.frequency, '')
+
+    def test_omon_toz_succes_if_strict(self):
+        """Get troz does not fail with Omon if not strict."""
+        self.variables_info.strict = False
+        var = self.variables_info.get_variable('O1', 'toz')
+        self.assertEqual(var.short_name, 'toz')
+        self.assertEqual(var.frequency, '')
 
 
 class TestCustomInfo(unittest.TestCase):
