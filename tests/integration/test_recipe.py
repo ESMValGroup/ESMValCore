@@ -1819,6 +1819,70 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     assert '_Omon_' not in fx_files['volcello']
 
 
+def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
+                                        config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           custom_order: true
+           extract_volume:
+             z_min: 0
+             z_max: 100
+           annual_statistics:
+             operator: mean
+           volume_statistics:
+             operator: mean
+             fx_files: ['areacello', 'volcello']
+             fx_preprocess: True
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tos'
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    assert len(task.ancestors) == 1
+    assert 'diagnostic_name' + TASKSEP + 'toz_derive_input_ps' in [
+        t.name for t in task.ancestors
+    ]
+    assert 'diagnostic_name' + TASKSEP + 'toz_derive_input_tro3' in [
+        t.name for t in task.ancestors
+    ]
+
+    # Check product content of tasks
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert 'derive' in product.settings
+    assert product.attributes['short_name'] == 'toz'
+    assert product.files
+
+    ps_product = next(p for a in task.ancestors for p in a.products
+                      if p.attributes['short_name'] == 'ps')
+    tro3_product = next(p for a in task.ancestors for p in a.products
+                        if p.attributes['short_name'] == 'tro3')
+    assert ps_product.filename in product.files
+    assert tro3_product.filename in product.files
+
+
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
                                         config_user):
     content = dedent("""
