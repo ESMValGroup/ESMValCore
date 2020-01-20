@@ -78,12 +78,12 @@ class Test(tests.Test):
             args, kwargs = mocker.call_args
             # Check the stratify.interpolate args ...
             self.assertEqual(len(args), 3)
-            self.assertArrayEqual(args[0], levels)
+            self.assert_array_equal(args[0], levels)
             pts = self.cube.coord(axis='z', dim_coords=True).points
             src_levels_broadcast = np.broadcast_to(
                 pts.reshape(self.z, 1, 1), self.cube.shape)
-            self.assertArrayEqual(args[1], src_levels_broadcast)
-            self.assertArrayEqual(args[2], self.cube.data)
+            self.assert_array_equal(args[1], src_levels_broadcast)
+            self.assert_array_equal(args[2], self.cube.data)
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
                 kwargs, dict(
@@ -92,8 +92,8 @@ class Test(tests.Test):
         # Check the _create_cube args ...
         self.assertEqual(len(args), 3)
         self.assertEqual(args[0], self.cube)
-        self.assertArrayEqual(args[1], new_data)
-        self.assertArrayEqual(args[2], levels)
+        self.assert_array_equal(args[1], new_data)
+        self.assert_array_equal(args[2], levels)
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())
 
@@ -108,12 +108,12 @@ class Test(tests.Test):
             args, kwargs = mocker.call_args
             # Check the stratify.interpolate args ...
             self.assertEqual(len(args), 3)
-            self.assertArrayEqual(args[0], levels)
+            self.assert_array_equal(args[0], levels)
             pts = self.cube.coord(axis='z', dim_coords=True).points
             src_levels_broadcast = np.broadcast_to(
                 pts.reshape(self.z, 1, 1), self.cube.shape)
-            self.assertArrayEqual(args[1], src_levels_broadcast)
-            self.assertArrayEqual(args[2], self.cube.data)
+            self.assert_array_equal(args[1], src_levels_broadcast)
+            self.assert_array_equal(args[2], self.cube.data)
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
                 kwargs, dict(
@@ -121,10 +121,10 @@ class Test(tests.Test):
         args, kwargs = self.mock_create_cube.call_args
         # Check the _create_cube args ...
         self.assertEqual(len(args), 3)
-        self.assertArrayEqual(args[0], self.cube)
+        self.assert_array_equal(args[0], self.cube)
         new_data[np.isnan(new_data)] = _MDI
-        self.assertArrayEqual(args[1], new_data)
-        self.assertArrayEqual(args[2], levels)
+        self.assert_array_equal(args[1], new_data)
+        self.assert_array_equal(args[2], levels)
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())
 
@@ -145,12 +145,12 @@ class Test(tests.Test):
             args, kwargs = mocker.call_args
             # Check the stratify.interpolate args ...
             self.assertEqual(len(args), 3)
-            self.assertArrayEqual(args[0], levels)
+            self.assert_array_equal(args[0], levels)
             pts = cube.coord(axis='z', dim_coords=True).points
             src_levels_broadcast = np.broadcast_to(
                 pts.reshape(self.z, 1, 1), cube.shape)
-            self.assertArrayEqual(args[1], src_levels_broadcast)
-            self.assertArrayEqual(args[2], cube.data)
+            self.assert_array_equal(args[1], src_levels_broadcast)
+            self.assert_array_equal(args[2], cube.data)
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
                 kwargs, dict(
@@ -164,11 +164,11 @@ class Test(tests.Test):
         coord_comparison = iris.analysis.coord_comparison(args[0], cube)
         self.assertFalse(coord_comparison['not_equal']
                          or coord_comparison['non_equal_data_dimension'])
-        self.assertArrayEqual(args[0].data, cube.data)
-        self.assertArrayEqual(args[1], new_data)
+        self.assert_array_equal(args[0].data, cube.data)
+        self.assert_array_equal(args[1], new_data)
         self.assertTrue(ma.isMaskedArray(args[1]))
-        self.assertArrayEqual(args[1].mask, new_data_mask)
-        self.assertArrayEqual(args[2], levels)
+        self.assert_array_equal(args[1].mask, new_data_mask)
+        self.assert_array_equal(args[2], levels)
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())
 

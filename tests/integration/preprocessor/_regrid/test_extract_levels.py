@@ -52,7 +52,7 @@ class Test(tests.Test):
         expected = np.array([[[[2., 3.], [4., 5.]], [[6., 7.], [8., 9.]]],
                              [[[14., 15.], [16., 17.]], [[18., 19.],
                                                          [20., 21.]]]])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
         self.shape[self.z_dim] = len(levels)
         self.assertEqual(result.shape, tuple(self.shape))
 
@@ -63,7 +63,7 @@ class Test(tests.Test):
         expected = np.array([[[[0., 1.], [2., 3.]], [[8., 9.], [10., 11.]]],
                              [[[12., 13.], [14., 15.]], [[20., 21.],
                                                          [22., 23.]]]])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
         self.shape[self.z_dim] = len(levels)
         self.assertEqual(result.shape, tuple(self.shape))
 
@@ -76,7 +76,7 @@ class Test(tests.Test):
               [[8., 9.], [10., 11.]], [[_MDI, _MDI], [_MDI, _MDI]]],
              [[[_MDI, _MDI], [_MDI, _MDI]], [[16., 17.], [18., 19.]],
               [[20., 21.], [22., 23.]], [[_MDI, _MDI], [_MDI, _MDI]]]])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
         self.shape[self.z_dim] = len(levels)
         self.assertEqual(result.shape, tuple(self.shape))
 
@@ -85,7 +85,7 @@ class Test(tests.Test):
         scheme = 'nearest'
         result = extract_levels(self.cube, level, scheme)
         expected = np.array([[[4., 5.], [6., 7.]], [[16., 17.], [18., 19.]]])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
         del self.shape[self.z_dim]
         self.assertEqual(result.shape, tuple(self.shape))
 
