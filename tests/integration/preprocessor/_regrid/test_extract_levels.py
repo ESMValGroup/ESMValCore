@@ -71,11 +71,23 @@ class Test(tests.Test):
         levels = [-10, 1, 2, 10]
         scheme = 'nearest'
         result = extract_levels(self.cube, levels, scheme)
-        expected = np.array(
-            [[[[_MDI, _MDI], [_MDI, _MDI]], [[4., 5.], [6., 7.]],
-              [[8., 9.], [10., 11.]], [[_MDI, _MDI], [_MDI, _MDI]]],
-             [[[_MDI, _MDI], [_MDI, _MDI]], [[16., 17.], [18., 19.]],
-              [[20., 21.], [22., 23.]], [[_MDI, _MDI], [_MDI, _MDI]]]])
+        expected = np.array([[[[_MDI, _MDI], [_MDI, _MDI]], [[4., 5.],
+                                                             [6., 7.]],
+                              [[8., 9.], [10., 11.]],
+                              [[_MDI, _MDI], [_MDI, _MDI]]],
+                             [[[_MDI, _MDI], [_MDI, _MDI]],
+                              [[16., 17.], [18., 19.]], [[20., 21.],
+                                                         [22., 23.]],
+                              [[_MDI, _MDI], [_MDI, _MDI]]]])
+        expected_mask = np.array([[[[True, True], [True, True]],
+                                   [[False, False], [False, False]],
+                                   [[False, False], [False, False]],
+                                   [[True, True], [True, True]]],
+                                  [[[True, True], [True, True]],
+                                   [[False, False], [False, False]],
+                                   [[False, False], [False, False]],
+                                   [[True, True], [True, True]]]])
+        expected = np.ma.array(expected, mask=expected_mask)
         self.assert_array_equal(result.data, expected)
         self.shape[self.z_dim] = len(levels)
         self.assertEqual(result.shape, tuple(self.shape))
