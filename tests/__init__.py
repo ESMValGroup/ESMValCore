@@ -69,7 +69,7 @@ class Test(unittest.TestCase):
     @wraps(np.testing.assert_array_equal)
     def assert_array_equal(self, a, b):
         np.testing.assert_array_equal(a, b)
-        if np.ma.isMaskedArray(a) and np.ma.isMaskedArray(b):
+        if np.ma.isMaskedArray(a) or np.ma.isMaskedArray(b):
             np.testing.assert_array_equal(a.mask, b.mask)
 
     @wraps(np.testing.assert_array_almost_equal)
