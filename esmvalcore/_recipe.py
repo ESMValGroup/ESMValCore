@@ -901,27 +901,24 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     for step in ('area_statistics', 'volume_statistics'):
         if profile.get(step, {}).get('fx_files') and \
                 profile.get(step, {}).get('fx_preprocess'):
-            var = dict(variable)
             fx_vars = profile.get(step, {}).get('fx_files')
 
             # Create tasks to prepare the input data for the fx var
             order = _extract_preprocessor_order(profile)
             before, after = _split_settings(profile, step, order)
-            fx_input = [
-                _get_correct_fx_file(variable, fx_var, config_user)[1]
+            fx_variables = [
+                _get_correct_fx_file(variable, fx_var, config_user)[1][0]
                 for fx_var in fx_vars
             ]
-
-            for fx_variable in fx_input:
-                fx_name = task_name.split(
-                    TASKSEP)[0] + TASKSEP + fx_variable['short_name']
-                task = _get_single_preprocessor_task(
-                    fx_variables,
-                    before,
-                    config_user,
-                    name=fx_name,
-                )
-                fx_preproc_tasks.append(task)
+            fx_name = task_name.split(
+                TASKSEP)[0] + TASKSEP + fx_variables[0]['variable_group']
+            task = _get_single_preprocessor_task(
+                fx_variables,
+                before,
+                config_user,
+                name=fx_name,
+            )
+            fx_preproc_tasks.append(task)
 
     derive_tasks.extend(fx_preproc_tasks)
 
