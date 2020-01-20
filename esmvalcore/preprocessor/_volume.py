@@ -170,7 +170,8 @@ def calculate_volume(cube):
 def volume_statistics(
         cube,
         operator,
-        fx_files=None):
+        fx_files=None,
+        fx_preprocess=False):
     """
     Apply a statistical operation over a volume.
 
