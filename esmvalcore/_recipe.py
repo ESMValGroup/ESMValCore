@@ -919,19 +919,21 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
             # Create tasks to prepare the input data for the fx var
             order = _extract_preprocessor_order(profile)
             before, after = _split_settings(profile, step, order)
-            fx_variables = [
-                _get_correct_fx_file(variable, fx_var, config_user)[1][0]
-                for fx_var in fx_vars
-            ]
-            fx_name = task_name.split(
-                TASKSEP)[0] + TASKSEP + fx_variables[0]['variable_group']
-            task = _get_single_preprocessor_task(
-                fx_variables,
-                before,
-                config_user,
-                name=fx_name,
-            )
-            fx_preproc_tasks.append(task)
+            for var in variables:
+                fx_variables = [
+                    _get_correct_fx_file(var, fx_var, config_user)[1][0]
+                    for fx_var in fx_vars
+                ]
+                fx_name = task_name.split(
+                    TASKSEP)[0] + TASKSEP + 'area-vol_stat_' + \
+                    fx_variables[0]['variable_group']
+                task = _get_single_preprocessor_task(
+                    fx_variables,
+                    before,
+                    config_user,
+                    name=fx_name,
+                )
+                fx_preproc_tasks.append(task)
 
     derive_tasks.extend(fx_preproc_tasks)
 
