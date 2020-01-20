@@ -136,7 +136,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, 'area_weighted')
         expected = np.array([1.499886, 5.499886, 9.499886])
-        self.assertArrayAlmostEqual(result.data, expected)
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
     def test_regrid__unstructured_nearest(self):
         data = np.empty((1, 1))
@@ -165,7 +165,7 @@ class Test(tests.Test):
         self.cube.add_aux_coord(lats, (1, 2))
         result = regrid(self.cube, grid, 'unstructured_nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
-        self.assertArrayAlmostEqual(result.data, expected)
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
 
 if __name__ == '__main__':
