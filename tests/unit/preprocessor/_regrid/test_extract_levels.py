@@ -123,6 +123,9 @@ class Test(tests.Test):
         self.assertEqual(len(args), 3)
         self.assert_array_equal(args[0], self.cube)
         new_data[np.isnan(new_data)] = _MDI
+        new_data_mask = np.zeros(new_data.shape, bool)
+        new_data_mask[new_data == _MDI] = True
+        new_data = np.ma.array(new_data, mask=new_data_mask)
         self.assert_array_equal(args[1], new_data)
         self.assert_array_equal(args[2], levels)
         # Check the _create_cube kwargs ...
@@ -165,6 +168,9 @@ class Test(tests.Test):
         self.assertFalse(coord_comparison['not_equal']
                          or coord_comparison['non_equal_data_dimension'])
         self.assert_array_equal(args[0].data, cube.data)
+        new_data_mask = np.zeros(new_data.shape, bool)
+        new_data_mask[new_data == _MDI] = True
+        new_data = np.ma.array(new_data, mask=new_data_mask)
         self.assert_array_equal(args[1], new_data)
         self.assertTrue(ma.isMaskedArray(args[1]))
         self.assert_array_equal(args[1].mask, new_data_mask)
