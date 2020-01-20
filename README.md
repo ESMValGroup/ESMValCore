@@ -28,7 +28,7 @@ you can install ESMValCore by running:
 ## Installing from source
 
 If you need the very latest features, please see
-[CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/development/CONTRIBUTING.md)
+[CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/master/CONTRIBUTING.md)
 for instructions on installing ESMValCore from source.
 
 ## Using ESMValCore as a Python library
@@ -65,4 +65,4 @@ on [readthedocs](https://esmvaltool.readthedocs.io), is to open an
 ## Contributing
 
 If you would like to contribute a new feature, please have a
-look at [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/development/CONTRIBUTING.md).
+look at [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/master/CONTRIBUTING.md).

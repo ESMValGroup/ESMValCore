@@ -1,21 +1,20 @@
-import iris
 from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor import derive
 from esmvalcore.preprocessor._derive import get_required
-from esmvalcore.preprocessor._derive.csoil_grid import DerivedVariable
+from esmvalcore.preprocessor._derive.ohc import DerivedVariable
 
 
 def test_get_required():
 
-    variables = get_required('alb')
+    variables = get_required('alb', 'CMIP5')
 
     reference = [
         {
-            'short_name': 'rsds',
+            'short_name': 'rsdscs',
         },
         {
-            'short_name': 'rsus',
+            'short_name': 'rsuscs',
         },
     ]
 
@@ -24,12 +23,12 @@ def test_get_required():
 
 def test_get_required_with_fx():
 
-    variables = get_required('nbp_grid')
+    variables = get_required('ohc', 'CMIP5')
 
-    reference = [{
-        'short_name': 'nbp',
-        'fx_files': ['sftlf'],
-    }]
+    reference = [
+        {'short_name': 'thetao'},
+        {'short_name': 'volcello', 'mip': 'fx'},
+    ]
 
     assert variables == reference
 
@@ -41,13 +40,15 @@ def test_derive_nonstandard_nofx():
     units = 1
     standard_name = ''
 
-    rsds = Cube([2.])
-    rsds.standard_name = 'surface_downwelling_shortwave_flux_in_air'
+    rsdscs = Cube([2.])
+    rsdscs.short_name = 'rsdscs'
+    rsdscs.var_name = rsdscs.short_name
 
-    rsus = Cube([1.])
-    rsus.standard_name = 'surface_upwelling_shortwave_flux_in_air'
+    rsuscs = Cube([1.])
+    rsuscs.short_name = 'rsuscs'
+    rsuscs.var_name = rsuscs.short_name
 
-    cubes = CubeList([rsds, rsus])
+    cubes = CubeList([rsdscs, rsuscs])
 
     alb = derive(cubes, short_name, long_name, units, standard_name)
 
@@ -73,28 +74,22 @@ def test_derive_noop():
 
 def test_derive_mixed_case_with_fx(tmp_path, monkeypatch):
 
-    short_name = 'cSoil_grid'
-    long_name = 'Carbon Mass in Soil Pool relative to grid cell area'
-    units = 'kg m-2'
+    short_name = 'ohc'
+    long_name = 'Heat content in grid cell'
+    units = 'J'
 
-    csoil_cube = Cube([])
-    fx_cube = Cube([])
-    fx_cube.var_name = 'sftlf'
-    fx_file = str(tmp_path / 'sftlf_file.nc')
-    iris.save(fx_cube, target=fx_file)
+    ohc_cube = Cube([])
 
     def mock_calculate(self, cubes):
-        assert len(cubes) == 2
-        assert cubes[0] == csoil_cube
-        assert cubes[1].var_name == fx_cube.var_name
+        assert len(cubes) == 1
+        assert cubes[0] == ohc_cube
         return Cube([])
 
     monkeypatch.setattr(DerivedVariable, 'calculate', mock_calculate)
 
     derive(
-        [csoil_cube],
+        [ohc_cube],
         short_name,
         long_name,
         units,
-        fx_files={'sftlf': fx_file},
     )

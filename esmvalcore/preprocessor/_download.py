@@ -30,20 +30,22 @@ def synda_search(variable):
     result = subprocess.check_output(cmd, shell=True, universal_newlines=True)
     logger.debug('Result:\n%s', result.strip())
 
-    files = (l.split()[-1] for l in result.split('\n') if l.startswith('new'))
-    files = select_files(files, variable['start_year'], variable['end_year'])
+    files = [l.split()[-1] for l in result.split('\n') if l.startswith('new')]
+    if variable.get('frequency', '') != 'fx':
+        files = select_files(files, variable['start_year'],
+                             variable['end_year'])
 
-    # filter partially overlapping files
-    intervals = {get_start_end_year(name): name for name in files}
-    files = []
-    for (start, end), filename in intervals.items():
-        for _start, _end in intervals:
-            if start == _start and end == _end:
-                continue
-            if start >= _start and end <= _end:
-                break
-        else:
-            files.append(filename)
+        # filter partially overlapping files
+        intervals = {get_start_end_year(name): name for name in files}
+        files = []
+        for (start, end), filename in intervals.items():
+            for _start, _end in intervals:
+                if start == _start and end == _end:
+                    continue
+                if start >= _start and end <= _end:
+                    break
+            else:
+                files.append(filename)
 
     logger.debug("Selected files:\n%s", '\n'.join(files))
 
