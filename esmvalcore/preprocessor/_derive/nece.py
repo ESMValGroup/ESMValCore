@@ -9,10 +9,14 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `nece` (Net Ecosystem Carbon Exchange)."""
 
     # Required variables
-    required = [{'short_name': 'rh', },
-                {'short_name': 'npp', }]
-    # ra = Autotrophic respiration
-    # npp = net primary production
+    .
+    def required(project):
+        """Declare the variables needed for derivation."""
+        # ra = Autotrophic respiration
+        # npp = net primary production
+        required = [{'short_name': 'rh', },
+                    {'short_name': 'npp', }]
+        return required
 
     @staticmethod
     def calculate(cubes):
