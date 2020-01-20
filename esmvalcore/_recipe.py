@@ -494,13 +494,26 @@ def _update_fx_settings(settings, variable, config_user):
         logger.info(msg, 'land/sea fraction weighting', pformat(fx_dict))
 
     for step in ('area_statistics', 'volume_statistics'):
+        var = dict(variable)
         if settings.get(step, {}).get('fx_files') and not \
                 settings.get(step, {}).get('fx_preprocess'):
-            var = dict(variable)
             var['fx_files'] = settings.get(step, {}).get('fx_files')
             fx_files_dict = {
                 fxvar: _get_correct_fx_file(variable, fxvar, config_user)[0]
                 for fxvar in var['fx_files']
+            }
+            settings[step]['fx_files'] = fx_files_dict
+            logger.info(msg, step, pformat(fx_files_dict))
+        if settings.get(step, {}).get('fx_files') and \
+                settings.get(step, {}).get('fx_preprocess'):
+            var['fx_files'] = settings.get(step, {}).get('fx_files')
+            fx_variables = [
+                _get_correct_fx_file(variable, fxvar, config_user)[1][0]
+                for fxvar in var['fx_files']
+            ]
+            fx_files_dict = {
+                fxvar: get_output_file(cmor_fx_var, config_user['preproc_dir'])
+                for fxvar, cmor_fx_var in zip(var['fx_files'], fx_variables)
             }
             settings[step]['fx_files'] = fx_files_dict
             logger.info(msg, step, pformat(fx_files_dict))
