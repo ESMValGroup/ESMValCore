@@ -930,7 +930,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
 
             # Create tasks to prepare the input data for the fx var
             order = _extract_preprocessor_order(fx_profile)
-            before, after = _split_settings(fx_profile, step, order)
+            before, _ = _split_settings(fx_profile, step, order)
             for var in variables:
                 fx_variables = [
                     _get_correct_fx_file(var, fx_var, config_user)[1]
