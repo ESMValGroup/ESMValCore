@@ -12,11 +12,13 @@ import time
 from copy import deepcopy
 from multiprocessing import Pool
 from pybtex.database import BibliographyData, Entry
+import doi2bib.crossref as ref
 
 import psutil
 import yaml
+import prov
 
-from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags, get_tag_value
+from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags, get_tag_value, REFERENCES_PATH
 from ._provenance import TrackedFile, get_task_provenance
 
 logger = logging.getLogger(__name__)
@@ -507,7 +509,7 @@ class DiagnosticTask(BaseTask):
         if returncode == 0:
             logger.debug("Script %s completed successfully", self.script)
             self._collect_provenance()
-            self._write_citation_file()
+            # self._write_citation_file()
             return [self.output_dir]
 
         raise DiagnosticError(
@@ -571,47 +573,25 @@ class DiagnosticTask(BaseTask):
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)
             product.save_provenance()
+            self._write_citation_file(product)
             self.products.add(product)
         logger.debug("Collecting provenance of task %s took %.1f seconds",
                      self.name,
                      time.time() - start)
 
 
-    def _write_citation_file(self):
+    def _write_citation_file(self, product):
         """Write citation information provided by the recorded provenance."""
-        provenance_file = os.path.join(self.settings['run_dir'],
-                                       'diagnostic_provenance.yml')
-        with open(provenance_file, 'r') as file:
-            table = yaml.safe_load(file)
-        section = 'references'
-        reference_dict = {}
-        for filename, attributes in table.items():
-            for tag in attributes[section]:
-                reference_dict[tag] = get_tag_value(section, tag)
+        bib_data = {v:k for k, v in TAGS['references'].items()}
 
-        # papers describing the diagnostic and recipe
-        bib_entry = {}
-        bib_fields = ['author', 'journal', 'volume', 'pages', 'doi', 'year']
-        for key in reference_dict:
-            reference = list(reference_dict[key].split(","))
-        # "[Last name] et al., [journal abbr.], [volume], [pages], doi:[doi], [year].
-            bib_entry.update({
-                key: Entry('article', list(zip(bib_fields, reference ))),
-            })
-        bib_data = BibliographyData(bib_entry)
+        for item in product.provenance.records:
+            for key, value in item.attributes:
+                # if key.namespace.prefix == 'attribute' and key.localpart in {'reference', 'references'}:
+                if key.namespace.prefix == 'attribute' and key.localpart in {'reference'}:
+                    tag = bib_data[value]
 
-        # model data citation information
-
-        # observational data citation information
-
-        # esmvaltool and other scientific software citation
-
-        # scientific compute cluster citation information, if applicable
-
-        # save the file
-        citation_file = os.path.join(self.settings['run_dir'],
-                                     'diagnostic_citation.bibtex')
-        bib_data.to_string(citation_file, 'bibtex')
+        # print(REFERENCES_PATH)
+        # citation_file = Path(product.filename) + '_citation.bibtex'
 
 
     def __str__(self):
