@@ -21,11 +21,11 @@ def make_src_cubes(units, mip='E1hr'):
     # Adapt data and time coordinate for different mips
     data = np.arange(27).reshape(3, 3, 3)
     if mip == 'E1hr':
-        timestamps = [788928, 788929, 788930] # 3 consecutive hours
+        timestamps = [788928, 788929, 788930]  # 3 consecutive hours
     elif mip == 'Amon':
-        timestamps = [788928, 789672, 790344] # 3 consecutive months
+        timestamps = [788928, 789672, 790344]  # 3 consecutive months
     elif mip == 'Fx':
-        timestamps = [788928]                 # 1 single timestamp
+        timestamps = [788928]  # 1 single timestamp
         data = np.arange(9).reshape(1, 3, 3)
 
     # Create coordinates
@@ -70,20 +70,19 @@ def make_target_cubes(project, mip, short_name):
     bounds = None
     if mip == 'E1hr':
         timestamps = [51134.0, 51134.0416667, 51134.0833333]
-        if not 'time1' in vardef.dimensions:
+        if 'time1' not in vardef.dimensions:
             bounds = np.array([[51133.9791667, 51134.0208333],
                                [51134.0208333, 51134.0625],
                                [51134.0625, 51134.1041667]])
     elif mip == 'Amon':
         timestamps = [51149.5, 51179.0, 51208.5]
-        if not 'time1' in vardef.dimensions:
-            bounds = np.array([[51134.0, 51165.0],
-		                       [51165.0, 51193.0],
-		                       [51193.0, 51224.0]])
+        if 'time1' not in vardef.dimensions:
+            bounds = np.array([[51134.0, 51165.0], [51165.0, 51193.0],
+                               [51193.0, 51224.0]])
     elif mip == 'Fx':
         data = np.arange(9).reshape(1, 3, 3)[:, ::-1, :]
         timestamps = [51134.0]
-        if not 'time1' in vardef.dimensions:
+        if 'time1' not in vardef.dimensions:
             bounds = np.array([[51133.9791667, 51134.0208333]])
 
     # Make lat/lon/time coordinates

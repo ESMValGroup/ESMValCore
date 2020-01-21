@@ -49,19 +49,22 @@ def read_cmor_tables(cfg_developer=None):
 
         if cmor_type == 'CMIP3':
             CMOR_TABLES[table] = CMIP3Info(
-                table_path, default=custom, strict=cmor_strict,
+                table_path,
+                default=custom,
+                strict=cmor_strict,
             )
         elif cmor_type == 'CMIP5':
             CMOR_TABLES[table] = CMIP5Info(
-                table_path, default=custom, strict=cmor_strict,
+                table_path,
+                default=custom,
+                strict=cmor_strict,
             )
         elif cmor_type == 'CMIP6':
             CMOR_TABLES[table] = CMIP6Info(
-                table_path, default=custom, strict=cmor_strict,
-                default_table_prefix=default_table_prefix
-            )
-
-
+                table_path,
+                default=custom,
+                strict=cmor_strict,
+                default_table_prefix=default_table_prefix)
 
 
 class CMIP6Info(object):
@@ -92,7 +95,10 @@ class CMIP6Info(object):
         'vsi': 'siv',
     }
 
-    def __init__(self, cmor_tables_path, default=None, strict=True,
+    def __init__(self,
+                 cmor_tables_path,
+                 default=None,
+                 strict=True,
                  default_table_prefix=''):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
@@ -131,8 +137,7 @@ class CMIP6Info(object):
         if os.path.isdir(cmor_tables_path):
             return cmor_tables_path
         raise ValueError(
-            'CMOR tables not found in {}'.format(cmor_tables_path)
-        )
+            'CMOR tables not found in {}'.format(cmor_tables_path))
 
     def _load_table(self, json_file):
         with open(json_file) as inf:
@@ -173,13 +178,11 @@ class CMIP6Info(object):
                     coord = self.coords[dimension]
                 except KeyError:
                     logger.exception(
-                        'Can not find dimension %s for variable %s',
-                        dimension, var
-                    )
+                        'Can not find dimension %s for variable %s', dimension,
+                        var)
                     raise
 
             var.coordinates[dimension] = coord
-
 
     def _load_coordinates(self):
         self.coords = {}
@@ -195,8 +198,8 @@ class CMIP6Info(object):
     def _load_controlled_vocabulary(self):
         self.activities = {}
         self.institutes = {}
-        for json_file in glob.glob(
-                os.path.join(self._cmor_folder, '*_CV.json')):
+        for json_file in glob.glob(os.path.join(self._cmor_folder,
+                                                '*_CV.json')):
             with open(json_file) as inf:
                 table_data = json.loads(inf.read())
                 try:
@@ -296,7 +299,6 @@ class CMIP6Info(object):
 @total_ordering
 class TableInfo(dict):
     """Container class for storing a CMOR table."""
-
     def __init__(self, *args, **kwargs):
         """Create a new TableInfo object for storing VariableInfo objects."""
         super(TableInfo, self).__init__(*args, **kwargs)
@@ -323,7 +325,6 @@ class JsonInfo(object):
 
     Provides common utility methods to read json variables
     """
-
     def __init__(self):
         self._json_data = {}
 
@@ -368,7 +369,6 @@ class JsonInfo(object):
 
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
-
     def __init__(self, table_type, short_name):
         """
         Class to read and store variable information.
@@ -455,7 +455,6 @@ class VariableInfo(JsonInfo):
 
 class CoordinateInfo(JsonInfo):
     """Class to read and store coordinate information."""
-
     def __init__(self, name):
         """
         Class to read and store coordinate information.
@@ -498,7 +497,6 @@ class CoordinateInfo(JsonInfo):
         """Maximum allowed value"""
         self.must_have_bounds = ""
         """Whether bounds are required on this dimension"""
-
     def read_json(self, json_data):
         """
         Read coordinate information from json.
@@ -545,7 +543,6 @@ class CMIP5Info(object):
         found in the requested one
 
     """
-
     def __init__(self, cmor_tables_path, default=None, strict=True):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
@@ -648,8 +645,7 @@ class CMIP5Info(object):
                 return coord
             if key == 'requested':
                 coord.requested.extend(
-                    (val for val in value.split(' ') if val)
-                )
+                    (val for val in value.split(' ') if val))
                 continue
             if hasattr(coord, key):
                 setattr(coord, key, value)
@@ -744,9 +740,8 @@ class CMIP3Info(CMIP5Info):
         found in the requested one
 
     """
-
     def _read_table_file(self, table_file, table=None):
-        for dim in ('zlevel',):
+        for dim in ('zlevel', ):
             coord = CoordinateInfo(dim)
             coord.generic_level = True
             coord.axis = 'Z'
@@ -778,7 +773,6 @@ class CustomInfo(CMIP5Info):
         ESMValTool repository
 
     """
-
     def __init__(self, cmor_tables_path=None):
         cwd = os.path.dirname(os.path.realpath(__file__))
         self._cmor_folder = os.path.join(cwd, 'tables', 'custom')
@@ -866,5 +860,6 @@ class CustomInfo(CMIP5Info):
                     continue
                 if not self._read_line():
                     return
+
 
 read_cmor_tables()

@@ -11,24 +11,16 @@ from esmvalcore.cmor._fixes.cmip6.ipsl_cm6a_lr import AllVars
 
 class TestAllVars(unittest.TestCase):
     def setUp(self):
-        self.fix = AllVars()
+        self.fix = AllVars(None)
         self.cube = Cube(np.random.rand(2, 2, 2), var_name='ch4')
         self.cube.add_aux_coord(
-            AuxCoord(
-                np.random.rand(2, 2),
-                var_name='nav_lat',
-                standard_name='latitude'
-            ),
-            (1, 2)
-        )
+            AuxCoord(np.random.rand(2, 2),
+                     var_name='nav_lat',
+                     standard_name='latitude'), (1, 2))
         self.cube.add_aux_coord(
-            AuxCoord(
-                np.random.rand(2, 2),
-                var_name='nav_lon',
-                standard_name='longitude'
-            ),
-            (1, 2)
-        )
+            AuxCoord(np.random.rand(2, 2),
+                     var_name='nav_lon',
+                     standard_name='longitude'), (1, 2))
 
     def test_fix_metadata_ocean_var(self):
         cell_area = Cube(np.random.rand(2, 2), standard_name='cell_area')

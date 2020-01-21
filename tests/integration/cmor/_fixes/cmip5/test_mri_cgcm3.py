@@ -7,19 +7,17 @@ from esmvalcore.cmor._fixes.cmip5.mri_cgcm3 import Msftmyz, ThetaO
 
 class TestMsftmyz(unittest.TestCase):
     """Test msftmyz fixes."""
-
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'MRI-CGCM3', 'msftmyz'), [Msftmyz()]
-        )
+            Fix.get_fixes('CMIP5', 'MRI-CGCM3', 'Amon', 'msftmyz'),
+            [Msftmyz(None)])
 
 
 class TestThetao(unittest.TestCase):
     """Test thetao fixes."""
-
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'MRI-CGCM3', 'thetao'), [ThetaO()]
-        )
+            Fix.get_fixes('CMIP5', 'MRI-CGCM3', 'Amon', 'thetao'),
+            [ThetaO(None)])

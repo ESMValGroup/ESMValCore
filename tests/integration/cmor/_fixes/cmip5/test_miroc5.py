@@ -11,16 +11,15 @@ from esmvalcore.cmor.fix import Fix
 
 class TestSftof(unittest.TestCase):
     """Test sftof fixes."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='sftof', units='J')
-        self.fix = Sftof()
+        self.fix = Sftof(None)
 
     def test_get(self):
         """Test fix get"""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'sftof'),
-                             [Sftof()])
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'sftof'),
+                             [Sftof(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -31,7 +30,6 @@ class TestSftof(unittest.TestCase):
 
 class TestTas(unittest.TestCase):
     """Test tas fixes."""
-
     def setUp(self):
         """Prepare tests."""
         self.coord_name = 'latitude'
@@ -39,11 +37,12 @@ class TestTas(unittest.TestCase):
                                           bounds=[[1.23, 4.5678910]],
                                           standard_name=self.coord_name)
         self.cube = Cube([1.0], dim_coords_and_dims=[(self.coord, 0)])
-        self.fix = Tas()
+        self.fix = Tas(None)
 
     def test_get(self):
         """Test fix get"""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'tas'), [Tas()])
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'tas'),
+                             [Tas(None)])
 
     def test_fix_metadata(self):
         """Test metadata fix."""

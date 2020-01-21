@@ -8,19 +8,18 @@ from ..shared import add_scalar_height_coord
 
 class FixEra5(Fix):
     """Fixes for ERA5 variables"""
-
     @staticmethod
     def _frequency(cube):
-        if not cube.coords(axis='T'):
-            return 'fx'
         coord = cube.coord(axis='T')
-        if 27 < coord.points[1] - coord.points[0] < 32:
+        if len(coord.points) == 1:
+            return 'fx'
+        elif 27 < coord.points[1] - coord.points[0] < 32:
             return 'monthly'
         return 'hourly'
 
+
 class Accumulated(FixEra5):
     """Fixes for accumulated variables."""
-
     def _fix_frequency(self, cube):
         if self._frequency(cube) == 'monthly':
             cube.units = cube.units * 'd-1'
@@ -34,9 +33,9 @@ class Accumulated(FixEra5):
             self._fix_frequency(cube)
         return cubes
 
+
 class Hydrological(FixEra5):
     """Fixes for hydrological variables."""
-
     @staticmethod
     def _fix_units(cube):
         cube.units = 'kg m-2 s-1'
@@ -49,48 +48,58 @@ class Hydrological(FixEra5):
             self._fix_units(cube)
         return cubes
 
+
 class Radiation(FixEra5):
     """Fixes for accumulated radiation variables."""
-
     def fix_metadata(self, cubes):
         super().fix_metadata(cubes)
         for cube in cubes:
             cube.attributes['positive'] = 'down'
         return cubes
 
+
 class Fx(FixEra5):
     """Fixes for time invariant variables."""
+
 
 class Evspsbl(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
+
 class Mrro(Hydrological, Accumulated):
     """Fixes for evspsbl."""
+
 
 class Prsn(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
+
 class Pr(Hydrological, Accumulated):
     """Fixes for evspsbl."""
+
 
 class Evspsblpot(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
+
 class Rss(Radiation, Accumulated):
     """Fixes for Rss."""
+
 
 class Rsds(Radiation, Accumulated):
     """Fixes for Rsds."""
 
+
 class Rsdt(Radiation, Accumulated):
     """Fixes for Rsdt."""
+
 
 class Rls(Radiation):
     """Fixes for Rls."""
 
+
 class Orog(Fx):
     """Fixes for orography"""
-
     @staticmethod
     def _fix_units(cube):
         # Divide by acceleration of gravity [m s-2],
@@ -106,9 +115,9 @@ class Orog(Fx):
             self._fix_units(cube)
         return cubes
 
+
 class AllVars(FixEra5):
     """Fixes for all variables."""
-
     def _fix_coordinates(self, cube):
         """Fix coordinates."""
         # Fix coordinate increasing direction
@@ -126,7 +135,6 @@ class AllVars(FixEra5):
         if 'height10m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.)
 
-
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis
             coord = cube.coord(axis=axis)
@@ -140,7 +148,6 @@ class AllVars(FixEra5):
             coord.points = coord.core_points().astype('float64')
             if len(coord.points) > 1 and coord_def.must_have_bounds == "yes":
                 coord.guess_bounds()
-
 
         self._fix_monthly_time_coord(cube)
 

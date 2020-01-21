@@ -45,7 +45,7 @@ class TestGetCube(unittest.TestCase):
         self.cube_2 = mock.Mock()
         self.cube_2.var_name = 'cube2'
         self.cubes = [self.cube_1, self.cube_2]
-        self.fix = Fix()
+        self.fix = Fix(None)
 
     def test_get_first_cube(self):
         """Test selecting first cube."""
