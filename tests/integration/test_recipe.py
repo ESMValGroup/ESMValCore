@@ -1857,30 +1857,26 @@ def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
     assert task.name == 'diagnostic_name' + TASKSEP + 'tos'
-    assert len(task.products) == 1
-    product = task.products.pop()
-
-    assert len(task.ancestors) == 1
-    assert 'diagnostic_name' + TASKSEP + 'toz_derive_input_ps' in [
+    assert len(task.ancestors) == 2
+    assert 'diagnostic_name' + TASKSEP + 'fx_area-volume_stats_areacello' in [
         t.name for t in task.ancestors
     ]
-    assert 'diagnostic_name' + TASKSEP + 'toz_derive_input_tro3' in [
+    assert 'diagnostic_name' + TASKSEP + 'fx_area-volume_stats_volcello' in [
         t.name for t in task.ancestors
     ]
 
     # Check product content of tasks
     assert len(task.products) == 1
     product = task.products.pop()
-    assert 'derive' in product.settings
-    assert product.attributes['short_name'] == 'toz'
+    assert product.attributes['short_name'] == 'tos'
     assert product.files
 
-    ps_product = next(p for a in task.ancestors for p in a.products
-                      if p.attributes['short_name'] == 'ps')
-    tro3_product = next(p for a in task.ancestors for p in a.products
-                        if p.attributes['short_name'] == 'tro3')
-    assert ps_product.filename in product.files
-    assert tro3_product.filename in product.files
+    area_product = next(p for a in task.ancestors for p in a.products
+                        if p.attributes['short_name'] == 'areacello')
+    vol_product = next(p for a in task.ancestors for p in a.products
+                       if p.attributes['short_name'] == 'volcello')
+    assert area_product.filename in product.files
+    assert vol_product.filename in product.files
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
