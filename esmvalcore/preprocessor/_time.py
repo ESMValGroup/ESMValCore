@@ -411,7 +411,6 @@ def climate_statistics(cube, operator='mean', period='full'):
     operator = get_iris_analysis_operation(operator)
     clim_cube = cube.aggregated_by(clim_coord, operator)
     clim_cube.remove_coord('time')
-    print(clim_cube)
     if clim_cube.coord(clim_coord.name()).is_monotonic():
         iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
     else:
@@ -474,6 +473,7 @@ def anomalies(cube, period, reference):
         data[indexes] = data[indexes] - ref[cube_coord.points[i]]
 
     cube = cube.copy(data)
+    cube.remove_coord(cube_coord)
     return cube
 
 
