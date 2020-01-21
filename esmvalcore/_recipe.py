@@ -493,7 +493,7 @@ def _update_fx_settings(settings, variable, config_user):
         settings['weighting_landsea_fraction']['fx_files'] = fx_dict
         logger.info(msg, 'land/sea fraction weighting', pformat(fx_dict))
 
-    for step in ('area_statistics', 'volume_statistics'):
+    for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
         var = dict(variable)
         if settings.get(step, {}).get('fx_files') and not \
                 var.get("fx_var_preprocess"):
@@ -911,7 +911,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
             derive_tasks.append(task)
 
     # special case: fx variable pre-processing
-    for step in ('area_statistics', 'volume_statistics'):
+    for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
         if profile.get(step, {}).get('fx_files') and \
                 variable.get("fx_var_preprocess"):
             fx_vars = profile.get(step, {}).get('fx_files')
