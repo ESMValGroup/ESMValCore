@@ -903,52 +903,80 @@ def make_map_data(number_years=2):
     return cube
 
 
-@pytest.mark.parametrize('period', ['full', 'day', 'month', 'season'])
-def test_anomalies(period):
+PARAMETERS = []
+for period in ('full', 'day', 'month', 'season'):
+    PARAMETERS.append((period, None))
+    if period == 'season':
+        PARAMETERS.append((
+            period,
+            {
+                "start_year": 1950, 'start_month': 3, 'start_day': 1,
+                "end_year": 1951, 'end_month': 3, 'end_day': 1,
+            }))
+    else:
+        PARAMETERS.append((
+            period,
+            {
+                "start_year": 1950, 'start_month': 1, 'start_day': 1,
+                "end_year": 1951, 'end_month': 1, 'end_day': 1,
+            }))
+
+
+@pytest.mark.parametrize('period, reference', PARAMETERS)
+def test_anomalies(period, reference):
     cube = make_map_data(number_years=2)
-    result = anomalies(cube, period)
-    if period == 'full':
-        anom = np.arange(-359.5, 360, 1)
-        zeros = np.zeros_like(anom)
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'day':
-        anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
-        zeros = np.zeros_like(anom)
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'month':
-        anom1 = np.concatenate([np.arange(-194.5, -165) for x in range(12)])
-        anom2 = np.concatenate([np.arange(165.5, 195) for x in range(12)])
-        anom = np.concatenate((anom1, anom2))
-        zeros = np.zeros_like(anom)
-        print(result.data[0, 1])
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'season':
-        anom = np.concatenate((
-            np.arange(-314.5, -255),
-            np.arange(-224.5, -135),
-            np.arange(-224.5, -135),
-            np.arange(-224.5, -135),
-            np.arange(15.5, 105),
-            np.arange(135.5, 225),
-            np.arange(135.5, 225),
-            np.arange(135.5, 225),
-            np.arange(375.5, 405),
-        ))
-        zeros = np.zeros_like(anom)
-        print(result.data[0, 1])
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
+    result = anomalies(cube, period, reference)
+    if reference is None:
+        if period == 'full':
+            anom = np.arange(-359.5, 360)
+        elif period == 'day':
+            anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
+        elif period == 'month':
+            anom1 = np.concatenate(
+                [np.arange(-194.5, -165) for x in range(12)])
+            anom2 = np.concatenate(
+                [np.arange(165.5, 195) for x in range(12)])
+            anom = np.concatenate((anom1, anom2))
+        elif period == 'season':
+            anom = np.concatenate((
+                np.arange(-314.5, -255),
+                np.arange(-224.5, -135),
+                np.arange(-224.5, -135),
+                np.arange(-224.5, -135),
+                np.arange(15.5, 105),
+                np.arange(135.5, 225),
+                np.arange(135.5, 225),
+                np.arange(135.5, 225),
+                np.arange(375.5, 405),
+            ))
+    else:
+        if period == 'full':
+            anom = np.arange(-179.5, 540)
+        elif period == 'day':
+            anom = np.concatenate((np.zeros(360), np.ones(360) * 360))
+        elif period == 'month':
+            anom1 = np.concatenate([np.arange(-14.5, 15) for x in range(12)])
+            anom2 = np.concatenate([np.arange(345.5, 375) for x in range(12)])
+            anom = np.concatenate((anom1, anom2))
+        elif period == 'season':
+            anom = np.concatenate((
+                np.arange(-374.5, -315),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(315.5, 405),
+                np.arange(315.5, 405),
+                np.arange(315.5, 405),
+                np.arange(315.5, 345),
+            ))
+    zeros = np.zeros_like(anom)
+    print(anom)
+    print(result.data[0, 1, ...])
+    assert_array_equal(
+        result.data,
+        np.array([[zeros, anom], [anom, zeros]])
+    )
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
 
 

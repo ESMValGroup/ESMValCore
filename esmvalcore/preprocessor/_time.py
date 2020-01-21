@@ -9,8 +9,10 @@ from warnings import filterwarnings
 
 import dask.array as da
 import iris
+import iris.cube
 import iris.coord_categorisation
 import iris.util
+from iris.time import PartialDateTime
 import numpy as np
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
@@ -78,21 +80,20 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
             start_day = 30
         if end_day > 30:
             end_day = 30
-    start_date = datetime.datetime(int(start_year), int(start_month),
-                                   int(start_day))
-    end_date = datetime.datetime(int(end_year), int(end_month), int(end_day))
+    t_1 = PartialDateTime(
+        year=int(start_year), month=int(start_month), day=int(start_day))
+    t_2 = PartialDateTime(
+        year=int(end_year), month=int(end_month), day=int(end_day))
 
-    t_1 = time_units.date2num(start_date)
-    t_2 = time_units.date2num(end_date)
     constraint = iris.Constraint(
-        time=lambda t: t_1 <= time_units.date2num(t.point) < t_2)
+        time=lambda t: t_1 <= t.point < t_2)
 
     cube_slice = cube.extract(constraint)
     if cube_slice is None:
         start_cube = str(cube.coord('time').points[0])
         end_cube = str(cube.coord('time').points[-1])
         raise ValueError(
-            f"Time slice {start_date} to {end_date} is outside cube "
+            f"Time slice {start_cube} to {end_cube} is outside cube "
             f"time bounds {start_cube} to {end_cube}.")
 
     # Issue when time dimension was removed when only one point as selected.
@@ -409,13 +410,18 @@ def climate_statistics(cube, operator='mean', period='full'):
     clim_coord = _get_period_coord(cube, period)
     operator = get_iris_analysis_operation(operator)
     clim_cube = cube.aggregated_by(clim_coord, operator)
-    cube.remove_coord(clim_coord)
     clim_cube.remove_coord('time')
-    iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
+    print(clim_cube)
+    if clim_cube.coord(clim_coord.name()).is_monotonic():
+        iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
+    else:
+        clim_cube = iris.cube.CubeList(
+            clim_cube.slices_over(clim_coord.name())).merge_cube()
+    cube.remove_coord(clim_coord)
     return clim_cube
 
 
-def anomalies(cube, period):
+def anomalies(cube, period, reference):
     """
     Compute anomalies using a mean with the specified granularity.
 
@@ -427,17 +433,26 @@ def anomalies(cube, period):
     cube: iris.cube.Cube
         input cube.
 
-    period: str, optional
+    period: str
         Period to compute the statistic over.
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
         'mon', 'daily', 'day'
+
+    reference: list int, optional, default: None
+        Period of time to use a reference, as needed for the 'extract_time'
+        preprocessor function
+        If None, all available data is used as a reference
 
     Returns
     -------
     iris.cube.Cube
         Monthly statistics cube
     """
-    reference = climate_statistics(cube, period=period)
+    if reference is None:
+        reference_cube = cube
+    else:
+        reference_cube = extract_time(cube, **reference)
+    reference = climate_statistics(reference_cube, period=period)
     if period in ['full']:
         return cube - reference
 
