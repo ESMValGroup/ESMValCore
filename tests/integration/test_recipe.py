@@ -1833,13 +1833,13 @@ def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
            volume_statistics:
              operator: mean
              fx_files: ['areacello', 'volcello']
-             fx_preprocess: True
 
         diagnostics:
           diagnostic_name:
             variables:
               tos:
                 preprocessor: preproc
+                fx_var_preprocess: True
                 project: CMIP6
                 mip: Omon
                 exp: historical
@@ -1864,19 +1864,19 @@ def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
     assert 'diagnostic_name' + TASKSEP + 'fx_area-volume_stats_volcello' in [
         t.name for t in task.ancestors
     ]
-
-    # Check product content of tasks
     assert len(task.products) == 1
     product = task.products.pop()
     assert product.attributes['short_name'] == 'tos'
     assert product.files
-
-    area_product = next(p for a in task.ancestors for p in a.products
-                        if p.attributes['short_name'] == 'areacello')
-    vol_product = next(p for a in task.ancestors for p in a.products
-                       if p.attributes['short_name'] == 'volcello')
-    assert area_product.filename in product.files
-    assert vol_product.filename in product.files
+    assert 'volume_statistics' in product.settings
+    settings = product.settings['volume_statistics']
+    assert len(settings) == 2
+    assert settings['operator'] == 'mean'
+    fx_files = settings['fx_files']
+    assert isinstance(fx_files, dict)
+    assert 'preproc' in fx_files['areacello']
+    assert 'CMIP6_CanESM5_Ofx_historical_r1i1p1f1_areacello.nc' in \
+        fx_files['areacello']
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
