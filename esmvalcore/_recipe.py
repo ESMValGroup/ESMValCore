@@ -496,7 +496,7 @@ def _update_fx_settings(settings, variable, config_user):
     for step in ('area_statistics', 'volume_statistics'):
         var = dict(variable)
         if settings.get(step, {}).get('fx_files') and not \
-                settings.get(step, {}).get('fx_preprocess'):
+                var.get("fx_var_preprocess"):
             var['fx_files'] = settings.get(step, {}).get('fx_files')
             fx_files_dict = {
                 fxvar: _get_correct_fx_file(variable, fxvar, config_user)[0]
@@ -505,7 +505,7 @@ def _update_fx_settings(settings, variable, config_user):
             settings[step]['fx_files'] = fx_files_dict
             logger.info(msg, step, pformat(fx_files_dict))
         if settings.get(step, {}).get('fx_files') and \
-                settings.get(step, {}).get('fx_preprocess'):
+                var.get("fx_var_preprocess"):
             var['fx_files'] = settings.get(step, {}).get('fx_files')
             fx_variables = [
                 _get_correct_fx_file(variable, fxvar, config_user)[1][0]
@@ -733,7 +733,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_regrid_time(variable, settings)
         ancestors = grouped_ancestors.get(variable['filename'])
-        if not ancestors:
+        if not ancestors or variable.get("fx_var_preprocess"):
             ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') and not ancestors:
                 logger.info("Skipping: no data found for %s", variable)
@@ -913,7 +913,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     # special case: fx variable pre-processing
     for step in ('area_statistics', 'volume_statistics'):
         if profile.get(step, {}).get('fx_files') and \
-                profile.get(step, {}).get('fx_preprocess'):
+                variable.get("fx_var_preprocess"):
             fx_vars = profile.get(step, {}).get('fx_files')
 
             # Create tasks to prepare the input data for the fx var
