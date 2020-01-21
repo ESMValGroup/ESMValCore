@@ -431,6 +431,8 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
+    if valid_fx_vars:
+        valid_fx_vars = valid_fx_vars[0]
 
     return fx_files, valid_fx_vars
 
@@ -506,17 +508,25 @@ def _update_fx_settings(settings, variable, config_user):
             logger.info(msg, step, pformat(fx_files_dict))
         if settings.get(step, {}).get('fx_files') and \
                 var.get("fx_var_preprocess"):
+            avail_fx_files_dict = {}
             var['fx_files'] = settings.get(step, {}).get('fx_files')
             fx_variables = [
-                _get_correct_fx_file(variable, fxvar, config_user)[1][0]
+                _get_correct_fx_file(variable, fxvar, config_user)[1]
                 for fxvar in var['fx_files']
             ]
-            fx_files_dict = {
-                fxvar: get_output_file(cmor_fx_var, config_user['preproc_dir'])
-                for fxvar, cmor_fx_var in zip(var['fx_files'], fx_variables)
+            if fx_variables:
+                avail_fx_files_dict = {
+                    cmor_fx_var['short_name']:
+                    get_output_file(cmor_fx_var, config_user['preproc_dir'])
+                    for cmor_fx_var in fx_variables
+                }
+            settings[step]['fx_files'] = {
+                non_fx: []
+                for non_fx in var['fx_files']
+                if non_fx not in avail_fx_files_dict
             }
-            settings[step]['fx_files'] = fx_files_dict
-            logger.info(msg, step, pformat(fx_files_dict))
+            settings[step]['fx_files'].update(avail_fx_files_dict)
+            logger.info(msg, step, pformat(avail_fx_files_dict))
 
 
 def _read_attributes(filename):
@@ -921,7 +931,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
             before, after = _split_settings(profile, step, order)
             for var in variables:
                 fx_variables = [
-                    _get_correct_fx_file(var, fx_var, config_user)[1][0]
+                    _get_correct_fx_file(var, fx_var, config_user)[1]
                     for fx_var in fx_vars
                 ]
                 for fx_variable in fx_variables:
