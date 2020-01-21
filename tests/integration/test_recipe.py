@@ -1858,6 +1858,7 @@ def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
     task = recipe.tasks.pop()
     assert task.name == 'diagnostic_name' + TASKSEP + 'tos'
     assert len(task.ancestors) == 2
+    assert len(task.ancestors[0].ancestors) == 0
     assert 'diagnostic_name' + TASKSEP + 'fx_area-volume_stats_areacello' in [
         t.name for t in task.ancestors
     ]
