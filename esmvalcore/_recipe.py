@@ -269,8 +269,7 @@ def _limit_datasets(variables, profile, max_datasets=0):
         if variable not in limited:
             limited.append(variable)
 
-    logger.info("Only considering %s",
-                ', '.join(v['alias'] for v in limited))
+    logger.info("Only considering %s", ', '.join(v['alias'] for v in limited))
 
     return limited
 
@@ -386,43 +385,54 @@ def _add_fxvar_keys(fx_var_dict, variable):
 
 
 def _get_correct_fx_file(variable, fx_varname, config_user):
-    """Wrapper to standard file getter to recover the correct fx file."""
+    """Get fx files (searching all possible mips)."""
+    # TODO: allow user to specify certain mip if desired
     var = dict(variable)
-    if var['project'] in ['CMIP5', 'OBS', 'OBS6', 'obs4mips']:
-        fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
-    elif var['project'] == 'CMIP6':
-        if fx_varname == 'sftlf':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
-                                     var)
-        elif fx_varname == 'sftof':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
-                                     var)
-        # TODO allow availability for multiple mip's for sftgif
-        elif fx_varname == 'sftgif':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
-                                     var)
-        elif fx_varname == 'volcello':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
-                                     var)
+    var_project = variable['project']
+    cmor_table = CMOR_TABLES[var_project]
+    valid_fx_vars = []
+
+    # Get all fx-related mips ('fx' always first, original mip last)
+    fx_mips = ['fx']
+    fx_mips.extend(
+        [key for key in cmor_table.tables if 'fx' in key and key != 'fx'])
+    fx_mips.append(variable['mip'])
+
+    # Search all mips for available variables
+    searched_mips = []
+    for fx_mip in fx_mips:
+        fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
+        if fx_variable is not None:
+            searched_mips.append(fx_mip)
+            fx_var = _add_fxvar_keys({
+                'short_name': fx_varname,
+                'mip': fx_mip
+            }, var)
+            logger.debug("For fx variable '%s', found table '%s'", fx_varname,
+                         fx_mip)
+            fx_files = _get_input_files(fx_var, config_user)
+
+            # If files found, return them
+            if fx_files:
+                valid_fx_vars.append(fx_var)
+                logger.debug("Found fx variables '%s':\n%s", fx_varname,
+                             pformat(fx_files))
+                break
     else:
+        # No files found
+        fx_files = []
+
+    # If fx variable was not found in any table, raise exception
+    if not searched_mips:
         raise RecipeError(
-            f"Project {var['project']} not supported with fx variables")
-
-    fx_files = _get_input_files(fx_var, config_user)
-
-    # If can't find Ofx files, then try with original variable mip
-    if not fx_files and fx_var['mip'] == 'Ofx':
-        fx_var['mip'] = var['mip']
-        fx_files = _get_input_files(fx_var, config_user)
-
-    if not fx_files:
-        logger.warning("Unable to locate Fx files in Ofx or %s", var['mip'])
+            f"Requested fx variable '{fx_varname}' not available in "
+            f"any 'fx'-related CMOR table ({fx_mips}) for '{var_project}'")
 
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
 
-    return fx_files
+    return fx_files, valid_fx_vars
 
 
 def _get_landsea_fraction_fx_dict(variable, config_user):
@@ -432,7 +442,8 @@ def _get_landsea_fraction_fx_dict(variable, config_user):
     if variable['project'] != 'obs4mips':
         fx_vars.append('sftof')
     for fx_var in fx_vars:
-        fx_dict[fx_var] = _get_correct_fx_file(variable, fx_var, config_user)
+        fx_dict[fx_var] = _get_correct_fx_file(variable, fx_var,
+                                               config_user)[0]
     return fx_dict
 
 
@@ -469,7 +480,8 @@ def _update_fx_settings(settings, variable, config_user):
         logger.debug('Getting fx mask settings now...')
         settings['mask_landseaice']['fx_files'] = []
         fx_files_dict = {
-            'sftgif': _get_correct_fx_file(variable, 'sftgif', config_user)}
+            'sftgif': _get_correct_fx_file(variable, 'sftgif', config_user)[0]
+        }
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
@@ -481,13 +493,28 @@ def _update_fx_settings(settings, variable, config_user):
         settings['weighting_landsea_fraction']['fx_files'] = fx_dict
         logger.info(msg, 'land/sea fraction weighting', pformat(fx_dict))
 
-    for step in ('area_statistics', 'volume_statistics'):
-        if settings.get(step, {}).get('fx_files'):
-            var = dict(variable)
+    for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
+        var = dict(variable)
+        if settings.get(step, {}).get('fx_files') and not \
+                var.get("fx_var_preprocess"):
             var['fx_files'] = settings.get(step, {}).get('fx_files')
             fx_files_dict = {
-                fxvar: _get_correct_fx_file(variable, fxvar, config_user)
-                for fxvar in var['fx_files']}
+                fxvar: _get_correct_fx_file(variable, fxvar, config_user)[0]
+                for fxvar in var['fx_files']
+            }
+            settings[step]['fx_files'] = fx_files_dict
+            logger.info(msg, step, pformat(fx_files_dict))
+        if settings.get(step, {}).get('fx_files') and \
+                var.get("fx_var_preprocess"):
+            var['fx_files'] = settings.get(step, {}).get('fx_files')
+            fx_variables = [
+                _get_correct_fx_file(variable, fxvar, config_user)[1][0]
+                for fxvar in var['fx_files']
+            ]
+            fx_files_dict = {
+                fxvar: get_output_file(cmor_fx_var, config_user['preproc_dir'])
+                for fxvar, cmor_fx_var in zip(var['fx_files'], fx_variables)
+            }
             settings[step]['fx_files'] = fx_files_dict
             logger.info(msg, step, pformat(fx_files_dict))
 
@@ -507,10 +534,9 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
-    input_files = get_input_filelist(
-        variable=variable,
-        rootpath=config_user['rootpath'],
-        drs=config_user['drs'])
+    input_files = get_input_filelist(variable=variable,
+                                     rootpath=config_user['rootpath'],
+                                     drs=config_user['drs'])
 
     # Set up downloading using synda if requested.
     # Do not download if files are already available locally.
@@ -696,9 +722,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_extract_shape(settings, config_user)
         _update_weighting_settings(settings, variable)
-        _update_fx_settings(
-            settings=settings, variable=variable,
-            config_user=config_user)
+        _update_fx_settings(settings=settings,
+                            variable=variable,
+                            config_user=config_user)
         _update_target_grid(
             variable=variable,
             variables=variables,
@@ -707,7 +733,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_regrid_time(variable, settings)
         ancestors = grouped_ancestors.get(variable['filename'])
-        if not ancestors:
+        if not ancestors or variable.get("fx_var_preprocess"):
             ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') and not ancestors:
                 logger.info("Skipping: no data found for %s", variable)
@@ -738,7 +764,7 @@ def _get_single_preprocessor_task(variables,
     order = _extract_preprocessor_order(profile)
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
 
-    if variables[0]['frequency'] == 'fx':
+    if variables[0].get('frequency') == 'fx':
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
@@ -822,8 +848,7 @@ def _get_derive_input_variables(variables, config_user):
     for variable in variables:
         group_prefix = variable['variable_group'] + '_derive_input_'
         if not variable.get('force_derivation') and _get_input_files(
-                variable,
-                config_user):
+                variable, config_user):
             # No need to derive, just process normally up to derive step
             var = deepcopy(variable)
             append(group_prefix, var)
@@ -865,6 +890,8 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
         _add_cmor_info(variable)
     # Create preprocessor task(s)
     derive_tasks = []
+    fx_preproc_tasks = []
+    # set up tasks
     if variable.get('derive'):
         # Create tasks to prepare the input data for the derive step
         derive_profile, profile = _split_derive_profile(profile)
@@ -883,6 +910,34 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
             )
             derive_tasks.append(task)
 
+    # special case: fx variable pre-processing
+    for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
+        if profile.get(step, {}).get('fx_files') and \
+                variable.get("fx_var_preprocess"):
+            fx_vars = profile.get(step, {}).get('fx_files')
+
+            # Create tasks to prepare the input data for the fx var
+            order = _extract_preprocessor_order(profile)
+            before, after = _split_settings(profile, step, order)
+            for var in variables:
+                fx_variables = [
+                    _get_correct_fx_file(var, fx_var, config_user)[1][0]
+                    for fx_var in fx_vars
+                ]
+                for fx_variable in fx_variables:
+                    fx_name = task_name.split(
+                        TASKSEP)[0] + TASKSEP + 'fx_area-volume_stats_' + \
+                        fx_variable['variable_group']
+                    task = _get_single_preprocessor_task(
+                        [fx_variable],
+                        before,
+                        config_user,
+                        name=fx_name,
+                    )
+                    fx_preproc_tasks.append(task)
+
+    derive_tasks.extend(fx_preproc_tasks)
+
     # Create (final) preprocessor task
     task = _get_single_preprocessor_task(
         variables,
@@ -900,7 +955,6 @@ class Recipe:
 
     info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
     """List of keys to be used to compose the alias, ordered by priority."""
-
     def __init__(self,
                  raw_recipe,
                  config_user,
@@ -997,7 +1051,7 @@ class Recipe:
             if not match:
                 expanded.append(variable)
                 continue
-            start, end = match.group(0)[1: -1].split(':')
+            start, end = match.group(0)[1:-1].split(':')
             for i in range(int(start), int(end) + 1):
                 expand = deepcopy(variable)
                 expand['ensemble'] = regex.sub(str(i), ensemble, 1)
@@ -1039,12 +1093,14 @@ class Recipe:
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
             _update_from_others(variable, ['cmor_table', 'mip'], datasets)
-            institute = get_institutes(variable)
-            if institute:
-                variable['institute'] = institute
-            activity = get_activity(variable)
-            if activity:
-                variable['activity'] = activity
+            if 'institute' not in variable:
+                institute = get_institutes(variable)
+                if institute:
+                    variable['institute'] = institute
+            if 'activity' not in variable:
+                activity = get_activity(variable)
+                if activity:
+                    variable['activity'] = activity
             check.variable(variable, required_keys)
         variables = self._expand_ensemble(variables)
         return variables
