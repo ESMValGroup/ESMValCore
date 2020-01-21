@@ -16,6 +16,13 @@ coordinate bounds like ''lat_bnds'') or problems with the actual data
 The ESMValTool can apply on the fly fixes to data sets that have
 known errors that can be fixed automatically.
 
+.. note::
+  **CMORization as a fix**. As of early 2020, we've started implementing cmorization as fixes for
+  observational datasets. Previously, cmorization was an additional function implemented in ESMValTool.
+  This meant that users always had to store 2 copies of their observational data: both raw and cmorized.
+  Implementing cmorization as a fix removes this redundancy, as the fixes are applied 'on the fly' when
+  running a recipe. **ERA5** is the first dataset for which this "cmorization on the fly" is supported.
+
 Fix structure
 =============
 
@@ -44,7 +51,7 @@ Check the output
 Next to the error message, you should see some info about the iris cube: size,
 coordinates. In our example it looks like this:
 
-.. code-block::
+.. code-block:: python
 
     air_temperature/ (K) (time: 312; altitude: 90; longitude: 180)
         Dimension coordinates:
