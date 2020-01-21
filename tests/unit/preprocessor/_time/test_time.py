@@ -97,6 +97,24 @@ class TestTimeSlice(tests.Test):
             np.arange(0, 360),
             sliced.coord('time').points)
 
+    def test_extract_time_non_gregorian_day(self):
+        """Test extract time when the day is not in the Gregorian calendar"""
+        cube = Cube(np.arange(0, 720), var_name='co2', units='J')
+        cube.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(0., 720., 1.),
+                standard_name='time',
+                units=Unit(
+                    'days since 1950-01-01 00:00:00', calendar='360_day'
+                ),
+            ),
+            0,
+        )
+        sliced = extract_time(cube, 1950, 2, 30, 1950, 3, 1)
+        assert_array_equal(
+            np.array([59]),
+            sliced.coord('time').points)
+
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
         with self.assertRaises(ValueError):
