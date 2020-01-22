@@ -1865,6 +1865,15 @@ def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
     assert 'diagnostic_name' + TASKSEP + 'fx_area-volume_stats_volcello' in [
         t.name for t in task.ancestors
     ]
+    for product in task.products:
+        assert 'volume_statistics' in product.settings
+        assert product.attributes['short_name'] == 'tos'
+    for ancestor_product in task.ancestors[0].products:
+        assert ancestor_product.attributes['short_name'] == 'areacello'
+        assert 'volume_statistics' not in ancestor_product.settings
+    for ancestor_product in task.ancestors[1].products:
+        assert ancestor_product.attributes['short_name'] == 'volcello'
+        assert 'volume_statistics' not in ancestor_product.settings
     assert len(task.products) == 1
     product = task.products.pop()
     assert product.attributes['short_name'] == 'tos'
