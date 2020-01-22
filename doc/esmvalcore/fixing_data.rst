@@ -17,11 +17,13 @@ The ESMValTool can apply on the fly fixes to data sets that have
 known errors that can be fixed automatically.
 
 .. note::
-  **CMORization as a fix**. As of early 2020, we've started implementing cmorization as fixes for
-  observational datasets. Previously, cmorization was an additional function implemented in ESMValTool.
-  This meant that users always had to store 2 copies of their observational data: both raw and cmorized.
-  Implementing cmorization as a fix removes this redundancy, as the fixes are applied 'on the fly' when
-  running a recipe. **ERA5** is the first dataset for which this "cmorization on the fly" is supported.
+  **CMORization as a fix**. As of early 2020, we've started implementing CMORization as fixes for
+  observational datasets. Previously, CMORization was an additional function implemented in ESMValTool.
+  This meant that users always had to store 2 copies of their observational data: both raw and CMORized.
+  Implementing CMORization as a fix removes this redundancy, as the fixes are applied 'on the fly' when
+  running a recipe. **ERA5** is the first dataset for which this 'CMORization on the fly' is supported.
+  For more information about CMORization, see:
+  `Contributing a CMORizing script for an observational dataset <https://esmvaltool.readthedocs.io/en/latest/esmvaldiag/observations.html>`_.
 
 Fix structure
 =============
