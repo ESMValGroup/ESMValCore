@@ -1,6 +1,8 @@
 """Fixes for ERA5."""
+import iris
 import numpy as np
 from iris.cube import CubeList
+from iris.exceptions import CoordinateNotFoundError
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
@@ -10,14 +12,22 @@ class FixEra5(Fix):
     """Fixes for ERA5 variables"""
     @staticmethod
     def _frequency(cube):
-        try:
-            time = cube.coord(axis='T')
-        except CoordinateNotFoundError:
-            time = None
 
-        if not time or len(time.points) == 1:
+        if not cube.coords(axis='T'):
             return 'fx'
-        elif time.points[1] - time.points[0] == 1:
+        else:
+            time = cube.coord(axis='T')
+
+        if len(time.points) == 1:
+            return 'fx'
+
+        interval = time.points[1] - time.points[0]
+        unit = 'hours' if 'hour' in time.units.name else 'days'
+        print(time.units.name)
+        print(unit)
+        if (unit == 'hours'
+                and interval == 1) or (unit == 'days'
+                                       and interval - 1 / 24 < 1e-4):
             return 'hourly'
         return 'monthly'
 
@@ -25,7 +35,7 @@ class FixEra5(Fix):
 class Accumulated(FixEra5):
     """Fixes for accumulated variables."""
     def _fix_frequency(self, cube):
-        if cube.varname in ['mx2t', 'mn2t']:
+        if cube.var_name in ['mx2t', 'mn2t']:
             pass
         elif self._frequency(cube) == 'monthly':
             cube.units = cube.units * 'd-1'
@@ -73,15 +83,17 @@ class Radiation(FixEra5):
 
 class Fx(FixEra5):
     """Fixes for time invariant variables."""
-    @staticmethod
-    def _remove_time_coordinate(cube):
+    def _remove_time_coordinate(self, cube):
         cube = iris.util.squeeze(cube)
         cube.remove_coord('time')
         return cube
 
     def fix_metadata(self, cubes):
+        squeezed_cubes = []
         for cube in cubes:
-            self._remove_time_coordinate(cube)
+            cube = self._remove_time_coordinate(cube)
+            squeezed_cubes.append(cube)
+        return CubeList(squeezed_cubes)
 
 
 class Tasmin(Accumulated):
@@ -137,7 +149,7 @@ class Orog(Fx):
         return cube
 
     def fix_metadata(self, cubes):
-        super().fix_metadata(cubes)
+        cubes = super().fix_metadata(cubes)
         for cube in cubes:
             self._divide_by_gravity(cube)
         return cubes
@@ -173,7 +185,7 @@ class AllVars(FixEra5):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype('float64')
-            if coord_def.must_have_bounds == "yes":
+            if len(coord.points) > 1 and coord_def.must_have_bounds == "yes":
                 coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)

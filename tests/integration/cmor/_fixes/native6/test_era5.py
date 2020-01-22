@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.native6.era5 import AllVars, Evspsbl
+from esmvalcore.cmor._fixes.native6.era5 import AllVars, Evspsbl, FixEra5
 from esmvalcore.cmor.fix import Fix, fix_metadata
 from esmvalcore.cmor.table import CMOR_TABLES
 
@@ -15,20 +15,36 @@ def test_get_evspsbl_fix():
     assert fix == [Evspsbl(None), AllVars(None)]
 
 
+def test_get_frequency():
+    fix = FixEra5(None)
+    frequencies = {'hourly': [0, 1, 2], 'monthly': [0, 31, 59], 'fx': [0]}
+    for frequency, points in frequencies.items():
+        data = np.zeros(len(points))
+        time = iris.coords.DimCoord(points,
+                                    standard_name='time',
+                                    units=Unit('hours since 1900-01-01'))
+        cube = iris.cube.Cube(data,
+                              var_name='random_varname',
+                              dim_coords_and_dims=[(time, 0)])
+        assert fix._frequency(cube) == frequency
+        cube.coord('time').convert_units('days since 1850-1-1 00:00:00.0')
+        assert fix._frequency(cube) == frequency
+    cube = iris.cube.Cube(1., var_name='random')
+    assert fix._frequency(cube) == 'fx'
+
+
 def make_src_cubes(units, mip='E1hr'):
     """Make dummy cube that looks like the ERA5 data."""
 
-    # Adapt data and time coordinate for different mips
     data = np.arange(27).reshape(3, 3, 3)
     if mip == 'E1hr':
-        timestamps = [788928, 788929, 788930]  # 3 consecutive hours
+        timestamps = [788928, 788929, 788930]
     elif mip == 'Amon':
-        timestamps = [788928, 789672, 790344]  # 3 consecutive months
-    elif mip == 'Fx':
-        timestamps = [788928]  # 1 single timestamp
+        timestamps = [788928, 789672, 790344]
+    elif mip == 'fx':
+        timestamps = [788928]
         data = np.arange(9).reshape(1, 3, 3)
 
-    # Create coordinates
     latitude = iris.coords.DimCoord(np.array([90., 0., -90.]),
                                     standard_name='latitude',
                                     long_name='latitude',
@@ -79,11 +95,9 @@ def make_target_cubes(project, mip, short_name):
         if 'time1' not in vardef.dimensions:
             bounds = np.array([[51134.0, 51165.0], [51165.0, 51193.0],
                                [51193.0, 51224.0]])
-    elif mip == 'Fx':
-        data = np.arange(9).reshape(1, 3, 3)[:, ::-1, :]
-        timestamps = [51134.0]
-        if 'time1' not in vardef.dimensions:
-            bounds = np.array([[51133.9791667, 51134.0208333]])
+    elif mip == 'fx':
+        data = np.arange(9).reshape(3, 3)[::-1, :]
+        timestamps = [51143]
 
     # Make lat/lon/time coordinates
     latitude = iris.coords.DimCoord(np.array([-90., 0., 90.]),
@@ -115,13 +129,18 @@ def make_target_cubes(project, mip, short_name):
     if vardef.positive:
         attributes['positive'] = vardef.positive
 
+    if mip == 'fx':
+        dims = [(latitude, 0), (longitude, 1)]
+    else:
+        dims = [(time, 0), (latitude, 1), (longitude, 2)]
+
     cube = iris.cube.Cube(
         data.astype('float32'),
         long_name=vardef.long_name,
         var_name=short_name,  # vardef.cmor_name after #391?,
         standard_name=vardef.standard_name,
         units=Unit(vardef.units),
-        dim_coords_and_dims=[(time, 0), (latitude, 1), (longitude, 2)],
+        dim_coords_and_dims=dims,
         attributes=attributes)
 
     # Add auxiliary height coordinate for certain variables
@@ -143,7 +162,8 @@ variables = [
     ['pr', 'E1hr', 'm'],
     ['evspsbl', 'E1hr', 'm'],
     ['mrro', 'E1hr', 'm'],
-    ['prsn', 'E1hr', 'm of water equivalent'],
+    ['prsn', 'E1hr',
+     'unknown'],  # can't create testcube with 'm of water equivalent'
     ['evspsblpot', 'E1hr', 'm'],
     ['rss', 'E1hr', 'J m**-2'],
     ['rsds', 'E1hr', 'J m**-2'],
@@ -152,7 +172,7 @@ variables = [
     ['uas', 'E1hr', 'm s**-1'],  # a variable without explicit fixes
     ['pr', 'Amon', 'm'],  # a monthly variable
     # ['ua', 'E1hr', 'm s**-1'], # a 4d variable (we decided not to do this now)
-    ['orog', 'Fx', 'm**2 s**-2']  # a 2D variable (but keep time coord)
+    ['orog', 'fx', 'm**2 s**-2']  # a 2D variable
 ]
 
 
@@ -164,9 +184,9 @@ def test_cmorization(variable):
     src_cubes = make_src_cubes(era5_units, mip=mip)
     target_cubes = make_target_cubes('native6', mip, short_name)
 
-    print(src_cubes[0].xml())
     out_cubes = fix_metadata(src_cubes, short_name, 'native6', 'era5', mip)
 
-    print(out_cubes[0].xml())  # for testing purposes
-    print(target_cubes[0].xml())  # during development
+    print('src_cube:', src_cubes[0].xml())
+    print('out_cube:', out_cubes[0].xml())
+    print('target_cube:', target_cubes[0].xml())
     assert out_cubes[0].xml() == target_cubes[0].xml()
