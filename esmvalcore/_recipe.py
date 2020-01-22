@@ -444,8 +444,9 @@ def _get_landsea_fraction_fx_dict(variable, config_user):
     if variable['project'] != 'obs4mips':
         fx_vars.append('sftof')
     for fx_var in fx_vars:
-        fx_dict[fx_var] = _get_correct_fx_file(variable, fx_var,
-                                               config_user)[0]
+        fx_file, _ = _get_correct_fx_file(variable, fx_var, config_user)
+        fx_dict[fx_var] = fx_file
+
     return fx_dict
 
 
@@ -481,9 +482,8 @@ def _update_fx_settings(settings, variable, config_user):
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')
         settings['mask_landseaice']['fx_files'] = []
-        fx_files_dict = {
-            'sftgif': _get_correct_fx_file(variable, 'sftgif', config_user)[0]
-        }
+        fx_file, _ = _get_correct_fx_file(variable, 'sftgif', config_user)
+        fx_files_dict = {'sftgif': fx_file}
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
@@ -497,36 +497,55 @@ def _update_fx_settings(settings, variable, config_user):
 
     for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
         var = dict(variable)
-        if settings.get(step, {}).get('fx_files') and not \
-                var.get("fx_var_preprocess"):
+        cmor_fxvars = []
+        fx_files_dict = {}
+        if settings.get(step, {}).get('fx_files'):
             var['fx_files'] = settings.get(step, {}).get('fx_files')
-            fx_files_dict = {
-                fxvar: _get_correct_fx_file(variable, fxvar, config_user)[0]
-                for fxvar in var['fx_files']
-            }
+            for fxvar in var['fx_files']:
+                fx_file, cmor_fx_var = _get_correct_fx_file(
+                    variable, fxvar, config_user)
+                fx_files_dict[fxvar] = fx_file
+                if cmor_fx_var:
+                    cmor_fxvars.append(cmor_fx_var)
+
+            # special case for preprocessing fx variables
+            if var.get("fx_var_preprocess"):
+
+                # a brand new dictionary in this case
+                fx_files_dict = {}
+
+                # we need to switch to (virtual) output file
+                # but need to perform data checks first
+                if not cmor_fxvars:
+                    raise RecipeError(
+                        f"No data files found for {var['fx_files']} "
+                        f"for variable {var['short_name']} "
+                        f"but are needed for preprocessing.")
+                else:
+                    fxvars_with_data = [
+                        cmor_fx_var['short_name']
+                        for cmor_fx_var in cmor_fxvars
+                    ]
+                    missing_fx_vars = [
+                        fx for fx in var['fx_files']
+                        if fx not in fxvars_with_data
+                    ]
+                    if missing_fx_vars:
+                        raise RecipeError(
+                            f"No data files found for {missing_fx_vars} "
+                            f"for variable {var['short_name']} "
+                            f"but are needed for preprocessing.")
+                    else:
+                        fx_files_dict = {
+                            cmor_fx_var['short_name']:
+                            get_output_file(cmor_fx_var,
+                                            config_user['preproc_dir'])
+                            for cmor_fx_var in cmor_fxvars
+                        }
+
+            # finally construct the fx files dictionary
             settings[step]['fx_files'] = fx_files_dict
             logger.info(msg, step, pformat(fx_files_dict))
-        if settings.get(step, {}).get('fx_files') and \
-                var.get("fx_var_preprocess"):
-            avail_fx_files_dict = {}
-            var['fx_files'] = settings.get(step, {}).get('fx_files')
-            fx_variables = [
-                _get_correct_fx_file(variable, fxvar, config_user)[1]
-                for fxvar in var['fx_files']
-            ]
-            if fx_variables:
-                avail_fx_files_dict = {
-                    cmor_fx_var['short_name']:
-                    get_output_file(cmor_fx_var, config_user['preproc_dir'])
-                    for cmor_fx_var in fx_variables
-                }
-            settings[step]['fx_files'] = {
-                non_fx: []
-                for non_fx in var['fx_files']
-                if non_fx not in avail_fx_files_dict
-            }
-            settings[step]['fx_files'].update(avail_fx_files_dict)
-            logger.info(msg, step, pformat(avail_fx_files_dict))
 
 
 def _read_attributes(filename):
