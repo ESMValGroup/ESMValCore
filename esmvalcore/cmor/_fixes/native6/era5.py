@@ -1,23 +1,21 @@
 """Fixes for ERA5."""
-import iris
 import numpy as np
-from iris.cube import CubeList
-from iris.exceptions import CoordinateNotFoundError
+import iris
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
 
 class FixEra5(Fix):
-    """Fixes for ERA5 variables"""
+    """Fixes for ERA5 variables."""
+
     @staticmethod
     def _frequency(cube):
 
         if not cube.coords(axis='T'):
             return 'fx'
-        else:
-            time = cube.coord(axis='T')
 
+        time = cube.coord(axis='T')
         if len(time.points) == 1:
             return 'fx'
 
@@ -34,6 +32,7 @@ class FixEra5(Fix):
 
 class Accumulated(FixEra5):
     """Fixes for accumulated variables."""
+
     def _fix_frequency(self, cube):
         if cube.var_name in ['mx2t', 'mn2t']:
             pass
@@ -44,12 +43,13 @@ class Accumulated(FixEra5):
         return cube
 
     def _fix_hourly_time_coordinate(self, cube):
-        if self._frequency == 'hourly':
+        if self._frequency(cube) == 'hourly':
             time = cube.coord(axis='T')
             time.points = time.points - 0.5
         return cube
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         super().fix_metadata(cubes)
         for cube in cubes:
             self._fix_hourly_time_coordinate(...)
@@ -59,6 +59,7 @@ class Accumulated(FixEra5):
 
 class Hydrological(FixEra5):
     """Fixes for hydrological variables."""
+
     @staticmethod
     def _fix_units(cube):
         cube.units = 'kg m-2 s-1'
@@ -66,6 +67,7 @@ class Hydrological(FixEra5):
         return cube
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         super().fix_metadata(cubes)
         for cube in cubes:
             self._fix_units(cube)
@@ -74,26 +76,35 @@ class Hydrological(FixEra5):
 
 class Radiation(FixEra5):
     """Fixes for accumulated radiation variables."""
+
+    @staticmethod
+    def _fix_direction(cube):
+        cube.attributes['positive'] = 'down'
+
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         super().fix_metadata(cubes)
         for cube in cubes:
-            cube.attributes['positive'] = 'down'
+            self._fix_direction(cube)
         return cubes
 
 
 class Fx(FixEra5):
     """Fixes for time invariant variables."""
-    def _remove_time_coordinate(self, cube):
+
+    @staticmethod
+    def _remove_time_coordinate(cube):
         cube = iris.util.squeeze(cube)
         cube.remove_coord('time')
         return cube
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         squeezed_cubes = []
         for cube in cubes:
             cube = self._remove_time_coordinate(cube)
             squeezed_cubes.append(cube)
-        return CubeList(squeezed_cubes)
+        return iris.cube.CubeList(squeezed_cubes)
 
 
 class Tasmin(Accumulated):
@@ -141,7 +152,8 @@ class Rls(Radiation):
 
 
 class Orog(Fx):
-    """Fixes for orography"""
+    """Fixes for orography."""
+
     @staticmethod
     def _divide_by_gravity(cube):
         cube.units = cube.units / 'm s-2'
@@ -149,6 +161,7 @@ class Orog(Fx):
         return cube
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         cubes = super().fix_metadata(cubes)
         for cube in cubes:
             self._divide_by_gravity(cube)
@@ -157,6 +170,7 @@ class Orog(Fx):
 
 class AllVars(FixEra5):
     """Fixes for all variables."""
+
     def _fix_coordinates(self, cube):
         """Fix coordinates."""
         # Fix coordinate increasing direction
@@ -215,7 +229,7 @@ class AllVars(FixEra5):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        fixed_cubes = CubeList()
+        fixed_cubes = iris.cube.CubeList()
         for cube in cubes:
             cube.var_name = self.vardef.short_name
             cube.standard_name = self.vardef.standard_name

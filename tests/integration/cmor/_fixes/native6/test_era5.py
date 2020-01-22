@@ -16,6 +16,7 @@ def test_get_evspsbl_fix():
 
 
 def test_get_frequency():
+    """Test whether FixEra5._frequency infers the frequency correctly."""
     fix = FixEra5(None)
     frequencies = {'hourly': [0, 1, 2], 'monthly': [0, 31, 59], 'fx': [0]}
     for frequency, points in frequencies.items():
@@ -35,7 +36,6 @@ def test_get_frequency():
 
 def make_src_cubes(units, mip='E1hr'):
     """Make dummy cube that looks like the ERA5 data."""
-
     data = np.arange(27).reshape(3, 3, 3)
     if mip == 'E1hr':
         timestamps = [788928, 788929, 788930]
@@ -157,7 +157,7 @@ def make_target_cubes(project, mip, short_name):
     return [cube]
 
 
-variables = [
+VARIABLES = [
     # short_name, mip, era5_units, ndims
     ['pr', 'E1hr', 'm'],
     ['evspsbl', 'E1hr', 'm'],
@@ -171,12 +171,12 @@ variables = [
     ['rls', 'E1hr', 'W m**-2'],  # variables with explicit fixes
     ['uas', 'E1hr', 'm s**-1'],  # a variable without explicit fixes
     ['pr', 'Amon', 'm'],  # a monthly variable
-    # ['ua', 'E1hr', 'm s**-1'], # a 4d variable (we decided not to do this now)
+    # ['ua', 'E1hr', 'm s**-1'], # a 4d variable (decided not to do this now)
     ['orog', 'fx', 'm**2 s**-2']  # a 2D variable
 ]
 
 
-@pytest.mark.parametrize('variable', variables)
+@pytest.mark.parametrize('variable', VARIABLES)
 def test_cmorization(variable):
     """Verify that cmorization results in the expected target cube."""
     short_name, mip, era5_units = variable
