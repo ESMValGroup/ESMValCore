@@ -414,6 +414,92 @@ variable items e.g.:
 
 .. _masking of missing values:
 
+
+Using mask files for area/volume/zonal statistics
+-------------------------------------------------
+
+Preprocessors like `volume_statistics` may take the optional key `fx_files` to allow
+the computation of statistics with fx data; this data is retrieved in the same manner
+as regular data files and can be ingested in the statistical computation as-is or it
+can be preprocessed:
+
+Key features:
+
+- it is possible to run a set of preprocessor steps on the `fx_files: [vars or dicts of vars]` specified in the `area_statistics`, `volume_statistics` or `zonal_statistics`by setting the `fx_var_preprocess: True` in the `variable`; take for instance this example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      prep:
+        custom_order: true
+        extract_volume:
+            z_min: 0
+            z_max: 100
+        annual_statistics:
+            operator: mean
+        volume_statistics:
+            operator: mean
+            fx_files: [volcello, ]
+
+    diagnostics:
+      diag:
+        variables:
+          thetao700_Omon:
+          short_name: thetao
+          preprocessor: prep
+          fx_var_preprocess: True
+          mip: Omon
+          exp: historical
+          ensemble: r1i1p1f1
+          grid: gn
+          start_year: 2010
+          end_year: 2014
+          additional_datasets:
+            - {dataset: GFDL-CM4}
+            - {dataset: HadGEM3-GC31-LL}
+            - {dataset: UKESM1-0-LL}
+
+
+this setup will run the custom-ordered preprocessor steps in `preprocessors/prep` before (and not including) `volume_statistics` for the fx variable `volcello`;
+
+- it is also possible to request the same type of fx variables but as dictionaries, providing more information towards the retrieval of the correct data; take this snippet for example:
+
+
+.. code-block:: yaml
+
+    preprocessors:
+      prep:
+        custom_order: true
+        extract_volume:
+            z_min: 0
+            z_max: 100
+        annual_statistics:
+            operator: mean
+        volume_statistics:
+            operator: mean
+            fx_files: [{short_name: volcello, mip: Omon, exp: historical}]
+
+    diagnostics:
+      diag:
+        variables:
+          thetao700_Omon:
+          short_name: thetao
+          preprocessor: prep
+          fx_var_preprocess: True
+          mip: Omon
+          exp: historical
+          ensemble: r1i1p1f1
+          grid: gn
+          start_year: 2010
+          end_year: 2014
+          additional_datasets:
+            - {dataset: GFDL-CM4}
+            - {dataset: HadGEM3-GC31-LL}
+            - {dataset: UKESM1-0-LL}
+
+
+in this case, by providing the extra CMOR keys, we allow the code to find the `volcello` with mip `Omon` and experiment `historical`. This is particularly useful when the actual fx data is not found in the master variable's (`thetao` in this case) data experiment; this is also useful to force a certain time-dependent data (mip: Omon) for preprocessors that need time operations
+
 Missing values masks
 --------------------
 
