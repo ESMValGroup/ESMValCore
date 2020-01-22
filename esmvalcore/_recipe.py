@@ -386,7 +386,15 @@ def _add_fxvar_keys(fx_var_dict, variable):
 
 def _get_correct_fx_file(variable, fx_varname, config_user):
     """Get fx files (searching all possible mips)."""
-    # TODO: allow user to specify certain mip if desired
+    # first see if we have strings or dicts for fx_varname
+    user_defined = False
+    if isinstance(fx_varname, dict):
+        user_defined = True
+        user_fx_mip = fx_varname.get('mip')
+        user_fx_experiment = fx_varname.get('exp')
+        fx_varname = fx_varname.get('short_name')
+
+    # assemble info from master variable
     var = dict(variable)
     var_project = variable['project']
     cmor_table = CMOR_TABLES[var_project]
@@ -398,7 +406,14 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
         [key for key in cmor_table.tables if 'fx' in key and key != 'fx'])
     fx_mips.append(variable['mip'])
 
+    # force only the mip declared by user
+    if user_defined and user_fx_mip:
+        fx_mips = [
+            user_fx_mip,
+        ]
+
     # Search all mips for available variables
+    # priority goes to user specified mip if available
     searched_mips = []
     for fx_mip in fx_mips:
         fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
@@ -408,6 +423,8 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
                 'short_name': fx_varname,
                 'mip': fx_mip
             }, var)
+            if user_defined and user_fx_experiment:
+                fx_var['exp'] = user_fx_experiment
             logger.debug("For fx variable '%s', found table '%s'", fx_varname,
                          fx_mip)
             fx_files = _get_input_files(fx_var, config_user)
@@ -502,9 +519,15 @@ def _update_fx_settings(settings, variable, config_user):
         if settings.get(step, {}).get('fx_files'):
             var['fx_files'] = settings.get(step, {}).get('fx_files')
             for fxvar in var['fx_files']:
+                fxvar_name = fxvar
+                if isinstance(fxvar, dict):
+                    fxvar_name = fxvar.get("short_name")
+                    if not fxvar_name:
+                        raise RecipeError(
+                            "Key short_name missing from {}".format(fxvar))
                 fx_file, cmor_fx_var = _get_correct_fx_file(
                     variable, fxvar, config_user)
-                fx_files_dict[fxvar] = fx_file
+                fx_files_dict[fxvar_name] = fx_file
                 if cmor_fx_var:
                     cmor_fxvars.append(cmor_fx_var)
 
@@ -530,6 +553,11 @@ def _update_fx_settings(settings, variable, config_user):
                         fx for fx in var['fx_files']
                         if fx not in fxvars_with_data
                     ]
+                    if isinstance(fxvar, dict):
+                        missing_fx_vars = [
+                            fx.get('short_name') for fx in var['fx_files']
+                            if fx.get('short_name') not in fxvars_with_data
+                        ]
                     if missing_fx_vars:
                         raise RecipeError(
                             f"No data files found for {missing_fx_vars} "
