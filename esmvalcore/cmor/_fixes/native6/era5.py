@@ -10,26 +10,39 @@ class FixEra5(Fix):
     """Fixes for ERA5 variables"""
     @staticmethod
     def _frequency(cube):
-        coord = cube.coord(axis='T')
-        if len(coord.points) == 1:
+        try:
+            time = cube.coord(axis='T')
+        except CoordinateNotFoundError:
+            time = None
+
+        if not time or len(time.points) == 1:
             return 'fx'
-        elif 27 < coord.points[1] - coord.points[0] < 32:
-            return 'monthly'
-        return 'hourly'
+        elif time.points[1] - time.points[0] == 1:
+            return 'hourly'
+        return 'monthly'
 
 
 class Accumulated(FixEra5):
     """Fixes for accumulated variables."""
     def _fix_frequency(self, cube):
-        if self._frequency(cube) == 'monthly':
+        if cube.varname in ['mx2t', 'mn2t']:
+            pass
+        elif self._frequency(cube) == 'monthly':
             cube.units = cube.units * 'd-1'
         elif self._frequency(cube) == 'hourly':
             cube.units = cube.units * 'h-1'
         return cube
 
+    def _fix_hourly_time_coordinate(self, cube):
+        if self._frequency == 'hourly':
+            time = cube.coord(axis='T')
+            time.points = time.points - 0.5
+        return cube
+
     def fix_metadata(self, cubes):
         super().fix_metadata(cubes)
         for cube in cubes:
+            self._fix_hourly_time_coordinate(...)
             self._fix_frequency(cube)
         return cubes
 
@@ -60,6 +73,23 @@ class Radiation(FixEra5):
 
 class Fx(FixEra5):
     """Fixes for time invariant variables."""
+    @staticmethod
+    def _remove_time_coordinate(cube):
+        cube = iris.util.squeeze(cube)
+        cube.remove_coord('time')
+        return cube
+
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            self._remove_time_coordinate(cube)
+
+
+class Tasmin(Accumulated):
+    """Fixes for tasmin."""
+
+
+class Tasmax(Accumulated):
+    """Fixes for tasmax."""
 
 
 class Evspsbl(Hydrological, Accumulated):
@@ -101,10 +131,7 @@ class Rls(Radiation):
 class Orog(Fx):
     """Fixes for orography"""
     @staticmethod
-    def _fix_units(cube):
-        # Divide by acceleration of gravity [m s-2],
-        # required for geopotential height, see:
-        # https://apps.ecmwf.int/codes/grib/param-db?id=129
+    def _divide_by_gravity(cube):
         cube.units = cube.units / 'm s-2'
         cube.data = cube.core_data() / 9.80665
         return cube
@@ -112,7 +139,7 @@ class Orog(Fx):
     def fix_metadata(self, cubes):
         super().fix_metadata(cubes)
         for cube in cubes:
-            self._fix_units(cube)
+            self._divide_by_gravity(cube)
         return cubes
 
 
