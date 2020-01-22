@@ -640,6 +640,67 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         assert variable[key] == reference[key]
 
 
+def test_simple_cordex_recipe(tmp_path, patched_datafinder,
+                              config_user):
+    """Test simple CORDEX recipe."""
+    content = dedent("""
+        diagnostics:
+          test:
+            additional_datasets:
+              - dataset: MOHC-HadGEM3-RA
+                project: CORDEX
+                product: output
+                domain: AFR-44
+                institute: MOHC
+                driver: ECMWF-ERAINT
+                exp: evaluation
+                ensemble: r1i1p1
+                rcm_version: v1
+                start_year: 1991
+                end_year: 1993
+                mip: mon
+            variables:
+              tas:
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['test']['preprocessor_output']['tas'][0]
+    filename = variable.pop('filename').split('/')[-1]
+    assert (filename ==
+            'tas_MOHC-HadGEM3-RA_evaluation_r1i1p1_v1_mon_1991-1993.nc')
+    reference = {
+        'alias': 'MOHC-HadGEM3-RA',
+        'cmor_table': 'CORDEX',
+        'dataset': 'MOHC-HadGEM3-RA',
+        'diagnostic': 'test',
+        'domain': 'AFR-44',
+        'driver': 'ECMWF-ERAINT',
+        'end_year': 1993,
+        'ensemble': 'r1i1p1',
+        'exp': 'evaluation',
+        'frequency': 'mon',
+        'institute': 'MOHC',
+        'long_name': 'Near-Surface Air Temperature',
+        'mip': 'mon',
+        'modeling_realm': ['atmos'],
+        'preprocessor': 'default',
+        'product': 'output',
+        'project': 'CORDEX',
+        'recipe_dataset_index': 0,
+        'rcm_version': 'v1',
+        'short_name': 'tas',
+        'standard_name': 'air_temperature',
+        'start_year': 1991,
+        'units': 'K',
+        'variable_group': 'tas',
+    }
+
+    assert set(variable) == set(reference)
+    for key in reference:
+        assert variable[key] == reference[key]
+
+
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,
                            monkeypatch):
 
