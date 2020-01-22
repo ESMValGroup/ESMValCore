@@ -11,14 +11,11 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
-from pybtex.database import BibliographyData, Entry
-import doi2bib.crossref as ref
 
 import psutil
 import yaml
-import prov
 
-from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags, get_tag_value, REFERENCES_PATH
+from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags, REFERENCES_PATH
 from ._provenance import TrackedFile, get_task_provenance
 
 logger = logging.getLogger(__name__)
@@ -587,20 +584,35 @@ class DiagnosticTask(BaseTask):
                      self.name,
                      time.time() - start)
 
-
     def _write_citation_file(self, product):
         """Write citation information provided by the recorded provenance."""
-        bib_data = {v:k for k, v in TAGS['references'].items()}
-
+        reference_tag = {v: k for k, v in TAGS['references'].items()}
+        # collect info from provenance
+        product_entry = []
         for item in product.provenance.records:
             for key, value in item.attributes:
-                # if key.namespace.prefix == 'attribute' and key.localpart in {'reference', 'references'}:
-                if key.namespace.prefix == 'attribute' and key.localpart in {'reference'}:
-                    tag = bib_data[value]
+                if (key.namespace.prefix == 'attribute'
+                        and key.localpart in {'reference', 'references'}):
+                    product_entry.append(value)
 
-        # print(REFERENCES_PATH)
-        # citation_file = Path(product.filename) + '_citation.bibtex'
+        # map between reference tags and entries
+        product_tag = []
+        for key in reference_tag.keys():
+            for entry in product_entry:
+                if key in entry and reference_tag[key] not in product_tag:
+                    product_tag.append(reference_tag[key])
 
+        # save all citation info into one bibtex file
+        bibtex_entry = ''
+        for tags in product_tag:
+            bib_file_path = os.path.join(REFERENCES_PATH, tags + '.bibtex')
+            if os.path.isfile(bib_file_path):
+                with open(bib_file_path, 'r') as file:
+                    bibtex_entry += '{}\n'.format(file.read())
+        citation_file = (os.path.splitext(product.filename)[0]
+                         + '_citation.bibtex')
+        with open(citation_file, 'w') as file:
+            file.write(bibtex_entry)
 
     def __str__(self):
         """Get human readable description."""
