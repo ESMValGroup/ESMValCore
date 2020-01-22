@@ -26,6 +26,7 @@ def find_diagnostics():
 
 DIAGNOSTICS_PATH = find_diagnostics()
 
+
 def find_references():
     """Try to find bibtex files in references folder."""
     try:
