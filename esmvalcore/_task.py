@@ -586,7 +586,6 @@ class DiagnosticTask(BaseTask):
 
     def _write_citation_file(self, product):
         """Write citation information provided by the recorded provenance."""
-        reference_tag = {v: k for k, v in TAGS['references'].items()}
         # collect info from provenance
         product_entry = []
         for item in product.provenance.records:
@@ -596,6 +595,7 @@ class DiagnosticTask(BaseTask):
                     product_entry.append(value)
 
         # map between reference tags and entries
+        reference_tag = {v: k for k, v in TAGS['references'].items()}
         product_tag = []
         for key in reference_tag.keys():
             for entry in product_entry:
