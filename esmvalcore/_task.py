@@ -594,7 +594,7 @@ class DiagnosticTask(BaseTask):
                         and key.localpart in {'reference', 'references'}):
                     product_entry.append(value)
 
-        # map between reference tags and entries
+        # map between reference.tags and product.entries
         reference_tag = {v: k for k, v in TAGS['references'].items()}
         product_tag = []
         for key in reference_tag.keys():
@@ -605,10 +605,14 @@ class DiagnosticTask(BaseTask):
         # save all citation info into one bibtex file
         bibtex_entry = ''
         for tags in product_tag:
-            bib_file_path = os.path.join(REFERENCES_PATH, tags + '.bibtex')
-            if os.path.isfile(bib_file_path):
-                with open(bib_file_path, 'r') as file:
+            bibtex_file = os.path.join(REFERENCES_PATH, tags + '.bibtex')
+            if os.path.isfile(bibtex_file):
+                with open(bibtex_file, 'r') as file:
                     bibtex_entry += '{}\n'.format(file.read())
+            else:
+                raise DiagnosticError(
+                    "The reference file ({}): does not exist.".format(
+                        bibtex_file))
         citation_file = (os.path.splitext(product.filename)[0]
                          + '_citation.bibtex')
         with open(citation_file, 'w') as file:
