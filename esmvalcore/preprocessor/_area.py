@@ -200,19 +200,31 @@ def tile_grid_areas(cube, fx_files):
                 continue
             logger.info('Attempting to load %s from file: %s', key, fx_file)
             fx_cube = iris.load_cube(fx_file)
-
+             
             grid_areas = fx_cube.core_data()
+            return grid_areas
+
             if cube.ndim == 4 and grid_areas.ndim == 2:
                 grid_areas = da.tile(grid_areas,
                                      [cube.shape[0], cube.shape[1], 1, 1])
             elif cube.ndim == 4 and grid_areas.ndim == 3:
                 grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
             elif cube.ndim == 3 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
+                #grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
+                #tiled = da.array([grid_areas for i in range(cube.shape[0])])
+                #print('tiled:', tiled.shape)
+                grid_areas = da.from_array([grid_areas for i in range(cube.shape[0])])
+                #grid_areas = da.block(tiled) 
+                #print('grid_areas', grid_areas.shape) 
+                # grid_areas = da.tile(grid_areas, [cube.shape[0], None, None])
+
             else:
                 raise ValueError('Grid and dataset number of dimensions not '
                                  'recognised: {} and {}.'
                                  ''.format(cube.ndim, grid_areas.ndim))
+    print("grid_areas", grid_areas.shape, cube.shape)
+    if cube.shape != grid_areas.shape:
+        assert 0
     return grid_areas
 
 

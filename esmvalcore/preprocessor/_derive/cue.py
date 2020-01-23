@@ -9,8 +9,11 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `cue` (Carbon Use Efficiency)."""
 
     # Required variables
-    required = [{'short_name': 'gpp', },
-                {'short_name': 'npp', }]
+    @staticmethod
+    def required(project):
+        req = [{'short_name': 'gpp', },
+               {'short_name': 'npp', }]
+        return req
     # npp = net primary production
     # gpp = gross primary production
 

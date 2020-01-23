@@ -9,9 +9,11 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `wue` (Water Use Efficiency)."""
 
     # Required variables
-    required = [{'short_name': 'gpp'},
-                {'short_name': 'tran'}]
-
+    @staticmethod
+    def required(project):
+        req = [{'short_name': 'gpp'},
+               {'short_name': 'tran'}]
+        return req
     # gpp = gross primary production
     # tran = Transpiration
 
