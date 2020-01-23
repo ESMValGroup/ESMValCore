@@ -415,6 +415,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     # Search all mips for available variables
     # priority goes to user specified mip if available
     searched_mips = []
+    fx_files = []
     for fx_mip in fx_mips:
         fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
         if fx_variable is not None:
@@ -435,9 +436,6 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
                 logger.debug("Found fx variables '%s':\n%s", fx_varname,
                              pformat(fx_files))
                 break
-    else:
-        # No files found
-        fx_files = []
 
     # If fx variable was not found in any table, raise exception
     if not searched_mips:
