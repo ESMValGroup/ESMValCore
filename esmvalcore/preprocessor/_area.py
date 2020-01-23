@@ -175,15 +175,20 @@ def tile_grid_areas(cube, fx_files):
                 continue
             logger.info('Attempting to load %s from file: %s', key, fx_file)
             fx_cube = iris.load_cube(fx_file)
-
+             
             grid_areas = fx_cube.core_data()
+
             if cube.ndim == 4 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas,
-                                     [cube.shape[0], cube.shape[1], 1, 1])
+                tiled = da.array([grid_areas for i in range(cube.shape[1])])
+                grid_areas = da.stack(tiled, axis=0)
+                tiled = da.array([grid_areas for i in range(cube.shape[0])])
+                grid_areas = da.stack(tiled, axis=0)
             elif cube.ndim == 4 and grid_areas.ndim == 3:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
+                tiled = da.array([grid_areas for i in range(cube.shape[0])])
+                grid_areas = da.stack(tiled, axis=0).compute()
             elif cube.ndim == 3 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
+                tiled = da.array([grid_areas for i in range(cube.shape[0])])
+                grid_areas = da.stack(tiled, axis=0).compute()
             else:
                 raise ValueError('Grid and dataset number of dimensions not '
                                  'recognised: {} and {}.'
@@ -192,7 +197,7 @@ def tile_grid_areas(cube, fx_files):
 
 
 # get the area average
-def area_statistics(cube, operator, fx_files=None):
+def area_statistics(cube, operator, fx_files=None, calculate_grid = False):
     """
     Apply a statistical operator in the horizontal direction.
 
@@ -230,6 +235,9 @@ def area_statistics(cube, operator, fx_files=None):
             variance
         fx_files: dict
             dictionary of field:filename for the fx_files
+        calculate_grid: bool
+            option to try to calculate the grid area. This option only works
+            for regular grids.
 
     Returns
     -------
@@ -243,16 +251,27 @@ def area_statistics(cube, operator, fx_files=None):
     ValueError
         if input data cube has different shape than grid area weights
     """
-    grid_areas = tile_grid_areas(cube, fx_files)
+    if operator == 'weightless_sum':
+        return cube.collapsed(['longitude', 'latitude'], iris.analysis.SUM)
+
+    if operator == 'weightless_mean':
+        return cube.collapsed(['longitude', 'latitude'], iris.analysis.MEAN)
+
+    operation = get_iris_analysis_operation(operator)
+
+    # Many IRIS analysis functions do not accept weights arguments.
+    if not operator_accept_weights(operator):
+        return cube.collapsed(['longitude', 'latitude'], operation)
 
     if not fx_files and cube.coord('latitude').points.ndim == 2:
         logger.error(
             'fx_file needed to calculate grid cell area for irregular grids.')
         raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
 
-    coord_names = ['longitude', 'latitude']
-    if grid_areas is None or not grid_areas.any():
-        cube = guess_bounds(cube, coord_names)
+    if not calculate_grid:
+        grid_areas = tile_grid_areas(cube, fx_files)
+    else:
+        cube = guess_bounds(cube, ['longitude', 'latitude'])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         logger.info('Calculated grid area shape: %s', grid_areas.shape)
 
@@ -260,16 +279,7 @@ def area_statistics(cube, operator, fx_files=None):
         raise ValueError('Cube shape ({}) doesn`t match grid area shape '
                          '({})'.format(cube.shape, grid_areas.shape))
 
-    operation = get_iris_analysis_operation(operator)
-
-    # TODO: implement weighted stdev, median, s var when available in iris.
-    # See iris issue: https://github.com/SciTools/iris/issues/3208
-
-    if operator_accept_weights(operator):
-        return cube.collapsed(coord_names, operation, weights=grid_areas)
-
-    # Many IRIS analysis functions do not accept weights arguments.
-    return cube.collapsed(coord_names, operation)
+    return cube.collapsed(['longitude', 'latitude'], operation, weights=grid_areas)
 
 
 def extract_named_regions(cube, regions):
