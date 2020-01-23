@@ -16,7 +16,7 @@ def test_get_evspsbl_fix():
 
 
 def test_get_frequency():
-    """Test whether FixEra5._frequency infers the frequency correctly."""
+    """Test for FixEra5._frequency."""
     fix = FixEra5(None)
     frequencies = {'hourly': [0, 1, 2], 'monthly': [0, 31, 59], 'fx': [0]}
     for frequency, points in frequencies.items():
@@ -34,29 +34,31 @@ def test_get_frequency():
     assert fix._frequency(cube) == 'fx'
 
 
-def make_src_cubes(units, mip='E1hr'):
-    """Make dummy cube that looks like the ERA5 data."""
-    data = np.arange(27).reshape(3, 3, 3)
-    if mip == 'E1hr':
-        timestamps = [788928, 788929, 788930]
-    elif mip == 'Amon':
-        timestamps = [788928, 789672, 790344]
-    elif mip == 'fx':
-        timestamps = [788928]
-        data = np.arange(9).reshape(1, 3, 3)
+def _era5_latitude():
+    return iris.coords.DimCoord(np.array([90., 0., -90.]),
+                                standard_name='latitude',
+                                long_name='latitude',
+                                var_name='latitude',
+                                units=Unit('degrees'))
 
-    latitude = iris.coords.DimCoord(np.array([90., 0., -90.]),
-                                    standard_name='latitude',
-                                    long_name='latitude',
-                                    var_name='latitude',
-                                    units=Unit('degrees'))
-    longitude = iris.coords.DimCoord(np.array([0, 180, 359.75]),
-                                     standard_name='longitude',
-                                     long_name='longitude',
-                                     var_name='longitude',
-                                     units=Unit('degrees'),
-                                     circular=True)
-    time = iris.coords.DimCoord(np.array(timestamps, dtype='int32'),
+
+def _era5_longitude():
+    return iris.coords.DimCoord(np.array([0, 180, 359.75]),
+                                standard_name='longitude',
+                                long_name='longitude',
+                                var_name='longitude',
+                                units=Unit('degrees'),
+                                circular=True)
+
+
+def _era5_time(frequency):
+    if frequency == 'invariant':
+        timestamps = [788928]
+    elif frequency == 'hourly':
+        timestamps = [788928, 788929, 788930]
+    elif frequency == 'monthly':
+        timestamps = [788928, 789672, 790344]
+    return iris.coords.DimCoord(np.array(timestamps, dtype='int32'),
                                 standard_name='time',
                                 long_name='time',
                                 var_name='time',
@@ -65,58 +67,56 @@ def make_src_cubes(units, mip='E1hr'):
                                     '00:00:00.0',
                                     calendar='gregorian'))
 
-    cube = iris.cube.Cube(
-        data,
-        long_name='random_long_name',
-        var_name='random_var_name',
-        units=units,
-        dim_coords_and_dims=[(time, 0), (latitude, 1), (longitude, 2)],
-    )
-    return iris.cube.CubeList([cube])
+
+def _era5_data(frequency):
+    if frequency == 'invariant':
+        return np.arange(9).reshape(1, 3, 3)
+    return np.arange(27).reshape(3, 3, 3)
 
 
-def make_target_cubes(project, mip, short_name):
-    """Make dummy cube that looks like the CMORized data."""
-    # Look up variable definition in CMOR table
-    cmor_table = CMOR_TABLES[project]
-    vardef = cmor_table.get_variable(mip, short_name)
+def _cmor_latitude():
+    return iris.coords.DimCoord(np.array([-90., 0., 90.]),
+                                standard_name='latitude',
+                                long_name='Latitude',
+                                var_name='lat',
+                                units=Unit('degrees_north'),
+                                bounds=np.array([[-90., -45.], [-45., 45.],
+                                                 [45., 90.]]))
 
-    # Make up time dimension and data (shape)
-    data = np.arange(27).reshape(3, 3, 3)[:, ::-1, :]
-    bounds = None
-    if mip == 'E1hr':
-        timestamps = [51134.0, 51134.0416667, 51134.0833333]
-        if 'time1' not in vardef.dimensions:
-            bounds = np.array([[51133.9791667, 51134.0208333],
-                               [51134.0208333, 51134.0625],
-                               [51134.0625, 51134.1041667]])
-    elif mip == 'Amon':
-        timestamps = [51149.5, 51179.0, 51208.5]
-        if 'time1' not in vardef.dimensions:
+
+def _cmor_longitude():
+    return iris.coords.DimCoord(np.array([0, 180, 359.75]),
+                                standard_name='longitude',
+                                long_name='Longitude',
+                                var_name='lon',
+                                units=Unit('degrees_east'),
+                                bounds=np.array([[-0.125, 90.], [90., 269.875],
+                                                 [269.875, 359.875]]),
+                                circular=True)
+
+
+def _cmor_time(mip, bounds=None, shifted=False):
+    """Provide expected time coordinate after fixes."""
+    if mip is 'E1hr':
+        if not shifted:
+            timestamps = [51134.0, 51134.0416667, 51134.0833333]
+            if bounds is not None:
+                bounds = np.array([[51133.9791667, 51134.0208333],
+                                   [51134.0208333, 51134.0625],
+                                   [51134.0625, 51134.1041667]])
+        else:
+            timestamps = [51133.97916667, 51134.02083333, 51134.0625]
+            if bounds is not None:
+                bounds = np.array([[51133.95833333, 51134.0],
+                                   [51134.0, 51134.04166667],
+                                   [51134.04166667, 51134.08333333]])
+    elif mip is 'Amon':
+        timestamps = np.array([51149.5, 51179.0, 51208.5])
+        if bounds is not None:
             bounds = np.array([[51134.0, 51165.0], [51165.0, 51193.0],
                                [51193.0, 51224.0]])
-    elif mip == 'fx':
-        data = np.arange(9).reshape(3, 3)[::-1, :]
-        timestamps = [51143]
 
-    # Make lat/lon/time coordinates
-    latitude = iris.coords.DimCoord(np.array([-90., 0., 90.]),
-                                    standard_name='latitude',
-                                    long_name='Latitude',
-                                    var_name='lat',
-                                    units=Unit('degrees_north'),
-                                    bounds=np.array([[-90., -45.], [-45., 45.],
-                                                     [45., 90.]]))
-    longitude = iris.coords.DimCoord(np.array([0, 180, 359.75]),
-                                     standard_name='longitude',
-                                     long_name='Longitude',
-                                     var_name='lon',
-                                     units=Unit('degrees_east'),
-                                     bounds=np.array([[-0.125, 90.],
-                                                      [90., 269.875],
-                                                      [269.875, 359.875]]),
-                                     circular=True)
-    time = iris.coords.DimCoord(np.array(timestamps, dtype=float),
+    return iris.coords.DimCoord(np.array(timestamps, dtype=float),
                                 standard_name='time',
                                 long_name='time',
                                 var_name='time',
@@ -124,69 +124,308 @@ def make_target_cubes(project, mip, short_name):
                                            calendar='gregorian'),
                                 bounds=bounds)
 
-    # Make dummy cube that's the cmor equivalent of the era5 dummy cube.
-    attributes = {}
-    if vardef.positive:
-        attributes['positive'] = vardef.positive
 
-    if mip == 'fx':
-        dims = [(latitude, 0), (longitude, 1)]
-    else:
-        dims = [(time, 0), (latitude, 1), (longitude, 2)]
+def _cmor_aux_height(value):
+    return iris.coords.AuxCoord(value,
+                                long_name="height",
+                                standard_name="height",
+                                units=Unit('m'),
+                                var_name="height",
+                                attributes={'positive': 'up'})
 
+
+def _cmor_data(mip):
+    if mip is 'fx':
+        return np.arange(9).reshape(3, 3)[::-1, :]
+    return np.arange(27).reshape(3, 3, 3)[:, ::-1, :]
+
+
+def pr_era5_monthly():
+    time = _era5_time('monthly')
     cube = iris.cube.Cube(
-        data.astype('float32'),
-        long_name=vardef.long_name,
-        var_name=short_name,  # vardef.cmor_name after #391?,
-        standard_name=vardef.standard_name,
-        units=Unit(vardef.units),
-        dim_coords_and_dims=dims,
-        attributes=attributes)
+        _era5_data('monthly'),
+        long_name='total_precipitation',
+        var_name='tp',
+        units='m',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
 
-    # Add auxiliary height coordinate for certain variables
-    if short_name in ['uas', 'vas', 'tas', 'tasmin', 'tasmax']:
-        value = 10. if short_name in ['uas', 'vas'] else 2.
-        aux_coord = iris.coords.AuxCoord([value],
-                                         long_name="height",
-                                         standard_name="height",
-                                         units=Unit('m'),
-                                         var_name="height",
-                                         attributes={'positive': 'up'})
-        cube.add_aux_coord(aux_coord, ())
 
-    return [cube]
+def pr_cmor_amon():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('Amon', 'pr')
+    time = _cmor_time('Amon', bounds=True)
+    data = _cmor_data('Amon') * 1000.
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)])
+    return iris.cube.CubeList([cube])
 
+
+def pr_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='total_precipitation',
+        var_name='tp',
+        units='m',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def pr_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'pr')
+    time = _cmor_time('E1hr', bounds=True, shifted=True)
+    data = _cmor_data('E1hr') * 1000.
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)])
+    return iris.cube.CubeList([cube])
+
+
+def orog_era5_hourly():
+    time = _era5_time('invariant')
+    cube = iris.cube.Cube(
+        _era5_data('invariant'),
+        long_name='geopotential height',
+        var_name='zg',
+        units='m**2 s**-2',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def orog_cmor_fx():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('fx', 'orog')
+    data = _cmor_data('fx') / 9.80665
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(_cmor_latitude(), 0),
+                                               (_cmor_longitude(), 1)])
+    return iris.cube.CubeList([cube])
+
+
+def uas_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='10m_u_component_of_wind',
+        var_name='u10',
+        units='m s-1',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def uas_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'uas')
+    time = _cmor_time('E1hr')
+    data = _cmor_data('E1hr')
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)])
+    cube.add_aux_coord(_cmor_aux_height(10.))
+    return iris.cube.CubeList([cube])
+
+
+def tas_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='2m_temperature',
+        var_name='t2m',
+        units='degC',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def tas_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'tas')
+    time = _cmor_time('E1hr')
+    data = _cmor_data('E1hr') + 273.15
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)])
+    cube.add_aux_coord(_cmor_aux_height(2.))
+    return iris.cube.CubeList([cube])
+
+
+def rsds_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='solar_radiation_downwards',
+        var_name='rlwd',
+        units='J m**-2',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def rsds_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'rsds')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') / 3600
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={'positive': 'down'})
+    return iris.cube.CubeList([cube])
+
+
+def prsn_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='snow',
+        var_name='snow',
+        units='unknown',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def prsn_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'prsn')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') * 1000
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)])
+    return iris.cube.CubeList([cube])
+
+
+def mrro_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='runoff',
+        var_name='runoff',
+        units='m',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def mrro_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'mrro')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') * 1000
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)])
+    return iris.cube.CubeList([cube])
+
+
+def rls_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='runoff',
+        var_name='runoff',
+        units='W m**-2',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def rls_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'rls')
+    time = _cmor_time('E1hr', shifted=False, bounds=True)
+    data = _cmor_data('E1hr')
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={'positive': 'down'})
+    return iris.cube.CubeList([cube])
 
 VARIABLES = [
-    # short_name, mip, era5_units, ndims
-    ['pr', 'E1hr', 'm'],
-    ['evspsbl', 'E1hr', 'm'],
-    ['mrro', 'E1hr', 'm'],
-    ['prsn', 'E1hr',
-     'unknown'],  # can't create testcube with 'm of water equivalent'
-    ['evspsblpot', 'E1hr', 'm'],
-    ['rss', 'E1hr', 'J m**-2'],
-    ['rsds', 'E1hr', 'J m**-2'],
-    ['rsdt', 'E1hr', 'J m**-2'],
-    ['rls', 'E1hr', 'W m**-2'],  # variables with explicit fixes
-    ['uas', 'E1hr', 'm s**-1'],  # a variable without explicit fixes
-    ['pr', 'Amon', 'm'],  # a monthly variable
-    # ['ua', 'E1hr', 'm s**-1'], # a 4d variable (decided not to do this now)
-    ['orog', 'fx', 'm**2 s**-2']  # a 2D variable
+    pytest.param(a, b, c, d, id=c + '_' + d) for (a, b, c, d) in [
+        (pr_era5_monthly(), pr_cmor_amon(), 'pr', 'Amon'),
+        (pr_era5_hourly(), pr_cmor_e1hr(), 'pr', 'E1hr'),
+        (orog_era5_hourly(), orog_cmor_fx(), 'orog', 'fx'),
+        (uas_era5_hourly(), uas_cmor_e1hr(), 'uas', 'E1hr'),
+        (tas_era5_hourly(), tas_cmor_e1hr(), 'tas', 'E1hr'),
+        (rsds_era5_hourly(), rsds_cmor_e1hr(), 'rsds', 'E1hr'),
+        (prsn_era5_hourly(), prsn_cmor_e1hr(), 'prsn', 'E1hr'),
+        (mrro_era5_hourly(), mrro_cmor_e1hr(), 'mrro', 'E1hr'),
+        (rls_era5_hourly(), rls_cmor_e1hr(), 'rls', 'E1hr'),
+    ]
 ]
 
 
-@pytest.mark.parametrize('variable', VARIABLES)
-def test_cmorization(variable):
+@pytest.mark.parametrize('era5_cubes, cmor_cubes, var, mip', VARIABLES)
+def test_cmorization(era5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
-    short_name, mip, era5_units = variable
 
-    src_cubes = make_src_cubes(era5_units, mip=mip)
-    target_cubes = make_target_cubes('native6', mip, short_name)
-
-    out_cubes = fix_metadata(src_cubes, short_name, 'native6', 'era5', mip)
-
-    print('src_cube:', src_cubes[0].xml())
-    print('out_cube:', out_cubes[0].xml())
-    print('target_cube:', target_cubes[0].xml())
-    assert out_cubes[0].xml() == target_cubes[0].xml()
+    fixed_cubes = fix_metadata(era5_cubes, var, 'native6', 'era5', mip)
+    print('era5_cube:', era5_cubes[0].xml())
+    print('cmor_cube:', cmor_cubes[0].xml())
+    print('fixed_cube:', fixed_cubes[0].xml())
+    assert fixed_cubes[0].xml() == cmor_cubes[0].xml()
+    assert (fixed_cubes[0].data == cmor_cubes[0].data).all()
+    # assert fixed_cubes[0].coords() == cmor_cubes[0].coords()
+    # assert fixed_cubes[0] == cmor_cubes[0]

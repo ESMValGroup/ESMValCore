@@ -14,18 +14,15 @@ class FixEra5(Fix):
 
         if not cube.coords(axis='T'):
             return 'fx'
-
         time = cube.coord(axis='T')
         if len(time.points) == 1:
             return 'fx'
 
         interval = time.points[1] - time.points[0]
         unit = 'hours' if 'hour' in time.units.name else 'days'
-        print(time.units.name)
-        print(unit)
-        if (unit == 'hours'
-                and interval == 1) or (unit == 'days'
-                                       and interval - 1 / 24 < 1e-4):
+        if (unit == 'hours' and interval == 1):
+            return 'hourly'
+        if (unit == 'days' and interval - 1 / 24 < 1e-4):
             return 'hourly'
         return 'monthly'
 
@@ -52,7 +49,7 @@ class Accumulated(FixEra5):
         """Fix metadata."""
         super().fix_metadata(cubes)
         for cube in cubes:
-            self._fix_hourly_time_coordinate(...)
+            self._fix_hourly_time_coordinate(cube)
             self._fix_frequency(cube)
         return cubes
 
