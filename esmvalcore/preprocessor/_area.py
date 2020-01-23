@@ -225,6 +225,10 @@ def area_statistics(cube, operator, fx_files=None, calculate_grid = False):
     +------------+--------------------------------------------------+
     | `max`      | Maximum value                                    |
     +------------+--------------------------------------------------+
+    | `weightless_mean` | Mean without weighting by area            |
+    +------------+--------------------------------------------------+
+    | `weightless_sum` | Calculate the Sum without weighing by area |
+    +------------+--------------------------------------------------+
 
     Parameters
     ----------
