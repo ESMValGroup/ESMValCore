@@ -514,7 +514,6 @@ class DiagnosticTask(BaseTask):
         if returncode == 0:
             logger.debug("Script %s completed successfully", self.script)
             self._collect_provenance()
-            # self._write_citation_file()
             return [self.output_dir]
 
         raise DiagnosticError(

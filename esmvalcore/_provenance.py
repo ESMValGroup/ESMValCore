@@ -8,12 +8,15 @@ from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 from prov.dot import prov_to_dot
 from prov.model import ProvDocument
+from ._config import replace_tags
 
 from ._version import __version__
 
 logger = logging.getLogger(__name__)
 
 ESMVALTOOL_URI_PREFIX = 'https://www.esmvaltool.org/'
+# it is the technical overview and should always be cited
+ESMVALTOOL_PAPER_TAG = ['righi19gmd']
 
 
 def update_without_duplicating(bundle, other):
@@ -31,9 +34,12 @@ def create_namespace(provenance, namespace):
 def get_esmvaltool_provenance():
     """Create an esmvaltool run activity."""
     provenance = ProvDocument()
-    namespace = 'software'
-    create_namespace(provenance, namespace)
-    attributes = {}  # TODO: add dependencies with versions here
+    for namespace in ('software', 'attribute'):
+        create_namespace(provenance, namespace)
+
+    # TODO: add dependencies with versions here
+    attributes_value = replace_tags('references', ESMVALTOOL_PAPER_TAG)
+    attributes = {'attribute:references': attributes_value}
     activity = provenance.activity(
         namespace + ':esmvaltool==' + __version__, other_attributes=attributes)
 
