@@ -443,6 +443,9 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
         raise RecipeError(
             f"Requested fx variable '{fx_varname}' not available in "
             f"any 'fx'-related CMOR table ({fx_mips}) for '{var_project}'")
+    # flag a warning
+    if not fx_files:
+        logger.warning("Missing data for fx variable {}".format(fx_varname))
 
     # allow for empty lists corrected for by NE masks
     if fx_files:
@@ -532,43 +535,12 @@ def _update_fx_settings(settings, variable, config_user):
 
             # special case for preprocessing fx variables
             if var.get("fx_var_preprocess"):
-
-                # a brand new dictionary in this case
-                fx_files_dict = {}
-
-                # we need to switch to (virtual) output file
-                # but need to perform data checks first
-                if not cmor_fxvars:
-                    raise RecipeError(
-                        f"No data files found for {var['fx_files']} "
-                        f"for variable {var['short_name']} "
-                        f"but are needed for preprocessing.")
-                else:
-                    fxvars_with_data = [
-                        cmor_fx_var['short_name']
-                        for cmor_fx_var in cmor_fxvars
-                    ]
-                    missing_fx_vars = [
-                        fx for fx in var['fx_files']
-                        if fx not in fxvars_with_data
-                    ]
-                    if isinstance(fxvar, dict):
-                        missing_fx_vars = [
-                            fx.get('short_name') for fx in var['fx_files']
-                            if fx.get('short_name') not in fxvars_with_data
-                        ]
-                    if missing_fx_vars:
-                        raise RecipeError(
-                            f"No data files found for {missing_fx_vars} "
-                            f"for variable {var['short_name']} "
-                            f"but are needed for preprocessing.")
-                    else:
-                        fx_files_dict = {
-                            cmor_fx_var['short_name']:
-                            get_output_file(cmor_fx_var,
-                                            config_user['preproc_dir'])
-                            for cmor_fx_var in cmor_fxvars
-                        }
+                fx_files_dict = {
+                    cmor_fx_var['short_name']:
+                    get_output_file(cmor_fx_var,
+                                    config_user['preproc_dir'])
+                    for cmor_fx_var in cmor_fxvars
+                }
 
             # finally construct the fx files dictionary
             settings[step]['fx_files'] = fx_files_dict
