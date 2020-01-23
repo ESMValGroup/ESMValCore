@@ -364,23 +364,20 @@ def _get_default_settings(variable, config_user, derive=False):
 def _add_fxvar_keys(fx_var_dict, variable):
     """Add keys specific to fx variable to use get_input_filelist."""
     fx_variable = dict(variable)
+    fx_variable.update(fx_var_dict)
 
     # set variable names
     fx_variable['variable_group'] = fx_var_dict['short_name']
-    fx_variable['short_name'] = fx_var_dict['short_name']
 
     # specificities of project
     if fx_variable['project'] == 'CMIP5':
-        fx_variable['mip'] = 'fx'
         fx_variable['ensemble'] = 'r0i0p0'
-    elif fx_variable['project'] == 'CMIP6':
-        fx_variable['grid'] = variable['grid']
-        if 'mip' in fx_var_dict:
-            fx_variable['mip'] = fx_var_dict['mip']
     elif fx_variable['project'] in ['OBS', 'OBS6', 'obs4mips']:
         fx_variable['mip'] = 'fx'
+
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
+
     return fx_variable
 
 
@@ -389,11 +386,6 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     # make it a dict
     if not isinstance(fx_varname, dict):
         fx_varname = {'short_name': fx_varname}
-
-    # get some parameters
-    user_fx_mip = fx_varname.get('mip')
-    user_fx_experiment = fx_varname.get('exp')
-    fx_varname = fx_varname.get('short_name')
 
     # assemble info from master variable
     var = dict(variable)
@@ -408,6 +400,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     fx_mips.append(variable['mip'])
 
     # force only the mip declared by user
+    user_fx_mip = fx_varname.get('mip')
     if user_fx_mip:
         fx_mips = [
             user_fx_mip,
@@ -418,15 +411,11 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     searched_mips = []
     fx_files = []
     for fx_mip in fx_mips:
-        fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
+        fx_variable = cmor_table.get_variable(fx_mip, fx_varname['short_name'])
         if fx_variable is not None:
             searched_mips.append(fx_mip)
-            fx_var = _add_fxvar_keys({
-                'short_name': fx_varname,
-                'mip': fx_mip
-            }, var)
-            if user_fx_experiment:
-                fx_var['exp'] = user_fx_experiment
+            fx_varname['mip'] = fx_mip
+            fx_var = _add_fxvar_keys(fx_varname, var)
             logger.debug("For fx variable '%s', found table '%s'", fx_varname,
                          fx_mip)
             fx_files = _get_input_files(fx_var, config_user)
