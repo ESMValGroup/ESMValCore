@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 ESMVALTOOL_URI_PREFIX = 'https://www.esmvaltool.org/'
 # it is the technical overview and should always be cited
-ESMVALTOOL_PAPER_TAG = ['righi19gmd']
+ESMVALTOOL_PAPER_TAG = ['righi19gmdd']
 
 
 def update_without_duplicating(bundle, other):
