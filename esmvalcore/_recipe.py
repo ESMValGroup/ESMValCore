@@ -386,13 +386,14 @@ def _add_fxvar_keys(fx_var_dict, variable):
 
 def _get_correct_fx_file(variable, fx_varname, config_user):
     """Get fx files (searching all possible mips)."""
-    # first see if we have strings or dicts for fx_varname
-    user_defined = False
-    if isinstance(fx_varname, dict):
-        user_defined = True
-        user_fx_mip = fx_varname.get('mip')
-        user_fx_experiment = fx_varname.get('exp')
-        fx_varname = fx_varname.get('short_name')
+    # make it a dict
+    if not isinstance(fx_varname, dict):
+        fx_varname = {'short_name': fx_varname}
+
+    # get some parameters
+    user_fx_mip = fx_varname.get('mip')
+    user_fx_experiment = fx_varname.get('exp')
+    fx_varname = fx_varname.get('short_name')
 
     # assemble info from master variable
     var = dict(variable)
@@ -407,7 +408,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     fx_mips.append(variable['mip'])
 
     # force only the mip declared by user
-    if user_defined and user_fx_mip:
+    if user_fx_mip:
         fx_mips = [
             user_fx_mip,
         ]
@@ -424,7 +425,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
                 'short_name': fx_varname,
                 'mip': fx_mip
             }, var)
-            if user_defined and user_fx_experiment:
+            if user_fx_experiment:
                 fx_var['exp'] = user_fx_experiment
             logger.debug("For fx variable '%s', found table '%s'", fx_varname,
                          fx_mip)
