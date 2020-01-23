@@ -991,6 +991,12 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
                     for fx_var in fx_vars
                 ]
                 for fx_variable in fx_variables:
+                    # list may be (intentionally) empty - catch it here
+                    if not fx_variable:
+                        raise RecipeError(
+                            f"One or more of {fx_vars} are missing data. "
+                            f"Task can not be performed since there is "
+                            f"no data available. ")
                     before, _ = _split_settings(fx_profile, step, order)
                     # remove time preprocessors for any fx/Ofx/Efx/etc
                     # that dont have time coords
