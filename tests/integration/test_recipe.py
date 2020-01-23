@@ -2205,33 +2205,3 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
         assert msg in rec_err_exp
-
-
-def test_fx_var_invalid_project(tmp_path, patched_datafinder, config_user):
-    content = dedent("""
-        preprocessors:
-          preproc:
-           area_statistics:
-             operator: mean
-             fx_files: ['areacella']
-
-        diagnostics:
-          diagnostic_name:
-            variables:
-              tas:
-                preprocessor: preproc
-                project: EMAC
-                mip: Amon
-                exp: historical
-                start_year: 2000
-                end_year: 2005
-                ensemble: r1i1p1f1
-                grid: gn
-                additional_datasets:
-                  - {dataset: CanESM5}
-            scripts: null
-        """)
-    msg = 'Project EMAC not supported with fx variables'
-    with pytest.raises(RecipeError) as rec_err_exp:
-        get_recipe(tmp_path, content, config_user)
-        assert msg in rec_err_exp
