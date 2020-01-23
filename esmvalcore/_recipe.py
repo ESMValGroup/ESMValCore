@@ -22,7 +22,7 @@ from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (DEFAULT_ORDER, FINAL_STEPS, INITIAL_STEPS,
                            MULTI_MODEL_FUNCTIONS, PreprocessingTask,
-                           PreprocessorFile)
+                           PreprocessorFile, TIME_PREPROCESSORS)
 from .preprocessor._derive import get_required
 from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
@@ -415,6 +415,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     # Search all mips for available variables
     # priority goes to user specified mip if available
     searched_mips = []
+    fx_files = []
     for fx_mip in fx_mips:
         fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
         if fx_variable is not None:
@@ -435,9 +436,6 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
                 logger.debug("Found fx variables '%s':\n%s", fx_varname,
                              pformat(fx_files))
                 break
-    else:
-        # No files found
-        fx_files = []
 
     # If fx variable was not found in any table, raise exception
     if not searched_mips:
@@ -929,6 +927,16 @@ def _get_derive_input_variables(variables, config_user):
     return derive_input
 
 
+def _remove_time_preproc(fxprofile):
+    "Remove all time preprocessors from the fx profile."""
+    fxprofile = deepcopy(fxprofile)
+    for key in fxprofile:
+        if key in TIME_PREPROCESSORS:
+            fxprofile[key] = False
+
+    return fxprofile
+
+
 def _get_preprocessor_task(variables, profiles, config_user, task_name):
     """Create preprocessor task(s) for a set of datasets."""
     # First set up the preprocessor profile
@@ -977,13 +985,17 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
 
             # Create tasks to prepare the input data for the fx var
             order = _extract_preprocessor_order(fx_profile)
-            before, _ = _split_settings(fx_profile, step, order)
             for var in variables:
                 fx_variables = [
                     _get_correct_fx_file(var, fx_var, config_user)[1]
                     for fx_var in fx_vars
                 ]
                 for fx_variable in fx_variables:
+                    before, _ = _split_settings(fx_profile, step, order)
+                    # remove time preprocessors for any fx/Ofx/Efx/etc
+                    # that dont have time coords
+                    if 'fx' in fx_variable['mip']:
+                        before = _remove_time_preproc(before)
                     fx_name = task_name.split(
                         TASKSEP)[0] + TASKSEP + 'fx_area-volume_stats_' + \
                         fx_variable['variable_group']

@@ -1993,14 +1993,13 @@ def test_fx_dicts_volcello_preproc_cmip6(tmp_path, patched_datafinder,
         assert ancestor_product.attributes['short_name'] == 'areacello'
         assert ancestor_product.attributes['mip'] == 'Ofx'
         assert ancestor_product.attributes['exp'] == 'piControl'
+        assert 'annual_statistics' not in ancestor_product.settings
         assert 'volume_statistics' not in ancestor_product.settings
     for ancestor_product in task.ancestors[1].products:
         assert ancestor_product.attributes['short_name'] == 'volcello'
         assert ancestor_product.attributes['mip'] == 'Omon'
         assert ancestor_product.attributes['exp'] == 'historical'
-        assert 'volume_statistics' not in ancestor_product.settings
-    for ancestor_product in task.ancestors[1].products:
-        assert ancestor_product.attributes['short_name'] == 'volcello'
+        assert 'annual_statistics' in ancestor_product.settings
         assert 'volume_statistics' not in ancestor_product.settings
     assert len(task.products) == 1
     product = task.products.pop()
