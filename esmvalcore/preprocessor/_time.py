@@ -530,6 +530,8 @@ def regrid_time(cube, frequency):
             datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 6, 0,
                               0) for t in time_c
         ]
+    else:
+        raise ValueError('frequency %s not supported', frequency)
 
     cube.coord('time').points = [
         cube.coord('time').units.date2num(cl)
