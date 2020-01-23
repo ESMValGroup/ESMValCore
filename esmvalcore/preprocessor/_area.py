@@ -175,7 +175,7 @@ def tile_grid_areas(cube, fx_files):
                 continue
             logger.info('Attempting to load %s from file: %s', key, fx_file)
             fx_cube = iris.load_cube(fx_file)
-             
+
             grid_areas = fx_cube.core_data()
 
             if cube.ndim == 4 and grid_areas.ndim == 2:
@@ -197,7 +197,7 @@ def tile_grid_areas(cube, fx_files):
 
 
 # get the area average
-def area_statistics(cube, operator, fx_files=None, calculate_grid = False):
+def area_statistics(cube, operator, fx_files=None, calculate_grid=False):
     """
     Apply a statistical operator in the horizontal direction.
 
@@ -283,7 +283,8 @@ def area_statistics(cube, operator, fx_files=None, calculate_grid = False):
         raise ValueError('Cube shape ({}) doesn`t match grid area shape '
                          '({})'.format(cube.shape, grid_areas.shape))
 
-    return cube.collapsed(['longitude', 'latitude'], operation, weights=grid_areas)
+    return cube.collapsed(['longitude', 'latitude'], operation,
+                          weights=grid_areas)
 
 
 def extract_named_regions(cube, regions):
