@@ -52,7 +52,6 @@ def get_start_end_year(filename):
         end_year = end_date[:4]
     else:
         dates = re.findall(r'([0-9]{4,12})', filename)
-        print(dates)
         if not dates:
             raise ValueError('Name {0} does not match a recognized '
                              'pattern'.format(filename))
