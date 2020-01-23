@@ -152,31 +152,6 @@ def meridional_statistics(cube, operator):
         raise ValueError(msg)
 
 
-def load_grid_areas(cube, fx_files):
-    """
-    Tile the grid area data to match the dataset cube.
-
-    Parameters
-    ----------
-    cube: iris.cube.Cube
-        input cube.
-    fx_files: dict
-        dictionary of field:filename for the fx_files
-
-    Returns
-    -------
-    iris.cube.Cube
-        Freshly tiled grid areas cube.
-    """
-    grid_areas = None
-    if fx_files:
-        for key, fx_file in fx_files.items():
-            if fx_file is None:
-                continue
-            logger.info('Attempting to load %s from file: %s', key, fx_file)
-            return iris.load_cube(fx_file)
-
-
 def tile_grid_areas(cube, fx_files):
     """
     Tile the grid area data to match the dataset cube.
@@ -202,29 +177,22 @@ def tile_grid_areas(cube, fx_files):
             fx_cube = iris.load_cube(fx_file)
              
             grid_areas = fx_cube.core_data()
-            return grid_areas
 
             if cube.ndim == 4 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas,
-                                     [cube.shape[0], cube.shape[1], 1, 1])
+                tiled = da.array([grid_areas for i in range(cube.shape[1])])
+                grid_areas = da.stack(tiled, axis=0)
+                tiled = da.array([grid_areas for i in range(cube.shape[0])])
+                grid_areas = da.stack(tiled, axis=0)
             elif cube.ndim == 4 and grid_areas.ndim == 3:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
+                tiled = da.array([grid_areas for i in range(cube.shape[0])])
+                grid_areas = da.stack(tiled, axis=0).compute()
             elif cube.ndim == 3 and grid_areas.ndim == 2:
-                #grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
-                #tiled = da.array([grid_areas for i in range(cube.shape[0])])
-                #print('tiled:', tiled.shape)
-                grid_areas = da.from_array([grid_areas for i in range(cube.shape[0])])
-                #grid_areas = da.block(tiled) 
-                #print('grid_areas', grid_areas.shape) 
-                # grid_areas = da.tile(grid_areas, [cube.shape[0], None, None])
-
+                tiled = da.array([grid_areas for i in range(cube.shape[0])])
+                grid_areas = da.stack(tiled, axis=0).compute()
             else:
                 raise ValueError('Grid and dataset number of dimensions not '
                                  'recognised: {} and {}.'
                                  ''.format(cube.ndim, grid_areas.ndim))
-    print("grid_areas", grid_areas.shape, cube.shape)
-    if cube.shape != grid_areas.shape:
-        assert 0
     return grid_areas
 
 
@@ -301,15 +269,15 @@ def area_statistics(cube, operator, fx_files=None, calculate_grid = False):
         raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
 
     if not calculate_grid:
-        grid_areas = load_grid_areas(cube, fx_files)
+        grid_areas = tile_grid_areas(cube, fx_files)
     else:
         cube = guess_bounds(cube, ['longitude', 'latitude'])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         logger.info('Calculated grid area shape: %s', grid_areas.shape)
 
-    # if cube.shape != grid_areas.shape:
-    #     raise ValueError('Cube shape ({}) doesn`t match grid area shape '
-    #                      '({})'.format(cube.shape, grid_areas.shape))
+    if cube.shape != grid_areas.shape:
+        raise ValueError('Cube shape ({}) doesn`t match grid area shape '
+                         '({})'.format(cube.shape, grid_areas.shape))
 
     return cube.collapsed(['longitude', 'latitude'], operation, weights=grid_areas)
 
