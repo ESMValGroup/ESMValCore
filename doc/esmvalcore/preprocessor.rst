@@ -14,6 +14,7 @@ following the default order in which they are applied:
 * :ref:`Land/Sea/Ice masking`
 * :ref:`Horizontal regridding`
 * :ref:`Masking of missing values`
+* :ref:`Preprocessing fx variables for spatial statistics`
 * :ref:`Multi-model statistics`
 * :ref:`Time operations`
 * :ref:`Area operations`
@@ -414,6 +415,62 @@ variable items e.g.:
 
 .. _masking of missing values:
 
+Missing values masks
+--------------------
+
+Missing (masked) values can be a nuisance especially when dealing with
+multimodel ensembles and having to compute multimodel statistics; different
+numbers of missing data from dataset to dataset may introduce biases and
+artifically assign more weight to the datasets that have less missing
+data. This is handled in ESMValTool via the missing values masks: two types of
+such masks are available, one for the multimodel case and another for the
+single model case.
+
+The multimodel missing values mask (``mask_fillvalues``) is a preprocessor step
+that usually comes after all the single-model steps (regridding, area selection
+etc) have been performed; in a nutshell, it combines missing values masks from
+individual models into a multimodel missing values mask; the individual model
+masks are built according to common criteria: the user chooses a time window in
+which missing data points are counted, and if the number of missing data points
+relative to the number of total data points in a window is less than a chosen
+fractional theshold, the window is discarded i.e. all the points in the window
+are masked (set to missing).
+
+.. code-block:: yaml
+
+    preprocessors:
+      missing_values_preprocessor:
+        mask_fillvalues:
+          threshold_fraction: 0.95
+          min_value: 19.0
+          time_window: 10.0
+
+In the example above, the fractional threshold for missing data vs. total data
+is set to 95% and the time window is set to 10.0 (units of the time coordinate
+units). Optionally, a minimum value threshold can be applied, in this case it
+is set to 19.0 (in units of the variable units).
+
+See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
+
+.. note::
+
+   It is possible to use ``mask_fillvalues`` to create a combined multimodel
+   mask (all the masks from all the analyzed models combined into a single
+   mask); for that purpose setting the ``threshold_fraction`` to 0 will not
+   discard any time windows, essentially keeping the original model masks and
+   combining them into a single mask; here is an example:
+
+   .. code-block:: yaml
+
+       preprocessors:
+         missing_values_preprocessor:
+           mask_fillvalues:
+             threshold_fraction: 0.0     # keep all missing values
+             min_value: -1e20            # small enough not to alter the data
+             #  time_window: 10.0        # this will not matter anymore
+
+
+.. _preprocessing fx variables for spatial statistics:
 
 Using mask files for area/volume/zonal statistics
 -------------------------------------------------
@@ -500,59 +557,6 @@ this setup will run the custom-ordered preprocessor steps in `preprocessors/prep
 
 in this case, by providing the extra CMOR keys, we allow the code to find the `volcello` with mip `Omon` and experiment `historical`. This is particularly useful when the actual fx data is not found in the master variable's (`thetao` in this case) data experiment; this is also useful to force a certain time-dependent data (mip: Omon) for preprocessors that need time operations
 
-Missing values masks
---------------------
-
-Missing (masked) values can be a nuisance especially when dealing with
-multimodel ensembles and having to compute multimodel statistics; different
-numbers of missing data from dataset to dataset may introduce biases and
-artifically assign more weight to the datasets that have less missing
-data. This is handled in ESMValTool via the missing values masks: two types of
-such masks are available, one for the multimodel case and another for the
-single model case.
-
-The multimodel missing values mask (``mask_fillvalues``) is a preprocessor step
-that usually comes after all the single-model steps (regridding, area selection
-etc) have been performed; in a nutshell, it combines missing values masks from
-individual models into a multimodel missing values mask; the individual model
-masks are built according to common criteria: the user chooses a time window in
-which missing data points are counted, and if the number of missing data points
-relative to the number of total data points in a window is less than a chosen
-fractional theshold, the window is discarded i.e. all the points in the window
-are masked (set to missing).
-
-.. code-block:: yaml
-
-    preprocessors:
-      missing_values_preprocessor:
-        mask_fillvalues:
-          threshold_fraction: 0.95
-          min_value: 19.0
-          time_window: 10.0
-
-In the example above, the fractional threshold for missing data vs. total data
-is set to 95% and the time window is set to 10.0 (units of the time coordinate
-units). Optionally, a minimum value threshold can be applied, in this case it
-is set to 19.0 (in units of the variable units).
-
-See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
-
-.. note::
-
-   It is possible to use ``mask_fillvalues`` to create a combined multimodel
-   mask (all the masks from all the analyzed models combined into a single
-   mask); for that purpose setting the ``threshold_fraction`` to 0 will not
-   discard any time windows, essentially keeping the original model masks and
-   combining them into a single mask; here is an example:
-
-   .. code-block:: yaml
-
-       preprocessors:
-         missing_values_preprocessor:
-           mask_fillvalues:
-             threshold_fraction: 0.0     # keep all missing values
-             min_value: -1e20            # small enough not to alter the data
-             #  time_window: 10.0        # this will not matter anymore
 
 Minimum, maximum and interval masking
 -------------------------------------
