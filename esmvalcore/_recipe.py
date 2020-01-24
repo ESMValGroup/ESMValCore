@@ -526,8 +526,7 @@ def _update_fx_settings(settings, variable, config_user):
             if var.get("fx_var_preprocess"):
                 fx_files_dict = {
                     cmor_fx_var['short_name']:
-                    get_output_file(cmor_fx_var,
-                                    config_user['preproc_dir'])
+                    get_output_file(cmor_fx_var, config_user['preproc_dir'])
                     for cmor_fx_var in cmor_fxvars
                 }
 
@@ -890,7 +889,7 @@ def _get_derive_input_variables(variables, config_user):
 
 
 def _remove_time_preproc(fxprofile):
-    "Remove all time preprocessors from the fx profile."""
+    "Remove all time preprocessors from the fx profile." ""
     fxprofile = deepcopy(fxprofile)
     for key in fxprofile:
         if key in TIME_PREPROCESSORS:
@@ -986,6 +985,25 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
         ancestor_tasks=derive_tasks,
         name=task_name,
     )
+
+    return task
+
+
+def _check_duplication(task):
+    """Check and remove duplicate ancestry tasks."""
+    ancestors_filename_dict = OrderedDict()
+    filenames = []
+    if isinstance(task, PreprocessingTask):
+        for ancestor_task in task.ancestors:
+            for anc_product in ancestor_task.products:
+                ancestors_filename_dict[anc_product.filename] = ancestor_task
+                filenames.append(anc_product.filename)
+        set_ancestors = list(
+            set([ancestors_filename_dict[filename] for filename in filenames]))
+        task.ancestors = [
+            ancestor for ancestor in task.ancestors
+            if ancestor in set_ancestors
+        ]
 
     return task
 
@@ -1362,6 +1380,11 @@ class Recipe:
                     config_user=self._cfg,
                     task_name=task_name,
                 )
+                # remove possible duplicate ancestor tasks that
+                # preprocess the same
+                # fx var file needed by different var["activity"] but with
+                # the same output fx var file
+                _check_duplication(task)
                 for task0 in task.flatten():
                     task0.priority = priority
                 tasks.add(task)
