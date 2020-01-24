@@ -176,7 +176,8 @@ def volume_statistics(
 
     The volume average is weighted acoording to the cell volume. Cell volume
     is calculated from iris's cartography tool multiplied by the cell
-    thickness. If fx_files is provided and the variable object has fx_var_preprocess
+    thickness. If fx_files is provided and the variable object has
+    fx_var_preprocess
     set to True, the variable's preprocessor chain will be applied to each of
     the requested fx variables, up to and not including this step.
 
