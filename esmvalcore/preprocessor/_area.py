@@ -221,6 +221,10 @@ def area_statistics(cube, operator, fx_files=None):
     | `max`      | Maximum value                                    |
     +------------+--------------------------------------------------+
 
+    If fx_files is provided and the variable object has fx_var_preprocess
+    set to True, the variable's preprocessor chain will be applied to each of
+    the requested fx variables, up to and not including this step.
+
     Parameters
     ----------
         cube: iris.cube.Cube
@@ -228,8 +232,11 @@ def area_statistics(cube, operator, fx_files=None):
         operator: str
             The operation, options: mean, median, min, max, std_dev, sum,
             variance
-        fx_files: dict
-            dictionary of field:filename for the fx_files
+        fx_files: list
+            list of field:short_name for the fx variables requested or
+            list of field:dict for the fx variables requested, including
+            but not limited to: short_name, mip, experiment etc (at least
+            short_name required)
 
     Returns
     -------
