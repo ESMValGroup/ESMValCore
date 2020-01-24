@@ -1,0 +1,604 @@
+table_id: Table 3h
+modeling_realm: atmos
+
+frequency: 3hr
+
+cmor_version: 2.6         ! version of CMOR that can read this table
+cf_version:   1.4         ! version of CF that output conforms to
+project_id:   CORDEX  ! project id
+table_date:   March 2015 ! date this table was constructed
+
+missing_value: 1.e20      ! value used to indicate a missing value
+                          !   in arrays output by netCDF as 32-bit IEEE 
+                          !   floating-point numbers (float or real)
+
+
+product: output
+! CMIP5's Table adapted for CORDEX
+required_global_attributes: creation_date tracking_id model_id contact institute_id ! space separated required global attribute 
+
+expt_id_ok: 'Evaluation run with reanalysis forcing' 'evaluation'
+expt_id_ok: 'historical' 'historical'
+expt_id_ok: 'RCP2.6' 'rcp26'
+expt_id_ok: 'RCP4.5' 'rcp45'
+expt_id_ok: 'RCP8.5' 'rcp85'
+expt_id_ok: 'AMIP' 'amip'
+expt_id_ok: '10- or 30-year run initialized in year XXXX' 'decadalXXXX'
+
+approx_interval:  0.125000     ! approximate spacing between successive time
+                               !   samples (in units of the output time 
+                               !   coordinate.
+
+!============
+axis_entry: longitude
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    longitude
+units:            degrees_east
+axis:             X             ! X, Y, Z, T (default: undeclared)
+long_name:        longitude
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         lon
+stored_direction: increasing
+type:             double
+must_have_bounds: yes
+!----------------------------------
+!
+
+
+!============
+axis_entry: latitude
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    latitude
+units:            degrees_north
+axis:             Y             ! X, Y, Z, T (default: undeclared)
+long_name:        latitude
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         lat
+valid_min:        -90.0         
+valid_max:        90.0 
+stored_direction: increasing
+type:             double
+must_have_bounds: yes
+!----------------------------------
+!
+
+
+!
+!============
+axis_entry: time
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    time
+units:            days since ?
+axis:             T             ! X, Y, Z, T (default: undeclared)
+long_name:        time
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         time
+stored_direction: increasing
+type:             double
+must_have_bounds: yes
+!----------------------------------
+!
+
+
+
+!============
+axis_entry: time1
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    time
+units:            days since ?
+axis:             T             ! X, Y, Z, T (default: undeclared)
+long_name:        time
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         time
+stored_direction: increasing
+type:             double
+must_have_bounds: no
+!----------------------------------
+!
+
+
+!============
+axis_entry: height2m
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    height
+units:            m
+axis:             Z             ! X, Y, Z, T (default: undeclared)
+positive:         up         ! up or down (default: undeclared)
+long_name:        height
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         height
+valid_min:        1.0         
+valid_max:        10.0 
+stored_direction: increasing
+type:             double
+value:            2.            ! of scalar (singleton) dimension 
+must_have_bounds: no
+!----------------------------------
+!
+
+
+!============
+axis_entry: height10m
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    height
+units:            m
+axis:             Z             ! X, Y, Z, T (default: undeclared)
+positive:         up         ! up or down (default: undeclared)
+long_name:        height
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         height
+valid_min:        1.0         
+valid_max:        30.0 
+stored_direction: increasing
+type:             double
+value:            10.            ! of scalar (singleton) dimension 
+must_have_bounds: no
+!----------------------------------
+!
+
+
+!============
+axis_entry: sdepth1 
+!============
+!----------------------------------
+! Axis attributes:
+!----------------------------------
+standard_name:    depth
+units:            m
+axis:             Z             ! X, Y, Z, T (default: undeclared)
+positive:         down         ! up or down (default: undeclared)
+long_name:        depth
+!----------------------------------
+! Additional axis information:
+!----------------------------------
+out_name:         depth
+valid_min:        0.0         
+valid_max:        0.2 
+stored_direction: increasing
+type:             double
+value:            0.05            ! of scalar (singleton) dimension 
+bounds_values:    0.0 0.1    ! of scalar (singleton) dimension bounds
+must_have_bounds: yes
+!----------------------------------
+!
+
+
+!============
+variable_entry:    tas
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     air_temperature
+units:             K
+cell_methods:      time: point
+
+long_name:         Near-Surface Air Temperature
+comment:           mean near-surface (usually, 2 meter) air temperature.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time1 height2m
+out_name:          tas
+type:              real
+!----------------------------------
+!
+
+
+!============
+variable_entry:    pr
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     precipitation_flux
+units:             kg m-2 s-1
+cell_methods:      time: mean
+
+long_name:         Precipitation
+comment:           at surface; includes both liquid and solid phases from all types of clouds (both large-scale and convective)
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          pr
+type:              real
+!----------------------------------
+!
+
+!============
+variable_entry:    ps
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     surface_air_pressure
+units:             Pa
+cell_methods:      time: point
+
+long_name:         Surface Air Pressure
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time1
+out_name:          ps
+type:              real
+!----------------------------------
+!
+
+!============
+variable_entry:    psl
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     air_pressure_at_sea_level
+units:             Pa
+cell_methods:      time: point
+
+long_name:         Sea Level Pressure
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time1
+out_name:          psl
+type:              real
+!----------------------------------
+!
+
+
+!============
+variable_entry:    hurs
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     relative_humidity
+units:             %
+cell_methods:      time: point
+cell_measures:     area: areacella
+long_name:         Near-Surface Relative Humidity
+comment:           This is the relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time1 height2m
+out_name:          hurs
+type:              real
+!----------------------------------
+!
+
+
+!============
+variable_entry:    huss
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     specific_humidity
+units:             1
+cell_methods:      time: point
+
+long_name:         Near-Surface Specific Humidity
+comment:           near-surface (usually, 2 meter) specific humidity.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time1 height2m
+out_name:          huss
+type:              real
+!----------------------------------
+!
+
+
+!============
+variable_entry:    sfcWind
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     wind_speed
+units:             m s-1
+cell_methods:      time: point
+
+long_name:         Near-Surface Wind Speed
+comment:           near-surface (usually, 10 meters) wind speed.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time1 height10m
+out_name:          sfcWind
+type:              real
+!----------------------------------
+!
+
+
+!============
+variable_entry:    clt
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     cloud_area_fraction
+units:             %
+cell_methods:      time: mean
+
+long_name:         Total Cloud Fraction
+comment:           for the whole atmospheric column, as seen from the surface or the top of the atmosphere. Include both large-scale and convective cloud.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          clt
+type:              real
+!----------------------------------
+!   
+
+
+
+!============
+variable_entry:    sund
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     duration_of_sunshine
+units:             s
+cell_methods:      time: sum
+
+long_name:         Duration of Sunshine
+comment:             
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          sund
+type:              real
+!----------------------------------
+!
+
+!============
+variable_entry:    rsds
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     surface_downwelling_shortwave_flux_in_air
+units:             W m-2
+cell_methods:      time: mean
+
+long_name:         Surface Downwelling Shortwave Radiation
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          rsds
+type:              real
+positive:          down
+!----------------------------------
+!
+
+
+!============
+variable_entry:    rlds
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     surface_downwelling_longwave_flux_in_air
+units:             W m-2
+cell_methods:      time: mean
+long_name:         Surface Downwelling Longwave Radiation
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          rlds
+type:              real
+positive:          down
+!----------------------------------
+!
+
+
+!============
+variable_entry:    hfls
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     surface_upward_latent_heat_flux
+units:             W m-2
+cell_methods:      time: mean
+
+long_name:         Surface Upward Latent Heat Flux
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          hfls
+type:              real
+positive:          up
+!----------------------------------
+!
+
+!============
+variable_entry:    hfss
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     surface_upward_sensible_heat_flux
+units:             W m-2
+cell_methods:      time: mean
+
+long_name:         Surface Upward Sensible Heat Flux
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          hfss
+type:              real
+positive:          up
+!----------------------------------
+!
+
+
+
+
+!============
+variable_entry:    rsus
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     surface_upwelling_shortwave_flux_in_air
+units:             W m-2
+cell_methods:      time: mean
+
+long_name:         Surface Upwelling Shortwave Radiation
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          rsus
+type:              real
+positive:          up
+!----------------------------------
+!
+
+
+
+!============
+variable_entry:    rlus
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     surface_upwelling_longwave_flux_in_air
+units:             W m-2
+cell_methods:      time: mean
+
+long_name:         Surface Upwelling Longwave Radiation
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          rlus
+type:              real
+positive:          up
+!----------------------------------
+!
+
+!============
+variable_entry:    prc
+!============
+deflate: 1
+deflate_level: 1
+shuffle: 1
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     convective_precipitation_flux
+units:             kg m-2 s-1
+cell_methods:      time: mean
+
+long_name:         Convective Precipitation
+comment:           at surface; includes both liquid and solid phases.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          prc
+type:              real
+!----------------------------------
+!
+
+
