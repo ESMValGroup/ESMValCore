@@ -557,6 +557,15 @@ this setup will run the custom-ordered preprocessor steps in `preprocessors/prep
 
 in this case, by providing the extra CMOR keys, we allow the code to find the `volcello` with mip `Omon` and experiment `historical`. This is particularly useful when the actual fx data is not found in the master variable's (`thetao` in this case) data experiment; this is also useful to force a certain time-dependent data (mip: Omon) for preprocessors that need time operations
 
+.. note::
+
+   In the case of fx variables that don't have a time coordinate (e.g. Ofx or Efx),
+   the preprocessor chain is run but the time preprocessor steps are excluded and
+   not run to avoid code failure. If you intent to run and use the result of a certain
+   time-preprocessing step, make sure you request an fx variable that has a time coordinate
+   e.g. instead of using mip Ofx, use Omon. If data is not available for Omon then
+   that preprocessor step can not be run and the tool will raise a data not found error.
+
 
 Minimum, maximum and interval masking
 -------------------------------------
