@@ -39,7 +39,11 @@ def read_cmor_tables(cfg_developer):
         cmor_strict = project.get('cmor_strict', True)
         default_table_prefix = project.get('cmor_default_table_prefix', '')
 
-        if cmor_type == 'CMIP5':
+        if cmor_type == 'CMIP3':
+            CMOR_TABLES[table] = CMIP3Info(
+                table_path, default=custom, strict=cmor_strict,
+            )
+        elif cmor_type == 'CMIP5':
             CMOR_TABLES[table] = CMIP5Info(
                 table_path, default=custom, strict=cmor_strict,
             )
@@ -164,11 +168,7 @@ class CMIP6Info(object):
                     )
                     raise
 
-            axis = coord.axis
-            if not axis:
-                axis = 'none'
-
-            var.coordinates[axis] = coord
+            var.coordinates[dimension] = coord
 
     def _load_coordinates(self):
         self.coords = {}
@@ -392,7 +392,11 @@ class VariableInfo(JsonInfo):
         self.dimensions = []
         """List of dimensions"""
         self.coordinates = {}
-        """Coordinates"""
+        """Coordinates
+
+        This is a dict with the names of the dimensions as keys and
+        CoordinateInfo objects as values.
+        """
 
         self._json_data = None
 
@@ -629,7 +633,9 @@ class CMIP5Info(object):
             if key in ('variable_entry', 'axis_entry'):
                 return coord
             if key == 'requested':
-                coord.requested = value.split(' ')
+                coord.requested.extend(
+                    (val for val in value.split(' ') if val)
+                )
                 continue
             if hasattr(coord, key):
                 setattr(coord, key, value)
@@ -705,6 +711,46 @@ class CMIP5Info(object):
             if mip_info:
                 var_info.frequency = mip_info.frequency
         return var_info
+
+
+class CMIP3Info(CMIP5Info):
+    """
+    Class to read CMIP3-like data request.
+
+    Parameters
+    ----------
+    cmor_tables_path: basestring
+       Path to the folder containing the Tables folder with the json files
+
+    default: object
+        Default table to look variables on if not found
+
+    strict: bool
+        If False, will look for a variable in other tables if it can not be
+        found in the requested one
+
+    """
+
+    def _read_table_file(self, table_file, table=None):
+        for dim in ('zlevel',):
+            coord = CoordinateInfo(dim)
+            coord.generic_level = True
+            coord.axis = 'Z'
+            self.coords[dim] = coord
+        super()._read_table_file(table_file, table)
+
+    def _read_coordinate(self, value):
+        coord = super()._read_coordinate(value)
+        if not coord.out_name:
+            coord.out_name = coord.name
+            coord.var_name = coord.name
+        return coord
+
+    def _read_variable(self, short_name, frequency):
+        var = super()._read_variable(short_name, frequency)
+        var.modeling_realm = None
+        var.frequency = None
+        return var
 
 
 class CustomInfo(CMIP5Info):
