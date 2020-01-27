@@ -12,7 +12,7 @@ import numpy as np
 from .table import CMOR_TABLES
 
 CheckLevels = IntEnum(
-    'CheckLevels', 'DEBUG WARNING ERROR CRITICAL NEVER_FAIL IGNORE_ALL')
+    'CheckLevels', 'DEBUG STRICT DEFAULT RELAXED IGNORE')
 
 
 class CMORCheckError(Exception):
@@ -61,7 +61,7 @@ class CMORCheck():
                  var_info,
                  frequency=None,
                  fail_on_error=False,
-                 check_level=CheckLevels.ERROR,
+                 check_level=CheckLevels.DEFAULT,
                  automatic_fixes=False):
 
         self._cube = cube
@@ -636,8 +636,7 @@ class CMORCheck():
             message
         """
         msg = message.format(*args)
-        if (level == CheckLevels.DEBUG or
-                self._check_level == CheckLevels.IGNORE_ALL):
+        if level == CheckLevels.DEBUG:
             if self._failerr:
                 self._logger.debug(msg)
             else:
@@ -666,7 +665,7 @@ class CMORCheck():
             arguments to format the message string.
 
         """
-        self.report(CheckLevels.CRITICAL, message, *args)
+        self.report(CheckLevels.RELAXED, message, *args)
 
     def report_error(self, message, *args):
         """Report a normal error.
@@ -679,7 +678,7 @@ class CMORCheck():
             arguments to format the message string.
 
         """
-        self.report(CheckLevels.ERROR, message, *args)
+        self.report(CheckLevels.DEFAULT, message, *args)
 
     def report_warning(self, message, *args):
         """Report a warning level error.
@@ -692,7 +691,7 @@ class CMORCheck():
             arguments to format the message string.
 
         """
-        self.report(CheckLevels.WARNING, message, *args)
+        self.report(CheckLevels.STRICT, message, *args)
 
     def report_debug_message(self, message, *args):
         """Report a debug message.
@@ -728,7 +727,7 @@ def _get_cmor_checker(table,
                       short_name,
                       frequency,
                       fail_on_error=False,
-                      check_level=CheckLevels.ERROR,
+                      check_level=CheckLevels.DEFAULT,
                       automatic_fixes=False):
     """Get a CMOR checker/fixer."""
     if table not in CMOR_TABLES:

@@ -102,18 +102,19 @@ def get_args():
     parser.add_argument(
         '--check-level',
         type=str,
-        choices=[val.name for val in CheckLevels if val != CheckLevels.DEBUG],
-        default='ERROR',
+        choices=[
+            val.name.lower() for val in CheckLevels if val != CheckLevels.DEBUG
+            ],
+        default='default',
         help="""
             Configure the severity of the errors that will make the CMOR check
             fail.
             Optional: true;
             Possible values:
-            IGNORE_ALL: all issues will be reported as debug messages
-            NEVER_FAIL: all errors will be reported as warnings
-            CRITICAL: only fail if there are critical errors
-            ERROR: fail if there are any errors (DEFAULT)
-            WARNING: fail if there are any warnings
+            ignore: all errors will be reported as warnings
+            relaxed: only fail if there are critical errors
+            default: fail if there are any errors
+            strict: fail if there are any warnings
         """
     )
     args = parser.parse_args()

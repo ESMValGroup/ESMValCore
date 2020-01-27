@@ -151,7 +151,7 @@ class TestFixMetadata(unittest.TestCase):
                     mip='mip',
                     short_name='short_name',
                     table='cmor_table',
-                    check_level=CheckLevels.ERROR,)
+                    check_level=CheckLevels.DEFAULT,)
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_metadata.assert_called_once_with()
 
@@ -198,7 +198,7 @@ class TestFixData(unittest.TestCase):
                          'cmor_table', 'mip', 'frequency')
                 get_mock.assert_called_once_with(
                     automatic_fixes=True,
-                    check_level=CheckLevels.ERROR,
+                    check_level=CheckLevels.DEFAULT,
                     fail_on_error=False,
                     frequency='frequency',
                     mip='mip',

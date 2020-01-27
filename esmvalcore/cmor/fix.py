@@ -57,7 +57,7 @@ def fix_metadata(cubes,
                  cmor_table=None,
                  mip=None,
                  frequency=None,
-                 check_level=CheckLevels.ERROR):
+                 check_level=CheckLevels.DEFAULT):
     """
     Fix cube metadata if fixes are required and check it anyway.
 
@@ -161,7 +161,7 @@ def fix_data(cube,
              cmor_table=None,
              mip=None,
              frequency=None,
-             check_level=CheckLevels.ERROR):
+             check_level=CheckLevels.DEFAULT):
     """
     Fix cube data if fixes add present and check it anyway.
 
