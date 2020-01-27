@@ -462,16 +462,15 @@ def anomalies(cube, period, reference):
     cube_time = cube.coord('time')
     ref = {}
     for ref_slice in reference.slices_over(ref_coord):
-        ref[ref_slice.coord(ref_coord).points[0]] = da.ravel(
-            ref_slice.core_data())
-    cube_coord_dim = cube.coord_dims(cube_coord)[0]
-    for i in range(cube_time.shape[0]):
-        time = cube_time.points[i]
-        indexes = cube_time.points == time
-        indexes = iris.util.broadcast_to_shape(indexes, data.shape,
-                                               (cube_coord_dim, ))
-        data[indexes] = data[indexes] - ref[cube_coord.points[i]]
+        ref[ref_slice.coord(ref_coord).points[0]] = ref_slice.core_data()
 
+    cube_coord_dim = cube.coord_dims(cube_coord)[0]
+    slicer = [slice(None)] * len(data.shape)
+    new_data = []
+    for i in range(cube_time.shape[0]):
+        slicer[cube_coord_dim] = i
+        new_data.append(data[tuple(slicer)] - ref[cube_coord.points[i]])
+    data = da.stack(new_data, axis=cube_coord_dim)
     cube = cube.copy(data)
     cube.remove_coord(cube_coord)
     return cube
