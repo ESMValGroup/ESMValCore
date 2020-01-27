@@ -152,7 +152,7 @@ def meridional_statistics(cube, operator):
         raise ValueError(msg)
 
 
-def load_fx(cube, fx_files):
+def load_fx(fx_files):
     """
     Tile the grid area data to match the dataset cube.
 
@@ -299,7 +299,7 @@ def area_statistics(cube, operator, fx_files=None, calculate_grid=False):
     # Load grid area
     grid_areas_loaded = False
     if fx_files:
-        grid_areas = load_fx(cube, fx_files)
+        grid_areas = load_fx(fx_files)
         grid_areas_loaded = True
 
     if calculate_grid:
