@@ -554,6 +554,7 @@ class DiagnosticTask(BaseTask):
         attrs = {
             'script_file': self.script,
         }
+
         for key in self.settings:
             if key not in ignore:
                 attrs[key] = self.settings[key]
@@ -583,7 +584,8 @@ class DiagnosticTask(BaseTask):
                      self.name,
                      time.time() - start)
 
-    def _write_citation_file(self, product):
+    @staticmethod
+    def _write_citation_file(product):
         """Write citation information provided by the recorded provenance."""
         # collect info from provenance
         product_entry = []
