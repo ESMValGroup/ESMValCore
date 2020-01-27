@@ -135,11 +135,8 @@ class Test(tests.Test):
 
         # Create Irregular grid.
         fx_file = make_fx_file()
-        fx_cube = iris.load_cube(fx_file)
-        irr_cube = fx_cube.copy()
-        irr_cube.data = np.array([[0., 1.], [2., 3.]])
-
-        self.gridir = irr_cube
+        self.gridir = iris.load_cube(fx_file)
+        self.gridir.data = np.array([[0., 1.], [2., 3.]])
         self.fx_files = {'areacello': fx_file}
 
     # Regular grid area_statistics tests:
