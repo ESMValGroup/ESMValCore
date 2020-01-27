@@ -36,6 +36,13 @@ def _create_sample_cube():
     return cube
 
 
+def add_auxiliary_coordinate(cubelist):
+    """Add AuxCoords to cubes in cubelist."""
+    for cube in cubelist:
+        iris.coord_categorisation.add_day_of_month(cube, cube.coord('time'))
+        iris.coord_categorisation.add_day_of_year(cube, cube.coord('time'))
+
+
 class TestExtractMonth(tests.Test):
     """Tests for extract_month."""
 
@@ -514,6 +521,52 @@ class TestDailyStatistics(tests.Test):
         assert_array_equal(result.data, expected)
 
 
+class TestRegridTimeYearly(tests.Test):
+    """Tests for regrid_time with monthly frequency."""
+    def setUp(self):
+        """Prepare tests."""
+        self.cube_1 = _create_sample_cube()
+        self.cube_2 = _create_sample_cube()
+        self.cube_2.data = self.cube_2.data * 2.
+        self.cube_2.remove_coord('time')
+        self.cube_1.remove_coord('time')
+        self.cube_1.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(11., 8770., 365.),
+                standard_name='time',
+                units=Unit(
+                    'days since 1950-01-01 00:00:00', calendar='gregorian'),
+            ),
+            0,
+        )
+        self.cube_2.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(91., 8851., 365.),
+                standard_name='time',
+                units=Unit(
+                    'days since 1950-01-01 00:00:00', calendar='gregorian'),
+            ),
+            0,
+        )
+        add_auxiliary_coordinate([self.cube_1, self.cube_2])
+
+    def test_regrid_time_year(self):
+        """Test changes to cubes."""
+        # test yearly
+        newcube_1 = regrid_time(self.cube_1, frequency='yr')
+        newcube_2 = regrid_time(self.cube_2, frequency='yr')
+        # no changes to core data
+        assert_array_equal(newcube_1.data, self.cube_1.data)
+        assert_array_equal(newcube_2.data, self.cube_2.data)
+        # no changes to number of coords and aux_coords
+        assert len(newcube_1.coords()) == len(self.cube_1.coords())
+        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
+        # test difference; also diff is zero
+        expected = self.cube_1.data
+        diff_cube = newcube_2 - newcube_1
+        assert_array_equal(diff_cube.data, expected)
+
+
 class TestRegridTimeMonthly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
 
@@ -528,10 +581,11 @@ class TestRegridTimeMonthly(tests.Test):
                 np.arange(14., 719., 30.),
                 standard_name='time',
                 units=Unit(
-                    'days since 1950-01-01 00:00:00', calendar='360_day'),
+                    'days since 1950-01-01 00:00:00', calendar='gregorian'),
             ),
             0,
         )
+        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_mon(self):
         """Test changes to cubes."""
@@ -565,7 +619,7 @@ class TestRegridTimeDaily(tests.Test):
                 np.arange(14. * 24. + 6., 38. * 24. + 6., 24.),
                 standard_name='time',
                 units=Unit(
-                    'hours since 1950-01-01 00:00:00', calendar='360_day'),
+                    'hours since 1950-01-01 00:00:00', calendar='gregorian'),
             ),
             0,
         )
@@ -574,10 +628,11 @@ class TestRegridTimeDaily(tests.Test):
                 np.arange(14. * 24. + 3., 38. * 24. + 3., 24.),
                 standard_name='time',
                 units=Unit(
-                    'hours since 1950-01-01 00:00:00', calendar='360_day'),
+                    'hours since 1950-01-01 00:00:00', calendar='gregorian'),
             ),
             0,
         )
+        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_day(self):
         """Test changes to cubes."""
@@ -624,6 +679,7 @@ class TestRegridTime6Hourly(tests.Test):
             ),
             0,
         )
+        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_6hour(self):
         """Test changes to cubes."""
@@ -657,7 +713,7 @@ class TestRegridTime3Hourly(tests.Test):
                 np.arange(17. * 180. + 40., 41. * 180. + 40., 180.),
                 standard_name='time',
                 units=Unit(
-                    'minutes since 1950-01-01 00:00:00', calendar='360_day'),
+                    'minutes since 1950-01-01 00:00:00', calendar='gregorian'),
             ),
             0,
         )
@@ -666,10 +722,11 @@ class TestRegridTime3Hourly(tests.Test):
                 np.arange(17. * 180. + 150., 41. * 180. + 150., 180.),
                 standard_name='time',
                 units=Unit(
-                    'minutes since 1950-01-01 00:00:00', calendar='360_day'),
+                    'minutes since 1950-01-01 00:00:00', calendar='gregorian'),
             ),
             0,
         )
+        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_3hour(self):
         """Test changes to cubes."""
@@ -716,6 +773,7 @@ class TestRegridTime1Hourly(tests.Test):
             ),
             0,
         )
+        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
     def test_regrid_time_hour(self):
         """Test changes to cubes."""

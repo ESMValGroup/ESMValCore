@@ -505,7 +505,7 @@ class CMORCheck():
         freq = self.frequency
         if freq.lower().endswith('pt'):
             freq = freq[:-2]
-        if freq == 'mon':
+        if freq in ['mon', 'mo']:
             for i in range(len(coord.points) - 1):
                 first = coord.cell(i).point
                 second = coord.cell(i + 1).point
