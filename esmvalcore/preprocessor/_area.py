@@ -152,7 +152,7 @@ def meridional_statistics(cube, operator):
         raise ValueError(msg)
 
 
-def tile_grid_areas(cube, fx_files):
+def load_fx(cube, fx_files):
     """
     Tile the grid area data to match the dataset cube.
 
@@ -177,22 +177,42 @@ def tile_grid_areas(cube, fx_files):
             fx_cube = iris.load_cube(fx_file)
 
             grid_areas = fx_cube.core_data()
+    return grid_areas
 
-            if cube.ndim == 4 and grid_areas.ndim == 2:
-                tiled = da.array([grid_areas for i in range(cube.shape[1])])
-                grid_areas = da.stack(tiled, axis=0)
-                tiled = da.array([grid_areas for i in range(cube.shape[0])])
-                grid_areas = da.stack(tiled, axis=0)
-            elif cube.ndim == 4 and grid_areas.ndim == 3:
-                tiled = da.array([grid_areas for i in range(cube.shape[0])])
-                grid_areas = da.stack(tiled, axis=0).compute()
-            elif cube.ndim == 3 and grid_areas.ndim == 2:
-                tiled = da.array([grid_areas for i in range(cube.shape[0])])
-                grid_areas = da.stack(tiled, axis=0).compute()
-            else:
-                raise ValueError('Grid and dataset number of dimensions not '
-                                 'recognised: {} and {}.'
-                                 ''.format(cube.ndim, grid_areas.ndim))
+
+def tile_grid_areas(cube, grid_areas):
+    """
+    Tile the grid area data to match the dataset cube.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+    fx_files: dict
+        dictionary of field:filename for the fx_files
+
+    Returns
+    -------
+    iris.cube.Cube
+        Freshly tiled grid areas cube.
+    """
+    if cube.ndim == grid_areas.ndim:
+        return grid_areas
+    if cube.ndim == 4 and grid_areas.ndim == 2:
+        tiled = da.array([grid_areas for i in range(cube.shape[1])])
+        grid_areas = da.stack(tiled, axis=0)
+        tiled = da.array([grid_areas for i in range(cube.shape[0])])
+        grid_areas = da.stack(tiled, axis=0)
+    elif cube.ndim == 4 and grid_areas.ndim == 3:
+        tiled = da.array([grid_areas for i in range(cube.shape[0])])
+        grid_areas = da.stack(tiled, axis=0).compute()
+    elif cube.ndim == 3 and grid_areas.ndim == 2:
+        tiled = da.array([grid_areas for i in range(cube.shape[0])])
+        grid_areas = da.stack(tiled, axis=0).compute()
+    else:
+        raise ValueError('Grid and dataset number of dimensions not '
+                         'recognised: {} and {}.'
+                         ''.format(cube.ndim, grid_areas.ndim))
     return grid_areas
 
 
@@ -267,17 +287,38 @@ def area_statistics(cube, operator, fx_files=None, calculate_grid=False):
     if not operator_accept_weights(operator):
         return cube.collapsed(['longitude', 'latitude'], operation)
 
+    # The following are for operators with means
     if not fx_files and cube.coord('latitude').points.ndim == 2:
         logger.error(
-            'fx_file needed to calculate grid cell area for irregular grids.')
+            'fx_file needed for weighted calcuions on irregular grids.')
         raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
 
-    if not calculate_grid:
-        grid_areas = tile_grid_areas(cube, fx_files)
-    else:
+    if fx_files and calculate_grid:
+        logger.error(
+            'Cannot calculate_grid when FX file is provided.')
+        raise ValueError('Incompatible recipe arguments (area_statistics): '
+                         'fx_files and calculate_grid do not work together.')
+
+    # Load grid area
+    grid_areas_loaded = False
+    if fx_files:
+        grid_areas = load_fx(cube, fx_files)
+        grid_areas_loaded = True
+
+    if calculate_grid:
         cube = guess_bounds(cube, ['longitude', 'latitude'])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        grid_areas_loaded = True
+
+    if not grid_areas_loaded:
+        logger.error(
+            'Cannot calculate_grid without Grid area data. '
+            'Please provide fx_files or set calculate_grid: True.')
+        raise ValueError('Cannot calculate_grid without Grid area data.')
+
+    # Tile grid area to match cube
+    grid_areas = tile_grid_areas(cube, grid_areas)
 
     if cube.shape != grid_areas.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid area shape '
