@@ -253,16 +253,16 @@ Customizing checker strictness
 The data checker classifies its issues using four different levels of
 severity. From highest to lowest:
 
- - ``CRITICAL``: issues that most of the time will have severe consequences
+ - ``CRITICAL``: issues that most of the time will have severe consequences.
 
  - ``ERROR``: issues that usually lead to unexpected errors, but can be safely
-    ignored sometimes
+    ignored sometimes.
 
  - ``WARNING``: something is not up to the standard but is unlikely to have
-    consequences later
+    consequences later.
 
  - ``DEBUG``: any info that the checker wants to communicate. Regardless of
-    checker strictness, thos will always be reported as debug messages
+    checker strictness, those will always be reported as debug messages.
 
 Users can have control about which levels of issues are interpreted as errors,
 and therefore make the checker fail or warnings or debug messages.
@@ -270,23 +270,17 @@ For this purpose there is an optional command line option `--check-level`
 that can take a number of values, listed below from the lowest level of
 strictness to the highest:
 
-- ``IGNORE_ALL``: all issues, regardless of severity, will be reported as debug
-    messages only. Checker will never fail. Use this at your own risk and be
-    advised that any preprocessor or diagnostic failures due to data
-    irregulariries can only be corrected for if the ``main_log_debug.txt``
-    is examined.
+- ``ignore``: all issues, regardless of severity, will be reported as
+    warnings. Checker will never fail. Use this at your own risk.
 
-- ``NEVER_FAIL``: all issues, regardless of severity, will be reported as
-    warnings. Use this at your own risk
-
-- ``CRITICAL``: only CRITICAL issues are treated as errors. We recommend not to
-    relay on this mode, although it can be useful if there an errors preventing
+- ``relaxed``: only CRITICAL issues are treated as errors. We recommend not to
+    relay on this mode, although it can be useful if there are errors preventing
     the run that you are sure you can manage on the diagnostics or that will
-    not affect you
+    not affect you.
 
-- ``ERROR``: fail if there are any CRITICAL or ERROR issues (DEFAULT); Provides
-    a good measure of safety
+- ``default``: fail if there are any CRITICAL or ERROR issues (DEFAULT); Provides
+    a good measure of safety.
 
-- ``WARNING``: fail if there are any warnings, this is the highest level of
+- ``strict``: fail if there are any warnings, this is the highest level of
     strictness. Mostly useful for checking datasets that you have produced, to
     be sure that future users will not be distracted by inoffensive warnings.
