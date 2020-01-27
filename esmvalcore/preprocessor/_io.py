@@ -288,8 +288,12 @@ def _concatenate_overlapping_cubes(cubes):
     # we arrange [cube1, cube2] so that cube1.start <= cube2.start
     if cubes[0].coord('time').points[0] <= cubes[1].coord('time').points[0]:
         cubes = [cubes[0], cubes[1]]
+        logger.debug(f"Will attempt to concatenate cubes %s "
+                     f"and %s in this order", cubes[0], cubes[1])
     else:
         cubes = [cubes[1], cubes[0]]
+        logger.debug(f"Will attempt to concatenate cubes %s "
+                     f"and %s in this order", cubes[1], cubes[0])
 
     # get time end points
     time_1 = cubes[0].coord('time')
@@ -302,8 +306,16 @@ def _concatenate_overlapping_cubes(cubes):
     # case 1: both cubes start at the same time -> return longer cube
     if data_start_1 == data_start_2:
         if data_end_1 < data_end_2:
+            logger.debug(f"Both cubes start at the same time but cube %s "
+                         f"ends before %s", cubes[0], cubes[1])
+            logger.debug(f"Cube %s contains all needed data "
+                         f"so using it fully", cubes[1])
             cubes = [cubes[1]]
         else:
+            logger.debug(f"Both cubes start at the same time but cube %s "
+                         f"ends before %s", cubes[1], cubes[0])
+            logger.debug(f"Cube %s contains all needed data "
+                         f"so using it fully", cubes[0])
             cubes = [cubes[0]]
 
     # case 2: cube1 starts before cube2
@@ -321,12 +333,24 @@ def _concatenate_overlapping_cubes(cubes):
                              f"separated in time.")
         # case 2.1: cube1 ends before cube2 -> use full cube2 and shorten cube1
         if start_overlap and data_end_1 <= data_end_2:
+            logger.debug(f"Extracting time slice between %s and %s "
+                         f"from cube %s to use it for concatenation "
+                         f"with cube %s",
+                         "-".join([str(data_start_1.year),
+                                   str(data_start_1.month),
+                                   str(data_start_1.day)]),
+                         "-".join([str(start_overlap.year),
+                                   str(start_overlap.month),
+                                   str(start_overlap.day)]),
+                         cubes[0], cubes[1])
             c1_delta = extract_time(
                 cubes[0],
                 data_start_1.year, data_start_1.month, data_start_1.day,
                 start_overlap.year, start_overlap.month, start_overlap.day
             )
             cubes = iris.cube.CubeList([c1_delta, cubes[1]])
+            logger.debug("Attemptong concatenatenation of %s with %s",
+                         c1_delta, cubes[1])
             try:
                 cubes = [iris.cube.CubeList(cubes).concatenate_cube()]
             except iris.exceptions.ConcatenateError as ex:
@@ -338,6 +362,7 @@ def _concatenate_overlapping_cubes(cubes):
         # case 2.2: cube1 ends after cube2 -> return cube1
         if start_overlap and data_end_1 > data_end_2:
             cubes = [cubes[0]]
+            logger.debug("Using only data from %s", cubes[0])
         # case 2.3: there is no overlap: return original cubes
 
     return cubes
