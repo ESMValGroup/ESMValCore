@@ -202,7 +202,7 @@ def tile_grid_areas(cube, grid_areas):
         tiled = da.array([grid_areas for i in range(cube.shape[1])])
         grid_areas = da.stack(tiled, axis=0)
         tiled = da.array([grid_areas for i in range(cube.shape[0])])
-        grid_areas = da.stack(tiled, axis=0)
+        grid_areas = da.stack(tiled, axis=0).compute()
     elif (cube.ndim, grid_areas.ndim) in [(4, 3), (3, 2)]:
         tiled = da.array([grid_areas for i in range(cube.shape[0])])
         grid_areas = da.stack(tiled, axis=0).compute()
@@ -321,6 +321,7 @@ def area_statistics(cube, operator, fx_files=None, calculate_grid=False):
         raise ValueError('Cube shape ({}) doesn`t match grid area shape '
                          '({})'.format(cube.shape, grid_areas.shape))
 
+    if isinstance(grid_areas, da.Array):
     return cube.collapsed(['longitude', 'latitude'], operation,
                           weights=grid_areas)
 

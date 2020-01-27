@@ -41,6 +41,7 @@ def calc_grid_area():
 
 def make_fx_file():
     """
+    Create and save an FX file
     """
     i_axis = iris.coords.DimCoord(
         [i for i in range(2)],
@@ -72,7 +73,6 @@ def make_fx_file():
 
     gridir = iris.cube.Cube(data, var_name='areacello', units=Unit('m^2'),
                             dim_coords_and_dims=coords_spec)
-    print(gridir.data.mean())
 
     lat_coord = iris.coords.AuxCoord(lat2d, standard_name='latitude',
                                      long_name='latitude',
@@ -223,20 +223,19 @@ class Test(tests.Test):
             area_statistics(self.gridir, 'mean', calculate_grid=False)
 
         # This should work:
-        result = area_statistics(self.gridir, 'mean', self.fx_files)
-        expected = np.array([1.])
+        result = area_statistics(self.gridir, 'mean', fx_files=self.fx_files)
+        expected = np.array([1.5])
         self.assertArrayEqual(result.data, expected)
 
-    # Irregular grid area_statistics tests:
     def test_area_statistics_sum_ir(self):
         """Test for area average of a 2D field."""
         # This should fail:
         self.assertRaises(iris.exceptions.CoordinateMultiDimError,
                           area_statistics, self.gridir, 'sum')
         # This should work:
-        result = area_statistics(self.gridir, 'sum', self.fx_files)
-        expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        result = area_statistics(self.gridir, 'sum', fx_files=self.fx_files)
+        expected = np.array(7381511118575.528)
+        self.assertArrayAlmostEqual(result.data, expected, decimal=1)
 
     # extract region
     def test_extract_region(self):
