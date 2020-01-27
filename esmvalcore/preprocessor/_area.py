@@ -203,10 +203,7 @@ def tile_grid_areas(cube, grid_areas):
         grid_areas = da.stack(tiled, axis=0)
         tiled = da.array([grid_areas for i in range(cube.shape[0])])
         grid_areas = da.stack(tiled, axis=0)
-    elif cube.ndim == 4 and grid_areas.ndim == 3:
-        tiled = da.array([grid_areas for i in range(cube.shape[0])])
-        grid_areas = da.stack(tiled, axis=0).compute()
-    elif cube.ndim == 3 and grid_areas.ndim == 2:
+    elif (cube.ndim, grid_areas.ndim) in [(4, 3), (3, 2)]:
         tiled = da.array([grid_areas for i in range(cube.shape[0])])
         grid_areas = da.stack(tiled, axis=0).compute()
     else:
