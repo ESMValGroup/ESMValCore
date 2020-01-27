@@ -323,7 +323,7 @@ def area_statistics(cube, operator, fx_files=None, calculate_grid=False):
 
     if isinstance(grid_areas, da.Array):
         grid_areas = grid_areas.compute()
-        
+
     return cube.collapsed(['longitude', 'latitude'], operation,
                           weights=grid_areas)
 
