@@ -744,6 +744,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         fx_files_in_settings = [
             setting.get('fx_files', None) for setting in settings.values()
         ]
+        fx_files_in_settings = [
+            x for x in fx_files_in_settings if x is not None
+        ]
         if not ancestors or fx_files_in_settings:
             ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') and not ancestors:
