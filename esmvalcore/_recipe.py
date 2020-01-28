@@ -369,11 +369,9 @@ def _add_fxvar_keys(fx_var_dict, variable):
     # set variable names
     fx_variable['variable_group'] = fx_var_dict['short_name']
 
-    # specificities of project
+    # add special ensemble for CMIP5 only
     if fx_variable['project'] == 'CMIP5':
         fx_variable['ensemble'] = 'r0i0p0'
-    elif fx_variable['project'] in ['OBS', 'OBS6', 'obs4mips']:
-        fx_variable['mip'] = 'fx'
 
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
