@@ -1887,7 +1887,6 @@ def test_fx_vars_list_preproc_cmip6(tmp_path, patched_datafinder,
             variables:
               tos:
                 preprocessor: preproc
-                fx_var_preprocess: True
                 project: CMIP6
                 mip: Omon
                 exp: historical
@@ -1960,7 +1959,6 @@ def test_fx_vars_dicts_preproc_cmip6(tmp_path, patched_datafinder,
             variables:
               tos:
                 preprocessor: preproc
-                fx_var_preprocess: True
                 project: CMIP6
                 mip: Omon
                 exp: historical
@@ -2030,7 +2028,6 @@ def test_fx_vars_dicts_activity_preproc_cmip6(tmp_path, patched_datafinder,
             variables:
               tos:
                 preprocessor: preproc
-                fx_var_preprocess: True
                 project: CMIP6
                 mip: Omon
                 start_year: 2000
