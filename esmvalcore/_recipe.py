@@ -741,7 +741,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_regrid_time(variable, settings)
         ancestors = grouped_ancestors.get(variable['filename'])
-        fx_files_in_settings = variable.get('fx_files', None)
+        fx_files_in_settings = [
+            setting.get('fx_files', None) for setting in settings.values()
+        ]
         if not ancestors or fx_files_in_settings:
             ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') and not ancestors:
