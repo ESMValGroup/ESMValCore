@@ -12,7 +12,8 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import TAGS, get_activity, get_institutes, replace_tags
+from ._config import (TAGS, get_activity, get_institutes, get_project_config,
+                      replace_tags)
 from ._data_finder import (get_input_filelist, get_output_file,
                            get_statistic_output_file)
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -388,6 +389,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     # assemble info from master variable
     var = dict(variable)
     var_project = variable['project']
+    get_project_config(var_project)
     cmor_table = CMOR_TABLES[var_project]
     valid_fx_vars = []
 
@@ -503,7 +505,6 @@ def _update_fx_settings(settings, variable, config_user):
 
     for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
         var = dict(variable)
-        cmor_fxvars = []
         fx_files_dict = {}
         if settings.get(step, {}).get('fx_files'):
             var['fx_files'] = settings.get(step, {}).get('fx_files')
@@ -514,19 +515,12 @@ def _update_fx_settings(settings, variable, config_user):
                     if not fxvar_name:
                         raise RecipeError(
                             "Key short_name missing from {}".format(fxvar))
-                fx_file, cmor_fx_var = _get_correct_fx_file(
+                _, cmor_fx_var = _get_correct_fx_file(
                     variable, fxvar, config_user)
-                fx_files_dict[fxvar_name] = fx_file
                 if cmor_fx_var:
-                    cmor_fxvars.append(cmor_fx_var)
-
-            # special case for preprocessing fx variables
-            if var.get("fx_var_preprocess"):
-                fx_files_dict = {
-                    cmor_fx_var['short_name']:
-                    get_output_file(cmor_fx_var, config_user['preproc_dir'])
-                    for cmor_fx_var in cmor_fxvars
-                }
+                    fx_files_dict[fxvar_name] = get_output_file(
+                        cmor_fx_var,
+                        config_user['preproc_dir'])
 
             # finally construct the fx files dictionary
             settings[step]['fx_files'] = fx_files_dict
@@ -747,7 +741,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_regrid_time(variable, settings)
         ancestors = grouped_ancestors.get(variable['filename'])
-        if not ancestors or variable.get("fx_var_preprocess"):
+        fx_files_in_settings = variable.get('fx_files', None)
+        if not ancestors or fx_files_in_settings:
             ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') and not ancestors:
                 logger.info("Skipping: no data found for %s", variable)
@@ -936,8 +931,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
 
     # special case: fx variable pre-processing
     for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
-        if profile.get(step, {}).get('fx_files') and \
-                variable.get("fx_var_preprocess"):
+        if profile.get(step, {}).get('fx_files'):
             # conserve profile
             fx_profile = deepcopy(profile)
             fx_vars = profile.get(step, {}).get('fx_files')
