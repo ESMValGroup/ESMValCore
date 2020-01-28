@@ -482,7 +482,7 @@ can be preprocessed:
 
 Key features:
 
-- it is possible to run a set of preprocessor steps on the `fx_files: [vars or dicts of vars]` specified in the `area_statistics`, `volume_statistics` or `zonal_statistics`by setting the `fx_var_preprocess: True` in the `variable`; take for instance this example:
+- preprocessor steps will be run on the `fx_files: [vars or dicts of vars]` specified in the `area_statistics`, `volume_statistics` or `zonal_statistics` take for instance this example:
 
 .. code-block:: yaml
 
@@ -504,7 +504,6 @@ Key features:
           thetao700_Omon:
           short_name: thetao
           preprocessor: prep
-          fx_var_preprocess: True
           mip: Omon
           exp: historical
           ensemble: r1i1p1f1
@@ -542,7 +541,6 @@ this setup will run the custom-ordered preprocessor steps in `preprocessors/prep
           thetao700_Omon:
           short_name: thetao
           preprocessor: prep
-          fx_var_preprocess: True
           mip: Omon
           exp: historical
           ensemble: r1i1p1f1
