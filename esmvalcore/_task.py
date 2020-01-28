@@ -611,9 +611,8 @@ class DiagnosticTask(BaseTask):
                 with open(bibtex_file, 'r') as file:
                     bibtex_entry += '{}\n'.format(file.read())
             else:
-                raise DiagnosticError(
-                    "The reference file ({}): does not exist.".format(
-                        bibtex_file))
+                logger.info('The reference file %s does not exist.',
+                            bibtex_file)
         citation_file = (os.path.splitext(product.filename)[0]
                          + '_citation.bibtex')
         with open(citation_file, 'w') as file:
