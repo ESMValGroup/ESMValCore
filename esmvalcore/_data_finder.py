@@ -30,41 +30,47 @@ def find_files(dirnames, filenames):
 
 
 def get_start_end_year(filename):
-    """Get the start and end year from a file name.
-
-    We assume that the filename *must* contain at least 1 year/date.
-    We look for four-to-eight-digit numbers.
-    If two potential dates are separated by either - or _,
-    we interpret this as the _daterange_ (startdate_enddate).
-    If no date range is present, but multiple potential dates are
-    present (e.g. including a version number), we assume that the last
-    number represents the date.
-    """
-    # Strip only filename from full path (and discard extension?)
+    """Get the start and end year from a file name."""
     filename = os.path.splitext(filename)[0]
     filename = filename.split(os.sep)[-1]
 
-    # Check for a block of two potential dates separated by _ or -
+    # First check for a block of two potential dates separated by _ or -
     daterange = re.findall(r'([0-9]{4,12}[-_][0-9]{4,12})', filename)
     if daterange:
         start_date, end_date = re.findall(r'([0-9]{4,12})', daterange[0])
         start_year = start_date[:4]
         end_year = end_date[:4]
     else:
+        # Check for single dates in the filename
         dates = re.findall(r'([0-9]{4,12})', filename)
-        if not dates:
-            raise ValueError('Name {0} does not match a recognized '
-                             'pattern'.format(filename))
-        elif len(dates) == 1:
+        if len(dates) == 1:
             start_year = end_year = dates[0][:4]
-        else:
+        elif len(dates) > 1:
             # Check for dates at start or end of filename
             outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', filename)
             if len(outerdates) == 1:
                 start_year = end_year = outerdates[0][:4]
-            else:
-                raise ValueError('Name {0} does not match a recognized '
-                                 'pattern'.format(filename))
+
+    # As final resort, try to get the dates from the file contents
+    if start_year is None or end_year is None:
+        try:
+            cubes = iris.load(filename)
+        except OSError:
+            raise ValueError(f'File {filename} can not be read')
+
+        for cube in cubes:
+            logger.debug(cube)
+            try:
+                time = cube.coord('time')
+            except iris.exceptions.CoordinateNotFoundError:
+                continue
+            start_year = time.cell(0).point.year
+            end_year = time.cell(-1).point.year
+            break
+
+    if start_year is None or end_year is None:
+        raise ValueError(f'File {filename} dates do not match a recognized'
+                         'pattern and time can not be read from the file')
 
     logger.debug("Found start_year %s and end_year %s", start_year, end_year)
     return int(start_year), int(end_year)
