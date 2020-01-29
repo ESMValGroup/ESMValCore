@@ -403,11 +403,8 @@ def _get_correct_fx_file(variable, fx_variable, config_user):
     fx_mips.append(variable['mip'])
 
     # force only the mip declared by user
-    user_fx_mip = fx_variable.get('mip')
-    if user_fx_mip:
-        fx_mips = [
-            user_fx_mip,
-        ]
+    if 'mip' in fx_variable:
+        fx_mips = [fx_variable['mip']]
 
     # Search all mips for available variables
     # priority goes to user specified mip if available
@@ -416,16 +413,17 @@ def _get_correct_fx_file(variable, fx_variable, config_user):
     for fx_mip in fx_mips:
         fx_cmor_variable = cmor_table.get_variable(fx_mip, fx_varname)
         if fx_cmor_variable is not None:
+            fx_var_dict = dict(fx_variable)
             searched_mips.append(fx_mip)
-            fx_variable['mip'] = fx_mip
-            fx_variable = _add_fxvar_keys(fx_variable, var)
+            fx_var_dict['mip'] = fx_mip
+            fx_var_dict = _add_fxvar_keys(fx_var_dict, var)
             logger.debug("For fx variable '%s', found table '%s'", fx_varname,
                          fx_mip)
-            fx_files = _get_input_files(fx_variable, config_user)
+            fx_files = _get_input_files(fx_var_dict, config_user)
 
             # If files found, return them
             if fx_files:
-                valid_fx_vars.append(fx_variable)
+                valid_fx_vars.append(fx_var_dict)
                 logger.debug("Found fx variables '%s':\n%s", fx_varname,
                              pformat(fx_files))
                 break
@@ -746,10 +744,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         _update_regrid_time(variable, settings)
         ancestors = grouped_ancestors.get(variable['filename'])
         fx_files_in_settings = [
-            setting.get('fx_files', None) for setting in settings.values()
-        ]
-        fx_files_in_settings = [
-            x for x in fx_files_in_settings if x is not None
+            setting.get('fx_files') for setting in settings.values() if
+            setting.get('fx_files') is not None
         ]
         if not ancestors or fx_files_in_settings:
             ancestors = _get_ancestors(variable, config_user)
