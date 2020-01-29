@@ -143,13 +143,13 @@ def _special_name_to_dataset(variable, special_name):
     if special_name in ('reference_dataset', 'alternative_dataset'):
         if special_name not in variable:
             raise RecipeError(
-                "Preprocessor {} uses {}, but {} is not defined for "
-                "variable {} of diagnostic {}".format(
-                    variable['preprocessor'],
-                    special_name,
-                    special_name,
-                    variable['short_name'],
-                    variable['diagnostic'],
+                "Preprocessor {preproc} uses {name}, but {name} is not "
+                "defined for variable {short_name} of diagnostic "
+                "{diagnostic}".format(
+                    preproc=variable['preprocessor'],
+                    name=special_name,
+                    short_name=variable['short_name'],
+                    diagnostic=variable['diagnostic'],
                 ))
         special_name = variable[special_name]
 
@@ -380,11 +380,14 @@ def _add_fxvar_keys(fx_var_dict, variable):
     return fx_variable
 
 
-def _get_correct_fx_file(variable, fx_varname, config_user):
+def _get_correct_fx_file(variable, fx_variable, config_user):
     """Get fx files (searching all possible mips)."""
     # make it a dict
-    if not isinstance(fx_varname, dict):
-        fx_varname = {'short_name': fx_varname}
+    if not isinstance(fx_variable, dict):
+        fx_varname = fx_variable
+        fx_variable = {'short_name': fx_variable}
+    else:
+        fx_varname = fx_variable['short_name']
 
     # assemble info from master variable
     var = dict(variable)
@@ -400,7 +403,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     fx_mips.append(variable['mip'])
 
     # force only the mip declared by user
-    user_fx_mip = fx_varname.get('mip')
+    user_fx_mip = fx_variable.get('mip')
     if user_fx_mip:
         fx_mips = [
             user_fx_mip,
@@ -411,18 +414,18 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
     searched_mips = []
     fx_files = []
     for fx_mip in fx_mips:
-        fx_variable = cmor_table.get_variable(fx_mip, fx_varname['short_name'])
-        if fx_variable is not None:
+        fx_cmor_variable = cmor_table.get_variable(fx_mip, fx_varname)
+        if fx_cmor_variable is not None:
             searched_mips.append(fx_mip)
-            fx_varname['mip'] = fx_mip
-            fx_var = _add_fxvar_keys(fx_varname, var)
+            fx_variable['mip'] = fx_mip
+            fx_variable = _add_fxvar_keys(fx_variable, var)
             logger.debug("For fx variable '%s', found table '%s'", fx_varname,
                          fx_mip)
-            fx_files = _get_input_files(fx_var, config_user)
+            fx_files = _get_input_files(fx_variable, config_user)
 
             # If files found, return them
             if fx_files:
-                valid_fx_vars.append(fx_var)
+                valid_fx_vars.append(fx_variable)
                 logger.debug("Found fx variables '%s':\n%s", fx_varname,
                              pformat(fx_files))
                 break
@@ -432,9 +435,10 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
         raise RecipeError(
             f"Requested fx variable '{fx_varname}' not available in "
             f"any 'fx'-related CMOR table ({fx_mips}) for '{var_project}'")
+
     # flag a warning
     if not fx_files:
-        logger.warning("Missing data for fx variable {}".format(fx_varname))
+        logger.warning("Missing data for fx variable '%s'", fx_varname)
 
     # allow for empty lists corrected for by NE masks
     if fx_files:
@@ -887,7 +891,7 @@ def _get_derive_input_variables(variables, config_user):
 
 
 def _remove_time_preproc(fxprofile):
-    "Remove all time preprocessors from the fx profile." ""
+    """Remove all time preprocessors from the fx profile."""
     fxprofile = deepcopy(fxprofile)
     for key in fxprofile:
         if key in TIME_PREPROCESSORS:
@@ -996,7 +1000,7 @@ def _check_duplication(task):
                 ancestors_filename_dict[anc_product.filename] = ancestor_task
                 filenames.append(anc_product.filename)
         set_ancestors = list(
-            set([ancestors_filename_dict[filename] for filename in filenames]))
+            {ancestors_filename_dict[filename] for filename in filenames})
         task.ancestors = [
             ancestor for ancestor in task.ancestors
             if ancestor in set_ancestors
@@ -1090,10 +1094,10 @@ class Recipe:
 
     @staticmethod
     def _expand_ensemble(variables):
-        """
-        Expand ensemble members to multiple datasets
+        """Expand ensemble members to multiple datasets.
 
-        Expansion only support ensembles defined as strings, not lists
+        Expansion only support ensembles defined as strings, not lists.
+
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
@@ -1187,8 +1191,7 @@ class Recipe:
         return preprocessor_output
 
     def _set_alias(self, preprocessor_output):
-        """
-        Add unique alias for datasets.
+        """Add unique alias for datasets.
 
         Generates a unique alias for each dataset that will be shared by all
         variables. Tries to make it as small as possible to make it useful for
@@ -1205,7 +1208,7 @@ class Recipe:
         Function will not modify alias if it is manually added to the recipe
         but it will use the dataset info to compute the others
 
-        Examples:
+        Examples
         --------
         - {project: CMIP5, model: EC-Earth, ensemble: r1i1p1}
         - {project: CMIP6, model: EC-Earth, ensemble: r1i1p1f1}
@@ -1229,7 +1232,7 @@ class Recipe:
         - {project: CMIP5, model: EC-Earth, experiment: historical}
         will generate alias 'EC-Earth'
 
-        Parameters:
+        Parameters
         ----------
         preprocessor_output : dict
             preprocessor output dictionary
