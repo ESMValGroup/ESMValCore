@@ -1867,6 +1867,58 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     assert '_Omon_' not in fx_files['volcello']
 
 
+def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
+                                       config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           regrid:
+             target_grid: 1x1
+             scheme: linear
+           extract_volume:
+             z_min: 0
+             z_max: 100
+           annual_statistics:
+             operator: mean
+           convert_units:
+             units: K
+           area_statistics:
+             operator: mean
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tos'
+    assert len(task.ancestors) == 0
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert product.attributes['short_name'] == 'tos'
+    assert product.files
+    assert 'area_statistics' in product.settings
+    settings = product.settings['area_statistics']
+    assert len(settings) == 1
+    assert settings['operator'] == 'mean'
+    assert 'fx_files' not in settings
+
+
 def test_fx_vars_list_preproc_cmip6(tmp_path, patched_datafinder,
                                     config_user):
     content = dedent("""
@@ -1944,6 +1996,48 @@ def test_fx_vars_list_preproc_cmip6(tmp_path, patched_datafinder,
     assert 'preproc' in fx_files['areacello']
     assert 'CMIP6_CanESM5_Ofx_historical_r1i1p1f1_areacello.nc' in \
         fx_files['areacello']
+
+
+def test_fx_vars_list_preproc_cmip6_fail(tmp_path, patched_failing_datafinder,
+                                         config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           regrid:
+             target_grid: 1x1
+             scheme: linear
+           extract_volume:
+             z_min: 0
+             z_max: 100
+           annual_statistics:
+             operator: mean
+           convert_units:
+             units: K
+           volume_statistics:
+             operator: mean
+             fx_files: ['areacello', 'volcello']
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, config_user)
+        msg = ('One or more of volume_statistics fx data for tos are missing. '
+               'Task can not be performed since there is no fx data found.')
+        assert rec_err == msg
 
 
 def test_fx_vars_dicts_preproc_cmip6(tmp_path, patched_datafinder,
