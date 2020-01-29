@@ -221,9 +221,8 @@ def area_statistics(cube, operator, fx_files=None):
     | `max`      | Maximum value                                    |
     +------------+--------------------------------------------------+
 
-    If fx_files is provided and the variable object has fx_var_preprocess
-    set to True, the variable's preprocessor chain will be applied to each of
-    the requested fx variables, up to and not including this step.
+    If fx_files is provided, the variable's preprocessor chain will be applied
+    to each of the requested fx variables, up to and not including this step.
 
     Parameters
     ----------
