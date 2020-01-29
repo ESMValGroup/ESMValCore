@@ -1,35 +1,38 @@
 """Fixes for ERA5."""
 import numpy as np
 import iris
+import logging
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
+logger = logging.getLogger(__name__)
+
 
 class FixEra5(Fix):
     """Fixes for ERA5 variables."""
-
     @staticmethod
     def _frequency(cube):
-
-        if not cube.coords(axis='T'):
+        """Determine time frequency of input cube."""
+        try:
+            time = cube.coord(axis='T')
+        except iris.exceptions.CoordinateNotFoundError:
             return 'fx'
-        time = cube.coord(axis='T')
+
+        time.convert_units('days since 1850-1-1 00:00:00.0')
         if len(time.points) == 1:
+            if cube.long_name is not 'Geopotential':
+                raise ValueError('Unable to infer frequency of cube '
+                                 f'with length 1 time dimension: {cube}')
             return 'fx'
-
         interval = time.points[1] - time.points[0]
-        unit = 'hours' if 'hour' in time.units.name else 'days'
-        if (unit == 'hours' and interval == 1):
-            return 'hourly'
-        if (unit == 'days' and interval - 1 / 24 < 1e-4):
+        if interval - 1 / 24 < 1e-4:
             return 'hourly'
         return 'monthly'
 
 
 class Accumulated(FixEra5):
     """Fixes for accumulated variables."""
-
     def _fix_frequency(self, cube):
         if cube.var_name in ['mx2t', 'mn2t']:
             pass
@@ -56,7 +59,6 @@ class Accumulated(FixEra5):
 
 class Hydrological(FixEra5):
     """Fixes for hydrological variables."""
-
     @staticmethod
     def _fix_units(cube):
         cube.units = 'kg m-2 s-1'
@@ -73,7 +75,6 @@ class Hydrological(FixEra5):
 
 class Radiation(FixEra5):
     """Fixes for accumulated radiation variables."""
-
     @staticmethod
     def _fix_direction(cube):
         cube.attributes['positive'] = 'down'
@@ -88,7 +89,6 @@ class Radiation(FixEra5):
 
 class Fx(FixEra5):
     """Fixes for time invariant variables."""
-
     @staticmethod
     def _remove_time_coordinate(cube):
         cube = iris.util.squeeze(cube)
@@ -150,7 +150,6 @@ class Rls(Radiation):
 
 class Orog(Fx):
     """Fixes for orography."""
-
     @staticmethod
     def _divide_by_gravity(cube):
         cube.units = cube.units / 'm s-2'
@@ -167,7 +166,6 @@ class Orog(Fx):
 
 class AllVars(FixEra5):
     """Fixes for all variables."""
-
     def _fix_coordinates(self, cube):
         """Fix coordinates."""
         # Fix coordinate increasing direction

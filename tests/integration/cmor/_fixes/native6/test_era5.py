@@ -15,23 +15,47 @@ def test_get_evspsbl_fix():
     assert fix == [Evspsbl(None), AllVars(None)]
 
 
-def test_get_frequency():
-    """Test for FixEra5._frequency."""
+def test_get_frequency_hourly():
     fix = FixEra5(None)
-    frequencies = {'hourly': [0, 1, 2], 'monthly': [0, 31, 59], 'fx': [0]}
-    for frequency, points in frequencies.items():
-        data = np.zeros(len(points))
-        time = iris.coords.DimCoord(points,
-                                    standard_name='time',
-                                    units=Unit('hours since 1900-01-01'))
-        cube = iris.cube.Cube(data,
-                              var_name='random_varname',
-                              dim_coords_and_dims=[(time, 0)])
-        assert fix._frequency(cube) == frequency
-        cube.coord('time').convert_units('days since 1850-1-1 00:00:00.0')
-        assert fix._frequency(cube) == frequency
-    cube = iris.cube.Cube(1., var_name='random')
+    time = iris.coords.DimCoord([0, 1, 2],
+                                standard_name='time',
+                                units=Unit('hours since 1900-01-01'))
+    cube = iris.cube.Cube([1, 6, 3],
+                          var_name='random_var',
+                          dim_coords_and_dims=[(time, 0)])
+    assert fix._frequency(cube) == 'hourly'
+    cube.coord('time').convert_units('days since 1850-1-1 00:00:00.0')
+    assert fix._frequency(cube) == 'hourly'
+
+
+def test_get_frequency_monthly():
+    fix = FixEra5(None)
+    time = iris.coords.DimCoord([0, 31, 59],
+                                standard_name='time',
+                                units=Unit('hours since 1900-01-01'))
+    cube = iris.cube.Cube([1, 6, 3],
+                          var_name='random_var',
+                          dim_coords_and_dims=[(time, 0)])
+    assert fix._frequency(cube) == 'monthly'
+    cube.coord('time').convert_units('days since 1850-1-1 00:00:00.0')
+    assert fix._frequency(cube) == 'monthly'
+
+
+def test_get_frequency_fx():
+    fix = FixEra5(None)
+    cube = iris.cube.Cube(1., long_name='Cube without time coordinate')
     assert fix._frequency(cube) == 'fx'
+    time = iris.coords.DimCoord(0,
+                                standard_name='time',
+                                units=Unit('hours since 1900-01-01'))
+    cube = iris.cube.Cube([1],
+                          var_name='cube_with_length_1_time_coord',
+                          long_name='Geopotential',
+                          dim_coords_and_dims=[(time, 0)])
+    assert fix._frequency(cube) == 'fx'
+    cube.long_name = 'Not geopotential'
+    with pytest.raises(ValueError):
+        fix._frequency(cube)
 
 
 def _era5_latitude():
