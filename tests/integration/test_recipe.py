@@ -1872,12 +1872,16 @@ def test_fx_vars_list_preproc_cmip6(tmp_path, patched_datafinder,
     content = dedent("""
         preprocessors:
           preproc:
-           custom_order: true
+           regrid:
+             target_grid: 1x1
+             scheme: linear
            extract_volume:
              z_min: 0
              z_max: 100
            annual_statistics:
              operator: mean
+           convert_units:
+             units: K
            volume_statistics:
              operator: mean
              fx_files: ['areacello', 'volcello']
@@ -1918,9 +1922,15 @@ def test_fx_vars_list_preproc_cmip6(tmp_path, patched_datafinder,
     for ancestor_product in task.ancestors[0].products:
         assert ancestor_product.attributes['short_name'] == 'areacello'
         assert 'volume_statistics' not in ancestor_product.settings
+        assert 'convert_units' not in ancestor_product.settings
+        assert 'regrid' in ancestor_product.settings
+        assert 'extract_volume' in ancestor_product.settings
     for ancestor_product in task.ancestors[1].products:
         assert ancestor_product.attributes['short_name'] == 'volcello'
         assert 'volume_statistics' not in ancestor_product.settings
+        assert 'convert_units' not in ancestor_product.settings
+        assert 'regrid' in ancestor_product.settings
+        assert 'extract_volume' in ancestor_product.settings
     assert len(task.products) == 1
     product = task.products.pop()
     assert product.attributes['short_name'] == 'tos'

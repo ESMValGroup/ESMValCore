@@ -959,7 +959,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
                     before, _ = _split_settings(fx_profile, step, order)
                     # remove time preprocessors for any fx/Ofx/Efx/etc
                     # that dont have time coords
-                    if 'fx' in fx_variable['mip']:
+                    if fx_variable['frequency'] == 'fx':
                         before = _remove_time_preproc(before)
                     fx_name = task_name.split(
                         TASKSEP)[0] + TASKSEP + 'fx_area-volume_stats_' + \
