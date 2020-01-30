@@ -1414,7 +1414,6 @@ class Recipe:
                     in duplicates
                 ]
             for task in prelim_tasks:
-                print("ANCS", [t.name for t in task.ancestors])
                 if not isinstance(task, PreprocessingTask):
                     tasks.add(task)
                     priority += 1
