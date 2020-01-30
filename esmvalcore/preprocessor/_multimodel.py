@@ -20,6 +20,10 @@ import cf_units
 import iris
 import numpy as np
 
+import itertools
+
+from collections import OrderedDict, defaultdict
+
 logger = logging.getLogger(__name__)
 
 
@@ -299,6 +303,8 @@ def _assemble_full_data(cubes, statistic):
     return stats_cube
 
 
+
+
 def multi_model_statistics(products, span, output_products, statistics):
     """
     Compute multi-model statistics.
@@ -371,13 +377,32 @@ def multi_model_statistics(products, span, output_products, statistics):
             statistic_cube.data, dtype=np.dtype('float32'))
 
         # Add to output product and log provenance
-        statistic_product = output_products[statistic]
-        statistic_product.cubes = [statistic_cube]
-        for product in products:
-            statistic_product.wasderivedfrom(product)
-        logger.info("Generated %s", statistic_product)
-        statistic_products.add(statistic_product)
+        generated_products = output_products[statistic]
+        for statistic_product in generated_products:
+            statistic_product.cubes = [statistic_cube]
+            for product in products:
+                statistic_product.wasderivedfrom(product)
+            logger.info("Generated %s", statistic_product)
+            statistic_products.add(statistic_product)
 
     products |= statistic_products
 
     return products
+
+def ensemble_statistics(products, span, output_products, statistics):
+
+    prods = defaultdict(set)
+    for p in products:
+        ensemble = '{}_{}_{}'.format(p.attributes['project'],
+                                     p.attributes['dataset'],
+                                     p.attributes['exp'])
+
+        prods[ensemble].add(p)
+
+    for ensemble, ensemble_products in prods.items():
+        output_products = next(iter(ensemble_products)).settings['ensemble_statistics'].get('output_products',{})
+        prd = multi_model_statistics(ensemble_products, span, output_products, statistics)
+        products |= prd
+
+    return products
+

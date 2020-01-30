@@ -3,9 +3,10 @@ import fnmatch
 import logging
 import os
 import re
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from pprint import pformat
+import itertools
 
 import yaml
 from netCDF4 import Dataset
@@ -628,6 +629,44 @@ def _update_statistic_settings(products, order, preproc_dir):
             settings['output_products'][statistic] = statistic_product
 
 
+def _update_ensemble_settings(products, order, preproc_dir):
+    step = 'ensemble_statistics'
+    if not products:
+        return
+
+    prods = defaultdict(set)
+
+    for p in products:
+        if step in p.settings:
+            ensemble = '{}_{}_{}'.format(p.attributes['project'],
+                                                      p.attributes['dataset'],
+                                                      p.attributes['exp'])
+
+            prods[ensemble].add(p)
+    for ensemble, ensemble_products in prods.items():
+        some_product = next(iter(ensemble_products))
+        for statistic in some_product.settings[step]['statistics']:
+            attributes = _get_statistic_attributes(ensemble_products)
+            attributes['dataset'] = '{}_Ensemble{}'.format(ensemble, statistic.title())
+            attributes['filename'] = get_statistic_output_file(
+                attributes, preproc_dir)
+            common_settings = _get_remaining_common_settings(step, order, ensemble_products)
+            statistic_product = PreprocessorFile(attributes, common_settings)
+            for product in ensemble_products:
+                settings = product.settings[step]
+                if 'output_products' not in settings:
+                    settings['output_products'] = defaultdict(set)
+                settings['output_products'][statistic].add(statistic_product)
+
+    
+
+
+
+
+
+
+
+
 def _update_extract_shape(settings, config_user):
     if 'extract_shape' in settings:
         shapefile = settings['extract_shape'].get('shapefile')
@@ -727,6 +766,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         products.add(product)
 
     _update_statistic_settings(products, order, config_user['preproc_dir'])
+    _update_ensemble_settings(products, order,  config_user['preproc_dir'])
 
     for product in products:
         product.check()
