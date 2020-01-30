@@ -23,14 +23,14 @@ class Test(tests.Test):
         mid_dx, mid_dy = dx / 2, dy / 2
         if lat_off and lon_off:
             expected_lat_points = np.linspace(
-                _LAT_MIN + mid_dy, _LAT_MAX - mid_dy, _LAT_RANGE / dy)
+                _LAT_MIN + mid_dy, _LAT_MAX - mid_dy, int(_LAT_RANGE / dy))
             expected_lon_points = np.linspace(
-                _LON_MIN + mid_dx, _LON_MAX - mid_dx, _LON_RANGE / dx)
+                _LON_MIN + mid_dx, _LON_MAX - mid_dx, int(_LON_RANGE / dx))
         else:
             expected_lat_points = np.linspace(_LAT_MIN, _LAT_MAX,
-                                              _LAT_RANGE / dy + 1)
+                                              int(_LAT_RANGE / dy) + 1)
             expected_lon_points = np.linspace(_LON_MIN, _LON_MAX - dx,
-                                              _LON_RANGE / dx)
+                                              int(_LON_RANGE / dx))
 
         # Check the stock cube coordinates.
         self.assertEqual(self.mock_DimCoord.call_count, 2)
