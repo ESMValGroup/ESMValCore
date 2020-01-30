@@ -1,6 +1,9 @@
 """Unit tests for :func:`esmvalcore._data_finder.regrid._stock_cube`"""
 
+import iris
 import pytest
+import tempfile
+import os
 
 from esmvalcore._data_finder import get_start_end_year
 
@@ -19,6 +22,7 @@ FILENAME_CASES = [
     ['var_control-1950_whatever_19800101.nc', 1980, 1980],
 ]
 
+
 @pytest.mark.parametrize('case', FILENAME_CASES)
 def test_get_start_end_year(case):
     """Tests for get_start_end_year function"""
@@ -26,6 +30,21 @@ def test_get_start_end_year(case):
     start, end = get_start_end_year(filename)
     assert case_start == start
     assert case_end == end
+
+
+def test_read_file_if_no_date_present():
+    """Test raises if no date is present"""
+    temp_file = tempfile.NamedTemporaryFile(suffix='.nc')
+    cube = iris.cube.Cube([0, 0], var_name='var')
+    time = iris.coords.DimCoord([0, 366],
+                                'time',
+                                units='days since 1990-01-01')
+    cube.add_dim_coord(time, 0)
+    iris.save(cube, temp_file.name)
+    start, end = get_start_end_year(temp_file.name)
+    assert start == 1990
+    assert end == 1991
+
 
 def test_fails_if_no_date_present():
     """Test raises if no date is present"""

@@ -5,6 +5,7 @@
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
 import fnmatch
+import iris
 import logging
 import os
 import re
@@ -31,23 +32,24 @@ def find_files(dirnames, filenames):
 
 def get_start_end_year(filename):
     """Get the start and end year from a file name."""
-    filename = os.path.splitext(filename)[0]
-    filename = filename.split(os.sep)[-1]
+    stripped_name = os.path.splitext(filename)[0]
+    stripped_name = stripped_name.split(os.sep)[-1]
+    start_year = end_year = None
 
     # First check for a block of two potential dates separated by _ or -
-    daterange = re.findall(r'([0-9]{4,12}[-_][0-9]{4,12})', filename)
+    daterange = re.findall(r'([0-9]{4,12}[-_][0-9]{4,12})', stripped_name)
     if daterange:
         start_date, end_date = re.findall(r'([0-9]{4,12})', daterange[0])
         start_year = start_date[:4]
         end_year = end_date[:4]
     else:
         # Check for single dates in the filename
-        dates = re.findall(r'([0-9]{4,12})', filename)
+        dates = re.findall(r'([0-9]{4,12})', stripped_name)
         if len(dates) == 1:
             start_year = end_year = dates[0][:4]
         elif len(dates) > 1:
             # Check for dates at start or end of filename
-            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', filename)
+            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stripped_name)
             if len(outerdates) == 1:
                 start_year = end_year = outerdates[0][:4]
 
