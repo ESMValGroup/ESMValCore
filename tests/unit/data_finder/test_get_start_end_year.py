@@ -1,9 +1,8 @@
 """Unit tests for :func:`esmvalcore._data_finder.regrid._stock_cube`"""
 
+import tempfile
 import iris
 import pytest
-import tempfile
-import os
 
 from esmvalcore._data_finder import get_start_end_year
 
@@ -32,8 +31,8 @@ def test_get_start_end_year(case):
     assert case_end == end
 
 
-def test_read_file_if_no_date_present():
-    """Test raises if no date is present"""
+def test_read_time_from_cube():
+    """Try to get time from cube if no date in filename"""
     temp_file = tempfile.NamedTemporaryFile(suffix='.nc')
     cube = iris.cube.Cube([0, 0], var_name='var')
     time = iris.coords.DimCoord([0, 366],
@@ -48,5 +47,5 @@ def test_read_file_if_no_date_present():
 
 def test_fails_if_no_date_present():
     """Test raises if no date is present"""
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, OSError)):
         get_start_end_year('var_whatever')

@@ -77,7 +77,7 @@ def _era5_longitude():
 
 def _era5_time(frequency):
     if frequency == 'invariant':
-        timestamps = [788928]
+        timestamps = [788928]  # hours since 1900 at 1 january 1990
     elif frequency == 'hourly':
         timestamps = [788928, 788929, 788930]
     elif frequency == 'monthly':
@@ -121,24 +121,18 @@ def _cmor_longitude():
 
 def _cmor_time(mip, bounds=None, shifted=False):
     """Provide expected time coordinate after fixes."""
-    if mip is 'E1hr':
-        if not shifted:
-            timestamps = [51134.0, 51134.0416667, 51134.0833333]
-            if bounds is not None:
-                bounds = np.array([[51133.9791667, 51134.0208333],
-                                   [51134.0208333, 51134.0625],
-                                   [51134.0625, 51134.1041667]])
-        else:
-            timestamps = [51133.97916667, 51134.02083333, 51134.0625]
-            if bounds is not None:
-                bounds = np.array([[51133.95833333, 51134.0],
-                                   [51134.0, 51134.04166667],
-                                   [51134.04166667, 51134.08333333]])
-    elif mip is 'Amon':
-        timestamps = np.array([51149.5, 51179.0, 51208.5])
+    if mip == 'E1hr':
+        offset = 51134  # days since 1850 at 1 january 1990
+        timestamps = offset + np.arange(3) / 24
+        if shifted:
+            timestamps -= 1 / 48
         if bounds is not None:
-            bounds = np.array([[51134.0, 51165.0], [51165.0, 51193.0],
-                               [51193.0, 51224.0]])
+            bounds = [[t - 1 / 48, t + 1 / 48] for t in timestamps]
+    elif mip == 'Amon':
+        timestamps = np.array([51149.5, 51179., 51208.5])
+        if bounds is not None:
+            bounds = np.array([[51134., 51165.], [51165., 51193.],
+                               [51193., 51224.]])
 
     return iris.coords.DimCoord(np.array(timestamps, dtype=float),
                                 standard_name='time',
@@ -159,7 +153,7 @@ def _cmor_aux_height(value):
 
 
 def _cmor_data(mip):
-    if mip is 'fx':
+    if mip == 'fx':
         return np.arange(9).reshape(3, 3)[::-1, :]
     return np.arange(27).reshape(3, 3, 3)[:, ::-1, :]
 
@@ -426,6 +420,7 @@ def rls_cmor_e1hr():
                           attributes={'positive': 'down'})
     return iris.cube.CubeList([cube])
 
+
 VARIABLES = [
     pytest.param(a, b, c, d, id=c + '_' + d) for (a, b, c, d) in [
         (pr_era5_monthly(), pr_cmor_amon(), 'pr', 'Amon'),
@@ -444,12 +439,16 @@ VARIABLES = [
 @pytest.mark.parametrize('era5_cubes, cmor_cubes, var, mip', VARIABLES)
 def test_cmorization(era5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
-
     fixed_cubes = fix_metadata(era5_cubes, var, 'native6', 'era5', mip)
-    print('era5_cube:', era5_cubes[0].xml())
-    print('cmor_cube:', cmor_cubes[0].xml())
-    print('fixed_cube:', fixed_cubes[0].xml())
-    assert fixed_cubes[0].xml() == cmor_cubes[0].xml()
-    assert (fixed_cubes[0].data == cmor_cubes[0].data).all()
-    # assert fixed_cubes[0].coords() == cmor_cubes[0].coords()
-    # assert fixed_cubes[0] == cmor_cubes[0]
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    cmor_cube = cmor_cubes[0]
+    if fixed_cube.coords('time'):
+        for cube in [fixed_cube, cmor_cube]:
+            coord = cube.coord('time')
+            coord.points = np.round(coord.points, decimals=7)
+            if coord.bounds is not None:
+                coord.bounds = np.round(coord.bounds, decimals=7)
+    print('cmor_cube:', cmor_cube.xml())
+    print('fixed_cube:', fixed_cube.xml())
+    assert fixed_cube == cmor_cube

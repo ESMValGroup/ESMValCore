@@ -498,7 +498,7 @@ def get_reference_levels(filename,
                          dataset,
                          short_name,
                          fix_dir):
-    """Get level definition from a CMOR coordinate.
+    """Get level definition from a reference dataset.
 
     Parameters
     ----------

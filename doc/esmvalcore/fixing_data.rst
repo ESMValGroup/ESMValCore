@@ -211,15 +211,27 @@ with the actual data units.
 
 .. code-block:: python
 
-    ...
-        def fix_metadata(self, cubes):
-            ...
-            cube.units = 'real_units'
-            ...
+    def fix_metadata(self, cubes):
+        cube.units = 'real_units'
+
 
 Detecting this error can be tricky if the units are similar enough. It also
 has a good chance of going undetected until you notice strange results in
 your diagnostic.
+
+For the above example, it can be useful to access the variable definition
+and associated coordinate definitions as provided by the CMOR table.
+For example:
+
+.. code-block:: python
+
+    def fix_metadata(self, cubes):
+        cube.units = self.vardef.units
+
+To learn more about what is available in these definitions, see:
+:class:`esmvalcore.cmor.table.VariableInfo` and
+:class:`esmvalcore.cmor.table.CoordinateInfo`.
+
 
 
 Coordinates missing

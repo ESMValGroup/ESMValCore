@@ -141,15 +141,21 @@ class TestFixMetadata(unittest.TestCase):
             with mock.patch(
                     'esmvalcore.cmor.fix._get_cmor_checker',
                     return_value=checker) as get_mock:
-                fix_metadata([self.cube], 'short_name', 'project', 'model',
-                             'cmor_table', 'mip', 'frequency')
+                fix_metadata(
+                    cubes=[self.cube],
+                    short_name='short_name',
+                    project='project',
+                    dataset='dataset',
+                    mip='mip',
+                    frequency='frequency',
+                )
                 get_mock.assert_called_once_with(
                     automatic_fixes=True,
                     fail_on_error=False,
                     frequency='frequency',
                     mip='mip',
                     short_name='short_name',
-                    table='cmor_table')
+                    table='project')
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_metadata.assert_called_once_with()
 
@@ -193,13 +199,14 @@ class TestFixData(unittest.TestCase):
                     'esmvalcore.cmor.fix._get_cmor_checker',
                     return_value=checker) as get_mock:
                 fix_data(self.cube, 'short_name', 'project', 'model',
-                         'cmor_table', 'mip', 'frequency')
+                         'mip', 'frequency')
                 get_mock.assert_called_once_with(
+                    table='project',
                     automatic_fixes=True,
                     fail_on_error=False,
                     frequency='frequency',
                     mip='mip',
                     short_name='short_name',
-                    table='cmor_table')
+                    )
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_data.assert_called_once_with()

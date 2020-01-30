@@ -1,7 +1,9 @@
 """Fixes for ERA5."""
-import numpy as np
-import iris
+import datetime
 import logging
+
+import iris
+import numpy as np
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
@@ -21,7 +23,7 @@ class FixEra5(Fix):
 
         time.convert_units('days since 1850-1-1 00:00:00.0')
         if len(time.points) == 1:
-            if cube.long_name is not 'Geopotential':
+            if cube.long_name != 'Geopotential':
                 raise ValueError('Unable to infer frequency of cube '
                                  f'with length 1 time dimension: {cube}')
             return 'fx'
@@ -34,9 +36,7 @@ class FixEra5(Fix):
 class Accumulated(FixEra5):
     """Fixes for accumulated variables."""
     def _fix_frequency(self, cube):
-        if cube.var_name in ['mx2t', 'mn2t']:
-            pass
-        elif self._frequency(cube) == 'monthly':
+        if self._frequency(cube) == 'monthly':
             cube.units = cube.units * 'd-1'
         elif self._frequency(cube) == 'hourly':
             cube.units = cube.units * 'h-1'
@@ -45,7 +45,8 @@ class Accumulated(FixEra5):
     def _fix_hourly_time_coordinate(self, cube):
         if self._frequency(cube) == 'hourly':
             time = cube.coord(axis='T')
-            time.points = time.points - 0.5
+            time.points = time.points - 1 / 48
+            time.guess_bounds()
         return cube
 
     def fix_metadata(self, cubes):
@@ -91,7 +92,7 @@ class Fx(FixEra5):
     """Fixes for time invariant variables."""
     @staticmethod
     def _remove_time_coordinate(cube):
-        cube = iris.util.squeeze(cube)
+        cube = cube[0]
         cube.remove_coord('time')
         return cube
 
@@ -104,13 +105,26 @@ class Fx(FixEra5):
         return iris.cube.CubeList(squeezed_cubes)
 
 
-class Tasmin(Accumulated):
+class Tasmin(FixEra5):
     """Fixes for tasmin."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            if self._frequency(cube) == 'hourly':
+                time = cube.coord(axis='T')
+                time.points = time.points - 1 / 48
+                time.guess_bounds()
+        return cubes
 
 
-class Tasmax(Accumulated):
+class Tasmax(FixEra5):
     """Fixes for tasmax."""
-
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            if self._frequency(cube) == 'hourly':
+                time = cube.coord(axis='T')
+                time.points = time.points - 1 / 48
+                time.guess_bounds()
+        return cubes
 
 class Evspsbl(Hydrological, Accumulated):
     """Fixes for evspsbl."""
@@ -194,7 +208,7 @@ class AllVars(FixEra5):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype('float64')
-            if len(coord.points) > 1 and coord_def.must_have_bounds == "yes":
+            if (coord.bounds is not None and len(coord.points) > 1 and coord_def.must_have_bounds == "yes"):
                 coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)
@@ -234,6 +248,10 @@ class AllVars(FixEra5):
             self._fix_units(cube)
 
             cube.data = cube.core_data().astype('float32')
+            year = datetime.datetime.now().year
+            cube.attributes['comment'] = (
+                'Contains modified Copernicus Climate Change '
+                f'Service Information {year}')
 
             fixed_cubes.append(cube)
 
