@@ -15,6 +15,83 @@ from esmvalcore.preprocessor._area import (_crop_cube, area_statistics,
                                            extract_region, extract_shape)
 
 
+def calc_grid_area():
+    """
+    Creates a regular grid with the same size as the fx file below.
+    """
+    coord_sys = iris.coord_systems.GeogCS(
+        iris.fileformats.pp.EARTH_RADIUS)
+    data = np.ones((2, 2))
+    lons = iris.coords.DimCoord(
+        [-5., 5.],
+        standard_name='longitude',
+        bounds=[[-10., 0.], [0., 10.]],
+        units='degrees_east',
+        coord_system=coord_sys)
+    lats = iris.coords.DimCoord(
+        [-5., 5.],
+        standard_name='latitude',
+        bounds=[[-10., 0.], [0., 10.]],
+        units='degrees_north',
+        coord_system=coord_sys)
+    coords_spec = [(lats, 0), (lons, 1)]
+    grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+    return iris.analysis.cartography.area_weights(grid)
+
+
+def make_fx_file():
+    """
+    Create and save an FX file
+    """
+    i_axis = iris.coords.DimCoord(
+        [i for i in range(2)],
+        standard_name=None,
+        var_name='i',
+        long_name='cell index along first dimension'
+        )
+    j_axis = iris.coords.DimCoord(
+        [i for i in range(2)],
+        standard_name=None,
+        var_name='j',
+        long_name='cell index along second dimension'
+        )
+
+    lat2d = np.array([[-5., -5.], [5., 5.]])
+    lon2d = np.array([[-5.,  5.], [-5., 5.]])
+
+    lat2d_bounds = np.array([[[-10., -10., 0., 0.],
+                              [-10., -10., 0., 0.]],
+                             [[0., 0., 10., 10.],
+                              [0., 0., 10., 10.]]])
+    lon2d_bounds = np.array([[[-10., 0., 0., -10.],
+                              [0., 10., 10., 0.]],
+                             [[-10., 0., 0., -10.],
+                             [0., 10., 10., 0.]]])
+
+    coords_spec = [(i_axis, 0), (j_axis, 1)]
+    data = calc_grid_area()
+
+    gridir = iris.cube.Cube(data, var_name='areacello', units=Unit('m^2'),
+                            dim_coords_and_dims=coords_spec)
+
+    lat_coord = iris.coords.AuxCoord(lat2d, standard_name='latitude',
+                                     long_name='latitude',
+                                     var_name='latitude',
+                                     units=Unit('degrees'),
+                                     bounds=lat2d_bounds)
+    lon_coord = iris.coords.AuxCoord(lon2d, standard_name='longitude',
+                                     long_name='longitude',
+                                     var_name='longitude',
+                                     units=Unit('degrees'),
+                                     bounds=lon2d_bounds)
+
+    gridir.add_aux_coord(lat_coord, data_dims=(0, 1))
+    gridir.add_aux_coord(lon_coord, data_dims=(0, 1))
+    fn = 'fx_test_areacello.nc'
+    iris.save(gridir, fn)
+    return fn
+
+
 class Test(tests.Test):
     """Test class for the :func:`esmvalcore.preprocessor._area_pp` module."""
     def setUp(self):
@@ -56,9 +133,25 @@ class Test(tests.Test):
         self.negative_grid = iris.cube.Cube(ndata,
                                             dim_coords_and_dims=coords_spec)
 
+        # Create Irregular grid.
+        fx_file = make_fx_file()
+        self.gridir = iris.load_cube(fx_file)
+        self.gridir.data = np.array([[0., 1.], [2., 3.]])
+        self.fx_files = {'areacello': fx_file}
+
+    # Regular grid area_statistics tests:
     def test_area_statistics_mean(self):
         """Test for area average of a 2D field."""
-        result = area_statistics(self.grid, 'mean')
+        with self.assertRaises(ValueError):
+            area_statistics(self.grid, 'mean', calculate_grid=False)
+
+        result = area_statistics(self.grid, 'mean',  calculate_grid=True)
+        expected = np.array([1.])
+        self.assertArrayEqual(result.data, expected)
+
+    def test_area_statistics_mean_calgrid(self):
+        """Test for area average of a 2D field."""
+        result = area_statistics(self.grid, 'mean', calculate_grid=True)
         expected = np.array([1.])
         self.assertArrayEqual(result.data, expected)
 
@@ -88,9 +181,21 @@ class Test(tests.Test):
 
     def test_area_statistics_sum(self):
         """Test for sum of a 2D field."""
-        result = area_statistics(self.grid, 'sum')
+        result = area_statistics(self.grid, 'sum', calculate_grid=True)
         grid_areas = iris.analysis.cartography.area_weights(self.grid)
         expected = np.sum(grid_areas)
+        self.assertArrayEqual(result.data, expected)
+
+    def test_area_statistics_weightless_sum(self):
+        """Test for weightless sum of a 2D field."""
+        result = area_statistics(self.grid, 'weightless_sum')
+        expected = np.sum(self.grid.data)
+        self.assertArrayEqual(result.data, expected)
+
+    def test_area_statistics_weightless_mean(self):
+        """Test for weightless mean of a 2D field."""
+        result = area_statistics(self.grid, 'weightless_mean')
+        expected = np.mean(self.grid.data)
         self.assertArrayEqual(result.data, expected)
 
     def test_area_statistics_variance(self):
@@ -99,12 +204,37 @@ class Test(tests.Test):
         expected = np.array([0.])
         self.assertArrayEqual(result.data, expected)
 
+    # Negative grids:
     def test_area_statistics_neg_lon(self):
         """Test for area average of a 2D field."""
-        result = area_statistics(self.negative_grid, 'mean')
+        result = area_statistics(self.negative_grid, 'mean',
+                                 calculate_grid=True)
         expected = np.array([1.])
         self.assertArrayEqual(result.data, expected)
 
+    # Irregular grid area_statistics tests:
+    def test_area_statistics_mean_ir(self):
+        """Test for area average of a 2D field."""
+        # This should fail:
+        with self.assertRaises(ValueError):
+            area_statistics(self.gridir, 'mean', calculate_grid=False)
+
+        # This should work:
+        result = area_statistics(self.gridir, 'mean', fx_files=self.fx_files)
+        expected = np.array([1.5])
+        self.assertArrayEqual(result.data, expected)
+
+    def test_area_statistics_sum_ir(self):
+        """Test for area average of a 2D field."""
+        # This should fail:
+        self.assertRaises(iris.exceptions.CoordinateMultiDimError,
+                          area_statistics, self.gridir, 'sum')
+        # This should work:
+        result = area_statistics(self.gridir, 'sum', fx_files=self.fx_files)
+        expected = np.array(7381511118575.528)
+        self.assertArrayAlmostEqual(result.data, expected, decimal=1)
+
+    # extract region
     def test_extract_region(self):
         """Test for extracting a region from a 2D field."""
         result = extract_region(self.grid, 1.5, 2.5, 1.5, 2.5)
