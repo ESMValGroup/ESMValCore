@@ -1,6 +1,5 @@
-
 """Fixes for MIROC ESM model."""
-import cf_units
+
 from iris.coords import DimCoord
 from iris.exceptions import CoordinateNotFoundError
 
@@ -53,29 +52,6 @@ class Co2(Fix):
         return cubes
 
 
-class Gpp(Fix):
-    """Fixes for gpp."""
-
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
-
-        Fixes error in cube units
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        # Fixing the metadata, automatic unit conversion should do the trick
-        self.get_cube_from_list(cubes).units = cf_units.Unit('g m-2 day-1')
-        return cubes
-
-
 class AllVars(Fix):
     """Common fixes to all vars."""
 
@@ -101,9 +77,9 @@ class AllVars(Fix):
                 cube.remove_coord(old)
 
                 plev = DimCoord.from_coord(old)
-                plev.var_name = plev
+                plev.var_name = 'plev'
                 plev.standard_name = 'air_pressure'
-                plev.long_name = 'Pressure '
+                plev.long_name = 'pressure'
                 cube.add_dim_coord(plev, dims)
             except CoordinateNotFoundError:
                 pass

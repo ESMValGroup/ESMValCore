@@ -34,35 +34,34 @@ ALL_DERIVED_VARIABLES = _get_all_derived_variables()
 __all__ = list(ALL_DERIVED_VARIABLES)
 
 
-def get_required(short_name):
+def get_required(short_name, project):
     """Return all required variables for derivation.
 
-    Get all information (at least `short_name`) required for derivation and
-    optionally a list of needed fx files.
+    Get all information (at least `short_name`) required for derivation.
 
     Parameters
     ----------
     short_name : str
         `short_name` of the variable to derive.
+    project : str
+        `project` of the variable to derive.
 
     Returns
     -------
     list
-        List of dictionaries (including at least the key `short_name`)
-        and occasionally mip or fx_files.
+        List of dictionaries (including at least the key `short_name`).
 
     """
+    if short_name not in ALL_DERIVED_VARIABLES:
+        raise NotImplementedError(
+            f"Cannot derive variable '{short_name}', no derivation script "
+            f"available")
     DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
-    variables = deepcopy(DerivedVariable().required)
+    variables = deepcopy(DerivedVariable().required(project))
     return variables
 
 
-def derive(cubes,
-           short_name,
-           long_name,
-           units,
-           standard_name=None,
-           fx_files=None):
+def derive(cubes, short_name, long_name, units, standard_name=None):
     """Derive variable.
 
     Parameters
@@ -78,9 +77,6 @@ def derive(cubes,
         units
     standard_name: str, optional
         standard_name
-    fx_files: dict, optional
-        If required, dictionary containing fx files  with `short_name`
-        (keys) and path (values) of the fx variable.
 
     Returns
     -------
@@ -92,22 +88,9 @@ def derive(cubes,
         return cubes[0]
 
     cubes = iris.cube.CubeList(cubes)
-    # Preprare input cubes and add fx files if necessary
-    if fx_files:
-        for (fx_var, fx_path) in fx_files.items():
-            if fx_path is not None:
-                fx_cube = iris.load_cube(
-                    fx_path,
-                    constraint=iris.Constraint(
-                        cube_func=lambda c, var=fx_var: c.var_name == var))
-                cubes.append(fx_cube)
-            else:
-                logger.debug(
-                    "Requested fx variable '%s' for derivation of "
-                    "'%s' not found", fx_var, short_name)
 
     # Derive variable
-    DerivedVariable = ALL_DERIVED_VARIABLES[short_name]  # noqa: N806
+    DerivedVariable = ALL_DERIVED_VARIABLES[short_name.lower()]  # noqa: N806
     cube = DerivedVariable().calculate(cubes)
 
     # Set standard attributes

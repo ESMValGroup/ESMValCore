@@ -1,0 +1,96 @@
+{
+    "creators": [
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Andela, Bouwe",
+            "orcid": "0000-0001-9005-8940"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Bock, Lisa",
+            "orcid": "0000-0001-7058-5938"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Broetz, Bjoern"
+        },
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Diblen, Faruk"
+        },
+        {
+            "affiliation": "MetOffice, UK",
+            "name": "Dreyer, Laura"
+        },
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Drost, Niels",
+            "orcid": "0000-0001-9795-7981"
+        },
+        {
+            "affiliation": "MetOffice, UK",
+            "name": "Earnshaw, Paul"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Eyring, Veronika",
+            "orcid": "0000-0002-6887-4885"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Hassler, Birgit",
+            "orcid": "0000-0003-2724-709X"
+        },
+        {
+            "affiliation": "AWI, Germany",
+            "name": "Koldunov, Nikolay",
+            "orcid": "0000-0002-3365-8146"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Lauer, Axel",
+            "orcid": "0000-0002-9270-1044"
+        },
+        {
+            "affiliation": "MetOffice, UK",
+            "name": "Little, Bill"
+        },
+        {
+            "affiliation": "BSC, Spain",
+            "name": "Loosveldt-Tomas, Saskia"
+        },
+        {
+            "affiliation": "PML, UK",
+            "name": "de Mora, Lee",
+            "orcid": "0000-0002-5080-3149"
+        },
+        {
+            "affiliation": "URead, UK",
+            "name": "Predoi, Valeriu",
+            "orcid": "0000-0002-9729-6578"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Righi, Mattia",
+            "orcid": "0000-0003-3827-5950"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Schlund, Manuel"
+        },
+        {
+            "affiliation": "BSC, Spain",
+            "name": "Vegas-Regidor, Javier",
+            "orcid": "0000-0003-0096-4291"
+        },
+        {
+            "affiliation": "SMHI, Sweden",
+            "name": "Zimmermann, Klaus"
+        }
+    ],
+    "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
+    "license": {
+        "id": "Apache-2.0"
+    },
+    "title": "ESMValCore"
+}
