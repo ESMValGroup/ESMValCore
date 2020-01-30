@@ -2033,7 +2033,7 @@ def test_fx_vars_list_preproc_cmip6_fail(tmp_path, patched_failing_datafinder,
                   - {dataset: CanESM5}
             scripts: null
         """)
-    with pytest.raises(RecipeError) as rec_err_exp:
+    with pytest.raises(RecipeError) as rec_err:
         get_recipe(tmp_path, content, config_user)
         msg = ('One or more of volume_statistics fx data for tos are missing. '
                'Task can not be performed since there is no fx data found.')
