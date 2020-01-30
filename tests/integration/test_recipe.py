@@ -1867,17 +1867,73 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     assert '_Omon_' not in fx_files['volcello']
 
 
-def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
-                                        config_user):
+def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
+                                       config_user):
     content = dedent("""
         preprocessors:
           preproc:
-           custom_order: true
+           regrid:
+             target_grid: 1x1
+             scheme: linear
            extract_volume:
              z_min: 0
              z_max: 100
            annual_statistics:
              operator: mean
+           convert_units:
+             units: K
+           area_statistics:
+             operator: mean
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tos'
+    assert len(task.ancestors) == 0
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert product.attributes['short_name'] == 'tos'
+    assert product.files
+    assert 'area_statistics' in product.settings
+    settings = product.settings['area_statistics']
+    assert len(settings) == 1
+    assert settings['operator'] == 'mean'
+    assert 'fx_files' not in settings
+
+
+def test_fx_vars_list_preproc_cmip6(tmp_path, patched_datafinder,
+                                    config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           regrid:
+             target_grid: 1x1
+             scheme: linear
+           extract_volume:
+             z_min: 0
+             z_max: 100
+           annual_statistics:
+             operator: mean
+           convert_units:
+             units: K
            volume_statistics:
              operator: mean
              fx_files: ['areacello', 'volcello']
@@ -1887,7 +1943,6 @@ def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
             variables:
               tos:
                 preprocessor: preproc
-                fx_var_preprocess: True
                 project: CMIP6
                 mip: Omon
                 exp: historical
@@ -1919,9 +1974,15 @@ def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
     for ancestor_product in task.ancestors[0].products:
         assert ancestor_product.attributes['short_name'] == 'areacello'
         assert 'volume_statistics' not in ancestor_product.settings
+        assert 'convert_units' not in ancestor_product.settings
+        assert 'regrid' in ancestor_product.settings
+        assert 'extract_volume' in ancestor_product.settings
     for ancestor_product in task.ancestors[1].products:
         assert ancestor_product.attributes['short_name'] == 'volcello'
         assert 'volume_statistics' not in ancestor_product.settings
+        assert 'convert_units' not in ancestor_product.settings
+        assert 'regrid' in ancestor_product.settings
+        assert 'extract_volume' in ancestor_product.settings
     assert len(task.products) == 1
     product = task.products.pop()
     assert product.attributes['short_name'] == 'tos'
@@ -1937,8 +1998,50 @@ def test_fx_vars_volcello_preproc_cmip6(tmp_path, patched_datafinder,
         fx_files['areacello']
 
 
-def test_fx_dicts_volcello_preproc_cmip6(tmp_path, patched_datafinder,
+def test_fx_vars_list_preproc_cmip6_fail(tmp_path, patched_failing_datafinder,
                                          config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           regrid:
+             target_grid: 1x1
+             scheme: linear
+           extract_volume:
+             z_min: 0
+             z_max: 100
+           annual_statistics:
+             operator: mean
+           convert_units:
+             units: K
+           volume_statistics:
+             operator: mean
+             fx_files: ['areacello', 'volcello']
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, config_user)
+        msg = ('One or more of volume_statistics fx data for tos are missing. '
+               'Task can not be performed since there is no fx data found.')
+        assert rec_err == msg
+
+
+def test_fx_vars_dicts_preproc_cmip6(tmp_path, patched_datafinder,
+                                     config_user):
     content = dedent("""
         preprocessors:
           preproc:
@@ -1960,7 +2063,6 @@ def test_fx_dicts_volcello_preproc_cmip6(tmp_path, patched_datafinder,
             variables:
               tos:
                 preprocessor: preproc
-                fx_var_preprocess: True
                 project: CMIP6
                 mip: Omon
                 exp: historical
@@ -2006,6 +2108,71 @@ def test_fx_dicts_volcello_preproc_cmip6(tmp_path, patched_datafinder,
     assert product.attributes['short_name'] == 'tos'
     assert product.files
     assert 'volume_statistics' in product.settings
+
+
+def test_fx_vars_dicts_activity_preproc_cmip6(tmp_path, patched_datafinder,
+                                              config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           custom_order: true
+           extract_volume:
+             z_min: 0
+             z_max: 100
+           annual_statistics:
+             operator: mean
+           volume_statistics:
+             operator: mean
+             fx_files: [{short_name: areacello,
+                         mip: Ofx, exp: piControl,
+                         activity: CMIP}]
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f2
+                grid: gn
+                additional_datasets:
+                  - {dataset: UKESM1-0-LL, exp: ssp585}
+                  - {dataset: UKESM1-0-LL, exp: ssp119}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tos'
+    assert len(task.ancestors) == 1
+    assert len(task.ancestors[0].ancestors) == 0
+    assert 'diagnostic_name' + TASKSEP + 'fx_area-volume_stats_areacello' in [
+        t.name for t in task.ancestors
+    ]
+    product_files = [
+        anc_product.filename for anc_product
+        in task.ancestors[0].products
+    ]
+    anc_products = task.ancestors[0].products
+    assert len(anc_products) == 1
+    assert len(product_files) == 1
+    assert os.path.basename(product_files[0]) == \
+        'CMIP6_UKESM1-0-LL_Ofx_piControl_r1i1p1f2_areacello.nc'
+    for product in task.products:
+        assert 'volume_statistics' in product.settings
+        assert product.attributes['short_name'] == 'tos'
+    ancestor_product = list(anc_products)[0]
+    assert ancestor_product.attributes['short_name'] == 'areacello'
+    assert ancestor_product.attributes['mip'] == 'Ofx'
+    assert ancestor_product.attributes['exp'] == 'piControl'
+    assert ancestor_product.attributes['activity'] == 'CMIP'
+    assert 'annual_statistics' not in ancestor_product.settings
+    assert 'volume_statistics' not in ancestor_product.settings
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
