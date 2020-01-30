@@ -1,8 +1,8 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._weighting`."""
 from collections import OrderedDict
+from unittest import mock
 
 import iris
-import mock
 import numpy as np
 import pytest
 from cf_units import Unit

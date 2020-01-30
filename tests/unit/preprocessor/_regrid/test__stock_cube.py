@@ -5,9 +5,9 @@ function.
 """
 
 import unittest
+from unittest import mock
 
 import iris
-import mock
 import numpy as np
 
 import tests

@@ -4,8 +4,8 @@ Provides testing capabilities for :mod:`esmvaltool` package.
 """
 import unittest
 from functools import wraps
+from unittest import mock
 
-import mock
 import numpy as np
 
 

@@ -1,15 +1,21 @@
 """Unit tests for the esmvalcore.preprocessor._regrid_esmpy module."""
+from unittest import mock
+
 import cf_units
 import iris
-import mock
 import numpy as np
 from iris.exceptions import CoordinateNotFoundError
 
 import tests
-from esmvalcore.preprocessor._regrid_esmpy import (
-    build_regridder, build_regridder_2d, coords_iris_to_esmpy,
-    cube_to_empty_field, get_grid, get_grid_representant,
-    get_grid_representants, get_representant, is_lon_circular, regrid)
+from esmvalcore.preprocessor._regrid_esmpy import (build_regridder,
+                                                   build_regridder_2d,
+                                                   coords_iris_to_esmpy,
+                                                   cube_to_empty_field,
+                                                   get_grid,
+                                                   get_grid_representant,
+                                                   get_grid_representants,
+                                                   get_representant,
+                                                   is_lon_circular, regrid)
 
 
 def identity(*args, **kwargs):

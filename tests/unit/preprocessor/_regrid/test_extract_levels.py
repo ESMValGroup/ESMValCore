@@ -1,9 +1,9 @@
 """Unit tests for :func:`esmvalcore.preprocessor.regrid.extract_levels`."""
 
 import unittest
+from unittest import mock
 
 import iris
-import mock
 import numpy as np
 from numpy import ma
 
