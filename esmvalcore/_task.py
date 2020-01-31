@@ -12,8 +12,7 @@ import time
 from copy import deepcopy
 from multiprocessing import Pool
 
-import urllib
-import json
+import requests
 import psutil
 import yaml
 
@@ -648,10 +647,9 @@ def _get_response(url):
     json_data = False
     if url.lower().startswith('https'):
         try:
-            open_url = urllib.request.urlopen(url)
-            if open_url.getcode() == 200:
-                data = open_url.read()
-                json_data = json.loads(data)
+            response = requests.get(url)
+            if response.status_code == 200:
+                json_data = response.json()
             else:
                 logger.info('Error in the CMIP citation link %s',
                             url)
