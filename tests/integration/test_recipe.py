@@ -2436,3 +2436,38 @@ def test_fx_vars_duplicate_files(tmp_path, patched_datafinder,
             scripts: null
         """)
     recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 3
+    all_task_names = [
+        'diag_439/sst', 'diag_437/tos', 'diag_439/sss'
+    ]
+    task_name = 'diag_437' + TASKSEP + 'tos'
+    task = [
+        elem for elem in recipe.tasks if elem.name == task_name
+    ][0]
+    assert task.name in all_task_names
+    assert len(task.ancestors) == 1
+    assert len(task.ancestors[0].ancestors) == 0
+    anc_name = 'diag_437' + TASKSEP + 'fx_area-volume_stats_areacello'
+    assert anc_name in [
+        t.name for t in task.ancestors
+    ]
+    for product in task.products:
+        assert 'regrid_time' in product.settings
+        assert product.attributes['short_name'] == 'tos'
+        for anc_product in task.ancestors[0].products:
+            assert anc_product.attributes['short_name'] == 'areacello'
+
+    task_name = 'diag_439' + TASKSEP + 'sss'
+    task = [
+        elem for elem in recipe.tasks if elem.name == task_name
+    ][0]
+    assert task.name in all_task_names
+    assert len(task.ancestors) == 1
+    task_name = 'diag_439' + TASKSEP + 'sst'
+    task = [
+        elem for elem in recipe.tasks if elem.name == task_name
+    ][0]
+    assert task.name in all_task_names
+    assert len(task.ancestors) == 0
