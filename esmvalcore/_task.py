@@ -590,7 +590,14 @@ class DiagnosticTask(BaseTask):
 
     @staticmethod
     def _write_citation_file(product):
-        """Write citation information provided by the recorded provenance."""
+        """
+            Write citation information provided by the recorded provenance.
+            Recipe and cmip6 data references are saved into one bibtex file.
+            cmip6 data references are provided by CMIP6 data citation service.
+            each cmip6 data reference has a json link. In the case of internet
+            connection, cmip6 data references are saved into a bibtex file.
+            Otherwise, cmip6 data reference links are saved into a text file.
+        """
         # collect info from provenance
         file_name = os.path.splitext(product.filename)[0]
         citation = {
