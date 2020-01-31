@@ -17,7 +17,7 @@ from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
 from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_fillvalues, mask_glaciated, mask_inside_range,
                     mask_landsea, mask_landseaice, mask_outside_range)
-from ._multimodel import multi_model_statistics, ensemble_statistics
+from ._multimodel import multi_model_statistics
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
 from ._regrid import extract_levels, regrid
@@ -78,7 +78,6 @@ __all__ = [
     # 'average_zone': average_zone,
     # 'cross_section': cross_section,
     'detrend',
-    'ensemble_statistics',
     'multi_model_statistics',
     # Grid-point operations
     'extract_named_regions',
@@ -114,7 +113,6 @@ FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('cmor_check_data'):]
 MULTI_MODEL_FUNCTIONS = {
     'multi_model_statistics',
     'mask_fillvalues',
-    'ensemble_statistics'
 }
 
 
@@ -381,20 +379,13 @@ class PreprocessingTask(BaseTask):
         for step in steps:
             input_products = [p for p in self.products if step in p.settings]
             if input_products:
-                statistic_products = input_products[0].settings[step].get(
-                    'output_products', {}).values()
+                statistic_products = set()
+                for input_product in input_products:
+                    for key, prods in input_product.settings[step].get('output_products', {}).items():
+                        statistic_products.update(prods.values())
                 for product in statistic_products:
                     product.initialize_provenance(self.activity)
 
-        step = 'ensemble_statistics'
-        input_products = [p for p in self.products if step in p.settings]
-        if input_products:
-            statistic_products = set()
-            for input_product in input_products:
-                for prods in input_product.settings[step].get('output_products', {}).values():
-                    statistic_products.update(prods)
-            for product in statistic_products:
-                product.initialize_provenance(self.activity)
 
 
 

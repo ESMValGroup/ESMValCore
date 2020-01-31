@@ -609,56 +609,41 @@ def _update_statistic_settings(products, order, preproc_dir):
     # TODO: move this to multi model statistics function?
     # But how to check, with a dry-run option?
     step = 'multi_model_statistics'
-
-    products = {p for p in products if step in p.settings}
-    if not products:
-        return
-
-    some_product = next(iter(products))
-    for statistic in some_product.settings[step]['statistics']:
-        attributes = _get_statistic_attributes(products)
-        attributes['dataset'] = 'MultiModel{}'.format(statistic.title())
-        attributes['filename'] = get_statistic_output_file(
-            attributes, preproc_dir)
-        common_settings = _get_remaining_common_settings(step, order, products)
-        statistic_product = PreprocessorFile(attributes, common_settings)
-        for product in products:
-            settings = product.settings[step]
-            if 'output_products' not in settings:
-                settings['output_products'] = {}
-            settings['output_products'][statistic] = statistic_product
-
-
-def _update_ensemble_settings(products, order, preproc_dir):
-    step = 'ensemble_statistics'
-    if not products:
-        return
-
     prods = defaultdict(set)
-
+    name = defaultdict(dict)
     for p in products:
         if step in p.settings:
-            ensemble = '{}_{}_{}'.format(p.attributes['project'],
-                                                      p.attributes['dataset'],
-                                                      p.attributes['exp'])
+            group = p.settings[step]['group']
+            if len(group) < 2:
+                if 'ensemble' in group:
+                    key = '{}_{}_{}'.format(p.attributes['project'],
+                                            p.attributes['dataset'],
+                                            p.attributes['exp'])
+                    name[key] = '{}_Ensemble'.format(key)
+                if 'all' in group:
+                    key = 'all'
+                    name[key] = 'MultiModel'
+            prods[key].add(p)
+            # PENDING: compute ensemble stats and then stats over ensemble results
 
-            prods[ensemble].add(p)
-    for ensemble, ensemble_products in prods.items():
-        some_product = next(iter(ensemble_products))
+    for key, group_products in prods.items():
+        some_product = next(iter(group_products))
         for statistic in some_product.settings[step]['statistics']:
-            attributes = _get_statistic_attributes(ensemble_products)
-            attributes['dataset'] = '{}_Ensemble{}'.format(ensemble, statistic.title())
+            attributes = _get_statistic_attributes(group_products)
+            attributes['dataset'] = '{}{}'.format(name[key], statistic.title())
             attributes['filename'] = get_statistic_output_file(
                 attributes, preproc_dir)
-            common_settings = _get_remaining_common_settings(step, order, ensemble_products)
+            common_settings = _get_remaining_common_settings(step, order, products)
             statistic_product = PreprocessorFile(attributes, common_settings)
-            for product in ensemble_products:
+            for product in products:
                 settings = product.settings[step]
                 if 'output_products' not in settings:
-                    settings['output_products'] = defaultdict(set)
-                settings['output_products'][statistic].add(statistic_product)
+                    settings['output_products'] = defaultdict(dict)
+                    settings['output_products'][key] = {}
+                settings['output_products'][key][statistic] = statistic_product
 
-    
+
+
 
 
 
@@ -766,7 +751,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         products.add(product)
 
     _update_statistic_settings(products, order, config_user['preproc_dir'])
-    _update_ensemble_settings(products, order,  config_user['preproc_dir'])
 
     for product in products:
         product.check()

@@ -305,7 +305,7 @@ def _assemble_full_data(cubes, statistic):
 
 
 
-def multi_model_statistics(products, span, output_products, statistics):
+def multi_model_statistics(products, span, output_products, statistics, group):
     """
     Compute multi-model statistics.
 
@@ -343,66 +343,60 @@ def multi_model_statistics(products, span, output_products, statistics):
         If span is neither overlap nor full.
 
     """
-    logger.debug('Multimodel statistics: computing: %s', statistics)
-    if len(products) < 2:
-        logger.info("Single dataset in list: will not compute statistics.")
-        return products
-
-    cubes = [cube for product in products for cube in product.cubes]
-    # check if we have any time overlap
-    interval = _get_overlap(cubes)
-    if interval is None:
-        logger.info("Time overlap between cubes is none or a single point."
-                    "check datasets: will not compute statistics.")
-        return products
-
-    if span == 'overlap':
-        logger.debug("Using common time overlap between "
-                     "datasets to compute statistics.")
-    elif span == 'full':
-        logger.debug("Using full time spans to compute statistics.")
-    else:
-        raise ValueError(
-            "Unexpected value for span {}, choose from 'overlap', 'full'"
-            .format(span))
-
+    prods = defaultdict(set)
     statistic_products = set()
-    for statistic in statistics:
-        # Compute statistic
+    for p in products:
+        if len(group) < 2:
+            if 'ensemble' in group:
+                key = '{}_{}_{}'.format(p.attributes['project'],
+                                        p.attributes['dataset'],
+                                        p.attributes['exp'])
+            if 'all' in group:
+                key = 'all'
+        prods[key].add(p)
+
+    for key, ensemble_products in prods.items():
+        logger.debug('Multimodel statistics: computing: %s', statistics)
+        if len(ensemble_products) < 2:
+            logger.info("Single dataset in list: will not compute statistics.")
+            return products
+
+        cubes = [cube for product in ensemble_products for cube in product.cubes]
+        # check if we have any time overlap
+        interval = _get_overlap(cubes)
+        if interval is None:
+            logger.info("Time overlap between cubes is none or a single point."
+                        "check datasets: will not compute statistics.")
+            return products
+
         if span == 'overlap':
-            statistic_cube = _assemble_overlap_data(cubes, interval, statistic)
+            logger.debug("Using common time overlap between "
+                         "datasets to compute statistics.")
         elif span == 'full':
-            statistic_cube = _assemble_full_data(cubes, statistic)
-        statistic_cube.data = np.ma.array(
-            statistic_cube.data, dtype=np.dtype('float32'))
+            logger.debug("Using full time spans to compute statistics.")
+        else:
+            raise ValueError(
+                "Unexpected value for span {}, choose from 'overlap', 'full'"
+                .format(span))
+
+        for statistic in statistics:
+            # Compute statistic
+            if span == 'overlap':
+                statistic_cube = _assemble_overlap_data(cubes, interval, statistic)
+            elif span == 'full':
+                statistic_cube = _assemble_full_data(cubes, statistic)
+            statistic_cube.data = np.ma.array(
+                statistic_cube.data, dtype=np.dtype('float32'))
 
         # Add to output product and log provenance
-        generated_products = output_products[statistic]
-        for statistic_product in generated_products:
-            statistic_product.cubes = [statistic_cube]
-            for product in products:
-                statistic_product.wasderivedfrom(product)
-            logger.info("Generated %s", statistic_product)
-            statistic_products.add(statistic_product)
+            generated_product = output_products[key][statistic]
+            generated_product.cubes = [statistic_cube]
+            for product in ensemble_products:
+                generated_product.wasderivedfrom(product)
+            logger.info("Generated %s", generated_product)
+            statistic_products.add(generated_product)
 
     products |= statistic_products
-
-    return products
-
-def ensemble_statistics(products, span, output_products, statistics):
-
-    prods = defaultdict(set)
-    for p in products:
-        ensemble = '{}_{}_{}'.format(p.attributes['project'],
-                                     p.attributes['dataset'],
-                                     p.attributes['exp'])
-
-        prods[ensemble].add(p)
-
-    for ensemble, ensemble_products in prods.items():
-        output_products = next(iter(ensemble_products)).settings['ensemble_statistics'].get('output_products',{})
-        prd = multi_model_statistics(ensemble_products, span, output_products, statistics)
-        products |= prd
 
     return products
 
