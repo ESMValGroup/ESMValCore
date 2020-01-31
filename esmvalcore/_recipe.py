@@ -1387,9 +1387,11 @@ class Recipe:
                 prelim_tasks.add(task)
                 priority += 1
 
-            # remove ancestor tasks that do the same thing
-            # eg: fx files that are needed but can be produced
-            # only once
+            # remove ancestor tasks that perform the same operation
+            # and write to the same Preprocessor file
+            # eg: fx files that are needed multiple times but can be produced
+            # only once; this is an inter-tasks check.
+            # The equivanet intra-task check is done by _check_duplication
             all_names = []
             for task in prelim_tasks:
                 if task.ancestors:
@@ -1403,7 +1405,8 @@ class Recipe:
                     tasks.add(task)
                     priority += 1
 
-            # look for cross-tasks duplication
+            # look for inter-tasks duplication by name
+            # this should be safe now once we've set-filtered by product
             if not len(all_names) > 1:
                 tasks.add(task)
                 priority += 1
@@ -1418,6 +1421,7 @@ class Recipe:
                 for task in prelim_tasks:
                     for ancestor_task in task.ancestors:
                         if ancestor_task.name not in duplicates:
+                            # list:duplicates can be empty, just add the task
                             tasks.add(task)
                             priority += 2
                         else:
