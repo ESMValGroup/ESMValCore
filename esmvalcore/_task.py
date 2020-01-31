@@ -646,17 +646,18 @@ class DiagnosticTask(BaseTask):
 def _get_response(url):
     """Return information from CMIP6 Data Citation service in json format."""
     json_data = False
-    try:
-        open_url = urllib.request.urlopen(url)
-        if open_url.getcode() == 200:
-            data = open_url.read()
-            json_data = json.loads(data)
-        else:
-            logger.info('Error in the CMIP citation link %s',
+    if url.lower().startswith('https'):
+        try:
+            open_url = urllib.request.urlopen(url)
+            if open_url.getcode() == 200:
+                data = open_url.read()
+                json_data = json.loads(data)
+            else:
+                logger.info('Error in the CMIP citation link %s',
+                            url)
+        except IOError:
+            logger.info('Error in receiving the CMIP citation file %s',
                         url)
-    except IOError:
-        logger.info('Error in receiving the CMIP citation file %s',
-                    url)
     return json_data
 
 
