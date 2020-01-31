@@ -593,18 +593,17 @@ class DiagnosticTask(BaseTask):
     def _write_citation_file(product):
         """Write citation information provided by the recorded provenance."""
         # collect info from provenance
+        file_name = os.path.splitext(product.filename)[0]
         citation = {
             'reference': [],
             'info_url': [],
             'tag': [],
-            'file': [],
             'entry': '',
-            'url': ''
-            }
-        citation['file'] = [
-            os.path.splitext(product.filename)[0] + '_data_citation_url.txt',
-            os.path.splitext(product.filename)[0] + '_citation.bibtex',
-        ]
+            'url': '',
+            'file': [
+                file_name + '_data_citation_url.txt',
+                file_name + '_citation.bibtex',
+            ]}
         for item in product.provenance.records:
             for key, value in item.attributes:
                 if (key.namespace.prefix == 'attribute'
@@ -612,9 +611,7 @@ class DiagnosticTask(BaseTask):
                     citation['reference'].append(value)
                 if (key.namespace.prefix == 'attribute'
                         and key.localpart == 'further_info_url'):
-                    citation['info_url'].append('.'.join(
-                        (value.split(".org/")[1]).split(".")[1:4]
-                        ))
+                    citation['info_url'].append(value)
 
         # collect CMIP6 citation, if any
         if citation['info_url']:
@@ -708,19 +705,20 @@ def _collect_bibtex_citation(tags):
 def _collect_cmip_citation(info_url):
     """Collect information from CMIP6 Data Citation Service."""
     split_str = 'cmip6?input=CMIP6.CMIP.'
-    url = ''.join([CMIP6_CITATION_URL.split(split_str)[0],
-                   'cerarest/export', split_str])
+    url_stem = ''.join([CMIP6_CITATION_URL.split(split_str)[0],
+                        'cerarest/export', split_str])
     entry = ''
     link = ''
-    for info in info_url:
-        json_url = ''.join([url, info])  # make the json url
+    for data_url in info_url:
+        data_info = '.'.join((data_url.split(".org/")[1]).split(".")[1:4])
+        json_url = ''.join([url_stem, data_info])  # make the json url
         json_data = _get_response(json_url)
         if json_data:
             entry += '{}\n'.format(_json_to_bibtex(json_data))
         else:
             logger.info('Writing the CMIP citation link %s',
                         json_url)
-            link += '{}\n'.format(''.join([CMIP6_CITATION_URL, info]))
+            link += '{}\n'.format(''.join([CMIP6_CITATION_URL, data_info]))
     return entry, link
 
 
