@@ -658,11 +658,9 @@ def _get_response(url):
             if response.status_code == 200:
                 json_data = response.json()
             else:
-                logger.info('Error in the CMIP citation link %s',
-                            url)
+                logger.info('Error in the CMIP json link')
         except IOError:
-            logger.info('Error in receiving the CMIP citation file %s',
-                        url)
+            logger.info('Error in receiving the CMIP json file')
     return json_data
 
 
@@ -686,12 +684,12 @@ def _json_to_bibtex(data):
 def _replace_entry(product_entry):
     """Find tags of the references in provenance"""
     entry_tags = {v: k for k, v in TAGS['references'].items()}
-    tags = []
+    tag_list = []
     for key in entry_tags.keys():
         for entry in product_entry:
-            if key in entry and entry_tags[key] not in tags:
-                tags.append(entry_tags[key])
-    return tags
+            if key in entry and entry_tags[key] not in tag_list:
+                tag_list.append(entry_tags[key])
+    return tag_list
 
 
 def _collect_bibtex_citation(tags):
@@ -713,19 +711,18 @@ def _collect_cmip_citation(info_url):
     split_str = 'cmip6?input=CMIP6.CMIP.'
     url_stem = ''.join([CMIP6_CITATION_URL.split(split_str)[0],
                         'cerarest/export', split_str])
-    entry = ''
-    link = ''
+    citation_entry = ''
+    citation_link = ''
     for data_url in info_url:
         data_info = '.'.join((data_url.split(".org/")[1]).split(".")[1:4])
-        json_url = ''.join([url_stem, data_info])  # make the json url
-        json_data = _get_response(json_url)
+        json_data = _get_response(''.join([url_stem, data_info]))
         if json_data:
-            entry += '{}\n'.format(_json_to_bibtex(json_data))
+            citation_entry += '{}\n'.format(_json_to_bibtex(json_data))
         else:
-            logger.info('Writing the CMIP citation link %s',
-                        json_url)
-            link += '{}\n'.format(''.join([CMIP6_CITATION_URL, data_info]))
-    return entry, link
+            citation_link += '{}\n'.format(''.join(
+                [CMIP6_CITATION_URL, data_info]))
+            logger.info('Returning the CMIP citation link for %s', data_info)
+    return citation_entry, citation_link
 
 
 def get_flattened_tasks(tasks):
