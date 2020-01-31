@@ -242,12 +242,17 @@ class CMORCheck():
 
         if self._cmor_var.units:
             units = self._get_effective_units()
-
-            if not self._cube.units.is_convertible(units):
-                self.report_error(
-                    f'Variable {self._cube.var_name} units '
-                    f'{self._cube.units} can not be '
-                    f'converted to {self._cmor_var.units}')
+            if self._cube.units != units:
+                if not self._cube.units.is_convertible(units):
+                    self.report_error(
+                        f'Variable {self._cube.var_name} units '
+                        f'{self._cube.units} can not be '
+                        f'converted to {self._cmor_var.units}')
+                else:
+                    self.report_warning(
+                        f'Variable {self._cube.var_name} units '
+                        f'{self._cube.units} will be '
+                        f'converted to {self._cmor_var.units}')
 
         # Check other variable attributes that match entries in cube.attributes
         attrs = ('positive', )
@@ -383,10 +388,15 @@ class CMORCheck():
                 fixed = False
                 if self.automatic_fixes:
                     try:
+                        old_unit = coord.units
                         new_unit = cf_units.Unit(cmor.units,
                                                  coord.units.calendar)
                         coord.convert_units(new_unit)
                         fixed = True
+                        self.report_warning(
+                            f'Coordinate {coord.var_name} units '
+                            f'{str(old_unit)} '
+                            f'converted to {cmor.units}')
                     except ValueError:
                         pass
                 if not fixed:
