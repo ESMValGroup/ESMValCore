@@ -183,7 +183,13 @@ def pr_cmor_amon():
                           units=Unit(vardef.units),
                           dim_coords_and_dims=[(time, 0),
                                                (_cmor_latitude(), 1),
-                                               (_cmor_longitude(), 2)])
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
     return iris.cube.CubeList([cube])
 
 
@@ -212,7 +218,13 @@ def pr_cmor_e1hr():
                           units=Unit(vardef.units),
                           dim_coords_and_dims=[(time, 0),
                                                (_cmor_latitude(), 1),
-                                               (_cmor_longitude(), 2)])
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
     return iris.cube.CubeList([cube])
 
 
@@ -239,7 +251,13 @@ def orog_cmor_fx():
                           standard_name=vardef.standard_name,
                           units=Unit(vardef.units),
                           dim_coords_and_dims=[(_cmor_latitude(), 0),
-                                               (_cmor_longitude(), 1)])
+                                               (_cmor_longitude(), 1)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
     return iris.cube.CubeList([cube])
 
 
@@ -268,7 +286,13 @@ def uas_cmor_e1hr():
                           units=Unit(vardef.units),
                           dim_coords_and_dims=[(time, 0),
                                                (_cmor_latitude(), 1),
-                                               (_cmor_longitude(), 2)])
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
     cube.add_aux_coord(_cmor_aux_height(10.))
     return iris.cube.CubeList([cube])
 
@@ -298,7 +322,13 @@ def tas_cmor_e1hr():
                           units=Unit(vardef.units),
                           dim_coords_and_dims=[(time, 0),
                                                (_cmor_latitude(), 1),
-                                               (_cmor_longitude(), 2)])
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
     cube.add_aux_coord(_cmor_aux_height(2.))
     return iris.cube.CubeList([cube])
 
@@ -329,7 +359,14 @@ def rsds_cmor_e1hr():
                           dim_coords_and_dims=[(time, 0),
                                                (_cmor_latitude(), 1),
                                                (_cmor_longitude(), 2)],
-                          attributes={'positive': 'down'})
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020',
+                              'positive':
+                              'down'
+                          })
     return iris.cube.CubeList([cube])
 
 
@@ -358,7 +395,13 @@ def prsn_cmor_e1hr():
                           units=Unit(vardef.units),
                           dim_coords_and_dims=[(time, 0),
                                                (_cmor_latitude(), 1),
-                                               (_cmor_longitude(), 2)])
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
     return iris.cube.CubeList([cube])
 
 
@@ -387,7 +430,13 @@ def mrro_cmor_e1hr():
                           units=Unit(vardef.units),
                           dim_coords_and_dims=[(time, 0),
                                                (_cmor_latitude(), 1),
-                                               (_cmor_longitude(), 2)])
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
     return iris.cube.CubeList([cube])
 
 
@@ -417,7 +466,14 @@ def rls_cmor_e1hr():
                           dim_coords_and_dims=[(time, 0),
                                                (_cmor_latitude(), 1),
                                                (_cmor_longitude(), 2)],
-                          attributes={'positive': 'down'})
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020',
+                              'positive':
+                              'down'
+                          })
     return iris.cube.CubeList([cube])
 
 
@@ -451,4 +507,5 @@ def test_cmorization(era5_cubes, cmor_cubes, var, mip):
                 coord.bounds = np.round(coord.bounds, decimals=7)
     print('cmor_cube:', cmor_cube.xml())
     print('fixed_cube:', fixed_cube.xml())
+    assert fixed_cube.xml() == cmor_cube.xml()
     assert fixed_cube == cmor_cube

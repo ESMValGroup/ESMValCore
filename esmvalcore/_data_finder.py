@@ -5,11 +5,11 @@
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
 import fnmatch
-import iris
 import logging
 import os
 import re
 import glob
+import iris
 
 from ._config import get_project_config
 

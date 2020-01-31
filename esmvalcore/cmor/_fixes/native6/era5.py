@@ -126,6 +126,7 @@ class Tasmax(FixEra5):
                 time.guess_bounds()
         return cubes
 
+
 class Evspsbl(Hydrological, Accumulated):
     """Fixes for evspsbl."""
 
@@ -208,7 +209,8 @@ class AllVars(FixEra5):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype('float64')
-            if (coord.bounds is not None and len(coord.points) > 1 and coord_def.must_have_bounds == "yes"):
+            if (coord.bounds is None and len(coord.points) > 1
+                    and coord_def.must_have_bounds == "yes"):
                 coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)
