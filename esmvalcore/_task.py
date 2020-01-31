@@ -16,7 +16,6 @@ import urllib
 import json
 import psutil
 import yaml
-from pybtex.database import BibliographyData, Entry
 
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags, REFERENCES_PATH
 from ._provenance import TrackedFile, get_task_provenance
@@ -666,21 +665,20 @@ def _get_response(url):
 
 
 def _json_to_bibtex(data):
-    """Make a bibtex entry from CMIP6 Data Citation json format."""
+    """Make a bibtex entry from CMIP6 Data Citation json data."""
     url = ''.join(['https://doi.org/', data['identifier']['id']])
     author_list = []
     for item in data['creators']:
         author_list.append(item['creatorName'])
-    bib_entry = {url: Entry('misc', [
-        ('url', url),
-        ('title', data['titles'][0]),
-        ('publisher', data['publisher']),
-        ('year', data['publicationYear']),
-        ('author', ' and '.join(author_list)),
-        ('doi', data['identifier']['id']),
-        ])}
-    bib_data = BibliographyData(bib_entry).to_string("bibtex")
-    return bib_data
+    bibtex_entry = ('@misc{'+ url + ',\n\t'\
+                    'url = {' + url + '},\n\t'\
+                    'title = {' + data['titles'][0] + '},\n\t'\
+                    'publisher = {' + data['publisher'] + '},\n\t'\
+                    'year = '+ data['publicationYear'] + ',\n\t'\
+                    'author = {' + ' and '.join(author_list) + '},\n\t'\
+                    'doi = {' + data['identifier']['id'] + '},\n'\
+                    '}')
+    return bibtex_entry
 
 
 def _cmip_citation(json_url):
