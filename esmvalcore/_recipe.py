@@ -1411,7 +1411,7 @@ class Recipe:
                     for ancestor_task in task.ancestors:
                         if ancestor_task.name not in duplicates:
                             tasks.add(task)
-                            priority += 1
+                            priority += 2
                         else:
                             if ancestor_task.name not in removed_ancestors:
                                 removed_ancestors.append(ancestor_task.name)
