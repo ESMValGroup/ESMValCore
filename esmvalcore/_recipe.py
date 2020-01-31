@@ -1359,6 +1359,7 @@ class Recipe:
     def initialize_tasks(self):
         """Define tasks in recipe."""
         logger.info("Creating tasks from recipe")
+        prelim_tasks = set()
         tasks = set()
 
         priority = 0
@@ -1383,8 +1384,58 @@ class Recipe:
                 _check_duplication(task)
                 for task0 in task.flatten():
                     task0.priority = priority
-                tasks.add(task)
+                prelim_tasks.add(task)
                 priority += 1
+
+            # remove tasks with the same product output keeping only one
+            anc_filenames = []
+            ancestor_tasks = []
+            anc_tasks = {}
+            for task in prelim_tasks:
+                if isinstance(task, PreprocessingTask):
+                    if task.ancestors:
+                        for ancestor_task in task.ancestors:
+                            for anc_product in ancestor_task.products:
+                                anc_filenames.append(anc_product.filename)
+                            ancestor_tasks.append(ancestor_task)
+                anc_tasks[task] = (anc_filenames, ancestor_tasks)
+
+            if anc_tasks:
+                all_files = [anc_tasks[task][0] for task in prelim_tasks
+                             if anc_tasks[task][0]]
+                duplicates = []
+                while len(all_files) > 0:
+                    elem = all_files.pop()
+                    if elem in all_files:
+                        duplicates.append(elem)
+                doubles_ancestors = [
+                    anc_tasks[task][1][0] for task in prelim_tasks
+                    if anc_tasks[task][1] and anc_tasks[task][0]
+                    in duplicates
+                ]
+            for task in prelim_tasks:
+                if not isinstance(task, PreprocessingTask):
+                    tasks.add(task)
+                    priority += 1
+                else:
+                    if not anc_tasks[task][1]:
+                        tasks.add(task)
+                        priority += 1
+                    else:
+                        for ancestor_task in task.ancestors:
+                            if ancestor_task not in doubles_ancestors:
+                                tasks.add(task)
+                                priority += 1
+                            else:
+                                added_ancestors = []
+                                if ancestor_task.name in added_ancestors:
+                                    added_ancestors.append(ancestor_task.name)
+                                    tasks.add(task)
+                                    priority += 1
+                                else:
+                                    task.ancestors.remove(ancestor_task)
+                                    tasks.add(task)
+                                    priority += 1
 
             # Create diagnostic tasks
             for script_name, script_cfg in diagnostic['scripts'].items():

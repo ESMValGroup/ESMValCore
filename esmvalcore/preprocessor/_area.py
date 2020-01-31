@@ -258,10 +258,10 @@ def area_statistics(cube, operator, fx_files=None, calculate_grid=False):
             The operation, options: mean, median, min, max, std_dev, sum,
             variance
         fx_files: list
-            list of field:short_name for the fx variables requested or
+            list of field:str short_name for the fx variables requested or
             list of field:dict for the fx variables requested, including
             but not limited to: short_name, mip, experiment etc (at least
-            short_name required)
+            short_name required if dict)
         calculate_grid: bool
             option to try to calculate the grid area. This option only works
             for regular grids.
