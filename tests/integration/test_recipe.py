@@ -2372,3 +2372,67 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
         assert msg in rec_err_exp
+
+
+def test_fx_vars_duplicate_files(tmp_path, patched_datafinder,
+                                 config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+            custom_order: True
+            annual_statistics:
+              operator: mean
+            extract_region:
+              start_longitude: -80.
+              end_longitude: 30.
+              start_latitude: -80.
+              end_latitude: 80.
+            area_statistics:
+              operator: mean
+              fx_files: [{short_name: areacello, mip: Ofx,
+                          exp: piControl, activity: CMIP}]
+            regrid_time:
+              frequency: yr
+
+        diagnostics:
+          diag_437:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f2
+                grid: gn
+                additional_datasets:
+                  - {dataset: UKESM1-0-LL, exp: ssp585}
+                  - {dataset: UKESM1-0-LL, exp: ssp119}
+            scripts: null
+          diag_439:
+            variables:
+              sst:
+                short_name: tos
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f2
+                grid: gn
+                additional_datasets:
+                  - {dataset: UKESM1-0-LL, exp: ssp585}
+              sss:
+                short_name: tos
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f2
+                grid: gn
+                additional_datasets:
+                  - {dataset: UKESM1-0-LL, exp: ssp585}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
