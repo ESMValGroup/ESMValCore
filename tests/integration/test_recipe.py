@@ -2459,15 +2459,25 @@ def test_fx_vars_duplicate_files(tmp_path, patched_datafinder,
         for anc_product in task.ancestors[0].products:
             assert anc_product.attributes['short_name'] == 'areacello'
 
-    task_name = 'diag_439' + TASKSEP + 'sss'
-    task = [
-        elem for elem in recipe.tasks if elem.name == task_name
-    ][0]
-    assert task.name in all_task_names
-    assert len(task.ancestors) == 1
-    task_name = 'diag_439' + TASKSEP + 'sst'
-    task = [
-        elem for elem in recipe.tasks if elem.name == task_name
-    ][0]
-    assert task.name in all_task_names
-    assert len(task.ancestors) == 0
+    # identify tasks
+    task_name_a = 'diag_439' + TASKSEP + 'sss'
+    task_a = [
+        elem for elem in recipe.tasks if elem.name == task_name_a
+    ]
+    assert task_a
+    task_a = task_a[0]
+    task_name_b = 'diag_439' + TASKSEP + 'sst'
+    task_b = [
+        elem for elem in recipe.tasks if elem.name == task_name_b
+    ]
+    assert task_b
+    task_b = task_b[0]
+
+    # test removal of identical ancestors across tasks
+    # both task_a and task_b have the same ancestor; one
+    # will be removed; process is random so
+    # either task_a has no ancestors or task_b has no ancestors
+    if len(task_a.ancestors) == 1:
+        assert len(task_b.ancestors) == 0
+    elif len(task_b.ancestors) == 1:
+        assert len(task_a.ancestors) == 0
