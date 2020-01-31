@@ -274,7 +274,7 @@ strictness to the highest:
     warnings. Checker will never fail. Use this at your own risk.
 
 - ``relaxed``: only CRITICAL issues are treated as errors. We recommend not to
-    relay on this mode, although it can be useful if there are errors preventing
+    rely on this mode, although it can be useful if there are errors preventing
     the run that you are sure you can manage on the diagnostics or that will
     not affect you.
 
