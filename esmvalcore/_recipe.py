@@ -1393,13 +1393,21 @@ class Recipe:
             all_names = []
             for task in prelim_tasks:
                 if task.ancestors:
-                    for ancestor_task in task.ancestors:
-                        all_names.append(ancestor_task.name)
+                    product_set = []
+                    for product in task.products:
+                        for ancestor_task in task.ancestors:
+                            product_set.append(ancestor_task.name)
+                    for unique_task in list(set(product_set)):
+                        all_names.append(unique_task)
                 else:
                     tasks.add(task)
                     priority += 1
 
-            if all_names:
+            # look for cross-tasks duplication
+            if not len(all_names) > 1:
+                tasks.add(task)
+                priority += 1
+            else:
                 duplicates = []
                 while len(all_names) > 0:
                     elem = all_names.pop()
