@@ -250,7 +250,8 @@ class AllVars(Fix):
 
         return cube
 
-    def _fix_monthly_time_coord(self, cube):
+    @staticmethod
+    def _fix_monthly_time_coord(cube):
         """Set the monthly time coordinates to the middle of the month."""
         if get_frequency(cube) == 'monthly':
             coord = cube.coord(axis='T')
