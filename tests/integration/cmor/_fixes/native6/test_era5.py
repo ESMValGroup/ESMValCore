@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.native6.era5 import AllVars, Evspsbl, FixEra5
+from esmvalcore.cmor._fixes.native6.era5 import AllVars, Evspsbl, get_frequency
 from esmvalcore.cmor.fix import Fix, fix_metadata
 from esmvalcore.cmor.table import CMOR_TABLES
 
@@ -16,35 +16,35 @@ def test_get_evspsbl_fix():
 
 
 def test_get_frequency_hourly():
-    fix = FixEra5(None)
+    """Test cubes with hourly frequency."""
     time = iris.coords.DimCoord([0, 1, 2],
                                 standard_name='time',
                                 units=Unit('hours since 1900-01-01'))
     cube = iris.cube.Cube([1, 6, 3],
                           var_name='random_var',
                           dim_coords_and_dims=[(time, 0)])
-    assert fix._frequency(cube) == 'hourly'
+    assert get_frequency(cube) == 'hourly'
     cube.coord('time').convert_units('days since 1850-1-1 00:00:00.0')
-    assert fix._frequency(cube) == 'hourly'
+    assert get_frequency(cube) == 'hourly'
 
 
 def test_get_frequency_monthly():
-    fix = FixEra5(None)
+    """Test cubes with monthly frequency."""
     time = iris.coords.DimCoord([0, 31, 59],
                                 standard_name='time',
                                 units=Unit('hours since 1900-01-01'))
     cube = iris.cube.Cube([1, 6, 3],
                           var_name='random_var',
                           dim_coords_and_dims=[(time, 0)])
-    assert fix._frequency(cube) == 'monthly'
+    assert get_frequency(cube) == 'monthly'
     cube.coord('time').convert_units('days since 1850-1-1 00:00:00.0')
-    assert fix._frequency(cube) == 'monthly'
+    assert get_frequency(cube) == 'monthly'
 
 
 def test_get_frequency_fx():
-    fix = FixEra5(None)
+    """Test cubes with time invariant frequency."""
     cube = iris.cube.Cube(1., long_name='Cube without time coordinate')
-    assert fix._frequency(cube) == 'fx'
+    assert get_frequency(cube) == 'fx'
     time = iris.coords.DimCoord(0,
                                 standard_name='time',
                                 units=Unit('hours since 1900-01-01'))
@@ -52,10 +52,10 @@ def test_get_frequency_fx():
                           var_name='cube_with_length_1_time_coord',
                           long_name='Geopotential',
                           dim_coords_and_dims=[(time, 0)])
-    assert fix._frequency(cube) == 'fx'
+    assert get_frequency(cube) == 'fx'
     cube.long_name = 'Not geopotential'
     with pytest.raises(ValueError):
-        fix._frequency(cube)
+        get_frequency(cube)
 
 
 def _era5_latitude():
@@ -175,7 +175,7 @@ def pr_cmor_amon():
     cmor_table = CMOR_TABLES['native6']
     vardef = cmor_table.get_variable('Amon', 'pr')
     time = _cmor_time('Amon', bounds=True)
-    data = _cmor_data('Amon') * 1000.
+    data = _cmor_data('Amon') * 1000. / 3600. / 24.
     cube = iris.cube.Cube(data.astype('float32'),
                           long_name=vardef.long_name,
                           var_name=vardef.short_name,
@@ -210,7 +210,7 @@ def pr_cmor_e1hr():
     cmor_table = CMOR_TABLES['native6']
     vardef = cmor_table.get_variable('E1hr', 'pr')
     time = _cmor_time('E1hr', bounds=True, shifted=True)
-    data = _cmor_data('E1hr') * 1000.
+    data = _cmor_data('E1hr') * 1000. / 3600.
     cube = iris.cube.Cube(data.astype('float32'),
                           long_name=vardef.long_name,
                           var_name=vardef.short_name,
@@ -387,7 +387,7 @@ def prsn_cmor_e1hr():
     cmor_table = CMOR_TABLES['native6']
     vardef = cmor_table.get_variable('E1hr', 'prsn')
     time = _cmor_time('E1hr', shifted=True, bounds=True)
-    data = _cmor_data('E1hr') * 1000
+    data = _cmor_data('E1hr') * 1000 / 3600.
     cube = iris.cube.Cube(data.astype('float32'),
                           long_name=vardef.long_name,
                           var_name=vardef.short_name,
@@ -422,7 +422,7 @@ def mrro_cmor_e1hr():
     cmor_table = CMOR_TABLES['native6']
     vardef = cmor_table.get_variable('E1hr', 'mrro')
     time = _cmor_time('E1hr', shifted=True, bounds=True)
-    data = _cmor_data('E1hr') * 1000
+    data = _cmor_data('E1hr') * 1000 / 3600.
     cube = iris.cube.Cube(data.astype('float32'),
                           long_name=vardef.long_name,
                           var_name=vardef.short_name,

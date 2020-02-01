@@ -11,175 +11,208 @@ from ..shared import add_scalar_height_coord
 logger = logging.getLogger(__name__)
 
 
-class FixEra5(Fix):
-    """Fixes for ERA5 variables."""
-    @staticmethod
-    def _frequency(cube):
-        """Determine time frequency of input cube."""
-        try:
-            time = cube.coord(axis='T')
-        except iris.exceptions.CoordinateNotFoundError:
-            return 'fx'
+def get_frequency(cube):
+    """Determine time frequency of input cube."""
+    try:
+        time = cube.coord(axis='T')
+    except iris.exceptions.CoordinateNotFoundError:
+        return 'fx'
 
-        time.convert_units('days since 1850-1-1 00:00:00.0')
-        if len(time.points) == 1:
-            if cube.long_name != 'Geopotential':
-                raise ValueError('Unable to infer frequency of cube '
-                                 f'with length 1 time dimension: {cube}')
-            return 'fx'
-        interval = time.points[1] - time.points[0]
-        if interval - 1 / 24 < 1e-4:
-            return 'hourly'
-        return 'monthly'
+    time.convert_units('days since 1850-1-1 00:00:00.0')
+    if len(time.points) == 1:
+        if cube.long_name != 'Geopotential':
+            raise ValueError('Unable to infer frequency of cube '
+                             f'with length 1 time dimension: {cube}')
+        return 'fx'
+
+    interval = time.points[1] - time.points[0]
+    if interval - 1 / 24 < 1e-4:
+        return 'hourly'
+
+    return 'monthly'
 
 
-class Accumulated(FixEra5):
-    """Fixes for accumulated variables."""
-    def _fix_frequency(self, cube):
-        if self._frequency(cube) == 'monthly':
-            cube.units = cube.units * 'd-1'
-        elif self._frequency(cube) == 'hourly':
-            cube.units = cube.units * 'h-1'
-        return cube
+def fix_invalid_units(cube):
+    """Convert m of water equivalent to m."""
+    cube.units = 'm'
+    return cube
 
-    def _fix_hourly_time_coordinate(self, cube):
-        if self._frequency(cube) == 'hourly':
-            time = cube.coord(axis='T')
-            time.points = time.points - 1 / 48
-            time.guess_bounds()
-        return cube
 
+def fix_hourly_time_coordinate(cube):
+    """Shift aggregated variables 30 minutes back in time."""
+    if get_frequency(cube) == 'hourly':
+        time = cube.coord(axis='T')
+        time.points = time.points - 1 / 48
+        time.guess_bounds()
+    return cube
+
+
+def fix_accumulated_units(cube):
+    """Convert accumulations to fluxes."""
+    if get_frequency(cube) == 'monthly':
+        cube.units = cube.units * 'd-1'
+    elif get_frequency(cube) == 'hourly':
+        cube.units = cube.units * 'h-1'
+    return cube
+
+
+def multiply_with_density(cube, density=1000):
+    """Convert precipitatin from m to kg/m2."""
+    cube.data = cube.core_data() * density
+    cube.units *= 'kg m**-3'
+    return cube
+
+
+def remove_time_coordinate(cube):
+    """Remove time coordinate for invariant parameters."""
+    cube = cube[0]
+    cube.remove_coord('time')
+    return cube
+
+
+def divide_by_gravity(cube):
+    """Convert geopotential to height."""
+    cube.units = cube.units / 'm s-2'
+    cube.data = cube.core_data() / 9.80665
+    return cube
+
+
+class Evspsbl(Fix):
+    """Fixes for evspsbl."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        super().fix_metadata(cubes)
         for cube in cubes:
-            self._fix_hourly_time_coordinate(cube)
-            self._fix_frequency(cube)
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            multiply_with_density(cube)
+
         return cubes
 
 
-class Hydrological(FixEra5):
-    """Fixes for hydrological variables."""
-    @staticmethod
-    def _fix_units(cube):
-        cube.units = 'kg m-2 s-1'
-        cube.data = cube.core_data() * 1000.
-        return cube
-
+class Evspsblpot(Fix):
+    """Fixes for evspsblpot."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        super().fix_metadata(cubes)
         for cube in cubes:
-            self._fix_units(cube)
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            multiply_with_density(cube)
+
         return cubes
 
 
-class Radiation(FixEra5):
-    """Fixes for accumulated radiation variables."""
-    @staticmethod
-    def _fix_direction(cube):
-        cube.attributes['positive'] = 'down'
-
+class Mrro(Fix):
+    """Fixes for mrro."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        super().fix_metadata(cubes)
         for cube in cubes:
-            self._fix_direction(cube)
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            multiply_with_density(cube)
+
         return cubes
 
 
-class Fx(FixEra5):
-    """Fixes for time invariant variables."""
-    @staticmethod
-    def _remove_time_coordinate(cube):
-        cube = cube[0]
-        cube.remove_coord('time')
-        return cube
-
+class Pr(Fix):
+    """Fixes for pr."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        squeezed_cubes = []
         for cube in cubes:
-            cube = self._remove_time_coordinate(cube)
-            squeezed_cubes.append(cube)
-        return iris.cube.CubeList(squeezed_cubes)
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            multiply_with_density(cube)
 
-
-class Tasmin(FixEra5):
-    """Fixes for tasmin."""
-    def fix_metadata(self, cubes):
-        for cube in cubes:
-            if self._frequency(cube) == 'hourly':
-                time = cube.coord(axis='T')
-                time.points = time.points - 1 / 48
-                time.guess_bounds()
         return cubes
 
 
-class Tasmax(FixEra5):
+class Prsn(Fix):
+    """Fixes for prsn."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_invalid_units(cube)
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            multiply_with_density(cube)
+
+        return cubes
+
+
+class Orog(Fix):
+    """Fixes for orography."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        fixed_cubes = []
+        for cube in cubes:
+            cube = remove_time_coordinate(cube)
+            divide_by_gravity(cube)
+            fixed_cubes.append(cube)
+        return iris.cube.CubeList(fixed_cubes)
+
+
+class Rls(Fix):
+    """Fixes for Rls."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.attributes['positive'] = 'down'
+
+        return cubes
+
+
+class Rsds(Fix):
+    """Fixes for Rsds."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.attributes['positive'] = 'down'
+
+        return cubes
+
+
+class Rsdt(Fix):
+    """Fixes for Rsdt."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.attributes['positive'] = 'down'
+
+        return cubes
+
+
+class Rss(Fix):
+    """Fixes for Rss."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.attributes['positive'] = 'down'
+
+        return cubes
+
+
+class Tasmax(Fix):
     """Fixes for tasmax."""
     def fix_metadata(self, cubes):
         for cube in cubes:
-            if self._frequency(cube) == 'hourly':
-                time = cube.coord(axis='T')
-                time.points = time.points - 1 / 48
-                time.guess_bounds()
+            fix_hourly_time_coordinate(cube)
         return cubes
 
 
-class Evspsbl(Hydrological, Accumulated):
-    """Fixes for evspsbl."""
-
-
-class Mrro(Hydrological, Accumulated):
-    """Fixes for evspsbl."""
-
-
-class Prsn(Hydrological, Accumulated):
-    """Fixes for evspsbl."""
-
-
-class Pr(Hydrological, Accumulated):
-    """Fixes for evspsbl."""
-
-
-class Evspsblpot(Hydrological, Accumulated):
-    """Fixes for evspsbl."""
-
-
-class Rss(Radiation, Accumulated):
-    """Fixes for Rss."""
-
-
-class Rsds(Radiation, Accumulated):
-    """Fixes for Rsds."""
-
-
-class Rsdt(Radiation, Accumulated):
-    """Fixes for Rsdt."""
-
-
-class Rls(Radiation):
-    """Fixes for Rls."""
-
-
-class Orog(Fx):
-    """Fixes for orography."""
-    @staticmethod
-    def _divide_by_gravity(cube):
-        cube.units = cube.units / 'm s-2'
-        cube.data = cube.core_data() / 9.80665
-        return cube
-
+class Tasmin(Fix):
+    """Fixes for tasmin."""
     def fix_metadata(self, cubes):
-        """Fix metadata."""
-        cubes = super().fix_metadata(cubes)
         for cube in cubes:
-            self._divide_by_gravity(cube)
+            fix_hourly_time_coordinate(cube)
         return cubes
 
 
-class AllVars(FixEra5):
+class AllVars(Fix):
     """Fixes for all variables."""
     def _fix_coordinates(self, cube):
         """Fix coordinates."""
@@ -219,7 +252,7 @@ class AllVars(FixEra5):
 
     def _fix_monthly_time_coord(self, cube):
         """Set the monthly time coordinates to the middle of the month."""
-        if self._frequency(cube) == 'monthly':
+        if get_frequency(cube) == 'monthly':
             coord = cube.coord(axis='T')
             end = []
             for cell in coord.cells():
