@@ -233,18 +233,19 @@ def _augment(base, update):
 
 def _dataset_to_file(variable, config_user):
     """Find the first file belonging to dataset from variable info."""
-    files = _get_input_files(variable, config_user)
+    (files, dirnames, filenames) = _get_input_files(variable, config_user)
     if not files and variable.get('derive'):
         required_vars = get_required(variable['short_name'],
                                      variable['project'])
         for required_var in required_vars:
             _augment(required_var, variable)
             _add_cmor_info(required_var, override=True)
-            files = _get_input_files(required_var, config_user)
+            (files, dirnames, filenames) = _get_input_files(required_var,
+                                                            config_user)
             if files:
                 variable = required_var
                 break
-    check.data_availability(files, variable)
+    check.data_availability(files, variable, dirnames, filenames)
     return files[0]
 
 
@@ -408,7 +409,7 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
                 {'short_name': fx_varname, 'mip': fx_mip}, var)
             logger.debug("For CMIP6 fx variable '%s', found table '%s'",
                          fx_varname, fx_mip)
-            fx_files = _get_input_files(fx_var, config_user)
+            fx_files = _get_input_files(fx_var, config_user)[0]
 
             # If files found, return them
             if fx_files:
@@ -514,7 +515,7 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
-    input_files = get_input_filelist(
+    (input_files, dirnames, filenames) = get_input_filelist(
         variable=variable,
         rootpath=config_user['rootpath'],
         drs=config_user['drs'])
@@ -523,20 +524,23 @@ def _get_input_files(variable, config_user):
     # Do not download if files are already available locally.
     if config_user['synda_download'] and not input_files:
         input_files = synda_search(variable)
+        dirnames = None
+        filenames = None
 
-    return input_files
+    return (input_files, dirnames, filenames)
 
 
 def _get_ancestors(variable, config_user):
     """Get the input files for a single dataset and setup provenance."""
-    input_files = _get_input_files(variable, config_user)
+    (input_files, dirnames, filenames) = _get_input_files(variable,
+                                                          config_user)
 
     logger.info("Using input files for variable %s of dataset %s:\n%s",
                 variable['short_name'], variable['dataset'],
                 '\n'.join(input_files))
     if (not config_user.get('skip-nonexistent')
             or variable['dataset'] == variable.get('reference_dataset')):
-        check.data_availability(input_files, variable)
+        check.data_availability(input_files, variable, dirnames, filenames)
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
@@ -830,7 +834,7 @@ def _get_derive_input_variables(variables, config_user):
         group_prefix = variable['variable_group'] + '_derive_input_'
         if not variable.get('force_derivation') and _get_input_files(
                 variable,
-                config_user):
+                config_user)[0]:
             # No need to derive, just process normally up to derive step
             var = deepcopy(variable)
             append(group_prefix, var)
@@ -841,7 +845,7 @@ def _get_derive_input_variables(variables, config_user):
             for var in required_vars:
                 _augment(var, variable)
                 _add_cmor_info(var, override=True)
-                files = _get_input_files(var, config_user)
+                files = _get_input_files(var, config_user)[0]
                 if var.get('optional') and not files:
                     logger.info(
                         "Skipping: no data found for %s which is marked as "
