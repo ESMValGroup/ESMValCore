@@ -329,7 +329,8 @@ def _concatenate_overlapping_cubes(cubes):
         # case 0: no overlap (new iris implementaion does allow
         # concatenation of cubes with no overlap)
         if not start_overlap:
-            raise ValueError(f"Attempting to concatenate cubes that are"
+            logger.debug("Unable to concatenate non-overlapping cubes\n%s\nand\n%s"
+            return cubes
                              f"separated in time.")
         # case 2.1: cube1 ends before cube2 -> use full cube2 and shorten cube1
         if start_overlap and data_end_1 <= data_end_2:
