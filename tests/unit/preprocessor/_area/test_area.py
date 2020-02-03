@@ -61,63 +61,63 @@ class Test(tests.Test):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'mean')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_min(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'min')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_max(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'max')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_median(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'median')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_std_dev(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'std_dev')
         expected = np.array([0.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_sum(self):
         """Test for sum of a 2D field."""
         result = area_statistics(self.grid, 'sum')
         grid_areas = iris.analysis.cartography.area_weights(self.grid)
         expected = np.sum(grid_areas)
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_variance(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'variance')
         expected = np.array([0.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_neg_lon(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.negative_grid, 'mean')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_region(self):
         """Test for extracting a region from a 2D field."""
         result = extract_region(self.grid, 1.5, 2.5, 1.5, 2.5)
         # expected outcome
         expected = np.ones((2, 2))
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_region_neg_lon(self):
         """Test for extracting a region with a negative longitude field."""
         result = extract_region(self.negative_grid, -0.5, 0.5, -0.5, 0.5)
         expected = np.ones((2, 2))
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_named_region(self):
         """Test for extracting a named region."""
@@ -149,12 +149,12 @@ class Test(tests.Test):
         # test string region
         result1 = extract_named_regions(region_cube, 'region1')
         expected = np.ones((3, ))
-        self.assertArrayEqual(result1.data, expected)
+        self.assert_array_equal(result1.data, expected)
 
         # test list of regions
         result2 = extract_named_regions(region_cube, ['region1', 'region2'])
         expected = np.ones((3, 2))
-        self.assertArrayEqual(result2.data, expected)
+        self.assert_array_equal(result2.data, expected)
 
         # test for expected failures:
         with self.assertRaises(ValueError):

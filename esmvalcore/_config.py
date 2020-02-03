@@ -168,7 +168,10 @@ def configure_logging(cfg_file=None, output=None, console_log_level=None):
 def get_project_config(project):
     """Get developer-configuration for project."""
     logger.debug("Retrieving %s configuration", project)
-    return CFG[project]
+    if project in CFG:
+        return CFG[project]
+    else:
+        raise ValueError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
