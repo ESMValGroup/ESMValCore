@@ -160,8 +160,8 @@ def check_for_temporal_preprocs(profile):
         preproc for preproc in profile if preproc in temporal_preprocs]
     if temp_preprocs:
         raise RecipeError(
-            "Time coordinate preprocessor step {} not permitted on fx vars \
-            please remove them from recipe.".format(", ".join(temp_preprocs)))
+            "Time coordinate preprocessor step(s) {} not permitted on fx "
+            "vars, please remove them from recipe".format(temp_preprocs))
 
 
 def extract_shape(settings):
