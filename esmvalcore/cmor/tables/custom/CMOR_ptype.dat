@@ -1,0 +1,26 @@
+SOURCE: CMIP5
+!============
+variable_entry:    ptype
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             1
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Precipitation type
+comment:           Description of numerical values can be found in GRIB2 - CODE TABLE 4.201
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          ptype
+type:              real
+valid_min:         0
+valid_max:         255
+ok_min_mean_abs:   0
+ok_max_mean_abs:   255
+!----------------------------------
+!

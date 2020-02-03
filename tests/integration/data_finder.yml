@@ -38,7 +38,7 @@ get_input_filelist:
     dirs:
       - ''
     file_patterns:
-      - ta_Amon_HadGEM2-ES_historical_r1i1p1_*.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
 
@@ -55,8 +55,8 @@ get_input_filelist:
     dirs:
       - ''
     file_patterns:
-      - ta_Amon_HadGEM2-ES_historical_r1i1p1_*.nc
-      - ta_Amon_HadGEM2-ES_rcp85_r1i1p1_*.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
+      - ta_Amon_HadGEM2-ES_rcp85_r1i1p1*.nc
     found_files:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_198413-200512.nc
@@ -75,14 +75,14 @@ get_input_filelist:
     dirs:
       - ''
     file_patterns:
-      - ta_Amon_HadGEM2-ES_historical_r1i1p1_*.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files: []
 
   - drs: default
     variable: *variable
     dirs: null
     file_patterns:
-      - ta_Amon_HadGEM2-ES_historical_r1i1p1_*.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files: []
 
   - drs: BADC
@@ -103,7 +103,7 @@ get_input_filelist:
     dirs:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/latest/ta
     file_patterns:
-      - ta_Amon_HadGEM2-ES_historical_r1i1p1_*.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/latest/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/latest/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
@@ -123,7 +123,7 @@ get_input_filelist:
     dirs:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta
     file_patterns:
-      - ta_Amon_HadGEM2-ES_historical_r1i1p1_*.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
@@ -148,9 +148,9 @@ get_input_filelist:
       - MOHC/HadGEM2-ES/rcp45/mon/atmos/Amon/r1i1p1/v20110330/ta
       - MOHC/HadGEM2-ES/rcp85/mon/atmos/Amon/r1i1p1/v20110330/ta
     file_patterns:
-      - ta_Amon_HadGEM2-ES_historical_r1i1p1_*.nc
-      - ta_Amon_HadGEM2-ES_rcp45_r1i1p1_*.nc
-      - ta_Amon_HadGEM2-ES_rcp85_r1i1p1_*.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
+      - ta_Amon_HadGEM2-ES_rcp45_r1i1p1*.nc
+      - ta_Amon_HadGEM2-ES_rcp85_r1i1p1*.nc
     found_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
@@ -172,7 +172,7 @@ get_input_filelist:
     dirs:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1
     file_patterns:
-      - ta_Amon_HadGEM2-ES_historical_r1i1p1_*.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
@@ -193,7 +193,7 @@ get_input_filelist:
     dirs:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1
     file_patterns:
-      - ta_Amon_HadGEM2-ES_historical_r1i1p1_*.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
 

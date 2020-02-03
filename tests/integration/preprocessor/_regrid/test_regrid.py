@@ -17,6 +17,7 @@ from tests.unit.preprocessor._regrid import _make_cube
 
 class Test(tests.Test):
     def setUp(self):
+        """Prepare tests."""
         shape = (3, 2, 2)
         data = np.arange(np.prod(shape)).reshape(shape)
         self.cube = _make_cube(data)
@@ -38,7 +39,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, 'linear')
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__linear_extrapolate(self):
         data = np.empty((3, 3))
@@ -58,7 +59,7 @@ class Test(tests.Test):
         expected = [[[-3., -1.5, 0.], [0., 1.5, 3.], [3., 4.5, 6.]],
                     [[1., 2.5, 4.], [4., 5.5, 7.], [7., 8.5, 10.]],
                     [[5., 6.5, 8.], [8., 9.5, 11.], [11., 12.5, 14.]]]
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__linear_extrapolate_with_mask(self):
         data = np.empty((3, 3))
@@ -79,7 +80,7 @@ class Test(tests.Test):
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([1.5, 5.5, 9.5])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__nearest(self):
         data = np.empty((1, 1))
@@ -97,7 +98,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, 'nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__nearest_extrapolate_with_mask(self):
         data = np.empty((3, 3))
@@ -117,7 +118,7 @@ class Test(tests.Test):
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([3, 7, 11])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__area_weighted(self):
         data = np.empty((1, 1))
@@ -135,7 +136,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, 'area_weighted')
         expected = np.array([1.499886, 5.499886, 9.499886])
-        self.assertArrayAlmostEqual(result.data, expected)
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
     def test_regrid__unstructured_nearest(self):
         data = np.empty((1, 1))
@@ -164,7 +165,7 @@ class Test(tests.Test):
         self.cube.add_aux_coord(lats, (1, 2))
         result = regrid(self.cube, grid, 'unstructured_nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
-        self.assertArrayAlmostEqual(result.data, expected)
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
 
 if __name__ == '__main__':

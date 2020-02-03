@@ -10,12 +10,12 @@ import subprocess
 import threading
 import time
 from copy import deepcopy
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 
 import psutil
 import yaml
 
-from ._config import TAGS, replace_tags, DIAGNOSTICS_PATH
+from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
 
 logger = logging.getLogger(__name__)
@@ -48,12 +48,19 @@ def _get_resource_usage(process, start_time, children=True):
         'Disk write (GB)',
     ]
     fmt = '{}\t' * len(entries[:-1]) + '{}\n'
-    yield fmt.format(*entries)
+    yield (fmt.format(*entries), 0.)
 
     # Compute resource usage
     gigabyte = float(2**30)
     precision = [1, 1, None, 1, None, 3, 3]
     cache = {}
+    max_memory = 0.
+    try:
+        process.io_counters()
+    except AttributeError:
+        counters_available = False
+    else:
+        counters_available = True
     while process.is_running():
         try:
             if children:
@@ -77,8 +84,10 @@ def _get_resource_usage(process, start_time, children=True):
                     proc.cpu_percent(),
                     proc.memory_info().rss / gigabyte,
                     proc.memory_percent(),
-                    proc.io_counters().read_bytes / gigabyte,
-                    proc.io_counters().write_bytes / gigabyte,
+                    (proc.io_counters().read_bytes / gigabyte
+                     if counters_available else float('nan')),
+                    (proc.io_counters().write_bytes / gigabyte
+                     if counters_available else float('nan')),
                 ]
         except (OSError, psutil.AccessDenied, psutil.NoSuchProcess):
             # Try again if an error occurs because some process died
@@ -89,7 +98,8 @@ def _get_resource_usage(process, start_time, children=True):
         entries.insert(0, time.time() - start_time)
         entries = [round(entry, p) for entry, p in zip(entries, precision)]
         entries.insert(0, datetime.datetime.utcnow())
-        yield fmt.format(*entries)
+        max_memory = max(max_memory, entries[4])
+        yield (fmt.format(*entries), max_memory)
 
 
 @contextlib.contextmanager
@@ -102,10 +112,16 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
         process = psutil.Process(pid)
         start_time = time.time()
         with open(filename, 'w') as file:
-            for msg in _get_resource_usage(process, start_time, children):
+            for msg, max_mem in _get_resource_usage(process, start_time,
+                                                    children):
                 file.write(msg)
                 time.sleep(interval)
                 if halt.is_set():
+                    logger.info(
+                        'Maximum memory used (estimate): %.1f GB', max_mem)
+                    logger.info(
+                        'Sampled every second. It may be inaccurate if short '
+                        'but high spikes in memory consumption occur.')
                     return
 
     thread = threading.Thread(target=_log_resource_usage)
@@ -193,12 +209,14 @@ def write_ncl_settings(settings, filename, mode='wt'):
 class BaseTask:
     """Base class for defining task classes."""
 
-    def __init__(self, ancestors=None, name=''):
+    def __init__(self, ancestors=None, name='', products=None):
         """Initialize task."""
         self.ancestors = [] if ancestors is None else ancestors
+        self.products = set() if products is None else set(products)
         self.output_files = None
         self.name = name
         self.activity = None
+        self.priority = 0
 
     def initialize_provenance(self, recipe_entity):
         """Initialize task provenance activity."""
@@ -224,8 +242,11 @@ class BaseTask:
                 input_files.extend(task.run())
             logger.info("Starting task %s in process [%s]", self.name,
                         os.getpid())
+            start = datetime.datetime.now()
             self.output_files = self._run(input_files)
-            logger.info("Successfully completed task %s", self.name)
+            runtime = datetime.datetime.now() - start
+            logger.info("Successfully completed task %s (priority %s) in %s",
+                        self.name, self.priority, runtime)
 
         return self.output_files
 
@@ -254,10 +275,9 @@ class DiagnosticTask(BaseTask):
 
     def __init__(self, script, settings, output_dir, ancestors=None, name=''):
         """Create a diagnostic task."""
-        super(DiagnosticTask, self).__init__(ancestors=ancestors, name=name)
+        super().__init__(ancestors=ancestors, name=name)
         self.script = script
         self.settings = settings
-        self.products = set()
         self.output_dir = output_dir
         self.cmd = self._initialize_cmd(script)
         self.log = os.path.join(settings['run_dir'], 'log.txt')
@@ -266,8 +286,8 @@ class DiagnosticTask(BaseTask):
 
     def _initialize_cmd(self, script):
         """Create a an executable command from script."""
-        diagnostics_root = os.path.join(
-            DIAGNOSTICS_PATH, 'diag_scripts')
+        diagnostics_root = os.path.join(DIAGNOSTICS_PATH, 'diag_scripts')
+        script = os.path.expanduser(script)
         script_file = os.path.abspath(os.path.join(diagnostics_root, script))
 
         if not os.path.isfile(script_file):
@@ -456,8 +476,8 @@ class DiagnosticTask(BaseTask):
             env['MPLBACKEND'] = 'Agg'
         else:
             # Make diag_scripts path available to diagostics scripts
-            env['diag_scripts'] = os.path.join(
-                DIAGNOSTICS_PATH, 'diag_scripts')
+            env['diag_scripts'] = os.path.join(DIAGNOSTICS_PATH,
+                                               'diag_scripts')
 
         cmd = list(self.cmd)
         settings_file = self.write_settings()
@@ -601,53 +621,46 @@ def _run_tasks_sequential(tasks):
     n_tasks = len(get_flattened_tasks(tasks))
     logger.info("Running %s tasks sequentially", n_tasks)
 
-    for task in get_independent_tasks(tasks):
+    tasks = get_independent_tasks(tasks)
+    for task in sorted(tasks, key=lambda t: t.priority):
         task.run()
 
 
 def _run_tasks_parallel(tasks, max_parallel_tasks=None):
     """Run tasks in parallel."""
     scheduled = get_flattened_tasks(tasks)
-    running = []
-    results = []
+    running = {}
 
     n_scheduled, n_running = len(scheduled), len(running)
     n_tasks = n_scheduled
 
-    pool = Pool(processes=max_parallel_tasks)
-
-    logger.info("Running %s tasks using at most %s processes", n_tasks,
-                max_parallel_tasks or cpu_count())
+    if max_parallel_tasks is None:
+        max_parallel_tasks = os.cpu_count()
+    if max_parallel_tasks > n_tasks:
+        max_parallel_tasks = n_tasks
+    logger.info("Running %s tasks using %s processes", n_tasks,
+                max_parallel_tasks)
 
     def done(task):
         """Assume a task is done if it not scheduled or running."""
         return not (task in scheduled or task in running)
 
+    pool = Pool(processes=max_parallel_tasks)
     while scheduled or running:
         # Submit new tasks to pool
-        just_scheduled = []
-        for task in scheduled:
-            if not task.ancestors or all(done(t) for t in task.ancestors):
-                result = pool.apply_async(_run_task, [task])
-                results.append(result)
-                running.append(task)
-                just_scheduled.append(task)
-        for task in just_scheduled:
-            scheduled.remove(task)
+        for task in sorted(scheduled, key=lambda t: t.priority):
+            if len(running) >= max_parallel_tasks:
+                break
+            if all(done(t) for t in task.ancestors):
+                future = pool.apply_async(_run_task, [task])
+                running[task] = future
+                scheduled.remove(task)
 
         # Handle completed tasks
-        for task, result in zip(running, results):
-            if result.ready():
-                task.output_files, updated_products = result.get()
-                for updated in updated_products:
-                    for original in task.products:
-                        if original.filename == updated.filename:
-                            updated.copy_provenance(target=original)
-                            break
-                    else:
-                        task.products.add(updated)
-                running.remove(task)
-                results.remove(result)
+        ready = {t for t in running if running[t].ready()}
+        for task in ready:
+            _copy_results(task, running[task])
+            running.pop(task)
 
         # Wait if there are still tasks running
         if running:
@@ -658,12 +671,23 @@ def _run_tasks_parallel(tasks, max_parallel_tasks=None):
             n_scheduled, n_running = len(scheduled), len(running)
             n_done = n_tasks - n_scheduled - n_running
             logger.info(
-                "Progress: %s tasks running or queued, %s tasks waiting for "
-                "ancestors, %s/%s done", n_running, n_scheduled, n_done,
-                n_tasks)
+                "Progress: %s tasks running, %s tasks waiting for ancestors, "
+                "%s/%s done", n_running, n_scheduled, n_done, n_tasks)
 
     pool.close()
     pool.join()
+
+
+def _copy_results(task, future):
+    """Update task with the results from the remote process."""
+    task.output_files, updated_products = future.get()
+    for updated in updated_products:
+        for original in task.products:
+            if original.filename == updated.filename:
+                updated.copy_provenance(target=original)
+                break
+        else:
+            task.products.add(updated)
 
 
 def _run_task(task):

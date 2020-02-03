@@ -6,20 +6,18 @@ selecting geographical regions; constructing area averages; etc.
 """
 import logging
 
+import fiona
 import iris
+import numpy as np
+import shapely
+import shapely.ops
 from dask import array as da
+from iris.exceptions import CoordinateNotFoundError
+
+from ._shared import (get_iris_analysis_operation, guess_bounds,
+                      operator_accept_weights)
 
 logger = logging.getLogger(__name__)
-
-
-# guess bounds tool
-def _guess_bounds(cube, coords):
-    """Guess bounds of a cube, or not."""
-    # check for bounds just in case
-    for coord in coords:
-        if not cube.coord(coord).has_bounds():
-            cube.coord(coord).guess_bounds()
-    return cube
 
 
 # slice cube over a restricted area (box)
@@ -50,87 +48,108 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     iris.cube.Cube
         smaller cube.
     """
-    # Converts Negative longitudes to 0 -> 360. standard
-    start_longitude = float(start_longitude)
-    end_longitude = float(end_longitude)
-    start_latitude = float(start_latitude)
-    end_latitude = float(end_latitude)
-
+    if abs(start_latitude) > 90.:
+        raise ValueError(f"Invalid start_latitude: {start_latitude}")
+    if abs(end_latitude) > 90.:
+        raise ValueError(f"Invalid end_latitude: {end_latitude}")
     if cube.coord('latitude').ndim == 1:
+        # Iris check if any point of the cell is inside the region
+        # To check only the center, ignore_bounds must be set to
+        # True (default) is False
         region_subset = cube.intersection(
             longitude=(start_longitude, end_longitude),
-            latitude=(start_latitude, end_latitude))
+            latitude=(start_latitude, end_latitude),
+            ignore_bounds=True,
+        )
         region_subset = region_subset.intersection(longitude=(0., 360.))
         return region_subset
-    # irregular grids
+    # Irregular grids
     lats = cube.coord('latitude').points
     lons = cube.coord('longitude').points
-    select_lats = start_latitude < lats < end_latitude
-    select_lons = start_longitude < lons < end_longitude
+    # Convert longitudes to valid range
+    if start_longitude != 360.:
+        start_longitude %= 360.
+    if end_longitude != 360.:
+        end_longitude %= 360.
+
+    if start_longitude <= end_longitude:
+        select_lons = (lons >= start_longitude) & (lons <= end_longitude)
+    else:
+        select_lons = (lons >= start_longitude) | (lons <= end_longitude)
+
+    if start_latitude <= end_latitude:
+        select_lats = (lats >= start_latitude) & (lats <= end_latitude)
+    else:
+        select_lats = (lats >= start_latitude) | (lats <= end_latitude)
+
     selection = select_lats & select_lons
-    data = da.ma.masked_where(~selection, cube.core_data())
-    return cube.copy(data)
+    selection = da.broadcast_to(selection, cube.shape)
+    cube.data = da.ma.masked_where(~selection, cube.core_data())
+    return cube
 
 
-def get_iris_analysis_operation(operator):
+def zonal_statistics(cube, operator):
     """
-    Determine the iris analysis operator from a string.
-
-    Map string to functional operator.
-
-    Parameters
-    ----------
-    operator: str
-        A named operator.
-
-    Returns
-    -------
-        function: A function from iris.analysis
-
-    Raises
-    ------
-    ValueError
-        operator not in allowed operators list.
-        allowed operators: mean, median, std_dev, variance, min, max
-    """
-    operators = ['mean', 'median', 'std_dev', 'variance', 'min', 'max']
-    operator = operator.lower()
-    if operator not in operators:
-        raise ValueError("operator {} not recognised. "
-                         "Accepted values are: {}."
-                         "".format(operator, ', '.join(operators)))
-    operation = getattr(iris.analysis, operator.upper())
-    return operation
-
-
-def zonal_means(cube, coordinate, mean_type):
-    """
-    Get zonal means.
-
-    Function that returns zonal means along a coordinate `coordinate`;
-    the type of mean is controlled by mean_type variable (string):
-    - 'mean' -> MEAN
-    - 'median' -> MEDIAN
-    - 'std_dev' -> STD_DEV
-    - 'variance' -> VARIANCE
-    - 'min' -> MIN
-    - 'max' -> MAX
+    Compute zonal statistics.
 
     Parameters
     ----------
     cube: iris.cube.Cube
         input cube.
-    coordinate: str
-        name of coordinate to make mean.
-    mean_type: str
-        Type of analysis to use, from iris.analysis.
+
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
 
     Returns
     -------
     iris.cube.Cube
+        Zonal statistics cube.
+
+    Raises
+    ------
+    ValueError
+        Error raised if computation on irregular grids is attempted.
+        Zonal statistics not yet implemented for irregular grids.
     """
-    operation = get_iris_analysis_operation(mean_type)
-    return cube.collapsed(coordinate, operation)
+    if cube.coord('longitude').points.ndim < 2:
+        operation = get_iris_analysis_operation(operator)
+        return cube.collapsed('longitude', operation)
+    else:
+        msg = (f"Zonal statistics on irregular grids not yet implemnted")
+        raise ValueError(msg)
+
+
+def meridional_statistics(cube, operator):
+    """
+    Compute meridional statistics.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Meridional statistics cube.
+
+    Raises
+    ------
+    ValueError
+        Error raised if computation on irregular grids is attempted.
+        Zonal statistics not yet implemented for irregular grids.
+    """
+    if cube.coord('latitude').points.ndim < 2:
+        operation = get_iris_analysis_operation(operator)
+        return cube.collapsed('latitude', operation)
+    else:
+        msg = (f"Meridional statistics on irregular grids not yet implemnted")
+        raise ValueError(msg)
 
 
 def tile_grid_areas(cube, fx_files):
@@ -193,6 +212,8 @@ def area_statistics(cube, operator, fx_files=None):
     +------------+--------------------------------------------------+
     | `std_dev`  | Standard Deviation (not area weighted)           |
     +------------+--------------------------------------------------+
+    | `sum`      | Area weighted sum.                               |
+    +------------+--------------------------------------------------+
     | `variance` | Variance (not area weighted)                     |
     +------------+--------------------------------------------------+
     | `min`:     | Minimum value                                    |
@@ -205,7 +226,8 @@ def area_statistics(cube, operator, fx_files=None):
         cube: iris.cube.Cube
             Input cube.
         operator: str
-            The operation, options: mean, median, min, max, std_dev, variance
+            The operation, options: mean, median, min, max, std_dev, sum,
+            variance
         fx_files: dict
             dictionary of field:filename for the fx_files
 
@@ -230,7 +252,7 @@ def area_statistics(cube, operator, fx_files=None):
 
     coord_names = ['longitude', 'latitude']
     if grid_areas is None or not grid_areas.any():
-        cube = _guess_bounds(cube, coord_names)
+        cube = guess_bounds(cube, coord_names)
         grid_areas = iris.analysis.cartography.area_weights(cube)
         logger.info('Calculated grid area shape: %s', grid_areas.shape)
 
@@ -243,10 +265,8 @@ def area_statistics(cube, operator, fx_files=None):
     # TODO: implement weighted stdev, median, s var when available in iris.
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
-    if operator == 'mean':
-        return cube.collapsed(coord_names,
-                              operation,
-                              weights=grid_areas)
+    if operator_accept_weights(operator):
+        return cube.collapsed(coord_names, operation, weights=grid_areas)
 
     # Many IRIS analysis functions do not accept weights arguments.
     return cube.collapsed(coord_names, operation)
@@ -295,3 +315,185 @@ def extract_named_regions(cube, regions):
     constraints = iris.Constraint(region=lambda r: r in regions)
     cube = cube.extract(constraint=constraints)
     return cube
+
+
+def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
+               end_latitude):
+    """Crop cubes on a cartesian grid."""
+    lon_coord = cube.coord(axis='X')
+    lat_coord = cube.coord(axis='Y')
+    if lon_coord.ndim == 1 and lat_coord.ndim == 1:
+        # add a padding of one cell around the cropped cube
+        lon_bound = lon_coord.core_bounds()[0]
+        lon_step = lon_bound[1] - lon_bound[0]
+        start_longitude -= lon_step
+        end_longitude += lon_step
+        lat_bound = lat_coord.core_bounds()[0]
+        lat_step = lat_bound[1] - lat_bound[0]
+        start_latitude -= lat_step
+        end_latitude += lat_step
+        cube = extract_region(cube, start_longitude, end_longitude,
+                              start_latitude, end_latitude)
+
+    return cube
+
+
+def _select_representative_point(shape, lon, lat):
+    """Select a representative point for `shape` from `lon` and `lat`."""
+    representative_point = shape.representative_point()
+    points = shapely.geometry.MultiPoint(np.stack((lon.flat, lat.flat),
+                                                  axis=1))
+    nearest_point = shapely.ops.nearest_points(points, representative_point)[0]
+    nearest_lon, nearest_lat = nearest_point.coords[0]
+    select = (lon == nearest_lon) & (lat == nearest_lat)
+    return select
+
+
+def _get_masks_from_geometries(geometries,
+                               lon,
+                               lat,
+                               method='contains',
+                               decomposed=False):
+
+    if method not in {'contains', 'representative'}:
+        raise ValueError(
+            "Invalid value for `method`. Choose from 'contains', ",
+            "'representative'.")
+
+    selections = dict()
+
+    for i, item in enumerate(geometries):
+        shape = shapely.geometry.shape(item['geometry'])
+        if method == 'contains':
+            select = shapely.vectorized.contains(shape, lon, lat)
+        if method == 'representative' or not select.any():
+            select = _select_representative_point(shape, lon, lat)
+        if 'ID' in item['properties']:
+            id_ = int(item['properties']['ID'])
+        elif 'id' in item['properties']:
+            id_ = int(item['properties']['id'])
+        else:
+            id_ = i
+
+        selections[id_] = select
+
+    if not decomposed and len(selections) > 1:
+        selection = np.zeros(lat.shape, dtype=bool)
+        for select in selections.values():
+            selection |= select
+
+        selections = {0: selection}
+
+    return selections
+
+
+def fix_coordinate_ordering(cube):
+    """ transpose the dimensions such that the order of dimension is
+    in standard order, ie:
+
+    [time] [shape_id] [other_coordinates] latitude longitude
+
+    where dimensions between brackets are optional.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+       input cube.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with dimensions transposed to standard order
+
+    """
+    try:
+        time_dim = cube.coord_dims('time')
+    except CoordinateNotFoundError:
+        time_dim = ()
+    try:
+        shape_dim = cube.coord_dims('shape_id')
+    except CoordinateNotFoundError:
+        shape_dim = ()
+
+    other = list(range(len(cube.shape)))
+    for dim in [time_dim, shape_dim]:
+        for i in dim:
+            other.remove(i)
+    other = tuple(other)
+
+    order = time_dim + shape_dim + other
+
+    cube.transpose(new_order=order)
+    return cube
+
+
+def extract_shape(cube,
+                  shapefile,
+                  method='contains',
+                  crop=True,
+                  decomposed=False):
+    """Extract a region defined by a shapefile.
+
+    Note that this function does not work for shapes crossing the
+    prime meridian or poles.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+       input cube.
+    shapefile: str
+        A shapefile defining the region(s) to extract.
+    method: str, optional
+        Select all points contained by the shape or select a single
+        representative point. Choose either 'contains' or 'representative'.
+        If 'contains' is used, but not a single grid point is contained by the
+        shape, a representative point will selected.
+    crop: bool, optional
+        Crop the resulting cube using `extract_region()`. Note that data on
+        irregular grids will not be cropped.
+    decomposed: bool, optional
+        Whether or not to retain the sub shapes of the shapefile in the output.
+        If this is set to True, the output cube has a dimension for the sub
+        shapes.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube containing the extracted region.
+
+    See Also
+    --------
+    extract_region : Extract a region from a cube.
+
+    """
+
+    with fiona.open(shapefile) as geometries:
+
+        if crop:
+            cube = _crop_cube(cube, *geometries.bounds)
+
+        lon = cube.coord(axis='X').points
+        lat = cube.coord(axis='Y').points
+        if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
+            lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+
+        selections = _get_masks_from_geometries(geometries,
+                                                lon,
+                                                lat,
+                                                method=method,
+                                                decomposed=decomposed)
+
+    cubelist = iris.cube.CubeList()
+
+    for id_, select in selections.items():
+        _cube = cube.copy()
+        _cube.add_aux_coord(
+            iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
+
+        select = da.broadcast_to(select, _cube.shape)
+        _cube.data = da.ma.masked_where(~select, _cube.core_data())
+        cubelist.append(_cube)
+
+    cube = cubelist.merge_cube()
+
+    return fix_coordinate_ordering(cube)
