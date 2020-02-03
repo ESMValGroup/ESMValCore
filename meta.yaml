@@ -49,6 +49,7 @@ requirements:
     - netCDF4
     - numba
     - numpy
+    - mock>=3.0.5,<4.0
     - prov
     - psutil
     - pydot
