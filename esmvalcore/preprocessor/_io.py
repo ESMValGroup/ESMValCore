@@ -306,7 +306,7 @@ def _concatenate_overlapping_cubes(cubes):
     # case 1: both cubes start at the same time -> return longer cube
     if data_start_1 == data_start_2:
         if data_end_1 < data_end_2:
-            logger.debug(f"Both cubes start at the same time but cube %s "
+            logger.debug("Both cubes start at the same time but cube %s "
                          f"ends before %s", cubes[0], cubes[1])
             logger.debug(f"Cube %s contains all needed data "
                          f"so using it fully", cubes[1])
