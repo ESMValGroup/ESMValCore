@@ -107,12 +107,7 @@ class CMORCheck():
         self.report_warnings(logger)
         self.report_errors(logger)
 
-        if self.frequency != 'fx':
-            self._add_auxiliar_time_coordinates()
-        if self.has_errors():
-            return None
-        else:
-            return self._cube
+        return self._cube
 
     def report_errors(self, logger):
         """Report detected errors.
