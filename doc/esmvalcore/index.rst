@@ -1,6 +1,6 @@
-###############
-ESMValTool Core
-###############
+##########
+ESMValCore
+##########
 
 
 .. toctree::
@@ -10,3 +10,6 @@ ESMValTool Core
     Finding data <datafinder>
     Recipe <recipe>
     Preprocessor <preprocessor>
+    Fixing data <fixing_data>
+    Deriving variables <derivation>
+    Utilities <utils>
