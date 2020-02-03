@@ -67,11 +67,7 @@ class Test(unittest.TestCase):
         return start_result
 
     @wraps(np.testing.assert_array_equal)
-    def assertArrayEqual(self, a, b, err_msg='', verbose=True):  # noqa: N802
-        np.testing.assert_array_equal(a, b, err_msg=err_msg, verbose=verbose)
-
-    @wraps(np.testing.assert_array_almost_equal)
-    def assertArrayAlmostEqual(self, a, b, decimal=6,  # noqa: N802
-                               err_msg='', verbose=True):
-        np.testing.assert_array_almost_equal(
-            a, b, decimal=decimal, err_msg=err_msg, verbose=verbose)
+    def assert_array_equal(self, a, b):
+        np.testing.assert_array_equal(a, b)
+        if np.ma.isMaskedArray(a) or np.ma.isMaskedArray(b):
+            np.testing.assert_array_equal(a.mask, b.mask)

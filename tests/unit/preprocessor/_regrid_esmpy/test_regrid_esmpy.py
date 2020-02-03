@@ -107,26 +107,25 @@ class TestHelpers(tests.Test):
         lon_1d_points = lon_1d_bounds.mean(axis=1)
         lon_2d_points, lat_2d_points = np.meshgrid(lon_1d_points,
                                                    lat_1d_points)
-        (lon_2d_pre_bounds, lat_2d_pre_bounds) = np.meshgrid(
-            lon_1d_pre_bounds, lat_1d_pre_bounds)
+        (lon_2d_pre_bounds,
+         lat_2d_pre_bounds) = np.meshgrid(lon_1d_pre_bounds, lat_1d_pre_bounds)
         lat_2d_bounds = np.stack([
             lat_2d_pre_bounds[:-1, :-1], lat_2d_pre_bounds[:-1, 1:],
             lat_2d_pre_bounds[1:, 1:], lat_2d_pre_bounds[1:, :-1]
         ],
-            axis=2)
+                                 axis=2)
         lon_2d_bounds = np.stack([
             lon_2d_pre_bounds[:-1, :-1], lon_2d_pre_bounds[:-1, 1:],
             lon_2d_pre_bounds[1:, 1:], lon_2d_pre_bounds[1:, :-1]
         ],
-            axis=2)
-        self.lat_1d = mock.Mock(
-            iris.coords.DimCoord,
-            standard_name='latitude',
-            long_name='latitude',
-            ndim=1,
-            points=lat_1d_points,
-            bounds=lat_1d_bounds,
-            has_bounds=mock.Mock(return_value=True))
+                                 axis=2)
+        self.lat_1d = mock.Mock(iris.coords.DimCoord,
+                                standard_name='latitude',
+                                long_name='latitude',
+                                ndim=1,
+                                points=lat_1d_points,
+                                bounds=lat_1d_bounds,
+                                has_bounds=mock.Mock(return_value=True))
         self.lat_1d_no_bounds = mock.Mock(
             iris.coords.DimCoord,
             standard_name='latitude',
@@ -135,40 +134,36 @@ class TestHelpers(tests.Test):
             has_bounds=mock.Mock(return_value=False),
             bounds=lat_1d_bounds,
             guess_bounds=mock.Mock())
-        self.lon_1d = mock.Mock(
-            iris.coords.DimCoord,
-            standard_name='longitude',
-            long_name='longitude',
-            ndim=1,
-            points=lon_1d_points,
-            bounds=lon_1d_bounds,
-            has_bounds=mock.Mock(return_value=True),
-            circular=True)
-        self.lon_1d_aux = mock.Mock(
-            iris.coords.AuxCoord,
-            standard_name='longitude',
-            long_name='longitude',
-            ndim=1,
-            shape=lon_1d_points.shape,
-            points=lon_1d_points,
-            bounds=lon_1d_bounds,
-            has_bounds=mock.Mock(return_value=True))
-        self.lat_2d = mock.Mock(
-            iris.coords.AuxCoord,
-            standard_name='latitude',
-            long_name='latitude',
-            ndim=2,
-            points=lat_2d_points,
-            bounds=lat_2d_bounds,
-            has_bounds=mock.Mock(return_value=True))
-        self.lon_2d = mock.Mock(
-            iris.coords.AuxCoord,
-            standard_name='longitude',
-            long_name='longitude',
-            ndim=2,
-            points=lon_2d_points,
-            bounds=lon_2d_bounds,
-            has_bounds=mock.Mock(return_value=True))
+        self.lon_1d = mock.Mock(iris.coords.DimCoord,
+                                standard_name='longitude',
+                                long_name='longitude',
+                                ndim=1,
+                                points=lon_1d_points,
+                                bounds=lon_1d_bounds,
+                                has_bounds=mock.Mock(return_value=True),
+                                circular=True)
+        self.lon_1d_aux = mock.Mock(iris.coords.AuxCoord,
+                                    standard_name='longitude',
+                                    long_name='longitude',
+                                    ndim=1,
+                                    shape=lon_1d_points.shape,
+                                    points=lon_1d_points,
+                                    bounds=lon_1d_bounds,
+                                    has_bounds=mock.Mock(return_value=True))
+        self.lat_2d = mock.Mock(iris.coords.AuxCoord,
+                                standard_name='latitude',
+                                long_name='latitude',
+                                ndim=2,
+                                points=lat_2d_points,
+                                bounds=lat_2d_bounds,
+                                has_bounds=mock.Mock(return_value=True))
+        self.lon_2d = mock.Mock(iris.coords.AuxCoord,
+                                standard_name='longitude',
+                                long_name='longitude',
+                                ndim=2,
+                                points=lon_2d_points,
+                                bounds=lon_2d_bounds,
+                                has_bounds=mock.Mock(return_value=True))
         self.lon_2d_non_circular = mock.Mock(
             iris.coords.AuxCoord,
             standard_name='longitude',
@@ -176,36 +171,34 @@ class TestHelpers(tests.Test):
             points=lon_2d_points[:, 1:-1],
             bounds=lon_2d_bounds[:, 1:-1],
             has_bounds=mock.Mock(return_value=True))
-        self.lat_3d = mock.Mock(
-            iris.coords.AuxCoord,
-            standard_name='latitude',
-            long_name='latitude',
-            ndim=3)
-        self.lon_3d = mock.Mock(
-            iris.coords.AuxCoord,
-            standard_name='longitude',
-            long_name='longitude',
-            ndim=3)
+        self.lat_3d = mock.Mock(iris.coords.AuxCoord,
+                                standard_name='latitude',
+                                long_name='latitude',
+                                ndim=3)
+        self.lon_3d = mock.Mock(iris.coords.AuxCoord,
+                                standard_name='longitude',
+                                long_name='longitude',
+                                ndim=3)
         depth_pre_bounds = np.linspace(0, 5000, 5)
         depth_bounds = np.stack([depth_pre_bounds[:-1], depth_pre_bounds[1:]],
                                 axis=1)
         depth_points = depth_bounds.mean(axis=1)
-        self.depth = mock.Mock(
-            iris.coords.DimCoord,
-            standard_name='depth',
-            long_name='depth',
-            ndim=1,
-            shape=depth_points.shape,
-            points=depth_points,
-            bounds=depth_bounds,
-            has_bounds=mock.Mock(return_value=True))
+        self.depth = mock.Mock(iris.coords.DimCoord,
+                               standard_name='depth',
+                               long_name='depth',
+                               ndim=1,
+                               shape=depth_points.shape,
+                               points=depth_points,
+                               bounds=depth_bounds,
+                               has_bounds=mock.Mock(return_value=True))
         data_shape = lon_2d_points.shape
         raw_data = np.arange(np.prod(data_shape)).reshape(data_shape)
         mask = np.zeros(data_shape)
         mask[:data_shape[0] // 2] = True
         self.data = np.ma.masked_array(raw_data, mask)
-        self.data_3d = np.repeat(
-            self.data[..., np.newaxis], depth_points.shape[0], axis=-1)
+        self.data_3d = np.repeat(self.data[..., np.newaxis],
+                                 depth_points.shape[0],
+                                 axis=-1)
         self.expected_esmpy_lat = np.array([[-67.5, -22.5, 22.5, 67.5],
                                             [-67.5, -22.5, 22.5, 67.5],
                                             [-67.5, -22.5, 22.5, 67.5],
@@ -316,51 +309,51 @@ class TestHelpers(tests.Test):
 
     def test_coords_iris_to_esmpy_1d_circular(self):
         """Test coord conversion with 1d coords and circular longitudes."""
-        (esmpy_lat, esmpy_lon,
-         esmpy_lat_corners, esmpy_lon_corners) = coords_iris_to_esmpy(
-             self.lat_1d, self.lon_1d, True)
-        self.assertArrayEqual(esmpy_lat, self.expected_esmpy_lat)
-        self.assertArrayEqual(esmpy_lon, self.expected_esmpy_lon)
-        self.assertArrayEqual(esmpy_lat_corners,
-                              self.expected_esmpy_lat_corners[:-1])
-        self.assertArrayEqual(esmpy_lon_corners,
-                              self.expected_esmpy_lon_corners[:-1])
+        (esmpy_lat, esmpy_lon, esmpy_lat_corners,
+         esmpy_lon_corners) = coords_iris_to_esmpy(self.lat_1d, self.lon_1d,
+                                                   True)
+        self.assert_array_equal(esmpy_lat, self.expected_esmpy_lat)
+        self.assert_array_equal(esmpy_lon, self.expected_esmpy_lon)
+        self.assert_array_equal(esmpy_lat_corners,
+                                self.expected_esmpy_lat_corners[:-1])
+        self.assert_array_equal(esmpy_lon_corners,
+                                self.expected_esmpy_lon_corners[:-1])
 
     def test_coords_iris_to_esmpy_1d_non_circular(self):
         """Test coord conversion with 1d coords and non circular longitudes."""
-        (esmpy_lat, esmpy_lon,
-         esmpy_lat_corners, esmpy_lon_corners) = coords_iris_to_esmpy(
-             self.lat_1d, self.lon_1d, False)
-        self.assertArrayEqual(esmpy_lat, self.expected_esmpy_lat)
-        self.assertArrayEqual(esmpy_lon, self.expected_esmpy_lon)
-        self.assertArrayEqual(esmpy_lat_corners,
-                              self.expected_esmpy_lat_corners)
-        self.assertArrayEqual(esmpy_lon_corners,
-                              self.expected_esmpy_lon_corners)
+        (esmpy_lat, esmpy_lon, esmpy_lat_corners,
+         esmpy_lon_corners) = coords_iris_to_esmpy(self.lat_1d, self.lon_1d,
+                                                   False)
+        self.assert_array_equal(esmpy_lat, self.expected_esmpy_lat)
+        self.assert_array_equal(esmpy_lon, self.expected_esmpy_lon)
+        self.assert_array_equal(esmpy_lat_corners,
+                                self.expected_esmpy_lat_corners)
+        self.assert_array_equal(esmpy_lon_corners,
+                                self.expected_esmpy_lon_corners)
 
     def test_coords_iris_to_esmpy_2d_circular(self):
         """Test coord conversion with 2d coords and circular longitudes."""
-        (esmpy_lat, esmpy_lon,
-         esmpy_lat_corners, esmpy_lon_corners) = coords_iris_to_esmpy(
-             self.lat_2d, self.lon_2d, True)
-        self.assertArrayEqual(esmpy_lat, self.expected_esmpy_lat)
-        self.assertArrayEqual(esmpy_lon, self.expected_esmpy_lon)
-        self.assertArrayEqual(esmpy_lat_corners,
-                              self.expected_esmpy_lat_corners[:-1])
-        self.assertArrayEqual(esmpy_lon_corners,
-                              self.expected_esmpy_lon_corners[:-1])
+        (esmpy_lat, esmpy_lon, esmpy_lat_corners,
+         esmpy_lon_corners) = coords_iris_to_esmpy(self.lat_2d, self.lon_2d,
+                                                   True)
+        self.assert_array_equal(esmpy_lat, self.expected_esmpy_lat)
+        self.assert_array_equal(esmpy_lon, self.expected_esmpy_lon)
+        self.assert_array_equal(esmpy_lat_corners,
+                                self.expected_esmpy_lat_corners[:-1])
+        self.assert_array_equal(esmpy_lon_corners,
+                                self.expected_esmpy_lon_corners[:-1])
 
     def test_coords_iris_to_esmpy_2d_non_circular(self):
         """Test coord conversion with 2d coords and non circular longitudes."""
-        (esmpy_lat, esmpy_lon,
-         esmpy_lat_corners, esmpy_lon_corners) = coords_iris_to_esmpy(
-             self.lat_2d, self.lon_2d, False)
-        self.assertArrayEqual(esmpy_lat, self.expected_esmpy_lat)
-        self.assertArrayEqual(esmpy_lon, self.expected_esmpy_lon)
-        self.assertArrayEqual(esmpy_lat_corners,
-                              self.expected_esmpy_lat_corners)
-        self.assertArrayEqual(esmpy_lon_corners,
-                              self.expected_esmpy_lon_corners)
+        (esmpy_lat, esmpy_lon, esmpy_lat_corners,
+         esmpy_lon_corners) = coords_iris_to_esmpy(self.lat_2d, self.lon_2d,
+                                                   False)
+        self.assert_array_equal(esmpy_lat, self.expected_esmpy_lat)
+        self.assert_array_equal(esmpy_lon, self.expected_esmpy_lon)
+        self.assert_array_equal(esmpy_lat_corners,
+                                self.expected_esmpy_lat_corners)
+        self.assert_array_equal(esmpy_lon_corners,
+                                self.expected_esmpy_lon_corners)
 
     def test_get_grid_circular(self):
         """Test building of ESMF grid from iris cube circular longitude."""
@@ -451,9 +444,8 @@ class TestHelpers(tests.Test):
         """Test extraction of horizontal representant from iris cube."""
         horizontal_slice = ['latitude', 'longitude']
         get_representant(self.cube, horizontal_slice)
-        self.cube.__getitem__.assert_called_once_with((slice(None, None, None),
-                                                       slice(None, None,
-                                                             None)))
+        self.cube.__getitem__.assert_called_once_with(
+            (slice(None, None, None), slice(None, None, None)))
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.cube_to_empty_field',
                 mock_cube_to_empty_field)
@@ -481,8 +473,8 @@ class TestHelpers(tests.Test):
     @mock.patch('ESMF.Regrid')
     def test_build_regridder_2d_masked_data(self, mock_regrid):
         """Test building of 2d regridder for masked data."""
-        mock_regrid.return_value = mock.Mock(
-            return_value=mock.Mock(data=self.data.T))
+        mock_regrid.return_value = mock.Mock(return_value=mock.Mock(
+            data=self.data.T))
         regrid_method = mock.sentinel.rm_bilinear
         src_rep = mock.MagicMock(data=self.data)
         dst_rep = mock.MagicMock()
@@ -490,22 +482,20 @@ class TestHelpers(tests.Test):
         dst_rep.field = mock.MagicMock()
         build_regridder_2d(src_rep, dst_rep, regrid_method, .99)
         expected_calls = [
-            mock.call(
-                src_mask_values=np.array([]),
-                dst_mask_values=np.array([]),
-                srcfield=src_rep.field,
-                dstfield=dst_rep.field,
-                unmapped_action=mock.sentinel.ua_ignore,
-                ignore_degenerate=True,
-                regrid_method=regrid_method),
-            mock.call(
-                src_mask_values=np.array([1]),
-                dst_mask_values=np.array([1]),
-                regrid_method=regrid_method,
-                srcfield=src_rep.field,
-                dstfield=dst_rep.field,
-                unmapped_action=mock.sentinel.ua_ignore,
-                ignore_degenerate=True),
+            mock.call(src_mask_values=np.array([]),
+                      dst_mask_values=np.array([]),
+                      srcfield=src_rep.field,
+                      dstfield=dst_rep.field,
+                      unmapped_action=mock.sentinel.ua_ignore,
+                      ignore_degenerate=True,
+                      regrid_method=regrid_method),
+            mock.call(src_mask_values=np.array([1]),
+                      dst_mask_values=np.array([1]),
+                      regrid_method=regrid_method,
+                      srcfield=src_rep.field,
+                      dstfield=dst_rep.field,
+                      unmapped_action=mock.sentinel.ua_ignore,
+                      ignore_degenerate=True),
         ]
         kwargs = mock_regrid.call_args_list[0][-1]
         expected_kwargs = expected_calls[0][-1]
@@ -667,5 +657,6 @@ class TestHelpers(tests.Test):
         regrid(self.cube_3d, self.cube)
         mock_build_regridder.assert_called_once_with(self.cube_3d, self.cube,
                                                      'linear')
-        mock_map_slices.assert_called_once_with(
-            self.cube_3d, mock.sentinel.regridder, self.cube_3d, self.cube)
+        mock_map_slices.assert_called_once_with(self.cube_3d,
+                                                mock.sentinel.regridder,
+                                                self.cube_3d, self.cube)
