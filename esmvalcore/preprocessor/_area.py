@@ -358,10 +358,11 @@ def _correct_coords_from_shapefile(cube, cmor_coords):
 
     if not cmor_coords:
         # Wrap around longitude coordinate to match data
+        lon = lon.copy()  # ValueError: assignment destination is read-only
         lon[lon >= 180.] -= 360.
         # the NE mask has no points at x = -180 and y = +/-90
         # so we will fool it and apply the mask at (-179, -89, 89) instead
-        lon = np.where(lon_180 == -180., lon_180 + 1., lon_180)
+        lon = np.where(lon == -180., lon + 1., lon)
         lat_0 = np.where(lat == -90., lat + 1., lat)
         lat = np.where(lat_0 == 90., lat_0 - 1., lat_0)
 
