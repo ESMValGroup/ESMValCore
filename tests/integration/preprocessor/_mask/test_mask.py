@@ -12,7 +12,6 @@ import unittest
 
 import iris
 import numpy as np
-from numpy.testing import assert_array_equal
 
 import tests
 from esmvalcore.preprocessor import (PreprocessorFile, mask_fillvalues,
@@ -70,12 +69,10 @@ class Test(tests.Test):
         np.ma.set_fill_value(result_land.data, 1e+20)
         np.ma.set_fill_value(result_sea.data, 1e+20)
         np.ma.set_fill_value(expected, 1e+20)
-        assert_array_equal(result_land.data, expected)
-        assert_array_equal(result_land.data.mask, expected.mask)
+        self.assert_array_equal(result_land.data, expected)
         expected.mask = np.zeros((3, 3), bool)
         expected.mask[1, 2] = True
-        assert_array_equal(result_sea.data, expected)
-        assert_array_equal(result_sea.data.mask, expected.mask)
+        self.assert_array_equal(result_sea.data, expected)
 
         # Mask with shp files although sftlf is available
         new_cube_land = iris.cube.Cube(self.new_cube_data,
@@ -93,11 +90,9 @@ class Test(tests.Test):
         np.ma.set_fill_value(result_land.data, 1e+20)
         np.ma.set_fill_value(result_sea.data, 1e+20)
         expected.mask = np.zeros((3, 3), bool)
-        assert_array_equal(result_land.data, expected)
-        assert_array_equal(result_land.data.mask, expected.mask)
+        self.assert_array_equal(result_land.data, expected)
         expected.mask = np.ones((3, 3), bool)
-        assert_array_equal(result_sea.data, expected)
-        assert_array_equal(result_sea.data.mask, expected.mask)
+        self.assert_array_equal(result_sea.data, expected)
 
         # remove the fx.nc temporary file
         os.remove('sftlf_test.nc')
@@ -114,11 +109,9 @@ class Test(tests.Test):
         np.ma.set_fill_value(result_land.data, 1e+20)
         np.ma.set_fill_value(result_sea.data, 1e+20)
         expected.mask = np.zeros((3, 3), bool)
-        assert_array_equal(result_land.data, expected)
-        assert_array_equal(result_land.data.mask, expected.mask)
+        self.assert_array_equal(result_land.data, expected)
         expected.mask = np.ones((3, 3), bool)
-        assert_array_equal(result_sea.data, expected)
-        assert_array_equal(result_sea.data.mask, expected.mask)
+        self.assert_array_equal(result_sea.data, expected)
 
     def test_mask_landseaice(self):
         """Test mask_landseaice func."""
@@ -132,7 +125,7 @@ class Test(tests.Test):
         expected.mask[1, 2] = False
         np.ma.set_fill_value(result_ice.data, 1e+20)
         np.ma.set_fill_value(expected, 1e+20)
-        assert_array_equal(result_ice.data.mask, expected.mask)
+        self.assert_array_equal(result_ice.data, expected)
         os.remove('sftgif_test.nc')
 
     def test_mask_fillvalues(self):
@@ -160,8 +153,8 @@ class Test(tests.Test):
                 result_1 = product.cubes[0]
             if product.filename == filename_2:
                 result_2 = product.cubes[0]
-        assert_array_equal(result_2.data.mask, data_2.mask)
-        assert_array_equal(result_1.data, data_1)
+        self.assert_array_equal(result_2.data.mask, data_2.mask)
+        self.assert_array_equal(result_1.data, data_1)
 
 
 if __name__ == '__main__':
