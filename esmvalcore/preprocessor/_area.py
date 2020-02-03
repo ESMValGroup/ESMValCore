@@ -325,7 +325,7 @@ def _correct_coords_from_shapefile(cube, cmor_coords):
 
     if not cmor_coords:
         # Wrap around longitude coordinate to match data
-        lon_180 = np.where(lon >= 180., lon - 360., lon)
+        lon[lon >= 180.] -= 360.
         # the NE mask has no points at x = -180 and y = +/-90
         # so we will fool it and apply the mask at (-179, -89, 89) instead
         lon = np.where(lon_180 == -180., lon_180 + 1., lon_180)
