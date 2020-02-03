@@ -173,12 +173,11 @@ def _check_multi_model_settings(products):
             elif reference is None:
                 reference = product
             elif reference.settings[step] != settings:
-                continue
-                #raise ValueError(
-                #    "Unable to combine differing multi-dataset settings for "
-                #    "{} and {}, {} and {}".format(
-                #        reference.filename, product.filename,
-                #        reference.settings[step], settings))
+                raise ValueError(
+                    "Unable to combine differing multi-dataset settings for "
+                    "{} and {}, {} and {}".format(
+                        reference.filename, product.filename,
+                        reference.settings[step], settings))
 
 
 def _get_multi_model_settings(products, step):

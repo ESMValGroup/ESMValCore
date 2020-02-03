@@ -616,10 +616,13 @@ def _update_statistic_settings(products, order, preproc_dir):
             group = p.settings[step]['group']
             if len(group) < 2:
                 if 'ensemble' in group:
-                    key = '{}_{}_{}'.format(p.attributes['project'],
-                                            p.attributes['dataset'],
-                                            p.attributes['exp'])
-                    name[key] = '{}_Ensemble'.format(key)
+                    try:
+                        key = '{}_{}_{}'.format(p.attributes['project'],
+                                                p.attributes['dataset'],
+                                                p.attributes['exp'])
+                        name[key] = '{}_Ensemble'.format(key)
+                    except KeyError:
+                        continue # datasets cannot be grouped?
                 if 'all' in group:
                     key = 'all'
                     name[key] = 'MultiModel'
@@ -636,21 +639,11 @@ def _update_statistic_settings(products, order, preproc_dir):
             common_settings = _get_remaining_common_settings(step, order, products)
             statistic_product = PreprocessorFile(attributes, common_settings)
             for product in products:
-                settings = product.settings[step]
-                if 'output_products' not in settings:
-                    settings['output_products'] = defaultdict(dict)
-                    settings['output_products'][key] = {}
-                settings['output_products'][key][statistic] = statistic_product
-
-
-
-
-
-
-
-
-
-
+                if step in product.settings:
+                    settings = product.settings[step]
+                    if 'output_products' not in settings:
+                        settings['output_products'] = defaultdict(lambda: defaultdict(dict))
+                    settings['output_products'][key][statistic] = statistic_product
 
 def _update_extract_shape(settings, config_user):
     if 'extract_shape' in settings:
