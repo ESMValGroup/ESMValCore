@@ -2,11 +2,11 @@ import os
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
+from unittest.mock import create_autospec
 
 import iris
 import pytest
 import yaml
-from mock import create_autospec
 
 import esmvalcore
 from esmvalcore._recipe import TASKSEP, read_recipe_file

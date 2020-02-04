@@ -130,16 +130,17 @@ def _stock_cube(spec, lat_offset=True, lon_offset=True):
     # Construct the latitude coordinate, with bounds.
     if lat_offset:
         latdata = np.linspace(_LAT_MIN + mid_dlat, _LAT_MAX - mid_dlat,
-                              _LAT_RANGE / dlat)
+                              int(_LAT_RANGE / dlat))
     else:
-        latdata = np.linspace(_LAT_MIN, _LAT_MAX, _LAT_RANGE / dlat + 1)
+        latdata = np.linspace(_LAT_MIN, _LAT_MAX, int(_LAT_RANGE / dlat) + 1)
 
     # Construct the longitude coordinat, with bounds.
     if lon_offset:
         londata = np.linspace(_LON_MIN + mid_dlon, _LON_MAX - mid_dlon,
-                              _LON_RANGE / dlon)
+                              int(_LON_RANGE / dlon))
     else:
-        londata = np.linspace(_LON_MIN, _LON_MAX - dlon, _LON_RANGE / dlon)
+        londata = np.linspace(_LON_MIN, _LON_MAX - dlon,
+                              int(_LON_RANGE / dlon))
 
     lats = iris.coords.DimCoord(
         latdata,
