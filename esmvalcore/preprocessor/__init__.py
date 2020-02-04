@@ -8,27 +8,27 @@ from iris.cube import Cube
 from .._provenance import TrackedFile
 from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
-                    extract_shape, zonal_means)
+                    extract_shape, zonal_statistics, meridional_statistics)
 from ._derive import derive
 from ._detrend import detrend
 from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
 from ._mask import (mask_above_threshold, mask_below_threshold,
-                    mask_fillvalues, mask_inside_range, mask_landsea,
-                    mask_landseaice, mask_outside_range)
+                    mask_fillvalues, mask_glaciated, mask_inside_range,
+                    mask_landsea, mask_landseaice, mask_outside_range)
 from ._multimodel import multi_model_statistics
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
 from ._regrid import extract_levels, regrid
-from ._time import (extract_month, extract_season, extract_time, regrid_time,
-                    daily_statistics, monthly_statistics, seasonal_statistics,
-                    annual_statistics, decadal_statistics,
-                    climate_statistics, anomalies)
-
+from ._time import (annual_statistics, anomalies, climate_statistics,
+                    daily_statistics, decadal_statistics, extract_month,
+                    extract_season, extract_time, monthly_statistics,
+                    regrid_time, seasonal_statistics)
 from ._units import convert_units
-from ._volume import (volume_statistics, depth_integration, extract_trajectory,
-                      extract_transect, extract_volume)
+from ._volume import (depth_integration, extract_trajectory, extract_transect,
+                      extract_volume, volume_statistics)
+from ._weighting import weighting_landsea_fraction
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +53,12 @@ __all__ = [
     'fix_data',
     # Level extraction
     'extract_levels',
+    # Weighting
+    'weighting_landsea_fraction',
     # Mask landsea (fx or Natural Earth)
     'mask_landsea',
+    # Natural Earth only
+    'mask_glaciated',
     # Mask landseaice, sftgif only
     'mask_landseaice',
     # Regridding
@@ -83,7 +87,8 @@ __all__ = [
     # Time operations
     # 'annual_cycle': annual_cycle,
     # 'diurnal_cycle': diurnal_cycle,
-    'zonal_means',
+    'zonal_statistics',
+    'meridional_statistics',
     'daily_statistics',
     'monthly_statistics',
     'seasonal_statistics',
@@ -120,9 +125,6 @@ def _get_itype(step):
 
 def check_preprocessor_settings(settings):
     """Check preprocessor settings."""
-    # The inspect functions getargspec and getcallargs are deprecated
-    # in Python 3, but their replacements are not available in Python 2.
-    # TODO: Use the new Python 3 inspect API
     for step in settings:
         if step not in DEFAULT_ORDER:
             raise ValueError(
@@ -130,7 +132,7 @@ def check_preprocessor_settings(settings):
                     step, ', '.join(DEFAULT_ORDER)))
 
         function = function = globals()[step]
-        argspec = inspect.getargspec(function)
+        argspec = inspect.getfullargspec(function)
         args = argspec.args[1:]
         # Check for invalid arguments
         invalid_args = set(settings[step]) - set(args)

@@ -10,6 +10,8 @@ import os
 import re
 import glob
 
+import iris
+
 from ._config import get_project_config
 
 logger = logging.getLogger(__name__)
@@ -46,8 +48,8 @@ def get_start_end_year(filename):
     """
     name = os.path.splitext(filename)[0]
 
-    filename = name.split(os.sep)[-1]
-    filename_list = [elem.split('-') for elem in filename.split('_')]
+    name = name.split(os.sep)[-1]
+    filename_list = [elem.split('-') for elem in name.split('_')]
     filename_list = [elem for sublist in filename_list for elem in sublist]
 
     pos_ydates = [elem.isdigit() and len(elem) >= 4 for elem in filename_list]
@@ -67,16 +69,35 @@ def get_start_end_year(filename):
         filename_list[ind] for ind, _ in enumerate(pos_ydates)
         if pos_ydates_r[ind] or pos_ydates_l[ind]
     ]
-
+    start_year = None
+    end_year = None
     if len(dates) == 1:
         start_year = int(dates[0][:4])
         end_year = start_year
     elif len(dates) == 2:
         start_year, end_year = int(dates[0][:4]), int(dates[1][:4])
     else:
-        raise ValueError('Name {0} dates do not match a recognized '
-                         'pattern'.format(name))
+        # Slower than just parsing the name
+        try:
+            cubes = iris.load(filename)
+        except OSError:
+            raise ValueError('File {0} can not be read'.format(filename))
 
+        for cube in cubes:
+            logger.debug(cube)
+            try:
+                time = cube.coord('time')
+            except iris.exceptions.CoordinateNotFoundError:
+                continue
+            start_year = time.cell(0).point.year
+            end_year = time.cell(-1).point.year
+            break
+
+    if start_year is None or end_year is None:
+        raise ValueError(
+            'File {0} dates do not match a recognized pattern and time can '
+            'not be read from the file'.format(filename)
+        )
     return start_year, end_year
 
 
@@ -104,7 +125,7 @@ def _replace_tags(path, variable):
 
         if tag == 'latestversion':  # handled separately later
             continue
-        elif tag in variable:
+        if tag in variable:
             replacewith = variable[tag]
         else:
             raise KeyError("Dataset key {} must be specified for {}, check "
@@ -227,7 +248,7 @@ def _find_input_files(variable, rootpath, drs):
     filenames_glob = _get_filenames_glob(variable, drs)
     files = find_files(input_dirs, filenames_glob)
 
-    return files
+    return (files, input_dirs, filenames_glob)
 
 
 def get_input_filelist(variable, rootpath, drs):
@@ -236,12 +257,12 @@ def get_input_filelist(variable, rootpath, drs):
     # this is needed and is not a duplicate effort
     if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
-    files = _find_input_files(variable, rootpath, drs)
+    (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
-    return files
+    return (files, dirnames, filenames)
 
 
 def get_output_file(variable, preproc_dir):

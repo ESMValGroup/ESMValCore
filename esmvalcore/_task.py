@@ -48,12 +48,13 @@ def _get_resource_usage(process, start_time, children=True):
         'Disk write (GB)',
     ]
     fmt = '{}\t' * len(entries[:-1]) + '{}\n'
-    yield fmt.format(*entries)
+    yield (fmt.format(*entries), 0.)
 
     # Compute resource usage
     gigabyte = float(2**30)
     precision = [1, 1, None, 1, None, 3, 3]
     cache = {}
+    max_memory = 0.
     try:
         process.io_counters()
     except AttributeError:
@@ -97,7 +98,8 @@ def _get_resource_usage(process, start_time, children=True):
         entries.insert(0, time.time() - start_time)
         entries = [round(entry, p) for entry, p in zip(entries, precision)]
         entries.insert(0, datetime.datetime.utcnow())
-        yield fmt.format(*entries)
+        max_memory = max(max_memory, entries[4])
+        yield (fmt.format(*entries), max_memory)
 
 
 @contextlib.contextmanager
@@ -110,10 +112,16 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
         process = psutil.Process(pid)
         start_time = time.time()
         with open(filename, 'w') as file:
-            for msg in _get_resource_usage(process, start_time, children):
+            for msg, max_mem in _get_resource_usage(process, start_time,
+                                                    children):
                 file.write(msg)
                 time.sleep(interval)
                 if halt.is_set():
+                    logger.info(
+                        'Maximum memory used (estimate): %.1f GB', max_mem)
+                    logger.info(
+                        'Sampled every second. It may be inaccurate if short '
+                        'but high spikes in memory consumption occur.')
                     return
 
     thread = threading.Thread(target=_log_resource_usage)
@@ -279,6 +287,7 @@ class DiagnosticTask(BaseTask):
     def _initialize_cmd(self, script):
         """Create a an executable command from script."""
         diagnostics_root = os.path.join(DIAGNOSTICS_PATH, 'diag_scripts')
+        script = os.path.expanduser(script)
         script_file = os.path.abspath(os.path.join(diagnostics_root, script))
 
         if not os.path.isfile(script_file):

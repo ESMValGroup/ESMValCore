@@ -41,7 +41,7 @@ class Test(tests.Test):
         expected_data = np.array([[-273.15, -272.15], [-271.15, -270.15]])
         expected_units = cf_units.Unit('degC')
         self.assertEquals(result.units, expected_units)
-        self.assertArrayEqual(result.data, expected_data)
+        self.assert_array_equal(result.data, expected_data)
 
 
 if __name__ == '__main__':

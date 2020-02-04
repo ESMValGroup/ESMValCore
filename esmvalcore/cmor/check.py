@@ -87,8 +87,7 @@ class CMORCheck():
         homogenize some data:
 
             - Equivalent calendars will all default to the same name.
-            - Auxiliary coordinates year, month_number, day_of_month and
-              day_of_year will be added for the time axis.
+            - Time units will be set to days since 1850-01-01
 
         Raises
         ------
@@ -113,9 +112,6 @@ class CMORCheck():
         self.report_debug_messages()
         self.report_warnings()
         self.report_errors()
-
-        if self.frequency != 'fx':
-            self._add_auxiliary_time_coordinates()
 
         return self._cube
 
@@ -331,7 +327,7 @@ class CMORCheck():
                             coord.var_name = coordinate.out_name
                         else:
                             self.report_error(
-                                'Coordinate {0} has var name {1}'
+                                'Coordinate {0} has var name {1} '
                                 'instead of {2}',
                                 coordinate.name,
                                 coord.var_name,
@@ -538,7 +534,7 @@ class CMORCheck():
         freq = self.frequency
         if freq.lower().endswith('pt'):
             freq = freq[:-2]
-        if freq == 'mon':
+        if freq in ['mon', 'mo']:
             for i in range(len(coord.points) - 1):
                 first = coord.cell(i).point
                 second = coord.cell(i + 1).point
@@ -715,21 +711,6 @@ class CMORCheck():
 
         """
         self.report(CheckLevels.DEBUG, message, *args)
-
-    def _add_auxiliary_time_coordinates(self):
-        try:
-            time = self._cube.coord('time')
-        except iris.exceptions.CoordinateNotFoundError:
-            return
-
-        if not self._cube.coords('day_of_month'):
-            iris.coord_categorisation.add_day_of_month(self._cube, time)
-        if not self._cube.coords('day_of_year'):
-            iris.coord_categorisation.add_day_of_year(self._cube, time)
-        if not self._cube.coords('month_number'):
-            iris.coord_categorisation.add_month_number(self._cube, time)
-        if not self._cube.coords('year'):
-            iris.coord_categorisation.add_year(self._cube, time)
 
 
 def _get_cmor_checker(table,
