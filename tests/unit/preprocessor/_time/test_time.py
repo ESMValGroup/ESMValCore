@@ -658,15 +658,15 @@ class TestRegridTimeDaily(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='day')
         newcube_2 = regrid_time(self.cube_2, frequency='day')
         # no changes to core data
-        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
-        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        self.assert_array_equal(newcube_1.data, self.cube_1.data)
+        self.assert_array_equal(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assertArrayEqual(diff_cube.data, expected)
+        self.assert_array_equal(diff_cube.data, expected)
 
 
 class TestRegridTime6Hourly(tests.Test):
@@ -705,15 +705,15 @@ class TestRegridTime6Hourly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='6hr')
         newcube_2 = regrid_time(self.cube_2, frequency='6hr')
         # no changes to core data
-        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
-        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        self.assert_array_equal(newcube_1.data, self.cube_1.data)
+        self.assert_array_equal(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assertArrayEqual(diff_cube.data, expected)
+        self.assert_array_equal(diff_cube.data, expected)
 
 
 class TestRegridTime3Hourly(tests.Test):
@@ -752,15 +752,15 @@ class TestRegridTime3Hourly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='3hr')
         newcube_2 = regrid_time(self.cube_2, frequency='3hr')
         # no changes to core data
-        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
-        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        self.assert_array_equal(newcube_1.data, self.cube_1.data)
+        self.assert_array_equal(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assertArrayEqual(diff_cube.data, expected)
+        self.assert_array_equal(diff_cube.data, expected)
 
 
 class TestRegridTime1Hourly(tests.Test):
@@ -799,15 +799,15 @@ class TestRegridTime1Hourly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='1hr')
         newcube_2 = regrid_time(self.cube_2, frequency='1hr')
         # no changes to core data
-        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
-        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        self.assert_array_equal(newcube_1.data, self.cube_1.data)
+        self.assert_array_equal(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assertArrayEqual(diff_cube.data, expected)
+        self.assert_array_equal(diff_cube.data, expected)
 
 
 def make_time_series(number_years=2):
