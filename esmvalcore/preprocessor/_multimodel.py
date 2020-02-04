@@ -302,9 +302,6 @@ def _assemble_full_data(cubes, statistic):
     stats_cube = _put_in_cube(cubes[0], stats_dats, statistic, time_axis)
     return stats_cube
 
-
-
-
 def multi_model_statistics(products, span, output_products, statistics, group):
     """
     Compute multi-model statistics.
@@ -344,24 +341,23 @@ def multi_model_statistics(products, span, output_products, statistics, group):
 
     """
     prods = defaultdict(set)
-    statistic_products = set()
+    statistic_products = defaultdict(set)
     for p in products:
-        if len(group) < 2:
-            if 'ensemble' in group:
-                key = '{}_{}_{}'.format(p.attributes['project'],
-                                        p.attributes['dataset'],
-                                        p.attributes['exp'])
-            if 'all' in group:
-                key = 'all'
+        if 'ensemble' in group[0]:
+            key = '{}_{}_{}'.format(p.attributes['project'],
+                                    p.attributes['dataset'],
+                                    p.attributes['exp'])
+        if 'all' in group[0]:
+            key = 'all'
         prods[key].add(p)
 
-    for key, ensemble_products in prods.items():
+    for key, grouped_products in prods.items():
         logger.debug('Multimodel statistics: computing: %s', statistics)
-        if len(ensemble_products) < 2:
+        if len(grouped_products) < 2:
             logger.info("Single dataset in list: will not compute statistics.")
             return products
 
-        cubes = [cube for product in ensemble_products for cube in product.cubes]
+        cubes = [cube for product in grouped_products for cube in product.cubes]
         # check if we have any time overlap
         interval = _get_overlap(cubes)
         if interval is None:
@@ -391,12 +387,46 @@ def multi_model_statistics(products, span, output_products, statistics, group):
         # Add to output product and log provenance
             generated_product = output_products[key][statistic]
             generated_product.cubes = [statistic_cube]
-            for product in ensemble_products:
+            for product in grouped_products:
                 generated_product.wasderivedfrom(product)
             logger.info("Generated %s", generated_product)
-            statistic_products.add(generated_product)
+            statistic_products[statistic].add(generated_product)
 
-    products |= statistic_products
+    if 'concatenate_stats' in output_products:
+        for statistic in output_products['concatenate_stats']:
+            cubes = [cube for product in statistic_products[statistic] for cube in product.cubes]
+            interval = _get_overlap(cubes)
+            if interval is None:
+                logger.info("Time overlap between cubes is none or a single point."
+                            "check datasets: will not compute statistics.")
+                continue
+
+            if span == 'overlap':
+                logger.debug("Using common time overlap between "
+                             "datasets to compute statistics.")
+            elif span == 'full':
+                logger.debug("Using full time spans to compute statistics.")
+            else:
+                raise ValueError(
+                    "Unexpected value for span {}, choose from 'overlap', 'full'"
+                    .format(span))
+
+            if span == 'overlap':
+                statistic_cube = _assemble_overlap_data(cubes, interval, statistic)
+            elif span == 'full':
+                statistic_cube = _assemble_full_data(cubes, statistic)
+            statistic_cube.data = np.ma.array(
+                statistic_cube.data, dtype=np.dtype('float32'))
+
+            generated_product = output_products['concatenate_stats'][statistic]
+            generated_product.cubes = [statistic_cube]
+            for product in statistic_products[statistic]:
+                generated_product.wasderivedfrom(product)
+            logger.info("Generated %s", generated_product)
+            statistic_products[statistic].add(generated_product)
+
+    for statistic in statistics:
+        products |= statistic_products[statistic]
 
     return products
 

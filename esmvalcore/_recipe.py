@@ -614,20 +614,23 @@ def _update_statistic_settings(products, order, preproc_dir):
     for p in products:
         if step in p.settings:
             group = p.settings[step]['group']
-            if len(group) < 2:
-                if 'ensemble' in group:
-                    try:
-                        key = '{}_{}_{}'.format(p.attributes['project'],
-                                                p.attributes['dataset'],
-                                                p.attributes['exp'])
-                        name[key] = '{}_Ensemble'.format(key)
-                    except KeyError:
-                        continue # datasets cannot be grouped?
-                if 'all' in group:
-                    key = 'all'
-                    name[key] = 'MultiModel'
+            if 'ensemble' in group[0]:
+                try:
+                    key = '{}_{}_{}'.format(p.attributes['project'],
+                                            p.attributes['dataset'],
+                                            p.attributes['exp'])
+                    name[key] = '{}_Ensemble'.format(key)
+                except KeyError:
+                    continue # datasets cannot be grouped?
+                if len(group) == 2 and 'all' in group[1]:
+                    name['concatenate_stats'] = 'MultiModelEnsemble'
+                    prods['concatenate_stats'].add(p)
+            elif 'all' in group[0] and len(group) < 2:
+                key = 'all'
+                name[key] = 'MultiModel'
+            else:
+                raise ValueError # wrong options
             prods[key].add(p)
-            # PENDING: compute ensemble stats and then stats over ensemble results
 
     for key, group_products in prods.items():
         some_product = next(iter(group_products))
@@ -644,6 +647,7 @@ def _update_statistic_settings(products, order, preproc_dir):
                     if 'output_products' not in settings:
                         settings['output_products'] = defaultdict(lambda: defaultdict(dict))
                     settings['output_products'][key][statistic] = statistic_product
+
 
 def _update_extract_shape(settings, config_user):
     if 'extract_shape' in settings:
