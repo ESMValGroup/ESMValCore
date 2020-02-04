@@ -13,6 +13,7 @@ from collections import defaultdict
 from iris.cube import CubeList
 
 from ._fixes.fix import Fix
+from .table import CMOR_TABLES
 from .check import _get_cmor_checker
 
 logger = logging.getLogger(__name__)
@@ -97,6 +98,11 @@ def fix_metadata(cubes,
     """
     fixes = Fix.get_fixes(
         project=project, dataset=dataset, variable=cmor_name)
+    if cmor_table and mip:
+        short_name = CMOR_TABLES[cmor_table].get_variable(
+            mip, cmor_name).short_name
+    else:
+        short_name = cmor_name
     fixed_cubes = []
     by_file = defaultdict(list)
     for cube in cubes:
@@ -110,7 +116,7 @@ def fix_metadata(cubes,
         if len(cube_list) != 1:
             cube = None
             for raw_cube in cube_list:
-                if raw_cube.var_name == cmor_name:
+                if raw_cube.var_name == short_name:
                     cube = raw_cube
                     break
             if not cube:
