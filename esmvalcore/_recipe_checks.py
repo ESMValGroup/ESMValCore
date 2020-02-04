@@ -93,6 +93,7 @@ def variable(var, required_keys):
 
 def data_availability(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
+    var = dict(var)
     if not input_files:
         var.pop('filename', None)
         logger.error("No input files found for variable %s", var)

@@ -35,12 +35,12 @@ FILES = [
 
 
 DATA_AVAILABILITY_DATA = [
-    (FILES, VAR, None),
-    (FILES, FX_VAR, None),
-    (FILES[:-1], VAR, ERR_RANGE.format('2025', FILES[:-1])),
-    (FILES[:-2], VAR, ERR_RANGE.format('2024, 2025', FILES[:-2])),
-    ([FILES[1]] + [FILES[3]], VAR, ERR_RANGE.format('2024, 2025, 2020, 2022',
-                                                    [FILES[1]] + [FILES[3]])),
+    (FILES, dict(VAR), None),
+    (FILES, dict(FX_VAR), None),
+    (FILES[:-1], dict(VAR), ERR_RANGE.format('2025', FILES[:-1])),
+    (FILES[:-2], dict(VAR), ERR_RANGE.format('2024, 2025', FILES[:-2])),
+    ([FILES[1]] + [FILES[3]], dict(VAR), ERR_RANGE.format(
+        '2024, 2025, 2020, 2022', [FILES[1]] + [FILES[3]])),
 
 ]
 
@@ -49,6 +49,7 @@ DATA_AVAILABILITY_DATA = [
 @mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
 def test_data_availability_data(mock_logger, input_files, var, error):
     """Test check for data."""
+    saved_var = dict(var)
     if error is None:
         check.data_availability(input_files, var, None, None)
         mock_logger.error.assert_not_called()
@@ -56,6 +57,7 @@ def test_data_availability_data(mock_logger, input_files, var, error):
         with pytest.raises(check.RecipeError) as rec_err:
             check.data_availability(input_files, var, None, None)
         assert str(rec_err.value) == error
+    assert var == saved_var
 
 
 DATA_AVAILABILITY_NO_DATA = [
@@ -82,7 +84,13 @@ DATA_AVAILABILITY_NO_DATA = [
 @mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
 def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     """Test check for data."""
-    error_first = ('No input files found for variable %s', VAR)
+    var = {
+        'frequency': 'mon',
+        'short_name': 'tas',
+        'start_year': 2020,
+        'end_year': 2025,
+    }
+    error_first = ('No input files found for variable %s', var)
     error_last = ("Set 'log_level' to 'debug' to get more information", )
     with pytest.raises(check.RecipeError) as rec_err:
         check.data_availability([], VAR, dirnames, filenames)
