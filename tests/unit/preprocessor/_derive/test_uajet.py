@@ -3,12 +3,18 @@ import iris
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.uajet as uajet
+from esmvalcore.preprocessor._derive import uajet
 
 TIME_COORD = iris.coords.DimCoord([1.0, 2.0, 3.0], standard_name='time')
 LEV_COORD = iris.coords.DimCoord([80000.0, 83000.0, 87000.0],
                                  standard_name='air_pressure')
-LON_COORD = iris.coords.DimCoord([0.0, 90.0, 180.0, 240.0, 360.0],
+LON_COORD = iris.coords.DimCoord([0.0, 90.0, 180.0, 270.0],
+                                 bounds=[
+                                     [-45., 45.],
+                                     [45., 135.],
+                                     [135., 225.],
+                                     [225., 315.],
+                                 ],
                                  standard_name='longitude')
 
 
