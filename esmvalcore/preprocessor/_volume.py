@@ -201,7 +201,7 @@ def volume_statistics(
     # TODO: Add other operations.
 
     # #####
-    # Operators, weightless sum, weightless mean. 
+    # Operators, weightless sum, weightless mean.
     if operator == 'weightless_mean':
         return cube.collapsed([cube.coord(axis='z'),
                                'longitude', 'latitude'],
