@@ -100,6 +100,28 @@ class Test(tests.Test):
         expected = np.array([1., 1., 1., 1.])
         self.assert_array_equal(result.data, expected)
 
+    def test_volume_statistics_sum(self):
+        """
+        Test to take the volume independant sum of a (4,3,2,2) cube.
+
+        This extra time is needed, as the volume average calculation uses
+        different methods for small and large cubes.
+        """
+        result = volume_statistics(self.grid_4d_2, 'weightless_sum')
+        expected = np.array([12., 12., 12., 12.])
+        self.assert_array_equal(result.data, expected)
+
+    def test_volume_statistics_mean(self):
+        """
+        Test to take the volume independant sum of a (4,3,2,2) cube.
+
+        This extra time is needed, as the volume average calculation uses
+        different methods for small and large cubes.
+        """
+        result = volume_statistics(self.grid_4d_2, 'weightless_mean')
+        expected = np.array([1., 1., 1., 1.])
+        self.assert_array_equal(result.data, expected)
+
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
         result = depth_integration(self.grid_3d[:, 0, 0])

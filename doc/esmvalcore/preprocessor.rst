@@ -1058,7 +1058,10 @@ This function calculates the volume-weighted average across three dimensions,
 but maintains the time dimension.
 
 This function takes the argument: ``operator``, which defines the operation to
-apply over the volume.
+apply over the volume. The operator options are ``mean``: the volume-weighted
+mean, ``weightless_mean``: the mean over three dimenstions independent of cell
+volume, and ``weightless_sum``: the sum along all three dimensions independent
+of cell volume.
 
 No depth coordinate is required as this is determined by Iris. This function
 works best when the ``fx_files`` provide the cell volume.
