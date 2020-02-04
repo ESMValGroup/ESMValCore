@@ -93,7 +93,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
         start_cube = str(cube.coord('time').points[0])
         end_cube = str(cube.coord('time').points[-1])
         raise ValueError(
-            f"Time slice {start_cube} to {end_cube} is outside cube "
+            f"Time slice {t_1} to {t_2} is outside cube "
             f"time bounds {start_cube} to {end_cube}.")
 
     # Issue when time dimension was removed when only one point as selected.
@@ -420,7 +420,7 @@ def climate_statistics(cube, operator='mean', period='full'):
     return clim_cube
 
 
-def anomalies(cube, period, reference):
+def anomalies(cube, period, reference=None):
     """
     Compute anomalies using a mean with the specified granularity.
 
