@@ -48,7 +48,7 @@ DATA_AVAILABILITY_DATA = [
 @pytest.mark.parametrize('input_files,var,error', DATA_AVAILABILITY_DATA)
 @mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
 def test_data_availability_data(mock_logger, input_files, var, error):
-    """Test check for data."""
+    """Test check for data when data is present."""
     saved_var = dict(var)
     if error is None:
         check.data_availability(input_files, var, None, None)
@@ -83,17 +83,18 @@ DATA_AVAILABILITY_NO_DATA = [
 @pytest.mark.parametrize('dirnames,filenames,error', DATA_AVAILABILITY_NO_DATA)
 @mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
 def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
-    """Test check for data."""
-    var = {
+    """Test check for data when no data is present."""
+    var = dict(VAR)
+    var_no_filename = {
         'frequency': 'mon',
         'short_name': 'tas',
         'start_year': 2020,
         'end_year': 2025,
     }
-    error_first = ('No input files found for variable %s', var)
+    error_first = ('No input files found for variable %s', var_no_filename)
     error_last = ("Set 'log_level' to 'debug' to get more information", )
     with pytest.raises(check.RecipeError) as rec_err:
-        check.data_availability([], VAR, dirnames, filenames)
+        check.data_availability([], var, dirnames, filenames)
     assert str(rec_err.value) == 'Missing data'
     if error is None:
         assert mock_logger.error.call_count == 2
@@ -103,3 +104,4 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
         errors = [error_first, error, error_last]
     calls = [mock.call(*e) for e in errors]
     assert mock_logger.error.call_args_list == calls
+    assert var == VAR
