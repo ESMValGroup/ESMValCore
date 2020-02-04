@@ -872,6 +872,10 @@ Parameters:
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
 
+    * reference: Time slice to use as the reference to compute the climatology
+      on. Can be 'null' to use the full cube or a dictionary with the
+      parameters from extract_time_. Default is null
+
 Examples:
     * Anomalies from the monthly climatology:
 
@@ -958,9 +962,9 @@ Extract a shape or a representative point for this shape from
 the data.
 
 Parameters:
-  * ``shapefile``: path to the shapefile containing the geometry of the 
-    region to be extracted. If the file contains multiple shapes behaviour 
-    depends on the decomposed parameter. This path can be relative to 
+  * ``shapefile``: path to the shapefile containing the geometry of the
+    region to be extracted. If the file contains multiple shapes behaviour
+    depends on the decomposed parameter. This path can be relative to
     ``auxiliary_data_dir`` defined in the :ref:`user configuration file`.
   * ``method``: the method to select the region, selecting either all points
 	  contained by the shape or a single representative point. Choose either
@@ -969,9 +973,9 @@ Parameters:
   * ``crop``: by default extract_region_ will be used to crop the data to a
 	  minimal rectangular region containing the shape. Set to ``false`` to only
 	  mask data outside the shape. Data on irregular grids will not be cropped.
-  * ``decomposed``: by default ``false``, in this case the union of all the 
-    regions in the shape file is masked out. If ``true``, the regions in the 
-    shapefiles are masked out seperately, generating an auxiliary dimension 
+  * ``decomposed``: by default ``false``, in this case the union of all the
+    regions in the shape file is masked out. If ``true``, the regions in the
+    shapefiles are masked out seperately, generating an auxiliary dimension
     for the cube for this.
 
 Examples:
