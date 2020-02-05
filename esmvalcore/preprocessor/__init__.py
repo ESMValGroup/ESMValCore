@@ -17,7 +17,7 @@ from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
 from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_fillvalues, mask_glaciated, mask_inside_range,
                     mask_landsea, mask_landseaice, mask_outside_range)
-from ._multimodel import multi_model_statistics
+from ._multimodel import multi_model_statistics, ensemble_statistics
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
 from ._regrid import extract_levels, regrid
@@ -61,6 +61,8 @@ __all__ = [
     'mask_glaciated',
     # Mask landseaice, sftgif only
     'mask_landseaice',
+    # Ensemble statistics
+    'ensemble_statistics',
     # Regridding
     'regrid',
     # Masking missing values
@@ -113,6 +115,7 @@ FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('cmor_check_data'):]
 MULTI_MODEL_FUNCTIONS = {
     'multi_model_statistics',
     'mask_fillvalues',
+    'ensemble_statistics'
 }
 
 
@@ -374,16 +377,23 @@ class PreprocessingTask(BaseTask):
             product.initialize_provenance(self.activity)
 
         # Hacky way to initialize the multi model products as well.
-        steps = ['multi_model_statistics',]
-        for step in steps:
-            input_products = [p for p in self.products if step in p.settings]
-            if input_products:
-                statistic_products = set()
-                for input_product in input_products:
-                    for key, prods in input_product.settings[step].get('output_products', {}).items():
+        step = 'multi_model_statistics'
+        input_products = [p for p in self.products if step in p.settings]
+        if input_products:
+            statistic_products = input_products[0].settings[step].get(
+                'output_products', {}).values()
+            for product in statistic_products:
+                product.initialize_provenance(self.activity)
+
+        step = 'ensemble_statistics'
+        input_products = [p for p in self.products if step in p.settings]
+        if input_products:
+            statistic_products = set()
+            for inputs in input_products:
+                for dataset, prods in inputs.settings[step].get('output_products', {}).items():
                         statistic_products.update(prods.values())
-                for product in statistic_products:
-                    product.initialize_provenance(self.activity)
+            for product in statistic_products:
+                product.initialize_provenance(self.activity)
 
 
 
