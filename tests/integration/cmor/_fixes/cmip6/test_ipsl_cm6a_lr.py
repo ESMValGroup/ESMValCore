@@ -28,8 +28,8 @@ class TestAllVars(unittest.TestCase):
 
         self.assertEqual(len(cubes), 1)
         cube = cubes[0]
-        self.assertEquals(cube.coord('latitude').var_name, 'lat')
-        self.assertEquals(cube.coord('longitude').var_name, 'lon')
+        self.assertEqual(cube.coord('latitude').var_name, 'lat')
+        self.assertEqual(cube.coord('longitude').var_name, 'lon')
         self.cube.coord('cell_area')
 
     def test_fix_data_other_var(self):

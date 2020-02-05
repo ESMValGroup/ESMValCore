@@ -100,7 +100,7 @@ def _replace_tags(path, variable):
 
         if tag == 'latestversion':  # handled separately later
             continue
-        elif tag in variable:
+        if tag in variable:
             replacewith = variable[tag]
         else:
             raise KeyError("Dataset key {} must be specified for {}, check "
@@ -223,7 +223,7 @@ def _find_input_files(variable, rootpath, drs):
     filenames_glob = _get_filenames_glob(variable, drs)
     files = find_files(input_dirs, filenames_glob)
 
-    return files
+    return (files, input_dirs, filenames_glob)
 
 
 def get_input_filelist(variable, rootpath, drs):
@@ -232,12 +232,12 @@ def get_input_filelist(variable, rootpath, drs):
     # this is needed and is not a duplicate effort
     if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
-    files = _find_input_files(variable, rootpath, drs)
+    (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
-    return files
+    return (files, dirnames, filenames)
 
 
 def get_output_file(variable, preproc_dir):

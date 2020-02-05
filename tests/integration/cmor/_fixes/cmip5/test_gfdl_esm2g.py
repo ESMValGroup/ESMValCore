@@ -1,15 +1,16 @@
 """Tests for fixes of GFDL-ESM2G (CMIP5)."""
 import unittest
+from unittest import mock
 
 import iris
-from iris.cube import Cube
-import mock
 import pytest
 from cf_units import Unit
+from iris.cube import Cube
+
+from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import (AllVars, Areacello, Co2,
+                                                     FgCo2, Usi, Vsi,
+                                                     _get_and_remove)
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import (_get_and_remove, AllVars,
-                                                     Co2, FgCo2, Usi, Vsi,
-                                                     Areacello)
 
 CUBE_1 = iris.cube.Cube([1.0], long_name='to_be_rm')
 CUBE_2 = iris.cube.Cube([1.0], long_name='not_to_be_rm')
