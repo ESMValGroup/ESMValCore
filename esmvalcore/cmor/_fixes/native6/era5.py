@@ -32,12 +32,6 @@ def get_frequency(cube):
     return 'monthly'
 
 
-def fix_invalid_units(cube):
-    """Convert m of water equivalent to m."""
-    cube.units = 'm'
-    return cube
-
-
 def fix_hourly_time_coordinate(cube):
     """Shift aggregated variables 30 minutes back in time."""
     if get_frequency(cube) == 'hourly':
@@ -77,11 +71,24 @@ def divide_by_gravity(cube):
     return cube
 
 
+class Clt(Fix):
+    """Fixes for clt."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = '%'
+            cube.data = cube.core_data()*100.
+
+        return cubes
+
+
 class Evspsbl(Fix):
     """Fixes for evspsbl."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
+            # Set input cube units for invalid units were ignored on load
+            cube.units = 'm'
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
@@ -94,6 +101,8 @@ class Evspsblpot(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
+            # Set input cube units for invalid units were ignored on load
+            cube.units = 'm'
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
@@ -112,6 +121,16 @@ class Mrro(Fix):
 
         return cubes
 
+class Orog(Fix):
+    """Fixes for orography."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        fixed_cubes = []
+        for cube in cubes:
+            cube = remove_time_coordinate(cube)
+            divide_by_gravity(cube)
+            fixed_cubes.append(cube)
+        return iris.cube.CubeList(fixed_cubes)
 
 class Pr(Fix):
     """Fixes for pr."""
@@ -130,7 +149,8 @@ class Prsn(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            fix_invalid_units(cube)
+            # Set input cube units for invalid units were ignored on load
+            cube.units = 'm'
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
@@ -138,23 +158,34 @@ class Prsn(Fix):
         return cubes
 
 
-class Orog(Fix):
-    """Fixes for orography."""
+class Ptype(Fix):
+    """Fixes for ptype."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        fixed_cubes = []
         for cube in cubes:
-            cube = remove_time_coordinate(cube)
-            divide_by_gravity(cube)
-            fixed_cubes.append(cube)
-        return iris.cube.CubeList(fixed_cubes)
+            cube.units = 1
 
+        return cubes
+
+
+class Rlds(Fix):
+    """Fixes for Rlds."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.attributes['positive'] = 'down'
+
+        return cubes
 
 class Rls(Fix):
     """Fixes for Rls."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
             cube.attributes['positive'] = 'down'
 
         return cubes
@@ -277,7 +308,8 @@ class AllVars(Fix):
         fixed_cubes = iris.cube.CubeList()
         for cube in cubes:
             cube.var_name = self.vardef.short_name
-            cube.standard_name = self.vardef.standard_name
+            if self.vardef.standard_name:
+                cube.standard_name = self.vardef.standard_name
             cube.long_name = self.vardef.long_name
 
             cube = self._fix_coordinates(cube)

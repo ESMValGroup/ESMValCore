@@ -61,6 +61,13 @@ def load(file, callback=None):
             category=UserWarning,
             module='iris',
         )
+        filterwarnings(
+            'ignore',
+            message="Ignoring netCDF variable '.*' invalid units '.*'",
+            category=UserWarning,
+            module='iris',
+        )
+
         raw_cubes = iris.load_raw(file, callback=callback)
     if not raw_cubes:
         raise Exception('Can not load cubes from {0}'.format(file))

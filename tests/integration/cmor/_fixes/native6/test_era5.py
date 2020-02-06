@@ -158,6 +158,179 @@ def _cmor_data(mip):
     return np.arange(27).reshape(3, 3, 3)[:, ::-1, :]
 
 
+def clt_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='cloud cover fraction',
+        var_name='cloud_cover',
+        units='unknown',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def clt_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'clt')
+    time = _cmor_time('E1hr', bounds=True)
+    data = _cmor_data('E1hr') * 100
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    return iris.cube.CubeList([cube])
+
+
+def evspsbl_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='total evapotranspiration',
+        var_name='e',
+        units='unknown',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def evspsbl_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'evspsbl')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') * 1000 / 3600.
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    return iris.cube.CubeList([cube])
+
+
+def evspsblpot_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='potential evapotranspiration',
+        var_name='epot',
+        units='unknown',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def evspsblpot_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'evspsblpot')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') * 1000 / 3600.
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    return iris.cube.CubeList([cube])
+
+
+def mrro_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='runoff',
+        var_name='runoff',
+        units='m',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def mrro_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'mrro')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') * 1000 / 3600.
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    return iris.cube.CubeList([cube])
+
+
+def orog_era5_hourly():
+    time = _era5_time('invariant')
+    cube = iris.cube.Cube(
+        _era5_data('invariant'),
+        long_name='geopotential height',
+        var_name='zg',
+        units='m**2 s**-2',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def orog_cmor_fx():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('fx', 'orog')
+    data = _cmor_data('fx') / 9.80665
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(_cmor_latitude(), 0),
+                                               (_cmor_longitude(), 1)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    return iris.cube.CubeList([cube])
+
+
 def pr_era5_monthly():
     time = _era5_time('monthly')
     cube = iris.cube.Cube(
@@ -228,30 +401,32 @@ def pr_cmor_e1hr():
     return iris.cube.CubeList([cube])
 
 
-def orog_era5_hourly():
-    time = _era5_time('invariant')
+def prsn_era5_hourly():
+    time = _era5_time('hourly')
     cube = iris.cube.Cube(
-        _era5_data('invariant'),
-        long_name='geopotential height',
-        var_name='zg',
-        units='m**2 s**-2',
+        _era5_data('hourly'),
+        long_name='snow',
+        var_name='snow',
+        units='unknown',
         dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
                              (_era5_longitude(), 2)],
     )
     return iris.cube.CubeList([cube])
 
 
-def orog_cmor_fx():
+def prsn_cmor_e1hr():
     cmor_table = CMOR_TABLES['native6']
-    vardef = cmor_table.get_variable('fx', 'orog')
-    data = _cmor_data('fx') / 9.80665
+    vardef = cmor_table.get_variable('E1hr', 'prsn')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') * 1000 / 3600.
     cube = iris.cube.Cube(data.astype('float32'),
                           long_name=vardef.long_name,
                           var_name=vardef.short_name,
                           standard_name=vardef.standard_name,
                           units=Unit(vardef.units),
-                          dim_coords_and_dims=[(_cmor_latitude(), 0),
-                                               (_cmor_longitude(), 1)],
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
                           attributes={
                               'comment':
                               'Contains modified '
@@ -261,29 +436,28 @@ def orog_cmor_fx():
     return iris.cube.CubeList([cube])
 
 
-def uas_era5_hourly():
+def ptype_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
         _era5_data('hourly'),
-        long_name='10m_u_component_of_wind',
-        var_name='u10',
-        units='m s-1',
+        long_name='snow',
+        var_name='snow',
+        units='unknown',
         dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
                              (_era5_longitude(), 2)],
     )
     return iris.cube.CubeList([cube])
 
 
-def uas_cmor_e1hr():
+def ptype_cmor_e1hr():
     cmor_table = CMOR_TABLES['native6']
-    vardef = cmor_table.get_variable('E1hr', 'uas')
-    time = _cmor_time('E1hr')
+    vardef = cmor_table.get_variable('E1hr', 'ptype')
+    time = _cmor_time('E1hr', shifted=False, bounds=True)
     data = _cmor_data('E1hr')
     cube = iris.cube.Cube(data.astype('float32'),
                           long_name=vardef.long_name,
                           var_name=vardef.short_name,
-                          standard_name=vardef.standard_name,
-                          units=Unit(vardef.units),
+                          units=1,
                           dim_coords_and_dims=[(time, 0),
                                                (_cmor_latitude(), 1),
                                                (_cmor_longitude(), 2)],
@@ -293,28 +467,29 @@ def uas_cmor_e1hr():
                               'Copernicus Climate Change Service '
                               'Information 2020'
                           })
-    cube.add_aux_coord(_cmor_aux_height(10.))
+    cube.coord('latitude').long_name = 'latitude'
+    cube.coord('longitude').long_name = 'longitude'
     return iris.cube.CubeList([cube])
 
 
-def tas_era5_hourly():
+def rlds_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
         _era5_data('hourly'),
-        long_name='2m_temperature',
-        var_name='t2m',
-        units='degC',
+        long_name='surface thermal radiation downwards',
+        var_name='ssrd',
+        units='J m**-2',
         dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
                              (_era5_longitude(), 2)],
     )
     return iris.cube.CubeList([cube])
 
 
-def tas_cmor_e1hr():
+def rlds_cmor_e1hr():
     cmor_table = CMOR_TABLES['native6']
-    vardef = cmor_table.get_variable('E1hr', 'tas')
-    time = _cmor_time('E1hr')
-    data = _cmor_data('E1hr') + 273.15
+    vardef = cmor_table.get_variable('E1hr', 'rlds')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') / 3600
     cube = iris.cube.Cube(data.astype('float32'),
                           long_name=vardef.long_name,
                           var_name=vardef.short_name,
@@ -327,9 +502,47 @@ def tas_cmor_e1hr():
                               'comment':
                               'Contains modified '
                               'Copernicus Climate Change Service '
-                              'Information 2020'
+                              'Information 2020',
+                              'positive':
+                              'down'
                           })
-    cube.add_aux_coord(_cmor_aux_height(2.))
+    return iris.cube.CubeList([cube])
+
+
+def rls_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='runoff',
+        var_name='runoff',
+        units='J m-2',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def rls_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'rls')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') / 3600
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020',
+                              'positive':
+                              'down'
+                          })
     return iris.cube.CubeList([cube])
 
 
@@ -370,94 +583,24 @@ def rsds_cmor_e1hr():
     return iris.cube.CubeList([cube])
 
 
-def prsn_era5_hourly():
+def rsdt_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
         _era5_data('hourly'),
-        long_name='snow',
-        var_name='snow',
-        units='unknown',
+        long_name='thermal_radiation_downwards',
+        var_name='strd',
+        units='J m**-2',
         dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
                              (_era5_longitude(), 2)],
     )
     return iris.cube.CubeList([cube])
 
 
-def prsn_cmor_e1hr():
+def rsdt_cmor_e1hr():
     cmor_table = CMOR_TABLES['native6']
-    vardef = cmor_table.get_variable('E1hr', 'prsn')
+    vardef = cmor_table.get_variable('E1hr', 'rsdt')
     time = _cmor_time('E1hr', shifted=True, bounds=True)
-    data = _cmor_data('E1hr') * 1000 / 3600.
-    cube = iris.cube.Cube(data.astype('float32'),
-                          long_name=vardef.long_name,
-                          var_name=vardef.short_name,
-                          standard_name=vardef.standard_name,
-                          units=Unit(vardef.units),
-                          dim_coords_and_dims=[(time, 0),
-                                               (_cmor_latitude(), 1),
-                                               (_cmor_longitude(), 2)],
-                          attributes={
-                              'comment':
-                              'Contains modified '
-                              'Copernicus Climate Change Service '
-                              'Information 2020'
-                          })
-    return iris.cube.CubeList([cube])
-
-
-def mrro_era5_hourly():
-    time = _era5_time('hourly')
-    cube = iris.cube.Cube(
-        _era5_data('hourly'),
-        long_name='runoff',
-        var_name='runoff',
-        units='m',
-        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
-                             (_era5_longitude(), 2)],
-    )
-    return iris.cube.CubeList([cube])
-
-
-def mrro_cmor_e1hr():
-    cmor_table = CMOR_TABLES['native6']
-    vardef = cmor_table.get_variable('E1hr', 'mrro')
-    time = _cmor_time('E1hr', shifted=True, bounds=True)
-    data = _cmor_data('E1hr') * 1000 / 3600.
-    cube = iris.cube.Cube(data.astype('float32'),
-                          long_name=vardef.long_name,
-                          var_name=vardef.short_name,
-                          standard_name=vardef.standard_name,
-                          units=Unit(vardef.units),
-                          dim_coords_and_dims=[(time, 0),
-                                               (_cmor_latitude(), 1),
-                                               (_cmor_longitude(), 2)],
-                          attributes={
-                              'comment':
-                              'Contains modified '
-                              'Copernicus Climate Change Service '
-                              'Information 2020'
-                          })
-    return iris.cube.CubeList([cube])
-
-
-def rls_era5_hourly():
-    time = _era5_time('hourly')
-    cube = iris.cube.Cube(
-        _era5_data('hourly'),
-        long_name='runoff',
-        var_name='runoff',
-        units='W m**-2',
-        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
-                             (_era5_longitude(), 2)],
-    )
-    return iris.cube.CubeList([cube])
-
-
-def rls_cmor_e1hr():
-    cmor_table = CMOR_TABLES['native6']
-    vardef = cmor_table.get_variable('E1hr', 'rls')
-    time = _cmor_time('E1hr', shifted=False, bounds=True)
-    data = _cmor_data('E1hr')
+    data = _cmor_data('E1hr') / 3600
     cube = iris.cube.Cube(data.astype('float32'),
                           long_name=vardef.long_name,
                           var_name=vardef.short_name,
@@ -477,17 +620,245 @@ def rls_cmor_e1hr():
     return iris.cube.CubeList([cube])
 
 
+def rss_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='net_solar_radiation',
+        var_name='ssr',
+        units='J m**-2',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def rss_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'rss')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr') / 3600
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020',
+                              'positive':
+                              'down'
+                          })
+    return iris.cube.CubeList([cube])
+
+
+def tas_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='2m_temperature',
+        var_name='t2m',
+        units='K',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def tas_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'tas')
+    time = _cmor_time('E1hr')
+    data = _cmor_data('E1hr')
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    cube.add_aux_coord(_cmor_aux_height(2.))
+    return iris.cube.CubeList([cube])
+
+
+def tas_era5_monthly():
+    time = _era5_time('monthly')
+    cube = iris.cube.Cube(
+        _era5_data('monthly'),
+        long_name='2m_temperature',
+        var_name='t2m',
+        units='K',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def tas_cmor_amon():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('Amon', 'tas')
+    time = _cmor_time('Amon',  bounds=True)
+    data = _cmor_data('Amon')
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    cube.add_aux_coord(_cmor_aux_height(2.))
+    return iris.cube.CubeList([cube])
+
+
+def tasmax_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='maximum 2m temperature',
+        var_name='mx2t',
+        units='K',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def tasmax_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'tasmax')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr')
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    cube.add_aux_coord(_cmor_aux_height(2.))
+    return iris.cube.CubeList([cube])
+
+
+def tasmin_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='minimum 2m temperature',
+        var_name='mn2t',
+        units='K',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def tasmin_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'tasmin')
+    time = _cmor_time('E1hr', shifted=True, bounds=True)
+    data = _cmor_data('E1hr')
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    cube.add_aux_coord(_cmor_aux_height(2.))
+    return iris.cube.CubeList([cube])
+
+
+def uas_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='10m_u_component_of_wind',
+        var_name='u10',
+        units='m s-1',
+        dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
+                             (_era5_longitude(), 2)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def uas_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'uas')
+    time = _cmor_time('E1hr')
+    data = _cmor_data('E1hr')
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_latitude(), 1),
+                                               (_cmor_longitude(), 2)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    cube.add_aux_coord(_cmor_aux_height(10.))
+    return iris.cube.CubeList([cube])
+
+
 VARIABLES = [
     pytest.param(a, b, c, d, id=c + '_' + d) for (a, b, c, d) in [
+        (clt_era5_hourly(), clt_cmor_e1hr(), 'clt', 'E1hr'),
+        (evspsbl_era5_hourly(), evspsbl_cmor_e1hr(), 'evspsbl', 'E1hr'),
+        (evspsblpot_era5_hourly(), evspsblpot_cmor_e1hr(), 'evspsblpot',
+         'E1hr'),
+        (mrro_era5_hourly(), mrro_cmor_e1hr(), 'mrro', 'E1hr'),
+        (orog_era5_hourly(), orog_cmor_fx(), 'orog', 'fx'),
         (pr_era5_monthly(), pr_cmor_amon(), 'pr', 'Amon'),
         (pr_era5_hourly(), pr_cmor_e1hr(), 'pr', 'E1hr'),
-        (orog_era5_hourly(), orog_cmor_fx(), 'orog', 'fx'),
-        (uas_era5_hourly(), uas_cmor_e1hr(), 'uas', 'E1hr'),
-        (tas_era5_hourly(), tas_cmor_e1hr(), 'tas', 'E1hr'),
-        (rsds_era5_hourly(), rsds_cmor_e1hr(), 'rsds', 'E1hr'),
         (prsn_era5_hourly(), prsn_cmor_e1hr(), 'prsn', 'E1hr'),
-        (mrro_era5_hourly(), mrro_cmor_e1hr(), 'mrro', 'E1hr'),
+        (ptype_era5_hourly(), ptype_cmor_e1hr(), 'ptype', 'E1hr'),
+        (rlds_era5_hourly(), rlds_cmor_e1hr(), 'rlds', 'E1hr'),
         (rls_era5_hourly(), rls_cmor_e1hr(), 'rls', 'E1hr'),
+        (rsds_era5_hourly(), rsds_cmor_e1hr(), 'rsds', 'E1hr'),
+        (rsdt_era5_hourly(), rsdt_cmor_e1hr(), 'rsdt', 'E1hr'),
+        (rss_era5_hourly(), rss_cmor_e1hr(), 'rss', 'E1hr'),
+        (tas_era5_hourly(), tas_cmor_e1hr(), 'tas', 'E1hr'),
+        (tas_era5_monthly(), tas_cmor_amon(), 'tas', 'Amon'),
+        (tasmax_era5_hourly(), tasmax_cmor_e1hr(), 'tasmax', 'E1hr'),
+        (tasmin_era5_hourly(), tasmin_cmor_e1hr(), 'tasmin', 'E1hr'),
+        (uas_era5_hourly(), uas_cmor_e1hr(), 'uas', 'E1hr'),
     ]
 ]
 
