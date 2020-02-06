@@ -155,7 +155,7 @@ def test_round_coordinate(cubes_in, decimals, out):
 
 def test_cube_to_aux_coord():
     cube = iris.cube.Cube(
-        np.ones((2,2)),
+        np.ones((2, 2)),
         standard_name='longitude',
         long_name='longitude',
         var_name='lon',

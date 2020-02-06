@@ -69,6 +69,7 @@ def add_scalar_typesea_coord(cube, value='default'):
         cube.add_aux_coord(typesea_coord, ())
     return cube
 
+
 def cube_to_aux_coord(cube):
     """Convert cube to iris AuxCoord"""
     return iris.coords.AuxCoord(

@@ -110,6 +110,7 @@ class TestTas(unittest.TestCase):
         coord = out_cube_with[0].coord('time')
         assert coord.long_name == "time"
 
+
 class TestAreacello(unittest.TestCase):
     """Test areacello fixes."""
 
@@ -117,7 +118,7 @@ class TestAreacello(unittest.TestCase):
         """Prepare tests."""
 
         latitude = Cube(
-            np.ones((2,2)),
+            np.ones((2, 2)),
             standard_name='latitude',
             long_name='latitude',
             var_name='lat',
@@ -125,7 +126,7 @@ class TestAreacello(unittest.TestCase):
         )
 
         longitude = Cube(
-            np.ones((2,2)),
+            np.ones((2, 2)),
             standard_name='longitude',
             long_name='longitude',
             var_name='lon',
@@ -134,7 +135,7 @@ class TestAreacello(unittest.TestCase):
 
         self.cubes = CubeList([
             Cube(
-                np.ones((2,2)),
+                np.ones((2, 2)),
                 var_name='areacello',
                 long_name='Areas of grid cell',
             ),
