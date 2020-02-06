@@ -515,7 +515,7 @@ def rls_era5_hourly():
         _era5_data('hourly'),
         long_name='runoff',
         var_name='runoff',
-        units='J m-2',
+        units='W m-2',
         dim_coords_and_dims=[(time, 0), (_era5_latitude(), 1),
                              (_era5_longitude(), 2)],
     )
@@ -526,7 +526,7 @@ def rls_cmor_e1hr():
     cmor_table = CMOR_TABLES['native6']
     vardef = cmor_table.get_variable('E1hr', 'rls')
     time = _cmor_time('E1hr', shifted=True, bounds=True)
-    data = _cmor_data('E1hr') / 3600
+    data = _cmor_data('E1hr')
     cube = iris.cube.Cube(data.astype('float32'),
                           long_name=vardef.long_name,
                           var_name=vardef.short_name,

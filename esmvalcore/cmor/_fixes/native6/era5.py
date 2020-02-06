@@ -121,6 +121,7 @@ class Mrro(Fix):
 
         return cubes
 
+
 class Orog(Fix):
     """Fixes for orography."""
     def fix_metadata(self, cubes):
@@ -131,6 +132,7 @@ class Orog(Fix):
             divide_by_gravity(cube)
             fixed_cubes.append(cube)
         return iris.cube.CubeList(fixed_cubes)
+
 
 class Pr(Fix):
     """Fixes for pr."""
@@ -179,13 +181,13 @@ class Rlds(Fix):
 
         return cubes
 
+
 class Rls(Fix):
     """Fixes for Rls."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
             cube.attributes['positive'] = 'down'
 
         return cubes
