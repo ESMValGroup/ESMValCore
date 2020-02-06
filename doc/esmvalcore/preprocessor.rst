@@ -1113,6 +1113,15 @@ of the operation to apply.
 This function can be used to apply several different operations in the
 horizonal plane: mean, standard deviation, median variance, minimum and maximum.
 
+By default, the sum and mean operations require cell area data to correctly
+account for cell size when calculating the mean or the sum. 
+If a weightless sum or mean is required, then the operators  ``weightless_sum`` 
+or ``weightless_mean`` can be applied.
+
+In the case that no FX file is available, (for instance in the case of an
+observational dataset), then the option ``calculate_grid`` can be used
+for dataset with regular grids to calculate the cell areas as weights.
+
 Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
