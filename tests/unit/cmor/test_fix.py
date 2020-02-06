@@ -1,8 +1,7 @@
 """Unit tests for the variable_info module."""
 
 import unittest
-
-import mock
+from unittest import mock
 
 from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
 
