@@ -205,6 +205,17 @@ def volume_statistics(
     # TODO: Test sigma coordinates.
     # TODO: Add other operations.
 
+    # #####
+    # Operators, weightless sum, weightless mean.
+    if operator == 'weightless_mean':
+        return cube.collapsed([cube.coord(axis='z'),
+                               'longitude', 'latitude'],
+                              iris.analysis.MEAN)
+    if operator == 'weightless_sum':
+        return cube.collapsed([cube.coord(axis='z'),
+                               'longitude', 'latitude'],
+                              iris.analysis.SUM)
+
     # ####
     # Load z coordinate field and figure out which dim is which.
     t_dim = cube.coord_dims('time')[0]
