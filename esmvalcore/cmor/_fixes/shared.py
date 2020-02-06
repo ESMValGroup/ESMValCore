@@ -69,6 +69,16 @@ def add_scalar_typesea_coord(cube, value='default'):
         cube.add_aux_coord(typesea_coord, ())
     return cube
 
+def cube_to_aux_coord(cube):
+    """Convert cube to iris AuxCoord"""
+    return iris.coords.AuxCoord(
+        points=cube.core_data(),
+        var_name=cube.var_name,
+        standard_name=cube.standard_name,
+        long_name=cube.long_name,
+        units=cube.units,
+    )
+
 
 def round_coordinates(cubes, decimals=5):
     """Round all dimensional coordinates of all cubes."""
