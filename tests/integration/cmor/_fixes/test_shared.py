@@ -1,4 +1,5 @@
 """Tests for shared functions for fixes."""
+import numpy as np
 import iris
 import pytest
 from cf_units import Unit
@@ -7,7 +8,8 @@ from esmvalcore.cmor._fixes.shared import (add_scalar_depth_coord,
                                            add_scalar_height_coord,
                                            add_scalar_typeland_coord,
                                            add_scalar_typesea_coord,
-                                           round_coordinates)
+                                           round_coordinates,
+                                           cube_to_aux_coord)
 
 DIM_COORD = iris.coords.DimCoord([3.141592],
                                  bounds=[[1.23, 4.567891011]],
@@ -149,3 +151,19 @@ def test_round_coordinate(cubes_in, decimals, out):
             assert not coords
         else:
             assert coords[0] == out[idx]
+
+
+def test_cube_to_aux_coord():
+    cube = iris.cube.Cube(
+        np.ones((2,2)),
+        standard_name='longitude',
+        long_name='longitude',
+        var_name='lon',
+        units='degrees_north',
+    )
+    coord = cube_to_aux_coord(cube)
+    assert coord.var_name == cube.var_name
+    assert coord.standard_name == cube.standard_name
+    assert coord.long_name == cube.long_name
+    assert coord.units == cube.units
+    assert np.all(coord.points == cube.data)
