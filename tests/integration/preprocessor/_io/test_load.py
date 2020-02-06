@@ -79,4 +79,4 @@ class TestLoad(unittest.TestCase):
         self.assertTrue((cube.data == np.array([1, 2])).all())
         self.assertTrue((cube.coord('latitude').points == np.array([1,
                                                                     2])).all())
-        self.assertEquals(cube.coord('latitude').units, 'degrees_north')
+        self.assertEqual(cube.coord('latitude').units, 'degrees_north')
