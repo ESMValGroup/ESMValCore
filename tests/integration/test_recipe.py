@@ -1448,14 +1448,22 @@ def test_extract_shape(tmp_path, patched_datafinder, config_user):
     assert product.settings['extract_shape']['shapefile'] == str(shapefile)
 
 
-@pytest.mark.parametrize('invalid_arg', ['crop', 'shapefile', 'method'])
+@pytest.mark.parametrize('invalid_arg',
+                         ['shapefile', 'method', 'crop', 'decomposed'])
 def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
                               invalid_arg):
+    # Create shapefile
+    shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
+    shapefile.parent.mkdir(parents=True, exist_ok=True)
+    shapefile.touch()
+
     content = dedent(f"""
         preprocessors:
           test:
             extract_shape:
-              {invalid_arg}: x
+              crop: true
+              method: contains
+              shapefile: test.shp
 
         diagnostics:
           test:
@@ -1473,6 +1481,12 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
                       dataset: GFDL-CM3
             scripts: null
         """)
+
+    # Add invalid argument
+    recipe = yaml.safe_load(content)
+    recipe['preprocessors']['test']['extract_shape'][invalid_arg] = 'x'
+    content = yaml.safe_dump(recipe)
+
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, config_user)
     assert 'extract_shape' in str(exc.value)

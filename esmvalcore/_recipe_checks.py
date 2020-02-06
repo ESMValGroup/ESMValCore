@@ -175,6 +175,7 @@ def extract_shape(settings):
     valid = {
         'method': {'contains', 'representative'},
         'crop': {True, False},
+        'decomposed': {True, False},
     }
     for key in valid:
         value = settings.get(key)
