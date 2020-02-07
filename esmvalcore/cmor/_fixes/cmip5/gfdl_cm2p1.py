@@ -55,6 +55,30 @@ class Sftof(Fix):
         cube.metadata = metadata
         return cube
 
+class Sit(Fix):
+    """Fixes for sit"""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix metadata.
+
+        Fixes wrong units.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        time = cube.coord('time')
+        if time.bounds.max() > 1e8:
+            time.bounds = None
+            time.guess_bounds()
+        return cubes
 
 class Tos(Fix):
     """Fixes for tos"""
