@@ -92,5 +92,18 @@
     "license": {
         "id": "Apache-2.0"
     },
-    "title": "ESMValCore"
+    "title": "ESMValCore",
+    "communities": [
+        {
+            "identifier": "is-enes3"
+        },
+        {
+            "identifier": "ecfunded"
+        }
+    ],
+    "grants": [
+        {
+            "id": "10.13039/501100000780::824084"
+        }
+    ]
 }
