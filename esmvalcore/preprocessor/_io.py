@@ -87,15 +87,20 @@ def _fix_cube_attributes(cubes):
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
     _fix_cube_attributes(cubes)
-    try:
-        cube = iris.cube.CubeList(cubes).concatenate_cube()
-        return cube
-    except iris.exceptions.ConcatenateError as ex:
-        logger.error('Can not concatenate cubes: %s', ex)
-        logger.error('Cubes:')
-        for cube in cubes:
-            logger.error(cube)
-        raise ex
+    concatenated = iris.cube.CubeList(cubes).concatenate()
+    if len(concatenated) == 1:
+        return concatenated[0]
+    logger.error('Can not concatenate cubes into a single one.')
+    logger.error('Resulting cubes:')
+    for cube in concatenated:
+        logger.error(cube)
+        try:
+            time = cube.coord('time')
+        except iris.exceptions.CoordinateNotFoundError:
+            pass
+        else:
+            logger.error('From %s to %s', time.cell(0), time.cell(-1))
+    raise ValueError('Can not concatenate cubes.')
 
 
 def save(cubes, filename, optimize_access='', compress=False, **kwargs):
@@ -238,11 +243,6 @@ def write_metadata(products, write_ncl=False):
 def _write_ncl_metadata(output_dir, metadata):
     """Write NCL metadata files to output_dir."""
     variables = [copy.deepcopy(v) for v in metadata.values()]
-
-    for variable in variables:
-        fx_files = variable.pop('fx_files', {})
-        for fx_type in fx_files:
-            variable[fx_type] = fx_files[fx_type]
 
     info = {'input_file_info': variables}
 

@@ -9,7 +9,6 @@ from ._shared import cloud_area_fraction
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `clltkisccp`."""
 
-    # Required variables
     required = [{'short_name': 'clisccp'}]
 
     @staticmethod

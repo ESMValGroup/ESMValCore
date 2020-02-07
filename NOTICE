@@ -3,17 +3,17 @@ Earth System Model Evaluation Tool Core VERSION 2.0 (the Software) License
 PLEASE READ THIS SOFTWARE LICENSE ("LICENSE") CAREFULLY. USE OF THE SOFTWARE CONSTITUTES ACCEPTANCE OF THIS LICENSE AND TERMS
 
 DATE: 6 February 2019
-========================================================================
+====================================================================================================================
 
-THIS LICENSE APPLIES TO THE ESMValTool Core VERSION 2.0 THAT IS RELEASED AS OPEN-SOURCE SOFTWARE UNDER THE APACHE LICENSE
+THIS LICENSE APPLIES TO THE ESMValCore VERSION 2.0 THAT IS RELEASED AS OPEN-SOURCE SOFTWARE UNDER THE APACHE LICENSE
 
-========================================================================
+====================================================================================================================
 
 Copyright 2008- Deutsches Zentrum für Luft- und Raumfahrt e.V. (DLR) and partners (see below). All rights reserved.
 
-==========================================
-(1) ESMValTool Core VERSION 2.0 CORE DEVELOPMENT TEAM
-==========================================
+================================================
+(1) ESMValCore VERSION 2.0 CORE DEVELOPMENT TEAM
+================================================
 Copyright 2008- Deutsches Zentrum für Luft- und Raumfahrt e.V. (DLR), Germany - ESMValTool Principal Investigator (PI)
 Copyright 2017- Alfred-Wegener-Institute (AWI), Germany
 Copyright 2017- Barcelona Supercomputing Center (BSC), Spain
@@ -22,9 +22,9 @@ Copyright 2017- Netherlands e-Science Center (NLeSC), Netherlands
 Copyright 2019- Plymouth Marine Laboratory, UK
 Copyright 2017- University of Reading, UK
 
-==========================================
-(2) ESMValTool Core VERSION 2.0 PREPROCESSOR
-==========================================
+=======================================
+(2) ESMValCore VERSION 2.0 PREPROCESSOR
+=======================================
 COPYRIGHT 2008- ALL CORE DEVELOPERS (see under (1))
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at

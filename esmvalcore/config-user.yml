@@ -42,8 +42,11 @@ rootpath:
   OBS: ~/obs_inputpath
   RAWOBS: ~/rawobs_inputpath
   default: ~/default_inputpath
+  CORDEX: ~/default_inputpath
 
 # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
 drs:
   CMIP5: default
+  CORDEX: default
+  OBS: default

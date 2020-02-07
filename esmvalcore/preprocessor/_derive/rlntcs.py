@@ -7,8 +7,11 @@ from ._baseclass import DerivedVariableBase
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `rlntcs`."""
 
-    # Required variables
-    required = [{'short_name': 'rlutcs'}]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [{'short_name': 'rlutcs'}]
+        return required
 
     @staticmethod
     def calculate(cubes):
