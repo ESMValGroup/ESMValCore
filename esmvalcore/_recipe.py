@@ -1413,7 +1413,7 @@ class Recipe:
 
             # look for inter-tasks duplication by name
             # this should be safe now once we've set-filtered by product
-            if not len(all_names) > 1:
+            if not len(all_names) > 1 and prelim_tasks:
                 tasks.add(task)
                 priority += 1
             else:
