@@ -15,7 +15,7 @@ def _is_single_item(testee):
     We count string types as 'single', also.
     """
     return (isinstance(testee, str)
-            or not isinstance(testee, collections.Iterable))
+            or not isinstance(testee, collections.abc.Iterable))
 
 
 def _as_list_of_coords(cube, names_or_coords):

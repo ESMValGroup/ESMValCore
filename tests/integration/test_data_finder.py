@@ -86,8 +86,17 @@ def test_get_input_filelist(root, cfg):
     # Find files
     rootpath = {cfg['variable']['project']: [root]}
     drs = {cfg['variable']['project']: cfg['drs']}
-    input_filelist = get_input_filelist(cfg['variable'], rootpath, drs)
+    (input_filelist, dirnames,
+     filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
 
     # Test result
-    reference = [os.path.join(root, file) for file in cfg['found_files']]
-    assert sorted(input_filelist) == sorted(reference)
+    ref_files = [os.path.join(root, file) for file in cfg['found_files']]
+    if cfg['dirs'] is None:
+        ref_dirs = []
+    else:
+        ref_dirs = [os.path.join(root, dir) for dir in cfg['dirs']]
+    ref_patterns = cfg['file_patterns']
+
+    assert sorted(input_filelist) == sorted(ref_files)
+    assert sorted(dirnames) == sorted(ref_dirs)
+    assert sorted(filenames) == sorted(ref_patterns)
