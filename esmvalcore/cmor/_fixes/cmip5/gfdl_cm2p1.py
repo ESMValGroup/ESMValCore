@@ -55,6 +55,7 @@ class Sftof(Fix):
         cube.metadata = metadata
         return cube
 
+
 class Sit(Fix):
     """Fixes for sit"""
 
@@ -79,6 +80,7 @@ class Sit(Fix):
             time.bounds = None
             time.guess_bounds()
         return cubes
+
 
 class Tos(Fix):
     """Fixes for tos"""
