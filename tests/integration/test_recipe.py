@@ -7,6 +7,7 @@ from unittest.mock import create_autospec
 import iris
 import pytest
 import yaml
+from PIL import Image
 
 import esmvalcore
 from esmvalcore._recipe import TASKSEP, read_recipe_file
@@ -64,6 +65,7 @@ def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test')
     cfg['synda_download'] = False
+    cfg['output_file_type'] = 'png'
     return cfg
 
 
@@ -1130,12 +1132,12 @@ def test_derive_with_optional_var_nodata(tmp_path,
         assert ancestor_product.filename in all_product_files
 
 
-def get_plot_filename(basename, cfg):
+def create_test_image(basename, cfg):
     """Get a valid path for saving a diagnostic plot."""
-    return os.path.join(
-        cfg['plot_dir'],
-        basename + '.' + cfg['output_file_type'],
-    )
+    image = Path(cfg['plot_dir']) / (basename + '.' + cfg['output_file_type'])
+    image.parent.mkdir(parents=True)
+    Image.new('RGB', (1, 1)).save(image)
+    return str(image)
 
 
 def get_diagnostic_filename(basename, cfg, extension='nc'):
@@ -1154,7 +1156,7 @@ def simulate_diagnostic_run(diagnostic_task):
     ]
     record = {
         'caption': 'Test plot',
-        'plot_file': get_plot_filename('test', cfg),
+        'plot_file': create_test_image('test', cfg),
         'statistics': ['mean', 'var'],
         'domains': ['trop', 'et'],
         'plot_types': ['zonal'],
