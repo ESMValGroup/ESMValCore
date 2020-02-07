@@ -18,7 +18,7 @@ from .check import _get_cmor_checker
 logger = logging.getLogger(__name__)
 
 
-def fix_file(file, short_name, project, dataset, output_dir):
+def fix_file(file, short_name, project, dataset, mip, output_dir):
     """
     Fix files before ESMValTool can load them.
 
@@ -45,7 +45,7 @@ def fix_file(file, short_name, project, dataset, output_dir):
 
     """
     for fix in Fix.get_fixes(
-            project=project, dataset=dataset, mip='', short_name=short_name):
+            project=project, dataset=dataset, mip=mip, short_name=short_name):
         file = fix.fix_file(file, output_dir)
     return file
 
@@ -54,7 +54,7 @@ def fix_metadata(cubes,
                  short_name,
                  project,
                  dataset,
-                 mip='',
+                 mip,
                  frequency=None):
     """
     Fix cube metadata if fixes are required and check it anyway.
@@ -74,8 +74,8 @@ def fix_metadata(cubes,
 
     dataset: str
 
-    mip: str, optional
-        Variable's MIP, if available
+    mip: str
+        Variable's MIP
 
     frequency: str, optional
         Variable's data frequency, if available
@@ -130,15 +130,14 @@ def fix_metadata(cubes,
         else:
             cube = cube_list[0]
 
-        if mip:
-            checker = _get_cmor_checker(
-                frequency=frequency,
-                table=project,
-                mip=mip,
-                short_name=short_name,
-                fail_on_error=False,
-                automatic_fixes=True)
-            cube = checker(cube).check_metadata()
+        checker = _get_cmor_checker(
+            frequency=frequency,
+            table=project,
+            mip=mip,
+            short_name=short_name,
+            fail_on_error=False,
+            automatic_fixes=True)
+        cube = checker(cube).check_metadata()
         cube.attributes.pop('source_file', None)
         fixed_cubes.append(cube)
     return fixed_cubes
@@ -148,7 +147,7 @@ def fix_data(cube,
              short_name,
              project,
              dataset,
-             mip='',
+             mip,
              frequency=None):
     """
     Fix cube data if fixes add present and check it anyway.
@@ -167,15 +166,9 @@ def fix_data(cube,
     short_name: str
         Variable's short name
     project: str
-
     dataset: str
-
-    cmor_table: str, optional
-        CMOR tables to use for the check, if available
-
-    mip: str, optional
-        Variable's MIP, if available
-
+    mip: str
+        Variable's MIP
     frequency: str, optional
         Variable's data frequency, if available
 
@@ -193,13 +186,13 @@ def fix_data(cube,
     for fix in Fix.get_fixes(
             project=project, dataset=dataset, mip=mip, short_name=short_name):
         cube = fix.fix_data(cube)
-    if mip:
-        checker = _get_cmor_checker(
-            frequency=frequency,
-            table=project,
-            mip=mip,
-            short_name=short_name,
-            fail_on_error=False,
-            automatic_fixes=True)
-        cube = checker(cube).check_data()
+
+    checker = _get_cmor_checker(
+        frequency=frequency,
+        table=project,
+        mip=mip,
+        short_name=short_name,
+        fail_on_error=False,
+        automatic_fixes=True)
+    cube = checker(cube).check_data()
     return cube

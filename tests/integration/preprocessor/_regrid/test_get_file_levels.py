@@ -36,8 +36,22 @@ class TestGetFileLevels(unittest.TestCase):
         os.remove(self.path)
 
     def test_get_coord(self):
-        self.assertListEqual(
-            _regrid.get_reference_levels(
-                self.path, 'CMIP6', 'dataset', 'short_name', 'output_dir'),
-            [0., 1]
-        )
+        fix_file = unittest.mock.create_autospec(_regrid.fix_file)
+        fix_file.side_effect = lambda file, **_: file
+        fix_metadata = unittest.mock.create_autospec(_regrid.fix_metadata)
+        fix_metadata.side_effect = lambda cubes, **_: cubes
+        with unittest.mock.patch('esmvalcore.preprocessor._regrid.fix_file',
+                                 fix_file):
+            with unittest.mock.patch(
+                    'esmvalcore.preprocessor._regrid.fix_metadata',
+                    fix_metadata):
+                reference_levels = _regrid.get_reference_levels(
+                    filename=self.path,
+                    project='CMIP6',
+                    dataset='dataset',
+                    short_name='short_name',
+                    mip='mip',
+                    frequency='mon',
+                    fix_dir='output_dir',
+                )
+        self.assertListEqual(reference_levels, [0., 1])

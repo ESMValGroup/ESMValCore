@@ -19,7 +19,6 @@ from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
 
 MANDATORY_DATASET_KEYS = (
-    'cmor_table',
     'dataset',
     'diagnostic',
     'end_year',
@@ -348,6 +347,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
+            'mip': 'Oyr',
             'output_dir': fix_dir,
         },
         'fix_data': {
@@ -433,6 +433,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'sftlf',
+            'mip': 'fx',
             'output_dir': fix_dir,
         },
         'fix_data': {
@@ -667,7 +668,6 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder,
             'tas_MOHC-HadGEM3-RA_evaluation_r1i1p1_v1_mon_1991-1993.nc')
     reference = {
         'alias': 'MOHC-HadGEM3-RA',
-        'cmor_table': 'CORDEX',
         'dataset': 'MOHC-HadGEM3-RA',
         'diagnostic': 'test',
         'domain': 'AFR-44',
@@ -764,11 +764,13 @@ def test_reference_dataset(tmp_path, patched_datafinder, config_user,
 
     fix_dir = os.path.splitext(reference.filename)[0] + '_fixed'
     get_reference_levels.assert_called_once_with(
-        reference.files[0],
-        'CMIP5',
-        'MPI-ESM-LR',
-        'ta',
-        fix_dir,
+        filename=reference.files[0],
+        project='CMIP5',
+        dataset='MPI-ESM-LR',
+        short_name='ta',
+        mip='Amon',
+        frequency='mon',
+        fix_dir=fix_dir,
     )
 
     assert 'regrid' not in reference.settings
@@ -2036,9 +2038,11 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    with pytest.raises(ValueError) as wrong_proj:
+    with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, config_user)
-        assert wrong_proj == "Project CMIP7 not in config-developer"
+    assert str(wrong_proj.value) == (
+        "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
+        "with mip 'Omon'")
 
 
 def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):

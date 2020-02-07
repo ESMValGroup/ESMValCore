@@ -88,40 +88,26 @@ def _get_value(key, datasets):
     return value
 
 
-def _update_from_others(variable, keys, datasets):
-    """Get values for keys by copying from the other datasets."""
-    for key in keys:
-        if key not in variable:
-            value = _get_value(key, datasets)
-            if value is not None:
-                variable[key] = value
-
-
 def _add_cmor_info(variable, override=False):
     """Add information from CMOR tables to variable."""
     logger.debug("If not present: adding keys from CMOR table to %s", variable)
-
-    if 'cmor_table' not in variable or 'mip' not in variable:
-        logger.debug("Skipping because cmor_table or mip not specified")
-        return
-
-    if variable['cmor_table'] not in CMOR_TABLES:
-        logger.warning("Unknown CMOR table %s", variable['cmor_table'])
-
-    derive = variable.get('derive', False)
     # Copy the following keys from CMOR table
     cmor_keys = [
         'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
     ]
-    cmor_table = variable['cmor_table']
+    project = variable['project']
     mip = variable['mip']
     short_name = variable['short_name']
-    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name, derive)
-
+    derive = variable.get('derive', False)
+    table = CMOR_TABLES.get(project)
+    if table:
+        table_entry = table.get_variable(mip, short_name, derive)
+    else:
+        table_entry = None
     if table_entry is None:
         raise RecipeError(
-            "Unable to load CMOR table '{}' for variable '{}' with mip '{}'".
-            format(cmor_table, short_name, mip))
+            f"Unable to load CMOR table (project) '{project}' for variable "
+            f"'{short_name}' with mip '{mip}'")
 
     for key in cmor_keys:
         if key not in variable or override:
@@ -180,12 +166,17 @@ def _update_target_levels(variable, variables, settings, config_user):
             del settings['extract_levels']
         else:
             variable_data = _get_dataset_info(dataset, variables)
-            filename = \
-                _dataset_to_file(variable_data, config_user)
+            filename = _dataset_to_file(variable_data, config_user)
             settings['extract_levels']['levels'] = get_reference_levels(
-                filename, variable_data['project'], dataset,
-                variable_data['short_name'],
-                os.path.splitext(variable_data['filename'])[0] + '_fixed')
+                filename=filename,
+                project=variable_data['project'],
+                dataset=dataset,
+                short_name=variable_data['short_name'],
+                mip=variable_data['mip'],
+                frequency=variable_data['frequency'],
+                fix_dir=os.path.splitext(
+                    variable_data['filename'])[0] + '_fixed',
+            )
 
 
 def _update_target_grid(variable, variables, settings, config_user):
@@ -300,16 +291,16 @@ def _get_default_settings(variable, config_user, derive=False):
         'project': variable['project'],
         'dataset': variable['dataset'],
         'short_name': variable['short_name'],
+        'mip': variable['mip'],
     }
     # File fixes
     fix_dir = os.path.splitext(variable['filename'])[0] + '_fixed'
     settings['fix_file'] = dict(fix)
     settings['fix_file']['output_dir'] = fix_dir
     # Cube fixes
-    fix['mip'] = variable['mip']
     fix['frequency'] = variable['frequency']
-    settings['fix_data'] = dict(fix)
     settings['fix_metadata'] = dict(fix)
+    settings['fix_data'] = dict(fix)
 
     # Configure time extraction
     if 'start_year' in variable and 'end_year' in variable \
@@ -332,21 +323,19 @@ def _get_default_settings(variable, config_user, derive=False):
         }
 
     # Configure CMOR metadata check
-    if variable.get('cmor_table'):
-        settings['cmor_check_metadata'] = {
-            'cmor_table': variable['cmor_table'],
-            'mip': variable['mip'],
-            'short_name': variable['short_name'],
-            'frequency': variable['frequency'],
-        }
+    settings['cmor_check_metadata'] = {
+        'cmor_table': variable['project'],
+        'mip': variable['mip'],
+        'short_name': variable['short_name'],
+        'frequency': variable['frequency'],
+    }
     # Configure final CMOR data check
-    if variable.get('cmor_table'):
-        settings['cmor_check_data'] = {
-            'cmor_table': variable['cmor_table'],
-            'mip': variable['mip'],
-            'short_name': variable['short_name'],
-            'frequency': variable['frequency'],
-        }
+    settings['cmor_check_data'] = {
+        'cmor_table': variable['project'],
+        'mip': variable['mip'],
+        'short_name': variable['short_name'],
+        'frequency': variable['frequency'],
+    }
 
     # Clean up fixed files
     if not config_user['save_intermediary_cubes']:
@@ -1026,9 +1015,6 @@ class Recipe:
             variable.update(dataset)
 
             variable['recipe_dataset_index'] = index
-            if ('cmor_table' not in variable
-                    and variable.get('project') in CMOR_TABLES):
-                variable['cmor_table'] = variable['project']
             if 'end_year' in variable and 'max_years' in self._cfg:
                 variable['end_year'] = min(
                     variable['end_year'],
@@ -1046,7 +1032,6 @@ class Recipe:
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
-            _update_from_others(variable, ['cmor_table', 'mip'], datasets)
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:

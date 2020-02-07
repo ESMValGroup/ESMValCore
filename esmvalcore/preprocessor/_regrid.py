@@ -498,6 +498,8 @@ def get_reference_levels(filename,
                          project,
                          dataset,
                          short_name,
+                         mip,
+                         frequency,
                          fix_dir):
     """Get level definition from a reference dataset.
 
@@ -517,9 +519,23 @@ def get_reference_levels(filename,
         levels or the string is badly formatted.
 
     """
-    filename = fix_file(filename, short_name, project, dataset, fix_dir)
+    filename = fix_file(
+        file=filename,
+        short_name=short_name,
+        project=project,
+        dataset=dataset,
+        mip=mip,
+        output_dir=fix_dir,
+    )
     cubes = load(filename, callback=concatenate_callback)
-    cubes = fix_metadata(cubes, short_name, project, dataset)
+    cubes = fix_metadata(
+        cubes=cubes,
+        short_name=short_name,
+        project=project,
+        dataset=dataset,
+        mip=mip,
+        frequency=frequency,
+    )
     cube = cubes[0]
     try:
         coord = cube.coord(axis='Z')
