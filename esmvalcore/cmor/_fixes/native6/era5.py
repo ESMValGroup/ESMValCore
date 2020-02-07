@@ -37,7 +37,6 @@ def fix_hourly_time_coordinate(cube):
     if get_frequency(cube) == 'hourly':
         time = cube.coord(axis='T')
         time.points = time.points - 1 / 48
-        time.guess_bounds()
     return cube
 
 
