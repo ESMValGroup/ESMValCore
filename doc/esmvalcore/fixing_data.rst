@@ -19,7 +19,7 @@ known errors that can be fixed automatically.
 Fix structure
 =============
 
-Fixes are Python classes stored in ``esmvaltool/cmor/_fixes/[PROJECT]/[DATASET].py``
+Fixes are Python classes stored in ``esmvalcore/cmor/_fixes/[PROJECT]/[DATASET].py``
 that derive from :class:`esmvalcore.cmor._fixes.fix.Fix` and
 are named after the short name of the variable they fix. You can use the name
 ``AllVars`` if you want the fix to be applied to the whole dataset
@@ -67,7 +67,7 @@ Create the fix
 --------------
 
 We start by creating the module file. In our example the path will be
-``esmvaltool/cmor/_fixes/CMIPX/PERFECT_MODEL.py``. If it already exists
+``esmvalcore/cmor/_fixes/CMIPX/PERFECT_MODEL.py``. If it already exists
 just add the class to the file, there is no limit in the number of fixes
 we can have in any given file.
 
