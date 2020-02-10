@@ -975,6 +975,7 @@ The area manipulation module contains the following preprocessor functions:
 * extract_named_regions_: Extract a specific region from in the region
   cooordinate.
 * extract_shape_: Extract a region defined by a shapefile.
+* extract_point_: Extract a single point (with interpolation)
 * zonal_statistics_: Compute zonal statistics.
 * meridional_statistics_: Compute meridional statistics.
 * area_statistics_: Compute area statistics.
@@ -1043,6 +1044,30 @@ Examples:
               method: contains
 
 See also :func:`esmvalcore.preprocessor.extract_shape`.
+
+
+``extract_point``
+-----------------
+
+Extract a single point from the data. This is done using either
+nearest or linear interpolation.
+
+Returns a cube with the extracted point(s), and with adjusted latitude
+and longitude coordinates (see below).
+
+Multiple points can also be extracted, by supplying an array of
+latitude and/or longitude coordinates. The resulting point cube will
+match the respective latitude and longitude coordinate to those of the
+input coordinates. If the input coordinate is a scalar, the dimension
+will be missing in the output cube (that is, it will be a scalar).
+
+Parameters:
+  * ``cube``: the input dataset cube.
+  * ``latitude``, ``longitude``: coordinates (as floating point
+    values) of the point to be extracted. Either (or both) can also
+    be an array of floating point values.
+  * ``scheme``: interpolation scheme: either ``'linear'`` or
+    ``'nearest'``. There is no default.
 
 
 ``zonal_statistics``
