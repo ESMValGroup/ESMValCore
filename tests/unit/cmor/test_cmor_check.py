@@ -490,6 +490,24 @@ class TestCMORCheck(unittest.TestCase):
         )
         self._check_debug_messages_on_metadata(automatic_fixes=True)
 
+    def test_bad_bounds_in_multidim_longitude(self):
+        """Warning if multidimensional lon has bad var_name at metadata"""
+        self.var_info.table_type = 'CMIP6'
+        self.cube.remove_coord('longitude')
+        lons = np.reshape(np.linspace(180, 540, num=20*20), (20, 20))
+        bounds = np.stack([lons.copy() - 0.5, lons.copy() + 0.5], -1)
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                lons,
+                var_name='bad_name',
+                standard_name='longitude',
+                units='degrees_east',
+                bounds=bounds,
+            ),
+            (1, 2)
+        )
+        self._check_debug_messages_on_metadata(automatic_fixes=True)
+
     def test_bad_out_name_onedim_latitude(self):
         """Warning if onedimensional lat has bad var_name at metadata"""
         self.var_info.table_type = 'CMIP6'
