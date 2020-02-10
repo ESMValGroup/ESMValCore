@@ -249,6 +249,8 @@ class TestCMORCheck(unittest.TestCase):
         """Check succeeds even if two required coordinates share dimensions."""
         self.cube = self.cube.extract(
             iris.Constraint(latitude=self.cube.coord('latitude').points[0]))
+        lat_points = self.cube.coord('longitude').points
+        lat_points = lat_points / 3.0 - 50.
         self.cube.remove_coord('latitude')
         iris.util.demote_dim_coord_to_aux_coord(self.cube, 'longitude')
         new_lat = iris.coords.AuxCoord(
