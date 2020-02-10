@@ -168,7 +168,10 @@ def configure_logging(cfg_file=None, output=None, console_log_level=None):
 def get_project_config(project):
     """Get developer-configuration for project."""
     logger.debug("Retrieving %s configuration", project)
-    return CFG[project]
+    if project in CFG:
+        return CFG[project]
+    else:
+        raise ValueError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
@@ -190,22 +193,10 @@ def get_activity(variable):
         exp = variable['exp']
         logger.debug("Retrieving activity_id for experiment %s", exp)
         if isinstance(exp, list):
-            return [CMOR_TABLES[project].activities[value] for value in exp]
-        return CMOR_TABLES[project].activities[exp]
+            return [CMOR_TABLES[project].activities[value][0] for value in exp]
+        return CMOR_TABLES[project].activities[exp][0]
     except (KeyError, AttributeError):
         return None
-
-
-def replace_mip_fx(fx_file):
-    """Replace MIP so to retrieve correct fx files."""
-    default_mip = 'Amon'
-    if fx_file not in CFG['CMIP5']['fx_mip_change']:
-        logger.warning(
-            'mip for fx variable %s is not specified in '
-            'config_developer.yml, using default (%s)', fx_file, default_mip)
-    new_mip = CFG['CMIP5']['fx_mip_change'].get(fx_file, default_mip)
-    logger.debug("Switching mip for fx file finding to %s", new_mip)
-    return new_mip
 
 
 TAGS_CONFIG_FILE = os.path.join(

@@ -8,21 +8,24 @@ from .swcre import DerivedVariable as Swcre
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `netcre`."""
 
-    # Required variables
-    required = [
-        {
-            'short_name': 'rlut'
-        },
-        {
-            'short_name': 'rlutcs'
-        },
-        {
-            'short_name': 'rsut'
-        },
-        {
-            'short_name': 'rsutcs'
-        },
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [
+            {
+                'short_name': 'rlut'
+            },
+            {
+                'short_name': 'rlutcs'
+            },
+            {
+                'short_name': 'rsut'
+            },
+            {
+                'short_name': 'rsutcs'
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):

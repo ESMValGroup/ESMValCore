@@ -1,0 +1,21 @@
+!============
+variable_entry:    hurStderr
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             %
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Relative Humidity Error
+comment:           The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude plevs time
+out_name:          hurStderr
+type:              real
+!----------------------------------
+!

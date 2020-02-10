@@ -1,6 +1,6 @@
 # ESMValCore package
 
-[![Documentation Status](https://readthedocs.org/projects/esmvaltool/badge/?version=version2_development)](https://esmvaltool.readthedocs.io/en/version2_development/?badge=version2_development)
+[![Documentation Status](https://readthedocs.org/projects/esmvaltool/badge/?version=latest)](https://esmvaltool.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3387139.svg)](https://doi.org/10.5281/zenodo.3387139)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ESMValGroup?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore.svg?style=svg)](https://circleci.com/gh/ESMValGroup/ESMValCore)
@@ -28,7 +28,7 @@ you can install ESMValCore by running:
 ## Installing from source
 
 If you need the very latest features, please see
-[CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/development/CONTRIBUTING.md)
+[CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/master/CONTRIBUTING.md)
 for instructions on installing ESMValCore from source.
 
 ## Using ESMValCore as a Python library
@@ -65,4 +65,4 @@ on [readthedocs](https://esmvaltool.readthedocs.io), is to open an
 ## Contributing
 
 If you would like to contribute a new feature, please have a
-look at [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/development/CONTRIBUTING.md).
+look at [CONTRIBUTING.md](https://github.com/ESMValGroup/ESMValCore/blob/master/CONTRIBUTING.md).

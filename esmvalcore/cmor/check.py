@@ -80,8 +80,7 @@ class CMORCheck():
         homogenize some data:
 
             - Equivalent calendars will all default to the same name.
-            - Auxiliary coordinates year, month_number, day_of_month and
-              day_of_year will be added for the time axis.
+            - Time units will be set to days since 1850-01-01
 
         Raises
         ------
@@ -98,14 +97,14 @@ class CMORCheck():
         self._check_fill_value()
         self._check_dim_names()
         self._check_coords()
-        self._check_time_coord()
+        if self.frequency != 'fx':
+            self._check_time_coord()
         self._check_rank()
 
         self.report_debug_messages(logger)
         self.report_warnings(logger)
         self.report_errors()
 
-        self._add_auxiliar_time_coordinates()
         return self._cube
 
     def report_errors(self):
@@ -313,7 +312,6 @@ class CMORCheck():
                             coord.var_name = coordinate.out_name
                         else:
                             self.report_error(
-                                'Coordinate {0} has var name {1}'
                                 'Coordinate {0} has var name {1} '
                                 'instead of {2}',
                                 coordinate.name,
@@ -475,28 +473,39 @@ class CMORCheck():
             coord.units = cf_units.Unit(coord.units.origin, simplified_cal)
 
             attrs = self._cube.attributes
-            branch_child = 'branch_time_in_child'
-            if branch_child in attrs:
-                attrs[branch_child] = old_units.convert(attrs[branch_child],
-                                                        coord.units)
 
             parent_time = 'parent_time_units'
             if parent_time in attrs:
-                parent_units = cf_units.Unit(attrs[parent_time],
-                                             simplified_cal)
-                attrs[parent_time] = 'days since 1850-1-1 00:00:00'
-
-                branch_parent = 'branch_time_in_parent'
-                if branch_parent in attrs:
-                    attrs[branch_parent] = parent_units.convert(
-                        attrs[branch_parent], coord.units)
+                if attrs[parent_time] in 'no parent':
+                    pass
+                else:
+                    try:
+                        parent_units = cf_units.Unit(attrs[parent_time],
+                                                     simplified_cal)
+                    except ValueError:
+                        self.report_warning('Attribute parent_time_units has '
+                                            'a wrong format and cannot be '
+                                            'read by cf_units. A fix needs to '
+                                            'be added to convert properly '
+                                            'attributes branch_time_in_parent '
+                                            'and branch_time_in_child.')
+                    else:
+                        attrs[parent_time] = 'days since 1850-1-1 00:00:00'
+                        branch_parent = 'branch_time_in_parent'
+                        if branch_parent in attrs:
+                            attrs[branch_parent] = parent_units.convert(
+                                attrs[branch_parent], coord.units)
+                        branch_child = 'branch_time_in_child'
+                        if branch_child in attrs:
+                            attrs[branch_child] = old_units.convert(
+                                attrs[branch_child], coord.units)
 
         tol = 0.001
         intervals = {'dec': (3600, 3660), 'day': (1, 1)}
         freq = self.frequency
         if freq.lower().endswith('pt'):
             freq = freq[:-2]
-        if freq == 'mon':
+        if freq in ['mon', 'mo']:
             for i in range(len(coord.points) - 1):
                 first = coord.cell(i).point
                 second = coord.cell(i + 1).point
@@ -637,17 +646,6 @@ class CMORCheck():
         """
         msg = message.format(*args)
         self._debug_messages.append(msg)
-
-    def _add_auxiliar_time_coordinates(self):
-        coords = [coord.name() for coord in self._cube.aux_coords]
-        if 'day_of_month' not in coords:
-            iris.coord_categorisation.add_day_of_month(self._cube, 'time')
-        if 'day_of_year' not in coords:
-            iris.coord_categorisation.add_day_of_year(self._cube, 'time')
-        if 'month_number' not in coords:
-            iris.coord_categorisation.add_month_number(self._cube, 'time')
-        if 'year' not in coords:
-            iris.coord_categorisation.add_year(self._cube, 'time')
 
 
 def _get_cmor_checker(table,

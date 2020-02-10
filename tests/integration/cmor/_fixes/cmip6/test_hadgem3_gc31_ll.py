@@ -1,4 +1,4 @@
-"""Tests for the fixes of CESM2."""
+"""Tests for the fixes of HadGEM3-GC31-LL."""
 import iris
 import pytest
 
