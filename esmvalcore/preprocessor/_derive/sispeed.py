@@ -1,9 +1,7 @@
 """Derivation of variable `sispeed`."""
 
 import logging
-import numpy as np
 from iris import Constraint
-from iris.coords import DimCoord
 
 from .._regrid import regrid
 
