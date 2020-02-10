@@ -612,12 +612,11 @@ class DiagnosticTask(BaseTask):
             ]}
         for item in product.provenance.records:
             for key, value in item.attributes:
-                if (key.namespace.prefix == 'attribute'
-                        and key.localpart in {'reference', 'references'}):
-                    citation['reference'].append(value)
-                if (key.namespace.prefix == 'attribute'
-                        and key.localpart == 'further_info_url'):
-                    citation['info_url'].append(value)
+                if key.namespace.prefix == 'attribute':
+                    if key.localpart in {'reference', 'references'}:
+                        citation['reference'].append(value)
+                    elif  key.localpart == 'further_info_url':
+                        citation['info_url'].append(value)
 
         # collect CMIP6 citation, if any
         if citation['info_url']:
@@ -682,7 +681,7 @@ def _json_to_bibtex(data):
 
 
 def _replace_entry(product_entry):
-    """Find tags of the references in provenance"""
+    """Find tags of the references in provenance."""
     entry_tags = {v: k for k, v in TAGS['references'].items()}
     tag_list = []
     for key in entry_tags.keys():
@@ -693,7 +692,7 @@ def _replace_entry(product_entry):
 
 
 def _collect_bibtex_citation(tags):
-    """Collect informtion from bibtex files"""
+    """Collect information from bibtex files."""
     entry = ''
     for tag in tags:
         bibtex_file = os.path.join(REFERENCES_PATH, tag + '.bibtex')
