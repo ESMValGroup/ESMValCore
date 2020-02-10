@@ -44,7 +44,7 @@ class DerivedVariable(DerivedVariableBase):
         try:
             return DerivedVariable._get_speed(siu, siv)
         except ValueError:
-            logger.info('Regridding siv into siu grid to compute sispeed')
+            logger.debug('Regridding siv into siu grid to compute sispeed')
             siv = regrid(siv, siu, 'linear')
             return DerivedVariable._get_speed(siu, siv)
 
