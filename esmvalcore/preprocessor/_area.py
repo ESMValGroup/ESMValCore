@@ -349,7 +349,7 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
-def _correct_coords_from_shapefile(cube, cmor_coords):
+def _correct_coords_from_shapefile(cube, cmor_coords, natural_earth_file):
     """Get correct lat and lon from shapefile."""
     lon = cube.coord(axis='X').points
     lat = cube.coord(axis='Y').points
@@ -360,11 +360,12 @@ def _correct_coords_from_shapefile(cube, cmor_coords):
         # Wrap around longitude coordinate to match data
         lon = lon.copy()  # ValueError: assignment destination is read-only
         lon[lon >= 180.] -= 360.
-        # the NE mask has no points at x = -180 and y = +/-90
-        # so we will fool it and apply the mask at (-179, -89, 89) instead
-        lon = np.where(lon == -180., lon + 1., lon)
-        lat_0 = np.where(lat == -90., lat + 1., lat)
-        lat = np.where(lat_0 == 90., lat_0 - 1., lat_0)
+        if natural_earth_file:
+            # the NE mask has no points at x = -180 and y = +/-90
+            # so we will fool it and apply the mask at (-179, -89, 89) instead
+            lon = np.where(lon == -180., lon + 1., lon)
+            lat_0 = np.where(lat == -90., lat + 1., lat)
+            lat = np.where(lat_0 == 90., lat_0 - 1., lat_0)
 
     return lon, lat
 
@@ -495,9 +496,14 @@ def extract_shape(cube,
             cube = _crop_cube(cube, *geometries.bounds)
 
         cmor_coords = True
+        natural_earth_file = False
         if geometries.bounds[0] < 0:
             cmor_coords = False
-        lon, lat = _correct_coords_from_shapefile(cube, cmor_coords)
+        if "ne_" in str(shapefile):
+            natural_earth_file = True
+        lon, lat = _correct_coords_from_shapefile(cube,
+                                                  cmor_coords,
+                                                  natural_earth_file)
 
         selections = _get_masks_from_geometries(geometries,
                                                 lon,
