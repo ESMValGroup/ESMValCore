@@ -249,10 +249,14 @@ class TestCMORCheck(unittest.TestCase):
         """Check succeeds even if two required coordinates share dimensions."""
         self.cube = self.cube.extract(
             iris.Constraint(latitude=self.cube.coord('latitude').points[0]))
+        lat_points = self.cube.coord('longitude').points
+        lat_points = lat_points / 3.0 - 50.
         self.cube.remove_coord('latitude')
         iris.util.demote_dim_coord_to_aux_coord(self.cube, 'longitude')
         new_lat = self.cube.coord('longitude').copy()
+        new_lat.points = lat_points
         new_lat.var_name = 'lat'
+        new_lat.units = 'degrees_north'
         new_lat.standard_name = 'latitude'
         new_lat.long_name = 'Latitude'
         self.cube.add_aux_coord(new_lat, 1)
@@ -482,6 +486,8 @@ class TestCMORCheck(unittest.TestCase):
             ),
             (1, 2)
         )
+        self.cube.coord("longitude").points = \
+            self.cube.coord("longitude").points + 100.
         self._check_debug_messages_on_metadata()
 
     def test_bad_out_name_onedim_latitude(self):
