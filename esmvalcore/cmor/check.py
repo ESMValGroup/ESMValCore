@@ -439,17 +439,23 @@ class CMORCheck():
                 self._cube = self._cube.intersection(lon_extent)
             else:
                 new_lons = coord.points.copy()
-                new_bounds = coord.bounds.copy()
-                while new_lons.min() < 0:
-                    new_lons[new_lons < 0] += 360
-                    new_bounds[new_bounds < 0] += 360
-                while new_lons.max() > 360:
-                    new_lons[new_lons > 360] -= 360
-                    new_bounds[new_bounds > 360] -= 360
+                self._set_range_in_0_360(new_lons)
+                if coord.bounds:
+                    new_bounds = coord.bounds.copy()
+                    self._set_range_in_0_360(new_bounds)
+                else:
+                    new_bounds = None
                 new_coord = coord.copy(new_lons, new_bounds)
                 dims = self._cube.coord_dims(coord)
                 self._cube.remove_coord(coord)
                 self._cube.add_aux_coord(new_coord, dims)
+
+    @staticmethod
+    def _set_range_in_0_360(array):
+        while array.min() < 0:
+            array[array < 0] += 360
+        while array.max() > 360:
+            array[array > 360] -= 360
 
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""

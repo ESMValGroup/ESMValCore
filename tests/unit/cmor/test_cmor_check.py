@@ -251,10 +251,13 @@ class TestCMORCheck(unittest.TestCase):
             iris.Constraint(latitude=self.cube.coord('latitude').points[0]))
         self.cube.remove_coord('latitude')
         iris.util.demote_dim_coord_to_aux_coord(self.cube, 'longitude')
-        new_lat = self.cube.coord('longitude').copy()
-        new_lat.var_name = 'lat'
-        new_lat.standard_name = 'latitude'
-        new_lat.long_name = 'Latitude'
+        new_lat = iris.coords.AuxCoord(
+            points=self.cube.coord('longitude').points / 4,
+            var_name='lat',
+            standard_name='latitude',
+            long_name='Latitude',
+            units='degrees_north',
+        )
         self.cube.add_aux_coord(new_lat, 1)
         self._check_cube()
 
@@ -274,8 +277,9 @@ class TestCMORCheck(unittest.TestCase):
         checker.check_metadata()
         self.assertTrue(checker.has_warnings())
 
-    def _check_debug_messages_on_metadata(self):
-        checker = CMORCheck(self.cube, self.var_info)
+    def _check_debug_messages_on_metadata(self, automatic_fixes=False):
+        checker = CMORCheck(
+            self.cube, self.var_info, automatic_fixes=automatic_fixes)
         checker.check_metadata()
         self.assertTrue(checker.has_debug_messages())
 
@@ -482,7 +486,7 @@ class TestCMORCheck(unittest.TestCase):
             ),
             (1, 2)
         )
-        self._check_debug_messages_on_metadata()
+        self._check_debug_messages_on_metadata(automatic_fixes=True)
 
     def test_bad_out_name_onedim_latitude(self):
         """Warning if onedimensional lat has bad var_name at metadata"""
