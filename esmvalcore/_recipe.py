@@ -909,7 +909,9 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
 class Recipe:
     """Recipe object."""
 
-    info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
+    info_keys = (
+        'project', 'activity', 'dataset', 'exp', 'ensemble', 'version'
+    )
     """List of keys to be used to compose the alias, ordered by priority."""
 
     def __init__(self,
