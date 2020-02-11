@@ -75,13 +75,13 @@ class TestSit(unittest.TestCase):
             ),
             0
         )
-        self.fix = Sit()
+        self.fix = Sit(None)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'sit'),
-            [AllVars(), Sit()])
+            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'OImon', 'sit'),
+            [Sit(None), AllVars(None)])
 
     def test_fix_metadata(self):
         """Test data fix."""
