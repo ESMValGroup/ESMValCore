@@ -27,11 +27,11 @@ To install on a MacOS you will have to perform the following installation proced
 **WARNING**
 The Mac OSX installation is not being continuously tested via CircleCI! If you notice any problems please report them on GitHub.
 
-  - Download and install Anaconda [for OSX](https://repo.anaconda.com/archive/Anaconda3-2019.07-MacOSX-x86_64.sh)(install by e.g. `bash Anaconda3-2019.07-MacOSX-x86_64.sh` or whatever the installer is called);
+  - Download and install Miniconda or Anaconda [for OSX](https://www.anaconda.com/distribution/)(install by e.g. `bash Anaconda3-2019.07-MacOSX-x86_64.sh` or whatever the installer you downloaded is called);
   - Answer yes when, at the end of the installation, Anaconda asks you to initialize the installation in your `.bash_profile`;
-  - Clone the ESMValTool Core Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
+  - Clone the ESMValTool Core Git repository: `git clone git@github.com:ESMValGroup/ESMValCore.git` (if `git` is not available on your system, install via `conda install git`)
   - Go to the source code directory: `cd ESMValCore`
-  - Use the `environment.yml` file to create the conda viartual environment, as explained above for a Linux installation: `conda env create -n esmvaltool -f environment.yml`
+  - Use the `environment.yml` file to create the conda virtual environment, as explained above for a Linux installation: `conda env create -n esmvaltool -f environment.yml`
   - Activate the esmvaltool environment: `conda activate esmvaltool`
   - Install in development mode: `pip install -e '.[develop]'`. If you are installing behind a proxy that does not trust the usual pip-urls you can declare them with the option `--trusted-host`, e.g. `pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]`
   - Test that your installation was succesful by running `esmvaltool -h`.
