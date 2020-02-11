@@ -95,10 +95,11 @@ class Sit(Fix):
     def _fix_required(self, time):
         if self.vardef.frequency != 'mon':
             return False
-        if time.bounds[0, 0] > time.points[0]:
+        if time.bounds[-1, 0] > time.points[-1]:
             return True
-        if time.bounds[0, 1] < time.points[0]:
+        if time.bounds[-1, 1] < time.points[-1]:
             return True
+        return False
 
 
 class Tos(Fix):
