@@ -233,7 +233,7 @@ def run():
             "output directory.")
         sys.exit(1)
     else:
-        if conf["remove_preproc_dir"]:
+        if os.path.exists(conf["preproc_dir"]) and conf["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
             logger.info("set remove_preproc_dir to false in config")

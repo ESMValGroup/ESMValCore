@@ -15,8 +15,8 @@ def tas_cubes():
 
 
 def test_get_tas_fix():
-    fix = Fix.get_fixes('CMIP6', 'CESM2', 'tas')
-    assert fix == [Tas()]
+    fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'tas')
+    assert fix == [Tas(None)]
 
 
 def test_tas_fix_metadata(tas_cubes):
@@ -29,7 +29,7 @@ def test_tas_fix_metadata(tas_cubes):
                                         long_name='height',
                                         units=Unit('m'),
                                         attributes={'positive': 'up'})
-    fix = Tas()
+    fix = Tas(None)
     out_cubes = fix.fix_metadata(tas_cubes)
     assert out_cubes is tas_cubes
     for cube in out_cubes:

@@ -123,6 +123,8 @@ class TestTimeSlice(tests.Test):
     def test_extract_time_one_time(self):
         """Test extract_time with one time step."""
         cube = _create_sample_cube()
+        cube.coord('time').guess_bounds()
+        cube.remove_coord('month_number')
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = extract_time(cube, 1950, 1, 1, 1952, 12, 31)
         assert_array_equal(np.array([360.]), sliced.coord('time').points)
