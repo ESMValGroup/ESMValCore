@@ -662,6 +662,15 @@ def _get_response(url):
             logger.info('Error in receiving the CMIP json file')
     return json_data
 
+def _valid_json_data(data):
+    valid_data = False
+    keys = ['identifier', 'creators', 'titles', 'publisher', 'publicationYear']
+    if all(key in data for key in keys):
+        check_names = all('creatorName' in item for item in data['creators'])
+        if 'id' in data['identifier'] and check_names:
+            valid_data = True
+    return valid_data
+
 
 def _json_to_bibtex(data):
     """Make a bibtex entry from CMIP6 Data Citation json data."""
@@ -715,7 +724,7 @@ def _collect_cmip_citation(info_url):
     for data_url in info_url:
         data_info = '.'.join((data_url.split(".org/")[1]).split(".")[1:4])
         json_data = _get_response(''.join([url_stem, data_info]))
-        if json_data:
+        if json_data and _valid_json_data(json_data):
             citation_entry += '{}\n'.format(_json_to_bibtex(json_data))
         else:
             citation_link += '{}\n'.format(''.join(
