@@ -601,8 +601,8 @@ class DiagnosticTask(BaseTask):
         # collect info from provenance
         file_name = os.path.splitext(product.filename)[0]
         citation = {
-            'reference': [],
-            'info_url': [],
+            'references': [],
+            'info_urls': [],
             'tag': [],
             'entry': '',
             'url': '',
@@ -614,21 +614,21 @@ class DiagnosticTask(BaseTask):
             for key, value in item.attributes:
                 if key.namespace.prefix == 'attribute':
                     if key.localpart in {'reference', 'references'}:
-                        citation['reference'].append(value)
-                    elif  key.localpart == 'further_info_url':
-                        citation['info_url'].append(value)
+                        citation['references'].append(value)
+                    elif key.localpart == 'further_info_url':
+                        citation['info_urls'].append(value)
 
         # collect CMIP6 citation, if any
-        if citation['info_url']:
+        if citation['info_urls']:
             citation['entry'], citation['url'] = _collect_cmip_citation(
-                citation['info_url'])
+                citation['info_urls'])
         if citation['url']:
             with open(citation['file'][0], 'w') as file:
                 file.write(citation['url'])
 
         # collect recipe citation, if any
-        if citation['reference']:
-            citation['tag'] = _replace_entry(citation['reference'])
+        if citation['references']:
+            citation['tag'] = _replace_entry(citation['references'])
             citation['entry'] += '{}\n'.format(
                 _collect_bibtex_citation(citation['tag']))
 
@@ -661,6 +661,7 @@ def _get_response(url):
         except IOError:
             logger.info('Error in receiving the CMIP json file')
     return json_data
+
 
 def _valid_json_data(data):
     valid_data = False
