@@ -1,5 +1,6 @@
 """Test GDL-CM2P1 fixes."""
 import unittest
+import mock
 
 from cf_units import Unit
 import iris
@@ -66,7 +67,7 @@ class TestSit(unittest.TestCase):
         self.cube = Cube([1.0, 2.0], var_name='sit', units='m')
         self.cube.add_dim_coord(
             iris.coords.DimCoord(
-                points=[45000.5, 45001.5],
+                points=[45000.5, 45031.5],
                 var_name='time',
                 standard_name='time',
                 long_name='time',
@@ -75,19 +76,34 @@ class TestSit(unittest.TestCase):
             ),
             0
         )
-        self.fix = Sit(None)
+        self.var_info_mock = mock.Mock()
+        self.var_info_mock.frequency = 'mon'
+        self.fix = Sit(self.var_info_mock)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'OImon', 'sit'),
-            [Sit(None), AllVars(None)])
+            [Sit(self.var_info_mock), AllVars(None)])
+
+    def test_fix_metadata_day_do_nothing(self):
+        """Test data fix."""
+        self.var_info_mock.frequency = 'day'
+        fix = Sit(self.var_info_mock)
+        cube = fix.fix_metadata((self.cube,))[0]
+        time = cube.coord('time')
+        self.assertEqual(time.bounds[0, 0], 1e8)
+        self.assertEqual(time.bounds[0, 1], 1.1e8)
+        self.assertEqual(time.bounds[1, 0], 1.1e8)
+        self.assertEqual(time.bounds[1, 1], 1.2e8)
 
     def test_fix_metadata(self):
         """Test data fix."""
-        cube = self.fix.fix_metadata((self.cube,))[0]
+        fix = Sit(self.var_info_mock)
+        cube = fix.fix_metadata((self.cube,))[0]
         time = cube.coord('time')
-        self.assertEqual(time.bounds[0, 0], 45000)
-        self.assertEqual(time.bounds[0, 1], 45001)
-        self.assertEqual(time.bounds[1, 0], 45001)
-        self.assertEqual(time.bounds[1, 1], 45002)
+        print(time.bounds)
+        self.assertEqual(time.bounds[0, 0], 44984)
+        self.assertEqual(time.bounds[0, 1], 45015)
+        self.assertEqual(time.bounds[1, 0], 45015)
+        self.assertEqual(time.bounds[1, 1], 45045)

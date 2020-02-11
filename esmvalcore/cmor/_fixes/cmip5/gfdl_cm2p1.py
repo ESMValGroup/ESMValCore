@@ -1,5 +1,7 @@
 """Fixes for GFDL CM2p1 model."""
 from copy import deepcopy
+import numpy as np
+import cftime
 
 from ..fix import Fix
 from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
@@ -63,7 +65,7 @@ class Sit(Fix):
         """
         Fix metadata.
 
-        Fixes wrong units.
+        Fixes bad bounds
 
         Parameters
         ----------
@@ -76,9 +78,18 @@ class Sit(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         time = cube.coord('time')
-        if time.bounds.max() > 1e8:
-            time.bounds = None
-            time.guess_bounds()
+        if time.bounds.max() > 1e8 and self.vardef.frequency == 'mon':
+            new_bounds = np.empty(time.bounds.shape, time.bounds.dtype)
+            for x, point in enumerate(time):
+                date = point.units.num2date(point.points[0])
+                start = cftime.DatetimeJulian(date.year, date.month, 1)
+                if date.month < 12:
+                    end = cftime.DatetimeJulian(date.year, date.month + 1, 1)
+                else:
+                    end = cftime.DatetimeJulian(date.year + 1, 1, 1)
+                new_bounds[x, 0] = point.units.date2num(start)
+                new_bounds[x, 1] = point.units.date2num(end)
+            time.bounds = new_bounds
         return cubes
 
 
