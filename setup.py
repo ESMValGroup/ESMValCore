@@ -31,6 +31,7 @@ REQUIREMENTS = {
     'install': [
         'cf-units',
         'dask[array]',
+        'fiona',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numba',
@@ -39,15 +40,13 @@ REQUIREMENTS = {
         'psutil',
         'pyyaml',
         'scitools-iris>=2.2',
+        'shapely[vectorized]',
         'stratify',
         'yamale',
     ],
     # Test dependencies
     # Execute 'python setup.py test' to run tests
     'test': [
-        'easytest',
-        'mock',
-        'nose',
         'pytest>=3.9',
         'pytest-cov',
         'pytest-env',

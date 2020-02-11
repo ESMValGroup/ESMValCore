@@ -38,13 +38,12 @@ def read_config_user_file(config_file, recipe_name):
         'write_netcdf': True,
         'compress_netcdf': False,
         'exit_on_warning': False,
-        'max_data_filesize': 100,
-        'output_file_type': 'ps',
-        'output_dir': './output_dir',
-        'auxiliary_data_dir': './auxiliary_data',
+        'output_file_type': 'png',
+        'output_dir': 'esmvaltool_output',
+        'auxiliary_data_dir': 'auxiliary_data',
         'save_intermediary_cubes': False,
-        'remove_preproc_dir': False,
-        'max_parallel_tasks': 1,
+        'remove_preproc_dir': True,
+        'max_parallel_tasks': None,
         'run_diagnostic': True,
         'profile_diagnostic': False,
         'config_developer_file': None,
@@ -168,7 +167,10 @@ def configure_logging(cfg_file=None, output=None, console_log_level=None):
 def get_project_config(project):
     """Get developer-configuration for project."""
     logger.debug("Retrieving %s configuration", project)
-    return CFG[project]
+    if project in CFG:
+        return CFG[project]
+    else:
+        raise ValueError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
@@ -190,22 +192,10 @@ def get_activity(variable):
         exp = variable['exp']
         logger.debug("Retrieving activity_id for experiment %s", exp)
         if isinstance(exp, list):
-            return [CMOR_TABLES[project].activities[value] for value in exp]
-        return CMOR_TABLES[project].activities[exp]
+            return [CMOR_TABLES[project].activities[value][0] for value in exp]
+        return CMOR_TABLES[project].activities[exp][0]
     except (KeyError, AttributeError):
         return None
-
-
-def replace_mip_fx(fx_file):
-    """Replace MIP so to retrieve correct fx files."""
-    default_mip = 'Amon'
-    if fx_file not in CFG['CMIP5']['fx_mip_change']:
-        logger.warning(
-            'mip for fx variable %s is not specified in '
-            'config_developer.yml, using default (%s)', fx_file, default_mip)
-    new_mip = CFG['CMIP5']['fx_mip_change'].get(fx_file, default_mip)
-    logger.debug("Switching mip for fx file finding to %s", new_mip)
-    return new_mip
 
 
 TAGS_CONFIG_FILE = os.path.join(

@@ -37,6 +37,29 @@ class AllVars(Fix):
         return cubes
 
 
+class Areacello(Fix):
+    """Fixes for areacello"""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix metadata.
+
+        Fixes wrong units.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        cube.units = 'm2'
+        return cubes
+
+
 class Co2(Fix):
     """Fixes for co2."""
 
@@ -98,7 +121,8 @@ class Usi(Fix):
         -------
         iris.cube.CubeList
         """
-        cubes[0].standard_name = 'sea_ice_x_velocity'
+        cube = self.get_cube_from_list(cubes)
+        cube.standard_name = 'sea_ice_x_velocity'
         return cubes
 
 
@@ -118,5 +142,6 @@ class Vsi(Fix):
         -------
         iris.cube.CubeList
         """
-        cubes[0].standard_name = 'sea_ice_y_velocity'
+        cube = self.get_cube_from_list(cubes)
+        cube.standard_name = 'sea_ice_y_velocity'
         return cubes

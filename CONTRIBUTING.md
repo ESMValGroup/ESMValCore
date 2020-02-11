@@ -4,7 +4,7 @@ If you would like to contribute a new diagnostic and recipe or a new feature, pl
 
 If you have a bug to report, please do so using the [issues tab on the ESMValCore github repository](https://github.com/ESMValGroup/ESMValCore/issues).
 
-To get started developing, follow the instructions below. More detailed instructions can be found in the [manual](https://esmvaltool.readthedocs.io) under Developer's Guide.
+To get started developing, follow the instructions below. If you are contributing fixes for a model/dataset, you can find extra instructions [here](https://esmvaltool.readthedocs.io/projects/esmvalcore/en/latest/esmvalcore/fixing_data.html).
 
 ## Getting started
 
@@ -81,6 +81,7 @@ Please use `yamllint` to check that your YAML files do not contain mistakes.
 ### What should be documented
 
 Any code documentation that is visible on [readthedocs](https://esmvaltool.readthedocs.io) should be well written and adhere to the standards for documentation for the respective language. Note that there is no need to write extensive documentation for functions that are not visible on readthedocs. However, adding a one line docstring describing what a function does is always a good idea.
+When making changes/introducing a new preprocessor function, also update the [preprocessor documentation](https://esmvaltool.readthedocs.io/projects/esmvalcore/en/latest/esmvalcore/preprocessor.html).
 
 ### How to build the documentation locally
 
@@ -90,9 +91,11 @@ Go to the directory where the repository is cloned and run
 
 Make sure that your newly added documentation builds without warnings or errors.
 
-## Pull requests and code review
+## Branches, pull requests and code review
 
-It is recommended that you open a pull request early, as this will cause CircleCI to run the unit tests and Codacy to analyse your code. It's also easier to get help from other developers if your code is visible in a pull request.
+The default git branch is ``master``. Use this branch to create a new feature branch from and make a pull request against. This [page](https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow) offers a good introduction to git branches, but it was written for BitBucket while we use GitHub, so replace the word BitBucket by GitHub whenever you read it.
+
+It is recommended that you open a [draft pull request](https://github.blog/2019-02-14-introducing-draft-pull-requests/) early, as this will cause CircleCI to run the unit tests and Codacy to analyse your code. It's also easier to get help from other developers if your code is visible in a pull request.
 
 You can view the results of the automatic checks below your pull request. If one of the tests shows a red cross instead of a green approval sign, please click the link and try to solve the issue. Note that this kind of automated checks make it easier to review code, but they are not flawless, so occasionally Codacy will report false positives.
 

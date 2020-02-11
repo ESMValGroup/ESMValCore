@@ -5,12 +5,15 @@
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
 import fnmatch
+import glob
 import logging
 import os
 import re
+from pathlib import Path
 
-from ._config import get_project_config, replace_mip_fx
-from .cmor.table import CMOR_TABLES
+import iris
+
+from ._config import get_project_config
 
 logger = logging.getLogger(__name__)
 
@@ -30,54 +33,47 @@ def find_files(dirnames, filenames):
 
 
 def get_start_end_year(filename):
-    """Get the start and end year from a file name.
+    """Get the start and end year from a file name."""
+    stem = Path(filename).stem
+    start_year = end_year = None
 
-    This works for filenames matching
-
-    *[-,_]YYYY*[-,_]YYYY*.*
-      or
-    *[-,_]YYYY*.*
-      or
-    YYYY*[-,_]*.*
-      or
-    YYYY*[-,_]YYYY*[-,_]*.*
-      or
-    YYYY*[-,_]*[-,_]YYYY*.* (Does this make sense? Is this worth catching?)
-    """
-    name = os.path.splitext(filename)[0]
-
-    filename = name.split(os.sep)[-1]
-    filename_list = [elem.split('-') for elem in filename.split('_')]
-    filename_list = [elem for sublist in filename_list for elem in sublist]
-
-    pos_ydates = [elem.isdigit() and len(elem) >= 4 for elem in filename_list]
-    pos_ydates_l = list(pos_ydates)
-    pos_ydates_r = list(pos_ydates)
-
-    for ind, _ in enumerate(pos_ydates_l):
-        if ind != 0:
-            pos_ydates_l[ind] = (pos_ydates_l[ind - 1] and pos_ydates_l[ind])
-
-    for ind, _ in enumerate(pos_ydates_r):
-        if ind != 0:
-            pos_ydates_r[-ind - 1] = (pos_ydates_r[-ind]
-                                      and pos_ydates_r[-ind - 1])
-
-    dates = [
-        filename_list[ind] for ind, _ in enumerate(pos_ydates)
-        if pos_ydates_r[ind] or pos_ydates_l[ind]
-    ]
-
-    if len(dates) == 1:
-        start_year = int(dates[0][:4])
-        end_year = start_year
-    elif len(dates) == 2:
-        start_year, end_year = int(dates[0][:4]), int(dates[1][:4])
+    # First check for a block of two potential dates separated by _ or -
+    daterange = re.findall(r'([0-9]{4,12}[-_][0-9]{4,12})', stem)
+    if daterange:
+        start_date, end_date = re.findall(r'([0-9]{4,12})', daterange[0])
+        start_year = start_date[:4]
+        end_year = end_date[:4]
     else:
-        raise ValueError('Name {0} dates do not match a recognized '
-                         'pattern'.format(name))
+        # Check for single dates in the filename
+        dates = re.findall(r'([0-9]{4,12})', stem)
+        if len(dates) == 1:
+            start_year = end_year = dates[0][:4]
+        elif len(dates) > 1:
+            # Check for dates at start or end of filename
+            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stem)
+            if len(outerdates) == 1:
+                start_year = end_year = outerdates[0][:4]
 
-    return start_year, end_year
+    # As final resort, try to get the dates from the file contents
+    if start_year is None or end_year is None:
+        cubes = iris.load(filename)
+
+        for cube in cubes:
+            logger.debug(cube)
+            try:
+                time = cube.coord('time')
+            except iris.exceptions.CoordinateNotFoundError:
+                continue
+            start_year = time.cell(0).point.year
+            end_year = time.cell(-1).point.year
+            break
+
+    if start_year is None or end_year is None:
+        raise ValueError(f'File {filename} dates do not match a recognized'
+                         'pattern and time can not be read from the file')
+
+    logger.debug("Found start_year %s and end_year %s", start_year, end_year)
+    return int(start_year), int(end_year)
 
 
 def select_files(filenames, start_year, end_year):
@@ -93,29 +89,24 @@ def select_files(filenames, start_year, end_year):
     return selection
 
 
-def _replace_tags(path, variable, fx_var=None):
+def _replace_tags(path, variable):
     """Replace tags in the config-developer's file with actual values."""
     path = path.strip('/')
-
-    tlist = re.findall(r'\[([^]]*)\]', path)
-
+    tlist = re.findall(r'{([^}]*)}', path)
     paths = [path]
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
 
-        if tag == 'fx_var':
-            replacewith = fx_var
-        elif tag == 'latestversion':  # handled separately later
+        if tag == 'latestversion':  # handled separately later
             continue
-        elif tag in variable:
+        if tag in variable:
             replacewith = variable[tag]
         else:
             raise KeyError("Dataset key {} must be specified for {}, check "
                            "your recipe entry".format(tag, variable))
 
         paths = _replace_tag(paths, original_tag, replacewith)
-
     return paths
 
 
@@ -128,7 +119,7 @@ def _replace_tag(paths, tag, replacewith):
             result.extend(_replace_tag(paths, tag, item))
     else:
         text = _apply_caps(str(replacewith), lower, upper)
-        result.extend(p.replace('[' + tag + ']', text) for p in paths)
+        result.extend(p.replace('{' + tag + '}', text) for p in paths)
     return result
 
 
@@ -154,11 +145,11 @@ def _apply_caps(original, lower, upper):
 
 def _resolve_latestversion(dirname_template):
     """Resolve the 'latestversion' tag."""
-    if '[latestversion]' not in dirname_template:
+    if '{latestversion}' not in dirname_template:
         return dirname_template
 
     # Find latest version
-    part1, part2 = dirname_template.split('[latestversion]')
+    part1, part2 = dirname_template.split('{latestversion}')
     part2 = part2.lstrip(os.sep)
     if os.path.exists(part1):
         versions = os.listdir(part1)
@@ -196,70 +187,57 @@ def get_rootpath(rootpath, project):
     raise KeyError('default rootpath must be specified in config-user file')
 
 
-def _find_input_dirs(variable, rootpath, drs, fx_var=None):
+def _find_input_dirs(variable, rootpath, drs):
     """Return a the full paths to input directories."""
     project = variable['project']
 
     root = get_rootpath(rootpath, project)
-    input_type = 'input_{}dir'.format('fx_' if fx_var else '')
-    path_template = _select_drs(input_type, drs, project)
+    path_template = _select_drs('input_dir', drs, project)
 
     dirnames = []
-    for dirname_template in _replace_tags(path_template, variable, fx_var):
+    for dirname_template in _replace_tags(path_template, variable):
         for base_path in root:
             dirname = os.path.join(base_path, dirname_template)
             dirname = _resolve_latestversion(dirname)
-            if os.path.exists(dirname):
-                logger.debug("Found %s", dirname)
-                dirnames.append(dirname)
+            matches = glob.glob(dirname)
+            matches = [match for match in matches if os.path.isdir(match)]
+            if matches:
+                for match in matches:
+                    logger.debug("Found %s", match)
+                    dirnames.append(match)
             else:
                 logger.debug("Skipping non-existent %s", dirname)
 
     return dirnames
 
 
-def _get_filenames_glob(variable, drs, fx_var=None):
+def _get_filenames_glob(variable, drs):
     """Return patterns that can be used to look for input files."""
-    input_type = 'input_{}file'.format('fx_' if fx_var else '')
-    path_template = _select_drs(input_type, drs, variable['project'])
-    filenames_glob = _replace_tags(path_template, variable, fx_var)
+    path_template = _select_drs('input_file', drs, variable['project'])
+    filenames_glob = _replace_tags(path_template, variable)
     return filenames_glob
 
 
-def _find_input_files(variable, rootpath, drs, fx_var=None):
-    logger.debug("Looking for input %sfiles for variable %s of dataset %s",
-                 fx_var + ' fx ' if fx_var else '', variable['short_name'],
-                 variable['dataset'])
-
-    input_dirs = _find_input_dirs(variable, rootpath, drs, fx_var)
-    filenames_glob = _get_filenames_glob(variable, drs, fx_var)
+def _find_input_files(variable, rootpath, drs):
+    input_dirs = _find_input_dirs(variable, rootpath, drs)
+    filenames_glob = _get_filenames_glob(variable, drs)
     files = find_files(input_dirs, filenames_glob)
 
-    return files
+    return (files, input_dirs, filenames_glob)
 
 
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
-    files = _find_input_files(variable, rootpath, drs)
-    files = select_files(files, variable['start_year'], variable['end_year'])
-    return files
-
-
-def get_input_fx_filelist(variable, rootpath, drs):
-    """Return a dict with the full path to fx input files."""
-    fx_files = {}
-    for fx_var in variable['fx_files']:
-        var = dict(variable)
-        var['mip'] = replace_mip_fx(fx_var)
-        table = CMOR_TABLES[var['cmor_table']].get_table(var['mip'])
-        var['frequency'] = table.frequency
-        realm = getattr(table.get(var['short_name']), 'modeling_realm', None)
-        var['modeling_realm'] = realm if realm else table.realm
-
-        files = _find_input_files(var, rootpath, drs, fx_var)
-        fx_files[fx_var] = files[0] if files else None
-
-    return fx_files
+    # change ensemble to fixed r0i0p0 for fx variables
+    # this is needed and is not a duplicate effort
+    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
+        variable['ensemble'] = 'r0i0p0'
+    (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
+    # do time gating only for non-fx variables
+    if variable['frequency'] != 'fx':
+        files = select_files(files, variable['start_year'],
+                             variable['end_year'])
+    return (files, dirnames, filenames)
 
 
 def get_output_file(variable, preproc_dir):
@@ -275,9 +253,11 @@ def get_output_file(variable, preproc_dir):
         preproc_dir,
         variable['diagnostic'],
         variable['variable_group'],
-        _replace_tags(cfg['output_file'], variable)[0] + '.nc',
+        _replace_tags(cfg['output_file'], variable)[0],
     )
-
+    if variable['frequency'] != 'fx':
+        outfile += '_{start_year}-{end_year}'.format(**variable)
+    outfile += '.nc'
     return outfile
 
 

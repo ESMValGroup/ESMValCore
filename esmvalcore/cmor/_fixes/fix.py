@@ -3,11 +3,23 @@ import importlib
 import os
 import inspect
 
+from ..table import CMOR_TABLES
 
-class Fix(object):
+
+class Fix:
     """
     Base class for dataset fixes.
     """
+    def __init__(self, vardef):
+        """Initialize fix object.
+
+        Parameters
+        ----------
+        vardef: basestring
+            CMOR table entry
+
+        """
+        self.vardef = vardef
 
     def fix_file(self, filepath, output_dir):
         """
@@ -109,7 +121,7 @@ class Fix(object):
         return not self.__eq__(other)
 
     @staticmethod
-    def get_fixes(project, dataset, variable):
+    def get_fixes(project, dataset, mip, short_name):
         """
         Get the fixes that must be applied for a given dataset.
 
@@ -128,16 +140,20 @@ class Fix(object):
         ----------
         project: str
         dataset: str
-        variable: str
+        mip: str
+        short_name: str
 
         Returns
         -------
         list(Fix)
             Fixes to apply for the given data
         """
+        cmor_table = CMOR_TABLES[project]
+        vardef = cmor_table.get_variable(mip, short_name)
+
         project = project.replace('-', '_').lower()
         dataset = dataset.replace('-', '_').lower()
-        variable = variable.replace('-', '_')
+        short_name = short_name.replace('-', '_').lower()
 
         fixes = []
         try:
@@ -146,9 +162,9 @@ class Fix(object):
 
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
-            for fix_name in ('allvars', variable):
+            for fix_name in (short_name, 'allvars'):
                 try:
-                    fixes.append(classes[fix_name]())
+                    fixes.append(classes[fix_name](vardef))
                 except KeyError:
                     pass
         except ImportError:
