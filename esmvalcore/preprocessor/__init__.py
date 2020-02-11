@@ -2,6 +2,7 @@
 import copy
 import inspect
 import logging
+from pprint import pformat
 
 from iris.cube import Cube
 
@@ -418,7 +419,8 @@ class PreprocessingTask(BaseTask):
             step for step in self.order
             if any(step in product.settings for product in self.products)
         ]
-        products = '\n\n'.join(str(p) for p in self.products)
+        products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
+                               for p in self.products)
         txt = "{}:\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
             order,

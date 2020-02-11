@@ -12,18 +12,16 @@ from esmvalcore.cmor._fixes.cmip5.gfdl_cm2p1 import (Sftof, AllVars,
 
 class TestSftof(unittest.TestCase):
     """Test sftof fixes."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='sftof', units='J')
-        self.fix = Sftof()
+        self.fix = Sftof(None)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'sftof'),
-            [AllVars(), Sftof()]
-        )
+            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'sftof'),
+            [Sftof(None), AllVars(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -38,24 +36,24 @@ class TestAreacello(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='areacello', units='m-2')
-        self.fix = Areacello()
+        self.fix = Areacello(None)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'areacello'),
-            [AllVars(), Areacello()])
+            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'areacello'),
+            [Areacello(None), AllVars(None)])
 
     def test_fix_metadata(self):
         """Test data fix."""
-        cube = self.fix.fix_metadata((self.cube,))[0]
+        cube = self.fix.fix_metadata((self.cube, ))[0]
         self.assertEqual(cube.data[0], 1.0)
         self.assertEqual(cube.units, Unit('m2'))
 
     def test_fix_data(self):
         """Test data fix."""
         self.cube.units = 'm2'
-        cube = self.fix.fix_metadata((self.cube,))[0]
+        cube = self.fix.fix_metadata((self.cube, ))[0]
         self.assertEqual(cube.data[0], 1.0)
         self.assertEqual(cube.units, Unit('m2'))
 
