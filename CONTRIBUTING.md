@@ -35,7 +35,7 @@ The Mac OSX installation is not being continuously tested via CircleCI! If you n
   - Activate the esmvaltool environment: `conda activate esmvaltool`
   - Install in development mode: `pip install -e '.[develop]'`. If you are installing behind a proxy that does not trust the usual pip-urls you can declare them with the option `--trusted-host`, e.g. `pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]`
   - Test that your installation was succesful by running `esmvaltool -h`.
-  - Note that the installation instructions are identical to the Linux installation due to the package being architecture agnostic (specified by the `noarch` label).
+  - Note that the package is architecture-agnostic (specified by the `noarch` label), but if you do encounter issues related to shared libraries, please report them to us.
 
 ## Running tests
 
