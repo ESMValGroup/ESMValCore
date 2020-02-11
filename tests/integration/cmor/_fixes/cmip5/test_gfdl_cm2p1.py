@@ -1,6 +1,5 @@
 """Test GDL-CM2P1 fixes."""
 import unittest
-import mock
 
 from cf_units import Unit
 import iris
@@ -76,7 +75,7 @@ class TestSit(unittest.TestCase):
             ),
             0
         )
-        self.var_info_mock = mock.Mock()
+        self.var_info_mock = unittest.mock.Mock()
         self.var_info_mock.frequency = 'mon'
         self.fix = Sit(self.var_info_mock)
 
@@ -102,8 +101,19 @@ class TestSit(unittest.TestCase):
         fix = Sit(self.var_info_mock)
         cube = fix.fix_metadata((self.cube,))[0]
         time = cube.coord('time')
-        print(time.bounds)
         self.assertEqual(time.bounds[0, 0], 44984)
         self.assertEqual(time.bounds[0, 1], 45015)
         self.assertEqual(time.bounds[1, 0], 45015)
         self.assertEqual(time.bounds[1, 1], 45045)
+
+    def test_fix_metadata_not_needed(self):
+        """Test data fix."""
+        fix = Sit(self.var_info_mock)
+        cube = fix.fix_metadata((self.cube,))[0]
+        time = cube.coord('time')
+        new_bounds = [[44985., 45014.], [45016., 45044.]]
+        time.bounds = new_bounds
+        self.assertEqual(time.bounds[0, 0], 44985)
+        self.assertEqual(time.bounds[0, 1], 45014)
+        self.assertEqual(time.bounds[1, 0], 45016)
+        self.assertEqual(time.bounds[1, 1], 45044)

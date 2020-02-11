@@ -78,7 +78,7 @@ class Sit(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         time = cube.coord('time')
-        if time.bounds.max() > 1e8 and self.vardef.frequency == 'mon':
+        if self._fix_required(time):
             new_bounds = np.empty(time.bounds.shape, time.bounds.dtype)
             for x, point in enumerate(time):
                 date = point.units.num2date(point.points[0])
@@ -91,6 +91,14 @@ class Sit(Fix):
                 new_bounds[x, 1] = point.units.date2num(end)
             time.bounds = new_bounds
         return cubes
+
+    def _fix_required(self, time):
+        if self.vardef.frequency != 'mon':
+            return False
+        if time.bounds[0, 0] > time.points[0]:
+            return True
+        if time.bounds[0, 1] < time.points[0]:
+            return True
 
 
 class Tos(Fix):
