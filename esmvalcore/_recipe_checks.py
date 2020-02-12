@@ -1,4 +1,5 @@
 """Module with functions to check a recipe."""
+import itertools
 import logging
 import os
 import subprocess
@@ -90,25 +91,47 @@ def variable(var, required_keys):
                 missing, var.get('short_name'), var.get('diagnostic')))
 
 
-def data_availability(input_files, var):
+def data_availability(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
     if not input_files:
-        raise RecipeError("No input files found for variable {}".format(var))
+        var.pop('filename', None)
+        logger.error("No input files found for variable %s", var)
+        if dirnames and filenames:
+            patterns = itertools.product(dirnames, filenames)
+            patterns = [os.path.join(d, f) for (d, f) in patterns]
+            if len(patterns) == 1:
+                msg = f': {patterns[0]}'
+            else:
+                msg = '\n{}'.format('\n'.join(patterns))
+            logger.error("Looked for files matching%s", msg)
+        elif dirnames and not filenames:
+            logger.error(
+                "Looked for files in %s, but did not find any file pattern "
+                "to match against", dirnames)
+        elif filenames and not dirnames:
+            logger.error(
+                "Looked for files matching %s, but did not find any existing "
+                "input directory", filenames)
+        logger.error("Set 'log_level' to 'debug' to get more information")
+        raise RecipeError("Missing data")
+
+    # check time avail only for non-fx variables
+    if var['frequency'] == 'fx':
+        return
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))
     available_years = set()
-    # check time avail only for non-fx variables
-    if var['frequency'] != 'fx':
-        for filename in input_files:
-            start, end = get_start_end_year(filename)
-            available_years.update(range(start, end + 1))
 
-        missing_years = required_years - available_years
-        if missing_years:
-            raise RecipeError(
-                "No input data available for years {} in files {}".format(
-                    ", ".join(str(year) for year in missing_years),
-                    input_files))
+    for filename in input_files:
+        start, end = get_start_end_year(filename)
+        available_years.update(range(start, end + 1))
+
+    missing_years = required_years - available_years
+    if missing_years:
+        raise RecipeError(
+            "No input data available for years {} in files {}".format(
+                ", ".join(str(year) for year in missing_years),
+                input_files))
 
 
 def tasks_valid(tasks):

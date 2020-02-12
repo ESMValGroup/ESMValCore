@@ -42,6 +42,10 @@ def test_add_scalar_depth_coord(cube_in, depth):
     assert cube_out is cube_in
     coord = cube_in.coord('depth')
     assert coord == depth_coord
+    cube_out_2 = add_scalar_depth_coord(cube_out)
+    assert cube_out_2 is cube_out
+    coord = cube_in.coord('depth')
+    assert coord == depth_coord
 
 
 @pytest.mark.parametrize('cube_in,height', TEST_ADD_SCALAR_COORD)
@@ -62,6 +66,10 @@ def test_add_scalar_height_coord(cube_in, height):
     else:
         cube_out = add_scalar_height_coord(cube_in, height)
     assert cube_out is cube_in
+    coord = cube_in.coord('height')
+    assert coord == height_coord
+    cube_out_2 = add_scalar_height_coord(cube_out)
+    assert cube_out_2 is cube_out
     coord = cube_in.coord('height')
     assert coord == height_coord
 
@@ -85,6 +93,10 @@ def test_add_scalar_typeland_coord(cube_in, typeland):
     assert cube_out is cube_in
     coord = cube_in.coord('area_type')
     assert coord == typeland_coord
+    cube_out_2 = add_scalar_typeland_coord(cube_out)
+    assert cube_out_2 is cube_out
+    coord = cube_in.coord('area_type')
+    assert coord == typeland_coord
 
 
 @pytest.mark.parametrize('cube_in,typesea', TEST_ADD_SCALAR_COORD)
@@ -104,6 +116,10 @@ def test_add_scalar_typesea_coord(cube_in, typesea):
     else:
         cube_out = add_scalar_typesea_coord(cube_in, typesea)
     assert cube_out is cube_in
+    coord = cube_in.coord('area_type')
+    assert coord == typesea_coord
+    cube_out_2 = add_scalar_typesea_coord(cube_out)
+    assert cube_out_2 is cube_out
     coord = cube_in.coord('area_type')
     assert coord == typesea_coord
 

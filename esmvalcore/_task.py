@@ -48,12 +48,19 @@ def _get_resource_usage(process, start_time, children=True):
         'Disk write (GB)',
     ]
     fmt = '{}\t' * len(entries[:-1]) + '{}\n'
-    yield fmt.format(*entries)
+    yield (fmt.format(*entries), 0.)
 
     # Compute resource usage
     gigabyte = float(2**30)
     precision = [1, 1, None, 1, None, 3, 3]
     cache = {}
+    max_memory = 0.
+    try:
+        process.io_counters()
+    except AttributeError:
+        counters_available = False
+    else:
+        counters_available = True
     while process.is_running():
         try:
             if children:
@@ -77,8 +84,10 @@ def _get_resource_usage(process, start_time, children=True):
                     proc.cpu_percent(),
                     proc.memory_info().rss / gigabyte,
                     proc.memory_percent(),
-                    proc.io_counters().read_bytes / gigabyte,
-                    proc.io_counters().write_bytes / gigabyte,
+                    (proc.io_counters().read_bytes / gigabyte
+                     if counters_available else float('nan')),
+                    (proc.io_counters().write_bytes / gigabyte
+                     if counters_available else float('nan')),
                 ]
         except (OSError, psutil.AccessDenied, psutil.NoSuchProcess):
             # Try again if an error occurs because some process died
@@ -89,7 +98,8 @@ def _get_resource_usage(process, start_time, children=True):
         entries.insert(0, time.time() - start_time)
         entries = [round(entry, p) for entry, p in zip(entries, precision)]
         entries.insert(0, datetime.datetime.utcnow())
-        yield fmt.format(*entries)
+        max_memory = max(max_memory, entries[4])
+        yield (fmt.format(*entries), max_memory)
 
 
 @contextlib.contextmanager
@@ -102,10 +112,16 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
         process = psutil.Process(pid)
         start_time = time.time()
         with open(filename, 'w') as file:
-            for msg in _get_resource_usage(process, start_time, children):
+            for msg, max_mem in _get_resource_usage(process, start_time,
+                                                    children):
                 file.write(msg)
                 time.sleep(interval)
                 if halt.is_set():
+                    logger.info(
+                        'Maximum memory used (estimate): %.1f GB', max_mem)
+                    logger.info(
+                        'Sampled every second. It may be inaccurate if short '
+                        'but high spikes in memory consumption occur.')
                     return
 
     thread = threading.Thread(target=_log_resource_usage)
@@ -271,6 +287,7 @@ class DiagnosticTask(BaseTask):
     def _initialize_cmd(self, script):
         """Create a an executable command from script."""
         diagnostics_root = os.path.join(DIAGNOSTICS_PATH, 'diag_scripts')
+        script = os.path.expanduser(script)
         script_file = os.path.abspath(os.path.join(diagnostics_root, script))
 
         if not os.path.isfile(script_file):
@@ -338,7 +355,6 @@ class DiagnosticTask(BaseTask):
             'run_dir',
             'plot_dir',
             'work_dir',
-            'max_data_filesize',
             'output_file_type',
             'log_level',
             'write_plots',
@@ -411,11 +427,12 @@ class DiagnosticTask(BaseTask):
 
         rerun_msg = 'cd {}; '.format(cwd)
         if env:
-            rerun_msg += ' '.join('{}="{}"'.format(k, env[k]) for k in env
-                                  if k not in os.environ)
+            rerun_msg += ' '.join('{}="{}"'.format(k, env[k]) for k in env)
         rerun_msg += ' ' + ' '.join(cmd)
         logger.info("To re-run this diagnostic script, run:\n%s", rerun_msg)
 
+        complete_env = dict(os.environ)
+        complete_env.update(env)
         try:
             process = subprocess.Popen(
                 cmd,
@@ -423,7 +440,7 @@ class DiagnosticTask(BaseTask):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 cwd=cwd,
-                env=env)
+                env=complete_env)
         except OSError as exc:
             if exc.errno == errno.ENOEXEC:
                 logger.error(
@@ -453,7 +470,7 @@ class DiagnosticTask(BaseTask):
                 if f.endswith('.yml') or os.path.isdir(f)
             ]
 
-        env = dict(os.environ)
+        env = {}
         if self.script.lower().endswith('.py'):
             # Set non-interactive matplotlib backend
             env['MPLBACKEND'] = 'Agg'
@@ -522,7 +539,6 @@ class DiagnosticTask(BaseTask):
             'exit_on_ncl_warning',
             'input_files',
             'log_level',
-            'max_data_filesize',
             'output_file_type',
             'plot_dir',
             'profile_diagnostic',
