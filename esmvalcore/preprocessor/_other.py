@@ -29,5 +29,11 @@ def clip(cube, minimum=None, maximum=None):
     iris.cube.Cube
         clipped cube.
     """
+    if minimum==None and maximum==None:
+        raise ValueError("Either minimum, maximum or both have to be\
+                          specified.")
+    elif minimum!=None and maximum!=None:
+        if maximum<=minimum:
+            raise ValueError("Maximum should be equal or larger than minimum.")
     cube.data = np.ma.clip(cube.data, minimum, maximum)
     return cube
