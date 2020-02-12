@@ -22,10 +22,10 @@ from ._multimodel import multi_model_statistics
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
 from ._regrid import extract_levels, regrid
-from ._time import (extract_month, extract_season, extract_time, regrid_time,
-                    daily_statistics, monthly_statistics, seasonal_statistics,
-                    annual_statistics, decadal_statistics, climate_statistics,
-                    anomalies)
+from ._time import (annual_statistics, anomalies, climate_statistics,
+                    daily_statistics, decadal_statistics, extract_month,
+                    extract_season, extract_time, monthly_statistics,
+                    regrid_time, seasonal_statistics)
 from ._units import convert_units
 from ._volume import (depth_integration, extract_trajectory, extract_transect,
                       extract_volume, volume_statistics)

@@ -5,7 +5,7 @@ import pytest
 import tests
 
 import numpy as np
-from numpy.testing import assert_array_equal, assert_allclose
+from numpy.testing import assert_array_equal
 
 from cf_units import Unit
 import iris
@@ -905,10 +905,9 @@ def make_map_data(number_years=2):
     return cube
 
 
-@pytest.mark.parametrize('standardize', [True])
 @pytest.mark.parametrize('period', ['full'])
-def test_standardized_anomalies(period, standardize):
-    cube = make_map_data(number_years=4)
+def test_standardized_anomalies(period, standardize=True):
+    cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize)
     if period == 'full':
         expected_anomalies = (cube.data - np.mean(cube.data, axis=2, keepdims=True))
@@ -928,26 +927,21 @@ def test_standardized_anomalies(period, standardize):
                 result.data,
                 expected
             )
-    assert_array_equal(result.coord('time').points, expected.coord('time').points)
 
 
-@pytest.mark.parametrize('standardize', [False])
 @pytest.mark.parametrize('period', ['full', 'day', 'month', 'season'])
-def test_anomalies(period, standardize):
+def test_anomalies(period, standardize=False):
     cube = make_map_data(number_years=2)
-    result = anomalies(cube, period, standardize)
+    result = anomalies(cube, period)
     if period == 'full':
         anom = np.arange(-359.5, 360, 1)
         zeros = np.zeros_like(anom)
-        expected = np.array([[zeros, anom], [anom, zeros]])
         assert_array_equal(
             result.data,
-            expected,
+            np.array([[zeros, anom], [anom, zeros]])
         )
     elif period == 'day':
         anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
-        if standardize:
-            anom = None  # TODO: add numpy array with correct values here
         zeros = np.zeros_like(anom)
         assert_array_equal(
             result.data,
@@ -957,8 +951,6 @@ def test_anomalies(period, standardize):
         anom1 = np.concatenate([np.arange(-194.5, -165) for x in range(12)])
         anom2 = np.concatenate([np.arange(165.5, 195) for x in range(12)])
         anom = np.concatenate((anom1, anom2))
-        if standardize:
-            anom = None  # TODO: add numpy array with correct values here
         zeros = np.zeros_like(anom)
         print(result.data[0, 1])
         assert_array_equal(
@@ -977,8 +969,6 @@ def test_anomalies(period, standardize):
             np.arange(135.5, 225),
             np.arange(375.5, 405),
         ))
-        if standardize:
-            anom = None  # TODO: add numpy array with correct values here
         zeros = np.zeros_like(anom)
         print(result.data[0, 1])
         assert_array_equal(
