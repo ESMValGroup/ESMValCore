@@ -913,8 +913,8 @@ def test_standardized_anomalies(period, standardize=True):
         expected_anomalies = (cube.data - np.mean(cube.data, axis=2,
                                                   keepdims=True))
         if standardize:
-            # NB: default numpy behaviour is ddof=0,
-            # whereas default iris behaviour is ddof=1
+            # NB: default behaviour for np.std is ddof=0, whereas
+            #     default behaviour for iris.analysis.STD_DEV is ddof=1
             expected_stdanomalies = expected_anomalies / np.std(
                  expected_anomalies, axis=2, keepdims=True, ddof=1)
             expected = np.ma.masked_invalid(expected_stdanomalies)
