@@ -2,13 +2,14 @@
 import copy
 import inspect
 import logging
+from pprint import pformat
 
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
 from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
-                    extract_shape, zonal_means)
+                    extract_shape, zonal_statistics, meridional_statistics)
 from ._derive import derive
 from ._detrend import detrend
 from ._download import download
@@ -90,7 +91,8 @@ __all__ = [
     # Time operations
     # 'annual_cycle': annual_cycle,
     # 'diurnal_cycle': diurnal_cycle,
-    'zonal_means',
+    'zonal_statistics',
+    'meridional_statistics',
     'daily_statistics',
     'monthly_statistics',
     'seasonal_statistics',
@@ -121,15 +123,12 @@ MULTI_MODEL_FUNCTIONS = {
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
-    itype = inspect.getargspec(function).args[0]
+    itype = inspect.getfullargspec(function).args[0]
     return itype
 
 
 def check_preprocessor_settings(settings):
     """Check preprocessor settings."""
-    # The inspect functions getargspec and getcallargs are deprecated
-    # in Python 3, but their replacements are not available in Python 2.
-    # TODO: Use the new Python 3 inspect API
     for step in settings:
         if step not in DEFAULT_ORDER:
             raise ValueError(
@@ -137,7 +136,7 @@ def check_preprocessor_settings(settings):
                     step, ', '.join(DEFAULT_ORDER)))
 
         function = function = globals()[step]
-        argspec = inspect.getargspec(function)
+        argspec = inspect.getfullargspec(function)
         args = argspec.args[1:]
         # Check for invalid arguments
         invalid_args = set(settings[step]) - set(args)
@@ -423,7 +422,8 @@ class PreprocessingTask(BaseTask):
             step for step in self.order
             if any(step in product.settings for product in self.products)
         ]
-        products = '\n\n'.join(str(p) for p in self.products)
+        products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
+                               for p in self.products)
         txt = "{}:\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
             order,

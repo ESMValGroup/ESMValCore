@@ -88,40 +88,26 @@ def _get_value(key, datasets):
     return value
 
 
-def _update_from_others(variable, keys, datasets):
-    """Get values for keys by copying from the other datasets."""
-    for key in keys:
-        if key not in variable:
-            value = _get_value(key, datasets)
-            if value is not None:
-                variable[key] = value
-
-
 def _add_cmor_info(variable, override=False):
     """Add information from CMOR tables to variable."""
     logger.debug("If not present: adding keys from CMOR table to %s", variable)
-
-    if 'cmor_table' not in variable or 'mip' not in variable:
-        logger.debug("Skipping because cmor_table or mip not specified")
-        return
-
-    if variable['cmor_table'] not in CMOR_TABLES:
-        logger.warning("Unknown CMOR table %s", variable['cmor_table'])
-
-    derive = variable.get('derive', False)
     # Copy the following keys from CMOR table
     cmor_keys = [
         'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
     ]
-    cmor_table = variable['cmor_table']
+    project = variable['project']
     mip = variable['mip']
     short_name = variable['short_name']
-    table_entry = CMOR_TABLES[cmor_table].get_variable(mip, short_name, derive)
-
+    derive = variable.get('derive', False)
+    table = CMOR_TABLES.get(project)
+    if table:
+        table_entry = table.get_variable(mip, short_name, derive)
+    else:
+        table_entry = None
     if table_entry is None:
         raise RecipeError(
-            "Unable to load CMOR table '{}' for variable '{}' with mip '{}'".
-            format(cmor_table, short_name, mip))
+            f"Unable to load CMOR table (project) '{project}' for variable "
+            f"'{short_name}' with mip '{mip}'")
 
     for key in cmor_keys:
         if key not in variable or override:
@@ -180,12 +166,17 @@ def _update_target_levels(variable, variables, settings, config_user):
             del settings['extract_levels']
         else:
             variable_data = _get_dataset_info(dataset, variables)
-            filename = \
-                _dataset_to_file(variable_data, config_user)
+            filename = _dataset_to_file(variable_data, config_user)
             settings['extract_levels']['levels'] = get_reference_levels(
-                filename, variable_data['project'], dataset,
-                variable_data['short_name'],
-                os.path.splitext(variable_data['filename'])[0] + '_fixed')
+                filename=filename,
+                project=variable_data['project'],
+                dataset=dataset,
+                short_name=variable_data['short_name'],
+                mip=variable_data['mip'],
+                frequency=variable_data['frequency'],
+                fix_dir=os.path.splitext(
+                    variable_data['filename'])[0] + '_fixed',
+            )
 
 
 def _update_target_grid(variable, variables, settings, config_user):
@@ -233,18 +224,19 @@ def _augment(base, update):
 
 def _dataset_to_file(variable, config_user):
     """Find the first file belonging to dataset from variable info."""
-    files = _get_input_files(variable, config_user)
+    (files, dirnames, filenames) = _get_input_files(variable, config_user)
     if not files and variable.get('derive'):
         required_vars = get_required(variable['short_name'],
                                      variable['project'])
         for required_var in required_vars:
             _augment(required_var, variable)
             _add_cmor_info(required_var, override=True)
-            files = _get_input_files(required_var, config_user)
+            (files, dirnames, filenames) = _get_input_files(required_var,
+                                                            config_user)
             if files:
                 variable = required_var
                 break
-    check.data_availability(files, variable)
+    check.data_availability(files, variable, dirnames, filenames)
     return files[0]
 
 
@@ -270,7 +262,7 @@ def _limit_datasets(variables, profile, max_datasets=0):
             limited.append(variable)
 
     logger.info("Only considering %s",
-                ', '.join(v['dataset'] for v in limited))
+                ', '.join(v['alias'] for v in limited))
 
     return limited
 
@@ -299,19 +291,16 @@ def _get_default_settings(variable, config_user, derive=False):
         'project': variable['project'],
         'dataset': variable['dataset'],
         'short_name': variable['short_name'],
+        'mip': variable['mip'],
     }
     # File fixes
     fix_dir = os.path.splitext(variable['filename'])[0] + '_fixed'
     settings['fix_file'] = dict(fix)
     settings['fix_file']['output_dir'] = fix_dir
     # Cube fixes
-    # Only supply mip if the CMOR check fixes are implemented.
-    if variable.get('cmor_table'):
-        fix['cmor_table'] = variable['cmor_table']
-        fix['mip'] = variable['mip']
-        fix['frequency'] = variable['frequency']
-    settings['fix_data'] = dict(fix)
+    fix['frequency'] = variable['frequency']
     settings['fix_metadata'] = dict(fix)
+    settings['fix_data'] = dict(fix)
 
     # Configure time extraction
     if 'start_year' in variable and 'end_year' in variable \
@@ -334,21 +323,19 @@ def _get_default_settings(variable, config_user, derive=False):
         }
 
     # Configure CMOR metadata check
-    if variable.get('cmor_table'):
-        settings['cmor_check_metadata'] = {
-            'cmor_table': variable['cmor_table'],
-            'mip': variable['mip'],
-            'short_name': variable['short_name'],
-            'frequency': variable['frequency'],
-        }
+    settings['cmor_check_metadata'] = {
+        'cmor_table': variable['project'],
+        'mip': variable['mip'],
+        'short_name': variable['short_name'],
+        'frequency': variable['frequency'],
+    }
     # Configure final CMOR data check
-    if variable.get('cmor_table'):
-        settings['cmor_check_data'] = {
-            'cmor_table': variable['cmor_table'],
-            'mip': variable['mip'],
-            'short_name': variable['short_name'],
-            'frequency': variable['frequency'],
-        }
+    settings['cmor_check_data'] = {
+        'cmor_table': variable['project'],
+        'mip': variable['mip'],
+        'short_name': variable['short_name'],
+        'frequency': variable['frequency'],
+    }
 
     # Clean up fixed files
     if not config_user['save_intermediary_cubes']:
@@ -386,26 +373,45 @@ def _add_fxvar_keys(fx_var_dict, variable):
 
 
 def _get_correct_fx_file(variable, fx_varname, config_user):
-    """Wrapper to standard file getter to recover the correct fx file."""
+    """Get fx files (searching all possible mips)."""
+    # TODO: allow user to specify certain mip if desired
     var = dict(variable)
-    if var['project'] in ['CMIP5', 'OBS', 'OBS6', 'obs4mips']:
-        fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'}, var)
-    elif var['project'] == 'CMIP6':
-        if fx_varname == 'sftlf':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
-                                     var)
-        elif fx_varname == 'sftof':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'Ofx'},
-                                     var)
-        # TODO allow availability for multiple mip's for sftgif
-        elif fx_varname == 'sftgif':
-            fx_var = _add_fxvar_keys({'short_name': fx_varname, 'mip': 'fx'},
-                                     var)
-    else:
-        raise RecipeError(
-            f"Project {var['project']} not supported with fx variables")
+    var_project = variable['project']
+    cmor_table = CMOR_TABLES[var_project]
 
-    fx_files = _get_input_files(fx_var, config_user)
+    # Get all fx-related mips ('fx' always first, original mip last)
+    fx_mips = ['fx']
+    fx_mips.extend(
+        [key for key in cmor_table.tables if 'fx' in key and key != 'fx'])
+    fx_mips.append(variable['mip'])
+
+    # Search all mips for available variables
+    searched_mips = []
+    for fx_mip in fx_mips:
+        fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
+        if fx_variable is not None:
+            searched_mips.append(fx_mip)
+            fx_var = _add_fxvar_keys(
+                {'short_name': fx_varname, 'mip': fx_mip}, var)
+            logger.debug("For CMIP6 fx variable '%s', found table '%s'",
+                         fx_varname, fx_mip)
+            fx_files = _get_input_files(fx_var, config_user)[0]
+
+            # If files found, return them
+            if fx_files:
+                logger.debug("Found CMIP6 fx variables '%s':\n%s",
+                             fx_varname, pformat(fx_files))
+                break
+    else:
+        # No files found
+        fx_files = []
+
+    # If fx variable was not found in any table, raise exception
+    if not searched_mips:
+        raise RecipeError(
+            f"Requested fx variable '{fx_varname}' not available in "
+            f"any 'fx'-related CMOR table ({fx_mips}) for '{var_project}'")
+
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
@@ -495,7 +501,7 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
-    input_files = get_input_filelist(
+    (input_files, dirnames, filenames) = get_input_filelist(
         variable=variable,
         rootpath=config_user['rootpath'],
         drs=config_user['drs'])
@@ -504,20 +510,23 @@ def _get_input_files(variable, config_user):
     # Do not download if files are already available locally.
     if config_user['synda_download'] and not input_files:
         input_files = synda_search(variable)
+        dirnames = None
+        filenames = None
 
-    return input_files
+    return (input_files, dirnames, filenames)
 
 
 def _get_ancestors(variable, config_user):
     """Get the input files for a single dataset and setup provenance."""
-    input_files = _get_input_files(variable, config_user)
+    (input_files, dirnames, filenames) = _get_input_files(variable,
+                                                          config_user)
 
     logger.info("Using input files for variable %s of dataset %s:\n%s",
                 variable['short_name'], variable['dataset'],
                 '\n'.join(input_files))
     if (not config_user.get('skip-nonexistent')
             or variable['dataset'] == variable.get('reference_dataset')):
-        check.data_availability(input_files, variable)
+        check.data_availability(input_files, variable, dirnames, filenames)
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
@@ -726,7 +735,7 @@ def _get_single_preprocessor_task(variables,
     order = _extract_preprocessor_order(profile)
     ancestor_products = [p for task in ancestor_tasks for p in task.products]
 
-    if variables[0]['frequency'] == 'fx':
+    if variables[0].get('frequency') == 'fx':
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
@@ -811,7 +820,7 @@ def _get_derive_input_variables(variables, config_user):
         group_prefix = variable['variable_group'] + '_derive_input_'
         if not variable.get('force_derivation') and _get_input_files(
                 variable,
-                config_user):
+                config_user)[0]:
             # No need to derive, just process normally up to derive step
             var = deepcopy(variable)
             append(group_prefix, var)
@@ -822,7 +831,7 @@ def _get_derive_input_variables(variables, config_user):
             for var in required_vars:
                 _augment(var, variable)
                 _add_cmor_info(var, override=True)
-                files = _get_input_files(var, config_user)
+                files = _get_input_files(var, config_user)[0]
                 if var.get('optional') and not files:
                     logger.info(
                         "Skipping: no data found for %s which is marked as "
@@ -886,7 +895,9 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
 class Recipe:
     """Recipe object."""
 
-    info_keys = ('project', 'dataset', 'exp', 'ensemble', 'version')
+    info_keys = (
+        'project', 'activity', 'dataset', 'exp', 'ensemble', 'version'
+    )
     """List of keys to be used to compose the alias, ordered by priority."""
 
     def __init__(self,
@@ -1006,9 +1017,6 @@ class Recipe:
             variable.update(dataset)
 
             variable['recipe_dataset_index'] = index
-            if ('cmor_table' not in variable
-                    and variable.get('project') in CMOR_TABLES):
-                variable['cmor_table'] = variable['project']
             if 'end_year' in variable and 'max_years' in self._cfg:
                 variable['end_year'] = min(
                     variable['end_year'],
@@ -1026,13 +1034,14 @@ class Recipe:
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
-            _update_from_others(variable, ['cmor_table', 'mip'], datasets)
-            institute = get_institutes(variable)
-            if institute:
-                variable['institute'] = institute
-            activity = get_activity(variable)
-            if activity:
-                variable['activity'] = activity
+            if 'institute' not in variable:
+                institute = get_institutes(variable)
+                if institute:
+                    variable['institute'] = institute
+            if 'activity' not in variable:
+                activity = get_activity(variable)
+                if activity:
+                    variable['activity'] = activity
             check.variable(variable, required_keys)
         variables = self._expand_ensemble(variables)
         return variables
@@ -1194,7 +1203,6 @@ class Recipe:
             if self._cfg['write_ncl_interface']:
                 settings['exit_on_ncl_warning'] = self._cfg['exit_on_warning']
             for key in (
-                    'max_data_filesize',
                     'output_file_type',
                     'log_level',
                     'write_plots',

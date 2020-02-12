@@ -4,9 +4,9 @@ Unit tests for the :func:`esmvalcore.preprocessor.regrid.regrid` function.
 """
 
 import unittest
+from unittest import mock
 
 import iris
-import mock
 
 import tests
 from esmvalcore.preprocessor import regrid
