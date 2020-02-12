@@ -147,11 +147,11 @@ def extract_month(cube, month):
     iris.cube.Cube
         data cube for specified month.
     """
+    if month not in range(1, 13):
+        raise ValueError('Please provide a month number between 1 and 12.')
     if not cube.coords('month_number'):
         iris.coord_categorisation.add_month_number(cube, 'time',
                                                    name='month_number')
-    if month not in range(1, 13):
-        raise ValueError('Please provide a month number between 1 and 12.')
     return cube.extract(iris.Constraint(month_number=month))
 
 
