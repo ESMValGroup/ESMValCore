@@ -1,11 +1,12 @@
 """Test EC-EARTH fixes."""
 import unittest
 
+import numpy as np
 from cf_units import Unit
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore.cmor._fixes.cmip5.ec_earth import Sftlf, Sic, Tas
+from esmvalcore.cmor._fixes.cmip5.ec_earth import Sftlf, Sic, Tas, Areacello
 from esmvalcore.cmor.fix import Fix
 
 
@@ -103,3 +104,52 @@ class TestTas(unittest.TestCase):
 
         coord = out_cube_with[0].coord('time')
         assert coord.long_name == "time"
+
+
+class TestAreacello(unittest.TestCase):
+    """Test areacello fixes."""
+
+    def setUp(self):
+        """Prepare tests."""
+
+        latitude = Cube(
+            np.ones((2, 2)),
+            standard_name='latitude',
+            long_name='latitude',
+            var_name='lat',
+            units='degrees_north',
+        )
+
+        longitude = Cube(
+            np.ones((2, 2)),
+            standard_name='longitude',
+            long_name='longitude',
+            var_name='lon',
+            units='degrees_north',
+        )
+
+        self.cubes = CubeList([
+            Cube(
+                np.ones((2, 2)),
+                var_name='areacello',
+                long_name='Areas of grid cell',
+            ),
+            latitude,
+            longitude
+            ])
+
+        self.fix = Areacello()
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'EC-EARTH', 'areacello'), [Areacello()])
+
+    def test_tas_fix_metadata(self):
+        """Test metadata fix."""
+
+        out_cube = self.fix.fix_metadata(self.cubes)
+        assert len(out_cube) == 1
+
+        out_cube[0].coord('latitude')
+        out_cube[0].coord('longitude')
