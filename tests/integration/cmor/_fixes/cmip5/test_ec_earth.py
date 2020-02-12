@@ -6,7 +6,7 @@ from cf_units import Unit
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore.cmor._fixes.cmip5.ec_earth import Sftlf, Sic, Tas, Areacello
+from esmvalcore.cmor._fixes.cmip5.ec_earth import Areacello, Sftlf, Sic, Tas
 from esmvalcore.cmor.fix import Fix
 
 
@@ -108,7 +108,6 @@ class TestTas(unittest.TestCase):
 
 class TestAreacello(unittest.TestCase):
     """Test areacello fixes."""
-
     def setUp(self):
         """Prepare tests."""
 
@@ -133,19 +132,19 @@ class TestAreacello(unittest.TestCase):
                 np.ones((2, 2)),
                 var_name='areacello',
                 long_name='Areas of grid cell',
-            ),
-            latitude,
-            longitude
-            ])
+            ), latitude, longitude
+        ])
 
-        self.fix = Areacello()
+        self.fix = Areacello(None)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'EC-EARTH', 'areacello'), [Areacello()])
+            Fix.get_fixes('CMIP5', 'EC-EARTH', 'Omon', 'areacello'),
+            [Areacello(None)],
+        )
 
-    def test_tas_fix_metadata(self):
+    def test_areacello_fix_metadata(self):
         """Test metadata fix."""
 
         out_cube = self.fix.fix_metadata(self.cubes)
