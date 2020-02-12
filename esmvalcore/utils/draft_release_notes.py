@@ -4,7 +4,7 @@ To use this tool, follow these steps:
 1) `pip install pygithub`
 2) Create an access token and store it in the file ~/.github_api_key, see:
 https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
-3) set PREVIOUS_RELEASE to the date/time of the previous release in the code below
+3) set PREVIOUS_RELEASE to the date/time of the previous release in code below
 
 """
 import datetime
@@ -15,7 +15,13 @@ try:
 except ImportError:
     print("Please `pip install pygithub`")
 
-GITHUB_API_KEY = Path("~/.github_api_key").expanduser().read_text().strip()
+try:
+    GITHUB_API_KEY = Path("~/.github_api_key").expanduser().read_text().strip()
+except FileNotFoundError:
+    print("Please create an access token and store it in the file "
+          "~/.github_api_key, see:\nhttps://help.github.com/en/github/"
+          "authenticating-to-github/creating-a-personal-access-token-"
+          "for-the-command-line")
 GITHUB_REPO = "ESMValGroup/ESMValCore"
 
 
