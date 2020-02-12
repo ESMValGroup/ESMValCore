@@ -908,20 +908,21 @@ def make_map_data(number_years=2):
 @pytest.mark.parametrize('standardize', [False, True])
 @pytest.mark.parametrize('period', ['full', 'day', 'month', 'season'])
 def test_anomalies(period, standardize):
-    cube = make_map_data(number_years=20)
+    cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize)
     if period == 'full':
         expected_anomalies = (cube.data - np.mean(cube.data, axis=2, keepdims=True))
         if standardize:
             # TODO: add numpy array with correct values here
-            expected_stdanomalies = expected_anomalies / np.std(expected_anomalies, axis=2, keepdims=True)
+            expected_stdanomalies = expected_anomalies / np.std(
+                 expected_anomalies, axis=2, keepdims=True)
             expected = np.ma.masked_invalid(expected_stdanomalies)
             assert_allclose(
                 result.data,
                 expected,
                 # Note the pretty large tolerance, which is needed since
                 # there actually IS quite a difference --> WHY?
-                rtol=1.2e-3,
+                rtol=1.2e-5,
                 atol=0.0012
             )
         else:
@@ -931,13 +932,13 @@ def test_anomalies(period, standardize):
                 expected
             )
             # Old way of testing
-            anom = np.arange(-359.5, 360, 1)
-            zeros = np.zeros_like(anom)
-            expected = np.array([[zeros, anom], [anom, zeros]])
-            assert_array_equal(
-                result.data,
-                expected,
-            )
+            #anom = np.arange(-359.5, 360, 1)
+            #zeros = np.zeros_like(anom)
+            #expected = np.array([[zeros, anom], [anom, zeros]])
+            #assert_array_equal(
+            #    result.data,
+            #    expected,
+            #)
 #    elif period == 'day':
 #        anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
 #        if standardize:
