@@ -910,7 +910,8 @@ def test_standardized_anomalies(period, standardize=True):
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize)
     if period == 'full':
-        expected_anomalies = (cube.data - np.mean(cube.data, axis=2, keepdims=True))
+        expected_anomalies = (cube.data - np.mean(cube.data, axis=2,
+                                                  keepdims=True))
         if standardize:
             # NB: default numpy behaviour is ddof=0,
             # whereas default iris behaviour is ddof=1
