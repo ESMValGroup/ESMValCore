@@ -16,10 +16,19 @@ coordinate bounds like ''lat_bnds'') or problems with the actual data
 The ESMValTool can apply on the fly fixes to data sets that have
 known errors that can be fixed automatically.
 
+.. note::
+  **CMORization as a fix**. As of early 2020, we've started implementing CMORization as fixes for
+  observational datasets. Previously, CMORization was an additional function implemented in ESMValTool.
+  This meant that users always had to store 2 copies of their observational data: both raw and CMORized.
+  Implementing CMORization as a fix removes this redundancy, as the fixes are applied 'on the fly' when
+  running a recipe. **ERA5** is the first dataset for which this 'CMORization on the fly' is supported.
+  For more information about CMORization, see:
+  `Contributing a CMORizing script for an observational dataset <https://esmvaltool.readthedocs.io/en/latest/esmvaldiag/observations.html>`_.
+
 Fix structure
 =============
 
-Fixes are Python classes stored in ``esmvaltool/cmor/_fixes/[PROJECT]/[DATASET].py``
+Fixes are Python classes stored in ``esmvalcore/cmor/_fixes/[PROJECT]/[DATASET].py``
 that derive from :class:`esmvalcore.cmor._fixes.fix.Fix` and
 are named after the short name of the variable they fix. You can use the name
 ``AllVars`` if you want the fix to be applied to the whole dataset
@@ -44,7 +53,7 @@ Check the output
 Next to the error message, you should see some info about the iris cube: size,
 coordinates. In our example it looks like this:
 
-.. code-block::
+.. code-block:: python
 
     air_temperature/ (K) (time: 312; altitude: 90; longitude: 180)
         Dimension coordinates:
@@ -67,7 +76,7 @@ Create the fix
 --------------
 
 We start by creating the module file. In our example the path will be
-``esmvaltool/cmor/_fixes/CMIPX/PERFECT_MODEL.py``. If it already exists
+``esmvalcore/cmor/_fixes/CMIPX/PERFECT_MODEL.py``. If it already exists
 just add the class to the file, there is no limit in the number of fixes
 we can have in any given file.
 
@@ -202,15 +211,27 @@ with the actual data units.
 
 .. code-block:: python
 
-    ...
-        def fix_metadata(self, cubes):
-            ...
-            cube.units = 'real_units'
-            ...
+    def fix_metadata(self, cubes):
+        cube.units = 'real_units'
+
 
 Detecting this error can be tricky if the units are similar enough. It also
 has a good chance of going undetected until you notice strange results in
 your diagnostic.
+
+For the above example, it can be useful to access the variable definition
+and associated coordinate definitions as provided by the CMOR table.
+For example:
+
+.. code-block:: python
+
+    def fix_metadata(self, cubes):
+        cube.units = self.vardef.units
+
+To learn more about what is available in these definitions, see:
+:class:`esmvalcore.cmor.table.VariableInfo` and
+:class:`esmvalcore.cmor.table.CoordinateInfo`.
+
 
 
 Coordinates missing
