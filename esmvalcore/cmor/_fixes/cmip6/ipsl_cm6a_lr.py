@@ -44,3 +44,27 @@ class AllVars(Fix):
             cube.coord('longitude').var_name = 'lon'
             new_list.append(cube)
         return CubeList(new_list)
+
+class Clcalipso(Fix):
+    """Fixes for clcalipso."""
+
+    def fix_metadata(self, cubes):
+        """
+        Corrects alt40 coordinate var_name.
+
+        Parameters
+        ----------
+        cube: iris.cube.CubeList
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            alt40 = cube.coord('height')
+            alt40.var_name = 'alt40'
+            alt40.standard_name = 'altitude'
+            alt40.long_name = 'altitude'
+
+        return cubes
