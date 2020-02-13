@@ -665,6 +665,7 @@ def mask_multimodel(products):
         If products have a different shape
     """
     # Allow for passing products as a CubeList to support calling from diag script
+    all_cubes = []
     if isinstance(products, iris.cube.CubeList):
         all_cubes = products
     # Following other multimodel preprocessors
