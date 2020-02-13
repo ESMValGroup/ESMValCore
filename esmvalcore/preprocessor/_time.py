@@ -447,9 +447,8 @@ def anomalies(cube, period, standardize=False):
         if standardize:
             cube_stddev = climate_statistics(
                 cube, operator='std_dev', period=period)
-            return cube / cube_stddev
-        else:
-            return cube
+            cube = cube / cube_stddev
+        return cube
 
     cube_coord = _get_period_coord(cube, period)
     ref_coord = _get_period_coord(reference, period)
