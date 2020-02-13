@@ -100,7 +100,7 @@ If you make a (significant) contribution to ESMValCore, please add your name to 
 
 ## How to make a release
 
-To make a new release of the package, follow these steps
+To make a new release of the package, follow these steps:
 
 ### 1. Check that the nightly build on CircleCI was successful
 
@@ -109,7 +109,7 @@ All tests should pass before making a release.
 
 ### 2. Make a pull request to increase the version number
 
-The version number is stored in esmvalcore/_version.py, meta.yaml, CITATION.cff.
+The version number is stored in `esmvalcore/_version.py`, `meta.yaml`, `CITATION.cff`.
 Make sure to update all files. See https://semver.org for more information on choosing a version number.
 
 ### 3. Make the release on GitHub
@@ -121,7 +121,7 @@ the release notes and edit those.
 
 ### 4. Create and upload the Conda package
 
-Follow these steps to create a new conda package
+Follow these steps to create a new conda package:
 - Check out the tag corresponding to the release, e.g. `git checkout v2.0.0b6`
 - Edit meta.yaml and uncomment the lines starting with `git_rev` and `git_url`, remove the line starting with `path` in the `source` section.
 - Activate the base environment `conda activate base`
