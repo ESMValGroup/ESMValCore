@@ -20,6 +20,7 @@ following the default order in which they are applied:
 * :ref:`Volume operations`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
+* :ref:`Other`
 
 Overview
 ========
@@ -1196,3 +1197,30 @@ the average file size of all the datasets; this memory intake is high but also
 assumes that all data is fully realized in memory; this aspect will gradually
 change and the amount of realized data will decrease with the increase of
 ``dask`` use.
+
+.. _Other:
+
+Other
+=====
+
+Miscellaneous functions that do not belong to any of the other categories.
+
+Clip
+----
+
+This function clips data values to a certain minimum, maximum or range. The function takes two
+arguments:
+
+* ``minimum``: Lower bound of range. Default: ``None``
+* ``maximum``: Upper bound of range. Default: ``None``
+
+The example below shows how to set all values below zero to zero.
+
+
+.. code-block:: yaml
+
+    preprocessors:
+      clip:
+        minimum: 0
+        maximum: None
+
