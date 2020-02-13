@@ -2,9 +2,9 @@
 Preprocessor functions that do not fit into any of the categories.
 """
 
-import dask.array as da
 import logging
 
+import dask.array as da
 
 logger = logging.getLogger(__name__)
 
