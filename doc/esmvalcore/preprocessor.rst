@@ -468,6 +468,24 @@ See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
              min_value: -1e20            # small enough not to alter the data
              #  time_window: 10.0        # this will not matter anymore
 
+
+Multimodel masking
+------------------
+
+Masks an element in every product if it is masked in any of the products. 
+This function takes takes no arguments.
+
+.. note::
+
+   Input data has to have the same shape, so it might be needed to apply other
+   preprocessors before applying this one.
+
+.. code-block:: yaml
+
+    preprocessors:
+      mask_multimodel:
+
+
 Minimum, maximum and interval masking
 -------------------------------------
 
