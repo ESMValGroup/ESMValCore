@@ -195,9 +195,9 @@ class Test(tests.Test):
         self.assert_array_equal(result_2.data[0, ...].mask,
                                 result_1.data[0, ...].mask)
         # identical masks with cumluative
-        cumulative_mask = cube_1[0].data.mask | cube_2[0].data.mask
-        self.assert_array_equal(result_1[0].data.mask, cumulative_mask)
-        self.assert_array_equal(result_2[0].data.mask, cumulative_mask)
+        cumulative_mask = cube_1[1:2].data.mask | cube_2[1:2].data.mask
+        self.assert_array_equal(result_1[1:2].data.mask, cumulative_mask)
+        self.assert_array_equal(result_2[2:3].data.mask, cumulative_mask)
 
 
 if __name__ == '__main__':
