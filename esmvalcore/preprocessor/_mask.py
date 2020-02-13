@@ -640,3 +640,39 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
         mask = mask.data | mask.mask
 
     return mask
+
+
+def mask_multimodel(products):
+    """
+    Mask all datasets if any is masked
+
+    Masks array elements in all products if any of the given products has that
+    element masked.
+
+    Parameters
+    ----------
+    products: iris.cube.Cube
+        data products to be masked.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Masked iris cubes.
+
+    Raises
+    ------
+    ValueError
+        If products have a different shape
+    """
+    all_cubes = []
+    for product in products:
+        for cube in product.cubes:
+            all_cubes.append(cube)
+    if len({cube.shape for cube in all_cubes}) != 1:
+        print([cube.shape for cube in all_cubes])
+        raise ValueError("Datasets should have the same shape.")
+    commonmask = np.any([cube.data.mask for cube in all_cubes],axis=0)
+    for product in products:
+        for cube in product.cubes:
+            cube.data.mask |= commonmask
+    return products

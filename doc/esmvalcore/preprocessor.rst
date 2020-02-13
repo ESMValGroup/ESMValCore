@@ -483,8 +483,24 @@ for threshold masking or the pair ``minimum`, ``maximum`` for interval masking.
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related
 functions.
 
+Multimodel masking
+------------------
+
+Masks an element in every product if it is masked in any of the products. 
+This function takes takes no arguments.
+
+.. note::
+
+   Input data has to have the same shape, so it might be needed to apply other
+   preprocessors before applying this one.
+
+.. code-block:: yaml
+
+    preprocessors:
+      mask_multimodel:
 
 .. _Horizontal regridding:
+
 
 Horizontal regridding
 =====================

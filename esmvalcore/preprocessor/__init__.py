@@ -17,7 +17,8 @@ from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
 from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_fillvalues, mask_glaciated, mask_inside_range,
-                    mask_landsea, mask_landseaice, mask_outside_range)
+                    mask_landsea, mask_landseaice, mask_multimodel,
+                    mask_outside_range)
 from ._multimodel import multi_model_statistics
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
@@ -66,6 +67,7 @@ __all__ = [
     'regrid',
     # Masking missing values
     'mask_fillvalues',
+    'mask_multimodel',
     'mask_above_threshold',
     'mask_below_threshold',
     'mask_inside_range',
@@ -114,6 +116,7 @@ FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('cmor_check_data'):]
 MULTI_MODEL_FUNCTIONS = {
     'multi_model_statistics',
     'mask_fillvalues',
+    'mask_multimodel',
 }
 
 
