@@ -565,8 +565,8 @@ def mask_fillvalues(products,
     for product in products:
         for cube in product.cubes:
             cube.data = np.ma.fix_invalid(cube.data, copy=False)
-            mask = _get_fillvalues_mask(cube, threshold_fraction, min_value,
-                                        time_window)
+            mask = _get_fillvalues_mask(cube, threshold_fraction,
+                                        float(min_value), time_window)
             if combined_mask is None:
                 combined_mask = np.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
