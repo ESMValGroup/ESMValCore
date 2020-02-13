@@ -651,7 +651,7 @@ def mask_multimodel(products):
 
     Parameters
     ----------
-    products: iris.cube.Cube
+    products: iris.cube.Cube OR iris.cube.CubeList
         data products to be masked.
 
     Returns
@@ -664,15 +664,23 @@ def mask_multimodel(products):
     ValueError
         If products have a different shape
     """
-    all_cubes = []
-    for product in products:
-        for cube in product.cubes:
-            all_cubes.append(cube)
+    # Allow for passing products as a CubeList to support calling from diag script
+    if isinstance(products, iris.cube.CubeList):
+        all_cubes = products
+    # Following other multimodel preprocessors
+    else:
+        for product in products:
+            for cube in product.cubes:
+                all_cubes.append(cube)
     if len({cube.shape for cube in all_cubes}) != 1:
         print([cube.shape for cube in all_cubes])
         raise ValueError("Datasets should have the same shape.")
     commonmask = np.any([cube.data.mask for cube in all_cubes],axis=0)
-    for product in products:
-        for cube in product.cubes:
+    if isinstance(products,iris.cube.CubeList):
+        for cube in products:
             cube.data.mask |= commonmask
+    else:
+        for product in products:
+            for cube in product.cubes:
+                cube.data.mask |= commonmask
     return products
