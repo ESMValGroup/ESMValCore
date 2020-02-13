@@ -4,7 +4,6 @@ Preprocessor functions that do not fit into any of the categories.
 
 import dask.array as da
 import logging
-import numpy as np
 
 
 logger = logging.getLogger(__name__)
@@ -31,10 +30,10 @@ def clip(cube, minimum=None, maximum=None):
     iris.cube.Cube
         clipped cube.
     """
-    if minimum == None and maximum == None:
+    if minimum is None and maximum is None:
         raise ValueError("Either minimum, maximum or both have to be\
                           specified.")
-    elif minimum != None and maximum != None:
+    elif minimum is not None and maximum is not None:
         if maximum < minimum:
             raise ValueError("Maximum should be equal or larger than minimum.")
     cube.data = da.clip(cube.core_data(), minimum, maximum)
