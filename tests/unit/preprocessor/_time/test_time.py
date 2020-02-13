@@ -32,7 +32,6 @@ def _create_sample_cube():
         ),
         0,
     )
-    iris.coord_categorisation.add_month_number(cube, 'time')
     return cube
 
 
@@ -57,6 +56,14 @@ class TestExtractMonth(tests.Test):
             np.array([1, 1]),
             sliced.coord('month_number').points)
 
+    def test_get_january_with_existing_coord(self):
+        """Test january extraction"""
+        iris.coord_categorisation.add_month_number(self.cube, 'time')
+        sliced = extract_month(self.cube, 1)
+        assert_array_equal(
+            np.array([1, 1]),
+            sliced.coord('month_number').points)
+
     def test_bad_month_raises(self):
         """Test january extraction"""
         with self.assertRaises(ValueError):
@@ -75,6 +82,7 @@ class TestTimeSlice(tests.Test):
     def test_extract_time(self):
         """Test extract_time."""
         sliced = extract_time(self.cube, 1950, 1, 1, 1950, 12, 31)
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.arange(1, 13, 1),
             sliced.coord('month_number').points)
@@ -106,7 +114,6 @@ class TestTimeSlice(tests.Test):
         """Test extract_time with one time step."""
         cube = _create_sample_cube()
         cube.coord('time').guess_bounds()
-        cube.remove_coord('month_number')
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = extract_time(cube, 1950, 1, 1, 1952, 12, 31)
         assert_array_equal(np.array([360.]), sliced.coord('time').points)
@@ -128,6 +135,7 @@ class TestExtractSeason(tests.Test):
     def test_get_djf(self):
         """Test function for winter"""
         sliced = extract_season(self.cube, 'djf')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([1, 2, 12, 1, 2, 12]),
             sliced.coord('month_number').points)
@@ -135,6 +143,7 @@ class TestExtractSeason(tests.Test):
     def test_get_djf_caps(self):
         """Test function works when season specified in caps"""
         sliced = extract_season(self.cube, 'DJF')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([1, 2, 12, 1, 2, 12]),
             sliced.coord('month_number').points)
@@ -142,6 +151,7 @@ class TestExtractSeason(tests.Test):
     def test_get_mam(self):
         """Test function for spring"""
         sliced = extract_season(self.cube, 'mam')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([3, 4, 5, 3, 4, 5]),
             sliced.coord('month_number').points)
@@ -149,6 +159,7 @@ class TestExtractSeason(tests.Test):
     def test_get_jja(self):
         """Test function for summer"""
         sliced = extract_season(self.cube, 'jja')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([6, 7, 8, 6, 7, 8]),
             sliced.coord('month_number').points)
@@ -156,6 +167,7 @@ class TestExtractSeason(tests.Test):
     def test_get_son(self):
         """Test function for summer"""
         sliced = extract_season(self.cube, 'son')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([9, 10, 11, 9, 10, 11]),
             sliced.coord('month_number').points)

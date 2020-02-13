@@ -92,11 +92,11 @@ authors:
     given-names: Saskia
 
 cff-version: "1.0.3"
-date-released: 2019-10-31
+date-released: 2020-02-12
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.0.0b5"
+version: "v2.0.0b6"
 ...
