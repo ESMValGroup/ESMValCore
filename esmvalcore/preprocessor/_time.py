@@ -473,11 +473,6 @@ def anomalies(cube, period, standardize=False):
         cube_stddev = climate_statistics(cube,
                                          operator='std_dev',
                                          period=period)
-        if not cube.ndim == cube_stddev.ndim:
-            raise ValueError(
-                "Inconsistent dimensions between anomaly cube and "
-                f"standard deviation cube: {cube.ndim} vs {cube_stddev.ndim}"
-            )
         tdim = cube.coord_dims('time')[0]
         reps = cube.shape[tdim] / cube_stddev.shape[tdim]
         if not reps % 1 == 0:
@@ -486,9 +481,8 @@ def anomalies(cube, period, standardize=False):
                 "since the full time period of this dataset is not "
                 f"a multiple of the period '{period}'"
             )
-        cube.data = cube.core_data() / \
-            da.concatenate([cube_stddev.core_data()
-                            for _ in range(int(reps))], axis=tdim)
+        cube.data = cube.core_data() / da.concatenate(
+            [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
     return cube
 
 
