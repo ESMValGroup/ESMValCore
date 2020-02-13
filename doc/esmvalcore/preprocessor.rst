@@ -873,7 +873,7 @@ Parameters:
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
 
-    * standardize: if True calculate standardized anomalies (default: False)
+    * standardize: if true calculate standardized anomalies (default: false)
 
 Examples:
     * Anomalies from the monthly climatology:
