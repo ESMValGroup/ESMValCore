@@ -44,6 +44,10 @@ class Test(tests.Test):
                                           bounds=[[0, 1], [1, 2], [2, 3],
                                                   [3, 4]],
                                           units='hours')
+        self.time2 = iris.coords.DimCoord([0, 1.5, 2.5],
+                                          standard_name='time',
+                                          bounds=[[0, 1], [1, 2], [2, 3]],
+                                          units='hours')
         self.coords_spec = [(self.lats, 0), (self.lons, 1)]
         self.fx_mask = iris.cube.Cube(fx_data,
                                       dim_coords_and_dims=self.coords_spec)
@@ -158,16 +162,18 @@ class Test(tests.Test):
 
     def test_mask_fillvalues_zero_threshold(self):
         """Test the fillvalues mask: func mask_fillvalues for 0-threshold"""
-        data_1 = data_2 = self.mock_data
+        data_1 = self.mock_data
+        data_2 = self.mock_data[0:3]
         data_1.mask = np.ones((4, 3, 3), bool)
-        data_1.mask[0, 0, 0] = False
-        data_1.mask[2, 0, 1] = False
-        data_2.mask = np.ones((4, 3, 3), bool)
-        data_2.mask[0, 0, 0] = False
-        data_2.mask[1, 0, 1] = False
+        data_1.mask[0] = False
+        data_1.mask[2] = False
+        data_2.mask = np.ones((3, 3, 3), bool)
+        data_2.mask[0] = False
+        data_2.mask[1] = False
         coords_spec = [(self.times, 0), (self.lats, 1), (self.lons, 2)]
+        coords_spec2 = [(self.time2, 0), (self.lats, 1), (self.lons, 2)]
         cube_1 = iris.cube.Cube(data_1, dim_coords_and_dims=coords_spec)
-        cube_2 = iris.cube.Cube(data_2, dim_coords_and_dims=coords_spec)
+        cube_2 = iris.cube.Cube(data_2, dim_coords_and_dims=coords_spec2)
         filename_1 = tempfile.NamedTemporaryFile().name + '.nc'
         filename_2 = tempfile.NamedTemporaryFile().name + '.nc'
         product_1 = PreprocessorFile(attributes={'filename': filename_1},
@@ -177,7 +183,7 @@ class Test(tests.Test):
                                      settings={})
         product_2.cubes = [cube_2]
         results = mask_fillvalues({product_1, product_2},
-                                  0.5,
+                                  0.,
                                   min_value=-1.e20)
         result_1, result_2 = None, None
         for product in results:
@@ -185,12 +191,9 @@ class Test(tests.Test):
                 result_1 = product.cubes[0]
             if product.filename == filename_2:
                 result_2 = product.cubes[0]
-        self.assert_array_equal(result_2.data.mask, data_2.mask)
-        self.assert_array_equal(result_1.data, data_1)
-        # identical masks per time point
-        self.assert_array_equal(result_2[0].data.mask, result_1[0].data.mask)
-        self.assert_array_equal(result_2[1].data.mask, result_1[1].data.mask)
-        self.assert_array_equal(result_2[2].data.mask, result_1[2].data.mask)
+        # identical masks
+        self.assert_array_equal(result_2.data[0, ...].mask,
+                                result_1.data[0, ...].mask)
         # identical masks with cumluative
         cumulative_mask = cube_1[0].data.mask | cube_2[0].data.mask
         self.assert_array_equal(result_1[0].data.mask, cumulative_mask)
