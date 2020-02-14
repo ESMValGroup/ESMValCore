@@ -399,7 +399,7 @@ def count_spells(data, threshold, axis, spell_length):
         # just cope with negative axis numbers
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
-    data_hits = data > threshold
+    data_hits = data > float(threshold)
     # Make an array with data values "windowed" along the time axis.
     ###############################################################
     # WARNING: default step is = window size i.e. no overlapping
@@ -566,7 +566,7 @@ def mask_fillvalues(products,
         for cube in product.cubes:
             cube.data = np.ma.fix_invalid(cube.data, copy=False)
             mask = _get_fillvalues_mask(cube, threshold_fraction,
-                                        float(min_value), time_window)
+                                        min_value, time_window)
             if combined_mask is None:
                 combined_mask = np.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
