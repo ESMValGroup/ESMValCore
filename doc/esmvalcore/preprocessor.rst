@@ -939,7 +939,6 @@ Examples:
                 filter_type: lowpass  # low-pass filter
                 filter_stats: mean    # 3-monthly mean lowpass filter
 
-See also :func:`esmvalcore.preprocessor.low_pass_weights`.
 See also :func:`esmvalcore.preprocessor.timeseries_filter`.
 
 .. _area operations:
