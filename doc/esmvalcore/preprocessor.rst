@@ -1222,5 +1222,4 @@ The example below shows how to set all values below zero to zero.
     preprocessors:
       clip:
         minimum: 0
-        maximum: None
-
+        maximum: null
