@@ -918,6 +918,27 @@ implementation is inspired by this `iris example
 SOI_filtering.html?highlight=running%20mean>`_ and uses aggregation via a
 `rolling window <https://scitools.org.uk/iris/docs/v2.0/iris/iris/cube.html#iris.cube.Cube.rolling_window>`_.
 
+Parameters:
+    * window: the length of the filter window (in units of cube time coordinate).
+    * span: period (number of months/days, depending on data frequency) on which
+      weights should be computed e.g. for 2-yearly: span = 24 (2 x 12 months).
+      Make sure span has the same units as the data cube time coordinate.
+    * `filter_type`: the type of filter to be applied; default 'lowpass'.
+      Available types: 'lowpass'.
+    * `filter_stats`: the type of statistic to aggregate on the rolling window;
+      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+
+Examples:
+    * Lowpass filter witha monthly mean as operator:
+
+        .. code-block:: yaml
+
+            timeseries_filter:
+                window: 3  # 3-monthly filter window
+                span: 12   # weights computed on the first year
+                filter_type: lowpass  # low-pass filter
+                filter_stats: mean    # 3-monthly mean lowpass filter
+
 See also :func:`esmvalcore.preprocessor.low_pass_weights`.
 See also :func:`esmvalcore.preprocessor.timeseries_filter`.
 
