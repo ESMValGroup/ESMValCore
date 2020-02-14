@@ -80,7 +80,7 @@ class Sit(Fix):
         time = cube.coord('time')
         if self._fix_required(time):
             new_bounds = np.empty(time.bounds.shape, time.bounds.dtype)
-            for x, point in enumerate(time):
+            for i, point in enumerate(time):
                 date = point.units.num2date(point.points[0])
                 start = cftime.DatetimeJulian(date.year, date.month, 1)
                 if date.month < 12:
