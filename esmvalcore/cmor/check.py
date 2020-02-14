@@ -579,6 +579,9 @@ class CMORCheck():
                     self.report_error(msg, var_name, freq)
                     break
 
+        if hasattr(coord, "attributes"):
+            coord.attributes = None
+
     @staticmethod
     def _simplify_calendar(calendar):
         calendar_aliases = {
