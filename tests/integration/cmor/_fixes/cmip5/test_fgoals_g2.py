@@ -11,22 +11,21 @@ from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import AllVars
 
 class TestAll(unittest.TestCase):
     """Test fixes for all vars."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='co2', units='J')
         self.cube.add_dim_coord(
-            DimCoord(
-                [0.0, 1.0],
-                standard_name='time',
-                units=Unit('days since 0001-01', calendar='gregorian')),
+            DimCoord([0.0, 1.0],
+                     standard_name='time',
+                     units=Unit('days since 0001-01', calendar='gregorian')),
             0)
-        self.fix = AllVars()
+        self.fix = AllVars(None)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'FGOALS-G2', 'tas'), [AllVars()])
+            Fix.get_fixes('CMIP5', 'FGOALS-G2', 'Amon', 'tas'),
+            [AllVars(None)])
 
     def test_fix_metadata(self):
         """Test calendar fix."""
