@@ -10,16 +10,15 @@ from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
 
 class TestCanESM2Fgco2(unittest.TestCase):
     """Test fgc02 fixes."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='fgco2', units='J')
-        self.fix = FgCo2()
+        self.fix = FgCo2(None)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CANESM2', 'fgco2'), [FgCo2()])
+            Fix.get_fixes('CMIP5', 'CANESM2', 'Amon', 'fgco2'), [FgCo2(None)])
 
     def test_fix_data(self):
         """Test data fix."""

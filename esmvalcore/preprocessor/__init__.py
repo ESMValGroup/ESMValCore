@@ -2,13 +2,14 @@
 import copy
 import inspect
 import logging
+from pprint import pformat
 
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
 from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
-                    extract_shape, zonal_means)
+                    extract_shape, zonal_statistics, meridional_statistics)
 from ._derive import derive
 from ._detrend import detrend
 from ._download import download
@@ -87,7 +88,8 @@ __all__ = [
     # Time operations
     # 'annual_cycle': annual_cycle,
     # 'diurnal_cycle': diurnal_cycle,
-    'zonal_means',
+    'zonal_statistics',
+    'meridional_statistics',
     'daily_statistics',
     'monthly_statistics',
     'seasonal_statistics',
@@ -119,7 +121,7 @@ MULTI_MODEL_FUNCTIONS = {
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
-    itype = inspect.getargspec(function).args[0]
+    itype = inspect.getfullargspec(function).args[0]
     return itype
 
 
@@ -418,7 +420,8 @@ class PreprocessingTask(BaseTask):
             step for step in self.order
             if any(step in product.settings for product in self.products)
         ]
-        products = '\n\n'.join(str(p) for p in self.products)
+        products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
+                               for p in self.products)
         txt = "{}:\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
             order,

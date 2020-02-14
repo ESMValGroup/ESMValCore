@@ -38,13 +38,12 @@ def read_config_user_file(config_file, recipe_name):
         'write_netcdf': True,
         'compress_netcdf': False,
         'exit_on_warning': False,
-        'max_data_filesize': 100,
-        'output_file_type': 'ps',
-        'output_dir': './output_dir',
-        'auxiliary_data_dir': './auxiliary_data',
+        'output_file_type': 'png',
+        'output_dir': 'esmvaltool_output',
+        'auxiliary_data_dir': 'auxiliary_data',
         'save_intermediary_cubes': False,
-        'remove_preproc_dir': False,
-        'max_parallel_tasks': 1,
+        'remove_preproc_dir': True,
+        'max_parallel_tasks': None,
         'run_diagnostic': True,
         'profile_diagnostic': False,
         'config_developer_file': None,
@@ -168,7 +167,10 @@ def configure_logging(cfg_file=None, output=None, console_log_level=None):
 def get_project_config(project):
     """Get developer-configuration for project."""
     logger.debug("Retrieving %s configuration", project)
-    return CFG[project]
+    if project in CFG:
+        return CFG[project]
+    else:
+        raise ValueError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
