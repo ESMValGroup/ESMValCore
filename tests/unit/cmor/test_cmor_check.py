@@ -167,6 +167,13 @@ class TestCMORCheck(unittest.TestCase):
         iris.coord_categorisation.add_year(self.cube, 'time')
         self._check_cube()
 
+    def test_check_with_time_attributes(self):
+        """Test checks succeeds for a good cube with year."""
+        self.cube.coord('time').attributes["cow"] = "moo"
+        assert self.cube.coord('time').attributes["cow"] == "moo"
+        self._check_cube()
+        assert not self.cube.coord('time').attributes
+
     def test_check_bad_standard_name_auto_fix(self):
         """Test check pass for a bad standard_name with automatic fixes."""
         self.cube = self.get_cube(self.var_info)
