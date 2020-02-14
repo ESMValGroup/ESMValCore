@@ -287,7 +287,7 @@ def area_statistics(cube, operator, fx_files=None, calculate_grid=False):
     # The following are for operators with means
     if not fx_files and cube.coord('latitude').points.ndim == 2:
         logger.error(
-            'fx_file needed for weighted calcuions on irregular grids.')
+            'fx_file needed for weighted calculations on irregular grids.')
         raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
 
     if fx_files and calculate_grid:
