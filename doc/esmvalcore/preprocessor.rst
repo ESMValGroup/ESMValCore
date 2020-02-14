@@ -53,7 +53,7 @@ Overview
 
 The ESMValTool preprocessor can be used to perform a broad range of operations
 on the input data before diagnostics or metrics are applied. The preprocessor
-performs these operations in a centralized, documented and efficient way, thus
+performs these operations in a centralied, documented and efficient way, thus
 reducing the data processing load on the diagnostics side.
 
 Each of the preprocessor operations is written in a dedicated python module and
@@ -219,9 +219,10 @@ extract the levels and vertically regrid onto the vertical levels of
           scheme: linear_horizontal_extrapolate_vertical
 
 By default, vertical interpolation is performed in the dimension coordinate of
-the z axis. If you want to use another coordinate (for example, ``air_pressure``'
-in variables that are provided in model levels and not pressure levels) you can
-override that automatic choice by providing the name of the desired coordinate:
+the z axis. If you want to explicitly declare the z axis coordinate to use
+(for example, ``air_pressure``' in variables that are provided in model levels 
+and not pressure levels) you can override that automatic choice by providing 
+the name of the desired coordinate:
 
 .. code-block:: yaml
 
