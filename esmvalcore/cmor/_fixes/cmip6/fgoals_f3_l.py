@@ -20,7 +20,8 @@ class AllVars(Fix):
         iris.cube.Cube
 
         """
-
+        cube.coord('latitude').bounds = None
+        cube.coord('longitude').bounds = None
         xbounds = cube.coord('longitude').contiguous_bounds()
         ybounds = cube.coord('latitude').contiguous_bounds()
         xbnd = np.zeros((xbounds.size-1, 2))
