@@ -355,7 +355,6 @@ class DiagnosticTask(BaseTask):
             'run_dir',
             'plot_dir',
             'work_dir',
-            'max_data_filesize',
             'output_file_type',
             'log_level',
             'write_plots',
@@ -428,11 +427,12 @@ class DiagnosticTask(BaseTask):
 
         rerun_msg = 'cd {}; '.format(cwd)
         if env:
-            rerun_msg += ' '.join('{}="{}"'.format(k, env[k]) for k in env
-                                  if k not in os.environ)
+            rerun_msg += ' '.join('{}="{}"'.format(k, env[k]) for k in env)
         rerun_msg += ' ' + ' '.join(cmd)
         logger.info("To re-run this diagnostic script, run:\n%s", rerun_msg)
 
+        complete_env = dict(os.environ)
+        complete_env.update(env)
         try:
             process = subprocess.Popen(
                 cmd,
@@ -440,7 +440,7 @@ class DiagnosticTask(BaseTask):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 cwd=cwd,
-                env=env)
+                env=complete_env)
         except OSError as exc:
             if exc.errno == errno.ENOEXEC:
                 logger.error(
@@ -470,7 +470,7 @@ class DiagnosticTask(BaseTask):
                 if f.endswith('.yml') or os.path.isdir(f)
             ]
 
-        env = dict(os.environ)
+        env = {}
         if self.script.lower().endswith('.py'):
             # Set non-interactive matplotlib backend
             env['MPLBACKEND'] = 'Agg'
@@ -539,7 +539,6 @@ class DiagnosticTask(BaseTask):
             'exit_on_ncl_warning',
             'input_files',
             'log_level',
-            'max_data_filesize',
             'output_file_type',
             'plot_dir',
             'profile_diagnostic',
