@@ -2,6 +2,7 @@
 import copy
 import inspect
 import logging
+from pprint import pformat
 
 from iris.cube import Cube
 
@@ -18,6 +19,7 @@ from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_fillvalues, mask_glaciated, mask_inside_range,
                     mask_landsea, mask_landseaice, mask_outside_range)
 from ._multimodel import multi_model_statistics
+from ._other import clip
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
 from ._regrid import extract_levels, regrid
@@ -69,6 +71,8 @@ __all__ = [
     'mask_below_threshold',
     'mask_inside_range',
     'mask_outside_range',
+    # Other
+    'clip',
     # Region selection
     'extract_region',
     'extract_shape',
@@ -432,7 +436,8 @@ class PreprocessingTask(BaseTask):
             step for step in self.order
             if any(step in product.settings for product in self.products)
         ]
-        products = '\n\n'.join(str(p) for p in self.products)
+        products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
+                               for p in self.products)
         txt = "{}:\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
             order,

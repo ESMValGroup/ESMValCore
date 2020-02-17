@@ -14,12 +14,12 @@ class TestCo2(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
-        self.fix = Co2()
+        self.fix = Co2(None)
 
     def test_get(self):
         """Test fix get"""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'CESM1-BGC', 'co2'),
-                             [Co2()])
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'co2'), [Co2(None)])
 
     def test_fix_data(self):
         """Test fix to set units correctly."""
@@ -33,12 +33,12 @@ class TestGpp(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0, 1.0e33, 2.0])
-        self.fix = Gpp()
+        self.fix = Gpp(None)
 
     def test_get(self):
         """Test fix get"""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'CESM1-BGC', 'gpp'),
-                             [Gpp()])
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'gpp'), [Gpp(None)])
 
     def test_fix_data(self):
         """Test fix to set missing values correctly."""
@@ -55,9 +55,9 @@ class TestNbp(TestGpp):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0, 1.0e33, 2.0])
-        self.fix = Nbp()
+        self.fix = Nbp(None)
 
     def test_get(self):
         """Test fix get"""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'CESM1-BGC', 'nbp'),
-                             [Nbp()])
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'nbp'), [Nbp(None)])

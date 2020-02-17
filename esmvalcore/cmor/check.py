@@ -35,6 +35,8 @@ class CMORCheck():
     automatic_fixes: bool
         If True, CMORCheck will try to apply automatic fixes for any
         detected error, if possible.
+    warnings_as_errors: bool, default False
+        If True, CMORCheck will treat all warnings as errors
 
     Attributes
     ----------
@@ -43,7 +45,8 @@ class CMORCheck():
     automatic_fixes: bool
         If True, CMORCheck will try to apply automatic fixes for any
         detected error, if possible.
-
+    warnings_as_errors: bool
+         If True, CMORCheck will treat all warnings as errors
     """
 
     _attr_msg = '{}: {} should be {}, not {}'
@@ -57,7 +60,8 @@ class CMORCheck():
                  var_info,
                  frequency=None,
                  fail_on_error=False,
-                 automatic_fixes=False):
+                 automatic_fixes=False,
+                 warnings_as_errors=False):
 
         self._cube = cube
         self._failerr = fail_on_error
@@ -69,6 +73,7 @@ class CMORCheck():
             frequency = self._cmor_var.frequency
         self.frequency = frequency
         self.automatic_fixes = automatic_fixes
+        self.warnings_as_errors = warnings_as_errors
 
     def check_metadata(self, logger=None):
         """
@@ -374,7 +379,29 @@ class CMORCheck():
                     self.report_error(self._attr_msg, var_name, 'units',
                                       cmor.units, coord.units)
         self._check_coord_values(cmor, coord, var_name)
+        self._check_coord_bounds(coord, var_name)
         self._check_coord_monotonicity_and_direction(cmor, coord, var_name)
+
+    def _check_coord_bounds(self, coord, var_name):
+        if not coord.has_bounds():
+            if self.automatic_fixes:
+                try:
+                    coord.guess_bounds()
+                except ValueError as ex:
+                    self.report_warning(
+                        'Can not guess bounds for coordinate {0} '
+                        'from var {1}: {2}', coord.var_name, var_name, ex
+                    )
+                else:
+                    self.report_warning(
+                        'Added guessed bounds to coordinate {0} from var {1}',
+                        coord.var_name, var_name
+                    )
+            else:
+                self.report_warning(
+                    'Coordinate {0} from var {1} does not have bounds',
+                    coord.var_name, var_name
+                )
 
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
@@ -627,6 +654,10 @@ class CMORCheck():
             arguments to format the message string.
 
         """
+        if self.warnings_as_errors:
+            self.report_error(message, *args)
+            return
+
         msg = message.format(*args)
         if self._failerr:
             print('WARNING: {0}'.format(msg))
