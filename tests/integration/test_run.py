@@ -28,6 +28,36 @@ def write_config_user_file(dirname, add_procs=False):
     return str(config_file)
 
 
+def check_log(tmp_path, pattern):
+
+    log_dir = os.path.join(tmp_path, 'output_dir')
+    log_file = os.path.join(log_dir,
+                            os.listdir(log_dir)[0], 'run', 'main_log.txt')
+    with open(log_file, 'r') as log:
+        cases = []
+        for line in log.readlines():
+            case = pattern in line
+            cases.append(case)
+        assert True in cases
+
+
+def check(tmp_path):
+    """Check the run results."""
+    log_dir = os.path.join(tmp_path, 'output_dir')
+    log_file = os.path.join(log_dir,
+                            os.listdir(log_dir)[0], 'run', 'main_log.txt')
+    debug_file = os.path.join(log_dir,
+                              os.listdir(log_dir)[0], 'run',
+                              'main_log_debug.txt')
+    assert os.listdir(log_dir)
+    assert len(os.listdir(log_dir)) == 1
+    recipe_dir = os.listdir(log_dir)[0]
+    assert float(recipe_dir.split("_")[-1])
+    assert float(recipe_dir.split("_")[-2])
+    assert os.path.isfile(debug_file)
+    assert os.path.isfile(log_file)
+
+
 @contextlib.contextmanager
 def arguments(*args):
     backup = sys.argv
@@ -36,39 +66,33 @@ def arguments(*args):
     sys.argv = backup
 
 
-def check(result_file):
-    """Check the results."""
-    result = yaml.safe_load(result_file.read_text())
+def test_recipe_from_diags(tmp_path):
 
-    print(result)
-
-    required_keys = {
-        'input_files',
-        'log_level',
-        'plot_dir',
-        'run_dir',
-        'work_dir',
-    }
-    missing = required_keys - set(result)
-    assert not missing
+    recipe_file = "recipe_autoassess_stratosphere.yml"
+    config_user_file = write_config_user_file(tmp_path)
+    with arguments(
+            'esmvaltool',
+            '-c',
+            config_user_file,
+            str(recipe_file),
+    ):
+        with pytest.raises(SystemExit):
+            run()
 
 
-# python only for Core
-SCRIPTS = {
-    'diagnostic.py':
-    dedent("""
-        import yaml
-        from esmvaltool.diag_scripts.shared import run_diagnostic
+def test_no_recipe(tmp_path):
 
-        def main(cfg):
-            with open(cfg['setting_name'], 'w') as file:
-                yaml.safe_dump(cfg, file)
-
-        if __name__ == '__main__':
-            with run_diagnostic() as config:
-                main(config)
-        """),
-}
+    recipe_file = "recipe_cows_and_oxen.yml"
+    config_user_file = write_config_user_file(tmp_path)
+    with arguments(
+            'esmvaltool',
+            '-c',
+            config_user_file,
+            str(recipe_file),
+    ):
+        with pytest.raises(SystemExit):
+            run()
+    check_log(tmp_path, "Specified recipe file does not exist")
 
 
 def test_diagnostic_null_with_no_processors(tmp_path):
@@ -96,6 +120,8 @@ def test_diagnostic_null_with_no_processors(tmp_path):
     ):
         with pytest.raises(SystemExit):
             run()
+
+    check(tmp_path)
 
 
 def test_diagnostic_null(tmp_path):
@@ -143,49 +169,5 @@ def test_diagnostic_null(tmp_path):
         with pytest.raises(SystemExit):
             run()
 
-    log_dir = os.path.join(tmp_path, 'output_dir')
-    log_file = os.path.join(log_dir,
-                            os.listdir(log_dir)[0], 'run', 'main_log.txt')
-    with open(log_file, 'r') as log:
-        cases = []
-        for line in log.readlines():
-            case = "Missing data" in line
-            cases.append(case)
-        assert True in cases
-
-
-@pytest.mark.parametrize('script_file, script', SCRIPTS.items())
-def test_diagnostic_run(tmp_path, script_file, script):
-
-    recipe_file = tmp_path / 'recipe_test.yml'
-    script_file = tmp_path / script_file
-    result_file = tmp_path / 'result.yml'
-
-    # Write script to file
-    script_file.write_text(str(script))
-
-    # Create recipe
-    recipe = dedent("""
-        documentation:
-          description: Recipe with no data.
-          authors: [andela_bouwe]
-
-        diagnostics:
-          diagnostic_name:
-            scripts:
-              script_name:
-                script: {}
-                setting_name: {}
-        """.format(script_file, result_file))
-    recipe_file.write_text(str(recipe))
-
-    config_user_file = write_config_user_file(tmp_path)
-    with arguments(
-            'esmvaltool',
-            '-c',
-            config_user_file,
-            str(recipe_file),
-    ):
-        run()
-
-    check(result_file)
+    check_log(tmp_path, "Missing data")
+    check(tmp_path)
