@@ -579,8 +579,8 @@ class CMORCheck():
                     self.report_error(msg, var_name, freq)
                     break
 
-        if hasattr(coord, "attributes"):
-            coord.attributes.pop('time_origin', None)
+        # remove time_origin from attributes
+        coord.attributes.pop('time_origin', None)
 
     @staticmethod
     def _simplify_calendar(calendar):
