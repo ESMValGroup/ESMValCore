@@ -1,9 +1,11 @@
 # Running ESMValTool packaged in the docker container
 
 ## Install docker
+
 Use official [Docker documentation](https://docs.docker.com/engine/installation/)
 
 ## Get docker image
+
 All available docker images are listed on
 [Docker Hub page](https://hub.docker.com/r/esmvalgroup/esmvaltool/tags/)
 Before running container you need to pull the image to your machine.
@@ -13,23 +15,27 @@ docker pull esmvalgroup/esmvaltool:2.0
 ```
 
 ## Running ESMValTool in the container
+
 To run ESMValTool in the docker container you need to mount
 necessary directories and provide the name of the namelist
 to execute. ESMValTool expects specific directory structure
 and directories for input and output files need to be created
 in advance. Below are few user scenerios.
 
-1. Input and output directories are located in the same directory.
+### 1. Input and output directories are located in the same directory.
+
 ```sh
 docker run -v <local_data>:/data/ esmvalgroup/esmvaltool:2.0 nml/<namelist_name>.xml
 ```
+
 Replace:
+
 * `<namelist_name>` with name of the namelist you want to execute
 * `<local_data>` with  a location on your local machine
 (docker host). It has to be absolute path.
 
-Content of the `<local_data>`
-directory has to have following structure:
+Content of the `<local_data>` directory has to have following structure:
+
 ```sh
 tree <local_data>
 <local_data>
@@ -44,9 +50,11 @@ tree <local_data>
     └── work        # output data path (netCDF)
 ```
 
-2. Input and output directories are in different locations.
+### 2. Input and output directories are in different locations.
+
 If input and output directories are in different locations,
 they need to be mounted separately.
+
 ```sh
 docker run \
     -v <datamodel>:/data/in/datamodel \
@@ -58,4 +66,5 @@ docker run \
     -v <work>:/data/out/work \
     esmvalgroup/esmvaltool:<tag> nml/<namelist_name>.xml
 ```
+
 Replace paths in angle brackets `< >` with appropriate values.

@@ -37,8 +37,9 @@ Klaus Zimmermann (zklaus) to the issue. They will then check the issue raised an
 data model developers.
 
 **Please attach**
-  - The recipe that you are trying to run, you can find a copy in the `run` directory in the output directory
-  - The `main_log_debug.txt` file, this can also be found in the `run` directory in the output directory
-  - Attach a text file with the output of `ncdump -h /path/to/file.nc`
+
+- The recipe that you are trying to run, you can find a copy in the `run` directory in the output directory
+- The `main_log_debug.txt` file, this can also be found in the `run` directory in the output directory
+- Attach a text file with the output of `ncdump -h /path/to/file.nc`
 
 Cheers :beer:
