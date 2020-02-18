@@ -169,10 +169,10 @@ class TestCMORCheck(unittest.TestCase):
 
     def test_check_with_time_attributes(self):
         """Test checks succeeds for a good cube with year."""
-        self.cube.coord('time').attributes["cow"] = "moo"
-        assert self.cube.coord('time').attributes["cow"] == "moo"
+        self.cube.coord('time').attributes['time_origin'] = "cow"
+        assert self.cube.coord('time').attributes['time_origin'] == "cow"
         self._check_cube()
-        assert not self.cube.coord('time').attributes
+        assert 'time_origin' not in self.cube.coord('time').attributes
 
     def test_check_bad_standard_name_auto_fix(self):
         """Test check pass for a bad standard_name with automatic fixes."""
