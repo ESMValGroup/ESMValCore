@@ -8,11 +8,15 @@ from ._baseclass import DerivedVariableBase
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sithick`."""
 
-    # Required variables
-    required = [
-        {'short_name': 'sit', },
-        {'short_name': 'sic', }
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [{
+            'short_name': 'sit',
+        }, {
+            'short_name': 'sic',
+        }]
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -24,7 +28,7 @@ class DerivedVariable(DerivedVariableBase):
         `sivol` and the real thickness is called `sithick`
 
         Arguments
-        ----
+        ---------
             cubes: cubelist containing volume and concentration components.
 
         Returns
@@ -32,8 +36,9 @@ class DerivedVariable(DerivedVariableBase):
             Cube containing sea ice speed.
 
         """
-        siconc = cubes.extract_strict(Constraint(name='sea_ice_thickness'))
-        sivol = cubes.extract_strict(Constraint(name='sea_ice_area_fraction'))
+        sivol = cubes.extract_strict(Constraint(name='sea_ice_thickness'))
+        siconc = cubes.extract_strict(Constraint(name='sea_ice_area_fraction'))
+        siconc.convert_units('1.0')
 
-        sithick = siconc * sivol
+        sithick = sivol / siconc
         return sithick

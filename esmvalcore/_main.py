@@ -15,6 +15,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
   Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
   Manuel Schlund (DLR, Germany - manuel.schlund@dlr.de)
   Javier Vegas-Regidor (BSC, Spain - javier.vegas@bsc.es)
+  Klaus Zimmermann (SMHI, Sweden - klaus.zimmermann@smhi.se)
 
 For further help, please read the documentation at
 http://esmvaltool.readthedocs.io. Have fun!
@@ -30,7 +31,6 @@ http://esmvaltool.readthedocs.io. Have fun!
 import argparse
 import datetime
 import errno
-import glob
 import logging
 import os
 import shutil
@@ -212,14 +212,6 @@ def process_recipe(recipe_file, config_user):
         __version__, timestamp2.strftime(timestamp_format))
     logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
 
-    # Remind the user about reference/acknowledgement file
-    out_refs = glob.glob(
-        os.path.join(config_user['output_dir'], '*', '*',
-                     'references-acknowledgements.txt'))
-    logger.info(
-        "For the required references/acknowledgements of these "
-        "diagnostics see:\n%s", '\n'.join(out_refs))
-
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
@@ -241,7 +233,7 @@ def run():
             "output directory.")
         sys.exit(1)
     else:
-        if conf["remove_preproc_dir"]:
+        if os.path.exists(conf["preproc_dir"]) and conf["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
             logger.info("set remove_preproc_dir to false in config")

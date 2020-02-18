@@ -26,7 +26,7 @@ CMIP6:
     DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
-  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP6'
 
 CMIP5:
@@ -41,7 +41,7 @@ CMIP5:
     RCAST: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
     BSC: '{type}/{project}/{exp}/{dataset.lower}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
-  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   institutes:
     'ACCESS1-0': ['CSIRO-BOM']
     'ACCESS1-3': ['CSIRO-BOM']
@@ -64,6 +64,7 @@ CMIP5:
     'CNRM-CM5': ['CNRM-CERFACS']
     'CNRM-CM5-2': ['CNRM-CERFACS']
     'CSIRO-Mk3-6-0': ['CSIRO-QCCCE']
+    'CSIRO-Mk3L-1-2': ['CSIRO-QCCCE']
     'EC-EARTH': ['ICHEC']
     'FGOALS-g2': ['LASG-CESS']
     'FGOALS-gl': ['LASG-IAP']
@@ -105,6 +106,64 @@ CMIP5:
     'NorESM1-M': ['NCC']
     'NorESM1-ME': ['NCC']
 
+CMIP3:
+  cmor_strict: true
+  input_dir:
+    default: '/'
+    BADC: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{latestversion}'
+    DKRZ: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
+  input_file: '{short_name}_*.nc'
+  output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  cmor_type: 'CMIP3'
+  institutes:
+    'bccr_bcm2_0': ['BCCR']
+    'cccma_cgcm3_1': ['CCCMA']
+    'cccma_cgcm3_1_t63': ['CCCMA']
+    'cnrm_cm3': ['CNRM']
+    'csiro_mk3_0': ['CSIRO']
+    'csiro_mk3_5': ['CSIRO']
+    'gfdl_cm2_0': ['GFDL']
+    'gfdl_cm2_1': ['GFDL']
+    'ingv_echam4': ['INGV']
+    'inmcm3_0': ['INM']
+    'ipsl_cm4': ['IPSL']
+    'iap_fgoals1_0_g': ['LASG']
+    'miub_echo_g': ['MIUB-KMA']
+    'mpi_echam5': ['MPIM']
+    'mri_cgcm2_3_2a': ['MRI']
+    'giss_aom': ['NASA']
+    'giss_model_e_h': ['NASA']
+    'giss_model_e_r': ['NASA']
+    'ncar_ccsm3_0': ['NCAR']
+    'ncar_pcm1': ['NCAR']
+    'miroc3_2_hires': ['NIES']
+    'miroc3_2_medres': ['NIES']
+    'ukmo_hadcm3': ['UKMO']
+    'ukmo_hadgem1': ['UKMO']
+    'BCM2': ['BCCR']
+    'CGCM3-1-T47': ['CCCMA']
+    'CGCM3-1-T63': ['CCCMA']
+    'BCC-CM1': ['CMA']
+    'CM3': ['CNRM', 'INM']
+    'MK3': ['CSIRO']
+    'MK3-5': ['CSIRO']
+    'CM2': ['GFDL']
+    'CM2-1': ['GFDL']
+    'ECHAM4': ['INGV']
+    'CM4': ['IPSL']
+    'FGOALS-G1-0': ['LASG']
+    'ECHO-G': ['MIUB-KMA']
+    'ECHAM5': ['MPIM']
+    'GISS-AOM': ['NASA']
+    'GISS-EH': ['NASA']
+    'GISS-ER': ['NASA']
+    'CCSM3': ['NCAR']
+    'PCM': ['NCAR']
+    'MIROC3-2-HI': ['NIES']
+    'MIROC3-2-MED': ['NIES']
+    'HADCM3': ['UKMO']
+    'HADGEM1': ['UKMO']
+
 OBS:
   cmor_strict: false
   input_dir:
@@ -115,7 +174,7 @@ OBS:
     default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
     BSC: '{short_name}_*.nc'
     RCAST: '{short_name}_{mip}_{type}_{dataset}_*.nc'
-  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP5'
 
 OBS6:
@@ -124,18 +183,30 @@ OBS6:
     default: 'Tier{tier}/{dataset}'
     BSC: '{type}/{institute.lower}/{dataset.lower}/{freq_folder}/{short_name}{freq_base}'
   input_file:
-    default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_*.nc'
+    default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
     BSC: '{short_name}_*.nc'
-  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
 
+native6:
+  cmor_strict: false
+  input_dir:
+    default: 'Tier{tier}/{dataset}'
+    era5cli: 'Tier{tier}/{dataset}'
+  input_file:
+    default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
+    era5cli: 'era5_{era5_name}*{era5_freq}.nc'
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
+
 obs4mips:
-  cmor_strict: true
+  cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}'
     RCAST: '/'
   input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
-  output_file: '{project}_{dataset}_{level}_{version}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_path: 'obs4mips'
   cmor_default_table_prefix: 'obs4MIPs_'
@@ -146,7 +217,7 @@ ana4mips:
     default: 'Tier{tier}/{dataset}'
     RCAST: '/'
   input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
-  output_file: '{project}_{mip}_{type}_{dataset}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{mip}_{type}_{dataset}_{short_name}'
   cmor_type: 'CMIP5'
   # TODO: add cmor_path and table and set cmor_strict to true
 
@@ -154,5 +225,15 @@ EMAC:
   input_dir:
     default: '{dataset}'
   input_file: ''
-  output_file: '{dataset}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  output_file: '{dataset}_{ensemble}_{short_name}'
   cmor_type: 'CMIP5'
+
+CORDEX:
+  input_dir:
+    default: '/'
+    spec: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}'
+    BADC: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{latestversion}'
+  input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
+  output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
+  cmor_type: 'CMIP5'
+  cmor_path: 'cordex'

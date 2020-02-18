@@ -10,6 +10,7 @@ following the default order in which they are applied:
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
 * :ref:`Vertical interpolation`
+* :ref:`Weighting`
 * :ref:`Land/Sea/Ice masking`
 * :ref:`Horizontal regridding`
 * :ref:`Masking of missing values`
@@ -19,6 +20,7 @@ following the default order in which they are applied:
 * :ref:`Volume operations`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
+* :ref:`Other`
 
 Overview
 ========
@@ -105,7 +107,9 @@ The required arguments for this module are two boolean switches:
 * ``force_derivation``: force variable derivation even if the variable is
   directly available in the input data.
 
-See also :func:`esmvalcore.preprocessor.derive`.
+See also :func:`esmvalcore.preprocessor.derive`. To get an overview on
+derivation scripts and how to implement new ones, please go to
+:ref:`derivation`.
 
 
 .. _CMOR check and dataset-specific fixes:
@@ -257,6 +261,50 @@ the name of the desired coordinate:
 	  points will be masked, otherwise they will be set to NaN.
 
 
+.. _weighting:
+
+Weighting
+=========
+
+.. _land/sea fraction weighting:
+
+Land/sea fraction weighting
+---------------------------
+
+This preprocessor allows weighting of data by land or sea fractions. In other
+words, this function multiplies the given input field by a fraction in the range 0-1 to
+account for the fact that not all grid points are completely land- or sea-covered.
+
+The application of this preprocessor is very important for most carbon cycle variables (and
+other land surface outputs), which are e.g. reported in units of
+:math:`kgC~m^{-2}`. Here, the surface unit actually refers to 'square meter of land/sea' and
+NOT 'square meter of gridbox'. In order to integrate these globally or
+regionally one has to weight by both the surface quantity and the
+land/sea fraction.
+
+For example, to weight an input field with the land fraction, the following
+preprocessor can be used:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_weighting:
+        weighting_landsea_fraction:
+          area_type: land
+          exclude: ['CanESM2', 'reference_dataset']
+
+Allowed arguments for the keyword ``area_type`` are ``land`` (fraction is 1
+for grid cells with only land surface, 0 for grid cells with only sea surface
+and values in between 0 and 1 for coastal regions) and ``sea`` (1 for
+sea, 0 for land, in between for coastal regions). The optional argument
+``exclude`` allows to exclude specific datasets from this preprocessor, which
+is for example useful for climate models which do not offer land/sea fraction
+files. This arguments also accepts the special dataset specifiers
+``reference_dataset`` and ``alternative_dataset``.
+
+See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
+
+
 .. _masking:
 
 Masking
@@ -307,7 +355,7 @@ the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
 vectorized rasters). As mentioned above, the spatial resolution of the the
 Natural Earth masks are much higher than any typical global model (10m for
-land and 50m for ocean masks).
+land and glaciated areas and 50m for ocean masks).
 
 See also :func:`esmvalcore.preprocessor.mask_landsea`.
 
@@ -329,6 +377,23 @@ and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
 As in the case of ``mask_landsea``, the preprocessor automatically retrieves
 the ``fx_files: [sftgif]`` mask.
+
+See also :func:`esmvalcore.preprocessor.mask_landseaice`.
+
+Glaciated masking
+-----------------
+
+For masking out glaciated areas a Natural Earth shapefile is used. To mask
+glaciated areas out, ``mask_glaciated`` can be used:
+
+.. code-block:: yaml
+
+  preprocessors:
+    preproc_mask:
+      mask_glaciated:
+        mask_out: glaciated
+
+and it requires only one argument: ``mask_out``: only ``glaciated``.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -847,7 +912,7 @@ See also :func:`esmvalcore.preprocessor.anomalies`.
 
 This function aligns the time points of each component dataset so that the Iris
 cubes from different datasets can be subtracted. The operation makes the
-datasets time points common and sets common calendars; it also resets the time
+datasets time points common; it also resets the time
 bounds and auxiliary coordinates to reflect the artifically shifted time
 points. Current implementation for monthly and daily data; the ``frequency`` is
 set automatically from the variable CMOR table unless a custom ``frequency`` is
@@ -867,8 +932,9 @@ The area manipulation module contains the following preprocessor functions:
 * extract_named_regions_: Extract a specific region from in the region
   cooordinate.
 * extract_shape_: Extract a region defined by a shapefile.
-* zonal_means_: Calculates the zonal or meridional means.
-* area_statistics_: Calculates the average value over a region.
+* zonal_statistics_: Compute zonal statistics.
+* meridional_statistics_: Compute meridional statistics.
+* area_statistics_: Compute area statistics.
 
 
 ``extract_region``
@@ -908,16 +974,21 @@ Extract a shape or a representative point for this shape from
 the data.
 
 Parameters:
-	* ``shapefile``: path to the shapefile containing the geometry of the region to be
-	  extracted. This path can be relative to ``auxiliary_data_dir`` defined in
-	  the :ref:`user configuration file`.
-	* ``method``: the method to select the region, selecting either all points
+  * ``shapefile``: path to the shapefile containing the geometry of the 
+    region to be extracted. If the file contains multiple shapes behaviour 
+    depends on the decomposed parameter. This path can be relative to 
+    ``auxiliary_data_dir`` defined in the :ref:`user configuration file`.
+  * ``method``: the method to select the region, selecting either all points
 	  contained by the shape or a single representative point. Choose either
 	  'contains' or 'representative'. If not a single grid point is contained
 	  in the shape, a representative point will be selected.
-	* ``crop``: by default extract_region_ will be used to crop the data to a
+  * ``crop``: by default extract_region_ will be used to crop the data to a
 	  minimal rectangular region containing the shape. Set to ``false`` to only
 	  mask data outside the shape. Data on irregular grids will not be cropped.
+  * ``decomposed``: by default ``false``, in this case the union of all the 
+    regions in the shape file is masked out. If ``true``, the regions in the 
+    shapefiles are masked out seperately, generating an auxiliary dimension 
+    for the cube for this.
 
 Examples:
     * Extract the shape of the river Elbe from a shapefile:
@@ -931,18 +1002,24 @@ Examples:
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
 
-``zonal_means``
----------------
+``zonal_statistics``
+--------------------
 
-The function calculates the zonal or meridional means. While this function is
-named ``zonal_mean``, it can be used to apply several different operations in
-an zonal or meridional direction. This function takes two arguments:
+The function calculates the zonal statistics by applying an operator along the longitude coordinate. This function takes one argument:
 
-* ``coordinate``: Which direction to apply the operation: latitude or longitude
-* ``mean_type``: Which operation to apply: mean, std_dev, variance, median,
-  min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
 
 See also :func:`esmvalcore.preprocessor.zonal_means`.
+
+
+``meridional_statistics``
+-------------------------
+
+The function calculates the meridional statistics by applying an operator along the latitude coordinate. This function takes one argument:
+
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+
+See also :func:`esmvalcore.preprocessor.meridional_means`.
 
 
 ``area_statistics``
@@ -1135,3 +1212,29 @@ the average file size of all the datasets; this memory intake is high but also
 assumes that all data is fully realized in memory; this aspect will gradually
 change and the amount of realized data will decrease with the increase of
 ``dask`` use.
+
+.. _Other:
+
+Other
+=====
+
+Miscellaneous functions that do not belong to any of the other categories.
+
+Clip
+----
+
+This function clips data values to a certain minimum, maximum or range. The function takes two
+arguments:
+
+* ``minimum``: Lower bound of range. Default: ``None``
+* ``maximum``: Upper bound of range. Default: ``None``
+
+The example below shows how to set all values below zero to zero.
+
+
+.. code-block:: yaml
+
+    preprocessors:
+      clip:
+        minimum: 0
+        maximum: null

@@ -133,14 +133,16 @@ class TestCMORCheck(unittest.TestCase):
         """Test checks succeeds for a good cube."""
         self._check_cube()
 
-    def _check_cube(self, automatic_fixes=False, frequency=None):
+    def _check_cube(self, automatic_fixes=False, frequency=None,
+                    warnings_as_errors=True):
         """Apply checks and optionally automatic fixes to self.cube."""
         def checker(cube):
             return CMORCheck(
                 cube,
                 self.var_info,
                 automatic_fixes=automatic_fixes,
-                frequency=frequency)
+                frequency=frequency,
+                warnings_as_errors=warnings_as_errors)
 
         self.cube = checker(self.cube).check_metadata()
         self.cube = checker(self.cube).check_data()
@@ -169,7 +171,7 @@ class TestCMORCheck(unittest.TestCase):
         """Test check pass for a bad standard_name with automatic fixes."""
         self.cube = self.get_cube(self.var_info)
         self.cube.standard_name = 'wind_speed'
-        self._check_cube(automatic_fixes=True)
+        self._check_cube(automatic_fixes=True, warnings_as_errors=False)
         self._check_cube()
 
     def test_check_bad_standard_name(self):
@@ -182,7 +184,7 @@ class TestCMORCheck(unittest.TestCase):
         """Test check pass for a bad standard_name with automatic fixes."""
         self.cube = self.get_cube(self.var_info)
         self.cube.long_name = 'bad_name'
-        self._check_cube(automatic_fixes=True)
+        self._check_cube(automatic_fixes=True, warnings_as_errors=False)
         self._check_cube()
 
     def test_check_bad_long_name_auto_fix_report_warning(self):
@@ -269,7 +271,9 @@ class TestCMORCheck(unittest.TestCase):
 
     def _check_warnings_on_metadata(self, automatic_fixes=False):
         checker = CMORCheck(
-            self.cube, self.var_info, automatic_fixes=automatic_fixes
+            self.cube, self.var_info,
+            warnings_as_errors=False,
+            automatic_fixes=automatic_fixes,
         )
         checker.check_metadata()
         self.assertTrue(checker.has_warnings())
@@ -324,6 +328,18 @@ class TestCMORCheck(unittest.TestCase):
         for index in range(20):
             self.assertTrue(
                 iris.util.approx_equal(cube_points[index], reference[index]))
+
+    def test_not_bounds(self):
+        """Warning if bounds are not available."""
+        self.cube.coord('longitude').bounds = None
+        self._check_warnings_on_metadata(automatic_fixes=False)
+        self.assertFalse(self.cube.coord('longitude').has_bounds())
+
+    def test_not_bounds_with_fixes(self):
+        """Warning if bounds added with automatic fixes."""
+        self.cube.coord('longitude').bounds = None
+        self._check_warnings_on_metadata(automatic_fixes=True)
+        self.assertTrue(self.cube.coord('longitude').has_bounds())
 
     def test_not_correct_lons(self):
         """Fail if longitudes are not correct in metadata step."""
@@ -699,6 +715,7 @@ class TestCMORCheck(unittest.TestCase):
             attributes=coord_atts,
             units=unit,
         )
+        coord.guess_bounds()
         return coord
 
     @staticmethod
