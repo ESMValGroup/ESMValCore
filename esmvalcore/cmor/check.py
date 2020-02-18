@@ -580,7 +580,7 @@ class CMORCheck():
                     break
 
         if hasattr(coord, "attributes"):
-            coord.attributes = None
+            coord.attributes.pop('time_origin', None)
 
     @staticmethod
     def _simplify_calendar(calendar):
