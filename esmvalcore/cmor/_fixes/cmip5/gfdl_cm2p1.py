@@ -87,8 +87,8 @@ class Sit(Fix):
                     end = cftime.DatetimeJulian(date.year, date.month + 1, 1)
                 else:
                     end = cftime.DatetimeJulian(date.year + 1, 1, 1)
-                new_bounds[x, 0] = point.units.date2num(start)
-                new_bounds[x, 1] = point.units.date2num(end)
+                new_bounds[i, 0] = point.units.date2num(start)
+                new_bounds[i, 1] = point.units.date2num(end)
             time.bounds = new_bounds
         return cubes
 
