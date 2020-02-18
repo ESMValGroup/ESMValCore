@@ -53,7 +53,7 @@ Overview
 
 The ESMValTool preprocessor can be used to perform a broad range of operations
 on the input data before diagnostics or metrics are applied. The preprocessor
-performs these operations in a centralied, documented and efficient way, thus
+performs these operations in a centralized, documented and efficient way, thus
 reducing the data processing load on the diagnostics side.
 
 Each of the preprocessor operations is written in a dedicated python module and
