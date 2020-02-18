@@ -845,16 +845,16 @@ Examples:
         .. code-block:: yaml
 
             climate_statistics:
-                operator: max
-                period: day
+              operator: max
+              period: day
 
     * Minimum value in the period:
 
         .. code-block:: yaml
 
             climate_statistics:
-                operator: min
-                period: full
+              operator: min
+              period: full
 
 See also :func:`esmvalcore.preprocessor.climate_statistics`.
 
@@ -877,18 +877,32 @@ Parameters:
       parameters from extract_time_. Default is null
 
 Examples:
-    * Anomalies from the monthly climatology:
-
-        .. code-block:: yaml
-
-            anomalies:
-                period: month
-
     * Anomalies from the full period climatology:
 
         .. code-block:: yaml
 
             anomalies:
+
+    * Anomalies from the full period monthly climatology:
+
+        .. code-block:: yaml
+
+            anomalies:
+              period: month
+
+    * Anomalies from the 1979-2000 monthly climatology:
+
+        .. code-block:: yaml
+
+            anomalies:
+              period: month
+              reference:
+                start_year: 1979
+                start_month: 1
+                start_day: 1
+                end_year: 2000
+                end_month: 12
+                end_day: 31
 
 See also :func:`esmvalcore.preprocessor.anomalies`.
 
