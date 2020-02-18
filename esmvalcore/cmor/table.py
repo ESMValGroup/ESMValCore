@@ -21,6 +21,18 @@ CMOR_TABLES = {}
 
 
 def get_var_info(project, mip, cmor_name):
+    """
+    Get variable information
+
+    Parameters
+    ----------
+    project:  of str
+        Dataset's project
+    mip: str
+        Variable's cmor table
+    cmor_name: str
+        Variable's cmor name
+    """
     return CMOR_TABLES[project].get_variable(mip, cmor_name)
 
 

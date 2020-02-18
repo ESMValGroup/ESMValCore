@@ -673,22 +673,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     for variable in variables:
         variable['filename'] = get_output_file(variable,
                                                config_user['preproc_dir'])
-    """[summary]
-
-    Returns
-    -------
-    [type]
-        [description]
-
-    Raises
-    ------
-    RecipeError
-        [description]
-    RecipeError
-        [description]
-    RecipeError
-        [description]
-    """
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
     else:
