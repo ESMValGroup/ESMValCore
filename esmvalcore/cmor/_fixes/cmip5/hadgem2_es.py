@@ -27,7 +27,7 @@ class AllVars(Fix):
                 lat = cube.coord('latitude')
                 lat.points = np.clip(lat.points, -90., 90.)
                 if not lat.has_bounds():
-                  lat.guess_bounds()
+                    lat.guess_bounds()
                 lat.bounds = np.clip(lat.bounds, -90., 90.)
 
         return cubes
