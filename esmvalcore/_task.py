@@ -12,21 +12,18 @@ import time
 from copy import deepcopy
 from multiprocessing import Pool
 
-import requests
 import psutil
 import yaml
 
-from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags, REFERENCES_PATH
+from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
+from ._citation import _write_citation_file
 
 logger = logging.getLogger(__name__)
 
 DATASET_KEYS = {
     'mip',
 }
-
-CMIP6_CITATION_URL = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch/' \
-                     'cmip6?input=CMIP6.CMIP.'
 
 
 def which(executable):
@@ -575,67 +572,22 @@ class DiagnosticTask(BaseTask):
             }
 
             attributes.update(deepcopy(attrs))
-            for key in attributes:
-                if key in TAGS:
-                    attributes[key] = replace_tags(key, attributes[key])
+            section = 'references'
+            # for key in attributes:
+            #     if key in TAGS:
+                    # if key in section:
+                    #     attributes[key] = cite_tags(key, attributes[key])
+                    # else:
+                    #     attributes[key] = replace_tags(key, attributes[key])
 
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)
             product.save_provenance()
-            self._write_citation_file(product)
+            _write_citation_file(product)
             self.products.add(product)
         logger.debug("Collecting provenance of task %s took %.1f seconds",
                      self.name,
                      time.time() - start)
-
-    @staticmethod
-    def _write_citation_file(product):
-        """
-            Write citation information provided by the recorded provenance.
-            Recipe and cmip6 data references are saved into one bibtex file.
-            cmip6 data references are provided by CMIP6 data citation service.
-            each cmip6 data reference has a json link. In the case of internet
-            connection, cmip6 data references are saved into a bibtex file.
-            Otherwise, cmip6 data reference links are saved into a text file.
-        """
-        # collect info from provenance
-        file_name = os.path.splitext(product.filename)[0]
-        citation = {
-            'references': [],
-            'info_urls': [],
-            'tag': [],
-            'entry': '',
-            'url': '',
-            'file': [
-                file_name + '_data_citation_url.txt',
-                file_name + '_citation.bibtex',
-            ]}
-        for item in product.provenance.records:
-            for key, value in item.attributes:
-                if key.namespace.prefix == 'attribute':
-                    if key.localpart in {'reference', 'references'}:
-                        citation['references'].append(value)
-                    elif key.localpart == 'further_info_url':
-                        citation['info_urls'].append(value)
-
-        # collect CMIP6 citation, if any
-        if citation['info_urls']:
-            citation['entry'], citation['url'] = _collect_cmip_citation(
-                citation['info_urls'])
-        if citation['url']:
-            with open(citation['file'][0], 'w') as file:
-                file.write(citation['url'])
-
-        # collect recipe citation, if any
-        if citation['references']:
-            citation['tag'] = _replace_entry(citation['references'])
-            citation['entry'] += '{}\n'.format(
-                _collect_bibtex_citation(citation['tag']))
-
-        # write one bibtex file
-        if citation['entry']:
-            with open(citation['file'][1], 'w') as file:
-                file.write(citation['entry'])
 
     def __str__(self):
         """Get human readable description."""
@@ -646,92 +598,6 @@ class DiagnosticTask(BaseTask):
             super(DiagnosticTask, self).str(),
         )
         return txt
-
-
-def _get_response(url):
-    """Return information from CMIP6 Data Citation service in json format."""
-    json_data = False
-    if url.lower().startswith('https'):
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                json_data = response.json()
-            else:
-                logger.info('Error in the CMIP json link')
-        except IOError:
-            logger.info('Error in receiving the CMIP json file')
-    return json_data
-
-
-def _valid_json_data(data):
-    valid_data = False
-    keys = ['identifier', 'creators', 'titles', 'publisher', 'publicationYear']
-    if all(key in data for key in keys):
-        check_names = all('creatorName' in item for item in data['creators'])
-        if 'id' in data['identifier'] and check_names:
-            valid_data = True
-    return valid_data
-
-
-def _json_to_bibtex(data):
-    """Make a bibtex entry from CMIP6 Data Citation json data."""
-    url = ''.join(['https://doi.org/', data['identifier']['id']])
-    author_list = []
-    for item in data['creators']:
-        author_list.append(item['creatorName'])
-    bibtex_entry = ('@misc{' + url + ',\n\t'
-                    'url = {' + url + '},\n\t'
-                    'title = {' + data['titles'][0] + '},\n\t'
-                    'publisher = {' + data['publisher'] + '},\n\t'
-                    'year = ' + data['publicationYear'] + ',\n\t'
-                    'author = {' + ' and '.join(author_list) + '},\n\t'
-                    'doi = {' + data['identifier']['id'] + '},\n'
-                    '}')
-    return bibtex_entry
-
-
-def _replace_entry(product_entry):
-    """Find tags of the references in provenance."""
-    entry_tags = {v: k for k, v in TAGS['references'].items()}
-    tag_list = []
-    for key in entry_tags.keys():
-        for entry in product_entry:
-            if key in entry and entry_tags[key] not in tag_list:
-                tag_list.append(entry_tags[key])
-    return tag_list
-
-
-def _collect_bibtex_citation(tags):
-    """Collect information from bibtex files."""
-    entry = ''
-    for tag in tags:
-        bibtex_file = os.path.join(REFERENCES_PATH, tag + '.bibtex')
-        if os.path.isfile(bibtex_file):
-            with open(bibtex_file, 'r') as file:
-                entry += '{}\n'.format(file.read())
-        else:
-            logger.info('The reference file %s does not exist.',
-                        bibtex_file)
-    return entry
-
-
-def _collect_cmip_citation(info_url):
-    """Collect information from CMIP6 Data Citation Service."""
-    split_str = 'cmip6?input=CMIP6.CMIP.'
-    url_stem = ''.join([CMIP6_CITATION_URL.split(split_str)[0],
-                        'cerarest/export', split_str])
-    citation_entry = ''
-    citation_link = ''
-    for data_url in info_url:
-        data_info = '.'.join((data_url.split(".org/")[1]).split(".")[1:4])
-        json_data = _get_response(''.join([url_stem, data_info]))
-        if json_data and _valid_json_data(json_data):
-            citation_entry += '{}\n'.format(_json_to_bibtex(json_data))
-        else:
-            citation_link += '{}\n'.format(''.join(
-                [CMIP6_CITATION_URL, data_info]))
-            logger.info('Returning the CMIP citation link for %s', data_info)
-    return citation_entry, citation_link
 
 
 def get_flattened_tasks(tasks):
