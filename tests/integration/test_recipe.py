@@ -2070,7 +2070,7 @@ def test_fx_vars_list_preproc_cmip6(tmp_path, patched_datafinder,
     fx_files = settings['fx_files']
     assert isinstance(fx_files, dict)
     assert 'preproc' in fx_files['areacello']
-    assert 'CMIP6_CanESM5_Ofx_historical_r1i1p1f1_areacello.nc' in \
+    assert 'CMIP6_CanESM5_Ofx_historical_r1i1p1f1_areacello_2000-2005.nc' in \
         fx_files['areacello']
 
 
@@ -2238,7 +2238,7 @@ def test_fx_vars_dicts_activity_preproc_cmip6(tmp_path, patched_datafinder,
     assert len(anc_products) == 1
     assert len(product_files) == 1
     assert os.path.basename(product_files[0]) == \
-        'CMIP6_UKESM1-0-LL_Ofx_piControl_r1i1p1f2_areacello.nc'
+        'CMIP6_UKESM1-0-LL_Ofx_piControl_r1i1p1f2_areacello_2000-2005.nc'
     for product in task.products:
         assert 'volume_statistics' in product.settings
         assert product.attributes['short_name'] == 'tos'
@@ -2551,12 +2551,5 @@ def test_fx_vars_duplicate_files(tmp_path, patched_datafinder,
     ]
     assert task_b
     task_b = task_b[0]
-
-    # test removal of identical ancestors across tasks
-    # both task_a and task_b have the same ancestor; one
-    # will be removed; process is random so
-    # either task_a has no ancestors or task_b has no ancestors
-    if len(task_a.ancestors) == 1:
-        assert len(task_b.ancestors) == 0
-    elif len(task_b.ancestors) == 1:
-        assert len(task_a.ancestors) == 0
+    assert len(task_a.ancestors) == 1
+    assert len(task_b.ancestors) == 1
