@@ -10,16 +10,16 @@ To get started developing, follow the instructions below. If you are contributin
 
 To install in development mode, follow these instructions.
 
-- [Download and install conda](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html) (this should be done even if the system in use already has a preinstalled version of conda, as problems have been reported with NCL when using such a version)
-- To make the `conda` command availble, add `source <prefix>/etc/profile.d/conda.sh` to your `.bashrc` file and restart your shell. If using (t)csh shell, add `source <prefix>/etc/profile.d/conda.csh` to your `.cshrc`/`.tcshrc` file instead.
-- Update conda: `conda update -y conda`
-- Clone the ESMValCore Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
-- Go to the source code directory: `cd ESMValCore`
-- Create the esmvaltool conda environment `conda env create --name esmvaltool --file environment.yml`
-- Activate the esmvaltool environment: `conda activate esmvaltool`
-- Install in development mode: `pip install -e '.[develop]'`. If you are installing behind a proxy that does not trust the usual    pip-urls you can declare them with the option `--trusted-host`, e.g. `pip install --trusted-host=pypi.python.org   --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]`
-- Test that your installation was succesful by running `esmvaltool -h`.
-- If you log into a cluster or other device via `ssh` and your origin machine sends the `locale` environment via the `ssh`   connection, make sure the environment is set correctly, specifically `LANG` and `LC_ALL` are set correctly (for GB English UTF-8  encoding these variables must be set to `en_GB.UTF-8`; you can set them by adding `export LANG=en_GB.UTF-8` and `export LC_ALL=en_GB.UTF-8` in your origin or login machines' `.profile`)
+  - [Download and install conda](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html) (this should be done even if the system in use already has a   preinstalled version of conda, as problems have been reported with NCL when using such a version)
+  - To make the `conda` command availble, add `source <prefix>/etc/profile.d/conda.sh` to your `.bashrc` file and restart your shell. If using (t)csh shell, add `source <prefix>/etc/profile.d/conda.csh` to your `.cshrc`/`.tcshrc` file instead.
+  - Update conda: `conda update -y conda`
+  - Clone the ESMValCore Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
+  - Go to the source code directory: `cd ESMValCore`
+  - Create the esmvaltool conda environment `conda env create --name esmvaltool --file environment.yml`
+  - Activate the esmvaltool environment: `conda activate esmvaltool`
+  - Install in development mode: `pip install -e '.[develop]'`. If you are installing behind a proxy that does not trust the usual    pip-urls you can declare them with the option `--trusted-host`, e.g. `pip install --trusted-host=pypi.python.org   --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]`
+  - Test that your installation was succesful by running `esmvaltool -h`.
+  - If you log into a cluster or other device via `ssh` and your origin machine sends the `locale` environment via the `ssh`   connection, make sure the environment is set correctly, specifically `LANG` and `LC_ALL` are set correctly (for GB English UTF-8  encoding these variables must be set to `en_GB.UTF-8`; you can set them by adding `export LANG=en_GB.UTF-8` and `export LC_ALL=en_GB.UTF-8` in your origin or login machines' `.profile`)
 
 ## Running tests
 
@@ -87,9 +87,9 @@ You can view the results of the automatic checks below your pull request. If one
 
 Contributions to ESMValCore should
 
-- Preferably be covered by unit tests. Unit tests are mandatory for new preprocessor functions or modifications to existing   functions. If you do not know how to start with writing unit tests, let us know in a comment on the pull request and a core development team member will try to help you get started.
-- Be accompanied by appropriate documentation.
-- Introduce no new issues on Codacy.
+  - Preferably be covered by unit tests. Unit tests are mandatory for new preprocessor functions or modifications to existing   functions. If you do not know how to start with writing unit tests, let us know in a comment on the pull request and a core development team member will try to help you get started.
+  - Be accompanied by appropriate documentation.
+  - Introduce no new issues on Codacy.
 
 ### List of authors
 
@@ -123,8 +123,8 @@ the release notes and edit those.
 
 Follow these steps to create a new conda package:
 
--   Check out the tag corresponding to the release, e.g. `git checkout v2.0.0b6`
--   Edit meta.yaml and uncomment the lines starting with `git_rev` and `git_url`, remove the line starting with `path` in the `source` section.
--   Activate the base environment `conda activate base`
--   Run `conda build . -c conda-forge -c esmvalgroup` to build the conda package
--   If the build was successful, upload the package to the esmvalgroup conda channel, e.g. `anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvaltool-2.0.0b2-py_0.tar.bz2`.
+  - Check out the tag corresponding to the release, e.g. `git checkout v2.0.0b6`
+  - Edit meta.yaml and uncomment the lines starting with `git_rev` and `git_url`, remove the line starting with `path` in the `source` section.
+  - Activate the base environment `conda activate base`
+  - Run `conda build . -c conda-forge -c esmvalgroup` to build the conda package
+  - If the build was successful, upload the package to the esmvalgroup conda channel, e.g. `anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvaltool-2.0.0b2-py_0.tar.bz2`.

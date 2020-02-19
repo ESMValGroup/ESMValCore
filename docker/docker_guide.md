@@ -22,7 +22,7 @@ to execute. ESMValTool expects specific directory structure
 and directories for input and output files need to be created
 in advance. Below are few user scenerios.
 
-### 1. Input and output directories are located in the same directory.
+### 1. Input and output directories are located in the same directory
 
 ```sh
 docker run -v <local_data>:/data/ esmvalgroup/esmvaltool:2.0 nml/<namelist_name>.xml
@@ -30,9 +30,9 @@ docker run -v <local_data>:/data/ esmvalgroup/esmvaltool:2.0 nml/<namelist_name>
 
 Replace:
 
-* `<namelist_name>` with name of the namelist you want to execute
-* `<local_data>` with  a location on your local machine
-(docker host). It has to be absolute path.
+  * `<namelist_name>` with name of the namelist you want to execute
+  * `<local_data>` with  a location on your local machine
+    (docker host). It has to be absolute path.
 
 Content of the `<local_data>` directory has to have following structure:
 
@@ -50,7 +50,7 @@ tree <local_data>
     └── work        # output data path (netCDF)
 ```
 
-### 2. Input and output directories are in different locations.
+### 2. Input and output directories are in different locations
 
 If input and output directories are in different locations,
 they need to be mounted separately.
