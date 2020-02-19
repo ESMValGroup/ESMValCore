@@ -24,4 +24,3 @@ class Clcalipso(Fix):
             alt40.standard_name = 'altitude'
 
         return cubes
-
