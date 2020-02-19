@@ -84,6 +84,8 @@ def fix_metadata(cubes,
 
     frequency: str, optional
         Variable's data frequency, if available
+    check_level: enum.IntEnum
+        Level of strictness of the checks. Set to default.
 
     Returns
     -------
@@ -190,6 +192,8 @@ def fix_data(cube,
 
     frequency: str, optional
         Variable's data frequency, if available
+    check_level: enum.IntEnum
+        Level of strictness of the checks. Set to default.
 
     Returns
     -------
