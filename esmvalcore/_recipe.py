@@ -1408,10 +1408,7 @@ class Recipe:
                 removed_ancestors = []
                 for task in prelim_tasks:
                     for ancestor_task in task.ancestors:
-                        # add tasks and assign priorities as rule:
-                        # no duplicates: highest +3
-                        # first duplicate (not removed): high +2
-                        # all others with deleted ancestors: low +1
+                        # add tasks and assign priorities
                         if ancestor_task.name not in duplicates:
                             # list:duplicates can be empty, just add the task
                             tasks.add(task)
@@ -1419,12 +1416,11 @@ class Recipe:
                         else:
                             if ancestor_task.name not in removed_ancestors:
                                 removed_ancestors.append(ancestor_task.name)
-                                tasks.add(task)
-                                priority += 2
+                                priority -= 2
                             else:
                                 task.ancestors.remove(ancestor_task)
-                                tasks.add(task)
                                 priority += 1
+                            tasks.add(task)
 
             # Create diagnostic tasks
             for script_name, script_cfg in diagnostic['scripts'].items():
