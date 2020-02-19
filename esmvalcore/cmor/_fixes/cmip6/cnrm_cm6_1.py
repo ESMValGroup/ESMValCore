@@ -1,7 +1,6 @@
 """Fixes for CNRM-CM6-1 model."""
 
 from ..fix import Fix
-from ..shared import add_scalar_height_coord
 
 
 class Clcalipso(Fix):

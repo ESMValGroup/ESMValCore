@@ -45,6 +45,7 @@ class AllVars(Fix):
             new_list.append(cube)
         return CubeList(new_list)
 
+
 class Clcalipso(Fix):
     """Fixes for clcalipso."""
 
