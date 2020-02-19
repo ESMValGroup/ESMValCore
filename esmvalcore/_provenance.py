@@ -40,7 +40,8 @@ def get_esmvaltool_provenance():
     # TODO: add dependencies with versions here
     section = 'references'
     if section in TAGS and ESMVALTOOL_PAPER_TAG in TAGS[section]:
-        attributes_value = replace_tags(section, [ESMVALTOOL_PAPER_TAG])
+        # attributes_value = replace_tags(section, [ESMVALTOOL_PAPER_TAG])
+        attributes_value = cite_tags(section, [ESMVALTOOL_PAPER_TAG])
     else:
         attributes_value = ESMVALTOOL_PAPER_TAG
     attributes = {'attribute:references': attributes_value}
