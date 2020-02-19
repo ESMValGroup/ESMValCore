@@ -508,8 +508,9 @@ def _update_fx_settings(settings, variable, config_user):
                     variable, fxvar, config_user)
                 if cmor_fx_var:
                     fx_files_dict[fxvar_name] = get_output_file(
-                        cmor_fx_var,
-                        config_user['preproc_dir'])
+                        var,
+                        config_user['preproc_dir'],
+                        fx_var_alias=cmor_fx_var)
 
             # finally construct the fx files dictionary
             settings[step]['fx_files'] = fx_files_dict
@@ -694,13 +695,21 @@ def _match_products(products, variables):
 
 
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
-                               config_user):
+                               config_user, fx_case=False):
     """Get preprocessor product definitions for a set of datasets."""
     products = set()
 
-    for variable in variables:
-        variable['filename'] = get_output_file(variable,
-                                               config_user['preproc_dir'])
+    if not fx_case:
+        for variable in variables:
+            variable['filename'] = get_output_file(variable,
+                                                   config_user['preproc_dir'])
+    else:
+        parent_variable = variables[1]
+        variables = [variables[0]]
+        for variable in variables:
+            variable['filename'] = get_output_file(parent_variable,
+                                                   config_user['preproc_dir'],
+                                                   fx_var_alias=variable)
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
@@ -762,7 +771,8 @@ def _get_single_preprocessor_task(variables,
                                   profile,
                                   config_user,
                                   name,
-                                  ancestor_tasks=None):
+                                  ancestor_tasks=None,
+                                  fx_case=False):
     """Create preprocessor tasks for a set of datasets w/ special case fx."""
     if ancestor_tasks is None:
         ancestor_tasks = []
@@ -773,13 +783,23 @@ def _get_single_preprocessor_task(variables,
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
-    products = _get_preprocessor_products(
-        variables=variables,
-        profile=profile,
-        order=order,
-        ancestor_products=ancestor_products,
-        config_user=config_user,
-    )
+    if not fx_case:
+        products = _get_preprocessor_products(
+            variables=variables,
+            profile=profile,
+            order=order,
+            ancestor_products=ancestor_products,
+            config_user=config_user,
+        )
+    else:
+        products = _get_preprocessor_products(
+            variables=variables,
+            profile=profile,
+            order=order,
+            ancestor_products=ancestor_products,
+            config_user=config_user,
+            fx_case=True
+        )
 
     if not products:
         raise RecipeError(
@@ -927,6 +947,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
             derive_tasks.append(task)
 
     # special case: fx variable pre-processing
+    variable_pairs = []
     for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
         if profile.get(step, {}).get('fx_files'):
             # conserve profile
@@ -957,12 +978,14 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
                         TASKSEP)[0] + TASKSEP + 'fx_area-volume_stats_' + \
                         fx_variable['variable_group']
                     task = _get_single_preprocessor_task(
-                        [fx_variable],
+                        [fx_variable, var],
                         before,
                         config_user,
                         name=fx_name,
+                        fx_case=True
                     )
                     fx_preproc_tasks.append(task)
+                    variable_pairs.append([var, fx_variable])
 
     derive_tasks.extend(fx_preproc_tasks)
 
@@ -1348,7 +1371,6 @@ class Recipe:
     def initialize_tasks(self):
         """Define tasks in recipe."""
         logger.info("Creating tasks from recipe")
-        prelim_tasks = set()
         tasks = set()
 
         priority = 0
@@ -1373,54 +1395,8 @@ class Recipe:
                 _check_duplication(task)
                 for task0 in task.flatten():
                     task0.priority = priority
-                prelim_tasks.add(task)
+                tasks.add(task)
                 priority += 1
-
-            # remove ancestor tasks that perform the same operation
-            # and write to the same Preprocessor file
-            # eg: fx files that are needed multiple times but can be produced
-            # only once; this is an inter-tasks check.
-            # The equivanet intra-task check is done by _check_duplication
-            all_names = []
-            for task in prelim_tasks:
-                if task.ancestors:
-                    product_set = []
-                    for product in task.products:
-                        for ancestor_task in task.ancestors:
-                            product_set.append(ancestor_task.name)
-                    for unique_task in list(set(product_set)):
-                        all_names.append(unique_task)
-                else:
-                    tasks.add(task)
-                    priority += 1
-
-            # look for inter-tasks duplication by name
-            # this should be safe now once we've set-filtered by product
-            if not len(all_names) > 1 and prelim_tasks:
-                tasks = prelim_tasks
-            else:
-                duplicates = []
-                while len(all_names) > 0:
-                    elem = all_names.pop()
-                    if elem in all_names:
-                        duplicates.append(elem)
-
-                removed_ancestors = []
-                for task in prelim_tasks:
-                    for ancestor_task in task.ancestors:
-                        # add tasks and assign priorities
-                        if ancestor_task.name not in duplicates:
-                            # list:duplicates can be empty, just add the task
-                            tasks.add(task)
-                            priority += 3
-                        else:
-                            if ancestor_task.name not in removed_ancestors:
-                                removed_ancestors.append(ancestor_task.name)
-                                priority -= 2
-                            else:
-                                task.ancestors.remove(ancestor_task)
-                                priority += 1
-                            tasks.add(task)
 
             # Create diagnostic tasks
             for script_name, script_cfg in diagnostic['scripts'].items():
