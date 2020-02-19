@@ -606,7 +606,8 @@ def _update_statistic_settings(products, order, preproc_dir):
     some_product = next(iter(products))
     for statistic in some_product.settings[step]['statistics']:
         attributes = _get_statistic_attributes(products)
-        attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(statistic.title())
+        attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
+            statistic.title())
         attributes['filename'] = get_statistic_output_file(
             attributes, preproc_dir)
         common_settings = _get_remaining_common_settings(step, order, products)
