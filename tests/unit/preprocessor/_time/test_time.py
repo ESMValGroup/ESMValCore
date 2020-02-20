@@ -107,8 +107,12 @@ class TestTimeSlice(tests.Test):
 
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as ctx:
             extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
+        msg = (
+            "Time slice 2200-01-01 00:00:00 to 2200-12-31 00:00:00 is outside"
+            " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
+        assert ctx.exception.args == (msg, )
 
     def test_extract_time_one_time(self):
         """Test extract_time with one time step."""
