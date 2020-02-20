@@ -40,7 +40,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     """
     Extract a time range from a cube.
 
-    Given a time range passed in as a series of years, mnoths and days, it
+    Given a time range passed in as a series of years, months and days, it
     returns a time-extracted cube with data only within the specified
     time range.
 
@@ -72,7 +72,8 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
         if time ranges are outside the cube time limits
 
     """
-    time_units = cube.coord('time').units
+    time_coord = cube.coord('time')
+    time_units = time_coord.units
     if time_units.calendar == '360_day':
         if start_day > 30:
             start_day = 30
@@ -89,17 +90,13 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
 
     cube_slice = cube.extract(constraint)
     if cube_slice is None:
-        start_cube = str(cube.coord('time').points[0])
-        end_cube = str(cube.coord('time').points[-1])
         raise ValueError(
-            f"Time slice {start_date} to {end_date} is outside cube "
-            f"time bounds {start_cube} to {end_cube}.")
+            f"Time slice {start_date} to {end_date} is outside cube time "
+            f"bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
 
     # Issue when time dimension was removed when only one point as selected.
     if cube_slice.ndim != cube.ndim:
-        time_1 = cube.coord('time')
-        time_2 = cube_slice.coord('time')
-        if time_1 == time_2:
+        if cube_slice.coord('time') == time_coord:
             logger.debug('No change needed to time.')
             return cube
 
@@ -360,7 +357,7 @@ def decadal_statistics(cube, operator='mean'):
     if not cube.coords('decade'):
 
         def get_decade(coord, value):
-            """Callback function to get decades from cube."""
+            """Categorize time coordinate into decades."""
             date = coord.units.num2date(value)
             return date.year - date.year % 10
 
@@ -470,11 +467,11 @@ def _get_period_coord(cube, period):
         if not cube.coords('day_of_year'):
             iris.coord_categorisation.add_day_of_year(cube, 'time')
         return cube.coord('day_of_year')
-    elif period in ['monthly', 'month', 'mon']:
+    if period in ['monthly', 'month', 'mon']:
         if not cube.coords('month_number'):
             iris.coord_categorisation.add_month_number(cube, 'time')
         return cube.coord('month_number')
-    elif period in ['seasonal', 'season']:
+    if period in ['seasonal', 'season']:
         if not cube.coords('season_number'):
             iris.coord_categorisation.add_season_number(cube, 'time')
         return cube.coord('season_number')
