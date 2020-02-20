@@ -923,13 +923,13 @@ Parameters:
     * span: period (number of months/days, depending on data frequency) on which
       weights should be computed e.g. for 2-yearly: span = 24 (2 x 12 months).
       Make sure span has the same units as the data cube time coordinate.
-    * `filter_type`: the type of filter to be applied; default 'lowpass'.
+    * filter_type: the type of filter to be applied; default 'lowpass'.
       Available types: 'lowpass'.
-    * `filter_stats`: the type of statistic to aggregate on the rolling window;
+    * filter_stats: the type of statistic to aggregate on the rolling window;
       default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
 
 Examples:
-    * Lowpass filter witha monthly mean as operator:
+    * Lowpass filter with a monthly mean as operator:
 
         .. code-block:: yaml
 
