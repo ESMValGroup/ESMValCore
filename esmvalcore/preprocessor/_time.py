@@ -361,7 +361,7 @@ def decadal_statistics(cube, operator='mean'):
     if not cube.coords('decade'):
 
         def get_decade(coord, value):
-            """Callback function to get decades from cube."""
+            """Call callback function to get decades from cube."""
             date = coord.units.num2date(value)
             return date.year - date.year % 10
 
@@ -467,6 +467,7 @@ def anomalies(cube, period):
 
 
 def _get_period_coord(cube, period):
+    """Get periods."""
     if period in ['daily', 'day']:
         if not cube.coords('day_of_year'):
             iris.coord_categorisation.add_day_of_year(cube, 'time')
@@ -582,16 +583,16 @@ def low_pass_weights(window, cutoff):
     """
     order = ((window - 1) // 2) + 1
     nwts = 2 * order + 1
-    w = np.zeros([nwts])
-    n = nwts // 2
-    w[n] = 2 * cutoff
-    k = np.arange(1., n)
-    sigma = np.sin(np.pi * k / n) * n / (np.pi * k)
-    firstfactor = np.sin(2. * np.pi * cutoff * k) / (np.pi * k)
-    w[(n - 1):0:-1] = firstfactor * sigma
-    w[(n + 1):-1] = firstfactor * sigma
+    weights = np.zeros([nwts])
+    half_order = nwts // 2
+    weights[half_order] = 2 * cutoff
+    kidx = np.arange(1., half_order)
+    sigma = np.sin(np.pi * kidx / half_order) * half_order / (np.pi * kidx)
+    firstfactor = np.sin(2. * np.pi * cutoff * kidx) / (np.pi * kidx)
+    weights[(half_order - 1):0:-1] = firstfactor * sigma
+    weights[(half_order + 1):-1] = firstfactor * sigma
 
-    return w[1:-1]
+    return weights[1:-1]
 
 
 def timeseries_filter(cube, window, span,
