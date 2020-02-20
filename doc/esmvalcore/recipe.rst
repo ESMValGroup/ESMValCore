@@ -82,7 +82,10 @@ data specifications:
   ``RCP8.5``)
 - mip (for CMIP data, key ``mip``, value e.g. ``Amon``, ``Omon``, ``LImon``)
 - ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
-- time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``)
+- time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``. Please
+  note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
+  so we recommend to avoid them. For example, use ``128`` to specify the year
+  128 instead of ``0128``.)
 - model grid (native grid ``grid: gn`` or regridded grid ``grid: gr``, for
   CMIP6 data only).
 
@@ -133,6 +136,8 @@ Please, bear in mind that this syntax can only be used in the ensemble tag.
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
+
+.. _`yaml`: https://yaml.org/refcard.html
 
 .. _Preprocessors:
 
