@@ -254,7 +254,7 @@ class TestCMORCheck(unittest.TestCase):
             iris.Constraint(time=self.cube.coord('time').cell(0)))
         self._check_cube()
 
-    def test_rank_unestructured_grid(self):
+    def test_rank_unstructured_grid(self):
         """Check succeeds even if two required coordinates share dimensions."""
         self.cube = self.cube.extract(
             iris.Constraint(latitude=self.cube.coord('latitude').points[0]))
@@ -264,6 +264,7 @@ class TestCMORCheck(unittest.TestCase):
         iris.util.demote_dim_coord_to_aux_coord(self.cube, 'longitude')
         new_lat = iris.coords.AuxCoord(
             points=self.cube.coord('longitude').points / 4,
+            bounds=self.cube.coord('longitude').bounds / 4,
             var_name='lat',
             standard_name='latitude',
             long_name='Latitude',
