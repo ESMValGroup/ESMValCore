@@ -379,11 +379,11 @@ class CMORCheck():
                     self.report_error(self._attr_msg, var_name, 'units',
                                       cmor.units, coord.units)
         self._check_coord_values(cmor, coord, var_name)
-        self._check_coord_bounds(coord, var_name)
+        self._check_coord_bounds(cmor, coord, var_name)
         self._check_coord_monotonicity_and_direction(cmor, coord, var_name)
 
-    def _check_coord_bounds(self, coord, var_name):
-        if not coord.has_bounds():
+    def _check_coord_bounds(self, cmor, coord, var_name):
+        if cmor.must_have_bounds == 'yes' and not coord.has_bounds():
             if self.automatic_fixes:
                 try:
                     coord.guess_bounds()

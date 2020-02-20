@@ -73,6 +73,7 @@ class CoordinateInfoMock:
             self.units = "units"
 
         self.stored_direction = "increasing"
+        self.must_have_bounds = "yes"
         self.requested = []
 
         valid_limits = {'lat': ('-90', '90'), 'lon': ('0', '360')}
@@ -349,11 +350,18 @@ class TestCMORCheck(unittest.TestCase):
         self._check_warnings_on_metadata(automatic_fixes=False)
         self.assertFalse(self.cube.coord('longitude').has_bounds())
 
-    def test_not_bounds_with_fixes(self):
+    def test_guess_bounds_with_fixes(self):
         """Warning if bounds added with automatic fixes."""
         self.cube.coord('longitude').bounds = None
         self._check_warnings_on_metadata(automatic_fixes=True)
         self.assertTrue(self.cube.coord('longitude').has_bounds())
+
+    def test_not_guess_bounds_with_fixes(self):
+        """Warning if bounds added with automatic fixes."""
+        self.cube.coord('longitude').bounds = None
+        self.var_info.coordinates['lon'].must_have_bounds = "no"
+        self._check_cube(automatic_fixes=True)
+        self.assertFalse(self.cube.coord('longitude').has_bounds())
 
     def test_not_correct_lons(self):
         """Fail if longitudes are not correct in metadata step."""
