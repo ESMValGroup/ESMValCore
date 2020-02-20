@@ -258,12 +258,17 @@ class TestCMORCheck(unittest.TestCase):
         """Check succeeds even if two required coordinates share dimensions."""
         self.cube = self.cube.extract(
             iris.Constraint(latitude=self.cube.coord('latitude').points[0]))
+        lat_points = self.cube.coord('longitude').points
+        lat_points = lat_points / 3.0 - 50.
         self.cube.remove_coord('latitude')
         iris.util.demote_dim_coord_to_aux_coord(self.cube, 'longitude')
-        new_lat = self.cube.coord('longitude').copy()
-        new_lat.var_name = 'lat'
-        new_lat.standard_name = 'latitude'
-        new_lat.long_name = 'Latitude'
+        new_lat = iris.coords.AuxCoord(
+            points=self.cube.coord('longitude').points / 4,
+            var_name='lat',
+            standard_name='latitude',
+            long_name='Latitude',
+            units='degrees_north',
+        )
         self.cube.add_aux_coord(new_lat, 1)
         self._check_cube()
 
@@ -285,8 +290,9 @@ class TestCMORCheck(unittest.TestCase):
         checker.check_metadata()
         self.assertTrue(checker.has_warnings())
 
-    def _check_debug_messages_on_metadata(self):
-        checker = CMORCheck(self.cube, self.var_info)
+    def _check_debug_messages_on_metadata(self, automatic_fixes=False):
+        checker = CMORCheck(
+            self.cube, self.var_info, automatic_fixes=automatic_fixes)
         checker.check_metadata()
         self.assertTrue(checker.has_debug_messages())
 
@@ -505,7 +511,25 @@ class TestCMORCheck(unittest.TestCase):
             ),
             (1, 2)
         )
-        self._check_debug_messages_on_metadata()
+        self._check_debug_messages_on_metadata(automatic_fixes=True)
+
+    def test_bad_bounds_in_multidim_longitude(self):
+        """Warning if multidimensional lon has bad var_name at metadata"""
+        self.var_info.table_type = 'CMIP6'
+        self.cube.remove_coord('longitude')
+        lons = np.reshape(np.linspace(180, 540, num=20*20), (20, 20))
+        bounds = np.stack([lons.copy() - 0.5, lons.copy() + 0.5], -1)
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                lons,
+                var_name='bad_name',
+                standard_name='longitude',
+                units='degrees_east',
+                bounds=bounds,
+            ),
+            (1, 2)
+        )
+        self._check_debug_messages_on_metadata(automatic_fixes=True)
 
     def test_bad_out_name_onedim_latitude(self):
         """Warning if onedimensional lat has bad var_name at metadata"""
