@@ -83,6 +83,8 @@ def _json_to_bibtex(data):
     if author_list:
         if author_list[0] == author_list[-1]:
             authors = author_list[0]
+            if not authors:
+                authors = 'creatorName not found'
         else:
             authors = ' and '.join(author_list)
 
