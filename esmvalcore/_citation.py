@@ -76,28 +76,24 @@ def _get_response(url):
     return json_data
 
 
-def _valid_json_data(data):
-    valid_data = False
-    keys = ['identifier', 'creators', 'titles', 'publisher', 'publicationYear']
-    if all(key in data for key in keys):
-        check_names = all('creatorName' in item for item in data['creators'])
-        if 'id' in data['identifier'] and check_names:
-            valid_data = True
-    return valid_data
-
-
 def _json_to_bibtex(data):
     """Make a bibtex entry from CMIP6 Data Citation json data."""
-    author_list = [item['creatorName'] for item in data['creators']]
-    if author_list[0] == author_list[-1]:
-        authors = author_list[0]
-    else:
-        authors = ' and '.join(author_list)
-    title = data['titles'][0]
-    publisher = data['publisher']
-    year = data['publicationYear']
-    doi = data['identifier']['id']
+    if data.get('creators', False):
+        author_list = [item.get('creatorName', '') for item in data['creators']]
+    if author_list:
+        if author_list[0] == author_list[-1]:
+            authors = author_list[0]
+        else:
+            authors = ' and '.join(author_list)
+
+    title = data.get('titles', ['title not found'])[0]
+    publisher = data.get('publisher', 'publisher not found')
+    year = data.get('publicationYear', 'publicationYear not found')
+
+    if data.get('identifier', False):
+        doi = data.get('identifier').get('id', 'doi not found')
     url = f'https://doi.org/{doi}'
+
     bibtex_entry = (
         f'{"@misc{"}{url},\n\t'
         f'url = {{{url}}},\n\t'
@@ -130,7 +126,7 @@ def _collect_cmip_citation(json_url, info_url):
     """Collect information from CMIP6 Data Citation Service."""
     bibtex_entry = info_url
     json_data = _get_response(json_url)
-    if json_data and _valid_json_data(json_data):
+    if json_data:
         bibtex_entry = _json_to_bibtex(json_data)
     else:
         logger.info('Invalid json link %s', json_url)
