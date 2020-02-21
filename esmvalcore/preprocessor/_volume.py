@@ -176,7 +176,9 @@ def volume_statistics(
 
     The volume average is weighted acoording to the cell volume. Cell volume
     is calculated from iris's cartography tool multiplied by the cell
-    thickness.
+    thickness. If fx_files is provided, the variable's preprocessor chain will
+    be applied to each of the requested fx variables, up to and not including
+    this step.
 
     Parameters
     ----------
@@ -184,8 +186,11 @@ def volume_statistics(
             Input cube.
         operator: str
             The operation to apply to the cube, options are: 'mean'.
-        fx_files: dict
-            dictionary of field:filename for the fx_files
+        fx_files: list
+            list of field:str short_name for the fx variables requested or
+            list of field:dict for the fx variables requested, including
+            but not limited to: keys: short_name, mip, experiment etc (at least
+            short_name required if dict)
 
     Returns
     -------
