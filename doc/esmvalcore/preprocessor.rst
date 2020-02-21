@@ -14,6 +14,7 @@ following the default order in which they are applied:
 * :ref:`Land/Sea/Ice masking`
 * :ref:`Horizontal regridding`
 * :ref:`Masking of missing values`
+* :ref:`Preprocessing fx variables for spatial statistics`
 * :ref:`Multi-model statistics`
 * :ref:`Time operations`
 * :ref:`Area operations`
@@ -484,6 +485,102 @@ combining them into a single mask; here is an example:
           threshold_fraction: 0.0     # keep all missing values
           min_value: -1e20            # small enough not to alter the data
           #  time_window: 10.0        # this will not matter anymore
+
+
+.. _preprocessing fx variables for spatial statistics:
+
+Using mask files for area/volume/zonal statistics
+-------------------------------------------------
+
+Preprocessors like `volume_statistics` may take the optional key `fx_files` to allow
+the computation of statistics with fx data; this data is retrieved in the same manner
+as regular data files and can be ingested in the statistical computation as-is or it
+can be preprocessed:
+
+Key features:
+
+- preprocessor steps will be run on the `fx_files: [vars or dicts of vars]` specified in the `area_statistics`, `volume_statistics` or `zonal_statistics` take for instance this example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      prep:
+        custom_order: true
+        extract_volume:
+            z_min: 0
+            z_max: 100
+        annual_statistics:
+            operator: mean
+        volume_statistics:
+            operator: mean
+            fx_files: [volcello, ]
+
+    diagnostics:
+      diag:
+        variables:
+          thetao700_Omon:
+          short_name: thetao
+          preprocessor: prep
+          mip: Omon
+          exp: historical
+          ensemble: r1i1p1f1
+          grid: gn
+          start_year: 2010
+          end_year: 2014
+          additional_datasets:
+            - {dataset: GFDL-CM4}
+            - {dataset: HadGEM3-GC31-LL}
+            - {dataset: UKESM1-0-LL}
+
+
+this setup will run the custom-ordered preprocessor steps in `preprocessors/prep` before (and not including) `volume_statistics` for the fx variable `volcello`;
+
+- it is also possible to request the same type of fx variables but as dictionaries, providing more information towards the retrieval of the correct data; take this snippet for example:
+
+
+.. code-block:: yaml
+
+    preprocessors:
+      prep:
+        custom_order: true
+        extract_volume:
+            z_min: 0
+            z_max: 100
+        annual_statistics:
+            operator: mean
+        volume_statistics:
+            operator: mean
+            fx_files: [{short_name: volcello, mip: Omon, exp: historical}]
+
+    diagnostics:
+      diag:
+        variables:
+          thetao700_Omon:
+          short_name: thetao
+          preprocessor: prep
+          mip: Omon
+          exp: historical
+          ensemble: r1i1p1f1
+          grid: gn
+          start_year: 2010
+          end_year: 2014
+          additional_datasets:
+            - {dataset: GFDL-CM4}
+            - {dataset: HadGEM3-GC31-LL}
+            - {dataset: UKESM1-0-LL}
+
+
+in this case, by providing the extra CMOR keys, we allow the code to find the `volcello` with mip `Omon` and experiment `historical`. This is particularly useful when the actual fx data is not found in the master variable's (`thetao` in this case) data experiment; this is also useful to force a certain time-dependent data (mip: Omon) for preprocessors that need time operations
+
+.. note::
+
+   In the case of fx variables that don't have a time coordinate (e.g. Ofx or Efx),
+   the preprocessor chain is run but the time preprocessor steps are excluded and
+   not run to avoid code failure. If you intent to run and use the result of a certain
+   time-preprocessing step, make sure you request an fx variable that has a time coordinate
+   e.g. instead of using mip Ofx, use Omon. If data is not available for Omon then
+   that preprocessor step can not be run and the tool will raise a data not found error.
+
 
 Minimum, maximum and interval masking
 -------------------------------------
