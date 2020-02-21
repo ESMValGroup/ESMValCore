@@ -268,22 +268,22 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 def _check_horiz_grid_closeness(cube1, cube2):
     """
     Check if two cubes have the same horizontal grid definition.
-    
+
     The result of the function is a boolean answer, if both cubes have the
     same horizontal grid definition. The function checks both longitude and
     latitude, based on extent and resolution.
-    
+
     Parameters
     ----------
     cube1 : cube
         The first of the cubes to be checked.
     cube2 : cube
         The second of the cubes to be checked.
-    
+
     Returns
     -------
     bool
-    
+
     .. note::
 
         The current implementation checks if the bounds and the
