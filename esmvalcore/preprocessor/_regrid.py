@@ -251,6 +251,10 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             if coords:
                 [coord] = coords
                 cube.remove_coord(coord)
+                
+    # Return cube if hotizontal grid is the same.
+    if _check_horizontal_grid_closeness(cube, target_grid):
+        return cube
 
     # Perform the horizontal regridding.
     if _attempt_irregular_regridding(cube, scheme):
@@ -260,6 +264,50 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     return cube
 
+def _check_horizontal_grid_closeness(cube1, cube2):
+    """
+    Check if two cubes have the same horizontal grid definition.
+    
+    The result of the function is a boolean answer, if both cubes have the 
+    same horizontal grid definition. The function checks both longitude and
+    latitude, based on extent and resolution.
+    
+    Parameters
+    ----------
+    cube1 : cube
+        The first of the cubes to be checked.
+    cube2 : cube
+        The second of the cubes to be checked.
+        
+    Returns
+    -------
+    bool
+    
+    .. note::
+        
+        The current implementation checks if the bounds and the 
+        grid shapes are the same.
+        Exits on first difference.
+    """
+    # Go through the 2 expected horizontal coordinates longitude and latitude.
+    for coord in ['latitude', 'longitude']:
+        # Compare shapes.
+        if cube1.coord(coord).shape != cube2.coord(coord).shape:
+            # Different shapes detected.
+            return False
+        else:
+            # Iterate through the combined bounds.
+            for c1bndval, c2bndval in np.nditer(
+                    [cube1.coord(coord).bounds,
+                     cube2.coord(coord).bounds]
+                    ):
+                # Check if bound value is same or similar.
+                if (c1bndval != c2bndval
+                        and not(np.allclose(c1bndval, c2bndval))):
+                    # Different bounds values detected.
+                    return False
+    # Returns default value.
+    return True
 
 def _create_cube(src_cube, data, src_levels, levels, ):
     """
