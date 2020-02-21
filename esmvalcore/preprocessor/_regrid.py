@@ -251,7 +251,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             if coords:
                 [coord] = coords
                 cube.remove_coord(coord)
-                
+
     # Return cube if hotizontal grid is the same.
     if _check_horizontal_grid_closeness(cube, target_grid):
         return cube
@@ -264,11 +264,12 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     return cube
 
+
 def _check_horizontal_grid_closeness(cube1, cube2):
     """
     Check if two cubes have the same horizontal grid definition.
     
-    The result of the function is a boolean answer, if both cubes have the 
+    The result of the function is a boolean answer, if both cubes have the
     same horizontal grid definition. The function checks both longitude and
     latitude, based on extent and resolution.
     
@@ -285,7 +286,7 @@ def _check_horizontal_grid_closeness(cube1, cube2):
     
     .. note::
         
-        The current implementation checks if the bounds and the 
+        The current implementation checks if the bounds and the
         grid shapes are the same.
         Exits on first difference.
     """
@@ -308,6 +309,7 @@ def _check_horizontal_grid_closeness(cube1, cube2):
                     return False
     # Returns default value.
     return True
+
 
 def _create_cube(src_cube, data, src_levels, levels, ):
     """
