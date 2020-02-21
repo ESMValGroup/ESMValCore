@@ -113,13 +113,16 @@ def _json_to_bibtex(data):
 
 def _collect_bibtex_citation(tag):
     """Collect information from bibtex files."""
-    bibtex_file = os.path.join(REFERENCES_PATH, tag + '.bibtex')
-    if os.path.isfile(bibtex_file):
-        with open(bibtex_file, 'r') as file:
-            entry = '{}'.format(file.read())
+    if REFERENCES_PATH:
+        bibtex_file = os.path.join(REFERENCES_PATH, tag + '.bibtex')
+        if os.path.isfile(bibtex_file):
+            with open(bibtex_file, 'r') as file:
+                entry = '{}'.format(file.read())
+        else:
+            raise ValueError('The reference file {} does not exist.'.format(bibtex_file))
     else:
-        logger.info('The reference file %s does not exist.',
-                    bibtex_file)
+        logger.info('The reference folder does not exist.')
+        entry = ''
     return entry
 
 
