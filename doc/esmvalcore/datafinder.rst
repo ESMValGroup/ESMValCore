@@ -212,20 +212,20 @@ The tool will then use the root path ``/badc/cmip6/data/CMIP6/CMIP`` and the
 dataset information and will assemble the full DRS path using information from
 CMOR-DRS_ and establish the path to the files as:
 
-.. code-block::
+.. code-block:: bash
 
   /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon
 
 then look for variable ``ta`` and specifically the latest version of the data
 file:
 
-.. code-block::
+.. code-block:: bash
 
   /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/
 
 and finally, using the file naming definition from CMOR-DRS_ find the file:
 
-.. code-block::
+.. code-block:: bash
 
   /badc/cmip6/data/CMIP6/CMIP/MOHC/UKESM1-0-LL/historical/r1i1p1f2/Amon/ta/gn/latest/ta_Amon_UKESM1-0-LL_historical_r1i1p1f2_gn_195001-201412.nc
 

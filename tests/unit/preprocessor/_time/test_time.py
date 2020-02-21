@@ -5,7 +5,7 @@ import pytest
 import tests
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from cf_units import Unit
 import iris
@@ -17,7 +17,7 @@ from esmvalcore.preprocessor._time import (
     extract_month, extract_season, extract_time,
     regrid_time,
     decadal_statistics, annual_statistics, seasonal_statistics,
-    monthly_statistics, daily_statistics,
+    monthly_statistics, daily_statistics, timeseries_filter,
     climate_statistics, anomalies
 )
 
@@ -32,7 +32,6 @@ def _create_sample_cube():
         ),
         0,
     )
-    iris.coord_categorisation.add_month_number(cube, 'time')
     return cube
 
 
@@ -57,6 +56,14 @@ class TestExtractMonth(tests.Test):
             np.array([1, 1]),
             sliced.coord('month_number').points)
 
+    def test_get_january_with_existing_coord(self):
+        """Test january extraction"""
+        iris.coord_categorisation.add_month_number(self.cube, 'time')
+        sliced = extract_month(self.cube, 1)
+        assert_array_equal(
+            np.array([1, 1]),
+            sliced.coord('month_number').points)
+
     def test_bad_month_raises(self):
         """Test january extraction"""
         with self.assertRaises(ValueError):
@@ -75,6 +82,7 @@ class TestTimeSlice(tests.Test):
     def test_extract_time(self):
         """Test extract_time."""
         sliced = extract_time(self.cube, 1950, 1, 1, 1950, 12, 31)
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.arange(1, 13, 1),
             sliced.coord('month_number').points)
@@ -99,14 +107,17 @@ class TestTimeSlice(tests.Test):
 
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as ctx:
             extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
+        msg = (
+            "Time slice 2200-01-01 00:00:00 to 2200-12-31 00:00:00 is outside"
+            " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
+        assert ctx.exception.args == (msg, )
 
     def test_extract_time_one_time(self):
         """Test extract_time with one time step."""
         cube = _create_sample_cube()
         cube.coord('time').guess_bounds()
-        cube.remove_coord('month_number')
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = extract_time(cube, 1950, 1, 1, 1952, 12, 31)
         assert_array_equal(np.array([360.]), sliced.coord('time').points)
@@ -128,6 +139,7 @@ class TestExtractSeason(tests.Test):
     def test_get_djf(self):
         """Test function for winter"""
         sliced = extract_season(self.cube, 'djf')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([1, 2, 12, 1, 2, 12]),
             sliced.coord('month_number').points)
@@ -135,6 +147,7 @@ class TestExtractSeason(tests.Test):
     def test_get_djf_caps(self):
         """Test function works when season specified in caps"""
         sliced = extract_season(self.cube, 'DJF')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([1, 2, 12, 1, 2, 12]),
             sliced.coord('month_number').points)
@@ -142,6 +155,7 @@ class TestExtractSeason(tests.Test):
     def test_get_mam(self):
         """Test function for spring"""
         sliced = extract_season(self.cube, 'mam')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([3, 4, 5, 3, 4, 5]),
             sliced.coord('month_number').points)
@@ -149,6 +163,7 @@ class TestExtractSeason(tests.Test):
     def test_get_jja(self):
         """Test function for summer"""
         sliced = extract_season(self.cube, 'jja')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([6, 7, 8, 6, 7, 8]),
             sliced.coord('month_number').points)
@@ -156,6 +171,7 @@ class TestExtractSeason(tests.Test):
     def test_get_son(self):
         """Test function for summer"""
         sliced = extract_season(self.cube, 'son')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([9, 10, 11, 9, 10, 11]),
             sliced.coord('month_number').points)
@@ -792,6 +808,45 @@ class TestRegridTime1Hourly(tests.Test):
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
         self.assert_array_equal(diff_cube.data, expected)
+
+
+class TestTimeseriesFilter(tests.Test):
+    """Tests for regrid_time with hourly frequency."""
+
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = _create_sample_cube()
+
+    def test_timeseries_filter_simple(self):
+        """Test timeseries_filter func."""
+        filtered_cube = timeseries_filter(self.cube, 7, 14,
+                                          filter_type='lowpass',
+                                          filter_stats='sum')
+        expected_data = np.array(
+            [2.44824568, 3.0603071, 3.67236852, 4.28442994, 4.89649137,
+             5.50855279, 6.12061421, 6.73267563, 7.34473705, 7.95679847,
+             8.56885989, 9.18092131, 9.79298273, 10.40504415, 11.01710557,
+             11.62916699, 12.24122841, 12.85328983]
+        )
+        assert_array_almost_equal(filtered_cube.data, expected_data)
+        assert len(filtered_cube.coord('time').points) == 18
+
+    def test_timeseries_filter_timecoord(self):
+        """Test missing time axis."""
+        import iris.exceptions
+        new_cube = self.cube.copy()
+        new_cube.remove_coord(new_cube.coord('time'))
+        with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
+            timeseries_filter(new_cube, 7, 14,
+                              filter_type='lowpass',
+                              filter_stats='sum')
+
+    def test_timeseries_filter_implemented(self):
+        """Test a not implemnted filter."""
+        with self.assertRaises(NotImplementedError):
+            timeseries_filter(self.cube, 7, 14,
+                              filter_type='bypass',
+                              filter_stats='sum')
 
 
 def make_time_series(number_years=2):

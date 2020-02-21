@@ -303,12 +303,11 @@ def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):
                   - dataset: MPI-ESM-LR
             scripts: null
         """)
-    rec_err = "Time coordinate preprocessor step extract_season \
-              not permitted on fx vars \
-              please remove them from recipe."
+    msg = ("Time coordinate preprocessor step(s) ['extract_season'] not "
+           "permitted on fx vars, please remove them from recipe")
     with pytest.raises(Exception) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-        assert rec_err == rec_err_exp
+    assert str(rec_err_exp.value) == msg
 
 
 def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
@@ -1451,14 +1450,22 @@ def test_extract_shape(tmp_path, patched_datafinder, config_user):
     assert product.settings['extract_shape']['shapefile'] == str(shapefile)
 
 
-@pytest.mark.parametrize('invalid_arg', ['crop', 'shapefile', 'method'])
+@pytest.mark.parametrize('invalid_arg',
+                         ['shapefile', 'method', 'crop', 'decomposed'])
 def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
                               invalid_arg):
+    # Create shapefile
+    shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
+    shapefile.parent.mkdir(parents=True, exist_ok=True)
+    shapefile.touch()
+
     content = dedent(f"""
         preprocessors:
           test:
             extract_shape:
-              {invalid_arg}: x
+              crop: true
+              method: contains
+              shapefile: test.shp
 
         diagnostics:
           test:
@@ -1476,10 +1483,16 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
                       dataset: GFDL-CM3
             scripts: null
         """)
+
+    # Add invalid argument
+    recipe = yaml.safe_load(content)
+    recipe['preprocessors']['test']['extract_shape'][invalid_arg] = 'x'
+    content = yaml.safe_dump(recipe)
+
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, config_user)
-        assert 'extract_shape' in exc.value
-        assert invalid_arg in exc.value
+    assert 'extract_shape' in str(exc.value)
+    assert invalid_arg in str(exc.value)
 
 
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
@@ -2042,11 +2055,12 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    with pytest.raises(RecipeError) as wrong_proj:
-        get_recipe(tmp_path, content, config_user)
-    assert str(wrong_proj.value) == (
+    msg = (
         "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
         "with mip 'Omon'")
+    with pytest.raises(RecipeError) as wrong_proj:
+        get_recipe(tmp_path, content, config_user)
+    assert str(wrong_proj.value) == msg
 
 
 def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
@@ -2076,11 +2090,11 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    msg = ("Requested fx variable 'wrong_fx_variable' for CMIP6 not "
-           "available in any 'fx'-related CMOR table")
+    msg = ("Requested fx variable 'wrong_fx_variable' not available in any "
+           "'fx'-related CMOR table")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-        assert msg in rec_err_exp
+    assert msg in str(rec_err_exp.value)
 
 
 def test_fx_var_invalid_project(tmp_path, patched_datafinder, config_user):
@@ -2107,7 +2121,9 @@ def test_fx_var_invalid_project(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    msg = 'Project EMAC not supported with fx variables'
+    msg = (
+        "Unable to load CMOR table (project) 'EMAC' for variable 'areacella' "
+        "with mip 'Amon'")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-        assert msg in rec_err_exp
+    assert str(rec_err_exp.value) == msg

@@ -93,6 +93,7 @@ def variable(var, required_keys):
 
 def data_availability(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
+    var = dict(var)
     if not input_files:
         var.pop('filename', None)
         logger.error("No input files found for variable %s", var)
@@ -160,8 +161,8 @@ def check_for_temporal_preprocs(profile):
         preproc for preproc in profile if preproc in temporal_preprocs]
     if temp_preprocs:
         raise RecipeError(
-            "Time coordinate preprocessor step {} not permitted on fx vars \
-            please remove them from recipe.".format(", ".join(temp_preprocs)))
+            "Time coordinate preprocessor step(s) {} not permitted on fx "
+            "vars, please remove them from recipe".format(temp_preprocs))
 
 
 def extract_shape(settings):
@@ -174,6 +175,7 @@ def extract_shape(settings):
     valid = {
         'method': {'contains', 'representative'},
         'crop': {True, False},
+        'decomposed': {True, False},
     }
     for key in valid:
         value = settings.get(key)

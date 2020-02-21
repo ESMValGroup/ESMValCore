@@ -1,9 +1,9 @@
 """Test derivation of `sispeed`."""
 
 import math
+from unittest import mock
 
 import numpy as np
-import pytest
 
 from iris.cube import Cube, CubeList
 from iris.coords import AuxCoord
@@ -11,14 +11,19 @@ from iris.coords import AuxCoord
 from esmvalcore.preprocessor._derive.sispeed import DerivedVariable
 
 
-def get_cube(name, lat=((0, 1), (2, 3)), lon=((0, 1), (2, 3))):
-    cube = Cube(np.ones((2, 2)), name)
-    cube.add_aux_coord(AuxCoord(lat, 'latitude'), (0, 1))
-    cube.add_aux_coord(AuxCoord(lon, 'longitude'), (0, 1))
+def get_cube(name, lat=((0.5, 1.5), (2.5, 3.5)), lon=((0.5, 1.5), (2.5, 3.5))):
+    lat = np.array(lat)
+    lon = np.array(lon)
+    lat_bounds = np.array((lat - 0.5, lat + 0.5))
+    lon_bounds = np.array((lon - 0.5, lon + 0.5))
+    cube = Cube(np.ones((2, 2, 2)), name)
+    cube.add_aux_coord(AuxCoord(lat, 'latitude', bounds=lat_bounds), (1, 2))
+    cube.add_aux_coord(AuxCoord(lon, 'longitude', bounds=lon_bounds), (1, 2))
     return cube
 
-
-def test_sispeed_calculation():
+@mock.patch(
+    'esmvalcore.preprocessor._regrid.esmpy_regrid', autospec=True)
+def test_sispeed_calculation(mock_regrid):
     """Test calculation of `sispeed."""
     siu = get_cube('sea_ice_x_velocity')
     siv = get_cube('sea_ice_y_velocity')
@@ -27,40 +32,22 @@ def test_sispeed_calculation():
     assert np.all(
         sispeed.data == np.full_like(sispeed.data, 1 * math.sqrt(2))
     )
+    assert mock_regrid.call_count == 0
 
-
-def test_sispeed_calculation_small_coord_difference():
+@mock.patch(
+    'esmvalcore.preprocessor._regrid.esmpy_regrid', autospec=True)
+def test_sispeed_calculation_coord_differ(mock_regrid):
     """Test calculation of `sispeed."""
     siu = get_cube('sea_ice_x_velocity')
     siv = get_cube(
-        'sea_ice_y_velocity', lat=((2, 1), (2, 3)), lon=((2, 1), (2, 3))
+        'sea_ice_y_velocity',
+        lat=((0.25, 1.25), (2.25, 3.25)),
+        lon=((0.25, 1.25), (2.25, 3.25))
     )
+    mock_regrid.return_value = siu
     derived_var = DerivedVariable()
     sispeed = derived_var.calculate(CubeList((siu, siv)))
     assert np.all(
         sispeed.data == np.full_like(sispeed.data, 1 * math.sqrt(2))
     )
-    assert np.all(
-        sispeed.coord('latitude').points == siu.coord('latitude').points
-    )
-    assert np.all(
-        sispeed.coord('longitude').points == siu.coord('longitude').points
-    )
-
-
-def test_sispeed_calculation_lat_differ_too_much():
-    """Test calculation of `sispeed."""
-    siu = get_cube('sea_ice_x_velocity')
-    siv = get_cube('sea_ice_y_velocity', lat=((6, 1), (2, 3)))
-    derived_var = DerivedVariable()
-    with pytest.raises(ValueError):
-        derived_var.calculate(CubeList((siu, siv)))
-
-
-def test_sispeed_calculation_lon_differ_too_much():
-    """Test calculation of `sispeed."""
-    siu = get_cube('sea_ice_x_velocity')
-    siv = get_cube('sea_ice_y_velocity', lon=((6, 1), (2, 3)))
-    derived_var = DerivedVariable()
-    with pytest.raises(ValueError):
-        derived_var.calculate(CubeList((siu, siv)))
+    assert mock_regrid.call_count == 1
