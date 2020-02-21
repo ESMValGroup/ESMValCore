@@ -285,7 +285,7 @@ def _check_horiz_grid_closeness(cube1, cube2):
     bool
     
     .. note::
-    
+
         The current implementation checks if the bounds and the
         grid shapes are the same.
         Exits on first difference.
