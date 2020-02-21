@@ -399,7 +399,10 @@ def count_spells(data, threshold, axis, spell_length):
         # just cope with negative axis numbers
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
-    data_hits = data > float(threshold)
+    if not threshold:
+        data_hits = data
+    else:
+        data_hits = data > float(threshold)
     # Make an array with data values "windowed" along the time axis.
     ###############################################################
     # WARNING: default step is = window size i.e. no overlapping
@@ -520,7 +523,7 @@ def mask_outside_range(cube, minimum, maximum):
 
 def mask_fillvalues(products,
                     threshold_fraction,
-                    min_value=-1.e10,
+                    min_value=None,
                     time_window=1):
     """
     Compute and apply a multi-dataset fillvalues mask.
@@ -542,7 +545,8 @@ def mask_fillvalues(products,
         Must be between 0 and 1.
 
     min_value: float
-        minumum value threshold; default set to -1e10.
+        minumum value threshold; default None
+        If default, no thresholding applied so the full mask will be selected.
 
     time_window: float
         time window to compute missing data counts; default set to 1.
