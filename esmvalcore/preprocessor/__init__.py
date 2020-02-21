@@ -109,6 +109,20 @@ __all__ = [
     'cleanup',
 ]
 
+TIME_PREPROCESSORS = [
+    'extract_time',
+    'extract_season',
+    'extract_month',
+    'daily_statistics',
+    'monthly_statistics',
+    'seasonal_statistics',
+    'annual_statistics',
+    'decadal_statistics',
+    'climate_statistics',
+    'anomalies',
+    'regrid_time',
+]
+
 DEFAULT_ORDER = tuple(__all__)
 
 # The order of initial and final steps cannot be configured
