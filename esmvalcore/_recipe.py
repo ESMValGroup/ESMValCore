@@ -12,7 +12,8 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import TAGS, get_activity, get_institutes, replace_tags
+from ._config import (TAGS, get_activity, get_institutes, get_project_config,
+                      replace_tags)
 from ._data_finder import (get_input_filelist, get_output_file,
                            get_statistic_output_file)
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -22,7 +23,7 @@ from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (DEFAULT_ORDER, FINAL_STEPS, INITIAL_STEPS,
                            MULTI_MODEL_FUNCTIONS, PreprocessingTask,
-                           PreprocessorFile)
+                           PreprocessorFile, TIME_PREPROCESSORS)
 from .preprocessor._derive import get_required
 from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
@@ -128,13 +129,13 @@ def _special_name_to_dataset(variable, special_name):
     if special_name in ('reference_dataset', 'alternative_dataset'):
         if special_name not in variable:
             raise RecipeError(
-                "Preprocessor {} uses {}, but {} is not defined for "
-                "variable {} of diagnostic {}".format(
-                    variable['preprocessor'],
-                    special_name,
-                    special_name,
-                    variable['short_name'],
-                    variable['diagnostic'],
+                "Preprocessor {preproc} uses {name}, but {name} is not "
+                "defined for variable {short_name} of diagnostic "
+                "{diagnostic}".format(
+                    preproc=variable['preprocessor'],
+                    name=special_name,
+                    short_name=variable['short_name'],
+                    diagnostic=variable['diagnostic'],
                 ))
         special_name = variable[special_name]
 
@@ -261,8 +262,7 @@ def _limit_datasets(variables, profile, max_datasets=0):
         if variable not in limited:
             limited.append(variable)
 
-    logger.info("Only considering %s",
-                ', '.join(v['alias'] for v in limited))
+    logger.info("Only considering %s", ', '.join(v['alias'] for v in limited))
 
     return limited
 
@@ -352,32 +352,36 @@ def _get_default_settings(variable, config_user, derive=False):
 def _add_fxvar_keys(fx_var_dict, variable):
     """Add keys specific to fx variable to use get_input_filelist."""
     fx_variable = dict(variable)
+    fx_variable.update(fx_var_dict)
 
     # set variable names
     fx_variable['variable_group'] = fx_var_dict['short_name']
-    fx_variable['short_name'] = fx_var_dict['short_name']
 
-    # specificities of project
+    # add special ensemble for CMIP5 only
     if fx_variable['project'] == 'CMIP5':
-        fx_variable['mip'] = 'fx'
         fx_variable['ensemble'] = 'r0i0p0'
-    elif fx_variable['project'] == 'CMIP6':
-        fx_variable['grid'] = variable['grid']
-        if 'mip' in fx_var_dict:
-            fx_variable['mip'] = fx_var_dict['mip']
-    elif fx_variable['project'] in ['OBS', 'OBS6', 'obs4mips']:
-        fx_variable['mip'] = 'fx'
+
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
+
     return fx_variable
 
 
-def _get_correct_fx_file(variable, fx_varname, config_user):
+def _get_correct_fx_file(variable, fx_variable, config_user):
     """Get fx files (searching all possible mips)."""
-    # TODO: allow user to specify certain mip if desired
+    # make it a dict
+    if not isinstance(fx_variable, dict):
+        fx_varname = fx_variable
+        fx_variable = {'short_name': fx_variable}
+    else:
+        fx_varname = fx_variable['short_name']
+
+    # assemble info from master variable
     var = dict(variable)
     var_project = variable['project']
+    get_project_config(var_project)
     cmor_table = CMOR_TABLES[var_project]
+    valid_fx_vars = []
 
     # Get all fx-related mips ('fx' always first, original mip last)
     fx_mips = ['fx']
@@ -385,26 +389,31 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
         [key for key in cmor_table.tables if 'fx' in key and key != 'fx'])
     fx_mips.append(variable['mip'])
 
+    # force only the mip declared by user
+    if 'mip' in fx_variable:
+        fx_mips = [fx_variable['mip']]
+
     # Search all mips for available variables
+    # priority goes to user specified mip if available
     searched_mips = []
+    fx_files = []
     for fx_mip in fx_mips:
-        fx_variable = cmor_table.get_variable(fx_mip, fx_varname)
-        if fx_variable is not None:
+        fx_cmor_variable = cmor_table.get_variable(fx_mip, fx_varname)
+        if fx_cmor_variable is not None:
+            fx_var_dict = dict(fx_variable)
             searched_mips.append(fx_mip)
-            fx_var = _add_fxvar_keys(
-                {'short_name': fx_varname, 'mip': fx_mip}, var)
-            logger.debug("For CMIP6 fx variable '%s', found table '%s'",
-                         fx_varname, fx_mip)
-            fx_files = _get_input_files(fx_var, config_user)[0]
+            fx_var_dict['mip'] = fx_mip
+            fx_var_dict = _add_fxvar_keys(fx_var_dict, var)
+            logger.debug("For fx variable '%s', found table '%s'", fx_varname,
+                         fx_mip)
+            fx_files = _get_input_files(fx_var_dict, config_user)[0]
 
             # If files found, return them
             if fx_files:
-                logger.debug("Found CMIP6 fx variables '%s':\n%s",
-                             fx_varname, pformat(fx_files))
+                valid_fx_vars.append(fx_var_dict)
+                logger.debug("Found fx variables '%s':\n%s", fx_varname,
+                             pformat(fx_files))
                 break
-    else:
-        # No files found
-        fx_files = []
 
     # If fx variable was not found in any table, raise exception
     if not searched_mips:
@@ -412,11 +421,17 @@ def _get_correct_fx_file(variable, fx_varname, config_user):
             f"Requested fx variable '{fx_varname}' not available in "
             f"any 'fx'-related CMOR table ({fx_mips}) for '{var_project}'")
 
+    # flag a warning
+    if not fx_files:
+        logger.warning("Missing data for fx variable '%s'", fx_varname)
+
     # allow for empty lists corrected for by NE masks
     if fx_files:
         fx_files = fx_files[0]
+    if valid_fx_vars:
+        valid_fx_vars = valid_fx_vars[0]
 
-    return fx_files
+    return fx_files, valid_fx_vars
 
 
 def _get_landsea_fraction_fx_dict(variable, config_user):
@@ -426,7 +441,9 @@ def _get_landsea_fraction_fx_dict(variable, config_user):
     if variable['project'] != 'obs4mips':
         fx_vars.append('sftof')
     for fx_var in fx_vars:
-        fx_dict[fx_var] = _get_correct_fx_file(variable, fx_var, config_user)
+        fx_file, _ = _get_correct_fx_file(variable, fx_var, config_user)
+        fx_dict[fx_var] = fx_file
+
     return fx_dict
 
 
@@ -462,8 +479,8 @@ def _update_fx_settings(settings, variable, config_user):
     if 'mask_landseaice' in settings:
         logger.debug('Getting fx mask settings now...')
         settings['mask_landseaice']['fx_files'] = []
-        fx_files_dict = {
-            'sftgif': _get_correct_fx_file(variable, 'sftgif', config_user)}
+        fx_file, _ = _get_correct_fx_file(variable, 'sftgif', config_user)
+        fx_files_dict = {'sftgif': fx_file}
         if fx_files_dict['sftgif']:
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
@@ -475,13 +492,27 @@ def _update_fx_settings(settings, variable, config_user):
         settings['weighting_landsea_fraction']['fx_files'] = fx_dict
         logger.info(msg, 'land/sea fraction weighting', pformat(fx_dict))
 
-    for step in ('area_statistics', 'volume_statistics'):
+    for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
+        var = dict(variable)
+        fx_files_dict = {}
         if settings.get(step, {}).get('fx_files'):
-            var = dict(variable)
             var['fx_files'] = settings.get(step, {}).get('fx_files')
-            fx_files_dict = {
-                fxvar: _get_correct_fx_file(variable, fxvar, config_user)
-                for fxvar in var['fx_files']}
+            for fxvar in var['fx_files']:
+                fxvar_name = fxvar
+                if isinstance(fxvar, dict):
+                    fxvar_name = fxvar.get("short_name")
+                    if not fxvar_name:
+                        raise RecipeError(
+                            "Key short_name missing from {}".format(fxvar))
+                _, cmor_fx_var = _get_correct_fx_file(
+                    variable, fxvar, config_user)
+                if cmor_fx_var:
+                    fx_files_dict[fxvar_name] = get_output_file(
+                        var,
+                        config_user['preproc_dir'],
+                        fx_var_alias=cmor_fx_var)
+
+            # finally construct the fx files dictionary
             settings[step]['fx_files'] = fx_files_dict
             logger.info(msg, step, pformat(fx_files_dict))
 
@@ -665,13 +696,21 @@ def _match_products(products, variables):
 
 
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
-                               config_user):
+                               config_user, fx_case=False):
     """Get preprocessor product definitions for a set of datasets."""
     products = set()
 
-    for variable in variables:
-        variable['filename'] = get_output_file(variable,
-                                               config_user['preproc_dir'])
+    if not fx_case:
+        for variable in variables:
+            variable['filename'] = get_output_file(variable,
+                                                   config_user['preproc_dir'])
+    else:
+        parent_variable = variables[1]
+        variables = [variables[0]]
+        for variable in variables:
+            variable['filename'] = get_output_file(parent_variable,
+                                                   config_user['preproc_dir'],
+                                                   fx_var_alias=variable)
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
@@ -694,9 +733,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_extract_shape(settings, config_user)
         _update_weighting_settings(settings, variable)
-        _update_fx_settings(
-            settings=settings, variable=variable,
-            config_user=config_user)
+        _update_fx_settings(settings=settings,
+                            variable=variable,
+                            config_user=config_user)
         _update_target_grid(
             variable=variable,
             variables=variables,
@@ -705,7 +744,11 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_regrid_time(variable, settings)
         ancestors = grouped_ancestors.get(variable['filename'])
-        if not ancestors:
+        fx_files_in_settings = [
+            setting.get('fx_files') for setting in settings.values() if
+            setting.get('fx_files') is not None
+        ]
+        if not ancestors or fx_files_in_settings:
             ancestors = _get_ancestors(variable, config_user)
             if config_user.get('skip-nonexistent') and not ancestors:
                 logger.info("Skipping: no data found for %s", variable)
@@ -729,7 +772,8 @@ def _get_single_preprocessor_task(variables,
                                   profile,
                                   config_user,
                                   name,
-                                  ancestor_tasks=None):
+                                  ancestor_tasks=None,
+                                  fx_case=False):
     """Create preprocessor tasks for a set of datasets w/ special case fx."""
     if ancestor_tasks is None:
         ancestor_tasks = []
@@ -740,13 +784,23 @@ def _get_single_preprocessor_task(variables,
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
-    products = _get_preprocessor_products(
-        variables=variables,
-        profile=profile,
-        order=order,
-        ancestor_products=ancestor_products,
-        config_user=config_user,
-    )
+    if not fx_case:
+        products = _get_preprocessor_products(
+            variables=variables,
+            profile=profile,
+            order=order,
+            ancestor_products=ancestor_products,
+            config_user=config_user,
+        )
+    else:
+        products = _get_preprocessor_products(
+            variables=variables,
+            profile=profile,
+            order=order,
+            ancestor_products=ancestor_products,
+            config_user=config_user,
+            fx_case=True
+        )
 
     if not products:
         raise RecipeError(
@@ -845,6 +899,16 @@ def _get_derive_input_variables(variables, config_user):
     return derive_input
 
 
+def _remove_time_preproc(fxprofile):
+    """Remove all time preprocessors from the fx profile."""
+    fxprofile = deepcopy(fxprofile)
+    for key in fxprofile:
+        if key in TIME_PREPROCESSORS:
+            fxprofile[key] = False
+
+    return fxprofile
+
+
 def _get_preprocessor_task(variables, profiles, config_user, task_name):
     """Create preprocessor task(s) for a set of datasets."""
     # First set up the preprocessor profile
@@ -863,6 +927,8 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
         _add_cmor_info(variable)
     # Create preprocessor task(s)
     derive_tasks = []
+    fx_preproc_tasks = []
+    # set up tasks
     if variable.get('derive'):
         # Create tasks to prepare the input data for the derive step
         derive_profile, profile = _split_derive_profile(profile)
@@ -881,6 +947,49 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
             )
             derive_tasks.append(task)
 
+    # special case: fx variable pre-processing
+    variable_pairs = []
+    for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
+        if profile.get(step, {}).get('fx_files'):
+            # conserve profile
+            fx_profile = deepcopy(profile)
+            fx_vars = profile.get(step, {}).get('fx_files')
+
+            # Create tasks to prepare the input data for the fx var
+            order = _extract_preprocessor_order(fx_profile)
+            for var in variables:
+                fx_variables = [
+                    _get_correct_fx_file(var, fx_var, config_user)[1]
+                    for fx_var in fx_vars
+                ]
+                for fx_variable in fx_variables:
+                    # list may be (intentionally) empty - catch it here
+                    if not fx_variable:
+                        raise RecipeError(
+                            f"One or more of {step} fx data "
+                            f"for {var['short_name']} are missing. "
+                            f"Task can not be performed since there is "
+                            f"no fx data found.")
+                    before, _ = _split_settings(fx_profile, step, order)
+                    # remove time preprocessors for any fx/Ofx/Efx/etc
+                    # that dont have time coords
+                    if fx_variable['frequency'] == 'fx':
+                        before = _remove_time_preproc(before)
+                    fx_name = task_name.split(
+                        TASKSEP)[0] + TASKSEP + 'fx_area-volume_stats_' + \
+                        fx_variable['variable_group']
+                    task = _get_single_preprocessor_task(
+                        [fx_variable, var],
+                        before,
+                        config_user,
+                        name=fx_name,
+                        fx_case=True
+                    )
+                    fx_preproc_tasks.append(task)
+                    variable_pairs.append([var, fx_variable])
+
+    derive_tasks.extend(fx_preproc_tasks)
+
     # Create (final) preprocessor task
     task = _get_single_preprocessor_task(
         variables,
@@ -893,6 +1002,25 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     return task
 
 
+def _check_duplication(task):
+    """Check and remove duplicate ancestry tasks."""
+    ancestors_filename_dict = OrderedDict()
+    filenames = []
+    if isinstance(task, PreprocessingTask):
+        for ancestor_task in task.ancestors:
+            for anc_product in ancestor_task.products:
+                ancestors_filename_dict[anc_product.filename] = ancestor_task
+                filenames.append(anc_product.filename)
+        set_ancestors = list(
+            {ancestors_filename_dict[filename] for filename in filenames})
+        task.ancestors = [
+            ancestor for ancestor in task.ancestors
+            if ancestor in set_ancestors
+        ]
+
+    return task
+
+
 class Recipe:
     """Recipe object."""
 
@@ -900,7 +1028,6 @@ class Recipe:
         'project', 'activity', 'dataset', 'exp', 'ensemble', 'version'
     )
     """List of keys to be used to compose the alias, ordered by priority."""
-
     def __init__(self,
                  raw_recipe,
                  config_user,
@@ -981,10 +1108,10 @@ class Recipe:
 
     @staticmethod
     def _expand_ensemble(variables):
-        """
-        Expand ensemble members to multiple datasets
+        """Expand ensemble members to multiple datasets.
 
-        Expansion only support ensembles defined as strings, not lists
+        Expansion only support ensembles defined as strings, not lists.
+
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
@@ -997,7 +1124,7 @@ class Recipe:
             if not match:
                 expanded.append(variable)
                 continue
-            start, end = match.group(0)[1: -1].split(':')
+            start, end = match.group(0)[1:-1].split(':')
             for i in range(int(start), int(end) + 1):
                 expand = deepcopy(variable)
                 expand['ensemble'] = regex.sub(str(i), ensemble, 1)
@@ -1074,8 +1201,7 @@ class Recipe:
         return preprocessor_output
 
     def _set_alias(self, preprocessor_output):
-        """
-        Add unique alias for datasets.
+        """Add unique alias for datasets.
 
         Generates a unique alias for each dataset that will be shared by all
         variables. Tries to make it as small as possible to make it useful for
@@ -1092,7 +1218,7 @@ class Recipe:
         Function will not modify alias if it is manually added to the recipe
         but it will use the dataset info to compute the others
 
-        Examples:
+        Examples
         --------
         - {project: CMIP5, model: EC-Earth, ensemble: r1i1p1}
         - {project: CMIP6, model: EC-Earth, ensemble: r1i1p1f1}
@@ -1116,7 +1242,7 @@ class Recipe:
         - {project: CMIP5, model: EC-Earth, experiment: historical}
         will generate alias 'EC-Earth'
 
-        Parameters:
+        Parameters
         ----------
         preprocessor_output : dict
             preprocessor output dictionary
@@ -1263,6 +1389,11 @@ class Recipe:
                     config_user=self._cfg,
                     task_name=task_name,
                 )
+                # remove possible duplicate ancestor tasks that
+                # preprocess the same
+                # fx var file needed by different var["activity"] but with
+                # the same output fx var file
+                _check_duplication(task)
                 for task0 in task.flatten():
                     task0.priority = priority
                 tasks.add(task)
