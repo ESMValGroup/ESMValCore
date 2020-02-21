@@ -572,13 +572,9 @@ class DiagnosticTask(BaseTask):
             }
 
             attributes.update(deepcopy(attrs))
-            section = 'references'
-            # for key in attributes:
-            #     if key in TAGS:
-                    # if key in section:
-                    #     attributes[key] = cite_tags(key, attributes[key])
-                    # else:
-                    #     attributes[key] = replace_tags(key, attributes[key])
+            for key in attributes:
+                if key in TAGS and key not in 'references':
+                    attributes[key] = replace_tags(key, attributes[key])
 
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)

@@ -39,23 +39,13 @@ def _write_citation_file(product):
     """
     # collect info from provenance
     product_name = os.path.splitext(product.filename)[0]
-    product_tags = []
     product_entries = ''
     product_urls = ''
-    citation = {
-        'references': [],
-        'info_urls': [],
-        'tag': [],
-        'entry': '',
-        'url': '',
-        }
     for item in product.provenance.records:
         for key, value in item.attributes:
             if key.namespace.prefix == 'attribute':
-                print(item.attributes[0])
-                print('&&&&&&&&&&&&&&&&&&&&&&&&')
                 if key.localpart in {'reference', 'references'}:
-                    product_entries += '{}\n'.format(_collect_bibtex_citation(product_tags))
+                    product_entries += '{}\n'.format(_collect_bibtex_citation(value))
                 elif key.localpart == 'mip_era' and value == 'CMIP6':
                     json_url, info_url = _make_url(item.attributes)
                     cmip_entry = _collect_cmip_citation(json_url, info_url)
@@ -67,11 +57,11 @@ def _write_citation_file(product):
     # save CMIP6 url_info, if any
     if product_urls:
         with open(f'{product_name}_data_citation_url.txt', 'w') as file:
-            file.write(citation['url'])
+            file.write(product_urls)
 
     # write one bibtex file
     if product_entries:
-        with open(f'{product_name}_citation.bibtex.txt', 'w') as file:
+        with open(f'{product_name}_citation.bibtex', 'w') as file:
             file.write(product_entries)
 
 
@@ -102,18 +92,30 @@ def _valid_json_data(data):
 
 def _json_to_bibtex(data):
     """Make a bibtex entry from CMIP6 Data Citation json data."""
-    url = ''.join(['https://doi.org/', data['identifier']['id']])
-    author_list = []
-    for item in data['creators']:
-        author_list.append(item['creatorName'])
-    bibtex_entry = ('@misc{' + url + ',\n\t'
-                    'url = {' + url + '},\n\t'
-                    'title = {' + data['titles'][0] + '},\n\t'
-                    'publisher = {' + data['publisher'] + '},\n\t'
-                    'year = ' + data['publicationYear'] + ',\n\t'
-                    'author = {' + ' and '.join(author_list) + '},\n\t'
-                    'doi = {' + data['identifier']['id'] + '},\n'
-                    '}')
+    author_list = [item['creatorName'] for item in data['creators']]
+    if len(author_list) > 1:
+        authors = ' and '.join(author_list)
+    else:
+        authors = author_list[0]
+    title = data['titles'][0]
+    publisher = data['publisher']
+    year = data['publicationYear']
+    doi = data['identifier']['id']
+    url = f'https://doi.org/{doi}'
+
+    newlinetab = '\n\t'
+    newline = '\n'
+
+    bibtex_entry = (
+        f'{"@misc{"}{url},{newlinetab}'
+        f'url = {{{url}}},{newlinetab}'
+        f'title = {{{title}}},{newlinetab}'
+        f'publisher = {{{publisher}}},{newlinetab}'
+        f'year = {year},{newlinetab}'
+        f'author = {{{authors}}},{newlinetab}'
+        f'doi = {{{doi}}},{newline}'
+        f'{"}"}'
+        )
     return bibtex_entry
 
 
@@ -128,8 +130,9 @@ def _replace_entry(product_entry):
     return tag_list
 
 
-def _collect_bibtex_citation(tags):
+def _collect_bibtex_citation(value):
     """Collect information from bibtex files."""
+    tags = value.split(',')
     entry = ''
     for tag in tags:
         bibtex_file = os.path.join(REFERENCES_PATH, tag + '.bibtex')
@@ -154,12 +157,19 @@ def _collect_cmip_citation(json_url, info_url):
 
 
 def _make_url(attribute):
-    mip_era = attribute.get('attribute:mip_era')
-    activity_id = attribute.get('attribute:activity_id')
-    institution_id = attribute.get('attribute:institution_id')
-    source_id = attribute.get('attribute:source_id')
-    experiment_id = attribute.get('attribute:experiment_id')
-    url_prefix = f'{mip_era}.{activity_id}.{institution_id}.{source_id}.{experiment_id}'
+    """make json and info urls based on CMIP6 Data Citation Service."""
+    # the order of keys is important
+    localpart = {
+        'mip_era': '',
+        'activity_id': '',
+        'institution_id': '',
+        'source_id': '',
+        'experiment_id': '',
+    }
+    for key, value in attribute:
+        if key.localpart in localpart:
+            localpart[key.localpart] = value
+    url_prefix = '.'.join(localpart.values())
     json_url = f'{CMIP6_URL_STEM}/cerarest/exportcmip6?input={url_prefix}'
     info_url = f'{CMIP6_URL_STEM}/cmip6?input=CMIP6.{url_prefix}'
     return json_url, info_url
