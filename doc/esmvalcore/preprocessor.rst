@@ -451,22 +451,23 @@ is set to 19.0 (in units of the variable units).
 
 See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
 
-.. note::
+Common mask for multiple models
+-------------------------------
 
-   It is possible to use ``mask_fillvalues`` to create a combined multimodel
-   mask (all the masks from all the analyzed models combined into a single
-   mask); for that purpose setting the ``threshold_fraction`` to 0 will not
-   discard any time windows, essentially keeping the original model masks and
-   combining them into a single mask; here is an example:
+It is possible to use ``mask_fillvalues`` to create a combined multimodel
+mask (all the masks from all the analyzed models combined into a single
+mask); for that purpose setting the ``threshold_fraction`` to 0 will not
+discard any time windows, essentially keeping the original model masks and
+combining them into a single mask; here is an example:
 
-   .. code-block:: yaml
+.. code-block:: yaml
 
-       preprocessors:
-         missing_values_preprocessor:
-           mask_fillvalues:
-             threshold_fraction: 0.0     # keep all missing values
-             min_value: -1e20            # small enough not to alter the data
-             #  time_window: 10.0        # this will not matter anymore
+    preprocessors:
+      missing_values_preprocessor:
+        mask_fillvalues:
+          threshold_fraction: 0.0     # keep all missing values
+          min_value: -1e20            # small enough not to alter the data
+          #  time_window: 10.0        # this will not matter anymore
 
 Minimum, maximum and interval masking
 -------------------------------------
