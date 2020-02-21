@@ -1,29 +1,11 @@
 """Citation module."""
-import contextlib
-import datetime
-import errno
-import logging
-import numbers
 import os
-import pprint
-import subprocess
-import threading
-import time
-from copy import deepcopy
-from multiprocessing import Pool
-
+import logging
+import re
 import requests
-import psutil
-import yaml
-
-from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags, REFERENCES_PATH
-from ._provenance import TrackedFile, get_task_provenance
+from ._config import REFERENCES_PATH
 
 logger = logging.getLogger(__name__)
-
-DATASET_KEYS = {
-    'mip',
-}
 
 CMIP6_URL_STEM = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch'
 
@@ -39,13 +21,14 @@ def _write_citation_file(product):
     """
     # collect info from provenance
     product_name = os.path.splitext(product.filename)[0]
+    products_tags = []
     product_entries = ''
     product_urls = ''
     for item in product.provenance.records:
         for key, value in item.attributes:
             if key.namespace.prefix == 'attribute':
                 if key.localpart in {'reference', 'references'}:
-                    product_entries += '{}\n'.format(_collect_bibtex_citation(value))
+                    products_tags.append(value)
                 elif key.localpart == 'mip_era' and value == 'CMIP6':
                     json_url, info_url = _make_url(item.attributes)
                     cmip_entry = _collect_cmip_citation(json_url, info_url)
@@ -59,10 +42,23 @@ def _write_citation_file(product):
         with open(f'{product_name}_data_citation_url.txt', 'w') as file:
             file.write(product_urls)
 
+    # convert tags to bibtex entries
+    if products_tags:
+        # make tags clean and unique
+        tags = list(set(_clean_tags(products_tags)))
+        for tag in tags:
+            product_entries += '{}\n'.format(_collect_bibtex_citation(tag))
+
     # write one bibtex file
     if product_entries:
         with open(f'{product_name}_citation.bibtex', 'w') as file:
             file.write(product_entries)
+
+
+def _clean_tags(tags):
+    """some tages are combined in one string variable in provenance."""
+    pattern = re.compile(r'\w+')
+    return pattern.findall(str(tags))
 
 
 def _get_response(url):
@@ -93,55 +89,37 @@ def _valid_json_data(data):
 def _json_to_bibtex(data):
     """Make a bibtex entry from CMIP6 Data Citation json data."""
     author_list = [item['creatorName'] for item in data['creators']]
-    if len(author_list) > 1:
-        authors = ' and '.join(author_list)
-    else:
+    if author_list[0] == author_list[-1]:
         authors = author_list[0]
+    else:
+        authors = ' and '.join(author_list)
     title = data['titles'][0]
     publisher = data['publisher']
     year = data['publicationYear']
     doi = data['identifier']['id']
     url = f'https://doi.org/{doi}'
-
-    newlinetab = '\n\t'
-    newline = '\n'
-
     bibtex_entry = (
-        f'{"@misc{"}{url},{newlinetab}'
-        f'url = {{{url}}},{newlinetab}'
-        f'title = {{{title}}},{newlinetab}'
-        f'publisher = {{{publisher}}},{newlinetab}'
-        f'year = {year},{newlinetab}'
-        f'author = {{{authors}}},{newlinetab}'
-        f'doi = {{{doi}}},{newline}'
-        f'{"}"}'
+        f'{"@misc{"}{url},\n\t'
+        f'url = {{{url}}},\n\t'
+        f'title = {{{title}}},\n\t'
+        f'publisher = {{{publisher}}},\n\t'
+        f'year = {year},\n\t'
+        f'author = {{{authors}}},\n\t'
+        f'doi = {{{doi}}},\n'
+        f'{"}"}\n'
         )
     return bibtex_entry
 
 
-def _replace_entry(product_entry):
-    """Find tags of the references in provenance."""
-    entry_tags = {v: k for k, v in TAGS['references'].items()}
-    tag_list = []
-    for key in entry_tags.keys():
-        for entry in product_entry:
-            if key in entry and entry_tags[key] not in tag_list:
-                tag_list.append(entry_tags[key])
-    return tag_list
-
-
-def _collect_bibtex_citation(value):
+def _collect_bibtex_citation(tag):
     """Collect information from bibtex files."""
-    tags = value.split(',')
-    entry = ''
-    for tag in tags:
-        bibtex_file = os.path.join(REFERENCES_PATH, tag + '.bibtex')
-        if os.path.isfile(bibtex_file):
-            with open(bibtex_file, 'r') as file:
-                entry += '{}\n'.format(file.read())
-        else:
-            logger.info('The reference file %s does not exist.',
-                        bibtex_file)
+    bibtex_file = os.path.join(REFERENCES_PATH, tag + '.bibtex')
+    if os.path.isfile(bibtex_file):
+        with open(bibtex_file, 'r') as file:
+            entry = '{}'.format(file.read())
+    else:
+        logger.info('The reference file %s does not exist.',
+                    bibtex_file)
     return entry
 
 
