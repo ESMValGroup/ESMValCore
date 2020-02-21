@@ -10,7 +10,6 @@ from prov.dot import prov_to_dot
 from prov.model import ProvDocument
 
 from ._version import __version__
-from ._config import replace_tags, TAGS
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +37,7 @@ def get_esmvaltool_provenance():
         create_namespace(provenance, namespace)
 
     # TODO: add dependencies with versions here
-    section = 'references'
-    if section in TAGS and ESMVALTOOL_PAPER_TAG in TAGS[section]:
-        # attributes_value = replace_tags(section, [ESMVALTOOL_PAPER_TAG])
-        attributes_value = cite_tags(section, [ESMVALTOOL_PAPER_TAG])
-    else:
-        attributes_value = ESMVALTOOL_PAPER_TAG
+    attributes_value = ESMVALTOOL_PAPER_TAG
     attributes = {'attribute:references': attributes_value}
     activity = provenance.activity(
         namespace + ':esmvaltool==' + __version__, other_attributes=attributes)

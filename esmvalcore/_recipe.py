@@ -949,7 +949,7 @@ class Recipe:
         """Initialize the recipe provenance."""
         doc = deepcopy(raw_documentation)
         for key in doc:
-            if key in TAGS:
+            if key in TAGS and key not in 'references':
                 doc[key] = replace_tags(key, doc[key])
 
         return get_recipe_provenance(doc, self._filename)
