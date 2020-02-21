@@ -252,15 +252,14 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                 [coord] = coords
                 cube.remove_coord(coord)
 
-    # Return cube if hotizontal grid is the same.
-    if _check_horiz_grid_closeness(cube, target_grid):
-        return cube
+    # Return unaltered cube if hotizontal grid is the same.
+    if not _check_horiz_grid_closeness(cube, target_grid):
 
-    # Perform the horizontal regridding.
-    if _attempt_irregular_regridding(cube, scheme):
-        cube = esmpy_regrid(cube, target_grid, scheme)
-    else:
-        cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+        # Perform the horizontal regridding.
+        if _attempt_irregular_regridding(cube, scheme):
+            cube = esmpy_regrid(cube, target_grid, scheme)
+        else:
+            cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
 
     return cube
 
