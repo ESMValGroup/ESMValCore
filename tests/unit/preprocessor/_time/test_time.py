@@ -960,8 +960,33 @@ def make_map_data(number_years=2):
     return cube
 
 
+@pytest.mark.parametrize('period', ['full'])
+def test_standardized_anomalies(period, standardize=True):
+    cube = make_map_data(number_years=2)
+    result = anomalies(cube, period, standardize)
+    if period == 'full':
+        expected_anomalies = (cube.data - np.mean(cube.data, axis=2,
+                                                  keepdims=True))
+        if standardize:
+            # NB: default behaviour for np.std is ddof=0, whereas
+            #     default behaviour for iris.analysis.STD_DEV is ddof=1
+            expected_stdanomalies = expected_anomalies / np.std(
+                 expected_anomalies, axis=2, keepdims=True, ddof=1)
+            expected = np.ma.masked_invalid(expected_stdanomalies)
+            assert_array_equal(
+                result.data,
+                expected
+            )
+        else:
+            expected = np.ma.masked_invalid(expected_anomalies)
+            assert_array_equal(
+                result.data,
+                expected
+            )
+
+
 @pytest.mark.parametrize('period', ['full', 'day', 'month', 'season'])
-def test_anomalies(period):
+def test_anomalies(period, standardize=False):
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period)
     if period == 'full':

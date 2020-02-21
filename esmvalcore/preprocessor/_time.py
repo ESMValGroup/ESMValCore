@@ -416,7 +416,7 @@ def climate_statistics(cube, operator='mean', period='full'):
     return clim_cube
 
 
-def anomalies(cube, period):
+def anomalies(cube, period, standardize=False):
     """
     Compute anomalies using a mean with the specified granularity.
 
@@ -433,33 +433,56 @@ def anomalies(cube, period):
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
         'mon', 'daily', 'day'
 
+    standardize: bool, optional
+        If True standardized anomalies are calculated
+
+
     Returns
     -------
     iris.cube.Cube
-        Monthly statistics cube
+        Anomalies cube
     """
     reference = climate_statistics(cube, period=period)
     if period in ['full']:
-        return cube - reference
+        cube = cube - reference
+        if standardize:
+            cube_stddev = climate_statistics(
+                cube, operator='std_dev', period=period)
+            cube = cube / cube_stddev
+        return cube
 
     cube_coord = _get_period_coord(cube, period)
     ref_coord = _get_period_coord(reference, period)
 
     data = cube.core_data()
-    cube_time = cube.coord('time')
     ref = {}
     for ref_slice in reference.slices_over(ref_coord):
         ref[ref_slice.coord(ref_coord).points[0]] = da.ravel(
             ref_slice.core_data())
     cube_coord_dim = cube.coord_dims(cube_coord)[0]
-    for i in range(cube_time.shape[0]):
-        time = cube_time.points[i]
-        indexes = cube_time.points == time
+    for i in range(cube.coord('time').shape[0]):
+        indexes = cube.coord('time').points == cube.coord('time').points[i]
         indexes = iris.util.broadcast_to_shape(indexes, data.shape,
                                                (cube_coord_dim, ))
         data[indexes] = data[indexes] - ref[cube_coord.points[i]]
 
     cube = cube.copy(data)
+
+    # standardize the results if requested
+    if standardize:
+        cube_stddev = climate_statistics(cube,
+                                         operator='std_dev',
+                                         period=period)
+        tdim = cube.coord_dims('time')[0]
+        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
+        if not reps % 1 == 0:
+            raise ValueError(
+                "Cannot safely apply preprocessor to this dataset, "
+                "since the full time period of this dataset is not "
+                f"a multiple of the period '{period}'"
+            )
+        cube.data = cube.core_data() / da.concatenate(
+            [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
     return cube
 
 
@@ -477,7 +500,7 @@ def _get_period_coord(cube, period):
         if not cube.coords('season_number'):
             iris.coord_categorisation.add_season_number(cube, 'time')
         return cube.coord('season_number')
-    raise ValueError('Period %s not supported')
+    raise ValueError(f"Period '{period}' not supported")
 
 
 def regrid_time(cube, frequency):
