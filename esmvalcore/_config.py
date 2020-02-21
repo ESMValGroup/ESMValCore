@@ -28,7 +28,7 @@ DIAGNOSTICS_PATH = find_diagnostics()
 
 
 def find_references():
-    """Try to find bibtex files in references folder."""
+    """Try to find the path for references folder."""
     try:
         import esmvaltool
     except ImportError:
