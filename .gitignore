@@ -85,6 +85,9 @@ test-reports/
 /test_bash.sh
 /python_test_out.txt
 
+# Auto generated doc
+_sidebar.rst.inc
+
 # Build folder
 doc/build
 doc/_sidebar.rst.inc

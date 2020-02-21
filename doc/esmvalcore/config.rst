@@ -205,7 +205,7 @@ at each site. As an example, the CMIP6 directory path on BADC would be:
 
 The resulting directory path would look something like this:
 
-.. code-block::
+.. code-block:: bash
 
     CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Omon/tos/gn/latest
 
