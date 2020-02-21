@@ -5,7 +5,7 @@ import pytest
 import tests
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from cf_units import Unit
 import iris
@@ -17,7 +17,7 @@ from esmvalcore.preprocessor._time import (
     extract_month, extract_season, extract_time,
     regrid_time,
     decadal_statistics, annual_statistics, seasonal_statistics,
-    monthly_statistics, daily_statistics,
+    monthly_statistics, daily_statistics, timeseries_filter,
     climate_statistics, anomalies
 )
 
@@ -107,8 +107,12 @@ class TestTimeSlice(tests.Test):
 
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as ctx:
             extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
+        msg = (
+            "Time slice 2200-01-01 00:00:00 to 2200-12-31 00:00:00 is outside"
+            " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
+        assert ctx.exception.args == (msg, )
 
     def test_extract_time_one_time(self):
         """Test extract_time with one time step."""
@@ -806,6 +810,45 @@ class TestRegridTime1Hourly(tests.Test):
         self.assert_array_equal(diff_cube.data, expected)
 
 
+class TestTimeseriesFilter(tests.Test):
+    """Tests for regrid_time with hourly frequency."""
+
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = _create_sample_cube()
+
+    def test_timeseries_filter_simple(self):
+        """Test timeseries_filter func."""
+        filtered_cube = timeseries_filter(self.cube, 7, 14,
+                                          filter_type='lowpass',
+                                          filter_stats='sum')
+        expected_data = np.array(
+            [2.44824568, 3.0603071, 3.67236852, 4.28442994, 4.89649137,
+             5.50855279, 6.12061421, 6.73267563, 7.34473705, 7.95679847,
+             8.56885989, 9.18092131, 9.79298273, 10.40504415, 11.01710557,
+             11.62916699, 12.24122841, 12.85328983]
+        )
+        assert_array_almost_equal(filtered_cube.data, expected_data)
+        assert len(filtered_cube.coord('time').points) == 18
+
+    def test_timeseries_filter_timecoord(self):
+        """Test missing time axis."""
+        import iris.exceptions
+        new_cube = self.cube.copy()
+        new_cube.remove_coord(new_cube.coord('time'))
+        with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
+            timeseries_filter(new_cube, 7, 14,
+                              filter_type='lowpass',
+                              filter_stats='sum')
+
+    def test_timeseries_filter_implemented(self):
+        """Test a not implemnted filter."""
+        with self.assertRaises(NotImplementedError):
+            timeseries_filter(self.cube, 7, 14,
+                              filter_type='bypass',
+                              filter_stats='sum')
+
+
 def make_time_series(number_years=2):
     """Make a cube with time only dimension."""
     times = np.array([i * 30 + 15 for i in range(0, 12 * number_years, 1)])
@@ -917,8 +960,33 @@ def make_map_data(number_years=2):
     return cube
 
 
+@pytest.mark.parametrize('period', ['full'])
+def test_standardized_anomalies(period, standardize=True):
+    cube = make_map_data(number_years=2)
+    result = anomalies(cube, period, standardize)
+    if period == 'full':
+        expected_anomalies = (cube.data - np.mean(cube.data, axis=2,
+                                                  keepdims=True))
+        if standardize:
+            # NB: default behaviour for np.std is ddof=0, whereas
+            #     default behaviour for iris.analysis.STD_DEV is ddof=1
+            expected_stdanomalies = expected_anomalies / np.std(
+                 expected_anomalies, axis=2, keepdims=True, ddof=1)
+            expected = np.ma.masked_invalid(expected_stdanomalies)
+            assert_array_equal(
+                result.data,
+                expected
+            )
+        else:
+            expected = np.ma.masked_invalid(expected_anomalies)
+            assert_array_equal(
+                result.data,
+                expected
+            )
+
+
 @pytest.mark.parametrize('period', ['full', 'day', 'month', 'season'])
-def test_anomalies(period):
+def test_anomalies(period, standardize=False):
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period)
     if period == 'full':
