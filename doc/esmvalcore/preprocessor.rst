@@ -44,7 +44,7 @@ Overview
    * ease of maintenance (including unit and integration testing) of existing
      routines;
    * a straightforward manner of importing and using the preprocessing routines as
-     part  of the overall usage of the software and, as a special case, the use
+     part  of the overall usage of the software and, as a special case, the useFH
      during diagnostic execution;
    * shifting the effort for the scientific diagnostic developer from implementing
      both standard and diagnostic-specific functionalities to allowing them to
@@ -513,7 +513,8 @@ conceptually a very similar process to interpolation (in fact, the regridder
 engine uses interpolation and extrapolation, with various schemes). The primary
 difference is that interpolation is based on sample data points, while
 regridding is based on the horizontal grid of another cube (the reference
-grid).
+grid). If the horizontal grids of a cube and its reference grid are sufficiently
+the same, regridding is automatically and silently skipped for performance reasons.
 
 The underlying regridding mechanism in ESMValTool uses the `cube.regrid()
 <https://scitools.org.uk/iris/docs/latest/iris/iris/cube.html#iris.cube.Cube.regrid>`_
