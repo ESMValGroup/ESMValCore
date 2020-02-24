@@ -27,18 +27,6 @@ def find_diagnostics():
 DIAGNOSTICS_PATH = find_diagnostics()
 
 
-def find_references():
-    """Try to find the path for references folder."""
-    try:
-        import esmvaltool
-    except ImportError:
-        return ''
-    return os.path.join(os.path.dirname(esmvaltool.__file__), 'references')
-
-
-REFERENCES_PATH = find_references()
-
-
 def read_config_user_file(config_file, recipe_name):
     """Read config user file and store settings in a dictionary."""
     with open(config_file, 'r') as file:
