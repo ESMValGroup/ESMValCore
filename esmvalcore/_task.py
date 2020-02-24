@@ -578,7 +578,7 @@ class DiagnosticTask(BaseTask):
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)
             product.save_provenance()
-            _write_citation_file(product)
+            _write_citation_file(product.filename, product.provenance)
             self.products.add(product)
         logger.debug("Collecting provenance of task %s took %.1f seconds",
                      self.name,

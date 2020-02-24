@@ -38,7 +38,7 @@ ESMVALTOOL_PAPER = (
 )
 
 
-def _write_citation_file(product):
+def _write_citation_file(filename, provenance):
     """
     Write citation information provided by the recorded provenance.
 
@@ -49,24 +49,24 @@ def _write_citation_file(product):
     Otherwise, cmip6 data reference links are saved into a text file.
     """
     # collect info from provenance
-    product_name = os.path.splitext(product.filename)[0]
+    product_name = os.path.splitext(filename)[0]
     info_urls = []
     json_urls = []
-    products_tags = []
-    for item in product.provenance.records:
+    product_tags = []
+    for item in provenance.records:
         for key, value in item.attributes:
             if key.namespace.prefix == 'attribute':
                 if key.localpart in {'reference', 'references'}:
-                    products_tags.append(value)
+                    product_tags.append(value)
                 elif key.localpart == 'mip_era' and value == 'CMIP6':
                     url_prefix = _make_url_prefix(item.attributes)
                     info_urls.append(_make_info_url(url_prefix))
                     json_urls.append(_make_json_url(url_prefix))
 
-    _save_citation_info(product_name, products_tags, json_urls, info_urls)
+    _save_citation_info(product_name, product_tags, json_urls, info_urls)
 
 
-def _save_citation_info(product_name, products_tags, json_urls, info_urls):
+def _save_citation_info(product_name, product_tags, json_urls, info_urls):
     product_entries = ''
     product_urls = ''
 
@@ -83,9 +83,9 @@ def _save_citation_info(product_name, products_tags, json_urls, info_urls):
             product_entries += '{}\n'.format(_collect_cmip_citation(json_url))
 
     # convert tags to bibtex entries
-    if products_tags:
+    if product_tags:
         # make tags clean and unique
-        tags = list(set(_clean_tags(products_tags)))
+        tags = list(set(_clean_tags(product_tags)))
         for tag in tags:
             product_entries += '{}\n'.format(_collect_bibtex_citation(tag))
 
