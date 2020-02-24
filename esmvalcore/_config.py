@@ -245,8 +245,3 @@ def get_tag_value(section, tag):
 def replace_tags(section, tags):
     """Replace a list of tags with their values."""
     return tuple(get_tag_value(section, tag) for tag in tags)
-
-
-def cite_tags(section, tags):
-    """Replace a list of tags with their values."""
-    return tuple(get_tag_value(section, tag) for tag in tags)
