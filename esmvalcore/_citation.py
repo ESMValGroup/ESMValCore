@@ -16,6 +16,27 @@ logger = logging.getLogger(__name__)
 
 CMIP6_URL_STEM = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch'
 
+# it is the technical overview and should always be cited
+ESMVALTOOL_PAPER = (
+    '@article{righi19gmdd,\n\t'
+    'doi = {10.5194/gmd-2019-226},\n\t'
+    'url = {https://doi.org/10.5194%2Fgmd-2019-226},\n\t'
+    'year = 2019,\n\t'
+    'month = {sep},\n\t'
+    'publisher = {Copernicus {GmbH}},\n\t'
+    'author = {Mattia Righi and Bouwe Andela and Veronika Eyring '
+    'and Axel Lauer and Valeriu Predoi and Manuel Schlund '
+    'and Javier Vegas-Regidor and Lisa Bock and Björn Brötz '
+    'and Lee de Mora and Faruk Diblen and Laura Dreyer '
+    'and Niels Drost and Paul Earnshaw and Birgit Hassler '
+    'and Nikolay Koldunov and Bill Little and Saskia Loosveldt Tomas '
+    'and Klaus Zimmermann},\n\t'
+    'title = {{ESMValTool} v2.0 '
+    '{\\&}amp$\\mathsemicolon${\\#}8211$\\mathsemicolon$ '
+    'Technical overview}\n'
+    '}\n'
+)
+
 
 def _write_citation_file(product):
     """
@@ -70,8 +91,12 @@ def _save_citation_info(product_name, products_tags, json_urls, info_urls):
 
     # write one bibtex file
     if product_entries:
-        with open(f'{product_name}_citation.bibtex', 'w') as file:
-            file.write(product_entries)
+        bibtex_content = product_entries
+    else:
+        # add the technical overview paper that should always be cited
+        bibtex_content = ESMVALTOOL_PAPER
+    with open(f'{product_name}_citation.bibtex', 'w') as file:
+        file.write(bibtex_content)
 
 
 def _clean_tags(tags):
