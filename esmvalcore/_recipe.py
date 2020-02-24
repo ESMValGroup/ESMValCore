@@ -383,15 +383,15 @@ def _get_correct_fx_file(variable, fx_variable, config_user):
     cmor_table = CMOR_TABLES[var_project]
     valid_fx_vars = []
 
-    # Get all fx-related mips ('fx' always first, original mip last)
-    fx_mips = ['fx']
-    fx_mips.extend(
-        [key for key in cmor_table.tables if 'fx' in key and key != 'fx'])
-    fx_mips.append(variable['mip'])
-
     # force only the mip declared by user
     if 'mip' in fx_variable:
         fx_mips = [fx_variable['mip']]
+    else:
+        # Get all fx-related mips ('fx' always first, original mip last)
+        fx_mips = ['fx']
+        fx_mips.extend(
+            [key for key in cmor_table.tables if 'fx' in key and key != 'fx'])
+        fx_mips.append(variable['mip'])
 
     # Search all mips for available variables
     # priority goes to user specified mip if available
