@@ -83,20 +83,18 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
             product_entries += '{}\n'.format(_collect_cmip_citation(json_url))
 
     # convert tags to bibtex entries
-    if product_tags:
-        # make tags clean and unique
-        tags = list(set(_clean_tags(product_tags)))
-        for tag in tags:
-            product_entries += '{}\n'.format(_collect_bibtex_citation(tag))
-
-    # write one bibtex file
-    if product_entries:
-        bibtex_content = product_entries
+    if REFERENCES_PATH:
+        if product_tags:
+            # make tags clean and unique
+            tags = list(set(_clean_tags(product_tags)))
+            for tag in tags:
+                product_entries += '{}\n'.format(_collect_bibtex_citation(tag))
     else:
         # add the technical overview paper that should always be cited
-        bibtex_content = ESMVALTOOL_PAPER
+        logger.info('The reference folder does not exist.')
+        product_entries = ESMVALTOOL_PAPER
     with open(f'{product_name}_citation.bibtex', 'w') as file:
-        file.write(bibtex_content)
+        file.write(product_entries)
 
 
 def _clean_tags(tags):
@@ -157,17 +155,13 @@ def _json_to_bibtex(data):
 
 def _collect_bibtex_citation(tag):
     """Collect information from bibtex files."""
-    if REFERENCES_PATH:
-        bibtex_file = REFERENCES_PATH / f'{tag}.bibtex'
-        if bibtex_file.is_file():
-            entry = bibtex_file.read_text()
-        else:
-            raise ValueError(
-                'The reference file {} does not exist.'.format(bibtex_file)
-            )
+    bibtex_file = REFERENCES_PATH / f'{tag}.bibtex'
+    if bibtex_file.is_file():
+        entry = bibtex_file.read_text()
     else:
-        logger.info('The reference folder does not exist.')
-        entry = ''
+        raise ValueError(
+            'The reference file {} does not exist.'.format(bibtex_file)
+        )
     return entry
 
 
