@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 import requests
 
-from ._config import DIAGNOSTICS_PATH
+from ._config import DIAGNOSTICS_PATH, ESMVALTOOL_PAPER_TAG
 
 if DIAGNOSTICS_PATH:
     REFERENCES_PATH = Path(DIAGNOSTICS_PATH) / 'references'
@@ -67,20 +67,20 @@ def _write_citation_file(filename, provenance):
 
 
 def _save_citation_info(product_name, product_tags, json_urls, info_urls):
-    product_entries = ''
-    product_urls = ''
+    citation_entries = [ESMVALTOOL_PAPER]
+    citation_urls = ''
 
     # save CMIP6 url_info, if any
     if info_urls:
         for info_url in info_urls:
-            product_urls += '{}\n'.format(info_url)
+            citation_urls += '{}\n'.format(info_url)
         with open(f'{product_name}_data_citation_url.txt', 'w') as file:
-            file.write(product_urls)
+            file.write(citation_urls)
 
     # convert json_urls to bibtex entries
     if json_urls:
         for json_url in json_urls:
-            product_entries += '{}\n'.format(_collect_cmip_citation(json_url))
+            citation_entries.append(_collect_cmip_citation(json_url))
 
     # convert tags to bibtex entries
     if REFERENCES_PATH:
@@ -88,13 +88,11 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
             # make tags clean and unique
             tags = list(set(_clean_tags(product_tags)))
             for tag in tags:
-                product_entries += '{}\n'.format(_collect_bibtex_citation(tag))
-    else:
-        # add the technical overview paper that should always be cited
-        logger.info('The reference folder does not exist.')
-        product_entries = ESMVALTOOL_PAPER
+                if tag not in ESMVALTOOL_PAPER_TAG:
+                    citation_entries.append(_collect_bibtex_citation(tag))
+
     with open(f'{product_name}_citation.bibtex', 'w') as file:
-        file.write(product_entries)
+        file.write('\n'.join(citation_entries))
 
 
 def _clean_tags(tags):
