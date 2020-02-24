@@ -22,16 +22,32 @@ def _write_citation_file(product):
     """
     # collect info from provenance
     product_name = os.path.splitext(product.filename)[0]
+    info_urls = []
+    json_urls = []
+    products_tags = []
+    for item in product.provenance.records:
+        for key, value in item.attributes:
+            if key.namespace.prefix == 'attribute':
+                if key.localpart in {'reference', 'references'}:
+                    products_tags.append(value)
+                elif key.localpart == 'mip_era' and value == 'CMIP6':
+                    url_prefix = _make_url_prefix(item.attributes)
+                    info_urls.append(_make_info_url(url_prefix))
+                    json_urls.append(_make_json_url(url_prefix))
+
+    _save_citation_info(product_name, products_tags, json_urls, info_urls)
+
+
+def _save_citation_info(product_name, products_tags, json_urls, info_urls):
     product_entries = ''
-    urls = ''
-    products_tags, json_urls, info_urls = _get_citation_info(product)
+    product_urls = ''
 
     # save CMIP6 url_info, if any
     if info_urls:
         for info_url in info_urls:
-            urls += '{}\n'.format(info_url)
+            product_urls += '{}\n'.format(info_url)
         with open(f'{product_name}_data_citation_url.txt', 'w') as file:
-            file.write(urls)
+            file.write(product_urls)
 
     # convert json_urls to bibtex entries
     if json_urls:
@@ -49,23 +65,6 @@ def _write_citation_file(product):
     if product_entries:
         with open(f'{product_name}_citation.bibtex', 'w') as file:
             file.write(product_entries)
-
-
-def _get_citation_info(product):
-    """Collect tags, and urls."""
-    info_urls = []
-    json_urls = []
-    tags = []
-    for item in product.provenance.records:
-        for key, value in item.attributes:
-            if key.namespace.prefix == 'attribute':
-                if key.localpart in {'reference', 'references'}:
-                    tags.append(value)
-                elif key.localpart == 'mip_era' and value == 'CMIP6':
-                    url_prefix = _make_url_prefix(item.attributes)
-                    info_urls.append(_make_info_url(url_prefix))
-                    json_urls.append(_make_json_url(url_prefix))
-    return tags, json_urls, info_urls
 
 
 def _clean_tags(tags):
