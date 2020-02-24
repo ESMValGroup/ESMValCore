@@ -6,7 +6,8 @@ import pytest
 
 import esmvalcore
 from esmvalcore._task import (BaseTask, _run_tasks_parallel,
-                              _run_tasks_sequential, run_tasks)
+                              _run_tasks_sequential, run_tasks,
+                              which)
 
 
 @pytest.fixture
@@ -80,3 +81,9 @@ def test_runner_uses_priority(monkeypatch, runner, example_tasks):
     print(order)
     assert len(order) == 12
     assert order == sorted(order)
+
+
+@pytest.mark.parametrize('executables', ['ls', 'mv'])
+def test_which(executables):
+    """Test the which wrapper."""
+    assert which(executables).split(os.sep)[-1] in ['ls', 'mv']
