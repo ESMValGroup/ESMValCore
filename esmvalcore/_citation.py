@@ -2,8 +2,15 @@
 import os
 import logging
 import re
+from pathlib import Path
 import requests
-from ._config import REFERENCES_PATH
+
+from ._config import DIAGNOSTICS_PATH
+
+if DIAGNOSTICS_PATH:
+    REFERENCES_PATH = Path(DIAGNOSTICS_PATH) / 'references'
+else:
+    REFERENCES_PATH = ''
 
 logger = logging.getLogger(__name__)
 
@@ -126,10 +133,9 @@ def _json_to_bibtex(data):
 def _collect_bibtex_citation(tag):
     """Collect information from bibtex files."""
     if REFERENCES_PATH:
-        bibtex_file = os.path.join(REFERENCES_PATH, tag + '.bibtex')
-        if os.path.isfile(bibtex_file):
-            with open(bibtex_file, 'r') as file:
-                entry = '{}'.format(file.read())
+        bibtex_file = REFERENCES_PATH / f'{tag}.bibtex'
+        if bibtex_file.is_file():
+            entry = bibtex_file.read_text()
         else:
             raise ValueError(
                 'The reference file {} does not exist.'.format(bibtex_file)
