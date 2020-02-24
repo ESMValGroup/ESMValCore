@@ -555,7 +555,6 @@ class DiagnosticTask(BaseTask):
         attrs = {
             'script_file': self.script,
         }
-
         for key in self.settings:
             if key not in ignore:
                 attrs[key] = self.settings[key]
