@@ -114,7 +114,7 @@ def _get_response(url):
             if response.status_code == 200:
                 json_data = response.json()
             else:
-                logger.info('Error in the CMIP json link')
+                logger.info('Error in the CMIP json link: %s', url)
         except IOError:
             logger.info('Error in receiving the CMIP json file')
     return json_data
