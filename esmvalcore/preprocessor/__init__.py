@@ -26,7 +26,7 @@ from ._regrid import extract_levels, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
                     daily_statistics, decadal_statistics, extract_month,
                     extract_season, extract_time, monthly_statistics,
-                    regrid_time, seasonal_statistics)
+                    regrid_time, seasonal_statistics, timeseries_filter,)
 from ._units import convert_units
 from ._volume import (depth_integration, extract_trajectory, extract_transect,
                       extract_volume, volume_statistics)
@@ -101,6 +101,7 @@ __all__ = [
     'climate_statistics',
     'anomalies',
     'regrid_time',
+    'timeseries_filter',
     'cmor_check_data',
     'convert_units',
     # Save to file

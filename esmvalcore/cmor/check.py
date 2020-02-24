@@ -337,7 +337,7 @@ class CMORCheck():
 
             # Get coordinate var_name as it exists!
             try:
-                coord = self._cube.coord(var_name=var_name, dim_coords=True)
+                coord = self._cube.coord(var_name=var_name)
             except iris.exceptions.CoordinateNotFoundError:
                 continue
 
@@ -379,11 +379,11 @@ class CMORCheck():
                     self.report_error(self._attr_msg, var_name, 'units',
                                       cmor.units, coord.units)
         self._check_coord_values(cmor, coord, var_name)
-        self._check_coord_bounds(coord, var_name)
+        self._check_coord_bounds(cmor, coord, var_name)
         self._check_coord_monotonicity_and_direction(cmor, coord, var_name)
 
-    def _check_coord_bounds(self, coord, var_name):
-        if not coord.has_bounds():
+    def _check_coord_bounds(self, cmor, coord, var_name):
+        if cmor.must_have_bounds == 'yes' and not coord.has_bounds():
             if self.automatic_fixes:
                 try:
                     coord.guess_bounds()
@@ -405,6 +405,8 @@ class CMORCheck():
 
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
+        if coord.ndim > 1:
+            return
         if not coord.is_monotonic():
             self.report_error(self._is_msg, var_name, 'monotonic')
         if len(coord.points) == 1:
@@ -458,8 +460,29 @@ class CMORCheck():
                                       '> {} ='.format('valid_max'), valid_max)
 
         if l_fix_coord_value:
-            lon_extent = iris.coords.CoordExtent(coord, 0.0, 360., True, False)
-            self._cube = self._cube.intersection(lon_extent)
+            if coord.ndim == 1:
+                lon_extent = iris.coords.CoordExtent(
+                    coord, 0.0, 360., True, False)
+                self._cube = self._cube.intersection(lon_extent)
+            else:
+                new_lons = coord.points.copy()
+                self._set_range_in_0_360(new_lons)
+                if coord.bounds is not None:
+                    new_bounds = coord.bounds.copy()
+                    self._set_range_in_0_360(new_bounds)
+                else:
+                    new_bounds = None
+                new_coord = coord.copy(new_lons, new_bounds)
+                dims = self._cube.coord_dims(coord)
+                self._cube.remove_coord(coord)
+                self._cube.add_aux_coord(new_coord, dims)
+
+    @staticmethod
+    def _set_range_in_0_360(array):
+        while array.min() < 0:
+            array[array < 0] += 360
+        while array.max() > 360:
+            array[array > 360] -= 360
 
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
@@ -578,6 +601,9 @@ class CMORCheck():
                     msg = '{}: Frequency {} does not match input data'
                     self.report_error(msg, var_name, freq)
                     break
+
+        # remove time_origin from attributes
+        coord.attributes.pop('time_origin', None)
 
     @staticmethod
     def _simplify_calendar(calendar):

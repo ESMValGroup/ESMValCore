@@ -10,6 +10,7 @@ from warnings import filterwarnings
 import dask.array as da
 import iris
 import iris.coord_categorisation
+import iris.exceptions
 import iris.util
 import numpy as np
 
@@ -40,7 +41,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     """
     Extract a time range from a cube.
 
-    Given a time range passed in as a series of years, mnoths and days, it
+    Given a time range passed in as a series of years, months and days, it
     returns a time-extracted cube with data only within the specified
     time range.
 
@@ -72,7 +73,8 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
         if time ranges are outside the cube time limits
 
     """
-    time_units = cube.coord('time').units
+    time_coord = cube.coord('time')
+    time_units = time_coord.units
     if time_units.calendar == '360_day':
         if start_day > 30:
             start_day = 30
@@ -89,17 +91,13 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
 
     cube_slice = cube.extract(constraint)
     if cube_slice is None:
-        start_cube = str(cube.coord('time').points[0])
-        end_cube = str(cube.coord('time').points[-1])
         raise ValueError(
-            f"Time slice {start_date} to {end_date} is outside cube "
-            f"time bounds {start_cube} to {end_cube}.")
+            f"Time slice {start_date} to {end_date} is outside cube time "
+            f"bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
 
     # Issue when time dimension was removed when only one point as selected.
     if cube_slice.ndim != cube.ndim:
-        time_1 = cube.coord('time')
-        time_2 = cube_slice.coord('time')
-        if time_1 == time_2:
+        if cube_slice.coord('time') == time_coord:
             logger.debug('No change needed to time.')
             return cube
 
@@ -360,7 +358,7 @@ def decadal_statistics(cube, operator='mean'):
     if not cube.coords('decade'):
 
         def get_decade(coord, value):
-            """Callback function to get decades from cube."""
+            """Categorize time coordinate into decades."""
             date = coord.units.num2date(value)
             return date.year - date.year % 10
 
@@ -418,7 +416,7 @@ def climate_statistics(cube, operator='mean', period='full'):
     return clim_cube
 
 
-def anomalies(cube, period):
+def anomalies(cube, period, standardize=False):
     """
     Compute anomalies using a mean with the specified granularity.
 
@@ -435,50 +433,74 @@ def anomalies(cube, period):
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
         'mon', 'daily', 'day'
 
+    standardize: bool, optional
+        If True standardized anomalies are calculated
+
+
     Returns
     -------
     iris.cube.Cube
-        Monthly statistics cube
+        Anomalies cube
     """
     reference = climate_statistics(cube, period=period)
     if period in ['full']:
-        return cube - reference
+        cube = cube - reference
+        if standardize:
+            cube_stddev = climate_statistics(
+                cube, operator='std_dev', period=period)
+            cube = cube / cube_stddev
+        return cube
 
     cube_coord = _get_period_coord(cube, period)
     ref_coord = _get_period_coord(reference, period)
 
     data = cube.core_data()
-    cube_time = cube.coord('time')
     ref = {}
     for ref_slice in reference.slices_over(ref_coord):
         ref[ref_slice.coord(ref_coord).points[0]] = da.ravel(
             ref_slice.core_data())
     cube_coord_dim = cube.coord_dims(cube_coord)[0]
-    for i in range(cube_time.shape[0]):
-        time = cube_time.points[i]
-        indexes = cube_time.points == time
+    for i in range(cube.coord('time').shape[0]):
+        indexes = cube.coord('time').points == cube.coord('time').points[i]
         indexes = iris.util.broadcast_to_shape(indexes, data.shape,
                                                (cube_coord_dim, ))
         data[indexes] = data[indexes] - ref[cube_coord.points[i]]
 
     cube = cube.copy(data)
+
+    # standardize the results if requested
+    if standardize:
+        cube_stddev = climate_statistics(cube,
+                                         operator='std_dev',
+                                         period=period)
+        tdim = cube.coord_dims('time')[0]
+        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
+        if not reps % 1 == 0:
+            raise ValueError(
+                "Cannot safely apply preprocessor to this dataset, "
+                "since the full time period of this dataset is not "
+                f"a multiple of the period '{period}'"
+            )
+        cube.data = cube.core_data() / da.concatenate(
+            [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
     return cube
 
 
 def _get_period_coord(cube, period):
+    """Get periods."""
     if period in ['daily', 'day']:
         if not cube.coords('day_of_year'):
             iris.coord_categorisation.add_day_of_year(cube, 'time')
         return cube.coord('day_of_year')
-    elif period in ['monthly', 'month', 'mon']:
+    if period in ['monthly', 'month', 'mon']:
         if not cube.coords('month_number'):
             iris.coord_categorisation.add_month_number(cube, 'time')
         return cube.coord('month_number')
-    elif period in ['seasonal', 'season']:
+    if period in ['seasonal', 'season']:
         if not cube.coords('season_number'):
             iris.coord_categorisation.add_season_number(cube, 'time')
         return cube.coord('season_number')
-    raise ValueError('Period %s not supported')
+    raise ValueError(f"Period '{period}' not supported")
 
 
 def regrid_time(cube, frequency):
@@ -557,5 +579,113 @@ def regrid_time(cube, frequency):
     iris.coord_categorisation.add_day_of_year(cube,
                                               cube.coord('time'),
                                               name='day_of_year')
+
+    return cube
+
+
+def low_pass_weights(window, cutoff):
+    """
+    Calculate weights for a low pass Lanczos filter.
+
+    Method borrowed from `iris example
+    <https://scitools.org.uk/iris/docs/latest/examples/General/
+    SOI_filtering.html?highlight=running%20mean>`_
+
+    Parameters
+    ----------
+    window: int
+        The length of the filter window.
+    cutoff: float
+        The cutoff frequency in inverse time steps.
+
+    Returns
+    -------
+    list:
+        List of floats representing the weights.
+    """
+    order = ((window - 1) // 2) + 1
+    nwts = 2 * order + 1
+    weights = np.zeros([nwts])
+    half_order = nwts // 2
+    weights[half_order] = 2 * cutoff
+    kidx = np.arange(1., half_order)
+    sigma = np.sin(np.pi * kidx / half_order) * half_order / (np.pi * kidx)
+    firstfactor = np.sin(2. * np.pi * cutoff * kidx) / (np.pi * kidx)
+    weights[(half_order - 1):0:-1] = firstfactor * sigma
+    weights[(half_order + 1):-1] = firstfactor * sigma
+
+    return weights[1:-1]
+
+
+def timeseries_filter(cube, window, span,
+                      filter_type='lowpass', filter_stats='sum'):
+    """
+    Apply a timeseries filter.
+
+    Method borrowed from `iris example
+    <https://scitools.org.uk/iris/docs/latest/examples/General/
+    SOI_filtering.html?highlight=running%20mean>`_
+
+    Apply each filter using the rolling_window method used with the weights
+    keyword argument. A weighted sum is required because the magnitude of
+    the weights are just as important as their relative sizes.
+
+    See also the `iris rolling window
+    <https://scitools.org.uk/iris/docs/v2.0/iris/iris/
+    cube.html#iris.cube.Cube.rolling_window>`_
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+    window: int
+        The length of the filter window (in units of cube time coordinate).
+    span: int
+        Number of months/days (depending on data frequency) on which
+        weights should be computed e.g. 2-yearly: span = 24 (2 x 12 months).
+        Span should have same units as cube time coordinate.
+    filter_type: str, optional
+        Type of filter to be applied; default 'lowpass'.
+        Available types: 'lowpass'.
+    filter_stats: str, optional
+        Type of statistic to aggregate on the rolling window; default 'sum'.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+
+    Returns
+    -------
+    iris.cube.Cube
+        cube time-filtered using 'rolling_window'.
+
+    Raises
+    ------
+    iris.exceptions.CoordinateNotFoundError:
+        Cube does not have time coordinate.
+    NotImplementedError:
+        If filter_type is not implemented.
+    """
+    try:
+        cube.coord('time')
+    except iris.exceptions.CoordinateNotFoundError:
+        logger.error("Cube %s does not have time coordinate", cube)
+        raise
+
+    # Construct weights depending on frequency
+    # TODO implement more filters!
+    supported_filters = ['lowpass', ]
+    if filter_type in supported_filters:
+        if filter_type == 'lowpass':
+            wgts = low_pass_weights(window, 1. / span)
+    else:
+        raise NotImplementedError(
+            "Filter type {} not implemented, \
+            please choose one of {}".format(filter_type,
+                                            ", ".join(supported_filters)))
+
+    # Apply filter
+    aggregation_operator = get_iris_analysis_operation(filter_stats)
+    cube = cube.rolling_window('time',
+                               aggregation_operator,
+                               len(wgts),
+                               weights=wgts)
 
     return cube
