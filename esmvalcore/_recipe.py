@@ -372,7 +372,7 @@ def _get_correct_fx_file(variable, fx_variable, config_user):
     # make it a dict
     if not isinstance(fx_variable, dict):
         fx_varname = fx_variable
-        fx_variable = {'short_name': fx_variable}
+        fx_variable = {'short_name': fx_varname}
     else:
         fx_varname = fx_variable['short_name']
 
