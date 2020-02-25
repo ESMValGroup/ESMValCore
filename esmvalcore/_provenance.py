@@ -10,12 +10,11 @@ from prov.dot import prov_to_dot
 from prov.model import ProvDocument
 
 from ._version import __version__
+from ._citation import ESMVALTOOL_PAPER_TAG
 
 logger = logging.getLogger(__name__)
 
 ESMVALTOOL_URI_PREFIX = 'https://www.esmvaltool.org/'
-# it is the technical overview and should always be cited
-ESMVALTOOL_PAPER_TAG = 'righi19gmdd'
 
 
 def update_without_duplicating(bundle, other):
