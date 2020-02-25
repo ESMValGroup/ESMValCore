@@ -711,7 +711,13 @@ def _match_products(products, variables):
 
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user, var_fxvar_coupling=False):
-    """Get preprocessor product definitions for a set of datasets."""
+    """
+    Get preprocessor product definitions for a set of datasets.
+
+
+    It updates recipe settings as needed by various preprocessors
+    and sets the correct ancestry.
+    """
     products = set()
 
     if not var_fxvar_coupling:
@@ -799,23 +805,14 @@ def _get_single_preprocessor_task(variables,
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
-    if not var_fxvar_coupling:
-        products = _get_preprocessor_products(
-            variables=variables,
-            profile=profile,
-            order=order,
-            ancestor_products=ancestor_products,
-            config_user=config_user,
-        )
-    else:
-        products = _get_preprocessor_products(
-            variables=variables,
-            profile=profile,
-            order=order,
-            ancestor_products=ancestor_products,
-            config_user=config_user,
-            var_fxvar_coupling=True
-        )
+    products = _get_preprocessor_products(
+        variables=variables,
+        profile=profile,
+        order=order,
+        ancestor_products=ancestor_products,
+        config_user=config_user,
+        var_fxvar_coupling=var_fxvar_coupling
+    )
 
     if not products:
         raise RecipeError(
@@ -914,8 +911,8 @@ def _get_derive_input_variables(variables, config_user):
     return derive_input
 
 
-def _remove_time_preproc(fxprofile):
-    """Remove all time preprocessors from the fx profile."""
+def _get_filtered_fxprofile(fxprofile):
+    """Remove all time preprocessors from the fx profile (returns a copy)."""
     fxprofile = deepcopy(fxprofile)
     for key in fxprofile:
         if key in TIME_PREPROCESSORS:
@@ -989,7 +986,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
                     # remove time preprocessors for any fx/Ofx/Efx/etc
                     # that dont have time coords
                     if fx_variable['frequency'] == 'fx':
-                        before = _remove_time_preproc(before)
+                        before = _get_filtered_fxprofile(before)
                     fx_name = task_name.split(
                         TASKSEP)[0] + TASKSEP + 'fx_area-volume_stats_' + \
                         fx_variable['variable_group']
