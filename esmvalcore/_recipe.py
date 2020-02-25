@@ -710,11 +710,11 @@ def _match_products(products, variables):
 
 
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
-                               config_user, fx_case=False):
+                               config_user, var_fxvar_coupling=False):
     """Get preprocessor product definitions for a set of datasets."""
     products = set()
 
-    if not fx_case:
+    if not var_fxvar_coupling:
         for variable in variables:
             variable['filename'] = get_output_file(variable,
                                                    config_user['preproc_dir'])
@@ -747,9 +747,10 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         _update_extract_shape(settings, config_user)
         _update_weighting_settings(settings, variable)
-        _update_fx_settings(settings=settings,
-                            variable=variable,
-                            config_user=config_user)
+        _update_fx_settings(
+            settings=settings,
+            variable=variable,
+            config_user=config_user)
         _update_target_grid(
             variable=variable,
             variables=variables,
@@ -787,7 +788,7 @@ def _get_single_preprocessor_task(variables,
                                   config_user,
                                   name,
                                   ancestor_tasks=None,
-                                  fx_case=False):
+                                  var_fxvar_coupling=False):
     """Create preprocessor tasks for a set of datasets w/ special case fx."""
     if ancestor_tasks is None:
         ancestor_tasks = []
@@ -798,7 +799,7 @@ def _get_single_preprocessor_task(variables,
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
-    if not fx_case:
+    if not var_fxvar_coupling:
         products = _get_preprocessor_products(
             variables=variables,
             profile=profile,
@@ -813,7 +814,7 @@ def _get_single_preprocessor_task(variables,
             order=order,
             ancestor_products=ancestor_products,
             config_user=config_user,
-            fx_case=True
+            var_fxvar_coupling=True
         )
 
     if not products:
@@ -997,7 +998,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
                         before,
                         config_user,
                         name=fx_name,
-                        fx_case=True
+                        var_fxvar_coupling=True
                     )
                     fx_preproc_tasks.append(task)
                     variable_pairs.append([var, fx_variable])
