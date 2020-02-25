@@ -44,7 +44,7 @@ Overview
    * ease of maintenance (including unit and integration testing) of existing
      routines;
    * a straightforward manner of importing and using the preprocessing routines as
-     part  of the overall usage of the software and, as a special case, the useFH
+     part  of the overall usage of the software and, as a special case, the use
      during diagnostic execution;
    * shifting the effort for the scientific diagnostic developer from implementing
      both standard and diagnostic-specific functionalities to allowing them to
