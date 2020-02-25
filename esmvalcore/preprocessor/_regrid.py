@@ -293,9 +293,9 @@ def _check_horiz_grid_closeness(cube1, cube2):
     for coord in ['latitude', 'longitude']:
         coord1 = cube1.coord(coord)
         coord2 = cube2.coord(coord)
-        # Compare shapes and bounds
-        shp_n_bnds = (coord1.shape == coord2.shape 
-            and np.allclose(coord1.bounds, coord2.bounds))
+        # Compare shapes and bounds.
+        shp_n_bnds = (coord1.shape == coord2.shape
+                      and np.allclose(coord1.bounds, coord2.bounds))
         if not shp_n_bnds:
             return False
     # Returns default value.
