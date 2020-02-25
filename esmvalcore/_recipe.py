@@ -469,12 +469,22 @@ def _update_weighting_settings(settings, variable):
 def _get_fx_mask_settings(variable, settings, config_user):
     """Assemble the fx var structures for land/sea masking."""
     msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
-    if 'mask_landsea' in settings:
-        logger.debug('Getting land-sea fx mask settings now...')
+
+    def _update_landsea(operation, variable, config_user):
+        """Update settings for either landsea or weighted landsea."""
+        logger.debug('Getting {operation} fx mask settings now...')
         fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
         fx_list = [fx_file for fx_file in fx_dict.values() if fx_file]
-        settings['mask_landsea']['fx_files'] = fx_list
-        logger.info(msg, 'land/sea masking', pformat(fx_dict))
+        if operation == 'mask_landsea':
+            settings[operation]['fx_files'] = fx_list
+        elif operation == 'weighting_landsea_fraction':
+            settings[operation]['fx_files'] = fx_dict
+        logger.info(msg, '{operation} masking', pformat(fx_dict))
+
+    landsea_ops = ['mask_landsea', 'weighting_landsea_fraction']
+    for landsea_op in landsea_ops:
+        if landsea_op in settings:
+            _update_landsea(landsea_op, variable, config_user)
 
     if 'mask_landseaice' in settings:
         logger.debug('Getting land-seaice fx mask settings now...')
@@ -485,12 +495,6 @@ def _get_fx_mask_settings(variable, settings, config_user):
             settings['mask_landseaice']['fx_files'].append(
                 fx_files_dict['sftgif'])
         logger.info(msg, 'land/sea ice masking', pformat(fx_files_dict))
-
-    if 'weighting_landsea_fraction' in settings:
-        logger.debug("Getting fx files for landsea fraction weighting now...")
-        fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
-        settings['weighting_landsea_fraction']['fx_files'] = fx_dict
-        logger.info(msg, 'land/sea fraction weighting', pformat(fx_dict))
 
 
 def _get_fx_stats_settings(variable, settings, config_user):
