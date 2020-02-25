@@ -921,6 +921,49 @@ def _get_filtered_fxprofile(fxprofile):
     return fxprofile
 
 
+def _add_fxvar_preprocessing_ancestors(step, profile, variables,
+                                       config_user, task_name):
+    """Bolt on the fx vars preproc ancestors, if needed."""
+    fx_preproc_tasks = []
+    # conserve profile
+    fx_profile = deepcopy(profile)
+    fx_vars = profile.get(step, {}).get('fx_files')
+
+    # Create tasks to prepare the input data for the fx var
+    order = _extract_preprocessor_order(fx_profile)
+    for var in variables:
+        fx_variables = [
+            _get_correct_fx_file(var, fx_var, config_user)[1]
+            for fx_var in fx_vars
+        ]
+        for fx_variable in fx_variables:
+            # list may be (intentionally) empty - catch it here
+            if not fx_variable:
+                raise RecipeError(
+                    f"One or more of {step} fx data "
+                    f"for {var['short_name']} are missing. "
+                    f"Task can not be performed since there is "
+                    f"no fx data found.")
+            before, _ = _split_settings(fx_profile, step, order)
+            # remove time preprocessors for any fx/Ofx/Efx/etc
+            # that dont have time coords
+            if fx_variable['frequency'] == 'fx':
+                before = _get_filtered_fxprofile(before)
+            fx_name = task_name.split(
+                TASKSEP)[0] + TASKSEP + 'fx_area-volume_stats_' + \
+                fx_variable['variable_group']
+            task = _get_single_preprocessor_task(
+                [fx_variable, var],
+                before,
+                config_user,
+                name=fx_name,
+                var_fxvar_coupling=True
+            )
+            fx_preproc_tasks.append(task)
+
+    return fx_preproc_tasks
+
+
 def _get_preprocessor_task(variables, profiles, config_user, task_name):
     """Create preprocessor task(s) for a set of datasets."""
     # First set up the preprocessor profile
@@ -939,7 +982,6 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
         _add_cmor_info(variable)
     # Create preprocessor task(s)
     derive_tasks = []
-    fx_preproc_tasks = []
     # set up tasks
     if variable.get('derive'):
         # Create tasks to prepare the input data for the derive step
@@ -960,47 +1002,11 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
             derive_tasks.append(task)
 
     # special case: fx variable pre-processing
-    variable_pairs = []
     for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
         if profile.get(step, {}).get('fx_files'):
-            # conserve profile
-            fx_profile = deepcopy(profile)
-            fx_vars = profile.get(step, {}).get('fx_files')
-
-            # Create tasks to prepare the input data for the fx var
-            order = _extract_preprocessor_order(fx_profile)
-            for var in variables:
-                fx_variables = [
-                    _get_correct_fx_file(var, fx_var, config_user)[1]
-                    for fx_var in fx_vars
-                ]
-                for fx_variable in fx_variables:
-                    # list may be (intentionally) empty - catch it here
-                    if not fx_variable:
-                        raise RecipeError(
-                            f"One or more of {step} fx data "
-                            f"for {var['short_name']} are missing. "
-                            f"Task can not be performed since there is "
-                            f"no fx data found.")
-                    before, _ = _split_settings(fx_profile, step, order)
-                    # remove time preprocessors for any fx/Ofx/Efx/etc
-                    # that dont have time coords
-                    if fx_variable['frequency'] == 'fx':
-                        before = _get_filtered_fxprofile(before)
-                    fx_name = task_name.split(
-                        TASKSEP)[0] + TASKSEP + 'fx_area-volume_stats_' + \
-                        fx_variable['variable_group']
-                    task = _get_single_preprocessor_task(
-                        [fx_variable, var],
-                        before,
-                        config_user,
-                        name=fx_name,
-                        var_fxvar_coupling=True
-                    )
-                    fx_preproc_tasks.append(task)
-                    variable_pairs.append([var, fx_variable])
-
-    derive_tasks.extend(fx_preproc_tasks)
+            derive_tasks.extend(
+                _add_fxvar_preprocessing_ancestors(step, profile, variables,
+                                                   config_user, task_name))
 
     # Create (final) preprocessor task
     task = _get_single_preprocessor_task(
