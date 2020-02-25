@@ -466,18 +466,18 @@ def _update_weighting_settings(settings, variable):
     _exclude_dataset(settings, variable, 'weighting_landsea_fraction')
 
 
-def _update_fx_settings(settings, variable, config_user):
-    """Find and set the FX mask settings."""
+def _get_fx_mask_settings(variable, settings, config_user):
+    """Assemble the fx var structures for land/sea masking."""
     msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
     if 'mask_landsea' in settings:
-        logger.debug('Getting fx mask settings now...')
+        logger.debug('Getting land-sea fx mask settings now...')
         fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
         fx_list = [fx_file for fx_file in fx_dict.values() if fx_file]
         settings['mask_landsea']['fx_files'] = fx_list
         logger.info(msg, 'land/sea masking', pformat(fx_dict))
 
     if 'mask_landseaice' in settings:
-        logger.debug('Getting fx mask settings now...')
+        logger.debug('Getting land-seaice fx mask settings now...')
         settings['mask_landseaice']['fx_files'] = []
         fx_file, _ = _get_correct_fx_file(variable, 'sftgif', config_user)
         fx_files_dict = {'sftgif': fx_file}
@@ -492,6 +492,10 @@ def _update_fx_settings(settings, variable, config_user):
         settings['weighting_landsea_fraction']['fx_files'] = fx_dict
         logger.info(msg, 'land/sea fraction weighting', pformat(fx_dict))
 
+
+def _get_fx_stats_settings(variable, settings, config_user):
+    """Assemble the fx vars structures for area/volume stats."""
+    msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
     for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
         var = dict(variable)
         fx_files_dict = {}
@@ -504,7 +508,7 @@ def _update_fx_settings(settings, variable, config_user):
                         fxvar_name = fxvar["short_name"]
                     except KeyError:
                         raise RecipeError(
-                            "No valid short_name found in {}".format(fxvar)
+                            "No entry short_name found in {}".format(fxvar)
                         )
                 _, cmor_fx_var = _get_correct_fx_file(
                     variable, fxvar, config_user)
@@ -517,6 +521,14 @@ def _update_fx_settings(settings, variable, config_user):
             # finally construct the fx files dictionary
             settings[step]['fx_files'] = fx_files_dict
             logger.info(msg, step, pformat(fx_files_dict))
+
+
+def _update_fx_settings(settings, variable, config_user):
+    """Find and set the general FX mask/stats settings."""
+    # get settings for fixed fx masks: land, sea or seaice or weighted
+    _get_fx_mask_settings(variable, settings, config_user)
+    # get settings for fx variables that need preprocessing
+    _get_fx_stats_settings(variable, settings, config_user)
 
 
 def _read_attributes(filename):
