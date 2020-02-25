@@ -252,7 +252,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                 [coord] = coords
                 cube.remove_coord(coord)
 
-    # Return unaltered cube if hotizontal grid is the same.
+    # Return non-regridded cube if hotizontal grid is the same.
     if not _check_horiz_grid_closeness(cube, target_grid):
 
         # Perform the horizontal regridding.
@@ -291,21 +291,13 @@ def _check_horiz_grid_closeness(cube1, cube2):
     """
     # Go through the 2 expected horizontal coordinates longitude and latitude.
     for coord in ['latitude', 'longitude']:
-        # Compare shapes.
-        if cube1.coord(coord).shape != cube2.coord(coord).shape:
-            # Different shapes detected.
+        coord1 = cube1.coord(coord)
+        coord2 = cube2.coord(coord)
+        # Compare shapes and bounds
+        shp_n_bnds = (coord1.shape == coord2.shape 
+            and np.allclose(coord1.bounds, coord2.bounds))
+        if not shp_n_bnds:
             return False
-        else:
-            # Iterate through the combined bounds.
-            for c1bndval, c2bndval in np.nditer(
-                    [cube1.coord(coord).bounds,
-                     cube2.coord(coord).bounds]
-            ):
-                # Check if bound value is same or similar.
-                if (c1bndval != c2bndval
-                        and not np.allclose(c1bndval, c2bndval)):
-                    # Different bounds values detected.
-                    return False
     # Returns default value.
     return True
 
