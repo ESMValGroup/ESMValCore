@@ -5,7 +5,7 @@ from multiprocessing.pool import ThreadPool
 import pytest
 
 import esmvalcore
-from esmvalcore._task import (BaseTask, _run_tasks_parallel,
+from esmvalcore._task import (BaseTask, _py2ncl, _run_tasks_parallel,
                               _run_tasks_sequential, run_tasks,
                               which)
 
@@ -87,3 +87,21 @@ def test_runner_uses_priority(monkeypatch, runner, example_tasks):
 def test_which(executables):
     """Test the which wrapper."""
     assert which(executables).split(os.sep)[-1] in ['ls', 'mv']
+
+
+def test_py2ncl():
+    """Test for _py2ncl func."""
+    ncl_text = _py2ncl(None, 'tas')
+    assert ncl_text == 'tas = _Missing'
+    ncl_text = _py2ncl('cow', 'tas')
+    assert ncl_text == 'tas = "cow"'
+    ncl_text = _py2ncl([1, 2], 'tas')
+    assert ncl_text == 'tas = (/1, 2/)'
+    ncl_text = _py2ncl({'cow': 22}, 'tas')
+    assert ncl_text == 'tas = True\ntas@cow = 22\n'
+    with pytest.raises(ValueError) as ex_err:
+        _py2ncl([1, "cow"], 'tas')
+    assert 'NCL array cannot be mixed type:' in str(ex_err.value)
+    with pytest.raises(ValueError) as ex_err:
+        _py2ncl({"cow": 22}, None)
+    assert 'NCL does not support nested dicts:' in str(ex_err.value)
