@@ -370,7 +370,7 @@ def _add_fxvar_keys(fx_var_dict, variable):
 def _get_correct_fx_file(variable, fx_variable, config_user):
     """Get fx files (searching all possible mips)."""
     # make it a dict
-    if not isinstance(fx_variable, dict):
+    if isinstance(fx_variable, str):
         fx_varname = fx_variable
         fx_variable = {'short_name': fx_varname}
     else:
@@ -495,15 +495,17 @@ def _update_fx_settings(settings, variable, config_user):
     for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
         var = dict(variable)
         fx_files_dict = {}
-        if settings.get(step, {}).get('fx_files'):
-            var['fx_files'] = settings.get(step, {}).get('fx_files')
+        var['fx_files'] = settings.get(step, {}).get('fx_files')
+        if var['fx_files']:
             for fxvar in var['fx_files']:
                 fxvar_name = fxvar
                 if isinstance(fxvar, dict):
-                    fxvar_name = fxvar.get("short_name")
-                    if not fxvar_name:
+                    try:
+                        fxvar_name = fxvar["short_name"]
+                    except KeyError:
                         raise RecipeError(
-                            "Key short_name missing from {}".format(fxvar))
+                            "No valid short_name found in {}".format(fxvar)
+                        )
                 _, cmor_fx_var = _get_correct_fx_file(
                     variable, fxvar, config_user)
                 if cmor_fx_var:
