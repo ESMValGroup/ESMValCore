@@ -1023,8 +1023,9 @@ def _check_duplication(task):
             for anc_product in ancestor_task.products:
                 ancestors_filename_dict[anc_product.filename] = ancestor_task
                 filenames.append(anc_product.filename)
-        set_ancestors = list(
-            {ancestors_filename_dict[filename] for filename in filenames})
+        set_ancestors = {
+            ancestors_filename_dict[filename] for filename in filenames
+        }
         task.ancestors = [
             ancestor for ancestor in task.ancestors
             if ancestor in set_ancestors
@@ -1120,10 +1121,10 @@ class Recipe:
 
     @staticmethod
     def _expand_ensemble(variables):
-        """Expand ensemble members to multiple datasets.
+        """
+        Expand ensemble members to multiple datasets.
 
-        Expansion only support ensembles defined as strings, not lists.
-
+        Expansion only supports ensembles defined as strings, not lists.
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
