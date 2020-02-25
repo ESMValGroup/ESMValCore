@@ -387,11 +387,11 @@ def _get_correct_fx_file(variable, fx_variable, config_user):
     if 'mip' in fx_variable:
         fx_mips = [fx_variable['mip']]
     else:
-        # Get all fx-related mips ('fx' always first, original mip last)
-        fx_mips = ['fx']
+        # Get all fx-related mips (original var mip,
+        # 'fx' and extend from cmor tables)
+        fx_mips = [variable['mip'], 'fx']
         fx_mips.extend(
             [key for key in cmor_table.tables if 'fx' in key and key != 'fx'])
-        fx_mips.append(variable['mip'])
 
     # Search all mips for available variables
     # priority goes to user specified mip if available
