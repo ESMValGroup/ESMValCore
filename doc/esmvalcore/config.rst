@@ -50,14 +50,12 @@ option:
   # Set the console log level debug, [info], warning, error
   # for much more information printed to screen set log_level: debug
   log_level: info
-  # verbosity is deprecated and will be removed in the future
-  # verbosity: 1
 
-  # Exit on warning? true/[false]
+  # Exit on warning (only for NCL diagnostic scripts)? true/[false]
   exit_on_warning: false
 
-  # Plot file format? [ps]/pdf/png/eps/epsi
-  output_file_type: pdf
+  # Plot file format? [png]/pdf/ps/eps/epsi
+  output_file_type: png
 
   # Destination directory where all output will be written
   # including log files and performance stats
@@ -81,10 +79,14 @@ option:
   # CAUTION when using: if you need those files, set it to false
   remove_preproc_dir: true
 
-  # Run at most this many tasks in parallel null/[1]/2/3/4/..
+  # Run at most this many tasks in parallel [null]/1/2/3/4/..
   # Set to null to use the number of available CPUs.
-  # Make sure your system has enough memory for the specified number of tasks.
-  max_parallel_tasks: 1
+  # If you run out of memory, try setting max_parallel_tasks to 1 and check the
+  # amount of memory you need for that by inspecting the file
+  # run/resource_usage.txt in the output directory. Using the number there you
+  # can increase the number of parallel tasks again to a reasonable number for
+  # the amount of memory available in your system.
+  max_parallel_tasks: null
 
   # Path to custom config-developer file, to customise project configurations.
   # See config-developer.yml for an example. Set to None to use the default
@@ -203,7 +205,7 @@ at each site. As an example, the CMIP6 directory path on BADC would be:
 
 The resulting directory path would look something like this:
 
-.. code-block::
+.. code-block:: bash
 
     CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Omon/tos/gn/latest
 
