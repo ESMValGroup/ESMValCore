@@ -1,5 +1,4 @@
 """Test _citation.py."""
-from pathlib import Path
 from prov.model import ProvDocument
 
 import esmvalcore
