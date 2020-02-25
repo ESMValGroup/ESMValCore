@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 import requests
 
-from ._config import DIAGNOSTICS_PATH, ESMVALTOOL_PAPER_TAG
+from ._config import DIAGNOSTICS_PATH
 
 if DIAGNOSTICS_PATH:
     REFERENCES_PATH = Path(DIAGNOSTICS_PATH) / 'references'
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 CMIP6_URL_STEM = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch'
 
 # it is the technical overview and should always be cited
+ESMVALTOOL_PAPER_TAG = 'righi19gmdd'
 ESMVALTOOL_PAPER = (
     '@article{righi19gmdd,\n\t'
     'doi = {10.5194/gmd-2019-226},\n\t'
