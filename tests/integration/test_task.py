@@ -105,3 +105,27 @@ def test_py2ncl():
     with pytest.raises(ValueError) as ex_err:
         _py2ncl({"cow": 22}, None)
     assert 'NCL does not support nested dicts:' in str(ex_err.value)
+
+
+def test_basetask():
+    """Test BaseTask."""
+    tasks = set()
+    for i in range(2):
+        task = BaseTask(
+            name=f'task{i}',
+            ancestors=[
+                BaseTask(name=f'task{i}-ancestor{j}') for j in range(2)
+            ],
+        )
+        for task0 in task.flatten():
+            task0.priority = i
+        tasks.add(task)
+    task_names = [task.name for task in tasks]
+    assert task_names == ['task1', 'task0']
+    ancestor_names = [anc.name for anc in list(tasks)[0].ancestors]
+    assert ancestor_names == ['task1-ancestor0', 'task1-ancestor1']
+    task = list(tasks)[0]
+    assert task.products == set()
+    assert task.output_files is None
+    assert task.activity is None
+    assert task.priority == 1
