@@ -128,7 +128,7 @@ class TestTimeSlice(tests.Test):
         with self.assertRaises(ValueError) as ctx:
             extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
         msg = (
-            "Time slice 2200-01-01 00:00:00 to 2200-12-31 00:00:00 is outside"
+            "Time slice 2200-01-01 to 2200-12-31 is outside"
             " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         assert ctx.exception.args == (msg, )
 

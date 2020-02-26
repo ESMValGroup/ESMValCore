@@ -93,7 +93,8 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     cube_slice = cube.extract(constraint)
     if cube_slice is None:
         raise ValueError(
-            f"Time slice {start_date} to {end_date} is outside cube time "
+            f"Time slice {start_year:0>4d}-{start_month:0>2d}-{start_day:0>2d} to "
+            f"{end_year:0>4d}-{end_month:0>2d}-{end_day:0>2d} is outside cube time "
             f"bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
 
     # Issue when time dimension was removed when only one point as selected.
@@ -442,7 +443,7 @@ def anomalies(cube, period, reference=None, standardize=False):
         Period of time to use a reference, as needed for the 'extract_time'
         preprocessor function
         If None, all available data is used as a reference
-        
+
     standardize: bool, optional
         If True standardized anomalies are calculated
 
@@ -469,6 +470,7 @@ def anomalies(cube, period, reference=None, standardize=False):
     ref_coord = _get_period_coord(reference, period)
 
     data = cube.core_data()
+    cube_time = cube.coord('time')
     ref = {}
     for ref_slice in reference.slices_over(ref_coord):
         ref[ref_slice.coord(ref_coord).points[0]] = ref_slice.core_data()
@@ -481,6 +483,7 @@ def anomalies(cube, period, reference=None, standardize=False):
         new_data.append(data[tuple(slicer)] - ref[cube_coord.points[i]])
     data = da.stack(new_data, axis=cube_coord_dim)
     cube = cube.copy(data)
+    cube.remove_coord(cube_coord)
 
     # standardize the results if requested
     if standardize:
