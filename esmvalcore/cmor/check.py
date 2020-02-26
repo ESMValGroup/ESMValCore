@@ -742,13 +742,13 @@ def cmor_check_metadata(cube, cmor_table, mip, cmor_name, frequency):
     ----------
     cube: iris.cube.Cube
         Data cube to check.
-    cmor_table: basestring
+    cmor_table: str
         CMOR definitions to use.
     mip:
         Variable's mip.
-    cmor_name: basestring
+    cmor_name: str
         Variable's name.
-    frequency: basestring
+    frequency: str
         Data frequency.
 
     """
@@ -766,13 +766,13 @@ def cmor_check_data(cube, cmor_table, mip, cmor_name, frequency):
     ----------
     cube: iris.cube.Cube
         Data cube to check.
-    cmor_table: basestring
+    cmor_table: str
         CMOR definitions to use.
     mip:
         Variable's mip.
-    cmor_name: basestring
+    cmor_name: str
         Variable's name
-    frequency: basestring
+    frequency: str
         Data frequency
 
     """
@@ -791,13 +791,13 @@ def cmor_check(cube, cmor_table, mip, cmor_name, frequency):
     ----------
     cube: iris.cube.Cube
         Data cube to check.
-    cmor_table: basestring
+    cmor_table: str
         CMOR definitions to use.
     mip:
         Variable's mip.
-    cmor_name: basestring
+    cmor_name: str
         Variable's  name.
-    frequency: basestring
+    frequency: str
         Data frequency.
 
     """

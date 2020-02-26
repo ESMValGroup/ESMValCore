@@ -15,7 +15,7 @@ class Fix:
 
         Parameters
         ----------
-        vardef: basestring
+        vardef: esmvalcore.cmor.table.VariableInfo
             CMOR table entry
 
         """
@@ -31,14 +31,14 @@ class Fix:
 
         Parameters
         ----------
-        filepath: basestring
+        filepath: str
             file to fix
-        output_dir: basestring
+        output_dir: str
             path to the folder to store the fixe files, if required
 
         Returns
         -------
-        basestring
+        str
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
             original filepath
