@@ -87,7 +87,7 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
     )
 
 
-def test_cmip6_data_citation_url(tmp_path, monkeypatch):
+def test_cmip6_data_citation_url(tmp_path):
     """Test3: CMIP6 info_url is retrieved from ES-DOC."""
     # Create fake provenance
     provenance = ProvDocument()
@@ -103,10 +103,6 @@ def test_cmip6_data_citation_url(tmp_path, monkeypatch):
     }
     filename = str(tmp_path / 'output.nc')
     provenance.entity('file:' + filename, attributes)
-
-    monkeypatch.setattr(
-        esmvalcore._citation, '_get_response', mock_get_response
-    )
     _write_citation_file(filename, provenance)
     citation_url = tmp_path / 'output_data_citation_url.txt'
 
