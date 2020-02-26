@@ -1,8 +1,8 @@
 """Test MRI-ESM1 fixes."""
 import unittest
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.mri_esm1 import Msftmyz
+from esmvalcore.cmor.fix import Fix
 
 
 class TestMsftmyz(unittest.TestCase):

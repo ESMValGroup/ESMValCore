@@ -5,8 +5,9 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.ccsm4 import Rlut, Rlutcs, So
+from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 class TestsRlut(unittest.TestCase):
@@ -74,12 +75,13 @@ class TestSo(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='so', units='1.0')
-        self.fix = So(None)
+        self.vardef = get_var_info('CMIP5', 'Omon', self.cube.var_name)
+        self.fix = So(self.vardef)
 
     def test_get(self):
         """Test fix get"""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'so'),
-                             [So(None)])
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Omon', 'so'),
+                             [So(self.vardef)])
 
     def test_fix_metadata(self):
         """Checks that units are changed to the correct value."""

@@ -1,8 +1,8 @@
 """Test HADGEM2-ES fixes."""
 import unittest
 
+from esmvalcore.cmor._fixes.cmip5.hadgem2_es import O2, AllVars
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.hadgem2_es import AllVars, O2
 
 
 class TestAllVars(unittest.TestCase):

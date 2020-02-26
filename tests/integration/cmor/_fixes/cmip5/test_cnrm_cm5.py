@@ -4,8 +4,8 @@ import unittest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.cnrm_cm5 import Msftmyz, Msftmyzba
+from esmvalcore.cmor.fix import Fix
 
 
 class TestMsftmyz(unittest.TestCase):

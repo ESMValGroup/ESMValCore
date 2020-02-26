@@ -16,16 +16,16 @@ def _get_all_derived_variables():
     Returns
     -------
     dict
-        All derived variables with `short_name` (keys) and the associated
+        All derived variables with `cmor_name` (keys) and the associated
         python classes (values).
 
     """
     derivers = {}
     for path in Path(__file__).parent.glob('[a-z]*.py'):
-        short_name = path.stem
+        cmor_name = path.stem
         module = importlib.import_module(
-            f'esmvalcore.preprocessor._derive.{short_name}')
-        derivers[short_name] = getattr(module, 'DerivedVariable')
+            f'esmvalcore.preprocessor._derive.{cmor_name}')
+        derivers[cmor_name] = getattr(module, 'DerivedVariable')
     return derivers
 
 
@@ -49,7 +49,7 @@ def get_required(cmor_name, project):
     Returns
     -------
     list
-        List of dictionaries (including at least the key `short_name`).
+        List of dictionaries (including at least the key `cmor_name`).
 
     """
     if cmor_name not in ALL_DERIVED_VARIABLES:

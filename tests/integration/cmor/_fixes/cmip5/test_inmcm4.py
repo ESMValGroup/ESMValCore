@@ -1,11 +1,11 @@
 """Tests for inmcm4 fixes."""
 import unittest
 
-from iris.cube import Cube
 from cf_units import Unit
+from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.inmcm4 import Gpp, Lai, Nbp
+from esmvalcore.cmor.fix import Fix
 
 
 class TestGpp(unittest.TestCase):

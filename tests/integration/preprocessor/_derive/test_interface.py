@@ -73,7 +73,7 @@ def test_derive_noop():
     assert cube is alb
 
 
-def test_derive_mixed_case_with_fx(tmp_path, monkeypatch):
+def test_derive_mixed_case_with_fx(monkeypatch):
 
     short_name = 'ohc'
     long_name = 'Heat content in grid cell'

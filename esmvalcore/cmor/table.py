@@ -91,7 +91,7 @@ class CMIP6Info(object):
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
         Path to the folder containing the Tables folder with the json files
 
     default: object
@@ -240,7 +240,7 @@ class CMIP6Info(object):
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
@@ -261,10 +261,10 @@ class CMIP6Info(object):
 
         Parameters
         ----------
-        table_name: basestring
+        table_name: str
             Table name
-        short_name: basestring
-            Variable's short name
+        cmor_name: str
+            Variable's cmor name
         derived: bool, optional
             Variable is derived. Info retrieval is less strict
 
@@ -283,8 +283,8 @@ class CMIP6Info(object):
                 pass
 
         if cmor_name in CMIP6Info._CMIP_5to6_varname:
-            new_short_name = CMIP6Info._CMIP_5to6_varname[cmor_name]
-            return self.get_variable(table_name, new_short_name, derived)
+            new_cmor_name = CMIP6Info._CMIP_5to6_varname[cmor_name]
+            return self.get_variable(table_name, new_cmor_name, derived)
 
         var_info = None
         if not self.strict:
@@ -550,7 +550,7 @@ class CMIP5Info(object):
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
        Path to the folder containing the Tables folder with the json files
 
     default: object
@@ -692,7 +692,7 @@ class CMIP5Info(object):
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
@@ -704,16 +704,16 @@ class CMIP5Info(object):
         """
         return self.tables.get(table)
 
-    def get_variable(self, table, short_name, derived=False):
+    def get_variable(self, table, cmor_name, derived=False):
         """
         Search and return the variable info.
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
-        short_name: basestring
-            Variable's short name
+        cmor_name: str
+            Variable's cmor name
         derived: bool, optional
             Variable is derived. Info retrieval is less strict
 
@@ -724,16 +724,16 @@ class CMIP5Info(object):
             found, returns None if not
 
         """
-        var_info = self.tables.get(table, {}).get(short_name, None)
+        var_info = self.tables.get(table, {}).get(cmor_name, None)
         if var_info:
             return var_info
         if not self.strict:
             for table_vars in sorted(self.tables.values()):
-                if short_name in table_vars:
-                    var_info = table_vars[short_name]
+                if cmor_name in table_vars:
+                    var_info = table_vars[cmor_name]
                     break
         if not var_info and (derived or not self.strict):
-            var_info = self.default.get_variable(table, short_name)
+            var_info = self.default.get_variable(table, cmor_name)
 
         if var_info:
             mip_info = self.get_table(table)
@@ -749,7 +749,7 @@ class CMIP3Info(CMIP5Info):
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
        Path to the folder containing the Tables folder with the json files
 
     default: object
@@ -775,8 +775,8 @@ class CMIP3Info(CMIP5Info):
             coord.var_name = coord.name
         return coord
 
-    def _read_variable(self, short_name, frequency):
-        var = super()._read_variable(short_name, frequency)
+    def _read_variable(self, cmor_name, frequency):
+        var = super()._read_variable(cmor_name, frequency)
         var.modeling_realm = None
         var.frequency = None
         return var
@@ -788,7 +788,7 @@ class CustomInfo(CMIP5Info):
 
     Parameters
     ----------
-    cmor_tables_path: basestring or None
+    cmor_tables_path: str or None
         Full path to the table or name for the table if it is present in
         ESMValTool repository
 
@@ -827,7 +827,7 @@ class CustomInfo(CMIP5Info):
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
@@ -839,16 +839,16 @@ class CustomInfo(CMIP5Info):
         """
         return self.tables.get(table)
 
-    def get_variable(self, table, short_name, derived=False):
+    def get_variable(self, table, cmor_name, derived=False):
         """
         Search and return the variable info.
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
-        short_name: basestring
-            Variable's short name
+        cmor_name: str
+            Variable's cmor name
         derived: bool, optional
             Variable is derived. Info retrieval is less strict
 
@@ -859,7 +859,7 @@ class CustomInfo(CMIP5Info):
             found, returns None if not
 
         """
-        return self.tables['custom'].get(short_name, None)
+        return self.tables['custom'].get(cmor_name, None)
 
     def _read_table_file(self, table_file, table=None):
         with open(table_file) as self._current_table:

@@ -215,7 +215,7 @@ A (simplified) example diagnostics section could look like
         - atmos
       variables:
         variable_name:
-          short_name: ta
+          cmor_name: ta
           preprocessor: preprocessor_name
           mip: Amon
       scripts:
@@ -249,7 +249,7 @@ that wildcard expansion can be used to define ancestors.
     diagnostic_1:
       variables:
         airtemp:
-          short_name: ta
+          cmor_name: ta
           preprocessor: preprocessor_name
           mip: Amon
       scripts:
@@ -258,7 +258,7 @@ that wildcard expansion can be used to define ancestors.
     diagnostic_2:
       variables:
         precip:
-          short_name: pr
+          cmor_name: pr
           preprocessor: preprocessor_name
           mip: Amon
       scripts:

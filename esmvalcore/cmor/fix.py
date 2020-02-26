@@ -95,10 +95,7 @@ def fix_metadata(cubes,
     """
     fixes = Fix.get_fixes(
         project=project, dataset=dataset, mip=mip, cmor_name=cmor_name)
-    if project and mip:
-        short_name = get_var_info(project, mip, cmor_name).short_name
-    else:
-        short_name = cmor_name
+    short_name = get_var_info(project, mip, cmor_name).short_name
     fixed_cubes = []
     by_file = defaultdict(list)
     for cube in cubes:

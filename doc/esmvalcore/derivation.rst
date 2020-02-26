@@ -27,8 +27,8 @@ A typical example looks like this:
            if project == 'CMIP6':
                mip = 'Ofx'
            required = [
-               {'short_name': 'var_a'},
-               {'short_name': 'var_b', 'mip': mip, 'optional': True},
+               {'cmor_name': 'var_a'},
+               {'cmor_name': 'var_b', 'mip': mip, 'optional': True},
            ]
            return required
 

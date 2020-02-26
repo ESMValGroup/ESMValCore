@@ -89,7 +89,7 @@ class Fix:
             Variable's cube
         """
         if short_name is None:
-            short_name = self.__class__.__name__.lower()
+            short_name = self.vardef.short_name
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube

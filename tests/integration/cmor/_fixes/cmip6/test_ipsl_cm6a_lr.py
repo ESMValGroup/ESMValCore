@@ -1,9 +1,8 @@
 import unittest
 
 import numpy as np
-
-from iris.cube import Cube, CubeList
 from iris.coords import AuxCoord
+from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.cmor._fixes.cmip6.ipsl_cm6a_lr import AllVars

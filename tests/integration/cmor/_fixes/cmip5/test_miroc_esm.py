@@ -6,8 +6,9 @@ from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateNotFoundError
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.miroc_esm import AllVars, Co2, Tro3
+from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 class TestCo2(unittest.TestCase):
@@ -15,13 +16,14 @@ class TestCo2(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
-        self.fix = Co2(None)
+        self.vardef = get_var_info('CMIP5', 'Amon', self.cube.var_name)
+        self.fix = Co2(self.vardef)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'co2'),
-            [Co2(None), AllVars(None)])
+            [Co2(self.vardef), AllVars(self.vardef)])
 
     def test_fix_metadata(self):
         """Test unit fix."""

@@ -2,7 +2,6 @@
 import logging
 
 import cf_units
-import iris.coord_categorisation
 import iris.coords
 import iris.exceptions
 import iris.util

@@ -1,8 +1,8 @@
 """Test Access1-0 fixes."""
 import unittest
 
-from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1_m import Tos
+from esmvalcore.cmor._fixes.fix import Fix
 
 
 class TestTos(unittest.TestCase):

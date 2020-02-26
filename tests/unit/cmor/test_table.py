@@ -16,13 +16,19 @@ class TestVariableInfo(unittest.TestCase):
         """Test basic constructor."""
         info = VariableInfo('table_type', 'var')
         self.assertEqual('table_type', info.table_type)
-        self.assertEqual('var', info.short_name)
+        self.assertEqual('var', info.cmor_name)
 
     def test_read_empty_dictionary(self):
         """Test read empty dict."""
         info = VariableInfo('table_type', 'var')
         info.read_json({}, '')
         self.assertEqual('', info.standard_name)
+
+    def test_read_short_name(self):
+        """Test out_name."""
+        info = VariableInfo('table_type', 'var')
+        info.read_json({'out_name': self.value}, '')
+        self.assertEqual(info.short_name, self.value)
 
     def test_read_standard_name(self):
         """Test standard_name."""

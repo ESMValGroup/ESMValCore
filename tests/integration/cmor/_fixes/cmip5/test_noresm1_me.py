@@ -1,10 +1,10 @@
 """Tests for fixes of NorESM1-ME (CMIP5)."""
-import pytest
 import iris
+import pytest
 from iris.cube import CubeList
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.noresm1_me import Tas
+from esmvalcore.cmor.fix import Fix
 
 DIM_COORD_SHORT = iris.coords.DimCoord(
     [1.0, 2.0, 3.0],

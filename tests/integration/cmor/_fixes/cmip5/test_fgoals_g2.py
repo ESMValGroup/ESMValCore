@@ -5,8 +5,8 @@ from cf_units import Unit
 from iris.coords import DimCoord
 from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import AllVars
+from esmvalcore.cmor.fix import Fix
 
 
 class TestAll(unittest.TestCase):

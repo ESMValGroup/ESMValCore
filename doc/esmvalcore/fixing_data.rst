@@ -66,7 +66,7 @@ coordinates. In our example it looks like this:
             month_number                             x              -              -
             year                                     x              -              -
         Attributes:
-            {'cmor_table': 'CMIPX', 'mip': 'Amon', 'short_name': 'tas', 'frequency': 'mon'})
+            {'cmor_table': 'CMIPX', 'mip': 'Amon', 'cmor_name': 'tas', 'frequency': 'mon'})
 
 
 So now the mistake is clear: the latitude coordinate is badly named and the
@@ -132,7 +132,7 @@ so we will implement the ``fix_metadata`` method:
             latitude = tas_cube.coord('altitude')
 
             # Fix the names. Latitude values, units and
-            latitude.short_name = 'lat'
+            latitude.var_name = 'lat'
             latitude.standard_name = 'latitude'
             latitude.long_name = 'latitude'
             return cubes
@@ -185,7 +185,7 @@ from the one you just created:
             latitude = tas_cube.coord('altitude')
 
             # Fix the names. Latitude values, units and
-            latitude.short_name = 'lat'
+            latitude.var_name = 'lat'
             latitude.standard_name = 'latitude'
             latitude.long_name = 'latitude'
             return cubes

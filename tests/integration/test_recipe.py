@@ -155,8 +155,8 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
 
-    def get_required(short_name, _):
-        if short_name != 'tas':
+    def get_required(cmor_name, _):
+        if cmor_name != 'tas':
             assert False
         required = [
             {'cmor_name': 'pr'},
@@ -527,6 +527,7 @@ def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder,
     variable = recipe.diagnostics['test']['preprocessor_output']['zg'][0]
 
     reference = {
+        'cmor_name': 'zg',
         'dataset': 'bccr_bcm2_0',
         'diagnostic': 'test',
         'end_year': 2001,
@@ -571,6 +572,7 @@ def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
 
     reference = {
+        'cmor_name': 'pr',
         'dataset': 'CanESM2',
         'diagnostic': 'test',
         'end_year': 2001,
@@ -583,7 +585,6 @@ def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
         'modeling_realm': ['atmos'],
         'preprocessor': 'default',
         'project': 'CMIP5',
-        'cmor_name': 'pr',
         'standard_name': 'precipitation_flux',
         'start_year': 2000,
         'units': 'kg m-2 s-1',
@@ -617,6 +618,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
 
     reference = {
         'activity': 'CMIP',
+        'cmor_name': 'pr',
         'dataset': 'HadGEM3-GC31-LL',
         'diagnostic': 'test',
         'end_year': 2001,
@@ -630,7 +632,6 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         'modeling_realm': ['atmos'],
         'preprocessor': 'default',
         'project': 'CMIP6',
-        'cmor_name': 'pr',
         'standard_name': 'precipitation_flux',
         'start_year': 2000,
         'units': 'kg m-2 s-1',

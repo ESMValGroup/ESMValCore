@@ -4,8 +4,8 @@ import unittest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
+from esmvalcore.cmor.fix import Fix
 
 
 class TestCanESM2Fgco2(unittest.TestCase):

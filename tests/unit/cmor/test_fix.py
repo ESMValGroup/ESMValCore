@@ -53,7 +53,8 @@ class TestGetCube(TestCase):
         self.cube_2 = Mock()
         self.cube_2.var_name = 'cube2'
         self.cubes = [self.cube_1, self.cube_2]
-        self.fix = Fix(None)
+        self.vardef = Mock()
+        self.fix = Fix(self.vardef)
 
     def test_get_first_cube(self):
         """Test selecting first cube."""
@@ -73,6 +74,7 @@ class TestGetCube(TestCase):
     def test_get_default(self):
         """Check that the default return the cube (fix is a cube)."""
         self.cube_1.var_name = 'fix'
+        self.vardef.short_name = self.cube_1.var_name
         self.assertIs(self.cube_1, self.fix.get_cube_from_list(self.cubes))
 
 
@@ -189,7 +191,7 @@ class TestFixMetadata(TestCase):
         checker = Mock()
         checker.return_value = Mock()
         var_info = Mock()
-        var_info.shoart_name = 'short_name'
+        var_info.short_name = 'short_name'
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',

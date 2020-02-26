@@ -5,6 +5,7 @@ from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cmip6.mcm_ua_1_0 import AllVars, Tas
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
@@ -80,7 +81,8 @@ def test_tas_fix_metadata(cubes):
                                         long_name='height',
                                         units=Unit('m'),
                                         attributes={'positive': 'up'})
-    fix = Tas(None)
+    vardef = get_var_info('CMIP6', 'Amon', 'tas')
+    fix = Tas(vardef)
 
     # Check fix
     out_cubes = fix.fix_metadata(cubes)

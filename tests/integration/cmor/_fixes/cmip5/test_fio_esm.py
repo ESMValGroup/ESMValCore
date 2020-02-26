@@ -4,8 +4,8 @@ import unittest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.fio_esm import Ch4, Co2
+from esmvalcore.cmor.fix import Fix
 
 
 class TestCh4(unittest.TestCase):

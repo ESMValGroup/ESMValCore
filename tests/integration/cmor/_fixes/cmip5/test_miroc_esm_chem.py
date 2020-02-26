@@ -5,8 +5,8 @@ import unittest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.miroc_esm_chem import Tro3
+from esmvalcore.cmor.fix import Fix
 
 
 class TestTro3(unittest.TestCase):
