@@ -20,6 +20,7 @@ following the default order in which they are applied:
 * :ref:`Volume operations`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
+* :ref:`Other`
 
 Overview
 ========
@@ -221,6 +222,21 @@ extract the levels and vertically regrid onto the vertical levels of
           # levels: {dataset: ERA-Interim, coordinate: air_pressure}
           scheme: linear_horizontal_extrapolate_vertical
 
+By default, vertical interpolation is performed in the dimension coordinate of
+the z axis. If you want to explicitly declare the z axis coordinate to use
+(for example, ``air_pressure``' in variables that are provided in model levels 
+and not pressure levels) you can override that automatic choice by providing 
+the name of the desired coordinate:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_select_levels_from_dataset:
+        extract_levels:
+          levels: ERA-Interim
+          scheme: linear_horizontal_extrapolate_vertical
+          coordinate: air_pressure
+
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
 
@@ -406,7 +422,7 @@ diagnostic is, in turn, a dictionary on its own, and members of it can be
 accessed in the diagnostic through a simple loop over the ``config`` diagnostic
 variable items e.g.:
 
-.. code-block::
+.. code-block:: python
 
     for filename, attributes in config['input_data'].items():
         sftlf_file = attributes['fx_files']['sftlf']
@@ -451,22 +467,23 @@ is set to 19.0 (in units of the variable units).
 
 See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
 
-.. note::
+Common mask for multiple models
+-------------------------------
 
-   It is possible to use ``mask_fillvalues`` to create a combined multimodel
-   mask (all the masks from all the analyzed models combined into a single
-   mask); for that purpose setting the ``threshold_fraction`` to 0 will not
-   discard any time windows, essentially keeping the original model masks and
-   combining them into a single mask; here is an example:
+It is possible to use ``mask_fillvalues`` to create a combined multimodel
+mask (all the masks from all the analyzed models combined into a single
+mask); for that purpose setting the ``threshold_fraction`` to 0 will not
+discard any time windows, essentially keeping the original model masks and
+combining them into a single mask; here is an example:
 
-   .. code-block:: yaml
+.. code-block:: yaml
 
-       preprocessors:
-         missing_values_preprocessor:
-           mask_fillvalues:
-             threshold_fraction: 0.0     # keep all missing values
-             min_value: -1e20            # small enough not to alter the data
-             #  time_window: 10.0        # this will not matter anymore
+    preprocessors:
+      missing_values_preprocessor:
+        mask_fillvalues:
+          threshold_fraction: 0.0     # keep all missing values
+          min_value: -1e20            # small enough not to alter the data
+          #  time_window: 10.0        # this will not matter anymore
 
 Minimum, maximum and interval masking
 -------------------------------------
@@ -668,9 +685,10 @@ The ``_time.py`` module contains the following preprocessor functions:
 * annual_statistics_: Compute statistics for each year
 * decadal_statistics_: Compute statistics for each decade
 * climate_statistics_: Compute statistics for the full period
-* anomalies_: Compute anomalies
+* anomalies_: Compute (standardized) anomalies
 * regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
+* timeseries_filter_: Allows application of a filter to the time-series data.
 
 Statistics functions are applied by default in the order they appear in the
 list. For example, the following example applied to hourly data will retrieve
@@ -864,17 +882,18 @@ See also :func:`esmvalcore.preprocessor.climate_statistics`.
 ----------------------
 
 This function computes the anomalies for the whole dataset. It can compute
-anomalies from the full, seasonal, monthly and daily climatologies.
+anomalies from the full, seasonal, monthly and daily climatologies. Optionally
+standardized anomalies can be calculated.
 
 Parameters:
     * period: define the granularity of the climatology to use:
       full period, seasonal, monthly or daily.
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
-
     * reference: Time slice to use as the reference to compute the climatology
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null
+    * standardize: if true calculate standardized anomalies (default: false)
 
 Examples:
     * Anomalies from the full period climatology:
@@ -890,7 +909,15 @@ Examples:
             anomalies:
               period: month
 
-    * Anomalies from the 1979-2000 monthly climatology:
+    * Standardized anomalies from the full period climatology:
+   
+        .. code-block:: yaml
+
+            anomalies:
+              standardized: true
+
+
+     * Standardized Anomalies from the 1979-2000 monthly climatology:
 
         .. code-block:: yaml
 
@@ -903,6 +930,7 @@ Examples:
                 end_year: 2000
                 end_month: 12
                 end_day: 31
+                standardize: true
 
 See also :func:`esmvalcore.preprocessor.anomalies`.
 
@@ -922,6 +950,41 @@ set manually by the user in recipe.
 
 See also :func:`esmvalcore.preprocessor.regrid_time`.
 
+
+.. _timeseries_filter:
+
+``timeseries_filter``
+---------------------
+
+This function allows the user to apply a filter to the timeseries data. This filter may be
+of the user's choice (currently only the ``low-pass`` Lanczos filter is implemented); the
+implementation is inspired by this `iris example
+<https://scitools.org.uk/iris/docs/latest/examples/General/
+SOI_filtering.html?highlight=running%20mean>`_ and uses aggregation via a
+`rolling window <https://scitools.org.uk/iris/docs/v2.0/iris/iris/cube.html#iris.cube.Cube.rolling_window>`_.
+
+Parameters:
+    * window: the length of the filter window (in units of cube time coordinate).
+    * span: period (number of months/days, depending on data frequency) on which
+      weights should be computed e.g. for 2-yearly: span = 24 (2 x 12 months).
+      Make sure span has the same units as the data cube time coordinate.
+    * filter_type: the type of filter to be applied; default 'lowpass'.
+      Available types: 'lowpass'.
+    * filter_stats: the type of statistic to aggregate on the rolling window;
+      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+
+Examples:
+    * Lowpass filter with a monthly mean as operator:
+
+        .. code-block:: yaml
+
+            timeseries_filter:
+                window: 3  # 3-monthly filter window
+                span: 12   # weights computed on the first year
+                filter_type: lowpass  # low-pass filter
+                filter_stats: mean    # 3-monthly mean lowpass filter
+
+See also :func:`esmvalcore.preprocessor.timeseries_filter`.
 
 .. _area operations:
 
@@ -1214,3 +1277,29 @@ the average file size of all the datasets; this memory intake is high but also
 assumes that all data is fully realized in memory; this aspect will gradually
 change and the amount of realized data will decrease with the increase of
 ``dask`` use.
+
+.. _Other:
+
+Other
+=====
+
+Miscellaneous functions that do not belong to any of the other categories.
+
+Clip
+----
+
+This function clips data values to a certain minimum, maximum or range. The function takes two
+arguments:
+
+* ``minimum``: Lower bound of range. Default: ``None``
+* ``maximum``: Upper bound of range. Default: ``None``
+
+The example below shows how to set all values below zero to zero.
+
+
+.. code-block:: yaml
+
+    preprocessors:
+      clip:
+        minimum: 0
+        maximum: null

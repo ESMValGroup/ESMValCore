@@ -8,7 +8,7 @@ import yamale
 
 from ._data_finder import get_start_end_year
 from ._task import get_flattened_tasks, which
-from .preprocessor import PreprocessingTask
+from .preprocessor import PreprocessingTask, TIME_PREPROCESSORS
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +93,7 @@ def variable(var, required_keys):
 
 def data_availability(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
+    var = dict(var)
     if not input_files:
         var.pop('filename', None)
         logger.error("No input files found for variable %s", var)
@@ -130,8 +131,7 @@ def data_availability(input_files, var, dirnames, filenames):
     if missing_years:
         raise RecipeError(
             "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years),
-                input_files))
+                ", ".join(str(year) for year in missing_years), input_files))
 
 
 def tasks_valid(tasks):
@@ -148,20 +148,14 @@ def tasks_valid(tasks):
 
 def check_for_temporal_preprocs(profile):
     """Check for temporal operations on fx variables."""
-    temporal_preprocs = [
-        'extract_season',
-        'extract_month',
-        'annual_mean',
-        'seasonal_mean',
-        'time_average',
-        'regrid_time',
-    ]
     temp_preprocs = [
-        preproc for preproc in profile if preproc in temporal_preprocs]
+        preproc for preproc in profile
+        if profile[preproc] and preproc in TIME_PREPROCESSORS
+    ]
     if temp_preprocs:
         raise RecipeError(
-            "Time coordinate preprocessor step {} not permitted on fx vars \
-            please remove them from recipe.".format(", ".join(temp_preprocs)))
+            "Time coordinate preprocessor step(s) {} not permitted on fx "
+            "vars, please remove them from recipe".format(temp_preprocs))
 
 
 def extract_shape(settings):
@@ -174,6 +168,7 @@ def extract_shape(settings):
     valid = {
         'method': {'contains', 'representative'},
         'crop': {True, False},
+        'decomposed': {True, False},
     }
     for key in valid:
         value = settings.get(key)

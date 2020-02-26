@@ -90,10 +90,12 @@ class Test(tests.Test):
                     axis=0, interpolation=scheme, extrapolation='nan'))
         args, kwargs = self.mock_create_cube.call_args
         # Check the _create_cube args ...
-        self.assertEqual(len(args), 3)
+        self.assertEqual(len(args), 4)
         self.assertEqual(args[0], self.cube)
         self.assert_array_equal(args[1], new_data)
-        self.assert_array_equal(args[2], levels)
+        self.assert_array_equal(
+            args[2], self.cube.coord(axis='z', dim_coords=True))
+        self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())
 
@@ -120,14 +122,16 @@ class Test(tests.Test):
                     axis=0, interpolation=scheme, extrapolation='nan'))
         args, kwargs = self.mock_create_cube.call_args
         # Check the _create_cube args ...
-        self.assertEqual(len(args), 3)
+        self.assertEqual(len(args), 4)
         self.assert_array_equal(args[0], self.cube)
         new_data[np.isnan(new_data)] = _MDI
         new_data_mask = np.zeros(new_data.shape, bool)
         new_data_mask[new_data == _MDI] = True
         new_data = np.ma.array(new_data, mask=new_data_mask)
         self.assert_array_equal(args[1], new_data)
-        self.assert_array_equal(args[2], levels)
+        self.assert_array_equal(
+            args[2], self.cube.coord(axis='z', dim_coords=True))
+        self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())
 
@@ -162,7 +166,7 @@ class Test(tests.Test):
         # in-place for new extract_levels with nan's
         new_data[np.isnan(new_data)] = _MDI
         # Check the _create_cube args ...
-        self.assertEqual(len(args), 3)
+        self.assertEqual(len(args), 4)
         self.assertEqual(args[0].metadata, cube.metadata)
         coord_comparison = iris.analysis.coord_comparison(args[0], cube)
         self.assertFalse(coord_comparison['not_equal']
@@ -174,7 +178,9 @@ class Test(tests.Test):
         self.assert_array_equal(args[1], new_data)
         self.assertTrue(ma.isMaskedArray(args[1]))
         self.assert_array_equal(args[1].mask, new_data_mask)
-        self.assert_array_equal(args[2], levels)
+        self.assert_array_equal(
+            args[2], self.cube.coord(axis='z', dim_coords=True))
+        self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())
 
