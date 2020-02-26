@@ -253,6 +253,7 @@ def test_py_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     _run_tasks_parallel(tasks, 2)
 
 
+@pytest.mark.install
 def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = "cows on the [river]"
@@ -271,6 +272,7 @@ def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
     assert exp_mssg_2 in str(err_mssg.value)
 
 
+@pytest.mark.install
 def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = _py2ncl({'cow': 22}, 'tas')
@@ -284,6 +286,7 @@ def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     _run_tasks_parallel(tasks, 2)
 
 
+@pytest.mark.install
 def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = 'var0 <- "zg"'
