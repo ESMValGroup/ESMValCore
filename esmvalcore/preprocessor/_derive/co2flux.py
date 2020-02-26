@@ -1,9 +1,11 @@
 """Derivation of variable `co2flux`."""
 
-from iris import Constraint
+import iris
 
 from ._baseclass import DerivedVariableBase
+from ._shared import _var_name_constraint
 from .._regrid import regrid
+#from .._area import  area_statistics
 #from .._weighting.py import weighting_landsea_fraction
 
 
@@ -27,12 +29,16 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute total carbon flux from land and ocean."""
         nbp_cube = cubes.extract_strict(
-            Constraint(name='nbp'))
+            _var_name_constraint('nbp'))
         fgco2_cube = cubes.extract_strict(
-            Constraint(name='fgco2'))
+            _var_name_constraint('fgco2'))
 
         # Regridd fgco2 to linear grid
-        fgco2_cube = regrid(fgco2_cube, nbp_cube, 'linear')
+        if fgco2_cube.shape[1] != 1 and fgco2_cube.shape[2] != 1:
+            fgco2_cube = regrid(fgco2_cube, nbp_cube[0], 'linear')
+        #nbp_cube   = area_statistics(nbp_cube,'sum')
+        #fgco2_cube = area_statistics(fgco2_cube,'sum',fx_file!)
+
 
         # Account for leand-sea fraction (not working yet)
         #nbp_cube = weighting_landsea_fraction(nbp_cube, sftlf, land)

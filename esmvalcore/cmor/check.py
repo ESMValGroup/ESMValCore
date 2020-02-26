@@ -517,7 +517,7 @@ class CMORCheck():
                 if second_month != second.month or \
                    second_year != second.year:
                     msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, freq)
+                    self.report_warning(msg, var_name, freq)
                     break
         elif freq == 'yr':
             for i in range(len(coord.points) - 1):
@@ -526,7 +526,7 @@ class CMORCheck():
                 second_month = first.month + 1
                 if first.year + 1 != second.year:
                     msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, freq)
+                    self.report_warning(msg, var_name, freq)
                     break
         else:
             if freq in intervals:
@@ -549,7 +549,7 @@ class CMORCheck():
                 if (interval < target_interval[0]
                         or interval > target_interval[1]):
                     msg = '{}: Frequency {} does not match input data'
-                    self.report_error(msg, var_name, freq)
+                    self.report_warning(msg, var_name, freq)
                     break
 
     @staticmethod
