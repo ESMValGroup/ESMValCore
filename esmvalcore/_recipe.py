@@ -434,19 +434,6 @@ def _get_correct_fx_file(variable, fx_variable, config_user):
     return fx_files, valid_fx_vars
 
 
-def _get_landsea_fraction_fx_dict(variable, config_user):
-    """Get dict of available ``sftlf`` and ``sftof`` variables."""
-    fx_dict = {}
-    fx_vars = ['sftlf']
-    if variable['project'] != 'obs4mips':
-        fx_vars.append('sftof')
-    for fx_var in fx_vars:
-        fx_file, _ = _get_correct_fx_file(variable, fx_var, config_user)
-        fx_dict[fx_var] = fx_file
-
-    return fx_dict
-
-
 def _exclude_dataset(settings, variable, step):
     """Exclude dataset from specific preprocessor step if requested."""
     exclude = {
@@ -466,28 +453,17 @@ def _update_weighting_settings(settings, variable):
     _exclude_dataset(settings, variable, 'weighting_landsea_fraction')
 
 
-def _update_fx_settings_mask(settings, variable, config_user, as_list):
+def _update_fx_settings_mask(settings, variable, config_user,
+                             fx_vars, as_list):
     # msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
     logger.debug('Getting land-sea fx mask settings now...')
-    fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
+    fx_dict = {fx_var: _get_correct_fx_file(variable, fx_var, config_user)[0]
+               for fx_var in fx_vars}
     if as_list:
-        settings['fx_files'] = [fx_file
-                                for fx_file in fx_dict.values()
+        settings['fx_files'] = [fx_file for fx_file in fx_dict.values()
                                 if fx_file]
     else:
         settings['fx_files'] = fx_dict
-
-
-def _update_fx_settings_mask_landseaice(settings,
-                                        variable,
-                                        config_user):
-    logger.debug('Getting land-seaice fx mask settings now...')
-    settings['fx_files'] = []
-    fx_file, _ = _get_correct_fx_file(variable, 'sftgif', config_user)
-    fx_files_dict = {'sftgif': fx_file}
-    if fx_files_dict['sftgif']:
-        settings['fx_files'].append(fx_files_dict['sftgif'])
-    # logger.info(msg, 'land/sea ice masking', pformat(fx_files_dict))
 
 
 def _update_fx_settings_stats(settings, variable, config_user):
@@ -520,13 +496,19 @@ def _update_fx_settings_stats(settings, variable, config_user):
 
 
 def _update_fx_settings(settings, variable, config_user):
+    landseamask_vars = ['sftlf']
+    if variable['project'] != 'obs4mips':
+        landseamask_vars.append('sftof')
     update_methods = {
         'mask_landsea':
-        (_update_fx_settings_mask, {'as_list': True}),
+        (_update_fx_settings_mask, {'as_list': True,
+                                    'fx_vars': landseamask_vars}),
         'mask_landseaice':
-        (_update_fx_settings_mask_landseaice, {}),
+        (_update_fx_settings_mask, {'as_list': True,
+                                    'fx_vars': ['sftgif']}),
         'weighting_landsea_fraction':
-        (_update_fx_settings_mask, {'as_list': False}),
+        (_update_fx_settings_mask, {'as_list': False,
+                                    'fx_vars': landseamask_vars}),
         'area_statistics': (_update_fx_settings_stats, {}),
         'volume_statistics': (_update_fx_settings_stats, {}),
         'zonal_statistics': (_update_fx_settings_stats, {}),
