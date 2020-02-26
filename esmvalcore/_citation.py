@@ -119,6 +119,14 @@ def _get_response(url):
 
 def _json_to_bibtex(data):
     """Make a bibtex entry from CMIP6 Data Citation json data."""
+    url = 'url not found'
+    title = data.get('titles', ['title not found'])[0]
+    publisher = data.get('publisher', 'publisher not found')
+    year = data.get('publicationYear', 'publicationYear not found')
+    authors = 'creators not found'
+    doi = 'doi not found'
+
+    author_list = []
     if data.get('creators', False):
         author_list = [
             item.get('creatorName', '') for item in data['creators']
@@ -131,13 +139,9 @@ def _json_to_bibtex(data):
         else:
             authors = ' and '.join(author_list)
 
-    title = data.get('titles', ['title not found'])[0]
-    publisher = data.get('publisher', 'publisher not found')
-    year = data.get('publicationYear', 'publicationYear not found')
-
     if data.get('identifier', False):
         doi = data.get('identifier').get('id', 'doi not found')
-    url = f'https://doi.org/{doi}'
+        url = f'https://doi.org/{doi}'
 
     bibtex_entry = (
         f'{"@misc{"}{url},\n\t'
