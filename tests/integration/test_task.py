@@ -109,7 +109,7 @@ def test_py2ncl():
 
 
 def test_base_task():
-    """Test BaseTask."""
+    """Test BaseTask basic attributes."""
     tasks = set()
     task = BaseTask(
         name='task0',
@@ -130,7 +130,7 @@ def test_base_task():
 
 
 def test_py_diagnostic_task_basics(tmp_path):
-    """Test BaseTask."""
+    """Test DiagnosticTask basic attributes."""
     diag_output_dir = tmp_path / 'mydiag'
     diag_run_dir = diag_output_dir / 'run_dir'
     diag_settings = {'run_dir': diag_run_dir, 'profile_diagnostic': False}
@@ -177,9 +177,10 @@ def test_py_diagnostic_task_basics(tmp_path):
     assert ept == str(err_msg.value)
 
 
-def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
-    # diag exists; test the NotImplementedError
-    diag_script = tmp_path / 'diag_cow.py'
+def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
+    """Assemble Python diagnostic tasks of DiagnosticTasks."""
+    diag = 'diag_cow.' + extension
+    diag_script = tmp_path / diag
     diag_output_dir = tmp_path / 'mydiag'
     diag_run_dir = diag_output_dir / 'run_dir'
     diag_plot_dir = diag_output_dir / 'plot_dir'
@@ -187,10 +188,11 @@ def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
     diag_settings = {'run_dir': diag_run_dir.as_posix(),
                      'plot_dir': diag_plot_dir.as_posix(),
                      'work_dir': diag_work_dir.as_posix(),
-                     'profile_diagnostic': False}
+                     'profile_diagnostic': False,
+                     'exit_on_ncl_warning': False}
 
     with open(diag_script, "w") as fil:
-        fil.write("import os\n\nprint(cow)")
+        fil.write(diagnostic_text)
     tasks = set()
     task = DiagnosticTask(
         name='task0',
@@ -202,6 +204,14 @@ def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
     for task0 in task.flatten():
         task0.priority = 0
     tasks.add(task)
+
+    return tasks
+
+
+def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
+    """Run DiagnosticTask sequentially with bad Python script."""
+    diagnostic_text = "import os\n\nprint(cow)"
+    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
@@ -215,29 +225,9 @@ def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
 
 
 def test_py_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
-    diag_script = tmp_path / 'diag_cow.py'
-    diag_output_dir = tmp_path / 'mydiag'
-    diag_run_dir = diag_output_dir / 'run_dir'
-    diag_plot_dir = diag_output_dir / 'plot_dir'
-    diag_work_dir = diag_output_dir / 'work_dir'
-    diag_settings = {'run_dir': diag_run_dir.as_posix(),
-                     'plot_dir': diag_plot_dir.as_posix(),
-                     'work_dir': diag_work_dir.as_posix(),
-                     'profile_diagnostic': False}
-
-    with open(diag_script, "w") as fil:
-        fil.write("import os\n\nprint(cow)")
-    tasks = set()
-    task = DiagnosticTask(
-        name='task0',
-        ancestors=None,
-        script=diag_script.as_posix(),
-        settings=diag_settings,
-        output_dir=diag_output_dir.as_posix(),
-    )
-    for task0 in task.flatten():
-        task0.priority = 0
-    tasks.add(task)
+    """Run DiagnosticTask parallel with bad Python script."""
+    diagnostic_text = "import os\n\nprint(cow)"
+    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
@@ -251,29 +241,9 @@ def test_py_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
 
 
 def test_py_diagnostic_run_parallel_task(monkeypatch, tmp_path):
-    diag_script = tmp_path / 'diag_cow.py'
-    diag_output_dir = tmp_path / 'mydiag'
-    diag_run_dir = diag_output_dir / 'run_dir'
-    diag_plot_dir = diag_output_dir / 'plot_dir'
-    diag_work_dir = diag_output_dir / 'work_dir'
-    diag_settings = {'run_dir': diag_run_dir.as_posix(),
-                     'plot_dir': diag_plot_dir.as_posix(),
-                     'work_dir': diag_work_dir.as_posix(),
-                     'profile_diagnostic': False}
-
-    with open(diag_script, "w") as fil:
-        fil.write("import os\n\nprint('cow')")
-    tasks = set()
-    task = DiagnosticTask(
-        name='task0',
-        ancestors=None,
-        script=diag_script.as_posix(),
-        settings=diag_settings,
-        output_dir=diag_output_dir.as_posix(),
-    )
-    for task0 in task.flatten():
-        task0.priority = 0
-    tasks.add(task)
+    """Run DiagnosticTask in parallel with OK Python script."""
+    diagnostic_text = "import os\n\nprint('cow')"
+    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
@@ -283,32 +253,41 @@ def test_py_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     _run_tasks_parallel(tasks, 2)
 
 
-def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
-    diag_script = tmp_path / 'diag_cow.ncl'
-    diag_output_dir = tmp_path / 'mydiag'
-    diag_run_dir = diag_output_dir / 'run_dir'
-    diag_plot_dir = diag_output_dir / 'plot_dir'
-    diag_work_dir = diag_output_dir / 'work_dir'
-    diag_settings = {'run_dir': diag_run_dir.as_posix(),
-                     'plot_dir': diag_plot_dir.as_posix(),
-                     'work_dir': diag_work_dir.as_posix(),
-                     'profile_diagnostic': False,
-                     'exit_on_ncl_warning': False}
+def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
+    """Run DiagnosticTask in parallel with OK NCL script."""
+    diagnostic_text = "cows on the [river]"
+    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
 
-    ncl_text = _py2ncl({'cow': 22}, 'tas')
-    with open(diag_script, "w") as fil:
-        fil.write(ncl_text)
-    tasks = set()
-    task = DiagnosticTask(
-        name='task0',
-        ancestors=None,
-        script=diag_script.as_posix(),
-        settings=diag_settings,
-        output_dir=diag_output_dir.as_posix(),
-    )
-    for task0 in task.flatten():
-        task0.priority = 0
-    tasks.add(task)
+    def _run(self, input_filesi=[]):
+        print(f'running task {self.name}')
+
+    monkeypatch.setattr(BaseTask, '_run', _run)
+
+    with pytest.raises(DiagnosticError) as err_mssg:
+        _run_tasks_parallel(tasks, 2)
+    exp_mssg_1 = "An error occurred during execution of NCL script"
+    exp_mssg_2 = "diag_cow.ncl"
+    assert exp_mssg_1 in str(err_mssg.value)
+    assert exp_mssg_2 in str(err_mssg.value)
+
+
+def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
+    """Run DiagnosticTask in parallel with OK NCL script."""
+    diagnostic_text = _py2ncl({'cow': 22}, 'tas')
+    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
+
+    def _run(self, input_filesi=[]):
+        print(f'running task {self.name}')
+
+    monkeypatch.setattr(BaseTask, '_run', _run)
+
+    _run_tasks_parallel(tasks, 2)
+
+
+def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
+    """Run DiagnosticTask in parallel with OK NCL script."""
+    diagnostic_text = 'var0 <- "zg"'
+    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
