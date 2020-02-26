@@ -43,7 +43,7 @@ option:
   # turning it off will turn off graphical output from diagnostic
   write_plots: true
 
-  # Diagnositcs write NetCDF files? [true]/false
+  # Diagnostic write NetCDF files? [true]/false
   # turning it off will turn off netCDF output from diagnostic
   write_netcdf: true
 
@@ -113,7 +113,7 @@ Most of these settings are fairly self-explanatory, e.g.:
 
   # Diagnostics create plots? [true]/false
   write_plots: true
-  # Diagnositcs write NetCDF files? [true]/false
+  # Diagnostic write NetCDF files? [true]/false
   write_netcdf: true
 
 The ``write_plots`` setting is used to inform ESMValTool diagnostics about your

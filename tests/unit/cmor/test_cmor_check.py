@@ -15,7 +15,7 @@ from esmvalcore.cmor.check import CMORCheck, CMORCheckError
 
 
 class VariableInfoMock:
-    """Mock for the variables defintion."""
+    """Mock for the variables definition."""
 
     def __init__(self):
         self.table_type = 'CMIP5'
