@@ -466,69 +466,75 @@ def _update_weighting_settings(settings, variable):
     _exclude_dataset(settings, variable, 'weighting_landsea_fraction')
 
 
-def _get_fx_mask_settings(variable, settings, config_user):
-    """Assemble the fx var structures for land/sea masking."""
-    msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
-    if 'mask_landsea' in settings:
-        logger.debug('Getting land-sea fx mask settings now...')
-        fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
-        fx_list = [fx_file for fx_file in fx_dict.values() if fx_file]
-        settings['mask_landsea']['fx_files'] = fx_list
-        logger.info(msg, 'land/sea masking', pformat(fx_dict))
-
-    if 'mask_landseaice' in settings:
-        logger.debug('Getting land-seaice fx mask settings now...')
-        settings['mask_landseaice']['fx_files'] = []
-        fx_file, _ = _get_correct_fx_file(variable, 'sftgif', config_user)
-        fx_files_dict = {'sftgif': fx_file}
-        if fx_files_dict['sftgif']:
-            settings['mask_landseaice']['fx_files'].append(
-                fx_files_dict['sftgif'])
-        logger.info(msg, 'land/sea ice masking', pformat(fx_files_dict))
-
-    if 'weighting_landsea_fraction' in settings:
-        logger.debug("Getting fx files for landsea fraction weighting now...")
-        fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
-        settings['weighting_landsea_fraction']['fx_files'] = fx_dict
-        logger.info(msg, 'land/sea fraction weighting', pformat(fx_dict))
+def _update_fx_settings_mask(settings, variable, config_user, as_list):
+    # msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
+    logger.debug('Getting land-sea fx mask settings now...')
+    fx_dict = _get_landsea_fraction_fx_dict(variable, config_user)
+    if as_list:
+        settings['fx_files'] = [fx_file
+                                for fx_file in fx_dict.values()
+                                if fx_file]
+    else:
+        settings['fx_files'] = fx_dict
 
 
-def _get_fx_stats_settings(variable, settings, config_user):
+def _update_fx_settings_mask_landseaice(settings,
+                                        variable,
+                                        config_user):
+    logger.debug('Getting land-seaice fx mask settings now...')
+    settings['fx_files'] = []
+    fx_file, _ = _get_correct_fx_file(variable, 'sftgif', config_user)
+    fx_files_dict = {'sftgif': fx_file}
+    if fx_files_dict['sftgif']:
+        settings['fx_files'].append(fx_files_dict['sftgif'])
+    # logger.info(msg, 'land/sea ice masking', pformat(fx_files_dict))
+
+
+def _update_fx_settings_stats(settings, variable, config_user):
     """Assemble the fx vars structures for area/volume stats."""
-    msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
-    for step in ('area_statistics', 'volume_statistics', 'zonal_statistics'):
-        var = dict(variable)
-        fx_files_dict = {}
-        var['fx_files'] = settings.get(step, {}).get('fx_files')
-        if var['fx_files']:
-            for fxvar in var['fx_files']:
-                fxvar_name = fxvar
-                if isinstance(fxvar, dict):
-                    try:
-                        fxvar_name = fxvar["short_name"]
-                    except KeyError:
-                        raise RecipeError(
-                            "No entry short_name found in {}".format(fxvar)
-                        )
-                _, cmor_fx_var = _get_correct_fx_file(
-                    variable, fxvar, config_user)
-                if cmor_fx_var:
-                    fx_files_dict[fxvar_name] = get_output_file(
-                        var,
-                        config_user['preproc_dir'],
-                        fx_var_alias=cmor_fx_var)
+    # msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
+    var = dict(variable)
+    fx_files_dict = {}
+    var['fx_files'] = settings.get('fx_files')
+    if var['fx_files']:
+        for fxvar in var['fx_files']:
+            fxvar_name = fxvar
+            if isinstance(fxvar, dict):
+                try:
+                    fxvar_name = fxvar["short_name"]
+                except KeyError:
+                    raise RecipeError(
+                        "No entry short_name found in {}".format(fxvar)
+                    )
+            _, cmor_fx_var = _get_correct_fx_file(
+                variable, fxvar, config_user)
+            if cmor_fx_var:
+                fx_files_dict[fxvar_name] = get_output_file(
+                    var,
+                    config_user['preproc_dir'],
+                    fx_var_alias=cmor_fx_var)
 
-            # finally construct the fx files dictionary
-            settings[step]['fx_files'] = fx_files_dict
-            logger.info(msg, step, pformat(fx_files_dict))
+        # finally construct the fx files dictionary
+        settings['fx_files'] = fx_files_dict
+        # logger.info(msg, step, pformat(fx_files_dict))
 
 
 def _update_fx_settings(settings, variable, config_user):
-    """Find and set the general FX mask/stats settings."""
-    # get settings for fixed fx masks: land, sea or seaice or weighted
-    _get_fx_mask_settings(variable, settings, config_user)
-    # get settings for fx variables that need preprocessing
-    _get_fx_stats_settings(variable, settings, config_user)
+    update_methods = {
+        'mask_landsea':
+        (_update_fx_settings_mask, {'as_list': True}),
+        'mask_landseaice':
+        (_update_fx_settings_mask_landseaice, {}),
+        'weighting_landsea_fraction':
+        (_update_fx_settings_mask, {'as_list': False}),
+        'area_statistics': (_update_fx_settings_stats, {}),
+        'volume_statistics': (_update_fx_settings_stats, {}),
+        'zonal_statistics': (_update_fx_settings_stats, {}),
+    }
+    for step_name, step_settings in settings.items():
+        update_method, kwargs = update_methods.get(step_name, (None, {}))
+        if update_method:
+            update_method(step_settings, variable, config_user, **kwargs)
 
 
 def _read_attributes(filename):
