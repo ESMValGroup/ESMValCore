@@ -22,7 +22,7 @@ from ._multimodel import multi_model_statistics
 from ._other import clip
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
-from ._regrid import extract_levels, regrid
+from ._regrid import extract_levels, regrid, extract_point
 from ._time import (annual_statistics, anomalies, climate_statistics,
                     daily_statistics, decadal_statistics, extract_month,
                     extract_season, extract_time, monthly_statistics,
@@ -65,6 +65,8 @@ __all__ = [
     'mask_landseaice',
     # Regridding
     'regrid',
+    # Point interpolation
+    'extract_point',
     # Masking missing values
     'mask_fillvalues',
     'mask_above_threshold',
