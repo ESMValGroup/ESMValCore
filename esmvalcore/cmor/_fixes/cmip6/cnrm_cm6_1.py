@@ -12,7 +12,7 @@ class Clcalipso(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
 
         Returns
         -------
