@@ -491,7 +491,7 @@ def _update_fx_settings_stats(settings, variable, config_user, fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
-    msg = f"Using fx files for %s of dataset {variable['dataset']}:\n%s"
+    msg = f"Using fx files for %s of dataset %s:\n%s"
     # landsea mask fx variables
     landseamask_vars = ['sftlf']
     if variable['project'] != 'obs4mips':
@@ -532,7 +532,8 @@ def _update_fx_settings(settings, variable, config_user):
         update_method, kwargs = update_methods.get(step_name, (None, {}))
         if update_method:
             update_method(step_settings, variable, config_user, **kwargs)
-            logger.info(msg, step_name)
+            logger.info(msg, variable['short_name'],
+                        variable['dataset'], step_name)
 
 
 def _read_attributes(filename):
