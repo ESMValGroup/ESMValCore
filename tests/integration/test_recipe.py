@@ -2,11 +2,12 @@ import os
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
+from unittest.mock import create_autospec
 
 import iris
 import pytest
 import yaml
-from mock import create_autospec
+from PIL import Image
 
 import esmvalcore
 from esmvalcore._recipe import TASKSEP, read_recipe_file
@@ -19,7 +20,6 @@ from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
 
 MANDATORY_DATASET_KEYS = (
-    'cmor_table',
     'dataset',
     'diagnostic',
     'end_year',
@@ -64,6 +64,7 @@ def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test')
     cfg['synda_download'] = False
+    cfg['output_file_type'] = 'png'
     return cfg
 
 
@@ -302,12 +303,11 @@ def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):
                   - dataset: MPI-ESM-LR
             scripts: null
         """)
-    rec_err = "Time coordinate preprocessor step extract_season \
-              not permitted on fx vars \
-              please remove them from recipe."
+    msg = ("Time coordinate preprocessor step(s) ['extract_season'] not "
+           "permitted on fx vars, please remove them from recipe")
     with pytest.raises(Exception) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-        assert rec_err == rec_err_exp
+    assert str(rec_err_exp.value) == msg
 
 
 def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
@@ -348,13 +348,13 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
+            'mip': 'Oyr',
             'output_dir': fix_dir,
         },
         'fix_data': {
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
-            'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'frequency': 'yr',
         },
@@ -362,7 +362,6 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
-            'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'frequency': 'yr',
         },
@@ -435,13 +434,13 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'sftlf',
+            'mip': 'fx',
             'output_dir': fix_dir,
         },
         'fix_data': {
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'sftlf',
-            'cmor_table': 'CMIP5',
             'mip': 'fx',
             'frequency': 'fx',
         },
@@ -449,7 +448,6 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'sftlf',
-            'cmor_table': 'CMIP5',
             'mip': 'fx',
             'frequency': 'fx',
         },
@@ -671,7 +669,6 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder,
             'tas_MOHC-HadGEM3-RA_evaluation_r1i1p1_v1_mon_1991-1993.nc')
     reference = {
         'alias': 'MOHC-HadGEM3-RA',
-        'cmor_table': 'CORDEX',
         'dataset': 'MOHC-HadGEM3-RA',
         'diagnostic': 'test',
         'domain': 'AFR-44',
@@ -768,11 +765,13 @@ def test_reference_dataset(tmp_path, patched_datafinder, config_user,
 
     fix_dir = os.path.splitext(reference.filename)[0] + '_fixed'
     get_reference_levels.assert_called_once_with(
-        reference.files[0],
-        'CMIP5',
-        'MPI-ESM-LR',
-        'ta',
-        fix_dir,
+        filename=reference.files[0],
+        project='CMIP5',
+        dataset='MPI-ESM-LR',
+        short_name='ta',
+        mip='Amon',
+        frequency='mon',
+        fix_dir=fix_dir,
     )
 
     assert 'regrid' not in reference.settings
@@ -1130,12 +1129,12 @@ def test_derive_with_optional_var_nodata(tmp_path,
         assert ancestor_product.filename in all_product_files
 
 
-def get_plot_filename(basename, cfg):
+def create_test_image(basename, cfg):
     """Get a valid path for saving a diagnostic plot."""
-    return os.path.join(
-        cfg['plot_dir'],
-        basename + '.' + cfg['output_file_type'],
-    )
+    image = Path(cfg['plot_dir']) / (basename + '.' + cfg['output_file_type'])
+    image.parent.mkdir(parents=True)
+    Image.new('RGB', (1, 1)).save(image)
+    return str(image)
 
 
 def get_diagnostic_filename(basename, cfg, extension='nc'):
@@ -1154,7 +1153,7 @@ def simulate_diagnostic_run(diagnostic_task):
     ]
     record = {
         'caption': 'Test plot',
-        'plot_file': get_plot_filename('test', cfg),
+        'plot_file': create_test_image('test', cfg),
         'statistics': ['mean', 'var'],
         'domains': ['trop', 'et'],
         'plot_types': ['zonal'],
@@ -1290,7 +1289,6 @@ def test_diagnostic_task_provenance(
 
 
 def test_alias_generation(tmp_path, patched_datafinder, config_user):
-
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1309,14 +1307,15 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                   - {dataset: GFDL-CM3,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r2i1p1}
-                  - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: custom_alias}
+                  - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: my_alias}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
-                  - {project: CMIP6, dataset: GFDL-CM3,  ensemble: r1i1p1}
-                  - {project: CMIP6, dataset: EC-EARTH,  ensemble: r1i1p1}
-                  - {project: CMIP6, dataset: HADGEM,  ensemble: r1i1p1}
+                  - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1}
+                  - {project: CMIP6, activity: CMP, dataset: GF2, ensemble: r1}
+                  - {project: CMIP6, activity: HRMP, dataset: EC, ensemble: r1}
+                  - {project: CMIP6, activity: HRMP, dataset: HA, ensemble: r1}
             scripts: null
-        """)
+        """)  # noqa:
 
     recipe = get_recipe(tmp_path, content, config_user)
     assert len(recipe.diagnostics) == 1
@@ -1332,14 +1331,16 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                 elif dataset['ensemble'] == 'r2i1p1':
                     assert dataset['alias'] == 'CMIP5_EC-EARTH_r2i1p1'
                 else:
-                    assert dataset['alias'] == 'custom_alias'
+                    assert dataset['alias'] == 'my_alias'
         elif dataset['project'] == 'CMIP6':
-            if dataset['dataset'] == 'GFDL-CM3':
-                assert dataset['alias'] == 'CMIP6_GFDL-CM3'
-            elif dataset['dataset'] == 'EC-EARTH':
-                assert dataset['alias'] == 'CMIP6_EC-EARTH'
+            if dataset['dataset'] == 'GF3':
+                assert dataset['alias'] == 'CMIP6_CMP_GF3'
+            elif dataset['dataset'] == 'GF2':
+                assert dataset['alias'] == 'CMIP6_CMP_GF2'
+            elif dataset['dataset'] == 'EC':
+                assert dataset['alias'] == 'CMIP6_HRMP_EC'
             else:
-                assert dataset['alias'] == 'CMIP6_HADGEM'
+                assert dataset['alias'] == 'CMIP6_HRMP_HA'
         else:
             if dataset['version'] == 1:
                 assert dataset['alias'] == 'OBS_1'
@@ -1449,14 +1450,22 @@ def test_extract_shape(tmp_path, patched_datafinder, config_user):
     assert product.settings['extract_shape']['shapefile'] == str(shapefile)
 
 
-@pytest.mark.parametrize('invalid_arg', ['crop', 'shapefile', 'method'])
+@pytest.mark.parametrize('invalid_arg',
+                         ['shapefile', 'method', 'crop', 'decomposed'])
 def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
                               invalid_arg):
+    # Create shapefile
+    shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
+    shapefile.parent.mkdir(parents=True, exist_ok=True)
+    shapefile.touch()
+
     content = dedent(f"""
         preprocessors:
           test:
             extract_shape:
-              {invalid_arg}: x
+              crop: true
+              method: contains
+              shapefile: test.shp
 
         diagnostics:
           test:
@@ -1474,10 +1483,16 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
                       dataset: GFDL-CM3
             scripts: null
         """)
+
+    # Add invalid argument
+    recipe = yaml.safe_load(content)
+    recipe['preprocessors']['test']['extract_shape'][invalid_arg] = 'x'
+    content = yaml.safe_dump(recipe)
+
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, config_user)
-        assert 'extract_shape' in exc.value
-        assert invalid_arg in exc.value
+    assert 'extract_shape' in str(exc.value)
+    assert invalid_arg in str(exc.value)
 
 
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
@@ -2040,9 +2055,12 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    with pytest.raises(ValueError) as wrong_proj:
+    msg = (
+        "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
+        "with mip 'Omon'")
+    with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, config_user)
-        assert wrong_proj == "Project CMIP7 not in config-developer"
+    assert str(wrong_proj.value) == msg
 
 
 def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
@@ -2072,11 +2090,11 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    msg = ("Requested fx variable 'wrong_fx_variable' for CMIP6 not "
-           "available in any 'fx'-related CMOR table")
+    msg = ("Requested fx variable 'wrong_fx_variable' not available in any "
+           "'fx'-related CMOR table")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-        assert msg in rec_err_exp
+    assert msg in str(rec_err_exp.value)
 
 
 def test_fx_var_invalid_project(tmp_path, patched_datafinder, config_user):
@@ -2103,7 +2121,9 @@ def test_fx_var_invalid_project(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    msg = 'Project EMAC not supported with fx variables'
+    msg = (
+        "Unable to load CMOR table (project) 'EMAC' for variable 'areacella' "
+        "with mip 'Amon'")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-        assert msg in rec_err_exp
+    assert str(rec_err_exp.value) == msg

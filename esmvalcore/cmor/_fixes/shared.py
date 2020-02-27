@@ -70,10 +70,49 @@ def add_scalar_typesea_coord(cube, value='default'):
     return cube
 
 
-def round_coordinates(cubes, decimals=5):
-    """Round all dimensional coordinates of all cubes."""
+def cube_to_aux_coord(cube):
+    """Convert cube to iris AuxCoord"""
+    return iris.coords.AuxCoord(
+        points=cube.core_data(),
+        var_name=cube.var_name,
+        standard_name=cube.standard_name,
+        long_name=cube.long_name,
+        units=cube.units,
+    )
+
+
+def round_coordinates(cubes, decimals=5, coord_names=None):
+    """Round all dimensional coordinates of all cubes in place
+
+    Cubes can be a list of Iris cubes, or an Iris `CubeList`.
+
+    Cubes are modified *in place*. The return value is simply for
+    convenience.
+
+    Parameters
+    ----------
+    - cubes: iris.cube.CubeList (or a list of iris.cube.Cube).
+
+    - decimals: number of decimals to round to.
+
+    - coord_names: list of strings, or None.
+        If None (or a falsey value), all dimensional coordinates will
+        be rounded.
+        Otherwise, only coordinates given by the names in
+        `coord_names` are rounded.
+
+    Returns
+    -------
+    The modified input `cubes`
+
+    """
+
     for cube in cubes:
-        for coord in cube.coords(dim_coords=True):
+        if not coord_names:
+            coords = cube.coords(dim_coords=True)
+        else:
+            coords = [cube.coord(name) for name in coord_names]
+        for coord in coords:
             coord.points = da.round(da.asarray(coord.core_points()), decimals)
             if coord.bounds is not None:
                 coord.bounds = da.round(da.asarray(coord.core_bounds()),
