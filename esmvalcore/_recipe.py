@@ -733,8 +733,7 @@ def _get_preprocessor_products(variables,
             variable['filename'] = get_output_file(variable,
                                                    config_user['preproc_dir'])
     else:
-        parent_variable = variables[1]
-        variables = [variables[0]]
+        parent_variable = variables.pop()
         for variable in variables:
             variable['filename'] = get_output_file(parent_variable,
                                                    config_user['preproc_dir'],
