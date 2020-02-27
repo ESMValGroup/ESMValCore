@@ -140,8 +140,8 @@ def _get_single_cube(cube_list, short_name, project, dataset):
         'Found variable %s in %s:%s, but there were other present in '
         'the file. Those extra variables are usually metadata '
         '(cell area, latitude descriptions) that was not saved '
-        'properly. It is possible that errors appear further on '
-        'because of this. \nFull list of cubes encountered: %s',
+        'according to CF-conventions. It is possible that errors appear '
+        'further on because of this. \nFull list of cubes encountered: %s',
         short_name,
         project,
         dataset,
