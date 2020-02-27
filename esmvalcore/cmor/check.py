@@ -811,7 +811,7 @@ def _get_cmor_checker(table,
 
 def cmor_check_metadata(cube, cmor_table, mip,
                         short_name, frequency,
-                        check_level):
+                        check_level=CheckLevels.DEFAULT):
     """Check if metadata conforms to variable's CMOR definiton.
 
     None of the checks at this step will force the cube to load the data.
