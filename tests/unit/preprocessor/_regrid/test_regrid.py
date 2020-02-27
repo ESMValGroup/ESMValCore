@@ -24,7 +24,9 @@ class Test(tests.Test):
             self.coord_system.asset_called_once()
             expected_calls = [
                 mock.call(axis='x', dim_coords=True),
-                mock.call(axis='y', dim_coords=True)
+                mock.call(axis='y', dim_coords=True),
+                mock.call(axis='latitude', dim_coords=True),
+                mock.call(axis='longitude', dim_coords=True)
             ]
             self.assertEqual(self.tgt_grid_coord.mock_calls, expected_calls)
             self.regrid.assert_called_once_with(self.tgt_grid, expected_scheme)
@@ -32,7 +34,9 @@ class Test(tests.Test):
             if scheme == 'unstructured_nearest':
                 expected_calls = [
                     mock.call(axis='x', dim_coords=True),
-                    mock.call(axis='y', dim_coords=True)
+                    mock.call(axis='y', dim_coords=True),
+                    mock.call(axis='latitude', dim_coords=True),
+                    mock.call(axis='longitude', dim_coords=True)
                 ]
                 self.assertEqual(self.coords.mock_calls, expected_calls)
                 expected_calls = [mock.call(self.coord), mock.call(self.coord)]
