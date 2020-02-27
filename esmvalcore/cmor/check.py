@@ -734,7 +734,7 @@ def _get_cmor_checker(table,
 
 
 def cmor_check_metadata(cube, cmor_table, mip, cmor_name, frequency):
-    """Check if metadata conforms to variable's CMOR definiton.
+    """Check if metadata conforms to variable's CMOR definition.
 
     None of the checks at this step will force the cube to load the data.
 
@@ -758,7 +758,7 @@ def cmor_check_metadata(cube, cmor_table, mip, cmor_name, frequency):
 
 
 def cmor_check_data(cube, cmor_table, mip, cmor_name, frequency):
-    """Check if data conforms to variable's CMOR definiton.
+    """Check if data conforms to variable's CMOR definition.
 
     The checks performed at this step require the data in memory.
 
@@ -782,7 +782,7 @@ def cmor_check_data(cube, cmor_table, mip, cmor_name, frequency):
 
 
 def cmor_check(cube, cmor_table, mip, cmor_name, frequency):
-    """Check if cube conforms to variable's CMOR definiton.
+    """Check if cube conforms to variable's CMOR definition.
 
     Equivalent to calling cmor_check_metadata and cmor_check_data
     consecutively.
