@@ -23,11 +23,13 @@ To install in development mode, follow these instructions.
 
 ## Running tests
 
-Go to the directory where the repository is cloned and run `python setup.py test --addopts --installation`. Tests will also be run automatically by [CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore).
+Go to the directory where the repository is cloned and run `python setup.py test`. Optionally you can run the full suite of tests which require some additional dependencies by adding the flags `--addopts --installation` to the previous command. Tests will also be run automatically by [CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore).
 
 ## Code style
 
-To increase the readability and maintainability or the ESMValTool source code, we aim to adhere to best practices and coding standards. All pull requests are reviewed and tested by one or more members of the core development team. For code in all languages, it is highly recommended that you split your code up in functions that are short enough to view without scrolling.
+To increase the readability and maintainability or the ESMValCore source code, we aim to adhere to best practices and coding standards.
+All pull requests are reviewed and tested by one or more members of the core development team.
+For code in all languages, it is highly recommended that you split your code up in functions that are short enough to view without scrolling.
 
 ### Python
 
@@ -59,6 +61,10 @@ We use `pycodestyle` on CircleCI to automatically check that there are no format
 ### YAML
 
 Please use `yamllint` to check that your YAML files do not contain mistakes.
+
+### Any text file
+
+A generic tool to check for common spelling mistakes is [codespell](https://pypi.org/project/codespell/).
 
 ## Documentation
 
