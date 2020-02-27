@@ -49,7 +49,7 @@ class CMORCheck():
     automatic_fixes: bool
         If True, CMORCheck will try to apply automatic fixes for any
         detected error, if possible.
-    check_level: enum.IntEnum
+    check_level: CheckLevels
         Level of strictness of the checks.
 
     Attributes
