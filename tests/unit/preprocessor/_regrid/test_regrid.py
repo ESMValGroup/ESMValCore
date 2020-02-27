@@ -35,8 +35,8 @@ class Test(tests.Test):
                 expected_calls = [
                     mock.call(axis='x', dim_coords=True),
                     mock.call(axis='y', dim_coords=True),
-                    mock.call(axis='latitude', dim_coords=True),
-                    mock.call(axis='longitude', dim_coords=True)
+                    mock.call(axis='latitude'),
+                    mock.call(axis='longitude')
                 ]
                 self.assertEqual(self.coords.mock_calls, expected_calls)
                 expected_calls = [mock.call(self.coord), mock.call(self.coord)]
