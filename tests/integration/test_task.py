@@ -108,20 +108,29 @@ def test_py2ncl():
     assert 'NCL does not support nested dicts:' in str(ex_err.value)
 
 
-def test_base_task():
+def _get_single_base_task():
     """Test BaseTask basic attributes."""
-    tasks = set()
     task = BaseTask(
         name='task0',
         ancestors=[BaseTask(name=f'task0-ancestor{j}') for j in range(2)],
     )
     for task0 in task.flatten():
         task0.priority = 0
-    tasks.add(task)
+    tasks = {task}
+
+    return tasks
+
+
+def test_base_task_names():
+    tasks = _get_single_base_task()
     task_names = [task.name for task in tasks]
     assert task_names == ['task0']
     ancestor_names = [anc.name for anc in list(tasks)[0].ancestors]
     assert ancestor_names == ['task0-ancestor0', 'task0-ancestor1']
+
+
+def test_individual_base_task_attrs():
+    tasks = _get_single_base_task()
     task = list(tasks)[0]
     assert task.products == set()
     assert task.output_files is None
@@ -129,17 +138,14 @@ def test_base_task():
     assert task.priority == 0
 
 
-def test_py_diagnostic_task_basics(tmp_path):
-    """Test DiagnosticTask basic attributes."""
+def _get_single_diagnostic_task(tmp_path, diag_script):
+    """Assemble a simple DiagnosticTask object."""
     diag_output_dir = tmp_path / 'mydiag'
     diag_run_dir = diag_output_dir / 'run_dir'
     diag_settings = {'run_dir': diag_run_dir, 'profile_diagnostic': False}
-
-    # diag exists
-    diag_script = tmp_path / 'diag_cow.py'
     with open(diag_script, "w") as fil:
         fil.write("import os\n\nprint(os.getcwd())")
-    tasks = set()
+
     task = DiagnosticTask(
         name='task0',
         ancestors=[BaseTask(name=f'task0-ancestor{j}') for j in range(2)],
@@ -147,28 +153,31 @@ def test_py_diagnostic_task_basics(tmp_path):
         settings=diag_settings,
         output_dir=diag_output_dir,
     )
-    for task0 in task.flatten():
-        task0.priority = 0
-    tasks.add(task)
+    tasks = {task}
+
+    return tasks
+
+
+def test_py_diagnostic_task_basics(tmp_path):
+    """Test DiagnosticTask basic attributes."""
+    diag_script = tmp_path / 'diag_cow.py'
+    tasks = _get_single_diagnostic_task(tmp_path, diag_script)
     task_names = [task.name for task in tasks]
     assert task_names == ['task0']
     ancestor_names = [anc.name for anc in list(tasks)[0].ancestors]
     assert ancestor_names == ['task0-ancestor0', 'task0-ancestor1']
     task = list(tasks)[0]
     assert task.script == diag_script
-    assert task.settings == diag_settings
-    assert task.output_dir == diag_output_dir
+    assert task.settings == {'run_dir': tmp_path / 'mydiag' / 'run_dir',
+                             'profile_diagnostic': False}
+    assert task.output_dir == tmp_path / 'mydiag'
 
-    # diag doesn't exist
+
+def test_diagnostic_diag_script_none(tmp_path):
+    """Test case when diagnostic script doesnt exist."""
     diag_script = 'diag_cow.py'
     with pytest.raises(DiagnosticError) as err_msg:
-        task = DiagnosticTask(
-            name='task0',
-            ancestors=[BaseTask(name=f'task0-ancestor{j}') for j in range(2)],
-            script=diag_script,
-            settings=diag_settings,
-            output_dir=diag_output_dir,
-        )
+        _get_single_diagnostic_task(tmp_path, diag_script)
     diagnostics_root = os.path.join(DIAGNOSTICS_PATH, 'diag_scripts')
     script_file = os.path.abspath(os.path.join(diagnostics_root, diag_script))
     ept = \
@@ -193,7 +202,7 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
 
     with open(diag_script, "w") as fil:
         fil.write(diagnostic_text)
-    tasks = set()
+
     task = DiagnosticTask(
         name='task0',
         ancestors=None,
@@ -201,11 +210,8 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
         settings=diag_settings,
         output_dir=diag_output_dir.as_posix(),
     )
-    for task0 in task.flatten():
-        task0.priority = 0
-    tasks.add(task)
 
-    return tasks
+    return {task}
 
 
 def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
