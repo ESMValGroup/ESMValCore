@@ -15,7 +15,7 @@ CheckLevels = IntEnum(
     'CheckLevels', 'DEBUG STRICT DEFAULT RELAXED IGNORE')
 """Level of strictness of the checks.
 
-   Values
+   Attributes
    ------
    - DEBUG: Report any debug message that the checker wants to communicate.
    - STRICT: Fail if there are warnings regarding compliance of CMOR standards.
