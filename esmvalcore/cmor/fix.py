@@ -80,7 +80,7 @@ def fix_metadata(cubes,
 
     frequency: str, optional
         Variable's data frequency, if available
-    check_level: enum.IntEnum
+    check_level: CheckLevels
         Level of strictness of the checks. Set to default.
 
     Returns
