@@ -356,8 +356,8 @@ class CMORCheck():
                             )
                     except iris.exceptions.CoordinateNotFoundError:
                         if coordinate.standard_name in ['time', 'latitude',
-                                                        'longitude'] \
-                            or coordinate.requested:
+                                                        'longitude'] or \
+                           coordinate.requested:
                             self.report_critical(
                                 self._does_msg, coordinate.name, 'exist')
                         else:
