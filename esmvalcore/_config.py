@@ -203,7 +203,7 @@ TAGS_CONFIG_FILE = os.path.join(
 
 
 def _load_tags(filename=TAGS_CONFIG_FILE):
-    """Load the refence tags used for provenance recording."""
+    """Load the reference tags used for provenance recording."""
     if os.path.exists(filename):
         logger.debug("Loading tags from %s", filename)
         with open(filename) as file:

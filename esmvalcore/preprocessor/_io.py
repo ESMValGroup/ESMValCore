@@ -335,7 +335,7 @@ def _concatenate_overlapping_cubes(cubes):
         start_overlap = next((time_1.units.num2date(t)
                               for t in time_1.points if t in time_2.points),
                              None)
-        # case 2.0: no overlap (new iris implementaion does allow
+        # case 2.0: no overlap (new iris implementation does allow
         # concatenation of cubes with no overlap)
         if not start_overlap:
             logger.debug(
