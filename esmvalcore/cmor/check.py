@@ -100,7 +100,8 @@ class CMORCheck():
 
         Parameters
         ----------
-        logger
+        logger: logging.Logger
+            Given logger.
 
         Raises
         ------
@@ -139,7 +140,8 @@ class CMORCheck():
 
         Parameters
         ----------
-        logger
+        logger: logging.Logger
+            Given logger.
 
         Raises
         ------
@@ -183,7 +185,8 @@ class CMORCheck():
 
         Parameters
         ----------
-        logger
+        logger: logging.Logger
+            Given logger
 
         """
         if self.has_warnings():
@@ -196,7 +199,8 @@ class CMORCheck():
 
         Parameters
         ----------
-        logger
+        logger: logging.Logger
+            Given logger.
 
         """
         if self.has_debug_messages():
