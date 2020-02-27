@@ -167,3 +167,21 @@ def test_cube_to_aux_coord():
     assert coord.long_name == cube.long_name
     assert coord.units == cube.units
     assert np.all(coord.points == cube.data)
+
+
+def test_round_coordinates_single_coord():
+    """Test rounding of specified coordinate"""
+    coords, bounds = [10.0001], [[9.0001, 11.0001]]
+    latcoord = iris.coords.DimCoord(coords.copy(), bounds=bounds.copy(),
+                                    standard_name='latitude')
+    loncoord = iris.coords.DimCoord(coords.copy(), bounds=bounds.copy(),
+                                    standard_name='longitude')
+    cube = iris.cube.Cube([[1.0]], standard_name='air_temperature',
+                          dim_coords_and_dims=[(latcoord, 0), (loncoord, 1)])
+    cubes = iris.cube.CubeList([cube])
+
+    out = round_coordinates(cubes, decimals=3, coord_names=['latitude'])
+    assert out is cubes
+    assert cubes[0].coord('longitude') is out[0].coord('longitude')
+    np.testing.assert_allclose(out[0].coord('latitude').points, [10])
+    np.testing.assert_allclose(out[0].coord('latitude').bounds, [[9, 11]])

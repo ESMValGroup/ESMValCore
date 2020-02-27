@@ -231,7 +231,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_time_mean_365_day(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -266,7 +266,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_time_sum_365_day(self):
-        """Test for time sum of a realisitc time axis and 365 day calendar"""
+        """Test for time sum of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         data[3] = 2.0
         times = np.array([15, 45, 74, 105, 135, 166])
@@ -279,7 +279,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_season_climatology(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -291,7 +291,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_monthly(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -303,7 +303,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_day(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([0.5, 1.5, 2.5, 365.5, 366.5, 367.5])
         bounds = np.array([[0, 1], [1, 2], [2, 3],
@@ -315,7 +315,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_period_not_supported(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
