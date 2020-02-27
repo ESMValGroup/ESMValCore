@@ -467,6 +467,27 @@ def anomalies(cube, period, reference=None, standardize=False):
             cube = cube / cube_stddev
         return cube
 
+    cube = _compute_anomalies(cube, reference, period)
+
+    # standardize the results if requested
+    if standardize:
+        cube_stddev = climate_statistics(cube,
+                                         operator='std_dev',
+                                         period=period)
+        tdim = cube.coord_dims('time')[0]
+        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
+        if not reps % 1 == 0:
+            raise ValueError(
+                "Cannot safely apply preprocessor to this dataset, "
+                "since the full time period of this dataset is not "
+                f"a multiple of the period '{period}'"
+            )
+        cube.data = cube.core_data() / da.concatenate(
+            [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
+    return cube
+
+
+def _compute_anomalies(cube, reference, period):
     cube_coord = _get_period_coord(cube, period)
     ref_coord = _get_period_coord(reference, period)
 
@@ -485,22 +506,6 @@ def anomalies(cube, period, reference=None, standardize=False):
     data = da.stack(new_data, axis=cube_coord_dim)
     cube = cube.copy(data)
     cube.remove_coord(cube_coord)
-
-    # standardize the results if requested
-    if standardize:
-        cube_stddev = climate_statistics(cube,
-                                         operator='std_dev',
-                                         period=period)
-        tdim = cube.coord_dims('time')[0]
-        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
-        if not reps % 1 == 0:
-            raise ValueError(
-                "Cannot safely apply preprocessor to this dataset, "
-                "since the full time period of this dataset is not "
-                f"a multiple of the period '{period}'"
-            )
-        cube.data = cube.core_data() / da.concatenate(
-            [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
     return cube
 
 
