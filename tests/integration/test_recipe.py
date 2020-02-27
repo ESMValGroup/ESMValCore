@@ -352,7 +352,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'output_dir': fix_dir,
         },
         'fix_data': {
-            'check_level': None,
+            'check_level': CheckLevels.DEFAULT,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
@@ -360,7 +360,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'frequency': 'yr',
         },
         'fix_metadata': {
-            'check_level': None,
+            'check_level': CheckLevels.DEFAULT,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
@@ -376,7 +376,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'end_day': 1,
         },
         'cmor_check_metadata': {
-            'check_level': None,
+            'check_level': CheckLevels.DEFAULT,
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'short_name': 'chl',

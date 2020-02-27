@@ -299,7 +299,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_file']['output_dir'] = fix_dir
     # Cube fixes
     fix['frequency'] = variable['frequency']
-    fix['check_level'] = config_user.get('check_level', None)
+    fix['check_level'] = config_user['check_level']
     settings['fix_metadata'] = dict(fix)
     settings['fix_data'] = dict(fix)
 
@@ -329,7 +329,7 @@ def _get_default_settings(variable, config_user, derive=False):
         'mip': variable['mip'],
         'short_name': variable['short_name'],
         'frequency': variable['frequency'],
-        'check_level': config_user.get('check_level', None)
+        'check_level': config_user['check_level']
     }
     # Configure final CMOR data check
     settings['cmor_check_data'] = {
@@ -337,7 +337,7 @@ def _get_default_settings(variable, config_user, derive=False):
         'mip': variable['mip'],
         'short_name': variable['short_name'],
         'frequency': variable['frequency'],
-        'check_level': config_user.get('check_level', None)
+        'check_level': config_user['check_level']
     }
 
     # Clean up fixed files
