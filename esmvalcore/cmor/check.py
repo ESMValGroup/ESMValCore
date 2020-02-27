@@ -856,7 +856,7 @@ def cmor_check_data(cube, cmor_table, mip, short_name, frequency, check_level):
         Variable's short name
     frequency: basestring
         Data frequency
-    check_level: enum.IntEnum
+    check_level: CheckLevels
         Level of strictness of the checks.
 
     """
