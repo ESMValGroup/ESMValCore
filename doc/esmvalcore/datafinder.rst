@@ -21,7 +21,7 @@ CMIP data - CMOR Data Reference Syntax (DRS) and the ESGF
 =========================================================
 CMIP data is widely available via the Earth System Grid Federation
 (`ESGF <https://esgf.llnl.gov/>`_) and is accessible to users either
-via dowload from the ESGF portal or through the ESGF data nodes hosted
+via download from the ESGF portal or through the ESGF data nodes hosted
 by large computing facilities (like CEDA-Jasmin, DKRZ, etc). This data
 adheres to, among other standards, the DRS and Controlled Vocabulary
 standard for naming files and structured paths; the `DRS
@@ -57,7 +57,7 @@ view:
 
 The first point is self-explanatory: if the user runs the tool on a machine
 that has access to a data repository or multiple data repositories, then
-ESMValTool will look for and find the avaialble data requested by the user.
+ESMValTool will look for and find the available data requested by the user.
 
 The second point underlines the fact that the user has full control over what
 type and the amount of data is needed for the analyses. Setting the data

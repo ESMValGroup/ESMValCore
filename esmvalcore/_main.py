@@ -208,7 +208,7 @@ def process_recipe(recipe_file, config_user):
 
     if config_user['compress_netcdf']:
         logger.warning(
-            "You have enabled NetCDF compression. Accesing .nc files can be "
+            "You have enabled NetCDF compression. Accessing .nc files can be "
             "much slower than expected if your access pattern does not match "
             "their internal pattern. Make sure to specify the expected "
             "access pattern in the recipe as a parameter to the 'save' "

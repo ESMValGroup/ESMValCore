@@ -145,14 +145,14 @@ of which may call the execution of one or several preprocessor functions.
 Each preprocessor section includes:
 
 - A preprocessor name (any name, under ``preprocessors``);
-- A list of preprocesor steps to be executed (choose from the API);
+- A list of preprocessor steps to be executed (choose from the API);
 - Any or none arguments given to the preprocessor steps;
-- The order that the preprocesor steps are applied can also be specified using
-  the ``custom_order`` preprocesor function.
+- The order that the preprocessor steps are applied can also be specified using
+  the ``custom_order`` preprocessor function.
 
 The following snippet is an example of a preprocessor named ``prep_map`` that
 contains multiple preprocessing steps (:ref:`Horizontal regridding` with two
-arguments, :ref:`Time operations` with no arguments (i.e., calcualting the
+arguments, :ref:`Time operations` with no arguments (i.e., calculating the
 average over the time dimension) and :ref:`Multi-model statistics` with two
 arguments):
 
@@ -192,7 +192,7 @@ section will include:
 The diagnostics section defines tasks
 -------------------------------------
 The diagnostic section(s) define the tasks that will be executed when running the recipe.
-For each variable a preprocesing task will be defined and for each diagnostic script a
+For each variable a preprocessing task will be defined and for each diagnostic script a
 diagnostic task will be defined. If variables need to be derived
 from other variables, a preprocessing task for each of the variables
 needed to derive that variable will be defined as well. These tasks can be viewed
@@ -320,7 +320,7 @@ The following example, taken from ``recipe_ocean_example.yml``, shows a
 diagnostic named `diag_map`, which loads the temperature at the ocean surface
 between the years 2001 and 2003 and then passes it to the ``prep_map``
 preprocessor. The result of this process is then passed to the ocean diagnostic
-map scipt, ``ocean/diagnostic_maps.py``.
+map script, ``ocean/diagnostic_maps.py``.
 
 .. code-block:: yaml
 

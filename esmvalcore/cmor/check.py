@@ -844,7 +844,8 @@ def cmor_check_metadata(cube, cmor_table, mip,
     return cube
 
 
-def cmor_check_data(cube, cmor_table, mip, short_name, frequency, check_level):
+def cmor_check_data(cube, cmor_table, mip, short_name, frequency,
+                    check_level=CheckLevels.DEFAULT):
     """Check if data conforms to variable's CMOR definiton.
 
     The checks performed at this step require the data in memory.

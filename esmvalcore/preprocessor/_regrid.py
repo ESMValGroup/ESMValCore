@@ -39,6 +39,12 @@ _LON_RANGE = _LON_MAX - _LON_MIN
 # A cached stock of standard horizontal target grids.
 _CACHE = dict()
 
+# Supported point interpolation schemes.
+POINT_INTERPOLATION_SCHEMES = {
+    'linear': Linear(extrapolation_mode='mask'),
+    'nearest': Nearest(extrapolation_mode='mask'),
+}
+
 # Supported horizontal regridding schemes.
 HORIZONTAL_SCHEMES = {
     'linear': Linear(extrapolation_mode='mask'),
@@ -177,6 +183,78 @@ def _attempt_irregular_regridding(cube, scheme):
         except iris.exceptions.CoordinateNotFoundError:
             pass
     return False
+
+
+def extract_point(cube, latitude, longitude, scheme):
+    """Extract a point, with interpolation
+
+    Extracts a single latitude/longitude point from a cube, according
+    to the interpolation scheme `scheme`.
+
+    Multiple points can also be extracted, by supplying an array of
+    latitude and/or longitude coordinates. The resulting point cube
+    will match the respective latitude and longitude coordinate to
+    those of the input coordinates. If the input coordinate is a
+    scalar, the dimension will be missing in the output cube (that is,
+    it will be a scalar).
+
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+
+    latitude, longitude : float, or array of float
+        The latitude and longitude of the point.
+
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+
+    Returns
+    -------
+    Returns a cube with the extracted point(s), and with adjusted
+    latitude and longitude coordinates (see above).
+
+
+    Examples
+    --------
+    With a cube that has the coordinates
+
+    - latitude: [1, 2, 3, 4]
+    - longitude: [1, 2, 3, 4]
+    - data values: [[[1, 2, 3, 4], [5, 6, ...], [...], [...],
+                      ... ]]]
+
+    >>> point = extract_point(cube, 2.5, 2.5, 'linear')  # doctest: +SKIP
+    >>> point.data  # doctest: +SKIP
+    array([ 8.5, 24.5, 40.5, 56.5])
+
+    Extraction of multiple points at once, with a nearest matching scheme.
+    The values for 0.1 will result in masked values, since this lies outside
+    the cube grid.
+
+    >>> point = extract_point(cube, [1.4, 2.1], [0.1, 1.1],
+    ...                       'nearest')  # doctest: +SKIP
+    >>> point.data.shape  # doctest: +SKIP
+    (4, 2, 2)
+    >>> # x, y, z indices of masked values
+    >>> np.where(~point.data.mask)     # doctest: +SKIP
+    (array([0, 0, 1, 1, 2, 2, 3, 3]), array([0, 1, 0, 1, 0, 1, 0, 1]),
+    array([1, 1, 1, 1, 1, 1, 1, 1]))
+    >>> point.data[~point.data.mask].data  # doctest: +SKIP
+    array([ 1,  5, 17, 21, 33, 37, 49, 53])
+
+    """
+
+    msg = f"Unknown interpolation scheme, got {scheme!r}."
+    scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
+    if not scheme:
+        raise ValueError(msg)
+
+    point = [('latitude', latitude), ('longitude', longitude)]
+    cube = cube.interpolate(point, scheme=scheme)
+    return cube
 
 
 def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
