@@ -1,4 +1,5 @@
 ^\.circleci/
-^setup\.py$
 ^environment\.yml$
-^meta\.yaml$
+^[A-Za-z_]*meta\.yaml$
+^setup\.py$
+^setup\.cfg$
