@@ -58,12 +58,12 @@ def _write_citation_file(filename, provenance):
         for key, value in item.attributes:
             if key.namespace.prefix == 'attribute':
                 if key.localpart in {'reference', 'references'}:
+                    ## check if value is a tag in recipe or diagnostics
                     product_tags.append(value)
                 elif key.localpart == 'mip_era' and value == 'CMIP6':
                     url_prefix = _make_url_prefix(item.attributes)
                     info_urls.append(_make_info_url(url_prefix))
                     json_urls.append(_make_json_url(url_prefix))
-
     _save_citation_info(product_name, product_tags, json_urls, info_urls)
 
 
@@ -97,7 +97,7 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
 
 
 def _clean_tags(tags):
-    """Clean the tages that are recorded as str by provenance."""
+    """Clean the tags that are recorded as str by provenance."""
     pattern = re.compile(r'\w+')
     return pattern.findall(str(tags))
 
