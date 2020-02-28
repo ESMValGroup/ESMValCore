@@ -4,6 +4,7 @@ import logging
 import logging.config
 import os
 import time
+from pathlib import Path
 
 import yaml
 
@@ -20,8 +21,8 @@ def find_diagnostics():
     try:
         import esmvaltool
     except ImportError:
-        return ''
-    return os.path.dirname(esmvaltool.__file__)
+        return Path.cwd()
+    return Path(esmvaltool.__file__).absolute().parent
 
 
 DIAGNOSTICS_PATH = find_diagnostics()
@@ -169,8 +170,7 @@ def get_project_config(project):
     logger.debug("Retrieving %s configuration", project)
     if project in CFG:
         return CFG[project]
-    else:
-        raise ValueError(f"Project '{project}' not in config-developer.yml")
+    raise ValueError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
