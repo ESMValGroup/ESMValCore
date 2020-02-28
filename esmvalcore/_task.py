@@ -479,23 +479,23 @@ class DiagnosticTask(BaseTask):
         process = self._start_diagnostic_script(cmd, env)
 
         returncode = None
-        last_line = ['']
 
         with resource_usage_logger(process.pid, self.resource_log),\
-                open(self.log, 'at') as log:
+                open(self.log, 'ab') as log:
+            last_line = ['']
             while returncode is None:
                 returncode = process.poll()
                 txt = process.stdout.read()
-                txt = txt.decode(encoding='utf-8', errors='ignore')
                 log.write(txt)
 
                 # Check if an error occurred in an NCL script
                 # Last line is treated separately to avoid missing
                 # error messages spread out over multiple lines.
-                lines = txt.split('\n')
                 if ext == '.ncl':
+                    txt = txt.decode(encoding='utf-8', errors='ignore')
+                    lines = txt.split('\n')
                     self._control_ncl_execution(process, last_line + lines)
-                last_line = lines[-1:]
+                    last_line = lines[-1:]
 
                 # wait, but not long because the stdout buffer may fill up:
                 # https://docs.python.org/3.6/library/subprocess.html#subprocess.Popen.stdout
