@@ -7,7 +7,7 @@ import pytest
 
 import esmvalcore
 from esmvalcore._config import DIAGNOSTICS_PATH
-from esmvalcore._task import (BaseTask, DiagnosticTask, DiagnosticError,
+from esmvalcore._task import (BaseTask, DiagnosticError, DiagnosticTask,
                               _py2ncl, _run_tasks_parallel,
                               _run_tasks_sequential, run_tasks, which)
 
