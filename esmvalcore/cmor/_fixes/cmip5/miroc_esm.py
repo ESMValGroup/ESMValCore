@@ -3,7 +3,12 @@
 from iris.coords import DimCoord
 from iris.exceptions import CoordinateNotFoundError
 
+from .bcc_csm1_1 import Cl as BaseCl
 from ..fix import Fix
+
+
+class Cl(BaseCl):
+    """Fixes for ``cl``."""
 
 
 class Tro3(Fix):
@@ -18,6 +23,7 @@ class Tro3(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -41,11 +47,12 @@ class Co2(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         self.get_cube_from_list(cubes).units = '1.0e-6'
@@ -63,7 +70,8 @@ class AllVars(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------

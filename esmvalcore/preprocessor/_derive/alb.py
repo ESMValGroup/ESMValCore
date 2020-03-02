@@ -6,7 +6,7 @@ authors:
 """
 
 from ._baseclass import DerivedVariableBase
-from ._shared import _var_name_constraint
+from ._shared import var_name_constraint
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -28,8 +28,8 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute surface albedo."""
-        rsdscs_cube = cubes.extract_strict(_var_name_constraint('rsdscs'))
-        rsuscs_cube = cubes.extract_strict(_var_name_constraint('rsuscs'))
+        rsdscs_cube = cubes.extract_strict(var_name_constraint('rsdscs'))
+        rsuscs_cube = cubes.extract_strict(var_name_constraint('rsuscs'))
 
         rsnscs_cube = rsuscs_cube / rsdscs_cube
 

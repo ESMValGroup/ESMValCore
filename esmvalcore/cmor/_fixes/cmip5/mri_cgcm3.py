@@ -1,8 +1,12 @@
-
 """Fixes for MRI-CGCM3 model."""
 from dask import array as da
 
+from .bcc_csm1_1 import Cl as BaseCl
 from ..fix import Fix
+
+
+class Cl(BaseCl):
+    """Fixes for ``cl``."""
 
 
 class Msftmyz(Fix):
@@ -17,6 +21,7 @@ class Msftmyz(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -39,6 +44,7 @@ class ThetaO(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------

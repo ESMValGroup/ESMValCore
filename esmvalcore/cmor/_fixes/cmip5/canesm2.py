@@ -1,6 +1,10 @@
-
 """Fixes for CanESM2 model."""
 from ..fix import Fix
+from .bcc_csm1_1 import Cl as BaseCl
+
+
+class Cl(BaseCl):
+    """Fixes for cl."""
 
 
 class FgCo2(Fix):
@@ -15,6 +19,7 @@ class FgCo2(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube to fix.
 
         Returns
         -------

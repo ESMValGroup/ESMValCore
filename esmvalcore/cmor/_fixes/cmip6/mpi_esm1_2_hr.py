@@ -1,7 +1,11 @@
 """Fixes for MPI-ESM1-2-HR model."""
-
+from ..cmip5.bcc_csm1_1 import Cl as BaseCl
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
+
+
+class Cl(BaseCl):
+    """Fixes for ``cl``."""
 
 
 class Tas(Fix):
@@ -9,11 +13,12 @@ class Tas(Fix):
 
     def fix_metadata(self, cubes):
         """
-        Adds missing height2m coordinate.
+        Add missing height2m coordinate.
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
@@ -35,7 +40,8 @@ class Ta(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
@@ -66,11 +72,12 @@ class SfcWind(Fix):
 
     def fix_metadata(self, cubes):
         """
-        Adds missing height10m coordinate.
+        Add missing height10m coordinate.
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
