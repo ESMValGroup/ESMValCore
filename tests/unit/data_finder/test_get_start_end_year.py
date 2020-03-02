@@ -1,8 +1,5 @@
 """Unit tests for :func:`esmvalcore._data_finder.regrid._stock_cube`"""
 
-import re
-import tempfile
-
 import iris
 import pytest
 
