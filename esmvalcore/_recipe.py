@@ -78,7 +78,7 @@ def _get_value(key, datasets):
     values = {dataset[key] for dataset in datasets if key in dataset}
 
     if len(values) > 1:
-        raise RecipeError("Ambigous values {} for property {}".format(
+        raise RecipeError("Ambiguous values {} for property {}".format(
             values, key))
 
     value = None
@@ -916,7 +916,7 @@ class Recipe:
             self._preprocessors['default'] = {}
         self.diagnostics = self._initialize_diagnostics(
             raw_recipe['diagnostics'], raw_recipe.get('datasets', []))
-        self.entity = self._initalize_provenance(
+        self.entity = self._initialize_provenance(
             raw_recipe.get('documentation', {}))
         self.tasks = self.initialize_tasks() if initialize_tasks else None
 
@@ -934,7 +934,7 @@ class Recipe:
                     return True
         return False
 
-    def _initalize_provenance(self, raw_documentation):
+    def _initialize_provenance(self, raw_documentation):
         """Initialize the recipe provenance."""
         doc = deepcopy(raw_documentation)
         for key in doc:

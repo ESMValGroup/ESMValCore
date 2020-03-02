@@ -1,7 +1,7 @@
 # Conda build recipe
 ---
 
-# Build commmand:
+# Build command:
 # conda build . -c conda-forge -c esmvalgroup
 
 # Package version number
