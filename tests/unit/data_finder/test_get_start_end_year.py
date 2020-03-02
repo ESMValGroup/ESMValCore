@@ -38,8 +38,8 @@ def test_read_time_from_cube(tmp_path):
                                 'time',
                                 units='days since 1990-01-01')
     cube.add_dim_coord(time, 0)
-    iris.save(cube, temp_file.name)
-    start, end = get_start_end_year(temp_file.name)
+    iris.save(cube, temp_file)
+    start, end = get_start_end_year(temp_file)
     assert start == 1990
     assert end == 1991
 
