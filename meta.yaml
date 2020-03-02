@@ -29,7 +29,7 @@ build:
 requirements:
   build:
     - git
-    - python>=3.6,<3.8
+    - python>=3.6
     # Normally installed via pip:
     - pytest-runner
     - setuptools_scm
