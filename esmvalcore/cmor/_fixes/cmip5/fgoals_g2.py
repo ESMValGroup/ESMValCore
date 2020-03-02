@@ -15,8 +15,6 @@ class AllVars(Fix):
         Fix time coordinate and round other coordinates to fix issue with
         modulus in longitude coordinate.
 
-        Fixes longitude precision
-
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -36,6 +34,8 @@ class AllVars(Fix):
                 time.units = Unit(time.units.name, time.units.calendar)
 
         round_coordinates(cubes, 4, coord_names=['longitude'])
+
+        return cubes
 
 
 class Cl(Fix):
