@@ -33,10 +33,9 @@ def test_get_start_end_year(case):
     assert case_end == end
 
 
-def test_read_time_from_cube():
+def test_read_time_from_cube(tmp_path):
     """Try to get time from cube if no date in filename"""
-    temp_file = tempfile.NamedTemporaryFile(suffix='.nc')
-    temp_file.name = re.sub(r'\d', 'v', temp_file.name)
+    temp_file = str(tmp_path / 'test.nc')
     cube = iris.cube.Cube([0, 0], var_name='var')
     time = iris.coords.DimCoord([0, 366],
                                 'time',
