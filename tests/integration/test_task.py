@@ -1,4 +1,5 @@
 import os
+import shutil
 from functools import partial
 from multiprocessing.pool import ThreadPool
 
@@ -138,13 +139,14 @@ def test_individual_base_task_attrs():
     assert task.priority == 0
 
 
-def _get_single_diagnostic_task(tmp_path, diag_script):
+def _get_single_diagnostic_task(tmp_path, diag_script, write_diag=True):
     """Assemble a simple DiagnosticTask object."""
     diag_output_dir = tmp_path / 'mydiag'
     diag_run_dir = diag_output_dir / 'run_dir'
     diag_settings = {'run_dir': diag_run_dir, 'profile_diagnostic': False}
-    with open(diag_script, "w") as fil:
-        fil.write("import os\n\nprint(os.getcwd())")
+    if write_diag:
+        with open(diag_script, "w") as fil:
+            fil.write("import os\n\nprint(os.getcwd())")
 
     task = DiagnosticTask(
         name='task0',
@@ -175,15 +177,13 @@ def test_py_diagnostic_task_basics(tmp_path):
 
 def test_diagnostic_diag_script_none(tmp_path):
     """Test case when diagnostic script doesnt exist."""
-    diag_script = 'diag_cow.py'
+    diag_script = tmp_path / 'diag_cow.py'
     with pytest.raises(DiagnosticError) as err_msg:
-        _get_single_diagnostic_task(tmp_path, diag_script)
+        _get_single_diagnostic_task(tmp_path, diag_script, write_diag=False)
     diagnostics_root = os.path.join(DIAGNOSTICS_PATH, 'diag_scripts')
     script_file = os.path.abspath(os.path.join(diagnostics_root, diag_script))
-    ept = \
-        "Cannot execute script diag_cow.py ({}): file does not exist.".format(
-            script_file)
-    assert ept == str(err_msg.value)
+    ept = "diag_cow.py ({}): file does not exist.".format(script_file)
+    assert ept in str(err_msg.value)
 
 
 def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
@@ -259,7 +259,6 @@ def test_py_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     _run_tasks_parallel(tasks, 2)
 
 
-@pytest.mark.install
 def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = "cows on the [river]"
@@ -268,17 +267,16 @@ def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
 
-    monkeypatch.setattr(BaseTask, '_run', _run)
+    if shutil.which('ncl') is not None:
+        monkeypatch.setattr(BaseTask, '_run', _run)
+        with pytest.raises(DiagnosticError) as err_mssg:
+            _run_tasks_parallel(tasks, 2)
+        exp_mssg_1 = "An error occurred during execution of NCL script"
+        exp_mssg_2 = "diag_cow.ncl"
+        assert exp_mssg_1 in str(err_mssg.value)
+        assert exp_mssg_2 in str(err_mssg.value)
 
-    with pytest.raises(DiagnosticError) as err_mssg:
-        _run_tasks_parallel(tasks, 2)
-    exp_mssg_1 = "An error occurred during execution of NCL script"
-    exp_mssg_2 = "diag_cow.ncl"
-    assert exp_mssg_1 in str(err_mssg.value)
-    assert exp_mssg_2 in str(err_mssg.value)
 
-
-@pytest.mark.install
 def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = _py2ncl({'cow': 22}, 'tas')
@@ -287,12 +285,11 @@ def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
 
-    monkeypatch.setattr(BaseTask, '_run', _run)
+    if shutil.which('ncl') is not None:
+        monkeypatch.setattr(BaseTask, '_run', _run)
+        _run_tasks_parallel(tasks, 2)
 
-    _run_tasks_parallel(tasks, 2)
 
-
-@pytest.mark.install
 def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = 'var0 <- "zg"'
@@ -301,6 +298,6 @@ def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
 
-    monkeypatch.setattr(BaseTask, '_run', _run)
-
-    _run_tasks_parallel(tasks, 2)
+    if shutil.which('R') is not None:
+        monkeypatch.setattr(BaseTask, '_run', _run)
+        _run_tasks_parallel(tasks, 2)
