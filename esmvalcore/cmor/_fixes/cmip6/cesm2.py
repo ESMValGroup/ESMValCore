@@ -1,57 +1,59 @@
 """Fixes for CESM2 model."""
-import iris
+from shutil import copyfile
 
-from ..cmip5.bcc_csm1_1 import Cl as BaseCl
+from netCDF4 import Dataset
+
 from ..fix import Fix
-from ..shared import (add_aux_coords_from_cubes, add_scalar_depth_coord,
-                      add_scalar_height_coord, add_scalar_typeland_coord,
-                      add_scalar_typesea_coord)
+from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
+                      add_scalar_typeland_coord, add_scalar_typesea_coord)
 
 
-class Cl(BaseCl):
+class Cl(Fix):
     """Fixes for ``cl``."""
 
-    def fix_metadata(self, cubes):
-        """Fix vertical hybrid sigma coordinate.
+    def fix_file(self, filepath, output_dir):
+        """Fix hybrid pressure coordinate.
+
+        Adds missing ``formula_terms`` attribute to file and fix ordering
+        of auxiliary coordinates ``a`` and ``b``.
+
+        Note
+        ----
+        Fixing this with :mod:`iris` in ``fix_metadata`` or ``fix_data`` is
+        **not** possible, since the bounds of the vertical coordinates ``a``
+        and ``b`` are not present in the loaded :class:`iris.cube.CubeList`,
+        even when :func:`iris.load_raw` is used.
 
         Parameters
         ----------
-        cubes : iris.cube.CubeList
-            Input cubes.
+        filepath : str
+            Path to the original file.
+        output_dir : str
+            Path of the directory where the fixed file is saved to.
 
         Returns
         -------
-        iris.cube.CubeList
+        str
+            Path to the fixed file.
 
         """
-        cube = self.get_cube_from_list(cubes)
+        new_path = self.get_fixed_filepath(output_dir, filepath)
+        copyfile(filepath, new_path)
+        dataset = Dataset(new_path, mode='a')
 
-        # Add auxiliary coordinate from list of cubes
-        coords_to_add = {
-            'a': 1,
-            'b': 1,
-            'ps': (0, 2, 3),
-            'p0': (),
-        }
-        add_aux_coords_from_cubes(cube, cubes, coords_to_add)
+        # Fix hybrid sigma pressure coordinate
+        dataset.variables['lev'].formula_terms = 'p0: p0 a: a b: b ps: ps'
+        dataset.variables['lev'].standard_name = (
+            'atmosphere_hybrid_sigma_pressure_coordinate')
+        dataset.variables['lev'].units = '1'
 
-        # Add ap coordinate
-        a_coord = cube.coord(var_name='a')
-        p0_coord = cube.coord(var_name='p0')
-        ap_coord = a_coord * p0_coord.points[0]
-        ap_coord.units = a_coord.units * p0_coord.units
-        ap_coord.rename('vertical pressure')
-        ap_coord.var_name = 'ap'
-        cube.add_aux_coord(ap_coord, cube.coord_dims(a_coord))
+        # Fix auxiliary coordinates
+        dataset.variables['a'][:] = dataset.variables['a'][::-1]
+        dataset.variables['b'][:] = dataset.variables['b'][::-1]
 
-        # Add aux_factory
-        pressure_coord_factory = iris.aux_factory.HybridPressureFactory(
-            delta=ap_coord,
-            sigma=cube.coord(var_name='b'),
-            surface_air_pressure=cube.coord(var_name='ps'),
-        )
-        cube.add_aux_factory(pressure_coord_factory)
-        return cubes
+        # Save
+        dataset.close()
+        return new_path
 
 
 class Fgco2(Fix):
