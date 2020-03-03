@@ -1,18 +1,156 @@
 """Integration tests for :func:`esmvalcore.preprocessor._io.concatenate`."""
 
 import unittest
+from unittest.mock import call
 
 import numpy as np
+import pytest
 from cf_units import Unit
-from iris.coords import DimCoord
+from iris.aux_factory import HybridHeightFactory, HybridPressureFactory
+from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import ConcatenateError
 
 from esmvalcore.preprocessor import _io
 
 
+@pytest.fixture
+def mock_empty_cube():
+    """Return mocked cube with irrelevant coordinates."""
+    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
+    a_coord = AuxCoord(0.0, var_name='a')
+    b_coord = AuxCoord(0.0, var_name='b')
+    cube.coords.return_value = [a_coord, b_coord]
+    return cube
+
+
+@pytest.fixture
+def mock_hybrid_height_cube():
+    """Return mocked cube with hybrid height coordinate."""
+    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
+    lev_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='lev', units='m')
+    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='b')
+    orog_coord = AuxCoord([[[100000]]], var_name='orog', units='m')
+    cube.coord.side_effect = [lev_coord, b_coord, orog_coord,
+                              lev_coord, b_coord, orog_coord]
+    cube.coords.return_value = [
+        lev_coord,
+        b_coord,
+        orog_coord,
+        AuxCoord(0.0, standard_name='atmosphere_hybrid_height_coordinate'),
+    ]
+    aux_factory = HybridHeightFactory(
+        delta=lev_coord,
+        sigma=b_coord,
+        orography=orog_coord,
+    )
+    cube.aux_factories = ['dummy', aux_factory]
+    return cube
+
+
+@pytest.fixture
+def mock_hybrid_pressure_cube():
+    """Return mocked cube with hybrid pressure coordinate."""
+    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
+    ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='ap', units='Pa')
+    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='b')
+    ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
+    cube.coord.side_effect = [ap_coord, b_coord, ps_coord,
+                              ap_coord, b_coord, ps_coord]
+    cube.coords.return_value = [
+        ap_coord,
+        b_coord,
+        ps_coord,
+        AuxCoord(0.0,
+                 standard_name='atmosphere_hybrid_sigma_pressure_coordinate'),
+    ]
+    aux_factory = HybridPressureFactory(
+        delta=ap_coord,
+        sigma=b_coord,
+        surface_air_pressure=ps_coord,
+    )
+    cube.aux_factories = ['dummy', aux_factory]
+    return cube
+
+
+@pytest.fixture
+def real_hybrid_pressure_cube():
+    """Return cube with hybrid pressure coordinate."""
+    ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='ap', units='Pa')
+    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='b')
+    ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
+    x_coord = AuxCoord(
+        0.0,
+        var_name='x',
+        standard_name='atmosphere_hybrid_sigma_pressure_coordinate',
+    )
+    cube = Cube([[[[0.0]]]], var_name='x',
+                aux_coords_and_dims=[(ap_coord, 1), (b_coord, 1),
+                                     (ps_coord, (0, 2, 3)), (x_coord, ())])
+    return cube
+
+
+def test_fix_aux_factories_empty_cube(mock_empty_cube):
+    """Test fixing with empty cube."""
+    _io._fix_aux_factories(mock_empty_cube)
+    assert mock_empty_cube.mock_calls == [call.coords()]
+
+
+def test_fix_aux_factories_hybrid_height(mock_hybrid_height_cube):
+    """Test fixing of hybrid height coordinate."""
+    # Test with aux_factory object
+    _io._fix_aux_factories(mock_hybrid_height_cube)
+    mock_hybrid_height_cube.coords.assert_called_once_with()
+    mock_hybrid_height_cube.coord.assert_has_calls([call(var_name='lev'),
+                                                    call(var_name='b'),
+                                                    call(var_name='orog')])
+    mock_hybrid_height_cube.add_aux_factory.assert_not_called()
+
+    # Test without aux_factory object
+    mock_hybrid_height_cube.reset_mock()
+    mock_hybrid_height_cube.aux_factories = ['dummy']
+    _io._fix_aux_factories(mock_hybrid_height_cube)
+    mock_hybrid_height_cube.coords.assert_called_once_with()
+    mock_hybrid_height_cube.coord.assert_has_calls([call(var_name='lev'),
+                                                    call(var_name='b'),
+                                                    call(var_name='orog')])
+    mock_hybrid_height_cube.add_aux_factory.assert_called_once()
+
+
+def test_fix_aux_factories_hybrid_pressure(mock_hybrid_pressure_cube):
+    """Test fixing of hybrid pressure coordinate."""
+    # Test with aux_factory object
+    _io._fix_aux_factories(mock_hybrid_pressure_cube)
+    mock_hybrid_pressure_cube.coords.assert_called_once_with()
+    mock_hybrid_pressure_cube.coord.assert_has_calls([call(var_name='ap'),
+                                                      call(var_name='b'),
+                                                      call(var_name='ps')])
+    mock_hybrid_pressure_cube.add_aux_factory.assert_not_called()
+
+    # Test without aux_factory object
+    mock_hybrid_pressure_cube.reset_mock()
+    mock_hybrid_pressure_cube.aux_factories = ['dummy']
+    _io._fix_aux_factories(mock_hybrid_pressure_cube)
+    mock_hybrid_pressure_cube.coords.assert_called_once_with()
+    mock_hybrid_pressure_cube.coord.assert_has_calls([call(var_name='ap'),
+                                                      call(var_name='b'),
+                                                      call(var_name='ps')])
+    mock_hybrid_pressure_cube.add_aux_factory.assert_called_once()
+
+
+def test_fix_aux_factories_real_cube(real_hybrid_pressure_cube):
+    """Test fixing of hybrid pressure coordinate on real cube."""
+    assert not real_hybrid_pressure_cube.coords('air_pressure')
+    _io._fix_aux_factories(real_hybrid_pressure_cube)
+    air_pressure_coord = real_hybrid_pressure_cube.coord('air_pressure')
+    expected_coord = AuxCoord([[[[1.0]]]], bounds=[[[[[-50000., 150002.]]]]],
+                              standard_name='air_pressure', units='Pa')
+    assert air_pressure_coord == expected_coord
+
+
 class TestConcatenate(unittest.TestCase):
     """Tests for :func:`esmvalcore.preprocessor._io.concatenate`."""
+
     def setUp(self):
         """Start tests."""
         self._model_coord = DimCoord([1., 2.],

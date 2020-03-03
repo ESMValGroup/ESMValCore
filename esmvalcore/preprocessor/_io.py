@@ -28,6 +28,41 @@ VARIABLE_KEYS = {
 }
 
 
+def _fix_aux_factories(cube):
+    """Fix :class:`iris.aux_factory.AuxCoordFactory` after concatenation.
+
+    Necessary because of bug in :mod:`iris` (see issue #2478).
+
+    """
+    coord_names = [coord.name() for coord in cube.coords()]
+
+    # Hybrid sigma pressure coordinate
+    if 'atmosphere_hybrid_sigma_pressure_coordinate' in coord_names:
+        new_aux_factory = iris.aux_factory.HybridPressureFactory(
+            delta=cube.coord(var_name='ap'),
+            sigma=cube.coord(var_name='b'),
+            surface_air_pressure=cube.coord(var_name='ps'),
+        )
+        for aux_factory in cube.aux_factories:
+            if isinstance(aux_factory, iris.aux_factory.HybridPressureFactory):
+                break
+        else:
+            cube.add_aux_factory(new_aux_factory)
+
+    # Hybrid sigma height coordinate
+    if 'atmosphere_hybrid_height_coordinate' in coord_names:
+        new_aux_factory = iris.aux_factory.HybridHeightFactory(
+            delta=cube.coord(var_name='lev'),
+            sigma=cube.coord(var_name='b'),
+            orography=cube.coord(var_name='orog'),
+        )
+        for aux_factory in cube.aux_factories:
+            if isinstance(aux_factory, iris.aux_factory.HybridHeightFactory):
+                break
+        else:
+            cube.add_aux_factory(new_aux_factory)
+
+
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
     if coord_name is not None:
         attrs = ncfield.cf_group[coord_name].cf_attrs()
@@ -107,9 +142,16 @@ def concatenate(cubes):
             concatenated = _concatenate_overlapping_cubes(concatenated)
 
     if len(concatenated) == 1:
-        return concatenated[0]
+        cube = concatenated[0]
+        _fix_aux_factories(cube)
+        return cube
 
-    logger.error('Can not concatenate cubes into a single one.')
+    # Concatenation not successful -> retrieve exact error message
+    try:
+        iris.cube.CubeList(cubes).concatenate_cube()
+    except iris.exceptions.ConcatenateError as exc:
+        msg = str(exc)
+    logger.error('Can not concatenate cubes into a single one: %s', msg)
     logger.error('Resulting cubes:')
     for cube in concatenated:
         logger.error(cube)
@@ -119,7 +161,7 @@ def concatenate(cubes):
             pass
         else:
             logger.error('From %s to %s', time.cell(0), time.cell(-1))
-    raise ValueError('Can not concatenate cubes.')
+    raise ValueError(f'Can not concatenate cubes: {msg}')
 
 
 def save(cubes, filename, optimize_access='', compress=False, **kwargs):
