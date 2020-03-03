@@ -3,11 +3,12 @@ import itertools
 import logging
 import os
 import subprocess
+from shutil import which
 
 import yamale
 
 from ._data_finder import get_start_end_year
-from ._task import get_flattened_tasks, which
+from ._task import get_flattened_tasks
 from .preprocessor import PreprocessingTask, TIME_PREPROCESSORS
 
 logger = logging.getLogger(__name__)
