@@ -933,7 +933,7 @@ Examples:
                 end_year: 2000
                 end_month: 12
                 end_day: 31
-                standardize: true
+              standardize: true
 
 See also :func:`esmvalcore.preprocessor.anomalies`.
 
