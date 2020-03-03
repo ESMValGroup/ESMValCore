@@ -12,17 +12,20 @@ from esmvalcore.cmor.fix import Fix
 
 @pytest.fixture
 def sample_cubes():
+    """Sample cubes."""
     ta_cube = iris.cube.Cube([1.0], var_name='ta')
     tas_cube = iris.cube.Cube([3.0], var_name='tas')
     return iris.cube.CubeList([ta_cube, tas_cube])
 
 
 def test_get_tas_fix():
+    """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'UKESM1-0-LL', 'Amon', 'tas')
     assert fix == [AllVars(None)]
 
 
 def test_allvars_fix_metadata(sample_cubes):
+    """Test ``fix_metadata`` for all variables."""
     for cube in sample_cubes:
         cube.attributes['parent_time_units'] = 'days since 1850-01-01'
     out_cubes = AllVars(None).fix_metadata(sample_cubes)
@@ -32,6 +35,7 @@ def test_allvars_fix_metadata(sample_cubes):
 
 
 def test_allvars_no_need_tofix_metadata(sample_cubes):
+    """Test ``fix_metadata`` for all variables."""
     for cube in sample_cubes:
         cube.attributes['parent_time_units'] = 'days since 1850-01-01'
     out_cubes = AllVars(None).fix_metadata(sample_cubes)
