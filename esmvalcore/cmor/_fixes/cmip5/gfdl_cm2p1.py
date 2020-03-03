@@ -79,27 +79,25 @@ class Sit(Fix):
         cube = self.get_cube_from_list(cubes)
         time = cube.coord('time')
         if self._fix_required(time):
-            new_bounds = np.empty(time.bounds.shape, time.bounds.dtype)
-            for i, point in enumerate(time):
-                date = point.units.num2date(point.points[0])
-                start = cftime.DatetimeJulian(date.year, date.month, 1)
-                if date.month < 12:
-                    end = cftime.DatetimeJulian(date.year, date.month + 1, 1)
-                else:
-                    end = cftime.DatetimeJulian(date.year + 1, 1, 1)
-                new_bounds[i, 0] = point.units.date2num(start)
-                new_bounds[i, 1] = point.units.date2num(end)
-            time.bounds = new_bounds
+            times = time.units.num2date(time.points)
+            starts = [
+                cftime.DatetimeJulian(c.year, c.month, 1)
+                for c in times
+            ]
+            ends = [
+                cftime.DatetimeJulian(c.year, c.month + 1, 1)
+                if c.month < 12
+                else cftime.DatetimeJulian(c.year + 1, 1, 1)
+                for c in times
+            ]
+            time.bounds = time.units.date2num(np.stack([starts, ends], -1))
         return cubes
 
     def _fix_required(self, time):
-        if self.vardef.frequency != 'mon':
-            return False
-        if time.bounds[-1, 0] > time.points[-1]:
-            return True
-        if time.bounds[-1, 1] < time.points[-1]:
-            return True
-        return False
+        return (
+            self.vardef.frequency == 'mon' and
+            not (time.bounds[-1, 0] < time.points[-1] < time.bounds[-1, 1])
+        )
 
 
 class Tos(Fix):

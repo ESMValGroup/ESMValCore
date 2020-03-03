@@ -1,5 +1,6 @@
 """Test GDL-CM2P1 fixes."""
 import unittest
+from unittest import mock
 
 from cf_units import Unit
 import iris
@@ -75,7 +76,7 @@ class TestSit(unittest.TestCase):
             ),
             0
         )
-        self.var_info_mock = unittest.mock.Mock()
+        self.var_info_mock = mock.Mock()
         self.var_info_mock.frequency = 'mon'
         self.fix = Sit(self.var_info_mock)
 
