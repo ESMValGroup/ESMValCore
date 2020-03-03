@@ -320,7 +320,7 @@ def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
         _run_tasks_parallel(tasks, 2)
     else:
         with pytest.raises(DiagnosticError) as err_mssg:
-            tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
+            tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
         exp_mssg_1 = "Cannot execute script "
         exp_mssg_2 = "program 'Rscript' not installed."
         assert exp_mssg_1 in str(err_mssg.value)
