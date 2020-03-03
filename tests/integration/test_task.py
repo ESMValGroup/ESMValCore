@@ -264,12 +264,13 @@ def test_py_diagnostic_run_parallel_task(monkeypatch, tmp_path):
 def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = "cows on the [river]"
-    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
 
     if shutil.which('ncl') is not None:
+        tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
+
         monkeypatch.setattr(BaseTask, '_run', _run)
         with pytest.raises(DiagnosticError) as err_mssg:
             _run_tasks_parallel(tasks, 2)
@@ -277,29 +278,50 @@ def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
         exp_mssg_2 = "diag_cow.ncl"
         assert exp_mssg_1 in str(err_mssg.value)
         assert exp_mssg_2 in str(err_mssg.value)
+    else:
+        with pytest.raises(DiagnosticError) as err_mssg:
+            tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
+        exp_mssg_1 = "Cannot execute script "
+        exp_mssg_2 = "program 'ncl' not installed."
+        assert exp_mssg_1 in str(err_mssg.value)
+        assert exp_mssg_2 in str(err_mssg.value)
 
 
 def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = _py2ncl({'cow': 22}, 'tas')
-    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
 
     if shutil.which('ncl') is not None:
+        tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
         monkeypatch.setattr(BaseTask, '_run', _run)
         _run_tasks_parallel(tasks, 2)
+    else:
+        with pytest.raises(DiagnosticError) as err_mssg:
+            tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
+        exp_mssg_1 = "Cannot execute script "
+        exp_mssg_2 = "program 'ncl' not installed."
+        assert exp_mssg_1 in str(err_mssg.value)
+        assert exp_mssg_2 in str(err_mssg.value)
 
 
 def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = 'var0 <- "zg"'
-    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
 
-    if shutil.which('R') is not None:
+    if shutil.which('Rscript') is not None:
+        tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
         monkeypatch.setattr(BaseTask, '_run', _run)
         _run_tasks_parallel(tasks, 2)
+    else:
+        with pytest.raises(DiagnosticError) as err_mssg:
+            tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
+        exp_mssg_1 = "Cannot execute script "
+        exp_mssg_2 = "program 'Rscript' not installed."
+        assert exp_mssg_1 in str(err_mssg.value)
+        assert exp_mssg_2 in str(err_mssg.value)
