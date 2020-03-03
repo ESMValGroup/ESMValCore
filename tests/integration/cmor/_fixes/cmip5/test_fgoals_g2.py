@@ -13,11 +13,18 @@ class TestAll(unittest.TestCase):
     """Test fixes for all vars."""
     def setUp(self):
         """Prepare tests."""
-        self.cube = Cube([1.0, 2.0], var_name='co2', units='J')
+        self.cube = Cube([[1.0, 2.0]], var_name='co2', units='J')
         self.cube.add_dim_coord(
-            DimCoord([0.0, 1.0],
-                     standard_name='time',
-                     units=Unit('days since 0001-01', calendar='gregorian')),
+            DimCoord(
+                [0.0, 1.0],
+                standard_name='time',
+                units=Unit('days since 0001-01', calendar='gregorian')),
+            1)
+        self.cube.add_dim_coord(
+            DimCoord(
+                [180],
+                standard_name='longitude',
+                units=Unit('degrees')),
             0)
         self.fix = AllVars(None)
 
