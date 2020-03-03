@@ -619,13 +619,12 @@ def _run_tasks_parallel(tasks, max_parallel_tasks=None):
     scheduled = get_flattened_tasks(tasks)
     running = {}
 
-    n_scheduled, n_running = len(scheduled), len(running)
-    n_tasks = n_scheduled
+    n_tasks = n_scheduled = len(scheduled)
+    n_running = 0
 
     if max_parallel_tasks is None:
         max_parallel_tasks = os.cpu_count()
-    if max_parallel_tasks > n_tasks:
-        max_parallel_tasks = n_tasks
+    max_parallel_tasks = min(max_parallel_tasks, n_tasks)
     logger.info("Running %s tasks using %s processes", n_tasks,
                 max_parallel_tasks)
 
@@ -633,37 +632,39 @@ def _run_tasks_parallel(tasks, max_parallel_tasks=None):
         """Assume a task is done if it not scheduled or running."""
         return not (task in scheduled or task in running)
 
-    pool = Pool(processes=max_parallel_tasks)
-    while scheduled or running:
-        # Submit new tasks to pool
-        for task in sorted(scheduled, key=lambda t: t.priority):
-            if len(running) >= max_parallel_tasks:
-                break
-            if all(done(t) for t in task.ancestors):
-                future = pool.apply_async(_run_task, [task])
-                running[task] = future
-                scheduled.remove(task)
+    with Pool(processes=max_parallel_tasks) as pool:
+        while scheduled or running:
+            # Submit new tasks to pool
+            for task in sorted(scheduled, key=lambda t: t.priority):
+                if len(running) >= max_parallel_tasks:
+                    break
+                if all(done(t) for t in task.ancestors):
+                    future = pool.apply_async(_run_task, [task])
+                    running[task] = future
+                    scheduled.remove(task)
 
-        # Handle completed tasks
-        ready = {t for t in running if running[t].ready()}
-        for task in ready:
-            _copy_results(task, running[task])
-            running.pop(task)
+            # Handle completed tasks
+            ready = {t for t in running if running[t].ready()}
+            for task in ready:
+                _copy_results(task, running[task])
+                running.pop(task)
 
-        # Wait if there are still tasks running
-        if running:
-            time.sleep(0.1)
+            # Wait if there are still tasks running
+            if running:
+                time.sleep(0.1)
 
-        # Log progress message
-        if len(scheduled) != n_scheduled or len(running) != n_running:
-            n_scheduled, n_running = len(scheduled), len(running)
-            n_done = n_tasks - n_scheduled - n_running
-            logger.info(
-                "Progress: %s tasks running, %s tasks waiting for ancestors, "
-                "%s/%s done", n_running, n_scheduled, n_done, n_tasks)
+            # Log progress message
+            if len(scheduled) != n_scheduled or len(running) != n_running:
+                n_scheduled, n_running = len(scheduled), len(running)
+                n_done = n_tasks - n_scheduled - n_running
+                logger.info(
+                    "Progress: %s tasks running, %s tasks waiting for "
+                    "ancestors, %s/%s done", n_running, n_scheduled, n_done,
+                    n_tasks)
 
-    pool.close()
-    pool.join()
+        logger.info("Successfully completed all tasks.")
+        pool.close()
+        pool.join()
 
 
 def _copy_results(task, future):
