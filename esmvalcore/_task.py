@@ -456,7 +456,7 @@ class DiagnosticTask(BaseTask):
             ]
 
         env = {}
-        if ext == ('.py', '.jl'):
+        if ext in ('.py', '.jl'):
             # Set non-interactive matplotlib backend
             env['MPLBACKEND'] = 'Agg'
         if ext in ('.r', '.ncl'):
