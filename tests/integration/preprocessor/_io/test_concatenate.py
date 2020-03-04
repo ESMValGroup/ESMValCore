@@ -1,5 +1,6 @@
 """Integration tests for :func:`esmvalcore.preprocessor._io.concatenate`."""
 
+import warnings
 import unittest
 from unittest.mock import call
 
@@ -133,7 +134,8 @@ def check_if_fix_aux_factories_is_necessary():
            "is now possible in iris (i.e. issue #2478 has been fixed). Thus, "
            "this test and ALL appearances of the function "
            "'_fix_aux_factories' can safely be removed!")
-    assert 'air_pressure' not in coords, msg
+    if 'air_pressure' in coords:
+        warnings.warn(msg)
 
 
 def test_fix_aux_factories_empty_cube(mock_empty_cube):
