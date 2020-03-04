@@ -8,7 +8,7 @@ import pytest
 from cf_units import Unit
 from iris.aux_factory import HybridHeightFactory, HybridPressureFactory
 from iris.coords import AuxCoord, DimCoord
-from iris.cube import Cube
+from iris.cube import Cube, CubeList
 from iris.exceptions import ConcatenateError
 
 from esmvalcore.preprocessor import _io
@@ -148,6 +148,29 @@ def test_fix_aux_factories_real_cube(real_hybrid_pressure_cube):
     assert air_pressure_coord == expected_coord
 
 
+def test_concatenation_with_aux_factory(real_hybrid_pressure_cube):
+    """Test actual concatenation of a cube with a derived coordinate."""
+
+    def time_coord(time_point):
+        """Time coordinate."""
+        return DimCoord([time_point], var_name='time', standard_name='time',
+                        units='days since 6453-2-1')
+
+    cube_0 = real_hybrid_pressure_cube.copy()
+    cube_1 = real_hybrid_pressure_cube.copy()
+    cube_0.add_dim_coord(time_coord(0), 0)
+    cube_1.add_dim_coord(time_coord(1), 0)
+    concatenated = _io.concatenate(CubeList([cube_0, cube_1]))
+    air_pressure_coord = concatenated.coord('air_pressure')
+    expected_coord = AuxCoord(
+        [[[[1.0]]], [[[1.0]]]],
+        bounds=[[[[[-50000.0, 150002.0]]]], [[[[-50000.0, 150002.0]]]]],
+        standard_name='air_pressure',
+        units='Pa',
+    )
+    assert air_pressure_coord == expected_coord
+
+
 class TestConcatenate(unittest.TestCase):
     """Tests for :func:`esmvalcore.preprocessor._io.concatenate`."""
 
@@ -175,7 +198,7 @@ class TestConcatenate(unittest.TestCase):
             concatenated.coord('time').points, np.array([1, 2, 3, 4, 5, 6]))
 
     def test_concatenate_with_overlap(self):
-        """Test concatenation of time overalapping cubes"""
+        """Test concatenation of time overalapping cubes."""
         self._add_cube([6.5, 7.5], [6., 7.])
         concatenated = _io.concatenate(self.raw_cubes)
         np.testing.assert_array_equal(
