@@ -1,12 +1,13 @@
 """Horizontal and vertical regridding module."""
 
+import logging
 import os
 import re
 from copy import deepcopy
 
+import iris
 import numpy as np
 import stratify
-import iris
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
@@ -15,6 +16,8 @@ from ..cmor.table import CMOR_TABLES
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+
+logger = logging.getLogger(__name__)
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -61,12 +64,13 @@ VERTICAL_SCHEMES = ('linear', 'nearest',
 
 
 def parse_cell_spec(spec):
-    """
-    Parse an MxN cell specification string.
+    """Parse an MxN cell specification string.
 
     Parameters
     ----------
-    spec: str
+    spec : str
+        Cell specs given in the form ``'MxN'`` (``M``: Number of latitudes,
+        ``N``: number of longitudes).
 
     Returns
     -------
@@ -185,8 +189,45 @@ def _attempt_irregular_regridding(cube, scheme):
     return False
 
 
+def _add_regridded_aux_coords(cube, regridded_cube, target_grid):
+    """Get regridded :class:`iris.coords.AuxCoord` and corresponding dims."""
+    if regridded_cube.ndim != cube.ndim:
+        return
+    for coord in cube.coords(dim_coords=False):
+        if regridded_cube.coords(coord.name()):
+            continue
+        if coord.ndim < 2:
+            continue
+        if coord.bounds is not None:
+            logger.warning(
+                "Auxiliary coordinate '%s' cannot be regridded since it "
+                "contains bounds", coord.name())
+            continue
+        logger.debug(
+            "Regridding (bound-less) auxiliary coordinate '%s' which could "
+            "not be regridded by iris", coord.name())
+
+        # Broadcast to shape of whole cube
+        coord_dims = cube.coord_dims(coord)
+        points = iris.util.broadcast_to_shape(coord.core_points(),
+                                              cube.shape,
+                                              coord_dims)
+        aux_coord_cube = cube.copy(points)
+        aux_coord_cube = aux_coord_cube.regrid(
+            target_grid, Linear(extrapolation_mode='extrapolate'))
+
+        # Broadcast to original shape
+        slices = [0] * cube.ndim
+        for coord_dim in coord_dims:
+            slices[coord_dim] = slice(None)
+        aux_coord = coord.copy(aux_coord_cube[tuple(slices)].core_data())
+
+        # Add coordinate to regridded cube
+        regridded_cube.add_aux_coord(aux_coord, coord_dims)
+
+
 def extract_point(cube, latitude, longitude, scheme):
-    """Extract a point, with interpolation
+    """Extract a point, with interpolation.
 
     Extracts a single latitude/longitude point from a cube, according
     to the interpolation scheme `scheme`.
@@ -246,7 +287,6 @@ def extract_point(cube, latitude, longitude, scheme):
     array([ 1,  5, 17, 21, 33, 37, 49, 53])
 
     """
-
     msg = f"Unknown interpolation scheme, got {scheme!r}."
     scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
     if not scheme:
@@ -332,11 +372,12 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     # Perform the horizontal regridding.
     if _attempt_irregular_regridding(cube, scheme):
-        cube = esmpy_regrid(cube, target_grid, scheme)
+        regridded_cube = esmpy_regrid(cube, target_grid, scheme)
     else:
-        cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+        regridded_cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+        _add_regridded_aux_coords(cube, regridded_cube, target_grid)
 
-    return cube
+    return regridded_cube
 
 
 def _create_cube(src_cube, data, src_levels, levels, ):
@@ -356,6 +397,8 @@ def _create_cube(src_cube, data, src_levels, levels, ):
     data : array
         The payload resulting from interpolating the source cube
         over the specified levels.
+    src_levels : iris.coords.DimCoord or iris.coords.AuxCoord
+        Source levels.
     levels : array
         The vertical levels of interpolation.
 

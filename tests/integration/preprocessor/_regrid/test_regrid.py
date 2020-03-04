@@ -41,6 +41,51 @@ class Test(tests.Test):
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         self.assert_array_equal(result.data, expected)
 
+    def test_regrid__linear_with_multidim_aux_coord(self):
+        data = np.empty((2, 2))
+        lons = iris.coords.DimCoord([1.25, 1.75],
+                                    standard_name='longitude',
+                                    bounds=[[0.0, 1.5], [1.5, 2.0]],
+                                    units='degrees_east',
+                                    coord_system=self.cs)
+        lats = iris.coords.DimCoord([1.25, 1.75],
+                                    standard_name='latitude',
+                                    bounds=[[0.0, 1.5], [1.5, 2.0]],
+                                    units='degrees_north',
+                                    coord_system=self.cs)
+        coords_spec = [(lats, 0), (lons, 1)]
+        grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+
+        # Prepare cube
+        aux_coord_bounds = iris.coords.AuxCoord(
+            [[1, 3], [5, 7]],
+            bounds=[[[0, 2], [2, 4]], [[4, 6], [6, 8]]],
+            var_name='coord_with_bounds',
+        )
+        aux_coord_no_bounds = iris.coords.AuxCoord(
+            [[10, 30], [50, 70]], var_name='coord_without_bounds',
+        )
+        cube = self.cube.copy()
+        cube.add_aux_coord(aux_coord_bounds, (1, 2))
+        cube.add_aux_coord(aux_coord_no_bounds, (1, 2))
+
+        # Regridding
+        result = regrid(cube, grid, 'linear')
+        result_coord = result.coord('coord_without_bounds')
+        expected_data = [[[0.75, 1.25],
+                          [1.75, 2.25]],
+                         [[4.75, 5.25],
+                          [5.75, 6.25]],
+                         [[8.75, 9.25],
+                          [9.75, 10.25]]]
+        expected_coord_points = [[25.0, 35.0],
+                                 [45.0, 55.0]]
+        self.assert_array_equal(result.data, expected_data)
+        self.assert_array_equal(result_coord.points, expected_coord_points)
+        assert result_coord.bounds is None
+        assert not result.coords('coord_with_bounds')
+
+
     def test_regrid__linear_extrapolate(self):
         data = np.empty((3, 3))
         lons = iris.coords.DimCoord([0, 1.5, 3],
