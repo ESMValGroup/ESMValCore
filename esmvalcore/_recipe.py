@@ -404,13 +404,13 @@ def _get_correct_fx_file(variable, fx_variable, config_user):
             searched_mips.append(fx_mip)
             fx_var_dict['mip'] = fx_mip
             fx_var_dict = _add_fxvar_keys(fx_var_dict, var)
+            valid_fx_vars.append(fx_var_dict)
             logger.debug("For fx variable '%s', found table '%s'", fx_varname,
                          fx_mip)
             fx_files = _get_input_files(fx_var_dict, config_user)[0]
 
             # If files found, return them
             if fx_files:
-                valid_fx_vars.append(fx_var_dict)
                 logger.debug("Found fx variables '%s':\n%s", fx_varname,
                              pformat(fx_files))
                 break
@@ -463,23 +463,20 @@ def _update_fx_files(step, settings, variable, config_user, fx_vars):
         'area_statistics', 'volume_statistics', 'zonal_statistics'
     ]
 
+    fx_vars = [
+        _get_correct_fx_file(variable, fxvar, config_user)
+        for fxvar in fx_vars
+    ]
+
     if step in non_preproc_fx_steps:
-        fx_dict = {
-            fx_var: _get_correct_fx_file(variable, fx_var, config_user)[0]
-            for fx_var in fx_vars
-        }
+        fx_dict = {fx_var[1]['short_name']: fx_var[0] for fx_var in fx_vars}
     elif step in preproc_fx_steps:
-        if not fx_vars:
-            return
-        fx_vars = [
-            _get_correct_fx_file(variable, fxvar, config_user)[1]
-            for fxvar in fx_vars
-        ]
         fx_dict = {
-            fx_var['short_name']: get_output_file(variable,
-                                                  config_user['preproc_dir'],
-                                                  fx_var_alias=fx_var)
-            for fx_var in fx_vars if fx_var
+            fx_var[1]['short_name']:
+            get_output_file(variable,
+                            config_user['preproc_dir'],
+                            fx_var_alias=fx_var[1])
+            for fx_var in fx_vars if fx_var[1]
         }
     settings['fx_files'] = fx_dict
     logger.info('Using fx_files: %s', pformat(settings['fx_files']))
