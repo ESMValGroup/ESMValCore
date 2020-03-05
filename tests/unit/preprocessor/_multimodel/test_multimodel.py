@@ -82,9 +82,9 @@ class Test(tests.Test):
 
     def test_compute_statistic(self):
         """Test statistic."""
-        datas = [self.cube1.data[0], self.cube2.data[0]]
-        stat_mean = _compute_statistic(datas, "mean")
-        stat_median = _compute_statistic(datas, "median")
+        data = [self.cube1.data[0], self.cube2.data[0]]
+        stat_mean = _compute_statistic(data, "mean")
+        stat_median = _compute_statistic(data, "median")
         expected_mean = np.ma.ones((3, 2, 2))
         expected_median = np.ma.ones((3, 2, 2))
         self.assert_array_equal(stat_mean, expected_mean)

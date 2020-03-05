@@ -174,7 +174,7 @@ def volume_statistics(
     """
     Apply a statistical operation over a volume.
 
-    The volume average is weighted acoording to the cell volume. Cell volume
+    The volume average is weighted according to the cell volume. Cell volume
     is calculated from iris's cartography tool multiplied by the cell
     thickness.
 
@@ -370,7 +370,7 @@ def extract_transect(cube, latitude=None, longitude=None):
     ValueError
         slice extraction not implemented for irregular grids.
     ValueError
-        latitude and longitute are both floats or lists; not allowed
+        latitude and longitude are both floats or lists; not allowed
         to slice on both axes at the same time.
     """
     # ###
@@ -381,17 +381,17 @@ def extract_transect(cube, latitude=None, longitude=None):
 
     if lats.ndim == 2:
         raise ValueError(
-            'extract_slice: Not implemented for irregular arrays!'
+            'extract_transect: Not implemented for irregular arrays!'
             + '\nTry regridding the data first.')
 
     if isinstance(latitude, float) and isinstance(longitude, float):
         raise ValueError(
-            'extract_slice: Cant slice along lat and lon at the same time'
+            "extract_transect: Can't slice along lat and lon at the same time"
         )
 
     if isinstance(latitude, list) and isinstance(longitude, list):
         raise ValueError(
-            'extract_slice: Can\'t reduce lat and lon at the same time'
+            "extract_transect: Can't reduce lat and lon at the same time"
         )
 
     for dim_name, dim_cut, coord in zip(['latitude', 'longitude'],
@@ -431,7 +431,7 @@ def extract_trajectory(cube, latitudes, longitudes, number_points=2):
 
     If only two latitude and longitude coordinates are given,
     extract_trajectory will produce a cube will extrapolate along a line
-    bewteen those two points, and will add `number_points` points between
+    between those two points, and will add `number_points` points between
     the two corners.
 
     If more than two points are provided, then

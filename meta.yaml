@@ -1,11 +1,11 @@
 # Conda build recipe
 ---
 
-# Build commmand:
+# Build command:
 # conda build . -c conda-forge -c esmvalgroup
 
 # Package version number
-{% set version = "2.0.0b6" %}
+{% set version = "2.0.0b7" %}
 
 package:
   name: esmvalcore
@@ -29,7 +29,7 @@ build:
 requirements:
   build:
     - git
-    - python>=3.6,<3.8
+    - python>=3.6
     # Normally installed via pip:
     - pytest-runner
     - setuptools_scm

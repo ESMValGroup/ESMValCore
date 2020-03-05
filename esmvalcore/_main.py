@@ -178,17 +178,19 @@ def process_recipe(recipe_file, config_user):
     logger.info("PLOTDIR    = %s", config_user["plot_dir"])
     logger.info(70 * "-")
 
-    logger.info("Running tasks using at most %s processes",
-                config_user['max_parallel_tasks'] or cpu_count())
+    n_processes = config_user['max_parallel_tasks'] or cpu_count()
+    logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
         "If your system hangs during execution, it may not have enough "
-        "memory for keeping this number of tasks in memory. In that case, "
-        "try reducing 'max_parallel_tasks' in your user configuration file.")
+        "memory for keeping this number of tasks in memory.")
+    logger.info(
+        "If you experience memory problems, try reducing "
+        "'max_parallel_tasks' in your user configuration file.")
 
     if config_user['compress_netcdf']:
         logger.warning(
-            "You have enabled NetCDF compression. Accesing .nc files can be "
+            "You have enabled NetCDF compression. Accessing .nc files can be "
             "much slower than expected if your access pattern does not match "
             "their internal pattern. Make sure to specify the expected "
             "access pattern in the recipe as a parameter to the 'save' "

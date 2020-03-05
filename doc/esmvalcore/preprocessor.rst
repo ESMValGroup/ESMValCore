@@ -225,8 +225,8 @@ extract the levels and vertically regrid onto the vertical levels of
 
 By default, vertical interpolation is performed in the dimension coordinate of
 the z axis. If you want to explicitly declare the z axis coordinate to use
-(for example, ``air_pressure``' in variables that are provided in model levels 
-and not pressure levels) you can override that automatic choice by providing 
+(for example, ``air_pressure``' in variables that are provided in model levels
+and not pressure levels) you can override that automatic choice by providing
 the name of the desired coordinate:
 
 .. code-block:: yaml
@@ -866,16 +866,16 @@ Examples:
         .. code-block:: yaml
 
             climate_statistics:
-                operator: max
-                period: day
+              operator: max
+              period: day
 
     * Minimum value in the period:
 
         .. code-block:: yaml
 
             climate_statistics:
-                operator: min
-                period: full
+              operator: min
+              period: full
 
 See also :func:`esmvalcore.preprocessor.climate_statistics`.
 
@@ -893,25 +893,47 @@ Parameters:
       full period, seasonal, monthly or daily.
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
-
+    * reference: Time slice to use as the reference to compute the climatology
+      on. Can be 'null' to use the full cube or a dictionary with the
+      parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
 
 Examples:
-    * Anomalies from the monthly climatology:
+    * Anomalies from the full period climatology:
 
         .. code-block:: yaml
 
             anomalies:
-                period: month
+
+    * Anomalies from the full period monthly climatology:
+
+        .. code-block:: yaml
+
+            anomalies:
+              period: month
 
     * Standardized anomalies from the full period climatology:
 
         .. code-block:: yaml
 
             anomalies:
-                standardize: true
+              standardized: true
 
 
+     * Standardized Anomalies from the 1979-2000 monthly climatology:
+
+        .. code-block:: yaml
+
+            anomalies:
+              period: month
+              reference:
+                start_year: 1979
+                start_month: 1
+                start_day: 1
+                end_year: 2000
+                end_month: 12
+                end_day: 31
+              standardize: true
 
 See also :func:`esmvalcore.preprocessor.anomalies`.
 
