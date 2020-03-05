@@ -1,3 +1,4 @@
+import itertools
 import os
 from pathlib import Path
 from pprint import pformat
@@ -1721,7 +1722,8 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
         assert len(settings) == 2
         assert settings['mask_out'] == 'sea'
         fx_files = settings['fx_files']
-        assert isinstance(fx_files, list)
+        assert isinstance(fx_files, dict)
+        fx_files = list(itertools.chain.from_iterable(fx_files.values()))
         if product.attributes['project'] == 'obs4mips':
             assert len(fx_files) == 1
         else:
@@ -1771,7 +1773,8 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
         assert settings['mask_out'] == 'sea'
         assert settings['always_use_ne_mask'] is False
         fx_files = settings['fx_files']
-        assert isinstance(fx_files, list)
+        assert isinstance(fx_files, dict)
+        fx_files = list(itertools.chain.from_iterable(fx_files.values()))
         assert fx_files == []
 
 
@@ -1838,7 +1841,8 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     assert len(settings) == 2
     assert settings['mask_out'] == 'sea'
     fx_files = settings['fx_files']
-    assert isinstance(fx_files, list)
+    assert isinstance(fx_files, dict)
+    fx_files = list(itertools.chain.from_iterable(fx_files.values()))
     assert len(fx_files) == 2
     for fx_file in fx_files:
         if 'sftlf' in fx_file:
@@ -1990,7 +1994,7 @@ def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
     assert product.files
     assert 'area_statistics' in product.settings
     settings = product.settings['area_statistics']
-    assert len(settings) == 1
+    assert len(settings) == 2
     assert settings['operator'] == 'mean'
     assert 'fx_files' not in settings
 
