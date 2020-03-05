@@ -132,7 +132,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
     }
 
     fx_files = fx_files.values()
-    if fx_files and not always_use_ne_mask:
+    if any(fx_files) and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
             fxfile_members = os.path.basename(fx_file).split('_')
@@ -214,7 +214,7 @@ def mask_landseaice(cube, fx_files, mask_out):
     """
     # sftgif is the only one so far but users can set others
     fx_files = fx_files.values()
-    if fx_files:
+    if any(fx_files):
         for fx_file in fx_files:
             fx_cube = iris.load_cube(fx_file)
 
