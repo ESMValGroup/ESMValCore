@@ -498,9 +498,9 @@ def _update_fx_settings(settings, variable, config_user):
         landseamask_vars.append('sftof')
 
     # spatial stats fx variables
-    def _get_spatial_stats_fx_vars(settings, step_name):
-        spatial_stats_fx_vars = settings.get(step_name, {}).get('fx_files')
-        return spatial_stats_fx_vars
+    def _get_fx_vars_from_attribute(settings, step_name):
+        user_fx_vars = settings.get(step_name, {}).get('fx_files')
+        return user_fx_vars
 
     update_methods = {
         'mask_landsea': (_update_fx_settings_mask, {
@@ -517,15 +517,15 @@ def _update_fx_settings(settings, variable, config_user):
         }),
         'area_statistics': (_update_fx_settings_stats, {
             'fx_vars':
-            _get_spatial_stats_fx_vars(settings, 'area_statistics')
+            _get_fx_vars_from_attribute(settings, 'area_statistics')
         }),
         'volume_statistics': (_update_fx_settings_stats, {
             'fx_vars':
-            _get_spatial_stats_fx_vars(settings, 'volume_statistics')
+            _get_fx_vars_from_attribute(settings, 'volume_statistics')
         }),
         'zonal_statistics': (_update_fx_settings_stats, {
             'fx_vars':
-            _get_spatial_stats_fx_vars(settings, 'zonal_statistics')
+            _get_fx_vars_from_attribute(settings, 'zonal_statistics')
         }),
     }
     for step_name, step_settings in settings.items():
