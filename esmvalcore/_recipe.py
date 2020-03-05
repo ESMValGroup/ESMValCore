@@ -453,77 +453,86 @@ def _update_weighting_settings(settings, variable):
     _exclude_dataset(settings, variable, 'weighting_landsea_fraction')
 
 
-def _update_fx_settings_mask(settings, variable, config_user, fx_vars,
-                             as_list):
+def _update_fx_files(step, settings, variable, config_user, fx_vars, as_list):
     """Update settings with mask fx file list or dict."""
-    logger.debug('Getting land-sea fx mask settings now...')
-    fx_dict = {
-        fx_var: _get_correct_fx_file(variable, fx_var, config_user)[0]
-        for fx_var in fx_vars
-    }
-    if as_list:
-        fx_list = [
-            fx_file for fx_file in fx_dict.values() if fx_file
-        ]
-        settings['fx_files'] = fx_list
-    else:
-        settings['fx_files'] = fx_dict
-    logger.info(pformat(settings['fx_files']))
-
-
-def _update_fx_settings_stats(settings, variable, config_user, fx_vars):
-    """Update settings with spatial analysis fx vars files dict."""
-    if not fx_vars:
-        return
-    fx_vars = [
-        _get_correct_fx_file(variable, fxvar, config_user)[1]
-        for fxvar in fx_vars
+    logger.debug('Getting fx settings for {} now...'.format(step))
+    non_preproc_fx_steps = [
+        'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction'
     ]
-    fx_dict = {
-        fx_var['short_name']: get_output_file(variable,
-                                              config_user['preproc_dir'],
-                                              fx_var_alias=fx_var)
-        for fx_var in fx_vars if fx_var
-    }
-    settings['fx_files'] = fx_dict
-    logger.info(pformat(settings['fx_files']))
+    preproc_fx_steps = [
+        'area_statistics', 'volume_statistics', 'zonal_statistics'
+    ]
+
+    if step in non_preproc_fx_steps:
+        fx_dict = {
+            fx_var: _get_correct_fx_file(variable, fx_var, config_user)[0]
+            for fx_var in fx_vars
+        }
+        if as_list:
+            fx_list = [fx_file for fx_file in fx_dict.values() if fx_file]
+            settings['fx_files'] = fx_list
+        else:
+            settings['fx_files'] = fx_dict
+    elif step in preproc_fx_steps:
+        if not fx_vars:
+            return
+        fx_vars = [
+            _get_correct_fx_file(variable, fxvar, config_user)[1]
+            for fxvar in fx_vars
+        ]
+        fx_dict = {
+            fx_var['short_name']: get_output_file(variable,
+                                                  config_user['preproc_dir'],
+                                                  fx_var_alias=fx_var)
+            for fx_var in fx_vars if fx_var
+        }
+        settings['fx_files'] = fx_dict
+    logger.info('Using fx_files: %s', pformat(settings['fx_files']))
 
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
     msg = f"Using fx files for %s of dataset %s:\n%s"
-    # landsea mask fx variables
-    landseamask_vars = ['sftlf']
-    if variable['project'] != 'obs4mips':
-        landseamask_vars.append('sftof')
 
-    # spatial stats fx variables
+    # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(settings, step_name):
         user_fx_vars = settings.get(step_name, {}).get('fx_files')
+        if not user_fx_vars:
+            user_fx_vars = ['sftlf']
+            if variable['project'] != 'obs4mips':
+                user_fx_vars.append('sftof')
+            if step_name == 'mask_landseaice':
+                user_fx_vars = ['sftgif']
         return user_fx_vars
 
     update_methods = {
-        'mask_landsea': (_update_fx_settings_mask, {
-            'as_list': True,
-            'fx_vars': landseamask_vars
+        'mask_landsea': (_update_fx_files, {
+            'as_list':
+            True,
+            'fx_vars':
+            _get_fx_vars_from_attribute(settings, 'mask_landsea')
         }),
-        'mask_landseaice': (_update_fx_settings_mask, {
-            'as_list': True,
-            'fx_vars': ['sftgif']
+        'mask_landseaice': (_update_fx_files, {
+            'as_list':
+            True,
+            'fx_vars':
+            _get_fx_vars_from_attribute(settings, 'mask_landseaice')
         }),
-        'weighting_landsea_fraction': (_update_fx_settings_mask, {
-            'as_list': False,
-            'fx_vars': landseamask_vars
+        'weighting_landsea_fraction': (_update_fx_files, {
+            'as_list':
+            False,
+            'fx_vars':
+            _get_fx_vars_from_attribute(settings, 'weighting_landsea_fraction')
         }),
-        'area_statistics': (_update_fx_settings_stats, {
+        'area_statistics': (_update_fx_files, {
             'fx_vars':
             _get_fx_vars_from_attribute(settings, 'area_statistics')
         }),
-        'volume_statistics': (_update_fx_settings_stats, {
+        'volume_statistics': (_update_fx_files, {
             'fx_vars':
             _get_fx_vars_from_attribute(settings, 'volume_statistics')
         }),
-        'zonal_statistics': (_update_fx_settings_stats, {
+        'zonal_statistics': (_update_fx_files, {
             'fx_vars':
             _get_fx_vars_from_attribute(settings, 'zonal_statistics')
         }),
@@ -531,9 +540,10 @@ def _update_fx_settings(settings, variable, config_user):
     for step_name, step_settings in settings.items():
         update_method, kwargs = update_methods.get(step_name, (None, {}))
         if update_method:
-            update_method(step_settings, variable, config_user, **kwargs)
-            logger.info(msg, variable['short_name'],
-                        variable['dataset'], step_name)
+            update_method(step_name, step_settings, variable, config_user,
+                          **kwargs)
+            logger.info(msg, variable['short_name'], variable['dataset'],
+                        step_name)
 
 
 def _read_attributes(filename):
