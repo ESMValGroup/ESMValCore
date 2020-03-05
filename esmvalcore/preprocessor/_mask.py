@@ -100,8 +100,8 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
     cube: iris.cube.Cube
         data cube to be masked.
 
-    fx_files: list
-        list holding the full paths to fx files.
+    fx_files: dict
+        dict: keys: fx variables, values: full paths to fx files.
 
     mask_out: str
         either "land" to mask out land mass or "sea" to mask out seas.
@@ -131,6 +131,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
+    fx_files = list(itertools.chain.from_iterable(fx_files.values()))
     if fx_files and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
@@ -192,8 +193,8 @@ def mask_landseaice(cube, fx_files, mask_out):
     cube: iris.cube.Cube
         data cube to be masked.
 
-    fx_files: list
-        list holding the full paths to fx files.
+    fx_files: dict
+        dict: keys: fx variables, values: full paths to fx files.
 
     mask_out: str
         either "landsea" to mask out landsea or "ice" to mask out ice.
@@ -211,7 +212,8 @@ def mask_landseaice(cube, fx_files, mask_out):
         Error raised if fx_files list is empty.
 
     """
-    # sftgif is the only one so far
+    # sftgif is the only one so far but users can set others
+    fx_files = list(itertools.chain.from_iterable(fx_files.values()))
     if fx_files:
         for fx_file in fx_files:
             fx_cube = iris.load_cube(fx_file)
