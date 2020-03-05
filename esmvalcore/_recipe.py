@@ -453,7 +453,7 @@ def _update_weighting_settings(settings, variable):
     _exclude_dataset(settings, variable, 'weighting_landsea_fraction')
 
 
-def _update_fx_files(step, settings, variable, config_user, fx_vars, as_list):
+def _update_fx_files(step, settings, variable, config_user, fx_vars):
     """Update settings with mask fx file list or dict."""
     logger.debug('Getting fx settings for {} now...'.format(step))
     non_preproc_fx_steps = [
@@ -468,11 +468,6 @@ def _update_fx_files(step, settings, variable, config_user, fx_vars, as_list):
             fx_var: _get_correct_fx_file(variable, fx_var, config_user)[0]
             for fx_var in fx_vars
         }
-        if as_list:
-            fx_list = [fx_file for fx_file in fx_dict.values() if fx_file]
-            settings['fx_files'] = fx_list
-        else:
-            settings['fx_files'] = fx_dict
     elif step in preproc_fx_steps:
         if not fx_vars:
             return
@@ -486,7 +481,7 @@ def _update_fx_files(step, settings, variable, config_user, fx_vars, as_list):
                                                   fx_var_alias=fx_var)
             for fx_var in fx_vars if fx_var
         }
-        settings['fx_files'] = fx_dict
+    settings['fx_files'] = fx_dict
     logger.info('Using fx_files: %s', pformat(settings['fx_files']))
 
 
@@ -505,38 +500,16 @@ def _update_fx_settings(settings, variable, config_user):
                 user_fx_vars = ['sftgif']
         return user_fx_vars
 
-    update_methods = {
-        'mask_landsea': (_update_fx_files, {
-            'as_list':
-            True,
+    fx_steps = [
+        'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
+        'area_statistics', 'volume_statistics', 'zonal_statistics'
+    ]
+    update_methods = {}
+    for step in fx_steps:
+        update_methods[step] = (_update_fx_files, {
             'fx_vars':
-            _get_fx_vars_from_attribute(settings, 'mask_landsea')
-        }),
-        'mask_landseaice': (_update_fx_files, {
-            'as_list':
-            True,
-            'fx_vars':
-            _get_fx_vars_from_attribute(settings, 'mask_landseaice')
-        }),
-        'weighting_landsea_fraction': (_update_fx_files, {
-            'as_list':
-            False,
-            'fx_vars':
-            _get_fx_vars_from_attribute(settings, 'weighting_landsea_fraction')
-        }),
-        'area_statistics': (_update_fx_files, {
-            'fx_vars':
-            _get_fx_vars_from_attribute(settings, 'area_statistics')
-        }),
-        'volume_statistics': (_update_fx_files, {
-            'fx_vars':
-            _get_fx_vars_from_attribute(settings, 'volume_statistics')
-        }),
-        'zonal_statistics': (_update_fx_files, {
-            'fx_vars':
-            _get_fx_vars_from_attribute(settings, 'zonal_statistics')
-        }),
-    }
+            _get_fx_vars_from_attribute(settings, step)
+        })
     for step_name, step_settings in settings.items():
         update_method, kwargs = update_methods.get(step_name, (None, {}))
         if update_method:
