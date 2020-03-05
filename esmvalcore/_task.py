@@ -268,7 +268,7 @@ class DiagnosticTask(BaseTask):
         super().__init__(ancestors=ancestors, name=name)
         self.script = script
         self.settings = settings
-        self.output_dir = Path(output_dir)
+        self.output_dir = output_dir
         self.cmd = self._initialize_cmd()
         self.log = Path(settings['run_dir']) / 'log.txt'
         self.resource_log = Path(settings['run_dir']) / 'resource_usage.txt'
