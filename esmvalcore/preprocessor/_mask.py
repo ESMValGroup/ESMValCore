@@ -7,7 +7,6 @@ Natural Earth shapefiles (land or ocean), masking on thresholds,
 missing values masking.
 """
 
-import itertools
 import logging
 import os
 
@@ -132,7 +131,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
-    fx_files = list(itertools.chain.from_iterable(fx_files.values()))
+    fx_files = fx_files.values()
     if fx_files and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
@@ -214,7 +213,7 @@ def mask_landseaice(cube, fx_files, mask_out):
 
     """
     # sftgif is the only one so far but users can set others
-    fx_files = list(itertools.chain.from_iterable(fx_files.values()))
+    fx_files = fx_files.values()
     if fx_files:
         for fx_file in fx_files:
             fx_cube = iris.load_cube(fx_file)
