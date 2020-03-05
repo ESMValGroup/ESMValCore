@@ -1,4 +1,4 @@
-"""Unit tests for regridding multidimensional :class:`iris.coords.AuxCoord`."""
+"""Unit tests for regridding :class:`iris.coords.AuxCoord`s."""
 
 import unittest
 from unittest.mock import call, sentinel
