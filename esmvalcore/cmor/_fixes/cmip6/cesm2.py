@@ -56,6 +56,14 @@ class Cl(Fix):
         return new_path
 
 
+class Clw(Cl):
+    """Fixes for ``clw (same as for cl)``."""
+
+
+class Cli(Cl):
+    """Fixes for ``cli (same as for cl)``."""
+
+
 class Fgco2(Fix):
     """Fixes for fgco2."""
 

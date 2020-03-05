@@ -42,5 +42,13 @@ class Cl(BaseCl):
         return new_path
 
 
+class Clw(Cl):
+    """Fixes for ``clw (same as for cl)``."""
+
+
+class Cli(Cl):
+    """Fixes for ``cli (same as for cl)``."""
+
+
 class Tas(BaseTas):
     """Fixes for tas."""

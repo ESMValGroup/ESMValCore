@@ -1,14 +1,14 @@
-"""Fixes for SAM0-UNICON model."""
-from ..cmip5.bcc_csm1_1 import Cl as BaseCl
+"""Fixes for CMIP6 ACCESS-CM2."""
+from .ukesm1_0_ll import Cl as BaseCl
 
 
 class Cl(BaseCl):
     """Fixes for ``cl``."""
 
 
-class Clw(Cl):
+class Clw(BaseCl):
     """Fixes for ``clw (same as for cl)``."""
 
 
-class Cli(Cl):
+class Cli(BaseCl):
     """Fixes for ``cli (same as for cl)``."""

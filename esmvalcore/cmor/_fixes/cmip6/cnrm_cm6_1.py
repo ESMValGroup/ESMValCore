@@ -1,6 +1,7 @@
 """Fixes for CNRM-CM6-1 model."""
 import iris
 
+from ..fix import Fix
 from ..cmip5.bcc_csm1_1 import Cl as BaseCl
 from ..shared import add_aux_coords_from_cubes, get_bounds_cube
 
@@ -48,3 +49,32 @@ class Cl(BaseCl):
         for coord_name in ('latitude', 'longitude'):
             cube.coord(coord_name).guess_bounds()
         return cubes
+
+
+class Clw(Cl):
+    """Fixes for ``clw (same as for cl)``."""
+
+
+class Cli(Cl):
+    """Fixes for ``cli (same as for cl)``."""
+
+
+class Clcalipso(Fix):
+    """Fixes for clcalipso."""
+
+    def fix_metadata(self, cubes):
+        """
+        Corrects alt40 coordinate standard_name.
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        cl_cube = self.get_cube_from_list(cubes)
+
+        alt40 = cl_cube.coord('alt40')
+        alt40.standard_name = 'altitude'
+
+        return iris.cube.CubeList([cl_cube])

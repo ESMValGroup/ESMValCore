@@ -47,3 +47,11 @@ class Cl(Fix):
         add_pressure_level_coordinate(cl_cube)
 
         return iris.cube.CubeList([cl_cube])
+
+
+class Clw(Cl):
+    """Fixes for ``clw (same as for cl)``."""
+
+
+class Cli(Cl):
+    """Fixes for ``cli (same as for cl)``."""

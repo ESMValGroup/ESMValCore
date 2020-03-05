@@ -1,5 +1,5 @@
-"""Fixes for SAM0-UNICON model."""
-from ..cmip5.bcc_csm1_1 import Cl as BaseCl
+"""Fixes for FGOALS-g3 model."""
+from ..cmip5.fgoals_g2 import Cl as BaseCl
 
 
 class Cl(BaseCl):

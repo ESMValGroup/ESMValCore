@@ -1,5 +1,6 @@
 """Fixes for CMIP6 HadGEM-GC31-LL."""
 from ..fix import Fix
+from .ukesm1_0_ll import Cl as BaseCl
 
 
 class AllVars(Fix):
@@ -27,3 +28,15 @@ class AllVars(Fix):
             except AttributeError:
                 pass
         return cubes
+
+
+class Cl(BaseCl):
+    """Fixes for ``cl``."""
+
+
+class Clw(Cl):
+    """Fixes for ``clw (same as for cl)``."""
+
+
+class Cli(Cl):
+    """Fixes for ``cli (same as for cl)``."""
