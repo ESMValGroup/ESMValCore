@@ -1729,6 +1729,44 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
             assert len(fx_files) == 2
 
 
+def test_landmask_change_fxvar(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_files: [{'short_name': 'sftlf', 'exp': 'piControl'}] 
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check custom fx variables
+    task = recipe.tasks.pop()
+    product = task.products.pop()
+    settings = product.settings['mask_landsea']
+    assert len(settings) == 2
+    assert settings['mask_out'] == 'sea'
+    fx_files = settings['fx_files']
+    assert isinstance(fx_files, dict)
+    assert len(fx_files) == 1
+    assert '_fx_' in fx_files['sftlf']
+    assert '_piControl_' in fx_files['sftlf']
+
+
 def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
     content = dedent("""
         preprocessors:
