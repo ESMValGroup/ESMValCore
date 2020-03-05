@@ -38,6 +38,7 @@ class Test(tests.Test):
                 expected_calls = [mock.call(self.coord), mock.call(self.coord)]
                 self.assertEqual(self.remove_coord.mock_calls, expected_calls)
             self.regrid.assert_called_once_with(tgt_grid, expected_scheme)
+        self.mock_add_regridded_aux_coords.assert_called_once()
 
         # Reset the mocks to enable multiple calls per test-case.
         for mocker in self.mocks:
@@ -75,7 +76,8 @@ class Test(tests.Test):
             return_value=None)
         self.mocks = [
             self.coord_system, self.coords, self.regrid, self.src_cube,
-            self.tgt_grid_coord, self.tgt_grid, self.mock_stock
+            self.tgt_grid_coord, self.tgt_grid, self.mock_stock,
+            self.mock_add_regridded_aux_coords,
         ]
 
     def test_invalid_tgt_grid__unknown(self):
