@@ -178,7 +178,6 @@ class Test(tests.Test):
         self.assert_array_equal(result_coord.points, expected_coord_points)
         assert result_coord.bounds is None
 
-
     def test_regrid__nearest_extrapolate_with_mask(self):
         data = np.empty((3, 3))
         lons = iris.coords.DimCoord([0, 1.6, 3],
