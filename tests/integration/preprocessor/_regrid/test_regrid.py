@@ -41,7 +41,7 @@ class Test(tests.Test):
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         self.assert_array_equal(result.data, expected)
 
-    def test_regrid__linear_with_multidim_aux_coord(self):
+    def test_regrid__linear_with_2d_aux_coord(self):
         data = np.empty((2, 2))
         lons = iris.coords.DimCoord([1.25, 1.75],
                                     standard_name='longitude',
@@ -84,7 +84,6 @@ class Test(tests.Test):
         self.assert_array_equal(result_coord.points, expected_coord_points)
         assert result_coord.bounds is None
         assert not result.coords('coord_with_bounds')
-
 
     def test_regrid__linear_extrapolate(self):
         data = np.empty((3, 3))
@@ -144,6 +143,41 @@ class Test(tests.Test):
         result = regrid(self.cube, grid, 'nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
         self.assert_array_equal(result.data, expected)
+
+    def test_regrid__nearest_with_1d_aux_coord(self):
+        data = np.empty((2, 2))
+        lons = iris.coords.DimCoord([1.25, 1.75],
+                                    standard_name='longitude',
+                                    bounds=[[0.0, 1.5], [1.5, 2.0]],
+                                    units='degrees_east',
+                                    coord_system=self.cs)
+        lats = iris.coords.DimCoord([1.25, 1.75],
+                                    standard_name='latitude',
+                                    bounds=[[0.0, 1.5], [1.5, 2.0]],
+                                    units='degrees_north',
+                                    coord_system=self.cs)
+        coords_spec = [(lats, 0), (lons, 1)]
+        grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+
+        # Prepare cube
+        aux_coord = iris.coords.AuxCoord([1.0, 2.0], var_name='lat_2')
+        cube = self.cube.copy()
+        cube.add_aux_coord(aux_coord, 1)
+
+        # Regridding
+        result = regrid(cube, grid, 'nearest')
+        result_coord = result.coord('lat_2')
+        expected_data = [[[0.0, 1.0],
+                          [2.0, 3.0]],
+                         [[4.0, 5.0],
+                          [6.0, 7.0]],
+                         [[8.0, 9.0],
+                          [10.0, 11.0]]]
+        expected_coord_points = [1.25, 1.75]
+        self.assert_array_equal(result.data, expected_data)
+        self.assert_array_equal(result_coord.points, expected_coord_points)
+        assert result_coord.bounds is None
+
 
     def test_regrid__nearest_extrapolate_with_mask(self):
         data = np.empty((3, 3))

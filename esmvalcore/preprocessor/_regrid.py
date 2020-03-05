@@ -196,8 +196,6 @@ def _add_regridded_aux_coords(cube, regridded_cube, target_grid):
     for coord in cube.coords(dim_coords=False):
         if regridded_cube.coords(coord.name()):
             continue
-        if coord.ndim < 2:
-            continue
         if coord.bounds is not None:
             logger.warning(
                 "Auxiliary coordinate '%s' cannot be regridded since it "
