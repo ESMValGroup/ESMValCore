@@ -7,15 +7,16 @@ Natural Earth shapefiles (land or ocean), masking on thresholds,
 missing values masking.
 """
 
+import itertools
 import logging
 import os
 
 import cartopy.io.shapereader as shpreader
 import iris
-from iris.analysis import Aggregator
-from iris.util import rolling_window
 import numpy as np
 import shapely.vectorized as shp_vect
+from iris.analysis import Aggregator
+from iris.util import rolling_window
 
 logger = logging.getLogger(__name__)
 
