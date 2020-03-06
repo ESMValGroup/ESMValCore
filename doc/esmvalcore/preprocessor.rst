@@ -303,6 +303,19 @@ is for example useful for climate models which do not offer land/sea fraction
 files. This arguments also accepts the special dataset specifiers
 ``reference_dataset`` and ``alternative_dataset``.
 
+Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
+experiment is preferred for fx data retrieval:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_weighting:
+        weighting_landsea_fraction:
+          area_type: land
+          exclude: ['CanESM2', 'reference_dataset']
+          fx_files: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+
+
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
 
@@ -351,7 +364,21 @@ and requires only one argument: ``mask_out``: either ``land`` or ``sea``.
 The preprocessor automatically retrieves the corresponding mask (``fx: stfof``
 in this case) and applies it so that sea-covered grid cells are set to
 missing. Conversely, it retrieves the ``fx: sftlf`` mask when land needs to be
-masked out, respectively. If the corresponding fx file is not found (which is
+masked out, respectively.
+
+Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
+experiment is preferred for fx data retrieval:
+
+
+.. code-block:: yaml
+
+    preprocessors:
+      landmask:
+        mask_landsea:
+          mask_out: sea
+          fx_files: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+
+If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
 vectorized rasters). As mentioned above, the spatial resolution of the the
@@ -378,6 +405,19 @@ and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
 As in the case of ``mask_landsea``, the preprocessor automatically retrieves
 the ``fx_files: [sftgif]`` mask.
+
+Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
+experiment is preferred for fx data retrieval:
+
+
+.. code-block:: yaml
+
+    preprocessors:
+      landseaicemask:
+        mask_landseaice:
+          mask_out: sea
+          fx_files: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
