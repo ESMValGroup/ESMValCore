@@ -453,7 +453,7 @@ def _update_weighting_settings(settings, variable):
     _exclude_dataset(settings, variable, 'weighting_landsea_fraction')
 
 
-def _update_fx_files(settings, variable, config_user, fx_vars):
+def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
     """Update settings with mask fx file list or dict."""
     if not fx_vars:
         return
@@ -465,7 +465,10 @@ def _update_fx_files(settings, variable, config_user, fx_vars):
 
     fx_dict = {fx_var[1]['short_name']: fx_var[0] for fx_var in fx_vars}
     settings['fx_files'] = fx_dict
-    logger.info('Using fx_files: %s', pformat(settings['fx_files']))
+    logger.info('Using fx_files: %s for variable %s during step %s',
+                pformat(settings['fx_files']),
+                variable['short_name'],
+                step_name)
 
 
 def _update_fx_settings(settings, variable, config_user):
@@ -498,7 +501,8 @@ def _update_fx_settings(settings, variable, config_user):
     for step_name, step_settings in settings.items():
         update_method, kwargs = update_methods.get(step_name, (None, {}))
         if update_method:
-            update_method(step_settings, variable, config_user, **kwargs)
+            update_method(step_name, step_settings,
+                          variable, config_user, **kwargs)
 
 
 def _read_attributes(filename):
