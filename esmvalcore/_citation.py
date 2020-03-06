@@ -49,39 +49,58 @@ def _write_citation_file(filename, provenance):
     connection, cmip6 data references are saved into a bibtex file.
     Otherwise, cmip6 data reference links are saved into a text file.
     """
-    # collect info from provenance
     product_name = os.path.splitext(filename)[0]
     info_urls = []
     json_urls = []
     product_tags = []
+    product_refs = []
+    # collect references from provenance
     for item in provenance.records:
+        attributes = {}
         for key, value in item.attributes:
             if key.namespace.prefix == 'attribute':
-                if key.localpart in {'reference', 'references'}:
-                    ## check if value is a tag in recipe or diagnostics
-                    product_tags.append(value)
-                elif key.localpart == 'mip_era' and value == 'CMIP6':
+                attributes[key.localpart] = value
+                attributes[item.identifier.namespace.prefix] = item.identifier.namespace.prefix
+        # check if item is related to a diagnostics
+        if {'references', 'script_file'} <= set(attributes):
+            product_tags.append(attributes['references'])
+        # check if item is related to a recipe
+        if {'references', 'recipe'} <= set(attributes):
+            product_tags.append(attributes['references'])
+        # check if item is not related to a diagnostics or recipe
+        if not attributes.keys() & {'recipe', 'script_file'} and attributes.keys() & {'references'}:
+            if attributes['references'] != ESMVALTOOL_PAPER_TAG:
+                product_refs.append(attributes['references'])
+
+    # collect cmip6 info from provenance
+    for item in provenance.records:
+        attributes = {}
+        for key, value in item.attributes:
+            if key.namespace.prefix == 'attribute':
+                if key.localpart == 'mip_era' and value == 'CMIP6':
                     url_prefix = _make_url_prefix(item.attributes)
                     info_urls.append(_make_info_url(url_prefix))
                     json_urls.append(_make_json_url(url_prefix))
-    _save_citation_info(product_name, product_tags, json_urls, info_urls)
+
+    _save_citation_info(product_name, product_tags, product_refs, json_urls, info_urls)
 
 
-def _save_citation_info(product_name, product_tags, json_urls, info_urls):
+def _save_citation_info(product_name, product_tags, product_refs, json_urls, info_urls):
     citation_entries = [ESMVALTOOL_PAPER]
-    citation_urls = ''
 
     # save CMIP6 url_info, if any
     if info_urls:
-        for info_url in info_urls:
-            citation_urls += '{}\n'.format(info_url)
-        with open(f'{product_name}_data_citation_url.txt', 'w') as file:
-            file.write(citation_urls)
+        with open(f'{product_name}_data_citation_info.txt', 'w') as file:
+            file.write('\n'.join(list(set(info_urls))))
+
+    # save any refrences info that is not related to recipe or diagnostics
+    if product_refs:
+        with open(f'{product_name}_data_citation_info.txt', 'w') as file:
+            file.write('\n'.join(list(set(product_refs))))
 
     # convert json_urls to bibtex entries
-    if json_urls:
-        for json_url in json_urls:
-            citation_entries.append(_collect_cmip_citation(json_url))
+    for json_url in json_urls:
+        citation_entries.append(_collect_cmip_citation(json_url))
 
     # convert tags to bibtex entries
     if REFERENCES_PATH:
