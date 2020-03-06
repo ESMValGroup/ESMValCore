@@ -467,8 +467,6 @@ def _update_fx_files(settings, variable, config_user, fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
-    msg = f"Using fx files for %s of dataset %s:\n%s"
-
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(settings, step_name):
         user_fx_vars = settings.get(step_name, {}).get('fx_files')
@@ -494,8 +492,6 @@ def _update_fx_settings(settings, variable, config_user):
         update_method, kwargs = update_methods.get(step_name, (None, {}))
         if update_method:
             update_method(step_settings, variable, config_user, **kwargs)
-            logger.info(msg, variable['short_name'], variable['dataset'],
-                        step_name)
 
 
 def _read_attributes(filename):
