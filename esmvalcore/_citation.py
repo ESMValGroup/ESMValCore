@@ -35,7 +35,7 @@ ESMVALTOOL_PAPER = (
     'title = {{ESMValTool} v2.0 '
     '{\\&}amp$\\mathsemicolon${\\#}8211$\\mathsemicolon$ '
     'Technical overview}\n'
-    '}\n'
+    '}'
 )
 
 
@@ -74,7 +74,6 @@ def _write_citation_file(filename, provenance):
 
     # collect cmip6 info from provenance
     for item in provenance.records:
-        attributes = {}
         for key, value in item.attributes:
             if key.namespace.prefix == 'attribute':
                 if key.localpart == 'mip_era' and value == 'CMIP6':
@@ -100,7 +99,9 @@ def _save_citation_info(product_name, product_tags, product_refs, json_urls, inf
 
     # convert json_urls to bibtex entries
     for json_url in json_urls:
-        citation_entries.append(_collect_cmip_citation(json_url))
+        cmip_citation = _collect_cmip_citation(json_url)
+        if cmip_citation:
+            citation_entries.append(cmip_citation)
 
     # convert tags to bibtex entries
     if REFERENCES_PATH:
@@ -194,7 +195,7 @@ def _collect_cmip_citation(json_url):
         bibtex_entry = _json_to_bibtex(json_data)
     else:
         logger.info('Invalid json link %s', json_url)
-        bibtex_entry = 'Invalid json link'
+        bibtex_entry = False
     return bibtex_entry
 
 
