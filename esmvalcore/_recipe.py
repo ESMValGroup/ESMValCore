@@ -455,6 +455,9 @@ def _update_weighting_settings(settings, variable):
 
 def _update_fx_files(settings, variable, config_user, fx_vars):
     """Update settings with mask fx file list or dict."""
+    if not fx_vars:
+        return
+
     fx_vars = [
         _get_correct_fx_file(variable, fxvar, config_user)
         for fxvar in fx_vars
@@ -471,11 +474,15 @@ def _update_fx_settings(settings, variable, config_user):
     def _get_fx_vars_from_attribute(settings, step_name):
         user_fx_vars = settings.get(step_name, {}).get('fx_files')
         if not user_fx_vars:
-            user_fx_vars = ['sftlf']
-            if variable['project'] != 'obs4mips':
-                user_fx_vars.append('sftof')
-            if step_name == 'mask_landseaice':
+            if step_name in ('mask_landsea', 'weighting_landsea_fraction'):
+                user_fx_vars = ['sftlf']
+                if variable['project'] != 'obs4mips':
+                    user_fx_vars.append('sftof')
+            elif step_name == 'mask_landseaice':
                 user_fx_vars = ['sftgif']
+            elif step_name in ('area_statistics',
+                               'volume_statistics', 'zonal_statistics'):
+                user_fx_vars = []
         return user_fx_vars
 
     fx_steps = [
