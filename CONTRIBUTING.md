@@ -11,23 +11,25 @@ To get started developing, follow the instructions below. If you are contributin
 To install in development mode, follow these instructions.
 
 -   [Download and install conda](https://conda.io/projects/conda/en/latest/user-guide/install/linux.html) (this should be done even if the system in use already has a preinstalled version of conda, as problems have been reported with NCL when using such a version)
--   To make the `conda` command availble, add `source <prefix>/etc/profile.d/conda.sh` to your `.bashrc` file and restart your shell. If using (t)csh shell, add `source <prefix>/etc/profile.d/conda.csh` to your `.cshrc`/`.tcshrc` file instead.
+-   To make the `conda` command available, add `source <prefix>/etc/profile.d/conda.sh` to your `.bashrc` file and restart your shell. If using (t)csh shell, add `source <prefix>/etc/profile.d/conda.csh` to your `.cshrc`/`.tcshrc` file instead.
 -   Update conda: `conda update -y conda`
 -   Clone the ESMValCore Git repository: `git clone git@github.com:ESMValGroup/ESMValCore`
 -   Go to the source code directory: `cd ESMValCore`
 -   Create the esmvaltool conda environment `conda env create --name esmvaltool --file environment.yml`
 -   Activate the esmvaltool environment: `conda activate esmvaltool`
 -   Install in development mode: `pip install -e '.[develop]'`. If you are installing behind a proxy that does not trust the usual pip-urls you can declare them with the option `--trusted-host`, e.g. `pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]`
--   Test that your installation was succesful by running `esmvaltool -h`.
+-   Test that your installation was successful by running `esmvaltool -h`.
 -   If you log into a cluster or other device via `ssh` and your origin machine sends the `locale` environment via the `ssh` connection, make sure the environment is set correctly, specifically `LANG` and `LC_ALL` are set correctly (for GB English UTF-8 encoding these variables must be set to `en_GB.UTF-8`; you can set them by adding `export LANG=en_GB.UTF-8` and `export LC_ALL=en_GB.UTF-8` in your origin or login machines' `.profile`)
 
 ## Running tests
 
-Go to the directory where the repository is cloned and run `python setup.py test --addopts --installation`. Tests will also be run automatically by [CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore).
+Go to the directory where the repository is cloned and run `python setup.py test`. Optionally you can run the full suite of tests which require some additional dependencies by adding the flags `--addopts --installation` to the previous command. Tests will also be run automatically by [CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore).
 
 ## Code style
 
-To increase the readability and maintainability or the ESMValTool source code, we aim to adhere to best practices and coding standards. All pull requests are reviewed and tested by one or more members of the core development team. For code in all languages, it is highly recommended that you split your code up in functions that are short enough to view without scrolling.
+To increase the readability and maintainability or the ESMValCore source code, we aim to adhere to best practices and coding standards.
+All pull requests are reviewed and tested by one or more members of the core development team.
+For code in all languages, it is highly recommended that you split your code up in functions that are short enough to view without scrolling.
 
 ### Python
 
@@ -59,6 +61,10 @@ We use `pycodestyle` on CircleCI to automatically check that there are no format
 ### YAML
 
 Please use `yamllint` to check that your YAML files do not contain mistakes.
+
+### Any text file
+
+A generic tool to check for common spelling mistakes is [codespell](https://pypi.org/project/codespell/).
 
 ## Documentation
 

@@ -76,7 +76,7 @@ def _apply_fx_mask(fx_mask, var_data):
     var_mask = np.zeros_like(var_data, bool)
     var_mask = np.broadcast_to(fx_mask, var_mask.shape).copy()
 
-    # Aplly mask accross
+    # Apply mask across
     if np.ma.is_masked(var_data):
         var_mask |= var_data.mask
 
@@ -362,7 +362,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
 
 def count_spells(data, threshold, axis, spell_length):
     """
-    Count data occurences.
+    Count data occurrences.
 
     Define a function to perform the custom statistical operation.
     Note: in order to meet the requirements of iris.analysis.Aggregator,
@@ -545,7 +545,7 @@ def mask_fillvalues(products,
         Must be between 0 and 1.
 
     min_value: float
-        minumum value threshold; default None
+        minimum value threshold; default None
         If default, no thresholding applied so the full mask will be selected.
 
     time_window: float

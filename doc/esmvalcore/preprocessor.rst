@@ -27,7 +27,7 @@ Overview
 ========
 
 ..
-   ESMValTool is a modular ``Python 3.6+`` software package possesing capabilities
+   ESMValTool is a modular ``Python 3.6+`` software package possessing capabilities
    of executing a large number of diagnostic routines that can be written in a
    number of programming languages (Python, NCL, R, Julia). The modular nature
    benefits the users and developers in different key areas: a new feature
@@ -121,12 +121,13 @@ CMORization and dataset-specific fixes
 Data checking
 -------------
 
-Data preprocessed by ESMValTool is automatically checked against its cmor
-definition. To reduce the impact of this check while maintaing it as realiable
-as possible, it is split in two parts: one will check the metadata and will
-be done just after loading and concatenating the data and the other one will
-check the data itself and will be applied after all extracting operations are
-applied to reduce the amount of data to process.
+Data preprocessed by ESMValTool is automatically checked against its
+cmor definition. To reduce the impact of this check while maintaining
+it as reliable as possible, it is split in two parts: one will check
+the metadata and will be done just after loading and concatenating the
+data and the other one will check the data itself and will be applied
+after all extracting operations are applied to reduce the amount of
+data to process.
 
 Checks include, but are not limited to:
 
@@ -225,8 +226,8 @@ extract the levels and vertically regrid onto the vertical levels of
 
 By default, vertical interpolation is performed in the dimension coordinate of
 the z axis. If you want to explicitly declare the z axis coordinate to use
-(for example, ``air_pressure``' in variables that are provided in model levels 
-and not pressure levels) you can override that automatic choice by providing 
+(for example, ``air_pressure``' in variables that are provided in model levels
+and not pressure levels) you can override that automatic choice by providing
 the name of the desired coordinate:
 
 .. code-block:: yaml
@@ -316,7 +317,7 @@ Introduction to masking
 
 Certain metrics and diagnostics need to be computed and performed on specific
 domains on the globe. The ESMValTool preprocessor supports filtering
-the input data on continents, oceans/seas and ice. This is achived by masking
+the input data on continents, oceans/seas and ice. This is achieved by masking
 the model data and keeping only the values associated with grid points that
 correspond to, e.g., land, ocean or ice surfaces, as specified by the
 user. Where possible, the masking is realized using the standard mask files
@@ -403,7 +404,7 @@ Mask files
 
 At the core of the land/sea/ice masking in the preprocessor are the mask files
 (whether it be fx type or Natural Earth type of files); these files (bar
-Natural Earth) can be retrived and used in the diagnostic phase as well. By
+Natural Earth) can be retrieved and used in the diagnostic phase as well. By
 specifying the ``fx_files:`` key in the variable in diagnostic in the recipe,
 and populating it with a list of desired files e.g.:
 
@@ -437,7 +438,7 @@ Missing values masks
 Missing (masked) values can be a nuisance especially when dealing with
 multimodel ensembles and having to compute multimodel statistics; different
 numbers of missing data from dataset to dataset may introduce biases and
-artifically assign more weight to the datasets that have less missing
+artificially assign more weight to the datasets that have less missing
 data. This is handled in ESMValTool via the missing values masks: two types of
 such masks are available, one for the multimodel case and another for the
 single model case.
@@ -449,7 +450,7 @@ individual models into a multimodel missing values mask; the individual model
 masks are built according to common criteria: the user chooses a time window in
 which missing data points are counted, and if the number of missing data points
 relative to the number of total data points in a window is less than a chosen
-fractional theshold, the window is discarded i.e. all the points in the window
+fractional threshold, the window is discarded i.e. all the points in the window
 are masked (set to missing).
 
 .. code-block:: yaml
@@ -591,7 +592,7 @@ interval thresholding and masking can also be performed. These functions are
 ``mask_above_threshold``, ``mask_below_threshold``, ``mask_inside_range``, and
 ``mask_outside_range``.
 
-Thes functions always take a cube as first argument and either ``threshold``
+These functions always take a cube as first argument and either ``threshold``
 for threshold masking or the pair ``minimum`, ``maximum`` for interval masking.
 
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related
@@ -624,8 +625,10 @@ we show a few examples.
 Regridding on a reference dataset grid
 --------------------------------------
 
-The example below shows how to regrid on the reference dataset ``ERA-Interim``
-(observational data, but just as well CMIP, obs4mips, or ana4mips datasets can be used); in this case the `scheme` is `linear`.
+The example below shows how to regrid on the reference dataset
+``ERA-Interim`` (observational data, but just as well CMIP, obs4mips,
+or ana4mips datasets can be used); in this case the `scheme` is
+`linear`.
 
 .. code-block:: yaml
 
@@ -641,7 +644,7 @@ Regridding on an ``MxN`` grid specification
 The example below shows how to regrid on a reference grid with a cell
 specification of ``2.5x2.5`` degrees. This is similar to regridding on
 reference datasets, but in the previous case the reference dataset grid cell
-specifications are not necessarily known a priori. Reegridding on an ``MxN``
+specifications are not necessarily known a priori. Regridding on an ``MxN``
 cell specification is oftentimes used when operating on localized data.
 
 .. code-block:: yaml
@@ -678,7 +681,7 @@ Regridding (interpolation, extrapolation) schemes
 
 The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
-implementaions in Iris:
+implementations in Iris:
 
 * ``linear``: `Linear(extrapolation_mode='mask') <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.Linear>`_.
 * ``linear_extrapolate``: `Linear(extrapolation_mode='extrapolate') <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.Linear>`_.
@@ -725,7 +728,7 @@ Multi-model statistics
 Computing multi-model statistics is an integral part of model analysis and
 evaluation: individual models display a variety of biases depending on model
 set-up, initial conditions, forcings and implementation; comparing model data
-to observational data, these biases have a significanly lower statistical
+to observational data, these biases have a significantly lower statistical
 impact when using a multi-model ensemble. ESMValTool has the capability of
 computing a number of multi-model statistical measures: using the preprocessor
 module ``multi_model_statistics`` will enable the user to ask for either a
@@ -960,16 +963,16 @@ Examples:
         .. code-block:: yaml
 
             climate_statistics:
-                operator: max
-                period: day
+              operator: max
+              period: day
 
     * Minimum value in the period:
 
         .. code-block:: yaml
 
             climate_statistics:
-                operator: min
-                period: full
+              operator: min
+              period: full
 
 See also :func:`esmvalcore.preprocessor.climate_statistics`.
 
@@ -987,25 +990,47 @@ Parameters:
       full period, seasonal, monthly or daily.
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
-
+    * reference: Time slice to use as the reference to compute the climatology
+      on. Can be 'null' to use the full cube or a dictionary with the
+      parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
 
 Examples:
-    * Anomalies from the monthly climatology:
+    * Anomalies from the full period climatology:
 
         .. code-block:: yaml
 
             anomalies:
-                period: month
+
+    * Anomalies from the full period monthly climatology:
+
+        .. code-block:: yaml
+
+            anomalies:
+              period: month
 
     * Standardized anomalies from the full period climatology:
 
         .. code-block:: yaml
 
             anomalies:
-                standardize: true
+              standardized: true
 
 
+     * Standardized Anomalies from the 1979-2000 monthly climatology:
+
+        .. code-block:: yaml
+
+            anomalies:
+              period: month
+              reference:
+                start_year: 1979
+                start_month: 1
+                start_day: 1
+                end_year: 2000
+                end_month: 12
+                end_day: 31
+              standardize: true
 
 See also :func:`esmvalcore.preprocessor.anomalies`.
 
@@ -1018,7 +1043,7 @@ See also :func:`esmvalcore.preprocessor.anomalies`.
 This function aligns the time points of each component dataset so that the Iris
 cubes from different datasets can be subtracted. The operation makes the
 datasets time points common; it also resets the time
-bounds and auxiliary coordinates to reflect the artifically shifted time
+bounds and auxiliary coordinates to reflect the artificially shifted time
 points. Current implementation for monthly and daily data; the ``frequency`` is
 set automatically from the variable CMOR table unless a custom ``frequency`` is
 set manually by the user in recipe.
@@ -1070,8 +1095,9 @@ The area manipulation module contains the following preprocessor functions:
 * extract_region_: Extract a region from a cube based on ``lat/lon``
   corners.
 * extract_named_regions_: Extract a specific region from in the region
-  cooordinate.
+  coordinate.
 * extract_shape_: Extract a region defined by a shapefile.
+* extract_point_: Extract a single point (with interpolation)
 * zonal_statistics_: Compute zonal statistics.
 * meridional_statistics_: Compute meridional statistics.
 * area_statistics_: Compute area statistics.
@@ -1080,7 +1106,7 @@ The area manipulation module contains the following preprocessor functions:
 ``extract_region``
 ------------------
 
-This function masks data outside a rectagular region requested. The boundairies
+This function masks data outside a rectangular region requested. The boundaries
 of the region are provided as latitude and longitude coordinates in the
 arguments:
 
@@ -1101,7 +1127,7 @@ See also :func:`esmvalcore.preprocessor.extract_region`.
 This function extracts a specific named region from the data. This function
 takes the following argument: ``regions`` which is either a string or a list
 of strings of named regions. Note that the dataset must have a ``region``
-cooordinate which includes a list of strings as values. This function then
+coordinate which includes a list of strings as values. This function then
 matches the named regions against the requested string.
 
 See also :func:`esmvalcore.preprocessor.extract_named_regions`.
@@ -1114,9 +1140,9 @@ Extract a shape or a representative point for this shape from
 the data.
 
 Parameters:
-  * ``shapefile``: path to the shapefile containing the geometry of the 
-    region to be extracted. If the file contains multiple shapes behaviour 
-    depends on the decomposed parameter. This path can be relative to 
+  * ``shapefile``: path to the shapefile containing the geometry of the
+    region to be extracted. If the file contains multiple shapes behaviour
+    depends on the decomposed parameter. This path can be relative to
     ``auxiliary_data_dir`` defined in the :ref:`user configuration file`.
   * ``method``: the method to select the region, selecting either all points
 	  contained by the shape or a single representative point. Choose either
@@ -1125,9 +1151,9 @@ Parameters:
   * ``crop``: by default extract_region_ will be used to crop the data to a
 	  minimal rectangular region containing the shape. Set to ``false`` to only
 	  mask data outside the shape. Data on irregular grids will not be cropped.
-  * ``decomposed``: by default ``false``, in this case the union of all the 
-    regions in the shape file is masked out. If ``true``, the regions in the 
-    shapefiles are masked out seperately, generating an auxiliary dimension 
+  * ``decomposed``: by default ``false``, in this case the union of all the
+    regions in the shape file is masked out. If ``true``, the regions in the
+    shapefiles are masked out separately, generating an auxiliary dimension
     for the cube for this.
 
 Examples:
@@ -1142,10 +1168,35 @@ Examples:
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
 
+``extract_point``
+-----------------
+
+Extract a single point from the data. This is done using either
+nearest or linear interpolation.
+
+Returns a cube with the extracted point(s), and with adjusted latitude
+and longitude coordinates (see below).
+
+Multiple points can also be extracted, by supplying an array of
+latitude and/or longitude coordinates. The resulting point cube will
+match the respective latitude and longitude coordinate to those of the
+input coordinates. If the input coordinate is a scalar, the dimension
+will be missing in the output cube (that is, it will be a scalar).
+
+Parameters:
+  * ``cube``: the input dataset cube.
+  * ``latitude``, ``longitude``: coordinates (as floating point
+    values) of the point to be extracted. Either (or both) can also
+    be an array of floating point values.
+  * ``scheme``: interpolation scheme: either ``'linear'`` or
+    ``'nearest'``. There is no default.
+
+
 ``zonal_statistics``
 --------------------
 
-The function calculates the zonal statistics by applying an operator along the longitude coordinate. This function takes one argument:
+The function calculates the zonal statistics by applying an operator
+along the longitude coordinate. This function takes one argument:
 
 * ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
 
@@ -1155,7 +1206,9 @@ See also :func:`esmvalcore.preprocessor.zonal_means`.
 ``meridional_statistics``
 -------------------------
 
-The function calculates the meridional statistics by applying an operator along the latitude coordinate. This function takes one argument:
+The function calculates the meridional statistics by applying an
+operator along the latitude coordinate. This function takes one
+argument:
 
 * ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
 
@@ -1170,7 +1223,7 @@ areas of the region. This function takes the argument, ``operator``: the name
 of the operation to apply.
 
 This function can be used to apply several different operations in the
-horizonal plane: mean, standard deviation, median variance, minimum and maximum.
+horizontal plane: mean, standard deviation, median variance, minimum and maximum.
 
 Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be
@@ -1201,7 +1254,7 @@ takes two arguments, a minimum and a maximum (``z_min`` and ``z_max``,
 respectively) in the `z`-direction.
 
 Note that this requires the requested `z`-coordinate range to be the same sign
-as the Iris cube. ie, if the cube has `z`-coordinate as negative, then
+as the Iris cube. That is, if the cube has `z`-coordinate as negative, then
 ``z_min`` and ``z_max`` need to be negative numbers.
 
 See also :func:`esmvalcore.preprocessor.extract_volume`.
@@ -1253,7 +1306,7 @@ See also :func:`esmvalcore.preprocessor.extract_transect`.
 ----------------------
 
 This function extract data along a specified trajectory.
-The three areguments are: ``latitudes``, ``longitudes`` and number of point
+The three arguments are: ``latitudes``, ``longitudes`` and number of point
 needed for extrapolation ``number_points``.
 
 If two points are provided, the ``number_points`` argument is used to set a
@@ -1264,7 +1317,7 @@ a cube which has extrapolated the data of the cube to those points, and
 ``number_points`` is not needed.
 
 Note that this function uses the expensive ``interpolate`` method from
-``Iris.analysis.trajectory``, but it may be neccesary for irregular grids.
+``Iris.analysis.trajectory``, but it may be necessary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 
@@ -1281,12 +1334,12 @@ This function has two parameters:
 * ``method``: It can be ``linear`` or ``constant``. Default: ``linear``
 
 If method is ``linear``, detrend will calculate the linear trend along the
-selected axis and substract it to the data. For example, this can be used to
+selected axis and subtract it to the data. For example, this can be used to
 remove the linear trend caused by climate change on some variables is selected
 dimension is time.
 
 If method is ``constant``, detrend will compute the mean along that dimension
-and substract it from the data
+and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
 
@@ -1318,7 +1371,7 @@ See also :func:`esmvalcore.preprocessor.convert_units`.
 Information on maximum memory required
 ======================================
 In the most general case, we can set upper limits on the maximum memory the
-anlysis will require:
+analysis will require:
 
 
 ``Ms = (R + N) x F_eff - F_eff`` - when no multimodel analysis is performed;

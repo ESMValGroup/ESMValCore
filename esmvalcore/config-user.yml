@@ -5,7 +5,7 @@
 
 # Diagnostics create plots? [true]/false
 write_plots: true
-# Diagnositcs write NetCDF files? [true]/false
+# Diagnostics write NetCDF files? [true]/false
 write_netcdf: true
 # Set the console log level debug, [info], warning, error
 log_level: info

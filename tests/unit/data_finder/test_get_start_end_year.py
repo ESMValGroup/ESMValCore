@@ -1,6 +1,5 @@
 """Unit tests for :func:`esmvalcore._data_finder.regrid._stock_cube`"""
 
-import tempfile
 import iris
 import pytest
 
@@ -31,16 +30,17 @@ def test_get_start_end_year(case):
     assert case_end == end
 
 
-def test_read_time_from_cube():
+def test_read_time_from_cube(monkeypatch, tmp_path):
     """Try to get time from cube if no date in filename"""
-    temp_file = tempfile.NamedTemporaryFile(suffix='.nc')
+    monkeypatch.chdir(tmp_path)
+    temp_file = 'test.nc'
     cube = iris.cube.Cube([0, 0], var_name='var')
     time = iris.coords.DimCoord([0, 366],
                                 'time',
                                 units='days since 1990-01-01')
     cube.add_dim_coord(time, 0)
-    iris.save(cube, temp_file.name)
-    start, end = get_start_end_year(temp_file.name)
+    iris.save(cube, temp_file)
+    start, end = get_start_end_year(temp_file)
     assert start == 1990
     assert end == 1991
 

@@ -105,12 +105,30 @@ class TestTimeSlice(tests.Test):
             np.arange(0, 360),
             sliced.coord('time').points)
 
+    def test_extract_time_non_gregorian_day(self):
+        """Test extract time when the day is not in the Gregorian calendar"""
+        cube = Cube(np.arange(0, 720), var_name='co2', units='J')
+        cube.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(0., 720., 1.),
+                standard_name='time',
+                units=Unit(
+                    'days since 1950-01-01 00:00:00', calendar='360_day'
+                ),
+            ),
+            0,
+        )
+        sliced = extract_time(cube, 1950, 2, 30, 1950, 3, 1)
+        assert_array_equal(
+            np.array([59]),
+            sliced.coord('time').points)
+
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
         with self.assertRaises(ValueError) as ctx:
             extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
         msg = (
-            "Time slice 2200-01-01 00:00:00 to 2200-12-31 00:00:00 is outside"
+            "Time slice 2200-01-01 to 2200-12-31 is outside"
             " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         assert ctx.exception.args == (msg, )
 
@@ -213,7 +231,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_time_mean_365_day(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -248,7 +266,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_time_sum_365_day(self):
-        """Test for time sum of a realisitc time axis and 365 day calendar"""
+        """Test for time sum of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         data[3] = 2.0
         times = np.array([15, 45, 74, 105, 135, 166])
@@ -261,7 +279,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_season_climatology(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -273,7 +291,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_monthly(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -285,7 +303,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_day(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([0.5, 1.5, 2.5, 365.5, 366.5, 367.5])
         bounds = np.array([[0, 1], [1, 2], [2, 3],
@@ -297,7 +315,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_period_not_supported(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -960,10 +978,29 @@ def make_map_data(number_years=2):
     return cube
 
 
+PARAMETERS = []
+for period in ('full', 'day', 'month', 'season'):
+    PARAMETERS.append((period, None))
+    if period == 'season':
+        PARAMETERS.append((
+            period,
+            {
+                "start_year": 1950, 'start_month': 3, 'start_day': 1,
+                "end_year": 1951, 'end_month': 3, 'end_day': 1,
+            }))
+    else:
+        PARAMETERS.append((
+            period,
+            {
+                "start_year": 1950, 'start_month': 1, 'start_day': 1,
+                "end_year": 1951, 'end_month': 1, 'end_day': 1,
+            }))
+
+
 @pytest.mark.parametrize('period', ['full'])
 def test_standardized_anomalies(period, standardize=True):
     cube = make_map_data(number_years=2)
-    result = anomalies(cube, period, standardize)
+    result = anomalies(cube, period, standardize=standardize)
     if period == 'full':
         expected_anomalies = (cube.data - np.mean(cube.data, axis=2,
                                                   keepdims=True))
@@ -985,52 +1022,61 @@ def test_standardized_anomalies(period, standardize=True):
             )
 
 
-@pytest.mark.parametrize('period', ['full', 'day', 'month', 'season'])
-def test_anomalies(period, standardize=False):
+@pytest.mark.parametrize('period, reference', PARAMETERS)
+def test_anomalies(period, reference, standardize=False):
     cube = make_map_data(number_years=2)
-    result = anomalies(cube, period)
-    if period == 'full':
-        anom = np.arange(-359.5, 360, 1)
-        zeros = np.zeros_like(anom)
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'day':
-        anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
-        zeros = np.zeros_like(anom)
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'month':
-        anom1 = np.concatenate([np.arange(-194.5, -165) for x in range(12)])
-        anom2 = np.concatenate([np.arange(165.5, 195) for x in range(12)])
-        anom = np.concatenate((anom1, anom2))
-        zeros = np.zeros_like(anom)
-        print(result.data[0, 1])
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'season':
-        anom = np.concatenate((
-            np.arange(-314.5, -255),
-            np.arange(-224.5, -135),
-            np.arange(-224.5, -135),
-            np.arange(-224.5, -135),
-            np.arange(15.5, 105),
-            np.arange(135.5, 225),
-            np.arange(135.5, 225),
-            np.arange(135.5, 225),
-            np.arange(375.5, 405),
-        ))
-        zeros = np.zeros_like(anom)
-        print(result.data[0, 1])
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
+    result = anomalies(cube, period, reference, standardize=standardize)
+    if reference is None:
+        if period == 'full':
+            anom = np.arange(-359.5, 360)
+        elif period == 'day':
+            anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
+        elif period == 'month':
+            anom1 = np.concatenate(
+                [np.arange(-194.5, -165) for x in range(12)])
+            anom2 = np.concatenate(
+                [np.arange(165.5, 195) for x in range(12)])
+            anom = np.concatenate((anom1, anom2))
+        elif period == 'season':
+            anom = np.concatenate((
+                np.arange(-314.5, -255),
+                np.arange(-224.5, -135),
+                np.arange(-224.5, -135),
+                np.arange(-224.5, -135),
+                np.arange(15.5, 105),
+                np.arange(135.5, 225),
+                np.arange(135.5, 225),
+                np.arange(135.5, 225),
+                np.arange(375.5, 405),
+            ))
+    else:
+        if period == 'full':
+            anom = np.arange(-179.5, 540)
+        elif period == 'day':
+            anom = np.concatenate((np.zeros(360), np.ones(360) * 360))
+        elif period == 'month':
+            anom1 = np.concatenate([np.arange(-14.5, 15) for x in range(12)])
+            anom2 = np.concatenate([np.arange(345.5, 375) for x in range(12)])
+            anom = np.concatenate((anom1, anom2))
+        elif period == 'season':
+            anom = np.concatenate((
+                np.arange(-374.5, -315),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(315.5, 405),
+                np.arange(315.5, 405),
+                np.arange(315.5, 405),
+                np.arange(315.5, 345),
+            ))
+    zeros = np.zeros_like(anom)
+    print(anom)
+    print(result.data[0, 1, ...])
+    assert_array_equal(
+        result.data,
+        np.array([[zeros, anom], [anom, zeros]])
+    )
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
 
 
