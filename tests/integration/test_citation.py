@@ -15,7 +15,10 @@ def test_references(tmp_path, monkeypatch):
     provenance.add_namespace('attribute',
                              uri=ESMVALTOOL_URI_PREFIX + 'attribute')
     filename = str(tmp_path / 'output.nc')
-    attributes = {'attribute:references': 'test_tag'}
+    attributes = {
+        'attribute:references': 'test_tag',
+        'attribute:script_file': 'diagnostics.py'
+    }
     provenance.entity('file:' + filename, attributes)
 
     # Create fake bibtex references tag file
@@ -104,9 +107,9 @@ def test_cmip6_data_citation_url(tmp_path):
     filename = str(tmp_path / 'output.nc')
     provenance.entity('file:' + filename, attributes)
     _write_citation_file(filename, provenance)
-    citation_url = tmp_path / 'output_data_citation_url.txt'
+    citation_url = tmp_path / 'output_data_citation_info.txt'
 
     # Create fake info url
     fake_url_prefix = '.'.join(attributes.values())
     fake_info_url = f'{CMIP6_URL_STEM}/cmip6?input=CMIP6.{fake_url_prefix}'
-    assert citation_url.read_text() == '{}\n'.format(fake_info_url)
+    assert citation_url.read_text() == fake_info_url
