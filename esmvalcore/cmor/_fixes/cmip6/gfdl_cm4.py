@@ -32,6 +32,14 @@ class Cl(BaseCl):
         return super().fix_metadata(cubes)
 
 
+class Cli(Cl):
+    """Fixes for ``cli``."""
+
+
+class Clw(Cl):
+    """Fixes for ``clw``."""
+
+
 class Tas(Fix):
     """Fixes for tas."""
 

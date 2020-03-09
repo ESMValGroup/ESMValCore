@@ -1,12 +1,13 @@
 """Tests for the fixes of GFDL-CM4."""
 import os
+import unittest
 
 import iris
 import numpy as np
 import pytest
 from netCDF4 import Dataset
 
-from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import Cl
+from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import Cl, Cli, Clw
 from esmvalcore.cmor.fix import Fix
 
 
@@ -135,3 +136,35 @@ def test_cl_fix_metadata(cl_file):
                                AIR_PRESSURE_POINTS)
     np.testing.assert_allclose(fixed_air_pressure_coord.bounds,
                                AIR_PRESSURE_BOUNDS)
+
+
+def test_get_cli_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'GFDL-CM4', 'Amon', 'cli')
+    assert fix == [Cli(None)]
+
+
+@unittest.mock.patch(
+    'esmvalcore.cmor._fixes.cmip6.gfdl_cm4.Cl.fix_metadata',
+    autospec=True)
+def test_cli_fix_metadata(mock_base_fix_metadata):
+    """Test ``fix_metadata`` for ``cli``."""
+    fix = Cli(None)
+    fix.fix_metadata('cubes')
+    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+
+
+def test_get_clw_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'GFDL-CM4', 'Amon', 'clw')
+    assert fix == [Clw(None)]
+
+
+@unittest.mock.patch(
+    'esmvalcore.cmor._fixes.cmip6.gfdl_cm4.Cl.fix_metadata',
+    autospec=True)
+def test_clw_fix_metadata(mock_base_fix_metadata):
+    """Test ``fix_metadata`` for ``clw``."""
+    fix = Clw(None)
+    fix.fix_metadata('cubes')
+    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')

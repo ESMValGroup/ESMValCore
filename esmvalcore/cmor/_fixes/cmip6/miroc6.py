@@ -23,3 +23,11 @@ class Cl(BaseCl):
         coord = cube.coord(long_name='Surface Air Pressure')
         coord.attributes = {}
         return cubes
+
+
+class Cli(Cl):
+    """Fixes for ``cli``."""
+
+
+class Clw(Cl):
+    """Fixes for ``clw``."""

@@ -7,5 +7,13 @@ class Cl(BaseCl):
     """Fixes for ``cl``."""
 
 
+class Cli(Cl):
+    """Fixes for ``cli``."""
+
+
+class Clw(Cl):
+    """Fixes for ``clw``."""
+
+
 class Tos(BaseTos):
     """Fixes for tos."""

@@ -2,6 +2,7 @@
 import iris
 
 from ..cmip5.bcc_csm1_1 import Cl as BaseCl
+from ..fix import Fix
 from ..shared import add_aux_coords_from_cubes, get_bounds_cube
 
 
@@ -48,3 +49,33 @@ class Cl(BaseCl):
         for coord_name in ('latitude', 'longitude'):
             cube.coord(coord_name).guess_bounds()
         return cubes
+
+
+class Clcalipso(Fix):
+    """Fixes for ``clcalipso``."""
+
+    def fix_metadata(self, cubes):
+        """Fix ``alt40`` coordinate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        alt_40_coord = cube.coord('alt40')
+        alt_40_coord.standard_name = 'altitude'
+        return iris.cube.CubeList([cube])
+
+
+class Cli(Cl):
+    """Fixes for ``cli``."""
+
+
+class Clw(Cl):
+    """Fixes for ``clw``."""

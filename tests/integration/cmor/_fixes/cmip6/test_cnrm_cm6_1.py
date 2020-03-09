@@ -1,12 +1,13 @@
 """Tests for the fixes of CNRM-CM6-1."""
 import os
+import unittest
 
 import iris
 import numpy as np
 import pytest
 from netCDF4 import Dataset
 
-from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl
+from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl, Clcalipso, Cli, Clw
 from esmvalcore.cmor.fix import Fix
 
 
@@ -145,3 +146,62 @@ def test_cl_fix_metadata(cl_file):
                                [[-45.0, -15.0], [-15.0, 15.0]])
     np.testing.assert_allclose(lon_coord.bounds,
                                [[15.0, 45.0], [45.0, 75.0]])
+
+
+def test_get_clcalipso_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Amon', 'clcalipso')
+    assert fix == [Clcalipso(None)]
+
+
+@pytest.fixture
+def clcalipso_cubes():
+    """Cubes to test fix for ``clcalipso``."""
+    alt_40_coord = iris.coords.DimCoord([0.0], var_name='alt40')
+    cube = iris.cube.Cube([0.0], var_name='clcalipso',
+                          dim_coords_and_dims=[(alt_40_coord.copy(), 0)])
+    x_cube = iris.cube.Cube([0.0], var_name='x',
+                            dim_coords_and_dims=[(alt_40_coord.copy(), 0)])
+    return iris.cube.CubeList([cube, x_cube])
+
+
+def test_clcalipso_fix_metadata(clcalipso_cubes):
+    """Test ``fix_metadata`` for ``clcalipso``."""
+    fix = Clcalipso(None)
+    cubes = fix.fix_metadata(clcalipso_cubes)
+    assert len(cubes) == 1
+    cube = cubes[0]
+    coord = cube.coord('altitude')
+    assert coord.standard_name == 'altitude'
+
+
+def test_get_cli_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Amon', 'cli')
+    assert fix == [Cli(None)]
+
+
+@unittest.mock.patch(
+    'esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1.Cl.fix_metadata',
+    autospec=True)
+def test_cli_fix_metadata(mock_base_fix_metadata):
+    """Test ``fix_metadata`` for ``cli``."""
+    fix = Cli(None)
+    fix.fix_metadata('cubes')
+    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+
+
+def test_get_clw_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Amon', 'clw')
+    assert fix == [Clw(None)]
+
+
+@unittest.mock.patch(
+    'esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1.Cl.fix_metadata',
+    autospec=True)
+def test_clw_fix_metadata(mock_base_fix_metadata):
+    """Test ``fix_metadata`` for ``clw``."""
+    fix = Clw(None)
+    fix.fix_metadata('cubes')
+    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
