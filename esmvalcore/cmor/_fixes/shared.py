@@ -1,14 +1,32 @@
 """Shared functions for fixes."""
 import logging
+import os
 import warnings
 
 import dask.array as da
 import iris
+import pandas as pd
 from cf_units import Unit
+from scipy.interpolate import interp1d
 
 from esmvalcore.preprocessor._derive._shared import var_name_constraint
 
 logger = logging.getLogger(__name__)
+
+
+def _get_altitude_to_pressure_func():
+    """Get function converting altitude [m] to air pressure [Pa]."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    source_file = os.path.join(base_dir, 'us_standard_atmosphere.csv')
+    data_frame = pd.read_csv(source_file, comment='#')
+    func = interp1d(data_frame['Altitude [m]'],
+                    data_frame['Pressure [Pa]'],
+                    kind='cubic',
+                    fill_value='extrapolate')
+    return func
+
+
+ALTITUDE_TO_PRESSURE = _get_altitude_to_pressure_func()
 
 
 class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
@@ -187,6 +205,27 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
         aux_coord = cube_to_aux_coord(coord_cube)
         cube.add_aux_coord(aux_coord, coord_dims)
         cubes.remove(coord_cube)
+
+
+def add_plev_from_altitude(cube):
+    """Add pressure level coordinate from altitude coordinate."""
+    if cube.coords('altitude'):
+        height_coord = cube.coord('altitude')
+        if height_coord.units != 'm':
+            height_coord.convert_units('m')
+        pressure_points = ALTITUDE_TO_PRESSURE(height_coord.core_points())
+        pressure_bounds = ALTITUDE_TO_PRESSURE(height_coord.core_bounds())
+        pressure_coord = iris.coords.AuxCoord(pressure_points,
+                                              bounds=pressure_bounds,
+                                              var_name='plev',
+                                              standard_name='air_pressure',
+                                              long_name='pressure',
+                                              units='Pa')
+        cube.add_aux_coord(pressure_coord, cube.coord_dims(height_coord))
+        return
+    raise ValueError(
+        "Cannot add 'air_pressure' coordinate, 'altitude' coordinate not "
+        "available")
 
 
 def add_scalar_depth_coord(cube, depth=0.0):

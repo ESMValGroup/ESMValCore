@@ -4,7 +4,10 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.shared import (add_aux_coords_from_cubes,
+from esmvalcore.cmor._fixes.shared import (ALTITUDE_TO_PRESSURE,
+                                           _get_altitude_to_pressure_func,
+                                           add_aux_coords_from_cubes,
+                                           add_plev_from_altitude,
                                            add_scalar_depth_coord,
                                            add_scalar_height_coord,
                                            add_scalar_typeland_coord,
@@ -13,6 +16,21 @@ from esmvalcore.cmor._fixes.shared import (add_aux_coords_from_cubes,
                                            cube_to_aux_coord, fix_bounds,
                                            get_bounds_cube, round_coordinates)
 from esmvalcore.preprocessor._derive._shared import var_name_constraint
+
+
+@pytest.mark.parametrize('func', [ALTITUDE_TO_PRESSURE,
+                                  _get_altitude_to_pressure_func()])
+def test_altitude_to_pressure_func(func):
+    """Test altitude to pressure function."""
+    assert callable(func)
+    np.testing.assert_allclose(func(-6000.0), 196968.01058487315)
+    np.testing.assert_allclose(func(-5000.0), 177687.0)
+    np.testing.assert_allclose(func(0.0), 101325.0)
+    np.testing.assert_allclose(func(50.0), 100725.54298598564)
+    np.testing.assert_allclose(func(80000.0), 0.88628)
+    np.testing.assert_allclose(func(90000.0), 0.1576523580997673)
+    np.testing.assert_allclose(func(np.array([0.0, 100.0])),
+                               [101325.0, 100129.0])
 
 
 TEST_ADD_AUX_COORDS_FROM_CUBES = [
@@ -61,6 +79,42 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
     else:
         assert "Expected exactly one coordinate cube 'c'" in str(err.value)
         assert "got 2" in str(err.value)
+
+
+ALT_COORD = iris.coords.AuxCoord([0.0], bounds=[[-100.0, 500.0]],
+                                 standard_name='altitude', units='m')
+ALT_COORD_KM = iris.coords.AuxCoord([0.0], bounds=[[-0.1, 0.5]],
+                                    standard_name='altitude', units='km')
+P_COORD = iris.coords.AuxCoord([101325.0], bounds=[[102532.0, 95460.8]],
+                               var_name='plev', standard_name='air_pressure',
+                               long_name='pressure', units='Pa')
+CUBE_ALT = iris.cube.Cube([1.0], var_name='x',
+                          aux_coords_and_dims=[(ALT_COORD, 0)])
+CUBE_ALT_KM = iris.cube.Cube([1.0], var_name='x',
+                             aux_coords_and_dims=[(ALT_COORD_KM, 0)])
+
+
+TEST_ADD_PRESSURE_LEVEL_COORDINATE = [
+    (CUBE_ALT.copy(), P_COORD.copy()),
+    (CUBE_ALT_KM.copy(), P_COORD.copy()),
+    (iris.cube.Cube(0.0), None),
+]
+
+
+@pytest.mark.parametrize('cube,output', TEST_ADD_PRESSURE_LEVEL_COORDINATE)
+def test_add_plev_from_altitude(cube, output):
+    """Test adding of pressure level coordinate."""
+    if output is None:
+        with pytest.raises(ValueError) as err:
+            add_plev_from_altitude(cube)
+        msg = ("Cannot add 'air_pressure' coordinate, 'altitude' coordinate "
+               "not available")
+        assert str(err.value) == msg
+        return
+    assert not cube.coords('air_pressure')
+    add_plev_from_altitude(cube)
+    air_pressure_coord = cube.coord('air_pressure')
+    assert air_pressure_coord == output
 
 
 DIM_COORD = iris.coords.DimCoord([3.141592],
