@@ -119,29 +119,37 @@ class TestCloseness(tests.Test):
         longitude = iris.coords.DimCoord(np.linspace(5, 355, 36),
                                          standard_name='longitude',
                                          units='degrees')
+        latitude2 = iris.coords.DimCoord(np.linspace(-85, 85, 17),
+                                         standard_name='latitude',
+                                         units='degrees')
+        longitude2 = iris.coords.DimCoord(np.linspace(5, 355, 35),
+                                          standard_name='longitude',
+                                          units='degrees')
         latitude.guess_bounds()
         longitude.guess_bounds()
         loc_cube = iris.cube.Cube(np.empty([18, 36]),
-                                  standard_name=None,
-                                  long_name=None,
-                                  var_name=None,
-                                  units=None,
-                                  attributes=None,
-                                  cell_methods=None,
                                   dim_coords_and_dims=[(latitude, 0),
                                                        (longitude, 1)],
-                                  aux_coords_and_dims=None,
-                                  aux_factories=None,
-                                  cell_measures_and_dims=None)
-        scheme = 'area_weighted'
+                                  )
         tgt_cubes = [loc_cube,
-                     regrid(loc_cube, '10x10', scheme),
-                     regrid(loc_cube, '10x20', scheme),
-                     regrid(loc_cube, '20x10', scheme)]
-        closeness = []
-        for tgt in tgt_cubes:
-            closeness.append(_check_horiz_grid_closeness(loc_cube, tgt))
-        self.assertEqual(closeness, [True, True, False, False])
+                     iris.cube.Cube(np.empty([18, 36]),
+                                    dim_coords_and_dims=[(latitude, 0),
+                                                         (longitude, 1)],
+                                    ),
+                     iris.cube.Cube(np.empty([17, 36]),
+                                    dim_coords_and_dims=[(latitude2, 0),
+                                                         (longitude, 1)],
+                                    ),
+                     iris.cube.Cube(np.empty([18, 35]),
+                                    dim_coords_and_dims=[(latitude, 0),
+                                                         (longitude2, 1)],
+                                    )
+                     ]
+
+        tgt_closeness = [True, True, False, False]
+        for tgt in zip(tgt_cubes, tgt_closeness):
+            self.assertEqual(_check_horiz_grid_closeness(loc_cube, tgt[0]),
+                             tgt[1])
 
 
 if __name__ == '__main__':
