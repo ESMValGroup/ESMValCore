@@ -8,8 +8,10 @@ from esmvalcore.cmor._fixes.shared import (add_scalar_depth_coord,
                                            add_scalar_height_coord,
                                            add_scalar_typeland_coord,
                                            add_scalar_typesea_coord,
+                                           add_sigma_factory,
                                            round_coordinates,
                                            cube_to_aux_coord)
+
 
 DIM_COORD = iris.coords.DimCoord([3.141592],
                                  bounds=[[1.23, 4.567891011]],
@@ -124,6 +126,59 @@ def test_add_scalar_typesea_coord(cube_in, typesea):
     assert cube_out_2 is cube_out
     coord = cube_in.coord('area_type')
     assert coord == typesea_coord
+
+
+PS_COORD = iris.coords.AuxCoord([[[101000.0]]], var_name='ps', units='Pa')
+PTOP_COORD = iris.coords.AuxCoord(1000.0, var_name='ptop', units='Pa')
+LEV_COORD = iris.coords.AuxCoord([0.5], bounds=[[0.2, 0.8]], var_name='lev',
+                                 units='1',
+                                 standard_name='atmosphere_sigma_coordinate')
+P_COORD_HYBRID = iris.coords.AuxCoord([[[[51000.0]]]],
+                                      bounds=[[[[[21000.0, 81000.0]]]]],
+                                      standard_name='air_pressure', units='Pa')
+CUBE_HYBRID = iris.cube.Cube([[[[1.0]]]], var_name='x',
+                             aux_coords_and_dims=[(PS_COORD, (0, 2, 3)),
+                                                  (PTOP_COORD, ()),
+                                                  (LEV_COORD, 1)])
+
+
+TEST_ADD_SIGMA_FACTORY = [
+    (CUBE_HYBRID.copy(), P_COORD_HYBRID.copy()),
+    (iris.cube.Cube(0.0), None),
+]
+
+
+@pytest.mark.parametrize('cube,output', TEST_ADD_SIGMA_FACTORY)
+def test_add_sigma_factory(cube, output):
+    """Test adding of factory for ``atmosphere_sigma_coordinate``."""
+    if output is None:
+        with pytest.raises(ValueError) as err:
+            add_sigma_factory(cube)
+        msg = ("Cannot add 'air_pressure' coordinate, "
+               "'atmosphere_sigma_coordinate' coordinate not available")
+        assert str(err.value) == msg
+        return
+    assert not cube.coords('air_pressure')
+    add_sigma_factory(cube)
+    air_pressure_coord = cube.coord('air_pressure')
+    assert air_pressure_coord == output
+
+
+def test_cube_to_aux_coord():
+    """Test converting cube to auxiliary coordinate."""
+    cube = iris.cube.Cube(
+        np.ones((2, 2)),
+        standard_name='longitude',
+        long_name='longitude',
+        var_name='lon',
+        units='degrees_north',
+    )
+    coord = cube_to_aux_coord(cube)
+    assert coord.var_name == cube.var_name
+    assert coord.standard_name == cube.standard_name
+    assert coord.long_name == cube.long_name
+    assert coord.units == cube.units
+    assert np.all(coord.points == cube.data)
 
 
 DIM_COORD_NB = iris.coords.DimCoord([3.1415], standard_name='latitude')
