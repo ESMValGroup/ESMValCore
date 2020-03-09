@@ -164,23 +164,6 @@ def test_add_sigma_factory(cube, output):
     assert air_pressure_coord == output
 
 
-def test_cube_to_aux_coord():
-    """Test converting cube to auxiliary coordinate."""
-    cube = iris.cube.Cube(
-        np.ones((2, 2)),
-        standard_name='longitude',
-        long_name='longitude',
-        var_name='lon',
-        units='degrees_north',
-    )
-    coord = cube_to_aux_coord(cube)
-    assert coord.var_name == cube.var_name
-    assert coord.standard_name == cube.standard_name
-    assert coord.long_name == cube.long_name
-    assert coord.units == cube.units
-    assert np.all(coord.points == cube.data)
-
-
 DIM_COORD_NB = iris.coords.DimCoord([3.1415], standard_name='latitude')
 CUBE_3 = iris.cube.Cube([5.0], dim_coords_and_dims=[(DIM_COORD_NB, 0)])
 COORD_3_DEC = DIM_COORD.copy([3.142], [[1.23, 4.568]])
