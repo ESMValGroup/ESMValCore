@@ -100,6 +100,7 @@ class CMORCheck():
 
         self._check_var_metadata()
         self._check_fill_value()
+        self._check_multiple_coords_same_stdname()
         self._check_dim_names()
         self._check_coords()
         if self.frequency != 'fx':
@@ -282,6 +283,21 @@ class CMORCheck():
         if self._cube.ndim != rank:
             self.report_error(self._does_msg, self._cube.var_name,
                               'match coordinate rank')
+
+    def _check_multiple_coords_same_stdname(self):
+        standard_names = set()
+        for coord in self._cube.coords():
+            if coord.standard_name:
+                if coord.standard_name in standard_names:
+                    coords = [c.var_name for c in self._cube.coords(
+                        standard_name=coord.standard_name)
+                    ]
+                    self.report_error(
+                        'There are multiple coordinates with '
+                        f'standard_name "{coord.standard_name}": {coords}'
+                    )
+                else:
+                    standard_names.add(coord.standard_name)
 
     def _check_dim_names(self):
         """Check dimension names."""
