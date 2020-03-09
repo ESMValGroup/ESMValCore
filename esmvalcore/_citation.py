@@ -35,7 +35,7 @@ ESMVALTOOL_PAPER = (
     'title = {{ESMValTool} v2.0 '
     '{\\&}amp$\\mathsemicolon${\\#}8211$\\mathsemicolon$ '
     'Technical overview}\n'
-    '}'
+    '}\n'
 )
 
 
@@ -53,6 +53,7 @@ def _write_citation_file(filename, provenance):
     info_urls = []
     json_urls = []
     product_tags = []
+    section = 'references'
     # collect references from provenance
     for item in provenance.records:
         attributes = {}
@@ -65,17 +66,14 @@ def _write_citation_file(filename, provenance):
                     url_prefix = _make_url_prefix(item.attributes)
                     info_urls.append(_make_info_url(url_prefix))
                     json_urls.append(_make_json_url(url_prefix))
-        # check if item is related to a diagnostics
-        if {'references', 'script_file'} <= set(attributes):
-            product_tags.append(attributes['references'])
-        # check if item is related to a recipe
-        if {'references', 'recipe'} <= set(attributes):
-            product_tags.append(attributes['references'])
-        # check if item is not related to a diagnostics or recipe
-        if (not attributes.keys() & {'recipe', 'script_file'} and
-                attributes.keys() & {'references'}):
-            if attributes['references'] != ESMVALTOOL_PAPER_TAG:
-                info_urls.append(attributes['references'])
+        if section in attributes.keys():
+            # check if reference is related to a diagnostics or a recipe
+            if attributes.keys() & {'script_file', 'recipe'}:
+                product_tags.append(attributes[section])
+            # check if reference is not related to a diagnostics or a recipe
+            if (not attributes.keys() & {'recipe', 'script_file'} and
+                    attributes[section] != ESMVALTOOL_PAPER_TAG):
+                info_urls.append(attributes[section])
 
     _save_citation_info(product_name, product_tags, json_urls, info_urls)
 
