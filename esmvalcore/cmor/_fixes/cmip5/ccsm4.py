@@ -1,6 +1,11 @@
 """Fixes for CCSM4 model."""
+from .bcc_csm1_1 import Cl as BaseCl
 from ..fix import Fix
 from ..shared import round_coordinates
+
+
+class Cl(BaseCl):
+    """Fixes for cl."""
 
 
 class Rlut(Fix):
@@ -15,11 +20,12 @@ class Rlut(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         return round_coordinates(cubes, 3)
@@ -80,11 +86,12 @@ class So(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         self.get_cube_from_list(cubes).units = '1e3'

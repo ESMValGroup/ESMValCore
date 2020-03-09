@@ -1,8 +1,13 @@
 """Fixes for MIROC5 model."""
 from dask import array as da
 
+from ..cmip6.miroc6 import Cl as BaseCl
 from ..fix import Fix
 from ..shared import round_coordinates
+
+
+class Cl(BaseCl):
+    """Fixes for ``cl``."""
 
 
 class Sftof(Fix):
@@ -17,6 +22,7 @@ class Sftof(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -41,6 +47,7 @@ class Snw(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -98,6 +105,7 @@ class Msftmyz(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -121,6 +129,7 @@ class Tas(Fix):
         Parameters
         ----------
         cubes: iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
@@ -146,6 +155,7 @@ class Tos(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------

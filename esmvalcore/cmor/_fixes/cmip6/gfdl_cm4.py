@@ -1,8 +1,35 @@
 """Fixes for GFDL-CM4 model."""
 import iris
 
+from ..cmip5.bcc_csm1_1 import Cl as BaseCl
 from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
+
+
+class Cl(BaseCl):
+    """Fixes for ``cl``."""
+
+    def fix_metadata(self, cubes):
+        """Fix hybrid sigma pressure coordinate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes which need to be fixed.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        coords_to_add = {
+            'ap': 1,
+            'b': 1,
+            'ps': (0, 2, 3),
+        }
+        add_aux_coords_from_cubes(cube, cubes, coords_to_add)
+        return super().fix_metadata(cubes)
 
 
 class Tas(Fix):
@@ -14,11 +41,12 @@ class Tas(Fix):
 
         Parameters
         ----------
-        cube : iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         cube = self.get_cube_from_list(cubes)
@@ -38,11 +66,12 @@ class Uas(Fix):
 
         Parameters
         ----------
-        cube : iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         cube = self.get_cube_from_list(cubes)
@@ -59,11 +88,12 @@ class Vas(Fix):
 
         Parameters
         ----------
-        cube : iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         cube = self.get_cube_from_list(cubes)

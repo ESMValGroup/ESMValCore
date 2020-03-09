@@ -1,6 +1,10 @@
-
-"""Fixes for MPI ESM LR model."""
+"""Fixes for MPI-ESM-LR model."""
 from ..fix import Fix
+from .bcc_csm1_1 import Cl as BaseCl
+
+
+class Cl(BaseCl):
+    """Fixes for cl."""
 
 
 class Pctisccp(Fix):
@@ -15,6 +19,7 @@ class Pctisccp(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
