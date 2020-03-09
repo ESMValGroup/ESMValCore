@@ -1,6 +1,9 @@
 """Test Access1-0 fixes."""
 import unittest
 
+import iris
+import numpy as np
+
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1 import Tos
 
