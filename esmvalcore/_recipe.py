@@ -491,17 +491,11 @@ def _update_fx_settings(settings, variable, config_user):
         'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
         'area_statistics', 'volume_statistics', 'zonal_statistics'
     ]
-    update_methods = {
-        step: (_update_fx_files, {
-            'fx_vars': _get_fx_vars_from_attribute(settings, step)
-        })
-        for step in fx_steps
-    }
+
     for step_name, step_settings in settings.items():
-        update_method, kwargs = update_methods.get(step_name, (None, {}))
-        if update_method:
-            update_method(step_name, step_settings,
-                          variable, config_user, **kwargs)
+        if step_name in fx_steps:
+            fx_vars = _get_fx_vars_from_attribute(settings, step)
+            _update_fx_files(step_settings, variable, config_user, fx_vars)
 
 
 def _read_attributes(filename):
