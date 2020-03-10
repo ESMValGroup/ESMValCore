@@ -475,7 +475,7 @@ def _update_fx_settings(settings, variable, config_user):
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_files')
-        if user_fx_vars is not None:
+        if not user_fx_vars:
             if step_name in ('mask_landsea', 'weighting_landsea_fraction'):
                 user_fx_vars = ['sftlf']
                 if variable['project'] != 'obs4mips':
@@ -495,7 +495,8 @@ def _update_fx_settings(settings, variable, config_user):
     for step_name, step_settings in settings.items():
         if step_name in fx_steps:
             fx_vars = _get_fx_vars_from_attribute(step_settings, step_name)
-            _update_fx_files(step_settings, variable, config_user, fx_vars)
+            _update_fx_files(step_name, step_settings,
+                             variable, config_user, fx_vars)
 
 
 def _read_attributes(filename):
