@@ -94,13 +94,11 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
             citation_entries.append(cmip_citation)
 
     # convert tags to bibtex entries
-    if REFERENCES_PATH:
-        if product_tags:
-            # make tags clean and unique
-            tags = list(set(_clean_tags(product_tags)))
-            for tag in tags:
-                if tag not in ESMVALTOOL_PAPER_TAG:
-                    citation_entries.append(_collect_bibtex_citation(tag))
+    if REFERENCES_PATH and product_tags:
+        # make tags clean and unique
+        tags = list(set(_clean_tags(product_tags)))
+        for tag in tags:
+            citation_entries.append(_collect_bibtex_citation(tag))
 
     with open(f'{product_name}_citation.bibtex', 'w') as file:
         file.write('\n'.join(citation_entries))
@@ -172,9 +170,10 @@ def _collect_bibtex_citation(tag):
     if bibtex_file.is_file():
         entry = bibtex_file.read_text()
     else:
-        raise ValueError(
-            'The reference file {} does not exist.'.format(bibtex_file)
+        logger.info(
+            'The reference file %s does not exist.', bibtex_file
         )
+        entry = ''
     return entry
 
 
