@@ -494,7 +494,7 @@ def _update_fx_settings(settings, variable, config_user):
 
     for step_name, step_settings in settings.items():
         if step_name in fx_steps:
-            fx_vars = _get_fx_vars_from_attribute(settings, step)
+            fx_vars = _get_fx_vars_from_attribute(step_settings, step_name)
             _update_fx_files(step_settings, variable, config_user, fx_vars)
 
 
