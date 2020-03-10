@@ -14,6 +14,7 @@ from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
+from esmvalcore._citation import REFERENCES_PATH, _clean_tags
 
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
@@ -1260,6 +1261,9 @@ def test_diagnostic_task_provenance(
         assert product.attributes[key] == tuple(TAGS[key][k]
                                                 for k in record[key])
 
+    # Check that diagnostic reference files have been added
+    _test_bibtex_files(product.attributes['references'])
+
     # Check that recipe diagnostic tags have been added
     src = yaml.safe_load(DEFAULT_DOCUMENTATION + content)
     for key in ('realms', 'themes'):
@@ -1269,12 +1273,16 @@ def test_diagnostic_task_provenance(
     # Check that recipe tags have been added
     recipe_record = product.provenance.get_record('recipe:recipe_test.yml')
     assert len(recipe_record) == 1
-    for key in ('description', 'references'):
-        value = src['documentation'][key]
-        if key == 'references':
-            value = ', '.join(src['documentation'][key])
-        assert recipe_record[0].get_attribute('attribute:' +
-                                              key).pop() == value
+    key = 'description'
+    value = src['documentation'][key]
+    assert recipe_record[0].get_attribute('attribute:' +
+                                          key).pop() == value
+
+    # Check that recipe reference files have been added
+    key = 'references'
+    recipe_tags = recipe_record[0].get_attribute('attribute:' +
+                                                 key).pop()
+    _test_bibtex_files(recipe_tags)
 
     # Test that provenance was saved to netcdf, xml and svg plot
     cube = iris.load(product.filename)[0]
@@ -1283,6 +1291,17 @@ def test_diagnostic_task_provenance(
     assert os.path.exists(prefix + '.xml')
     assert os.path.exists(prefix + '.svg')
 
+
+def _test_bibtex_files(product_tags):
+    """check bibtex files exit in REFERENCES_PATH."""
+    if REFERENCES_PATH:
+        tags = list(set(_clean_tags(product_tags)))
+        for tag in tags:
+            bibtex_file = REFERENCES_PATH / f'{tag}.bibtex'
+            if not bibtex_file.is_file():
+                raise ValueError(
+                    'The reference file {} does not exist.'.format(bibtex_file)
+                )
 
 def test_alias_generation(tmp_path, patched_datafinder, config_user):
 
