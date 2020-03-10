@@ -218,27 +218,10 @@ def _make_info_url(url_prefix):
     return info_url
 
 
-def cite_tag_value(tag):
-    """Convert a tag to bibtex entry."""
-    reference_entry = []
-    fields = ['title', 'publisher', 'authors', 'journal', 'doi']
-    pattern = r'.*?\{(.*)\}.*'
-
+def cite_tag_value(tags):
+    """Convert tags to bibtex entries."""
+    reference_entries = ''
     if REFERENCES_PATH:
-        entry = _collect_bibtex_citation(tag).split(',')
-        for item in entry:
-            if 'authors' in item:
-                authors_name = re.search(pattern, item).group(1).split('and')
-                if authors_name[0] == authors_name[-1]:
-                    reference_entry.append(authors_name)
-                else:
-                    reference_entry.append([f'{authors_name[0]}, et al.'])
-            if 'year' in item:
-                year = item.split('year =')[-1]
-                reference_entry.append(year)
-        for field in fields:
-            reference_entry = [
-                re.search(pattern, item).group(1) for item in entry if field in item
-            ]
-    print(','.join(reference_entry))
-    return ','.join(reference_entry)
+        reference_entries = [_collect_bibtex_citation(tag) for tag in [tags]]
+        reference_entries = '\n'.join(reference_entries)
+    return reference_entries
