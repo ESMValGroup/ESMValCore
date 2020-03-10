@@ -572,7 +572,7 @@ class DiagnosticTask(BaseTask):
 
             attributes.update(deepcopy(attrs))
             for key in attributes:
-                if key in TAGS and key not in 'references':
+                if key in TAGS:
                     attributes[key] = replace_tags(key, attributes[key])
 
             product = TrackedFile(filename, attributes, ancestors)
