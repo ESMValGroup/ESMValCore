@@ -1276,7 +1276,7 @@ def test_diagnostic_task_provenance(
     for key in ('description', 'references'):
         value = src['documentation'][key]
         if key == 'references':
-            value = ','.join(src['documentation'][key])
+            value = ', '.join(src['documentation'][key])
             _test_bibtex_files(value)
         assert recipe_record[0].get_attribute('attribute:' +
                                               key).pop() == value
