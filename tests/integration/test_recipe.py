@@ -1273,16 +1273,13 @@ def test_diagnostic_task_provenance(
     # Check that recipe tags have been added
     recipe_record = product.provenance.get_record('recipe:recipe_test.yml')
     assert len(recipe_record) == 1
-    key = 'description'
-    value = src['documentation'][key]
-    assert recipe_record[0].get_attribute('attribute:' +
-                                          key).pop() == value
-
-    # Check that recipe reference files have been added
-    key = 'references'
-    recipe_tags = recipe_record[0].get_attribute('attribute:' +
-                                                 key).pop()
-    _test_bibtex_files(recipe_tags)
+    for key in ('description', 'references'):
+        value = src['documentation'][key]
+        if key == 'references':
+            value = ','.join(src['documentation'][key])
+            _test_bibtex_files(value)
+        assert recipe_record[0].get_attribute('attribute:' +
+                                              key).pop() == value
 
     # Test that provenance was saved to netcdf, xml and svg plot
     cube = iris.load(product.filename)[0]
