@@ -54,31 +54,29 @@ def _write_citation_file(filename, provenance):
     json_urls = []
     product_tags = []
     for item in provenance.records:
+        reference_attr = item.get_attribute('attribute:' + 'references')
         # get cmip6 citation info
         value = item.get_attribute('attribute:' + 'mip_era')
         if 'CMIP6' in list(value):
             url_prefix = _make_url_prefix(item.attributes)
             info_urls.append(_make_info_url(url_prefix))
             json_urls.append(_make_json_url(url_prefix))
-        if item.get_attribute('attribute:' + 'references'):
+        if reference_attr:
             # get recipe citation tags
             if item.identifier.namespace.prefix == 'recipe':
-                product_tags.append(
-                    item.get_attribute('attribute:' + 'references').pop()
-                )
+                product_tags += list(reference_attr)
             # get diagnostics citation tags
             if item.get_attribute('attribute:' + 'script_file'):
-                product_tags.append(
-                    item.get_attribute('attribute:' + 'references').pop()
-                )
+                product_tags += list(reference_attr)
 
     # get other references information recorded by provenance
-    tags = list(set(_clean_tags(product_tags + [ESMVALTOOL_PAPER_TAG])))
+    tags = set(_clean_tags(product_tags + [ESMVALTOOL_PAPER_TAG]))
     for item in provenance.records:
-        if item.get_attribute('attribute:' + 'references'):
-            value = item.get_attribute('attribute:' + 'references').pop()
-            if value not in tags:
-                info_urls.append(value)
+        reference_attr = item.get_attribute('attribute:' + 'references')
+        if reference_attr:
+            value = set(_clean_tags(reference_attr))
+            if not value.issubset(tags):
+                info_urls += list(reference_attr)
 
     _save_citation_info(product_name, product_tags, json_urls, info_urls)
 
