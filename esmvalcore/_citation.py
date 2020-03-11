@@ -60,17 +60,18 @@ def _write_citation_file(filename, provenance):
             url_prefix = _make_url_prefix(item.attributes)
             info_urls.append(_make_info_url(url_prefix))
             json_urls.append(_make_json_url(url_prefix))
-        # get diagnostics citation tags
-        if item.get_attribute('attribute:' + 'script_file'):
-            product_tags.append(
-                item.get_attribute('attribute:' + 'references').pop()
-            )
-        # get recipe citation tags
         if item.get_attribute('attribute:' + 'references'):
+            # get recipe citation tags
             if item.identifier.namespace.prefix == 'recipe':
                 product_tags.append(
                     item.get_attribute('attribute:' + 'references').pop()
                 )
+            # get diagnostics citation tags
+            if item.get_attribute('attribute:' + 'script_file'):
+                product_tags.append(
+                    item.get_attribute('attribute:' + 'references').pop()
+                )
+
     # get other references information recorded by provenance
     tags = list(set(_clean_tags(product_tags + [ESMVALTOOL_PAPER_TAG])))
     for item in provenance.records:
