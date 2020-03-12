@@ -1,19 +1,16 @@
 """Fixes for MPI-ESM1-2-HR model."""
-from ..cmip5.bcc_csm1_1 import Cl as BaseCl
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
 
-class Cl(BaseCl):
-    """Fixes for ``cl``."""
+Cl = ClFixHybridPressureCoord
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Cli = ClFixHybridPressureCoord
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
+Clw = ClFixHybridPressureCoord
 
 
 class Tas(Fix):

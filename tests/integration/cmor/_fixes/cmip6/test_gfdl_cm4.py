@@ -1,6 +1,5 @@
 """Tests for the fixes of GFDL-CM4."""
 import os
-import unittest
 
 import iris
 import numpy as np
@@ -144,14 +143,9 @@ def test_get_cli_fix():
     assert fix == [Cli(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.gfdl_cm4.Cl.fix_metadata',
-    autospec=True)
-def test_cli_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``cli``."""
-    fix = Cli(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_cli_fix():
+    """Test fix for ``cli``."""
+    assert Cli(None) == Cl(None)
 
 
 def test_get_clw_fix():
@@ -160,11 +154,6 @@ def test_get_clw_fix():
     assert fix == [Clw(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.gfdl_cm4.Cl.fix_metadata',
-    autospec=True)
-def test_clw_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``clw``."""
-    fix = Clw(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_clw_fix():
+    """Test fix for ``clw``."""
+    assert Clw(None) == Cl(None)

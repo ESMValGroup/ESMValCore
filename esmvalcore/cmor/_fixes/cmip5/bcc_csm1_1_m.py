@@ -1,10 +1,9 @@
 """Fixes for bcc-csm1-1-m."""
-from .bcc_csm1_1 import Cl as BaseCl
 from .bcc_csm1_1 import Tos as BaseTos
+from ..common import ClFixHybridPressureCoord
 
 
-class Cl(BaseCl):
-    """Fixes for cl."""
+Cl = ClFixHybridPressureCoord
 
 
 class Tos(BaseTos):

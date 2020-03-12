@@ -7,6 +7,7 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.cmor._fixes.cmip5.miroc_esm import AllVars, Cl, Co2, Tro3
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
 
 
@@ -16,14 +17,9 @@ def test_get_cl_fix():
     assert fix == [Cl(None), AllVars(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip5.miroc_esm.BaseCl.fix_metadata',
-    autospec=True)
-def test_cl_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``cl``."""
-    fix = Cl(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl(None) == ClFixHybridPressureCoord(None)
 
 
 class TestCo2(unittest.TestCase):

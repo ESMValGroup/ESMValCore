@@ -3,17 +3,13 @@ from .cnrm_cm6_1 import Cl as BaseCl
 from .cnrm_cm6_1 import Clcalipso as BaseClcalipso
 
 
-class Cl(BaseCl):
-    """Fixes for ``cl``."""
+Cl = BaseCl
 
 
-class Clcalipso(BaseClcalipso):
-    """Fixes for ``clcalipso``."""
+Clcalipso = BaseClcalipso
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Cli = BaseCl
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
+Clw = BaseCl

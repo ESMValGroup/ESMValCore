@@ -1,10 +1,9 @@
 """Fixes for CanESM2 model."""
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
-from .bcc_csm1_1 import Cl as BaseCl
 
 
-class Cl(BaseCl):
-    """Fixes for cl."""
+Cl = ClFixHybridPressureCoord
 
 
 class FgCo2(Fix):

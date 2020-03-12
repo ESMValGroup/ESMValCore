@@ -1,12 +1,11 @@
 """Fixes for inmcm4 model."""
 import iris
 
-from .bcc_csm1_1 import Cl as BaseCl
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 
 
-class Cl(BaseCl):
-    """Fixes for cl."""
+Cl = ClFixHybridPressureCoord
 
 
 class Gpp(Fix):

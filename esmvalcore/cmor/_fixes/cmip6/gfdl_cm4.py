@@ -1,12 +1,12 @@
 """Fixes for GFDL-CM4 model."""
 import iris
 
-from ..cmip5.bcc_csm1_1 import Cl as BaseCl
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
 
 
-class Cl(BaseCl):
+class Cl(ClFixHybridPressureCoord):
     """Fixes for ``cl``."""
 
     def fix_metadata(self, cubes):
@@ -32,12 +32,10 @@ class Cl(BaseCl):
         return super().fix_metadata(cubes)
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Cli = Cl
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
+Clw = Cl
 
 
 class Tas(Fix):

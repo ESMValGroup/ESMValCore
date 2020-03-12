@@ -1,14 +1,11 @@
 """Fixes for MIROC-ES2L model."""
-from ..cmip5.bcc_csm1_1 import Cl as BaseCl
+from ..common import ClFixHybridPressureCoord
 
 
-class Cl(BaseCl):
-    """Fixes for ``cl``."""
+Cl = ClFixHybridPressureCoord
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Cli = ClFixHybridPressureCoord
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
+Clw = ClFixHybridPressureCoord

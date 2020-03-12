@@ -2,6 +2,7 @@
 import unittest
 
 from esmvalcore.cmor._fixes.cmip5.mri_cgcm3 import Cl, Msftmyz, ThetaO
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
 
 
@@ -11,14 +12,9 @@ def test_get_cl_fix():
     assert fix == [Cl(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip5.mri_cgcm3.BaseCl.fix_metadata',
-    autospec=True)
-def test_cl_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``cl``."""
-    fix = Cl(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl(None) == ClFixHybridPressureCoord(None)
 
 
 class TestMsftmyz(unittest.TestCase):

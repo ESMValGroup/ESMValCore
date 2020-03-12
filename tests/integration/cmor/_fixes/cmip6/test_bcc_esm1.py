@@ -2,6 +2,7 @@
 import unittest
 
 from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import Cl, Cli, Clw, Tos
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -11,14 +12,9 @@ def test_get_cl_fix():
     assert fix == [Cl(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.bcc_esm1.BaseCl.fix_metadata',
-    autospec=True)
-def test_cl_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``cl``."""
-    fix = Cl(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl(None) == ClFixHybridPressureCoord(None)
 
 
 def test_get_cli_fix():
@@ -27,14 +23,9 @@ def test_get_cli_fix():
     assert fix == [Cli(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.bcc_esm1.Cl.fix_metadata',
-    autospec=True)
-def test_cli_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``cli``."""
-    fix = Cli(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_cli_fix():
+    """Test fix for ``cli``."""
+    assert Cli(None) == ClFixHybridPressureCoord(None)
 
 
 def test_get_clw_fix():
@@ -43,14 +34,9 @@ def test_get_clw_fix():
     assert fix == [Clw(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.bcc_esm1.Cl.fix_metadata',
-    autospec=True)
-def test_clw_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``clw``."""
-    fix = Clw(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_clw_fix():
+    """Test fix for ``clw``."""
+    assert Clw(None) == ClFixHybridPressureCoord(None)
 
 
 def test_get_tos_fix():

@@ -1,12 +1,11 @@
 """Fixes for MRI-CGCM3 model."""
 from dask import array as da
 
-from .bcc_csm1_1 import Cl as BaseCl
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 
 
-class Cl(BaseCl):
-    """Fixes for ``cl``."""
+Cl = ClFixHybridPressureCoord
 
 
 class Msftmyz(Fix):

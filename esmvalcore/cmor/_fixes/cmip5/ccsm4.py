@@ -1,11 +1,10 @@
 """Fixes for CCSM4 model."""
-from .bcc_csm1_1 import Cl as BaseCl
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import round_coordinates
 
 
-class Cl(BaseCl):
-    """Fixes for cl."""
+Cl = ClFixHybridPressureCoord
 
 
 class Rlut(Fix):
