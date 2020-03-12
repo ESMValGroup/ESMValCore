@@ -13,7 +13,7 @@ from collections import defaultdict
 from iris.cube import CubeList
 
 from ._fixes.fix import Fix
-from .check import _get_cmor_checker
+from .check import _get_cmor_checker, CheckLevels
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,8 @@ def fix_metadata(cubes,
                  project,
                  dataset,
                  mip,
-                 frequency=None):
+                 frequency=None,
+                 check_level=CheckLevels.DEFAULT):
     """
     Fix cube metadata if fixes are required and check it anyway.
 
@@ -79,6 +80,8 @@ def fix_metadata(cubes,
 
     frequency: str, optional
         Variable's data frequency, if available
+    check_level: CheckLevels
+        Level of strictness of the checks. Set to default.
 
     Returns
     -------
@@ -103,38 +106,13 @@ def fix_metadata(cubes,
         for fix in fixes:
             cube_list = fix.fix_metadata(cube_list)
 
-        if len(cube_list) != 1:
-            cube = None
-            for raw_cube in cube_list:
-                if raw_cube.var_name == short_name:
-                    cube = raw_cube
-                    break
-            if not cube:
-                raise ValueError(
-                    'More than one cube found for variable %s in %s:%s but '
-                    'none of their var_names match the expected. \n'
-                    'Full list of cubes encountered: %s' %
-                    (short_name, project, dataset, cube_list)
-                )
-            logger.warning(
-                'Found variable %s in %s:%s, but there were other present in '
-                'the file. Those extra variables are usually metadata '
-                '(cell area, latitude descriptions) that was not saved '
-                'properly. It is possible that errors appear further on '
-                'because of this. \nFull list of cubes encountered: %s',
-                short_name,
-                project,
-                dataset,
-                cube_list
-            )
-        else:
-            cube = cube_list[0]
-
+        cube = _get_single_cube(cube_list, short_name, project, dataset)
         checker = _get_cmor_checker(
             frequency=frequency,
             table=project,
             mip=mip,
             short_name=short_name,
+            check_level=check_level,
             fail_on_error=False,
             automatic_fixes=True)
         cube = checker(cube).check_metadata()
@@ -143,12 +121,42 @@ def fix_metadata(cubes,
     return fixed_cubes
 
 
+def _get_single_cube(cube_list, short_name, project, dataset):
+    if len(cube_list) == 1:
+        return cube_list[0]
+    cube = None
+    for raw_cube in cube_list:
+        if raw_cube.var_name == short_name:
+            cube = raw_cube
+            break
+    if not cube:
+        raise ValueError(
+            'More than one cube found for variable %s in %s:%s but '
+            'none of their var_names match the expected. \n'
+            'Full list of cubes encountered: %s' %
+            (short_name, project, dataset, cube_list)
+        )
+    logger.warning(
+        'Found variable %s in %s:%s, but there were other present in '
+        'the file. Those extra variables are usually metadata '
+        '(cell area, latitude descriptions) that was not saved '
+        'according to CF-conventions. It is possible that errors appear '
+        'further on because of this. \nFull list of cubes encountered: %s',
+        short_name,
+        project,
+        dataset,
+        cube_list
+    )
+    return cube
+
+
 def fix_data(cube,
              short_name,
              project,
              dataset,
              mip,
-             frequency=None):
+             frequency=None,
+             check_level=CheckLevels.DEFAULT):
     """
     Fix cube data if fixes add present and check it anyway.
 
@@ -171,6 +179,8 @@ def fix_data(cube,
         Variable's MIP
     frequency: str, optional
         Variable's data frequency, if available
+    check_level: CheckLevels
+        Level of strictness of the checks. Set to default.
 
     Returns
     -------
@@ -186,13 +196,13 @@ def fix_data(cube,
     for fix in Fix.get_fixes(
             project=project, dataset=dataset, mip=mip, short_name=short_name):
         cube = fix.fix_data(cube)
-
     checker = _get_cmor_checker(
         frequency=frequency,
         table=project,
         mip=mip,
         short_name=short_name,
         fail_on_error=False,
-        automatic_fixes=True)
+        automatic_fixes=True,
+        check_level=check_level)
     cube = checker(cube).check_data()
     return cube
