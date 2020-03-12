@@ -1,6 +1,10 @@
 """Fixes for CCSM4 model."""
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import round_coordinates
+
+
+Cl = ClFixHybridPressureCoord
 
 
 class Rlut(Fix):
@@ -15,11 +19,12 @@ class Rlut(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         return round_coordinates(cubes, 3)
@@ -80,11 +85,12 @@ class So(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         self.get_cube_from_list(cubes).units = '1e3'

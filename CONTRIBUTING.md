@@ -110,7 +110,7 @@ To make a new release of the package, follow these steps:
 
 ### 1. Check that the nightly build on CircleCI was successful
 
-Check the `nightly` [build on CircleCI](https://circleci.com/gh/ESMValGroup/ESMValTool/tree/master).
+Check the `nightly` [build on CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore/tree/master).
 All tests should pass before making a release.
 
 ### 2. Make a pull request to increase the version number
@@ -133,4 +133,4 @@ Follow these steps to create a new conda package:
 -   Edit meta.yaml and uncomment the lines starting with `git_rev` and `git_url`, remove the line starting with `path` in the `source` section.
 -   Activate the base environment `conda activate base`
 -   Run `conda build . -c conda-forge -c esmvalgroup` to build the conda package
--   If the build was successful, upload the package to the esmvalgroup conda channel, e.g. `anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvaltool-2.0.0b2-py_0.tar.bz2`.
+-   If the build was successful, upload the package to the esmvalgroup conda channel, e.g. `anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.0.0b6-py_0.tar.bz2`.
