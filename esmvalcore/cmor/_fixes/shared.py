@@ -179,7 +179,19 @@ class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
 
 
 def add_sigma_factory(cube):
-    """Add factory for ``atmosphere_sigma_coordinate``."""
+    """Add factory for ``atmosphere_sigma_coordinate``.
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        Input cube.
+
+    Raises
+    ------
+    ValueError
+        ``cube`` does not contain coordinate ``atmosphere_sigma_coordinate``.
+
+    """
     if cube.coords('atmosphere_sigma_coordinate'):
         aux_factory = AtmosphereSigmaFactory(
             pressure_at_top=cube.coord(var_name='ptop'),
@@ -194,7 +206,27 @@ def add_sigma_factory(cube):
 
 
 def add_aux_coords_from_cubes(cube, cubes, coord_dict):
-    """Add auxiliary coordinate to cube from another cube in list of cubes."""
+    """Add auxiliary coordinate to cube from another cube in list of cubes.
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        Input cube to which the auxiliary coordinates will be added.
+    cubes : iris.cube.CubeList
+        List of cubes which contains the desired coordinates as single cubes.
+    coord_dict : dict
+        Dictionary of the form ``coord_name: coord_dims``, where ``coord_name``
+        is the ``var_name`` (:obj:`str`) of the desired coordinates and
+        ``coord_dims`` a :obj:`tuple` of :obj:`int` describing the coordinate
+        dimensions in ``cube``.
+
+    Raises
+    ------
+    ValueError
+        ``cubes`` do not contain a desired coordinate or multiple copies of
+        it.
+
+    """
     for (coord_name, coord_dims) in coord_dict.items():
         coord_cube = cubes.extract(var_name_constraint(coord_name))
         if len(coord_cube) != 1:
@@ -208,7 +240,19 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
 
 
 def add_plev_from_altitude(cube):
-    """Add pressure level coordinate from altitude coordinate."""
+    """Add pressure level coordinate from altitude coordinate.
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        Input cube.
+
+    Raises
+    ------
+    ValueError
+        ``cube`` does not contain coordinate ``altitude``.
+
+    """
     if cube.coords('altitude'):
         height_coord = cube.coord('altitude')
         if height_coord.units != 'm':
@@ -302,7 +346,29 @@ def cube_to_aux_coord(cube):
 
 
 def get_bounds_cube(cubes, coord_var_name):
-    """Find bound cube for a given variable in a list of cubes."""
+    """Find bound cube for a given variable in a :class:`iris.cube.CubeList`.
+
+    Parameters
+    ----------
+    cubes : iris.cube.CubeList
+        List of cubes containing the coordinate bounds for the desired
+        coordinate as single cube.
+    coord_var_name : str
+        ``var_name`` of the desired coordinate (without suffic ``_bnds`` or
+        ``_bounds``).
+
+    Returns
+    -------
+    iris.cube.Cube
+        Bounds cube.
+
+    Raises
+    ------
+    ValueError
+        ``cubes`` do not contain the desired coordinate bounds or multiple
+        copies of them.
+
+    """
     for bounds in ('bnds', 'bounds'):
         bound_var = f'{coord_var_name}_{bounds}'
         cube = cubes.extract(var_name_constraint(bound_var))
@@ -317,7 +383,26 @@ def get_bounds_cube(cubes, coord_var_name):
 
 
 def fix_bounds(cube, cubes, coord_var_names):
-    """Fix bounds for cube that could not be read correctly by :mod:`iris`."""
+    """Fix bounds for cube that could not be read correctly by :mod:`iris`.
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        Input cube whose coordinate bounds will be fixed.
+    cubes : iris.cube.CubeList
+        List of cubes which contains the desired coordinate bounds as single
+        cubes.
+    coord_var_names : list of str
+        ``var_name``s of the desired coordinates (without suffic ``_bnds`` or
+        ``_bounds``).
+
+    Raises
+    ------
+    ValueError
+        ``cubes`` do not contain a desired coordinate bounds or multiple copies
+        of them.
+
+    """
     for coord_var_name in coord_var_names:
         coord = cube.coord(var_name=coord_var_name)
         if coord.bounds is not None:

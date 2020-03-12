@@ -94,14 +94,14 @@ CUBE_ALT_KM = iris.cube.Cube([1.0], var_name='x',
                              aux_coords_and_dims=[(ALT_COORD_KM, 0)])
 
 
-TEST_ADD_PRESSURE_LEVEL_COORDINATE = [
+TEST_ADD_PLEV_FROM_ALTITUDE = [
     (CUBE_ALT.copy(), P_COORD.copy()),
     (CUBE_ALT_KM.copy(), P_COORD.copy()),
     (iris.cube.Cube(0.0), None),
 ]
 
 
-@pytest.mark.parametrize('cube,output', TEST_ADD_PRESSURE_LEVEL_COORDINATE)
+@pytest.mark.parametrize('cube,output', TEST_ADD_PLEV_FROM_ALTITUDE)
 def test_add_plev_from_altitude(cube, output):
     """Test adding of pressure level coordinate."""
     if output is None:
