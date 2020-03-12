@@ -41,6 +41,7 @@ from . import __version__
 from ._config import configure_logging, read_config_user_file, DIAGNOSTICS_PATH
 from ._recipe import TASKSEP, read_recipe_file
 from ._task import resource_usage_logger
+from .cmor.check import CheckLevels
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -97,6 +98,24 @@ def get_args():
         '--diagnostics',
         nargs='*',
         help="Only run the named diagnostics from the recipe.")
+    parser.add_argument(
+        '--check-level',
+        type=str,
+        choices=[
+            val.name.lower() for val in CheckLevels if val != CheckLevels.DEBUG
+            ],
+        default='default',
+        help="""
+            Configure the severity of the errors that will make the CMOR check
+            fail.
+            Optional: true;
+            Possible values:
+            ignore: all errors will be reported as warnings
+            relaxed: only fail if there are critical errors
+            default: fail if there are any errors
+            strict: fail if there are any warnings
+        """
+    )
     args = parser.parse_args()
     return args
 
@@ -142,6 +161,7 @@ def main(args):
         pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
         for pattern in args.diagnostics or ()
     }
+    cfg['check_level'] = CheckLevels[args.check_level.upper()]
     cfg['synda_download'] = args.synda_download
     for limit in ('max_datasets', 'max_years'):
         value = getattr(args, limit)
