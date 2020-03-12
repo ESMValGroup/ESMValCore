@@ -130,6 +130,10 @@ class Tas(Fix):
         return round_coordinates(cubes)
 
 
+class Hur(Tas):
+    """Fixes for hur."""
+
+
 class Tos(Fix):
     """Fixes for tos."""
 
