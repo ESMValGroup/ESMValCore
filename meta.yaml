@@ -35,7 +35,7 @@ requirements:
     - setuptools_scm
   run:
     # esmvaltool
-    - python>=3.6,<3.8
+    - python>=3.6
     - libunwind  # specifically for Python3.7+
     - graphviz
     - iris>=2.2.1
