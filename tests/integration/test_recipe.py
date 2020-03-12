@@ -1300,6 +1300,7 @@ def _test_bibtex_files(product_tags):
                     'The reference file {} does not exist.'.format(bibtex_file)
                 )
 
+
 def test_alias_generation(tmp_path, patched_datafinder, config_user):
 
     content = dedent("""
