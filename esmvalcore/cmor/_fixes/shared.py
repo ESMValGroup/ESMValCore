@@ -45,7 +45,7 @@ class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
                 surface_air_pressure is None,
         ]):
             raise ValueError(
-                "Unable to contruct atmosphere sigma coordinate factory due "
+                "Unable to construct atmosphere sigma coordinate factory due "
                 "to insufficient source coordinates")
 
         # Check dimensions
