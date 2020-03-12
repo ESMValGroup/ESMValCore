@@ -5,8 +5,24 @@ import iris
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.miroc5 import Sftof, Tas
+from esmvalcore.cmor._fixes.cmip5.miroc5 import Hur, Sftof, Tas
 from esmvalcore.cmor.fix import Fix
+
+
+def test_get_hur_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'hur')
+    assert fix == [Hur(None)]
+
+
+@unittest.mock.patch(
+    'esmvalcore.cmor._fixes.cmip5.miroc5.Tas.fix_metadata',
+    autospec=True)
+def test_hur_fix_metadata(mock_base_fix_metadata):
+    """Test ``fix_metadata`` for ``hur``."""
+    fix = Hur(None)
+    fix.fix_metadata('cubes')
+    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
 
 
 class TestSftof(unittest.TestCase):
