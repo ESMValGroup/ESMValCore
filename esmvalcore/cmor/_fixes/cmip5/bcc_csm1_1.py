@@ -3,7 +3,11 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.ndimage import map_coordinates
 
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
+
+
+Cl = ClFixHybridPressureCoord
 
 
 class Tos(Fix):

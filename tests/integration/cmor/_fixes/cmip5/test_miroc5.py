@@ -5,8 +5,20 @@ import iris
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.miroc5 import Hur, Sftof, Tas
+from esmvalcore.cmor._fixes.cmip5.miroc5 import Cl, Hur, Sftof, Tas
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'cl')
+    assert fix == [Cl(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl(None) == ClFixHybridPressureCoord(None)
 
 
 def test_get_hur_fix():
@@ -27,13 +39,14 @@ def test_hur_fix_metadata(mock_base_fix_metadata):
 
 class TestSftof(unittest.TestCase):
     """Test sftof fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='sftof', units='J')
         self.fix = Sftof(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'sftof'),
                              [Sftof(None)])
 
@@ -46,6 +59,7 @@ class TestSftof(unittest.TestCase):
 
 class TestTas(unittest.TestCase):
     """Test tas fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.coord_name = 'latitude'
@@ -56,7 +70,7 @@ class TestTas(unittest.TestCase):
         self.fix = Tas(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'tas'),
                              [Tas(None)])
 

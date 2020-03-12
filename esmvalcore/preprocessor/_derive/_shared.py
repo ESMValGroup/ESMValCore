@@ -8,7 +8,7 @@ from iris import Constraint
 logger = logging.getLogger(__name__)
 
 
-def _var_name_constraint(var_name):
+def var_name_constraint(var_name):
     """:mod:`iris.Constraint` using `var_name` of a :mod:`iris.cube.Cube`."""
     return Constraint(cube_func=lambda c: c.var_name == var_name)
 

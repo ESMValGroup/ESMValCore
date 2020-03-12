@@ -6,6 +6,8 @@ import dask.array as da
 import iris
 from cf_units import Unit
 
+from esmvalcore.preprocessor._derive._shared import var_name_constraint
+
 logger = logging.getLogger(__name__)
 
 
@@ -173,6 +175,20 @@ def add_sigma_factory(cube):
         "coordinate not available")
 
 
+def add_aux_coords_from_cubes(cube, cubes, coord_dict):
+    """Add auxiliary coordinate to cube from another cube in list of cubes."""
+    for (coord_name, coord_dims) in coord_dict.items():
+        coord_cube = cubes.extract(var_name_constraint(coord_name))
+        if len(coord_cube) != 1:
+            raise ValueError(
+                f"Expected exactly one coordinate cube '{coord_name}' in "
+                f"list of cubes {cubes}, got {len(coord_cube):d}")
+        coord_cube = coord_cube[0]
+        aux_coord = cube_to_aux_coord(coord_cube)
+        cube.add_aux_coord(aux_coord, coord_dims)
+        cubes.remove(coord_cube)
+
+
 def add_scalar_depth_coord(cube, depth=0.0):
     """Add scalar coordinate 'depth' with value of `depth`m."""
     logger.debug("Adding depth coordinate (%sm)", depth)
@@ -236,7 +252,7 @@ def add_scalar_typesea_coord(cube, value='default'):
 
 
 def cube_to_aux_coord(cube):
-    """Convert cube to iris AuxCoord"""
+    """Convert cube to iris AuxCoord."""
     return iris.coords.AuxCoord(
         points=cube.core_data(),
         var_name=cube.var_name,
@@ -246,8 +262,34 @@ def cube_to_aux_coord(cube):
     )
 
 
+def get_bounds_cube(cubes, coord_var_name):
+    """Find bound cube for a given variable in a list of cubes."""
+    for bounds in ('bnds', 'bounds'):
+        bound_var = f'{coord_var_name}_{bounds}'
+        cube = cubes.extract(var_name_constraint(bound_var))
+        if len(cube) == 1:
+            return cube[0]
+        if len(cube) > 1:
+            raise ValueError(
+                f"Multiple cubes with var_name '{bound_var}' found")
+    raise ValueError(
+        f"No bounds for coordinate variable '{coord_var_name}' available in "
+        f"cubes\n{cubes}")
+
+
+def fix_bounds(cube, cubes, coord_var_names):
+    """Fix bounds for cube that could not be read correctly by :mod:`iris`."""
+    for coord_var_name in coord_var_names:
+        coord = cube.coord(var_name=coord_var_name)
+        if coord.bounds is not None:
+            continue
+        bounds_cube = get_bounds_cube(cubes, coord_var_name)
+        cube.coord(var_name=coord_var_name).bounds = bounds_cube.core_data()
+        logger.debug("Fixed bounds of coordinate '%s'", coord_var_name)
+
+
 def round_coordinates(cubes, decimals=5, coord_names=None):
-    """Round all dimensional coordinates of all cubes in place
+    """Round all dimensional coordinates of all cubes in place.
 
     Cubes can be a list of Iris cubes, or an Iris `CubeList`.
 
@@ -256,22 +298,23 @@ def round_coordinates(cubes, decimals=5, coord_names=None):
 
     Parameters
     ----------
-    - cubes: iris.cube.CubeList (or a list of iris.cube.Cube).
+    cubes : iris.cube.CubeList or list of iris.cube.Cube
+        Cubes which are modified in place.
 
-    - decimals: number of decimals to round to.
+    decimals : int
+        Number of decimals to round to.
 
-    - coord_names: list of strings, or None.
-        If None (or a falsey value), all dimensional coordinates will
-        be rounded.
-        Otherwise, only coordinates given by the names in
-        `coord_names` are rounded.
+    coord_names : list of str or None
+        If ``None`` (or a falsey value), all dimensional coordinates will be
+        rounded. Otherwise, only coordinates given by the names in
+        ``coord_names`` are rounded.
 
     Returns
     -------
-    The modified input `cubes`
+    iris.cube.CubeList or list of iris.cube.Cube
+        The modified input ``cubes``.
 
     """
-
     for cube in cubes:
         if not coord_names:
             coords = cube.coords(dim_coords=True)

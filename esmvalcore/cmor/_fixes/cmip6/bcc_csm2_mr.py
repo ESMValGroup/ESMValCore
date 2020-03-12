@@ -1,5 +1,15 @@
 """Fixes for BCC-CSM2-MR model."""
 from ..cmip5.bcc_csm1_1 import Tos as BaseTos
+from ..common import ClFixHybridPressureCoord
+
+
+Cl = ClFixHybridPressureCoord
+
+
+Cli = ClFixHybridPressureCoord
+
+
+Clw = ClFixHybridPressureCoord
 
 
 class Tos(BaseTos):
