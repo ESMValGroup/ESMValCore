@@ -38,6 +38,7 @@ def _fix_aux_factories(cube):
     coord_names = [coord.name() for coord in cube.coords()]
 
     # Hybrid sigma pressure coordinate
+    # TODO possibly add support for other hybrid coordinates
     if 'atmosphere_hybrid_sigma_pressure_coordinate' in coord_names:
         new_aux_factory = iris.aux_factory.HybridPressureFactory(
             delta=cube.coord(var_name='ap'),
