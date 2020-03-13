@@ -1,9 +1,11 @@
-
-"""Fixes for BNU ESM model."""
+"""Fixes for BNU-ESM model."""
 from cf_units import Unit
 from dask import array as da
 
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
+
+Cl = ClFixHybridPressureCoord
 
 
 class FgCo2(Fix):
@@ -13,15 +15,16 @@ class FgCo2(Fix):
         """
         Fix metadata.
 
-        Fixes cube units
+        Fixes cube units.
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes to fix.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         self.get_cube_from_list(cubes).units = Unit('kg m-2 s-1')
@@ -31,11 +34,12 @@ class FgCo2(Fix):
         """
         Fix data.
 
-        Fixes cube units
+        Fixes cube units.
 
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube to fix.
 
         Returns
         -------
@@ -55,11 +59,12 @@ class Ch4(Fix):
         """
         Fix metadata.
 
-        Fixes cube units
+        Fixes cube units.
 
         Parameters
         ----------
-        cubes: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes to fix.
 
         Returns
         -------
@@ -73,11 +78,13 @@ class Ch4(Fix):
         """
         Fix metadata.
 
-        Fixes cube units
+        Fixes cube units.
 
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube to fix.
+
 
         Returns
         -------
@@ -97,11 +104,12 @@ class Co2(Fix):
         """
         Fix metadata.
 
-        Fixes cube units
+        Fixes cube units.
 
         Parameters
         ----------
-        cubes: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes to fix.
 
         Returns
         -------
@@ -115,11 +123,12 @@ class Co2(Fix):
         """
         Fix data.
 
-        Fixes cube units
+        Fixes cube units.
 
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube to fix.
 
         Returns
         -------
@@ -139,11 +148,12 @@ class SpCo2(Fix):
         """
         Fix data.
 
-        Fixes cube units
+        Fixes cube units.
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube : iris.cube.Cube
+            Input cube to fix.
 
         Returns
         -------
@@ -167,7 +177,8 @@ class Od550Aer(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube : iris.cube.Cube
+            Input cube to fix.
 
         Returns
         -------

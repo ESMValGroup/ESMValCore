@@ -1,6 +1,8 @@
 """Test fixes for SAM0-UNICON."""
 from esmvalcore.cmor._fixes.cmip6.sam0_unicon import Cl, Cli, Clw
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.common import (ClFixHybridPressureCoord,
+                                           CliFixHybridPressureCoord,
+                                           ClwFixHybridPressureCoord)
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -12,7 +14,8 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl(None) == ClFixHybridPressureCoord(None)
+    assert Cl is ClFixHybridPressureCoord
+    assert Cl.SHORT_NAME == 'cl'
 
 
 def test_get_cli_fix():
@@ -23,7 +26,8 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli(None) == ClFixHybridPressureCoord(None)
+    assert Cli is CliFixHybridPressureCoord
+    assert Cli.SHORT_NAME == 'cli'
 
 
 def test_get_clw_fix():
@@ -34,4 +38,5 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw(None) == ClFixHybridPressureCoord(None)
+    assert Clw is ClwFixHybridPressureCoord
+    assert Clw.SHORT_NAME == 'clw'

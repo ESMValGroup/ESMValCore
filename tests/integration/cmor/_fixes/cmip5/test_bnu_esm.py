@@ -5,20 +5,34 @@ import numpy.ma as ma
 from cf_units import Unit
 from iris.cube import Cube
 
+from esmvalcore.cmor._fixes.cmip5.bnu_esm import (Ch4, Cl, Co2, FgCo2,
+                                                  Od550Aer, SpCo2)
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.bnu_esm import (Ch4, Co2, FgCo2, SpCo2,
-                                                  Od550Aer)
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'bcc-csm1-1', 'Amon', 'cl')
+    assert fix == [Cl(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is ClFixHybridPressureCoord
+    assert Cl.SHORT_NAME == 'cl'
 
 
 class TestCo2(unittest.TestCase):
     """Test fixes for CO2."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
         self.fix = Co2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'co2'),
                              [Co2(None)])
 
@@ -37,13 +51,14 @@ class TestCo2(unittest.TestCase):
 
 class Testfgco2(unittest.TestCase):
     """Test fixes for FgCO2."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='fgco2', units='J')
         self.fix = FgCo2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'fgco2'), [FgCo2(None)])
 
@@ -62,13 +77,14 @@ class Testfgco2(unittest.TestCase):
 
 class TestCh4(unittest.TestCase):
     """Test fixes for ch4."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='ch4', units='J')
         self.fix = Ch4(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4'),
                              [Ch4(None)])
 
@@ -87,13 +103,14 @@ class TestCh4(unittest.TestCase):
 
 class Testspco2(unittest.TestCase):
     """Test fixes for SpCO2."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='spco2', units='J')
         self.fix = SpCo2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'spco2'), [SpCo2(None)])
 
@@ -112,6 +129,7 @@ class Testspco2(unittest.TestCase):
 
 class TestOd550Aer(unittest.TestCase):
     """Test fixes for SpCO2."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube(
@@ -121,7 +139,7 @@ class TestOd550Aer(unittest.TestCase):
         self.fix = Od550Aer(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'od550aer'),
             [Od550Aer(None)])

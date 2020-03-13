@@ -17,7 +17,8 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl(None) == ClFixHybridPressureCoord(None)
+    assert Cl is ClFixHybridPressureCoord
+    assert Cl.SHORT_NAME == 'cl'
 
 
 class TestPctisccp2(unittest.TestCase):

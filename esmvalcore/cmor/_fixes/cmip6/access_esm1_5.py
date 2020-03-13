@@ -1,14 +1,11 @@
 """Fixes for ACCESS-ESM1-5."""
-from .ukesm1_0_ll import Cl as BaseCl
+from ..common import (ClFixHybridHeightCoord, CliFixHybridHeightCoord,
+                      ClwFixHybridHeightCoord)
+
+Cl = ClFixHybridHeightCoord
 
 
-class Cl(BaseCl):
-    """Fixes for ``cl``."""
+Cli = CliFixHybridHeightCoord
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
-
-
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Clw = ClwFixHybridHeightCoord

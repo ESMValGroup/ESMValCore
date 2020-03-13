@@ -1,6 +1,8 @@
 """Test fixes for CNRM-ESM2-1."""
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clcalipso as BaseClcalipso
+from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cli as BaseCli
+from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clw as BaseClw
 from esmvalcore.cmor._fixes.cmip6.cnrm_esm2_1 import Cl, Clcalipso, Cli, Clw
 from esmvalcore.cmor._fixes.fix import Fix
 
@@ -13,7 +15,8 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl(None) == BaseCl(None)
+    assert Cl is BaseCl
+    assert Cl.SHORT_NAME == 'cl'
 
 
 def test_get_clcalipso_fix():
@@ -24,7 +27,7 @@ def test_get_clcalipso_fix():
 
 def test_clcalipso_fix():
     """Test fix for ``cl``."""
-    assert Clcalipso(None) == BaseClcalipso(None)
+    assert Clcalipso is BaseClcalipso
 
 
 def test_get_cli_fix():
@@ -35,7 +38,8 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli(None) == BaseCl(None)
+    assert Cli is BaseCli
+    assert Cli.SHORT_NAME == 'cli'
 
 
 def test_get_clw_fix():
@@ -46,4 +50,5 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw(None) == BaseCl(None)
+    assert Clw is BaseClw
+    assert Clw.SHORT_NAME == 'clw'

@@ -22,7 +22,7 @@ class Cl(ClFixHybridPressureCoord):
         iris.cube.Cube
 
         """
-        cube = self.get_cube_from_list(cubes)
+        cube = self.get_cube_from_list(cubes, short_name=self.SHORT_NAME)
 
         # Add auxiliary coordinate from list of cubes
         coords_to_add = {
@@ -73,7 +73,13 @@ class Clcalipso(Fix):
         return iris.cube.CubeList([cube])
 
 
-Cli = Cl
+class Cli(Cl):
+    """Fixes for ``cli``."""
+
+    SHORT_NAME = 'cli'
 
 
-Clw = Cl
+class Clw(Cl):
+    """Fixes for ``clw``."""
+
+    SHORT_NAME = 'clw'

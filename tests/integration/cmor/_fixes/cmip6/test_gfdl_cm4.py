@@ -1,5 +1,7 @@
 """Tests for the fixes of GFDL-CM4."""
 import os
+import unittest
+from unittest.mock import sentinel
 
 import iris
 import numpy as np
@@ -124,6 +126,7 @@ def test_cl_fix_metadata(cl_file):
 
     # Apply fix
     fix = Cl(None)
+    assert fix.SHORT_NAME == 'cl'
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
     fixed_cl_cube = fixed_cubes.extract_strict(
@@ -143,9 +146,15 @@ def test_get_cli_fix():
     assert fix == [Cli(None)]
 
 
-def test_cli_fix():
-    """Test fix for ``cli``."""
-    assert Cli(None) == Cl(None)
+@unittest.mock.patch(
+    'esmvalcore.cmor._fixes.cmip6.gfdl_cm4.Cl.fix_metadata',
+    autospec=True)
+def test_cli_fix_metadata(mock_base_fix_metadata):
+    """Test ``fix_metadata`` for ``cli``."""
+    fix = Cli(None)
+    assert fix.SHORT_NAME == 'cli'
+    fix.fix_metadata(sentinel.cubes)
+    mock_base_fix_metadata.assert_called_once_with(fix, sentinel.cubes)
 
 
 def test_get_clw_fix():
@@ -154,6 +163,12 @@ def test_get_clw_fix():
     assert fix == [Clw(None)]
 
 
-def test_clw_fix():
-    """Test fix for ``clw``."""
-    assert Clw(None) == Cl(None)
+@unittest.mock.patch(
+    'esmvalcore.cmor._fixes.cmip6.gfdl_cm4.Cl.fix_metadata',
+    autospec=True)
+def test_clw_fix_metadata(mock_base_fix_metadata):
+    """Test ``fix_metadata`` for ``clw``."""
+    fix = Clw(None)
+    assert fix.SHORT_NAME == 'clw'
+    fix.fix_metadata(sentinel.cubes)
+    mock_base_fix_metadata.assert_called_once_with(fix, sentinel.cubes)

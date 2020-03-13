@@ -1,19 +1,17 @@
 """Fixes for CMIP6 HadGEM-GC31-LL."""
+from ..common import (ClFixHybridHeightCoord, CliFixHybridHeightCoord,
+                      ClwFixHybridHeightCoord)
 from .ukesm1_0_ll import AllVars as BaseAllVars
-from .ukesm1_0_ll import Cl as BaseCl
 
 
 class AllVars(BaseAllVars):
     """Fixes for all vars."""
 
 
-class Cl(BaseCl):
-    """Fixes for ``cl``."""
+Cl = ClFixHybridHeightCoord
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
+Cli = CliFixHybridHeightCoord
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Clw = ClwFixHybridHeightCoord
