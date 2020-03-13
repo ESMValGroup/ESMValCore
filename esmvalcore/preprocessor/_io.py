@@ -13,6 +13,7 @@ import numpy as np
 import yaml
 
 from .._task import write_ncl_settings
+from ..cmor._fixes.shared import AtmosphereSigmaFactory
 from ._time import extract_time
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,19 @@ def _fix_aux_factories(cube):
         )
         for aux_factory in cube.aux_factories:
             if isinstance(aux_factory, iris.aux_factory.HybridHeightFactory):
+                break
+        else:
+            cube.add_aux_factory(new_aux_factory)
+
+    # Atmosphere sigma coordinate
+    if 'atmosphere_sigma_coordinate' in coord_names:
+        new_aux_factory = AtmosphereSigmaFactory(
+            pressure_at_top=cube.coord(var_name='ptop'),
+            sigma=cube.coord(var_name='lev'),
+            surface_air_pressure=cube.coord(var_name='ps'),
+        )
+        for aux_factory in cube.aux_factories:
+            if isinstance(aux_factory, AtmosphereSigmaFactory):
                 break
         else:
             cube.add_aux_factory(new_aux_factory)
