@@ -10,7 +10,7 @@ RUN apt-get update -y && apt-get install -y \
     unzip
 
 # install environment packages
-RUN conda install -c conda-forge -c esmvalgroup -c birdhouse esmvaltool
+RUN conda install -c conda-forge -c esmvalgroup esmvalcore
 
 # run tests
 RUN esmvaltool -h
