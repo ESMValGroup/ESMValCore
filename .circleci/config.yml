@@ -37,7 +37,7 @@ jobs:
             # conda update -y conda
             conda env update
             conda activate esmvaltool
-            python setup.py test
+            python setup.py test --addopts '-m "not installation"'
       - save_cache:
           key: deps3-{{ .Branch }}-{{ checksum "cache_key.txt" }}
           paths:
@@ -74,7 +74,7 @@ jobs:
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            python setup.py test --addopts --installation
+            python setup.py test
             esmvaltool -h
       - save_cache:
           key: python3-install-{{ .Branch }}
@@ -151,7 +151,7 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             esmvaltool -h
-            python setup.py test --addopts --installation
+            python setup.py test
       - store_artifacts:
           path: /logs
 

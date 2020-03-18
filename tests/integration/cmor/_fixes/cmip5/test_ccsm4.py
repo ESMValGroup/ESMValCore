@@ -5,12 +5,25 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 
+from esmvalcore.cmor._fixes.cmip5.ccsm4 import Cl, Rlut, Rlutcs, So
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.ccsm4 import Rlut, Rlutcs, So
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'cl')
+    assert fix == [Cl(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl(None) == ClFixHybridPressureCoord(None)
 
 
 class TestsRlut(unittest.TestCase):
     """Test for rlut fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='rlut')
@@ -24,7 +37,7 @@ class TestsRlut(unittest.TestCase):
         self.fix = Rlut(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'rlut'),
                              [Rlut(None)])
 
@@ -41,6 +54,7 @@ class TestsRlut(unittest.TestCase):
 
 class TestsRlutcs(unittest.TestCase):
     """Test for rlutcs fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='rlutcs')
@@ -54,7 +68,7 @@ class TestsRlutcs(unittest.TestCase):
         self.fix = Rlutcs(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'rlutcs'),
                              [Rlutcs(None)])
 
@@ -71,13 +85,14 @@ class TestsRlutcs(unittest.TestCase):
 
 class TestSo(unittest.TestCase):
     """Tests for so fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='so', units='1.0')
         self.fix = So(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'so'),
                              [So(None)])
 

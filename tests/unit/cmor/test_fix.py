@@ -4,6 +4,7 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 
 from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
+from esmvalcore.cmor.check import CheckLevels
 
 
 class TestFixFile(TestCase):
@@ -194,7 +195,7 @@ class TestFixMetadata(TestCase):
                     mip='mip',
                     short_name='short_name',
                     table='CMIP6',
-                )
+                    check_level=CheckLevels.DEFAULT,)
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_metadata.assert_called_once_with()
 
@@ -264,6 +265,7 @@ class TestFixData(TestCase):
                 get_mock.assert_called_once_with(
                     table='CMIP6',
                     automatic_fixes=True,
+                    check_level=CheckLevels.DEFAULT,
                     fail_on_error=False,
                     frequency='frequency',
                     mip='mip',

@@ -266,3 +266,42 @@ missing coordinate you can create a fix for this model:
         data_cube = cubes.extract_strict('VAR_NAME')
         data_cube.add_aux_coord(coord, DIMENSIONS_INDEX_TUPLE)
         return [data_cube]
+
+
+Customizing checker strictness
+==============================
+
+The data checker classifies its issues using four different levels of
+severity. From highest to lowest:
+
+ - ``CRITICAL``: issues that most of the time will have severe consequences.
+
+ - ``ERROR``: issues that usually lead to unexpected errors, but can be safely
+    ignored sometimes.
+
+ - ``WARNING``: something is not up to the standard but is unlikely to have
+    consequences later.
+
+ - ``DEBUG``: any info that the checker wants to communicate. Regardless of
+    checker strictness, those will always be reported as debug messages.
+
+Users can have control about which levels of issues are interpreted as errors,
+and therefore make the checker fail or warnings or debug messages.
+For this purpose there is an optional command line option `--check-level`
+that can take a number of values, listed below from the lowest level of
+strictness to the highest:
+
+- ``ignore``: all issues, regardless of severity, will be reported as
+    warnings. Checker will never fail. Use this at your own risk.
+
+- ``relaxed``: only CRITICAL issues are treated as errors. We recommend not to
+    rely on this mode, although it can be useful if there are errors preventing
+    the run that you are sure you can manage on the diagnostics or that will
+    not affect you.
+
+- ``default``: fail if there are any CRITICAL or ERROR issues (DEFAULT); Provides
+    a good measure of safety.
+
+- ``strict``: fail if there are any warnings, this is the highest level of
+    strictness. Mostly useful for checking datasets that you have produced, to
+    be sure that future users will not be distracted by inoffensive warnings.
