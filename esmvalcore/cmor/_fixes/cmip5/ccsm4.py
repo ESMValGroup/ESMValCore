@@ -11,21 +11,31 @@ Cl = ClFixHybridPressureCoord
 
 
 class Csoil(Fix):
+    """Fixes for Csoil."""
+
     def fix_data(self, cube):
+        """Fix data.
+
+        The data is not properly masked.
+        This fixes the mask.
+
+        Parameters
+        ----------
+        cubes : iris.cube.Cube
+            Input cube.
+
+        Returns
+        -------
+        iris.cube.CubeList
+        """
         cube.data = da.ma.masked_equal(cube.core_data(), 1.e33)
         return cube
 
 
-class Cveg(Fix):
-    def fix_data(self, cube):
-        cube.data = da.ma.masked_equal(cube.core_data(), 1.e33)
-        return cube
+Cveg = Csoil
 
 
-class Gpp(Fix):
-    def fix_data(self, cube):
-        cube.data = da.ma.masked_equal(cube.core_data(), 1.e33)
-        return cube
+Gpp = Csoil
 
 
 class Rlut(Fix):
