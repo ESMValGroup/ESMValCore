@@ -36,8 +36,7 @@ def get_esmvaltool_provenance():
         create_namespace(provenance, namespace)
 
     # TODO: add dependencies with versions here
-    attributes_value = ESMVALTOOL_PAPER_TAG
-    attributes = {'attribute:references': attributes_value}
+    attributes = {'attribute:references': ESMVALTOOL_PAPER_TAG}
     activity = provenance.activity(
         namespace + ':esmvaltool==' + __version__, other_attributes=attributes)
 
