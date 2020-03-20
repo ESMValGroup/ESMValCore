@@ -147,15 +147,17 @@ def _json_to_bibtex(data):
         doi = data.get('identifier').get('id', 'doi not found')
         url = f'https://doi.org/{doi}'
 
-    bibtex_entry = (
-        f'{"@misc{"}{url},\n\t'
-        f'url = {{{url}}},\n\t'
-        f'title = {{{title}}},\n\t'
-        f'publisher = {{{publisher}}},\n\t'
-        f'year = {year},\n\t'
-        f'author = {{{authors}}},\n\t'
-        f'doi = {{{doi}}},\n'
-        f'{"}"}\n'
+    bibtex_entry = textwrap.dedent(
+        f"""
+        @misc{{{url}
+        \turl = {{{url}}},
+        \ttitle = {{{title}}},
+        \tpublisher = {{{publisher}}},
+        \tyear = {year},
+        \tauthor = {{{authors}}},
+        \tdoi = {{{doi}}},
+        }}
+        """.lstrip()
     )
     return bibtex_entry
 
@@ -166,7 +168,7 @@ def _collect_bibtex_citation(tag):
     if bibtex_file.is_file():
         entry = bibtex_file.read_text()
     else:
-        logger.info(
+        logger.warning(
             'The reference file %s does not exist.', bibtex_file
         )
         entry = ''
@@ -179,8 +181,7 @@ def _collect_cmip_citation(json_url):
     if json_data:
         bibtex_entry = _json_to_bibtex(json_data)
     else:
-        logger.info('Invalid json link %s', json_url)
-        bibtex_entry = False
+        bibtex_entry = ''
     return bibtex_entry
 
 
