@@ -1,10 +1,31 @@
 """Fixes for CCSM4 model."""
+
+import dask.array as da
+
 from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import round_coordinates
 
 
 Cl = ClFixHybridPressureCoord
+
+
+class Csoil(Fix):
+    def fix_data(self, cube):
+        cube.data = da.ma.masked_equal(cube.core_data(), 1.e33)
+        return cube
+
+
+class Cveg(Fix):
+    def fix_data(self, cube):
+        cube.data = da.ma.masked_equal(cube.core_data(), 1.e33)
+        return cube
+
+
+class Gpp(Fix):
+    def fix_data(self, cube):
+        cube.data = da.ma.masked_equal(cube.core_data(), 1.e33)
+        return cube
 
 
 class Rlut(Fix):
