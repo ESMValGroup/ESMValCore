@@ -67,7 +67,6 @@ def _write_citation_file(filename, provenance):
                 product_tags.extend(reference_attr)
             # get diagnostics citation tags
             elif item.get_attribute('attribute:script_file'):
-                print(reference_attr)
                 product_tags.extend(reference_attr)
             elif ESMVALTOOL_PAPER_TAG not in reference_attr:
                 info_urls += list(reference_attr)
@@ -93,7 +92,7 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
     # convert tags to bibtex entries
     if REFERENCES_PATH and product_tags:
         # make tags clean and unique
-        tags = list(set(_clean_tags(product_tags)))
+        tags = _clean_tags(product_tags)
         for tag in tags:
             citation_entries.append(_collect_bibtex_citation(tag))
 
@@ -104,7 +103,7 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
 def _clean_tags(tags):
     """Clean the tags that are recorded as str by provenance."""
     pattern = re.compile(r'\w+')
-    return pattern.findall(str(tags))
+    return list(set(pattern.findall(str(tags))))
 
 
 def _get_response(url):
@@ -116,9 +115,9 @@ def _get_response(url):
             if response.status_code == 200:
                 json_data = response.json()
             else:
-                logger.info('Error in the CMIP json link: %s', url)
+                logger.warning('Error in the CMIP6 citation link: %s', url)
         except IOError:
-            logger.info('Error in receiving the CMIP json file')
+            logger.info('No network connection, unable to retrieve CMIP6 citation information')
     return json_data
 
 
