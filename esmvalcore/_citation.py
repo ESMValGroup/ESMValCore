@@ -19,20 +19,20 @@ CMIP6_URL_STEM = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch'
 # it is the technical overview and should always be cited
 ESMVALTOOL_PAPER_TAG = 'righi19gmdd'
 ESMVALTOOL_PAPER = (
-    '@article{righi19gmdd,\n\t'
-    'doi = {10.5194/gmd-2019-226},\n\t'
-    'url = {https://doi.org/10.5194%2Fgmd-2019-226},\n\t'
-    'year = 2019,\n\t'
-    'month = {sep},\n\t'
-    'publisher = {Copernicus {GmbH}},\n\t'
-    'author = {Mattia Righi and Bouwe Andela and Veronika Eyring '
+    '@article{righi19gmdd,\n'
+    '\tdoi = {10.5194/gmd-2019-226},\n'
+    '\turl = {https://doi.org/10.5194%2Fgmd-2019-226},\n'
+    '\tyear = 2019,\n'
+    '\tmonth = {sep},\n'
+    '\tpublisher = {Copernicus {GmbH}},\n'
+    '\tauthor = {Mattia Righi and Bouwe Andela and Veronika Eyring '
     'and Axel Lauer and Valeriu Predoi and Manuel Schlund '
     'and Javier Vegas-Regidor and Lisa Bock and Björn Brötz '
     'and Lee de Mora and Faruk Diblen and Laura Dreyer '
     'and Niels Drost and Paul Earnshaw and Birgit Hassler '
     'and Nikolay Koldunov and Bill Little and Saskia Loosveldt Tomas '
-    'and Klaus Zimmermann},\n\t'
-    'title = {{ESMValTool} v2.0 '
+    'and Klaus Zimmermann},\n'
+    '\ttitle = {{ESMValTool} v2.0 '
     '{\\&}amp$\\mathsemicolon${\\#}8211$\\mathsemicolon$ '
     'Technical overview}\n'
     '}\n'
@@ -54,9 +54,9 @@ def _write_citation_file(filename, provenance):
     json_urls = []
     product_tags = []
     for item in provenance.records:
-        reference_attr = item.get_attribute('attribute:' + 'references')
+        reference_attr = item.get_attribute('attribute:references')
         # get cmip6 citation info
-        value = item.get_attribute('attribute:' + 'mip_era')
+        value = item.get_attribute('attribute:mip_era')
         if 'CMIP6' in list(value):
             url_prefix = _make_url_prefix(item.attributes)
             info_urls.append(_make_info_url(url_prefix))
@@ -66,13 +66,13 @@ def _write_citation_file(filename, provenance):
             if item.identifier.namespace.prefix == 'recipe':
                 product_tags += list(reference_attr)
             # get diagnostics citation tags
-            if item.get_attribute('attribute:' + 'script_file'):
+            if item.get_attribute('attribute:script_file'):
                 product_tags += list(reference_attr)
 
     # get other references information recorded by provenance
     tags = set(_clean_tags(product_tags + [ESMVALTOOL_PAPER_TAG]))
     for item in provenance.records:
-        reference_attr = item.get_attribute('attribute:' + 'references')
+        reference_attr = item.get_attribute('attribute:references')
         if reference_attr:
             value = set(_clean_tags(reference_attr))
             if not value.issubset(tags):
