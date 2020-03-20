@@ -218,12 +218,3 @@ def _make_info_url(url_prefix):
     """Make info url based on CMIP6 Data Citation Service."""
     info_url = f'{CMIP6_URL_STEM}/cmip6?input=CMIP6.{url_prefix}'
     return info_url
-
-
-def cite_tag_value(tags):
-    """Convert tags to bibtex entries."""
-    reference_entries = ''
-    if REFERENCES_PATH:
-        reference_entries = [_collect_bibtex_citation(tag) for tag in [tags]]
-        reference_entries = '\n'.join(reference_entries)
-    return reference_entries
