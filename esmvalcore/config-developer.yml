@@ -25,6 +25,7 @@ CMIP6:
     BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
     DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
+    SYNDA: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP6'
@@ -40,6 +41,7 @@ CMIP5:
     SMHI: '{dataset}/{ensemble}/{exp}/{frequency}'
     RCAST: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
     BSC: '{type}/{project}/{exp}/{dataset.lower}'
+    SYNDA: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   institutes:
