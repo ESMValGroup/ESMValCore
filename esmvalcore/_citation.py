@@ -96,8 +96,7 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
 
     # convert tags to bibtex entries
     if REFERENCES_PATH and product_tags:
-        # make tags clean and unique
-        tags = _clean_tags(product_tags)
+        tags = _extract_tags(product_tags)
         for tag in tags:
             citation_entries.append(_collect_bibtex_citation(tag))
 
@@ -105,8 +104,10 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
         file.write('\n'.join(citation_entries))
 
 
-def _clean_tags(tags):
-    """Clean the tags that are recorded as str by provenance."""
+def _extract_tags(tags):
+    """Extract tags that are recorded by provenance,
+    as for example, "['acknow_project', 'acknow_author']".
+    """
     pattern = re.compile(r'\w+')
     return list(set(pattern.findall(str(tags))))
 
