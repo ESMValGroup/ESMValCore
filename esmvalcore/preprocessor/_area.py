@@ -114,7 +114,9 @@ def zonal_statistics(cube, operator):
     """
     if cube.coord('longitude').points.ndim < 2:
         operation = get_iris_analysis_operation(operator)
-        return cube.collapsed('longitude', operation)
+        cube = cube.collapsed('longitude', operation)
+        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+        return cube
     else:
         msg = (f"Zonal statistics on irregular grids not yet implemnted")
         raise ValueError(msg)
@@ -146,7 +148,9 @@ def meridional_statistics(cube, operator):
     """
     if cube.coord('latitude').points.ndim < 2:
         operation = get_iris_analysis_operation(operator)
-        return cube.collapsed('latitude', operation)
+        cube = cube.collapsed('latitude', operation)
+        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+        return cube
     else:
         msg = (f"Meridional statistics on irregular grids not yet implemnted")
         raise ValueError(msg)
