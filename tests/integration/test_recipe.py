@@ -1261,9 +1261,6 @@ def test_diagnostic_task_provenance(
         assert product.attributes[key] == tuple(TAGS[key][k]
                                                 for k in record[key])
 
-    # Check that diagnostic reference files have been added
-    _test_bibtex_files(product.attributes['references'])
-
     # Check that recipe diagnostic tags have been added
     src = yaml.safe_load(DEFAULT_DOCUMENTATION + content)
     for key in ('realms', 'themes'):
@@ -1277,7 +1274,6 @@ def test_diagnostic_task_provenance(
         value = src['documentation'][key]
         if key == 'references':
             value = ', '.join(src['documentation'][key])
-            _test_bibtex_files(value)
         assert recipe_record[0].get_attribute('attribute:' +
                                               key).pop() == value
 
@@ -1287,18 +1283,6 @@ def test_diagnostic_task_provenance(
     prefix = os.path.splitext(product.filename)[0] + '_provenance'
     assert os.path.exists(prefix + '.xml')
     assert os.path.exists(prefix + '.svg')
-
-
-def _test_bibtex_files(product_tags):
-    """check bibtex files exit in REFERENCES_PATH."""
-    if REFERENCES_PATH:
-        tags = list(set(_clean_tags(product_tags)))
-        for tag in tags:
-            bibtex_file = REFERENCES_PATH / f'{tag}.bibtex'
-            if not bibtex_file.is_file():
-                raise ValueError(
-                    'The reference file {} does not exist.'.format(bibtex_file)
-                )
 
 
 def test_alias_generation(tmp_path, patched_datafinder, config_user):
