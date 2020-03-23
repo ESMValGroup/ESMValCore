@@ -32,11 +32,9 @@ def create_namespace(provenance, namespace):
 def get_esmvaltool_provenance():
     """Create an esmvaltool run activity."""
     provenance = ProvDocument()
-    for namespace in ('software', 'attribute'):
-        create_namespace(provenance, namespace)
-
-    # TODO: add dependencies with versions here
-    attributes = {'attribute:references': ESMVALTOOL_PAPER_TAG}
+    namespace = 'software'
+    create_namespace(provenance, namespace)
+    attributes = {}  # TODO: add dependencies with versions here
     activity = provenance.activity(
         namespace + ':esmvaltool==' + __version__, other_attributes=attributes)
 
