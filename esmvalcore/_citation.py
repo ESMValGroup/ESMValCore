@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 CMIP6_URL_STEM = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch'
 
 # it is the technical overview and should always be cited
-ESMVALTOOL_PAPER_TAG = 'righi19gmdd'
+ESMVALTOOL_PAPER_TAG = 'righi19gmd'
 ESMVALTOOL_PAPER = (
-    '@article{righi19gmdd,\n'
+    '@article{righi19gmd,\n'
     '\tdoi = {10.5194/gmd-2019-226},\n'
     '\turl = {https://doi.org/10.5194%2Fgmd-2019-226},\n'
     '\tyear = 2019,\n'
@@ -80,9 +80,13 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
 
     # save CMIP6 url_info, if any
     # save any refrences info that is not related to recipe or diagnostics
+    title = [
+        "Some citation information are found, "
+        "which are not mentioned in the recipe or diagnostic."
+    ]
     if info_urls:
         with open(f'{product_name}_data_citation_info.txt', 'w') as file:
-            file.write('\n'.join(list(set(info_urls))))
+            file.write('\n'.join(title + list(set(info_urls))))
 
     # convert json_urls to bibtex entries
     for json_url in json_urls:
@@ -118,7 +122,10 @@ def _get_response(url):
             else:
                 logger.warning('Error in the CMIP6 citation link: %s', url)
         except IOError:
-            logger.info('No network connection, unable to retrieve CMIP6 citation information')
+            logger.info(
+                'No network connection,'
+                'unable to retrieve CMIP6 citation information'
+            )
     return json_data
 
 
@@ -128,6 +135,7 @@ def _json_to_bibtex(data):
     title = data.get('titles', ['title not found'])[0]
     publisher = data.get('publisher', 'publisher not found')
     year = data.get('publicationYear', 'publicationYear not found')
+    authors = 'creators not found'
     doi = 'doi not found'
 
     if data.get('creators', ''):
@@ -135,8 +143,8 @@ def _json_to_bibtex(data):
             item.get('creatorName', '') for item in data['creators']
         ]
         authors = ' and '.join(author_list)
-    if not authors:
-        authors = 'creators not found'
+        if not authors:
+            authors = 'creators not found'
 
     if data.get('identifier', ''):
         doi = data.get('identifier').get('id', 'doi not found')
@@ -144,13 +152,13 @@ def _json_to_bibtex(data):
 
     bibtex_entry = textwrap.dedent(
         f"""
-        @misc{{{url}
-        \turl = {{{url}}},
-        \ttitle = {{{title}}},
-        \tpublisher = {{{publisher}}},
-        \tyear = {year},
-        \tauthor = {{{authors}}},
-        \tdoi = {{{doi}}},
+        @misc{{{url},
+        url = {{{url}}},
+        title = {{{title}}},
+        publisher = {{{publisher}}},
+        year = {year},
+        author = {{{authors}}},
+        doi = {{{doi}}},
         }}
         """.lstrip()
     )
