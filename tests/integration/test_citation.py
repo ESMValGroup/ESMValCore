@@ -1,4 +1,5 @@
 """Test _citation.py."""
+import textwrap
 from prov.model import ProvDocument
 
 import esmvalcore
@@ -75,15 +76,17 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
     year = 'publicationYear not found'
     authors = 'creators not found'
     doi = 'doi not found'
-    fake_bibtex_entry = (
-        f'{"@misc{"}{url},\n\t'
-        f'url = {{{url}}},\n\t'
-        f'title = {{{title}}},\n\t'
-        f'publisher = {{{publisher}}},\n\t'
-        f'year = {year},\n\t'
-        f'author = {{{authors}}},\n\t'
-        f'doi = {{{doi}}},\n'
-        f'{"}"}\n'
+    fake_bibtex_entry = textwrap.dedent(
+        f"""
+        @misc{{{url},
+        url = {{{url}}},
+        title = {{{title}}},
+        publisher = {{{publisher}}},
+        year = {year},
+        author = {{{authors}}},
+        doi = {{{doi}}},
+        }}
+        """.lstrip()
     )
     assert citation_file.read_text() == '\n'.join(
         [ESMVALTOOL_PAPER, fake_bibtex_entry]
@@ -111,5 +114,9 @@ def test_cmip6_data_citation_url(tmp_path):
 
     # Create fake info url
     fake_url_prefix = '.'.join(attributes.values())
-    fake_info_url = f'{CMIP6_URL_STEM}/cmip6?input=CMIP6.{fake_url_prefix}'
-    assert citation_url.read_text() == fake_info_url
+    fake_info_url = [f'{CMIP6_URL_STEM}/cmip6?input=CMIP6.{fake_url_prefix}']
+    title = [
+        "Some citation information are found, "
+        "which are not mentioned in the recipe or diagnostic."
+    ]
+    assert citation_url.read_text() == '\n'.join(title + fake_info_url)
