@@ -3,6 +3,7 @@ import os
 import logging
 import re
 from pathlib import Path
+import textwrap
 import requests
 
 from ._config import DIAGNOSTICS_PATH
@@ -127,23 +128,17 @@ def _json_to_bibtex(data):
     title = data.get('titles', ['title not found'])[0]
     publisher = data.get('publisher', 'publisher not found')
     year = data.get('publicationYear', 'publicationYear not found')
-    authors = 'creators not found'
     doi = 'doi not found'
 
-    author_list = []
-    if data.get('creators', False):
+    if data.get('creators', ''):
         author_list = [
             item.get('creatorName', '') for item in data['creators']
         ]
-    if author_list:
-        if author_list[0] == author_list[-1]:
-            authors = author_list[0]
-            if not authors:
-                authors = 'creatorName not found'
-        else:
-            authors = ' and '.join(author_list)
+        authors = ' and '.join(author_list)
+    if not authors:
+        authors = 'creators not found'
 
-    if data.get('identifier', False):
+    if data.get('identifier', ''):
         doi = data.get('identifier').get('id', 'doi not found')
         url = f'https://doi.org/{doi}'
 
