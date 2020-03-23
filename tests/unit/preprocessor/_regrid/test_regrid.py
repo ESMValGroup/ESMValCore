@@ -26,8 +26,7 @@ class Test(tests.Test):
             self.coord_system.asset_called_once()
             expected_calls = [
                 mock.call(axis='x', dim_coords=True),
-                mock.call(axis='y', dim_coords=True),
-                mock.call('latitude')
+                mock.call(axis='y', dim_coords=True)
             ]
             self.assertEqual(self.tgt_grid_coord.mock_calls, expected_calls)
             self.regrid.assert_called_once_with(self.tgt_grid, expected_scheme)
@@ -66,6 +65,13 @@ class Test(tests.Test):
             'linear', 'linear_extrapolate', 'nearest', 'area_weighted',
             'unstructured_nearest'
         ]
+
+        def _mock_check_horiz_grid_closeness(src, tgt):
+            return False
+
+        self.patch(
+            'esmvalcore.preprocessor._regrid._check_horiz_grid_closeness',
+            side_effect=_mock_check_horiz_grid_closeness)
 
         def _return_mock_stock_cube(spec, lat_offset=True, lon_offset=True):
             return self.tgt_grid
