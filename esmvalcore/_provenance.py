@@ -10,7 +10,6 @@ from prov.dot import prov_to_dot
 from prov.model import ProvDocument
 
 from ._version import __version__
-from ._citation import ESMVALTOOL_PAPER_TAG
 
 logger = logging.getLogger(__name__)
 
