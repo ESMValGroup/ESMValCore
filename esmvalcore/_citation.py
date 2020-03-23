@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 CMIP6_URL_STEM = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch'
 
 # it is the technical overview and should always be cited
-ESMVALTOOL_PAPER_TAG = 'righi19gmd'
 ESMVALTOOL_PAPER = (
     '@article{righi19gmd,\n'
     '\tdoi = {10.5194/gmd-2019-226},\n'
@@ -69,7 +68,7 @@ def _write_citation_file(filename, provenance):
             # get diagnostics citation tags
             elif item.get_attribute('attribute:script_file'):
                 product_tags.extend(reference_attr)
-            elif ESMVALTOOL_PAPER_TAG not in reference_attr:
+            else:
                 info_urls += list(reference_attr)
 
     _save_citation_info(product_name, product_tags, json_urls, info_urls)
