@@ -15,7 +15,6 @@ from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
-from esmvalcore._citation import REFERENCES_PATH, _clean_tags
 from esmvalcore.cmor.check import CheckLevels
 
 
