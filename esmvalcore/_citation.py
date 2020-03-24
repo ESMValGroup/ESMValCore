@@ -104,8 +104,9 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
 
 
 def _extract_tags(tags):
-    """Extract tags that are recorded by provenance,
-    as for example, "['acknow_project', 'acknow_author']".
+    """
+    Extract tags that are recorded by provenance as
+    for example, "['acknow_project', 'acknow_author']".
     """
     pattern = re.compile(r'\w+')
     return list(set(pattern.findall(str(tags))))
