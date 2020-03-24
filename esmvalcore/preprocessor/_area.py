@@ -114,7 +114,9 @@ def zonal_statistics(cube, operator):
     """
     if cube.coord('longitude').points.ndim < 2:
         operation = get_iris_analysis_operation(operator)
-        return cube.collapsed('longitude', operation)
+        cube = cube.collapsed('longitude', operation)
+        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+        return cube
     else:
         msg = (f"Zonal statistics on irregular grids not yet implemnted")
         raise ValueError(msg)
@@ -146,7 +148,9 @@ def meridional_statistics(cube, operator):
     """
     if cube.coord('latitude').points.ndim < 2:
         operation = get_iris_analysis_operation(operator)
-        return cube.collapsed('latitude', operation)
+        cube = cube.collapsed('latitude', operation)
+        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+        return cube
     else:
         msg = (f"Meridional statistics on irregular grids not yet implemnted")
         raise ValueError(msg)
@@ -200,7 +204,7 @@ def area_statistics(cube, operator, fx_files=None):
     horizontal directions are ['longitude', 'latutude'].
 
     This function can be used to apply
-    several different operations in the horizonal plane: mean, standard
+    several different operations in the horizontal plane: mean, standard
     deviation, median variance, minimum and maximum. These options are
     specified using the `operator` argument and the following key word
     arguments:

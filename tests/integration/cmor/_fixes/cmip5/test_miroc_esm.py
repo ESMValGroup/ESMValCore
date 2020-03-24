@@ -6,8 +6,20 @@ from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateNotFoundError
 
+from esmvalcore.cmor._fixes.cmip5.miroc_esm import AllVars, Cl, Co2, Tro3
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.miroc_esm import AllVars, Co2, Tro3
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'cl')
+    assert fix == [Cl(None), AllVars(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl(None) == ClFixHybridPressureCoord(None)
 
 
 class TestCo2(unittest.TestCase):
@@ -16,12 +28,13 @@ class TestCo2(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
-        self.fix = Co2()
+        self.fix = Co2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'co2'), [AllVars(), Co2()])
+            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'co2'),
+            [Co2(None), AllVars(None)])
 
     def test_fix_metadata(self):
         """Test unit fix."""
@@ -36,12 +49,13 @@ class TestTro3(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='tro3', units='J')
-        self.fix = Tro3()
+        self.fix = Tro3(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'tro3'), [AllVars(), Tro3()])
+            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'tro3'),
+            [Tro3(None), AllVars(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -57,20 +71,19 @@ class TestAll(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([[1.0, 2.0], [3.0, 4.0]], var_name='co2', units='J')
         self.cube.add_dim_coord(
-            DimCoord(
-                [0, 1],
-                standard_name='time',
-                units=Unit(
-                    'days since 0000-01-01 00:00:00', calendar='gregorian')),
-            0)
+            DimCoord([0, 1],
+                     standard_name='time',
+                     units=Unit('days since 0000-01-01 00:00:00',
+                                calendar='gregorian')), 0)
         self.cube.add_dim_coord(DimCoord([0, 1], long_name='AR5PL35'), 1)
 
-        self.fix = AllVars()
+        self.fix = AllVars(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'tos'), [AllVars()])
+            Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'tos'),
+            [AllVars(None)])
 
     def test_fix_metadata_plev(self):
         """Test plev fix."""

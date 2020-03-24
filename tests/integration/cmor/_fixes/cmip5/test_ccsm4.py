@@ -5,8 +5,40 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 
+from esmvalcore.cmor._fixes.cmip5.ccsm4 import Cl, Csoil, Rlut, Rlutcs, So
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.ccsm4 import Rlut, Rlutcs, So
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'cl')
+    assert fix == [Cl(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl(None) == ClFixHybridPressureCoord(None)
+
+
+class TestCsoil(unittest.TestCase):
+    """Test cSoil fixes."""
+
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = Cube([1.0, 1.e33], var_name='cSoil', units='kg m-2')
+        self.fix = Csoil(None)
+
+    def test_get(self):
+        """Test fix get."""
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Lmon', 'cSoil'),
+                             [Csoil(None)])
+
+    def test_fix_data(self):
+        """Test data fix."""
+        cube = self.fix.fix_data(self.cube)
+        expected = np.ma.masked_array([1.0, 1.0], [False, True])
+        self.assertTrue(np.all(cube.data == expected))
 
 
 class TestsRlut(unittest.TestCase):
@@ -16,21 +48,18 @@ class TestsRlut(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='rlut')
         self.cube.add_dim_coord(
-            DimCoord(
-                [0.50001, 1.499999],
-                standard_name='latitude',
-                bounds=[
-                    [0.00001, 0.999999],
-                    [1.00001, 1.999999],
-                ]),
-            0
-        )
-        self.fix = Rlut()
+            DimCoord([0.50001, 1.499999],
+                     standard_name='latitude',
+                     bounds=[
+                         [0.00001, 0.999999],
+                         [1.00001, 1.999999],
+                     ]), 0)
+        self.fix = Rlut(None)
 
     def test_get(self):
-        """Test fix get"""
-        self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CCSM4', 'rlut'), [Rlut()])
+        """Test fix get."""
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'rlut'),
+                             [Rlut(None)])
 
     def test_fix_metadata(self):
         """Check that latitudes values are rounded."""
@@ -50,21 +79,18 @@ class TestsRlutcs(unittest.TestCase):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='rlutcs')
         self.cube.add_dim_coord(
-            DimCoord(
-                [0.50001, 1.499999],
-                standard_name='latitude',
-                bounds=[
-                    [0.00001, 0.999999],
-                    [1.00001, 1.999999],
-                ]),
-            0
-        )
-        self.fix = Rlutcs()
+            DimCoord([0.50001, 1.499999],
+                     standard_name='latitude',
+                     bounds=[
+                         [0.00001, 0.999999],
+                         [1.00001, 1.999999],
+                     ]), 0)
+        self.fix = Rlutcs(None)
 
     def test_get(self):
-        """Test fix get"""
-        self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CCSM4', 'rlutcs'), [Rlutcs()])
+        """Test fix get."""
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'rlutcs'),
+                             [Rlutcs(None)])
 
     def test_fix_metadata(self):
         """Check that latitudes values are rounded."""
@@ -83,12 +109,12 @@ class TestSo(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0, 2.0], var_name='so', units='1.0')
-        self.fix = So()
+        self.fix = So(None)
 
     def test_get(self):
-        """Test fix get"""
-        self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CCSM4', 'so'), [So()])
+        """Test fix get."""
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'so'),
+                             [So(None)])
 
     def test_fix_metadata(self):
         """Checks that units are changed to the correct value."""

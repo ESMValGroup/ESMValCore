@@ -1,5 +1,20 @@
 ---
 version: 2
+
+aliases:
+  check_changes: &check_changes
+    name: Check changes
+    command: |
+      if (test "$CIRCLE_BRANCH" = master ||
+          git --no-pager diff --name-only origin/master... |
+          grep -q -E -f .circleci/install_triggers)
+      then
+        echo Running installation tests
+      else
+        echo Skipping installation tests
+        circleci step halt
+      fi
+
 jobs:
   test:
     # Run tests
@@ -22,7 +37,7 @@ jobs:
             # conda update -y conda
             conda env update
             conda activate esmvaltool
-            python setup.py test
+            python setup.py test --addopts '-m "not installation"'
       - save_cache:
           key: deps3-{{ .Branch }}-{{ checksum "cache_key.txt" }}
           paths:
@@ -40,6 +55,7 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
+      - run: *check_changes
       - restore_cache:
           key: python3-install-{{ .Branch }}
       - run:
@@ -58,7 +74,7 @@ jobs:
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            python setup.py test --addopts --installation
+            python setup.py test
             esmvaltool -h
       - save_cache:
           key: python3-install-{{ .Branch }}
@@ -117,6 +133,7 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
+      - run: *check_changes
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
@@ -134,7 +151,7 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             esmvaltool -h
-            python setup.py test --addopts --installation
+            python setup.py test
       - store_artifacts:
           path: /logs
 
@@ -145,6 +162,7 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
+      - run: *check_changes
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
@@ -190,9 +208,9 @@ workflows:
   commit:
     jobs:
       - test
-      - install:
-          requires:
-            - test
+      - install
+      - develop
+      - conda_build
       - documentation
   nightly:
     triggers:

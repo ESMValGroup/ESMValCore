@@ -14,14 +14,14 @@ def sample_cubes():
 
 
 def test_get_tas_fix():
-    fix = Fix.get_fixes('CMIP6', 'HadGEM3-GC31-LL', 'tas')
-    assert fix == [AllVars()]
+    fix = Fix.get_fixes('CMIP6', 'HadGEM3-GC31-LL', 'Amon', 'tas')
+    assert fix == [AllVars(None)]
 
 
 def test_allvars_fix_metadata(sample_cubes):
     for cube in sample_cubes:
         cube.attributes['parent_time_units'] = 'days since 1850-01-01'
-    out_cubes = AllVars().fix_metadata(sample_cubes)
+    out_cubes = AllVars(None).fix_metadata(sample_cubes)
     assert out_cubes is sample_cubes
     for cube in out_cubes:
         assert cube.attributes['parent_time_units'] == 'days since 1850-01-01'
@@ -30,7 +30,7 @@ def test_allvars_fix_metadata(sample_cubes):
 def test_allvars_no_need_tofix_metadata(sample_cubes):
     for cube in sample_cubes:
         cube.attributes['parent_time_units'] = 'days since 1850-01-01'
-    out_cubes = AllVars().fix_metadata(sample_cubes)
+    out_cubes = AllVars(None).fix_metadata(sample_cubes)
     assert out_cubes is sample_cubes
     for cube in out_cubes:
         assert cube.attributes['parent_time_units'] == 'days since 1850-01-01'
