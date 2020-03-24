@@ -79,12 +79,12 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
     fake_bibtex_entry = textwrap.dedent(
         f"""
         @misc{{{url},
-        url = {{{url}}},
-        title = {{{title}}},
-        publisher = {{{publisher}}},
-        year = {year},
-        author = {{{authors}}},
-        doi = {{{doi}}},
+        \turl = {{{url}}},
+        \ttitle = {{{title}}},
+        \tpublisher = {{{publisher}}},
+        \tyear = {year},
+        \tauthor = {{{authors}}},
+        \tdoi = {{{doi}}},
         }}
         """.lstrip()
     )

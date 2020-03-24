@@ -153,12 +153,12 @@ def _json_to_bibtex(data):
     bibtex_entry = textwrap.dedent(
         f"""
         @misc{{{url},
-        url = {{{url}}},
-        title = {{{title}}},
-        publisher = {{{publisher}}},
-        year = {year},
-        author = {{{authors}}},
-        doi = {{{doi}}},
+        \turl = {{{url}}},
+        \ttitle = {{{title}}},
+        \tpublisher = {{{publisher}}},
+        \tyear = {year},
+        \tauthor = {{{authors}}},
+        \tdoi = {{{doi}}},
         }}
         """.lstrip()
     )
