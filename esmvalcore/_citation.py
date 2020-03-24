@@ -160,7 +160,7 @@ def _json_to_bibtex(data):
         \tauthor = {{{authors}}},
         \tdoi = {{{doi}}},
         }}
-        """.lstrip()
+        """
     )
     return bibtex_entry
 

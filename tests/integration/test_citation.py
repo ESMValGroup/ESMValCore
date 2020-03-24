@@ -86,7 +86,7 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
         \tauthor = {{{authors}}},
         \tdoi = {{{doi}}},
         }}
-        """.lstrip()
+        """
     )
     assert citation_file.read_text() == '\n'.join(
         [ESMVALTOOL_PAPER, fake_bibtex_entry]
