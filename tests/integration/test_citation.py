@@ -116,7 +116,6 @@ def test_cmip6_data_citation_url(tmp_path):
     fake_url_prefix = '.'.join(attributes.values())
     fake_info_url = [f'{CMIP6_URL_STEM}/cmip6?input=CMIP6.{fake_url_prefix}']
     title = [
-        "Some citation information are found, "
-        "which are not mentioned in the recipe or diagnostic."
+        "Follow the links below to find more information about CMIP6 data."
     ]
     assert citation_url.read_text() == '\n'.join(title + fake_info_url)
