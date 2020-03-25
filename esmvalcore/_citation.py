@@ -75,6 +75,7 @@ def _write_citation_file(filename, provenance):
     _save_citation(product_name, product_tags, cmip6_json_urls)
     _save_citation_info(product_name, cmip6_info_urls, further_info)
 
+
 def _save_citation(product_name, product_tags, json_urls):
     """Save all bibtex entries in one bibtex file."""
     citation_entries = [ESMVALTOOL_PAPER]
@@ -116,9 +117,10 @@ def _save_citation_info(product_name, info_urls, further_info):
 
 
 def _extract_tags(tags):
-    """
-    Extract tags that are recorded by provenance as
-    for example, "['acknow_project', 'acknow_author']".
+    """Extract tags.
+
+    Tags are recorded as string of lists by provenance.
+    For example, "['acknow_project', 'acknow_author']".
     """
     pattern = re.compile(r'\w+')
     return list(set(pattern.findall(str(tags))))
@@ -136,7 +138,7 @@ def _get_response(url):
                 logger.warning('Error in the CMIP6 citation link: %s', url)
         except IOError:
             logger.info(
-                'No network connection,'
+                'No network connection, '
                 'unable to retrieve CMIP6 citation information'
             )
     return json_data
