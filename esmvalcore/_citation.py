@@ -50,17 +50,18 @@ def _write_citation_file(filename, provenance):
     Otherwise, cmip6 data reference links are saved into a text file.
     """
     product_name = os.path.splitext(filename)[0]
-    info_urls = []
-    json_urls = []
+    further_info = []
+    cmip6_info_urls = []
+    cmip6_json_urls = []
     product_tags = []
     for item in provenance.records:
-        reference_attr = item.get_attribute('attribute:references')
         # get cmip6 citation info
-        value = item.get_attribute('attribute:mip_era')
-        if 'CMIP6' in value:
+        mip_era = item.get_attribute('attribute:mip_era')
+        if 'CMIP6' in mip_era:
             url_prefix = _make_url_prefix(item.attributes)
-            info_urls.append(_make_info_url(url_prefix))
-            json_urls.append(_make_json_url(url_prefix))
+            cmip6_info_urls.append(_make_info_url(url_prefix))
+            cmip6_json_urls.append(_make_json_url(url_prefix))
+        reference_attr = item.get_attribute('attribute:references')
         if reference_attr:
             # get recipe citation tags
             if item.identifier.namespace.prefix == 'recipe':
@@ -69,24 +70,14 @@ def _write_citation_file(filename, provenance):
             elif item.get_attribute('attribute:script_file'):
                 product_tags.extend(reference_attr)
             else:
-                info_urls += list(reference_attr)
+                further_info.extend(reference_attr)
 
-    _save_citation_info(product_name, product_tags, json_urls, info_urls)
+    _save_citation(product_name, product_tags, cmip6_json_urls)
+    _save_citation_info(product_name, cmip6_info_urls, further_info)
 
-
-def _save_citation_info(product_name, product_tags, json_urls, info_urls):
+def _save_citation(product_name, product_tags, json_urls):
+    """Save all bibtex entries in one bibtex file."""
     citation_entries = [ESMVALTOOL_PAPER]
-
-    # save CMIP6 url_info, if any
-    # save any refrences info that is not related to recipe or diagnostics
-    title = [
-        "Some citation information are found, "
-        "which are not mentioned in the recipe or diagnostic."
-    ]
-    if info_urls:
-        with open(f'{product_name}_data_citation_info.txt', 'w') as file:
-            file.write('\n'.join(title + list(set(info_urls))))
-
     # convert json_urls to bibtex entries
     for json_url in json_urls:
         cmip_citation = _collect_cmip_citation(json_url)
@@ -101,6 +92,27 @@ def _save_citation_info(product_name, product_tags, json_urls, info_urls):
 
     with open(f'{product_name}_citation.bibtex', 'w') as file:
         file.write('\n'.join(citation_entries))
+
+
+def _save_citation_info(product_name, info_urls, further_info):
+    """Save all citation information in one text file."""
+    lines = []
+    # save CMIP6 url_info, if any
+    if info_urls:
+        lines.append(
+            "Follow the links below to find more information about CMIP6 data."
+        )
+        lines.extend(info_urls)
+    # save any refrences info that is not related to recipe or diagnostics
+    if further_info:
+        lines.append(
+            "Some data citation information are found, "
+            "which are not mentioned in the recipe or diagnostic."
+        )
+        lines.extend(further_info)
+    if lines:
+        with open(f'{product_name}_data_citation_info.txt', 'w') as file:
+            file.write('\n'.join(lines))
 
 
 def _extract_tags(tags):
