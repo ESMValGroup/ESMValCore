@@ -45,9 +45,9 @@ def _write_citation_file(filename, provenance):
 
     Recipe and cmip6 data references are saved into one bibtex file.
     cmip6 data references are provided by CMIP6 data citation service.
-    each cmip6 data reference has a json link. In the case of internet
+    Each cmip6 data reference has a json link. In the case of internet
     connection, cmip6 data references are saved into a bibtex file.
-    Otherwise, cmip6 data reference links are saved into a text file.
+    Also, cmip6 data reference links are saved into a text file.
     """
     product_name = os.path.splitext(filename)[0]
     further_info = []
@@ -119,7 +119,7 @@ def _save_citation_info(product_name, info_urls, further_info):
 def _extract_tags(tags):
     """Extract tags.
 
-    Tags are recorded as string of lists by provenance.
+    Tags are recorded as string of a list by provenance.
     For example, "['acknow_project', 'acknow_author']".
     """
     pattern = re.compile(r'\w+')
