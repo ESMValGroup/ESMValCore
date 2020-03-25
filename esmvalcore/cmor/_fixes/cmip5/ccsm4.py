@@ -6,6 +6,7 @@ from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import round_coordinates
 
+
 Cl = ClFixHybridPressureCoord
 
 
