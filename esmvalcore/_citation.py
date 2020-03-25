@@ -128,7 +128,7 @@ def _extract_tags(tags):
 
 def _get_response(url):
     """Return information from CMIP6 Data Citation service in json format."""
-    json_data = False
+    json_data = None
     if url.lower().startswith('https'):
         try:
             response = requests.get(url)
@@ -153,7 +153,7 @@ def _json_to_bibtex(data):
     authors = 'creators not found'
     doi = 'doi not found'
 
-    if data.get('creators', ''):
+    if 'creators' in data:
         author_list = [
             item.get('creatorName', '') for item in data['creators']
         ]
@@ -161,8 +161,8 @@ def _json_to_bibtex(data):
         if not authors:
             authors = 'creators not found'
 
-    if data.get('identifier', ''):
-        doi = data.get('identifier').get('id', 'doi not found')
+    if 'identifier' in data:
+        doi = data['identifier'].get('id', 'doi not found')
         url = f'https://doi.org/{doi}'
 
     bibtex_entry = textwrap.dedent(
@@ -228,5 +228,5 @@ def _make_json_url(url_prefix):
 
 def _make_info_url(url_prefix):
     """Make info url based on CMIP6 Data Citation Service."""
-    info_url = f'{CMIP6_URL_STEM}/cmip6?input=CMIP6.{url_prefix}'
+    info_url = f'{CMIP6_URL_STEM}/cmip6?input={url_prefix}'
     return info_url
