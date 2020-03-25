@@ -114,7 +114,7 @@ def test_cmip6_data_citation_url(tmp_path):
 
     # Create fake info url
     fake_url_prefix = '.'.join(attributes.values())
-    fake_info_url = [f'{CMIP6_URL_STEM}/cmip6?input=CMIP6.{fake_url_prefix}']
+    fake_info_url = [f'{CMIP6_URL_STEM}/cmip6?input={fake_url_prefix}']
     title = [
         "Follow the links below to find more information about CMIP6 data."
     ]
