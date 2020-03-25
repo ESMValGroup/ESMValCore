@@ -4,13 +4,13 @@ import unittest
 import iris
 import numpy as np
 import pytest
-
-from iris.cube import Cube, CubeList
 from iris.coords import AuxCoord
+from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.cmor._fixes.cmip6.ipsl_cm6a_lr import AllVars, Clcalipso
 from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 class TestAllVars(unittest.TestCase):
@@ -54,7 +54,7 @@ class TestAllVars(unittest.TestCase):
 
 def test_get_clcalipso_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'IPSL-CM6A-LR', 'Amon', 'clcalipso')
+    fix = Fix.get_fixes('CMIP6', 'IPSL-CM6A-LR', 'CFmon', 'clcalipso')
     assert fix == [Clcalipso(None), AllVars(None)]
 
 
@@ -71,7 +71,8 @@ def clcalipso_cubes():
 
 def test_clcalipso_fix_metadata(clcalipso_cubes):
     """Test ``fix_metadata`` for ``clcalipso``."""
-    fix = Clcalipso(None)
+    vardef = get_var_info('CMIP6', 'CFmon', 'clcalipso')
+    fix = Clcalipso(vardef)
     cubes = fix.fix_metadata(clcalipso_cubes)
     assert len(cubes) == 1
     cube = cubes[0]

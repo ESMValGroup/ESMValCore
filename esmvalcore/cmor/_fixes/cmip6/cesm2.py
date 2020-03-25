@@ -56,12 +56,10 @@ class Cl(Fix):
         return new_path
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Cli = Cl
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
+Clw = Cl
 
 
 class Fgco2(Fix):

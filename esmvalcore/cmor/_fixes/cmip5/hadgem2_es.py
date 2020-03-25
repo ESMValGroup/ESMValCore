@@ -1,7 +1,7 @@
 """Fix HadGEM2_ES."""
 import numpy as np
 
-from ..cmip6.ukesm1_0_ll import Cl as BaseCl
+from ..common import ClFixHybridHeightCoord
 from ..fix import Fix
 
 
@@ -33,8 +33,7 @@ class AllVars(Fix):
         return cubes
 
 
-class Cl(BaseCl):
-    """Fixes for ``cl``."""
+Cl = ClFixHybridHeightCoord
 
 
 class O2(Fix):

@@ -8,6 +8,7 @@ from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip5.access1_0 import AllVars, Cl
 from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 class TestAllVars(unittest.TestCase):
@@ -22,6 +23,7 @@ class TestAllVars(unittest.TestCase):
         self.fix = AllVars(None)
 
     def test_get(self):
+        """Test getting of fix."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'ACCESS1-0', 'Amon', 'tas'),
             [AllVars(None)])
@@ -66,12 +68,12 @@ def cl_cubes():
 
 
 @unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip5.access1_0.BaseCl.fix_metadata',
-    autospec=True)
+    'esmvalcore.cmor._fixes.cmip5.access1_0.ClFixHybridHeightCoord.'
+    'fix_metadata', autospec=True)
 def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
     """Test ``fix_metadata`` for ``cl``."""
     mock_base_fix_metadata.return_value = cl_cubes
-    fix = Cl(None)
+    fix = Cl(get_var_info('CMIP5', 'Amon', 'cl'))
     fixed_cubes = fix.fix_metadata(cl_cubes)
     mock_base_fix_metadata.assert_called_once_with(fix, cl_cubes)
     assert len(fixed_cubes) == 2

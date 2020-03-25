@@ -16,7 +16,6 @@ def test_get_cl_fix():
 def test_cl_fix():
     """Test fix for ``cl``."""
     assert Cl is BaseCl
-    assert Cl.SHORT_NAME == 'cl'
 
 
 def test_get_clcalipso_fix():
@@ -39,7 +38,6 @@ def test_get_cli_fix():
 def test_cli_fix():
     """Test fix for ``cli``."""
     assert Cli is BaseCli
-    assert Cli.SHORT_NAME == 'cli'
 
 
 def test_get_clw_fix():
@@ -51,4 +49,3 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is BaseClw
-    assert Clw.SHORT_NAME == 'clw'

@@ -22,7 +22,7 @@ class Cl(ClFixHybridPressureCoord):
         iris.cube.CubeList
 
         """
-        cube = self.get_cube_from_list(cubes, short_name=self.SHORT_NAME)
+        cube = self.get_cube_from_list(cubes)
         coords_to_add = {
             'ap': 1,
             'b': 1,
@@ -32,16 +32,10 @@ class Cl(ClFixHybridPressureCoord):
         return super().fix_metadata(cubes)
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
-
-    SHORT_NAME = 'cli'
+Cli = Cl
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
-
-    SHORT_NAME = 'clw'
+Clw = Cl
 
 
 class Tas(Fix):

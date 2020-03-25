@@ -18,7 +18,6 @@ def test_get_cl_fix():
 def test_cl_fix():
     """Test fix for ``cl``."""
     assert Cl is ClFixHybridPressureCoord
-    assert Cl.SHORT_NAME == 'cl'
 
 
 class TestGpp(unittest.TestCase):

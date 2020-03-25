@@ -7,11 +7,8 @@ import pytest
 from netCDF4 import Dataset
 
 from esmvalcore.cmor._fixes.common import (ClFixHybridHeightCoord,
-                                           ClFixHybridPressureCoord,
-                                           CliFixHybridHeightCoord,
-                                           CliFixHybridPressureCoord,
-                                           ClwFixHybridHeightCoord,
-                                           ClwFixHybridPressureCoord)
+                                           ClFixHybridPressureCoord)
+from esmvalcore.cmor.table import get_var_info
 from esmvalcore.preprocessor._derive._shared import var_name_constraint
 
 
@@ -231,43 +228,17 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
 
 def test_cl_hybrid_pressure_coord_fix_metadata_with_a(cl_file_with_a):
     """Test ``fix_metadata`` for ``cl``."""
+    vardef = get_var_info('CMIP6', 'Amon', 'cl')
     var_names = hybrid_pressure_coord_fix_metadata(
-        cl_file_with_a, 'cl', ClFixHybridPressureCoord(None))
+        cl_file_with_a, 'cl', ClFixHybridPressureCoord(vardef))
     assert 'a_bnds' in var_names
 
 
 def test_cl_hybrid_pressure_coord_fix_metadata_with_ap(cl_file_with_ap):
     """Test ``fix_metadata`` for ``cl``."""
+    vardef = get_var_info('CMIP6', 'Amon', 'cl')
     var_names = hybrid_pressure_coord_fix_metadata(
-        cl_file_with_ap, 'cl', ClFixHybridPressureCoord(None))
-    assert 'ap_bnds' in var_names
-
-
-def test_cli_hybrid_pressure_coord_fix_metadata_with_a(cli_file_with_a):
-    """Test ``fix_metadata`` for ``cli``."""
-    var_names = hybrid_pressure_coord_fix_metadata(
-        cli_file_with_a, 'cli', CliFixHybridPressureCoord(None))
-    assert 'a_bnds' in var_names
-
-
-def test_cli_hybrid_pressure_coord_fix_metadata_with_ap(cli_file_with_ap):
-    """Test ``fix_metadata`` for ``cli``."""
-    var_names = hybrid_pressure_coord_fix_metadata(
-        cli_file_with_ap, 'cli', CliFixHybridPressureCoord(None))
-    assert 'ap_bnds' in var_names
-
-
-def test_clw_hybrid_pressure_coord_fix_metadata_with_a(clw_file_with_a):
-    """Test ``fix_metadata`` for ``clw``."""
-    var_names = hybrid_pressure_coord_fix_metadata(
-        clw_file_with_a, 'clw', ClwFixHybridPressureCoord(None))
-    assert 'a_bnds' in var_names
-
-
-def test_clw_hybrid_pressure_coord_fix_metadata_with_ap(clw_file_with_ap):
-    """Test ``fix_metadata`` for ``clw``."""
-    var_names = hybrid_pressure_coord_fix_metadata(
-        clw_file_with_ap, 'clw', ClwFixHybridPressureCoord(None))
+        cl_file_with_ap, 'cl', ClFixHybridPressureCoord(vardef))
     assert 'ap_bnds' in var_names
 
 
@@ -417,17 +388,6 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
 
 def test_cl_hybrid_height_coord_fix_metadata(cl_file_with_height):
     """Test ``fix_metadata`` for ``cl``."""
+    vardef = get_var_info('CMIP6', 'Amon', 'cl')
     hybrid_height_coord_fix_metadata(cl_file_with_height, 'cl',
-                                     ClFixHybridHeightCoord(None))
-
-
-def test_cli_hybrid_height_coord_fix_metadata(cli_file_with_height):
-    """Test ``fix_metadata`` for ``cli``."""
-    hybrid_height_coord_fix_metadata(cli_file_with_height, 'cli',
-                                     CliFixHybridHeightCoord(None))
-
-
-def test_clw_hybrid_height_coord_fix_metadata(clw_file_with_height):
-    """Test ``fix_metadata`` for ``clw``."""
-    hybrid_height_coord_fix_metadata(clw_file_with_height, 'clw',
-                                     ClwFixHybridHeightCoord(None))
+                                     ClFixHybridHeightCoord(vardef))

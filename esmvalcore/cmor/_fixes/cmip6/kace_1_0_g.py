@@ -1,11 +1,10 @@
 """Fixes for KACE-1-0-G."""
-from ..common import (ClFixHybridHeightCoord, CliFixHybridHeightCoord,
-                      ClwFixHybridHeightCoord)
+from ..common import ClFixHybridHeightCoord
 
 Cl = ClFixHybridHeightCoord
 
 
-Cli = CliFixHybridHeightCoord
+Cli = ClFixHybridHeightCoord
 
 
-Clw = ClwFixHybridHeightCoord
+Clw = ClFixHybridHeightCoord

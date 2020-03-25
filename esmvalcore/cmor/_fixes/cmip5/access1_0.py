@@ -2,7 +2,7 @@
 import iris
 from cf_units import Unit
 
-from ..cmip6.ukesm1_0_ll import Cl as BaseCl
+from ..common import ClFixHybridHeightCoord
 from ..fix import Fix
 
 
@@ -35,7 +35,7 @@ class AllVars(Fix):
         return cubes
 
 
-class Cl(BaseCl):
+class Cl(ClFixHybridHeightCoord):
     """Fixes for ``cl``."""
 
     def fix_metadata(self, cubes):

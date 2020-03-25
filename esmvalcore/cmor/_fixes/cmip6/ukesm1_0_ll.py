@@ -1,6 +1,5 @@
 """Fixes for CMIP6 UKESM1-0-LL."""
-from ..common import (ClFixHybridHeightCoord, CliFixHybridHeightCoord,
-                      ClwFixHybridHeightCoord)
+from ..common import ClFixHybridHeightCoord
 from ..fix import Fix
 
 
@@ -34,7 +33,7 @@ class AllVars(Fix):
 Cl = ClFixHybridHeightCoord
 
 
-Cli = CliFixHybridHeightCoord
+Cli = ClFixHybridHeightCoord
 
 
-Clw = ClwFixHybridHeightCoord
+Clw = ClFixHybridHeightCoord

@@ -2,18 +2,13 @@
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Tas as BaseTas
 
-
-class Cl(BaseCl):
-    """Fixes for ``cl``."""
+Cl = BaseCl
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
+Cli = Cl
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Clw = Cl
 
 
-class Tas(BaseTas):
-    """Fixes for ``tas``."""
+Tas = BaseTas

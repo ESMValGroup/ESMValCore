@@ -8,8 +8,6 @@ from .shared import add_plev_from_altitude, fix_bounds
 class ClFixHybridHeightCoord(Fix):
     """Fixes for ``cl`` regarding hybrid sigma height coordinates."""
 
-    SHORT_NAME = 'cl'
-
     def fix_metadata(self, cubes):
         """Fix hybrid sigma height coordinate and add pressure levels.
 
@@ -23,7 +21,7 @@ class ClFixHybridHeightCoord(Fix):
         iris.cube.CubeList
 
         """
-        cube = self.get_cube_from_list(cubes, short_name=self.SHORT_NAME)
+        cube = self.get_cube_from_list(cubes)
 
         # Remove all existing aux_factories
         for aux_factory in cube.aux_factories:
@@ -46,22 +44,8 @@ class ClFixHybridHeightCoord(Fix):
         return iris.cube.CubeList([cube])
 
 
-class CliFixHybridHeightCoord(ClFixHybridHeightCoord):
-    """Fixes for ``cli`` regarding hybrid sigma height coordinates."""
-
-    SHORT_NAME = 'cli'
-
-
-class ClwFixHybridHeightCoord(ClFixHybridHeightCoord):
-    """Fixes for ``clw`` regarding hybrid sigma height coordinates."""
-
-    SHORT_NAME = 'clw'
-
-
 class ClFixHybridPressureCoord(Fix):
     """Fixes for ``cl`` regarding hybrid sigma pressure coordinates."""
-
-    SHORT_NAME = 'cl'
 
     def fix_metadata(self, cubes):
         """Fix hybrid sigma pressure coordinate.
@@ -76,7 +60,7 @@ class ClFixHybridPressureCoord(Fix):
         iris.cube.CubeList
 
         """
-        cube = self.get_cube_from_list(cubes, short_name=self.SHORT_NAME)
+        cube = self.get_cube_from_list(cubes)
 
         # Remove all existing aux_factories
         for aux_factory in cube.aux_factories:
@@ -117,15 +101,3 @@ class ClFixHybridPressureCoord(Fix):
         cube.coord(var_name='ps').attributes = {}
 
         return iris.cube.CubeList([cube])
-
-
-class CliFixHybridPressureCoord(ClFixHybridPressureCoord):
-    """Fixes for ``cli`` regarding hybrid sigma pressure coordinates."""
-
-    SHORT_NAME = 'cli'
-
-
-class ClwFixHybridPressureCoord(ClFixHybridPressureCoord):
-    """Fixes for ``clw`` regarding hybrid sigma pressure coordinates."""
-
-    SHORT_NAME = 'clw'

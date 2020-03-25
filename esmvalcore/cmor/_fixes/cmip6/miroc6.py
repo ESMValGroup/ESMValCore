@@ -1,11 +1,10 @@
 """Fixes for MIROC6 model."""
-from ..common import (ClFixHybridPressureCoord, CliFixHybridPressureCoord,
-                      ClwFixHybridPressureCoord)
+from ..common import ClFixHybridPressureCoord
 
 Cl = ClFixHybridPressureCoord
 
 
-Cli = CliFixHybridPressureCoord
+Cli = ClFixHybridPressureCoord
 
 
-Clw = ClwFixHybridPressureCoord
+Clw = ClFixHybridPressureCoord

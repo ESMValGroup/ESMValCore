@@ -9,6 +9,7 @@ from esmvalcore.cmor._fixes.cmip5.bnu_esm import (Ch4, Cl, Co2, FgCo2,
                                                   Od550Aer, SpCo2)
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
@@ -20,7 +21,6 @@ def test_get_cl_fix():
 def test_cl_fix():
     """Test fix for ``cl``."""
     assert Cl is ClFixHybridPressureCoord
-    assert Cl.SHORT_NAME == 'cl'
 
 
 class TestCo2(unittest.TestCase):
@@ -29,12 +29,13 @@ class TestCo2(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
-        self.fix = Co2(None)
+        self.vardef = get_var_info('CMIP5', 'Amon', self.cube.var_name)
+        self.fix = Co2(self.vardef)
 
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'co2'),
-                             [Co2(None)])
+                             [Co2(self.vardef)])
 
     def test_fix_metadata(self):
         """Test unit change."""
@@ -55,12 +56,14 @@ class Testfgco2(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='fgco2', units='J')
-        self.fix = FgCo2(None)
+        self.vardef = get_var_info('CMIP5', 'Omon', self.cube.var_name)
+        self.fix = FgCo2(self.vardef)
 
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'fgco2'), [FgCo2(None)])
+            Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'fgco2'),
+            [FgCo2(self.vardef)])
 
     def test_fix_metadata(self):
         """Test unit fix."""
@@ -81,12 +84,13 @@ class TestCh4(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='ch4', units='J')
-        self.fix = Ch4(None)
+        self.vardef = get_var_info('CMIP5', 'Amon', self.cube.var_name)
+        self.fix = Ch4(self.vardef)
 
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4'),
-                             [Ch4(None)])
+                             [Ch4(self.vardef)])
 
     def test_fix_metadata(self):
         """Test unit fix."""

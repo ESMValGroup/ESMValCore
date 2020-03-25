@@ -6,7 +6,6 @@ from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import round_coordinates
 
-
 Cl = ClFixHybridPressureCoord
 
 
@@ -21,12 +20,12 @@ class Csoil(Fix):
 
         Parameters
         ----------
-        cubes : iris.cube.Cube
+        cube : iris.cube.Cube
             Input cube.
 
         Returns
         -------
-        iris.cube.CubeList
+        iris.cube.Cube
         """
         cube.data = da.ma.masked_equal(cube.core_data(), 1.e33)
         return cube

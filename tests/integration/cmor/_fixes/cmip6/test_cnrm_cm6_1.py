@@ -1,7 +1,5 @@
 """Tests for the fixes of CNRM-CM6-1."""
 import os
-import unittest
-from unittest.mock import sentinel
 
 import iris
 import numpy as np
@@ -10,6 +8,7 @@ from netCDF4 import Dataset
 
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl, Clcalipso, Cli, Clw
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
@@ -125,8 +124,8 @@ def test_cl_fix_metadata(cl_file):
     assert not cl_cube.coords('air_pressure')
 
     # Apply fix
-    fix = Cl(None)
-    assert fix.SHORT_NAME == 'cl'
+    vardef = get_var_info('CMIP6', 'Amon', 'cl')
+    fix = Cl(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
     fixed_cl_cube = fixed_cubes.extract_strict(
@@ -152,7 +151,7 @@ def test_cl_fix_metadata(cl_file):
 
 def test_get_clcalipso_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Amon', 'clcalipso')
+    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'CFmon', 'clcalipso')
     assert fix == [Clcalipso(None)]
 
 
@@ -169,7 +168,8 @@ def clcalipso_cubes():
 
 def test_clcalipso_fix_metadata(clcalipso_cubes):
     """Test ``fix_metadata`` for ``clcalipso``."""
-    fix = Clcalipso(None)
+    vardef = get_var_info('CMIP6', 'CFmon', 'clcalipso')
+    fix = Clcalipso(vardef)
     cubes = fix.fix_metadata(clcalipso_cubes)
     assert len(cubes) == 1
     cube = cubes[0]
@@ -183,15 +183,9 @@ def test_get_cli_fix():
     assert fix == [Cli(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1.Cl.fix_metadata',
-    autospec=True)
-def test_cli_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``cli``."""
-    fix = Cli(None)
-    assert fix.SHORT_NAME == 'cli'
-    fix.fix_metadata(sentinel.cubes)
-    mock_base_fix_metadata.assert_called_once_with(fix, sentinel.cubes)
+def test_cli_fix():
+    """Test fix for ``cli``."""
+    assert Cli is Cl
 
 
 def test_get_clw_fix():
@@ -200,12 +194,6 @@ def test_get_clw_fix():
     assert fix == [Clw(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1.Cl.fix_metadata',
-    autospec=True)
-def test_clw_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``clw``."""
-    fix = Clw(None)
-    assert fix.SHORT_NAME == 'clw'
-    fix.fix_metadata(sentinel.cubes)
-    mock_base_fix_metadata.assert_called_once_with(fix, sentinel.cubes)
+def test_clw_fix():
+    """Test fix for ``clw``."""
+    assert Clw is Cl

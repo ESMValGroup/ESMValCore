@@ -1,8 +1,6 @@
 """Test fixes for MIROC-ES2L."""
 from esmvalcore.cmor._fixes.cmip6.miroc_es2l import Cl, Cli, Clw
-from esmvalcore.cmor._fixes.common import (ClFixHybridPressureCoord,
-                                           CliFixHybridPressureCoord,
-                                           ClwFixHybridPressureCoord)
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -15,7 +13,6 @@ def test_get_cl_fix():
 def test_cl_fix():
     """Test fix for ``cl``."""
     assert Cl is ClFixHybridPressureCoord
-    assert Cl.SHORT_NAME == 'cl'
 
 
 def test_get_cli_fix():
@@ -26,8 +23,7 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli is CliFixHybridPressureCoord
-    assert Cli.SHORT_NAME == 'cli'
+    assert Cli is ClFixHybridPressureCoord
 
 
 def test_get_clw_fix():
@@ -38,5 +34,4 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw is ClwFixHybridPressureCoord
-    assert Clw.SHORT_NAME == 'clw'
+    assert Clw is ClFixHybridPressureCoord

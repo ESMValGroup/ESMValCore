@@ -3,9 +3,7 @@ import iris
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.hadgem3_gc31_ll import AllVars, Cl, Cli, Clw
-from esmvalcore.cmor._fixes.common import (ClFixHybridHeightCoord,
-                                           CliFixHybridHeightCoord,
-                                           ClwFixHybridHeightCoord)
+from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
 from esmvalcore.cmor.fix import Fix
 
 
@@ -48,7 +46,6 @@ def test_get_cl_fix():
 def test_cl_fix():
     """Test fix for ``cl``."""
     assert Cl is ClFixHybridHeightCoord
-    assert Cl.SHORT_NAME == 'cl'
 
 
 def test_get_cli_fix():
@@ -59,8 +56,7 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli is CliFixHybridHeightCoord
-    assert Cli.SHORT_NAME == 'cli'
+    assert Cli is ClFixHybridHeightCoord
 
 
 def test_get_clw_fix():
@@ -71,5 +67,4 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw is ClwFixHybridHeightCoord
-    assert Clw.SHORT_NAME == 'clw'
+    assert Clw is ClFixHybridHeightCoord
