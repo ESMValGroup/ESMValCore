@@ -11,7 +11,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [{'short_name': 'co2'}]
+        required = [{'short_name': 'co2', 'mip': 'Amon'}]
         return required
 
     @staticmethod
@@ -35,5 +35,5 @@ class DerivedVariable(DerivedVariableBase):
             surface_data = cube.data[tuple(indices)]
             cube = cube[:, 0, :, :]
             cube.data = surface_data
-        cube.convert_units('mol mol-1')
+        cube.convert_units('1e-6')
         return cube
