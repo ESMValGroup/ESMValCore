@@ -35,5 +35,5 @@ class DerivedVariable(DerivedVariableBase):
             surface_data = cube.data[tuple(indices)]
             cube = cube[:, 0, :, :]
             cube.data = surface_data
-        cube.convert_units('mol mol-1')
+        cube.convert_units('1e-6')
         return cube
