@@ -63,7 +63,7 @@ def unmasked_cubes():
         co2_data,
         var_name='co2',
         standard_name='mole_fraction_of_carbon_dioxide_in_air',
-        units='1e-7',
+        units='1e-8',
         dim_coords_and_dims=coord_spec,
     )
     return iris.cube.CubeList([cube])
@@ -88,8 +88,8 @@ def test_co2_calculate_unmasked_cubes(unmasked_cubes):
     out_cube = derived_var.calculate(unmasked_cubes)
     assert not np.ma.is_masked(out_cube.data)
     np.testing.assert_allclose(out_cube.data,
-                               [[[20.0, 10.0],
-                                 [8.0, 0.9]]])
+                               [[[2.0, 1.0],
+                                 [0.8, 0.09]]])
     assert out_cube.units == '1e-6'
     np.testing.assert_allclose(out_cube.coord('air_pressure').points,
                                123456.0)
