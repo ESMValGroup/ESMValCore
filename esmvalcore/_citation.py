@@ -1,23 +1,21 @@
 """Citation module."""
-import os
 import logging
+import os
 import re
-from pathlib import Path
 import textwrap
+from functools import lru_cache
+
 import requests
 
 from ._config import DIAGNOSTICS_PATH
 
-if DIAGNOSTICS_PATH:
-    REFERENCES_PATH = Path(DIAGNOSTICS_PATH) / 'references'
-else:
-    REFERENCES_PATH = ''
-
 logger = logging.getLogger(__name__)
+
+REFERENCES_PATH = DIAGNOSTICS_PATH / 'references'
 
 CMIP6_URL_STEM = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch'
 
-# it is the technical overview and should always be cited
+# The technical overview paper should always be cited
 ESMVALTOOL_PAPER = (
     '@article{righi19gmd,\n'
     '\tdoi = {10.5194/gmd-2019-226},\n'
@@ -35,11 +33,10 @@ ESMVALTOOL_PAPER = (
     '\ttitle = {{ESMValTool} v2.0 '
     '{\\&}amp$\\mathsemicolon${\\#}8211$\\mathsemicolon$ '
     'Technical overview}\n'
-    '}\n'
-)
+    '}\n')
 
 
-def _write_citation_file(filename, provenance):
+def _write_citation_files(filename, provenance):
     """
     Write citation information provided by the recorded provenance.
 
@@ -50,80 +47,97 @@ def _write_citation_file(filename, provenance):
     Also, cmip6 data reference links are saved into a text file.
     """
     product_name = os.path.splitext(filename)[0]
-    further_info = []
-    cmip6_info_urls = []
-    cmip6_json_urls = []
-    product_tags = []
+
+    tags = set()
+    cmip6_json_urls = set()
+    cmip6_info_urls = set()
+    other_info = set()
+
     for item in provenance.records:
-        # get cmip6 citation info
-        mip_era = item.get_attribute('attribute:mip_era')
-        if 'CMIP6' in mip_era:
+        # get cmip6 data citation info
+        cmip6_data = 'CMIP6' in item.get_attribute('attribute:mip_era')
+        if cmip6_data:
             url_prefix = _make_url_prefix(item.attributes)
-            cmip6_info_urls.append(_make_info_url(url_prefix))
-            cmip6_json_urls.append(_make_json_url(url_prefix))
-        reference_attr = item.get_attribute('attribute:references')
-        if reference_attr:
-            # get recipe citation tags
+            cmip6_info_urls.add(_make_info_url(url_prefix))
+            cmip6_json_urls.add(_make_json_url(url_prefix))
+
+        # get other citation info
+        references = item.get_attribute('attribute:references')
+        if not references:
+            # ESMValTool CMORization scripts use 'reference' (without final s)
+            references = item.get_attribute('attribute:reference')
+        if references:
             if item.identifier.namespace.prefix == 'recipe':
-                product_tags.extend(reference_attr)
-            # get diagnostics citation tags
+                # get recipe citation tags
+                tags.update(references)
             elif item.get_attribute('attribute:script_file'):
-                product_tags.extend(reference_attr)
-            else:
-                further_info.extend(reference_attr)
+                # get diagnostics citation tags
+                tags.update(references)
+            elif not cmip6_data:
+                # get any other data citation tags, e.g. CMIP5
+                other_info.update(references)
 
-    _save_citation(product_name, product_tags, cmip6_json_urls)
-    _save_citation_info(product_name, cmip6_info_urls, further_info)
+    _save_citation_bibtex(product_name, tags, cmip6_json_urls)
+    _save_citation_info_txt(product_name, cmip6_info_urls, other_info)
 
 
-def _save_citation(product_name, product_tags, json_urls):
-    """Save all bibtex entries in one bibtex file."""
+def _save_citation_bibtex(product_name, tags, json_urls):
+    """Save the bibtex entries in a bibtex file."""
     citation_entries = [ESMVALTOOL_PAPER]
+
+    # convert tags to bibtex entries
+    if tags:
+        entries = set()
+        for tag in _extract_tags(tags):
+            entries.add(_collect_bibtex_citation(tag))
+        citation_entries.extend(sorted(entries))
+
     # convert json_urls to bibtex entries
+    entries = set()
     for json_url in json_urls:
         cmip_citation = _collect_cmip_citation(json_url)
         if cmip_citation:
-            citation_entries.append(cmip_citation)
-
-    # convert tags to bibtex entries
-    if REFERENCES_PATH and product_tags:
-        tags = _extract_tags(product_tags)
-        for tag in tags:
-            citation_entries.append(_collect_bibtex_citation(tag))
+            entries.add(cmip_citation)
+    citation_entries.extend(sorted(entries))
 
     with open(f'{product_name}_citation.bibtex', 'w') as file:
         file.write('\n'.join(citation_entries))
 
 
-def _save_citation_info(product_name, info_urls, further_info):
-    """Save all citation information in one text file."""
+def _save_citation_info_txt(product_name, info_urls, other_info):
+    """Save all data citation information in one text file."""
     lines = []
-    # save CMIP6 url_info, if any
+    # Save CMIP6 url_info
     if info_urls:
         lines.append(
-            "Follow the links below to find more information about CMIP6 data."
+            "Follow the links below to find more information about CMIP6 data:"
         )
-        lines.extend(info_urls)
-    # save any refrences info that is not related to recipe or diagnostics
-    if further_info:
-        lines.append(
-            "Some data citation information are found, "
-            "which are not mentioned in the recipe or diagnostic."
-        )
-        lines.extend(further_info)
+        lines.extend(f'- {url}' for url in sorted(info_urls))
+
+    # Save any references from the 'references' and 'reference' NetCDF global
+    # attributes.
+    if other_info:
+        if lines:
+            lines.append('')
+        lines.append("Additional data citation information was found, for "
+                     "which no entry is available in the bibtex file:")
+        lines.extend('- ' + str(t).replace('\n', ' ')
+                     for t in sorted(other_info))
+
     if lines:
         with open(f'{product_name}_data_citation_info.txt', 'w') as file:
-            file.write('\n'.join(lines))
+            file.write('\n'.join(lines) + '\n')
 
 
 def _extract_tags(tags):
     """Extract tags.
 
-    Tags are recorded as string of a list by provenance.
-    For example, "['acknow_project', 'acknow_author']".
+    Tags are recorded as a list of strings converted to a string in provenance.
+    For example, a single entry in the list `tags` could be the string
+    "['acknow_project', 'acknow_author']".
     """
     pattern = re.compile(r'\w+')
-    return list(set(pattern.findall(str(tags))))
+    return set(pattern.findall(str(tags)))
 
 
 def _get_response(url):
@@ -137,10 +151,8 @@ def _get_response(url):
             else:
                 logger.warning('Error in the CMIP6 citation link: %s', url)
         except IOError:
-            logger.info(
-                'No network connection, '
-                'unable to retrieve CMIP6 citation information'
-            )
+            logger.info('No network connection, '
+                        'unable to retrieve CMIP6 citation information')
     return json_data
 
 
@@ -165,8 +177,7 @@ def _json_to_bibtex(data):
         doi = data['identifier'].get('id', 'doi not found')
         url = f'https://doi.org/{doi}'
 
-    bibtex_entry = textwrap.dedent(
-        f"""
+    bibtex_entry = textwrap.dedent(f"""
         @misc{{{url},
         \turl = {{{url}}},
         \ttitle = {{{title}}},
@@ -175,24 +186,25 @@ def _json_to_bibtex(data):
         \tauthor = {{{authors}}},
         \tdoi = {{{doi}}},
         }}
-        """
-    )
+        """).lstrip()
     return bibtex_entry
 
 
+@lru_cache(maxsize=1024)
 def _collect_bibtex_citation(tag):
     """Collect information from bibtex files."""
     bibtex_file = REFERENCES_PATH / f'{tag}.bibtex'
     if bibtex_file.is_file():
         entry = bibtex_file.read_text()
     else:
-        logger.warning(
-            'The reference file %s does not exist.', bibtex_file
-        )
         entry = ''
+        logger.warning(
+            "The reference file %s does not exist, citation information "
+            "incomplete.", bibtex_file)
     return entry
 
 
+@lru_cache(maxsize=1024)
 def _collect_cmip_citation(json_url):
     """Collect information from CMIP6 Data Citation Service."""
     json_data = _get_response(json_url)

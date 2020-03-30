@@ -1,10 +1,11 @@
 """Test _citation.py."""
 import textwrap
+
 from prov.model import ProvDocument
 
 import esmvalcore
-from esmvalcore._citation import (_write_citation_file,
-                                  ESMVALTOOL_PAPER, CMIP6_URL_STEM)
+from esmvalcore._citation import (CMIP6_URL_STEM, ESMVALTOOL_PAPER,
+                                  _write_citation_files)
 from esmvalcore._provenance import ESMVALTOOL_URI_PREFIX
 
 
@@ -25,14 +26,13 @@ def test_references(tmp_path, monkeypatch):
     # Create fake bibtex references tag file
     references_path = tmp_path / 'references'
     references_path.mkdir()
-    monkeypatch.setattr(
-        esmvalcore._citation, 'REFERENCES_PATH', references_path
-    )
+    monkeypatch.setattr(esmvalcore._citation, 'REFERENCES_PATH',
+                        references_path)
     fake_bibtex_file = references_path / 'test_tag.bibtex'
     fake_bibtex = "Fake bibtex file content\n"
     fake_bibtex_file.write_text(fake_bibtex)
 
-    _write_citation_file(filename, provenance)
+    _write_citation_files(filename, provenance)
     citation_file = tmp_path / 'output_citation.bibtex'
     citation = citation_file.read_text()
     assert citation == '\n'.join([ESMVALTOOL_PAPER, fake_bibtex])
@@ -63,10 +63,9 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
     filename = str(tmp_path / 'output.nc')
     provenance.entity('file:' + filename, attributes)
 
-    monkeypatch.setattr(
-        esmvalcore._citation, '_get_response', mock_get_response
-    )
-    _write_citation_file(filename, provenance)
+    monkeypatch.setattr(esmvalcore._citation, '_get_response',
+                        mock_get_response)
+    _write_citation_files(filename, provenance)
     citation_file = tmp_path / 'output_citation.bibtex'
 
     # Create fake bibtex entry
@@ -76,8 +75,7 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
     year = 'publicationYear not found'
     authors = 'creators not found'
     doi = 'doi not found'
-    fake_bibtex_entry = textwrap.dedent(
-        f"""
+    fake_bibtex_entry = textwrap.dedent(f"""
         @misc{{{url},
         \turl = {{{url}}},
         \ttitle = {{{title}}},
@@ -86,11 +84,9 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
         \tauthor = {{{authors}}},
         \tdoi = {{{doi}}},
         }}
-        """
-    )
+        """).lstrip()
     assert citation_file.read_text() == '\n'.join(
-        [ESMVALTOOL_PAPER, fake_bibtex_entry]
-    )
+        [ESMVALTOOL_PAPER, fake_bibtex_entry])
 
 
 def test_cmip6_data_citation_url(tmp_path):
@@ -109,13 +105,14 @@ def test_cmip6_data_citation_url(tmp_path):
     }
     filename = str(tmp_path / 'output.nc')
     provenance.entity('file:' + filename, attributes)
-    _write_citation_file(filename, provenance)
+    _write_citation_files(filename, provenance)
     citation_url = tmp_path / 'output_data_citation_info.txt'
 
     # Create fake info url
     fake_url_prefix = '.'.join(attributes.values())
-    fake_info_url = [f'{CMIP6_URL_STEM}/cmip6?input={fake_url_prefix}']
-    title = [
-        "Follow the links below to find more information about CMIP6 data."
-    ]
-    assert citation_url.read_text() == '\n'.join(title + fake_info_url)
+    text = '\n'.join([
+        "Follow the links below to find more information about CMIP6 data:",
+        f"- {CMIP6_URL_STEM}/cmip6?input={fake_url_prefix}",
+        '',
+    ])
+    assert citation_url.read_text() == text
