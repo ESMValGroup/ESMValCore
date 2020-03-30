@@ -18,6 +18,7 @@ following the default order in which they are applied:
 * :ref:`Time operations`
 * :ref:`Area operations`
 * :ref:`Volume operations`
+* :ref:`Cycles`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
 * :ref:`Other`
@@ -1223,6 +1224,34 @@ Note that this function uses the expensive ``interpolate`` method from
 ``Iris.analysis.trajectory``, but it may be necessary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
+
+
+.. _cycles:
+
+Cycles
+======
+
+The ``_cycles.py`` module contains the following preprocessor functions:
+
+* ``amplitude``: Extract the peak-to-peak amplitude of a cycle aggregated over
+  specified coordinates.
+
+``amplitude``
+-------------
+
+This functions extracts the peak-to-peak amplitude (maximum value minus minimum
+value) of a field aggregated over specified coordinates. Its only argument is
+``coords``, which can either be a single coordinate (given as :obj:`str`) or
+multiple coordinates (given as :obj:`list` of :obj:`str`). Usually, these
+coordinates refer to temporal `categorised coordinates
+<https://scitools.org.uk/iris/docs/latest/iris/iris/coord_categorisation.html>`_
+like `year`, `month`, `day of year`, etc. For example, to extract the amplitude
+of the annual cycle for every single year in the data, use ``coords: year``; to
+extract the amplitude of the diurnal cycle for every single day in the data,
+use ``coords: [year, day_of_year]``.
+
+See also :func:`esmvalcore.preprocessor.amplitude`.
+
 
 .. _detrend:
 
