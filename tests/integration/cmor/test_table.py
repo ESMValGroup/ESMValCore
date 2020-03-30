@@ -18,7 +18,11 @@ class TestCMIP6Info(unittest.TestCase):
         We read CMIP6Info once to keep tests times manageable
         """
         cls.variables_info = CMIP6Info(
-            'cmip6', default=CustomInfo(), strict=True
+            'cmip6', default=CustomInfo(), strict=True,
+            alias=[
+                ['sic', 'siconc'],
+                ['tro3', 'o3'],
+            ]
         )
 
     def setUp(self):
