@@ -73,6 +73,7 @@ class CoordinateInfoMock:
         self.stored_direction = "increasing"
         self.must_have_bounds = "yes"
         self.requested = []
+        self.generic_level_coords = {}
 
         valid_limits = {'lat': ('-90', '90'), 'lon': ('0', '360')}
         if name in valid_limits:
