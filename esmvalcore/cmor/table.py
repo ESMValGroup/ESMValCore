@@ -11,6 +11,7 @@ import json
 import logging
 import os
 from functools import total_ordering
+from collections import Counter
 from pathlib import Path
 
 import yaml
@@ -60,39 +61,91 @@ def read_cmor_tables(cfg_developer=None):
     CMOR_TABLES['custom'] = custom
     install_dir = os.path.dirname(os.path.realpath(__file__))
     for table in cfg_developer:
-        project = cfg_developer[table]
-        cmor_type = project.get('cmor_type', 'CMIP5')
-        default_path = os.path.join(install_dir, 'tables', cmor_type.lower())
-        table_path = project.get('cmor_path', default_path)
-        table_path = os.path.expandvars(os.path.expanduser(table_path))
-        cmor_strict = project.get('cmor_strict', True)
-        default_table_prefix = project.get('cmor_default_table_prefix', '')
-
-        if cmor_type == 'CMIP3':
-            CMOR_TABLES[table] = CMIP3Info(
-                table_path,
-                default=custom,
-                strict=cmor_strict,
-                alias=alias,
-            )
-        elif cmor_type == 'CMIP5':
-            CMOR_TABLES[table] = CMIP5Info(
-                table_path,
-                default=custom,
-                strict=cmor_strict,
-                alias=alias
-            )
-        elif cmor_type == 'CMIP6':
-            CMOR_TABLES[table] = CMIP6Info(
-                table_path,
-                default=custom,
-                strict=cmor_strict,
-                default_table_prefix=default_table_prefix,
-                alias=alias,
-            )
+        CMOR_TABLES[table] = _read_table(
+            cfg_developer, table, install_dir, custom, alias)
 
 
-class InfoBase(object):
+def _read_table(cfg_developer, table, install_dir, custom, alias):
+    project = cfg_developer[table]
+    cmor_type = project.get('cmor_type', 'CMIP5')
+    default_path = os.path.join(install_dir, 'tables', cmor_type.lower())
+    table_path = project.get('cmor_path', default_path)
+    table_path = os.path.expandvars(os.path.expanduser(table_path))
+    cmor_strict = project.get('cmor_strict', True)
+    default_table_prefix = project.get('cmor_default_table_prefix', '')
+
+    if cmor_type == 'CMIP3':
+        return CMIP3Info(
+            table_path,
+            default=custom,
+            strict=cmor_strict,
+            alias=alias,
+        )
+
+    if cmor_type == 'CMIP5':
+        return CMIP5Info(
+            table_path,
+            default=custom,
+            strict=cmor_strict,
+            alias=alias
+        )
+
+    if cmor_type == 'CMIP6':
+        return CMIP6Info(
+            table_path,
+            default=custom,
+            strict=cmor_strict,
+            default_table_prefix=default_table_prefix,
+            alias=alias,
+        )
+    raise ValueError(f'Unsupported CMOR type {cmor_type}')
+
+
+class InfoBase():
+    """
+    Base class for all table info classes.
+
+    This uses CMOR 3 json format
+
+    Parameters
+    ----------
+    default: object
+        Default table to look variables on if not found
+
+    alias: list[list[str]]
+        List of known aliases for variables
+
+    strict: bool
+        If False, will look for a variable in other tables if it can not be
+        found in the requested one
+
+    """
+
+    def __init__(self, default, alias, strict):
+        if alias is None:
+            alias = ""
+        self.default = default
+        self.alias = alias
+        self.strict = strict
+        self.tables = {}
+
+    def get_table(self, table):
+        """
+        Search and return the table info.
+
+        Parameters
+        ----------
+        table: basestring
+            Table name
+
+        Returns
+        -------
+        TableInfo
+            Return the TableInfo object for the requested table if
+            found, returns None if not
+
+        """
+        return self.tables.get(table)
 
     def get_variable(self, table_name, short_name, derived=False):
         """
@@ -114,11 +167,7 @@ class InfoBase(object):
             found, returns None if not
 
         """
-        aliases = [short_name]
-        for alias_list in self.alias:
-            if short_name in alias_list:
-                aliases.extend(
-                    [alias for alias in alias_list if alias not in aliases])
+        aliases = self._get_aliases(short_name)
 
         table = self.get_table(table_name)
         if table:
@@ -128,23 +177,47 @@ class InfoBase(object):
                 except KeyError:
                     pass
 
+        var_info = self._look_in_all_tables(aliases)
+        if not var_info:
+            var_info = self._look_in_default(derived, aliases, table_name)
+        if var_info:
+            var_info = self._update_mip_info(table_name, var_info)
+
+        return var_info
+
+    def _look_in_default(self, derived, aliases, table_name):
+        var_info = None
+        if (not self.strict or derived):
+            for alias in aliases:
+                var_info = self.default.get_variable(table_name, alias)
+                if var_info:
+                    break
+        return var_info
+
+    def _look_in_all_tables(self, aliases):
         var_info = None
         if not self.strict:
             for alias in aliases:
                 var_info = self._look_all_tables(alias)
                 if var_info:
                     break
-        if not var_info and (not self.strict or derived):
-            for alias in aliases:
-                var_info = self.default.get_variable(table_name, alias)
-                if var_info:
-                    break
+        return var_info
 
-        if var_info:
-            mip_info = self.get_table(table_name)
-            var_info = var_info.copy()
-            if mip_info:
-                var_info.frequency = mip_info.frequency
+
+    def _get_aliases(self, short_name):
+        aliases = [short_name]
+        for alias_list in self.alias:
+            if short_name in alias_list:
+                aliases.extend(
+                    [alias for alias in alias_list if alias not in aliases])
+        return aliases
+
+    def _update_mip_info(self, table_name, var_info):
+        var_info = var_info.copy()
+        mip_info = self.get_table(table_name)
+        if mip_info:
+            var_info.frequency = mip_info.frequency
+        return var_info
 
     def _look_all_tables(self, alias):
         for table_vars in sorted(self.tables.values()):
@@ -176,22 +249,20 @@ class CMIP6Info(InfoBase):
     def __init__(self,
                  cmor_tables_path,
                  default=None,
-                 alias=[],
+                 alias=None,
                  strict=True,
                  default_table_prefix=''):
+
+        super().__init__(default, alias, strict)
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
         if glob.glob(os.path.join(self._cmor_folder, '*_CV.json')):
             self._load_controlled_vocabulary()
-        self.default = default
-        self.alias = alias
-        self.strict = strict
+
         self.default_table_prefix = default_table_prefix
 
-        self.tables = {}
         self.var_to_freq = {}
-        self.strict = strict
 
         self._load_coordinates()
         for json_file in glob.glob(os.path.join(self._cmor_folder, '*.json')):
@@ -241,7 +312,6 @@ class CMIP6Info(InfoBase):
                 self.var_to_freq[table.name][var_name] = var.frequency
 
             if not table.frequency:
-                from collections import Counter
                 var_freqs = (var.frequency for var in table.values())
                 table_freq, _ = Counter(var_freqs).most_common(1)[0]
                 table.frequency = table_freq
@@ -581,7 +651,8 @@ class CMIP5Info(InfoBase):
 
     """
 
-    def __init__(self, cmor_tables_path, default=None, alias={}, strict=True):
+    def __init__(self, cmor_tables_path, default=None, alias=None, strict=True):
+        super().__init__(default, alias, strict)
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
         self._cmor_folder = os.path.join(cmor_tables_path, 'Tables')
@@ -592,9 +663,6 @@ class CMIP5Info(InfoBase):
         self.strict = strict
         self.tables = {}
         self.coords = {}
-        self.default = default
-        self.strict = strict
-        self.alias = alias
         self._current_table = None
         self._last_line_read = None
 
@@ -803,24 +871,6 @@ class CustomInfo(CMIP5Info):
                 else:
                     print(msg)
                 raise
-
-    def get_table(self, table):
-        """
-        Search and return the table info.
-
-        Parameters
-        ----------
-        table: basestring
-            Table name
-
-        Returns
-        -------
-        TableInfo
-            Return the TableInfo object for the requested table if
-            found, returns None if not
-
-        """
-        return self.tables.get(table)
 
     def get_variable(self, table, short_name, derived=False):
         """
