@@ -283,7 +283,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['load'] = {
         'callback': concatenate_callback,
     }
-    # Configure merge
+    # Configure concatenation
     settings['concatenate'] = {}
 
     # Configure fixes
