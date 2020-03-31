@@ -109,7 +109,7 @@ def _add_cmor_info(variable, override=False):
         raise RecipeError(
             f"Unable to load CMOR table (project) '{project}' for variable "
             f"'{short_name}' with mip '{mip}'")
-
+    variable['original_short_name'] = table_entry.short_name
     for key in cmor_keys:
         if key not in variable or override:
             value = getattr(table_entry, key, None)
