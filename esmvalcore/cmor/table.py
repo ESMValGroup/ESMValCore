@@ -651,7 +651,8 @@ class CMIP5Info(InfoBase):
 
     """
 
-    def __init__(self, cmor_tables_path, default=None, alias=None, strict=True):
+    def __init__(self, cmor_tables_path, default=None, alias=None,
+                 strict=True):
         super().__init__(default, alias, strict)
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
