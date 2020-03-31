@@ -22,7 +22,16 @@ except FileNotFoundError:
           "~/.github_api_key, see:\nhttps://help.github.com/en/github/"
           "authenticating-to-github/creating-a-personal-access-token-"
           "for-the-command-line")
+
+from esmvalcore import __version__
+
+VERSION = f"v{__version__}"
 GITHUB_REPO = "ESMValGroup/ESMValCore"
+
+TITLES = {
+    'bug': 'Bug fixes',
+    'enhancement': 'Improvements',
+}
 
 
 def draft_notes_since(previous_release_date, labels):
@@ -57,18 +66,26 @@ def draft_notes_since(previous_release_date, labels):
 
             user = pull.user
             username = user.login if user.name is None else user.name
-            line = (f"- {pull.title} (#{pull.number}) "
-                    f"[{username}](https://github.com/{user.login})")
+            line = (
+                f"-  {pull.title} (`#{pull.number} "
+                f"<https://github.com/{GITHUB_REPO}/pull/{pull.number}>`__) "
+                f"`{username} <https://github.com/{user.login}>`__")
             if label not in lines:
                 lines[label] = []
             lines[label].append((pull.closed_at, line))
 
     # Create sections
-    sections = ["This release includes"]
+    sections = [
+        VERSION,
+        '-' * len(VERSION),
+        '',
+        "This release includes",
+    ]
     for label in sorted(lines):
-        sections.append('\n' + label)
-        lines[label].sort()  # sort by merge time
-        sections.append('\n'.join(line for _, line in lines[label]))
+        entries = sorted(lines[label])  # sort by merge time
+        label = TITLES.get(label, label)
+        sections.append('\n'.join(['', label, '~' * len(label), '']))
+        sections.append('\n'.join(entry for _, entry in entries))
     notes = '\n'.join(sections)
 
     print(notes)
@@ -76,7 +93,7 @@ def draft_notes_since(previous_release_date, labels):
 
 if __name__ == '__main__':
 
-    PREVIOUS_RELEASE = datetime.datetime(2020, 1, 17)
+    PREVIOUS_RELEASE = datetime.datetime(2020, 3, 6)
     LABELS = ('bug', 'fix for dataset')
 
     draft_notes_since(PREVIOUS_RELEASE, LABELS)
