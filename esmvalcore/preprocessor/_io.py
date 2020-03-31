@@ -198,7 +198,8 @@ def concatenate(cubes):
     return result
 
 
-def save(cubes, filename, optimize_access='', compress=False, **kwargs):
+def save(cubes, filename, optimize_access='', compress=False, alias='',
+         **kwargs):
     """
     Save iris cubes to file.
 
@@ -263,6 +264,12 @@ def save(cubes, filename, optimize_access='', compress=False, **kwargs):
             for index, length in enumerate(cube.shape))
 
     kwargs['fill_value'] = GLOBAL_FILL_VALUE
+    if alias:
+
+        for cube in cubes:
+            logger.debug(
+                'Changing var_name from %s to %s', cube.var_name, alias)
+            cube.var_name = alias
     iris.save(cubes, **kwargs)
 
     return filename
