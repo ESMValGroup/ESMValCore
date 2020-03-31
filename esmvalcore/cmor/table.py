@@ -172,12 +172,10 @@ class CMIP6Info(object):
             if dimension in generic_levels:
                 coord = CoordinateInfo(dimension)
                 coord.generic_level = True
-                for coord_name in self.coords:
-                    generic_level_name = self.coords[coord_name].generic_level_name
-                    if dimension in [generic_level_name ]:
-                        coord.generic_level_coords[coord_name] = self.coords[coord_name]
-
-                        #var.coordinates[dimension][coord_name].generic_level = True    
+                for name in self.coords:
+                    generic_level = self.coords[name].generic_lev_name
+                    if dimension in [generic_level]:
+                        coord.generic_lev_coords[name] = self.coords[name]
             else:
                 try:
                     coord = self.coords[dimension]
@@ -473,7 +471,7 @@ class CoordinateInfo(JsonInfo):
         super(CoordinateInfo, self).__init__()
         self.name = name
         self.generic_level = False
-        self.generic_level_coords = {}
+        self.generic_lev_coords = {}
 
         self.axis = ""
         """Axis"""
@@ -503,7 +501,7 @@ class CoordinateInfo(JsonInfo):
         """Maximum allowed value"""
         self.must_have_bounds = ""
         """Whether bounds are required on this dimension"""
-        self.generic_level_name = ""
+        self.generic_lev_name = ""
         """Generic level name"""
     def read_json(self, json_data):
         """
@@ -532,7 +530,7 @@ class CoordinateInfo(JsonInfo):
         self.valid_max = self._read_json_variable('valid_max')
         self.requested = self._read_json_list_variable('requested')
         self.must_have_bounds = self._read_json_variable('must_have_bounds')
-        self.generic_level_name = self._read_json_variable('generic_level_name')
+        self.generic_lev_name = self._read_json_variable('generic_level_name')
 
 
 class CMIP5Info(object):

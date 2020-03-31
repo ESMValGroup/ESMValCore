@@ -318,33 +318,45 @@ class CMORCheck():
         """Check dimension names."""
         for (key, coordinate) in self._cmor_var.coordinates.items():
             if coordinate.generic_level:
-                if coordinate.generic_level_coords:
-                    for (_, coord) in coordinate.generic_level_coords.items():
+                if coordinate.generic_lev_coords:
+                    for (_, coord) in coordinate.generic_lev_coords.items():
                         try:
-                            cube_coord = self._cube.coord(var_name=coord.out_name)
+                            cube_coord = self._cube.coord(
+                                var_name=coord.out_name
+                            )
                             coordinate.out_name = coord.out_name
                             if cube_coord.standard_name == coord.standard_name:
                                 coordinate.standard_name = coord.standard_name
                                 coordinate.name = coord.name
                         except iris.exceptions.CoordinateNotFoundError:
                             try:
-                                cube_coord = self._cube.coord(var_name=coord.standard_name)
+                                cube_coord = self._cube.coord(
+                                    var_name=coord.standard_name
+                                )
                                 coordinate.standard_name = coord.standard_name
                                 coordinate.name = coord.name
                             except iris.exceptions.CoordinateNotFoundError:
                                 pass
                     if coordinate.standard_name:
                         if not coordinate.out_name:
-                            self.report_error(f'Coordinate {coordinate.name} has wrong var_name.',)
-                        level_coord = coordinate.generic_level_coords[coordinate.name]
-                        level_coord.generic_level = True
-                        self._cmor_var.coordinates[coordinate.name] = level_coord
+                            self.report_error(
+                                f'Coordinate {coordinate.name} '
+                                'has wrong var_name.,'
+                            )
+                        level = coordinate.generic_lev_coords[coordinate.name]
+                        level.generic_level = True
+                        self._cmor_var.coordinates[coordinate.name] = level
                         self._cmor_var.coordinates.pop(key)
                     else:
                         if coordinate.out_name:
-                            self.report_critical(f'Coordinate {coordinate.name} has wrong standard_name',)
+                            self.report_critical(
+                                f'Coordinate {coordinate.name} '
+                                'has wrong standard_name',
+                            )
                         else:
-                            self.report_critical(self._does_msg, coordinate.name, 'exist')                                                                                   
+                            self.report_critical(
+                                self._does_msg, coordinate.name, 'exist'
+                            )
                 else:
                     continue
             else:
