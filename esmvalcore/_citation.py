@@ -17,23 +17,26 @@ CMIP6_URL_STEM = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch'
 
 # The technical overview paper should always be cited
 ESMVALTOOL_PAPER = (
-    '@article{righi19gmd,\n'
-    '\tdoi = {10.5194/gmd-2019-226},\n'
-    '\turl = {https://doi.org/10.5194%2Fgmd-2019-226},\n'
-    '\tyear = 2019,\n'
-    '\tmonth = {sep},\n'
-    '\tpublisher = {Copernicus {GmbH}},\n'
-    '\tauthor = {Mattia Righi and Bouwe Andela and Veronika Eyring '
-    'and Axel Lauer and Valeriu Predoi and Manuel Schlund '
-    'and Javier Vegas-Regidor and Lisa Bock and Björn Brötz '
-    'and Lee de Mora and Faruk Diblen and Laura Dreyer '
-    'and Niels Drost and Paul Earnshaw and Birgit Hassler '
-    'and Nikolay Koldunov and Bill Little and Saskia Loosveldt Tomas '
-    'and Klaus Zimmermann},\n'
-    '\ttitle = {{ESMValTool} v2.0 '
-    '{\\&}amp$\\mathsemicolon${\\#}8211$\\mathsemicolon$ '
-    'Technical overview}\n'
-    '}\n')
+    "@article{righi20gmd,\n"
+    "\tdoi = {10.5194/gmd-13-1179-2020},\n"
+    "\turl = {https://doi.org/10.5194/gmd-13-1179-2020},\n"
+    "\tyear = {2020},\n"
+    "\tmonth = mar,\n"
+    "\tpublisher = {Copernicus {GmbH}},\n"
+    "\tvolume = {13},\n"
+    "\tnumber = {3},\n"
+    "\tpages = {1179--1199},\n"
+    "\tauthor = {Mattia Righi and Bouwe Andela and Veronika Eyring "
+    "and Axel Lauer and Valeriu Predoi and Manuel Schlund "
+    "and Javier Vegas-Regidor and Lisa Bock and Bj\"{o}rn Br\"{o}tz "
+    "and Lee de Mora and Faruk Diblen and Laura Dreyer "
+    "and Niels Drost and Paul Earnshaw and Birgit Hassler "
+    "and Nikolay Koldunov and Bill Little and Saskia Loosveldt Tomas "
+    "and Klaus Zimmermann},\n"
+    "\ttitle = {Earth System Model Evaluation Tool (ESMValTool) v2.0 "
+    "-- technical overview},\n"
+    "\tjournal = {Geoscientific Model Development}\n"
+    "}\n")
 
 
 def _write_citation_files(filename, provenance):
