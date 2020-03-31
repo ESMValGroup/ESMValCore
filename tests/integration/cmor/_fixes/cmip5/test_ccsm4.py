@@ -5,7 +5,7 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.ccsm4 import Cl, Rlut, Rlutcs, So
+from esmvalcore.cmor._fixes.cmip5.ccsm4 import Cl, Csoil, Rlut, Rlutcs, So
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
 
@@ -19,6 +19,26 @@ def test_get_cl_fix():
 def test_cl_fix():
     """Test fix for ``cl``."""
     assert Cl(None) == ClFixHybridPressureCoord(None)
+
+
+class TestCsoil(unittest.TestCase):
+    """Test cSoil fixes."""
+
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = Cube([1.0, 1.e33], var_name='cSoil', units='kg m-2')
+        self.fix = Csoil(None)
+
+    def test_get(self):
+        """Test fix get."""
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Lmon', 'cSoil'),
+                             [Csoil(None)])
+
+    def test_fix_data(self):
+        """Test data fix."""
+        cube = self.fix.fix_data(self.cube)
+        expected = np.ma.masked_array([1.0, 1.0], [False, True])
+        self.assertTrue(np.all(cube.data == expected))
 
 
 class TestsRlut(unittest.TestCase):

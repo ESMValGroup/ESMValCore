@@ -187,6 +187,19 @@ class TestCMORCheck(unittest.TestCase):
         self._check_cube()
         assert 'time_origin' not in self.cube.coord('time').attributes
 
+    def test_check_no_multiple_coords_same_stdname(self):
+        """Test checks fails if two coords have the same standard_name."""
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                np.reshape(np.linspace(-90, 90, num=20*20), (20, 20)),
+                var_name='bad_name',
+                standard_name='latitude',
+                units='degrees_north'
+            ),
+            (1, 2)
+        )
+        self._check_fails_in_metadata()
+
     def test_check_bad_standard_name_auto_fix(self):
         """Test check pass for a bad standard_name with automatic fixes."""
         self.cube = self.get_cube(self.var_info)
