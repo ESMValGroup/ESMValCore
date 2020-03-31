@@ -26,7 +26,7 @@ def _get_altitude_to_pressure_func():
     return func
 
 
-ALTITUDE_TO_PRESSURE = _get_altitude_to_pressure_func()
+altitude_to_pressure = _get_altitude_to_pressure_func()  # noqa
 
 
 class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
@@ -257,8 +257,8 @@ def add_plev_from_altitude(cube):
         height_coord = cube.coord('altitude')
         if height_coord.units != 'm':
             height_coord.convert_units('m')
-        pressure_points = ALTITUDE_TO_PRESSURE(height_coord.core_points())
-        pressure_bounds = ALTITUDE_TO_PRESSURE(height_coord.core_bounds())
+        pressure_points = altitude_to_pressure(height_coord.core_points())
+        pressure_bounds = altitude_to_pressure(height_coord.core_bounds())
         pressure_coord = iris.coords.AuxCoord(pressure_points,
                                               bounds=pressure_bounds,
                                               var_name='plev',
@@ -354,7 +354,7 @@ def get_bounds_cube(cubes, coord_var_name):
         List of cubes containing the coordinate bounds for the desired
         coordinate as single cube.
     coord_var_name : str
-        ``var_name`` of the desired coordinate (without suffic ``_bnds`` or
+        ``var_name`` of the desired coordinate (without suffix ``_bnds`` or
         ``_bounds``).
 
     Returns
@@ -393,7 +393,7 @@ def fix_bounds(cube, cubes, coord_var_names):
         List of cubes which contains the desired coordinate bounds as single
         cubes.
     coord_var_names : list of str
-        ``var_name``s of the desired coordinates (without suffic ``_bnds`` or
+        ``var_name``s of the desired coordinates (without suffix ``_bnds`` or
         ``_bounds``).
 
     Raises

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.shared import (ALTITUDE_TO_PRESSURE,
+from esmvalcore.cmor._fixes.shared import (altitude_to_pressure,
                                            _get_altitude_to_pressure_func,
                                            add_aux_coords_from_cubes,
                                            add_plev_from_altitude,
@@ -18,7 +18,7 @@ from esmvalcore.cmor._fixes.shared import (ALTITUDE_TO_PRESSURE,
 from esmvalcore.preprocessor._derive._shared import var_name_constraint
 
 
-@pytest.mark.parametrize('func', [ALTITUDE_TO_PRESSURE,
+@pytest.mark.parametrize('func', [altitude_to_pressure,
                                   _get_altitude_to_pressure_func()])
 def test_altitude_to_pressure_func(func):
     """Test altitude to pressure function."""
