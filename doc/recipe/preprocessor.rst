@@ -635,13 +635,13 @@ to observational data, these biases have a significantly lower statistical
 impact when using a multi-model ensemble. ESMValTool has the capability of
 computing a number of multi-model statistical measures: using the preprocessor
 module ``multi_model_statistics`` will enable the user to ask for either a
-multi-model ``mean``, ``median``, ```max``, ``min`` and / or ``std`` with a set
+multi-model ``mean``, ``median``, ``max``, ``min`` and / or ``std`` with a set
 of argument parameters passed to ``multi_model_statistics``.
 
-Multimodel statistics in ESMValTool are computed along the time axis, and as
-such, can be computed across a common overlap in time (by specifying ``span:
-overlap`` argument) or across the full length in time of each model (by
-specifying ``span: full`` argument).
+Note that current multimodel statistics in ESMValTool are local (not global),
+and are computed along the time axis. As such, can be computed across a common
+overlap in time (by specifying ``span: overlap`` argument) or across the full
+length in time of each model (by specifying ``span: full`` argument).
 
 Restrictive computation is also available by excluding  any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
