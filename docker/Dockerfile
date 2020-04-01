@@ -10,7 +10,7 @@ RUN apt-get update -y && apt-get install -y \
     unzip
 
 # install environment packages
-COPY .. /source
+COPY . /source
 WORKDIR /source
 RUN ls
 RUN conda env update --name base --file environment.yml
