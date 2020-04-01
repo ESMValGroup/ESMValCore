@@ -1,6 +1,6 @@
 """Tests for the fixes of CESM2."""
 import os
-import unittest
+import unittest.mock
 
 import iris
 import numpy as np
@@ -10,6 +10,7 @@ from netCDF4 import Dataset
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl, Cli, Clw, Tas
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
@@ -166,14 +167,9 @@ def test_get_cli_fix():
     assert fix == [Cli(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.cesm2.Cl.fix_metadata',
-    autospec=True)
-def test_cli_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``cli``."""
-    fix = Cli(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_cli_fix():
+    """Test fix for ``cli``."""
+    assert Cli is Cl
 
 
 def test_get_clw_fix():
@@ -182,14 +178,9 @@ def test_get_clw_fix():
     assert fix == [Clw(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.cesm2.Cl.fix_metadata',
-    autospec=True)
-def test_clw_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``clw``."""
-    fix = Clw(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_clw_fix():
+    """Test fix for ``clw``."""
+    assert Clw is Cl
 
 
 @pytest.fixture
@@ -217,7 +208,8 @@ def test_tas_fix_metadata(tas_cubes):
                                         long_name='height',
                                         units=Unit('m'),
                                         attributes={'positive': 'up'})
-    fix = Tas(None)
+    vardef = get_var_info('CMIP6', 'Amon', 'tas')
+    fix = Tas(vardef)
     out_cubes = fix.fix_metadata(tas_cubes)
     assert out_cubes is tas_cubes
     for cube in out_cubes:

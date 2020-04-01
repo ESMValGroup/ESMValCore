@@ -1,6 +1,6 @@
 """Fixes for BCC-ESM1 model."""
-from .bcc_csm2_mr import Tos as BaseTos
 from ..common import ClFixHybridPressureCoord
+from .bcc_csm2_mr import Tos as BaseTos
 
 
 Cl = ClFixHybridPressureCoord
@@ -12,5 +12,4 @@ Cli = ClFixHybridPressureCoord
 Clw = ClFixHybridPressureCoord
 
 
-class Tos(BaseTos):
-    """Fixes for tos."""
+Tos = BaseTos

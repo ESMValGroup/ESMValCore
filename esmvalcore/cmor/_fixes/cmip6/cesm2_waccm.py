@@ -42,13 +42,10 @@ class Cl(BaseCl):
         return new_path
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Cli = Cl
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
+Clw = Cl
 
 
-class Tas(BaseTas):
-    """Fixes for tas."""
+Tas = BaseTas
