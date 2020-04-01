@@ -10,6 +10,8 @@ RUN apt-get update -y && apt-get install -y \
     unzip
 
 # install environment packages
+RUN pwd
+RUN ls
 RUN conda env update --name base --file environment.yml
 RUN pip install .
 
