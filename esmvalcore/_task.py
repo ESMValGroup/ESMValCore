@@ -17,6 +17,7 @@ from shutil import which
 import psutil
 import yaml
 
+from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
 
@@ -565,6 +566,7 @@ class DiagnosticTask(BaseTask):
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)
             product.save_provenance()
+            _write_citation_files(product.filename, product.provenance)
             self.products.add(product)
         logger.debug("Collecting provenance of task %s took %.1f seconds",
                      self.name,

@@ -1190,11 +1190,6 @@ TAGS = {
             'name': 'Bouwe Andela',
         },
     },
-    'references': {
-        'acknow_author': "Please acknowledge the author(s).",
-        'contact_authors': "Please contact the author(s) ...",
-        'acknow_project': "Please acknowledge the project(s).",
-    },
     'projects': {
         'c3s-magic': 'C3S MAGIC project',
     },
@@ -1271,7 +1266,7 @@ def test_diagnostic_task_provenance(
                                             key).pop() == record[key]
 
     # Check that diagnostic script tags have been added
-    for key in ('statistics', 'domains', 'authors', 'references'):
+    for key in ('statistics', 'domains', 'authors'):
         assert product.attributes[key] == tuple(TAGS[key][k]
                                                 for k in record[key])
 
@@ -1287,7 +1282,7 @@ def test_diagnostic_task_provenance(
     for key in ('description', 'references'):
         value = src['documentation'][key]
         if key == 'references':
-            value = ', '.join(TAGS[key][k] for k in value)
+            value = str(src['documentation'][key])
         assert recipe_record[0].get_attribute('attribute:' +
                                               key).pop() == value
 
