@@ -10,7 +10,8 @@ RUN apt-get update -y && apt-get install -y \
     unzip
 
 # install environment packages
-RUN conda install -c conda-forge -c esmvalgroup esmvalcore
+RUN conda env update --name base --file environment.yml
+RUN pip install .
 
 # run tests
 RUN esmvaltool -h
