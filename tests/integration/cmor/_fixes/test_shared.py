@@ -4,8 +4,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.shared import (altitude_to_pressure,
-                                           _get_altitude_to_pressure_func,
+from esmvalcore.cmor._fixes.shared import (_get_altitude_to_pressure_func,
                                            add_aux_coords_from_cubes,
                                            add_plev_from_altitude,
                                            add_scalar_depth_coord,
@@ -13,9 +12,10 @@ from esmvalcore.cmor._fixes.shared import (altitude_to_pressure,
                                            add_scalar_typeland_coord,
                                            add_scalar_typesea_coord,
                                            add_sigma_factory,
+                                           altitude_to_pressure,
                                            cube_to_aux_coord, fix_bounds,
                                            get_bounds_cube, round_coordinates)
-from esmvalcore.preprocessor._derive._shared import var_name_constraint
+from esmvalcore.iris_helpers import var_name_constraint
 
 
 @pytest.mark.parametrize('func', [altitude_to_pressure,
