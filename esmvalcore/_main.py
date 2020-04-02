@@ -33,6 +33,7 @@ import datetime
 import errno
 import logging
 import os
+import glob
 import shutil
 import sys
 from multiprocessing import cpu_count
@@ -64,46 +65,51 @@ def get_args():
     parser = argparse.ArgumentParser(
         description=HEADER,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('recipe', help='Path or name of the yaml recipe file')
     parser.add_argument(
         '-v',
         '--version',
         action='version',
         version=__version__,
         help="return ESMValTool's version number and exit")
-    parser.add_argument(
+    subparsers = parser.add_subparsers(required=True)
+
+    run = subparsers.add_parser("run", help='Run recipe')
+    run.set_defaults(func=main)
+    run.add_argument('recipe', help='Path or name of the yaml recipe file')
+
+    run.add_argument(
         '-c',
         '--config-file',
         default=os.path.join(os.path.dirname(__file__), 'config-user.yml'),
         help='Config file')
-    parser.add_argument(
+    run.add_argument(
         '-s',
         '--synda-download',
         action='store_true',
         help='Download input data using synda. This requires a working '
         'synda installation.')
-    parser.add_argument(
+    run.add_argument(
         '--max-datasets',
         type=int,
         help='Try to limit the number of datasets used to MAX_DATASETS.')
-    parser.add_argument(
+    run.add_argument(
         '--max-years',
         type=int,
         help='Limit the number of years to MAX_YEARS.')
-    parser.add_argument(
+    run.add_argument(
         '--skip-nonexistent',
         action='store_true',
         help="Skip datasets that cannot be found.")
-    parser.add_argument(
+    run.add_argument(
         '--diagnostics',
         nargs='*',
         help="Only run the named diagnostics from the recipe.")
-    parser.add_argument(
+    run.add_argument(
         '--check-level',
         type=str,
         choices=[
             val.name.lower() for val in CheckLevels if val != CheckLevels.DEBUG
-            ],
+        ],
         default='default',
         help="""
             Configure the severity of the errors that will make the CMOR check
@@ -116,8 +122,35 @@ def get_args():
             strict: fail if there are any warnings
         """
     )
+    list_parser = subparsers.add_parser("list", help='List installed recipes')
+    list_parser.set_defaults(func=list_recipes)
+
+    get_parser = subparsers.add_parser("get", help='Get an installed recipe')
+    get_parser.set_defaults(func=get_recipe)
+    get_parser.add_argument('recipe', help='Name of the yaml recipe file')
     args = parser.parse_args()
     return args
+
+
+def list_recipes(args):
+    configure_logging(output=None, console_log_level='info')
+    recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
+    logger.info('Installed recipes:')
+    logger.info('------------------')
+    for path in glob.glob(os.path.join(recipes_folder, '*.yml')):
+        logger.info(os.path.relpath(path, recipes_folder))
+
+
+def get_recipe(args):
+    configure_logging(output=None, console_log_level='info')
+    installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', args.recipe)
+    if not os.path.exists(installed_recipe):
+        ValueError(
+            f'Recipe {args.recipe} not found. To list all available recipes, '
+            'execute "esmvaltool list"')
+    logger.info('Copying installed recipe to the current folder...')
+    shutil.copy(installed_recipe, args.recipe)
+    logger.info('Recipe %s successfully copied', args.recipe)
 
 
 def main(args):
@@ -174,6 +207,13 @@ def main(args):
     resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
     with resource_usage_logger(pid=os.getpid(), filename=resource_log):
         process_recipe(recipe_file=recipe, config_user=cfg)
+
+    if os.path.exists(cfg["preproc_dir"]) and cfg["remove_preproc_dir"]:
+        logger.info("Removing preproc containing preprocessed data")
+        logger.info("If this data is further needed, then")
+        logger.info("set remove_preproc_dir to false in config")
+        shutil.rmtree(cfg["preproc_dir"])
+    logger.info("Run was successful")
     return cfg
 
 
@@ -239,7 +279,7 @@ def run():
     """Run the `esmvaltool` program, logging any exceptions."""
     args = get_args()
     try:
-        conf = main(args)
+        conf = args.func(args)
     except:  # noqa
         if not logger.handlers:
             # Add a logging handler if main failed to do so.
@@ -254,10 +294,3 @@ def run():
             "the run/recipe_*.yml and run/main_log_debug.txt files from the "
             "output directory.")
         sys.exit(1)
-    else:
-        if os.path.exists(conf["preproc_dir"]) and conf["remove_preproc_dir"]:
-            logger.info("Removing preproc containing preprocessed data")
-            logger.info("If this data is further needed, then")
-            logger.info("set remove_preproc_dir to false in config")
-            shutil.rmtree(conf["preproc_dir"])
-        logger.info("Run was successful")
