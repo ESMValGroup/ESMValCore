@@ -19,7 +19,7 @@ class TestCMIP6Info(unittest.TestCase):
         """
         cls.variables_info = CMIP6Info(
             'cmip6', default=CustomInfo(), strict=True,
-            alias=[
+            alt_names=[
                 ['sic', 'siconc'],
                 ['tro3', 'o3'],
             ]
@@ -48,8 +48,8 @@ class TestCMIP6Info(unittest.TestCase):
         var = self.variables_info.get_variable('Amon', 'tas')
         self.assertEqual(var.short_name, 'tas')
 
-    def test_get_variable_from_alias(self):
-        """Get a variable from a known alias."""
+    def test_get_variable_from_alt_names(self):
+        """Get a variable from a known alt_names."""
         var = self.variables_info.get_variable('SImon', 'sic')
         self.assertEqual(var.short_name, 'siconc')
 
