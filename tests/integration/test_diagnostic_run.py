@@ -1,5 +1,6 @@
 """Test diagnostic script runs."""
 import contextlib
+import shutil
 import sys
 from textwrap import dedent
 
@@ -135,12 +136,18 @@ def test_diagnostic_run(tmp_path, script_file, script):
     recipe_file.write_text(str(recipe))
 
     config_user_file = write_config_user_file(tmp_path)
-    with arguments(
-            'esmvaltool',
-            '-c',
-            config_user_file,
-            str(recipe_file),
-    ):
-        run()
+    ncl_diag = r_diag = False
+    if shutil.which('ncl') is not None and script == "diagnostic.ncl":
+        ncl_diag = True
+    elif shutil.which('Rscript') is not None and script == "diagnostic.R":
+        r_diag = True
+    if ncl_diag or r_diag:
+        with arguments(
+                'esmvaltool',
+                '-c',
+                config_user_file,
+                str(recipe_file),
+        ):
+            run()
 
-    check(result_file)
+        check(result_file)
