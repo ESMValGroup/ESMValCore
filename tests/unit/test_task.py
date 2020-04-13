@@ -8,6 +8,9 @@ import esmvalcore._task
 @pytest.mark.parametrize("ext", ['.jl', '.py', '.ncl', '.R'])
 def test_diagnostic_task_env(ext, tmp_path, monkeypatch):
     """Test that the environmental variables are set correctly."""
+    monkeypatch.setattr(esmvalcore._task.DiagnosticTask, '_initialize_cmd',
+                        lambda self: None)
+
     esmvaltool_path = tmp_path / 'esmvaltool'
     monkeypatch.setattr(esmvalcore._task, 'DIAGNOSTICS_PATH', esmvaltool_path)
 
@@ -56,6 +59,9 @@ CMD = {
 @pytest.mark.parametrize("ext_profile,cmd", CMD.items())
 def test_diagnostic_task_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     """Test creating the command to run the diagnostic script."""
+    monkeypatch.setattr(esmvalcore._task.DiagnosticTask, '_initialize_env',
+                        lambda self: None)
+
     ext, profile = ext_profile
     script = tmp_path / ('test' + ext)
     script.touch()
