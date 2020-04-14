@@ -370,7 +370,7 @@ def _add_fxvar_keys(fx_var_dict, variable):
     return fx_variable
 
 
-def _get_correct_fx_file(variable, fx_variable, config_user):
+def _get_fx_file(variable, fx_variable, config_user):
     """Get fx files (searching all possible mips)."""
     # make it a dict
     if isinstance(fx_variable, str):
@@ -382,7 +382,14 @@ def _get_correct_fx_file(variable, fx_variable, config_user):
     # assemble info from master variable
     var = dict(variable)
     var_project = variable['project']
-    get_project_config(var_project)
+    # check if project in config-developer
+    try:
+        get_project_config(var_project)
+    except ValueError:
+        raise RecipeError(
+            f"Requested fx variable '{fx_varname}' with parent variable"
+            f"'{variable}' does not have a '{var_project}' project"
+            f"in config-developer.")
     cmor_table = CMOR_TABLES[var_project]
     valid_fx_vars = []
 
@@ -461,14 +468,14 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
         return
 
     fx_vars = [
-        _get_correct_fx_file(variable, fxvar, config_user)
+        _get_fx_file(variable, fxvar, config_user)
         for fxvar in fx_vars
     ]
 
     fx_dict = {fx_var[1]['short_name']: fx_var[0] for fx_var in fx_vars}
-    settings['fx_files'] = fx_dict
+    settings['fx_variables'] = fx_dict
     logger.info('Using fx_files: %s for variable %s during step %s',
-                pformat(settings['fx_files']),
+                pformat(settings['fx_variables']),
                 variable['short_name'],
                 step_name)
 
@@ -477,7 +484,7 @@ def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
-        user_fx_vars = step_settings.get('fx_files')
+        user_fx_vars = step_settings.get('fx_variables')
         if not user_fx_vars:
             if step_name in ('mask_landsea', 'weighting_landsea_fraction'):
                 user_fx_vars = ['sftlf']
