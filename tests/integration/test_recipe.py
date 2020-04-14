@@ -15,6 +15,8 @@ from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
+from esmvalcore.cmor.check import CheckLevels
+
 
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
@@ -65,6 +67,7 @@ def config_user(tmp_path):
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test')
     cfg['synda_download'] = False
     cfg['output_file_type'] = 'png'
+    cfg['check_level'] = CheckLevels.DEFAULT
     return cfg
 
 
@@ -352,6 +355,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'output_dir': fix_dir,
         },
         'fix_data': {
+            'check_level': CheckLevels.DEFAULT,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
@@ -359,6 +363,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'frequency': 'yr',
         },
         'fix_metadata': {
+            'check_level': CheckLevels.DEFAULT,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'chl',
@@ -374,12 +379,14 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             'end_day': 1,
         },
         'cmor_check_metadata': {
+            'check_level': CheckLevels.DEFAULT,
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'short_name': 'chl',
             'frequency': 'yr',
         },
         'cmor_check_data': {
+            'check_level': CheckLevels.DEFAULT,
             'cmor_table': 'CMIP5',
             'mip': 'Oyr',
             'short_name': 'chl',
@@ -438,6 +445,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'output_dir': fix_dir,
         },
         'fix_data': {
+            'check_level': CheckLevels.DEFAULT,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'sftlf',
@@ -445,6 +453,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'frequency': 'fx',
         },
         'fix_metadata': {
+            'check_level': CheckLevels.DEFAULT,
             'project': 'CMIP5',
             'dataset': 'CanESM2',
             'short_name': 'sftlf',
@@ -452,12 +461,14 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'frequency': 'fx',
         },
         'cmor_check_metadata': {
+            'check_level': CheckLevels.DEFAULT,
             'cmor_table': 'CMIP5',
             'mip': 'fx',
             'short_name': 'sftlf',
             'frequency': 'fx',
         },
         'cmor_check_data': {
+            'check_level': CheckLevels.DEFAULT,
             'cmor_table': 'CMIP5',
             'mip': 'fx',
             'short_name': 'sftlf',
@@ -1179,11 +1190,6 @@ TAGS = {
             'name': 'Bouwe Andela',
         },
     },
-    'references': {
-        'acknow_author': "Please acknowledge the author(s).",
-        'contact_authors': "Please contact the author(s) ...",
-        'acknow_project': "Please acknowledge the project(s).",
-    },
     'projects': {
         'c3s-magic': 'C3S MAGIC project',
     },
@@ -1260,7 +1266,7 @@ def test_diagnostic_task_provenance(
                                             key).pop() == record[key]
 
     # Check that diagnostic script tags have been added
-    for key in ('statistics', 'domains', 'authors', 'references'):
+    for key in ('statistics', 'domains', 'authors'):
         assert product.attributes[key] == tuple(TAGS[key][k]
                                                 for k in record[key])
 
@@ -1276,7 +1282,7 @@ def test_diagnostic_task_provenance(
     for key in ('description', 'references'):
         value = src['documentation'][key]
         if key == 'references':
-            value = ', '.join(TAGS[key][k] for k in value)
+            value = str(src['documentation'][key])
         assert recipe_record[0].get_attribute('attribute:' +
                                               key).pop() == value
 

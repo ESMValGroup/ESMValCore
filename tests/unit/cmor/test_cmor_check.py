@@ -1,8 +1,6 @@
 """Unit tests for the CMORCheck class."""
 
-import sys
 import unittest
-from io import StringIO
 
 import iris
 import iris.coord_categorisation
@@ -11,7 +9,7 @@ import iris.util
 import numpy as np
 from cf_units import Unit
 
-from esmvalcore.cmor.check import CMORCheck, CMORCheckError
+from esmvalcore.cmor.check import CMORCheck, CMORCheckError, CheckLevels
 
 
 class VariableInfoMock:
@@ -97,14 +95,14 @@ class TestCMORCheck(unittest.TestCase):
         """Test report error function."""
         checker = CMORCheck(self.cube, self.var_info)
         self.assertFalse(checker.has_errors())
-        checker.report_error('New error: {}', 'something failed')
+        checker.report_critical('New error: {}', 'something failed')
         self.assertTrue(checker.has_errors())
 
     def test_fail_on_error(self):
         """Test exception is raised if fail_on_error is activated."""
         checker = CMORCheck(self.cube, self.var_info, fail_on_error=True)
         with self.assertRaises(CMORCheckError):
-            checker.report_error('New error: {}', 'something failed')
+            checker.report_critical('New error: {}', 'something failed')
 
     def test_report_warning(self):
         """Test report warning function."""
@@ -116,12 +114,12 @@ class TestCMORCheck(unittest.TestCase):
     def test_warning_fail_on_error(self):
         """Test report warning function with fail_on_error."""
         checker = CMORCheck(self.cube, self.var_info, fail_on_error=True)
-        stdout = sys.stdout
-        sys.stdout = StringIO()
-        checker.report_warning('New error: {}', 'something failed')
-        output = sys.stdout.getvalue().strip()
-        sys.stdout = stdout
-        self.assertEqual(output, 'WARNING: New error: something failed')
+        with self.assertLogs(level='WARNING') as cm:
+            checker.report_warning('New error: {}', 'something failed')
+            self.assertEqual(
+                cm.output,
+                ['WARNING:esmvalcore.cmor.check:New error: something failed', ]
+            )
 
     def test_report_debug_message(self):
         """"Test report debug message function"""
@@ -135,7 +133,7 @@ class TestCMORCheck(unittest.TestCase):
         self._check_cube()
 
     def _check_cube(self, automatic_fixes=False, frequency=None,
-                    warnings_as_errors=True):
+                    check_level=CheckLevels.DEFAULT):
         """Apply checks and optionally automatic fixes to self.cube."""
         def checker(cube):
             return CMORCheck(
@@ -143,10 +141,23 @@ class TestCMORCheck(unittest.TestCase):
                 self.var_info,
                 automatic_fixes=automatic_fixes,
                 frequency=frequency,
-                warnings_as_errors=warnings_as_errors)
+                check_level=check_level)
 
         self.cube = checker(self.cube).check_metadata()
         self.cube = checker(self.cube).check_data()
+
+    def _check_cube_metadata(self, automatic_fixes=False, frequency=None,
+                             check_level=CheckLevels.DEFAULT):
+        """Apply checks and optionally automatic fixes to self.cube."""
+        def checker(cube):
+            return CMORCheck(
+                cube,
+                self.var_info,
+                automatic_fixes=automatic_fixes,
+                frequency=frequency,
+                check_level=check_level)
+
+        self.cube = checker(self.cube).check_metadata()
 
     def test_check_with_month_number(self):
         """Test checks succeeds for a good cube with month number."""
@@ -175,11 +186,24 @@ class TestCMORCheck(unittest.TestCase):
         self._check_cube()
         assert 'time_origin' not in self.cube.coord('time').attributes
 
+    def test_check_no_multiple_coords_same_stdname(self):
+        """Test checks fails if two coords have the same standard_name."""
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                np.reshape(np.linspace(-90, 90, num=20*20), (20, 20)),
+                var_name='bad_name',
+                standard_name='latitude',
+                units='degrees_north'
+            ),
+            (1, 2)
+        )
+        self._check_fails_in_metadata()
+
     def test_check_bad_standard_name_auto_fix(self):
         """Test check pass for a bad standard_name with automatic fixes."""
         self.cube = self.get_cube(self.var_info)
         self.cube.standard_name = 'wind_speed'
-        self._check_cube(automatic_fixes=True, warnings_as_errors=False)
+        self._check_cube(automatic_fixes=True)
         self._check_cube()
 
     def test_check_bad_standard_name(self):
@@ -192,7 +216,7 @@ class TestCMORCheck(unittest.TestCase):
         """Test check pass for a bad standard_name with automatic fixes."""
         self.cube = self.get_cube(self.var_info)
         self.cube.long_name = 'bad_name'
-        self._check_cube(automatic_fixes=True, warnings_as_errors=False)
+        self._check_cube(automatic_fixes=True)
         self._check_cube()
 
     def test_check_bad_long_name_auto_fix_report_warning(self):
@@ -274,20 +298,258 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.add_aux_coord(new_lat, 1)
         self._check_cube()
 
-    def _check_fails_in_metadata(self, automatic_fixes=False, frequency=None):
+    def test_check_bad_var_standard_name_strict_flag(self):
+        """Test check fails for a bad variable standard_name with
+        --cmor-check strict."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.standard_name = 'wind_speed'
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_bad_var_long_name_strict_flag(self):
+        """Test check fails for a bad variable long_name with
+        --cmor-check strict."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.long_name = "Near-Surface Wind Speed"
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_bad_var_units_strict_flag(self):
+        """Test check fails for a bad variable units with
+        --cmor-check strict."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.units = "kg"
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_bad_attributes_strict_flag(self):
+        """Test check fails for a bad variable attribute with
+        --cmor-check strict."""
+        self.var_info.standard_name = "surface_upward_latent_heat_flux"
+        self.var_info.positive = "up"
+        self.cube = self.get_cube(self.var_info)
+        self.cube.attributes['positive'] = "Wrong attribute"
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_bad_rank_strict_flag(self):
+        """Test check fails for a bad variable rank with
+        --cmor-check strict."""
+        lat = iris.coords.AuxCoord.from_coord(self.cube.coord('latitude'))
+        self.cube.remove_coord('latitude')
+        self.cube.add_aux_coord(lat, self.cube.coord_dims('longitude'))
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_bad_coord_var_name_strict_flag(self):
+        """Test check fails for bad coord var_name with
+        --cmor-check strict"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.coord('longitude').var_name = 'bad_name'
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_missing_lon_strict_flag(self):
+        """Test check fails for missing longitude with --cmor-check strict"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.remove_coord('longitude')
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_missing_lat_strict_flag(self):
+        """Test check fails for missing latitude with --cmor-check strict"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.remove_coord('latitude')
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_missing_time_strict_flag(self):
+        """Test check fails for missing time with --cmor-check strict"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.remove_coord('time')
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_missing_coord_strict_flag(self):
+        """Test check fails for missing coord other than lat and lon
+         with --cmor-check strict"""
+        self.cube = self.get_cube(self.var_info)
+        self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
+                                     }
+        self._check_fails_in_metadata(automatic_fixes=False)
+
+    def test_check_bad_var_standard_name_relaxed_flag(self):
+        """Test check reports warning for a bad variable standard_name with
+        --cmor-check relaxed."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.standard_name = 'wind_speed'
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.RELAXED)
+
+    def test_check_bad_var_long_name_relaxed_flag(self):
+        """Test check reports warning for a bad variable long_name with
+        --cmor-check relaxed."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.long_name = "Near-Surface Wind Speed"
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.RELAXED)
+
+    def test_check_bad_var_units_relaxed_flag(self):
+        """Test check reports warning for a bad variable units with
+        --cmor-check relaxed."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.units = "kg"
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.RELAXED)
+
+    def test_check_bad_attributes_relaxed_flag(self):
+        """Test check report warnings for a bad variable attribute with
+        --cmor-check relaxed."""
+        self.var_info.standard_name = "surface_upward_latent_heat_flux"
+        self.var_info.positive = "up"
+        self.cube = self.get_cube(self.var_info)
+        self.cube.attributes['positive'] = "Wrong attribute"
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.RELAXED)
+
+    def test_check_bad_rank_relaxed_flag(self):
+        """Test check report warnings for a bad variable rank with
+        --cmor-check relaxed."""
+        lat = iris.coords.AuxCoord.from_coord(self.cube.coord('latitude'))
+        self.cube.remove_coord('latitude')
+        self.cube.add_aux_coord(lat, self.cube.coord_dims('longitude'))
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.RELAXED)
+
+    def test_check_bad_coord_standard_name_relaxed_flag(self):
+        """Test check reports warning for bad coord var_name with
+        --cmor-check relaxed"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.coord('longitude').var_name = 'bad_name'
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.RELAXED)
+
+    def test_check_missing_lon_relaxed_flag(self):
+        """Test check fails for missing longitude with --cmor-check relaxed"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.remove_coord('longitude')
+        self._check_fails_in_metadata(automatic_fixes=False,
+                                      check_level=CheckLevels.RELAXED)
+
+    def test_check_missing_lat_relaxed_flag(self):
+        """Test check fails for missing latitude with --cmor-check relaxed"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.remove_coord('latitude')
+        self._check_fails_in_metadata(automatic_fixes=False,
+                                      check_level=CheckLevels.RELAXED)
+
+    def test_check_missing_time_relaxed_flag(self):
+        """Test check fails for missing latitude with --cmor-check relaxed"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.remove_coord('time')
+        self._check_fails_in_metadata(automatic_fixes=False,
+                                      check_level=CheckLevels.RELAXED)
+
+    def test_check_missing_coord_relaxed_flag(self):
+        """Test check reports warning for missing coord other than lat and lon
+        with --cmor-check relaxed"""
+        self.cube = self.get_cube(self.var_info)
+        self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
+                                     }
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.RELAXED)
+
+    def test_check_bad_var_standard_name_none_flag(self):
+        """Test check reports warning for a bad variable standard_name with
+        --cmor-check ignore."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.standard_name = 'wind_speed'
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def test_check_bad_var_long_name_none_flag(self):
+        """Test check reports warning for a bad variable long_name with
+        --cmor-check ignore."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.long_name = "Near-Surface Wind Speed"
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def test_check_bad_var_units_none_flag(self):
+        """Test check reports warning for a bad variable unit with
+        --cmor-check ignore."""
+        self.cube = self.get_cube(self.var_info)
+        self.cube.units = "kg"
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def test_check_bad_attributes_none_flag(self):
+        """Test check reports warning for a bad variable attribute with
+        --cmor-check ignore."""
+        self.var_info.standard_name = "surface_upward_latent_heat_flux"
+        self.var_info.positive = "up"
+        self.cube = self.get_cube(self.var_info)
+        self.cube.attributes['positive'] = "Wrong attribute"
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def test_check_bad_rank_none_flag(self):
+        """Test check reports warning for a bad variable rank with
+        --cmor-check ignore."""
+        lat = iris.coords.AuxCoord.from_coord(self.cube.coord('latitude'))
+        self.cube.remove_coord('latitude')
+        self.cube.add_aux_coord(lat, self.cube.coord_dims('longitude'))
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def test_check_bad_coord_standard_name_none_flag(self):
+        """Test check reports warning for bad coord var_name with
+        --cmor-check ignore."""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.coord('longitude').var_name = 'bad_name'
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def test_check_missing_lon_none_flag(self):
+        """Test check reports warning for missing longitude with
+        --cmor-check ignore"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.remove_coord('longitude')
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def test_check_missing_lat_none_flag(self):
+        """Test check reports warning for missing latitude with
+        --cmor-check ignore"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.remove_coord('latitude')
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def test_check_missing_time_none_flag(self):
+        """Test check reports warning for missing time
+        with --cmor-check ignore"""
+        self.var_info.table_type = 'CMIP5'
+        self.cube.remove_coord('time')
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def test_check_missing_coord_none_flag(self):
+        """Test check reports warning for missing coord other than lat, lon and
+        time with --cmor-check ignore"""
+        self.cube = self.get_cube(self.var_info)
+        self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
+                                     }
+        self._check_warnings_on_metadata(automatic_fixes=False,
+                                         check_level=CheckLevels.IGNORE)
+
+    def _check_fails_in_metadata(self, automatic_fixes=False, frequency=None,
+                                 check_level=CheckLevels.DEFAULT):
         checker = CMORCheck(
             self.cube,
             self.var_info,
             automatic_fixes=automatic_fixes,
-            frequency=frequency)
+            frequency=frequency,
+            check_level=check_level)
         with self.assertRaises(CMORCheckError):
             checker.check_metadata()
 
-    def _check_warnings_on_metadata(self, automatic_fixes=False):
+    def _check_warnings_on_metadata(self, automatic_fixes=False,
+                                    check_level=CheckLevels.DEFAULT):
         checker = CMORCheck(
-            self.cube, self.var_info,
-            warnings_as_errors=False,
-            automatic_fixes=automatic_fixes,
+            self.cube, self.var_info, automatic_fixes=automatic_fixes,
+            check_level=check_level
         )
         checker.check_metadata()
         self.assertTrue(checker.has_warnings())

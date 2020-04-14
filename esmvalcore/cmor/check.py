@@ -1,5 +1,6 @@
 """Module for checking iris cubes against their CMOR definitions."""
 import logging
+from enum import IntEnum
 
 import cf_units
 import iris.coord_categorisation
@@ -9,6 +10,19 @@ import iris.util
 import numpy as np
 
 from .table import CMOR_TABLES
+
+CheckLevels = IntEnum(
+    'CheckLevels', 'DEBUG STRICT DEFAULT RELAXED IGNORE')
+"""Level of strictness of the checks.
+
+   Attributes
+   ------
+   - DEBUG: Report any debug message that the checker wants to communicate.
+   - STRICT: Fail if there are warnings regarding compliance of CMOR standards.
+   - DEFAULT: Fail if cubes present any discrepancy with CMOR standards.
+   - RELAXED: Fail if cubes present severe discrepancies with CMOR standards.
+   - IGNORE: Do not fail for any discrepancy with CMOR standards.
+"""
 
 
 class CMORCheckError(Exception):
@@ -35,18 +49,13 @@ class CMORCheck():
     automatic_fixes: bool
         If True, CMORCheck will try to apply automatic fixes for any
         detected error, if possible.
-    warnings_as_errors: bool, default False
-        If True, CMORCheck will treat all warnings as errors
+    check_level: CheckLevels
+        Level of strictness of the checks.
 
     Attributes
     ----------
     frequency: str
         Expected frequency for the data.
-    automatic_fixes: bool
-        If True, CMORCheck will try to apply automatic fixes for any
-        detected error, if possible.
-    warnings_as_errors: bool
-         If True, CMORCheck will treat all warnings as errors
     """
 
     _attr_msg = '{}: {} should be {}, not {}'
@@ -60,11 +69,13 @@ class CMORCheck():
                  var_info,
                  frequency=None,
                  fail_on_error=False,
-                 automatic_fixes=False,
-                 warnings_as_errors=False):
+                 check_level=CheckLevels.DEFAULT,
+                 automatic_fixes=False):
 
         self._cube = cube
         self._failerr = fail_on_error
+        self._check_level = check_level
+        self._logger = logging.getLogger(__name__)
         self._errors = list()
         self._warnings = list()
         self._debug_messages = list()
@@ -73,7 +84,6 @@ class CMORCheck():
             frequency = self._cmor_var.frequency
         self.frequency = frequency
         self.automatic_fixes = automatic_fixes
-        self.warnings_as_errors = warnings_as_errors
 
     def check_metadata(self, logger=None):
         """
@@ -87,6 +97,12 @@ class CMORCheck():
             - Equivalent calendars will all default to the same name.
             - Time units will be set to days since 1850-01-01
 
+
+        Parameters
+        ----------
+        logger: logging.Logger
+            Given logger.
+
         Raises
         ------
         CMORCheckError
@@ -95,21 +111,59 @@ class CMORCheck():
             all checks and then raises.
 
         """
-        if logger is None:
-            logger = logging.getLogger(__name__)
+        if logger is not None:
+            self._logger = logger
 
         self._check_var_metadata()
         self._check_fill_value()
+        self._check_multiple_coords_same_stdname()
         self._check_dim_names()
         self._check_coords()
         if self.frequency != 'fx':
             self._check_time_coord()
+
         self._check_rank()
 
-        self.report_debug_messages(logger)
-        self.report_warnings(logger)
+        self.report_debug_messages()
+        self.report_warnings()
         self.report_errors()
 
+        return self._cube
+
+    def check_data(self, logger=None):
+        """Check the cube data.
+
+        Performs all the tests that require to have the data in memory.
+        Assumes that metadata is correct, so you must call check_metadata prior
+        to this.
+
+        It will also report some warnings in case of minor errors.
+
+        Parameters
+        ----------
+        logger: logging.Logger
+            Given logger.
+
+        Raises
+        ------
+        CMORCheckError
+            If errors are found. If fail_on_error attribute is set to True,
+            raises as soon as an error is detected. If set to False, it perform
+            all checks and then raises.
+
+        """
+        if logger is not None:
+            self._logger = logger
+
+        if self._cmor_var.units:
+            units = self._get_effective_units()
+            if str(self._cube.units) != units:
+                self._cube.convert_units(units)
+
+        self._check_coords_data()
+
+        self.report_warnings()
+        self.report_errors()
         return self._cube
 
     def report_errors(self):
@@ -127,62 +181,33 @@ class CMORCheck():
                              self._cube)
             raise CMORCheckError(msg)
 
-    def report_warnings(self, logger):
+    def report_warnings(self):
         """Report detected warnings to the given logger.
 
         Parameters
         ----------
-        logger
+        logger: logging.Logger
+            Given logger
 
         """
         if self.has_warnings():
             msg = 'There were warnings in variable {}:\n{}\n'.format(
                 self._cube.var_name, '\n '.join(self._warnings))
-            logger.warning(msg)
+            self._logger.warning(msg)
 
-    def report_debug_messages(self, logger):
+    def report_debug_messages(self):
         """Report detected debug messages to the given logger.
 
         Parameters
         ----------
-        logger
+        logger: logging.Logger
+            Given logger.
 
         """
         if self.has_debug_messages():
             msg = 'There were metadata changes in variable {}:\n{}\n'.format(
                 self._cube.var_name, '\n '.join(self._debug_messages))
-            logger.debug(msg)
-
-    def check_data(self, logger=None):
-        """Check the cube data.
-
-        Performs all the tests that require to have the data in memory.
-        Assumes that metadata is correct, so you must call check_metadata prior
-        to this.
-
-        It will also report some warnings in case of minor errors.
-
-        Raises
-        ------
-        CMORCheckError
-            If errors are found. If fail_on_error attribute is set to True,
-            raises as soon as an error is detected. If set to False, it perform
-            all checks and then raises.
-
-        """
-        if logger is None:
-            logger = logging.getLogger(__name__)
-
-        if self._cmor_var.units:
-            units = self._get_effective_units()
-            if str(self._cube.units) != units:
-                self._cube.convert_units(units)
-
-        self._check_coords_data()
-
-        self.report_warnings(logger)
-        self.report_errors()
-        return self._cube
+            self._logger.debug(msg)
 
     def _check_fill_value(self):
         """Check fill value."""
@@ -235,11 +260,17 @@ class CMORCheck():
 
         if self._cmor_var.units:
             units = self._get_effective_units()
-
-            if not self._cube.units.is_convertible(units):
-                self.report_error(f'Variable {self._cube.var_name} units '
-                                  f'{self._cube.units} can not be '
-                                  f'converted to {self._cmor_var.units}')
+            if self._cube.units != units:
+                if not self._cube.units.is_convertible(units):
+                    self.report_error(
+                        f'Variable {self._cube.var_name} units '
+                        f'{self._cube.units} can not be '
+                        f'converted to {self._cmor_var.units}')
+                else:
+                    self.report_warning(
+                        f'Variable {self._cube.var_name} units '
+                        f'{self._cube.units} will be '
+                        f'converted to {self._cmor_var.units}')
 
         # Check other variable attributes that match entries in cube.attributes
         attrs = ('positive', )
@@ -250,9 +281,10 @@ class CMORCheck():
                     self.report_warning('{}: attribute {} not present',
                                         self._cube.var_name, attr)
                 elif self._cube.attributes[attr] != attr_value:
-                    self.report_error(self._attr_msg, self._cube.var_name,
-                                      attr, attr_value,
-                                      self._cube.attributes[attr])
+                    self.report_error(
+                        self._attr_msg, self._cube.var_name,
+                        attr, attr_value,
+                        self._cube.attributes[attr])
 
     def _get_effective_units(self):
         """Get effective units."""
@@ -283,6 +315,21 @@ class CMORCheck():
             self.report_error(self._does_msg, self._cube.var_name,
                               'match coordinate rank')
 
+    def _check_multiple_coords_same_stdname(self):
+        standard_names = set()
+        for coord in self._cube.coords():
+            if coord.standard_name:
+                if coord.standard_name in standard_names:
+                    coords = [c.var_name for c in self._cube.coords(
+                        standard_name=coord.standard_name)
+                    ]
+                    self.report_error(
+                        'There are multiple coordinates with '
+                        f'standard_name "{coord.standard_name}": {coords}'
+                    )
+                else:
+                    standard_names.add(coord.standard_name)
+
     def _check_dim_names(self):
         """Check dimension names."""
         for (_, coordinate) in self._cmor_var.coordinates.items():
@@ -292,7 +339,7 @@ class CMORCheck():
                 try:
                     cube_coord = self._cube.coord(var_name=coordinate.out_name)
                     if cube_coord.standard_name != coordinate.standard_name:
-                        self.report_error(
+                        self.report_critical(
                             self._attr_msg,
                             coordinate.out_name,
                             'standard_name',
@@ -324,8 +371,14 @@ class CMORCheck():
                                 coordinate.out_name,
                             )
                     except iris.exceptions.CoordinateNotFoundError:
-                        self.report_error(self._does_msg, coordinate.name,
-                                          'exist')
+                        if coordinate.standard_name in ['time', 'latitude',
+                                                        'longitude'] or \
+                           coordinate.requested:
+                            self.report_critical(
+                                self._does_msg, coordinate.name, 'exist')
+                        else:
+                            self.report_error(
+                                self._does_msg, coordinate.name, 'exist')
 
     def _check_coords(self):
         """Check coordinates."""
@@ -369,15 +422,20 @@ class CMORCheck():
                 fixed = False
                 if self.automatic_fixes:
                     try:
+                        old_unit = coord.units
                         new_unit = cf_units.Unit(cmor.units,
                                                  coord.units.calendar)
                         coord.convert_units(new_unit)
                         fixed = True
+                        self.report_warning(
+                            f'Coordinate {coord.var_name} units '
+                            f'{str(old_unit)} '
+                            f'converted to {cmor.units}')
                     except ValueError:
                         pass
                 if not fixed:
-                    self.report_error(self._attr_msg, var_name, 'units',
-                                      cmor.units, coord.units)
+                    self.report_critical(self._attr_msg, var_name, 'units',
+                                         cmor.units, coord.units)
         self._check_coord_values(cmor, coord, var_name)
         self._check_coord_bounds(cmor, coord, var_name)
         self._check_coord_monotonicity_and_direction(cmor, coord, var_name)
@@ -408,20 +466,22 @@ class CMORCheck():
         if coord.ndim > 1:
             return
         if not coord.is_monotonic():
-            self.report_error(self._is_msg, var_name, 'monotonic')
+            self.report_critical(self._is_msg, var_name, 'monotonic')
         if len(coord.points) == 1:
             return
         if cmor.stored_direction:
             if cmor.stored_direction == 'increasing':
                 if coord.points[0] > coord.points[1]:
                     if not self.automatic_fixes or coord.ndim > 1:
-                        self.report_error(self._is_msg, var_name, 'increasing')
+                        self.report_critical(
+                            self._is_msg, var_name, 'increasing')
                     else:
                         self._reverse_coord(coord)
             elif cmor.stored_direction == 'decreasing':
                 if coord.points[0] < coord.points[1]:
                     if not self.automatic_fixes or coord.ndim > 1:
-                        self.report_error(self._is_msg, var_name, 'decreasing')
+                        self.report_critical(
+                            self._is_msg, var_name, 'decreasing')
                     else:
                         self._reverse_coord(coord)
 
@@ -446,8 +506,9 @@ class CMORCheck():
                         self.automatic_fixes:
                     l_fix_coord_value = True
                 else:
-                    self.report_error(self._vals_msg, var_name,
-                                      '< {} ='.format('valid_min'), valid_min)
+                    self.report_critical(
+                        self._vals_msg, var_name,
+                        '< {} ='.format('valid_min'), valid_min)
 
         if coord_info.valid_max:
             valid_max = float(coord_info.valid_max)
@@ -456,8 +517,9 @@ class CMORCheck():
                         self.automatic_fixes:
                     l_fix_coord_value = True
                 else:
-                    self.report_error(self._vals_msg, var_name,
-                                      '> {} ='.format('valid_max'), valid_max)
+                    self.report_critical(
+                        self._vals_msg, var_name,
+                        '> {} ='.format('valid_max'), valid_max)
 
         if l_fix_coord_value:
             if coord.ndim == 1:
@@ -511,8 +573,8 @@ class CMORCheck():
             )
 
         if not coord.units.is_time_reference():
-            self.report_error(self._does_msg, var_name,
-                              'have time reference units')
+            self.report_critical(self._does_msg, var_name,
+                                 'have time reference units')
         else:
             old_units = coord.units
             coord.convert_units(
@@ -647,7 +709,41 @@ class CMORCheck():
         """
         return len(self._debug_messages) > 0
 
-    def report_error(self, message, *args):
+    def report(self, level, message, *args):
+        """Generic method to report a message from the checker
+
+        Parameters
+        ----------
+        level : CheckLevels
+            Message level
+        message : str
+            Message to report
+        args :
+            String format args for the message
+
+        Raises
+        ------
+        CMORCheckError
+            If fail on error is set, it is thrown when registering an error
+            message
+        """
+        msg = message.format(*args)
+        if level == CheckLevels.DEBUG:
+            if self._failerr:
+                self._logger.debug(msg)
+            else:
+                self._debug_messages.append(msg)
+        elif level < self._check_level:
+            if self._failerr:
+                self._logger.warning(msg)
+            else:
+                self._warnings.append(msg)
+        else:
+            if self._failerr:
+                raise CMORCheckError(msg + '\nin cube:\n{}'.format(self._cube))
+            self._errors.append(msg)
+
+    def report_critical(self, message, *args):
         """Report an error.
 
         If fail_on_error is set to True, raises automatically.
@@ -661,16 +757,23 @@ class CMORCheck():
             arguments to format the message string.
 
         """
-        msg = message.format(*args)
-        if self._failerr:
-            raise CMORCheckError(msg + '\nin cube:\n{}'.format(self._cube))
-        self._errors.append(msg)
+        self.report(CheckLevels.RELAXED, message, *args)
+
+    def report_error(self, message, *args):
+        """Report a normal error.
+
+        Parameters
+        ----------
+        message: str: unicode
+            Message for the error.
+        *args:
+            arguments to format the message string.
+
+        """
+        self.report(CheckLevels.DEFAULT, message, *args)
 
     def report_warning(self, message, *args):
-        """Report a warning.
-
-        If fail_on_error is set to True, logs it automatically.
-        If fail_on_error is set to False, stores it for later reports.
+        """Report a warning level error.
 
         Parameters
         ----------
@@ -680,15 +783,7 @@ class CMORCheck():
             arguments to format the message string.
 
         """
-        if self.warnings_as_errors:
-            self.report_error(message, *args)
-            return
-
-        msg = message.format(*args)
-        if self._failerr:
-            print('WARNING: {0}'.format(msg))
-        else:
-            self._warnings.append(msg)
+        self.report(CheckLevels.STRICT, message, *args)
 
     def report_debug_message(self, message, *args):
         """Report a debug message.
@@ -701,15 +796,15 @@ class CMORCheck():
             arguments to format the message string
 
         """
-        msg = message.format(*args)
-        self._debug_messages.append(msg)
+        self.report(CheckLevels.DEBUG, message, *args)
 
 
 def _get_cmor_checker(table,
                       mip,
                       short_name,
                       frequency,
-                      fail_on_error=True,
+                      fail_on_error=False,
+                      check_level=CheckLevels.DEFAULT,
                       automatic_fixes=False):
     """Get a CMOR checker/fixer."""
     if table not in CMOR_TABLES:
@@ -729,13 +824,16 @@ def _get_cmor_checker(table,
             var_info,
             frequency=frequency,
             fail_on_error=fail_on_error,
+            check_level=check_level,
             automatic_fixes=automatic_fixes)
 
     return _checker
 
 
-def cmor_check_metadata(cube, cmor_table, mip, short_name, frequency):
-    """Check if metadata conforms to variable's CMOR definition.
+def cmor_check_metadata(cube, cmor_table, mip,
+                        short_name, frequency,
+                        check_level=CheckLevels.DEFAULT):
+    """Check if metadata conforms to variable's CMOR definiton.
 
     None of the checks at this step will force the cube to load the data.
 
@@ -751,15 +849,20 @@ def cmor_check_metadata(cube, cmor_table, mip, short_name, frequency):
         Variable's short name.
     frequency: basestring
         Data frequency.
+    check_level: CheckLevels
+        Level of strictness of the checks.
 
     """
-    checker = _get_cmor_checker(cmor_table, mip, short_name, frequency)
+    checker = _get_cmor_checker(cmor_table, mip,
+                                short_name, frequency,
+                                check_level=check_level)
     checker(cube).check_metadata()
     return cube
 
 
-def cmor_check_data(cube, cmor_table, mip, short_name, frequency):
-    """Check if data conforms to variable's CMOR definition.
+def cmor_check_data(cube, cmor_table, mip, short_name, frequency,
+                    check_level=CheckLevels.DEFAULT):
+    """Check if data conforms to variable's CMOR definiton.
 
     The checks performed at this step require the data in memory.
 
@@ -775,15 +878,18 @@ def cmor_check_data(cube, cmor_table, mip, short_name, frequency):
         Variable's short name
     frequency: basestring
         Data frequency
+    check_level: CheckLevels
+        Level of strictness of the checks.
 
     """
-    checker = _get_cmor_checker(cmor_table, mip, short_name, frequency)
+    checker = _get_cmor_checker(cmor_table, mip, short_name, frequency,
+                                check_level=check_level)
     checker(cube).check_data()
     return cube
 
 
-def cmor_check(cube, cmor_table, mip, short_name, frequency):
-    """Check if cube conforms to variable's CMOR definition.
+def cmor_check(cube, cmor_table, mip, short_name, frequency, check_level):
+    """Check if cube conforms to variable's CMOR definiton.
 
     Equivalent to calling cmor_check_metadata and cmor_check_data
     consecutively.
@@ -800,8 +906,12 @@ def cmor_check(cube, cmor_table, mip, short_name, frequency):
         Variable's short name.
     frequency: basestring
         Data frequency.
+    check_level: enum.IntEnum
+        Level of strictness of the checks.
 
     """
-    cmor_check_metadata(cube, cmor_table, mip, short_name, frequency)
-    cmor_check_data(cube, cmor_table, mip, short_name, frequency)
+    cmor_check_metadata(cube, cmor_table, mip, short_name, frequency,
+                        check_level=check_level)
+    cmor_check_data(cube, cmor_table, mip, short_name, frequency,
+                    check_level=check_level)
     return cube

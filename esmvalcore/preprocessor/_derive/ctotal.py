@@ -9,14 +9,18 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `ctotal`."""
 
     # Required variables
-    required = [
-        {
-            'short_name': 'cVeg'
-        },
-        {
-            'short_name': 'cSoil'
-        },
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [
+            {
+                'short_name': 'cVeg'
+            },
+            {
+                'short_name': 'cSoil'
+            },
+        ]
+        return required
 
     @staticmethod
     def calculate(cubes):
