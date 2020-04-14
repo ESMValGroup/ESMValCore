@@ -86,7 +86,7 @@ def _apply_fx_mask(fx_mask, var_data):
     return var_data
 
 
-def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
+def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
     """
     Mask out either land mass or sea (oceans, seas and lakes).
 
@@ -100,7 +100,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
     cube: iris.cube.Cube
         data cube to be masked.
 
-    fx_files: dict
+    fx_variables: dict
         dict: keys: fx variables, values: full paths to fx files.
 
     mask_out: str
@@ -131,7 +131,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
-    fx_files = fx_files.values()
+    fx_files = fx_variables.values()
     if any(fx_files) and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
@@ -181,7 +181,7 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
     return cube
 
 
-def mask_landseaice(cube, fx_files, mask_out):
+def mask_landseaice(cube, fx_variables, mask_out):
     """
     Mask out either landsea (combined) or ice.
 
@@ -193,7 +193,7 @@ def mask_landseaice(cube, fx_files, mask_out):
     cube: iris.cube.Cube
         data cube to be masked.
 
-    fx_files: dict
+    fx_variables: dict
         dict: keys: fx variables, values: full paths to fx files.
 
     mask_out: str
@@ -209,11 +209,11 @@ def mask_landseaice(cube, fx_files, mask_out):
     ValueError
         Error raised if fx mask and data have different dimensions.
     ValueError
-        Error raised if fx_files list is empty.
+        Error raised if fx files list is empty.
 
     """
     # sftgif is the only one so far but users can set others
-    fx_files = fx_files.values()
+    fx_files = fx_variables.values()
     if any(fx_files):
         for fx_file in fx_files:
             fx_cube = iris.load_cube(fx_file)
