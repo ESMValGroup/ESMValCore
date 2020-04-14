@@ -313,7 +313,7 @@ experiment is preferred for fx data retrieval:
         weighting_landsea_fraction:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
-          fx_files: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
 
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
@@ -376,7 +376,7 @@ experiment is preferred for fx data retrieval:
       landmask:
         mask_landsea:
           mask_out: sea
-          fx_files: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
 
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
@@ -404,7 +404,7 @@ losing generality. To mask ice out, ``mask_landseaice`` can be used:
 and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
 As in the case of ``mask_landsea``, the preprocessor automatically retrieves
-the ``fx_files: [sftgif]`` mask.
+the ``fx_variables: [sftgif]`` mask.
 
 Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
 experiment is preferred for fx data retrieval:
@@ -416,7 +416,7 @@ experiment is preferred for fx data retrieval:
       landseaicemask:
         mask_landseaice:
           mask_out: sea
-          fx_files: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+          fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
 
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
@@ -437,37 +437,6 @@ glaciated areas out, ``mask_glaciated`` can be used:
 and it requires only one argument: ``mask_out``: only ``glaciated``.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
-
-Mask files
-----------
-
-At the core of the land/sea/ice masking in the preprocessor are the mask files
-(whether it be fx type or Natural Earth type of files); these files (bar
-Natural Earth) can be retrieved and used in the diagnostic phase as well. By
-specifying the ``fx_files:`` key in the variable in diagnostic in the recipe,
-and populating it with a list of desired files e.g.:
-
-.. code-block:: yaml
-
-    variables:
-      ta:
-        preprocessor: my_masking_preprocessor
-          fx_files: [sftlf, sftof, sftgif, areacello, areacella]
-
-Such a recipe will automatically retrieve all the ``fx_files: [sftlf, sftof,
-sftgif, areacello, areacella]``-type fx files for each of the variables they
-are needed for and then, in the diagnostic phase, these mask files will be
-available for the developer to use them as they need to. The `fx_files`
-attribute of the big `variable` nested dictionary that gets passed to the
-diagnostic is, in turn, a dictionary on its own, and members of it can be
-accessed in the diagnostic through a simple loop over the ``config`` diagnostic
-variable items e.g.:
-
-.. code-block:: python
-
-    for filename, attributes in config['input_data'].items():
-        sftlf_file = attributes['fx_files']['sftlf']
-        areacello_file = attributes['fx_files']['areacello']
 
 .. _masking of missing values:
 
@@ -1213,7 +1182,7 @@ This function takes the argument: ``operator``, which defines the operation to
 apply over the volume.
 
 No depth coordinate is required as this is determined by Iris. This function
-works best when the ``fx_files`` provide the cell volume.
+works best when the ``fx_variables`` provide the cell volume.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
