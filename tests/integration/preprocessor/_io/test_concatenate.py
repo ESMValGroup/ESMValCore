@@ -258,7 +258,7 @@ class TestConcatenate(unittest.TestCase):
         concatenated = _io.concatenate(self.raw_cubes)
         np.testing.assert_array_equal(
             concatenated.coord('time').points,
-            np.array([1., 2., 3., 4., 5., 6., 1000., 7000.]))
+            np.array([1., 2., 3., 200., 1000., 7000.]))
 
     def test_concatenate_with_overlap_same_start(self):
         """Test a more generic case."""
@@ -340,7 +340,7 @@ class TestConcatenate(unittest.TestCase):
             Cube([33., 55.],
                  var_name='sample',
                  dim_coords_and_dims=((time_coord, 0), )))
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             _io.concatenate(self.raw_cubes)
 
     def test_fail_on_units_concatenate_with_overlap(self):
@@ -379,6 +379,7 @@ class TestConcatenate(unittest.TestCase):
     def test_fail_metadata_differs(self):
         """Test exception raised if two cubes have different metadata."""
         self.raw_cubes[0].units = 'm'
+        self.raw_cubes[1].units = 'K'
         with self.assertRaises(ValueError):
             _io.concatenate(self.raw_cubes)
 
