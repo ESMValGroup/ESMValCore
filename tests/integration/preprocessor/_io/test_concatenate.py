@@ -253,12 +253,22 @@ class TestConcatenate(unittest.TestCase):
 
     def test_concatenate_with_overlap_2(self):
         """Test a more generic case."""
-        self._add_cube([65., 75.], [3., 200.])
-        self._add_cube([65., 75.], [1000., 7000.])
+        self._add_cube([65., 75., 100.], [9., 10., 11.])
+        self._add_cube([65., 75., 100.], [7., 8., 9.])
         concatenated = _io.concatenate(self.raw_cubes)
         np.testing.assert_array_equal(
             concatenated.coord('time').points,
-            np.array([1., 2., 3., 200., 1000., 7000.]))
+            np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11.]))
+
+    def test_concatenate_with_overlap_3(self):
+        """Test a more generic case."""
+        self._add_cube([65., 75., 100.], [9., 10., 11.])
+        self._add_cube([65., 75., 100., 100., 100., 112.],
+                       [7., 8., 9., 10., 11., 12.])
+        concatenated = _io.concatenate(self.raw_cubes)
+        np.testing.assert_array_equal(
+            concatenated.coord('time').points,
+            np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]))
 
     def test_concatenate_with_overlap_same_start(self):
         """Test a more generic case."""
