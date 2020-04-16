@@ -185,8 +185,10 @@ def concatenate(cubes):
 
     if len(cubes) > 2:
         cubes_dict = {cube: cube.coord("time").points[0] for cube in cubes}
-        cubes_dict = OrderedDict({k: v for k, v in sorted(cubes_dict.items(),
-            key=lambda item: item[1])})
+        cubes_dict = OrderedDict(
+            {k: v for k, v in sorted(cubes_dict.items(),
+                                     key=lambda item: item[1])}
+        )
         cubes = [item[0] for item in cubes_dict.items()]
         concatenated = iris.cube.CubeList([cubes[0], cubes[1]]).concatenate()
         if len(concatenated) == 2:
