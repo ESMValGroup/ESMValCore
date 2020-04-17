@@ -12,12 +12,12 @@ def cubes():
     c_soil_cube = iris.cube.Cube([[1.0, 2.0],
                                   [0.0, 20.0]],
                                  units='kg m-2',
-                                 standard_name='soil_carbon_content')
+                                 var_name='cSoil')
 
     c_veg_cube = iris.cube.Cube([[10.0, 20.0],
                                  [50.0, 100.0]],
                                 units='kg m-2',
-                                standard_name='vegetation_carbon_content')
+                                var_name='cVeg')
     return iris.cube.CubeList([c_soil_cube, c_veg_cube])
 
 
