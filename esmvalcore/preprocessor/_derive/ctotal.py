@@ -1,8 +1,8 @@
 """Derivation of variable `ctotal`."""
 
-from iris import Constraint
-
 from ._baseclass import DerivedVariableBase
+
+from ._shared import var_name_constraint
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -12,23 +12,36 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
-            {
-                'short_name': 'cVeg'
-            },
-            {
-                'short_name': 'cSoil'
-            },
-        ]
+        if project == 'CMIP6':
+            required = [
+                {
+                    'short_name': 'cVeg',
+                    'mip': 'Lmon'
+                },
+                {
+                    'short_name': 'cSoil',
+                    'mip': 'Emon'
+                },
+            ]
+        else:
+            required = [
+                {
+                    'short_name': 'cVeg',
+                    'mip': 'Lmon'
+                },
+                {
+                    'short_name': 'cSoil',
+                    'mip': 'Lmon'
+                },
+            ]
+
         return required
 
     @staticmethod
     def calculate(cubes):
         """Compute total ecosystem carbon storage."""
-        c_soil_cube = cubes.extract_strict(
-            Constraint(name='soil_carbon_content'))
-        c_veg_cube = cubes.extract_strict(
-            Constraint(name='vegetation_carbon_content'))
+        c_soil_cube = cubes.extract_strict(var_name_constraint('cSoil'))
+        c_veg_cube = cubes.extract_strict(var_name_constraint('cVeg'))
         c_total_cube = c_soil_cube + c_veg_cube
         c_total_cube.standard_name = None
         c_total_cube.long_name = 'Total Carbon Stock'
