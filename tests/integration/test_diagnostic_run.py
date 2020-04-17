@@ -2,6 +2,7 @@
 import contextlib
 import shutil
 import sys
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -109,8 +110,31 @@ SCRIPTS = {
 }
 
 
-@pytest.mark.installation
-@pytest.mark.parametrize('script_file, script', SCRIPTS.items())
+def interpreter_not_installed(script):
+    """Check if an interpreter is installed for script."""
+    interpreters = {
+        '.jl': 'julia',
+        '.ncl': 'ncl',
+        '.py': 'python',
+        '.R': 'Rscript',
+    }
+    ext = Path(script).suffix
+    interpreter = interpreters[ext]
+    return shutil.which(interpreter) is None
+
+
+@pytest.mark.parametrize('script_file, script', [
+    pytest.param(
+        script,
+        content,
+        marks=[
+            pytest.mark.installation,
+            pytest.mark.xfail(interpreter_not_installed(script),
+                              run=False,
+                              reason="Interpreter not available"),
+        ],
+    ) for script, content in SCRIPTS.items()
+])
 def test_diagnostic_run(tmp_path, script_file, script):
 
     recipe_file = tmp_path / 'recipe_test.yml'
@@ -136,18 +160,12 @@ def test_diagnostic_run(tmp_path, script_file, script):
     recipe_file.write_text(str(recipe))
 
     config_user_file = write_config_user_file(tmp_path)
-    ncl_diag = r_diag = False
-    if shutil.which('ncl') is not None and script == "diagnostic.ncl":
-        ncl_diag = True
-    elif shutil.which('Rscript') is not None and script == "diagnostic.R":
-        r_diag = True
-    if ncl_diag or r_diag:
-        with arguments(
-                'esmvaltool',
-                '-c',
-                config_user_file,
-                str(recipe_file),
-        ):
-            run()
+    with arguments(
+            'esmvaltool',
+            '-c',
+            config_user_file,
+            str(recipe_file),
+    ):
+        run()
 
-        check(result_file)
+    check(result_file)
