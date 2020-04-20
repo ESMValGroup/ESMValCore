@@ -269,7 +269,7 @@ def volume_statistics(
         # ####
         # Calculate weighted mean over the water volumn;
         # account for masked array
-        if np.all(np.ma.average(column, weights=depth_volume)) == True:
+        if np.all(np.ma.average(column, weights=depth_volume)):
             logger.debug(f"Column at indeces time={time_itr} and "
                          f"z={z_itr} is fully masked")
         result[time_itr] = np.ma.average(column, weights=depth_volume)
