@@ -231,7 +231,7 @@ def volume_statistics(
 
     # #####
     # Calculate global volume weighted average
-    result = []
+    result = np.ma.zeros(cube.shape[t_dim],)
     # #####
     # iterate over time and z-coordinate dimensions.
     for time_itr in range(cube.shape[t_dim]):
@@ -267,13 +267,16 @@ def volume_statistics(
                 layer_vol = grid_volume.sum()
             depth_volume.append(layer_vol)
         # ####
-        # Calculate weighted mean over the water volumn
-        result.append(np.average(column, weights=depth_volume))
+        # Calculate weighted mean over the water volumn;
+        # account for masked array
+        if np.all(np.ma.average(column, weights=depth_volume)) == True:
+            logger.debug(f"Column at indeces time={time_itr} and "
+                         f"z={z_itr} is fully masked")
+        result[time_itr] = np.ma.average(column, weights=depth_volume)
 
     # ####
     # Send time series and dummy cube to cube creating tool.
     times = np.array(cube.coord('time').points.astype(float))
-    result = np.array(result)
 
     # #####
     # Create a small dummy output array for the output cube
