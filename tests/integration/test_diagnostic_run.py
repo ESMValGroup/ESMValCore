@@ -125,15 +125,15 @@ def interpreter_not_installed(script):
 
 @pytest.mark.parametrize('script_file, script', [
     pytest.param(
+        script_file,
         script,
-        content,
         marks=[
             pytest.mark.installation,
-            pytest.mark.xfail(interpreter_not_installed(script),
+            pytest.mark.xfail(interpreter_not_installed(script_file),
                               run=False,
                               reason="Interpreter not available"),
         ],
-    ) for script, content in SCRIPTS.items()
+    ) for script_file, script in SCRIPTS.items()
 ])
 def test_diagnostic_run(tmp_path, script_file, script):
 
