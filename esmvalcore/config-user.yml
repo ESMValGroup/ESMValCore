@@ -53,6 +53,7 @@ rootpath:
 # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
 drs:
+  # JASMIN: BADC
   CMIP5: default
   CORDEX: default
   OBS: default
