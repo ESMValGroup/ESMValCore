@@ -268,11 +268,16 @@ def volume_statistics(
             depth_volume.append(layer_vol)
         # ####
         # Calculate weighted mean over the water volumn;
-        # account for masked array
-        if np.all(np.ma.average(column, weights=depth_volume)):
-            logger.debug(f"Column at indeces time={time_itr} and "
+        # account for masked array and nan vals from weights fully masked
+        avg_vol = np.ma.average(column, weights=depth_volume)
+        if np.ma.is_masked(avg_vol) and np.all(avg_vol.mask):
+            logger.debug(f"Column at indices time={time_itr} and "
                          f"z={z_itr} is fully masked")
-        result[time_itr] = np.ma.average(column, weights=depth_volume)
+        if np.isnan(avg_vol):
+            logger.debug(f"Column at indices time={time_itr} and "
+                         f"z={z_itr} has fully masked weights, masking it fully too.")
+            avg_vol = np.ma.array(0, mask=True)
+        result[time_itr] = avg_vol
 
     # ####
     # Send time series and dummy cube to cube creating tool.
