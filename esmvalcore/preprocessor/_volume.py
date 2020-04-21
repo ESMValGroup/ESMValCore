@@ -273,9 +273,10 @@ def volume_statistics(
         if np.ma.is_masked(avg_vol) and np.all(avg_vol.mask):
             logger.debug(f"Column at indices time={time_itr} and "
                          f"z={z_itr} is fully masked")
-        if np.isnan(avg_vol):
+        elif np.isnan(avg_vol):
             logger.debug(f"Column at indices time={time_itr} and "
-                         f"z={z_itr} has fully masked weights, masking it fully too.")
+                         f"z={z_itr} has fully masked weights, "
+                         f"masking it fully too.")
             avg_vol = np.ma.array(0, mask=True)
         result[time_itr] = avg_vol
 
