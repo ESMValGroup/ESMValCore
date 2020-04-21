@@ -277,8 +277,10 @@ def volume_statistics(
             logger.debug(f"Column at indices time={time_itr} and "
                          f"z={z_itr} has fully masked weights, "
                          f"masking it fully too.")
-            avg_vol = np.ma.array(0, mask=True)
         result[time_itr] = avg_vol
+
+    # replace nan values with masked
+    result = np.ma.masked_where(np.isnan(result), result)
 
     # ####
     # Send time series and dummy cube to cube creating tool.
