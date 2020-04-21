@@ -110,6 +110,14 @@ class Test(tests.Test):
         expected = np.ma.array([1., 1.], mask=[True, True])
         self.assert_array_equal(result.data, expected)
 
+    def test_volume_statistics_nan_masked(self):
+        """Test to take the volume weighted average of a (2,3,2,2) cube."""
+        grid_4d_nan = self.grid_4d
+        grid_4d_nan.data[1] = np.nan
+        result = volume_statistics(grid_4d_nan, 'mean')
+        expected = np.ma.array([1., np.nan], mask=[False, True])
+        self.assert_array_equal(result.data, expected)
+
     def test_volume_statistics_long(self):
         """
         Test to take the volume weighted average of a (4,3,2,2) cube.
