@@ -17,19 +17,23 @@ class DerivedVariable(DerivedVariableBase):
         if project == 'CMIP5':
             required = [
                 {
-                    'short_name': 'cVeg', 'mip': 'Lmon'
+                    'short_name': 'cVeg',
+                    'mip': 'Lmon'
                 },
                 {
-                    'short_name': 'cSoil', 'mip': 'Lmon'
+                    'short_name': 'cSoil',
+                    'mip': 'Lmon'
                 },
             ]
         elif project == 'CMIP6':
             required = [
                 {
-                    'short_name': 'cVeg', 'mip': 'Lmon'
+                    'short_name': 'cVeg',
+                    'mip': 'Lmon'
                 },
                 {
-                    'short_name': 'cSoil', 'mip': 'Emon'
+                    'short_name': 'cSoil',
+                    'mip': 'Emon'
                 },
             ]
         return required
@@ -47,8 +51,7 @@ class DerivedVariable(DerivedVariableBase):
             except iris.exceptions.ConstraintMismatchError:
                 raise ValueError(f"No cube from {cubes} can be loaded with "
                                  f"standard name CMIP5: soil_carbon_content "
-                                 f"or CMIP6: soil_mass_content_of_carbon"
-                )
+                                 f"or CMIP6: soil_mass_content_of_carbon")
         c_veg_cube = cubes.extract_strict(
             Constraint(name='vegetation_carbon_content'))
         c_total_cube = c_soil_cube + c_veg_cube
