@@ -10,23 +10,20 @@ import esmvalcore.preprocessor._derive.ctotal as ctotal
 @pytest.fixture
 def cubes(project):
     if project == 'CMIP5':
-        c_soil_cube = iris.cube.Cube([[1.0, 2.0],
-                                      [0.0, 20.0]],
+        c_soil_cube = iris.cube.Cube([[1.0, 2.0], [0.0, 20.0]],
                                      units='kg m-2',
                                      standard_name='soil_carbon_content')
     elif project == 'CMIP6':
-        c_soil_cube = iris.cube.Cube([[1.0, 2.0],
-                                      [0.0, 20.0]],
-                                     units='kg m-2',
-                                     standard_name='soil_mass_content_of_carbon')
+        c_soil_cube = iris.cube.Cube(
+            [[1.0, 2.0], [0.0, 20.0]],
+            units='kg m-2',
+            standard_name='soil_mass_content_of_carbon')
     elif project == 'CMIPX':
-        c_soil_cube = iris.cube.Cube([[1.0, 2.0],
-                                      [0.0, 20.0]],
+        c_soil_cube = iris.cube.Cube([[1.0, 2.0], [0.0, 20.0]],
                                      units='kg m-2',
                                      standard_name='air_temperature')
 
-    c_veg_cube = iris.cube.Cube([[10.0, 20.0],
-                                 [50.0, 100.0]],
+    c_veg_cube = iris.cube.Cube([[10.0, 20.0], [50.0, 100.0]],
                                 units='kg m-2',
                                 standard_name='vegetation_carbon_content')
     return iris.cube.CubeList([c_soil_cube, c_veg_cube])
@@ -36,9 +33,8 @@ def _run_test(cubes):
     """Run the actual test on cubes list."""
     derived_var = ctotal.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
-    np.testing.assert_allclose(
-        out_cube.data, np.array([[11.0, 22.0],
-                                 [50.0, 120.0]]))
+    np.testing.assert_allclose(out_cube.data,
+                               np.array([[11.0, 22.0], [50.0, 120.0]]))
     assert out_cube.units == Unit('kg m-2')
 
 
