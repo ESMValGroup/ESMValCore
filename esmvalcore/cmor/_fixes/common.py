@@ -3,6 +3,8 @@ import iris
 
 from .fix import Fix
 from .shared import add_plev_from_altitude, fix_bounds
+import numpy as np
+from scipy.ndimage import map_coordinates
 
 
 class ClFixHybridHeightCoord(Fix):
@@ -101,3 +103,84 @@ class ClFixHybridPressureCoord(Fix):
         cube.coord(var_name='ps').attributes = {}
 
         return iris.cube.CubeList([cube])
+
+
+class OceanFixGrid(Fix):
+
+    """Fixes for tos, siconc in FGOALS-g3."""
+
+    def fix_data(self, cube):
+        """Fix data.
+        Calculate missing latitude/longitude boundaries using interpolation.
+        Based on a similar fix for BCC-CSM2-MR
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Input cube to fix.
+        Returns
+        -------
+        iris.cube.Cube
+        """
+
+        rlat = cube.coord('grid_latitude').points
+        rlon = cube.coord('grid_longitude').points
+
+        #Guess coordinate bounds in rlat, rlon (following BCC-CSM2-MR-1).
+        rlat_idx_bnds = np.zeros((len(rlat),2))
+        rlat_idx_bnds[:,0]=np.arange(len(rlat))-0.5
+        rlat_idx_bnds[:,1]=np.arange(len(rlat))+0.5
+        rlat_idx_bnds[0,0]=0.
+        rlat_idx_bnds[len(rlat)-1,1]=len(rlat)
+        rlon_idx_bnds = np.zeros((len(rlon),2))
+        rlon_idx_bnds[:,0]=np.arange(len(rlon))-0.5
+        rlon_idx_bnds[:,1]=np.arange(len(rlon))+0.5
+        
+        # Calculate latitude/longitude vertices by interpolation
+        lat_vertices = []
+        lon_vertices = []
+        for (i, j) in [(0, 0), (0, 1), (1, 1), (1, 0)]:
+            (rlat_v, rlon_v) = np.meshgrid(rlat_idx_bnds[:, i],
+                                           rlon_idx_bnds[:, j],
+                                           indexing='ij')
+            lat_vertices.append(
+                map_coordinates(cube.coord('latitude').points,
+                                [rlat_v, rlon_v],
+                                mode='nearest'))
+            lon_vertices.append(
+                map_coordinates(cube.coord('longitude').points,
+                                [rlat_v, rlon_v],
+                                mode='wrap'))
+        lat_vertices = np.array(lat_vertices)
+        lon_vertices = np.array(lon_vertices)
+        lat_vertices = np.moveaxis(lat_vertices, 0, -1)
+        lon_vertices = np.moveaxis(lon_vertices, 0, -1)
+
+        # Copy vertices to cube
+        cube.coord('latitude').bounds = lat_vertices
+        cube.coord('longitude').bounds = lon_vertices
+
+        return cube
+
+    def fix_metadata(self, cubes):
+        """Rename ``var_name`` of 1D-``latitude`` and 1D-``longitude``.
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        cube = self.get_cube_from_list(cubes)
+        lat_coord = cube.coord('cell index along second dimension', dimensions=(1, ))
+        lon_coord = cube.coord('cell index along first dimension', dimensions=(2, ))
+        lat_coord.standard_name = None
+        lat_coord.long_name = 'grid_latitude'
+        lat_coord.var_name = 'i'
+        lat_coord.units = '1'
+        lon_coord.standard_name = None
+        lon_coord.long_name = 'grid_longitude'
+        lon_coord.var_name = 'j'
+        lon_coord.units = '1'
+        lon_coord.circular = False
+        return cubes
