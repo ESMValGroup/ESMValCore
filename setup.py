@@ -50,7 +50,7 @@ REQUIREMENTS = {
         'pytest>=3.9',
         'pytest-cov',
         'pytest-env',
-        'pytest-flake8',
+        'pytest-flake8=1.0.4',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
     ],
