@@ -9,7 +9,7 @@ from netCDF4 import Dataset
 from esmvalcore.cmor._fixes.common import (ClFixHybridHeightCoord,
                                            ClFixHybridPressureCoord)
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.preprocessor._derive._shared import var_name_constraint
+from esmvalcore.iris_helpers import var_name_constraint
 
 
 def create_hybrid_pressure_file_without_ap(dataset, short_name):
