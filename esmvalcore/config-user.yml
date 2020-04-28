@@ -86,3 +86,15 @@ profile_diagnostic: false
 #  CMIP6: DKRZ
 #  CMIP5: DKRZ
 #  CMIP3: DKRZ
+
+# Site-specific entries: ETHZ
+# Uncomment the lines below to locate data at ETHZ
+#rootpath:
+#  CMIP6: /net/atmos/data/cmip6
+#  CMIP5: /net/atmos/data/cmip5
+#  CMIP3: /net/atmos/data/cmip3
+#  OBS: /net/exo/landclim/PROJECTS/C3S/datadir/obsdir/
+#drs:
+#  CMIP6: ETHZ
+#  CMIP5: ETHZ
+#  CMIP3: ETHZ
