@@ -147,16 +147,20 @@ def _by_two_concatenation(concatenated):
     try:
         concatenated[0].coord('time')
         concatenated[1].coord('time')
-    except iris.exceptions.CoordinateNotFoundError:
-        pass
+    except iris.exceptions.CoordinateNotFoundError as exc:
+        msg = "One or both cubes {} is missing".format(concatenated) + \
+              " time coordinate: {}".format(str(exc))
+        raise ValueError(msg)
     else:
-        concatenated = _concatenate_overlapping_cubes(concatenated)
-    if len(concatenated) >= 2:
-        _get_concatenation_error(concatenated)
-    else:
-        concatenated = concatenated[0]
-
-    return concatenated
+        concatenated = iris.cube.CubeList(concatenated).concatenate()
+        if len(concatenated) < 2:
+            return concatenated[0]
+        else:
+            concatenated = _concatenate_overlapping_cubes(concatenated)
+            if len(concatenated) == 2:
+                _get_concatenation_error(concatenated)
+            else:
+                return concatenated[0]
 
 
 def _get_concatenation_error(cubes):
@@ -170,12 +174,9 @@ def _get_concatenation_error(cubes):
     logger.error('Resulting cubes:')
     for cube in cubes:
         logger.error(cube)
-        try:
-            time = cube.coord('time')
-        except iris.exceptions.CoordinateNotFoundError:
-            pass
-        else:
-            logger.error('From %s to %s', time.cell(0), time.cell(-1))
+        time = cube.coord("time")
+        logger.error('From %s to %s', time.cell(0), time.cell(-1))
+
     raise ValueError(f'Can not concatenate cubes: {msg}')
 
 
@@ -184,34 +185,28 @@ def concatenate(cubes):
     _fix_cube_attributes(cubes)
 
     if len(cubes) > 2:
+        # order cubes by first time point
         cubes_dict = {cube: cube.coord("time").points[0] for cube in cubes}
-        cubes_dict = OrderedDict(
-            {k: v for k, v in sorted(cubes_dict.items(),
-                                     key=lambda item: item[1])}
-        )
+        cubes_dict = {
+            k: v for k, v in sorted(cubes_dict.items(),
+                                    key=lambda item: item[1])
+        }
         cubes = [item[0] for item in cubes_dict.items()]
-        concatenated = iris.cube.CubeList([cubes[0], cubes[1]]).concatenate()
-        if len(concatenated) == 2:
-            concatenated = _by_two_concatenation(concatenated)
-        else:
-            concatenated = concatenated[0]
-        for i in range(2, len(cubes)):
-            concatenated = [concatenated, cubes[i]]
-            concatenated = iris.cube.CubeList(concatenated).concatenate()
-            if len(concatenated) == 2:
-                concatenated = _by_two_concatenation(concatenated)
-            else:
-                concatenated = concatenated[0]
+
+        # iteratively concatenate starting with first cube
+        result = cubes[0]
+        for cube in cubes[1:]:
+            result = _by_two_concatenation([result, cube])
     else:
-        concatenated = iris.cube.CubeList(cubes).concatenate()
-        if len(concatenated) == 2:
-            concatenated = _by_two_concatenation(cubes)
+        result = iris.cube.CubeList(cubes).concatenate()
+        if len(result) == 2:
+            result = _by_two_concatenation(cubes)
+        else:
+            result = result[0]
 
-    if isinstance(concatenated, iris.cube.CubeList):
-        concatenated = concatenated[0]
-    _fix_aux_factories(concatenated)
+    _fix_aux_factories(result)
 
-    return concatenated
+    return result
 
 
 def save(cubes, filename, optimize_access='', compress=False, **kwargs):
