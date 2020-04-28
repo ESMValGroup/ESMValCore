@@ -25,8 +25,11 @@ def amplitude(cube, coords):
         extract the annual cycle amplitude for each year in the data or
         ``['day_of_year', 'year']`` to extract the diurnal cycle amplitude for
         each individual day in the data. If the coordinates are not found in
-        ``cube``, try to add it via :mod:`iris.coord_categorisation` (this only
-        works for temporal coordinates).
+        ``cube``, try to add it via :mod:`iris.coord_categorisation` (at the
+        moment, this only works for the temporal coordinates ``day_of_month``,
+        ``day_of_year``, ``hour``, ``month``, ``month_fullname``,
+        ``month_number``, ``season``, ``season_number``, ``season_year``,
+        ``weekday``, ``weekday_fullname``, ``weekday_number`` or ``year``.
 
     Returns
     -------

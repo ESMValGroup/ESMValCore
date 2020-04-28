@@ -1239,7 +1239,7 @@ The ``_cycles.py`` module contains the following preprocessor functions:
 ``amplitude``
 -------------
 
-This functions extracts the peak-to-peak amplitude (maximum value minus minimum
+This function extracts the peak-to-peak amplitude (maximum value minus minimum
 value) of a field aggregated over specified coordinates. Its only argument is
 ``coords``, which can either be a single coordinate (given as :obj:`str`) or
 multiple coordinates (given as :obj:`list` of :obj:`str`). Usually, these
