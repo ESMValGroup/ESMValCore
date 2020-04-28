@@ -312,6 +312,26 @@ class TestConcatenate(unittest.TestCase):
         with self.assertRaises(ConcatenateError):
             _io.concatenate(cubes_single_ovlp)
 
+    def test_concatenate_no_time_coords(self):
+        """Test a more generic case."""
+        time_coord_1 = DimCoord([1.5, 5., 7.],
+                                var_name='time',
+                                standard_name='time',
+                                units='days since 1950-01-01')
+        cube1 = Cube([33., 55., 77.],
+                     var_name='sample',
+                     dim_coords_and_dims=((time_coord_1, 0), ))
+        ap_coord_2 = DimCoord([1., 5., 7.],
+                              var_name='air_pressure',
+                              standard_name='air_pressure',
+                              units='m',
+                              attributes={'positive': 'down'})
+        cube2 = Cube([33., 55., 77.],
+                     var_name='sample',
+                     dim_coords_and_dims=((ap_coord_2, 0), ))
+        with self.assertRaises(ValueError):
+            _io.concatenate([cube1, cube2])
+
     def test_concatenate_with_order(self):
         """Test a more generic case."""
         time_coord_1 = DimCoord([1.5, 2., 5., 7.],
