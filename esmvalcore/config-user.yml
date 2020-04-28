@@ -39,28 +39,50 @@ config_developer_file: null
 profile_diagnostic: false
 
 # Rootpaths to the data from different projects (lists are also possible)
-rootpath:
-  # JASMIN #
-  # CMIP3: /badc/cmip3_drs/data/cmip3/output
-  # CMIP5: /badc/cmip5/data/cmip5/output1
-  # CMIP6: /badc/cmip6/data/CMIP6
-  # OBS: /group_workspaces/jasmin4/esmeval/obsdata-v2
-  # DKRZ #
-  # CMIP3: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP3
-  # CMIP5: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP5_DKRZ
-  # CMIP6: /mnt/lustre02/work/ik1017/CMIP6/data/CMIP6
-  # OBS: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
-  OBS: ~/obs_inputpath
-  RAWOBS: ~/rawobs_inputpath
-  default: ~/default_inputpath
-  CORDEX: ~/default_inputpath
+# these are generic entries to better allow you to enter your own
+# For site-specific entries, see below
+#rootpath:
+#  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
+#  OBS: ~/obs_inputpath
+#  RAWOBS: ~/rawobs_inputpath
+#  default: ~/default_inputpath
+#  CORDEX: ~/default_inputpath
 
 # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
-drs:
-  # JASMIN: BADC
-  # DKRZ: DKRZ
-  CMIP5: default
-  CORDEX: default
-  OBS: default
+#drs:
+#  CMIP5: default
+#  CORDEX: default
+#  OBS: default
+
+# Site-specific entries: Jasmin
+# Uncomment the lines below to locate data on JASMIN
+#rootpath:
+#  CMIP6: /badc/cmip6/data/CMIP6
+#  CMIP5: /badc/cmip5/data/cmip5/output1
+#  CMIP3: /badc/cmip3_drs/data/cmip3/output
+#  OBS: /group_workspaces/jasmin4/esmeval/obsdata-v2
+#  OBS6: /group_workspaces/jasmin4/esmeval/obsdata-v2
+#  obs4mips: /group_workspaces/jasmin4/esmeval/obsdata-v2
+#  ana4mips: /group_workspaces/jasmin4/esmeval/obsdata-v2
+#  CORDEX: /badc/cordex/data/CORDEX/output
+#drs:
+#  CMIP6: BADC
+#  CMIP5: BADC
+#  CMIP3: BADC
+#  CORDEX: BADC
+#  OBS: BADC
+#  obs4mips: BADC
+#  ana4mips: BADC
+
+# Site-specific entries: DKRZ
+# Uncomment the lines below to locate data on Mistral at DKRZ
+#rootpath:
+#  CMIP6: /mnt/lustre02/work/ik1017/CMIP6/data/CMIP6
+#  CMIP5: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP5_DKRZ
+#  CMIP3: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP3
+#  OBS: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
+#drs:
+#  CMIP6: DKRZ
+#  CMIP5: DKRZ
+#  CMIP3: DKRZ
