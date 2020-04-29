@@ -5,7 +5,7 @@ from .fix import Fix
 from .shared import add_plev_from_altitude, fix_bounds
 import numpy as np
 from scipy.ndimage import map_coordinates
-
+import matplotlib.pyplot as plt
 
 class ClFixHybridHeightCoord(Fix):
     """Fixes for ``cl`` regarding hybrid sigma height coordinates."""
@@ -158,7 +158,7 @@ class OceanFixGrid(Fix):
         # Copy vertices to cube
         cube.coord('latitude').bounds = lat_vertices
         cube.coord('longitude').bounds = lon_vertices
-
+        print ('************ fix_data,rlon,rlat',rlon,rlat)
         return cube
 
     def fix_metadata(self, cubes):
@@ -183,4 +183,8 @@ class OceanFixGrid(Fix):
         lon_coord.var_name = 'j'
         lon_coord.units = '1'
         lon_coord.circular = False
+        #FGOALS-g3 data contain latitude and longitude data set to >1e30 in some
+        #places. Set to 0. to avoid problem in check.py.
+        cube.coord('latitude').points[cube.coord('latitude').points > 1000.]=0.
+        cube.coord('longitude').points[cube.coord('longitude').points > 1000.]=0.
         return cubes
