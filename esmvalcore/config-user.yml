@@ -72,6 +72,7 @@ profile_diagnostic: false
 #  CMIP3: BADC
 #  CORDEX: BADC
 #  OBS: BADC
+#  OBS6: BADC
 #  obs4mips: BADC
 #  ana4mips: BADC
 
