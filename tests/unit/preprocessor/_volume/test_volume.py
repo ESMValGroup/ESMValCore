@@ -21,11 +21,6 @@ class Test(tests.Test):
         coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
         data1 = np.ones((3, 2, 2))
         data2 = np.ma.ones((2, 3, 2, 2))
-        data2_masked = np.ma.ones((2, 3, 2, 2))
-        data2_masked[0] = 200.
-        data2_masked.mask = (False, True, True, False)
-        data2_fully_masked = np.ma.ones((2, 3, 2, 2))
-        data2_fully_masked.mask = True
         data3 = np.ma.ones((4, 3, 2, 2))
         mask3 = np.full((4, 3, 2, 2), False)
         mask3[0, 0, 0, 0] = True
@@ -71,11 +66,7 @@ class Test(tests.Test):
 
         coords_spec4 = [(time, 0), (zcoord, 1), (lats2, 2), (lons2, 3)]
         self.grid_4d = iris.cube.Cube(data2, dim_coords_and_dims=coords_spec4)
-        self.grid_4d_masked = iris.cube.Cube(data2_masked,
-                                             dim_coords_and_dims=coords_spec4)
-        self.grid_4d_fully_masked = iris.cube.Cube(
-            data2_fully_masked,
-            dim_coords_and_dims=coords_spec4)
+
         coords_spec5 = [(time2, 0), (zcoord, 1), (lats2, 2), (lons2, 3)]
         self.grid_4d_2 = iris.cube.Cube(
             data3, dim_coords_and_dims=coords_spec5)
@@ -95,38 +86,27 @@ class Test(tests.Test):
     def test_volume_statistics(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube."""
         result = volume_statistics(self.grid_4d, 'mean')
-        expected = np.ma.array([1., 1.])
-        self.assert_array_equal(result.data, expected)
-
-    def test_volume_statistics_masked(self):
-        """Test to take the volume weighted average of a (2,3,2,2) cube."""
-        result = volume_statistics(self.grid_4d_masked, 'mean')
-        expected = np.ma.array([200., 1.])
-        self.assert_array_equal(result.data, expected)
-
-    def test_volume_statistics_fully_masked(self):
-        """Test to take the volume weighted average of a (2,3,2,2) cube."""
-        result = volume_statistics(self.grid_4d_fully_masked, 'mean')
-        expected = np.ma.array([1., 1.], mask=[True, True])
-        self.assert_array_equal(result.data, expected)
-
-    def test_volume_statistics_nan_masked(self):
-        """Test to take the volume weighted average of a (2,3,2,2) cube."""
-        grid_4d_nan = self.grid_4d
-        grid_4d_nan.data[1] = np.nan
-        result = volume_statistics(grid_4d_nan, 'mean')
-        expected = np.ma.array([1., np.nan], mask=[False, True])
+        expected = np.array([1., 1.])
         self.assert_array_equal(result.data, expected)
 
     def test_volume_statistics_long(self):
         """
         Test to take the volume weighted average of a (4,3,2,2) cube.
-
         This extra time is needed, as the volume average calculation uses
         different methods for small and large cubes.
         """
         result = volume_statistics(self.grid_4d_2, 'mean')
-        expected = np.ma.array([1., 1., 1., 1.])
+        expected = np.array([1., 1., 1., 1.])
+        self.assert_array_equal(result.data, expected)
+
+    def test_volume_statistics_masked_level(self):
+        """
+        Test to take the volume weighted average of a (2,3,2,2) cube
+        where the last depth level is fully masked.
+        """
+        self.grid_4d.data[:, -1, :, :] = np.ma.masked_all((2, 2, 2))
+        result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.array([1., 1.])
         self.assert_array_equal(result.data, expected)
 
     def test_depth_integration_1d(self):

@@ -1,6 +1,5 @@
 """
 Volume and z coordinate operations on data cubes.
-
 Allows for selecting data subsets using certain volume bounds;
 selecting depth or height regions; constructing volumetric averages;
 """
@@ -17,13 +16,11 @@ logger = logging.getLogger(__name__)
 def extract_volume(cube, z_min, z_max):
     """
     Subset a cube based on a range of values in the z-coordinate.
-
     Function that subsets a cube on a box (z_min, z_max)
     This function is a restriction of masked_cube_lonlat();
     Note that this requires the requested z-coordinate range to be the
     same sign as the iris cube. ie, if the cube has z-coordinate as
     negative, then z_min and z_max need to be negative numbers.
-
     Parameters
     ----------
     cube: iris.cube.Cube
@@ -32,7 +29,6 @@ def extract_volume(cube, z_min, z_max):
         minimum depth to extract.
     z_max: float
         maximum depth to extract.
-
     Returns
     -------
     iris.cube.Cube
@@ -56,15 +52,12 @@ def extract_volume(cube, z_min, z_max):
 def _create_cube_time(src_cube, data, times):
     """
     Generate a new cube with the volume averaged data.
-
     The resultant cube is seeded with `src_cube` metadata and coordinates,
     excluding any source coordinates that span the associated vertical
     dimension. The `times` of interpolation are used along with the
     associated source cube time coordinate metadata to add a new
     time coordinate to the resultant cube.
-
     Based on the _create_cube method from _regrid.py.
-
     Parameters
     ----------
     src_cube : cube
@@ -74,17 +67,13 @@ def _create_cube_time(src_cube, data, times):
         over the specified times.
     times : array
         The array of times.
-
     Returns
     -------
     cube
-
     .. note::
-
         If there is only one level of interpolation, the resultant cube
         will be collapsed over the associated vertical dimension, and a
         scalar vertical coordinate will be added.
-
     """
     # Get the source cube vertical coordinate and associated dimension.
     src_times = src_cube.coord('time')
@@ -134,14 +123,11 @@ def _create_cube_time(src_cube, data, times):
 def calculate_volume(cube):
     """
     Calculate volume from a cube.
-
     This function is used when the volume netcdf fx_files can't be found.
-
     Parameters
     ----------
     cube: iris.cube.Cube
         input cube.
-
     Returns
     -------
     float
@@ -173,11 +159,9 @@ def volume_statistics(
         fx_files=None):
     """
     Apply a statistical operation over a volume.
-
     The volume average is weighted according to the cell volume. Cell volume
     is calculated from iris's cartography tool multiplied by the cell
     thickness.
-
     Parameters
     ----------
         cube: iris.cube.Cube
@@ -186,12 +170,10 @@ def volume_statistics(
             The operation to apply to the cube, options are: 'mean'.
         fx_files: dict
             dictionary of field:filename for the fx_files
-
     Returns
     -------
     iris.cube.Cube
         collapsed cube.
-
     Raises
     ------
     ValueError
@@ -231,7 +213,7 @@ def volume_statistics(
 
     # #####
     # Calculate global volume weighted average
-    result = np.ma.zeros(cube.shape[t_dim],)
+    result = []
     # #####
     # iterate over time and z-coordinate dimensions.
     for time_itr in range(cube.shape[t_dim]):
@@ -267,24 +249,15 @@ def volume_statistics(
                 layer_vol = grid_volume.sum()
             depth_volume.append(layer_vol)
         # ####
-        # Calculate weighted mean over the water volumn;
-        # account for masked array and nan vals from weights fully masked
-        avg_vol = np.ma.average(column, weights=depth_volume)
-        if np.ma.is_masked(avg_vol) and np.all(avg_vol.mask):
-            logger.debug(f"Column at indices time={time_itr} and "
-                         f"z={z_itr} is fully masked")
-        elif np.isnan(avg_vol):
-            logger.debug(f"Column at indices time={time_itr} and "
-                         f"z={z_itr} has fully masked weights, "
-                         f"masking it fully too.")
-        result[time_itr] = avg_vol
-
-    # replace nan values with masked
-    result = np.ma.masked_where(np.isnan(result), result)
+        # Calculate weighted mean over the water volumn
+        column = np.ma.array(column)
+        depth_volume = np.ma.array(depth_volume)
+        result.append(np.ma.average(column, weights=depth_volume))
 
     # ####
     # Send time series and dummy cube to cube creating tool.
     times = np.array(cube.coord('time').points.astype(float))
+    result = np.array(result)
 
     # #####
     # Create a small dummy output array for the output cube
@@ -300,16 +273,13 @@ def volume_statistics(
 def depth_integration(cube):
     """
     Determine the total sum over the vertical component.
-
     Requires a 3D cube. The z-coordinate
     integration is calculated by taking the sum in the z direction of the
     cell contents multiplied by the cell thickness.
-
     Arguments
     ---------
     cube: iris.cube.Cube
         input cube.
-
     Returns
     -------
     iris.cube.Cube
@@ -342,7 +312,6 @@ def depth_integration(cube):
 def extract_transect(cube, latitude=None, longitude=None):
     """
     Extract data along a line of constant latitude or longitude.
-
     Both arguments, latitude and longitude, are treated identically.
     Either argument can be a single float, or a pair of floats, or can be
     left empty.
@@ -350,18 +319,14 @@ def extract_transect(cube, latitude=None, longitude=None):
     transect should be extracted.
     A pair of floats indicate the range that the transect should be
     extracted along the secondairy axis.
-
     For instance `'extract_transect(cube, longitude=-28)'` will produce a
     transect along 28 West.
-
     Also, `'extract_transect(cube, longitude=-28, latitude=[-50, 50])'` will
     produce a transect along 28 West  between 50 south and 50 North.
-
     This function is not yet implemented for irregular arrays - instead
     try the extract_trajectory function, but note that it is currently
     very slow. Alternatively, use the regrid preprocessor to regrid along
     a regular grid and then extract the transect.
-
     Parameters
     ----------
     cube: iris.cube.Cube
@@ -370,12 +335,10 @@ def extract_transect(cube, latitude=None, longitude=None):
         transect latiude or range.
     longitude:  None, float or [float, float], optional
         transect longitude or range.
-
     Returns
     -------
     iris.cube.Cube
         collapsed cube.
-
     Raises
     ------
     ValueError
@@ -433,22 +396,17 @@ def extract_transect(cube, latitude=None, longitude=None):
 def extract_trajectory(cube, latitudes, longitudes, number_points=2):
     """
     Extract data along a trajectory.
-
     latitudes and longitudes are the pairs of coordinates for two points.
     number_points is the number of points between the two points.
-
     This version uses the expensive interpolate method, but it may be
     necceasiry for irregular grids.
-
     If only two latitude and longitude coordinates are given,
     extract_trajectory will produce a cube will extrapolate along a line
     between those two points, and will add `number_points` points between
     the two corners.
-
     If more than two points are provided, then
     extract_trajectory will produce a cube which has extrapolated the data
     of the cube to those points, and `number_points` is not needed.
-
     Parameters
     ----------
     cube: iris.cube.Cube
@@ -459,12 +417,10 @@ def extract_trajectory(cube, latitudes, longitudes, number_points=2):
         list of longitude coordinates (floats).
     number_points: int
         number of points to extrapolate (optional).
-
     Returns
     -------
     iris.cube.Cube
         collapsed cube.
-
     Raises
     ------
     ValueError
