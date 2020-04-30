@@ -4,10 +4,11 @@ import os
 import re
 from copy import deepcopy
 
-import iris
 import numpy as np
 import stratify
+import iris
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
+from iris.util import broadcast_to_shape
 
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
@@ -37,6 +38,12 @@ _LON_RANGE = _LON_MAX - _LON_MIN
 
 # A cached stock of standard horizontal target grids.
 _CACHE = dict()
+
+# Supported point interpolation schemes.
+POINT_INTERPOLATION_SCHEMES = {
+    'linear': Linear(extrapolation_mode='mask'),
+    'nearest': Nearest(extrapolation_mode='mask'),
+}
 
 # Supported horizontal regridding schemes.
 HORIZONTAL_SCHEMES = {
@@ -178,6 +185,78 @@ def _attempt_irregular_regridding(cube, scheme):
     return False
 
 
+def extract_point(cube, latitude, longitude, scheme):
+    """Extract a point, with interpolation
+
+    Extracts a single latitude/longitude point from a cube, according
+    to the interpolation scheme `scheme`.
+
+    Multiple points can also be extracted, by supplying an array of
+    latitude and/or longitude coordinates. The resulting point cube
+    will match the respective latitude and longitude coordinate to
+    those of the input coordinates. If the input coordinate is a
+    scalar, the dimension will be missing in the output cube (that is,
+    it will be a scalar).
+
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+
+    latitude, longitude : float, or array of float
+        The latitude and longitude of the point.
+
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+
+    Returns
+    -------
+    Returns a cube with the extracted point(s), and with adjusted
+    latitude and longitude coordinates (see above).
+
+
+    Examples
+    --------
+    With a cube that has the coordinates
+
+    - latitude: [1, 2, 3, 4]
+    - longitude: [1, 2, 3, 4]
+    - data values: [[[1, 2, 3, 4], [5, 6, ...], [...], [...],
+                      ... ]]]
+
+    >>> point = extract_point(cube, 2.5, 2.5, 'linear')  # doctest: +SKIP
+    >>> point.data  # doctest: +SKIP
+    array([ 8.5, 24.5, 40.5, 56.5])
+
+    Extraction of multiple points at once, with a nearest matching scheme.
+    The values for 0.1 will result in masked values, since this lies outside
+    the cube grid.
+
+    >>> point = extract_point(cube, [1.4, 2.1], [0.1, 1.1],
+    ...                       'nearest')  # doctest: +SKIP
+    >>> point.data.shape  # doctest: +SKIP
+    (4, 2, 2)
+    >>> # x, y, z indices of masked values
+    >>> np.where(~point.data.mask)     # doctest: +SKIP
+    (array([0, 0, 1, 1, 2, 2, 3, 3]), array([0, 1, 0, 1, 0, 1, 0, 1]),
+    array([1, 1, 1, 1, 1, 1, 1, 1]))
+    >>> point.data[~point.data.mask].data  # doctest: +SKIP
+    array([ 1,  5, 17, 21, 33, 37, 49, 53])
+
+    """
+
+    msg = f"Unknown interpolation scheme, got {scheme!r}."
+    scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
+    if not scheme:
+        raise ValueError(msg)
+
+    point = [('latitude', latitude), ('longitude', longitude)]
+    cube = cube.interpolate(point, scheme=scheme)
+    return cube
+
+
 def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     """
     Perform horizontal regridding.
@@ -260,7 +339,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _create_cube(src_cube, data, levels):
+def _create_cube(src_cube, data, src_levels, levels, ):
     """
     Generate a new cube with the interpolated data.
 
@@ -292,8 +371,8 @@ def _create_cube(src_cube, data, levels):
 
     """
     # Get the source cube vertical coordinate and associated dimension.
-    src_levels = src_cube.coord(axis='z', dim_coords=True)
-    z_dim, = src_cube.coord_dims(src_levels)
+    z_coord = src_cube.coord(axis='z', dim_coords=True)
+    z_dim, = src_cube.coord_dims(z_coord)
 
     if data.shape[z_dim] != levels.size:
         emsg = ('Mismatch between data and levels for data dimension {!r}, '
@@ -342,20 +421,16 @@ def _create_cube(src_cube, data, levels):
     return result
 
 
-def _vertical_interpolate(cube, levels, interpolation, extrapolation):
+def _vertical_interpolate(cube, src_levels, levels, interpolation,
+                          extrapolation):
     """Perform vertical interpolation."""
     # Determine the source levels and axis for vertical interpolation.
-    src_levels = cube.coord(axis='z', dim_coords=True)
-    z_axis, = cube.coord_dims(src_levels)
+    z_axis, = cube.coord_dims(cube.coord(axis='z', dim_coords=True))
 
     # Broadcast the 1d source cube vertical coordinate to fully
     # describe the spatial extent that will be interpolated.
-    broadcast_shape = cube.shape[z_axis:]
-    reshape = [1] * len(broadcast_shape)
-    reshape[0] = cube.shape[z_axis]
-    src_levels_reshaped = src_levels.points.reshape(reshape)
-    src_levels_broadcast = np.broadcast_to(src_levels_reshaped,
-                                           broadcast_shape)
+    src_levels_broadcast = broadcast_to_shape(
+        src_levels.points, cube.shape, cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
     if np.ma.is_masked(cube.data):
@@ -378,10 +453,10 @@ def _vertical_interpolate(cube, levels, interpolation, extrapolation):
         new_data = np.ma.array(new_data, mask=mask, fill_value=_MDI)
 
     # Construct the resulting cube with the interpolated data.
-    return _create_cube(cube, new_data, levels.astype(float))
+    return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
-def extract_levels(cube, levels, scheme):
+def extract_levels(cube, levels, scheme, coordinate=None):
     """
     Perform vertical interpolation.
 
@@ -399,6 +474,8 @@ def extract_levels(cube, levels, scheme):
         'nearest',
         'nearest_horizontal_extrapolate_vertical',
         'linear_horizontal_extrapolate_vertical'.
+    coordinate :  optional str
+        The coordinate to interpolate
 
     Returns
     -------
@@ -428,14 +505,18 @@ def extract_levels(cube, levels, scheme):
     levels = np.array(levels, ndmin=1)
 
     # Get the source cube vertical coordinate, if available.
-    src_levels = cube.coord(axis='z', dim_coords=True)
+    if coordinate:
+        src_levels = cube.coord(coordinate)
+    else:
+        src_levels = cube.coord(axis='z', dim_coords=True)
 
     if (src_levels.shape == levels.shape
             and np.allclose(src_levels.points, levels)):
         # Only perform vertical extraction/interploation if the source
         # and target levels are not "similar" enough.
         result = cube
-    elif set(levels).issubset(set(src_levels.points)):
+    elif len(src_levels.shape) == 1 and \
+            set(levels).issubset(set(src_levels.points)):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
         coord_values = {name: lambda cell: cell.point in set(levels)}
@@ -447,7 +528,8 @@ def extract_levels(cube, levels, scheme):
             raise ValueError(emsg.format(list(levels), name))
     else:
         # As a last resort, perform vertical interpolation.
-        result = _vertical_interpolate(cube, levels, scheme, extrap_scheme)
+        result = _vertical_interpolate(
+            cube, src_levels, levels, scheme, extrap_scheme)
 
     return result
 
@@ -498,8 +580,10 @@ def get_reference_levels(filename,
                          project,
                          dataset,
                          short_name,
+                         mip,
+                         frequency,
                          fix_dir):
-    """Get level definition from a CMOR coordinate.
+    """Get level definition from a reference dataset.
 
     Parameters
     ----------
@@ -517,9 +601,23 @@ def get_reference_levels(filename,
         levels or the string is badly formatted.
 
     """
-    filename = fix_file(filename, short_name, project, dataset, fix_dir)
+    filename = fix_file(
+        file=filename,
+        short_name=short_name,
+        project=project,
+        dataset=dataset,
+        mip=mip,
+        output_dir=fix_dir,
+    )
     cubes = load(filename, callback=concatenate_callback)
-    cubes = fix_metadata(cubes, short_name, project, dataset)
+    cubes = fix_metadata(
+        cubes=cubes,
+        short_name=short_name,
+        project=project,
+        dataset=dataset,
+        mip=mip,
+        frequency=frequency,
+    )
     cube = cubes[0]
     try:
         coord = cube.coord(axis='Z')

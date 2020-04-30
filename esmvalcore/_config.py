@@ -4,6 +4,7 @@ import logging
 import logging.config
 import os
 import time
+from pathlib import Path
 
 import yaml
 
@@ -20,8 +21,8 @@ def find_diagnostics():
     try:
         import esmvaltool
     except ImportError:
-        return ''
-    return os.path.dirname(esmvaltool.__file__)
+        return Path.cwd()
+    return Path(esmvaltool.__file__).absolute().parent
 
 
 DIAGNOSTICS_PATH = find_diagnostics()
@@ -38,13 +39,12 @@ def read_config_user_file(config_file, recipe_name):
         'write_netcdf': True,
         'compress_netcdf': False,
         'exit_on_warning': False,
-        'max_data_filesize': 100,
-        'output_file_type': 'ps',
-        'output_dir': './output_dir',
-        'auxiliary_data_dir': './auxiliary_data',
+        'output_file_type': 'png',
+        'output_dir': 'esmvaltool_output',
+        'auxiliary_data_dir': 'auxiliary_data',
         'save_intermediary_cubes': False,
-        'remove_preproc_dir': False,
-        'max_parallel_tasks': 1,
+        'remove_preproc_dir': True,
+        'max_parallel_tasks': None,
         'run_diagnostic': True,
         'profile_diagnostic': False,
         'config_developer_file': None,
@@ -170,8 +170,7 @@ def get_project_config(project):
     logger.debug("Retrieving %s configuration", project)
     if project in CFG:
         return CFG[project]
-    else:
-        raise ValueError(f"Project '{project}' not in config-developer.yml")
+    raise ValueError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
@@ -204,7 +203,7 @@ TAGS_CONFIG_FILE = os.path.join(
 
 
 def _load_tags(filename=TAGS_CONFIG_FILE):
-    """Load the refence tags used for provenance recording."""
+    """Load the reference tags used for provenance recording."""
     if os.path.exists(filename):
         logger.debug("Loading tags from %s", filename)
         with open(filename) as file:

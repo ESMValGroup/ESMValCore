@@ -1,7 +1,7 @@
-
 """Fix HadGEM2_ES."""
 import numpy as np
 
+from ..common import ClFixHybridHeightCoord
 from ..fix import Fix
 
 
@@ -9,12 +9,12 @@ class AllVars(Fix):
     """Fix errors common to all vars."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix latitude.
+        """Fix latitude.
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes which need to be fixed.
 
         Returns
         -------
@@ -26,21 +26,26 @@ class AllVars(Fix):
             if lats:
                 lat = cube.coord('latitude')
                 lat.points = np.clip(lat.points, -90., 90.)
+                if not lat.has_bounds():
+                    lat.guess_bounds()
                 lat.bounds = np.clip(lat.bounds, -90., 90.)
 
         return cubes
+
+
+Cl = ClFixHybridHeightCoord
 
 
 class O2(Fix):
     """Fix o2."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix standard and long name.
+        """Fix standard and long name.
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes which need to be fixed.
 
         Returns
         -------

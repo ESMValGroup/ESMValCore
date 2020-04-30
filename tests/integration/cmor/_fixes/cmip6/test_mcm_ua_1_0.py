@@ -5,17 +5,22 @@ from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cmip6.mcm_ua_1_0 import AllVars, Tas
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
 def cubes():
-    correct_lat_coord = iris.coords.DimCoord([0.0], var_name='lat',
+    correct_lat_coord = iris.coords.DimCoord([0.0],
+                                             var_name='lat',
                                              standard_name='latitude')
-    wrong_lat_coord = iris.coords.DimCoord([0.0], var_name='latitudeCoord',
+    wrong_lat_coord = iris.coords.DimCoord([0.0],
+                                           var_name='latitudeCoord',
                                            standard_name='latitude')
-    correct_lon_coord = iris.coords.DimCoord([0.0], var_name='lon',
+    correct_lon_coord = iris.coords.DimCoord([0.0],
+                                             var_name='lon',
                                              standard_name='longitude')
-    wrong_lon_coord = iris.coords.DimCoord([0.0], var_name='longitudeCoord',
+    wrong_lon_coord = iris.coords.DimCoord([0.0],
+                                           var_name='longitudeCoord',
                                            standard_name='longitude')
     correct_cube = iris.cube.Cube(
         [[10.0]],
@@ -33,17 +38,17 @@ def cubes():
 
 
 def test_get_allvars_fix():
-    fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'arbitrary_var_name')
-    assert fix == [AllVars()]
+    fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Amon', 'arbitrary_var_name')
+    assert fix == [AllVars(None)]
 
 
 def test_get_tas_fix():
-    fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'tas')
-    assert fix == [AllVars(), Tas()]
+    fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Amon', 'tas')
+    assert fix == [Tas(None), AllVars(None)]
 
 
 def test_allvars_fix_metadata(cubes):
-    fix = AllVars()
+    fix = AllVars(None)
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
@@ -76,7 +81,8 @@ def test_tas_fix_metadata(cubes):
                                         long_name='height',
                                         units=Unit('m'),
                                         attributes={'positive': 'up'})
-    fix = Tas()
+    vardef = get_var_info('CMIP6', 'Amon', 'tas')
+    fix = Tas(vardef)
 
     # Check fix
     out_cubes = fix.fix_metadata(cubes)

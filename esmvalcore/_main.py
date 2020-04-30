@@ -41,6 +41,7 @@ from . import __version__
 from ._config import configure_logging, read_config_user_file, DIAGNOSTICS_PATH
 from ._recipe import TASKSEP, read_recipe_file
 from ._task import resource_usage_logger
+from .cmor.check import CheckLevels
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -97,6 +98,24 @@ def get_args():
         '--diagnostics',
         nargs='*',
         help="Only run the named diagnostics from the recipe.")
+    parser.add_argument(
+        '--check-level',
+        type=str,
+        choices=[
+            val.name.lower() for val in CheckLevels if val != CheckLevels.DEBUG
+            ],
+        default='default',
+        help="""
+            Configure the severity of the errors that will make the CMOR check
+            fail.
+            Optional: true;
+            Possible values:
+            ignore: all errors will be reported as warnings
+            relaxed: only fail if there are critical errors
+            default: fail if there are any errors
+            strict: fail if there are any warnings
+        """
+    )
     args = parser.parse_args()
     return args
 
@@ -142,6 +161,7 @@ def main(args):
         pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
         for pattern in args.diagnostics or ()
     }
+    cfg['check_level'] = CheckLevels[args.check_level.upper()]
     cfg['synda_download'] = args.synda_download
     for limit in ('max_datasets', 'max_years'):
         value = getattr(args, limit)
@@ -178,17 +198,19 @@ def process_recipe(recipe_file, config_user):
     logger.info("PLOTDIR    = %s", config_user["plot_dir"])
     logger.info(70 * "-")
 
-    logger.info("Running tasks using at most %s processes",
-                config_user['max_parallel_tasks'] or cpu_count())
+    n_processes = config_user['max_parallel_tasks'] or cpu_count()
+    logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
         "If your system hangs during execution, it may not have enough "
-        "memory for keeping this number of tasks in memory. In that case, "
-        "try reducing 'max_parallel_tasks' in your user configuration file.")
+        "memory for keeping this number of tasks in memory.")
+    logger.info(
+        "If you experience memory problems, try reducing "
+        "'max_parallel_tasks' in your user configuration file.")
 
     if config_user['compress_netcdf']:
         logger.warning(
-            "You have enabled NetCDF compression. Accesing .nc files can be "
+            "You have enabled NetCDF compression. Accessing .nc files can be "
             "much slower than expected if your access pattern does not match "
             "their internal pattern. Make sure to specify the expected "
             "access pattern in the recipe as a parameter to the 'save' "
@@ -233,7 +255,7 @@ def run():
             "output directory.")
         sys.exit(1)
     else:
-        if conf["remove_preproc_dir"]:
+        if os.path.exists(conf["preproc_dir"]) and conf["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
             logger.info("set remove_preproc_dir to false in config")
