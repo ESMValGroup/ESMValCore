@@ -7,6 +7,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.cube import Cube
 from shapely.geometry import Polygon, mapping
 
 import tests
@@ -377,12 +378,58 @@ def square_composite_shape(request, tmp_path):
     return np.ma.masked_array(vals, mask)
 
 
+def _create_sample_full_cube():
+    cube = Cube(np.zeros((24, 180, 360)), var_name='co2', units='J')
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.arange(15., 720., 30.),
+            standard_name='time',
+            units=Unit('days since 1950-01-01 00:00:00', calendar='gregorian'),
+        ),
+        0,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.arange(-90., 90., 1.),
+            standard_name='latitude',
+            units='degrees',
+        ),
+        1,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.arange(0., 360., 1.),
+            standard_name='longitude',
+            units='degrees',
+        ),
+        2,
+    )
+
+    cube.coord("time").guess_bounds()
+    cube.coord("longitude").guess_bounds()
+    cube.coord("latitude").guess_bounds()
+
+    return cube
+
+
 def test_crop_cube(make_testcube, square_shape, tmp_path):
     """Test for cropping a cube by shape bounds."""
     with fiona.open(tmp_path / 'test_shape.shp') as geometries:
         result = _crop_cube(make_testcube, *geometries.bounds)
         expected = square_shape.data
         np.testing.assert_array_equal(result.data, expected)
+
+
+def test_crop_cube_with_ne_file():
+    """Test for cropping a cube by shape bounds."""
+    shp_file = "esmvalcore/preprocessor/ne_masks/ne_10m_ocean.shp"
+    with fiona.open(shp_file) as geometries:
+        cube = _create_sample_full_cube()
+        result = _crop_cube(cube, *geometries.bounds)
+        result = (result.coord("latitude").points[-1],
+                  result.coord("longitude").points[-1])
+        expected = (89., 359.)
+        np.testing.assert_allclose(result, expected)
 
 
 @pytest.mark.parametrize('crop', [True, False])
