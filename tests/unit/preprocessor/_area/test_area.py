@@ -417,6 +417,16 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
 
+def test_extract_shape_natural_earth(make_testcube, square_shape):
+    """Test for extracting a shape from NE file."""
+    expected = np.ones((5, 5))
+    result = extract_shape(
+        make_testcube,
+        "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp",
+        crop=False)
+    np.testing.assert_array_equal(result.data.data, expected)
+
+
 @pytest.mark.parametrize('crop', [True, False])
 def test_extract_shape_negative_bounds(make_testcube,
                                        square_shape, tmp_path, crop):
