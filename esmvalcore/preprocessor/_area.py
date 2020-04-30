@@ -353,7 +353,8 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
-def _correct_coords_from_shapefile(cube, cmor_coords, natural_earth_file):
+def _correct_coords_from_shapefile(cube, cmor_coords,
+                                   pad_north_pole, pad_hawaii):
     """Get correct lat and lon from shapefile."""
     lon = cube.coord(axis='X').points
     lat = cube.coord(axis='Y').points
@@ -364,10 +365,12 @@ def _correct_coords_from_shapefile(cube, cmor_coords, natural_earth_file):
         # Wrap around longitude coordinate to match data
         lon = lon.copy()  # ValueError: assignment destination is read-only
         lon[lon >= 180.] -= 360.
-        if natural_earth_file:
-            # the NE mask has no points at x = -180 and y = +/-90
-            # so we will fool it and apply the mask at (-179, -89, 89) instead
+
+        # the NE mask may not have points at x = -180 and y = +/-90
+        # so we will fool it and apply the mask at (-179, -89, 89) instead
+        if pad_hawaii:
             lon = np.where(lon == -180., lon + 1., lon)
+        if pad_north_pole:
             lat_0 = np.where(lat == -90., lat + 1., lat)
             lat = np.where(lat_0 == 90., lat_0 - 1., lat_0)
 
@@ -500,14 +503,18 @@ def extract_shape(cube,
             cube = _crop_cube(cube, *geometries.bounds)
 
         cmor_coords = True
-        natural_earth_file = False
+        pad_north_pole = False
+        pad_hawaii = False
         if geometries.bounds[0] < 0:
             cmor_coords = False
-        if "ne_" in str(shapefile):
-            natural_earth_file = True
+        if geometries.bounds[1] > -90. and geometries.bounds[1] < -85.:
+            pad_north_pole = True
+        if geometries.bounds[0] > -180. and geometries.bounds[0] < 179.:
+            pad_hawaii = True
         lon, lat = _correct_coords_from_shapefile(cube,
                                                   cmor_coords,
-                                                  natural_earth_file)
+                                                  pad_north_pole,
+                                                  pad_hawaii)
 
         selections = _get_masks_from_geometries(geometries,
                                                 lon,
