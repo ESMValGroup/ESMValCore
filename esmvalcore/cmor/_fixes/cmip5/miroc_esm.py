@@ -1,10 +1,13 @@
+"""Fixes for MIROC-ESM model."""
 
-"""Fixes for MIROC ESM model."""
-import cf_units
 from iris.coords import DimCoord
 from iris.exceptions import CoordinateNotFoundError
 
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
+
+
+Cl = ClFixHybridPressureCoord
 
 
 class Tro3(Fix):
@@ -19,6 +22,7 @@ class Tro3(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -42,37 +46,15 @@ class Co2(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.Cube
-
-        """
-        self.get_cube_from_list(cubes).units = '1.0e-6'
-        return cubes
-
-
-class Gpp(Fix):
-    """Fixes for gpp."""
-
-    def fix_metadata(self, cubes):
-        """
-        Fix metadata.
-
-        Fixes error in cube units
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
         iris.cube.CubeList
 
         """
-        # Fixing the metadata, automatic unit conversion should do the trick
-        self.get_cube_from_list(cubes).units = cf_units.Unit('g m-2 day-1')
+        self.get_cube_from_list(cubes).units = '1.0e-6'
         return cubes
 
 
@@ -87,7 +69,8 @@ class AllVars(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
@@ -101,9 +84,9 @@ class AllVars(Fix):
                 cube.remove_coord(old)
 
                 plev = DimCoord.from_coord(old)
-                plev.var_name = plev
+                plev.var_name = 'plev'
                 plev.standard_name = 'air_pressure'
-                plev.long_name = 'Pressure '
+                plev.long_name = 'pressure'
                 cube.add_dim_coord(plev, dims)
             except CoordinateNotFoundError:
                 pass

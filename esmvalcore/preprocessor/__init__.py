@@ -2,29 +2,35 @@
 import copy
 import inspect
 import logging
+from pprint import pformat
 
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
 from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
-                    zonal_means)
+                    extract_shape, zonal_statistics, meridional_statistics)
 from ._derive import derive
+from ._detrend import detrend
 from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
 from ._mask import (mask_above_threshold, mask_below_threshold,
-                    mask_fillvalues, mask_inside_range, mask_landsea,
-                    mask_landseaice, mask_outside_range)
+                    mask_fillvalues, mask_glaciated, mask_inside_range,
+                    mask_landsea, mask_landseaice, mask_outside_range)
 from ._multimodel import multi_model_statistics
+from ._other import clip
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
-from ._regrid import extract_levels, regrid
-from ._time import (annual_mean, extract_month, extract_season, extract_time,
-                    regrid_time, seasonal_mean, time_average)
+from ._regrid import extract_levels, regrid, extract_point
+from ._time import (annual_statistics, anomalies, climate_statistics,
+                    daily_statistics, decadal_statistics, extract_month,
+                    extract_season, extract_time, monthly_statistics,
+                    regrid_time, seasonal_statistics, timeseries_filter,)
 from ._units import convert_units
-from ._volume import (volume_statistics, depth_integration, extract_trajectory,
-                      extract_transect, extract_volume)
+from ._volume import (depth_integration, extract_trajectory, extract_transect,
+                      extract_volume, volume_statistics)
+from ._weighting import weighting_landsea_fraction
 
 logger = logging.getLogger(__name__)
 
@@ -49,25 +55,35 @@ __all__ = [
     'fix_data',
     # Level extraction
     'extract_levels',
+    # Weighting
+    'weighting_landsea_fraction',
     # Mask landsea (fx or Natural Earth)
     'mask_landsea',
+    # Natural Earth only
+    'mask_glaciated',
     # Mask landseaice, sftgif only
     'mask_landseaice',
     # Regridding
     'regrid',
+    # Point interpolation
+    'extract_point',
     # Masking missing values
     'mask_fillvalues',
     'mask_above_threshold',
     'mask_below_threshold',
     'mask_inside_range',
     'mask_outside_range',
+    # Other
+    'clip',
     # Region selection
     'extract_region',
+    'extract_shape',
     'extract_volume',
     'extract_trajectory',
     'extract_transect',
     # 'average_zone': average_zone,
     # 'cross_section': cross_section,
+    'detrend',
     'multi_model_statistics',
     # Grid-point operations
     'extract_named_regions',
@@ -77,11 +93,17 @@ __all__ = [
     # Time operations
     # 'annual_cycle': annual_cycle,
     # 'diurnal_cycle': diurnal_cycle,
-    'zonal_means',
-    'annual_mean',
-    'seasonal_mean',
-    'time_average',
+    'zonal_statistics',
+    'meridional_statistics',
+    'daily_statistics',
+    'monthly_statistics',
+    'seasonal_statistics',
+    'annual_statistics',
+    'decadal_statistics',
+    'climate_statistics',
+    'anomalies',
     'regrid_time',
+    'timeseries_filter',
     'cmor_check_data',
     'convert_units',
     # Save to file
@@ -89,9 +111,23 @@ __all__ = [
     'cleanup',
 ]
 
+TIME_PREPROCESSORS = [
+    'extract_time',
+    'extract_season',
+    'extract_month',
+    'daily_statistics',
+    'monthly_statistics',
+    'seasonal_statistics',
+    'annual_statistics',
+    'decadal_statistics',
+    'climate_statistics',
+    'anomalies',
+    'regrid_time',
+]
+
 DEFAULT_ORDER = tuple(__all__)
 
-# The order of intial and final steps cannot be configured
+# The order of initial and final steps cannot be configured
 INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('fix_data') + 1]
 FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('cmor_check_data'):]
 
@@ -104,15 +140,12 @@ MULTI_MODEL_FUNCTIONS = {
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
-    itype = inspect.getargspec(function).args[0]
+    itype = inspect.getfullargspec(function).args[0]
     return itype
 
 
 def check_preprocessor_settings(settings):
     """Check preprocessor settings."""
-    # The inspect functions getargspec and getcallargs are deprecated
-    # in Python 3, but their replacements are not available in Python 2.
-    # TODO: Use the new Python 3 inspect API
     for step in settings:
         if step not in DEFAULT_ORDER:
             raise ValueError(
@@ -120,7 +153,7 @@ def check_preprocessor_settings(settings):
                     step, ', '.join(DEFAULT_ORDER)))
 
         function = function = globals()[step]
-        argspec = inspect.getargspec(function)
+        argspec = inspect.getfullargspec(function)
         args = argspec.args[1:]
         # Check for invalid arguments
         invalid_args = set(settings[step]) - set(args)
@@ -350,14 +383,13 @@ class PreprocessingTask(BaseTask):
             write_ncl_interface=False,
     ):
         """Initialize"""
-        super(PreprocessingTask, self).__init__(ancestors=ancestors, name=name)
         _check_multi_model_settings(products)
-        self.products = set(products)
+        super().__init__(ancestors=ancestors, name=name, products=products)
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
 
-    def _intialize_product_provenance(self):
+    def _initialize_product_provenance(self):
         """Initialize product provenance."""
         for product in self.products:
             product.initialize_provenance(self.activity)
@@ -373,7 +405,7 @@ class PreprocessingTask(BaseTask):
 
     def _run(self, _):
         """Run the preprocessor."""
-        self._intialize_product_provenance()
+        self._initialize_product_provenance()
 
         steps = {
             step
@@ -407,7 +439,8 @@ class PreprocessingTask(BaseTask):
             step for step in self.order
             if any(step in product.settings for product in self.products)
         ]
-        products = '\n\n'.join(str(p) for p in self.products)
+        products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
+                               for p in self.products)
         txt = "{}:\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
             order,

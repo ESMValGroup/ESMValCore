@@ -1,0 +1,22 @@
+SOURCE: CMIP6
+!============
+variable_entry:    vegfrac
+!============
+modeling_realm:    land
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             %
+cell_methods:      time: mean area: where land
+cell_measures:     area: areacella
+long_name:         Vegetation Fraction
+comment:           Fraction of entire grid cell that is not covered by bare soil.
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          vegfrac
+type:              real
+!----------------------------------
+!

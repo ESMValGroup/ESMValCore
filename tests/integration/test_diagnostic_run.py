@@ -1,6 +1,8 @@
 """Test diagnostic script runs."""
 import contextlib
+import shutil
 import sys
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -13,6 +15,7 @@ def write_config_user_file(dirname):
     config_file = dirname / 'config-user.yml'
     cfg = {
         'output_dir': str(dirname / 'output_dir'),
+        'auxiliary_data_dir': str(dirname / 'extra_data'),
         'rootpath': {
             'default': str(dirname / 'input_dir'),
         },
@@ -107,8 +110,31 @@ SCRIPTS = {
 }
 
 
-@pytest.mark.install
-@pytest.mark.parametrize('script_file, script', SCRIPTS.items())
+def interpreter_not_installed(script):
+    """Check if an interpreter is installed for script."""
+    interpreters = {
+        '.jl': 'julia',
+        '.ncl': 'ncl',
+        '.py': 'python',
+        '.R': 'Rscript',
+    }
+    ext = Path(script).suffix
+    interpreter = interpreters[ext]
+    return shutil.which(interpreter) is None
+
+
+@pytest.mark.parametrize('script_file, script', [
+    pytest.param(
+        script_file,
+        script,
+        marks=[
+            pytest.mark.installation,
+            pytest.mark.xfail(interpreter_not_installed(script_file),
+                              run=False,
+                              reason="Interpreter not available"),
+        ],
+    ) for script_file, script in SCRIPTS.items()
+])
 def test_diagnostic_run(tmp_path, script_file, script):
 
     recipe_file = tmp_path / 'recipe_test.yml'
@@ -122,7 +148,7 @@ def test_diagnostic_run(tmp_path, script_file, script):
     recipe = dedent("""
         documentation:
           description: Recipe with no data.
-          authors: [ande_bo]
+          authors: [andela_bouwe]
 
         diagnostics:
           diagnostic_name:

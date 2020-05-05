@@ -3,6 +3,28 @@ from ..fix import Fix
 from ..shared import round_coordinates
 
 
+class Pr(Fix):
+    """Fix errors for pr."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata.
+
+        Fixes latitude coordinate inaccuracies
+
+        Data is fixed in-place, as well as returned
+
+        Parameters
+        ----------
+        cube: iris.cube.CubeList
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        return round_coordinates(cubes, 12, coord_names=['latitude'])
+
+
 class Tas(Fix):
     """Fixes for tas."""
 

@@ -1,10 +1,12 @@
 dask[array]
+fiona
 netCDF4
 numba
 numpy
+pandas
 pillow
 prov[dot]
 pyyaml
 scipy
-shapely
+shapely[vectorized]
 yamale

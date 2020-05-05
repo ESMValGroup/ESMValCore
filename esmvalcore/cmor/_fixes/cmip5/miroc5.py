@@ -1,8 +1,12 @@
 """Fixes for MIROC5 model."""
 from dask import array as da
 
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import round_coordinates
+
+
+Cl = ClFixHybridPressureCoord
 
 
 class Sftof(Fix):
@@ -17,6 +21,7 @@ class Sftof(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -41,6 +46,7 @@ class Snw(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -98,6 +104,7 @@ class Msftmyz(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -121,6 +128,7 @@ class Tas(Fix):
         Parameters
         ----------
         cubes: iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
@@ -128,3 +136,30 @@ class Tas(Fix):
 
         """
         return round_coordinates(cubes)
+
+
+class Hur(Tas):
+    """Fixes for hur."""
+
+
+class Tos(Fix):
+    """Fixes for tos."""
+
+    def fix_data(self, cube):
+        """
+        Fix tos data.
+
+        Fixes mask
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Input cube.
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        cube.data = da.ma.masked_equal(cube.core_data(), 0.)
+        return cube

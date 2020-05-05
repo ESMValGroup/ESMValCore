@@ -10,13 +10,12 @@ missing values masking.
 import logging
 import os
 
-import numpy as np
-
 import cartopy.io.shapereader as shpreader
 import iris
-import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
+import numpy as np
+import shapely.vectorized as shp_vect
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +76,7 @@ def _apply_fx_mask(fx_mask, var_data):
     var_mask = np.zeros_like(var_data, bool)
     var_mask = np.broadcast_to(fx_mask, var_mask.shape).copy()
 
-    # Aplly mask accross
+    # Apply mask across
     if np.ma.is_masked(var_data):
         var_mask |= var_data.mask
 
@@ -87,7 +86,7 @@ def _apply_fx_mask(fx_mask, var_data):
     return var_data
 
 
-def mask_landsea(cube, fx_files, mask_out):
+def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
     """
     Mask out either land mass or sea (oceans, seas and lakes).
 
@@ -107,13 +106,17 @@ def mask_landsea(cube, fx_files, mask_out):
     mask_out: str
         either "land" to mask out land mass or "sea" to mask out seas.
 
+    always_use_ne_mask: bool, optional (default: False)
+        always apply Natural Earths mask, regardless if fx files are available
+        or not.
+
     Returns
     -------
     iris.cube.Cube
         Returns the masked iris cube.
 
     Raises
-    -------
+    ------
     ValueError
         Error raised if masking on irregular grids is attempted.
         Irregular grids are not currently supported for masking
@@ -128,11 +131,13 @@ def mask_landsea(cube, fx_files, mask_out):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
-    if fx_files:
+    if fx_files and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
-            fx_root = os.path.basename(fx_file).split('_')[0]
-            fx_cubes[fx_root] = iris.load_cube(fx_file)
+            fxfile_members = os.path.basename(fx_file).split('_')
+            for fx_root in ['sftlf', 'sftof']:
+                if fx_root in fxfile_members:
+                    fx_cubes[fx_root] = iris.load_cube(fx_file)
 
         # preserve importance order: try stflf first then sftof
         if ('sftlf' in fx_cubes.keys()
@@ -149,7 +154,9 @@ def mask_landsea(cube, fx_files, mask_out):
             logger.debug("Applying land-sea mask: sftof")
         else:
             if cube.coord('longitude').points.ndim < 2:
-                cube = _mask_with_shp(cube, shapefiles[mask_out])
+                cube = _mask_with_shp(cube, shapefiles[mask_out], [
+                    0,
+                ])
                 logger.debug(
                     "Applying land-sea mask from Natural Earth"
                     " shapefile: \n%s", shapefiles[mask_out])
@@ -159,7 +166,9 @@ def mask_landsea(cube, fx_files, mask_out):
                 raise ValueError(msg)
     else:
         if cube.coord('longitude').points.ndim < 2:
-            cube = _mask_with_shp(cube, shapefiles[mask_out])
+            cube = _mask_with_shp(cube, shapefiles[mask_out], [
+                0,
+            ])
             logger.debug(
                 "Applying land-sea mask from Natural Earth"
                 " shapefile: \n%s", shapefiles[mask_out])
@@ -195,7 +204,7 @@ def mask_landseaice(cube, fx_files, mask_out):
         Returns the masked iris cube with either land or ice masked out.
 
     Raises
-    -------
+    ------
     ValueError
         Error raised if fx mask and data have different dimensions.
     ValueError
@@ -221,26 +230,93 @@ def mask_landseaice(cube, fx_files, mask_out):
     return cube
 
 
-def _get_geometry_from_shp(shapefilename):
-    """Get the mask geometry out from a shapefile."""
+def mask_glaciated(cube, mask_out):
+    """
+    Mask out glaciated areas.
+
+    It applies a Natural Earth mask. Note that for computational reasons
+    only the 10 largest polygons are used for masking.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        data cube to be masked.
+
+    mask_out: str
+        "glaciated" to mask out glaciated areas
+
+    Returns
+    -------
+    iris.cube.Cube
+        Returns the masked iris cube.
+
+    Raises
+    ------
+    ValueError
+        Error raised if masking on irregular grids is attempted or if
+        mask_out has a wrong value.
+    """
+    # Dict to store the Natural Earth masks
+    cwd = os.path.dirname(__file__)
+    # read glaciated shapefile
+    shapefiles = {
+        'glaciated': os.path.join(cwd, 'ne_masks/ne_10m_glaciated_areas.shp'),
+    }
+    if mask_out == 'glaciated':
+        cube = _mask_with_shp(cube, shapefiles[mask_out], [
+            1859,
+            1860,
+            1861,
+            1857,
+            1858,
+            1716,
+            1587,
+            1662,
+            1578,
+            1606,
+        ])
+        logger.debug(
+            "Applying glaciated areas mask from Natural Earth"
+            " shapefile: \n%s", shapefiles[mask_out])
+    else:
+        msg = (f"Invalid argument mask_out: {mask_out}")
+        raise ValueError(msg)
+
+    return cube
+
+
+def _get_geometries_from_shp(shapefilename):
+    """Get the mask geometries out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
     # Index 0 grabs the lowest resolution mask (no zoom)
-    main_geom = [contour for contour in reader.geometries()][0]
-    return main_geom
+    geometries = [contour for contour in reader.geometries()]
+    if not geometries:
+        msg = "Could not find any geometry in {}".format(shapefilename)
+        raise ValueError(msg)
+
+    # TODO might need this for a later, more enhanced, version
+    # geometries = sorted(geometries, key=lambda x: x.area, reverse=True)
+
+    return geometries
 
 
-def _mask_with_shp(cube, shapefilename):
+def _mask_with_shp(cube, shapefilename, region_indices=None):
     """
     Apply a Natural Earth land/sea mask.
 
     Apply a pre-made land or sea mask that is extracted form a
     Natural Earth shapefile (proprietary file format). The masking
     process is performed by checking if any given (x, y) point from
-    the data cube lies within the desired geometry (eg land, sea) stored
+    the data cube lies within the desired geometries (eg land, sea) stored
     in the shapefile (this is done via shapefle vectorization and is fast).
+    region_indices is a list of indices that the user will want to index
+    the regions on (select a region by its index as it is listed in
+    the shapefile).
     """
     # Create the region
-    region = _get_geometry_from_shp(shapefilename)
+    regions = _get_geometries_from_shp(shapefilename)
+    if region_indices:
+        regions = [regions[idx] for idx in region_indices]
 
     # Create a mask for the data
     mask = np.zeros(cube.shape, dtype=bool)
@@ -266,24 +342,27 @@ def _mask_with_shp(cube, shapefilename):
     y_p_0 = np.where(y_p == -90., y_p + 1., y_p)
     y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
 
-    # Build mask with vectorization
-    if len(cube.data.shape) == 3:
-        mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
-    elif len(cube.data.shape) == 4:
-        mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
+    for region in regions:
+        # Build mask with vectorization
+        if cube.ndim == 2:
+            mask = shp_vect.contains(region, x_p_180, y_p_90)
+        elif cube.ndim == 3:
+            mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
+        elif cube.ndim == 4:
+            mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
 
-    # Then apply the mask
-    if isinstance(cube.data, np.ma.MaskedArray):
-        cube.data.mask |= mask
-    else:
-        cube.data = np.ma.masked_array(cube.data, mask)
+        # Then apply the mask
+        if isinstance(cube.data, np.ma.MaskedArray):
+            cube.data.mask |= mask
+        else:
+            cube.data = np.ma.masked_array(cube.data, mask)
 
     return cube
 
 
 def count_spells(data, threshold, axis, spell_length):
     """
-    Count data occurences.
+    Count data occurrences.
 
     Define a function to perform the custom statistical operation.
     Note: in order to meet the requirements of iris.analysis.Aggregator,
@@ -320,15 +399,20 @@ def count_spells(data, threshold, axis, spell_length):
         # just cope with negative axis numbers
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
-    data_hits = data > threshold
+    if not threshold:
+        data_hits = data
+    else:
+        data_hits = data > float(threshold)
     # Make an array with data values "windowed" along the time axis.
     ###############################################################
     # WARNING: default step is = window size i.e. no overlapping
     # if you want overlapping windows set the step to be m*spell_length
     # where m is a float
     ###############################################################
-    hit_windows = rolling_window(
-        data_hits, window=spell_length, step=spell_length, axis=axis)
+    hit_windows = rolling_window(data_hits,
+                                 window=spell_length,
+                                 step=spell_length,
+                                 axis=axis)
     # Find the windows "full of True-s" (along the added 'window axis').
     full_windows = np.all(hit_windows, axis=axis + 1)
     # Count points fulfilling the condition (along the time axis).
@@ -352,7 +436,7 @@ def mask_above_threshold(cube, threshold):
         threshold to be applied on input cube data.
 
     Returns
-    --------
+    -------
     iris.cube.Cube
         thresholded cube.
 
@@ -376,7 +460,7 @@ def mask_below_threshold(cube, threshold):
         threshold to be applied on input cube data.
 
     Returns
-    --------
+    -------
     iris.cube.Cube
         thresholded cube.
 
@@ -402,7 +486,7 @@ def mask_inside_range(cube, minimum, maximum):
         upper threshold to be applied on input cube data.
 
     Returns
-    --------
+    -------
     iris.cube.Cube
         thresholded cube.
 
@@ -428,7 +512,7 @@ def mask_outside_range(cube, minimum, maximum):
         upper threshold to be applied on input cube data.
 
     Returns
-    --------
+    -------
     iris.cube.Cube
         thresholded cube.
 
@@ -439,7 +523,7 @@ def mask_outside_range(cube, minimum, maximum):
 
 def mask_fillvalues(products,
                     threshold_fraction,
-                    min_value=-1.e10,
+                    min_value=None,
                     time_window=1):
     """
     Compute and apply a multi-dataset fillvalues mask.
@@ -461,7 +545,8 @@ def mask_fillvalues(products,
         Must be between 0 and 1.
 
     min_value: float
-        minumum value threshold; default set to -1e10.
+        minimum value threshold; default None
+        If default, no thresholding applied so the full mask will be selected.
 
     time_window: float
         time window to compute missing data counts; default set to 1.
@@ -472,7 +557,7 @@ def mask_fillvalues(products,
         Masked iris cubes.
 
     Raises
-    -------
+    ------
     NotImplementedError
         Implementation missing for data with higher dimensionality than 4.
 
@@ -484,8 +569,8 @@ def mask_fillvalues(products,
     for product in products:
         for cube in product.cubes:
             cube.data = np.ma.fix_invalid(cube.data, copy=False)
-            mask = _get_fillvalues_mask(cube, threshold_fraction, min_value,
-                                        time_window)
+            mask = _get_fillvalues_mask(cube, threshold_fraction,
+                                        min_value, time_window)
             if combined_mask is None:
                 combined_mask = np.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
@@ -543,12 +628,15 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
     counts_threshold = int(max_counts_per_time_window * threshold_fraction)
 
     # Make an aggregator
-    spell_count = Aggregator(
-        'spell_count', count_spells, units_func=lambda units: 1)
+    spell_count = Aggregator('spell_count',
+                             count_spells,
+                             units_func=lambda units: 1)
 
     # Calculate the statistic.
-    counts_windowed_cube = cube.collapsed(
-        'time', spell_count, threshold=min_value, spell_length=time_window)
+    counts_windowed_cube = cube.collapsed('time',
+                                          spell_count,
+                                          threshold=min_value,
+                                          spell_length=time_window)
 
     # Create mask
     mask = counts_windowed_cube.data < counts_threshold

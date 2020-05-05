@@ -53,10 +53,10 @@ def _plev_fix(dataset, pl_idx):
     return statj
 
 
-def _compute_statistic(datas, statistic_name):
+def _compute_statistic(data, statistic_name):
     """Compute multimodel statistic."""
-    datas = np.ma.array(datas)
-    statistic = datas[0]
+    data = np.ma.array(data)
+    statistic = data[0]
 
     if statistic_name == 'median':
         statistic_function = np.ma.median
@@ -66,16 +66,16 @@ def _compute_statistic(datas, statistic_name):
         raise NotImplementedError
 
     # no plevs
-    if len(datas[0].shape) < 3:
+    if len(data[0].shape) < 3:
         # get all NOT fully masked data - u_data
-        # datas is per time point
+        # data is per time point
         # so we can safely NOT compute stats for single points
-        if datas.ndim == 1:
-            u_datas = [data for data in datas]
+        if data.ndim == 1:
+            u_datas = [d for d in data]
         else:
-            u_datas = [data for data in datas if not np.all(data.mask)]
+            u_datas = [d for d in data if not np.all(d.mask)]
         if len(u_datas) > 1:
-            statistic = statistic_function(datas, axis=0)
+            statistic = statistic_function(data, axis=0)
         else:
             statistic.mask = True
         return statistic
@@ -83,7 +83,7 @@ def _compute_statistic(datas, statistic_name):
     # plevs
     for j in range(statistic.shape[0]):
         plev_check = []
-        for cdata in datas:
+        for cdata in data:
             fixed_data = _plev_fix(cdata, j)
             if fixed_data is not None:
                 plev_check.append(fixed_data)
@@ -107,8 +107,17 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
             t_axis,
             standard_name='time',
             units=template_cube.coord('time').units)
-    lats = template_cube.coord('latitude')
-    lons = template_cube.coord('longitude')
+
+    coord_names = [c.long_name for c in template_cube.coords()]
+    coord_names.extend([c.standard_name for c in template_cube.coords()])
+    if 'latitude' in coord_names:
+        lats = template_cube.coord('latitude')
+    else:
+        lats = None
+    if 'longitude' in coord_names:
+        lons = template_cube.coord('longitude')
+    else:
+        lons = None
 
     # no plevs
     if len(template_cube.shape) == 3:
@@ -158,7 +167,7 @@ def _datetime_to_int_days(cube):
     for date_obj in time_cells:
         # real_date resets the actual data point day
         # to the 1st of the month so that there are no
-        # wrong overlap indeces
+        # wrong overlap indices
         # NOTE: this workaround is good only
         # for monthly data
         real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
@@ -297,13 +306,13 @@ def multi_model_statistics(products, span, output_products, statistics):
     Multimodel statistics computed along the time axis. Can be
     computed across a common overlap in time (set span: overlap)
     or across the full length in time of each model (set span: full).
-    Restrictive compuation is also available by excluding any set of
+    Restrictive computation is also available by excluding any set of
     models that the user will not want to include in the statistics
     (set exclude: [excluded models list]).
 
     Restrictions needed by the input data:
     - model datasets must have consistent shapes,
-    - higher dimesnional data is not supported (ie dims higher than four:
+    - higher dimensional data is not supported (ie dims higher than four:
     time, vertical axis, two horizontal axes).
 
     Parameters
