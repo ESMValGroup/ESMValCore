@@ -40,9 +40,9 @@ class AllVars(Fix):
             rlon_to_idx = InterpolatedUnivariateSpline(
                 rlon, np.arange(len(rlon)), k=1)
             rlat_idx_bnds = rlat_to_idx(
-                cube.coord('grid_latitude').guess_bounds())
+                cube.coord('grid_latitude')._guess_bounds())
             rlon_idx_bnds = rlon_to_idx(
-                cube.coord('grid_longitude').guess_bounds())
+                cube.coord('grid_longitude')._guess_bounds())
 
             # Calculate latitude/longitude vertices by interpolation
             lat_vertices = []
