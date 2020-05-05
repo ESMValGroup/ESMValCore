@@ -118,6 +118,53 @@ def process_recipe(recipe_file, config_user):
     logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
 
 
+class Config():
+    """Manage configruation files"""
+
+    def get_config_user(self, overwrite=False, target_path=None):
+        """
+        Copy default config-user.yml file to a given path
+
+        Parameters:
+        -----------
+        overwrite: boolean
+            Name of the recipe to get
+        target_path: str
+            If not provided, the file will be copied to 
+            .esmvaltool in the user's home.
+
+        """
+        if not target_path:
+            target_path = os.path.expanduser('~/.esmvaltool/config-user.yml')
+        if not overwrite and os.path.isfile(target_path):
+            logger.info('Copy aborted. File %s already exists.')
+        shutil.copy2(
+            os.path.join(os.path.dirname(__file__), 'config-user.yml'),
+            target_path)
+
+    def get_config_developer(self, overwrite=False, target_path=None):
+        """
+        Copy default config-developer file to a given path
+
+        Parameters:
+        -----------
+        overwrite: boolean
+            Name of the recipe to get
+        target_path: str
+            If not provided, the file will be copied to 
+            .esmvaltool in the user's home.
+
+        """
+        if not target_path:
+            target_path = os.path.expanduser(
+                '~/.esmvaltool/config-developer.yml')
+        if not overwrite and os.path.isfile(target_path):
+            logger.info('Copy aborted. File %s already exists.')
+        shutil.copy2(
+            os.path.join(os.path.dirname(__file__), 'config-developer.yml'),
+            target_path)
+
+
 class Recipes():
     """Utilities to manage recipes"""
 
@@ -154,7 +201,8 @@ class ESMValTool():
     """ESMValTool main executable"""
 
     def __init__(self):
-        self.recipes = Recipes
+        self.recipes = Recipes()
+        self.config = Config()
 
     def version(self):
         """Show versions of ESMValTool packages"""
@@ -204,17 +252,16 @@ class ESMValTool():
                 recipe = installed_recipe
         recipe = os.path.abspath(
             os.path.expandvars(os.path.expanduser(recipe)))
-
+        if not config_file:
+            config_file = '~/.esmvaltool/config-user.yml'
         config_file = os.path.abspath(
             os.path.expandvars(os.path.expanduser(config_file)))
-
         # Read user config file
         if not os.path.exists(config_file):
             print("ERROR: config file {} does not exist".format(config_file))
 
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
-        if not config_file:
-            config_file = os.path.expanduser('~/.esmvaltool/config-user.yml')
+
         cfg = read_config_user_file(config_file, recipe_name)
 
         # Create run dir
