@@ -123,7 +123,9 @@ def _create_cube_time(src_cube, data, times):
 def calculate_volume(cube):
     """
     Calculate volume from a cube.
-    This function is used when the volume netcdf fx_files can't be found.
+
+    This function is used when the volume netcdf fx_variables can't be found.
+
     Parameters
     ----------
     cube: iris.cube.Cube
@@ -156,7 +158,7 @@ def calculate_volume(cube):
 def volume_statistics(
         cube,
         operator,
-        fx_files=None):
+        fx_variables=None):
     """
     Apply a statistical operation over a volume.
     The volume average is weighted according to the cell volume. Cell volume
@@ -168,8 +170,9 @@ def volume_statistics(
             Input cube.
         operator: str
             The operation to apply to the cube, options are: 'mean'.
-        fx_files: dict
-            dictionary of field:filename for the fx_files
+        fx_variables: dict
+            dictionary of field:filename for the fx_variables
+
     Returns
     -------
     iris.cube.Cube
@@ -188,8 +191,8 @@ def volume_statistics(
 
     grid_volume_found = False
     grid_volume = None
-    if fx_files:
-        for key, fx_file in fx_files.items():
+    if fx_variables:
+        for key, fx_file in fx_variables.items():
             if fx_file is None:
                 continue
             logger.info('Attempting to load %s from file: %s', key, fx_file)
