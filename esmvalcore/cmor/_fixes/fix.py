@@ -140,19 +140,21 @@ class Fix(object):
         variable = variable.replace('-', '_')
 
         fixes = []
-        try:
-            fixes_module = importlib.import_module(
-                'esmvalcore.cmor._fixes.{0}.{1}'.format(project, dataset))
+        for package in ('project', dataset):
+            try:
+                fixes_module = importlib.import_module(
+                    f'esmvalcore.cmor._fixes.{project}.{package}')
 
-            classes = inspect.getmembers(fixes_module, inspect.isclass)
-            classes = dict((name.lower(), value) for name, value in classes)
-            for fix_name in ('allvars', variable):
-                try:
-                    fixes.append(classes[fix_name]())
-                except KeyError:
-                    pass
-        except ImportError:
-            pass
+                classes = inspect.getmembers(fixes_module, inspect.isclass)
+                classes = dict((name.lower(), value)
+                               for name, value in classes)
+                for fix_name in ('allvars', variable):
+                    try:
+                        fixes.append(classes[fix_name]())
+                    except KeyError:
+                        pass
+            except ImportError:
+                pass
         return fixes
 
     @staticmethod
