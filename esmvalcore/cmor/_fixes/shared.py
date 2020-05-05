@@ -9,7 +9,7 @@ import pandas as pd
 from cf_units import Unit
 from scipy.interpolate import interp1d
 
-from esmvalcore.preprocessor._derive._shared import var_name_constraint
+from esmvalcore.iris_helpers import var_name_constraint
 
 logger = logging.getLogger(__name__)
 
