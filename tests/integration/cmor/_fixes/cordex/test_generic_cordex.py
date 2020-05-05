@@ -5,5 +5,5 @@ from esmvalcore.cmor.fix import Fix
 
 
 def test_get_allvars_fix():
-    fix = Fix.get_fixes('CORDEX', 'any_dataset', 'tas')
-    assert fix == [AllVars()]
+    fix = Fix.get_fixes('CORDEX', 'any_dataset', 'mip', 'tas')
+    assert fix == [AllVars(None)]
