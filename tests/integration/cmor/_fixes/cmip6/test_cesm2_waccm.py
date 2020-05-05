@@ -38,12 +38,12 @@ def cl_file(tmp_path):
     dataset.createVariable('a_bnds', np.float64, dimensions=('lev', 'bnds'))
     dataset.createVariable('b', np.float64, dimensions=('lev',))
     dataset.createVariable('b_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.variables['a'][:] = [2.0, 1.0]
+    dataset.variables['a'][:] = [1.0, 2.0]
     dataset.variables['a'].bounds = 'a_bnds'
-    dataset.variables['a_bnds'][:] = [[1.5, 3.0], [0.0, 1.5]]
-    dataset.variables['b'][:] = [1.0, 0.0]
+    dataset.variables['a_bnds'][:] = [[1.5, 0.0], [3.0, 1.5]]
+    dataset.variables['b'][:] = [0.0, 1.0]
     dataset.variables['b'].bounds = 'b_bnds'
-    dataset.variables['b_bnds'][:] = [[0.5, 2.0], [-1.0, 0.5]]
+    dataset.variables['b_bnds'][:] = [[0.5, -1.0], [2.0, 0.5]]
 
     dataset.close()
     return nc_path

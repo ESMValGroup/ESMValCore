@@ -3,14 +3,8 @@
 import logging
 
 import iris
-from iris import Constraint
 
 logger = logging.getLogger(__name__)
-
-
-def var_name_constraint(var_name):
-    """:mod:`iris.Constraint` using `var_name` of a :mod:`iris.cube.Cube`."""
-    return Constraint(cube_func=lambda c: c.var_name == var_name)
 
 
 def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
