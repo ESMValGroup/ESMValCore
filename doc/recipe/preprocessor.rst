@@ -1141,6 +1141,23 @@ Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
+The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
+the user may specify it as a list of variables e.g.
+
+.. code-block:: yaml
+
+    fx_variables: ['areacello', 'volcello']
+
+or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
+as a CMOR variable can permit):
+
+.. code-block:: yaml
+
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}] 
+
+The recipe parser wil automatically find the data files that are associated with these
+variables and pass them to the function for loading and processing.
+
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
 
@@ -1183,6 +1200,23 @@ apply over the volume.
 
 No depth coordinate is required as this is determined by Iris. This function
 works best when the ``fx_variables`` provide the cell volume.
+
+The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
+the user may specify it as a list of variables e.g.
+
+.. code-block:: yaml
+
+    fx_variables: ['areacello', 'volcello']
+
+or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
+as a CMOR variable can permit):
+
+.. code-block:: yaml
+
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}] 
+
+The recipe parser wil automatically find the data files that are associated with these
+variables and pass them to the function for loading and processing. 
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
