@@ -16,3 +16,4 @@ RUN ls
 RUN conda env update --name base --file environment.yml
 RUN pip install -e .[develop]
 RUN pip uninstall esmvalcore -y
+RUN rm -r /source
