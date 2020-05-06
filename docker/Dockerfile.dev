@@ -15,3 +15,6 @@ WORKDIR /source
 RUN ls
 RUN conda env update --name base --file environment.yml
 RUN pip install -e .[develop]
+RUN pip freeze
+RUN pip uninstall esmvalcore
+RUN pip freeze
