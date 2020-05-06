@@ -20,7 +20,7 @@ jobs:
     # Run tests
     working_directory: /test
     docker:
-      - image: continuumio/miniconda3
+      - image: esmvalgroup/esmvalcore:development
     steps:
       - checkout
       - run:
@@ -34,8 +34,6 @@ jobs:
           # Update/Create Conda environment and run tests
           command: |
             . /opt/conda/etc/profile.d/conda.sh
-            # conda update -y conda
-            conda env update
             conda activate esmvaltool
             python setup.py test
       - save_cache:
