@@ -31,9 +31,9 @@ jobs:
       - restore_cache:
           key: deps3-{{ .Branch }}-{{ checksum "cache_key.txt" }}
       - run:
-          # Update/Create Conda environment and run tests
           command: |
-            python setup.py test
+            python setup.py test --addopts '-m "not installation"'
+
       - save_cache:
           key: deps3-{{ .Branch }}-{{ checksum "cache_key.txt" }}
           paths:
@@ -70,7 +70,7 @@ jobs:
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            python setup.py test --addopts --installation
+            python setup.py test
             esmvaltool -h
       - save_cache:
           key: python3-install-{{ .Branch }}
@@ -147,7 +147,7 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             esmvaltool -h
-            python setup.py test --addopts --installation
+            python setup.py test
       - store_artifacts:
           path: /logs
 
@@ -171,7 +171,7 @@ jobs:
             dpkg -l > /logs/versions.txt
             conda env export -n base > /logs/build_environment.yml
             # Build conda package
-            conda build . -c conda-forge -c esmvalgroup > /logs/build_log.txt
+            conda build package -c conda-forge -c esmvalgroup > /logs/build_log.txt
       - store_artifacts:
           path: /logs
 

@@ -1,13 +1,32 @@
-"""Test Access1-0 fixes."""
+"""Test fixes for bcc-csm1-1-m."""
 import unittest
 
+from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1 import Tos as BaseTos
+from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1_m import Cl, Tos
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1_m import Tos
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'bcc-csm1-1-m', 'Amon', 'cl')
+    assert fix == [Cl(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is ClFixHybridPressureCoord
 
 
 class TestTos(unittest.TestCase):
     """Test tos fixes."""
+
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'BCC-CSM1-1-M', 'Amon', 'tos'), [Tos(None)])
+            Fix.get_fixes('CMIP5', 'bcc-csm1-1-m', 'Amon', 'tos'), [Tos(None)])
+
+
+def test_tos_fix():
+    """Test fix for ``tos``."""
+    assert Tos is BaseTos
