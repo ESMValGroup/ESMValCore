@@ -31,18 +31,11 @@ class AllVars(Fix):
             if cube.coord('latitude').has_bounds() and \
                     cube.coord('longitude').has_bounds():
                 continue
-            rlat = cube.coord('grid_latitude').points
-            rlon = cube.coord('grid_longitude').points
 
-            # Transform grid latitude/longitude to array indices [0, 1, 2, ...]
-            rlat_to_idx = InterpolatedUnivariateSpline(
-                rlat, np.arange(len(rlat)), k=1)
-            rlon_to_idx = InterpolatedUnivariateSpline(
-                rlon, np.arange(len(rlon)), k=1)
-            rlat_idx_bnds = rlat_to_idx(
-                cube.coord('grid_latitude')._guess_bounds())
-            rlon_idx_bnds = rlon_to_idx(
-                cube.coord('grid_longitude')._guess_bounds())
+            rlat_idx_bnds = self._get_points_and_bounds(
+                cube.coord('grid_latitude'))
+            rlon_idx_bnds = self._get_points_and_bounds(
+                cube.coord('grid_longitude'))
 
             # Calculate latitude/longitude vertices by interpolation
             lat_vertices = []
@@ -68,3 +61,11 @@ class AllVars(Fix):
             cube.coord('longitude').bounds = lon_vertices
 
         return cubes
+
+    def _get_points_and_bounds(self, coord):
+        coord = coord.copy()
+        coord.guess_bounds()
+        points_to_idx = InterpolatedUnivariateSpline(
+            coord.points, np.arange(len(coord.points)), k=1)
+        bounds = points_to_idx(coord.bounds)
+        return bounds
