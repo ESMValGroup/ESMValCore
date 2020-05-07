@@ -296,7 +296,7 @@ class ESMValTool():
         cfg['synda_download'] = synda_download
 
         def _check_limit(limit, value):
-            if value < 1:
+            if value is not None and value < 1:
                 raise ValueError("--{} should be larger than 0.".format(
                     limit.replace('_', '-')))
             cfg[limit] = value
