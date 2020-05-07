@@ -173,9 +173,18 @@ class Recipes():
         configure_logging(output=None, console_log_level='info')
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
         logger.info('Installed recipes:')
-        logger.info('------------------')
-        for path in glob.glob(os.path.join(recipes_folder, '*.yml')):
-            logger.info(os.path.relpath(path, recipes_folder))
+        logger.info('==================')
+        for root, dirs, files in os.walk(recipes_folder):
+            root = os.path.relpath(root, recipes_folder)
+            if root == '.':
+                root = ''
+            if root:
+                logger.info('')
+                logger.info(root.upper())
+                logger.info('-' * len(root))
+            for filename in files:
+                if filename.endswith('.yml'):
+                    logger.info(os.path.join(root, filename))
 
     def get(self, recipe):
         """
