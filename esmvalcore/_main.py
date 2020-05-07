@@ -28,12 +28,10 @@ http://esmvaltool.readthedocs.io. Have fun!
 # Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
-import argparse
 import datetime
 import errno
 import logging
 import os
-import glob
 import shutil
 import sys
 from multiprocessing import cpu_count
@@ -130,7 +128,7 @@ class Config():
         overwrite: boolean
             Name of the recipe to get
         target_path: str
-            If not provided, the file will be copied to 
+            If not provided, the file will be copied to
             .esmvaltool in the user's home.
 
         """
@@ -151,7 +149,7 @@ class Config():
         overwrite: boolean
             Name of the recipe to get
         target_path: str
-            If not provided, the file will be copied to 
+            If not provided, the file will be copied to
             .esmvaltool in the user's home.
 
         """
@@ -220,7 +218,7 @@ class ESMValTool():
         try:
             from esmvaltool import __version__ as tool_version
         except ImportError:
-            tool_version: 'not installed'
+            tool_version = 'not installed'
         logger.info('ESMValTool: %s', tool_version)
 
     def run(self, recipe, config_file=None, max_datasets=None, max_years=None,
@@ -232,8 +230,8 @@ class ESMValTool():
         Parameters:
         ----------
         recipe : str
-            Recipe to run, as either the name of an installed recipe or the path
-            to a non-installed one
+            Recipe to run, as either the name of an installed recipe or the
+            path to a non-installed one
         config_file: str, optional
             Config file to use
         max_datasets: int, optional
