@@ -93,19 +93,21 @@ def _replace_tags(path, variable):
     """Replace tags in the config-developer's file with actual values."""
     path = path.strip('/')
     tlist = re.findall(r'{([^}]*)}', path)
+    if 'startdate' in variable:
+        path = re.sub(r'(\b{ensemble}\b)', r'{startdate}-\1', path)
+        tlist.append('startdate')
     paths = [path]
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
 
         if tag == 'latestversion':  # handled separately later
-            continue
+            continue   
         if tag in variable:
             replacewith = variable[tag]
         else:
             raise KeyError("Dataset key {} must be specified for {}, check "
                            "your recipe entry".format(tag, variable))
-
         paths = _replace_tag(paths, original_tag, replacewith)
     return paths
 
@@ -233,8 +235,16 @@ def get_input_filelist(variable, rootpath, drs):
     if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
+    if 'startdate' in variable:
+        # update start and end years, move to new function?
+        intervals = [get_start_end_year(name) for name in files]
+        variable['start_year'] = min(intervals)[0]
+        variable['end_year'] = max(intervals)[1]
+        # best way to write this?
+        variable['filename'] = re.sub('\d\d\d\d-\d\d\d\d', str(variable['start_year'])+'-'+str(variable['end_year']), variable['filename'])
+          
     # do time gating only for non-fx variables
-    if variable['frequency'] != 'fx':
+    if variable['frequency'] != 'fx' or 'startdate' not in variable:
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
     return (files, dirnames, filenames)

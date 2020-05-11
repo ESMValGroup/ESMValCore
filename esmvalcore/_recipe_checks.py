@@ -118,7 +118,7 @@ def data_availability(input_files, var, dirnames, filenames):
         raise RecipeError("Missing data")
 
     # check time avail only for non-fx variables
-    if var['frequency'] == 'fx':
+    if var['frequency'] == 'fx' or 'startdate' in var:
         return
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))

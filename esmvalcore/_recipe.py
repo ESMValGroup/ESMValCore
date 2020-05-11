@@ -1007,27 +1007,27 @@ class Recipe:
         return datasets
 
     @staticmethod
-    def _expand_ensemble(variables):
+    def _expand_tag(variables, input_tag):
         """
-        Expand ensemble members to multiple datasets.
+        Expand tags such as ensemble members or stardates to multiple datasets.
 
         Expansion only supports ensembles defined as strings, not lists.
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
         for variable in variables:
-            ensemble = variable.get('ensemble', "")
-            if not isinstance(ensemble, str):
+            tag = variable.get(input_tag, "")
+            if not isinstance(tag, str):
                 expanded.append(variable)
                 continue
-            match = regex.search(ensemble)
+            match = regex.search(tag)
             if not match:
                 expanded.append(variable)
                 continue
             start, end = match.group(0)[1:-1].split(':')
             for i in range(int(start), int(end) + 1):
                 expand = deepcopy(variable)
-                expand['ensemble'] = regex.sub(str(i), ensemble, 1)
+                expand[input_tag] = regex.sub(str(i), tag, 1)
                 expanded.append(expand)
         return expanded
 
@@ -1071,7 +1071,8 @@ class Recipe:
                 if activity:
                     variable['activity'] = activity
             check.variable(variable, required_keys)
-        variables = self._expand_ensemble(variables)
+        variables = self._expand_tag(variables, 'ensemble')
+        variables = self._expand_tag(variables, 'startdate')
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
