@@ -22,6 +22,8 @@ following the default order in which they are applied:
 * :ref:`Unit conversion`
 * :ref:`Other`
 
+See also :ref:`preprocessor_functions`.
+
 Overview
 ========
 
@@ -1153,7 +1155,7 @@ as a CMOR variable can permit):
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}] 
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
 The recipe parser wil automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
@@ -1213,10 +1215,10 @@ as a CMOR variable can permit):
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}] 
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
 The recipe parser wil automatically find the data files that are associated with these
-variables and pass them to the function for loading and processing. 
+variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
