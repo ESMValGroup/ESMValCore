@@ -1070,7 +1070,14 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
-            check.variable(variable, required_keys)
+            if 'startdate' in variable:
+                startdate_keys = deepcopy(required_keys)
+                startdate_keys.update({'startdate'})
+                startdate_keys.remove('start_year')
+                startdate_keys.remove('end_year')
+                check.variable(variable, startdate_keys)
+            else:
+                check.variable(variable, required_keys)
         variables = self._expand_tag(variables, 'ensemble')
         variables = self._expand_tag(variables, 'startdate')
         return variables

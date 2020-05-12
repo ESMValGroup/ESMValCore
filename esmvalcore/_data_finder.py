@@ -219,6 +219,14 @@ def _get_filenames_glob(variable, drs):
     filenames_glob = _replace_tags(path_template, variable)
     return filenames_glob
 
+def _update_output_file(variable, files):
+    intervals = [get_start_end_year(name) for name in files]
+    variable.update({'start_year': min(intervals)[0]})
+    variable.update({'end_year': max(intervals)[1]})
+    filename = variable['filename'].replace('.nc', '_{start_year}-{end_year}.nc'.format(**variable))
+    variable['filename'] = filename
+    return variable
+
 
 def _find_input_files(variable, rootpath, drs):
     input_dirs = _find_input_dirs(variable, rootpath, drs)
@@ -236,12 +244,7 @@ def get_input_filelist(variable, rootpath, drs):
         variable['ensemble'] = 'r0i0p0'
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     if 'startdate' in variable:
-        # update start and end years, move to new function?
-        intervals = [get_start_end_year(name) for name in files]
-        variable['start_year'] = min(intervals)[0]
-        variable['end_year'] = max(intervals)[1]
-        # best way to write this?
-        variable['filename'] = re.sub('\d\d\d\d-\d\d\d\d', str(variable['start_year'])+'-'+str(variable['end_year']), variable['filename'])
+        variable = _update_output_file(variable, files)
           
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx' or 'startdate' not in variable:
@@ -265,7 +268,7 @@ def get_output_file(variable, preproc_dir):
         variable['variable_group'],
         _replace_tags(cfg['output_file'], variable)[0],
     )
-    if variable['frequency'] != 'fx':
+    if variable['frequency'] != 'fx' and 'startdate' not in variable:
         outfile += '_{start_year}-{end_year}'.format(**variable)
     outfile += '.nc'
     return outfile
