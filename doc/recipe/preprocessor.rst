@@ -4,8 +4,8 @@
 Preprocessor
 ************
 
-In this section, each of the preprocessor modules is described in detail
-following the default order in which they are applied:
+In this section, each of the preprocessor modules is described,
+roughly following the default order in which preprocessor functions are applied:
 
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
@@ -22,7 +22,7 @@ following the default order in which they are applied:
 * :ref:`Unit conversion`
 * :ref:`Other`
 
-See also :ref:`preprocessor_functions`.
+See :ref:`preprocessor_functions` for implementation details and the exact default order.
 
 Overview
 ========
