@@ -1073,10 +1073,11 @@ class Recipe:
             if 'startdate' in variable:
                 startdate_keys = deepcopy(required_keys)
                 startdate_keys.update({'startdate'})
-                if 'star_year' in variable:
+                try:
                     startdate_keys.remove('start_year')
-                if 'end_year' in variable:
                     startdate_keys.remove('end_year')
+                except KeyError:
+                    continue
                 check.variable(variable, startdate_keys)
             else:
                 check.variable(variable, required_keys)
