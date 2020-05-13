@@ -12,7 +12,7 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl is ClFixHybridHeightCoord
+    assert issubclass(Cl, ClFixHybridHeightCoord)
 
 
 def test_get_cli_fix():
@@ -23,7 +23,7 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli is ClFixHybridHeightCoord
+    assert issubclass(Cli, ClFixHybridHeightCoord)
 
 
 def test_get_clw_fix():
@@ -34,4 +34,4 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw is ClFixHybridHeightCoord
+    assert issubclass(Clw, ClFixHybridHeightCoord)

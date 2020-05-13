@@ -2,8 +2,8 @@
 from ..fix import Fix
 
 
-class cl(Fix):
-    """Fixes for pctisccp."""
+class Cl(Fix):
+    """Fixes for cl."""
 
     def fix_data(self, cube):
         """
