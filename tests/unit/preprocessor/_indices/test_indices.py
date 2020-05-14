@@ -64,5 +64,5 @@ class Test(tests.Test):
         self.cube.coord("air_pressure").guess_bounds()
         extracted = _extract_u850(self.cube)
         jets, lats = _get_jets(extracted)
-        np.testing.assert_equal(jets["DJF"], np.ma.array([1., 8.]))
-        np.testing.assert_equal(lats["DJF"], np.array([25., 4.]))
+        np.testing.assert_equal(jets["DJF"].data, np.ma.array([1., 8.]))
+        np.testing.assert_equal(lats["DJF"].data, np.array([25., 4.]))
