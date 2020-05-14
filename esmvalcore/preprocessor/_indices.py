@@ -64,11 +64,8 @@ def _get_jets(seasonal_dict):
     for season, _ in seasonal_dict.items():
         cube = seasonal_dict[season]
         jet_lat = np.empty((cube.data.shape[0], ))
-        t_ax, l_ax = cube.data.shape
-        for t_idx in range(t_ax):
-            for l_idx in range(l_ax):
-                if cube.data[t_idx, l_idx] == jet_speeds[season][t_idx]:
-                    jet_lat[t_idx] = cube.coord('latitude').points[l_idx]
+        idx = np.argmax(cube.data, axis=1)
+        jet_lat = cube.coord('latitude').points[idx]
         jet_lat_cube = iris.cube.Cube(
             jet_lat,
             dim_coords_and_dims=[],
