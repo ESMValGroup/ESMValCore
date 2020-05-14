@@ -299,7 +299,7 @@ def _assemble_full_data(cubes, statistic):
     return stats_cube
 
 
-def multi_model_statistics(products, span, output_products, statistics):
+def multi_model_statistics(products, span, statistics, output_products=None):
     """
     Compute multi-model statistics.
 
@@ -341,8 +341,12 @@ def multi_model_statistics(products, span, output_products, statistics):
     if len(products) < 2:
         logger.info("Single dataset in list: will not compute statistics.")
         return products
-
-    cubes = [cube for product in products for cube in product.cubes]
+    if isinstance(products, set):
+        cubes = [cube for product in products for cube in product.cubes]
+        statistic_products = set()
+    else:
+        cubes = products
+        statistic_products = {}
     # check if we have any time overlap
     interval = _get_overlap(cubes)
     if interval is None:
@@ -360,7 +364,6 @@ def multi_model_statistics(products, span, output_products, statistics):
             "Unexpected value for span {}, choose from 'overlap', 'full'"
             .format(span))
 
-    statistic_products = set()
     for statistic in statistics:
         # Compute statistic
         if span == 'overlap':
@@ -370,14 +373,18 @@ def multi_model_statistics(products, span, output_products, statistics):
         statistic_cube.data = np.ma.array(
             statistic_cube.data, dtype=np.dtype('float32'))
 
-        # Add to output product and log provenance
-        statistic_product = output_products[statistic]
-        statistic_product.cubes = [statistic_cube]
-        for product in products:
-            statistic_product.wasderivedfrom(product)
-        logger.info("Generated %s", statistic_product)
-        statistic_products.add(statistic_product)
+        if output_products:
+            # Add to output product and log provenance
+            statistic_product = output_products[statistic]
+            statistic_product.cubes = [statistic_cube]
+            for product in products:
+                statistic_product.wasderivedfrom(product)
+            logger.info("Generated %s", statistic_product)
+            statistic_products.add(statistic_product)
+        else:
+            statistic_products[statistic] = statistic_cube
 
-    products |= statistic_products
-
-    return products
+    if isinstance(statistic_products, set):
+        products |= statistic_products
+        return products
+    return statistic_products
