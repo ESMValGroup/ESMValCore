@@ -13,6 +13,7 @@ from ._area import (area_statistics, extract_named_regions, extract_region,
 from ._derive import derive
 from ._detrend import detrend
 from ._download import download
+from ._indices import acsis_indices
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
 from ._mask import (mask_above_threshold, mask_below_threshold,
@@ -51,6 +52,8 @@ __all__ = [
     'extract_time',
     'extract_season',
     'extract_month',
+    # Compute indices
+    'acsis_indices',
     # Data reformatting/CMORization
     'fix_data',
     # Level extraction
