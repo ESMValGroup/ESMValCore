@@ -655,6 +655,40 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
+def _update_acsis_indices(settings, config_user):
+    """Update the ACSIS indices calculator to output in work_dir."""
+    # set target dir to save
+    settings['acsis_indices']['target_dir'] = config_user['work_dir']
+    if not os.path.isdir(config_user['work_dir']):
+        os.makedirs(config_user['work_dir'])
+
+    # check for moc_file
+    moc_file = settings['acsis_indices'].get('moc_file')
+    if not moc_file:
+        raise RecipeError(
+            "acsis_indices: did not find any input option for moc_file")
+    else:
+        if not os.path.exists(moc_file):
+            moc_file = os.path.join(
+                config_user['auxiliary_data_dir'],
+                moc_file,
+            )
+            settings['acsis_indices']['moc_file'] = moc_file
+
+    # check for vn_file
+    vn_file = settings['acsis_indices'].get('vn_file')
+    if not vn_file:
+        raise RecipeError(
+            "acsis_indices: did not find any input option for vn_file")
+    else:
+        if not os.path.exists(vn_file):
+            vn_file = os.path.join(
+                config_user['auxiliary_data_dir'],
+                vn_file,
+            )
+            settings['acsis_indices']['vn_file'] = vn_file
+
+
 def _match_products(products, variables):
     """Match a list of input products to output product attributes."""
     grouped_products = {}
@@ -723,6 +757,7 @@ def _get_preprocessor_products(variables,
             config_user=config_user,
         )
         _update_extract_shape(settings, config_user)
+        _update_acsis_indices(settings, config_user)
         _update_weighting_settings(settings, variable)
         _update_fx_settings(settings=settings,
                             variable=variable,
