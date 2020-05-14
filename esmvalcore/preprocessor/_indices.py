@@ -64,7 +64,16 @@ def _get_jets(seasonal_dict):
         jet_lat = np.empty((cube.data.shape[0], ))
         max_ind = np.argmax(cube.data, axis=1)
         jet_lat[max_ind[0]] = cube.coord('latitude').points[max_ind[1]]
-        jet_lats[season] = jet_lat
+        jet_lat_cube = iris.cube.Cube(
+            jet_lat,
+            dim_coords_and_dims=[],
+            long_name="jet-latitudes")
+        jet_speed_cube = iris.cube.Cube(
+            jet_speeds[season],
+            dim_coords_and_dims=[],
+            long_name="jet-speeds")
+        jet_lats[season] = jet_lat_cube
+        jet_speeds[season] = jet_speed_cube
 
     return jet_speeds, jet_lats
 
@@ -103,3 +112,34 @@ def _moc_vn(moc_file, vn_file):
     annual_vn = annual_statistics(vn_cube)
 
     return annual_moc, annual_vn
+
+
+def acsis_indices(cube, moc_file, vn_file):
+    """
+    Function to compute and write to disk ACSIS indices.
+    """
+    logger.info("Computing and saving ACSIS indices...")
+    if os.path.isfile(moc_file):
+        logger.info("Using file for {}: {}".format(MOC_VARIABLE, moc_file))
+    else:
+        raise OSError("File {} for {} does not exist.".format(moc_file,
+                                                              MOC_VARIABLE))
+    if os.path.isfile(vn_file):
+        logger.info("Using file for {}: {}".format(AIRPRESS_VARIABLE,
+                                                   vn_file))
+    else:
+        raise OSError("File {} for {} does not exist.".format(
+                          vn_file,
+                          AIRPRESS_VARIABLE))
+
+    # jets compute
+    season_dict = _extract_u850(cube)
+    jet_speeds, jet_lats = _get_jets(season_dict)
+
+    # jets save
+    for season in seasons:
+        iris.save(jet_speeds[season], 'u850_{}_jet-speeds.nc'.format(season))
+        iris.save(jet_lats[season], 'u850_{}_jet-latitudes.nc'.format(season))
+
+    # moc-vn
+
