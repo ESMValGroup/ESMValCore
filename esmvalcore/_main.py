@@ -211,8 +211,6 @@ class ESMValTool():
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
-
-        
         for ep in iter_entry_points('esmvaltool_commands'):
             if hasattr(self, ep.name):
                 logger.error('Registered command %s already exists', ep.name)
