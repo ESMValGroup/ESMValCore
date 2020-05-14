@@ -1,6 +1,8 @@
 """Test diagnostic script runs."""
 import contextlib
+import shutil
 import sys
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -108,8 +110,31 @@ SCRIPTS = {
 }
 
 
-@pytest.mark.installation
-@pytest.mark.parametrize('script_file, script', SCRIPTS.items())
+def interpreter_not_installed(script):
+    """Check if an interpreter is installed for script."""
+    interpreters = {
+        '.jl': 'julia',
+        '.ncl': 'ncl',
+        '.py': 'python',
+        '.R': 'Rscript',
+    }
+    ext = Path(script).suffix
+    interpreter = interpreters[ext]
+    return shutil.which(interpreter) is None
+
+
+@pytest.mark.parametrize('script_file, script', [
+    pytest.param(
+        script_file,
+        script,
+        marks=[
+            pytest.mark.installation,
+            pytest.mark.xfail(interpreter_not_installed(script_file),
+                              run=False,
+                              reason="Interpreter not available"),
+        ],
+    ) for script_file, script in SCRIPTS.items()
+])
 def test_diagnostic_run(tmp_path, script_file, script):
 
     recipe_file = tmp_path / 'recipe_test.yml'

@@ -2,8 +2,9 @@
 
 import logging
 
+from esmvalcore.iris_helpers import var_name_constraint
+
 from ._baseclass import DerivedVariableBase
-from ._shared import var_name_constraint
 
 logger = logging.getLogger(__name__)
 
