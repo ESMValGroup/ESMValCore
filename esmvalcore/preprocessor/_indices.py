@@ -94,7 +94,7 @@ def _djf_greenland_iceland(data_file, var_constraint, season):
     diff = greenland - iceland
     season_geo_diff = extract_season(diff, season)
 
-    return season_geo_diff
+    return greenland_djf, iceland_djf, season_geo_diff
 
 
 def _moc_vn(moc_file, vn_file):
@@ -111,7 +111,12 @@ def _moc_vn(moc_file, vn_file):
     vn_cube = iris.load(vn_file, constraints=vn_constraint)[0]
     annual_vn = annual_statistics(vn_cube)
 
-    return annual_moc, annual_vn
+    # greenland-iceland
+    greenland_djf, iceland_djf, season_geo_diff = \
+        _djf_greenland_iceland(vn_file, vn_constraint, SEASON)
+
+    return (annual_moc, annual_vn,
+        greenland_djf, iceland_djf, season_geo_diff)
 
 
 def acsis_indices(cube, moc_file, vn_file):
@@ -141,5 +146,11 @@ def acsis_indices(cube, moc_file, vn_file):
         iris.save(jet_speeds[season], 'u850_{}_jet-speeds.nc'.format(season))
         iris.save(jet_lats[season], 'u850_{}_jet-latitudes.nc'.format(season))
 
-    # moc-vn
-
+    # moc-vn-greenland-iceland
+    (annual_moc, annual_vn,
+     greenland_djf, iceland_djf, season_geo_diff) = _moc_vn(moc_file, vn_file)
+    iris.save(annual_moc, 'annual_moc.nc')
+    iris.save(annual_vn, 'annual_vn.nc')
+    iris.save(greenland_djf, 'greenland_djf.nc')
+    iris.save(iceland_djf, 'iceland_djf.nc')
+    iris.save(season_geo_diff, 'iceland_greenland.nc')
