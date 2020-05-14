@@ -35,6 +35,7 @@ import os
 import shutil
 import sys
 from multiprocessing import cpu_count
+from pkg_resources import iter_entry_points
 import fire
 
 from . import __version__
@@ -210,6 +211,13 @@ class ESMValTool():
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
+
+        
+        for ep in iter_entry_points('esmvaltool_commands'):
+            if hasattr(self, ep.name):
+                logger.error('Registered command %s already exists', ep.name)
+                continue
+            self.__setattr__(ep.name, ep.load())
 
     def version(self):
         """Show versions of ESMValTool packages"""
