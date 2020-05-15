@@ -657,6 +657,9 @@ def _update_extract_shape(settings, config_user):
 
 def _update_acsis_indices(settings, config_user):
     """Update the ACSIS indices calculator to output in work_dir."""
+    if 'acsis_indices' not in settings:
+        return
+
     # get moc_variable and vn_variable
     moc_variable = settings['acsis_indices'].get('moc_variable')
     if not moc_variable:
