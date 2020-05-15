@@ -105,7 +105,7 @@ def test_py2ncl():
         _py2ncl([1, "cow"], 'tas')
     assert 'NCL array cannot be mixed type:' in str(ex_err.value)
     with pytest.raises(ValueError) as ex_err:
-        _py2ncl({"cow": 22}, None)
+        _py2ncl({"a": {"cow": 22}})
     assert 'NCL does not support nested dicts:' in str(ex_err.value)
 
 
