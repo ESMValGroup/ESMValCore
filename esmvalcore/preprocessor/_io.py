@@ -184,7 +184,7 @@ def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
     _fix_cube_attributes(cubes)
 
-    if len(cubes) > 2:
+    if len(cubes) > 1:
         # order cubes by first time point
         cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
 
