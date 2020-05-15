@@ -160,7 +160,7 @@ def _get_single_diagnostic_task(tmp_path, diag_script, write_diag=True):
     return tasks
 
 
-def test_py_diagnostic_task_basics(tmp_path):
+def test_py_diagnostic_task_constructor(tmp_path):
     """Test DiagnosticTask basic attributes."""
     diag_script = tmp_path / 'diag_cow.py'
     tasks = _get_single_diagnostic_task(tmp_path, diag_script)
