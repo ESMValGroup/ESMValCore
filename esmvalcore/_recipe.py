@@ -657,12 +657,21 @@ def _update_extract_shape(settings, config_user):
 
 def _update_acsis_indices(settings, config_user):
     """Update the ACSIS indices calculator to output in work_dir."""
-    # set target dir to save
-    settings['acsis_indices']['target_dir'] = config_user['work_dir']
-    if not os.path.isdir(config_user['work_dir']):
-        os.makedirs(config_user['work_dir'])
+    # get moc_variable and vn_variable
+    moc_variable = settings['acsis_indices'].get('moc_variable')
+    if not moc_variable:
+        logger.warning(
+            "acsis_indices: setting default moc variable to moc_mar_hc10")
+        moc_variable = 'moc_mar_hc10'
+    settings['acsis_indices']['moc_variable'] = moc_variable
+    vn_variable = settings['acsis_indices'].get('vn_variable')
+    if not vn_variable:
+        logger.warning(
+            "acsis_indices: setting default vn variable to UM_0_fc8_vn405")
+        vn_variable = 'UM_0_fc8_vn405'
+    settings['acsis_indices']['vn_variable'] = vn_variable
 
-    # check for moc_file
+    # check for moc_file and assign variable
     moc_file = settings['acsis_indices'].get('moc_file')
     if not moc_file:
         raise RecipeError(
@@ -673,9 +682,16 @@ def _update_acsis_indices(settings, config_user):
                 config_user['auxiliary_data_dir'],
                 moc_file,
             )
-            settings['acsis_indices']['moc_file'] = moc_file
+        if os.path.isfile(moc_file):
+            logger.info("Using file for {}: {}".format(moc_variable,
+                                                       moc_file))
+        else:
+            raise RecipeError("File {} for {} does not exist.".format(
+                                  moc_file,
+                                  moc_variable))
+        settings['acsis_indices']['moc_file'] = moc_file
 
-    # check for vn_file
+    # check for vn_file and assign variable
     vn_file = settings['acsis_indices'].get('vn_file')
     if not vn_file:
         raise RecipeError(
@@ -686,7 +702,13 @@ def _update_acsis_indices(settings, config_user):
                 config_user['auxiliary_data_dir'],
                 vn_file,
             )
-            settings['acsis_indices']['vn_file'] = vn_file
+        if os.path.isfile(vn_file):
+            logger.info("Using file for {}: {}".format(vn_variable,
+                                                       vn_file))
+        else:
+            raise RecipeError("File {} for {} does not exist.".format(
+                                  vn_file,
+                                  vn_variable))
 
 
 def _match_products(products, variables):
