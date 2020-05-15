@@ -382,7 +382,7 @@ def _concatenate_overlapping_cubes(cubes):
     time_2 = cubes[1].coord('time')
     if time_1.units != time_2.units:
         raise ValueError(
-            f"Cubes {cubes[0]} and {cubes[1]} can not be concatenated: "
+            f"Cubes\n{cubes[0]}\nand\n{cubes[1]}\ncan not be concatenated: "
             f"time units {time_1.units}, calendar {time_1.units.calendar} "
             f"and {time_2.units}, calendar {time_2.units.calendar} differ")
     data_start_1 = time_1.cell(0).point
