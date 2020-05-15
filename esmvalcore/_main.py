@@ -227,10 +227,9 @@ class ESMValTool():
 
     def version(self):
         """Show versions of ESMValTool packages."""
-        configure_logging(output=None, console_log_level='info')
-        logger.info('ESMValCore: %s', __version__)
+        print(f'ESMValCore: {__version__}')
         for project, version in self._extra_packages.items():
-            logger.info('%s: %s', project, version)
+            print(f'{project}: {version}')
 
     @staticmethod
     def run(recipe, config_file=None, max_datasets=None, max_years=None,
