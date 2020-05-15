@@ -35,7 +35,7 @@ def cl_file(tmp_path):
     dataset.variables['time'].units = 'days since 6543-2-1'
     dataset.variables['lev'][:] = [1.0, 2.0]
     dataset.variables['lev'].bounds = 'lev_bnds'
-    dataset.variables['lev'].units = '1'
+    dataset.variables['lev'].units = 'hPa'
     dataset.variables['lev_bnds'][:] = [[0.5, 1.5], [1.5, 3.0]]
     dataset.variables['lev_bnds'].standard_name = (
         'atmosphere_hybrid_sigma_pressure_coordinate')
@@ -57,12 +57,12 @@ def cl_file(tmp_path):
     dataset.createVariable('p0', np.float64, dimensions=())
     dataset.createVariable('ps', np.float64,
                            dimensions=('time', 'lat', 'lon'))
-    dataset.variables['a'][:] = [2.0, 1.0]  # Wrong order intended
+    dataset.variables['a'][:] = [1.0, 2.0]
     dataset.variables['a'].bounds = 'a_bnds'
-    dataset.variables['a_bnds'][:] = [[0.0, 1.5], [1.5, 3.0]]
-    dataset.variables['b'][:] = [1.0, 0.0]  # Wrong order intended
+    dataset.variables['a_bnds'][:] = [[1.5, 3.0], [0.0, 1.5]]  # intended
+    dataset.variables['b'][:] = [0.0, 1.0]
     dataset.variables['b'].bounds = 'b_bnds'
-    dataset.variables['b_bnds'][:] = [[-1.0, 0.5], [0.5, 2.0]]
+    dataset.variables['b_bnds'][:] = [[0.5, 2.0], [-1.0, 0.5]]  # intended
     dataset.variables['p0'][:] = 1.0
     dataset.variables['p0'].units = 'Pa'
     dataset.variables['ps'][:] = np.arange(1 * 3 * 4).reshape(1, 3, 4)
@@ -136,8 +136,8 @@ def test_cl_fix_file(mock_get_filepath, cl_file, tmp_path):
     assert 'ps' in var_names
 
     # Raw cl cube
-    cl_cube = cubes.extract_strict('cloud_area_fraction_in_atmosphere_layer')
-    assert not cl_cube.coords('air_pressure')
+    raw_cube = cubes.extract_strict('cloud_area_fraction_in_atmosphere_layer')
+    assert not raw_cube.coords('air_pressure')
 
     # Apply fix
     mock_get_filepath.return_value = os.path.join(tmp_path,
@@ -159,6 +159,58 @@ def test_cl_fix_file(mock_get_filepath, cl_file, tmp_path):
                                AIR_PRESSURE_POINTS)
     np.testing.assert_allclose(fixed_air_pressure_coord.bounds,
                                AIR_PRESSURE_BOUNDS)
+
+
+@pytest.fixture
+def cl_cube():
+    """``cl`` cube."""
+    time_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='time', standard_name='time',
+        units='days since 1850-01-01 00:00:00')
+    lev_coord = iris.coords.DimCoord(
+        [0.0, 1.0, 2.0], var_name='lev',
+        standard_name='atmosphere_hybrid_sigma_pressure_coordinate', units='1',
+        attributes={'positive': 'up'})
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
+    lon_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lon', standard_name='longitude', units='degrees')
+    coord_specs = [
+        (time_coord, 0),
+        (lev_coord, 1),
+        (lat_coord, 2),
+        (lon_coord, 3),
+    ]
+    cube = iris.cube.Cube(
+        np.arange(2 * 3 * 2 * 2).reshape(2, 3, 2, 2),
+        var_name='cl',
+        standard_name='cloud_area_fraction_in_atmosphere_layer',
+        units='%',
+        dim_coords_and_dims=coord_specs,
+    )
+    return cube
+
+
+def test_cl_fix_data(cl_cube):
+    """Test ``fix_data`` for ``cl``."""
+    fix = Cl(None)
+    out_cube = fix.fix_data(cl_cube)
+    assert out_cube.shape == cl_cube.shape
+    np.testing.assert_allclose(out_cube.data,
+                               [[[[8, 9],
+                                  [10, 11]],
+                                 [[4, 5],
+                                  [6, 7]],
+                                 [[0, 1],
+                                  [2, 3]]],
+                                [[[20, 21],
+                                  [22, 23]],
+                                 [[16, 17],
+                                  [18, 19]],
+                                 [[12, 13],
+                                  [14, 15]]]])
+    np.testing.assert_allclose(out_cube.coord(var_name='lev').points,
+                               [2.0, 1.0, 0.0])
 
 
 def test_get_cli_fix():

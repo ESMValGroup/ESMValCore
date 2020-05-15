@@ -11,8 +11,7 @@ class Cl(BaseCl):
     def fix_file(self, filepath, output_dir):
         """Fix hybrid pressure coordinate.
 
-        Adds missing ``formula_terms`` attribute to file and fix ordering
-        of auxiliary coordinates ``a``, ``b``, ``a_bnds`` and ``b_bnds``.
+        Adds missing ``formula_terms`` attribute to file.
 
         Note
         ----
@@ -34,10 +33,10 @@ class Cl(BaseCl):
             Path to the fixed file.
 
         """
-        new_path = super().fix_file(filepath, output_dir)
+        new_path = self._fix_formula_terms(filepath, output_dir)
         dataset = Dataset(new_path, mode='a')
-        dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][::-1]
-        dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][::-1]
+        dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][:, ::-1]
+        dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][:, ::-1]
         dataset.close()
         return new_path
 
