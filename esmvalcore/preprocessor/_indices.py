@@ -1,24 +1,40 @@
 """Module to compute various fixed indices."""
 import logging
-import os
-from datetime import datetime
 
 import iris
 import numpy as np
-import yaml
 
 from ._area import extract_region
 from ._regrid import extract_levels
 from ._time import annual_statistics, extract_season
 
-# global vars
-seasons = ['DJF', 'MAM', 'JJA', 'SON']
-MOC_VARIABLE = 'moc_mar_hc10'
-AIRPRESS_VARIABLE = 'UM_0_fc8_vn405'  # check current file, no metadata
-GREENLAND_ICELAND_SEASON = "DJF"
+# global vars: seasons
+CLIM_SEASONS = ['DJF', 'MAM', 'JJA', 'SON']
 
 # set up logging
 logger = logging.getLogger(__name__)
+
+
+def _load_cube(data_file, variable):
+    """Load cube with constraint."""
+    var_constraint = iris.Constraint(
+        cube_func=(lambda c: c.var_name == variable))
+    cube = iris.load(data_file, constraints=var_constraint)
+    if not cube:
+        raise ValueError("No variable {} found in file {}".format(
+            variable, data_file))
+    else:
+        cube = cube[0]
+
+    return cube
+
+
+def _add_attribute(cube, data, long_name):
+    """Add the indices as aux coords to cube."""
+    cube.attributes[long_name] = data
+
+    return cube
+
 
 def _extract_u850(cube):
     """
@@ -39,7 +55,8 @@ def _extract_u850(cube):
 
     # extract seasons
     seasonal_dict = {
-        season: extract_season(cube, season) for season in seasons
+        season: extract_season(cube, season)
+        for season in CLIM_SEASONS
     }
 
     return seasonal_dict
@@ -50,13 +67,14 @@ def _get_jets(seasonal_dict):
     # remove non-seasons and sub-dimensional data
     seasonal_dict = {k: v for k, v in seasonal_dict.items() if v is not None}
     seasonal_dict = {
-        k: v for k, v in seasonal_dict.items() if len(v.data.shape) >= 2
+        k: v
+        for k, v in seasonal_dict.items() if len(v.data.shape) >= 2
     }
 
     # get jet speeds
     jet_speeds = {
-        season: np.amax(seasonal_dict[season].data,
-                        axis=1) for season in seasonal_dict.keys()
+        season: np.amax(seasonal_dict[season].data, axis=1)
+        for season in seasonal_dict.keys()
     }
 
     # get the jet latitudes
@@ -66,24 +84,21 @@ def _get_jets(seasonal_dict):
         jet_lat = np.empty((cube.data.shape[0], ))
         idx = np.argmax(cube.data, axis=1)
         jet_lat = cube.coord('latitude').points[idx]
-        jet_lat_cube = iris.cube.Cube(
-            jet_lat,
-            dim_coords_and_dims=[],
-            long_name="jet-latitudes")
-        jet_speed_cube = iris.cube.Cube(
-            jet_speeds[season],
-            dim_coords_and_dims=[],
-            long_name="jet-speeds")
+        jet_lat_cube = iris.cube.Cube(jet_lat,
+                                      dim_coords_and_dims=[],
+                                      long_name="jet-latitudes")
+        jet_speed_cube = iris.cube.Cube(jet_speeds[season],
+                                        dim_coords_and_dims=[],
+                                        long_name="jet-speeds")
         jet_lats[season] = jet_lat_cube
         jet_speeds[season] = jet_speed_cube
 
     return jet_speeds, jet_lats
 
 
-def _djf_greenland_iceland(data_file, var_constraint, season):
+def _djf_greenland_iceland(vn_file, vn_variable, season):
     """Get the DJF mean for Greenland-Iceland."""
-    # TODO check file, no metadata
-    cube = iris.load(data_file)[1]  # , constraints=var_constraint)[0]
+    cube = _load_cube(vn_file, vn_variable)
     greenland_map = extract_region(cube, 25., 35., 30., 40.)
     iceland_map = extract_region(cube, 15., 25., 60., 70.)
     greenland = greenland_map.collapsed(['longitude', 'latitude'],
@@ -100,69 +115,69 @@ def _djf_greenland_iceland(data_file, var_constraint, season):
     return greenland_djf, iceland_djf, season_geo_diff
 
 
-def _moc_vn(moc_file, vn_file):
+def _moc_vn(moc_file, vn_file, moc_variable, vn_variable):
     """Compute yearly means for moc and vn."""
     # moc
-    moc_constraint = iris.Constraint(
-        cube_func=(lambda c: c.var_name == MOC_VARIABLE))
-    moc_cube = iris.load(moc_file, constraints=moc_constraint)[0]
+    moc_cube = _load_cube(moc_file, moc_variable)
     annual_moc = annual_statistics(moc_cube)
 
     # vn405
-    vn_constraint = iris.Constraint(
-        cube_func=(lambda c: c.var_name == AIRPRESS_VARIABLE))
-    # TODO current file has no metadata !!!
-    vn_cube = iris.load(vn_file)[1]  # , constraints=vn_constraint)[0]
+    vn_cube = _load_cube(vn_file, vn_variable)
     annual_vn = annual_statistics(vn_cube)
 
     # greenland-iceland
     greenland_djf, iceland_djf, season_geo_diff = \
-        _djf_greenland_iceland(vn_file, vn_constraint,
-                               GREENLAND_ICELAND_SEASON)
+        _djf_greenland_iceland(vn_file, vn_variable, "DJF")
 
-    return (annual_moc, annual_vn,
-        greenland_djf, iceland_djf, season_geo_diff)
+    return (annual_moc, annual_vn, greenland_djf, iceland_djf, season_geo_diff)
 
 
-def acsis_indices(cube, moc_file, vn_file, target_dir):
+def acsis_indices(cube, moc_file, vn_file, moc_variable, vn_variable):
     """
-    Function to compute and write to disk ACSIS indices.
+    Compute and store ACSIS indices.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+    moc_file: str
+        file containing moc data
+    vn_file: str
+        file containing vn data
+    moc_variable: str
+        identify the moc variable
+    vn_variable: str
+        identify the vn variable
+
+    Returns
+    -------
+    iris.cube.Cube
+        original cube with ACSIS indicators as attributes.
     """
     logger.info("Computing and saving ACSIS indices...")
-    if os.path.isfile(moc_file):
-        logger.info("Using file for {}: {}".format(MOC_VARIABLE, moc_file))
-    else:
-        raise OSError("File {} for {} does not exist.".format(moc_file,
-                                                              MOC_VARIABLE))
-    if os.path.isfile(vn_file):
-        logger.info("Using file for {}: {}".format(AIRPRESS_VARIABLE,
-                                                   vn_file))
-    else:
-        raise OSError("File {} for {} does not exist.".format(
-                          vn_file,
-                          AIRPRESS_VARIABLE))
 
     # jets compute
+    logger.debug("Extracting 850hPa and seasons from {}".format(cube))
     season_dict = _extract_u850(cube)
+    logger.debug("Computing jets from {}".format(str(season_dict)))
     jet_speeds, jet_lats = _get_jets(season_dict)
 
-    # jets save
-    for season in seasons:
-        iris.save(jet_speeds[season],
-                  os.path.join(target_dir,
-                               'u850_{}_jet-speeds.nc'.format(season)))
-        iris.save(jet_lats[season],
-                  os.path.join(target_dir,
-                               'u850_{}_jet-latitudes.nc'.format(season)))
+    # jets aux coord
+    if not cube.coords('clim_season'):
+        iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
+    for season in CLIM_SEASONS:
+        jets_name = 'u850_{}_jet-speeds'.format(season)
+        _add_attribute(cube, jet_speeds[season].data, jets_name)
+        lats_name = 'u850_{}_jet-latitudes'.format(season)
+        _add_attribute(cube, jet_lats[season].data, lats_name)
 
-    # moc-vn-greenland-iceland
-    (annual_moc, annual_vn,
-     greenland_djf, iceland_djf, season_geo_diff) = _moc_vn(moc_file, vn_file)
-    iris.save(annual_moc, os.path.join(target_dir, 'annual_moc.nc'))
-    iris.save(annual_vn, os.path.join(target_dir, 'annual_vn.nc'))
-    iris.save(greenland_djf, os.path.join(target_dir, 'greenland_djf.nc'))
-    iris.save(iceland_djf, os.path.join(target_dir, 'iceland_djf.nc'))
-    iris.save(season_geo_diff, os.path.join(target_dir,
-                                            'iceland_greenland.nc'))
+    # moc-vn-greenland-iceland and add aux coord
+    (annual_moc, annual_vn, greenland_djf, iceland_djf,
+     season_geo_diff) = _moc_vn(moc_file, vn_file, moc_variable, vn_variable)
+    _add_attribute(cube, np.max(annual_moc.data), 'max_annual_moc')
+    _add_attribute(cube, np.max(annual_vn.data), 'max_annual_vn')
+    _add_attribute(cube, np.max(greenland_djf.data), 'max_greenland_djf')
+    _add_attribute(cube, np.max(iceland_djf.data), 'max_iceland_djf')
+    _add_attribute(cube, np.max(season_geo_diff.data), 'max_iceland_greenland')
 
     return cube
