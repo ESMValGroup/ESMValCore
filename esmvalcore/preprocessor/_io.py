@@ -142,25 +142,17 @@ def _fix_cube_attributes(cubes):
         cube.attributes = attributes
 
 
-def _by_two_concatenation(concatenated):
+def _by_two_concatenation(cubes):
     """Perform a by-2 concatenation to avoid gaps."""
-    try:
-        concatenated[0].coord('time')
-        concatenated[1].coord('time')
-    except iris.exceptions.CoordinateNotFoundError as exc:
-        msg = "One or both cubes {} is missing".format(concatenated) + \
-              " time coordinate: {}".format(str(exc))
-        raise ValueError(msg)
+    concatenated = iris.cube.CubeList(cubes).concatenate()
+    if len(concatenated) == 1:
+        return concatenated[0]
     else:
-        concatenated = iris.cube.CubeList(concatenated).concatenate()
-        if len(concatenated) < 2:
-            return concatenated[0]
+        concatenated = _concatenate_overlapping_cubes(concatenated)
+        if len(concatenated) == 2:
+            _get_concatenation_error(concatenated)
         else:
-            concatenated = _concatenate_overlapping_cubes(concatenated)
-            if len(concatenated) == 2:
-                _get_concatenation_error(concatenated)
-            else:
-                return concatenated[0]
+            return concatenated[0]
 
 
 def _get_concatenation_error(cubes):
@@ -186,7 +178,12 @@ def concatenate(cubes):
 
     if len(cubes) > 1:
         # order cubes by first time point
-        cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
+        try:
+            cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
+        except iris.exceptions.CoordinateNotFoundError as exc:
+            msg = "One or both cubes {} is missing".format(cubes) + \
+                  " time coordinate: {}".format(str(exc))
+            raise ValueError(msg)
 
         # iteratively concatenate starting with first cube
         result = cubes[0]
