@@ -114,7 +114,9 @@ def zonal_statistics(cube, operator):
     """
     if cube.coord('longitude').points.ndim < 2:
         operation = get_iris_analysis_operation(operator)
-        return cube.collapsed('longitude', operation)
+        cube = cube.collapsed('longitude', operation)
+        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+        return cube
     else:
         msg = (f"Zonal statistics on irregular grids not yet implemnted")
         raise ValueError(msg)
@@ -146,7 +148,9 @@ def meridional_statistics(cube, operator):
     """
     if cube.coord('latitude').points.ndim < 2:
         operation = get_iris_analysis_operation(operator)
-        return cube.collapsed('latitude', operation)
+        cube = cube.collapsed('latitude', operation)
+        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+        return cube
     else:
         msg = (f"Meridional statistics on irregular grids not yet implemnted")
         raise ValueError(msg)
@@ -192,7 +196,7 @@ def tile_grid_areas(cube, fx_files):
 
 
 # get the area average
-def area_statistics(cube, operator, fx_files=None):
+def area_statistics(cube, operator, fx_variables=None):
     """
     Apply a statistical operator in the horizontal direction.
 
@@ -228,8 +232,8 @@ def area_statistics(cube, operator, fx_files=None):
         operator: str
             The operation, options: mean, median, min, max, std_dev, sum,
             variance
-        fx_files: dict
-            dictionary of field:filename for the fx_files
+        fx_variables: dict
+            dictionary of field:filename for the fx_variables
 
     Returns
     -------
@@ -243,9 +247,9 @@ def area_statistics(cube, operator, fx_files=None):
     ValueError
         if input data cube has different shape than grid area weights
     """
-    grid_areas = tile_grid_areas(cube, fx_files)
+    grid_areas = tile_grid_areas(cube, fx_variables)
 
-    if not fx_files and cube.coord('latitude').points.ndim == 2:
+    if not fx_variables and cube.coord('latitude').points.ndim == 2:
         logger.error(
             'fx_file needed to calculate grid cell area for irregular grids.')
         raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
