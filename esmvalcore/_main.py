@@ -215,23 +215,22 @@ class ESMValTool():
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
+        self._extra_packages = {}
         for entry_point in iter_entry_points('esmvaltool_commands'):
+            self._extra_packages[entry_point.dist.project_name] = \
+                entry_point.dist.version
             if hasattr(self, entry_point.name):
                 logger.error(
                     'Registered command %s already exists', entry_point.name)
                 continue
             self.__setattr__(entry_point.name, entry_point.load())
 
-    @staticmethod
-    def version():
+    def version(self):
         """Show versions of ESMValTool packages."""
         configure_logging(output=None, console_log_level='info')
         logger.info('ESMValCore: %s', __version__)
-        try:
-            from esmvaltool import __version__ as tool_version
-        except ImportError:
-            tool_version = 'not installed'
-        logger.info('ESMValTool: %s', tool_version)
+        for project, version in self._extra_packages.items():
+            logger.info('%s: %s', project, version)
 
     @staticmethod
     def run(recipe, config_file=None, max_datasets=None, max_years=None,
@@ -257,7 +256,7 @@ class ESMValTool():
             If True, download missing data using Synda if possible
         diagnostics: list(str), optional
             Only run the named diagnostics from the recipe
-        check-level: str, optional
+        check_level: str, optional
             Configure the severity of the errors that will make the CMOR check
             fail. Possible values:
                 - ignore: all errors will be reported as warnings
