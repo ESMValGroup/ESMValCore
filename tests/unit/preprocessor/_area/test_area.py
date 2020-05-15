@@ -422,7 +422,7 @@ def test_crop_cube(make_testcube, square_shape, tmp_path):
 
 def test_crop_cube_with_ne_file():
     """Test for cropping a cube by shape bounds."""
-    shp_file = "esmvalcore/preprocessor/ne_masks/ne_10m_ocean.shp"
+    shp_file = "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp"
     with fiona.open(shp_file) as geometries:
         cube = _create_sample_full_cube()
         result = _crop_cube(cube, *geometries.bounds)
