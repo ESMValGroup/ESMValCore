@@ -118,14 +118,15 @@ def process_recipe(recipe_file, config_user):
 
 
 class Config():
-    """Manage configruation files"""
+    """Manage configuration files."""
 
-    def get_config_user(self, overwrite=False, target_path=None):
+    @staticmethod
+    def get_config_user(overwrite=False, target_path=None):
         """
-        Copy default config-user.yml file to a given path
+        Copy default config-user.yml file to a given path.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         overwrite: boolean
             Name of the recipe to get
         target_path: str
@@ -141,12 +142,13 @@ class Config():
             os.path.join(os.path.dirname(__file__), 'config-user.yml'),
             target_path)
 
-    def get_config_developer(self, overwrite=False, target_path=None):
+    @staticmethod
+    def get_config_developer(overwrite=False, target_path=None):
         """
-        Copy default config-developer file to a given path
+        Copy default config-developer file to a given path.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         overwrite: boolean
             Name of the recipe to get
         target_path: str
@@ -165,15 +167,16 @@ class Config():
 
 
 class Recipes():
-    """Utilities to manage recipes"""
+    """Utilities to manage recipes."""
 
-    def list(self):
-        """List installed recipes"""
+    @staticmethod
+    def list():
+        """List installed recipes."""
         configure_logging(output=None, console_log_level='info')
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
         logger.info('Installed recipes:')
         logger.info('==================')
-        for root, dirs, files in os.walk(recipes_folder):
+        for root, _, files in os.walk(recipes_folder):
             root = os.path.relpath(root, recipes_folder)
             if root == '.':
                 root = ''
@@ -185,12 +188,13 @@ class Recipes():
                 if filename.endswith('.yml'):
                     logger.info(os.path.join(root, filename))
 
-    def get(self, recipe):
+    @staticmethod
+    def get(recipe):
         """
-        Get a copy of any installed recipe in the current path
+        Get a copy of any installed recipe in the current path.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         recipe: str
             Name of the recipe to get
         """
@@ -206,19 +210,21 @@ class Recipes():
 
 
 class ESMValTool():
-    """ESMValTool main executable"""
+    """ESMValTool main executable."""
 
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
-        for ep in iter_entry_points('esmvaltool_commands'):
-            if hasattr(self, ep.name):
-                logger.error('Registered command %s already exists', ep.name)
+        for entry_point in iter_entry_points('esmvaltool_commands'):
+            if hasattr(self, entry_point.name):
+                logger.error(
+                    'Registered command %s already exists', entry_point.name)
                 continue
-            self.__setattr__(ep.name, ep.load())
+            self.__setattr__(entry_point.name, entry_point.load())
 
-    def version(self):
-        """Show versions of ESMValTool packages"""
+    @staticmethod
+    def version():
+        """Show versions of ESMValTool packages."""
         configure_logging(output=None, console_log_level='info')
         logger.info('ESMValCore: %s', __version__)
         try:
@@ -227,13 +233,14 @@ class ESMValTool():
             tool_version = 'not installed'
         logger.info('ESMValTool: %s', tool_version)
 
-    def run(self, recipe, config_file=None, max_datasets=None, max_years=None,
+    @staticmethod
+    def run(recipe, config_file=None, max_datasets=None, max_years=None,
             skip_nonexistent=False, synda_download=False, diagnostics=None,
             check_level='default', **kwargs):
         """
-        Execute an ESMValTool recipe
+        Execute an ESMValTool recipe.
 
-        Parameters:
+        Parameters
         ----------
         recipe : str
             Recipe to run, as either the name of an installed recipe or the
@@ -318,12 +325,11 @@ class ESMValTool():
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
-
     try:
         fire.Fire(ESMValTool())
     except fire.core.FireExit as ex:
         sys.exit(ex.code)
-    except:  # noqa
+    except Exception:  # noqa
         if not logger.handlers:
             # Add a logging handler if main failed to do so.
             logging.basicConfig()
