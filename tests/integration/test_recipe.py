@@ -64,7 +64,7 @@ DEFAULT_PREPROCESSOR_STEPS = (
 @pytest.fixture
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
-    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test')
+    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
     cfg['synda_download'] = False
     cfg['output_file_type'] = 'png'
     cfg['check_level'] = CheckLevels.DEFAULT
