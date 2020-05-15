@@ -155,20 +155,17 @@ def _get_single_diagnostic_task(tmp_path, diag_script, write_diag=True):
         settings=diag_settings,
         output_dir=diag_output_dir,
     )
-    tasks = {task}
 
-    return tasks
+    return task
 
 
 def test_py_diagnostic_task_constructor(tmp_path):
     """Test DiagnosticTask basic attributes."""
     diag_script = tmp_path / 'diag_cow.py'
-    tasks = _get_single_diagnostic_task(tmp_path, diag_script)
-    task_names = [task.name for task in tasks]
-    assert task_names == ['task0']
-    ancestor_names = [anc.name for anc in list(tasks)[0].ancestors]
+    task = _get_single_diagnostic_task(tmp_path, diag_script)
+    assert task.name == 'task0'
+    ancestor_names = [anc.name for anc in task.ancestors]
     assert ancestor_names == ['task0-ancestor0', 'task0-ancestor1']
-    task = list(tasks)[0]
     assert task.script == diag_script
     assert task.settings == {'run_dir': tmp_path / 'mydiag' / 'run_dir',
                              'profile_diagnostic': False}
