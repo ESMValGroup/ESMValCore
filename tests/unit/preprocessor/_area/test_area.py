@@ -379,10 +379,10 @@ def square_composite_shape(request, tmp_path):
 
 
 def _create_sample_full_cube():
-    cube = Cube(np.zeros((24, 180, 360)), var_name='co2', units='J')
+    cube = Cube(np.zeros((4, 180, 360)), var_name='co2', units='J')
     cube.add_dim_coord(
         iris.coords.DimCoord(
-            np.arange(15., 720., 30.),
+            np.array([10., 40., 70., 110.]),
             standard_name='time',
             units=Unit('days since 1950-01-01 00:00:00', calendar='gregorian'),
         ),
