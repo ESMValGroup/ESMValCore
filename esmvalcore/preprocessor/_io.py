@@ -186,12 +186,7 @@ def concatenate(cubes):
 
     if len(cubes) > 2:
         # order cubes by first time point
-        cubes_dict = {cube: cube.coord("time").points[0] for cube in cubes}
-        cubes_dict = {
-            k: v for k, v in sorted(cubes_dict.items(),
-                                    key=lambda item: item[1])
-        }
-        cubes = [item[0] for item in cubes_dict.items()]
+        cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
 
         # iteratively concatenate starting with first cube
         result = cubes[0]
