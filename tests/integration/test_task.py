@@ -240,7 +240,8 @@ def test_py_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
     monkeypatch.setattr(BaseTask, '_run', _run)
 
     with pytest.raises(DiagnosticError) as err_mssg:
-        _run_tasks_parallel(tasks, 2)
+        for task in tasks:
+            task.run()
     exp_mssg = "diag_cow.py failed with return code 1"
     assert exp_mssg in str(err_mssg.value)
 
@@ -255,7 +256,8 @@ def test_py_diagnostic_run_parallel_task(monkeypatch, tmp_path):
 
     monkeypatch.setattr(BaseTask, '_run', _run)
 
-    _run_tasks_parallel(tasks, 2)
+    for task in tasks:
+        task.run()
 
 
 def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
@@ -270,7 +272,8 @@ def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
 
         monkeypatch.setattr(BaseTask, '_run', _run)
         with pytest.raises(DiagnosticError) as err_mssg:
-            _run_tasks_parallel(tasks, 2)
+            for task in tasks:
+                task.run()
         exp_mssg_1 = "An error occurred during execution of NCL script"
         exp_mssg_2 = "diag_cow.ncl"
         assert exp_mssg_1 in str(err_mssg.value)
@@ -294,7 +297,8 @@ def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     if shutil.which('ncl') is not None:
         tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
         monkeypatch.setattr(BaseTask, '_run', _run)
-        _run_tasks_parallel(tasks, 2)
+        for task in tasks:
+            task.run()
     else:
         with pytest.raises(DiagnosticError) as err_mssg:
             tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
@@ -314,7 +318,8 @@ def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     if shutil.which('Rscript') is not None:
         tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
         monkeypatch.setattr(BaseTask, '_run', _run)
-        _run_tasks_parallel(tasks, 2)
+        for task in tasks:
+            task.run()
     else:
         with pytest.raises(DiagnosticError) as err_mssg:
             tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
