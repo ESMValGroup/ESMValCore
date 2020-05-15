@@ -229,7 +229,7 @@ class ESMValTool():
 
     def run(self, recipe, config_file=None, max_datasets=None, max_years=None,
             skip_nonexistent=False, synda_download=False, diagnostics=None,
-            check_level='default'):
+            check_level='default', **kwargs):
         """
         Execute an ESMValTool recipe
 
@@ -265,17 +265,10 @@ class ESMValTool():
                 recipe = installed_recipe
         recipe = os.path.abspath(
             os.path.expandvars(os.path.expanduser(recipe)))
-        if not config_file:
-            config_file = '~/.esmvaltool/config-user.yml'
-        config_file = os.path.abspath(
-            os.path.expandvars(os.path.expanduser(config_file)))
-        # Read user config file
-        if not os.path.exists(config_file):
-            print("ERROR: config file {} does not exist".format(config_file))
 
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
 
-        cfg = read_config_user_file(config_file, recipe_name)
+        cfg = read_config_user_file(config_file, recipe_name, kwargs)
 
         # Create run dir
         if os.path.exists(cfg['run_dir']):
