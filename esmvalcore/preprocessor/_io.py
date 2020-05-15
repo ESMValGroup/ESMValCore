@@ -192,12 +192,6 @@ def concatenate(cubes):
         result = cubes[0]
         for cube in cubes[1:]:
             result = _by_two_concatenation([result, cube])
-    else:
-        result = iris.cube.CubeList(cubes).concatenate()
-        if len(result) == 2:
-            result = _by_two_concatenation(cubes)
-        else:
-            result = result[0]
 
     _fix_aux_factories(result)
 
