@@ -62,36 +62,28 @@ def _extract_u850(cube):
     return seasonal_dict
 
 
-def _get_jets(seasonal_dict):
+def _get_jets(season_dict):
     """Take seasonal dictionary and get jets dicts (speeds and lats)."""
     # remove non-seasons and sub-dimensional data
-    seasonal_dict = {k: v for k, v in seasonal_dict.items() if v is not None}
-    seasonal_dict = {
+    season_dict = {k: v for k, v in season_dict.items() if v is not None}
+    season_dict = {
         k: v
-        for k, v in seasonal_dict.items() if len(v.data.shape) >= 2
+        for k, v in season_dict.items() if len(v.data.shape) >= 2
     }
 
     # get jet speeds
     jet_speeds = {
-        season: np.amax(seasonal_dict[season].data, axis=1)
-        for season in seasonal_dict.keys()
+        season: np.amax(season_dict[season].data, axis=1)
+        for season in season_dict.keys()
     }
 
     # get the jet latitudes
-    jet_lats = {}
-    for season, _ in seasonal_dict.items():
-        cube = seasonal_dict[season]
-        jet_lat = np.empty((cube.data.shape[0], ))
-        idx = np.argmax(cube.data, axis=1)
-        jet_lat = cube.coord('latitude').points[idx]
-        jet_lat_cube = iris.cube.Cube(jet_lat,
-                                      dim_coords_and_dims=[],
-                                      long_name="jet-latitudes")
-        jet_speed_cube = iris.cube.Cube(jet_speeds[season],
-                                        dim_coords_and_dims=[],
-                                        long_name="jet-speeds")
-        jet_lats[season] = jet_lat_cube
-        jet_speeds[season] = jet_speed_cube
+    jet_lats = {
+        s:
+        season_dict[s].coord('latitude').points[np.argmax(season_dict[s].data,
+                                                          axis=1)]
+        for s, _ in season_dict.items()
+    }
 
     return jet_speeds, jet_lats
 
@@ -166,18 +158,19 @@ def acsis_indices(cube, moc_file, vn_file, moc_variable, vn_variable):
     if not cube.coords('clim_season'):
         iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
     for season in CLIM_SEASONS:
-        jets_name = 'u850_{}_jet-speeds'.format(season)
-        _add_attribute(cube, jet_speeds[season].data, jets_name)
-        lats_name = 'u850_{}_jet-latitudes'.format(season)
-        _add_attribute(cube, jet_lats[season].data, lats_name)
+        if season in jet_speeds:
+            jets_name = 'u850_{}_jet-speeds'.format(season)
+            _add_attribute(cube, jet_speeds[season], jets_name)
+            lats_name = 'u850_{}_jet-latitudes'.format(season)
+            _add_attribute(cube, jet_lats[season], lats_name)
 
     # moc-vn-greenland-iceland and add aux coord
     (annual_moc, annual_vn, greenland_djf, iceland_djf,
      season_geo_diff) = _moc_vn(moc_file, vn_file, moc_variable, vn_variable)
-    _add_attribute(cube, np.max(annual_moc.data), 'max_annual_moc')
-    _add_attribute(cube, np.max(annual_vn.data), 'max_annual_vn')
-    _add_attribute(cube, np.max(greenland_djf.data), 'max_greenland_djf')
-    _add_attribute(cube, np.max(iceland_djf.data), 'max_iceland_djf')
-    _add_attribute(cube, np.max(season_geo_diff.data), 'max_iceland_greenland')
+    _add_attribute(cube, np.max(annual_moc), 'max_annual_moc')
+    _add_attribute(cube, np.max(annual_vn), 'max_annual_vn')
+    _add_attribute(cube, np.max(greenland_djf), 'max_greenland_djf')
+    _add_attribute(cube, np.max(iceland_djf), 'max_iceland_djf')
+    _add_attribute(cube, np.max(season_geo_diff), 'max_iceland_greenland')
 
     return cube
