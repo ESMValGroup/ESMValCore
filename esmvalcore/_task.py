@@ -527,8 +527,8 @@ class DiagnosticTask(BaseTask):
         if not provenance_file.is_file():
             logger.warning(
                 "No provenance information was written to %s. Unable to "
-                "record provenance for files created by diagnostic script %s",
-                provenance_file, self.script)
+                "record provenance for files created by diagnostic script %s "
+                "in task %s", provenance_file, self.script, self.name)
             return
 
         logger.debug("Collecting provenance from %s", provenance_file)
@@ -571,8 +571,8 @@ class DiagnosticTask(BaseTask):
             if not ancestor_files:
                 logger.warning(
                     "No ancestor files specified for recording provenance of "
-                    "%s, created by diagnostic script %s", filename,
-                    self.script)
+                    "%s, created by diagnostic script %s in task %s", filename,
+                    self.script, self.name)
                 valid = False
             ancestors = set()
             for ancestor_file in ancestor_files:
@@ -582,8 +582,9 @@ class DiagnosticTask(BaseTask):
                     valid = False
                     logger.warning(
                         "Invalid ancestor file %s specified for recording "
-                        "provenance of %s, created by diagnostic script %s",
-                        ancestor_file, filename, self.script)
+                        "provenance of %s, created by diagnostic script %s "
+                        "in task %s", ancestor_file, filename, self.script,
+                        self.name)
 
             attributes.update(deepcopy(attrs))
             for key in attributes:
@@ -598,11 +599,11 @@ class DiagnosticTask(BaseTask):
 
         if not valid:
             logger.warning(
-                "Valid ancestor files for diagnostic script %s are:\n%s",
-                self.script, '\n'.join(ancestor_products))
+                "Valid ancestor files for diagnostic script %s in task %s "
+                "are:\n%s", self.script, self.name,
+                '\n'.join(ancestor_products))
         logger.debug("Collecting provenance of task %s took %.1f seconds",
-                     self.name,
-                     time.time() - start)
+                     self.name, time.time() - start)
 
     def __str__(self):
         """Get human readable description."""
