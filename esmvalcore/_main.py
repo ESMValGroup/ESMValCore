@@ -223,7 +223,7 @@ class ESMValTool():
                 logger.error(
                     'Registered command %s already exists', entry_point.name)
                 continue
-            self.__setattr__(entry_point.name, entry_point.load())
+            self.__setattr__(entry_point.name, entry_point.load()())
 
     def version(self):
         """Show versions of ESMValTool packages."""
@@ -244,7 +244,8 @@ class ESMValTool():
             Recipe to run, as either the name of an installed recipe or the
             path to a non-installed one
         config_file: str, optional
-            Config file to use
+            Config file to use. If not provided will load 
+            ${HOME}/.esmvaltool/config.user.yml if it exists
         max_datasets: int, optional
             Maximum number of datasets to compute
         max_years: int, optional
