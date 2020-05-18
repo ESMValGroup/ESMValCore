@@ -58,6 +58,7 @@ REQUIREMENTS = {
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
     'develop': [
+        'autodocsumm',
         'codespell',
         'isort',
         'prospector[with_pyroma]!=1.1.6.3,!=1.1.6.4',

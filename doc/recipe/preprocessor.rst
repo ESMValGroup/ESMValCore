@@ -4,8 +4,8 @@
 Preprocessor
 ************
 
-In this section, each of the preprocessor modules is described in detail
-following the default order in which they are applied:
+In this section, each of the preprocessor modules is described,
+roughly following the default order in which preprocessor functions are applied:
 
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
@@ -21,6 +21,8 @@ following the default order in which they are applied:
 * :ref:`Detrend`
 * :ref:`Unit conversion`
 * :ref:`Other`
+
+See :ref:`preprocessor_functions` for implementation details and the exact default order.
 
 Overview
 ========
@@ -1153,7 +1155,7 @@ as a CMOR variable can permit):
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}] 
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
 The recipe parser wil automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
@@ -1213,10 +1215,10 @@ as a CMOR variable can permit):
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}] 
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
 The recipe parser wil automatically find the data files that are associated with these
-variables and pass them to the function for loading and processing. 
+variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
