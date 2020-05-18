@@ -171,6 +171,7 @@ def test_collect_provenance(mocker, diagnostic_task):
     tracked_file_instance.save_provenance.assert_called_once()
     write_citation.assert_called_once_with(tracked_file_instance.filename,
                                            tracked_file_instance.provenance)
+    diagnostic_task.products.add.assert_called_once_with(tracked_file_instance)
 
 
 def assert_warned(log, msgs):
