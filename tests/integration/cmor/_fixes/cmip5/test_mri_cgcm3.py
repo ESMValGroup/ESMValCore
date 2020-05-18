@@ -14,7 +14,7 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl(None) == ClFixHybridPressureCoord(None)
+    assert Cl is ClFixHybridPressureCoord
 
 
 class TestMsftmyz(unittest.TestCase):

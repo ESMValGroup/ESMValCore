@@ -23,7 +23,6 @@ from datetime import datetime
 root = Path(__file__).absolute().parent.parent
 sys.path.insert(0, str(root))
 
-from esmvalcore.utils.doc.gensidebar import generate_sidebar
 from esmvalcore import __version__
 
 # -- RTD configuration ------------------------------------------------
@@ -34,7 +33,7 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 # This is used for linking and such so we link to the thing we're building
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
-if rtd_version not in ["latest"]:  # TODO: add "stable" once we have it
+if rtd_version not in ["latest", "doc"]:  # TODO: add "stable" once we have it
     rtd_version = "latest"
 
 # -- General configuration ------------------------------------------------
@@ -55,18 +54,17 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
+    'autodocsumm',
 ]
 
-autodoc_default_flags = [
-    'members',
-    'undoc-members',
-    'inherited-members',
-    'show-inheritance',
-]
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'inherited-members': True,
+    'show-inheritance': True,
+    'autosummary': True,
+}
 
-# autodoc_mock_imports = ['cf_units', 'iris', 'matplotlib', 'numpy', 'cartopy',
-#                        'cftime', 'netCDF4', 'yaml', 'PIL', 'prov', 'scipy',
-#                        'psutil', 'shapely', 'stratify', 'ESMF']
 autodoc_mock_imports = [
     'iris',
     'stratify',
@@ -430,4 +428,6 @@ intersphinx_mapping = {
 
 # -- Custom Document processing ----------------------------------------------
 
+sys.path.append(os.path.dirname(__file__))
+from gensidebar import generate_sidebar
 generate_sidebar(globals(), "esmvalcore")

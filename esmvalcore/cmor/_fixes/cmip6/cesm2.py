@@ -11,11 +11,42 @@ from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
 class Cl(Fix):
     """Fixes for ``cl``."""
 
+    def _fix_formula_terms(self, filepath, output_dir):
+        """Fix ``formula_terms`` attribute."""
+        new_path = self.get_fixed_filepath(output_dir, filepath)
+        copyfile(filepath, new_path)
+        dataset = Dataset(new_path, mode='a')
+        dataset.variables['lev'].formula_terms = 'p0: p0 a: a b: b ps: ps'
+        dataset.variables['lev'].standard_name = (
+            'atmosphere_hybrid_sigma_pressure_coordinate')
+        dataset.close()
+        return new_path
+
+    def fix_data(self, cube):
+        """Fix data.
+
+        Fixed ordering of vertical coordinate.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Input cube to fix.
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        (z_axis,) = cube.coord_dims(cube.coord(axis='Z', dim_coords=True))
+        indices = [slice(None)] * cube.ndim
+        indices[z_axis] = slice(None, None, -1)
+        cube = cube[tuple(indices)]
+        return cube
+
     def fix_file(self, filepath, output_dir):
         """Fix hybrid pressure coordinate.
 
-        Adds missing ``formula_terms`` attribute to file and fix ordering
-        of auxiliary coordinates ``a`` and ``b``.
+        Adds missing ``formula_terms`` attribute to file.
 
         Note
         ----
@@ -37,31 +68,18 @@ class Cl(Fix):
             Path to the fixed file.
 
         """
-        new_path = self.get_fixed_filepath(output_dir, filepath)
-        copyfile(filepath, new_path)
+        new_path = self._fix_formula_terms(filepath, output_dir)
         dataset = Dataset(new_path, mode='a')
-
-        # Fix hybrid sigma pressure coordinate
-        dataset.variables['lev'].formula_terms = 'p0: p0 a: a b: b ps: ps'
-        dataset.variables['lev'].standard_name = (
-            'atmosphere_hybrid_sigma_pressure_coordinate')
-        dataset.variables['lev'].units = '1'
-
-        # Fix auxiliary coordinates
-        dataset.variables['a'][:] = dataset.variables['a'][::-1]
-        dataset.variables['b'][:] = dataset.variables['b'][::-1]
-
-        # Save
+        dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][::-1, :]
+        dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][::-1, :]
         dataset.close()
         return new_path
 
 
-class Cli(Cl):
-    """Fixes for ``cli``."""
+Cli = Cl
 
 
-class Clw(Cl):
-    """Fixes for ``clw``."""
+Clw = Cl
 
 
 class Fgco2(Fix):

@@ -1,5 +1,7 @@
 """Test fixes for CNRM-CM6-1-HR."""
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl as BaseCl
+from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cli as BaseCli
+from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clw as BaseClw
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1_hr import Cl, Cli, Clw
 from esmvalcore.cmor._fixes.fix import Fix
 
@@ -12,7 +14,7 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl(None) == BaseCl(None)
+    assert Cl is BaseCl
 
 
 def test_get_cli_fix():
@@ -23,7 +25,7 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli(None) == BaseCl(None)
+    assert Cli is BaseCli
 
 
 def test_get_clw_fix():
@@ -34,4 +36,4 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw(None) == BaseCl(None)
+    assert Clw is BaseClw

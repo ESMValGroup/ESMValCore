@@ -2,15 +2,17 @@
 import unittest
 
 from cf_units import Unit
-from iris.cube import Cube
 from iris.coords import AuxCoord
+from iris.cube import Cube
 
+from esmvalcore.cmor._fixes.cmip5.access1_0 import Cl as BaseCl
+from esmvalcore.cmor._fixes.cmip5.access1_3 import AllVars, Cl
 from esmvalcore.cmor._fixes.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.access1_3 import AllVars
 
 
 class TestAllVars(unittest.TestCase):
     """Test fixes for all vars."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
@@ -20,6 +22,7 @@ class TestAllVars(unittest.TestCase):
         self.fix = AllVars(None)
 
     def test_get(self):
+        """Test getting of fix."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'ACCESS1-3', 'Amon', 'tas'),
             [AllVars(None)])
@@ -33,3 +36,14 @@ class TestAllVars(unittest.TestCase):
         """Test calendar fix do not fail if no time coord present."""
         self.cube.remove_coord('time')
         self.fix.fix_metadata([self.cube])
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'ACCESS1-3', 'Amon', 'cl')
+    assert fix == [Cl(None), AllVars(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is BaseCl

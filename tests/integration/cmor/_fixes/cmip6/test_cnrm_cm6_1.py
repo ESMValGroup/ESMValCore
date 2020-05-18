@@ -8,6 +8,7 @@ from netCDF4 import Dataset
 
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl, Clcalipso, Cli, Clw
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
@@ -123,7 +124,8 @@ def test_cl_fix_metadata(cl_file):
     assert not cl_cube.coords('air_pressure')
 
     # Apply fix
-    fix = Cl(None)
+    vardef = get_var_info('CMIP6', 'Amon', 'cl')
+    fix = Cl(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
     fixed_cl_cube = fixed_cubes.extract_strict(
@@ -149,7 +151,7 @@ def test_cl_fix_metadata(cl_file):
 
 def test_get_clcalipso_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Amon', 'clcalipso')
+    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'CFmon', 'clcalipso')
     assert fix == [Clcalipso(None)]
 
 
@@ -166,7 +168,8 @@ def clcalipso_cubes():
 
 def test_clcalipso_fix_metadata(clcalipso_cubes):
     """Test ``fix_metadata`` for ``clcalipso``."""
-    fix = Clcalipso(None)
+    vardef = get_var_info('CMIP6', 'CFmon', 'clcalipso')
+    fix = Clcalipso(vardef)
     cubes = fix.fix_metadata(clcalipso_cubes)
     assert len(cubes) == 1
     cube = cubes[0]
@@ -182,7 +185,7 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli(None) == Cl(None)
+    assert Cli is Cl
 
 
 def test_get_clw_fix():
@@ -193,4 +196,4 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw(None) == Cl(None)
+    assert Clw is Cl

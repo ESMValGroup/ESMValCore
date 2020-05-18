@@ -1,11 +1,7 @@
-.. _recipe:
-
-******
-Recipe
-******
+.. _recipe_overview:
 
 Overview
-========
+********
 
 After ``config-user.yml``, the ``recipe.yml`` is the second file the user needs
 to pass to ``esmvaltool`` as command line option, at each run time point.

@@ -1,13 +1,13 @@
 """Tests for the fixes of CESM2-WACCM."""
 import os
-import unittest
+import unittest.mock
 
 import iris
 import numpy as np
 import pytest
-from cf_units import Unit
 from netCDF4 import Dataset
 
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl, Cli, Clw, Tas
 from esmvalcore.cmor.fix import Fix
 
@@ -38,12 +38,12 @@ def cl_file(tmp_path):
     dataset.createVariable('a_bnds', np.float64, dimensions=('lev', 'bnds'))
     dataset.createVariable('b', np.float64, dimensions=('lev',))
     dataset.createVariable('b_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.variables['a'][:] = [2.0, 1.0]
+    dataset.variables['a'][:] = [1.0, 2.0]
     dataset.variables['a'].bounds = 'a_bnds'
-    dataset.variables['a_bnds'][:] = [[1.5, 3.0], [0.0, 1.5]]
-    dataset.variables['b'][:] = [1.0, 0.0]
+    dataset.variables['a_bnds'][:] = [[1.5, 0.0], [3.0, 1.5]]
+    dataset.variables['b'][:] = [0.0, 1.0]
     dataset.variables['b'].bounds = 'b_bnds'
-    dataset.variables['b_bnds'][:] = [[0.5, 2.0], [-1.0, 0.5]]
+    dataset.variables['b_bnds'][:] = [[0.5, -1.0], [2.0, 0.5]]
 
     dataset.close()
     return nc_path
@@ -85,14 +85,9 @@ def test_get_cli_fix():
     assert fix == [Cli(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.cesm2_waccm.Cl.fix_metadata',
-    autospec=True)
-def test_cli_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``cli``."""
-    fix = Cli(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_cli_fix():
+    """Test fix for ``cli``."""
+    assert Cli is Cl
 
 
 def test_get_clw_fix():
@@ -101,14 +96,9 @@ def test_get_clw_fix():
     assert fix == [Clw(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.cesm2_waccm.Cl.fix_metadata',
-    autospec=True)
-def test_clw_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``clw``."""
-    fix = Clw(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_clw_fix():
+    """Test fix for ``clw``."""
+    assert Clw is Cl
 
 
 @pytest.fixture
@@ -125,24 +115,6 @@ def test_get_tas_fix():
     assert fix == [Tas(None)]
 
 
-def test_tas_fix_metadata(tas_cubes):
-    """Test ``fix_metadata`` for ``tas``."""
-    for cube in tas_cubes:
-        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-            cube.coord('height')
-    height_coord = iris.coords.AuxCoord(2.0,
-                                        var_name='height',
-                                        standard_name='height',
-                                        long_name='height',
-                                        units=Unit('m'),
-                                        attributes={'positive': 'up'})
-    fix = Tas(None)
-    out_cubes = fix.fix_metadata(tas_cubes)
-    assert out_cubes is tas_cubes
-    for cube in out_cubes:
-        if cube.var_name == 'tas':
-            coord = cube.coord('height')
-            assert coord == height_coord
-        else:
-            with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-                cube.coord('height')
+def test_tas_fix():
+    """Test fix for ``tas``."""
+    assert Tas is BaseTas

@@ -1,4 +1,5 @@
 """ESMValtool task definition."""
+import abc
 import contextlib
 import datetime
 import errno
@@ -17,6 +18,7 @@ from shutil import which
 import psutil
 import yaml
 
+from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
 
@@ -242,9 +244,9 @@ class BaseTask:
 
         return self.output_files
 
+    @abc.abstractmethod
     def _run(self, input_files):
-        raise NotImplementedError(
-            "Method should be implemented by child class")
+        """Run task."""
 
     def str(self):
         """Return a nicely formatted description."""
@@ -270,11 +272,12 @@ class DiagnosticTask(BaseTask):
         self.settings = settings
         self.output_dir = output_dir
         self.cmd = self._initialize_cmd()
+        self.env = self._initialize_env()
         self.log = Path(settings['run_dir']) / 'log.txt'
         self.resource_log = Path(settings['run_dir']) / 'resource_usage.txt'
 
     def _initialize_cmd(self):
-        """Create a an executable command from script."""
+        """Create an executable command from script."""
         diagnostics_root = DIAGNOSTICS_PATH / 'diag_scripts'
         script = self.script
         script_file = (diagnostics_root / Path(script).expanduser()).absolute()
@@ -316,6 +319,24 @@ class DiagnosticTask(BaseTask):
         cmd.append(str(script_file))
 
         return cmd
+
+    def _initialize_env(self):
+        """Create an environment for executing script."""
+        ext = Path(self.script).suffix.lower()
+        env = {}
+        if ext in ('.py', '.jl'):
+            # Set non-interactive matplotlib backend
+            env['MPLBACKEND'] = 'Agg'
+        if ext in ('.r', '.ncl'):
+            # Make diag_scripts path available to diagostic script
+            env['diag_scripts'] = str(DIAGNOSTICS_PATH / 'diag_scripts')
+        if ext == '.jl':
+            # Set the julia virtual environment
+            env['JULIA_LOAD_PATH'] = "{}:{}".format(
+                DIAGNOSTICS_PATH / 'install' / 'Julia',
+                os.environ.get('JULIA_LOAD_PATH', ''),
+            )
+        return env
 
     def write_settings(self):
         """Write settings to file."""
@@ -455,20 +476,7 @@ class DiagnosticTask(BaseTask):
                 if f.endswith('.yml') or os.path.isdir(f)
             ]
 
-        env = {}
-        if ext in ('.py', '.jl'):
-            # Set non-interactive matplotlib backend
-            env['MPLBACKEND'] = 'Agg'
-        if ext in ('.r', '.ncl'):
-            # Make diag_scripts path available to diagostics scripts
-            env['diag_scripts'] = str(DIAGNOSTICS_PATH / 'diag_scripts')
-        if ext == '.jl':
-            # Set the julia virtual environment
-            env['JULIA_LOAD_PATH'] = "{}:{}".format(
-                DIAGNOSTICS_PATH / 'install' / 'Julia',
-                os.environ.get('JULIA_LOAD_PATH', ''),
-            )
-
+        env = dict(self.env)
         cmd = list(self.cmd)
         settings_file = self.write_settings()
         if ext == '.ncl':
@@ -565,6 +573,7 @@ class DiagnosticTask(BaseTask):
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)
             product.save_provenance()
+            _write_citation_files(product.filename, product.provenance)
             self.products.add(product)
         logger.debug("Collecting provenance of task %s took %.1f seconds",
                      self.name,

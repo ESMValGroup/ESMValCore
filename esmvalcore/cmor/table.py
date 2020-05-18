@@ -4,20 +4,36 @@ CMOR information reader for ESMValTool.
 Read variable information from CMOR 2 and CMOR 3 tables and make it easily
 available for the other components of ESMValTool
 """
-from functools import total_ordering
 import copy
 import errno
 import glob
 import json
 import logging
 import os
+from functools import total_ordering
 from pathlib import Path
+
 import yaml
 
 logger = logging.getLogger(__name__)
 
 CMOR_TABLES = {}
 """dict of str, obj: CMOR info objects."""
+
+
+def get_var_info(project, mip, short_name):
+    """Get variable information.
+
+    Parameters
+    ----------
+    project : str
+        Dataset's project.
+    mip : str
+        Variable's cmor table.
+    short_name : str
+        Variable's short name.
+    """
+    return CMOR_TABLES[project].get_variable(mip, short_name)
 
 
 def read_cmor_tables(cfg_developer=None):
