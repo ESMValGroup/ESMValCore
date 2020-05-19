@@ -425,11 +425,24 @@ def test_crop_cube_with_ne_file():
     shp_file = "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp"
     with fiona.open(shp_file) as geometries:
         cube = _create_sample_full_cube()
-        result = _crop_cube(cube, *geometries.bounds)
+        copy_bounds = list(geometries.bounds)
+        copy_bounds[2] = 170.
+        result = _crop_cube(cube, *tuple(copy_bounds))
         result = (result.coord("latitude").points[-1],
                   result.coord("longitude").points[-1])
         expected = (89., 359.)
         np.testing.assert_allclose(result, expected)
+
+
+def test_crop_cube_with_ne_file_fails_fullMap():
+    """Test for cropping a cube by shape bounds to fail on [-180, 180]."""
+    shp_file = "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp"
+    with fiona.open(shp_file) as geometries:
+        cube = _create_sample_full_cube()
+        with pytest.raises(ValueError) as exc:
+            result = _crop_cube(cube, *geometries.bounds)
+            assert exc.value == ("requested range greater than "
+                                 "coordinate's unit's modulus")
 
 
 @pytest.mark.parametrize('crop', [True, False])
