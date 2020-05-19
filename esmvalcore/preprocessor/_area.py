@@ -322,7 +322,7 @@ def extract_named_regions(cube, regions):
 
 
 def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
-               end_latitude):
+               end_latitude, pad_hawaii=False):
     """Crop cubes on a cartesian grid."""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
@@ -332,6 +332,9 @@ def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
         lon_step = lon_bound[1] - lon_bound[0]
         start_longitude -= lon_step
         end_longitude += lon_step
+        if pad_hawaii:
+            if end_longitude > 180:
+                end_longitude = 180.
         lat_bound = lat_coord.core_bounds()[0]
         lat_step = lat_bound[1] - lat_bound[0]
         start_latitude -= lat_step
@@ -499,9 +502,9 @@ def extract_shape(cube,
     """
     with fiona.open(shapefile) as geometries:
 
-        if crop:
-            cube = _crop_cube(cube, *geometries.bounds)
-
+        # get parameters specific to the shapefile (NE used case
+        # eg longitudes [-180, 180] or latitude missing
+        # or overflowing edges)
         cmor_coords = True
         pad_north_pole = False
         pad_hawaii = False
@@ -511,6 +514,10 @@ def extract_shape(cube,
             pad_north_pole = True
         if geometries.bounds[0] > -180. and geometries.bounds[0] < 179.:
             pad_hawaii = True
+
+        if crop:
+            cube = _crop_cube(cube, *geometries.bounds, pad_hawaii)
+
         lon, lat = _correct_coords_from_shapefile(cube,
                                                   cmor_coords,
                                                   pad_north_pole,
