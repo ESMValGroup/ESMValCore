@@ -322,7 +322,7 @@ def extract_named_regions(cube, regions):
 
 
 def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
-               end_latitude, pad_hawaii=False):
+               end_latitude, cmor_coords=True):
     """Crop cubes on a cartesian grid."""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
@@ -331,14 +331,14 @@ def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
         lon_bound = lon_coord.core_bounds()[0]
         lon_step = lon_bound[1] - lon_bound[0]
         start_longitude -= lon_step
-        if pad_hawaii:
+        if not cmor_coords:
             if start_longitude < -180.:
                 start_longitude = -180.
         else:
             if start_longitude < 0:
                 start_longitude = 0
         end_longitude += lon_step
-        if pad_hawaii:
+        if not cmor_coords:
             if end_longitude > 180.:
                 end_longitude = 180.
         else:
@@ -528,7 +528,8 @@ def extract_shape(cube,
             pad_hawaii = True
 
         if crop:
-            cube = _crop_cube(cube, *geometries.bounds, pad_hawaii)
+            cube = _crop_cube(cube, *geometries.bounds,
+                              cmor_coords=cmor_coords)
 
         lon, lat = _correct_coords_from_shapefile(cube,
                                                   cmor_coords,
