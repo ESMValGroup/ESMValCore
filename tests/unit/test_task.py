@@ -3,6 +3,7 @@ import stat
 import pytest
 
 import esmvalcore._task
+from esmvalcore._task import DiagnosticError
 
 
 @pytest.mark.parametrize("ext", ['.jl', '.py', '.ncl', '.R'])
@@ -87,3 +88,15 @@ def test_diagnostic_task_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     cmd.append(str(script))
 
     assert task.cmd == cmd
+
+    # test for no executable
+    monkeypatch.setattr(esmvalcore._task, 'which', lambda x: None)
+    if ext_profile[0] != '':
+        with pytest.raises(DiagnosticError) as err_mssg:
+            task = esmvalcore._task.DiagnosticTask(script,
+                                                   settings,
+                                                   output_dir=str(tmp_path))
+        exp_mssg1 = "Cannot execute script "
+        exp_mssg2 = "program '{}' not installed.".format(CMD[ext_profile][0])
+        assert exp_mssg1 in str(err_mssg.value)
+        assert exp_mssg2 in str(err_mssg.value)
