@@ -203,6 +203,7 @@ def write_ncl_settings(settings, filename, mode='wt'):
 
 class BaseTask:
     """Base class for defining task classes."""
+
     def __init__(self, ancestors=None, name='', products=None):
         """Initialize task."""
         self.ancestors = [] if ancestors is None else ancestors
@@ -265,6 +266,7 @@ class DiagnosticError(Exception):
 
 class DiagnosticTask(BaseTask):
     """Task for running a diagnostic."""
+
     def __init__(self, script, settings, output_dir, ancestors=None, name=''):
         """Create a diagnostic task."""
         super().__init__(ancestors=ancestors, name=name)
@@ -523,8 +525,10 @@ class DiagnosticTask(BaseTask):
         provenance_file = Path(
             self.settings['run_dir']) / 'diagnostic_provenance.yml'
         if not provenance_file.is_file():
-            logger.warning("No provenance information was written to %s",
-                           provenance_file)
+            logger.warning(
+                "No provenance information was written to %s. Unable to "
+                "record provenance for files created by diagnostic script %s "
+                "in task %s", provenance_file, self.script, self.name)
             return
 
         logger.debug("Collecting provenance from %s", provenance_file)
@@ -554,16 +558,33 @@ class DiagnosticTask(BaseTask):
             if key not in ignore:
                 attrs[key] = self.settings[key]
 
-        ancestor_products = {p for a in self.ancestors for p in a.products}
+        ancestor_products = {
+            p.filename: p
+            for a in self.ancestors for p in a.products
+        }
 
+        valid = True
         for filename, attributes in table.items():
             # copy to avoid updating other entries if file contains anchors
             attributes = deepcopy(attributes)
             ancestor_files = attributes.pop('ancestors', [])
-            ancestors = {
-                p
-                for p in ancestor_products if p.filename in ancestor_files
-            }
+            if not ancestor_files:
+                logger.warning(
+                    "No ancestor files specified for recording provenance of "
+                    "%s, created by diagnostic script %s in task %s", filename,
+                    self.script, self.name)
+                valid = False
+            ancestors = set()
+            for ancestor_file in ancestor_files:
+                if ancestor_file in ancestor_products:
+                    ancestors.add(ancestor_products[ancestor_file])
+                else:
+                    valid = False
+                    logger.warning(
+                        "Invalid ancestor file %s specified for recording "
+                        "provenance of %s, created by diagnostic script %s "
+                        "in task %s", ancestor_file, filename, self.script,
+                        self.name)
 
             attributes.update(deepcopy(attrs))
             for key in attributes:
@@ -575,9 +596,14 @@ class DiagnosticTask(BaseTask):
             product.save_provenance()
             _write_citation_files(product.filename, product.provenance)
             self.products.add(product)
+
+        if not valid:
+            logger.warning(
+                "Valid ancestor files for diagnostic script %s in task %s "
+                "are:\n%s", self.script, self.name,
+                '\n'.join(ancestor_products))
         logger.debug("Collecting provenance of task %s took %.1f seconds",
-                     self.name,
-                     time.time() - start)
+                     self.name, time.time() - start)
 
     def __str__(self):
         """Get human readable description."""
