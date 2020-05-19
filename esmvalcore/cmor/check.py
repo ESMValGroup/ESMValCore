@@ -378,7 +378,7 @@ class CMORCheck():
                                 self._does_msg, coordinate.name, 'exist')
                         else:
                             self.report_error(
-                                self._does_msg, coordinate.name, 'exist')  
+                                self._does_msg, coordinate.name, 'exist')
 
     def _check_generic_level_dim_names(self, key, coordinate):
         if coordinate.generic_lev_coords:

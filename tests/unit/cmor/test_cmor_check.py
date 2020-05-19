@@ -74,6 +74,7 @@ class CoordinateInfoMock:
         self.must_have_bounds = "yes"
         self.requested = []
         self.generic_lev_coords = {}
+        self.generic_lev_name = ""
 
         valid_limits = {'lat': ('-90', '90'), 'lon': ('0', '360')}
         if name in valid_limits:
@@ -298,6 +299,20 @@ class TestCMORCheck(unittest.TestCase):
         )
         self.cube.add_aux_coord(new_lat, 1)
         self._check_cube()
+
+    def test_bad_generic_level(self):
+        """Test check fails in metadata if generic level coord
+        has wrong var_name."""
+        depth_coord = CoordinateInfoMock('depth')
+        depth_coord.axis = 'Z'
+        depth_coord.generic_lev_name = 'olevel'
+        depth_coord.out_name = 'lev'
+        depth_coord.name = 'depth_coord'
+        depth_coord.long_name = 'ocean depth coordinate'
+        self.var_info.coordinates['depth'].generic_lev_coords = {
+            'depth_coord': depth_coord}
+        self.var_info.coordinates['depth'].out_name = ""
+        self._check_fails_in_metadata()
 
     def test_check_bad_var_standard_name_strict_flag(self):
         """Test check fails for a bad variable standard_name with
