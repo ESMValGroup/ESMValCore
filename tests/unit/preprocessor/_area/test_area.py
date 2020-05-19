@@ -435,16 +435,23 @@ def test_crop_cube(make_testcube, square_shape, tmp_path):
         np.testing.assert_array_equal(result.data, expected)
 
 
+def test_crop_cube_with_ne_file_imitation():
+    """Test for cropping a cube by shape bounds."""
+    cube = _create_sample_full_cube()
+    bounds = [-10., -99., 370., 100.]
+    result = _crop_cube(cube, *tuple(bounds))
+    result = (result.coord("latitude").points[-1],
+              result.coord("longitude").points[-1])
+    expected = (89., 359.)
+    np.testing.assert_allclose(result, expected)
+
+
 def test_crop_cube_with_ne_file():
     """Test for cropping a cube by shape bounds."""
     shp_file = "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp"
     with fiona.open(shp_file) as geometries:
         cube = _create_sample_full_cube()
-        copy_bounds = list(geometries.bounds)
-        copy_bounds[2] = 370.
-        copy_bounds[1] = -99.
-        copy_bounds[3] = 100.
-        result = _crop_cube(cube, *tuple(copy_bounds))
+        result = _crop_cube(cube, *geometries.bounds, cmor_coords=False)
         result = (result.coord("latitude").points[-1],
                   result.coord("longitude").points[-1])
         expected = (89., 359.)
