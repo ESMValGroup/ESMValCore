@@ -162,8 +162,8 @@ def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
                     "Applying land-sea mask from Natural Earth"
                     " shapefile: \n%s", shapefiles[mask_out])
             else:
-                msg = (f"Use of shapefiles with irregular grids not "
-                       f"yet implemented, land-sea mask not applied.")
+                msg = ("Use of shapefiles with irregular grids not "
+                       "yet implemented, land-sea mask not applied.")
                 raise ValueError(msg)
     else:
         if cube.coord('longitude').points.ndim < 2:
@@ -174,8 +174,8 @@ def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
                 "Applying land-sea mask from Natural Earth"
                 " shapefile: \n%s", shapefiles[mask_out])
         else:
-            msg = (f"Use of shapefiles with irregular grids not "
-                   f"yet implemented, land-sea mask not applied.")
+            msg = ("Use of shapefiles with irregular grids not "
+                   "yet implemented, land-sea mask not applied.")
             raise ValueError(msg)
 
     return cube
@@ -331,9 +331,9 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
             cube.coord(axis='Y').points)
     # 2D irregular grids; spit an error for now
     else:
-        msg = (f"No fx-files found (sftlf or sftof)!"
-               f"2D grids are suboptimally masked with "
-               f"Natural Earth masks. Exiting.")
+        msg = ("No fx-files found (sftlf or sftof)!"
+               "2D grids are suboptimally masked with "
+               "Natural Earth masks. Exiting.")
         raise ValueError(msg)
 
     # Wrap around longitude coordinate to match data
