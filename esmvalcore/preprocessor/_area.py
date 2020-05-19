@@ -331,14 +331,21 @@ def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
         lon_bound = lon_coord.core_bounds()[0]
         lon_step = lon_bound[1] - lon_bound[0]
         start_longitude -= lon_step
+        if start_longitude < 0:
+            start_longitude = 0
         end_longitude += lon_step
+        if end_longitude > 360:
+            end_longitude = 360.
         lat_bound = lat_coord.core_bounds()[0]
         lat_step = lat_bound[1] - lat_bound[0]
         start_latitude -= lat_step
+        if start_latitude < -90:
+            start_latitude = -90.
         end_latitude += lat_step
+        if end_latitude > 90.:
+            end_latitude = 90.
         cube = extract_region(cube, start_longitude, end_longitude,
                               start_latitude, end_latitude)
-
     return cube
 
 
