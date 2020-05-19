@@ -8,6 +8,7 @@ from netCDF4 import Dataset
 
 from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import Cl, Cli, Clw
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
@@ -123,7 +124,8 @@ def test_cl_fix_metadata(cl_file):
     assert not cl_cube.coords('air_pressure')
 
     # Apply fix
-    fix = Cl(None)
+    vardef = get_var_info('CMIP6', 'Amon', 'cl')
+    fix = Cl(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
     fixed_cl_cube = fixed_cubes.extract_strict(
@@ -145,7 +147,7 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli(None) == Cl(None)
+    assert Cli is Cl
 
 
 def test_get_clw_fix():
@@ -156,4 +158,4 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw(None) == Cl(None)
+    assert Clw is Cl

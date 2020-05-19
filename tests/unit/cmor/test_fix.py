@@ -3,8 +3,8 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
 
 
 class TestFixFile(TestCase):
@@ -54,7 +54,9 @@ class TestGetCube(TestCase):
         self.cube_2 = Mock()
         self.cube_2.var_name = 'cube2'
         self.cubes = [self.cube_1, self.cube_2]
-        self.fix = Fix(None)
+        vardef = Mock()
+        vardef.short_name = 'fix'
+        self.fix = Fix(vardef)
 
     def test_get_first_cube(self):
         """Test selecting first cube."""

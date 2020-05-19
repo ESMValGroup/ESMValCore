@@ -1,11 +1,12 @@
 """Test fixes for BCC-CSM2-MR."""
-import unittest
+import unittest.mock
 
 import iris
 
 from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import Cl, Cli, Clw, Tos
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
@@ -16,7 +17,7 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl(None) == ClFixHybridPressureCoord(None)
+    assert Cl is ClFixHybridPressureCoord
 
 
 def test_get_cli_fix():
@@ -27,7 +28,7 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli(None) == ClFixHybridPressureCoord(None)
+    assert Cli is ClFixHybridPressureCoord
 
 
 def test_get_clw_fix():
@@ -38,7 +39,7 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw(None) == ClFixHybridPressureCoord(None)
+    assert Clw is ClFixHybridPressureCoord
 
 
 def test_get_tos_fix():
@@ -91,7 +92,8 @@ def test_tos_fix_metadata():
                              (longitude.copy(), (1, 2))],
     )
     cubes = iris.cube.CubeList([cube, iris.cube.Cube(0.0)])
-    fix = Tos(None)
+    vardef = get_var_info('CMIP6', 'Omon', 'tos')
+    fix = Tos(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
     tos_cube = fixed_cubes.extract_strict('sea_surface_temperature')
 

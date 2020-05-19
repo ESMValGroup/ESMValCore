@@ -193,7 +193,7 @@ All tests should pass before making a release.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The version number is stored in ``esmvalcore/_version.py``,
-``meta.yaml``, ``CITATION.cff``. Make sure to update all files. See
+``package/meta.yaml``, ``CITATION.cff``. Make sure to update all files. See
 https://semver.org for more information on choosing a version number.
 
 3. Make the release on GitHub
@@ -212,11 +212,11 @@ Follow these steps to create a new conda package:
 
 -  Check out the tag corresponding to the release,
    e.g. \ ``git checkout v2.0.0b6``
--  Edit meta.yaml and uncomment the lines starting with ``git_rev`` and
+-  Edit package/meta.yaml and uncomment the lines starting with ``git_rev`` and
    ``git_url``, remove the line starting with ``path`` in the ``source``
    section.
 -  Activate the base environment ``conda activate base``
--  Run ``conda build . -c conda-forge -c esmvalgroup`` to build the
+-  Run ``conda build package -c conda-forge -c esmvalgroup`` to build the
    conda package
 -  If the build was successful, upload the package to the esmvalgroup
    conda channel,
