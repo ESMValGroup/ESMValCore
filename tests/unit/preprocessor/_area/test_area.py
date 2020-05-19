@@ -440,7 +440,7 @@ def test_crop_cube_with_ne_file_fails_fullMap():
     with fiona.open(shp_file) as geometries:
         cube = _create_sample_full_cube()
         with pytest.raises(ValueError) as exc:
-            result = _crop_cube(cube, *geometries.bounds)
+            _crop_cube(cube, *geometries.bounds)
             assert exc.value == ("requested range greater than "
                                  "coordinate's unit's modulus")
 
