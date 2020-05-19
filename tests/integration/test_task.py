@@ -167,8 +167,10 @@ def test_py_diagnostic_task_constructor(tmp_path):
     ancestor_names = [anc.name for anc in task.ancestors]
     assert ancestor_names == ['task0-ancestor0', 'task0-ancestor1']
     assert task.script == diag_script
-    assert task.settings == {'run_dir': tmp_path / 'mydiag' / 'run_dir',
-                             'profile_diagnostic': False}
+    assert task.settings == {
+        'run_dir': tmp_path / 'mydiag' / 'run_dir',
+        'profile_diagnostic': False
+    }
     assert task.output_dir == tmp_path / 'mydiag'
 
 
@@ -180,9 +182,7 @@ def test_diagnostic_diag_script_none(tmp_path):
     diagnostics_root = os.path.join(DIAGNOSTICS_PATH, 'diag_scripts')
     script_file = os.path.abspath(os.path.join(diagnostics_root, diag_script))
     ept = ("Cannot execute script '{}' "
-           "({}): file does not exist.".format(script_file,
-                                               script_file)
-    )
+           "({}): file does not exist.".format(script_file, script_file))
     assert ept == str(err_msg.value)
 
 
@@ -194,11 +194,13 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
     diag_run_dir = diag_output_dir / 'run_dir'
     diag_plot_dir = diag_output_dir / 'plot_dir'
     diag_work_dir = diag_output_dir / 'work_dir'
-    diag_settings = {'run_dir': diag_run_dir.as_posix(),
-                     'plot_dir': diag_plot_dir.as_posix(),
-                     'work_dir': diag_work_dir.as_posix(),
-                     'profile_diagnostic': False,
-                     'exit_on_ncl_warning': False}
+    diag_settings = {
+        'run_dir': diag_run_dir.as_posix(),
+        'plot_dir': diag_plot_dir.as_posix(),
+        'work_dir': diag_work_dir.as_posix(),
+        'profile_diagnostic': False,
+        'exit_on_ncl_warning': False
+    }
 
     with open(diag_script, "w") as fil:
         fil.write(diagnostic_text)
