@@ -332,7 +332,8 @@ class CMORCheck():
 
     def _check_dim_names(self):
         """Check dimension names."""
-        for (key, coordinate) in self._cmor_var.coordinates.items():
+        cmor_var_coordinates = self._cmor_var.coordinates.copy()
+        for (key, coordinate) in cmor_var_coordinates.items():
             if coordinate.generic_level:
                 self._check_generic_level_dim_names(key, coordinate)
             else:
