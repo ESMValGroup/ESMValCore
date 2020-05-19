@@ -281,13 +281,6 @@ def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
         exp_mssg_2 = "diag_cow.ncl"
         assert exp_mssg_1 in str(err_mssg.value)
         assert exp_mssg_2 in str(err_mssg.value)
-    else:
-        with pytest.raises(DiagnosticError) as err_mssg:
-            tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
-        exp_mssg_1 = "Cannot execute script "
-        exp_mssg_2 = "program 'ncl' not installed."
-        assert exp_mssg_1 in str(err_mssg.value)
-        assert exp_mssg_2 in str(err_mssg.value)
 
 
 def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
@@ -302,13 +295,6 @@ def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
         monkeypatch.setattr(BaseTask, '_run', _run)
         for task in tasks:
             task.run()
-    else:
-        with pytest.raises(DiagnosticError) as err_mssg:
-            tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
-        exp_mssg_1 = "Cannot execute script "
-        exp_mssg_2 = "program 'ncl' not installed."
-        assert exp_mssg_1 in str(err_mssg.value)
-        assert exp_mssg_2 in str(err_mssg.value)
 
 
 def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
@@ -323,10 +309,3 @@ def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
         monkeypatch.setattr(BaseTask, '_run', _run)
         for task in tasks:
             task.run()
-    else:
-        with pytest.raises(DiagnosticError) as err_mssg:
-            tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
-        exp_mssg_1 = "Cannot execute script "
-        exp_mssg_2 = "program 'Rscript' not installed."
-        assert exp_mssg_1 in str(err_mssg.value)
-        assert exp_mssg_2 in str(err_mssg.value)
