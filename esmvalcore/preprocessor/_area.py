@@ -118,7 +118,7 @@ def zonal_statistics(cube, operator):
         cube.data = cube.core_data().astype(np.float32, casting='same_kind')
         return cube
     else:
-        msg = (f"Zonal statistics on irregular grids not yet implemnted")
+        msg = ("Zonal statistics on irregular grids not yet implemnted")
         raise ValueError(msg)
 
 
@@ -152,7 +152,7 @@ def meridional_statistics(cube, operator):
         cube.data = cube.core_data().astype(np.float32, casting='same_kind')
         return cube
     else:
-        msg = (f"Meridional statistics on irregular grids not yet implemnted")
+        msg = ("Meridional statistics on irregular grids not yet implemented")
         raise ValueError(msg)
 
 
