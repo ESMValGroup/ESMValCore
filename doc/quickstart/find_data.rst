@@ -258,6 +258,16 @@ public availability, the ``default`` directory must be structured accordingly
 with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
 ``drs: default``.
 
+Data loading
+============
+
+Data loading is done using the data load functionality of `iris`; we will not go into too much detail
+about this since we can point the user to the specific functionality
+`here <https://scitools.org.uk/iris/docs/latest/userguide/loading_iris_cubes.html>`_ but we will underline
+that the initial loading is done by adhering to the CF Conventions that `iris` operates by as well (see
+`CF Conventions Document <http://cfconventions.org/cf-conventions/cf-conventions.html>`_ and the search
+page for CF `standard names <http://cfconventions.org/standard-names.html>`_).
+
 Data concatenation from multiple sources
 ========================================
 
