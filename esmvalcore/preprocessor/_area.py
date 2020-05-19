@@ -336,8 +336,6 @@ def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
         end_longitude += lon_step
         if end_longitude > 360:
             end_longitude = 360.
-        if end_longitude > 180 and start_longitude == -180.:
-            end_longitude = 180.
         lat_bound = lat_coord.core_bounds()[0]
         lat_step = lat_bound[1] - lat_bound[0]
         start_latitude -= lat_step
