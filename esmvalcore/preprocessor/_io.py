@@ -181,7 +181,7 @@ def concatenate(cubes):
         try:
             cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
         except iris.exceptions.CoordinateNotFoundError as exc:
-            msg = "One or both cubes {} is missing".format(cubes) + \
+            msg = "One or more cubes {} are missing".format(cubes) + \
                   " time coordinate: {}".format(str(exc))
             raise ValueError(msg)
 
