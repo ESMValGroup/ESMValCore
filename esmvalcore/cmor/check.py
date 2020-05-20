@@ -542,8 +542,6 @@ class CMORCheck():
                 self._cube.add_aux_coord(new_coord, dims)
 
     def _check_longitude_max(self, coord, var_name):
-        if not self.automatic_fixes:
-            return False
         if np.any(coord.points > 720):
             self.report_critical(
                 f'{var_name} longitude coordinate has values > 720 degrees'
@@ -552,8 +550,6 @@ class CMORCheck():
         return True
 
     def _check_longitude_min(self, coord, var_name):
-        if not self.automatic_fixes:
-            return False
         if np.any(coord.points < -360):
             self.report_critical(
                 f'{var_name} longitude coordinate has values < -360 degrees'
