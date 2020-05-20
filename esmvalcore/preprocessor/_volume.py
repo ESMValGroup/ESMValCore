@@ -272,7 +272,7 @@ def volume_statistics(
     # ####
     # Send time series and dummy cube to cube creating tool.
     times = np.array(cube.coord('time').points.astype(float))
-    result = np.array(result)
+    result = np.ma.array(result)
 
     # #####
     # Create a small dummy output array for the output cube
