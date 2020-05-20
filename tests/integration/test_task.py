@@ -210,7 +210,7 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
     return task
 
 
-def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
+def test_py_diagnostic_run_task_fails(monkeypatch, tmp_path):
     """Run DiagnosticTask sequentially with bad Python script."""
     diagnostic_text = "import os\n\nprint(cow)"
     task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
@@ -226,23 +226,7 @@ def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
     assert exp_mssg in str(err_mssg.value)
 
 
-def test_py_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
-    """Run DiagnosticTask parallel with bad Python script."""
-    diagnostic_text = "import os\n\nprint(cow)"
-    task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
-
-    def _run(self, input_filesi=[]):
-        print(f'running task {self.name}')
-
-    monkeypatch.setattr(BaseTask, '_run', _run)
-
-    with pytest.raises(DiagnosticError) as err_mssg:
-        task.run()
-    exp_mssg = "diag_cow.py failed with return code 1"
-    assert exp_mssg in str(err_mssg.value)
-
-
-def test_py_diagnostic_run_parallel_task(monkeypatch, tmp_path):
+def test_py_diagnostic_run_task(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK Python script."""
     diagnostic_text = "import os\n\nprint('cow')"
     task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
@@ -255,7 +239,7 @@ def test_py_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     task.run()
 
 
-def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
+def test_ncl_diagnostic_run_task_fails(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = "cows on the [river]"
 
@@ -274,7 +258,7 @@ def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
         assert exp_mssg_2 in str(err_mssg.value)
 
 
-def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
+def test_ncl_diagnostic_run_task(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
     diagnostic_text = _py2ncl({'cow': 22}, 'tas')
 
@@ -287,14 +271,16 @@ def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
         task.run()
 
 
-def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
+@pytest.mark.parametrize('executable', [{'ncl': _py2ncl({'cow': 22}, 'tas')},
+                                        {'Rscript': 'var0 <- "zg"']})
+def test_r_diagnostic_run_task(monkeypatch, executable, tmp_path):
     """Run DiagnosticTask in parallel with OK NCL script."""
-    diagnostic_text = 'var0 <- "zg"'
+    diagnostic_text = executable.values()[0]
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
 
-    if shutil.which('Rscript') is not None:
+    if shutil.which(executable.keys()[0]) is not None:
         task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
         monkeypatch.setattr(BaseTask, '_run', _run)
         task.run()
