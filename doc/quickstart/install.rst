@@ -26,19 +26,23 @@ run the
 You can get the latest release with
 
 .. code-block:: bash
+
    docker pull esmvalgroup/esmvalcore:stable
 
 If yoy want to use the current master branch, use
 
 .. code-block:: bash
+
    docker pull esmvalgroup/esmvalcore:latest
 
 To run a container using those images, use:
 
 .. code-block:: bash
+
    docker run esmvalgroup/esmvalcore:stable esmvaltool -v
 
 .. warning::
+
    The container does not see the data available in the host by default.
    You can make host data available with `-v /path:/path/in/container`
 
