@@ -96,8 +96,8 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     if ext_profile[0] != '':
         with pytest.raises(DiagnosticError) as err_mssg:
             esmvalcore._task.DiagnosticTask(script,
-                                                   settings,
-                                                   output_dir=str(tmp_path))
+                                            settings,
+                                            output_dir=str(tmp_path))
         exp_mssg1 = "Cannot execute script "
         exp_mssg2 = "program '{}' not installed.".format(CMD[ext_profile][0])
         assert exp_mssg1 in str(err_mssg.value)
