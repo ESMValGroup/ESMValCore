@@ -227,7 +227,8 @@ def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
     monkeypatch.setattr(BaseTask, '_run', _run)
 
     with pytest.raises(DiagnosticError) as err_mssg:
-        _run_tasks_sequential(tasks)
+        for task in tasks:
+            task.run()
     exp_mssg = "diag_cow.py failed with return code 1"
     assert exp_mssg in str(err_mssg.value)
 
