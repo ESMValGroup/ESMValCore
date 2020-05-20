@@ -85,12 +85,6 @@ def test_runner_uses_priority(monkeypatch, runner, example_tasks):
     assert order == sorted(order)
 
 
-@pytest.mark.parametrize('executables', ['ls', 'mv'])
-def test_which(executables):
-    """Test the which wrapper."""
-    assert which(executables).split(os.sep)[-1] in ['ls', 'mv']
-
-
 def test_py2ncl():
     """Test for _py2ncl func."""
     ncl_text = _py2ncl(None, 'tas')
