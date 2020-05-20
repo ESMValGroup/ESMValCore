@@ -95,7 +95,7 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     monkeypatch.setattr(esmvalcore._task, 'which', lambda x: None)
     if ext_profile[0] != '':
         with pytest.raises(DiagnosticError) as err_mssg:
-            task = esmvalcore._task.DiagnosticTask(script,
+            esmvalcore._task.DiagnosticTask(script,
                                                    settings,
                                                    output_dir=str(tmp_path))
         exp_mssg1 = "Cannot execute script "
