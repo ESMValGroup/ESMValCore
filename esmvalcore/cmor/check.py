@@ -514,7 +514,8 @@ class CMORCheck():
         if coord_info.valid_max:
             valid_max = float(coord_info.valid_max)
             if np.any(coord.points > valid_max):
-                if coord_info.standard_name == 'longitude':
+                if coord_info.standard_name == 'longitude' and \
+                        self.automatic_fixes:
                     l_fix_coord_value = self._check_longitude_max(
                         coord, var_name)
                 else:
