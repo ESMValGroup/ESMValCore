@@ -16,6 +16,33 @@ Once you have installed conda, you can install ESMValCore by running:
     conda install -c esmvalgroup -c conda-forge esmvalcore
 
 
+Using it through docker
+-----------------------
+
+ESMValCore is also provided thorugh DockerHub in the form of docker containers.
+See https://docs.docker.com/ for more info about docker containers and how to
+run the
+
+You can get the latest release with
+
+.. code-block:: bash
+   docker pull esmvalgroup/esmvalcore:stable
+
+If yoy want to use the current master branch, use
+
+.. code-block:: bash
+   docker pull esmvalgroup/esmvalcore:latest
+
+To run a container using those images, use:
+
+.. code-block:: bash
+   docker run esmvalgroup/esmvalcore:stable esmvaltool -v
+
+.. warning::
+   The container does not see the data available in the host by default.
+   You can make host data available with `-v /path:/path/in/container`
+
+
 Development installation
 ------------------------
 
