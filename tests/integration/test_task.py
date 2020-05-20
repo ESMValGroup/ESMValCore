@@ -213,13 +213,13 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
         output_dir=diag_output_dir.as_posix(),
     )
 
-    return {task}
+    return task
 
 
 def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
     """Run DiagnosticTask sequentially with bad Python script."""
     diagnostic_text = "import os\n\nprint(cow)"
-    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
+    task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
@@ -227,8 +227,7 @@ def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
     monkeypatch.setattr(BaseTask, '_run', _run)
 
     with pytest.raises(DiagnosticError) as err_mssg:
-        for task in tasks:
-            task.run()
+        task.run()
     exp_mssg = "diag_cow.py failed with return code 1"
     assert exp_mssg in str(err_mssg.value)
 
@@ -236,7 +235,7 @@ def test_py_diagnostic_run_sequential_task_fails(monkeypatch, tmp_path):
 def test_py_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
     """Run DiagnosticTask parallel with bad Python script."""
     diagnostic_text = "import os\n\nprint(cow)"
-    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
+    task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
@@ -244,8 +243,7 @@ def test_py_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
     monkeypatch.setattr(BaseTask, '_run', _run)
 
     with pytest.raises(DiagnosticError) as err_mssg:
-        for task in tasks:
-            task.run()
+        task.run()
     exp_mssg = "diag_cow.py failed with return code 1"
     assert exp_mssg in str(err_mssg.value)
 
@@ -253,15 +251,14 @@ def test_py_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
 def test_py_diagnostic_run_parallel_task(monkeypatch, tmp_path):
     """Run DiagnosticTask in parallel with OK Python script."""
     diagnostic_text = "import os\n\nprint('cow')"
-    tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
+    task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'py')
 
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
 
     monkeypatch.setattr(BaseTask, '_run', _run)
 
-    for task in tasks:
-        task.run()
+    task.run()
 
 
 def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
@@ -272,12 +269,11 @@ def test_ncl_diagnostic_run_parallel_task_fails(monkeypatch, tmp_path):
         print(f'running task {self.name}')
 
     if shutil.which('ncl') is not None:
-        tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
+        task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
 
         monkeypatch.setattr(BaseTask, '_run', _run)
         with pytest.raises(DiagnosticError) as err_mssg:
-            for task in tasks:
-                task.run()
+            task.run()
         exp_mssg_1 = "An error occurred during execution of NCL script"
         exp_mssg_2 = "diag_cow.ncl"
         assert exp_mssg_1 in str(err_mssg.value)
@@ -292,10 +288,9 @@ def test_ncl_diagnostic_run_parallel_task(monkeypatch, tmp_path):
         print(f'running task {self.name}')
 
     if shutil.which('ncl') is not None:
-        tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
+        task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'ncl')
         monkeypatch.setattr(BaseTask, '_run', _run)
-        for task in tasks:
-            task.run()
+        task.run()
 
 
 def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
@@ -306,7 +301,6 @@ def test_r_diagnostic_run_parallel_task(monkeypatch, tmp_path):
         print(f'running task {self.name}')
 
     if shutil.which('Rscript') is not None:
-        tasks = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
+        task = _get_diagnostic_tasks(tmp_path, diagnostic_text, 'R')
         monkeypatch.setattr(BaseTask, '_run', _run)
-        for task in tasks:
-            task.run()
+        task.run()
