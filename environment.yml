@@ -7,7 +7,6 @@ dependencies:
   - esmpy
   - iris>=2.2.1
   - graphviz
-  - gcc_linux-64
   - libunwind  # Needed for Python3.7+
   - python>=3.6
   - python-stratify

@@ -10,9 +10,9 @@ COPY . /home/root/source
 WORKDIR /home/root/source
 
 # Install
-RUN apt-get update -y && apt-get install -y build-essential
+RUN apt-get update
 RUN conda env update --name base --file environment.yml
-RUN pip install -e .[develop]
+RUN pip install -e .[test]
 RUN pip uninstall esmvalcore -y
 
 # Clean up
