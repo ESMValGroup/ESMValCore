@@ -191,7 +191,7 @@ OBS6:
 native6:
   cmor_strict: false
   input_dir:
-    default: '{dataset}/{latestversion}/{frequency}/{short_name}'
+    default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
     era5cli: 'Tier{tier}/{dataset}'
   input_file:
     default: '*.nc'
