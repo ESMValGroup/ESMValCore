@@ -190,5 +190,3 @@ class OceanFixGrid(Fix):
         cube.coord('longitude').points[cube.coord('longitude').points > 1000.]\
             = 0.
         return cubes
-
-

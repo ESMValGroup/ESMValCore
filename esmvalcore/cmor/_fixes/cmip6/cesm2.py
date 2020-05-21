@@ -178,7 +178,8 @@ class Tos(Fix):
 
         for cube in cubes:
             if cube.attributes['mipTable'] == 'Omon':
-                cube.coord('time').points=np.round(cube.coord('time').points, 1)
+                cube.coord('time').points = \
+                  np.round(cube.coord('time').points, 1)
         return cubes
 
 
