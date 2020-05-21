@@ -1,6 +1,6 @@
 # To build this container, go to ESMValCore root folder and execute :
 # docker build -t ${TAG_OF_YOUR_CHOICE} . -f docker/Dockerfile
-FROM continuumio/miniconda3:4.8.2-alpine
+FROM continuumio/miniconda3:4.7.12
 
 # update the conda packages
 RUN conda update -y conda pip
