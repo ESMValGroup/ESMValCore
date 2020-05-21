@@ -126,13 +126,13 @@ class OceanFixGrid(Fix):
 
         #Guess coordinate bounds in rlat, rlon (following BCC-CSM2-MR-1).
         rlat_idx_bnds = np.zeros((len(rlat), 2))
-        rlat_idx_bnds[:,0] = np.arange(len(rlat)) - 0.5
-        rlat_idx_bnds[:,1] = np.arange(len(rlat)) + 0.5
-        rlat_idx_bnds[0,0] = 0.
-        rlat_idx_bnds[len(rlat) - 1,1] = len(rlat)
+        rlat_idx_bnds[:, 0] = np.arange(len(rlat))-0.5
+        rlat_idx_bnds[:, 1] = np.arange(len(rlat))+0.5
+        rlat_idx_bnds[0, 0] = 0.
+        rlat_idx_bnds[len(rlat)-1, 1] = len(rlat)
         rlon_idx_bnds = np.zeros((len(rlon), 2))
-        rlon_idx_bnds[:,0] = np.arange(len(rlon)) - 0.5
-        rlon_idx_bnds[:,1] = np.arange(len(rlon)) + 0.5
+        rlon_idx_bnds[:, 0] = np.arange(len(rlon))-0.5
+        rlon_idx_bnds[:, 1] = np.arange(len(rlon))+0.5
 
         # Calculate latitude/longitude vertices by interpolation
         lat_vertices = []
