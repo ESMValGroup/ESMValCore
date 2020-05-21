@@ -24,8 +24,8 @@ class Siconc(Fix):
         """
         for cube in cubes:
             latitude = cube.coord('latitude')
-            latitude.bounds=np.round(latitude.bounds, 4)
+            latitude.bounds = np.round(latitude.bounds, 4)
             longitude = cube.coord('longitude')
-            longitude.bounds=np.round(longitude.bounds, 4)
+            longitude.bounds = np.round(longitude.bounds, 4)
 
         return cubes
