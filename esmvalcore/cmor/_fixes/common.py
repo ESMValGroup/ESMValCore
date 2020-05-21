@@ -1,11 +1,10 @@
 """Common fixes used for multiple datasets."""
 import iris
+import numpy as np
+from scipy.ndimage import map_coordinates
 
 from .fix import Fix
 from .shared import add_plev_from_altitude, fix_bounds
-import numpy as np
-from scipy.ndimage import map_coordinates
-import matplotlib.pyplot as plt
 
 class ClFixHybridHeightCoord(Fix):
     """Fixes for ``cl`` regarding hybrid sigma height coordinates."""
@@ -126,15 +125,15 @@ class OceanFixGrid(Fix):
         rlon = cube.coord('grid_longitude').points
 
         #Guess coordinate bounds in rlat, rlon (following BCC-CSM2-MR-1).
-        rlat_idx_bnds = np.zeros((len(rlat),2))
-        rlat_idx_bnds[:,0]=np.arange(len(rlat))-0.5
-        rlat_idx_bnds[:,1]=np.arange(len(rlat))+0.5
-        rlat_idx_bnds[0,0]=0.
-        rlat_idx_bnds[len(rlat)-1,1]=len(rlat)
-        rlon_idx_bnds = np.zeros((len(rlon),2))
-        rlon_idx_bnds[:,0]=np.arange(len(rlon))-0.5
-        rlon_idx_bnds[:,1]=np.arange(len(rlon))+0.5
-        
+        rlat_idx_bnds = np.zeros((len(rlat), 2))
+        rlat_idx_bnds[:,0] = np.arange(len(rlat))-0.5
+        rlat_idx_bnds[:,1] = np.arange(len(rlat))+0.5
+        rlat_idx_bnds[0,0] = 0.
+        rlat_idx_bnds[len(rlat)-1,1] = len(rlat)
+        rlon_idx_bnds = np.zeros((len(rlon), 2))
+        rlon_idx_bnds[:,0] = np.arange(len(rlon))-0.5
+        rlon_idx_bnds[:,1] = np.arange(len(rlon))+0.5
+
         # Calculate latitude/longitude vertices by interpolation
         lat_vertices = []
         lon_vertices = []
@@ -158,7 +157,6 @@ class OceanFixGrid(Fix):
         # Copy vertices to cube
         cube.coord('latitude').bounds = lat_vertices
         cube.coord('longitude').bounds = lon_vertices
-        print ('************ fix_data,rlon,rlat',rlon,rlat)
         return cube
 
     def fix_metadata(self, cubes):
@@ -172,8 +170,10 @@ class OceanFixGrid(Fix):
         iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
-        lat_coord = cube.coord('cell index along second dimension', dimensions=(1, ))
-        lon_coord = cube.coord('cell index along first dimension', dimensions=(2, ))
+        lat_coord = cube.coord('cell index along second dimension',
+                               dimensions=(1, ))
+        lon_coord = cube.coord('cell index along first dimension',
+                               dimensions=(2, ))
         lat_coord.standard_name = None
         lat_coord.long_name = 'grid_latitude'
         lat_coord.var_name = 'i'
@@ -183,8 +183,12 @@ class OceanFixGrid(Fix):
         lon_coord.var_name = 'j'
         lon_coord.units = '1'
         lon_coord.circular = False
-        #FGOALS-g3 data contain latitude and longitude data set to >1e30 in some
-        #places. Set to 0. to avoid problem in check.py.
-        cube.coord('latitude').points[cube.coord('latitude').points > 1000.]=0.
-        cube.coord('longitude').points[cube.coord('longitude').points > 1000.]=0.
+        #FGOALS-g3 data contain latitude and longitude data set to
+        #>1e30 in some places. Set to 0. to avoid problem in check.py.
+        cube.coord('latitude').points[cube.coord('latitude').points > 1000.]\
+            = 0.
+        cube.coord('longitude').points[cube.coord('longitude').points > 1000.]\
+            = 0.
         return cubes
+
+

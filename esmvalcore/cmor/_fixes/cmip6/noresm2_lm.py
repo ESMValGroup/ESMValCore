@@ -1,10 +1,10 @@
 """Fixes for NorESM2-LM model."""
-from ..fix import Fix
 import numpy as np
+from ..fix import Fix
 
 
 class Siconc(Fix):
-    """Fixes for tas."""
+    """Fixes for siconc."""
 
     def fix_metadata(self, cubes):
         """Fix metadata.
@@ -24,8 +24,8 @@ class Siconc(Fix):
         """
         for cube in cubes:
             latitude = cube.coord('latitude')
-            latitude.bounds=np.round(latitude.bounds,4)
+            latitude.bounds=np.round(latitude.bounds, 4)
             longitude = cube.coord('longitude')
-            longitude.bounds=np.round(longitude.bounds,4)
+            longitude.bounds=np.round(longitude.bounds, 4)
 
-        return (cubes)
+        return cubes

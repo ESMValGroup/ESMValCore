@@ -2,12 +2,12 @@
 from shutil import copyfile
 
 from netCDF4 import Dataset
+import numpy as np
 
 from ..fix import Fix
 from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
                       add_scalar_typeland_coord, add_scalar_typesea_coord)
-import numpy as np
-from .gfdl_esm4 import Siconc
+from .gfdl_esm4 import Siconc as Addtypesi
 
 
 class Cl(Fix):
@@ -108,10 +108,10 @@ class Tas(Fix):
         for cube in cubes:
             latitude = cube.coord('latitude')
             latitude.bounds = latitude.bounds.astype(np.float64)
-            latitude.bounds=np.round(latitude.bounds,4)
+            latitude.bounds=np.round(latitude.bounds, 4)
             longitude = cube.coord('longitude')
             longitude.bounds = longitude.bounds.astype(np.float64)
-            longitude.bounds=np.round(longitude.bounds,4)
+            longitude.bounds=np.round(longitude.bounds, 4)
 
         return cubes
 
@@ -177,10 +177,9 @@ class Tos(Fix):
         cube = self.get_cube_from_list(cubes)
 
         for cube in cubes:
-            if cube.attributes['mipTable']=='Omon':
-              cube.coord('time').points=np.round(cube.coord('time').points,1)
-            
+            if cube.attributes['mipTable'] == 'Omon':
+                cube.coord('time').points=np.round(cube.coord('time').points, 1)
         return cubes
 
 
-Siconc = Siconc
+Siconc = Addtypesi
