@@ -253,12 +253,22 @@ class TestConcatenate(unittest.TestCase):
 
     def test_concatenate_with_overlap_2(self):
         """Test a more generic case."""
-        self._add_cube([65., 75.], [3., 200.])
-        self._add_cube([65., 75.], [1000., 7000.])
+        self._add_cube([65., 75., 100.], [9., 10., 11.])
+        self._add_cube([65., 75., 100.], [7., 8., 9.])
         concatenated = _io.concatenate(self.raw_cubes)
         np.testing.assert_array_equal(
             concatenated.coord('time').points,
-            np.array([1., 2., 3., 4., 5., 6., 1000., 7000.]))
+            np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11.]))
+
+    def test_concatenate_with_overlap_3(self):
+        """Test a more generic case."""
+        self._add_cube([65., 75., 100.], [9., 10., 11.])
+        self._add_cube([65., 75., 100., 100., 100., 112.],
+                       [7., 8., 9., 10., 11., 12.])
+        concatenated = _io.concatenate(self.raw_cubes)
+        np.testing.assert_array_equal(
+            concatenated.coord('time').points,
+            np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]))
 
     def test_concatenate_with_overlap_same_start(self):
         """Test a more generic case."""
@@ -301,6 +311,26 @@ class TestConcatenate(unittest.TestCase):
         cubes_single_ovlp = [cube2, cube1]
         with self.assertRaises(ConcatenateError):
             _io.concatenate(cubes_single_ovlp)
+
+    def test_concatenate_no_time_coords(self):
+        """Test a more generic case."""
+        time_coord_1 = DimCoord([1.5, 5., 7.],
+                                var_name='time',
+                                standard_name='time',
+                                units='days since 1950-01-01')
+        cube1 = Cube([33., 55., 77.],
+                     var_name='sample',
+                     dim_coords_and_dims=((time_coord_1, 0), ))
+        ap_coord_2 = DimCoord([1., 5., 7.],
+                              var_name='air_pressure',
+                              standard_name='air_pressure',
+                              units='m',
+                              attributes={'positive': 'down'})
+        cube2 = Cube([33., 55., 77.],
+                     var_name='sample',
+                     dim_coords_and_dims=((ap_coord_2, 0), ))
+        with self.assertRaises(ValueError):
+            _io.concatenate([cube1, cube2])
 
     def test_concatenate_with_order(self):
         """Test a more generic case."""
@@ -379,6 +409,7 @@ class TestConcatenate(unittest.TestCase):
     def test_fail_metadata_differs(self):
         """Test exception raised if two cubes have different metadata."""
         self.raw_cubes[0].units = 'm'
+        self.raw_cubes[1].units = 'K'
         with self.assertRaises(ValueError):
             _io.concatenate(self.raw_cubes)
 
