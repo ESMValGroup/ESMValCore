@@ -640,6 +640,16 @@ class TestCMORCheck(unittest.TestCase):
         self.cube = self.cube.intersection(longitude=(180., 520.))
         self._check_cube(automatic_fixes=True)
 
+    def test_too_high_lons_automatic_fix_not_done(self):
+        """Test automatic fixes for bad longitudes."""
+        self.cube = self.cube.intersection(longitude=(720., 1080.))
+        self._check_fails_in_metadata(automatic_fixes=True)
+
+    def test_too_low_lons_automatic_fix_not_done(self):
+        """Test automatic fixes for bad longitudes."""
+        self.cube = self.cube.intersection(longitude=(-720., -360.))
+        self._check_fails_in_metadata(automatic_fixes=True)
+
     def test_not_valid_min(self):
         """Fail if coordinate values below valid_min."""
         coord = self.cube.coord('latitude')
