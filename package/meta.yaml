@@ -38,6 +38,7 @@ requirements:
     - python>=3.6
     - libunwind  # specifically for Python3.7+
     - graphviz
+    - hdf5>1.10.5  # try avert segfault from netCDF4.Dataset
     - iris>=2.2.1
     - python-stratify
     # Normally installed via pip:
