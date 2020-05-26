@@ -16,12 +16,12 @@ Once you have installed conda, you can install ESMValCore by running:
     conda install -c esmvalgroup -c conda-forge esmvalcore
 
 
-Using it through Docker
+Docker installation
 -----------------------
 
-ESMValCore is also provided thorugh DockerHub in the form of docker containers.
+ESMValCore is also provided through DockerHub in the form of docker containers.
 See https://docs.docker.com/ for more info about docker containers and how to
-run the
+run them.
 
 You can get the latest release with
 
@@ -29,7 +29,7 @@ You can get the latest release with
 
    docker pull esmvalgroup/esmvalcore:stable
 
-If yoy want to use the current master branch, use
+If you want to use the current master branch, use
 
 .. code-block:: bash
 
@@ -41,12 +41,12 @@ To run a container using those images, use:
 
    docker run esmvalgroup/esmvalcore:stable esmvaltool -v
 
-.. warning::
+.. note::
 
-   The container does not see the data available in the host by default.
+   The container does not see the data or environmental variables available in the host by default.
    You can make host data available with `-v /path:/path/in/container`
 
-Using it through Singularity
+Singularity installation
 ----------------------------
 
 Docker is usually forbidden in clusters due to security reasons. However, 
@@ -60,7 +60,7 @@ following command
 
    singularity run docker://esmvalgroup/esmvalcore:${DESIRED_TAG} -c ${PATH_TO_CONFIG_FILE} ${PATH_TO_RECIPE}
 
-.. warning::
+.. note::
 
    As with docker, The container does not see the data available in the host by default.
    You can make host data available with `-B /path:/path/in/container`
@@ -109,4 +109,3 @@ To install from source for development, follow these instructions.
    e.g. \ ``pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
-
