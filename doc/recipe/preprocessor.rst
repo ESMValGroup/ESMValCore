@@ -4,8 +4,8 @@
 Preprocessor
 ************
 
-In this section, each of the preprocessor modules is described in detail
-following the default order in which they are applied:
+In this section, each of the preprocessor modules is described,
+roughly following the default order in which preprocessor functions are applied:
 
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
@@ -18,9 +18,12 @@ following the default order in which they are applied:
 * :ref:`Time operations`
 * :ref:`Area operations`
 * :ref:`Volume operations`
+* :ref:`Cycles`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
 * :ref:`Other`
+
+See :ref:`preprocessor_functions` for implementation details and the exact default order.
 
 Overview
 ========
@@ -303,6 +306,19 @@ is for example useful for climate models which do not offer land/sea fraction
 files. This arguments also accepts the special dataset specifiers
 ``reference_dataset`` and ``alternative_dataset``.
 
+Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
+experiment is preferred for fx data retrieval:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_weighting:
+        weighting_landsea_fraction:
+          area_type: land
+          exclude: ['CanESM2', 'reference_dataset']
+          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+
+
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
 
@@ -351,7 +367,21 @@ and requires only one argument: ``mask_out``: either ``land`` or ``sea``.
 The preprocessor automatically retrieves the corresponding mask (``fx: stfof``
 in this case) and applies it so that sea-covered grid cells are set to
 missing. Conversely, it retrieves the ``fx: sftlf`` mask when land needs to be
-masked out, respectively. If the corresponding fx file is not found (which is
+masked out, respectively.
+
+Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
+experiment is preferred for fx data retrieval:
+
+
+.. code-block:: yaml
+
+    preprocessors:
+      landmask:
+        mask_landsea:
+          mask_out: sea
+          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+
+If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
 vectorized rasters). As mentioned above, the spatial resolution of the the
@@ -377,7 +407,20 @@ losing generality. To mask ice out, ``mask_landseaice`` can be used:
 and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
 As in the case of ``mask_landsea``, the preprocessor automatically retrieves
-the ``fx_files: [sftgif]`` mask.
+the ``fx_variables: [sftgif]`` mask.
+
+Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
+experiment is preferred for fx data retrieval:
+
+
+.. code-block:: yaml
+
+    preprocessors:
+      landseaicemask:
+        mask_landseaice:
+          mask_out: sea
+          fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -397,37 +440,6 @@ glaciated areas out, ``mask_glaciated`` can be used:
 and it requires only one argument: ``mask_out``: only ``glaciated``.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
-
-Mask files
-----------
-
-At the core of the land/sea/ice masking in the preprocessor are the mask files
-(whether it be fx type or Natural Earth type of files); these files (bar
-Natural Earth) can be retrieved and used in the diagnostic phase as well. By
-specifying the ``fx_files:`` key in the variable in diagnostic in the recipe,
-and populating it with a list of desired files e.g.:
-
-.. code-block:: yaml
-
-    variables:
-      ta:
-        preprocessor: my_masking_preprocessor
-          fx_files: [sftlf, sftof, sftgif, areacello, areacella]
-
-Such a recipe will automatically retrieve all the ``fx_files: [sftlf, sftof,
-sftgif, areacello, areacella]``-type fx files for each of the variables they
-are needed for and then, in the diagnostic phase, these mask files will be
-available for the developer to use them as they need to. The `fx_files`
-attribute of the big `variable` nested dictionary that gets passed to the
-diagnostic is, in turn, a dictionary on its own, and members of it can be
-accessed in the diagnostic through a simple loop over the ``config`` diagnostic
-variable items e.g.:
-
-.. code-block:: python
-
-    for filename, attributes in config['input_data'].items():
-        sftlf_file = attributes['fx_files']['sftlf']
-        areacello_file = attributes['fx_files']['areacello']
 
 .. _masking of missing values:
 
@@ -635,13 +647,13 @@ to observational data, these biases have a significantly lower statistical
 impact when using a multi-model ensemble. ESMValTool has the capability of
 computing a number of multi-model statistical measures: using the preprocessor
 module ``multi_model_statistics`` will enable the user to ask for either a
-multi-model ``mean`` and/or ``median`` with a set of argument parameters passed
-to ``multi_model_statistics``.
+multi-model ``mean``, ``median``, ``max``, ``min`` and / or ``std`` with a set
+of argument parameters passed to ``multi_model_statistics``.
 
-Multimodel statistics in ESMValTool are computed along the time axis, and as
-such, can be computed across a common overlap in time (by specifying ``span:
-overlap`` argument) or across the full length in time of each model (by
-specifying ``span: full`` argument).
+Note that current multimodel statistics in ESMValTool are local (not global),
+and are computed along the time axis. As such, can be computed across a common
+overlap in time (by specifying ``span: overlap`` argument) or across the full
+length in time of each model (by specifying ``span: full`` argument).
 
 Restrictive computation is also available by excluding  any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
@@ -1132,6 +1144,23 @@ Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
+The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
+the user may specify it as a list of variables e.g.
+
+.. code-block:: yaml
+
+    fx_variables: ['areacello', 'volcello']
+
+or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
+as a CMOR variable can permit):
+
+.. code-block:: yaml
+
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
+
+The recipe parser wil automatically find the data files that are associated with these
+variables and pass them to the function for loading and processing.
+
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
 
@@ -1173,7 +1202,24 @@ This function takes the argument: ``operator``, which defines the operation to
 apply over the volume.
 
 No depth coordinate is required as this is determined by Iris. This function
-works best when the ``fx_files`` provide the cell volume.
+works best when the ``fx_variables`` provide the cell volume.
+
+The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
+the user may specify it as a list of variables e.g.
+
+.. code-block:: yaml
+
+    fx_variables: ['areacello', 'volcello']
+
+or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
+as a CMOR variable can permit):
+
+.. code-block:: yaml
+
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
+
+The recipe parser wil automatically find the data files that are associated with these
+variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
@@ -1223,6 +1269,34 @@ Note that this function uses the expensive ``interpolate`` method from
 ``Iris.analysis.trajectory``, but it may be necessary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
+
+
+.. _cycles:
+
+Cycles
+======
+
+The ``_cycles.py`` module contains the following preprocessor functions:
+
+* ``amplitude``: Extract the peak-to-peak amplitude of a cycle aggregated over
+  specified coordinates.
+
+``amplitude``
+-------------
+
+This function extracts the peak-to-peak amplitude (maximum value minus minimum
+value) of a field aggregated over specified coordinates. Its only argument is
+``coords``, which can either be a single coordinate (given as :obj:`str`) or
+multiple coordinates (given as :obj:`list` of :obj:`str`). Usually, these
+coordinates refer to temporal `categorised coordinates
+<https://scitools.org.uk/iris/docs/latest/iris/iris/coord_categorisation.html>`_
+like `year`, `month`, `day of year`, etc. For example, to extract the amplitude
+of the annual cycle for every single year in the data, use ``coords: year``; to
+extract the amplitude of the diurnal cycle for every single day in the data,
+use ``coords: [year, day_of_year]``.
+
+See also :func:`esmvalcore.preprocessor.amplitude`.
+
 
 .. _detrend:
 

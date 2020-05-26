@@ -9,7 +9,7 @@ from netCDF4 import Dataset
 from esmvalcore.cmor._fixes.common import (ClFixHybridHeightCoord,
                                            ClFixHybridPressureCoord)
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.preprocessor._derive._shared import var_name_constraint
+from esmvalcore.iris_helpers import var_name_constraint
 
 
 def create_hybrid_pressure_file_without_ap(dataset, short_name):
@@ -98,7 +98,7 @@ def create_hybrid_pressure_file_with_ap(dataset, short_name):
 @pytest.fixture
 def cl_file_with_a(tmp_path):
     """Create netcdf file for ``cl`` with ``a`` coordinate."""
-    nc_path = os.path.join(tmp_path, f'cl_a.nc')
+    nc_path = os.path.join(tmp_path, 'cl_a.nc')
     dataset = Dataset(nc_path, mode='w')
     create_hybrid_pressure_file_with_a(dataset, 'cl')
     dataset.close()
@@ -108,7 +108,7 @@ def cl_file_with_a(tmp_path):
 @pytest.fixture
 def cl_file_with_ap(tmp_path):
     """Create netcdf file for ``cl`` with ``ap`` coordinate."""
-    nc_path = os.path.join(tmp_path, f'cl_ap.nc')
+    nc_path = os.path.join(tmp_path, 'cl_ap.nc')
     dataset = Dataset(nc_path, mode='w')
     create_hybrid_pressure_file_with_ap(dataset, 'cl')
     dataset.close()
@@ -118,7 +118,7 @@ def cl_file_with_ap(tmp_path):
 @pytest.fixture
 def cli_file_with_a(tmp_path):
     """Create netcdf file for ``cli`` with ``a`` coordinate."""
-    nc_path = os.path.join(tmp_path, f'cli_a.nc')
+    nc_path = os.path.join(tmp_path, 'cli_a.nc')
     dataset = Dataset(nc_path, mode='w')
     create_hybrid_pressure_file_with_a(dataset, 'cli')
     dataset.close()
@@ -128,7 +128,7 @@ def cli_file_with_a(tmp_path):
 @pytest.fixture
 def cli_file_with_ap(tmp_path):
     """Create netcdf file for ``cli`` with ``ap`` coordinate."""
-    nc_path = os.path.join(tmp_path, f'cli_ap.nc')
+    nc_path = os.path.join(tmp_path, 'cli_ap.nc')
     dataset = Dataset(nc_path, mode='w')
     create_hybrid_pressure_file_with_ap(dataset, 'cli')
     dataset.close()
@@ -138,7 +138,7 @@ def cli_file_with_ap(tmp_path):
 @pytest.fixture
 def clw_file_with_a(tmp_path):
     """Create netcdf file for ``clw`` with ``a`` coordinate."""
-    nc_path = os.path.join(tmp_path, f'clw_a.nc')
+    nc_path = os.path.join(tmp_path, 'clw_a.nc')
     dataset = Dataset(nc_path, mode='w')
     create_hybrid_pressure_file_with_a(dataset, 'clw')
     dataset.close()
@@ -148,7 +148,7 @@ def clw_file_with_a(tmp_path):
 @pytest.fixture
 def clw_file_with_ap(tmp_path):
     """Create netcdf file for ``clw`` with ``ap`` coordinate."""
-    nc_path = os.path.join(tmp_path, f'clw_ap.nc')
+    nc_path = os.path.join(tmp_path, 'clw_ap.nc')
     dataset = Dataset(nc_path, mode='w')
     create_hybrid_pressure_file_with_ap(dataset, 'clw')
     dataset.close()
@@ -301,7 +301,7 @@ def create_hybrid_height_file(dataset, short_name):
 @pytest.fixture
 def cl_file_with_height(tmp_path):
     """Create netcdf file for ``cl`` with hybrid height coordinate."""
-    nc_path = os.path.join(tmp_path, f'cl_hybrid_height.nc')
+    nc_path = os.path.join(tmp_path, 'cl_hybrid_height.nc')
     dataset = Dataset(nc_path, mode='w')
     create_hybrid_height_file(dataset, 'cl')
     dataset.close()
@@ -311,7 +311,7 @@ def cl_file_with_height(tmp_path):
 @pytest.fixture
 def cli_file_with_height(tmp_path):
     """Create netcdf file for ``cli`` with hybrid height coordinate."""
-    nc_path = os.path.join(tmp_path, f'cli_hybrid_height.nc')
+    nc_path = os.path.join(tmp_path, 'cli_hybrid_height.nc')
     dataset = Dataset(nc_path, mode='w')
     create_hybrid_height_file(dataset, 'cli')
     dataset.close()
@@ -321,7 +321,7 @@ def cli_file_with_height(tmp_path):
 @pytest.fixture
 def clw_file_with_height(tmp_path):
     """Create netcdf file for ``clw`` with hybrid height coordinate."""
-    nc_path = os.path.join(tmp_path, f'clw_hybrid_height.nc')
+    nc_path = os.path.join(tmp_path, 'clw_hybrid_height.nc')
     dataset = Dataset(nc_path, mode='w')
     create_hybrid_height_file(dataset, 'clw')
     dataset.close()

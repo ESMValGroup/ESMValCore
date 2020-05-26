@@ -30,7 +30,8 @@ def synda_search(variable):
     result = subprocess.check_output(cmd, shell=True, universal_newlines=True)
     logger.debug('Result:\n%s', result.strip())
 
-    files = [l.split()[-1] for l in result.split('\n') if l.startswith('new')]
+    files = [line.split()[-1] for line in result.split('\n')
+             if line.startswith('new')]
     if variable.get('frequency', '') != 'fx':
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
