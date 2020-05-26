@@ -5,7 +5,7 @@ channels:
 
 dependencies:
   - esmpy
-  - hdf5>1.10.5  # try avert segfault from netCDF4.Dataset
+  - hdf5>=1.10.6  # try avert segfault from netCDF4.Dataset
   - iris>=2.2.1
   - graphviz
   - gcc_linux-64
