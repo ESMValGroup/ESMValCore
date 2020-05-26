@@ -1022,6 +1022,17 @@ def test_standardized_anomalies(period, standardize=True):
             )
 
 
+
+@pytest.mark.parametrize('period, reference', PARAMETERS)
+def test_anomalies_preserve_metadata(period, reference, standardize=False):
+    cube = make_map_data(number_years=2)
+    cube.var_name = "si"
+    cube.units  = "m"
+    result = anomalies(cube, period, reference, standardize=standardize)
+    assert result.var_name == cube.var_name
+    assert result.units == cube.units
+
+
 @pytest.mark.parametrize('period, reference', PARAMETERS)
 def test_anomalies(period, reference, standardize=False):
     cube = make_map_data(number_years=2)
