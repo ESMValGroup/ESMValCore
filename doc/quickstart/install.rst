@@ -16,7 +16,7 @@ Once you have installed conda, you can install ESMValCore by running:
     conda install -c esmvalgroup -c conda-forge esmvalcore
 
 
-Using it through docker
+Using it through Docker
 -----------------------
 
 ESMValCore is also provided thorugh DockerHub in the form of docker containers.
@@ -45,6 +45,40 @@ To run a container using those images, use:
 
    The container does not see the data available in the host by default.
    You can make host data available with `-v /path:/path/in/container`
+
+Using it through Singularity
+----------------------------
+
+Docker is usually forbidden in clusters due to security reasons. However, 
+there is a more secure alternative to run containers that is usually available 
+on them: Singularity.
+
+Singularity can use docker containers directly from DockerHub with the
+following command
+
+.. code-block:: bash
+
+   singularity run docker://esmvalgroup/esmvalcore:${DESIRED_TAG} -c ${PATH_TO_CONFIG_FILE} ${PATH_TO_RECIPE}
+
+.. warning::
+
+   As with docker, The container does not see the data available in the host by default.
+   You can make host data available with `-B /path:/path/in/container`
+
+Some clusters may not allow to connect to external services, in those cases
+you can create a singularity image locally that can later be uploaded to the cluster.
+
+.. code-block:: bash
+
+   singularity build esmvalcore_${TAG}.sif docker://esmvalgroup/esmvalcore:${TAG}
+
+To run the container using the newly created image file use:
+
+.. code-block:: bash
+
+   singularity run esmvalcore_${TAG}.sif -c ${PATH_TO_CONFIG_FILE} ${PATH_TO_RECIPE}
+
+
 
 
 Development installation
