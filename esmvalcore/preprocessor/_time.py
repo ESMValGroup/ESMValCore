@@ -460,9 +460,9 @@ def anomalies(cube, period, reference=None, standardize=False):
         reference_cube = extract_time(cube, **reference)
     reference = climate_statistics(reference_cube, period=period)
     if period in ['full']:
-        orig_cube = cube.copy()
-        cube = orig_cube - reference
-        cube.metadata = orig_cube.metadata
+        metadata = copy.deepcopy(cube.metadata)
+        cube = cube - reference
+        cube.metadata = metadata
         if standardize:
             cube_stddev = climate_statistics(
                 cube, operator='std_dev', period=period)
