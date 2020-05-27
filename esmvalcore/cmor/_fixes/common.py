@@ -6,6 +6,7 @@ from scipy.ndimage import map_coordinates
 from .fix import Fix
 from .shared import add_plev_from_altitude, fix_bounds
 
+
 class ClFixHybridHeightCoord(Fix):
     """Fixes for ``cl`` regarding hybrid sigma height coordinates."""
 
@@ -124,7 +125,7 @@ class OceanFixGrid(Fix):
         rlat = cube.coord('grid_latitude').points
         rlon = cube.coord('grid_longitude').points
 
-        #Guess coordinate bounds in rlat, rlon (following BCC-CSM2-MR-1).
+        # Guess coordinate bounds in rlat, rlon (following BCC-CSM2-MR-1).
         rlat_idx_bnds = np.zeros((len(rlat), 2))
         rlat_idx_bnds[:, 0] = np.arange(len(rlat))-0.5
         rlat_idx_bnds[:, 1] = np.arange(len(rlat))+0.5
@@ -183,8 +184,8 @@ class OceanFixGrid(Fix):
         lon_coord.var_name = 'j'
         lon_coord.units = '1'
         lon_coord.circular = False
-        #FGOALS-g3 data contain latitude and longitude data set to
-        #>1e30 in some places. Set to 0. to avoid problem in check.py.
+        # FGOALS-g3 data contain latitude and longitude data set to
+        # >1e30 in some places. Set to 0. to avoid problem in check.py.
         cube.coord('latitude').points[cube.coord('latitude').points > 1000.]\
             = 0.
         cube.coord('longitude').points[cube.coord('longitude').points > 1000.]\
