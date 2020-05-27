@@ -8,6 +8,7 @@ import numpy as np
 from cf_units import Unit
 
 import tests
+from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (_assemble_full_data,
                                                  _assemble_overlap_data,
                                                  _compute_statistic,
@@ -89,6 +90,20 @@ class Test(tests.Test):
         expected_median = np.ma.ones((3, 2, 2))
         self.assert_array_equal(stat_mean, expected_mean)
         self.assert_array_equal(stat_median, expected_median)
+
+    def test_compute_full_statistic_cube(self):
+        data = [self.cube1, self.cube2]
+        stats = multi_model_statistics(data, 'full', ['mean'])
+        expected_full_mean = np.ma.ones((2, 3, 2, 2))
+        expected_full_mean.mask = np.zeros((2, 3, 2, 2))
+        expected_full_mean.mask[1] = True
+        self.assert_array_equal(stats['mean'].data, expected_full_mean)
+
+    def test_compute_overlap_statistic_cube(self):
+        data = [self.cube1, self.cube1]
+        stats = multi_model_statistics(data, 'overlap', ['mean'])
+        expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
+        self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
     def test_put_in_cube(self):
         """Test put in cube."""

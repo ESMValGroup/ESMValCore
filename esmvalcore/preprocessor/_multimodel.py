@@ -318,7 +318,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     Parameters
     ----------
     products: list
-        list of data products to be used in multimodel stat computation;
+        list of data products or cubes to be used in multimodel stat
+        computation;
         cube attribute of product is the data cube for computing the stats.
     span: str
         overlap or full; if overlap stas are computed on common time-span;
@@ -330,7 +331,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     Returns
     -------
     list
-        list of data products containing the multimodel stats computed.
+        list of data products or cubes containing the multimodel stats
+        computed.
     Raises
     ------
     ValueError
@@ -341,20 +343,20 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     if len(products) < 2:
         logger.info("Single dataset in list: will not compute statistics.")
         return products
-    if isinstance(products, set):
+    if output_products:
         cubes = [cube for product in products for cube in product.cubes]
         statistic_products = set()
     else:
         cubes = products
         statistic_products = {}
-    # check if we have any time overlap
-    interval = _get_overlap(cubes)
-    if interval is None:
-        logger.info("Time overlap between cubes is none or a single point."
-                    "check datasets: will not compute statistics.")
-        return products
 
     if span == 'overlap':
+        # check if we have any time overlap
+        interval = _get_overlap(cubes)
+        if interval is None:
+            logger.info("Time overlap between cubes is none or a single point."
+                        "check datasets: will not compute statistics.")
+            return products
         logger.debug("Using common time overlap between "
                      "datasets to compute statistics.")
     elif span == 'full':
@@ -384,7 +386,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         else:
             statistic_products[statistic] = statistic_cube
 
-    if isinstance(statistic_products, set):
+    if output_products:
         products |= statistic_products
         return products
     return statistic_products
