@@ -3,18 +3,19 @@
 Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
+import copy
 import datetime
 import logging
 from warnings import filterwarnings
 
 import dask.array as da
 import iris
-import iris.cube
 import iris.coord_categorisation
+import iris.cube
 import iris.exceptions
 import iris.util
-from iris.time import PartialDateTime
 import numpy as np
+from iris.time import PartialDateTime
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
