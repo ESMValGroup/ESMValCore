@@ -238,8 +238,29 @@ def test_clw_fix():
 @pytest.fixture
 def tas_cubes():
     """Cubes to test fixes for ``tas``."""
-    ta_cube = iris.cube.Cube([1.0], var_name='ta')
-    tas_cube = iris.cube.Cube([3.0], var_name='tas')
+    time_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='time', standard_name='time',
+        units='days since 1850-01-01 00:00:00')
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
+    lon_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lon', standard_name='longitude', units='degrees')
+    coord_specs = [
+        (time_coord, 0),
+        (lat_coord, 1),
+        (lon_coord, 2),
+    ]
+    ta_cube = iris.cube.Cube(
+        np.ones((2, 2, 2)),
+        var_name='ta',
+        dim_coords_and_dims=coord_specs,
+    )
+    tas_cube = iris.cube.Cube(
+        np.ones((2, 2, 2)),
+        var_name='tas',
+        dim_coords_and_dims=coord_specs,
+    )
+
     return iris.cube.CubeList([ta_cube, tas_cube])
 
 
@@ -265,6 +286,8 @@ def test_tas_fix_metadata(tas_cubes):
     out_cubes = fix.fix_metadata(tas_cubes)
     assert out_cubes is tas_cubes
     for cube in out_cubes:
+        assert cube.coord("longitude").has_bounds()
+        assert cube.coord("latitude").has_bounds()
         if cube.var_name == 'tas':
             coord = cube.coord('height')
             assert coord == height_coord
