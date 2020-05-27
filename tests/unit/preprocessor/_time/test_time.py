@@ -1028,8 +1028,11 @@ def test_anomalies_preserve_metadata(period, reference, standardize=False):
     cube.var_name = "si"
     cube.units = "m"
     result = anomalies(cube, period, reference, standardize=standardize)
-    assert result.var_name == cube.var_name
-    assert result.units == cube.units
+    assert result.metadata == cube.metadata
+    for coord_cube, coord_res in zip(cube.coords(), result.coords()):
+        if coord_cube.has_bounds() and coord_res.has_bounds():
+            assert_array_equal(coord_cube.bounds, coord_res.bounds)
+        assert coord_cube == coord_res
 
 
 @pytest.mark.parametrize('period, reference', PARAMETERS)
