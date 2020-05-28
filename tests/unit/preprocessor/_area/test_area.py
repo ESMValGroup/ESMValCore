@@ -292,7 +292,7 @@ def test_extract_region_irregular(irregular_extract_region_cube, case):
 
 
 def create_rotated_grid_cube(data):
-    """Create test cube on irregular grid."""
+    """Create test cube on rotated grid."""
     # CORDEX EUR-44 example
     grid_north_pole_latitude = 39.25
     grid_north_pole_longitude = -162.0
@@ -354,7 +354,7 @@ def create_rotated_grid_cube(data):
     return cube
 
 
-IRREGULAR_AREA_STATISTICS_TEST = [
+ROTATED_AREA_STATISTICS_TEST = [
     {
         'operator': 'mean',
         'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
@@ -392,9 +392,9 @@ IRREGULAR_AREA_STATISTICS_TEST = [
 ]
 
 
-@pytest.mark.parametrize('case', IRREGULAR_AREA_STATISTICS_TEST)
-def test_area_statistics_irregular(case):
-    """Test `area_statistics` with data on an irregular grid."""
+@pytest.mark.parametrize('case', ROTATED_AREA_STATISTICS_TEST)
+def test_area_statistics_rotated(case):
+    """Test `area_statistics` with data on an rotated grid."""
     rotated_cube = create_rotated_grid_cube(case['data'])
     operator = case['operator']
     cube = area_statistics(
