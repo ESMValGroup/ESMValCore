@@ -252,11 +252,7 @@ def area_statistics(cube, operator, fx_variables=None):
     if not fx_variables and cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
         if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
-            if not cube.coord('grid_longitude').has_bounds():
-                cube = guess_bounds(cube, 'grid_longitude')
-            if not cube.coord('grid_latitude').has_bounds():
-                cube = guess_bounds(cube, 'grid_latitude')
-            # remove lat lon and rename grid_lat grid_lon
+            cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
             cube_tmp = cube.copy()
             cube_tmp.remove_coord('latitude')
             cube_tmp.coord('grid_latitude').rename('latitude')
