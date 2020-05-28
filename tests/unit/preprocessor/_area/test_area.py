@@ -291,6 +291,129 @@ def test_extract_region_irregular(irregular_extract_region_cube, case):
             assert exc.value == case['raises']
 
 
+def create_rotated_grid_cube(data):
+    """Create test cube on irregular grid."""
+    # CORDEX EUR-44 example
+    grid_north_pole_latitude = 39.25
+    grid_north_pole_longitude = -162.0
+    grid_lons = np.array(
+        [-10, 0, 10],
+        dtype=np.float64,
+    )
+    grid_lats = np.array(
+        [-10, 0, 10],
+        dtype=np.float64,
+    )
+
+    coord_sys_rotated = iris.coord_systems.RotatedGeogCS(
+        grid_north_pole_latitude,
+        grid_north_pole_longitude
+    )
+    grid_lat = iris.coords.DimCoord(grid_lats,
+                                    var_name='rlon',
+                                    standard_name='grid_latitude',
+                                    units='degrees',
+                                    coord_system=coord_sys_rotated)
+    grid_lon = iris.coords.DimCoord(grid_lons,
+                                    var_name='rlon',
+                                    standard_name='grid_longitude',
+                                    units='degrees',
+                                    coord_system=coord_sys_rotated)
+
+    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    glon, glat = np.meshgrid(grid_lons, grid_lats)
+    lons, lats = iris.analysis.cartography.unrotate_pole(
+        np.deg2rad(glon), np.deg2rad(glat),
+        grid_north_pole_longitude, grid_north_pole_latitude)
+
+    lat = iris.coords.AuxCoord(lats,
+                               var_name='lat',
+                               standard_name='latitude',
+                               units='degrees',
+                               coord_system=coord_sys)
+    lon = iris.coords.AuxCoord(lons,
+                               var_name='lon',
+                               standard_name='longitude',
+                               units='degrees',
+                               coord_system=coord_sys)
+    dim_coord_spec = [
+        (grid_lat, 0),
+        (grid_lon, 1),
+    ]
+    aux_coord_spec = [
+        (lat, [0, 1]),
+        (lon, [0, 1]),
+    ]
+    cube = iris.cube.Cube(
+        data,
+        var_name='tos',
+        units='K',
+        dim_coords_and_dims=dim_coord_spec,
+        aux_coords_and_dims=aux_coord_spec,
+    )
+    return cube
+
+
+IRREGULAR_AREA_STATISTICS_TEST = [
+    {
+        'operator': 'mean',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([1.]),
+    },
+    {
+        'operator': 'median',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([1.]),
+    },
+    {
+        'operator': 'std_dev',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([0.]),
+    },
+    {
+        'operator': 'sum',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+    },
+    {
+        'operator': 'variance',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([0.]),
+    },
+    {
+        'operator': 'min',
+        'data': np.arange(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([0.]),
+    },
+    {
+        'operator': 'max',
+        'data': np.arange(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([8.]),
+    },
+]
+
+
+@pytest.mark.parametrize('case', IRREGULAR_AREA_STATISTICS_TEST)
+def test_area_statistics_irregular(case):
+    """Test `area_statistics` with data on an irregular grid."""
+    rotated_cube = create_rotated_grid_cube(case['data'])
+    operator = case['operator']
+    cube = area_statistics(
+        rotated_cube,
+        operator,
+    )
+    if operator != 'sum':
+        np.testing.assert_array_equal(cube.data, case['expected'])
+    else:
+        cube_tmp = rotated_cube.copy()
+        cube_tmp.remove_coord('latitude')
+        cube_tmp.coord('grid_latitude').rename('latitude')
+        cube_tmp.remove_coord('longitude')
+        cube_tmp.coord('grid_longitude').rename('longitude')
+        grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
+        expected = np.sum(grid_areas)
+        np.testing.assert_array_equal(cube.data, expected)
+
+
 @pytest.fixture
 def make_testcube():
     """Create a test cube on a Cartesian grid."""
