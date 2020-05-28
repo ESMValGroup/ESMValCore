@@ -361,7 +361,7 @@ def _add_fxvar_keys(fx_var_dict, variable):
     fx_variable['short_name'] = fx_var_dict['short_name']
 
     # specificities of project
-    if fx_variable['project'] == 'CMIP5':
+    if fx_variable['project'] in ['CMIP5', 'CORDEX']:
         fx_variable['mip'] = 'fx'
         fx_variable['ensemble'] = 'r0i0p0'
     elif fx_variable['project'] == 'CMIP6':
@@ -426,7 +426,7 @@ def _get_landsea_fraction_fx_dict(variable, config_user):
     """Get dict of available ``sftlf`` and ``sftof`` variables."""
     fx_dict = {}
     fx_vars = ['sftlf']
-    if variable['project'] != 'obs4mips':
+    if not variable['project'] in ['obs4mips', 'CORDEX']:
         fx_vars.append('sftof')
     for fx_var in fx_vars:
         fx_dict[fx_var] = _get_correct_fx_file(variable, fx_var, config_user)
