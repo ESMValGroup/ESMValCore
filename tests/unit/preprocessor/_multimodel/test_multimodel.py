@@ -90,6 +90,29 @@ class Test(tests.Test):
         self.assert_array_equal(stat_mean, expected_mean)
         self.assert_array_equal(stat_median, expected_median)
 
+    def test_compute_std(self):
+        """Test statistic."""
+        data = [self.cube1.data[0], self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "std")
+        expected = np.ma.ones((3, 2, 2)) * 0.5
+        expected[0, 0, 0] = 0
+        self.assert_array_equal(stat, expected)
+
+    def test_compute_max(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "max")
+        expected = np.ma.ones((3, 2, 2)) * 2
+        expected[0, 0, 0] = 0.5
+        self.assert_array_equal(stat, expected)
+
+    def test_compute_min(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "min")
+        expected = np.ma.ones((3, 2, 2)) * 0.5
+        self.assert_array_equal(stat, expected)
+
     def test_put_in_cube(self):
         """Test put in cube."""
         cube_data = np.ma.ones((2, 3, 2, 2))
