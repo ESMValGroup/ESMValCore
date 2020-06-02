@@ -54,6 +54,30 @@ class Test(tests.Test):
         self.mock_data = np.ma.empty((4, 3, 3))
         self.mock_data[:] = 10.
 
+    def test_components_fx_dict(self):
+        """Test compatibility of unput fx dictionary."""
+        iris.save(self.fx_mask, 'sftlf_test.nc')
+        new_cube_land = iris.cube.Cube(self.new_cube_data,
+                                       dim_coords_and_dims=self.coords_spec)
+        result_land = mask_landsea(
+            new_cube_land,
+            {'sftlf': 'sftlf_test.nc', 'sftof': []},
+            'land'
+        )
+        assert isinstance(result_land, iris.cube.Cube)
+        os.remove('sftlf_test.nc')
+
+        iris.save(self.fx_mask, 'sftgif_test.nc')
+        new_cube_ice = iris.cube.Cube(self.new_cube_data,
+                                      dim_coords_and_dims=self.coords_spec)
+        result_ice = mask_landseaice(
+            new_cube_ice,
+            {'sftgif': 'sftgif_test.nc', 'sftof': []},
+            'ice'
+        )
+        assert isinstance(result_ice, iris.cube.Cube)
+        os.remove('sftgif_test.nc')
+
     def test_mask_landsea(self):
         """Test mask_landsea func."""
         iris.save(self.fx_mask, 'sftlf_test.nc')
