@@ -55,7 +55,7 @@ class Test(tests.Test):
         self.mock_data[:] = 10.
 
     def test_components_fx_dict(self):
-        """Test compatibility of unput fx dictionary."""
+        """Test compatibility of input fx dictionary."""
         iris.save(self.fx_mask, 'sftlf_test.nc')
         new_cube_land = iris.cube.Cube(self.new_cube_data,
                                        dim_coords_and_dims=self.coords_spec)
