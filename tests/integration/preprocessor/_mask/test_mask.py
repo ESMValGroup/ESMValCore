@@ -12,10 +12,19 @@ import unittest
 
 import iris
 import numpy as np
+import pytest
 
 import tests
 from esmvalcore.preprocessor import (PreprocessorFile, mask_fillvalues,
                                      mask_landsea, mask_landseaice)
+
+
+def create_temporary_file():
+    """Create a temporary file with pytest tmp_path."""
+    temp_file = tempfile.NamedTemporaryFile().name + "_sftlf_mask.nc"
+
+    return temp_file
+
 
 
 class Test(tests.Test):
@@ -56,31 +65,32 @@ class Test(tests.Test):
 
     def test_components_fx_dict(self):
         """Test compatibility of input fx dictionary."""
-        iris.save(self.fx_mask, 'sftlf_test.nc')
+        sftlf_file = create_temporary_file()
+        iris.save(self.fx_mask, sftlf_file)
         new_cube_land = iris.cube.Cube(self.new_cube_data,
                                        dim_coords_and_dims=self.coords_spec)
         result_land = mask_landsea(
             new_cube_land,
-            {'sftlf': 'sftlf_test.nc', 'sftof': []},
+            {'sftlf': sftlf_file, 'sftof': []},
             'land'
         )
         assert isinstance(result_land, iris.cube.Cube)
-        os.remove('sftlf_test.nc')
 
-        iris.save(self.fx_mask, 'sftgif_test.nc')
+        sftgif_file = create_temporary_file().replace("sftlf", "sftgif")
+        iris.save(self.fx_mask, sftgif_file)
         new_cube_ice = iris.cube.Cube(self.new_cube_data,
                                       dim_coords_and_dims=self.coords_spec)
         result_ice = mask_landseaice(
             new_cube_ice,
-            {'sftgif': 'sftgif_test.nc', 'sftof': []},
+            {'sftgif': sftgif_file, 'sftof': []},
             'ice'
         )
         assert isinstance(result_ice, iris.cube.Cube)
-        os.remove('sftgif_test.nc')
 
     def test_mask_landsea(self):
         """Test mask_landsea func."""
-        iris.save(self.fx_mask, 'sftlf_test.nc')
+        sftlf_file = create_temporary_file()
+        iris.save(self.fx_mask, sftlf_file)
         new_cube_land = iris.cube.Cube(self.new_cube_data,
                                        dim_coords_and_dims=self.coords_spec)
         new_cube_sea = iris.cube.Cube(self.new_cube_data,
@@ -88,9 +98,9 @@ class Test(tests.Test):
 
         # mask with fx files
         result_land = mask_landsea(new_cube_land,
-                                   {'sftlf': 'sftlf_test.nc'}, 'land')
+                                   {'sftlf': sftlf_file}, 'land')
         result_sea = mask_landsea(new_cube_sea,
-                                  {'sftlf': 'sftlf_test.nc'}, 'sea')
+                                  {'sftlf': sftlf_file}, 'sea')
         expected = np.ma.empty((3, 3))
         expected.data[:] = 200.
         expected.mask = np.ones((3, 3), bool)
@@ -109,10 +119,10 @@ class Test(tests.Test):
                                        dim_coords_and_dims=self.coords_spec)
         new_cube_sea = iris.cube.Cube(self.new_cube_data,
                                       dim_coords_and_dims=self.coords_spec)
-        result_land = mask_landsea(new_cube_land, {'sftlf': 'sftlf_test.nc'},
+        result_land = mask_landsea(new_cube_land, {'sftlf': sftlf_file},
                                    'land',
                                    always_use_ne_mask=True)
-        result_sea = mask_landsea(new_cube_sea, {'sftlf': 'sftlf_test.nc'},
+        result_sea = mask_landsea(new_cube_sea, {'sftlf': sftlf_file},
                                   'sea',
                                   always_use_ne_mask=True)
 
@@ -123,9 +133,6 @@ class Test(tests.Test):
         self.assert_array_equal(result_land.data, expected)
         expected.mask = np.ones((3, 3), bool)
         self.assert_array_equal(result_sea.data, expected)
-
-        # remove the fx.nc temporary file
-        os.remove('sftlf_test.nc')
 
         # mask with shp files
         new_cube_land = iris.cube.Cube(self.new_cube_data,
@@ -145,11 +152,12 @@ class Test(tests.Test):
 
     def test_mask_landseaice(self):
         """Test mask_landseaice func."""
-        iris.save(self.fx_mask, 'sftgif_test.nc')
+        sftgif_file = create_temporary_file().replace("sftlf", "sftgif")
+        iris.save(self.fx_mask, sftgif_file)
         new_cube_ice = iris.cube.Cube(self.new_cube_data,
                                       dim_coords_and_dims=self.coords_spec)
         result_ice = mask_landseaice(new_cube_ice,
-                                     {'sftgif': 'sftgif_test.nc'}, 'ice')
+                                     {'sftgif': sftgif_file}, 'ice')
         expected = np.ma.empty((3, 3))
         expected.data[:] = 200.
         expected.mask = np.ones((3, 3), bool)
@@ -157,7 +165,6 @@ class Test(tests.Test):
         np.ma.set_fill_value(result_ice.data, 1e+20)
         np.ma.set_fill_value(expected, 1e+20)
         self.assert_array_equal(result_ice.data, expected)
-        os.remove('sftgif_test.nc')
 
     def test_mask_fillvalues(self):
         """Test the fillvalues mask: func mask_fillvalues."""
