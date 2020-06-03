@@ -6,13 +6,11 @@ module.
 
 """
 
-import os
 import tempfile
 import unittest
 
 import iris
 import numpy as np
-import pytest
 
 import tests
 from esmvalcore.preprocessor import (PreprocessorFile, mask_fillvalues,
@@ -24,7 +22,6 @@ def create_temporary_file():
     temp_file = tempfile.NamedTemporaryFile().name + "_sftlf_mask.nc"
 
     return temp_file
-
 
 
 class Test(tests.Test):
