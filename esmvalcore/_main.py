@@ -275,7 +275,7 @@ class ESMValTool():
         from ._config import configure_logging, read_config_user_file
         from ._config import DIAGNOSTICS_PATH
         from ._recipe import TASKSEP
-        
+
         if not os.path.exists(recipe):
             installed_recipe = os.path.join(
                 DIAGNOSTICS_PATH, 'recipes', recipe)
