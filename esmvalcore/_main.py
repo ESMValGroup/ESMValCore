@@ -28,21 +28,9 @@ http://esmvaltool.readthedocs.io. Have fun!
 # Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
-import datetime
-import errno
 import logging
-import os
-import shutil
-import sys
-from multiprocessing import cpu_count
 from pkg_resources import iter_entry_points
 import fire
-
-from . import __version__
-from ._config import configure_logging, read_config_user_file, DIAGNOSTICS_PATH
-from ._recipe import TASKSEP, read_recipe_file
-from ._task import resource_usage_logger
-from .cmor.check import CheckLevels
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -61,7 +49,13 @@ ______________________________________________________________________
 
 def process_recipe(recipe_file, config_user):
     """Process recipe."""
+    from . import __version__
+    from ._recipe import read_recipe_file
+    import datetime
+    import os
+    import shutil
     if not os.path.isfile(recipe_file):
+        import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
                       recipe_file)
 
@@ -80,6 +74,7 @@ def process_recipe(recipe_file, config_user):
     logger.info("PLOTDIR    = %s", config_user["plot_dir"])
     logger.info(70 * "-")
 
+    from multiprocessing import cpu_count
     n_processes = config_user['max_parallel_tasks'] or cpu_count()
     logger.info("Running tasks using at most %s processes", n_processes)
 
@@ -134,6 +129,8 @@ class Config():
             .esmvaltool in the user's home.
 
         """
+        import os
+        import shutil
         if not target_path:
             target_path = os.path.expanduser('~/.esmvaltool/config-user.yml')
         if not overwrite and os.path.isfile(target_path):
@@ -156,6 +153,8 @@ class Config():
             .esmvaltool in the user's home.
 
         """
+        import os
+        import shutil
         if not target_path:
             target_path = os.path.expanduser(
                 '~/.esmvaltool/config-developer.yml')
@@ -172,6 +171,8 @@ class Recipes():
     @staticmethod
     def list():
         """List installed recipes."""
+        import os
+        from ._config import configure_logging, DIAGNOSTICS_PATH
         configure_logging(output=None, console_log_level='info')
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
         logger.info('Installed recipes:')
@@ -198,6 +199,9 @@ class Recipes():
         recipe: str
             Name of the recipe to get
         """
+        import os
+        import shutil
+        from ._config import configure_logging, DIAGNOSTICS_PATH
         configure_logging(output=None, console_log_level='info')
         installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
         if not os.path.exists(installed_recipe):
@@ -227,6 +231,7 @@ class ESMValTool():
 
     def version(self):
         """Show versions of ESMValTool packages."""
+        from . import __version__
         print(f'ESMValCore: {__version__}')
         for project, version in self._extra_packages.items():
             print(f'{project}: {version}')
@@ -244,7 +249,7 @@ class ESMValTool():
             Recipe to run, as either the name of an installed recipe or the
             path to a non-installed one
         config_file: str, optional
-            Config file to use. If not provided will load 
+            Config file to use. If not provided will load
             ${HOME}/.esmvaltool/config.user.yml if it exists
         max_datasets: int, optional
             Maximum number of datasets to compute
@@ -264,6 +269,13 @@ class ESMValTool():
                 - default: fail if there are any errors
                 -strict: fail if there are any warnings
         """
+        import os
+        import shutil
+        from .cmor.check import CheckLevels
+        from ._config import configure_logging, read_config_user_file
+        from ._config import DIAGNOSTICS_PATH
+        from ._recipe import TASKSEP
+        
         if not os.path.exists(recipe):
             installed_recipe = os.path.join(
                 DIAGNOSTICS_PATH, 'recipes', recipe)
@@ -310,6 +322,7 @@ class ESMValTool():
         _check_limit('max_years', max_years)
 
         resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
+        from ._task import resource_usage_logger
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
             process_recipe(recipe_file=recipe, config_user=cfg)
 
@@ -324,6 +337,7 @@ class ESMValTool():
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
+    import sys
     try:
         fire.Fire(ESMValTool())
     except fire.core.FireExit as ex:
