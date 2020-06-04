@@ -47,7 +47,8 @@ class Test(unittest.TestCase):
 
         Returns
         -------
-            The substitute mock instance returned by :func:`unittest.patch.start`.
+            The substitute mock instance returned by
+            :func:`unittest.patch.start`.
 
         """
         # Make the new patch and start it.
