@@ -4,8 +4,8 @@
 Preprocessor
 ************
 
-In this section, each of the preprocessor modules is described in detail
-following the default order in which they are applied:
+In this section, each of the preprocessor modules is described,
+roughly following the default order in which preprocessor functions are applied:
 
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
@@ -18,9 +18,12 @@ following the default order in which they are applied:
 * :ref:`Time operations`
 * :ref:`Area operations`
 * :ref:`Volume operations`
+* :ref:`Cycles`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
 * :ref:`Other`
+
+See :ref:`preprocessor_functions` for implementation details and the exact default order.
 
 Overview
 ========
@@ -644,13 +647,13 @@ to observational data, these biases have a significantly lower statistical
 impact when using a multi-model ensemble. ESMValTool has the capability of
 computing a number of multi-model statistical measures: using the preprocessor
 module ``multi_model_statistics`` will enable the user to ask for either a
-multi-model ``mean`` and/or ``median`` with a set of argument parameters passed
-to ``multi_model_statistics``.
+multi-model ``mean``, ``median``, ``max``, ``min`` and / or ``std`` with a set
+of argument parameters passed to ``multi_model_statistics``.
 
-Multimodel statistics in ESMValTool are computed along the time axis, and as
-such, can be computed across a common overlap in time (by specifying ``span:
-overlap`` argument) or across the full length in time of each model (by
-specifying ``span: full`` argument).
+Note that current multimodel statistics in ESMValTool are local (not global),
+and are computed along the time axis. As such, can be computed across a common
+overlap in time (by specifying ``span: overlap`` argument) or across the full
+length in time of each model (by specifying ``span: full`` argument).
 
 Restrictive computation is also available by excluding  any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
@@ -1153,7 +1156,7 @@ as a CMOR variable can permit):
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}] 
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
 The recipe parser wil automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
@@ -1213,10 +1216,10 @@ as a CMOR variable can permit):
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}] 
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
 The recipe parser wil automatically find the data files that are associated with these
-variables and pass them to the function for loading and processing. 
+variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
@@ -1266,6 +1269,34 @@ Note that this function uses the expensive ``interpolate`` method from
 ``Iris.analysis.trajectory``, but it may be necessary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
+
+
+.. _cycles:
+
+Cycles
+======
+
+The ``_cycles.py`` module contains the following preprocessor functions:
+
+* ``amplitude``: Extract the peak-to-peak amplitude of a cycle aggregated over
+  specified coordinates.
+
+``amplitude``
+-------------
+
+This function extracts the peak-to-peak amplitude (maximum value minus minimum
+value) of a field aggregated over specified coordinates. Its only argument is
+``coords``, which can either be a single coordinate (given as :obj:`str`) or
+multiple coordinates (given as :obj:`list` of :obj:`str`). Usually, these
+coordinates refer to temporal `categorised coordinates
+<https://scitools.org.uk/iris/docs/latest/iris/iris/coord_categorisation.html>`_
+like `year`, `month`, `day of year`, etc. For example, to extract the amplitude
+of the annual cycle for every single year in the data, use ``coords: year``; to
+extract the amplitude of the diurnal cycle for every single day in the data,
+use ``coords: [year, day_of_year]``.
+
+See also :func:`esmvalcore.preprocessor.amplitude`.
+
 
 .. _detrend:
 
