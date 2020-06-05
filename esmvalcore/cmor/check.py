@@ -504,7 +504,8 @@ class CMORCheck():
             if np.any(coord.points < valid_min):
                 if coord_info.standard_name == 'longitude' and \
                         self.automatic_fixes:
-                    l_fix_coord_value = True
+                    l_fix_coord_value = self._check_longitude_min(
+                        coord, var_name)
                 else:
                     self.report_critical(
                         self._vals_msg, var_name,
@@ -515,7 +516,8 @@ class CMORCheck():
             if np.any(coord.points > valid_max):
                 if coord_info.standard_name == 'longitude' and \
                         self.automatic_fixes:
-                    l_fix_coord_value = True
+                    l_fix_coord_value = self._check_longitude_max(
+                        coord, var_name)
                 else:
                     self.report_critical(
                         self._vals_msg, var_name,
@@ -538,6 +540,22 @@ class CMORCheck():
                 dims = self._cube.coord_dims(coord)
                 self._cube.remove_coord(coord)
                 self._cube.add_aux_coord(new_coord, dims)
+
+    def _check_longitude_max(self, coord, var_name):
+        if np.any(coord.points > 720):
+            self.report_critical(
+                f'{var_name} longitude coordinate has values > 720 degrees'
+            )
+            return False
+        return True
+
+    def _check_longitude_min(self, coord, var_name):
+        if np.any(coord.points < -360):
+            self.report_critical(
+                f'{var_name} longitude coordinate has values < -360 degrees'
+            )
+            return False
+        return True
 
     @staticmethod
     def _set_range_in_0_360(array):

@@ -62,6 +62,12 @@ def _compute_statistic(data, statistic_name):
         statistic_function = np.ma.median
     elif statistic_name == 'mean':
         statistic_function = np.ma.mean
+    elif statistic_name == 'std':
+        statistic_function = np.ma.std
+    elif statistic_name == 'max':
+        statistic_function = np.ma.max
+    elif statistic_name == 'min':
+        statistic_function = np.ma.min
     else:
         raise NotImplementedError
 
@@ -327,7 +333,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     output_products: dict
         dictionary of output products.
     statistics: str
-        statistical measure to be computed (mean or median).
+        statistical measure to be computed. Available options: mean, median,
+        max, min, std
     Returns
     -------
     list
