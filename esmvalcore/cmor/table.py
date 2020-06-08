@@ -733,7 +733,7 @@ class CMIP5Info(object):
 
         if var_info:
             mip_info = self.get_table(table)
-            var_info.copy()
+            var_info = var_info.copy()
             if mip_info:
                 var_info.frequency = mip_info.frequency
         return var_info
