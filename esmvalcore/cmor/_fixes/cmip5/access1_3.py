@@ -34,6 +34,7 @@ class AllVars(Fix):
                 continue
             else:
                 if time.units.calendar == 'proleptic_gregorian':
-                    time.convert_units("days since 1850-01-01", calendar='proleptic_gregorian')
+                    time.convert_units("days since 1850-01-01",
+                                       calendar='proleptic_gregorian')
                     time.units = Unit(time.units.name, 'gregorian')
         return cubes
