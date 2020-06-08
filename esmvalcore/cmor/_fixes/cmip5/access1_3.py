@@ -33,5 +33,7 @@ class AllVars(Fix):
             except iris.exceptions.CoordinateNotFoundError:
                 continue
             else:
-                time.units = Unit(time.units.name, 'gregorian')
+                if time.units.calendar == 'proleptic_gregorian':
+                    time.convert_units("days since 1850-01-01", calendar='proleptic_gregorian')
+                    time.units = Unit(time.units.name, 'gregorian')
         return cubes
