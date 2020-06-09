@@ -22,6 +22,9 @@ def find_diagnostics():
         import esmvaltool
     except ImportError:
         return Path.cwd()
+    # catch a lingering failed install
+    if esmvaltool.__file__ is None:
+        return Path.cwd()
     return Path(esmvaltool.__file__).absolute().parent
 
 
