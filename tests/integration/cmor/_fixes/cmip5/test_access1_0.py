@@ -19,7 +19,7 @@ class TestAllVars(unittest.TestCase):
         self.cube = Cube([1.0], var_name='co2', units='J')
         self.cube.add_aux_coord(
             AuxCoord(0, 'time', 'time', 'time',
-                     Unit('days since 1850-01-01', 'julian')))
+                     Unit('days since 0001-01-01', 'proleptic_gregorian')))
         self.fix = AllVars(None)
 
     def test_get(self):
