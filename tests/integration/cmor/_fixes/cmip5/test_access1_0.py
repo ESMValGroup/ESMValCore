@@ -1,9 +1,10 @@
 """Test Access1-0 fixes."""
 import unittest
+from datetime import datetime
 
 import pytest
-from cf_units import Unit
-from iris.coords import AuxCoord
+from cf_units import Unit, date2num, num2date
+from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip5.access1_0 import AllVars, Cl
@@ -16,10 +17,19 @@ class TestAllVars(unittest.TestCase):
 
     def setUp(self):
         """Prepare tests."""
-        self.cube = Cube([1.0], var_name='co2', units='J')
-        self.cube.add_aux_coord(
-            AuxCoord(0, 'time', 'time', 'time',
-                     Unit('days since 0001-01-01', 'proleptic_gregorian')))
+        self.cube = Cube([1.0, 2.0], var_name='co2', units='J')
+        reference_dates = [
+            datetime(300, 1, 16, 12),  # e.g. piControl
+            datetime(1850, 1, 16, 12)  # e.g. historical
+        ]
+        esgf_time_units = {
+            'unit': 'days since 0001-01-01',
+            'calendar': 'proleptic_gregorian'
+        }
+        time_points = date2num(reference_dates, **esgf_time_units)
+        self.cube.add_dim_coord(
+            DimCoord(time_points, 'time', 'time', 'time',
+                     Unit(**esgf_time_units)), data_dim=0)
         self.fix = AllVars(None)
 
     def test_get(self):
@@ -31,7 +41,11 @@ class TestAllVars(unittest.TestCase):
     def test_fix_metadata(self):
         """Test fix for bad calendar."""
         cube = self.fix.fix_metadata([self.cube])[0]
-        self.assertEqual(cube.coord('time').units.calendar, 'gregorian')
+        time = cube.coord('time')
+        dates = num2date(time.points, time.units.name, time.units.calendar)
+        self.assertEqual(time.units.calendar, 'gregorian')
+        self.assertEqual(dates[0].strftime('%Y%m%d%H%M'), ' 30001161200')
+        self.assertEqual(dates[1].strftime('%Y%m%d%H%M'), '185001161200')
 
     def test_fix_metadata_if_not_time(self):
         """Test calendar fix do not fail if no time coord present."""
