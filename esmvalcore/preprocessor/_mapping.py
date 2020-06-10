@@ -15,7 +15,7 @@ def _is_single_item(testee):
     We count string types as 'single', also.
     """
     return (isinstance(testee, str)
-            or not isinstance(testee, collections.Iterable))
+            or not isinstance(testee, collections.abc.Iterable))
 
 
 def _as_list_of_coords(cube, names_or_coords):
@@ -128,7 +128,7 @@ def get_empty_data(shape, dtype=np.float32):
     """
     Create an empty data object of the given shape.
 
-    Creates an emtpy data object of the given shape, potentially of the lazy
+    Creates an empty data object of the given shape, potentially of the lazy
     kind from biggus or dask, depending on the used iris version.
     """
     data = np.empty(shape, dtype=dtype)

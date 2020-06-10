@@ -7,6 +7,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.cube import Cube
 from shapely.geometry import Polygon, mapping
 
 import tests
@@ -60,63 +61,63 @@ class Test(tests.Test):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'mean')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_min(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'min')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_max(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'max')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_median(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'median')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_std_dev(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'std_dev')
         expected = np.array([0.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_sum(self):
         """Test for sum of a 2D field."""
         result = area_statistics(self.grid, 'sum')
         grid_areas = iris.analysis.cartography.area_weights(self.grid)
         expected = np.sum(grid_areas)
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_variance(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'variance')
         expected = np.array([0.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_neg_lon(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.negative_grid, 'mean')
         expected = np.array([1.])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_region(self):
         """Test for extracting a region from a 2D field."""
         result = extract_region(self.grid, 1.5, 2.5, 1.5, 2.5)
         # expected outcome
         expected = np.ones((2, 2))
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_region_neg_lon(self):
         """Test for extracting a region with a negative longitude field."""
         result = extract_region(self.negative_grid, -0.5, 0.5, -0.5, 0.5)
         expected = np.ones((2, 2))
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_named_region(self):
         """Test for extracting a named region."""
@@ -148,12 +149,12 @@ class Test(tests.Test):
         # test string region
         result1 = extract_named_regions(region_cube, 'region1')
         expected = np.ones((3, ))
-        self.assertArrayEqual(result1.data, expected)
+        self.assert_array_equal(result1.data, expected)
 
         # test list of regions
         result2 = extract_named_regions(region_cube, ['region1', 'region2'])
         expected = np.ones((3, 2))
-        self.assertArrayEqual(result2.data, expected)
+        self.assert_array_equal(result2.data, expected)
 
         # test for expected failures:
         with self.assertRaises(ValueError):
@@ -291,6 +292,129 @@ def test_extract_region_irregular(irregular_extract_region_cube, case):
             assert exc.value == case['raises']
 
 
+def create_rotated_grid_cube(data):
+    """Create test cube on rotated grid."""
+    # CORDEX EUR-44 example
+    grid_north_pole_latitude = 39.25
+    grid_north_pole_longitude = -162.0
+    grid_lons = np.array(
+        [-10, 0, 10],
+        dtype=np.float64,
+    )
+    grid_lats = np.array(
+        [-10, 0, 10],
+        dtype=np.float64,
+    )
+
+    coord_sys_rotated = iris.coord_systems.RotatedGeogCS(
+        grid_north_pole_latitude,
+        grid_north_pole_longitude
+    )
+    grid_lat = iris.coords.DimCoord(grid_lats,
+                                    var_name='rlon',
+                                    standard_name='grid_latitude',
+                                    units='degrees',
+                                    coord_system=coord_sys_rotated)
+    grid_lon = iris.coords.DimCoord(grid_lons,
+                                    var_name='rlon',
+                                    standard_name='grid_longitude',
+                                    units='degrees',
+                                    coord_system=coord_sys_rotated)
+
+    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    glon, glat = np.meshgrid(grid_lons, grid_lats)
+    lons, lats = iris.analysis.cartography.unrotate_pole(
+        np.deg2rad(glon), np.deg2rad(glat),
+        grid_north_pole_longitude, grid_north_pole_latitude)
+
+    lat = iris.coords.AuxCoord(lats,
+                               var_name='lat',
+                               standard_name='latitude',
+                               units='degrees',
+                               coord_system=coord_sys)
+    lon = iris.coords.AuxCoord(lons,
+                               var_name='lon',
+                               standard_name='longitude',
+                               units='degrees',
+                               coord_system=coord_sys)
+    dim_coord_spec = [
+        (grid_lat, 0),
+        (grid_lon, 1),
+    ]
+    aux_coord_spec = [
+        (lat, [0, 1]),
+        (lon, [0, 1]),
+    ]
+    cube = iris.cube.Cube(
+        data,
+        var_name='tos',
+        units='K',
+        dim_coords_and_dims=dim_coord_spec,
+        aux_coords_and_dims=aux_coord_spec,
+    )
+    return cube
+
+
+ROTATED_AREA_STATISTICS_TEST = [
+    {
+        'operator': 'mean',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([1.]),
+    },
+    {
+        'operator': 'median',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([1.]),
+    },
+    {
+        'operator': 'std_dev',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([0.]),
+    },
+    {
+        'operator': 'sum',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+    },
+    {
+        'operator': 'variance',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([0.]),
+    },
+    {
+        'operator': 'min',
+        'data': np.arange(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([0.]),
+    },
+    {
+        'operator': 'max',
+        'data': np.arange(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([8.]),
+    },
+]
+
+
+@pytest.mark.parametrize('case', ROTATED_AREA_STATISTICS_TEST)
+def test_area_statistics_rotated(case):
+    """Test `area_statistics` with data on an rotated grid."""
+    rotated_cube = create_rotated_grid_cube(case['data'])
+    operator = case['operator']
+    cube = area_statistics(
+        rotated_cube,
+        operator,
+    )
+    if operator != 'sum':
+        np.testing.assert_array_equal(cube.data, case['expected'])
+    else:
+        cube_tmp = rotated_cube.copy()
+        cube_tmp.remove_coord('latitude')
+        cube_tmp.coord('grid_latitude').rename('latitude')
+        cube_tmp.remove_coord('longitude')
+        cube_tmp.coord('grid_longitude').rename('longitude')
+        grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
+        expected = np.sum(grid_areas)
+        np.testing.assert_array_equal(cube.data, expected)
+
+
 @pytest.fixture
 def make_testcube():
     """Create a test cube on a Cartesian grid."""
@@ -377,12 +501,62 @@ def square_composite_shape(request, tmp_path):
     return np.ma.masked_array(vals, mask)
 
 
+def _create_sample_full_cube():
+    cube = Cube(np.zeros((4, 180, 360)), var_name='co2', units='J')
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.array([10., 40., 70., 110.]),
+            standard_name='time',
+            units=Unit('days since 1950-01-01 00:00:00', calendar='gregorian'),
+        ),
+        0,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.arange(-90., 90., 1.),
+            standard_name='latitude',
+            units='degrees',
+        ),
+        1,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.arange(0., 360., 1.),
+            standard_name='longitude',
+            units='degrees',
+        ),
+        2,
+    )
+
+    cube.coord("time").guess_bounds()
+    cube.coord("longitude").guess_bounds()
+    cube.coord("latitude").guess_bounds()
+
+    return cube
+
+
 def test_crop_cube(make_testcube, square_shape, tmp_path):
     """Test for cropping a cube by shape bounds."""
     with fiona.open(tmp_path / 'test_shape.shp') as geometries:
         result = _crop_cube(make_testcube, *geometries.bounds)
         expected = square_shape.data
         np.testing.assert_array_equal(result.data, expected)
+
+
+def test_crop_cube_with_ne_file():
+    """Test for cropping a cube by shape bounds."""
+    shp_file = "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp"
+    with fiona.open(shp_file) as geometries:
+        cube = _create_sample_full_cube()
+        copy_bounds = list(geometries.bounds)
+        copy_bounds[2] = 370.
+        copy_bounds[1] = -99.
+        copy_bounds[3] = 100.
+        result = _crop_cube(cube, *tuple(copy_bounds))
+        result = (result.coord("latitude").points[-1],
+                  result.coord("longitude").points[-1])
+        expected = (89., 359.)
+        np.testing.assert_allclose(result, expected)
 
 
 @pytest.mark.parametrize('crop', [True, False])

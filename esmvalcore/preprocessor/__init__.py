@@ -2,13 +2,15 @@
 import copy
 import inspect
 import logging
+from pprint import pformat
 
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
 from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
-                    extract_shape, zonal_statistics, meridional_statistics)
+                    extract_shape, meridional_statistics, zonal_statistics)
+from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
 from ._download import download
@@ -18,13 +20,14 @@ from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_fillvalues, mask_glaciated, mask_inside_range,
                     mask_landsea, mask_landseaice, mask_outside_range)
 from ._multimodel import multi_model_statistics, ensemble_statistics
+from ._other import clip
 from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
                         fix_file, fix_metadata)
-from ._regrid import extract_levels, regrid
+from ._regrid import extract_levels, extract_point, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
                     daily_statistics, decadal_statistics, extract_month,
                     extract_season, extract_time, monthly_statistics,
-                    regrid_time, seasonal_statistics)
+                    regrid_time, seasonal_statistics, timeseries_filter)
 from ._units import convert_units
 from ._volume import (depth_integration, extract_trajectory, extract_transect,
                       extract_volume, volume_statistics)
@@ -65,12 +68,16 @@ __all__ = [
     'ensemble_statistics',
     # Regridding
     'regrid',
+    # Point interpolation
+    'extract_point',
     # Masking missing values
     'mask_fillvalues',
     'mask_above_threshold',
     'mask_below_threshold',
     'mask_inside_range',
     'mask_outside_range',
+    # Other
+    'clip',
     # Region selection
     'extract_region',
     'extract_shape',
@@ -89,6 +96,7 @@ __all__ = [
     # Time operations
     # 'annual_cycle': annual_cycle,
     # 'diurnal_cycle': diurnal_cycle,
+    'amplitude',
     'zonal_statistics',
     'meridional_statistics',
     'daily_statistics',
@@ -99,11 +107,26 @@ __all__ = [
     'climate_statistics',
     'anomalies',
     'regrid_time',
+    'timeseries_filter',
     'cmor_check_data',
     'convert_units',
     # Save to file
     'save',
     'cleanup',
+]
+
+TIME_PREPROCESSORS = [
+    'extract_time',
+    'extract_season',
+    'extract_month',
+    'daily_statistics',
+    'monthly_statistics',
+    'seasonal_statistics',
+    'annual_statistics',
+    'decadal_statistics',
+    'climate_statistics',
+    'anomalies',
+    'regrid_time',
 ]
 
 DEFAULT_ORDER = tuple(__all__)
@@ -122,7 +145,7 @@ MULTI_MODEL_FUNCTIONS = {
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
-    itype = inspect.getargspec(function).args[0]
+    itype = inspect.getfullargspec(function).args[0]
     return itype
 
 
@@ -434,7 +457,8 @@ class PreprocessingTask(BaseTask):
             step for step in self.order
             if any(step in product.settings for product in self.products)
         ]
-        products = '\n\n'.join(str(p) for p in self.products)
+        products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
+                               for p in self.products)
         txt = "{}:\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
             order,

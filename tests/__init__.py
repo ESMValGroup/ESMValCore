@@ -3,10 +3,15 @@ Provides testing capabilities for :mod:`esmvaltool` package.
 
 """
 import unittest
-from functools import wraps
 
-import mock
 import numpy as np
+
+
+def assert_array_equal(a, b):
+    """Assert that array a equals array b."""
+    np.testing.assert_array_equal(a, b)
+    if np.ma.isMaskedArray(a) or np.ma.isMaskedArray(b):
+        np.testing.assert_array_equal(a.mask, b.mask)
 
 
 class Test(unittest.TestCase):
@@ -14,7 +19,6 @@ class Test(unittest.TestCase):
     Provides esmvaltool specific testing functionality.
 
     """
-
     def _remove_testcase_patches(self):
         """
         Helper method to remove per-testcase patches installed by
@@ -32,22 +36,23 @@ class Test(unittest.TestCase):
         """
         Install a patch to be removed automatically after the current test.
 
-        The patch is created with :func:`mock.patch`.
+        The patch is created with :func:`unittest.mock.patch`.
 
         Parameters
         ----------
         args : list
-            The parameters to be passed to :func:`mock.patch`.
+            The parameters to be passed to :func:`unittest.mock.patch`.
         kwargs : dict
-            The keyword parameters to be passed to :func:`mock.patch`.
+            The keyword parameters to be passed to :func:`unittest.mock.patch`.
 
         Returns
         -------
-            The substitute mock instance returned by :func:`patch.start`.
+            The substitute mock instance returned by
+            :func:`unittest.patch.start`.
 
         """
         # Make the new patch and start it.
-        patch = mock.patch(*args, **kwargs)
+        patch = unittest.mock.patch(*args, **kwargs)
         start_result = patch.start()
 
         # Create the per-testcases control variable if it does not exist.
@@ -66,12 +71,5 @@ class Test(unittest.TestCase):
         # Return patch replacement object.
         return start_result
 
-    @wraps(np.testing.assert_array_equal)
-    def assertArrayEqual(self, a, b, err_msg='', verbose=True):  # noqa: N802
-        np.testing.assert_array_equal(a, b, err_msg=err_msg, verbose=verbose)
-
-    @wraps(np.testing.assert_array_almost_equal)
-    def assertArrayAlmostEqual(self, a, b, decimal=6,  # noqa: N802
-                               err_msg='', verbose=True):
-        np.testing.assert_array_almost_equal(
-            a, b, decimal=decimal, err_msg=err_msg, verbose=verbose)
+    def assert_array_equal(self, a, b):
+        assert_array_equal(a, b)

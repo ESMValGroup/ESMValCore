@@ -1,13 +1,15 @@
 """Module with functions to check a recipe."""
+import itertools
 import logging
 import os
 import subprocess
+from shutil import which
 
 import yamale
 
 from ._data_finder import get_start_end_year
-from ._task import get_flattened_tasks, which
-from .preprocessor import PreprocessingTask
+from ._task import get_flattened_tasks
+from .preprocessor import PreprocessingTask, TIME_PREPROCESSORS
 
 logger = logging.getLogger(__name__)
 
@@ -90,10 +92,30 @@ def variable(var, required_keys):
                 missing, var.get('short_name'), var.get('diagnostic')))
 
 
-def data_availability(input_files, var):
+def data_availability(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
+    var = dict(var)
     if not input_files:
-        raise RecipeError("No input files found for variable {}".format(var))
+        var.pop('filename', None)
+        logger.error("No input files found for variable %s", var)
+        if dirnames and filenames:
+            patterns = itertools.product(dirnames, filenames)
+            patterns = [os.path.join(d, f) for (d, f) in patterns]
+            if len(patterns) == 1:
+                msg = f': {patterns[0]}'
+            else:
+                msg = '\n{}'.format('\n'.join(patterns))
+            logger.error("Looked for files matching%s", msg)
+        elif dirnames and not filenames:
+            logger.error(
+                "Looked for files in %s, but did not find any file pattern "
+                "to match against", dirnames)
+        elif filenames and not dirnames:
+            logger.error(
+                "Looked for files matching %s, but did not find any existing "
+                "input directory", filenames)
+        logger.error("Set 'log_level' to 'debug' to get more information")
+        raise RecipeError("Missing data")
 
     # check time avail only for non-fx variables
     if var['frequency'] == 'fx':
@@ -110,8 +132,7 @@ def data_availability(input_files, var):
     if missing_years:
         raise RecipeError(
             "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years),
-                input_files))
+                ", ".join(str(year) for year in missing_years), input_files))
 
 
 def tasks_valid(tasks):
@@ -128,20 +149,14 @@ def tasks_valid(tasks):
 
 def check_for_temporal_preprocs(profile):
     """Check for temporal operations on fx variables."""
-    temporal_preprocs = [
-        'extract_season',
-        'extract_month',
-        'annual_mean',
-        'seasonal_mean',
-        'time_average',
-        'regrid_time',
-    ]
     temp_preprocs = [
-        preproc for preproc in profile if preproc in temporal_preprocs]
+        preproc for preproc in profile
+        if profile[preproc] and preproc in TIME_PREPROCESSORS
+    ]
     if temp_preprocs:
         raise RecipeError(
-            "Time coordinate preprocessor step {} not permitted on fx vars \
-            please remove them from recipe.".format(", ".join(temp_preprocs)))
+            "Time coordinate preprocessor step(s) {} not permitted on fx "
+            "vars, please remove them from recipe".format(temp_preprocs))
 
 
 def extract_shape(settings):
@@ -154,6 +169,7 @@ def extract_shape(settings):
     valid = {
         'method': {'contains', 'representative'},
         'crop': {True, False},
+        'decomposed': {True, False},
     }
     for key in valid:
         value = settings.get(key)

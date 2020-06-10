@@ -57,29 +57,35 @@ def _plev_fix(dataset, pl_idx):
     return statj
 
 
-def _compute_statistic(datas, statistic_name):
+def _compute_statistic(data, statistic_name):
     """Compute multimodel statistic."""
-    datas = np.ma.array(datas)
-    statistic = datas[0]
+    data = np.ma.array(data)
+    statistic = data[0]
 
     if statistic_name == 'median':
         statistic_function = np.ma.median
     elif statistic_name == 'mean':
         statistic_function = np.ma.mean
+    elif statistic_name == 'std':
+        statistic_function = np.ma.std
+    elif statistic_name == 'max':
+        statistic_function = np.ma.max
+    elif statistic_name == 'min':
+        statistic_function = np.ma.min
     else:
         raise NotImplementedError
 
     # no plevs
-    if len(datas[0].shape) < 3:
+    if len(data[0].shape) < 3:
         # get all NOT fully masked data - u_data
-        # datas is per time point
+        # data is per time point
         # so we can safely NOT compute stats for single points
-        if datas.ndim == 1:
-            u_datas = [data for data in datas]
+        if data.ndim == 1:
+            u_datas = [d for d in data]
         else:
-            u_datas = [data for data in datas if not np.all(data.mask)]
+            u_datas = [d for d in data if not np.all(d.mask)]
         if len(u_datas) > 1:
-            statistic = statistic_function(datas, axis=0)
+            statistic = statistic_function(data, axis=0)
         else:
             statistic.mask = True
         return statistic
@@ -87,7 +93,7 @@ def _compute_statistic(datas, statistic_name):
     # plevs
     for j in range(statistic.shape[0]):
         plev_check = []
-        for cdata in datas:
+        for cdata in data:
             fixed_data = _plev_fix(cdata, j)
             if fixed_data is not None:
                 plev_check.append(fixed_data)
@@ -171,7 +177,7 @@ def _datetime_to_int_days(cube):
     for date_obj in time_cells:
         # real_date resets the actual data point day
         # to the 1st of the month so that there are no
-        # wrong overlap indeces
+        # wrong overlap indices
         # NOTE: this workaround is good only
         # for monthly data
         real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
@@ -302,26 +308,28 @@ def _assemble_full_data(cubes, statistic):
     stats_cube = _put_in_cube(cubes[0], stats_dats, statistic, time_axis)
     return stats_cube
 
-def multi_model_statistics(products, span, output_products, statistics):
+
+def multi_model_statistics(products, span, statistics, output_products=None):
     """
     Compute multi-model statistics.
 
     Multimodel statistics computed along the time axis. Can be
     computed across a common overlap in time (set span: overlap)
     or across the full length in time of each model (set span: full).
-    Restrictive compuation is also available by excluding any set of
+    Restrictive computation is also available by excluding any set of
     models that the user will not want to include in the statistics
     (set exclude: [excluded models list]).
 
     Restrictions needed by the input data:
     - model datasets must have consistent shapes,
-    - higher dimesnional data is not supported (ie dims higher than four:
+    - higher dimensional data is not supported (ie dims higher than four:
     time, vertical axis, two horizontal axes).
 
     Parameters
     ----------
     products: list
-        list of data products to be used in multimodel stat computation;
+        list of data products or cubes to be used in multimodel stat
+        computation;
         cube attribute of product is the data cube for computing the stats.
     span: str
         overlap or full; if overlap stas are computed on common time-span;
@@ -329,11 +337,13 @@ def multi_model_statistics(products, span, output_products, statistics):
     output_products: dict
         dictionary of output products.
     statistics: str
-        statistical measure to be computed (mean or median).
+        statistical measure to be computed. Available options: mean, median,
+        max, min, std
     Returns
     -------
     list
-        list of data products containing the multimodel stats computed.
+        list of data products or cubes containing the multimodel stats
+        computed.
     Raises
     ------
     ValueError
@@ -344,16 +354,20 @@ def multi_model_statistics(products, span, output_products, statistics):
     if len(products) < 2:
         logger.info("Single dataset in list: will not compute statistics.")
         return products
-
-    cubes = [cube for product in products for cube in product.cubes]
-    # check if we have any time overlap
-    interval = _get_overlap(cubes)
-    if interval is None:
-        logger.info("Time overlap between cubes is none or a single point."
-                    "check datasets: will not compute statistics.")
-        return products
+    if output_products:
+        cubes = [cube for product in products for cube in product.cubes]
+        statistic_products = set()
+    else:
+        cubes = products
+        statistic_products = {}
 
     if span == 'overlap':
+        # check if we have any time overlap
+        interval = _get_overlap(cubes)
+        if interval is None:
+            logger.info("Time overlap between cubes is none or a single point."
+                        "check datasets: will not compute statistics.")
+            return products
         logger.debug("Using common time overlap between "
                      "datasets to compute statistics.")
     elif span == 'full':
@@ -363,7 +377,6 @@ def multi_model_statistics(products, span, output_products, statistics):
             "Unexpected value for span {}, choose from 'overlap', 'full'"
             .format(span))
 
-    statistic_products = set()
     for statistic in statistics:
         # Compute statistic
         if span == 'overlap':
@@ -373,17 +386,21 @@ def multi_model_statistics(products, span, output_products, statistics):
         statistic_cube.data = np.ma.array(
             statistic_cube.data, dtype=np.dtype('float32'))
 
-        # Add to output product and log provenance
-        statistic_product = output_products[statistic]
-        statistic_product.cubes = [statistic_cube]
-        for product in products:
-            statistic_product.wasderivedfrom(product)
-        logger.info("Generated %s", statistic_product)
-        statistic_products.add(statistic_product)
-
-    products |= statistic_products
-
-    return products
+        if output_products:
+            # Add to output product and log provenance
+            statistic_product = output_products[statistic]
+            statistic_product.cubes = [statistic_cube]
+            for product in products:
+                statistic_product.wasderivedfrom(product)
+            logger.info("Generated %s", statistic_product)
+            statistic_products.add(statistic_product)
+        else:
+            statistic_products[statistic] = statistic_cube
+    
+    if output_products:
+        products |= statistic_products
+        return products
+    return statistic_products
 
 
 def ensemble_statistics(products, output_products, statistics):
@@ -401,4 +418,3 @@ def ensemble_statistics(products, output_products, statistics):
         products |= statistic_products
 
     return products
-

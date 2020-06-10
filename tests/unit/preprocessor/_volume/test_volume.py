@@ -81,13 +81,13 @@ class Test(tests.Test):
         result = extract_volume(self.grid_3d, 0., 10.)
         expected = np.ones((2, 2, 2))
         print(result.data, expected.data)
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_volume_statistics(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube."""
         result = volume_statistics(self.grid_4d, 'mean')
-        expected = np.array([1., 1.])
-        self.assertArrayEqual(result.data, expected)
+        expected = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
 
     def test_volume_statistics_long(self):
         """
@@ -97,40 +97,60 @@ class Test(tests.Test):
         different methods for small and large cubes.
         """
         result = volume_statistics(self.grid_4d_2, 'mean')
-        expected = np.array([1., 1., 1., 1.])
-        self.assertArrayEqual(result.data, expected)
+        expected = np.ma.array([1., 1., 1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
+
+    def test_volume_statistics_masked_level(self):
+        """
+        Test to take the volume weighted average of a (2,3,2,2) cube
+        where the last depth level is fully masked.
+        """
+        self.grid_4d.data[:, -1, :, :] = np.ma.masked_all((2, 2, 2))
+        result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
+
+    def test_volume_statistics_masked_timestep(self):
+        """
+        Test to take the volume weighted average of a (2,3,2,2) cube
+        where the first timestep is fully masked.
+        """
+        self.grid_4d.data[0, :, :, :] = np.ma.masked_all((3, 2, 2))
+        result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.ma.array([1., 1], mask=[True, False])
+        self.assert_array_equal(result.data, expected)
 
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
         result = depth_integration(self.grid_3d[:, 0, 0])
         expected = np.ones((1, 1)) * 250.
         print(result.data, expected.data)
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_depth_integration_3d(self):
         """Test to take the depth integration of a 3 layer cube."""
         result = depth_integration(self.grid_3d)
         expected = np.ones((2, 2)) * 250.
         print(result.data, expected.data)
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_transect_latitude(self):
         """Test to extract a transect from a (3, 2, 2) cube."""
         result = extract_transect(self.grid_3d, latitude=1.5)
         expected = np.ones((3, 2))
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_transect_longitude(self):
         """Test to extract a transect from a (3, 2, 2) cube."""
         result = extract_transect(self.grid_3d, longitude=1.5)
         expected = np.ones((3, 2))
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_trajectory(self):
         """Test to extract a trajectory from a (3, 2, 2) cube."""
         result = extract_trajectory(self.grid_3d, [1.5, 2.5], [2., 2.], 2)
         expected = np.ones((3, 2))
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
 
 if __name__ == '__main__':

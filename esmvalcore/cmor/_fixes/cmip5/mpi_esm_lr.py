@@ -1,6 +1,9 @@
-
-"""Fixes for MPI ESM LR model."""
+"""Fixes for MPI-ESM-LR model."""
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
+
+
+Cl = ClFixHybridPressureCoord
 
 
 class Pctisccp(Fix):
@@ -15,6 +18,7 @@ class Pctisccp(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------

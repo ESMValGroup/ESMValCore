@@ -6,9 +6,9 @@ import cftime
 import iris
 import numpy as np
 from cf_units import Unit
-from numpy.testing import assert_array_equal, assert_equal
 
 import tests
+from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (_assemble_full_data,
                                                  _assemble_overlap_data,
                                                  _compute_statistic,
@@ -79,61 +79,99 @@ class Test(tests.Test):
         """Test time unit."""
         result = _get_time_offset("days since 1950-01-01")
         expected = cftime.real_datetime(1950, 1, 1, 0, 0)
-        assert_equal(result, expected)
+        np.testing.assert_equal(result, expected)
 
     def test_compute_statistic(self):
         """Test statistic."""
-        datas = [self.cube1.data[0], self.cube2.data[0]]
-        stat_mean = _compute_statistic(datas, "mean")
-        stat_median = _compute_statistic(datas, "median")
+        data = [self.cube1.data[0], self.cube2.data[0]]
+        stat_mean = _compute_statistic(data, "mean")
+        stat_median = _compute_statistic(data, "median")
         expected_mean = np.ma.ones((3, 2, 2))
         expected_median = np.ma.ones((3, 2, 2))
-        assert_array_equal(stat_mean, expected_mean)
-        assert_array_equal(stat_median, expected_median)
+        self.assert_array_equal(stat_mean, expected_mean)
+        self.assert_array_equal(stat_median, expected_median)
+
+    def test_compute_full_statistic_cube(self):
+        data = [self.cube1, self.cube2]
+        stats = multi_model_statistics(data, 'full', ['mean'])
+        expected_full_mean = np.ma.ones((2, 3, 2, 2))
+        expected_full_mean.mask = np.zeros((2, 3, 2, 2))
+        expected_full_mean.mask[1] = True
+        self.assert_array_equal(stats['mean'].data, expected_full_mean)
+
+    def test_compute_overlap_statistic_cube(self):
+        data = [self.cube1, self.cube1]
+        stats = multi_model_statistics(data, 'overlap', ['mean'])
+        expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
+        self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
+
+    def test_compute_std(self):
+        """Test statistic."""
+        data = [self.cube1.data[0], self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "std")
+        expected = np.ma.ones((3, 2, 2)) * 0.5
+        expected[0, 0, 0] = 0
+        self.assert_array_equal(stat, expected)
+
+    def test_compute_max(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "max")
+        expected = np.ma.ones((3, 2, 2)) * 2
+        expected[0, 0, 0] = 0.5
+        self.assert_array_equal(stat, expected)
+
+    def test_compute_min(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "min")
+        expected = np.ma.ones((3, 2, 2)) * 0.5
+        self.assert_array_equal(stat, expected)
 
     def test_put_in_cube(self):
         """Test put in cube."""
         cube_data = np.ma.ones((2, 3, 2, 2))
         stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=None)
-        assert_array_equal(stat_cube.data, self.cube1.data)
+        self.assert_array_equal(stat_cube.data, self.cube1.data)
 
     def test_datetime_to_int_days(self):
         """Test _datetime_to_int_days."""
         computed_dats = _datetime_to_int_days(self.cube1)
         expected_dats = [0, 31]
-        assert_array_equal(computed_dats, expected_dats)
+        self.assert_array_equal(computed_dats, expected_dats)
 
     def test_assemble_overlap_data(self):
         """Test overlap data."""
         comp_ovlap_mean = _assemble_overlap_data([self.cube1, self.cube1],
                                                  [0, 31], "mean")
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
-        assert_array_equal(comp_ovlap_mean.data, expected_ovlap_mean)
+        self.assert_array_equal(comp_ovlap_mean.data, expected_ovlap_mean)
 
     def test_assemble_full_data(self):
         """Test full data."""
         comp_full_mean = _assemble_full_data([self.cube1, self.cube2], "mean")
         expected_full_mean = np.ma.ones((2, 3, 2, 2))
-        expected_full_mean[1] = True
-        assert_array_equal(comp_full_mean.data, expected_full_mean)
+        expected_full_mean.mask = np.zeros((2, 3, 2, 2))
+        expected_full_mean.mask[1] = True
+        self.assert_array_equal(comp_full_mean.data, expected_full_mean)
 
     def test_slice_cube(self):
         """Test slice cube."""
         comp_slice = _slice_cube(self.cube1, 0, 31)
-        assert_array_equal([0, 1], comp_slice)
+        self.assert_array_equal([0, 1], comp_slice)
 
     def test_get_overlap(self):
         """Test get overlap."""
         full_ovlp = _get_overlap([self.cube1, self.cube1])
-        assert_array_equal([0, 31], full_ovlp)
+        self.assert_array_equal([0, 31], full_ovlp)
         no_ovlp = _get_overlap([self.cube1, self.cube2])
-        assert_equal(None, no_ovlp)
+        np.testing.assert_equal(None, no_ovlp)
 
     def test_plev_fix(self):
         """Test plev fix."""
         fixed_data = _plev_fix(self.cube2.data, 1)
         expected_data = np.ma.ones((3, 2, 2))
-        assert_array_equal(expected_data, fixed_data)
+        self.assert_array_equal(expected_data, fixed_data)
 
 
 if __name__ == '__main__':

@@ -1,25 +1,26 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
+import copy
 import unittest
-import pytest
-import tests
 
-import numpy as np
-from numpy.testing import assert_array_equal
-
-from cf_units import Unit
 import iris
 import iris.coord_categorisation
 import iris.coords
+import numpy as np
+import pytest
+from cf_units import Unit
 from iris.cube import Cube
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from esmvalcore.preprocessor._time import (
-    extract_month, extract_season, extract_time,
-    regrid_time,
-    decadal_statistics, annual_statistics, seasonal_statistics,
-    monthly_statistics, daily_statistics,
-    climate_statistics, anomalies
-)
+import tests
+from esmvalcore.preprocessor._time import (annual_statistics, anomalies,
+                                           climate_statistics,
+                                           daily_statistics,
+                                           decadal_statistics, extract_month,
+                                           extract_season, extract_time,
+                                           monthly_statistics, regrid_time,
+                                           seasonal_statistics,
+                                           timeseries_filter)
 
 
 def _create_sample_cube():
@@ -32,7 +33,6 @@ def _create_sample_cube():
         ),
         0,
     )
-    iris.coord_categorisation.add_month_number(cube, 'time')
     return cube
 
 
@@ -57,6 +57,14 @@ class TestExtractMonth(tests.Test):
             np.array([1, 1]),
             sliced.coord('month_number').points)
 
+    def test_get_january_with_existing_coord(self):
+        """Test january extraction"""
+        iris.coord_categorisation.add_month_number(self.cube, 'time')
+        sliced = extract_month(self.cube, 1)
+        assert_array_equal(
+            np.array([1, 1]),
+            sliced.coord('month_number').points)
+
     def test_bad_month_raises(self):
         """Test january extraction"""
         with self.assertRaises(ValueError):
@@ -75,6 +83,7 @@ class TestTimeSlice(tests.Test):
     def test_extract_time(self):
         """Test extract_time."""
         sliced = extract_time(self.cube, 1950, 1, 1, 1950, 12, 31)
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.arange(1, 13, 1),
             sliced.coord('month_number').points)
@@ -97,14 +106,37 @@ class TestTimeSlice(tests.Test):
             np.arange(0, 360),
             sliced.coord('time').points)
 
+    def test_extract_time_non_gregorian_day(self):
+        """Test extract time when the day is not in the Gregorian calendar"""
+        cube = Cube(np.arange(0, 720), var_name='co2', units='J')
+        cube.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(0., 720., 1.),
+                standard_name='time',
+                units=Unit(
+                    'days since 1950-01-01 00:00:00', calendar='360_day'
+                ),
+            ),
+            0,
+        )
+        sliced = extract_time(cube, 1950, 2, 30, 1950, 3, 1)
+        assert_array_equal(
+            np.array([59]),
+            sliced.coord('time').points)
+
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError) as ctx:
             extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
+        msg = (
+            "Time slice 2200-01-01 to 2200-12-31 is outside"
+            " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
+        assert ctx.exception.args == (msg, )
 
     def test_extract_time_one_time(self):
         """Test extract_time with one time step."""
         cube = _create_sample_cube()
+        cube.coord('time').guess_bounds()
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = extract_time(cube, 1950, 1, 1, 1952, 12, 31)
         assert_array_equal(np.array([360.]), sliced.coord('time').points)
@@ -126,6 +158,7 @@ class TestExtractSeason(tests.Test):
     def test_get_djf(self):
         """Test function for winter"""
         sliced = extract_season(self.cube, 'djf')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([1, 2, 12, 1, 2, 12]),
             sliced.coord('month_number').points)
@@ -133,6 +166,7 @@ class TestExtractSeason(tests.Test):
     def test_get_djf_caps(self):
         """Test function works when season specified in caps"""
         sliced = extract_season(self.cube, 'DJF')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([1, 2, 12, 1, 2, 12]),
             sliced.coord('month_number').points)
@@ -140,6 +174,7 @@ class TestExtractSeason(tests.Test):
     def test_get_mam(self):
         """Test function for spring"""
         sliced = extract_season(self.cube, 'mam')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([3, 4, 5, 3, 4, 5]),
             sliced.coord('month_number').points)
@@ -147,6 +182,7 @@ class TestExtractSeason(tests.Test):
     def test_get_jja(self):
         """Test function for summer"""
         sliced = extract_season(self.cube, 'jja')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([6, 7, 8, 6, 7, 8]),
             sliced.coord('month_number').points)
@@ -154,6 +190,7 @@ class TestExtractSeason(tests.Test):
     def test_get_son(self):
         """Test function for summer"""
         sliced = extract_season(self.cube, 'son')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(
             np.array([9, 10, 11, 9, 10, 11]),
             sliced.coord('month_number').points)
@@ -195,7 +232,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_time_mean_365_day(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -230,7 +267,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_time_sum_365_day(self):
-        """Test for time sum of a realisitc time axis and 365 day calendar"""
+        """Test for time sum of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         data[3] = 2.0
         times = np.array([15, 45, 74, 105, 135, 166])
@@ -243,7 +280,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_season_climatology(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -255,7 +292,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_monthly(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -267,7 +304,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_day(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([0.5, 1.5, 2.5, 365.5, 366.5, 367.5])
         bounds = np.array([[0, 1], [1, 2], [2, 3],
@@ -279,7 +316,7 @@ class TestClimatology(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_period_not_supported(self):
-        """Test for time avg of a realisitc time axis and 365 day calendar"""
+        """Test for time avg of a realistic time axis and 365 day calendar"""
         data = np.ones((6, ))
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -640,15 +677,15 @@ class TestRegridTimeDaily(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='day')
         newcube_2 = regrid_time(self.cube_2, frequency='day')
         # no changes to core data
-        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
-        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        self.assert_array_equal(newcube_1.data, self.cube_1.data)
+        self.assert_array_equal(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assertArrayEqual(diff_cube.data, expected)
+        self.assert_array_equal(diff_cube.data, expected)
 
 
 class TestRegridTime6Hourly(tests.Test):
@@ -687,15 +724,15 @@ class TestRegridTime6Hourly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='6hr')
         newcube_2 = regrid_time(self.cube_2, frequency='6hr')
         # no changes to core data
-        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
-        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        self.assert_array_equal(newcube_1.data, self.cube_1.data)
+        self.assert_array_equal(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assertArrayEqual(diff_cube.data, expected)
+        self.assert_array_equal(diff_cube.data, expected)
 
 
 class TestRegridTime3Hourly(tests.Test):
@@ -734,15 +771,15 @@ class TestRegridTime3Hourly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='3hr')
         newcube_2 = regrid_time(self.cube_2, frequency='3hr')
         # no changes to core data
-        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
-        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        self.assert_array_equal(newcube_1.data, self.cube_1.data)
+        self.assert_array_equal(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assertArrayEqual(diff_cube.data, expected)
+        self.assert_array_equal(diff_cube.data, expected)
 
 
 class TestRegridTime1Hourly(tests.Test):
@@ -781,15 +818,54 @@ class TestRegridTime1Hourly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='1hr')
         newcube_2 = regrid_time(self.cube_2, frequency='1hr')
         # no changes to core data
-        self.assertArrayEqual(newcube_1.data, self.cube_1.data)
-        self.assertArrayEqual(newcube_2.data, self.cube_2.data)
+        self.assert_array_equal(newcube_1.data, self.cube_1.data)
+        self.assert_array_equal(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assertArrayEqual(diff_cube.data, expected)
+        self.assert_array_equal(diff_cube.data, expected)
+
+
+class TestTimeseriesFilter(tests.Test):
+    """Tests for regrid_time with hourly frequency."""
+
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = _create_sample_cube()
+
+    def test_timeseries_filter_simple(self):
+        """Test timeseries_filter func."""
+        filtered_cube = timeseries_filter(self.cube, 7, 14,
+                                          filter_type='lowpass',
+                                          filter_stats='sum')
+        expected_data = np.array(
+            [2.44824568, 3.0603071, 3.67236852, 4.28442994, 4.89649137,
+             5.50855279, 6.12061421, 6.73267563, 7.34473705, 7.95679847,
+             8.56885989, 9.18092131, 9.79298273, 10.40504415, 11.01710557,
+             11.62916699, 12.24122841, 12.85328983]
+        )
+        assert_array_almost_equal(filtered_cube.data, expected_data)
+        assert len(filtered_cube.coord('time').points) == 18
+
+    def test_timeseries_filter_timecoord(self):
+        """Test missing time axis."""
+        import iris.exceptions
+        new_cube = self.cube.copy()
+        new_cube.remove_coord(new_cube.coord('time'))
+        with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
+            timeseries_filter(new_cube, 7, 14,
+                              filter_type='lowpass',
+                              filter_stats='sum')
+
+    def test_timeseries_filter_implemented(self):
+        """Test a not implemnted filter."""
+        with self.assertRaises(NotImplementedError):
+            timeseries_filter(self.cube, 7, 14,
+                              filter_type='bypass',
+                              filter_stats='sum')
 
 
 def make_time_series(number_years=2):
@@ -903,52 +979,119 @@ def make_map_data(number_years=2):
     return cube
 
 
-@pytest.mark.parametrize('period', ['full', 'day', 'month', 'season'])
-def test_anomalies(period):
+PARAMETERS = []
+for period in ('full', 'day', 'month', 'season'):
+    PARAMETERS.append((period, None))
+    if period == 'season':
+        PARAMETERS.append((
+            period,
+            {
+                "start_year": 1950, 'start_month': 3, 'start_day': 1,
+                "end_year": 1951, 'end_month': 3, 'end_day': 1,
+            }))
+    else:
+        PARAMETERS.append((
+            period,
+            {
+                "start_year": 1950, 'start_month': 1, 'start_day': 1,
+                "end_year": 1951, 'end_month': 1, 'end_day': 1,
+            }))
+
+
+@pytest.mark.parametrize('period', ['full'])
+def test_standardized_anomalies(period, standardize=True):
     cube = make_map_data(number_years=2)
-    result = anomalies(cube, period)
+    result = anomalies(cube, period, standardize=standardize)
     if period == 'full':
-        anom = np.arange(-359.5, 360, 1)
-        zeros = np.zeros_like(anom)
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'day':
-        anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
-        zeros = np.zeros_like(anom)
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'month':
-        anom1 = np.concatenate([np.arange(-194.5, -165) for x in range(12)])
-        anom2 = np.concatenate([np.arange(165.5, 195) for x in range(12)])
-        anom = np.concatenate((anom1, anom2))
-        zeros = np.zeros_like(anom)
-        print(result.data[0, 1])
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'season':
-        anom = np.concatenate((
-            np.arange(-314.5, -255),
-            np.arange(-224.5, -135),
-            np.arange(-224.5, -135),
-            np.arange(-224.5, -135),
-            np.arange(15.5, 105),
-            np.arange(135.5, 225),
-            np.arange(135.5, 225),
-            np.arange(135.5, 225),
-            np.arange(375.5, 405),
-        ))
-        zeros = np.zeros_like(anom)
-        print(result.data[0, 1])
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
+        expected_anomalies = (cube.data - np.mean(cube.data, axis=2,
+                                                  keepdims=True))
+        if standardize:
+            # NB: default behaviour for np.std is ddof=0, whereas
+            #     default behaviour for iris.analysis.STD_DEV is ddof=1
+            expected_stdanomalies = expected_anomalies / np.std(
+                 expected_anomalies, axis=2, keepdims=True, ddof=1)
+            expected = np.ma.masked_invalid(expected_stdanomalies)
+            assert_array_equal(
+                result.data,
+                expected
+            )
+        else:
+            expected = np.ma.masked_invalid(expected_anomalies)
+            assert_array_equal(
+                result.data,
+                expected
+            )
+
+
+@pytest.mark.parametrize('period, reference', PARAMETERS)
+def test_anomalies_preserve_metadata(period, reference, standardize=False):
+    cube = make_map_data(number_years=2)
+    cube.var_name = "si"
+    cube.units = "m"
+    metadata = copy.deepcopy(cube.metadata)
+    result = anomalies(cube, period, reference, standardize=standardize)
+    assert result.metadata == metadata
+    for coord_cube, coord_res in zip(cube.coords(), result.coords()):
+        if coord_cube.has_bounds() and coord_res.has_bounds():
+            assert_array_equal(coord_cube.bounds, coord_res.bounds)
+        assert coord_cube == coord_res
+
+
+@pytest.mark.parametrize('period, reference', PARAMETERS)
+def test_anomalies(period, reference, standardize=False):
+    cube = make_map_data(number_years=2)
+    result = anomalies(cube, period, reference, standardize=standardize)
+    if reference is None:
+        if period == 'full':
+            anom = np.arange(-359.5, 360)
+        elif period == 'day':
+            anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
+        elif period == 'month':
+            anom1 = np.concatenate(
+                [np.arange(-194.5, -165) for x in range(12)])
+            anom2 = np.concatenate(
+                [np.arange(165.5, 195) for x in range(12)])
+            anom = np.concatenate((anom1, anom2))
+        elif period == 'season':
+            anom = np.concatenate((
+                np.arange(-314.5, -255),
+                np.arange(-224.5, -135),
+                np.arange(-224.5, -135),
+                np.arange(-224.5, -135),
+                np.arange(15.5, 105),
+                np.arange(135.5, 225),
+                np.arange(135.5, 225),
+                np.arange(135.5, 225),
+                np.arange(375.5, 405),
+            ))
+    else:
+        if period == 'full':
+            anom = np.arange(-179.5, 540)
+        elif period == 'day':
+            anom = np.concatenate((np.zeros(360), np.ones(360) * 360))
+        elif period == 'month':
+            anom1 = np.concatenate([np.arange(-14.5, 15) for x in range(12)])
+            anom2 = np.concatenate([np.arange(345.5, 375) for x in range(12)])
+            anom = np.concatenate((anom1, anom2))
+        elif period == 'season':
+            anom = np.concatenate((
+                np.arange(-374.5, -315),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(315.5, 405),
+                np.arange(315.5, 405),
+                np.arange(315.5, 405),
+                np.arange(315.5, 345),
+            ))
+    zeros = np.zeros_like(anom)
+    print(anom)
+    print(result.data[0, 1, ...])
+    assert_array_equal(
+        result.data,
+        np.array([[zeros, anom], [anom, zeros]])
+    )
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
 
 

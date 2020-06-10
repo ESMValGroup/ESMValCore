@@ -4,13 +4,16 @@ CMOR information reader for ESMValTool.
 Read variable information from CMOR 2 and CMOR 3 tables and make it easily
 available for the other components of ESMValTool
 """
-from functools import total_ordering
 import copy
 import errno
 import glob
 import json
 import logging
 import os
+from functools import total_ordering
+from pathlib import Path
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +21,22 @@ CMOR_TABLES = {}
 """dict of str, obj: CMOR info objects."""
 
 
-def read_cmor_tables(cfg_developer):
+def get_var_info(project, mip, short_name):
+    """Get variable information.
+
+    Parameters
+    ----------
+    project : str
+        Dataset's project.
+    mip : str
+        Variable's cmor table.
+    short_name : str
+        Variable's short name.
+    """
+    return CMOR_TABLES[project].get_variable(mip, short_name)
+
+
+def read_cmor_tables(cfg_developer=None):
     """Read cmor tables required in the configuration.
 
     Parameters
@@ -27,7 +45,13 @@ def read_cmor_tables(cfg_developer):
         Parsed config-developer file
 
     """
+    if cfg_developer is None:
+        cfg_file = Path(__file__).parent.parent / 'config-developer.yml'
+        with cfg_file.open() as file:
+            cfg_developer = yaml.safe_load(file)
+
     custom = CustomInfo()
+    CMOR_TABLES.clear()
     CMOR_TABLES['custom'] = custom
     install_dir = os.path.dirname(os.path.realpath(__file__))
     for table in cfg_developer:
@@ -41,17 +65,22 @@ def read_cmor_tables(cfg_developer):
 
         if cmor_type == 'CMIP3':
             CMOR_TABLES[table] = CMIP3Info(
-                table_path, default=custom, strict=cmor_strict,
+                table_path,
+                default=custom,
+                strict=cmor_strict,
             )
         elif cmor_type == 'CMIP5':
             CMOR_TABLES[table] = CMIP5Info(
-                table_path, default=custom, strict=cmor_strict,
+                table_path,
+                default=custom,
+                strict=cmor_strict,
             )
         elif cmor_type == 'CMIP6':
             CMOR_TABLES[table] = CMIP6Info(
-                table_path, default=custom, strict=cmor_strict,
-                default_table_prefix=default_table_prefix
-            )
+                table_path,
+                default=custom,
+                strict=cmor_strict,
+                default_table_prefix=default_table_prefix)
 
 
 class CMIP6Info(object):
@@ -82,7 +111,10 @@ class CMIP6Info(object):
         'vsi': 'siv',
     }
 
-    def __init__(self, cmor_tables_path, default=None, strict=True,
+    def __init__(self,
+                 cmor_tables_path,
+                 default=None,
+                 strict=True,
                  default_table_prefix=''):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
@@ -121,8 +153,7 @@ class CMIP6Info(object):
         if os.path.isdir(cmor_tables_path):
             return cmor_tables_path
         raise ValueError(
-            'CMOR tables not found in {}'.format(cmor_tables_path)
-        )
+            'CMOR tables not found in {}'.format(cmor_tables_path))
 
     def _load_table(self, json_file):
         with open(json_file) as inf:
@@ -163,9 +194,8 @@ class CMIP6Info(object):
                     coord = self.coords[dimension]
                 except KeyError:
                     logger.exception(
-                        'Can not find dimension %s for variable %s',
-                        dimension, var
-                    )
+                        'Can not find dimension %s for variable %s', dimension,
+                        var)
                     raise
 
             var.coordinates[dimension] = coord
@@ -184,8 +214,8 @@ class CMIP6Info(object):
     def _load_controlled_vocabulary(self):
         self.activities = {}
         self.institutes = {}
-        for json_file in glob.glob(
-                os.path.join(self._cmor_folder, '*_CV.json')):
+        for json_file in glob.glob(os.path.join(self._cmor_folder,
+                                                '*_CV.json')):
             with open(json_file) as inf:
                 table_data = json.loads(inf.read())
                 try:
@@ -285,7 +315,6 @@ class CMIP6Info(object):
 @total_ordering
 class TableInfo(dict):
     """Container class for storing a CMOR table."""
-
     def __init__(self, *args, **kwargs):
         """Create a new TableInfo object for storing VariableInfo objects."""
         super(TableInfo, self).__init__(*args, **kwargs)
@@ -312,7 +341,6 @@ class JsonInfo(object):
 
     Provides common utility methods to read json variables
     """
-
     def __init__(self):
         self._json_data = {}
 
@@ -357,7 +385,6 @@ class JsonInfo(object):
 
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
-
     def __init__(self, table_type, short_name):
         """
         Class to read and store variable information.
@@ -444,7 +471,6 @@ class VariableInfo(JsonInfo):
 
 class CoordinateInfo(JsonInfo):
     """Class to read and store coordinate information."""
-
     def __init__(self, name):
         """
         Class to read and store coordinate information.
@@ -485,7 +511,8 @@ class CoordinateInfo(JsonInfo):
         """Minimum allowed value"""
         self.valid_max = ""
         """Maximum allowed value"""
-
+        self.must_have_bounds = ""
+        """Whether bounds are required on this dimension"""
     def read_json(self, json_data):
         """
         Read coordinate information from json.
@@ -512,6 +539,7 @@ class CoordinateInfo(JsonInfo):
         self.valid_min = self._read_json_variable('valid_min')
         self.valid_max = self._read_json_variable('valid_max')
         self.requested = self._read_json_list_variable('requested')
+        self.must_have_bounds = self._read_json_variable('must_have_bounds')
 
 
 class CMIP5Info(object):
@@ -531,7 +559,6 @@ class CMIP5Info(object):
         found in the requested one
 
     """
-
     def __init__(self, cmor_tables_path, default=None, strict=True):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
 
@@ -634,8 +661,7 @@ class CMIP5Info(object):
                 return coord
             if key == 'requested':
                 coord.requested.extend(
-                    (val for val in value.split(' ') if val)
-                )
+                    (val for val in value.split(' ') if val))
                 continue
             if hasattr(coord, key):
                 setattr(coord, key, value)
@@ -730,9 +756,8 @@ class CMIP3Info(CMIP5Info):
         found in the requested one
 
     """
-
     def _read_table_file(self, table_file, table=None):
-        for dim in ('zlevel',):
+        for dim in ('zlevel', ):
             coord = CoordinateInfo(dim)
             coord.generic_level = True
             coord.axis = 'Z'
@@ -764,7 +789,6 @@ class CustomInfo(CMIP5Info):
         ESMValTool repository
 
     """
-
     def __init__(self, cmor_tables_path=None):
         cwd = os.path.dirname(os.path.realpath(__file__))
         self._cmor_folder = os.path.join(cwd, 'tables', 'custom')
@@ -852,3 +876,6 @@ class CustomInfo(CMIP5Info):
                     continue
                 if not self._read_line():
                     return
+
+
+read_cmor_tables()
