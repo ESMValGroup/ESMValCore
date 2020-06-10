@@ -3,18 +3,19 @@
 Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
+import copy
 import datetime
 import logging
 from warnings import filterwarnings
 
 import dask.array as da
 import iris
-import iris.cube
 import iris.coord_categorisation
+import iris.cube
 import iris.exceptions
 import iris.util
-from iris.time import PartialDateTime
 import numpy as np
+from iris.time import PartialDateTime
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
@@ -460,9 +461,9 @@ def anomalies(cube, period, reference=None, standardize=False):
         reference_cube = extract_time(cube, **reference)
     reference = climate_statistics(reference_cube, period=period)
     if period in ['full']:
-        orig_cube = cube.copy()
-        cube = orig_cube - reference
-        cube.metadata = orig_cube.metadata
+        metadata = copy.deepcopy(cube.metadata)
+        cube = cube - reference
+        cube.metadata = metadata
         if standardize:
             cube_stddev = climate_statistics(
                 cube, operator='std_dev', period=period)

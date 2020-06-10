@@ -8,6 +8,7 @@ import numbers
 import os
 import pprint
 import subprocess
+import sys
 import threading
 import time
 from copy import deepcopy
@@ -311,7 +312,10 @@ class DiagnosticTask(BaseTask):
                 raise DiagnosticError(
                     f"{err_msg}: non-executable file with unknown extension "
                     f"'{script_file.suffix}'.")
-            interpreter = which(interpreters[ext])
+            if ext == 'py' and sys.executable:
+                interpreter = sys.executable
+            else:
+                interpreter = which(interpreters[ext])
             if interpreter is None:
                 raise DiagnosticError(
                     f"{err_msg}: program '{interpreters[ext]}' not installed.")

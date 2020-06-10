@@ -674,6 +674,17 @@ dimensionality higher than four: time, vertical axis, two horizontal axes).
 
 see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
+When calling the module inside diagnostic scripts, the input must be given 
+as a list of cubes. The output will be saved in a dictionary where each
+entry contains the resulting cube with the requested statistic operations.
+
+.. code-block::
+
+    from esmvalcore.preprocessor import multi_model_statistics
+    statistics = multi_model_statistics([cube1,...,cubeN], 'overlap', ['mean', 'median'])
+    mean_cube = statistics['mean']
+    median_cube = statistics['median']
+
 .. note::
 
    Note that the multimodel array operations, albeit performed in
