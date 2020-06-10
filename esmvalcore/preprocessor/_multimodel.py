@@ -414,7 +414,7 @@ def ensemble_statistics(products, output_products, statistics):
         prods[dataset].add(p)
 
     for dataset, ensemble_products in prods.items():
-        statistic_products = multi_model_statistics(ensemble_products, span, output_products[dataset], statistics)
+        statistic_products = multi_model_statistics(ensemble_products, span, statistics, output_products[dataset])
         products |= statistic_products
 
     return products
