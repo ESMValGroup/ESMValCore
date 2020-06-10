@@ -407,20 +407,20 @@ class CMORCheck():
                         f'Coordinate {coordinate.name} '
                         'has wrong var_name.',
                     )
-                    level = coordinate.generic_lev_coords[coordinate.name]
-                    level.generic_level = True
-                    self._cmor_var.coordinates[coordinate.name] = level
-                    self._cmor_var.coordinates.pop(key)
+                level = coordinate.generic_lev_coords[coordinate.name]
+                level.generic_level = True
+                self._cmor_var.coordinates[coordinate.name] = level
+                self._cmor_var.coordinates.pop(key)
+            else:
+                if coordinate.out_name:
+                    self.report_critical(
+                        f'Coordinate {coordinate.name} '
+                        'has wrong standard_name.',
+                    )
                 else:
-                    if coordinate.out_name:
-                        self.report_critical(
-                            f'Coordinate {coordinate.name} '
-                            'has wrong standard_name.',
-                        )
-                    else:
-                        self.report_critical(
-                            self._does_msg, coordinate.name, 'exist'
-                        )
+                    self.report_critical(
+                        self._does_msg, coordinate.name, 'exist'
+                    )
 
     def _check_coords(self):
         """Check coordinates."""
