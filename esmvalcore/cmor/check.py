@@ -383,7 +383,7 @@ class CMORCheck():
 
     def _check_generic_level_dim_names(self, key, coordinate):
         if coordinate.generic_lev_coords:
-            for (_, coord) in coordinate.generic_lev_coords.items():
+            for coord in coordinate.generic_lev_coords.values():
                 try:
                     cube_coord = self._cube.coord(
                         var_name=coord.out_name
