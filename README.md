@@ -51,7 +51,7 @@ The ESMValCore package provides various functions for:
     custom configuration file.
 
 -   Install the [ESMValTool](https://github.com/ESMValGroup/ESMValTool)
-    to run [ESMValTool recipes and diagnostics](https://esmvaltool.readthedocs.io/en/latest/recipes/index.html)
+    to run [ESMValTool recipes and diagnostics](https://docs.esmvaltool.org/en/latest/recipes/index.html)
 
 -   Run e.g. `esmvaltool -c ~/config-user.yml examples/recipe_python.yml` after
     downloading the necessary data.
@@ -59,7 +59,7 @@ The ESMValCore package provides various functions for:
 ## Getting help
 
 The easiest way to get help if you cannot find the answer in the documentation
-on [readthedocs](https://esmvaltool.readthedocs.io), is to open an
+on [readthedocs](https://docs.esmvaltool.org), is to open an
 [issue on GitHub](https://github.com/ESMValGroup/ESMValCore/issues).
 
 ## Contributing
