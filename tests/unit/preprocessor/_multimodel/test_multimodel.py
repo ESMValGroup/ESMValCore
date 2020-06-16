@@ -48,7 +48,22 @@ class Test(tests.Test):
                                      units=Unit(
                                          'days since 1950-01-01',
                                          calendar='gregorian'))
-
+        yr_time = iris.coords.DimCoord([15, 410],
+                                       standard_name='time',
+                                       bounds=[[1., 30.], [395., 425.]],
+                                       units=Unit(
+                                           'days since 1950-01-01',
+                                           calendar='gregorian'))
+        yr_time2 = iris.coords.DimCoord([1., 367., 733., 1099.],
+                                     standard_name='time',
+                                     bounds=[
+                                         [0.5, 1.5],
+                                         [366, 368],
+                                         [732, 734],
+                                         [1098, 1100], ],
+                                     units=Unit(
+                                         'days since 1950-01-01',
+                                         calendar='gregorian'))
         zcoord = iris.coords.DimCoord([0.5, 5., 50.],
                                       standard_name='air_pressure',
                                       long_name='air_pressure',
@@ -75,6 +90,14 @@ class Test(tests.Test):
         coords_spec5 = [(time2, 0), (zcoord, 1), (lats, 2), (lons, 3)]
         self.cube2 = iris.cube.Cube(data3, dim_coords_and_dims=coords_spec5)
 
+        coords_spec4_yr = [(yr_time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube1_yr = iris.cube.Cube(data2,
+                                       dim_coords_and_dims=coords_spec4_yr)
+
+        coords_spec5_yr = [(yr_time2, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube2_yr = iris.cube.Cube(data3,
+                                       dim_coords_and_dims=coords_spec5_yr)
+
     def test_get_time_offset(self):
         """Test time unit."""
         result = _get_time_offset("days since 1950-01-01")
@@ -92,16 +115,21 @@ class Test(tests.Test):
         self.assert_array_equal(stat_median, expected_median)
 
     def test_compute_full_statistic_cube(self):
-        data = [self.cube1, self.cube2]
-        stats = multi_model_statistics(data, 'full', ['mean'])
-        expected_full_mean = np.ma.ones((2, 3, 2, 2))
-        expected_full_mean.mask = np.zeros((2, 3, 2, 2))
-        expected_full_mean.mask[1] = True
-        self.assert_array_equal(stats['mean'].data, expected_full_mean)
+        datas = [[self.cube1_yr, self.cube2_yr]]
+        for data in datas:
+            stats = multi_model_statistics(data, 'full', ['mean'])
+            expected_full_mean = np.ma.ones((2, 3, 2, 2))
+            expected_full_mean.mask = np.zeros((2, 3, 2, 2))
+            expected_full_mean.mask[1] = True
+            print(stats['mean'].data)
+            self.assert_array_equal(stats['mean'].data, expected_full_mean)
 
     def test_compute_overlap_statistic_cube(self):
-        data = [self.cube1, self.cube1]
+        data = [self.cube1, self.cube2]
+                # [self.cube1_yr, self.cube2_yr]]
+        # for data in datas:
         stats = multi_model_statistics(data, 'overlap', ['mean'])
+        print(stats)
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
