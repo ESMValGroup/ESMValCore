@@ -114,22 +114,31 @@ class Test(tests.Test):
         self.assert_array_equal(stat_mean, expected_mean)
         self.assert_array_equal(stat_median, expected_median)
 
-    def test_compute_full_statistic_cube(self):
-        datas = [[self.cube1_yr, self.cube2_yr]]
-        for data in datas:
-            stats = multi_model_statistics(data, 'full', ['mean'])
-            expected_full_mean = np.ma.ones((2, 3, 2, 2))
-            expected_full_mean.mask = np.zeros((2, 3, 2, 2))
-            expected_full_mean.mask[1] = True
-            print(stats['mean'].data)
-            self.assert_array_equal(stats['mean'].data, expected_full_mean)
-
-    def test_compute_overlap_statistic_cube(self):
+    def test_compute_full_statistic_mon_cube(self):
         data = [self.cube1, self.cube2]
-                # [self.cube1_yr, self.cube2_yr]]
-        # for data in datas:
+        stats = multi_model_statistics(data, 'full', ['mean'])
+        expected_full_mean = np.ma.ones((2, 3, 2, 2))
+        expected_full_mean.mask = np.zeros((2, 3, 2, 2))
+        expected_full_mean.mask[1] = True
+        self.assert_array_equal(stats['mean'].data, expected_full_mean)
+
+    def test_compute_full_statistic_yr_cube(self):
+        data = [self.cube1_yr, self.cube2_yr]
+        stats = multi_model_statistics(data, 'full', ['mean'])
+        expected_full_mean = np.ma.ones((4, 3, 2, 2))
+        expected_full_mean.mask = np.zeros((4, 3, 2, 2))
+        expected_full_mean.mask[2:4] = True
+        self.assert_array_equal(stats['mean'].data, expected_full_mean)
+
+    def test_compute_overlap_statistic_mon_cube(self):
+        data = [self.cube1, self.cube1]
         stats = multi_model_statistics(data, 'overlap', ['mean'])
-        print(stats)
+        expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
+        self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
+
+    def test_compute_overlap_statistic_yr_cube(self):
+        data = [self.cube1_yr, self.cube1_yr]
+        stats = multi_model_statistics(data, 'overlap', ['mean'])
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
