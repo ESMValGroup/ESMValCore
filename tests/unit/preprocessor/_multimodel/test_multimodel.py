@@ -55,15 +55,15 @@ class Test(tests.Test):
                                            'days since 1950-01-01',
                                            calendar='gregorian'))
         yr_time2 = iris.coords.DimCoord([1., 367., 733., 1099.],
-                                     standard_name='time',
-                                     bounds=[
-                                         [0.5, 1.5],
-                                         [366, 368],
-                                         [732, 734],
-                                         [1098, 1100], ],
-                                     units=Unit(
-                                         'days since 1950-01-01',
-                                         calendar='gregorian'))
+                                        standard_name='time',
+                                        bounds=[
+                                            [0.5, 1.5],
+                                            [366, 368],
+                                            [732, 734],
+                                            [1098, 1100], ],
+                                        units=Unit(
+                                            'days since 1950-01-01',
+                                            calendar='gregorian'))
         zcoord = iris.coords.DimCoord([0.5, 5., 50.],
                                       standard_name='air_pressure',
                                       long_name='air_pressure',
