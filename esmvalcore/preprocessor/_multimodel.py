@@ -20,6 +20,8 @@ import cf_units
 import iris
 import numpy as np
 
+from ._time import regrid_time
+
 logger = logging.getLogger(__name__)
 
 
@@ -164,6 +166,7 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
 
 def _datetime_to_int_days(cube):
     """Return list of int(days) converted from cube datetime cells."""
+    cube = _align_yearly_axes(cube)
     time_cells = [cell.point for cell in cube.coord('time').cells()]
     time_unit = cube.coord('time').units.name
     time_offset = _get_time_offset(time_unit)
@@ -181,6 +184,21 @@ def _datetime_to_int_days(cube):
 
     days = [(date_obj - time_offset).days for date_obj in real_dates]
     return days
+
+
+def _align_yearly_axes(cube):
+    """Perform a time-regridding operation to align time axes for yr data."""
+    time_cells = [cell.point for cell in cube.coord('time').cells()]
+    years = [date_obj.year for date_obj in time_cells]
+    # be extra sure that the first point is not in the previous year
+    if len(years) > 2:
+        delta = int(years[2]) - int(years[1])
+    else:
+        delta = int(years[1]) - int(years[0])
+    if delta == 1:
+        return regrid_time(cube, 'yr')
+    else:
+        return cube
 
 
 def _get_overlap(cubes):
