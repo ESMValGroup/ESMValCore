@@ -361,10 +361,12 @@ def _add_fxvar_keys(fx_var_dict, variable):
     fx_variable['variable_group'] = fx_var_dict['short_name']
 
     # specificities of project
-    if fx_variable['project'] in ['CMIP5', 'CORDEX']:
+    if fx_variable['project'] in ['CMIP5', 'MPIGE']:
         fx_variable['mip'] = 'fx'
         fx_variable['ensemble'] = 'r0i0p0'
-
+    if fx_variable['project'] in ['CORDEX']:
+        fx_variable['ensemble'] = [fx_variable['ensemble'], 'r0i0p0']
+        fx_variable['mip'] = 'fx'
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
 
