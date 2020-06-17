@@ -332,13 +332,13 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         computation;
         cube attribute of product is the data cube for computing the stats.
     span: str
-        overlap or full; if overlap stas are computed on common time-span;
-        if full stats are computed on full time spans.
+        overlap or full; if overlap stats are computed on common time-span;
+        if full stats are computed on full time spans, ignoring missing data.
     output_products: dict
         dictionary of output products.
     statistics: str
         statistical measure to be computed. Available options: mean, median,
-        max, min, std
+        max, min, std, or pXX for percentile XX.
     Returns
     -------
     list
