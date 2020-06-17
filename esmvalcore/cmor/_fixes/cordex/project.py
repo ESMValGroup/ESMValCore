@@ -1,9 +1,12 @@
 """Fixes for CORDEX project"""
+import logging
 import numpy as np
 import iris
 
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.preprocessor._shared import guess_bounds
+
+logger = logging.getLogger(__name__)
 
 
 class AllVars(Fix):
@@ -44,7 +47,49 @@ class AllVars(Fix):
                 not cube.coord('longitude').has_bounds():
                 cube = self.get_lat_lon_bounds(cube)
 
+            cube = self.check_grid_differences(cube)
+
         return cubes
+
+
+    def check_grid_differences(self, cube):
+        """Derive lat and lon coordinates from grid coordinates.
+        And warn about the maximum differences"""
+        x_coord = cube.coord(axis='x', dim_coords=True)
+        y_coord = cube.coord(axis='y', dim_coords=True)
+        glon, glat = np.meshgrid(x_coord.points, y_coord.points)
+
+        global_coord_sys = iris.coord_systems.GeogCS(
+            iris.fileformats.pp.EARTH_RADIUS)
+        grid_coord_sys = x_coord.coord_system
+
+        if isinstance(grid_coord_sys, iris.coord_systems.RotatedGeogCS):
+            gr_type = "rotated"
+            glon, glat = np.meshgrid(x_coord.points, y_coord.points)
+            lons, lats = iris.analysis.cartography.unrotate_pole(
+                                    glon, glat,
+                                    grid_coord_sys.grid_north_pole_longitude,
+                                    grid_coord_sys.grid_north_pole_latitude)
+        elif isinstance(grid_coord_sys, iris.coord_systems.LambertConformal):
+            gr_type = "lcc"
+            ccrs_global = global_coord_sys.as_cartopy_crs()
+            xyz = ccrs_global.transform_points(grid_coord_sys.as_cartopy_crs(),
+                                               glon, glat)
+            lons = xyz[:, :, 0]
+            lats = xyz[:, :, 1]
+        else:
+            emsg = 'Unknown coordinate system, got {!r}.'
+            raise NotImplementedError(
+                emsg.format(type(x_coord.grid_coord_sys)))
+
+        dif = np.sqrt(np.square(lats - cube.coord('latitude').points) + \
+                      np.square(lons - cube.coord('longitude').points))
+        if dif.max() != 0:
+            logger.warning(f"There are diffs. betw. {gr_type} and lat-lon.")
+            logger.warning(f"Max diff: {dif.max()} ; Min diff: {dif.min()}")
+            cube.attributes.update({'grid_max_spacial_diff': dif.max()})
+            cube.attributes.update({'grid_min_spacial_diff': dif.min()})
+        return cube
 
 
     def get_lat_lon_bounds(self, cube):
@@ -53,7 +98,6 @@ class AllVars(Fix):
         CMOR standard for 2-D coordinate counds is indexing the four vertices
         as follows: 0=(j-1,i-1), 1=(j-1,i+1), 2=(j+1,i+1), 3=(j+1,i-1).
         """
-        coord_names = [coord.standard_name for coord in cube.coords()]
         x_coord = cube.coord(axis='x', dim_coords=True)
         y_coord = cube.coord(axis='y', dim_coords=True)
         glon, glat = np.meshgrid(x_coord.bounds, y_coord.bounds)
@@ -64,9 +108,9 @@ class AllVars(Fix):
 
         if isinstance(grid_coord_sys, iris.coord_systems.RotatedGeogCS):
             lon_bnds, lat_bnds = iris.analysis.cartography.unrotate_pole(
-                np.deg2rad(glon), np.deg2rad(glat),
-                grid_coord_sys.grid_north_pole_longitude,
-                grid_coord_sys.grid_north_pole_latitude)
+                                    glon, glat,
+                                    grid_coord_sys.grid_north_pole_longitude,
+                                    grid_coord_sys.grid_north_pole_latitude)
         elif isinstance(grid_coord_sys, iris.coord_systems.LambertConformal):
             ccrs_global = global_coord_sys.as_cartopy_crs()
             xyz = ccrs_global.transform_points(grid_coord_sys.as_cartopy_crs(),
@@ -109,9 +153,9 @@ class AllVars(Fix):
         if isinstance(grid_coord_sys, iris.coord_systems.RotatedGeogCS):
             glon, glat = np.meshgrid(x_coord.points, y_coord.points)
             lons, lats = iris.analysis.cartography.unrotate_pole(
-                np.deg2rad(glon), np.deg2rad(glat),
-                grid_coord_sys.grid_north_pole_longitude,
-                grid_coord_sys.grid_north_pole_latitude)
+                                    glon, glat,
+                                    grid_coord_sys.grid_north_pole_longitude,
+                                    grid_coord_sys.grid_north_pole_latitude)
         elif isinstance(grid_coord_sys, iris.coord_systems.LambertConformal):
             ccrs_global = global_coord_sys.as_cartopy_crs()
             xyz = ccrs_global.transform_points(grid_coord_sys.as_cartopy_crs(),
@@ -173,9 +217,9 @@ class AllVars(Fix):
 
             # badly defined units
             if x_coord.units == 'km':
-                x_coord.convert_units('m')
+                x_coord.convert_units('meter')
             if y_coord.units == 'km':
-                y_coord.convert_units('m')
+                y_coord.convert_units('meter')
 
             # and badly defined offsets
             if x_coord[0].points[0] == 0:
