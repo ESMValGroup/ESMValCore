@@ -338,7 +338,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         dictionary of output products.
     statistics: str
         statistical measure to be computed. Available options: mean, median,
-        max, min, std, or pXX for percentile XX.
+        max, min, std, or pXX (for percentile XX; p995 will be interpreted as
+        the 99.5-th percentile).
     Returns
     -------
     list

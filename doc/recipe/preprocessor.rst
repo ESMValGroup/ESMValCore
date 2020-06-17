@@ -647,8 +647,10 @@ to observational data, these biases have a significantly lower statistical
 impact when using a multi-model ensemble. ESMValTool has the capability of
 computing a number of multi-model statistical measures: using the preprocessor
 module ``multi_model_statistics`` will enable the user to ask for either a
-multi-model ``mean``, ``median``, ``max``, ``min`` and / or ``std`` with a set
-of argument parameters passed to ``multi_model_statistics``.
+multi-model ``mean``, ``median``, ``max``, ``min``, ``std``, and / or ``pXX``
+with a set of argument parameters passed to ``multi_model_statistics``.
+Percentiles can be specified like ``p10`` or ``p90``. ``p995`` will be
+interpreted as the 99.5-th percentile.
 
 Note that current multimodel statistics in ESMValTool are local (not global),
 and are computed along the time axis. As such, can be computed across a common
@@ -674,7 +676,7 @@ dimensionality higher than four: time, vertical axis, two horizontal axes).
 
 see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
-When calling the module inside diagnostic scripts, the input must be given 
+When calling the module inside diagnostic scripts, the input must be given
 as a list of cubes. The output will be saved in a dictionary where each
 entry contains the resulting cube with the requested statistic operations.
 
