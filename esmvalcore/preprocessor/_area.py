@@ -275,9 +275,6 @@ def area_statistics(cube, operator, fx_variables=None):
                 'grids.')
             raise iris.exceptions.CoordinateMultiDimError(
                 cube.coord('latitude'))
-        # logger.error(
-        #     'fx_file needed to calculate grid cell area for irregular grids.')
-        # raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
 
     coord_names = ['longitude', 'latitude']
     if grid_areas is None or not grid_areas.any():
