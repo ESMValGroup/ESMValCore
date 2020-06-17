@@ -22,5 +22,5 @@ class Sftlf(Fix):
             Fixed cube. It can be a difference instance.
         """
         if cube.units == "%" and da.max(cube.core_data()).compute() <= 1.:
-            cube.data = cube.data * 100
+            cube.data = cube.core_data() * 100.
         return cube
