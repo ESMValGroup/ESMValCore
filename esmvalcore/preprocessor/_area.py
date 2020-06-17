@@ -250,9 +250,34 @@ def area_statistics(cube, operator, fx_variables=None):
     grid_areas = tile_grid_areas(cube, fx_variables)
 
     if not fx_variables and cube.coord('latitude').points.ndim == 2:
-        logger.error(
-            'fx_file needed to calculate grid cell area for irregular grids.')
-        raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
+        coord_names = [coord.standard_name for coord in cube.coords()]
+        if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
+            cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
+            cube_tmp = cube.copy()
+            cube_tmp.remove_coord('latitude')
+            cube_tmp.coord('grid_latitude').rename('latitude')
+            cube_tmp.remove_coord('longitude')
+            cube_tmp.coord('grid_longitude').rename('longitude')
+            grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
+            logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        elif 'projection_y_coordinate' in coord_names and 'projection_x_coordinate' in coord_names:
+            cube = guess_bounds(cube, ['projection_y_coordinate', 'projection_x_coordinate'])
+            cube_tmp = cube.copy()
+            cube_tmp.remove_coord('latitude')
+            cube_tmp.coord('projection_y_coordinate').rename('latitude')
+            cube_tmp.remove_coord('longitude')
+            cube_tmp.coord('projection_x_coordinate').rename('longitude')
+            grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
+            logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        else:
+            logger.error(
+                'fx_file needed to calculate grid cell area for irregular '
+                'grids.')
+            raise iris.exceptions.CoordinateMultiDimError(
+                cube.coord('latitude'))
+        # logger.error(
+        #     'fx_file needed to calculate grid cell area for irregular grids.')
+        # raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
 
     coord_names = ['longitude', 'latitude']
     if grid_areas is None or not grid_areas.any():
@@ -274,6 +299,109 @@ def area_statistics(cube, operator, fx_variables=None):
 
     # Many IRIS analysis functions do not accept weights arguments.
     return cube.collapsed(coord_names, operation)
+
+
+def area_statistics_mask(cube, operator, fx_files=None):
+    """
+    Apply a statistical operator in the horizontal direction.
+
+    The average in the horizontal direction. We assume that the
+    horizontal directions are ['longitude', 'latutude'].
+
+    This function can be used to apply
+    several different operations in the horizonal plane: mean, standard
+    deviation, median variance, minimum and maximum. These options are
+    specified using the `operator` argument and the following key word
+    arguments:
+
+    +------------+--------------------------------------------------+
+    | `mean`     | Area weighted mean.                              |
+    +------------+--------------------------------------------------+
+    | `median`   | Median (not area weighted)                       |
+    +------------+--------------------------------------------------+
+    | `std_dev`  | Standard Deviation (not area weighted)           |
+    +------------+--------------------------------------------------+
+    | `variance` | Variance (not area weighted)                     |
+    +------------+--------------------------------------------------+
+    | `min`:     | Minimum value                                    |
+    +------------+--------------------------------------------------+
+    | `max`      | Maximum value                                    |
+    +------------+--------------------------------------------------+
+
+    Parameters
+    ----------
+        cube: iris.cube.Cube
+            Input cube.
+        operator: str
+            The operation, options: mean, median, min, max, std_dev, variance
+        fx_files: dict
+            dictionary of field:filename for the fx_files
+
+    Returns
+    -------
+    iris.cube.Cube
+        collapsed cube.
+
+    Raises
+    ------
+    iris.exceptions.CoordinateMultiDimError
+        Exception for latitude axis with dim > 2.
+    ValueError
+        if input data cube has different shape than grid area weights
+    """
+    grid_areas = tile_grid_areas(cube, fx_files)
+
+    if not fx_files and cube.coord('latitude').points.ndim == 2:
+        coord_names = [coord.standard_name for coord in cube.coords()]
+        if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
+            cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
+            cube_tmp = cube.copy()
+            cube_tmp.remove_coord('latitude')
+            cube_tmp.coord('grid_latitude').rename('latitude')
+            cube_tmp.remove_coord('longitude')
+            cube_tmp.coord('grid_longitude').rename('longitude')
+            grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
+            logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        else:
+            logger.error(
+                'fx_file needed to calculate grid cell area for irregular '
+                'grids.')
+            raise iris.exceptions.CoordinateMultiDimError(
+                cube.coord('latitude'))
+
+
+    coord_names = ['longitude', 'latitude']
+    if grid_areas is None or not grid_areas.any():
+        cube = guess_bounds(cube, coord_names)
+        grid_areas = iris.analysis.cartography.area_weights(cube)
+        logger.info('Calculated grid area shape: %s', grid_areas.shape)
+
+    if cube.shape != grid_areas.shape:
+        raise ValueError('Cube shape ({}) doesn`t match grid area shape '
+                         '({})'.format(cube.shape, grid_areas.shape))
+
+    operation = get_iris_analysis_operation(operator)
+
+    if len(cube.data.mask.shape) != 0:
+        coord = cube.coord('time')
+        axis = cube.coord_dims(coord)[0]
+        mask = np.any(cube.data.mask, axis=axis)
+        mask = np.array([mask]*cube.shape[axis])
+        cube.data = np.ma.array(cube.data, mask=mask)
+
+    # cube.data = np.ma.array(cube.data, mask=mask)
+
+    # TODO: implement weighted stdev, median, s var when available in iris.
+    # See iris issue: https://github.com/SciTools/iris/issues/3208
+
+    if operator == 'mean':
+        return cube.collapsed(coord_names,
+                              operation,
+                              weights=grid_areas)
+
+    # Many IRIS analysis functions do not accept weights arguments.
+    return cube.collapsed(coord_names, operation)
+
 
 
 def extract_named_regions(cube, regions):
