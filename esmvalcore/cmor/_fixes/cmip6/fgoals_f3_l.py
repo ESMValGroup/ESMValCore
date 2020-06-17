@@ -1,5 +1,6 @@
 """Fixes for FGOALS-f3-L model."""
 from ..fix import Fix
+import dask.array as da
 # from esmvalcore.cmor.fix import Fix
 
 class Sftlf(Fix):
