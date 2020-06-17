@@ -82,6 +82,8 @@ def _compute_statistic(data, statistic_name):
             u_datas = [d for d in data if not np.all(d.mask)]
         if len(u_datas) > 1:
             statistic = statistic_function(data, axis=0)
+            if len(data.shape) > 1 and type(data) == np.ma.core.MaskedArray:
+                statistic.mask = _get_area_overlap(data)
         else:
             statistic.mask = True
         return statistic
@@ -104,6 +106,18 @@ def _compute_statistic(data, statistic_name):
     return statistic
 
 
+def _get_area_overlap(data, threshhold=0.8):
+    """Derive the mask for data based on overlap threshhold, i.e. there is
+    valid data for at least threshhold x Ndata."""
+    threshhold = data.shape[0] * (1 - threshhold)
+
+    mask = np.sum(data.mask, axis=0)
+    newmask = np.zeros(mask.shape, dtype=bool)
+    newmask[mask > threshhold] = True
+
+    return newmask
+
+
 def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     """Quick cube building and saving."""
     if t_axis is None:
@@ -117,21 +131,42 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
     if 'latitude' in coord_names:
-        lats = template_cube.coord('latitude')
+        try:
+            y_name = template_cube.coord(axis='y', dim_coords=True).standard_name
+        except CoordinateNotFoundError:
+            y_name = 'latitude'
+        lats = template_cube.coord(y_name)
+        if y_name != 'latitude':
+            lats_2d = template_cube.coord('latitude')
+        else:
+            lats_2d = None
     else:
         lats = None
+
     if 'longitude' in coord_names:
-        lons = template_cube.coord('longitude')
+        try:
+            x_name = template_cube.coord(axis='x', dim_coords=True).standard_name
+        except CoordinateNotFoundError:
+            x_name = 'longitude'
+        lons = template_cube.coord(x_name)
+        if x_name != 'longitude':
+            lons_2d = template_cube.coord('longitude')
+        else:
+            lons_2d = None
     else:
         lons = None
 
     # no plevs
     if len(template_cube.shape) == 3:
         cspec = [(times, 0), (lats, 1), (lons, 2)]
+        if lats_2d != None and lons_2d != None:
+            aux_spec = [(lats_2d, [1, 2]), (lons_2d, [1, 2])]
     # plevs
     elif len(template_cube.shape) == 4:
         plev = template_cube.coord('air_pressure')
         cspec = [(times, 0), (plev, 1), (lats, 2), (lons, 3)]
+        if lats_2d is not None and lons_2d is not None:
+            aux_spec = [(lats_2d, [2, 3]), (lons_2d, [2, 3])]
     elif len(template_cube.shape) == 1:
         cspec = [
             (times, 0),
@@ -148,8 +183,13 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     # correct dspec if necessary
     fixed_dspec = np.ma.fix_invalid(cube_data, copy=False, fill_value=1e+20)
     # put in cube
-    stats_cube = iris.cube.Cube(
-        fixed_dspec, dim_coords_and_dims=cspec, long_name=statistic)
+    if lats_2d is not None and lons_2d is not None:
+        stats_cube = iris.cube.Cube(
+            fixed_dspec, dim_coords_and_dims=cspec, long_name=statistic,
+            aux_coords_and_dims=aux_spec)
+    else:
+        stats_cube = iris.cube.Cube(
+            fixed_dspec, dim_coords_and_dims=cspec, long_name=statistic)
     coord_names = [coord.name() for coord in template_cube.coords()]
     if 'air_pressure' in coord_names:
         if len(template_cube.shape) == 3:
