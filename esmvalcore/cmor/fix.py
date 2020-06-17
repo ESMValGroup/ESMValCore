@@ -103,7 +103,7 @@ def fix_metadata(cubes,
 
     for cube_list in by_file.values():
         cube_list = CubeList(cube_list)
-        for fix in fixes:
+        for fix in fixes[::-1]:
             cube_list = fix.fix_metadata(cube_list)
 
         cube = _get_single_cube(cube_list, short_name, project, dataset)
