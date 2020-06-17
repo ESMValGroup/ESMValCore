@@ -9,10 +9,11 @@ from iris.cube import Cube
 from .._provenance import TrackedFile
 from .._task import BaseTask
 from ._area import (area_statistics, extract_named_regions, extract_region,
-                    extract_shape, meridional_statistics, zonal_statistics)
+                    extract_shape, meridional_statistics, zonal_statistics,
+                    area_statistics_mask)
 from ._cycles import amplitude
 from ._derive import derive
-from ._detrend import detrend
+from ._detrend import (detrend, linear_trend)
 from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
@@ -85,11 +86,13 @@ __all__ = [
     # 'average_zone': average_zone,
     # 'cross_section': cross_section,
     'detrend',
+    'linear_trend',
     'multi_model_statistics',
     # Grid-point operations
     'extract_named_regions',
     'depth_integration',
     'area_statistics',
+    'area_statistics_mask',
     'volume_statistics',
     # Time operations
     # 'annual_cycle': annual_cycle,
