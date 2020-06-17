@@ -14,11 +14,12 @@ It operates on different (time) spans:
 
 import logging
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
 
 import cf_units
 import iris
 import numpy as np
+from scipy.stats import mstats
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,9 @@ def _compute_statistic(data, statistic_name):
         statistic_function = np.ma.max
     elif statistic_name == 'min':
         statistic_function = np.ma.min
+    elif statistic_name.startswith('q'):
+        quantile = float(statistic_name[1:]) / 100.
+        statistic_function = partial(mstats.mquantiles, prob=quantile)
     else:
         raise NotImplementedError
 
