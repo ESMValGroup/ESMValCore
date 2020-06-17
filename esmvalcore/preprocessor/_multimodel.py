@@ -194,8 +194,7 @@ def _datetime_to_int_days(cube, overlap=False):
 
 def _align_yearly_axes(cube):
     """Perform a time-regridding operation to align time axes for yr data."""
-    time_cells = [cell.point for cell in cube.coord('time').cells()]
-    years = [date_obj.year for date_obj in time_cells]
+    years = [cell.point.year for cell in cube.coord('time').cells()]
     # be extra sure that the first point is not in the previous year
     if len(years) > 2:
         delta = int(years[2]) - int(years[1])
