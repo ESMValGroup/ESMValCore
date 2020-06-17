@@ -164,12 +164,10 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     return stats_cube
 
 
-def _datetime_to_int_days(cube):
+def _datetime_to_int_days(cube, overlap=False):
     """Return list of int(days) converted from cube datetime cells."""
     cube = _align_yearly_axes(cube)
     time_cells = [cell.point for cell in cube.coord('time').cells()]
-    time_unit = cube.coord('time').units.name
-    time_offset = _get_time_offset(time_unit)
 
     # extract date info
     real_dates = []
@@ -179,10 +177,18 @@ def _datetime_to_int_days(cube):
         # wrong overlap indices
         # NOTE: this workaround is good only
         # for monthly data
-        real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
+        if overlap:
+            real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
+        else:
+            real_date = datetime(date_obj.year,
+                                 date_obj.month, 15, 0, 0, 0)
         real_dates.append(real_date)
 
+    # get the number of days starting from the reference unit
+    time_unit = cube.coord('time').units.name
+    time_offset = _get_time_offset(time_unit)
     days = [(date_obj - time_offset).days for date_obj in real_dates]
+
     return days
 
 
@@ -214,7 +220,7 @@ def _get_overlap(cubes):
     """
     all_times = []
     for cube in cubes:
-        span = _datetime_to_int_days(cube)
+        span = _datetime_to_int_days(cube, overlap=True)
         start, stop = span[0], span[-1]
         all_times.append([start, stop])
     bounds = [range(b[0], b[-1] + 1) for b in all_times]
@@ -232,7 +238,7 @@ def _slice_cube(cube, t_1, t_2):
     of common time-data elements.
     """
     time_pts = [t for t in cube.coord('time').points]
-    converted_t = _datetime_to_int_days(cube)
+    converted_t = _datetime_to_int_days(cube, overlap=True)
     idxs = sorted([
         time_pts.index(ii) for ii, jj in zip(time_pts, converted_t)
         if t_1 <= jj <= t_2
