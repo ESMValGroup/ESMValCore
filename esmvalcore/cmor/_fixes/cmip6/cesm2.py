@@ -6,6 +6,7 @@ from netCDF4 import Dataset
 from ..fix import Fix
 from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
                       add_scalar_typeland_coord, add_scalar_typesea_coord)
+from esmvalcore.preprocessor._shared import guess_bounds
 
 
 class Cl(Fix):
@@ -121,6 +122,34 @@ class Tas(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube)
+        for cube in cubes:
+            cube.coord('latitude').bounds=None
+            cube.coord('longitude').bounds=None
+            cube = guess_bounds(cube, ['latitude', 'longitude'])
+        return cubes
+
+
+class Pr(Fix):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """Add height (2m) coordinate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        for cube in cubes:
+            cube.coord('latitude').bounds=None
+            cube.coord('longitude').bounds=None
+            cube = guess_bounds(cube, ['latitude', 'longitude'])
         return cubes
 
 
