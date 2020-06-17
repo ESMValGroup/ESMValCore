@@ -54,6 +54,32 @@ def _plev_fix(dataset, pl_idx):
     return statj
 
 
+def _quantile(data, axis, quantile):
+    """Calculate quantile.
+
+    Workaround for calling scipy's mquantiles with arrays of >2 dimensions
+    Similar to iris' _percentiles function, see their discussion:
+    https://github.com/SciTools/iris/pull/625
+    """
+    # Ensure that the target axis is the last dimension.
+    data = np.rollaxis(data, axis, start=data.ndim)
+    shape = data.shape[:-1]
+    # Flatten any leading dimensions.
+    if shape:
+        data = data.reshape([np.prod(shape), data.shape[-1]])
+    # Perform the quantile calculation.
+    result = mstats.mquantiles(data, quantile, axis=-1, alphap=1, betap=1)
+    result = np.ma.MaskedArray(result)
+    # Ensure to unflatten any leading dimensions.
+    if shape:
+        result = result.reshape(shape)
+    # Check whether to reduce to a scalar result
+    if result.shape == (1,):
+        result = result[0]
+
+    return result
+
+
 def _compute_statistic(data, statistic_name):
     """Compute multimodel statistic."""
     data = np.ma.array(data)
@@ -71,7 +97,7 @@ def _compute_statistic(data, statistic_name):
         statistic_function = np.ma.min
     elif statistic_name.startswith('p'):
         quantile = float('.' + statistic_name[1:])
-        statistic_function = partial(mstats.mquantiles, prob=quantile)
+        statistic_function = partial(_quantile, quantile=quantile)
     else:
         raise NotImplementedError
 
