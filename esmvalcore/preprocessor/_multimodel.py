@@ -70,7 +70,7 @@ def _compute_statistic(data, statistic_name):
     elif statistic_name == 'min':
         statistic_function = np.ma.min
     elif statistic_name.startswith('p'):
-        quantile = float(statistic_name[1:]) / 100.
+        quantile = float('.' + statistic_name[1:])
         statistic_function = partial(mstats.mquantiles, prob=quantile)
     else:
         raise NotImplementedError
