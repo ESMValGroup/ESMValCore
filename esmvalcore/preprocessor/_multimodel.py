@@ -111,10 +111,12 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     if t_axis is None:
         times = template_cube.coord('time')
     else:
+        unit_name = template_cube.coord('time').units.name
+        tunits = cf_units.Unit(unit_name, calendar="standard")
         times = iris.coords.DimCoord(
             t_axis,
             standard_name='time',
-            units=template_cube.coord('time').units)
+            units=tunits)
 
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
@@ -164,7 +166,7 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     return stats_cube
 
 
-def _datetime_to_int_days(cube, overlap=False):
+def _datetime_to_int_days(cube):
     """Return list of int(days) converted from cube datetime cells."""
     cube = _align_yearly_axes(cube)
     time_cells = [cell.point for cell in cube.coord('time').cells()]
@@ -175,13 +177,7 @@ def _datetime_to_int_days(cube, overlap=False):
         # real_date resets the actual data point day
         # to the 1st of the month so that there are no
         # wrong overlap indices
-        # NOTE: this workaround is good only
-        # for monthly data
-        if overlap:
-            real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
-        else:
-            real_date = datetime(date_obj.year,
-                                 date_obj.month, 15, 0, 0, 0)
+        real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
         real_dates.append(real_date)
 
     # get the number of days starting from the reference unit
@@ -215,7 +211,7 @@ def _get_overlap(cubes):
     """
     all_times = []
     for cube in cubes:
-        span = _datetime_to_int_days(cube, overlap=True)
+        span = _datetime_to_int_days(cube)
         start, stop = span[0], span[-1]
         all_times.append([start, stop])
     bounds = [range(b[0], b[-1] + 1) for b in all_times]
@@ -233,7 +229,7 @@ def _slice_cube(cube, t_1, t_2):
     of common time-data elements.
     """
     time_pts = [t for t in cube.coord('time').points]
-    converted_t = _datetime_to_int_days(cube, overlap=True)
+    converted_t = _datetime_to_int_days(cube)
     idxs = sorted([
         time_pts.index(ii) for ii, jj in zip(time_pts, converted_t)
         if t_1 <= jj <= t_2
