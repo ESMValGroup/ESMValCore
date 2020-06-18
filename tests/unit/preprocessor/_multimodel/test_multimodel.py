@@ -171,16 +171,10 @@ class Test(tests.Test):
         stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=None)
         self.assert_array_equal(stat_cube.data, self.cube1.data)
 
-    def test_datetime_to_int_days_overlap(self):
-        """Test _datetime_to_int_days."""
-        computed_dats = _datetime_to_int_days(self.cube1, overlap=True)
-        expected_dats = [0, 31]
-        self.assert_array_equal(computed_dats, expected_dats)
-
     def test_datetime_to_int_days_no_overlap(self):
         """Test _datetime_to_int_days."""
         computed_dats = _datetime_to_int_days(self.cube1)
-        expected_dats = [14, 45]
+        expected_dats = [0, 31]
         self.assert_array_equal(computed_dats, expected_dats)
 
     def test_assemble_overlap_data(self):
