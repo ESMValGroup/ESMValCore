@@ -192,7 +192,7 @@ def _align_yearly_axes(cube):
     """Perform a time-regridding operation to align time axes for yr data."""
     years = [cell.point.year for cell in cube.coord('time').cells()]
     # be extra sure that the first point is not in the previous year
-    if not 0 in np.diff(years):
+    if 0 not in np.diff(years):
         return regrid_time(cube, 'yr')
     else:
         return cube
