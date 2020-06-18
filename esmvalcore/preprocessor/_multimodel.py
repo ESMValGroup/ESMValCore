@@ -19,6 +19,7 @@ from functools import reduce
 import cf_units
 import iris
 import numpy as np
+from iris.exceptions import CoordinateNotFoundError
 
 logger = logging.getLogger(__name__)
 
