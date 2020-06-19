@@ -194,8 +194,7 @@ def _align_yearly_axes(cube):
     # be extra sure that the first point is not in the previous year
     if 0 not in np.diff(years):
         return regrid_time(cube, 'yr')
-    else:
-        return cube
+    return cube
 
 
 def _get_overlap(cubes):
