@@ -20,6 +20,8 @@ import cf_units
 import iris
 import numpy as np
 
+from ._time import regrid_time
+
 logger = logging.getLogger(__name__)
 
 
@@ -109,10 +111,12 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     if t_axis is None:
         times = template_cube.coord('time')
     else:
+        unit_name = template_cube.coord('time').units.name
+        tunits = cf_units.Unit(unit_name, calendar="standard")
         times = iris.coords.DimCoord(
             t_axis,
             standard_name='time',
-            units=template_cube.coord('time').units)
+            units=tunits)
 
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
@@ -164,9 +168,8 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
 
 def _datetime_to_int_days(cube):
     """Return list of int(days) converted from cube datetime cells."""
+    cube = _align_yearly_axes(cube)
     time_cells = [cell.point for cell in cube.coord('time').cells()]
-    time_unit = cube.coord('time').units.name
-    time_offset = _get_time_offset(time_unit)
 
     # extract date info
     real_dates = []
@@ -174,13 +177,24 @@ def _datetime_to_int_days(cube):
         # real_date resets the actual data point day
         # to the 1st of the month so that there are no
         # wrong overlap indices
-        # NOTE: this workaround is good only
-        # for monthly data
         real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
         real_dates.append(real_date)
 
+    # get the number of days starting from the reference unit
+    time_unit = cube.coord('time').units.name
+    time_offset = _get_time_offset(time_unit)
     days = [(date_obj - time_offset).days for date_obj in real_dates]
+
     return days
+
+
+def _align_yearly_axes(cube):
+    """Perform a time-regridding operation to align time axes for yr data."""
+    years = [cell.point.year for cell in cube.coord('time').cells()]
+    # be extra sure that the first point is not in the previous year
+    if 0 not in np.diff(years):
+        return regrid_time(cube, 'yr')
+    return cube
 
 
 def _get_overlap(cubes):
