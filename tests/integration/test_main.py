@@ -146,37 +146,57 @@ def test_recipes_list_do_not_admit_parameters():
             run()
 
 
-@patch('esmvalcore._main.Config.get_config_developer', new=wrapper(Config.get_config_developer))
+@patch(
+    'esmvalcore._main.Config.get_config_developer',
+    new=wrapper(Config.get_config_developer))
 def test_get_config_developer():
     """Test version command"""
     with SetArgs('esmvaltool', 'config', 'get_config_developer'):
         run()
 
 
-@patch('esmvalcore._main.Config.get_config_user', new=wrapper(Config.get_config_user))
+@patch(
+    'esmvalcore._main.Config.get_config_user',
+    new=wrapper(Config.get_config_user))
 def test_get_config_user():
     """Test version command"""
     with SetArgs('esmvaltool', 'config', 'get_config_user'):
         run()
 
 
-@patch('esmvalcore._main.Config.get_config_user', new=wrapper(Config.get_config_user))
+@patch(
+    'esmvalcore._main.Config.get_config_user',
+    new=wrapper(Config.get_config_user))
 def test_get_config_user_overwrite():
     """Test version command"""
-    with SetArgs('esmvaltool', 'config', 'get_config_user', '--overwrite=True'):
+    with SetArgs(
+            'esmvaltool', 'config', 'get_config_user', '--overwrite'):
         run()
 
 
-@patch('esmvalcore._main.Config.get_config_user', new=wrapper(Config.get_config_user))
+def test_get_config_user_target_path():
+    """Test version command"""
+    with SetArgs(
+            'esmvaltool', 'config', 'get_config_user', '--target-path=path'):
+        run()
+
+
+@patch(
+    'esmvalcore._main.Config.get_config_user',
+    new=wrapper(Config.get_config_user))
 def test_get_config_user_path():
     """Test version command"""
-    with SetArgs('esmvaltool', 'config', 'get-config-user', '--target_path=path'):
+    with SetArgs(
+            'esmvaltool', 'config', 'get-config-user', '--target_path=path'):
         run()
 
 
-@patch('esmvalcore._main.Config.get_config_user', new=wrapper(Config.get_config_user))
+@patch(
+    'esmvalcore._main.Config.get_config_user',
+    new=wrapper(Config.get_config_user))
 def test_get_config_user_bad_option_fails():
     """Test version command"""
-    with SetArgs('esmvaltool', 'config', 'get_config_user', '--bad_option=path'):
+    with SetArgs(
+            'esmvaltool', 'config', 'get_config_user', '--bad_option=path'):
         with pytest.raises(SystemExit):
             run()
