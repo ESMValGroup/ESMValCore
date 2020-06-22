@@ -130,7 +130,7 @@ for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:
 
 Please, bear in mind that this syntax can only be used in the ensemble tag.
 Also, note that the combination of multiple experiments and ensembles, like
-exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] has not been yet supported and will raise an error.
+exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
