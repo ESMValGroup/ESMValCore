@@ -173,14 +173,7 @@ def get_time_weights(cube):
     """
     time = cube.coord('time')
     time_thickness = time.bounds[..., 1] - time.bounds[..., 0]
-
-    # The weights need to match the dimensionality of the cube.
-    slices = [None for i in cube.shape]
-    coord_dim = cube.coord_dims('time')[0]
-    slices[coord_dim] = slice(None)
-    time_thickness = np.abs(time_thickness[tuple(slices)])
-    ones = np.ones_like(cube.data)
-    time_weights = time_thickness * ones
+    time_weights = time_thickness * da.ones_like(cube.data)
     return time_weights
 
 
