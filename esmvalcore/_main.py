@@ -351,6 +351,14 @@ class ESMValTool():
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
     import sys
+
+    # Workaroud to avoid using more for the output
+
+    def Display(lines, out):
+        text = "\n".join(lines) + "\n"
+        out.write(text)
+    fire.core.Display = Display
+
     try:
         fire.Fire(ESMValTool())
     except fire.core.FireExit as ex:
