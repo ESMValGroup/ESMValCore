@@ -222,7 +222,7 @@ class Recipes():
                 f'Recipe {recipe} not found. To list all available recipes, '
                 'execute "esmvaltool list"')
         logger.info('Copying installed recipe to the current folder...')
-        shutil.copy(installed_recipe, recipe)
+        shutil.copy(installed_recipe, os.path.basename(recipe))
         logger.info('Recipe %s successfully copied', recipe)
 
 
@@ -354,16 +354,16 @@ def run():
 
     # Workaroud to avoid using more for the output
 
-    def Display(lines, out):
+    def display(lines, out):
         text = "\n".join(lines) + "\n"
         out.write(text)
-    fire.core.Display = Display
+    fire.core.Display = display
 
     try:
         fire.Fire(ESMValTool())
     except fire.core.FireExit as ex:
         sys.exit(ex.code)
-    except Exception:  # noqa
+    except Exception as ex:  # noqa
         if not logger.handlers:
             # Add a logging handler if main failed to do so.
             logging.basicConfig()

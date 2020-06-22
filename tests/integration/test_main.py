@@ -18,6 +18,7 @@ def wrapper(f):
     def empty(*args, **kwargs):
         if kwargs:
             raise ValueError(f'Parameters not supported: {kwargs}')
+        return True
     return empty
 
 
@@ -170,10 +171,13 @@ def test_get_config_user():
 def test_get_config_user_overwrite():
     """Test version command"""
     with SetArgs(
-            'esmvaltool', 'config', 'get_config_user', '--overwrite'):
+            'esmvaltool', 'config', 'get_config_user', '--overwrite=True'):
         run()
 
 
+@patch(
+    'esmvalcore._main.Config.get_config_user',
+    new=wrapper(Config.get_config_user))
 def test_get_config_user_target_path():
     """Test version command"""
     with SetArgs(
