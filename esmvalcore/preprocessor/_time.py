@@ -179,9 +179,10 @@ def get_time_weights(cube):
     coord_dim = cube.coord_dims('time')[0]
     slices[coord_dim] = slice(None)
     time_thickness = np.abs(time_thickness[tuple(slices)])
-    ones = np.ones_like(cube.data)
-    time_weights = time_thickness * ones
-    return time_weights
+    return time_thickness
+    #ones = da.ones_like(cube.data)
+    #time_weights = time_thickness * ones
+    #return time_weights
 
 
 def daily_statistics(cube, operator='mean'):
@@ -404,7 +405,12 @@ def climate_statistics(cube, operator='mean', period='full'):
         operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
             time_weights = get_time_weights(cube)
-            cube = cube.collapsed('time',
+            if time_weights.min() == time_weights.max():
+                # No weighting needed.
+                cube = cube.collapsed('time',
+                                      operator_method)
+            else:
+               cube = cube.collapsed('time',
                                   operator_method,
                                   weights=time_weights)
         else:
