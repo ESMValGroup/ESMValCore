@@ -102,8 +102,8 @@ Here it is an example concatenating the `historical` experiment with `rcp85`
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: [historical, rcp85], ensemble: r1i1p1, start_year: 2001, end_year: 2004}
 
-It is also possible to define the ensemble as a list, although it is useful only
-case the two experiments have different ensemble names
+It is also possible to define the ensemble as a list when the two experiments have different ensemble names.
+In this case, the specified datasets are concatenated into a single cube:
 
 .. code-block:: yaml
 
@@ -129,9 +129,8 @@ for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: "r(1:5)i(1:2)p1", start_year: 2001, end_year: 2004}
 
 Please, bear in mind that this syntax can only be used in the ensemble tag.
-Also, note that the combination of multiple experiments and ensembles has not been yet supported.
-For example running a recipe with exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] may generate a dataset
-that contains only the r2i1p1 ensemble for rcp85, skipping the ensemble r3i1p1.
+Also, note that the combination of multiple experiments and ensembles, like
+exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] has not been yet supported and will raise an error.
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
