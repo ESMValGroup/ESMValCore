@@ -3,6 +3,7 @@
 import copy
 import unittest
 
+import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
@@ -18,6 +19,7 @@ from esmvalcore.preprocessor._time import (annual_statistics, anomalies,
                                            daily_statistics,
                                            decadal_statistics, extract_month,
                                            extract_season, extract_time,
+                                           get_time_weights,
                                            monthly_statistics, regrid_time,
                                            seasonal_statistics,
                                            timeseries_filter)
@@ -1093,6 +1095,75 @@ def test_anomalies(period, reference, standardize=False):
         np.array([[zeros, anom], [anom, zeros]])
     )
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
+
+
+def _make_cube():
+    """Make a test cube."""
+    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    data2 = np.ma.ones((2, 3, 2, 2))
+    data3 = np.ma.ones((4, 3, 2, 2))
+    mask3 = np.full((4, 3, 2, 2), False)
+    mask3[0, 0, 0, 0] = True
+    data3 = np.ma.array(data3, mask=mask3)
+
+    time = iris.coords.DimCoord([15, 45],
+                                standard_name='time',
+                                bounds=[[1., 30.], [30., 60.]],
+                                units=Unit(
+                                    'days since 1950-01-01',
+                                    calendar='gregorian'))
+    zcoord = iris.coords.DimCoord([0.5, 5., 50.],
+                                  standard_name='air_pressure',
+                                  long_name='air_pressure',
+                                  bounds=[[0., 2.5], [2.5, 25.],
+                                          [25., 250.]],
+                                  units='m',
+                                  attributes={'positive': 'down'})
+    lons = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='longitude',
+                                long_name='longitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_east',
+                                coord_system=coord_sys)
+    lats = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='latitude',
+                                long_name='latitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_north',
+                                coord_system=coord_sys)
+    coords_spec4 = [(time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+    cube1 = iris.cube.Cube(data2, dim_coords_and_dims=coords_spec4)
+    return cube1
+
+
+def test_get_time_weights():
+    """Test instance dask.array for get_time_weights."""
+    cube = _make_cube()
+    weights = get_time_weights(cube)
+    assert isinstance(weights, da.core.Array)
+    assert_array_equal(weights.shape, (2, 3, 2, 2))
+
+
+def test_time_weights():
+    """Test time weights vs an old fixed implementation."""
+    cube = _make_cube()
+    time = cube.coord('time')
+    time_thickness = time.bounds[..., 1] - time.bounds[..., 0]
+
+    # The weights need to match the dimensionality of the cube.
+    slices = [None for i in cube.shape]
+    coord_dim = cube.coord_dims('time')[0]
+    slices[coord_dim] = slice(None)
+    time_thickness = np.abs(time_thickness[tuple(slices)])
+    ones = np.ones_like(cube.data)
+    time_weights = time_thickness * ones
+    operator_method = getattr(iris.analysis, "MEAN")
+    expected_cube = cube.collapsed('time',
+                                   operator_method,
+                                   weights=time_weights)
+    computed_cube = climate_statistics(cube, operator='mean', period='full')
+    assert expected_cube.data.shape == computed_cube.data.shape
+    assert_array_equal(expected_cube.data, computed_cube.data)
 
 
 if __name__ == '__main__':
