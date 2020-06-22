@@ -13,13 +13,14 @@ It operates on different (time) spans:
 """
 
 import logging
+import re
 from datetime import datetime
 from functools import partial, reduce
 
 import cf_units
 import iris
 import numpy as np
-from scipy.stats import mstats
+import scipy
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +69,7 @@ def _quantile(data, axis, quantile):
     if shape:
         data = data.reshape([np.prod(shape), data.shape[-1]])
     # Perform the quantile calculation.
-    result = mstats.mquantiles(data, quantile, axis=-1, alphap=1, betap=1)
-    result = np.ma.MaskedArray(result)
+    result = scipy.stats.mstats.mquantiles(data, quantile, axis=-1, alphap=1, betap=1)
     # Ensure to unflatten any leading dimensions.
     if shape:
         result = result.reshape(shape)
@@ -95,8 +95,9 @@ def _compute_statistic(data, statistic_name):
         statistic_function = np.ma.max
     elif statistic_name == 'min':
         statistic_function = np.ma.min
-    elif statistic_name.startswith('p'):
-        quantile = float('.' + statistic_name[1:])
+    elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic_name):
+        # percentiles between p0 and p99.99999...
+        quantile = float(statistic_name[1:]) / 100
         statistic_function = partial(_quantile, quantile=quantile)
     else:
         raise NotImplementedError
@@ -358,14 +359,14 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         computation;
         cube attribute of product is the data cube for computing the stats.
     span: str
-        overlap or full; if overlap stats are computed on common time-span;
-        if full stats are computed on full time spans, ignoring missing data.
+        overlap or full; if overlap, statitsticss are computed on common time-
+        span; if full, statistics are computed on full time spans, ignoring
+        missing data.
     output_products: dict
         dictionary of output products.
     statistics: str
         statistical measure to be computed. Available options: mean, median,
-        max, min, std, or pXX (for percentile XX; p995 will be interpreted as
-        the 99.5-th percentile).
+        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
     Returns
     -------
     list
