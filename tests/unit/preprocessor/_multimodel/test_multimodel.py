@@ -9,7 +9,7 @@ from cf_units import Unit
 import tests
 from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (
-    _assemble_full_data, _assemble_overlap_data, _compute_statistic,
+    _assemble_full_data, _assemble_overlap_data, _compute_statistic, _set_common_calendar,
     _datetime_to_int_days, _get_overlap, _plev_fix, _put_in_cube, _slice_cube)
 
 
@@ -24,12 +24,12 @@ class Test(tests.Test):
         mask3[0, 0, 0, 0] = True
         data3 = np.ma.array(data3, mask=mask3)
 
-        time = iris.coords.DimCoord([15, 45],
+        time = iris.coords.DimCoord([14, 45],
                                     standard_name='time',
                                     bounds=[[1., 30.], [30., 60.]],
                                     units=Unit('days since 1850-01-01',
                                                calendar='gregorian'))
-        time2 = iris.coords.DimCoord([45, 75, 105, 135],
+        time2 = iris.coords.DimCoord([45, 73, 104, 134],
                                      standard_name='time',
                                      bounds=[
                                          [30., 60.],
@@ -45,7 +45,7 @@ class Test(tests.Test):
                                         units=Unit(
                                             'days since 1850-01-01',
                                             calendar='gregorian'))
-        yr_time = iris.coords.DimCoord([15, 410],
+        yr_time = iris.coords.DimCoord([14., 410.],
                                        standard_name='time',
                                        bounds=[[1., 30.], [395., 425.]],
                                        units=Unit('days since 1850-01-01',
@@ -204,10 +204,15 @@ class Test(tests.Test):
         expected_data = np.ma.ones((3, 2, 2))
         self.assert_array_equal(expected_data, fixed_data)
 
+    def test_set_common_calendar(self):
+        """Test set common calenar."""
+        cubes = [self.cube1, self.cube2]
+        # TODO: complete this test
+
     def test_raise_daily(self):
         """Test raise for daily input data."""
         with self.assertRaises(ValueError):
-            _datetime_to_int_days(self.cube1_day)
+            _set_common_calendar([self.cube1_day])
 
 
 

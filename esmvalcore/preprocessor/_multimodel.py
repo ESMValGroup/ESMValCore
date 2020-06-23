@@ -158,8 +158,9 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     return stats_cube
 
 
-def _datetime_to_int_days(cube):
-    """Return list of int(days) with respect to a common reference.
+def _set_common_calendar(cubes):
+    """
+    Make sure all cubes' use the same standard calendar.
 
     Cubes may have different calendars. This function extracts the date
     information from the cube and re-constructs a default calendar,
@@ -170,25 +171,42 @@ def _datetime_to_int_days(cube):
     Doesn't work for (sub)daily data, because different calendars may have
     different number of days in the year.
     """
-    # Extract date info from cube
-    years = [cell.point.year for cell in cube.coord('time').cells()]
-    months = [cell.point.month for cell in cube.coord('time').cells()]
+    # The default time unit
+    t_unit = cf_units.Unit("days since 1850-01-01", calendar="standard")
 
-    # Reconstruct default calendar
-    if not 0 in np.diff(years):
-        # yearly data
-        standard_dates = [datetime(year, 7, 1) for year in years]
-    elif not 0 in np.diff(months):
-        # monthly data
-        standard_dates = [datetime(year, month, 15)
-                          for year, month in zip(years, months)]
-    else:
-        # (sub)daily data
-        raise ValueError("Multimodel only supports yearly or monthly data")
+    for cube in cubes:
+        # Extract date info from cube
+        years = [cell.point.year for cell in cube.coord('time').cells()]
+        months = [cell.point.month for cell in cube.coord('time').cells()]
 
-    # Get the number of days starting from the reference
-    reference_date = datetime(1850, 1, 1)
-    return [(date - reference_date).days for date in standard_dates]
+        # Reconstruct default calendar
+        if not 0 in np.diff(years):
+            # yearly data
+            dates = [datetime(year, 7, 1) for year in years]
+
+        elif not 0 in np.diff(months):
+            # monthly data
+            dates = [datetime(year, month, 15)
+                     for year, month in zip(years, months)]
+        else:
+            # (sub)daily data
+            raise ValueError("Multimodel only supports yearly or monthly data")
+
+        # Update the cubes' time coordinate (both point values and the units!)
+        cube.coord('time').points = [t_unit.date2num(date) for date in dates]
+        cube.coord('time').units = t_unit
+        # Reset bounds
+        cube.coord('time').bounds = None
+        cube.coord('time').guess_bounds()
+        # Remove aux coords that may differ
+        for auxcoord in cube.aux_coords:
+            if auxcoord.long_name in ['day_of_month', 'day_of_year']:
+                cube.remove_coord(auxcoord)
+
+
+def _datetime_to_int_days(cube):
+    """Return the cube's time point values as list of integers."""
+    return cube.coord('time').points.astype(int).tolist()
 
 
 def _get_overlap(cubes):
@@ -352,6 +370,9 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     else:
         cubes = products
         statistic_products = {}
+
+    # Make cubes share the same calendar, so time points are comparable
+    _set_common_calendar(cubes)
 
     if span == 'overlap':
         # check if we have any time overlap
