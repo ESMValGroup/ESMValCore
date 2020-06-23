@@ -204,13 +204,13 @@ def _set_common_calendar(cubes):
 def _get_time_intersection(cubes):
     """Return bounds of the intersection of all cubes' time arrays."""
     time_spans = [cube.coord('time').points for cube in cubes]
-    return reduce(np.intersect1d, time_spans).astype(int)
+    return reduce(np.intersect1d, time_spans)
 
 
 def _get_time_union(cubes):
     """Return the union of all cubes' time arrays."""
     time_spans = [cube.coord('time').points for cube in cubes]
-    return reduce(np.union1d, time_spans).astype(int)
+    return reduce(np.union1d, time_spans)
 
 
 def _get_subset(cube, tmin, tmax):
@@ -255,48 +255,42 @@ def _assemble_overlap_data(cubes, statistic):
         time_data = [cube.data[i] for cube in cubelist]
         stats_data[i] = _compute_statistic(time_data, statistic)
 
-    template_cube = cubelist[0]
-    stats_cube = _put_in_cube(template_cube, stats_data, statistic, new_times)
+    template = cubelist[0]
+    stats_cube = _put_in_cube(template, stats_data, statistic, new_times)
     return stats_cube
 
 
 def _assemble_full_data(cubes, statistic):
     """Get statistical data in iris cubes for FULL."""
-    # Gather the unique time points in the union of all cubes
-    time_points = _get_time_union(cubes)
-    time_axis = [float(fl) for fl in time_points]
+    # Gather time points in the union of all cubes
+    new_times = _get_time_union(cubes).tolist()
+    n_times = len(new_times)
 
-    # new big time-slice array shape
-    new_shape = [len(time_axis)] + list(cubes[0].shape[1:])
+    # Target array to populate with computed statistics
+    new_shape = [n_times] + list(cubes[0].shape[1:])
+    stats_data = np.ma.zeros(new_shape)
 
     # assemble an array to hold all time data
     # for all cubes; shape is (ncubes,(plev), lat, lon)
     new_arr = np.ma.empty([len(cubes)] + list(new_shape[1:]))
 
-    # data array for stats computation
-    stats_dats = np.ma.zeros(new_shape)
-
-    # assemble indices list to chop new_arr on
-    indices_list = []
-
     # empty data array to hold time slices
     empty_arr = np.ma.empty(new_shape)
 
-    # loop through cubes and populate empty_arr with points
+    # Prepare a list mapping the cubes' times to the indices of new_times
+    indices_list = []
     for cube in cubes:
-        time_redone = cube.coord('time').points.astype(int).tolist()
-        oidx = [time_axis.index(s) for s in time_redone]
+        oidx = [new_times.index(t) for t in cube.coord('time').points]
         indices_list.append(oidx)
-    for i in range(new_shape[0]):
+
+    for i in range(n_times):
         # hold time slices only
-        new_datas_array = _full_time_slice(cubes, empty_arr, indices_list,
+        time_data = _full_time_slice(cubes, empty_arr, indices_list,
                                            new_arr, i)
-        # list to hold time slices
-        time_data = []
-        for j in range(len(cubes)):
-            time_data.append(new_datas_array[j])
-        stats_dats[i] = _compute_statistic(time_data, statistic)
-    stats_cube = _put_in_cube(cubes[0], stats_dats, statistic, time_axis)
+        stats_data[i] = _compute_statistic(time_data, statistic)
+
+    template = cubes[0]
+    stats_cube = _put_in_cube(template, stats_data, statistic, new_times)
     return stats_cube
 
 
