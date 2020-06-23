@@ -10,7 +10,7 @@ import tests
 from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (
     _assemble_full_data, _assemble_overlap_data, _compute_statistic, _set_common_calendar,
-    _datetime_to_int_days, _get_overlap, _plev_fix, _put_in_cube, _slice_cube)
+    _get_overlap, _plev_fix, _put_in_cube, _slice_cube)
 
 
 class Test(tests.Test):
@@ -164,12 +164,6 @@ class Test(tests.Test):
         cube_data = np.ma.ones((2, 3, 2, 2))
         stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=None)
         self.assert_array_equal(stat_cube.data, self.cube1.data)
-
-    def test_datetime_to_int_days(self):
-        """Test _datetime_to_int_days."""
-        computed_dats = _datetime_to_int_days(self.cube1)
-        expected_dats = [14, 45]
-        self.assert_array_equal(computed_dats, expected_dats)
 
     def test_assemble_overlap_data(self):
         """Test overlap data."""

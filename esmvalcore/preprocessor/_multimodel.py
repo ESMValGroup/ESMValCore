@@ -204,24 +204,19 @@ def _set_common_calendar(cubes):
                 cube.remove_coord(auxcoord)
 
 
-def _datetime_to_int_days(cube):
-    """Return the cube's time point values as list of integers."""
-    return cube.coord('time').points.astype(int).tolist()
-
-
 def _get_overlap(cubes):
     """Return bounds of the intersection of all cubes' time arrays."""
-    time_spans = [_datetime_to_int_days(cube) for cube in cubes]
-    overlap = reduce(np.intersect1d, time_spans)
+    time_spans = [cube.coord('time').points for cube in cubes]
+    overlap = reduce(np.intersect1d, time_spans).astype(int)
     if len(overlap) > 1:
         return [overlap[0], overlap[-1]]
-    return
+    return None
 
 
 def _get_union(cubes):
     """Return the union of all cubes' time arrays."""
-    time_spans = [_datetime_to_int_days(cube) for cube in cubes]
-    return reduce(np.union1d, time_spans)
+    time_spans = [cube.coord('time').points for cube in cubes]
+    return reduce(np.union1d, time_spans).astype(int)
 
 
 def _slice_cube(cube, t_1, t_2):
@@ -232,7 +227,7 @@ def _slice_cube(cube, t_1, t_2):
     of common time-data elements.
     """
     time_pts = [t for t in cube.coord('time').points]
-    converted_t = _datetime_to_int_days(cube)
+    converted_t = cube.coord('time').points.astype(int).tolist()
     idxs = sorted([
         time_pts.index(ii) for ii, jj in zip(time_pts, converted_t)
         if t_1 <= jj <= t_2
@@ -303,7 +298,7 @@ def _assemble_full_data(cubes, statistic):
 
     # loop through cubes and populate empty_arr with points
     for cube in cubes:
-        time_redone = _datetime_to_int_days(cube)
+        time_redone = cube.coord('time').points.astype(int).tolist()
         oidx = [time_axis.index(s) for s in time_redone]
         indices_list.append(oidx)
     for i in range(new_shape[0]):
