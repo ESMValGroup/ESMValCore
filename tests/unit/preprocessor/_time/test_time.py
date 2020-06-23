@@ -254,7 +254,19 @@ class TestClimatology(tests.Test):
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([120.])
+        expected = np.array([4.])
+        assert_array_equal(result.data, expected)
+
+    def test_time_sum_weighted(self):
+        """Test for time sum of a 1D field."""
+        data = np.ones((3))
+        data[1] = 2.0
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[10., 20.], [30., 60.], [73., 77.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='sum')
+        expected = np.array([74.])
         assert_array_equal(result.data, expected)
 
     def test_time_sum_uneven(self):
