@@ -10,7 +10,7 @@ import tests
 from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (
     _assemble_full_data, _assemble_overlap_data, _compute_statistic, _set_common_calendar,
-    _get_overlap, _plev_fix, _put_in_cube, _get_slice_parameters)
+    _get_time_intersection, _plev_fix, _put_in_cube)
 
 
 class Test(tests.Test):
@@ -34,6 +34,14 @@ class Test(tests.Test):
                                      bounds=[
                                          [30., 60.],
                                          [60., 90.],
+                                         [90., 120.],
+                                         [120., 150.]],
+                                     units=Unit(
+                                         'days since 1850-01-01',
+                                         calendar='gregorian'))
+        time3 = iris.coords.DimCoord([104, 134],
+                                     standard_name='time',
+                                     bounds=[
                                          [90., 120.],
                                          [120., 150.]],
                                      units=Unit(
@@ -85,6 +93,9 @@ class Test(tests.Test):
 
         coords_spec5 = [(time2, 0), (zcoord, 1), (lats, 2), (lons, 3)]
         self.cube2 = iris.cube.Cube(data3, dim_coords_and_dims=coords_spec5)
+
+        coords_spec6 = [(time3, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube3 = iris.cube.Cube(data2, dim_coords_and_dims=coords_spec6)
 
         coords_spec4_yr = [(yr_time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
         self.cube1_yr = iris.cube.Cube(data2,
@@ -168,7 +179,7 @@ class Test(tests.Test):
     def test_assemble_overlap_data(self):
         """Test overlap data."""
         comp_ovlap_mean = _assemble_overlap_data([self.cube1, self.cube1],
-                                                 [14, 45], "mean")
+                                                 "mean")
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(comp_ovlap_mean.data, expected_ovlap_mean)
 
@@ -180,16 +191,11 @@ class Test(tests.Test):
         expected_full_mean.mask[1] = False
         self.assert_array_equal(comp_full_mean.data, expected_full_mean)
 
-    def test_get_slice_parameters(self):
-        """Test slice cube."""
-        comp_slice = _get_slice_parameters(self.cube1, 14, 45)
-        self.assert_array_equal([0, 1], comp_slice)
-
-    def test_get_overlap(self):
+    def test_get_time_intersection(self):
         """Test get overlap."""
-        full_ovlp = _get_overlap([self.cube1, self.cube1])
+        full_ovlp = _get_time_intersection([self.cube1, self.cube1])
         self.assert_array_equal([14, 45], full_ovlp)
-        no_ovlp = _get_overlap([self.cube1, self.cube2])
+        no_ovlp = _get_time_intersection([self.cube1, self.cube3])
         np.testing.assert_equal(None, no_ovlp)
 
     def test_plev_fix(self):

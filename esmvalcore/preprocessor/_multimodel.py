@@ -101,7 +101,6 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     if t_axis is None:
         times = template_cube.coord('time')
     else:
-        unit_name = template_cube.coord('time').units.name
         tunits = cf_units.Unit("days since 1850-01-01", calendar="standard")
         times = iris.coords.DimCoord(t_axis,
                                      standard_name='time',
@@ -202,26 +201,22 @@ def _set_common_calendar(cubes):
                 cube.remove_coord(auxcoord)
 
 
-def _get_overlap(cubes):
+def _get_time_intersection(cubes):
     """Return bounds of the intersection of all cubes' time arrays."""
     time_spans = [cube.coord('time').points for cube in cubes]
-    overlap = reduce(np.intersect1d, time_spans).astype(int)
-    if len(overlap) > 1:
-        return [overlap[0], overlap[-1]]
-    return None
+    return reduce(np.intersect1d, time_spans).astype(int)
 
 
-def _get_union(cubes):
+def _get_time_union(cubes):
     """Return the union of all cubes' time arrays."""
     time_spans = [cube.coord('time').points for cube in cubes]
     return reduce(np.union1d, time_spans).astype(int)
 
 
-def _get_slice_parameters(cube, tmin, tmax):
-    """Get the lower and upper array indices for a given time interval."""
+def _get_subset(cube, tmin, tmax):
     time = cube.coord('time').points
     idxs = np.argwhere((time >= tmin) & (time <= tmax))
-    return [idxs.min(), idxs.max()]
+    return cube[idxs.min():idxs.max()+1]
 
 
 def _full_time_slice(cubes, ndat, indices, ndatarr, t_idx):
@@ -240,33 +235,35 @@ def _full_time_slice(cubes, ndat, indices, ndatarr, t_idx):
     return ndatarr
 
 
-def _assemble_overlap_data(cubes, interval, statistic):
+def _assemble_overlap_data(cubes, statistic):
     """Get statistical data in iris cubes for OVERLAP."""
-    start, stop = interval
-    sl_1, sl_2 = _get_slice_parameters(cubes[0], start, stop)
-    stats_dats = np.ma.zeros(cubes[0].data[sl_1:sl_2 + 1].shape)
+    # Gather overlapping time points
+    new_times = _get_time_intersection(cubes).tolist()
+    tmin = min(new_times)
+    tmax = max(new_times)
+    n_times = len(new_times)
 
-    # keep this outside the following loop
-    # this speeds up the code by a factor of 15
-    indices = [_get_slice_parameters(cube, start, stop) for cube in cubes]
+    # Target array to populate with computed statistics
+    new_shape = [n_times] + list(cubes[0].shape[1:])
+    stats_data = np.ma.zeros(new_shape)
 
-    for i in range(stats_dats.shape[0]):
-        time_data = [
-            cube.data[indx[0]:indx[1] + 1][i]
-            for cube, indx in zip(cubes, indices)
-        ]
-        stats_dats[i] = _compute_statistic(time_data, statistic)
-    stats_cube = _put_in_cube(cubes[0][sl_1:sl_2 + 1],
-                              stats_dats,
-                              statistic,
-                              t_axis=None)
+    # Prepare a list of cubes with matching times (so far just pointers)
+    # Keep this outside the following loop; 15x speedup (still true?)
+    cubelist = [_get_subset(cube, tmin, tmax) for cube in cubes]
+
+    for i in range(n_times):
+        time_data = [cube.data[i] for cube in cubelist]
+        stats_data[i] = _compute_statistic(time_data, statistic)
+
+    template_cube = cubelist[0]
+    stats_cube = _put_in_cube(template_cube, stats_data, statistic, new_times)
     return stats_cube
 
 
 def _assemble_full_data(cubes, statistic):
     """Get statistical data in iris cubes for FULL."""
     # Gather the unique time points in the union of all cubes
-    time_points = _get_union(cubes)
+    time_points = _get_time_union(cubes)
     time_axis = [float(fl) for fl in time_points]
 
     # new big time-slice array shape
@@ -360,8 +357,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
 
     if span == 'overlap':
         # check if we have any time overlap
-        interval = _get_overlap(cubes)
-        if interval is None:
+        overlap = _get_time_intersection(cubes)
+        if len(overlap) <= 1:
             logger.info("Time overlap between cubes is none or a single point."
                         "check datasets: will not compute statistics.")
             return products
@@ -377,7 +374,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     for statistic in statistics:
         # Compute statistic
         if span == 'overlap':
-            statistic_cube = _assemble_overlap_data(cubes, interval, statistic)
+            statistic_cube = _assemble_overlap_data(cubes, statistic)
         elif span == 'full':
             statistic_cube = _assemble_full_data(cubes, statistic)
         statistic_cube.data = np.ma.array(statistic_cube.data,
