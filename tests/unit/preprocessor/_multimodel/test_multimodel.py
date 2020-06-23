@@ -29,16 +29,22 @@ class Test(tests.Test):
                                     bounds=[[1., 30.], [30., 60.]],
                                     units=Unit('days since 1850-01-01',
                                                calendar='gregorian'))
-        time2 = iris.coords.DimCoord([1., 2., 3., 4.],
+        time2 = iris.coords.DimCoord([45, 75, 105, 135],
                                      standard_name='time',
                                      bounds=[
-                                         [0.5, 1.5],
-                                         [1.5, 2.5],
-                                         [2.5, 3.5],
-                                         [3.5, 4.5],
-                                     ],
-                                     units=Unit('days since 1850-01-01',
-                                                calendar='gregorian'))
+                                         [30., 60.],
+                                         [60., 90.],
+                                         [90., 120.],
+                                         [120., 150.]],
+                                     units=Unit(
+                                         'days since 1850-01-01',
+                                         calendar='gregorian'))
+        day_time = iris.coords.DimCoord([1., 2.],
+                                        standard_name='time',
+                                        bounds=[[0.5, 1.5], [1.5, 2.5]],
+                                        units=Unit(
+                                            'days since 1850-01-01',
+                                            calendar='gregorian'))
         yr_time = iris.coords.DimCoord([15, 410],
                                        standard_name='time',
                                        bounds=[[1., 30.], [395., 425.]],
@@ -87,6 +93,10 @@ class Test(tests.Test):
         coords_spec5_yr = [(yr_time2, 0), (zcoord, 1), (lats, 2), (lons, 3)]
         self.cube2_yr = iris.cube.Cube(data3,
                                        dim_coords_and_dims=coords_spec5_yr)
+        coords_spec_day = [(day_time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube1_day = iris.cube.Cube(data2,
+                                        dim_coords_and_dims=coords_spec_day)
+
 
     def test_compute_statistic(self):
         """Test statistic."""
@@ -101,9 +111,9 @@ class Test(tests.Test):
     def test_compute_full_statistic_mon_cube(self):
         data = [self.cube1, self.cube2]
         stats = multi_model_statistics(data, 'full', ['mean'])
-        expected_full_mean = np.ma.ones((2, 3, 2, 2))
-        expected_full_mean.mask = np.zeros((2, 3, 2, 2))
-        expected_full_mean.mask[1] = True
+        expected_full_mean = np.ma.ones((5, 3, 2, 2))
+        expected_full_mean.mask = np.ones((5, 3, 2, 2))
+        expected_full_mean.mask[1] = False
         self.assert_array_equal(stats['mean'].data, expected_full_mean)
 
     def test_compute_full_statistic_yr_cube(self):
@@ -155,36 +165,36 @@ class Test(tests.Test):
         stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=None)
         self.assert_array_equal(stat_cube.data, self.cube1.data)
 
-    def test_datetime_to_int_days_no_overlap(self):
+    def test_datetime_to_int_days(self):
         """Test _datetime_to_int_days."""
         computed_dats = _datetime_to_int_days(self.cube1)
-        expected_dats = [0, 31]
+        expected_dats = [14, 45]
         self.assert_array_equal(computed_dats, expected_dats)
 
     def test_assemble_overlap_data(self):
         """Test overlap data."""
         comp_ovlap_mean = _assemble_overlap_data([self.cube1, self.cube1],
-                                                 [0, 31], "mean")
+                                                 [14, 45], "mean")
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(comp_ovlap_mean.data, expected_ovlap_mean)
 
     def test_assemble_full_data(self):
         """Test full data."""
         comp_full_mean = _assemble_full_data([self.cube1, self.cube2], "mean")
-        expected_full_mean = np.ma.ones((2, 3, 2, 2))
-        expected_full_mean.mask = np.zeros((2, 3, 2, 2))
-        expected_full_mean.mask[1] = True
+        expected_full_mean = np.ma.ones((5, 3, 2, 2))
+        expected_full_mean.mask = np.ones((5, 3, 2, 2))
+        expected_full_mean.mask[1] = False
         self.assert_array_equal(comp_full_mean.data, expected_full_mean)
 
     def test_slice_cube(self):
         """Test slice cube."""
-        comp_slice = _slice_cube(self.cube1, 0, 31)
+        comp_slice = _slice_cube(self.cube1, 14, 45)
         self.assert_array_equal([0, 1], comp_slice)
 
     def test_get_overlap(self):
         """Test get overlap."""
         full_ovlp = _get_overlap([self.cube1, self.cube1])
-        self.assert_array_equal([0, 31], full_ovlp)
+        self.assert_array_equal([14, 45], full_ovlp)
         no_ovlp = _get_overlap([self.cube1, self.cube2])
         np.testing.assert_equal(None, no_ovlp)
 
@@ -193,6 +203,12 @@ class Test(tests.Test):
         fixed_data = _plev_fix(self.cube2.data, 1)
         expected_data = np.ma.ones((3, 2, 2))
         self.assert_array_equal(expected_data, fixed_data)
+
+    def test_raise_daily(self):
+        """Test raise for daily input data."""
+        with self.assertRaises(ValueError):
+            _datetime_to_int_days(self.cube1_day)
+
 
 
 if __name__ == '__main__':

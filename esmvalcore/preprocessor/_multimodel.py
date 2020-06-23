@@ -159,32 +159,36 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
 
 
 def _datetime_to_int_days(cube):
-    """Return list of int(days) converted from cube datetime cells."""
-    cube = _align_yearly_axes(cube)
-    time_cells = [cell.point for cell in cube.coord('time').cells()]
+    """Return list of int(days) with respect to a common reference.
 
-    # extract date info
-    real_dates = []
-    for date_obj in time_cells:
-        # real_date resets the actual data point day
-        # to the 1st of the month so that there are no
-        # wrong overlap indices
-        real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
-        real_dates.append(real_date)
+    Cubes may have different calendars. This function extracts the date
+    information from the cube and re-constructs a default calendar,
+    resetting the actual dates to the 15th of the month or 1st of july for
+    yearly data (consistent with `regrid_time`), so that there are no
+    mismatches in the time arrays.
 
-    # get the number of days starting from the reference unit
-    reference_date = datetime(1850, 1, 1)
-    integer_days = [(date - reference_date).days for date in real_dates]
-    return integer_days
-
-
-def _align_yearly_axes(cube):
-    """Perform a time-regridding operation to align time axes for yr data."""
+    Doesn't work for (sub)daily data, because different calendars may have
+    different number of days in the year.
+    """
+    # Extract date info from cube
     years = [cell.point.year for cell in cube.coord('time').cells()]
-    # be extra sure that the first point is not in the previous year
-    if 0 not in np.diff(years):
-        return regrid_time(cube, 'yr')
-    return cube
+    months = [cell.point.month for cell in cube.coord('time').cells()]
+
+    # Reconstruct default calendar
+    if not 0 in np.diff(years):
+        # yearly data
+        standard_dates = [datetime(year, 7, 1) for year in years]
+    elif not 0 in np.diff(months):
+        # monthly data
+        standard_dates = [datetime(year, month, 15)
+                          for year, month in zip(years, months)]
+    else:
+        # (sub)daily data
+        raise ValueError("Multimodel only supports yearly or monthly data")
+
+    # Get the number of days starting from the reference
+    reference_date = datetime(1850, 1, 1)
+    return [(date - reference_date).days for date in standard_dates]
 
 
 def _get_overlap(cubes):
