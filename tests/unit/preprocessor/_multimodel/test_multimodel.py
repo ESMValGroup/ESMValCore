@@ -10,7 +10,7 @@ import tests
 from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (
     _assemble_full_data, _assemble_overlap_data, _compute_statistic, _set_common_calendar,
-    _get_overlap, _plev_fix, _put_in_cube, _slice_cube)
+    _get_overlap, _plev_fix, _put_in_cube, _get_slice_parameters)
 
 
 class Test(tests.Test):
@@ -180,9 +180,9 @@ class Test(tests.Test):
         expected_full_mean.mask[1] = False
         self.assert_array_equal(comp_full_mean.data, expected_full_mean)
 
-    def test_slice_cube(self):
+    def test_get_slice_parameters(self):
         """Test slice cube."""
-        comp_slice = _slice_cube(self.cube1, 14, 45)
+        comp_slice = _get_slice_parameters(self.cube1, 14, 45)
         self.assert_array_equal([0, 1], comp_slice)
 
     def test_get_overlap(self):

@@ -20,8 +20,6 @@ import cf_units
 import iris
 import numpy as np
 
-from ._time import regrid_time
-
 logger = logging.getLogger(__name__)
 
 
@@ -219,20 +217,11 @@ def _get_union(cubes):
     return reduce(np.union1d, time_spans).astype(int)
 
 
-def _slice_cube(cube, t_1, t_2):
-    """
-    Efficient slicer.
-
-    Simple cube data slicer on indices
-    of common time-data elements.
-    """
-    time_pts = [t for t in cube.coord('time').points]
-    converted_t = cube.coord('time').points.astype(int).tolist()
-    idxs = sorted([
-        time_pts.index(ii) for ii, jj in zip(time_pts, converted_t)
-        if t_1 <= jj <= t_2
-    ])
-    return [idxs[0], idxs[-1]]
+def _get_slice_parameters(cube, tmin, tmax):
+    """Get the lower and upper array indices for a given time interval."""
+    time = cube.coord('time').points
+    idxs = np.argwhere((time >= tmin) & (time <= tmax))
+    return [idxs.min(), idxs.max()]
 
 
 def _full_time_slice(cubes, ndat, indices, ndatarr, t_idx):
@@ -254,12 +243,12 @@ def _full_time_slice(cubes, ndat, indices, ndatarr, t_idx):
 def _assemble_overlap_data(cubes, interval, statistic):
     """Get statistical data in iris cubes for OVERLAP."""
     start, stop = interval
-    sl_1, sl_2 = _slice_cube(cubes[0], start, stop)
+    sl_1, sl_2 = _get_slice_parameters(cubes[0], start, stop)
     stats_dats = np.ma.zeros(cubes[0].data[sl_1:sl_2 + 1].shape)
 
     # keep this outside the following loop
     # this speeds up the code by a factor of 15
-    indices = [_slice_cube(cube, start, stop) for cube in cubes]
+    indices = [_get_slice_parameters(cube, start, stop) for cube in cubes]
 
     for i in range(stats_dats.shape[0]):
         time_data = [
