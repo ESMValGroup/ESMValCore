@@ -192,26 +192,12 @@ def _datetime_to_int_days(cube):
 
 
 def _get_overlap(cubes):
-    """
-    Get discrete time overlaps.
-
-    This method gets the bounds of coord time
-    from the cube and assembles a continuous time
-    axis with smallest unit 1; then it finds the
-    overlaps by doing a 1-dim intersect;
-    takes the floor of first date and
-    ceil of last date.
-    """
-    all_times = []
-    for cube in cubes:
-        span = _datetime_to_int_days(cube)
-        start, stop = span[0], span[-1]
-        all_times.append([start, stop])
-    bounds = [range(b[0], b[-1] + 1) for b in all_times]
-    time_pts = reduce(np.intersect1d, bounds)
-    if len(time_pts) > 1:
-        time_bounds_list = [time_pts[0], time_pts[-1]]
-        return time_bounds_list
+    """Return the intersection of all cubes' time arrays."""
+    time_spans = [_datetime_to_int_days(cube) for cube in cubes]
+    overlap = reduce(np.intersect1d, time_spans)
+    if len(overlap) > 1:
+        return [overlap[0], overlap[-1]]
+    return
 
 
 def _slice_cube(cube, t_1, t_2):
