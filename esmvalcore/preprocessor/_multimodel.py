@@ -25,14 +25,6 @@ from ._time import regrid_time
 logger = logging.getLogger(__name__)
 
 
-def _get_time_offset(time_unit):
-    """Return a datetime object equivalent to tunit."""
-    # tunit e.g. 'day since 1950-01-01 00:00:00.0000000 UTC'
-    cfunit = cf_units.Unit(time_unit, calendar=cf_units.CALENDAR_STANDARD)
-    time_offset = cfunit.num2date(0)
-    return time_offset
-
-
 def _plev_fix(dataset, pl_idx):
     """Extract valid plev data.
 
@@ -112,11 +104,10 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
         times = template_cube.coord('time')
     else:
         unit_name = template_cube.coord('time').units.name
-        tunits = cf_units.Unit(unit_name, calendar="standard")
-        times = iris.coords.DimCoord(
-            t_axis,
-            standard_name='time',
-            units=tunits)
+        tunits = cf_units.Unit("days since 1850-01-01", calendar="standard")
+        times = iris.coords.DimCoord(t_axis,
+                                     standard_name='time',
+                                     units=tunits)
 
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
@@ -152,8 +143,9 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     # correct dspec if necessary
     fixed_dspec = np.ma.fix_invalid(cube_data, copy=False, fill_value=1e+20)
     # put in cube
-    stats_cube = iris.cube.Cube(
-        fixed_dspec, dim_coords_and_dims=cspec, long_name=statistic)
+    stats_cube = iris.cube.Cube(fixed_dspec,
+                                dim_coords_and_dims=cspec,
+                                long_name=statistic)
     coord_names = [coord.name() for coord in template_cube.coords()]
     if 'air_pressure' in coord_names:
         if len(template_cube.shape) == 3:
@@ -181,11 +173,9 @@ def _datetime_to_int_days(cube):
         real_dates.append(real_date)
 
     # get the number of days starting from the reference unit
-    time_unit = cube.coord('time').units.name
-    time_offset = _get_time_offset(time_unit)
-    days = [(date_obj - time_offset).days for date_obj in real_dates]
-
-    return days
+    reference_date = datetime(1850, 1, 1)
+    integer_days = [(date - reference_date).days for date in real_dates]
+    return integer_days
 
 
 def _align_yearly_axes(cube):
@@ -275,8 +265,10 @@ def _assemble_overlap_data(cubes, interval, statistic):
             for cube, indx in zip(cubes, indices)
         ]
         stats_dats[i] = _compute_statistic(time_data, statistic)
-    stats_cube = _put_in_cube(
-        cubes[0][sl_1:sl_2 + 1], stats_dats, statistic, t_axis=None)
+    stats_cube = _put_in_cube(cubes[0][sl_1:sl_2 + 1],
+                              stats_dats,
+                              statistic,
+                              t_axis=None)
     return stats_cube
 
 
@@ -384,8 +376,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         logger.debug("Using full time spans to compute statistics.")
     else:
         raise ValueError(
-            "Unexpected value for span {}, choose from 'overlap', 'full'"
-            .format(span))
+            "Unexpected value for span {}, choose from 'overlap', 'full'".
+            format(span))
 
     for statistic in statistics:
         # Compute statistic
@@ -393,8 +385,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
             statistic_cube = _assemble_overlap_data(cubes, interval, statistic)
         elif span == 'full':
             statistic_cube = _assemble_full_data(cubes, statistic)
-        statistic_cube.data = np.ma.array(
-            statistic_cube.data, dtype=np.dtype('float32'))
+        statistic_cube.data = np.ma.array(statistic_cube.data,
+                                          dtype=np.dtype('float32'))
 
         if output_products:
             # Add to output product and log provenance

@@ -2,27 +2,19 @@
 
 import unittest
 
-import cftime
 import iris
 import numpy as np
 from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor import multi_model_statistics
-from esmvalcore.preprocessor._multimodel import (_assemble_full_data,
-                                                 _assemble_overlap_data,
-                                                 _compute_statistic,
-                                                 _datetime_to_int_days,
-                                                 _get_overlap,
-                                                 _get_time_offset,
-                                                 _plev_fix,
-                                                 _put_in_cube,
-                                                 _slice_cube)
+from esmvalcore.preprocessor._multimodel import (
+    _assemble_full_data, _assemble_overlap_data, _compute_statistic,
+    _datetime_to_int_days, _get_overlap, _plev_fix, _put_in_cube, _slice_cube)
 
 
 class Test(tests.Test):
     """Test class for preprocessor/_multimodel.py."""
-
     def setUp(self):
         """Prepare tests."""
         coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
@@ -35,35 +27,33 @@ class Test(tests.Test):
         time = iris.coords.DimCoord([15, 45],
                                     standard_name='time',
                                     bounds=[[1., 30.], [30., 60.]],
-                                    units=Unit(
-                                        'days since 1950-01-01',
-                                        calendar='gregorian'))
+                                    units=Unit('days since 1850-01-01',
+                                               calendar='gregorian'))
         time2 = iris.coords.DimCoord([1., 2., 3., 4.],
                                      standard_name='time',
                                      bounds=[
                                          [0.5, 1.5],
                                          [1.5, 2.5],
                                          [2.5, 3.5],
-                                         [3.5, 4.5], ],
-                                     units=Unit(
-                                         'days since 1950-01-01',
-                                         calendar='gregorian'))
+                                         [3.5, 4.5],
+                                     ],
+                                     units=Unit('days since 1850-01-01',
+                                                calendar='gregorian'))
         yr_time = iris.coords.DimCoord([15, 410],
                                        standard_name='time',
                                        bounds=[[1., 30.], [395., 425.]],
-                                       units=Unit(
-                                           'days since 1950-01-01',
-                                           calendar='gregorian'))
+                                       units=Unit('days since 1850-01-01',
+                                                  calendar='gregorian'))
         yr_time2 = iris.coords.DimCoord([1., 367., 733., 1099.],
                                         standard_name='time',
                                         bounds=[
                                             [0.5, 1.5],
                                             [366, 368],
                                             [732, 734],
-                                            [1098, 1100], ],
-                                        units=Unit(
-                                            'days since 1950-01-01',
-                                            calendar='gregorian'))
+                                            [1098, 1100],
+                                        ],
+                                        units=Unit('days since 1850-01-01',
+                                                   calendar='gregorian'))
         zcoord = iris.coords.DimCoord([0.5, 5., 50.],
                                       standard_name='air_pressure',
                                       long_name='air_pressure',
@@ -97,12 +87,6 @@ class Test(tests.Test):
         coords_spec5_yr = [(yr_time2, 0), (zcoord, 1), (lats, 2), (lons, 3)]
         self.cube2_yr = iris.cube.Cube(data3,
                                        dim_coords_and_dims=coords_spec5_yr)
-
-    def test_get_time_offset(self):
-        """Test time unit."""
-        result = _get_time_offset("days since 1950-01-01")
-        expected = cftime.real_datetime(1950, 1, 1, 0, 0)
-        np.testing.assert_equal(result, expected)
 
     def test_compute_statistic(self):
         """Test statistic."""
