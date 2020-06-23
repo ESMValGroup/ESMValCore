@@ -402,9 +402,9 @@ def climate_statistics(cube, operator='mean', period='full'):
                 cube = cube.collapsed('time',
                                       operator_method)
             else:
-               cube = cube.collapsed('time',
-                                  operator_method,
-                                  weights=time_weights)
+                cube = cube.collapsed('time',
+                                      operator_method,
+                                      weights=time_weights)
         else:
             cube = cube.collapsed('time', operator_method)
         return cube
