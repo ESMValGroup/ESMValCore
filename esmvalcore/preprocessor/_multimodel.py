@@ -192,12 +192,18 @@ def _datetime_to_int_days(cube):
 
 
 def _get_overlap(cubes):
-    """Return the intersection of all cubes' time arrays."""
+    """Return bounds of the intersection of all cubes' time arrays."""
     time_spans = [_datetime_to_int_days(cube) for cube in cubes]
     overlap = reduce(np.intersect1d, time_spans)
     if len(overlap) > 1:
         return [overlap[0], overlap[-1]]
     return
+
+
+def _get_union(cubes):
+    """Return the union of all cubes' time arrays."""
+    time_spans = [_datetime_to_int_days(cube) for cube in cubes]
+    return reduce(np.union1d, time_spans)
 
 
 def _slice_cube(cube, t_1, t_2):
@@ -214,13 +220,6 @@ def _slice_cube(cube, t_1, t_2):
         if t_1 <= jj <= t_2
     ])
     return [idxs[0], idxs[-1]]
-
-
-def _monthly_t(cubes):
-    """Rearrange time points for monthly data."""
-    # get original cubes tpoints
-    days = {day for cube in cubes for day in _datetime_to_int_days(cube)}
-    return sorted(days)
 
 
 def _full_time_slice(cubes, ndat, indices, ndatarr, t_idx):
@@ -264,8 +263,9 @@ def _assemble_overlap_data(cubes, interval, statistic):
 
 def _assemble_full_data(cubes, statistic):
     """Get statistical data in iris cubes for FULL."""
-    # all times, new MONTHLY data time axis
-    time_axis = [float(fl) for fl in _monthly_t(cubes)]
+    # Gather the unique time points in the union of all cubes
+    time_points = _get_union(cubes)
+    time_axis = [float(fl) for fl in time_points]
 
     # new big time-slice array shape
     new_shape = [len(time_axis)] + list(cubes[0].shape[1:])
