@@ -9,7 +9,7 @@ from cf_units import Unit
 import tests
 from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (
-    _assemble_full_data, _assemble_overlap_data, _compute_statistic, _set_common_calendar,
+    _assemble_data, _compute_statistic, _set_common_calendar,
     _get_time_intersection, _plev_fix, _put_in_cube)
 
 
@@ -178,14 +178,14 @@ class Test(tests.Test):
 
     def test_assemble_overlap_data(self):
         """Test overlap data."""
-        comp_ovlap_mean = _assemble_overlap_data([self.cube1, self.cube1],
-                                                 "mean")
+        comp_ovlap_mean = _assemble_data([self.cube1, self.cube1],
+                                        "mean", span='overlap')
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(comp_ovlap_mean.data, expected_ovlap_mean)
 
     def test_assemble_full_data(self):
         """Test full data."""
-        comp_full_mean = _assemble_full_data([self.cube1, self.cube2], "mean")
+        comp_full_mean = _assemble_data([self.cube1, self.cube2], "mean", span='full')
         expected_full_mean = np.ma.ones((5, 3, 2, 2))
         expected_full_mean.mask = np.ones((5, 3, 2, 2))
         expected_full_mean.mask[1] = False

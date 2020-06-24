@@ -213,18 +213,6 @@ def _get_time_union(cubes):
     return reduce(np.union1d, time_spans)
 
 
-def _get_subset(cube, tmin, tmax):
-    time = cube.coord('time').points
-    idxs = np.argwhere((time >= tmin) & (time <= tmax))
-    return cube[idxs.min():idxs.max()+1]
-
-
-def _get_index(cube, time):
-    # return cube.coord('time').points.tolist().index(time)
-    cubetime = cube.coord('time').points
-    return int(np.argwhere(time == cubetime))
-
-
 def _get_time_slice(cubes, time):
     """Fill time slice array with cubes' data if time in cube, else mask."""
     time_slice = []
@@ -240,10 +228,13 @@ def _get_time_slice(cubes, time):
     return time_slice
 
 
-def _assemble_overlap_data(cubes, statistic):
-    """Get statistical data in iris cubes for OVERLAP."""
-    # Gather overlapping time points
-    new_times = _get_time_intersection(cubes).tolist()
+def _assemble_data(cubes, statistic, span='overlap'):
+    """Get statistical data in iris cubes."""
+    if span == 'overlap':
+        new_times = _get_time_intersection(cubes).tolist()
+    elif span == 'full':
+        new_times = _get_time_union(cubes).tolist()
+
     n_times = len(new_times)
 
     # Target array to populate with computed statistics
@@ -255,25 +246,6 @@ def _assemble_overlap_data(cubes, statistic):
         stats_data[i] = _compute_statistic(time_data, statistic)
 
     template = cubes[0][:n_times]
-    stats_cube = _put_in_cube(template, stats_data, statistic, new_times)
-    return stats_cube
-
-
-def _assemble_full_data(cubes, statistic):
-    """Get statistical data in iris cubes for FULL."""
-    # Gather time points in the union of all cubes
-    new_times = _get_time_union(cubes).tolist()
-    n_times = len(new_times)
-
-    # Target array to populate with computed statistics
-    new_shape = [n_times] + list(cubes[0].shape[1:])
-    stats_data = np.ma.zeros(new_shape)
-
-    for i, time in enumerate(new_times):
-        time_data = _get_time_slice(cubes, time)
-        stats_data[i] = _compute_statistic(time_data, statistic)
-
-    template = cubes[0]
     stats_cube = _put_in_cube(template, stats_data, statistic, new_times)
     return stats_cube
 
@@ -351,10 +323,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
 
     for statistic in statistics:
         # Compute statistic
-        if span == 'overlap':
-            statistic_cube = _assemble_overlap_data(cubes, statistic)
-        elif span == 'full':
-            statistic_cube = _assemble_full_data(cubes, statistic)
+        statistic_cube = _assemble_data(cubes, statistic, span)
         statistic_cube.data = np.ma.array(statistic_cube.data,
                                           dtype=np.dtype('float32'))
 
