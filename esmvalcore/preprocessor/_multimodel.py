@@ -187,13 +187,6 @@ def _set_common_calendar(cubes):
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord('time').points = [t_unit.date2num(date) for date in dates]
         cube.coord('time').units = t_unit
-        # Reset bounds
-        cube.coord('time').bounds = None
-        cube.coord('time').guess_bounds()
-        # Remove aux coords that may differ
-        for auxcoord in cube.aux_coords:
-            if auxcoord.long_name in ['day_of_month', 'day_of_year']:
-                cube.remove_coord(auxcoord)
 
 
 def _get_time_slice(cubes, time):
