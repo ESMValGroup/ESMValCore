@@ -9,8 +9,7 @@ from cf_units import Unit
 import tests
 from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (
-    _assemble_data, _compute_statistic, _set_common_calendar,
-    _get_time_intersection, _plev_fix, _put_in_cube)
+    _assemble_data, _compute_statistic, _set_common_calendar, _plev_fix, _put_in_cube)
 
 
 class Test(tests.Test):
@@ -173,7 +172,7 @@ class Test(tests.Test):
     def test_put_in_cube(self):
         """Test put in cube."""
         cube_data = np.ma.ones((2, 3, 2, 2))
-        stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=None)
+        stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=[1,2])
         self.assert_array_equal(stat_cube.data, self.cube1.data)
 
     def test_assemble_overlap_data(self):
@@ -190,13 +189,6 @@ class Test(tests.Test):
         expected_full_mean.mask = np.ones((5, 3, 2, 2))
         expected_full_mean.mask[1] = False
         self.assert_array_equal(comp_full_mean.data, expected_full_mean)
-
-    def test_get_time_intersection(self):
-        """Test get overlap."""
-        full_ovlp = _get_time_intersection([self.cube1, self.cube1])
-        self.assert_array_equal([14, 45], full_ovlp)
-        no_ovlp = _get_time_intersection([self.cube1, self.cube3])
-        np.testing.assert_equal(None, no_ovlp)
 
     def test_plev_fix(self):
         """Test plev fix."""
