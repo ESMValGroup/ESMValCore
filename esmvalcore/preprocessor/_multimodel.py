@@ -69,7 +69,7 @@ def _compute_statistic(data, statistic_name):
         # data is per time point
         # so we can safely NOT compute stats for single points
         if data.ndim == 1:
-            u_datas = [d for d in data]
+            u_datas = data
         else:
             u_datas = [d for d in data if not np.all(d.mask)]
         if len(u_datas) > 1:
@@ -178,8 +178,10 @@ def _set_common_calendar(cubes):
 
         elif 0 not in np.diff(months):
             # monthly data
-            dates = [datetime(year, month, 15)
-                     for year, month in zip(years, months)]
+            dates = [
+                datetime(year, month, 15)
+                for year, month in zip(years, months)
+            ]
         else:
             # (sub)daily data
             raise ValueError("Multimodel only supports yearly or monthly data")
@@ -258,11 +260,13 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     statistics: str
         statistical measure to be computed. Available options: mean, median,
         max, min, std
+
     Returns
     -------
     list
         list of data products or cubes containing the multimodel stats
         computed.
+
     Raises
     ------
     ValueError
