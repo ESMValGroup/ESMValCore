@@ -219,43 +219,42 @@ def _get_subset(cube, tmin, tmax):
     return cube[idxs.min():idxs.max()+1]
 
 
-def _full_time_slice(cubes, ndat, indices, ndatarr, t_idx):
-    """Construct a contiguous collection over time."""
-    for idx_cube, cube in enumerate(cubes):
-        # reset mask
-        ndat.mask = True
-        ndat[indices[idx_cube]] = cube.data
-        if np.ma.is_masked(cube.data):
-            ndat.mask[indices[idx_cube]] = cube.data.mask
-        else:
-            ndat.mask[indices[idx_cube]] = False
-        ndatarr[idx_cube] = ndat[t_idx]
+def _get_index(cube, time):
+    # return cube.coord('time').points.tolist().index(time)
+    cubetime = cube.coord('time').points
+    return int(np.argwhere(time == cubetime))
 
-    # return time slice
-    return ndatarr
+
+def _get_time_slice(cubes, time):
+    """Fill time slice array with cubes' data if time in cube, else mask."""
+    time_slice = []
+    for j, cube in enumerate(cubes):
+        cube_time = cube.coord('time').points
+        if time in cube_time:
+            idx = int(np.argwhere(cube_time == time))
+            subset = cube[idx].data
+        else:
+            subset = np.ma.empty(list(cubes[0].shape[1:]))
+            subset.mask = True
+        time_slice.append(subset)
+    return time_slice
 
 
 def _assemble_overlap_data(cubes, statistic):
     """Get statistical data in iris cubes for OVERLAP."""
     # Gather overlapping time points
     new_times = _get_time_intersection(cubes).tolist()
-    tmin = min(new_times)
-    tmax = max(new_times)
     n_times = len(new_times)
 
     # Target array to populate with computed statistics
     new_shape = [n_times] + list(cubes[0].shape[1:])
     stats_data = np.ma.zeros(new_shape)
 
-    # Prepare a list of cubes with matching times (so far just pointers)
-    # Keep this outside the following loop; 15x speedup (still true?)
-    cubelist = [_get_subset(cube, tmin, tmax) for cube in cubes]
-
-    for i in range(n_times):
-        time_data = [cube.data[i] for cube in cubelist]
+    for i, time in enumerate(new_times):
+        time_data = _get_time_slice(cubes, time)
         stats_data[i] = _compute_statistic(time_data, statistic)
 
-    template = cubelist[0]
+    template = cubes[0][:n_times]
     stats_cube = _put_in_cube(template, stats_data, statistic, new_times)
     return stats_cube
 
@@ -270,23 +269,8 @@ def _assemble_full_data(cubes, statistic):
     new_shape = [n_times] + list(cubes[0].shape[1:])
     stats_data = np.ma.zeros(new_shape)
 
-    # assemble an array to hold all time data
-    # for all cubes; shape is (ncubes,(plev), lat, lon)
-    new_arr = np.ma.empty([len(cubes)] + list(new_shape[1:]))
-
-    # empty data array to hold time slices
-    empty_arr = np.ma.empty(new_shape)
-
-    # Prepare a list mapping the cubes' times to the indices of new_times
-    indices_list = []
-    for cube in cubes:
-        oidx = [new_times.index(t) for t in cube.coord('time').points]
-        indices_list.append(oidx)
-
-    for i in range(n_times):
-        # hold time slices only
-        time_data = _full_time_slice(cubes, empty_arr, indices_list,
-                                           new_arr, i)
+    for i, time in enumerate(new_times):
+        time_data = _get_time_slice(cubes, time)
         stats_data[i] = _compute_statistic(time_data, statistic)
 
     template = cubes[0]
