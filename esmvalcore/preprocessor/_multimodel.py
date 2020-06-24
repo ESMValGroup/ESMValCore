@@ -172,11 +172,11 @@ def _set_common_calendar(cubes):
         months = [cell.point.month for cell in cube.coord('time').cells()]
 
         # Reconstruct default calendar
-        if not 0 in np.diff(years):
+        if 0 not in np.diff(years):
             # yearly data
             dates = [datetime(year, 7, 1) for year in years]
 
-        elif not 0 in np.diff(months):
+        elif 0 not in np.diff(months):
             # monthly data
             dates = [datetime(year, month, 15)
                      for year, month in zip(years, months)]
