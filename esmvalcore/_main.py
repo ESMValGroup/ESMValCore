@@ -183,7 +183,11 @@ class Recipes():
 
     @staticmethod
     def list():
-        """List installed recipes."""
+        """
+        List all installed recipes.
+
+        Recipes are shown grouped by folder.
+        """
         import os
         from ._config import configure_logging, DIAGNOSTICS_PATH
         configure_logging(output=None, console_log_level='info')
@@ -205,12 +209,12 @@ class Recipes():
     @staticmethod
     def get(recipe):
         """
-        Get a copy of any installed recipe in the current path.
+        Get a copy of any installed recipe in the current working directory.
 
         Parameters
         ----------
         recipe: str
-            Name of the recipe to get
+            Name of the recipe to get, including any subdirectories.
         """
         import os
         import shutil
@@ -227,7 +231,8 @@ class Recipes():
 
 
 class ESMValTool():
-    """ESMValTool main executable."""
+
+    __doc__ = __doc__
 
     def __init__(self):
         self.recipes = Recipes()
@@ -243,7 +248,7 @@ class ESMValTool():
             self.__setattr__(entry_point.name, entry_point.load()())
 
     def version(self):
-        """Show versions of ESMValTool packages."""
+        """Show version of all ESMValTool packages."""
         from . import __version__
         print(f'ESMValCore: {__version__}')
         for project, version in self._extra_packages.items():
@@ -255,6 +260,9 @@ class ESMValTool():
             check_level='default', **kwargs):
         """
         Execute an ESMValTool recipe.
+
+        To get a list of available recipes and create a local copy of any of 
+        them, check `esmvaltool recipes` group.
 
         Parameters
         ----------
@@ -280,7 +288,7 @@ class ESMValTool():
                 - ignore: all errors will be reported as warnings
                 - relaxed: only fail if there are critical errors
                 - default: fail if there are any errors
-                -strict: fail if there are any warnings
+                - strict: fail if there are any warnings
         """
         import os
         import shutil
@@ -329,7 +337,8 @@ class ESMValTool():
             if value is not None and value < 1:
                 raise ValueError("--{} should be larger than 0.".format(
                     limit.replace('_', '-')))
-            cfg[limit] = value
+            if value:
+                cfg[limit] = value
 
         _check_limit('max_datasets', max_datasets)
         _check_limit('max_years', max_years)
@@ -361,8 +370,8 @@ def run():
 
     try:
         fire.Fire(ESMValTool())
-    except fire.core.FireExit as ex:
-        sys.exit(ex.code)
+    except fire.core.FireExit:
+        raise
     except Exception as ex:  # noqa
         if not logger.handlers:
             # Add a logging handler if main failed to do so.
