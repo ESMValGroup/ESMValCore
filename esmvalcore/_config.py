@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from .cmor.table import read_cmor_tables, CMOR_TABLES
+from .cmor.table import CMOR_TABLES, read_cmor_tables
 
 logger = logging.getLogger(__name__)
 

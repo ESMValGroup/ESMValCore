@@ -4,13 +4,14 @@ Tests for ESMValTool CLI
 Includes a context manager to temporarly modify sys.argv
 """
 
-import sys
 import copy
 import functools
-import pytest
+import sys
 from unittest.mock import patch
 
-from esmvalcore._main import run, ESMValTool, Recipes, Config
+import pytest
+
+from esmvalcore._main import Config, ESMValTool, Recipes, run
 
 
 def wrapper(f):
@@ -19,6 +20,7 @@ def wrapper(f):
         if kwargs:
             raise ValueError(f'Parameters not supported: {kwargs}')
         return True
+
     return empty
 
 
@@ -60,16 +62,15 @@ def test_run():
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_tun_with_config():
-    with SetArgs(
-            'esmvaltool', 'run', 'recipe.yml', '--config_file', 'config.yml'):
+    with SetArgs('esmvaltool', 'run', 'recipe.yml', '--config_file',
+                 'config.yml'):
         run()
 
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_run_with_max_years():
-    with SetArgs(
-            'esmvaltool', 'run', 'recipe.yml', '--config_file=config.yml',
-            '--max_years=2'):
+    with SetArgs('esmvaltool', 'run', 'recipe.yml', '--config_file=config.yml',
+                 '--max_years=2'):
         run()
 
 
@@ -147,60 +148,54 @@ def test_recipes_list_do_not_admit_parameters():
             run()
 
 
-@patch(
-    'esmvalcore._main.Config.get_config_developer',
-    new=wrapper(Config.get_config_developer))
+@patch('esmvalcore._main.Config.get_config_developer',
+       new=wrapper(Config.get_config_developer))
 def test_get_config_developer():
     """Test version command"""
     with SetArgs('esmvaltool', 'config', 'get_config_developer'):
         run()
 
 
-@patch(
-    'esmvalcore._main.Config.get_config_user',
-    new=wrapper(Config.get_config_user))
+@patch('esmvalcore._main.Config.get_config_user',
+       new=wrapper(Config.get_config_user))
 def test_get_config_user():
     """Test version command"""
     with SetArgs('esmvaltool', 'config', 'get_config_user'):
         run()
 
 
-@patch(
-    'esmvalcore._main.Config.get_config_user',
-    new=wrapper(Config.get_config_user))
+@patch('esmvalcore._main.Config.get_config_user',
+       new=wrapper(Config.get_config_user))
 def test_get_config_user_overwrite():
     """Test version command"""
-    with SetArgs(
-            'esmvaltool', 'config', 'get_config_user', '--overwrite=True'):
+    with SetArgs('esmvaltool', 'config', 'get_config_user',
+                 '--overwrite=True'):
         run()
 
 
-@patch(
-    'esmvalcore._main.Config.get_config_user',
-    new=wrapper(Config.get_config_user))
+@patch('esmvalcore._main.Config.get_config_user',
+       new=wrapper(Config.get_config_user))
 def test_get_config_user_target_path():
     """Test version command"""
-    with SetArgs(
-            'esmvaltool', 'config', 'get_config_user', '--target-path=path'):
+    with SetArgs('esmvaltool', 'config', 'get_config_user',
+                 '--target-path=path'):
         run()
 
 
-@patch(
-    'esmvalcore._main.Config.get_config_user',
-    new=wrapper(Config.get_config_user))
+@patch('esmvalcore._main.Config.get_config_user',
+       new=wrapper(Config.get_config_user))
 def test_get_config_user_path():
     """Test version command"""
-    with SetArgs(
-            'esmvaltool', 'config', 'get-config-user', '--target_path=path'):
+    with SetArgs('esmvaltool', 'config', 'get-config-user',
+                 '--target_path=path'):
         run()
 
 
-@patch(
-    'esmvalcore._main.Config.get_config_user',
-    new=wrapper(Config.get_config_user))
+@patch('esmvalcore._main.Config.get_config_user',
+       new=wrapper(Config.get_config_user))
 def test_get_config_user_bad_option_fails():
     """Test version command"""
-    with SetArgs(
-            'esmvaltool', 'config', 'get_config_user', '--bad_option=path'):
+    with SetArgs('esmvaltool', 'config', 'get_config_user',
+                 '--bad_option=path'):
         with pytest.raises(SystemExit):
             run()

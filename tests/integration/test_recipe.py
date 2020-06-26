@@ -13,10 +13,9 @@ import esmvalcore
 from esmvalcore._recipe import TASKSEP, read_recipe_file
 from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
+from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
-from esmvalcore.cmor.check import CheckLevels
-
 
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance

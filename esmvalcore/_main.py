@@ -29,8 +29,9 @@ http://docs.esmvaltool.org. Have fun!
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
 import logging
-from pkg_resources import iter_entry_points
+
 import fire
+from pkg_resources import iter_entry_points
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -114,7 +115,6 @@ def process_recipe(recipe_file, config_user):
 
 class Config():
     """Manage configuration files."""
-
     @staticmethod
     def _copy_config_file(filename, overwrite, target_path):
         import os
@@ -122,16 +122,14 @@ class Config():
         from ._config import configure_logging
         configure_logging(output=None, console_log_level='info')
         if not target_path:
-            target_path = os.path.join(
-                os.path.expanduser('~/.esmvaltool'),
-                filename
-            )
+            target_path = os.path.join(os.path.expanduser('~/.esmvaltool'),
+                                       filename)
         if os.path.isfile(target_path):
             if overwrite:
                 logger.info('Ovwerwriting file %s.', target_path)
             else:
-                logger.info(
-                    'Copy aborted. File %s already exists.', target_path)
+                logger.info('Copy aborted. File %s already exists.',
+                            target_path)
                 return
 
         target_folder = os.path.dirname(target_path)
@@ -140,9 +138,8 @@ class Config():
             os.makedirs(target_folder)
 
         logger.info('Copying file to %s...', target_path)
-        shutil.copy2(
-            os.path.join(os.path.dirname(__file__), filename),
-            target_path)
+        shutil.copy2(os.path.join(os.path.dirname(__file__), filename),
+                     target_path)
         logger.info('Copy finished.')
 
     @classmethod
@@ -180,7 +177,6 @@ class Config():
 
 class Recipes():
     """Utilities to manage recipes."""
-
     @staticmethod
     def list():
         """
@@ -242,8 +238,8 @@ class ESMValTool():
             self._extra_packages[entry_point.dist.project_name] = \
                 entry_point.dist.version
             if hasattr(self, entry_point.name):
-                logger.error(
-                    'Registered command %s already exists', entry_point.name)
+                logger.error('Registered command %s already exists',
+                             entry_point.name)
                 continue
             self.__setattr__(entry_point.name, entry_point.load()())
 
@@ -255,13 +251,19 @@ class ESMValTool():
             print(f'{project}: {version}')
 
     @staticmethod
-    def run(recipe, config_file=None, max_datasets=None, max_years=None,
-            skip_nonexistent=False, synda_download=False, diagnostics=None,
-            check_level='default', **kwargs):
+    def run(recipe,
+            config_file=None,
+            max_datasets=None,
+            max_years=None,
+            skip_nonexistent=False,
+            synda_download=False,
+            diagnostics=None,
+            check_level='default',
+            **kwargs):
         """
         Execute an ESMValTool recipe.
 
-        To get a list of available recipes and create a local copy of any of 
+        To get a list of available recipes and create a local copy of any of
         them, check `esmvaltool recipes` group.
 
         Parameters
@@ -298,12 +300,12 @@ class ESMValTool():
         from ._recipe import TASKSEP
 
         if not os.path.exists(recipe):
-            installed_recipe = os.path.join(
-                DIAGNOSTICS_PATH, 'recipes', recipe)
+            installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes',
+                                            recipe)
             if os.path.exists(installed_recipe):
                 recipe = installed_recipe
-        recipe = os.path.abspath(
-            os.path.expandvars(os.path.expanduser(recipe)))
+        recipe = os.path.abspath(os.path.expandvars(
+            os.path.expanduser(recipe)))
 
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
 
@@ -316,8 +318,8 @@ class ESMValTool():
         os.makedirs(cfg['run_dir'])
 
         # configure logging
-        log_files = configure_logging(
-            output=cfg['run_dir'], console_log_level=cfg['log_level'])
+        log_files = configure_logging(output=cfg['run_dir'],
+                                      console_log_level=cfg['log_level'])
 
         # log header
         logger.info(HEADER)
@@ -366,6 +368,7 @@ def run():
     def display(lines, out):
         text = "\n".join(lines) + "\n"
         out.write(text)
+
     fire.core.Display = display
 
     try:
