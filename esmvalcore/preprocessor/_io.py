@@ -142,25 +142,21 @@ def _fix_cube_attributes(cubes):
         cube.attributes = attributes
 
 
-def concatenate(cubes):
-    """Concatenate all cubes after fixing metadata."""
-    _fix_cube_attributes(cubes)
-
+def _by_two_concatenation(cubes):
+    """Perform a by-2 concatenation to avoid gaps."""
     concatenated = iris.cube.CubeList(cubes).concatenate()
-    if len(concatenated) == 2:
-        try:
-            concatenated[0].coord('time')
-            concatenated[1].coord('time')
-        except iris.exceptions.CoordinateNotFoundError:
-            pass
-        else:
-            concatenated = _concatenate_overlapping_cubes(concatenated)
-
     if len(concatenated) == 1:
-        cube = concatenated[0]
-        _fix_aux_factories(cube)
-        return cube
+        return concatenated[0]
 
+    concatenated = _concatenate_overlapping_cubes(concatenated)
+    if len(concatenated) == 2:
+        _get_concatenation_error(concatenated)
+    else:
+        return concatenated[0]
+
+
+def _get_concatenation_error(cubes):
+    """Raise an error for concatenation."""
     # Concatenation not successful -> retrieve exact error message
     try:
         iris.cube.CubeList(cubes).concatenate_cube()
@@ -168,15 +164,38 @@ def concatenate(cubes):
         msg = str(exc)
     logger.error('Can not concatenate cubes into a single one: %s', msg)
     logger.error('Resulting cubes:')
-    for cube in concatenated:
+    for cube in cubes:
         logger.error(cube)
-        try:
-            time = cube.coord('time')
-        except iris.exceptions.CoordinateNotFoundError:
-            pass
-        else:
-            logger.error('From %s to %s', time.cell(0), time.cell(-1))
+        time = cube.coord("time")
+        logger.error('From %s to %s', time.cell(0), time.cell(-1))
+
     raise ValueError(f'Can not concatenate cubes: {msg}')
+
+
+def concatenate(cubes):
+    """Concatenate all cubes after fixing metadata."""
+    if len(cubes) == 1:
+        return cubes[0]
+
+    _fix_cube_attributes(cubes)
+
+    if len(cubes) > 1:
+        # order cubes by first time point
+        try:
+            cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
+        except iris.exceptions.CoordinateNotFoundError as exc:
+            msg = "One or more cubes {} are missing".format(cubes) + \
+                  " time coordinate: {}".format(str(exc))
+            raise ValueError(msg)
+
+        # iteratively concatenate starting with first cube
+        result = cubes[0]
+        for cube in cubes[1:]:
+            result = _by_two_concatenation([result, cube])
+
+    _fix_aux_factories(result)
+
+    return result
 
 
 def save(cubes, filename, optimize_access='', compress=False, **kwargs):
@@ -364,6 +383,11 @@ def _concatenate_overlapping_cubes(cubes):
     # get time end points
     time_1 = cubes[0].coord('time')
     time_2 = cubes[1].coord('time')
+    if time_1.units != time_2.units:
+        raise ValueError(
+            f"Cubes\n{cubes[0]}\nand\n{cubes[1]}\ncan not be concatenated: "
+            f"time units {time_1.units}, calendar {time_1.units.calendar} "
+            f"and {time_2.units}, calendar {time_2.units.calendar} differ")
     data_start_1 = time_1.cell(0).point
     data_start_2 = time_2.cell(0).point
     data_end_1 = time_1.cell(-1).point

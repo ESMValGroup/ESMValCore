@@ -18,7 +18,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
   Klaus Zimmermann (SMHI, Sweden - klaus.zimmermann@smhi.se)
 
 For further help, please read the documentation at
-http://esmvaltool.readthedocs.io. Have fun!
+http://docs.esmvaltool.org. Have fun!
 """
 
 # ESMValTool main script

@@ -1465,7 +1465,7 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
     shapefile.parent.mkdir(parents=True, exist_ok=True)
     shapefile.touch()
 
-    content = dedent(f"""
+    content = dedent("""
         preprocessors:
           test:
             extract_shape:

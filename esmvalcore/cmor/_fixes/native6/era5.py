@@ -244,6 +244,15 @@ class Tasmin(Fix):
         return cubes
 
 
+class Zg(Fix):
+    """Fixes for Geopotential."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            divide_by_gravity(cube)
+        return cubes
+
+
 class AllVars(Fix):
     """Fixes for all variables."""
     def _fix_coordinates(self, cube):
