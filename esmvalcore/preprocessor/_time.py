@@ -118,19 +118,34 @@ def extract_season(cube, season):
         Original data
     season: str
         Season to extract. Available: DJF, MAM, JJA, SON
+        and all sequentially correct combinations: e.g. JJAS
 
     Returns
     -------
     iris.cube.Cube
         data cube for specified season.
     """
+    season = season.lower()
+
+    allmonths = 'jfmamjjasond' * 2
+    if season.lower() not in allmonths:
+        raise ValueError(
+            f"Unable to extract Season {season} "
+            f"combination of months not possible.")
+    sstart = allmonths.index(season.lower())
+    res_season = allmonths[sstart + len(season): sstart + 12]
+    seasons = [season, res_season]
+
     if not cube.coords('clim_season'):
-        iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
+        iris.coord_categorisation.add_season(
+            cube, 'time', name='clim_season', seasons=seasons
+        )
     if not cube.coords('season_year'):
-        iris.coord_categorisation.add_season_year(cube,
-                                                  'time',
-                                                  name='season_year')
-    return cube.extract(iris.Constraint(clim_season=season.lower()))
+        iris.coord_categorisation.add_season_year(
+            cube, 'time', name='season_year', seasons=seasons
+        )
+
+    return cube.extract(iris.Constraint(clim_season=season))
 
 
 def extract_month(cube, month):
@@ -247,11 +262,12 @@ def monthly_statistics(cube, operator='mean'):
     return cube
 
 
-def seasonal_statistics(cube, operator='mean'):
+def seasonal_statistics(cube, operator='mean',
+                        seasons=('djf', 'mam', 'jja', 'son')):
     """
     Compute seasonal statistics.
 
-    Chunks time in 3-month periods and computes statistics over them;
+    Chunks time seasons and computes statistics over them.
 
     Parameters
     ----------
@@ -262,42 +278,71 @@ def seasonal_statistics(cube, operator='mean'):
         Select operator to apply.
         Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
 
+    season: str, optional
+        Seasons to build. Available: ('DJF', 'MAM', 'JJA', SON') (default)
+        and all sequentially correct combinations holding every month
+        of a year: e.g. ('JJAS','ONDJFMAM'), or less in case of prior season
+        extraction.
+
     Returns
     -------
     iris.cube.Cube
         Seasonal statistic cube
     """
+    seasons = tuple([sea.lower() for sea in seasons])
+
+    if any([len(sea) < 2 for sea in seasons]):
+        raise ValueError(
+            f"Minimum of 2 month is required per Seasons: {seasonsl}.")
+
     if not cube.coords('clim_season'):
-        iris.coord_categorisation.add_season(cube, 'time', name='clim_season')
+        iris.coord_categorisation.add_season(
+            cube, 'time', name='clim_season', seasons=seasons
+        )
+    else:
+        old_seasons = set(cube.coord('clim_season').points)
+        if not all([sea in old_seasons for sea in seasons]):
+            raise ValueError(
+                f"Seasons {seasons} do not match prior season extraction "
+                f"{old_seasons}.")
+
     if not cube.coords('season_year'):
-        iris.coord_categorisation.add_season_year(cube,
-                                                  'time',
-                                                  name='season_year')
+        iris.coord_categorisation.add_season_year(
+            cube, 'time', name='season_year', seasons=seasons
+        )
 
     operator = get_iris_analysis_operation(operator)
 
     cube = cube.aggregated_by(['clim_season', 'season_year'], operator)
 
     # CMOR Units are days so we are safe to operate on days
-    # Ranging on [90, 92] days makes this calendar-independent
-    def spans_three_months(time):
+    # Ranging on [29, 31] days makes this calendar-independent
+    # the only season this could not work is 'F' but this raises an
+    # ValueError
+    def spans_full_season(cube):
         """
-        Check for three months.
+        Check for all month present in the season.
 
         Parameters
         ----------
-        time: iris.DimCoord
-            cube time coordinate
+        cube: iris.cube.Cube
+            input cube.
 
         Returns
         -------
         bool
             truth statement if time bounds are 90+2 days.
         """
-        return 90 <= (time.bound[1] - time.bound[0]).days <= 92
+        time = cube.coord('time')
+        num_days = [(tt.bounds[0, 1] - tt.bounds[0, 0]) for tt in time]
 
-    three_months_bound = iris.Constraint(time=spans_three_months)
-    return cube.extract(three_months_bound)
+        seasons = cube.coord('clim_season').points
+        tar_days = [(len(sea) * 29, len(sea) * 31) for sea in seasons]
+
+        return [td[0] <= nd <= td[1] for nd, td in zip(num_days, tar_days)]
+
+    correct_seasons = spans_full_season(cube)
+    return cube[correct_seasons]
 
 
 def annual_statistics(cube, operator='mean'):
