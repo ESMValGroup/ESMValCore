@@ -25,17 +25,25 @@ and one configuration file which is distributed with ESMValTool:
 User configuration file
 =======================
 
-The ``config-user.yml`` is one of the two files the user needs to provide as
-input arguments to the ``esmvaltool`` executable at run time, the second being
-the :ref:`recipe`.
 
 The ``config-user.yml`` configuration file contains all the global level
 information needed by ESMValTool. It can be reused as many times the user needs
 to before changing any of the options stored in it. This file is essentially
 the gateway between the user and the machine-specific instructions to
-``esmvaltool``. The following shows the default settings from the
-``config-user.yml`` file with explanations in a commented line above each
-option:
+``esmvaltool``. By default, esmvaltool looks for it in the home directory,
+inside the '.esmvaltool' folder.
+
+Users can get a copy of this file with default values by running
+
+.. code-block:: bash
+
+  ``esmvaltool config get-config-user --path=${TARGET_FOLDER}``.
+
+If the option ``--path`` is omitted, the file will be created in
+`${HOME}/.esmvaltool`
+
+The following shows the default settings from the ``config-user.yml`` file
+with explanations in a commented line above each option:
 
 .. code-block:: yaml
 
@@ -169,6 +177,23 @@ Federation (ESGF) and the standards for file naming and paths to files are set
 out by CMOR and DRS. For a detailed description of these standards and their
 adoption in ESMValCore, we refer the user to :ref:`CMOR-DRS` section where we
 relate these standards to the data retrieval mechanism of the ESMValCore.
+
+By default, esmvaltool looks for it in the home directory,
+inside the '.esmvaltool' folder.
+
+Users can get a copy of this file with default values by running
+
+.. code-block:: bash
+
+  ``esmvaltool config get-config-developer --path=${TARGET_FOLDER}``.
+
+If the option ``--path`` is omitted, the file will be created in
+`${HOME}/.esmvaltool`
+
+.. note::
+
+  Remember to change your config-user file if you want to use a custom
+  config-developer.
 
 Example of the CMIP6 project configuration:
 
