@@ -114,7 +114,12 @@ def process_recipe(recipe_file, config_user):
 
 
 class Config():
-    """Manage configuration files."""
+    """
+    Manage ESMValTool's configuration.
+
+    This group contains utilities to  
+
+    """
     @staticmethod
     def _copy_config_file(filename, overwrite, target_path):
         import os
@@ -147,6 +152,9 @@ class Config():
         """
         Copy default config-user.yml file to a given path.
 
+        Copy default config-user.yml file to a given path or, if a path is 
+        not provided, install it in the default `${HOME}/.esmvaltool` folder.
+
         Parameters
         ----------
         overwrite: boolean
@@ -161,7 +169,10 @@ class Config():
     @classmethod
     def get_config_developer(cls, overwrite=False, target_path=None):
         """
-        Copy default config-developer file to a given path.
+        Copy default config-developer.yml file to a given path.
+
+        Copy default config-developer.yml file to a given path or, if a path is 
+        not provided, install it in the default `${HOME}/.esmvaltool` folder.
 
         Parameters
         ----------
@@ -176,13 +187,18 @@ class Config():
 
 
 class Recipes():
-    """Utilities to manage recipes."""
+    """
+    List, show and retrieve installed recipes
+
+    This group contains utilities to explore and manage the recipes available
+    in your installation of ESMValTool
+    """
     @staticmethod
     def list():
         """
         List all installed recipes.
 
-        Recipes are shown grouped by folder.
+        Show all installed recipes, grouped by folder. 
         """
         import os
         from ._config import configure_logging, DIAGNOSTICS_PATH
@@ -207,6 +223,8 @@ class Recipes():
         """
         Get a copy of any installed recipe in the current working directory.
 
+        Use this command to get a local copy of any installed recipe. 
+
         Parameters
         ----------
         recipe: str
@@ -224,6 +242,32 @@ class Recipes():
         logger.info('Copying installed recipe to the current folder...')
         shutil.copy(installed_recipe, os.path.basename(recipe))
         logger.info('Recipe %s successfully copied', recipe)
+
+    @staticmethod
+    def show(recipe):
+        """
+        Show the given recipe in console
+
+        Use this command to see the contents of any installed recipe.
+
+        Parameters
+        ----------
+        recipe: str
+            Name of the recipe to get, including any subdirectories.
+        """
+        import os
+        from ._config import configure_logging, DIAGNOSTICS_PATH
+        configure_logging(output=None, console_log_level='info')
+        installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
+        if not os.path.exists(installed_recipe):
+            ValueError(
+                f'Recipe {recipe} not found. To list all available recipes, '
+                'execute "esmvaltool list"')
+        msg = f'Recipe {recipe}'
+        logger.info(msg)
+        logger.info('=' * len(msg))
+        with open(installed_recipe) as recipe_file:
+            print(recipe_file.read())
 
 
 class ESMValTool():
@@ -263,7 +307,7 @@ class ESMValTool():
         Show versions of all packages that conform ESMValTool.
 
         In particular, this command will show the version ESMValCore and
-        any pther package that adds a subcommand to 'esmvaltool' command.
+        any other package that adds a subcommand to 'esmvaltool' command.
 
         """
         from . import __version__
