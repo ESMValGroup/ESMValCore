@@ -82,9 +82,8 @@ def process_recipe(recipe_file, config_user):
     logger.info(
         "If your system hangs during execution, it may not have enough "
         "memory for keeping this number of tasks in memory.")
-    logger.info(
-        "If you experience memory problems, try reducing "
-        "'max_parallel_tasks' in your user configuration file.")
+    logger.info("If you experience memory problems, try reducing "
+                "'max_parallel_tasks' in your user configuration file.")
 
     if config_user['compress_netcdf']:
         logger.warning(
@@ -117,7 +116,7 @@ class Config():
     """
     Manage ESMValTool's configuration.
 
-    This group contains utilities to  
+    This group contains utilities to manage ESMValTool configuration files.
 
     """
     @staticmethod
@@ -152,7 +151,7 @@ class Config():
         """
         Copy default config-user.yml file to a given path.
 
-        Copy default config-user.yml file to a given path or, if a path is 
+        Copy default config-user.yml file to a given path or, if a path is
         not provided, install it in the default `${HOME}/.esmvaltool` folder.
 
         Parameters
@@ -171,7 +170,7 @@ class Config():
         """
         Copy default config-developer.yml file to a given path.
 
-        Copy default config-developer.yml file to a given path or, if a path is 
+        Copy default config-developer.yml file to a given path or, if a path is
         not provided, install it in the default `${HOME}/.esmvaltool` folder.
 
         Parameters
@@ -198,7 +197,7 @@ class Recipes():
         """
         List all installed recipes.
 
-        Show all installed recipes, grouped by folder. 
+        Show all installed recipes, grouped by folder.
         """
         import os
         from ._config import configure_logging, DIAGNOSTICS_PATH
@@ -223,7 +222,7 @@ class Recipes():
         """
         Get a copy of any installed recipe in the current working directory.
 
-        Use this command to get a local copy of any installed recipe. 
+        Use this command to get a local copy of any installed recipe.
 
         Parameters
         ----------
@@ -274,17 +273,17 @@ class ESMValTool():
 
     __doc__ = """
     A community tool for routine evaluation of ESM
-    
-    The Earth System Model Evaluation Tool (ESMValTool) is a community 
-    diagnostics and performance metrics tool for the evaluation of Earth 
-    System Models (ESMs) that allows for routine comparison of single or 
-    multiple models, either against predecessor versions or against 
-    observations. 
 
-    Complete documentation is available in 
+    The Earth System Model Evaluation Tool (ESMValTool) is a community
+    diagnostics and performance metrics tool for the evaluation of Earth
+    System Models (ESMs) that allows for routine comparison of single or
+    multiple models, either against predecessor versions or against
+    observations.
+
+    Complete documentation is available in
     https://docs.esmvaltool.org/en/latest/.
 
-    To report issues or ask for improvements, please visit 
+    To report issues or ask for improvements, please visit
     https://github.com/ESMValGroup/ESMValTool.
 
     """
@@ -328,8 +327,8 @@ class ESMValTool():
         """
         Execute an ESMValTool recipe.
 
-        `esmvaltool run` executes any given recipe. To get a list of available 
-        recipes and create a local copy of any of them, check 
+        `esmvaltool run` executes any given recipe. To get a list of available
+        recipes and create a local copy of any of them, check
         `esmvaltool recipes` command group.
 
         Parameters
@@ -356,7 +355,7 @@ class ESMValTool():
             Configure the sensitivity of the CMOR check. Possible values are:
             `ignore` (all errors will be reported  as warnings),
             `relaxed` (only fail if there are critical errors),
-            default (fail if there are any errors), 
+            default (fail if there are any errors),
             strict (fail if there are any warnings).
         """
         import os
