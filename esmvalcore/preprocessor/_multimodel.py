@@ -150,9 +150,9 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     return stats_cube
 
 
-def _set_common_calendar(cubes):
+def _unify_time_coordinates(cubes):
     """
-    Make sure all cubes' use the same standard calendar.
+    Make sure all cubes' use the same standard calendar and time units.
 
     Cubes may have different calendars. This function extracts the date
     information from the cube and re-constructs a default calendar,
@@ -189,6 +189,7 @@ def _set_common_calendar(cubes):
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord('time').points = [t_unit.date2num(date) for date in dates]
         cube.coord('time').units = t_unit
+        cube.coord('time').guess_bounds()
 
 
 def _get_time_slice(cubes, time):
@@ -271,6 +272,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     ------
     ValueError
         If span is neither overlap nor full.
+    ValueError
+        If the time frequency of the input data not yearly or monthly.
 
     """
     logger.debug('Multimodel statistics: computing: %s', statistics)
@@ -284,8 +287,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         cubes = products
         statistic_products = {}
 
-    # Make cubes share the same calendar, so time points are comparable
-    _set_common_calendar(cubes)
+    # Reset time coordinates and make cubes share the same calendar
+    _unify_time_coordinates(cubes)
 
     if span == 'overlap':
         # check if we have any time overlap

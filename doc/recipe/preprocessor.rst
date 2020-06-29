@@ -663,6 +663,10 @@ from a statistical point of view, this is needed since weights are not yet
 implemented; also higher dimensional data is not supported (i.e. anything with
 dimensionality higher than four: time, vertical axis, two horizontal axes).
 
+Input datasets may have different time coordinates. The multi-model statistics
+preprocessor sets a common time coordinate on all datasets. As the number of
+days in a year may vary between calendars, (sub-)daily data are not supported.
+
 .. code-block:: yaml
 
     preprocessors:
@@ -674,7 +678,7 @@ dimensionality higher than four: time, vertical axis, two horizontal axes).
 
 see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
-When calling the module inside diagnostic scripts, the input must be given 
+When calling the module inside diagnostic scripts, the input must be given
 as a list of cubes. The output will be saved in a dictionary where each
 entry contains the resulting cube with the requested statistic operations.
 
