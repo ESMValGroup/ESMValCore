@@ -12,12 +12,11 @@ from esmvalcore.preprocessor._multimodel import (_assemble_data,
                                                  _compute_statistic,
                                                  _get_time_slice, _plev_fix,
                                                  _put_in_cube,
-                                                 _set_common_calendar)
+                                                 _unify_time_coordinates)
 
 
 class Test(tests.Test):
     """Test class for preprocessor/_multimodel.py."""
-
     def setUp(self):
         """Prepare tests."""
         # Make various time arrays
@@ -171,7 +170,7 @@ class Test(tests.Test):
         expected_data = np.ma.ones((3, 2, 2))
         self.assert_array_equal(expected_data, fixed_data)
 
-    def test_set_common_calendar(self):
+    def test_unify_time_coordinates(self):
         """Test set common calenar."""
         cube1 = self.cube1
         time1 = cube1.coord('time')
@@ -183,7 +182,7 @@ class Test(tests.Test):
         cube2 = self.cube1.copy()
         cube2.coord('time').points = time2
         cube2.coord('time').units = t_unit2
-        _set_common_calendar([cube1, cube2])
+        _unify_time_coordinates([cube1, cube2])
         self.assertEqual(cube1.coord('time'), cube2.coord('time'))
 
     def test_get_time_slice_all(self):
@@ -205,7 +204,7 @@ class Test(tests.Test):
     def test_raise_daily(self):
         """Test raise for daily input data."""
         with self.assertRaises(ValueError):
-            _set_common_calendar([self.cube6])
+            _unify_time_coordinates([self.cube6])
 
 
 if __name__ == '__main__':

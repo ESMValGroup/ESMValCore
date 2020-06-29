@@ -189,6 +189,7 @@ def _unify_time_coordinates(cubes):
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord('time').points = [t_unit.date2num(date) for date in dates]
         cube.coord('time').units = t_unit
+        cube.coord('time').bounds = None
         cube.coord('time').guess_bounds()
 
 
