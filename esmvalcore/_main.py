@@ -228,7 +228,22 @@ class Recipes():
 
 class ESMValTool():
 
-    __doc__ = __doc__
+    __doc__ = """
+    A community tool for routine evaluation of ESM
+    
+    The Earth System Model Evaluation Tool (ESMValTool) is a community 
+    diagnostics and performance metrics tool for the evaluation of Earth 
+    System Models (ESMs) that allows for routine comparison of single or 
+    multiple models, either against predecessor versions or against 
+    observations. 
+
+    Complete documentation is available in 
+    https://docs.esmvaltool.org/en/latest/.
+
+    To report issues or ask for improvements, please visit 
+    https://github.com/ESMValGroup/ESMValTool.
+
+    """
 
     def __init__(self):
         self.recipes = Recipes()
@@ -244,7 +259,13 @@ class ESMValTool():
             self.__setattr__(entry_point.name, entry_point.load()())
 
     def version(self):
-        """Show version of all ESMValTool packages."""
+        """
+        Show versions of all packages that conform ESMValTool.
+
+        In particular, this command will show the version ESMValCore and
+        any pther package that adds a subcommand to 'esmvaltool' command.
+
+        """
         from . import __version__
         print(f'ESMValCore: {__version__}')
         for project, version in self._extra_packages.items():
@@ -263,8 +284,9 @@ class ESMValTool():
         """
         Execute an ESMValTool recipe.
 
-        To get a list of available recipes and create a local copy of any of
-        them, check `esmvaltool recipes` group.
+        `esmvaltool run` executes any given recipe. To get a list of available 
+        recipes and create a local copy of any of them, check 
+        `esmvaltool recipes` command group.
 
         Parameters
         ----------
@@ -272,25 +294,26 @@ class ESMValTool():
             Recipe to run, as either the name of an installed recipe or the
             path to a non-installed one
         config_file: str, optional
-            Config file to use. If not provided will load
+            Configuration file to use. If not provided will load
             ${HOME}/.esmvaltool/config.user.yml if it exists
         max_datasets: int, optional
             Maximum number of datasets to compute
         max_years: int, optional
             Maximum number of years to compute
         skip_nonexistent: bool, optional
-            If True, do not fail if data for some datasets is missing
+            If True, ESMValTool will  not fail if data for some datasets is
+            missing
         synda_download: bool, optional
-            If True, download missing data using Synda if possible
+            If True, ESMValtool will try to download missing data using Synda
+            if possible
         diagnostics: list(str), optional
-            Only run the named diagnostics from the recipe
+            Only run the selected diagnostics from the recipe
         check_level: str, optional
-            Configure the severity of the errors that will make the CMOR check
-            fail. Possible values:
-                - ignore: all errors will be reported as warnings
-                - relaxed: only fail if there are critical errors
-                - default: fail if there are any errors
-                - strict: fail if there are any warnings
+            Configure the sensitivity of the CMOR check. Possible values are:
+            `ignore` (all errors will be reported  as warnings),
+            `relaxed` (only fail if there are critical errors),
+            default (fail if there are any errors), 
+            strict (fail if there are any warnings).
         """
         import os
         import shutil
