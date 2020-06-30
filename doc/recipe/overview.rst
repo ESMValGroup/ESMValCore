@@ -181,6 +181,11 @@ arguments):
 
 .. _Diagnostics:
 
+Preprocessor operations will be applied using the default order
+as `listed here <https://docs.esmvaltool.org/projects/esmvalcore/en/latest/api/esmvalcore.preprocessor.html#preprocessor-functions)`_.
+Preprocessor tasks can be set to run in the order they are listed in the recipe
+by adding `custom: true` to the preprocessor definition.
+
 Recipe section: ``diagnostics``
 ===============================
 
@@ -236,6 +241,10 @@ called ``diagnostic_name`` and will result in two tasks:
 The path to the script provided in the ``script`` option should be
 either the absolute path to the script, or the path relative to the
 ``esmvaltool/diag_scripts`` directory.
+
+Depending on the installation configuration, you may get an error of
+"file does not exist" when the system tries to run the diagnostic script
+using relative paths. If this happens, use an absolute path instead.
 
 Ancestor tasks
 --------------
