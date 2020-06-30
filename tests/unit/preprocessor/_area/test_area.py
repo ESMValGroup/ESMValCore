@@ -598,7 +598,7 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
 
-def test_extract_shape_natural_earth(make_testcube, square_shape):
+def test_extract_shape_natural_earth(make_testcube):
     """Test for extracting a shape from NE file."""
     expected = np.ones((5, 5))
     result = extract_shape(
@@ -606,6 +606,16 @@ def test_extract_shape_natural_earth(make_testcube, square_shape):
         "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp",
         crop=False)
     np.testing.assert_array_equal(result.data.data, expected)
+
+
+def test_extract_shape_ne_check_nans():
+    """Test shape from NE file with check for boundary NaN's."""
+    cube = _create_sample_full_cube()
+    result = extract_shape(
+        cube,
+        "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp",
+        crop=False)
+    assert not np.isnan(result.data.data).any()
 
 
 @pytest.mark.parametrize('crop', [True, False])
