@@ -7,6 +7,7 @@ The ESMValCore package provides the ``esmvaltool`` command line tool, which can
 be used to run a :doc:`recipe <../recipe/index>`.
 
 To run a recipe, call ``esmvaltool run`` with the desired recipe:
+
 .. code:: bash
 
 	esmvaltool run recipe_python.yml
