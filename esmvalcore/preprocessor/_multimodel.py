@@ -20,6 +20,8 @@ import cf_units
 import iris
 import numpy as np
 
+from ._time import regrid_time
+
 logger = logging.getLogger(__name__)
 
 
@@ -109,10 +111,12 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     if t_axis is None:
         times = template_cube.coord('time')
     else:
+        unit_name = template_cube.coord('time').units.name
+        tunits = cf_units.Unit(unit_name, calendar="standard")
         times = iris.coords.DimCoord(
             t_axis,
             standard_name='time',
-            units=template_cube.coord('time').units)
+            units=tunits)
 
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
@@ -164,9 +168,8 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
 
 def _datetime_to_int_days(cube):
     """Return list of int(days) converted from cube datetime cells."""
+    cube = _align_yearly_axes(cube)
     time_cells = [cell.point for cell in cube.coord('time').cells()]
-    time_unit = cube.coord('time').units.name
-    time_offset = _get_time_offset(time_unit)
 
     # extract date info
     real_dates = []
@@ -174,13 +177,24 @@ def _datetime_to_int_days(cube):
         # real_date resets the actual data point day
         # to the 1st of the month so that there are no
         # wrong overlap indices
-        # NOTE: this workaround is good only
-        # for monthly data
         real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
         real_dates.append(real_date)
 
+    # get the number of days starting from the reference unit
+    time_unit = cube.coord('time').units.name
+    time_offset = _get_time_offset(time_unit)
     days = [(date_obj - time_offset).days for date_obj in real_dates]
+
     return days
+
+
+def _align_yearly_axes(cube):
+    """Perform a time-regridding operation to align time axes for yr data."""
+    years = [cell.point.year for cell in cube.coord('time').cells()]
+    # be extra sure that the first point is not in the previous year
+    if 0 not in np.diff(years):
+        return regrid_time(cube, 'yr')
+    return cube
 
 
 def _get_overlap(cubes):
@@ -305,7 +319,7 @@ def _assemble_full_data(cubes, statistic):
     return stats_cube
 
 
-def multi_model_statistics(products, span, output_products, statistics):
+def multi_model_statistics(products, span, statistics, output_products=None):
     """
     Compute multi-model statistics.
 
@@ -324,7 +338,8 @@ def multi_model_statistics(products, span, output_products, statistics):
     Parameters
     ----------
     products: list
-        list of data products to be used in multimodel stat computation;
+        list of data products or cubes to be used in multimodel stat
+        computation;
         cube attribute of product is the data cube for computing the stats.
     span: str
         overlap or full; if overlap stas are computed on common time-span;
@@ -337,7 +352,8 @@ def multi_model_statistics(products, span, output_products, statistics):
     Returns
     -------
     list
-        list of data products containing the multimodel stats computed.
+        list of data products or cubes containing the multimodel stats
+        computed.
     Raises
     ------
     ValueError
@@ -348,16 +364,20 @@ def multi_model_statistics(products, span, output_products, statistics):
     if len(products) < 2:
         logger.info("Single dataset in list: will not compute statistics.")
         return products
-
-    cubes = [cube for product in products for cube in product.cubes]
-    # check if we have any time overlap
-    interval = _get_overlap(cubes)
-    if interval is None:
-        logger.info("Time overlap between cubes is none or a single point."
-                    "check datasets: will not compute statistics.")
-        return products
+    if output_products:
+        cubes = [cube for product in products for cube in product.cubes]
+        statistic_products = set()
+    else:
+        cubes = products
+        statistic_products = {}
 
     if span == 'overlap':
+        # check if we have any time overlap
+        interval = _get_overlap(cubes)
+        if interval is None:
+            logger.info("Time overlap between cubes is none or a single point."
+                        "check datasets: will not compute statistics.")
+            return products
         logger.debug("Using common time overlap between "
                      "datasets to compute statistics.")
     elif span == 'full':
@@ -367,7 +387,6 @@ def multi_model_statistics(products, span, output_products, statistics):
             "Unexpected value for span {}, choose from 'overlap', 'full'"
             .format(span))
 
-    statistic_products = set()
     for statistic in statistics:
         # Compute statistic
         if span == 'overlap':
@@ -377,14 +396,18 @@ def multi_model_statistics(products, span, output_products, statistics):
         statistic_cube.data = np.ma.array(
             statistic_cube.data, dtype=np.dtype('float32'))
 
-        # Add to output product and log provenance
-        statistic_product = output_products[statistic]
-        statistic_product.cubes = [statistic_cube]
-        for product in products:
-            statistic_product.wasderivedfrom(product)
-        logger.info("Generated %s", statistic_product)
-        statistic_products.add(statistic_product)
+        if output_products:
+            # Add to output product and log provenance
+            statistic_product = output_products[statistic]
+            statistic_product.cubes = [statistic_cube]
+            for product in products:
+                statistic_product.wasderivedfrom(product)
+            logger.info("Generated %s", statistic_product)
+            statistic_products.add(statistic_product)
+        else:
+            statistic_products[statistic] = statistic_cube
 
-    products |= statistic_products
-
-    return products
+    if output_products:
+        products |= statistic_products
+        return products
+    return statistic_products

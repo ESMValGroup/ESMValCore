@@ -79,6 +79,7 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     }
 
     monkeypatch.setattr(esmvalcore._task, 'which', lambda x: x)
+    monkeypatch.setattr(esmvalcore._task.sys, 'executable', 'python')
 
     task = esmvalcore._task.DiagnosticTask(script,
                                            settings,

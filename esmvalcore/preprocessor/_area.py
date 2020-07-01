@@ -250,9 +250,22 @@ def area_statistics(cube, operator, fx_variables=None):
     grid_areas = tile_grid_areas(cube, fx_variables)
 
     if not fx_variables and cube.coord('latitude').points.ndim == 2:
-        logger.error(
-            'fx_file needed to calculate grid cell area for irregular grids.')
-        raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
+        coord_names = [coord.standard_name for coord in cube.coords()]
+        if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
+            cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
+            cube_tmp = cube.copy()
+            cube_tmp.remove_coord('latitude')
+            cube_tmp.coord('grid_latitude').rename('latitude')
+            cube_tmp.remove_coord('longitude')
+            cube_tmp.coord('grid_longitude').rename('longitude')
+            grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
+            logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        else:
+            logger.error(
+                'fx_file needed to calculate grid cell area for irregular '
+                'grids.')
+            raise iris.exceptions.CoordinateMultiDimError(
+                cube.coord('latitude'))
 
     coord_names = ['longitude', 'latitude']
     if grid_areas is None or not grid_areas.any():
