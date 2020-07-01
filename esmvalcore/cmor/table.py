@@ -740,7 +740,7 @@ class CMIP5Info(object):
 
         if var_info:
             mip_info = self.get_table(table)
-            var_info.copy()
+            var_info = var_info.copy()
             if mip_info:
                 var_info.frequency = mip_info.frequency
         return var_info
@@ -780,8 +780,8 @@ class CMIP3Info(CMIP5Info):
 
     def _read_variable(self, short_name, frequency):
         var = super()._read_variable(short_name, frequency)
-        var.modeling_realm = None
         var.frequency = None
+        var.modeling_realm = None
         return var
 
 
@@ -879,7 +879,7 @@ class CustomInfo(CMIP5Info):
                     self.coords[value] = self._read_coordinate(value)
                     continue
                 elif key == 'variable_entry':
-                    table[value] = self._read_variable(value, None)
+                    table[value] = self._read_variable(value, '')
                     continue
                 if not self._read_line():
                     return

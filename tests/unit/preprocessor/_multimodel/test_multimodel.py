@@ -8,6 +8,7 @@ import numpy as np
 from cf_units import Unit
 
 import tests
+from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (_assemble_full_data,
                                                  _assemble_overlap_data,
                                                  _compute_statistic,
@@ -47,7 +48,22 @@ class Test(tests.Test):
                                      units=Unit(
                                          'days since 1950-01-01',
                                          calendar='gregorian'))
-
+        yr_time = iris.coords.DimCoord([15, 410],
+                                       standard_name='time',
+                                       bounds=[[1., 30.], [395., 425.]],
+                                       units=Unit(
+                                           'days since 1950-01-01',
+                                           calendar='gregorian'))
+        yr_time2 = iris.coords.DimCoord([1., 367., 733., 1099.],
+                                        standard_name='time',
+                                        bounds=[
+                                            [0.5, 1.5],
+                                            [366, 368],
+                                            [732, 734],
+                                            [1098, 1100], ],
+                                        units=Unit(
+                                            'days since 1950-01-01',
+                                            calendar='gregorian'))
         zcoord = iris.coords.DimCoord([0.5, 5., 50.],
                                       standard_name='air_pressure',
                                       long_name='air_pressure',
@@ -74,6 +90,14 @@ class Test(tests.Test):
         coords_spec5 = [(time2, 0), (zcoord, 1), (lats, 2), (lons, 3)]
         self.cube2 = iris.cube.Cube(data3, dim_coords_and_dims=coords_spec5)
 
+        coords_spec4_yr = [(yr_time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube1_yr = iris.cube.Cube(data2,
+                                       dim_coords_and_dims=coords_spec4_yr)
+
+        coords_spec5_yr = [(yr_time2, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube2_yr = iris.cube.Cube(data3,
+                                       dim_coords_and_dims=coords_spec5_yr)
+
     def test_get_time_offset(self):
         """Test time unit."""
         result = _get_time_offset("days since 1950-01-01")
@@ -90,13 +114,64 @@ class Test(tests.Test):
         self.assert_array_equal(stat_mean, expected_mean)
         self.assert_array_equal(stat_median, expected_median)
 
+    def test_compute_full_statistic_mon_cube(self):
+        data = [self.cube1, self.cube2]
+        stats = multi_model_statistics(data, 'full', ['mean'])
+        expected_full_mean = np.ma.ones((2, 3, 2, 2))
+        expected_full_mean.mask = np.zeros((2, 3, 2, 2))
+        expected_full_mean.mask[1] = True
+        self.assert_array_equal(stats['mean'].data, expected_full_mean)
+
+    def test_compute_full_statistic_yr_cube(self):
+        data = [self.cube1_yr, self.cube2_yr]
+        stats = multi_model_statistics(data, 'full', ['mean'])
+        expected_full_mean = np.ma.ones((4, 3, 2, 2))
+        expected_full_mean.mask = np.zeros((4, 3, 2, 2))
+        expected_full_mean.mask[2:4] = True
+        self.assert_array_equal(stats['mean'].data, expected_full_mean)
+
+    def test_compute_overlap_statistic_mon_cube(self):
+        data = [self.cube1, self.cube1]
+        stats = multi_model_statistics(data, 'overlap', ['mean'])
+        expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
+        self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
+
+    def test_compute_overlap_statistic_yr_cube(self):
+        data = [self.cube1_yr, self.cube1_yr]
+        stats = multi_model_statistics(data, 'overlap', ['mean'])
+        expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
+        self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
+
+    def test_compute_std(self):
+        """Test statistic."""
+        data = [self.cube1.data[0], self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "std")
+        expected = np.ma.ones((3, 2, 2)) * 0.5
+        expected[0, 0, 0] = 0
+        self.assert_array_equal(stat, expected)
+
+    def test_compute_max(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "max")
+        expected = np.ma.ones((3, 2, 2)) * 2
+        expected[0, 0, 0] = 0.5
+        self.assert_array_equal(stat, expected)
+
+    def test_compute_min(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "min")
+        expected = np.ma.ones((3, 2, 2)) * 0.5
+        self.assert_array_equal(stat, expected)
+
     def test_put_in_cube(self):
         """Test put in cube."""
         cube_data = np.ma.ones((2, 3, 2, 2))
         stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=None)
         self.assert_array_equal(stat_cube.data, self.cube1.data)
 
-    def test_datetime_to_int_days(self):
+    def test_datetime_to_int_days_no_overlap(self):
         """Test _datetime_to_int_days."""
         computed_dats = _datetime_to_int_days(self.cube1)
         expected_dats = [0, 31]

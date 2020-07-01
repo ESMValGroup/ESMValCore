@@ -47,21 +47,22 @@ REQUIREMENTS = {
     # Test dependencies
     # Execute 'python setup.py test' to run tests
     'test': [
-        'flake8<3.8.0',
         'pytest>=3.9',
         'pytest-cov',
         'pytest-env',
         'pytest-flake8',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
+        'pytest-mock',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
     'develop': [
+        'autodocsumm',
         'codespell',
         'isort',
         'prospector[with_pyroma]!=1.1.6.3,!=1.1.6.4',
-        'sphinx',
+        'sphinx>2',
         'sphinx_rtd_theme',
         'vmprof',
         'yamllint',

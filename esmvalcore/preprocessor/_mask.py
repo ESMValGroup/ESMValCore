@@ -135,6 +135,8 @@ def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
     if any(fx_files) and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
+            if not fx_file:
+                continue
             fxfile_members = os.path.basename(fx_file).split('_')
             for fx_root in ['sftlf', 'sftof']:
                 if fx_root in fxfile_members:
@@ -162,8 +164,8 @@ def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
                     "Applying land-sea mask from Natural Earth"
                     " shapefile: \n%s", shapefiles[mask_out])
             else:
-                msg = (f"Use of shapefiles with irregular grids not "
-                       f"yet implemented, land-sea mask not applied.")
+                msg = ("Use of shapefiles with irregular grids not "
+                       "yet implemented, land-sea mask not applied.")
                 raise ValueError(msg)
     else:
         if cube.coord('longitude').points.ndim < 2:
@@ -174,8 +176,8 @@ def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
                 "Applying land-sea mask from Natural Earth"
                 " shapefile: \n%s", shapefiles[mask_out])
         else:
-            msg = (f"Use of shapefiles with irregular grids not "
-                   f"yet implemented, land-sea mask not applied.")
+            msg = ("Use of shapefiles with irregular grids not "
+                   "yet implemented, land-sea mask not applied.")
             raise ValueError(msg)
 
     return cube
@@ -216,6 +218,8 @@ def mask_landseaice(cube, fx_variables, mask_out):
     fx_files = fx_variables.values()
     if any(fx_files):
         for fx_file in fx_files:
+            if not fx_file:
+                continue
             fx_cube = iris.load_cube(fx_file)
 
             if _check_dims(cube, fx_cube):
@@ -331,9 +335,9 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
             cube.coord(axis='Y').points)
     # 2D irregular grids; spit an error for now
     else:
-        msg = (f"No fx-files found (sftlf or sftof)!"
-               f"2D grids are suboptimally masked with "
-               f"Natural Earth masks. Exiting.")
+        msg = ("No fx-files found (sftlf or sftof)!"
+               "2D grids are suboptimally masked with "
+               "Natural Earth masks. Exiting.")
         raise ValueError(msg)
 
     # Wrap around longitude coordinate to match data

@@ -118,7 +118,7 @@ def zonal_statistics(cube, operator):
         cube.data = cube.core_data().astype(np.float32, casting='same_kind')
         return cube
     else:
-        msg = (f"Zonal statistics on irregular grids not yet implemnted")
+        msg = ("Zonal statistics on irregular grids not yet implemnted")
         raise ValueError(msg)
 
 
@@ -152,7 +152,7 @@ def meridional_statistics(cube, operator):
         cube.data = cube.core_data().astype(np.float32, casting='same_kind')
         return cube
     else:
-        msg = (f"Meridional statistics on irregular grids not yet implemnted")
+        msg = ("Meridional statistics on irregular grids not yet implemented")
         raise ValueError(msg)
 
 
@@ -250,9 +250,22 @@ def area_statistics(cube, operator, fx_variables=None):
     grid_areas = tile_grid_areas(cube, fx_variables)
 
     if not fx_variables and cube.coord('latitude').points.ndim == 2:
-        logger.error(
-            'fx_file needed to calculate grid cell area for irregular grids.')
-        raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
+        coord_names = [coord.standard_name for coord in cube.coords()]
+        if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
+            cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
+            cube_tmp = cube.copy()
+            cube_tmp.remove_coord('latitude')
+            cube_tmp.coord('grid_latitude').rename('latitude')
+            cube_tmp.remove_coord('longitude')
+            cube_tmp.coord('grid_longitude').rename('longitude')
+            grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
+            logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        else:
+            logger.error(
+                'fx_file needed to calculate grid cell area for irregular '
+                'grids.')
+            raise iris.exceptions.CoordinateMultiDimError(
+                cube.coord('latitude'))
 
     coord_names = ['longitude', 'latitude']
     if grid_areas is None or not grid_areas.any():
@@ -331,14 +344,21 @@ def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
         lon_bound = lon_coord.core_bounds()[0]
         lon_step = lon_bound[1] - lon_bound[0]
         start_longitude -= lon_step
+        if start_longitude < 0:
+            start_longitude = 0
         end_longitude += lon_step
+        if end_longitude > 360:
+            end_longitude = 360.
         lat_bound = lat_coord.core_bounds()[0]
         lat_step = lat_bound[1] - lat_bound[0]
         start_latitude -= lat_step
+        if start_latitude < -90:
+            start_latitude = -90.
         end_latitude += lat_step
+        if end_latitude > 90.:
+            end_latitude = 90.
         cube = extract_region(cube, start_longitude, end_longitude,
                               start_latitude, end_latitude)
-
     return cube
 
 

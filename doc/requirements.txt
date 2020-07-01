@@ -1,3 +1,4 @@
+autodocsumm
 dask[array]
 fiona
 netCDF4
@@ -9,4 +10,5 @@ prov[dot]
 pyyaml
 scipy
 shapely[vectorized]
+sphinx>2
 yamale
