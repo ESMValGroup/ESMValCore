@@ -619,8 +619,8 @@ def test_extract_shape_ne_check_nans():
         cube,
         "esmvalcore/preprocessor/ne_masks/ne_10m_land.shp",
         crop=False)
-    assert not np.isnan(result1.data.data).any()
-    assert not np.isnan(result2.data.data).any()
+    assert not np.ma.is_masked(result1[:, 90, 179])
+    assert not np.ma.is_masked(result2[:, 89, :])
 
 
 @pytest.mark.parametrize('crop', [True, False])
