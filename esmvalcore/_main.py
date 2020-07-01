@@ -361,6 +361,8 @@ class ESMValTool():
 
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
 
+        if not config_file:
+            config_file = '~/.esmvaltool/config-user.yml'
         cfg = read_config_user_file(config_file, recipe_name, kwargs)
 
         # Create run dir

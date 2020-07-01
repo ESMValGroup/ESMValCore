@@ -33,8 +33,6 @@ DIAGNOSTICS_PATH = find_diagnostics()
 
 def read_config_user_file(config_file, folder_name, options):
     """Read config user file and store settings in a dictionary."""
-    if not config_file:
-        config_file = '~/.esmvaltool/config-user.yml'
     config_file = os.path.abspath(
         os.path.expandvars(os.path.expanduser(config_file)))
     # Read user config file
