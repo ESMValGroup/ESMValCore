@@ -21,13 +21,6 @@ For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
 """
 
-# ESMValTool main script
-#
-# Authors:
-# Bouwe Andela (NLESC, Netherlands - b.andela@esciencecenter.nl)
-# Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-# Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
-
 import logging
 
 import fire
@@ -119,17 +112,18 @@ class Config():
     This group contains utilities to manage ESMValTool configuration files.
 
     """
+
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
         import os
         import shutil
         from ._config import configure_logging
-        configure_logging(output=None, console_log_level='info')
+        configure_logging(console_log_level='info')
         if not path:
             path = os.path.join(os.path.expanduser('~/.esmvaltool'), filename)
         if os.path.isfile(path):
             if overwrite:
-                logger.info('Ovwerwriting file %s.', path)
+                logger.info('Overwriting file %s.', path)
             else:
                 logger.info('Copy aborted. File %s already exists.', path)
                 return
@@ -139,7 +133,7 @@ class Config():
             logger.info('Creating folder %s', target_folder)
             os.makedirs(target_folder)
 
-        logger.info('Copying file to %s...', path)
+        logger.info('Copying file to %s.', path)
         shutil.copy2(os.path.join(os.path.dirname(__file__), filename), path)
         logger.info('Copy finished.')
 
@@ -184,11 +178,15 @@ class Config():
 
 class Recipes():
     """
-    List, show and retrieve installed recipes
+    List, show and retrieve installed recipes.
 
     This group contains utilities to explore and manage the recipes available
-    in your installation of ESMValTool
+    in your installation of ESMValTool.
+
+    Documentation for recipes included with ESMValTool is available at
+    https://docs.esmvaltool.org/en/latest/recipes/index.html.
     """
+
     @staticmethod
     def list():
         """
@@ -198,7 +196,7 @@ class Recipes():
         """
         import os
         from ._config import configure_logging, DIAGNOSTICS_PATH
-        configure_logging(output=None, console_log_level='info')
+        configure_logging(console_log_level='info')
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
         logger.info('Installed recipes:')
         logger.info('==================')
@@ -229,7 +227,7 @@ class Recipes():
         import os
         import shutil
         from ._config import configure_logging, DIAGNOSTICS_PATH
-        configure_logging(output=None, console_log_level='info')
+        configure_logging(console_log_level='info')
         installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
         if not os.path.exists(installed_recipe):
             ValueError(
@@ -242,7 +240,7 @@ class Recipes():
     @staticmethod
     def show(recipe):
         """
-        Show the given recipe in console
+        Show the given recipe in console.
 
         Use this command to see the contents of any installed recipe.
 
@@ -253,7 +251,7 @@ class Recipes():
         """
         import os
         from ._config import configure_logging, DIAGNOSTICS_PATH
-        configure_logging(output=None, console_log_level='info')
+        configure_logging(console_log_level='info')
         installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
         if not os.path.exists(installed_recipe):
             ValueError(
@@ -267,9 +265,8 @@ class Recipes():
 
 
 class ESMValTool():
-
-    __doc__ = """
-    A community tool for routine evaluation of ESM
+    """
+    A community tool for routine evaluation of Earth system models.
 
     The Earth System Model Evaluation Tool (ESMValTool) is a community
     diagnostics and performance metrics tool for the evaluation of Earth
@@ -277,8 +274,7 @@ class ESMValTool():
     multiple models, either against predecessor versions or against
     observations.
 
-    Complete documentation is available in
-    https://docs.esmvaltool.org/en/latest/.
+    Complete documentation is available at https://docs.esmvaltool.org.
 
     To report issues or ask for improvements, please visit
     https://github.com/ESMValGroup/ESMValTool.
@@ -324,33 +320,31 @@ class ESMValTool():
         """
         Execute an ESMValTool recipe.
 
-        `esmvaltool run` executes any given recipe. To get a list of available
-        recipes and create a local copy of any of them, check
+        `esmvaltool run` executes the given recipe. To see a list of available
+        recipes or create a local copy of any of them, use the
         `esmvaltool recipes` command group.
 
         Parameters
         ----------
         recipe : str
             Recipe to run, as either the name of an installed recipe or the
-            path to a non-installed one
+            path to a non-installed one.
         config_file: str, optional
-            Configuration file to use. If not provided will load
-            ${HOME}/.esmvaltool/config.user.yml if it exists
+            Configuration file to use. If not provided the file
+            ${HOME}/.esmvaltool/config-user.yml will be used.
         max_datasets: int, optional
-            Maximum number of datasets to compute
+            Maximum number of datasets to use.
         max_years: int, optional
-            Maximum number of years to compute
+            Maximum number of years to use.
         skip_nonexistent: bool, optional
-            If True, ESMValTool will  not fail if data for some datasets is
-            missing
+            If True, the run will not fail if some datasets are not available.
         synda_download: bool, optional
-            If True, ESMValtool will try to download missing data using Synda
-            if possible
+            If True, the tool will try to download missing data using Synda.
         diagnostics: list(str), optional
-            Only run the selected diagnostics from the recipe
+            Only run the selected diagnostics from the recipe.
         check_level: str, optional
             Configure the sensitivity of the CMOR check. Possible values are:
-            `ignore` (all errors will be reported  as warnings),
+            `ignore` (all errors will be reported as warnings),
             `relaxed` (only fail if there are critical errors),
             default (fail if there are any errors),
             strict (fail if there are any warnings).
@@ -381,7 +375,7 @@ class ESMValTool():
         os.makedirs(cfg['run_dir'])
 
         # configure logging
-        log_files = configure_logging(output=cfg['run_dir'],
+        log_files = configure_logging(output_dir=cfg['run_dir'],
                                       console_log_level=cfg['log_level'])
 
         # log header
@@ -416,10 +410,9 @@ class ESMValTool():
         if os.path.exists(cfg["preproc_dir"]) and cfg["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
-            logger.info("set remove_preproc_dir to false in config")
+            logger.info("set remove_preproc_dir to false in config-user.yml")
             shutil.rmtree(cfg["preproc_dir"])
         logger.info("Run was successful")
-        return cfg
 
 
 def run():
@@ -438,7 +431,7 @@ def run():
         fire.Fire(ESMValTool())
     except fire.core.FireExit:
         raise
-    except Exception as ex:  # noqa
+    except Exception:  # noqa
         if not logger.handlers:
             # Add a logging handler if main failed to do so.
             logging.basicConfig()
