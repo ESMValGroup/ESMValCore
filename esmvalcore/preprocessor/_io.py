@@ -330,6 +330,8 @@ def write_metadata(products, write_ncl=False):
             if isinstance(product.attributes.get('exp'), (list, tuple)):
                 product.attributes = dict(product.attributes)
                 product.attributes['exp'] = '-'.join(product.attributes['exp'])
+            if 'original_short_name' in product.attributes:
+                del product.attributes['original_short_name']
             metadata[product.filename] = product.attributes
 
         output_filename = os.path.join(output_dir, 'metadata.yml')
