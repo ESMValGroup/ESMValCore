@@ -611,11 +611,16 @@ def test_extract_shape_natural_earth(make_testcube):
 def test_extract_shape_ne_check_nans():
     """Test shape from NE file with check for boundary NaN's."""
     cube = _create_sample_full_cube()
-    result = extract_shape(
+    result1 = extract_shape(
         cube,
         "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp",
         crop=False)
-    assert not np.isnan(result.data.data).any()
+    result2 = extract_shape(
+        cube,
+        "esmvalcore/preprocessor/ne_masks/ne_10m_land.shp",
+        crop=False)
+    assert not np.isnan(result1.data.data).any()
+    assert not np.isnan(result2.data.data).any()
 
 
 @pytest.mark.parametrize('crop', [True, False])
