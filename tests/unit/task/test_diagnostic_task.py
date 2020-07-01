@@ -94,7 +94,7 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
 
     # test for no executable
     monkeypatch.setattr(esmvalcore._task, 'which', lambda x: None)
-    if ext_profile[0] != '':
+    if ext_profile[0] != '' and ext_profile[0] != '.py':
         with pytest.raises(DiagnosticError) as err_mssg:
             esmvalcore._task.DiagnosticTask(script,
                                             settings,
