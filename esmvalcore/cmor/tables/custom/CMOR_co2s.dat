@@ -1,0 +1,21 @@
+SOURCE: CMIP5
+!============
+variable_entry:    co2s
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     mole_fraction_of_carbon_dioxide_in_air
+units:             1e-06
+cell_methods:      area: time: mean
+cell_measures:     area: areacella
+long_name:         Atmosphere CO2
+comment:           As co2, but only at the surface
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+!----------------------------------
+!

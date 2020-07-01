@@ -4,8 +4,8 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3387139.svg)](https://doi.org/10.5281/zenodo.3387139)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ESMValGroup?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore.svg?style=svg)](https://circleci.com/gh/ESMValGroup/ESMValCore)
-[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/5d496dea9ef64ec68e448a6df5a65783)](https://www.codacy.com/app/ESMValGroup/ESMValCore?utm_source=github.com&utm_medium=referral&utm_content=ESMValGroup/ESMValCore&utm_campaign=Badge_Coverage)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5d496dea9ef64ec68e448a6df5a65783)](https://www.codacy.com/app/ESMValGroup/ESMValCore?utm_source=github.com&utm_medium=referral&utm_content=ESMValGroup/ESMValCore&utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/5d496dea9ef64ec68e448a6df5a65783)](https://www.codacy.com/gh/ESMValGroup/ESMValCore?utm_source=github.com&utm_medium=referral&utm_content=ESMValGroup/ESMValCore&utm_campaign=Badge_Coverage)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5d496dea9ef64ec68e448a6df5a65783)](https://www.codacy.com/gh/ESMValGroup/ESMValCore?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ESMValGroup/ESMValCore&amp;utm_campaign=Badge_Grade)
 [![Docker Build Status](https://img.shields.io/docker/build/esmvalgroup/esmvaltool.svg)](https://hub.docker.com/r/esmvalgroup/esmvaltool/)
 [![Anaconda-Server Badge](https://anaconda.org/esmvalgroup/esmvalcore/badges/installer/conda.svg)](https://conda.anaconda.org/esmvalgroup)
 
@@ -51,7 +51,7 @@ The ESMValCore package provides various functions for:
     custom configuration file.
 
 -   Install the [ESMValTool](https://github.com/ESMValGroup/ESMValTool)
-    to run [ESMValTool recipes and diagnostics](https://esmvaltool.readthedocs.io/en/latest/recipes/index.html)
+    to run [ESMValTool recipes and diagnostics](https://docs.esmvaltool.org/en/latest/recipes/index.html)
 
 -   Run e.g. `esmvaltool -c ~/config-user.yml examples/recipe_python.yml` after
     downloading the necessary data.
@@ -59,7 +59,7 @@ The ESMValCore package provides various functions for:
 ## Getting help
 
 The easiest way to get help if you cannot find the answer in the documentation
-on [readthedocs](https://esmvaltool.readthedocs.io), is to open an
+on [readthedocs](https://docs.esmvaltool.org), is to open an
 [issue on GitHub](https://github.com/ESMValGroup/ESMValCore/issues).
 
 ## Contributing

@@ -3,6 +3,7 @@
 Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
+import copy
 import datetime
 import logging
 from warnings import filterwarnings
@@ -10,9 +11,11 @@ from warnings import filterwarnings
 import dask.array as da
 import iris
 import iris.coord_categorisation
+import iris.cube
 import iris.exceptions
 import iris.util
 import numpy as np
+from iris.time import PartialDateTime
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
@@ -80,20 +83,21 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
             start_day = 30
         if end_day > 30:
             end_day = 30
-    start_date = datetime.datetime(int(start_year), int(start_month),
-                                   int(start_day))
-    end_date = datetime.datetime(int(end_year), int(end_month), int(end_day))
+    t_1 = PartialDateTime(
+        year=int(start_year), month=int(start_month), day=int(start_day))
+    t_2 = PartialDateTime(
+        year=int(end_year), month=int(end_month), day=int(end_day))
 
-    t_1 = time_units.date2num(start_date)
-    t_2 = time_units.date2num(end_date)
     constraint = iris.Constraint(
-        time=lambda t: t_1 <= time_units.date2num(t.point) < t_2)
+        time=lambda t: t_1 <= t.point < t_2)
 
     cube_slice = cube.extract(constraint)
     if cube_slice is None:
         raise ValueError(
-            f"Time slice {start_date} to {end_date} is outside cube time "
-            f"bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
+            f"Time slice {start_year:0>4d}-{start_month:0>2d}-{start_day:0>2d}"
+            f" to {end_year:0>4d}-{end_month:0>2d}-{end_day:0>2d} is outside "
+            f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}."
+        )
 
     # Issue when time dimension was removed when only one point as selected.
     if cube_slice.ndim != cube.ndim:
@@ -169,14 +173,7 @@ def get_time_weights(cube):
     """
     time = cube.coord('time')
     time_thickness = time.bounds[..., 1] - time.bounds[..., 0]
-
-    # The weights need to match the dimensionality of the cube.
-    slices = [None for i in cube.shape]
-    coord_dim = cube.coord_dims('time')[0]
-    slices[coord_dim] = slice(None)
-    time_thickness = np.abs(time_thickness[tuple(slices)])
-    ones = np.ones_like(cube.data)
-    time_weights = time_thickness * ones
+    time_weights = time_thickness * da.ones_like(cube.data)
     return time_weights
 
 
@@ -400,9 +397,14 @@ def climate_statistics(cube, operator='mean', period='full'):
         operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
             time_weights = get_time_weights(cube)
-            cube = cube.collapsed('time',
-                                  operator_method,
-                                  weights=time_weights)
+            if time_weights.min() == time_weights.max():
+                # No weighting needed.
+                cube = cube.collapsed('time',
+                                      operator_method)
+            else:
+                cube = cube.collapsed('time',
+                                      operator_method,
+                                      weights=time_weights)
         else:
             cube = cube.collapsed('time', operator_method)
         return cube
@@ -410,13 +412,17 @@ def climate_statistics(cube, operator='mean', period='full'):
     clim_coord = _get_period_coord(cube, period)
     operator = get_iris_analysis_operation(operator)
     clim_cube = cube.aggregated_by(clim_coord, operator)
-    cube.remove_coord(clim_coord)
     clim_cube.remove_coord('time')
-    iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
+    if clim_cube.coord(clim_coord.name()).is_monotonic():
+        iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
+    else:
+        clim_cube = iris.cube.CubeList(
+            clim_cube.slices_over(clim_coord.name())).merge_cube()
+    cube.remove_coord(clim_coord)
     return clim_cube
 
 
-def anomalies(cube, period, standardize=False):
+def anomalies(cube, period, reference=None, standardize=False):
     """
     Compute anomalies using a mean with the specified granularity.
 
@@ -428,10 +434,15 @@ def anomalies(cube, period, standardize=False):
     cube: iris.cube.Cube
         input cube.
 
-    period: str, optional
+    period: str
         Period to compute the statistic over.
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
         'mon', 'daily', 'day'
+
+    reference: list int, optional, default: None
+        Period of time to use a reference, as needed for the 'extract_time'
+        preprocessor function
+        If None, all available data is used as a reference
 
     standardize: bool, optional
         If True standardized anomalies are calculated
@@ -442,31 +453,22 @@ def anomalies(cube, period, standardize=False):
     iris.cube.Cube
         Anomalies cube
     """
-    reference = climate_statistics(cube, period=period)
+    if reference is None:
+        reference_cube = cube
+    else:
+        reference_cube = extract_time(cube, **reference)
+    reference = climate_statistics(reference_cube, period=period)
     if period in ['full']:
+        metadata = copy.deepcopy(cube.metadata)
         cube = cube - reference
+        cube.metadata = metadata
         if standardize:
             cube_stddev = climate_statistics(
                 cube, operator='std_dev', period=period)
             cube = cube / cube_stddev
         return cube
 
-    cube_coord = _get_period_coord(cube, period)
-    ref_coord = _get_period_coord(reference, period)
-
-    data = cube.core_data()
-    ref = {}
-    for ref_slice in reference.slices_over(ref_coord):
-        ref[ref_slice.coord(ref_coord).points[0]] = da.ravel(
-            ref_slice.core_data())
-    cube_coord_dim = cube.coord_dims(cube_coord)[0]
-    for i in range(cube.coord('time').shape[0]):
-        indexes = cube.coord('time').points == cube.coord('time').points[i]
-        indexes = iris.util.broadcast_to_shape(indexes, data.shape,
-                                               (cube_coord_dim, ))
-        data[indexes] = data[indexes] - ref[cube_coord.points[i]]
-
-    cube = cube.copy(data)
+    cube = _compute_anomalies(cube, reference, period)
 
     # standardize the results if requested
     if standardize:
@@ -483,6 +485,28 @@ def anomalies(cube, period, standardize=False):
             )
         cube.data = cube.core_data() / da.concatenate(
             [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
+    return cube
+
+
+def _compute_anomalies(cube, reference, period):
+    cube_coord = _get_period_coord(cube, period)
+    ref_coord = _get_period_coord(reference, period)
+
+    data = cube.core_data()
+    cube_time = cube.coord('time')
+    ref = {}
+    for ref_slice in reference.slices_over(ref_coord):
+        ref[ref_slice.coord(ref_coord).points[0]] = ref_slice.core_data()
+
+    cube_coord_dim = cube.coord_dims(cube_coord)[0]
+    slicer = [slice(None)] * len(data.shape)
+    new_data = []
+    for i in range(cube_time.shape[0]):
+        slicer[cube_coord_dim] = i
+        new_data.append(data[tuple(slicer)] - ref[cube_coord.points[i]])
+    data = da.stack(new_data, axis=cube_coord_dim)
+    cube = cube.copy(data)
+    cube.remove_coord(cube_coord)
     return cube
 
 

@@ -4,14 +4,15 @@ CMOR information reader for ESMValTool.
 Read variable information from CMOR 2 and CMOR 3 tables and make it easily
 available for the other components of ESMValTool
 """
-from functools import total_ordering
 import copy
 import errno
 import glob
 import json
 import logging
 import os
+from functools import total_ordering
 from pathlib import Path
+
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -21,17 +22,16 @@ CMOR_TABLES = {}
 
 
 def get_var_info(project, mip, cmor_name):
-    """
-    Get variable information
+    """Get variable information.
 
     Parameters
     ----------
-    project:  of str
-        Dataset's project
-    mip: str
-        Variable's cmor table
-    cmor_name: str
-        Variable's cmor name
+    project : str
+        Dataset's project.
+    mip : str
+        Variable's cmor table.
+    cmor_name : str
+        Variable's cmor name.
     """
     return CMOR_TABLES[project].get_variable(mip, cmor_name)
 
@@ -737,7 +737,7 @@ class CMIP5Info(object):
 
         if var_info:
             mip_info = self.get_table(table)
-            var_info.copy()
+            var_info = var_info.copy()
             if mip_info:
                 var_info.frequency = mip_info.frequency
         return var_info
@@ -777,8 +777,8 @@ class CMIP3Info(CMIP5Info):
 
     def _read_variable(self, cmor_name, frequency):
         var = super()._read_variable(cmor_name, frequency)
-        var.modeling_realm = None
         var.frequency = None
+        var.modeling_realm = None
         return var
 
 
@@ -876,7 +876,7 @@ class CustomInfo(CMIP5Info):
                     self.coords[value] = self._read_coordinate(value)
                     continue
                 elif key == 'variable_entry':
-                    table[value] = self._read_variable(value, None)
+                    table[value] = self._read_variable(value, '')
                     continue
                 if not self._read_line():
                     return

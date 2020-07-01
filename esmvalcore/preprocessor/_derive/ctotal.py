@@ -1,5 +1,7 @@
 """Derivation of variable `ctotal`."""
 
+import iris
+
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
@@ -9,20 +11,47 @@ class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `ctotal`."""
 
     # Required variables
-    required = [
-        {
-            'cmor_name': 'cVeg'
-        },
-        {
-            'cmor_name': 'cSoil'
-        },
-    ]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        if project == 'CMIP5':
+            required = [
+                {
+                    'cmor_name': 'cVeg',
+                    'mip': 'Lmon'
+                },
+                {
+                    'cmor_name': 'cSoil',
+                    'mip': 'Lmon'
+                },
+            ]
+        elif project == 'CMIP6':
+            required = [
+                {
+                    'cmor_name': 'cVeg',
+                    'mip': 'Lmon'
+                },
+                {
+                    'cmor_name': 'cSoil',
+                    'mip': 'Emon'
+                },
+            ]
+        return required
 
     @staticmethod
     def calculate(cubes):
         """Compute total ecosystem carbon storage."""
-        c_soil_cube = cubes.extract_strict(
-            Constraint(name='soil_carbon_content'))
+        try:
+            c_soil_cube = cubes.extract_strict(
+                Constraint(name='soil_carbon_content'))
+        except iris.exceptions.ConstraintMismatchError:
+            try:
+                c_soil_cube = cubes.extract_strict(
+                    Constraint(name='soil_mass_content_of_carbon'))
+            except iris.exceptions.ConstraintMismatchError:
+                raise ValueError(f"No cube from {cubes} can be loaded with "
+                                 f"standard name CMIP5: soil_carbon_content "
+                                 f"or CMIP6: soil_mass_content_of_carbon")
         c_veg_cube = cubes.extract_strict(
             Constraint(name='vegetation_carbon_content'))
         c_total_cube = c_soil_cube + c_veg_cube

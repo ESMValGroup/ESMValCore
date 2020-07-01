@@ -1,25 +1,28 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
+import copy
 import unittest
-import pytest
-import tests
 
-import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-
-from cf_units import Unit
+import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
+import numpy as np
+import pytest
+from cf_units import Unit
 from iris.cube import Cube
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from esmvalcore.preprocessor._time import (
-    extract_month, extract_season, extract_time,
-    regrid_time,
-    decadal_statistics, annual_statistics, seasonal_statistics,
-    monthly_statistics, daily_statistics, timeseries_filter,
-    climate_statistics, anomalies
-)
+import tests
+from esmvalcore.preprocessor._time import (annual_statistics, anomalies,
+                                           climate_statistics,
+                                           daily_statistics,
+                                           decadal_statistics, extract_month,
+                                           extract_season, extract_time,
+                                           get_time_weights,
+                                           monthly_statistics, regrid_time,
+                                           seasonal_statistics,
+                                           timeseries_filter)
 
 
 def _create_sample_cube():
@@ -105,12 +108,30 @@ class TestTimeSlice(tests.Test):
             np.arange(0, 360),
             sliced.coord('time').points)
 
+    def test_extract_time_non_gregorian_day(self):
+        """Test extract time when the day is not in the Gregorian calendar"""
+        cube = Cube(np.arange(0, 720), var_name='co2', units='J')
+        cube.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(0., 720., 1.),
+                standard_name='time',
+                units=Unit(
+                    'days since 1950-01-01 00:00:00', calendar='360_day'
+                ),
+            ),
+            0,
+        )
+        sliced = extract_time(cube, 1950, 2, 30, 1950, 3, 1)
+        assert_array_equal(
+            np.array([59]),
+            sliced.coord('time').points)
+
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
         with self.assertRaises(ValueError) as ctx:
             extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
         msg = (
-            "Time slice 2200-01-01 00:00:00 to 2200-12-31 00:00:00 is outside"
+            "Time slice 2200-01-01 to 2200-12-31 is outside"
             " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         assert ctx.exception.args == (msg, )
 
@@ -233,7 +254,19 @@ class TestClimatology(tests.Test):
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([120.])
+        expected = np.array([4.])
+        assert_array_equal(result.data, expected)
+
+    def test_time_sum_weighted(self):
+        """Test for time sum of a 1D field."""
+        data = np.ones((3))
+        data[1] = 2.0
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[10., 20.], [30., 60.], [73., 77.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='sum')
+        expected = np.array([74.])
         assert_array_equal(result.data, expected)
 
     def test_time_sum_uneven(self):
@@ -960,10 +993,29 @@ def make_map_data(number_years=2):
     return cube
 
 
+PARAMETERS = []
+for period in ('full', 'day', 'month', 'season'):
+    PARAMETERS.append((period, None))
+    if period == 'season':
+        PARAMETERS.append((
+            period,
+            {
+                "start_year": 1950, 'start_month': 3, 'start_day': 1,
+                "end_year": 1951, 'end_month': 3, 'end_day': 1,
+            }))
+    else:
+        PARAMETERS.append((
+            period,
+            {
+                "start_year": 1950, 'start_month': 1, 'start_day': 1,
+                "end_year": 1951, 'end_month': 1, 'end_day': 1,
+            }))
+
+
 @pytest.mark.parametrize('period', ['full'])
 def test_standardized_anomalies(period, standardize=True):
     cube = make_map_data(number_years=2)
-    result = anomalies(cube, period, standardize)
+    result = anomalies(cube, period, standardize=standardize)
     if period == 'full':
         expected_anomalies = (cube.data - np.mean(cube.data, axis=2,
                                                   keepdims=True))
@@ -985,53 +1037,145 @@ def test_standardized_anomalies(period, standardize=True):
             )
 
 
-@pytest.mark.parametrize('period', ['full', 'day', 'month', 'season'])
-def test_anomalies(period, standardize=False):
+@pytest.mark.parametrize('period, reference', PARAMETERS)
+def test_anomalies_preserve_metadata(period, reference, standardize=False):
     cube = make_map_data(number_years=2)
-    result = anomalies(cube, period)
-    if period == 'full':
-        anom = np.arange(-359.5, 360, 1)
-        zeros = np.zeros_like(anom)
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'day':
-        anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
-        zeros = np.zeros_like(anom)
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'month':
-        anom1 = np.concatenate([np.arange(-194.5, -165) for x in range(12)])
-        anom2 = np.concatenate([np.arange(165.5, 195) for x in range(12)])
-        anom = np.concatenate((anom1, anom2))
-        zeros = np.zeros_like(anom)
-        print(result.data[0, 1])
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
-    elif period == 'season':
-        anom = np.concatenate((
-            np.arange(-314.5, -255),
-            np.arange(-224.5, -135),
-            np.arange(-224.5, -135),
-            np.arange(-224.5, -135),
-            np.arange(15.5, 105),
-            np.arange(135.5, 225),
-            np.arange(135.5, 225),
-            np.arange(135.5, 225),
-            np.arange(375.5, 405),
-        ))
-        zeros = np.zeros_like(anom)
-        print(result.data[0, 1])
-        assert_array_equal(
-            result.data,
-            np.array([[zeros, anom], [anom, zeros]])
-        )
+    cube.var_name = "si"
+    cube.units = "m"
+    metadata = copy.deepcopy(cube.metadata)
+    result = anomalies(cube, period, reference, standardize=standardize)
+    assert result.metadata == metadata
+    for coord_cube, coord_res in zip(cube.coords(), result.coords()):
+        if coord_cube.has_bounds() and coord_res.has_bounds():
+            assert_array_equal(coord_cube.bounds, coord_res.bounds)
+        assert coord_cube == coord_res
+
+
+@pytest.mark.parametrize('period, reference', PARAMETERS)
+def test_anomalies(period, reference, standardize=False):
+    cube = make_map_data(number_years=2)
+    result = anomalies(cube, period, reference, standardize=standardize)
+    if reference is None:
+        if period == 'full':
+            anom = np.arange(-359.5, 360)
+        elif period == 'day':
+            anom = np.concatenate((np.ones(360) * -180, np.ones(360) * 180))
+        elif period == 'month':
+            anom1 = np.concatenate(
+                [np.arange(-194.5, -165) for x in range(12)])
+            anom2 = np.concatenate(
+                [np.arange(165.5, 195) for x in range(12)])
+            anom = np.concatenate((anom1, anom2))
+        elif period == 'season':
+            anom = np.concatenate((
+                np.arange(-314.5, -255),
+                np.arange(-224.5, -135),
+                np.arange(-224.5, -135),
+                np.arange(-224.5, -135),
+                np.arange(15.5, 105),
+                np.arange(135.5, 225),
+                np.arange(135.5, 225),
+                np.arange(135.5, 225),
+                np.arange(375.5, 405),
+            ))
+    else:
+        if period == 'full':
+            anom = np.arange(-179.5, 540)
+        elif period == 'day':
+            anom = np.concatenate((np.zeros(360), np.ones(360) * 360))
+        elif period == 'month':
+            anom1 = np.concatenate([np.arange(-14.5, 15) for x in range(12)])
+            anom2 = np.concatenate([np.arange(345.5, 375) for x in range(12)])
+            anom = np.concatenate((anom1, anom2))
+        elif period == 'season':
+            anom = np.concatenate((
+                np.arange(-374.5, -315),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(-44.5, 45),
+                np.arange(315.5, 405),
+                np.arange(315.5, 405),
+                np.arange(315.5, 405),
+                np.arange(315.5, 345),
+            ))
+    zeros = np.zeros_like(anom)
+    print(anom)
+    print(result.data[0, 1, ...])
+    assert_array_equal(
+        result.data,
+        np.array([[zeros, anom], [anom, zeros]])
+    )
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
+
+
+def _make_cube():
+    """Make a test cube."""
+    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    data2 = np.ma.ones((2, 3, 2, 2))
+    data3 = np.ma.ones((4, 3, 2, 2))
+    mask3 = np.full((4, 3, 2, 2), False)
+    mask3[0, 0, 0, 0] = True
+    data3 = np.ma.array(data3, mask=mask3)
+
+    time = iris.coords.DimCoord([15, 45],
+                                standard_name='time',
+                                bounds=[[1., 30.], [30., 60.]],
+                                units=Unit(
+                                    'days since 1950-01-01',
+                                    calendar='gregorian'))
+    zcoord = iris.coords.DimCoord([0.5, 5., 50.],
+                                  standard_name='air_pressure',
+                                  long_name='air_pressure',
+                                  bounds=[[0., 2.5], [2.5, 25.],
+                                          [25., 250.]],
+                                  units='m',
+                                  attributes={'positive': 'down'})
+    lons = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='longitude',
+                                long_name='longitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_east',
+                                coord_system=coord_sys)
+    lats = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='latitude',
+                                long_name='latitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_north',
+                                coord_system=coord_sys)
+    coords_spec4 = [(time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+    cube1 = iris.cube.Cube(data2, dim_coords_and_dims=coords_spec4)
+    return cube1
+
+
+def test_get_time_weights():
+    """Test instance dask.array for get_time_weights."""
+    cube = _make_cube()
+    weights = get_time_weights(cube)
+    assert isinstance(weights, da.core.Array)
+    assert_array_equal(weights.shape, (2, 3, 2, 2))
+
+
+def test_time_weights():
+    """Test time weights vs an old fixed implementation."""
+    cube = _make_cube()
+    time = cube.coord('time')
+    time_thickness = time.bounds[..., 1] - time.bounds[..., 0]
+
+    # The weights need to match the dimensionality of the cube.
+    slices = [None for i in cube.shape]
+    coord_dim = cube.coord_dims('time')[0]
+    slices[coord_dim] = slice(None)
+    time_thickness = np.abs(time_thickness[tuple(slices)])
+    ones = np.ones_like(cube.data)
+    time_weights = time_thickness * ones
+    operator_method = getattr(iris.analysis, "MEAN")
+    expected_cube = cube.collapsed('time',
+                                   operator_method,
+                                   weights=time_weights)
+    computed_cube = climate_statistics(cube, operator='mean', period='full')
+    assert expected_cube.data.shape == computed_cube.data.shape
+    assert_array_equal(expected_cube.data, computed_cube.data)
 
 
 if __name__ == '__main__':

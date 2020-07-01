@@ -132,8 +132,7 @@ class TestAreacello(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'fx', 'areacello'),
-            [Areacello(self.vardef),
-             AllVars(self.vardef)])
+            [Areacello(self.vardef), AllVars(self.vardef)])
 
     def test_fix_metadata(self):
         """Test data fix."""

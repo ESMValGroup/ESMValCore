@@ -5,9 +5,40 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.ccsm4 import Rlut, Rlutcs, So
+from esmvalcore.cmor._fixes.cmip5.ccsm4 import Cl, Csoil, Rlut, Rlutcs, So
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'cl')
+    assert fix == [Cl(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is ClFixHybridPressureCoord
+
+
+class TestCsoil(unittest.TestCase):
+    """Test cSoil fixes."""
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = Cube([1.0, 1.e33], var_name='cSoil', units='kg m-2')
+        self.fix = Csoil(None)
+
+    def test_get(self):
+        """Test fix get."""
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Lmon', 'cSoil'),
+                             [Csoil(None)])
+
+    def test_fix_data(self):
+        """Test data fix."""
+        cube = self.fix.fix_data(self.cube)
+        expected = np.ma.masked_array([1.0, 1.0], [False, True])
+        self.assertTrue(np.all(cube.data == expected))
 
 
 class TestsRlut(unittest.TestCase):
@@ -25,7 +56,7 @@ class TestsRlut(unittest.TestCase):
         self.fix = Rlut(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'rlut'),
                              [Rlut(None)])
 
@@ -55,7 +86,7 @@ class TestsRlutcs(unittest.TestCase):
         self.fix = Rlutcs(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'rlutcs'),
                              [Rlutcs(None)])
 
@@ -79,8 +110,8 @@ class TestSo(unittest.TestCase):
         self.fix = So(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Omon', 'so'),
+        """Test fix get."""
+        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'so'),
                              [So(self.vardef)])
 
     def test_fix_metadata(self):

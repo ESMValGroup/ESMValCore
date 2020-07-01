@@ -1,7 +1,7 @@
 """Contains the base class for dataset fixes"""
 import importlib
-import os
 import inspect
+import os
 
 from ..table import get_var_info
 

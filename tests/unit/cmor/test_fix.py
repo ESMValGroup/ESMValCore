@@ -3,6 +3,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
+from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
 
 
@@ -53,8 +54,9 @@ class TestGetCube(TestCase):
         self.cube_2 = Mock()
         self.cube_2.var_name = 'cube2'
         self.cubes = [self.cube_1, self.cube_2]
-        self.vardef = Mock()
-        self.fix = Fix(self.vardef)
+        vardef = Mock()
+        vardef.short_name = 'fix'
+        self.fix = Fix(vardef)
 
     def test_get_first_cube(self):
         """Test selecting first cube."""
@@ -196,26 +198,24 @@ class TestFixMetadata(TestCase):
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=checker) as get_mock:
-                with patch('esmvalcore.cmor.fix.get_var_info',
-                           return_value=var_info):
-                    fix_metadata(
-                        cubes=[self.cube],
-                        cmor_name='cmor_name',
-                        project='CMIP6',
-                        dataset='dataset',
-                        mip='mip',
-                        frequency='frequency',
-                    )
-                    get_mock.assert_called_once_with(
-                        automatic_fixes=True,
-                        fail_on_error=False,
-                        frequency='frequency',
-                        mip='mip',
-                        cmor_name='cmor_name',
-                        table='CMIP6',
-                    )
-        checker.assert_called_once_with(self.cube)
-        checker.return_value.check_metadata.assert_called_once_with()
+                fix_metadata(
+                    cubes=[self.cube],
+                    cmor_name='cmor_name',
+                    project='CMIP6',
+                    dataset='dataset',
+                    mip='mip',
+                    frequency='frequency',
+                )
+                get_mock.assert_called_once_with(
+                    automatic_fixes=True,
+                    fail_on_error=False,
+                    frequency='frequency',
+                    mip='mip',
+                    cmor_name='cmor_name',
+                    table='CMIP6',
+                    check_level=CheckLevels.DEFAULT,)
+                checker.assert_called_once_with(self.cube)
+                checker.return_value.check_metadata.assert_called_once_with()
 
 
 class TestFixData(TestCase):
@@ -283,6 +283,7 @@ class TestFixData(TestCase):
                 get_mock.assert_called_once_with(
                     table='CMIP6',
                     automatic_fixes=True,
+                    check_level=CheckLevels.DEFAULT,
                     fail_on_error=False,
                     frequency='frequency',
                     mip='mip',

@@ -7,9 +7,13 @@ from ._baseclass import DerivedVariableBase
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `vegFrac`."""
 
-    required = [{
-        'cmor_name': 'baresoilFrac',
-    }]
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        required = [{
+            'cmor_name': 'baresoilFrac',
+        }]
+        return required
 
     @staticmethod
     def calculate(cubes):

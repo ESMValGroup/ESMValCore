@@ -78,13 +78,10 @@ def _create_cube_time(src_cube, data, times):
     Returns
     -------
     cube
-
     .. note::
-
         If there is only one level of interpolation, the resultant cube
         will be collapsed over the associated vertical dimension, and a
         scalar vertical coordinate will be added.
-
     """
     # Get the source cube vertical coordinate and associated dimension.
     src_times = src_cube.coord('time')
@@ -135,7 +132,7 @@ def calculate_volume(cube):
     """
     Calculate volume from a cube.
 
-    This function is used when the volume netcdf fx_files can't be found.
+    This function is used when the volume netcdf fx_variables can't be found.
 
     Parameters
     ----------
@@ -170,7 +167,7 @@ def calculate_volume(cube):
 def volume_statistics(
         cube,
         operator,
-        fx_files=None):
+        fx_variables=None):
     """
     Apply a statistical operation over a volume.
 
@@ -184,8 +181,8 @@ def volume_statistics(
             Input cube.
         operator: str
             The operation to apply to the cube, options are: 'mean'.
-        fx_files: dict
-            dictionary of field:filename for the fx_files
+        fx_variables: dict
+            dictionary of field:filename for the fx_variables
 
     Returns
     -------
@@ -206,8 +203,8 @@ def volume_statistics(
 
     grid_volume_found = False
     grid_volume = None
-    if fx_files:
-        for key, fx_file in fx_files.items():
+    if fx_variables:
+        for key, fx_file in fx_variables.items():
             if fx_file is None:
                 continue
             logger.info('Attempting to load %s from file: %s', key, fx_file)
@@ -268,12 +265,14 @@ def volume_statistics(
             depth_volume.append(layer_vol)
         # ####
         # Calculate weighted mean over the water volumn
-        result.append(np.average(column, weights=depth_volume))
+        column = np.ma.array(column)
+        depth_volume = np.ma.array(depth_volume)
+        result.append(np.ma.average(column, weights=depth_volume))
 
     # ####
     # Send time series and dummy cube to cube creating tool.
     times = np.array(cube.coord('time').points.astype(float))
-    result = np.array(result)
+    result = np.ma.array(result)
 
     # #####
     # Create a small dummy output array for the output cube
@@ -381,17 +380,17 @@ def extract_transect(cube, latitude=None, longitude=None):
 
     if lats.ndim == 2:
         raise ValueError(
-            'extract_slice: Not implemented for irregular arrays!'
+            'extract_transect: Not implemented for irregular arrays!'
             + '\nTry regridding the data first.')
 
     if isinstance(latitude, float) and isinstance(longitude, float):
         raise ValueError(
-            "extract_slice: Can't slice along lat and lon at the same time"
+            "extract_transect: Can't slice along lat and lon at the same time"
         )
 
     if isinstance(latitude, list) and isinstance(longitude, list):
         raise ValueError(
-            "extract_slice: Can't reduce lat and lon at the same time"
+            "extract_transect: Can't reduce lat and lon at the same time"
         )
 
     for dim_name, dim_cut, coord in zip(['latitude', 'longitude'],

@@ -13,6 +13,7 @@ import numpy as np
 import yaml
 
 from .._task import write_ncl_settings
+from ..cmor._fixes.shared import AtmosphereSigmaFactory
 from ._time import extract_time
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,55 @@ VARIABLE_KEYS = {
     'reference_dataset',
     'alternative_dataset',
 }
+
+
+def _fix_aux_factories(cube):
+    """Fix :class:`iris.aux_factory.AuxCoordFactory` after concatenation.
+
+    Necessary because of bug in :mod:`iris` (see issue #2478).
+
+    """
+    coord_names = [coord.name() for coord in cube.coords()]
+
+    # Hybrid sigma pressure coordinate
+    # TODO possibly add support for other hybrid coordinates
+    if 'atmosphere_hybrid_sigma_pressure_coordinate' in coord_names:
+        new_aux_factory = iris.aux_factory.HybridPressureFactory(
+            delta=cube.coord(var_name='ap'),
+            sigma=cube.coord(var_name='b'),
+            surface_air_pressure=cube.coord(var_name='ps'),
+        )
+        for aux_factory in cube.aux_factories:
+            if isinstance(aux_factory, iris.aux_factory.HybridPressureFactory):
+                break
+        else:
+            cube.add_aux_factory(new_aux_factory)
+
+    # Hybrid sigma height coordinate
+    if 'atmosphere_hybrid_height_coordinate' in coord_names:
+        new_aux_factory = iris.aux_factory.HybridHeightFactory(
+            delta=cube.coord(var_name='lev'),
+            sigma=cube.coord(var_name='b'),
+            orography=cube.coord(var_name='orog'),
+        )
+        for aux_factory in cube.aux_factories:
+            if isinstance(aux_factory, iris.aux_factory.HybridHeightFactory):
+                break
+        else:
+            cube.add_aux_factory(new_aux_factory)
+
+    # Atmosphere sigma coordinate
+    if 'atmosphere_sigma_coordinate' in coord_names:
+        new_aux_factory = AtmosphereSigmaFactory(
+            pressure_at_top=cube.coord(var_name='ptop'),
+            sigma=cube.coord(var_name='lev'),
+            surface_air_pressure=cube.coord(var_name='ps'),
+        )
+        for aux_factory in cube.aux_factories:
+            if isinstance(aux_factory, AtmosphereSigmaFactory):
+                break
+        else:
+            cube.add_aux_factory(new_aux_factory)
 
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
@@ -92,34 +142,60 @@ def _fix_cube_attributes(cubes):
         cube.attributes = attributes
 
 
-def concatenate(cubes):
-    """Concatenate all cubes after fixing metadata."""
-    _fix_cube_attributes(cubes)
-
+def _by_two_concatenation(cubes):
+    """Perform a by-2 concatenation to avoid gaps."""
     concatenated = iris.cube.CubeList(cubes).concatenate()
-    if len(concatenated) == 2:
-        try:
-            concatenated[0].coord('time')
-            concatenated[1].coord('time')
-        except iris.exceptions.CoordinateNotFoundError:
-            pass
-        else:
-            concatenated = _concatenate_overlapping_cubes(concatenated)
-
     if len(concatenated) == 1:
         return concatenated[0]
 
-    logger.error('Can not concatenate cubes into a single one.')
+    concatenated = _concatenate_overlapping_cubes(concatenated)
+    if len(concatenated) == 2:
+        _get_concatenation_error(concatenated)
+    else:
+        return concatenated[0]
+
+
+def _get_concatenation_error(cubes):
+    """Raise an error for concatenation."""
+    # Concatenation not successful -> retrieve exact error message
+    try:
+        iris.cube.CubeList(cubes).concatenate_cube()
+    except iris.exceptions.ConcatenateError as exc:
+        msg = str(exc)
+    logger.error('Can not concatenate cubes into a single one: %s', msg)
     logger.error('Resulting cubes:')
-    for cube in concatenated:
+    for cube in cubes:
         logger.error(cube)
+        time = cube.coord("time")
+        logger.error('From %s to %s', time.cell(0), time.cell(-1))
+
+    raise ValueError(f'Can not concatenate cubes: {msg}')
+
+
+def concatenate(cubes):
+    """Concatenate all cubes after fixing metadata."""
+    if len(cubes) == 1:
+        return cubes[0]
+
+    _fix_cube_attributes(cubes)
+
+    if len(cubes) > 1:
+        # order cubes by first time point
         try:
-            time = cube.coord('time')
-        except iris.exceptions.CoordinateNotFoundError:
-            pass
-        else:
-            logger.error('From %s to %s', time.cell(0), time.cell(-1))
-    raise ValueError('Can not concatenate cubes.')
+            cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
+        except iris.exceptions.CoordinateNotFoundError as exc:
+            msg = "One or more cubes {} are missing".format(cubes) + \
+                  " time coordinate: {}".format(str(exc))
+            raise ValueError(msg)
+
+        # iteratively concatenate starting with first cube
+        result = cubes[0]
+        for cube in cubes[1:]:
+            result = _by_two_concatenation([result, cube])
+
+    _fix_aux_factories(result)
+
+    return result
 
 
 def save(cubes, filename, optimize_access='', compress=False, **kwargs):
@@ -307,6 +383,11 @@ def _concatenate_overlapping_cubes(cubes):
     # get time end points
     time_1 = cubes[0].coord('time')
     time_2 = cubes[1].coord('time')
+    if time_1.units != time_2.units:
+        raise ValueError(
+            f"Cubes\n{cubes[0]}\nand\n{cubes[1]}\ncan not be concatenated: "
+            f"time units {time_1.units}, calendar {time_1.units.calendar} "
+            f"and {time_2.units}, calendar {time_2.units.calendar} differ")
     data_start_1 = time_1.cell(0).point
     data_start_2 = time_2.cell(0).point
     data_end_1 = time_1.cell(-1).point

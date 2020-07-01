@@ -1,33 +1,31 @@
 ---
 version: 2
+
+aliases:
+  check_changes: &check_changes
+    name: Check changes
+    command: |
+      if (test "$CIRCLE_BRANCH" = master ||
+          git --no-pager diff --name-only origin/master... |
+          grep -q -E -f .circleci/install_triggers)
+      then
+        echo Running installation tests
+      else
+        echo Skipping installation tests
+        circleci step halt
+      fi
+
 jobs:
   test:
     # Run tests
     working_directory: /test
     docker:
-      - image: continuumio/miniconda3
+      - image: esmvalgroup/esmvalcore:development
     steps:
       - checkout
       - run:
           command: |
-            # Create a file to checksum as cache key
-            date --rfc-3339 date > cache_key.txt
-            cat environment.yml >> cache_key.txt
-      - restore_cache:
-          key: deps3-{{ .Branch }}-{{ checksum "cache_key.txt" }}
-      - run:
-          # Update/Create Conda environment and run tests
-          command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            # conda update -y conda
-            conda env update
-            conda activate esmvaltool
-            python setup.py test
-      - save_cache:
-          key: deps3-{{ .Branch }}-{{ checksum "cache_key.txt" }}
-          paths:
-            - "/opt/conda/envs/esmvaltool"
-            - ".eggs"
+            python setup.py test --addopts '-m "not installation"'
       - store_test_results:
           path: test-reports/
       - store_artifacts:
@@ -40,6 +38,7 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
+      - run: *check_changes
       - restore_cache:
           key: python3-install-{{ .Branch }}
       - run:
@@ -58,7 +57,7 @@ jobs:
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            python setup.py test --addopts --installation
+            python setup.py test
             esmvaltool -h
       - save_cache:
           key: python3-install-{{ .Branch }}
@@ -117,24 +116,25 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
+      - run: *check_changes
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
-            set -x
             mkdir /logs
             # Install
             # conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
-            set +x; conda activate esmvaltool; set -x
-            conda install -yS r-base r-yaml ncl -c conda-forge
+            conda activate esmvaltool
             pip install -e .[develop] > /logs/install.txt 2>&1
+            # install additional requirements for running all tests
+            conda install -yS r-base r-yaml ncl -c conda-forge
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
             esmvaltool -h
-            python setup.py test --addopts --installation
+            python setup.py test
       - store_artifacts:
           path: /logs
 
@@ -145,6 +145,7 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
+      - run: *check_changes
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
@@ -157,7 +158,7 @@ jobs:
             dpkg -l > /logs/versions.txt
             conda env export -n base > /logs/build_environment.yml
             # Build conda package
-            conda build . -c conda-forge -c esmvalgroup > /logs/build_log.txt
+            conda build package -c conda-forge -c esmvalgroup > /logs/build_log.txt
       - store_artifacts:
           path: /logs
 
@@ -190,9 +191,9 @@ workflows:
   commit:
     jobs:
       - test
-      - install:
-          requires:
-            - test
+      - install
+      - develop
+      - conda_build
       - documentation
   nightly:
     triggers:

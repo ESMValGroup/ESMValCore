@@ -6,13 +6,26 @@ from iris.coords import DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateNotFoundError
 
-from esmvalcore.cmor._fixes.cmip5.miroc_esm import AllVars, Co2, Tro3
+from esmvalcore.cmor._fixes.cmip5.miroc_esm import AllVars, Cl, Co2, Tro3
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
 
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'cl')
+    assert fix == [Cl(None), AllVars(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is ClFixHybridPressureCoord
+
+
 class TestCo2(unittest.TestCase):
     """Test c02 fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
@@ -20,7 +33,7 @@ class TestCo2(unittest.TestCase):
         self.fix = Co2(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'co2'),
             [Co2(self.vardef), AllVars(self.vardef)])
@@ -34,13 +47,14 @@ class TestCo2(unittest.TestCase):
 
 class TestTro3(unittest.TestCase):
     """Test tro3 fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='tro3', units='J')
         self.fix = Tro3(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'tro3'),
             [Tro3(None), AllVars(None)])
@@ -54,6 +68,7 @@ class TestTro3(unittest.TestCase):
 
 class TestAll(unittest.TestCase):
     """Test fixes for allvars."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([[1.0, 2.0], [3.0, 4.0]], var_name='co2', units='J')
@@ -67,7 +82,7 @@ class TestAll(unittest.TestCase):
         self.fix = AllVars(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'tos'),
             [AllVars(None)])
