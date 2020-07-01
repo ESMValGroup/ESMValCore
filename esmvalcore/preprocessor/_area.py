@@ -394,10 +394,10 @@ def _correct_coords_from_shapefile(cube, cmor_coords,
         lon = lon.copy()  # ValueError: assignment destination is read-only
         lon[lon >= 180.] -= 360.
 
-    # the NE mask may not have points at x = -180 and y = +/-90
-    # so we will fool it and apply the mask at (-179, -89, 89) instead
-    if pad_hawaii:
-        lon = np.where(lon == -180., lon + 1., lon)
+        # the NE mask may not have points at x = -180 and y = +/-90
+        # so we will fool it and apply the mask at (-179, -89, 89) instead
+        if pad_hawaii:
+            lon = np.where(lon == -180., lon + 1., lon)
     if pad_north_pole:
         lat_0 = np.where(lat == -90., lat + 1., lat)
         lat = np.where(lat_0 == 90., lat_0 - 1., lat_0)
