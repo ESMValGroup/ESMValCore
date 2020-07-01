@@ -32,6 +32,7 @@ REQUIREMENTS = {
         'cf-units',
         'dask[array]',
         'fiona',
+        'fire',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numba',
@@ -100,6 +101,7 @@ def discover_python_files(paths, ignore):
 
 class CustomCommand(Command):
     """Custom Command class."""
+
     def install_deps_temp(self):
         """Try to temporarily install packages needed to run the command."""
         if self.distribution.install_requires:
@@ -116,8 +118,10 @@ class RunLinter(CustomCommand):
 
     def initialize_options(self):
         """Do nothing."""
+
     def finalize_options(self):
         """Do nothing."""
+
     def run(self):
         """Run prospector and generate a report."""
         check_paths = PACKAGES + [
