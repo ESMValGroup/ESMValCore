@@ -112,7 +112,6 @@ class Config():
     This group contains utilities to manage ESMValTool configuration files.
 
     """
-
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
         import os
@@ -186,7 +185,6 @@ class Recipes():
     Documentation for recipes included with ESMValTool is available at
     https://docs.esmvaltool.org/en/latest/recipes/index.html.
     """
-
     @staticmethod
     def list():
         """
@@ -198,19 +196,17 @@ class Recipes():
         from ._config import configure_logging, DIAGNOSTICS_PATH
         configure_logging(console_log_level='info')
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
-        logger.info('Installed recipes:')
-        logger.info('==================')
+        logger.info("Showing recipes installed in %s", recipes_folder)
+        print('# Installed recipes')
         for root, _, files in os.walk(recipes_folder):
             root = os.path.relpath(root, recipes_folder)
             if root == '.':
                 root = ''
             if root:
-                logger.info('')
-                logger.info(root.upper())
-                logger.info('-' * len(root))
+                print(f"\n# {root.replace(os.sep, ' - ').title()}")
             for filename in files:
                 if filename.endswith('.yml'):
-                    logger.info(os.path.join(root, filename))
+                    print(os.path.join(root, filename))
 
     @staticmethod
     def get(recipe):
@@ -274,13 +270,12 @@ class ESMValTool():
     multiple models, either against predecessor versions or against
     observations.
 
-    Complete documentation is available at https://docs.esmvaltool.org.
+    Documentation is available at https://docs.esmvaltool.org.
 
     To report issues or ask for improvements, please visit
     https://github.com/ESMValGroup/ESMValTool.
 
     """
-
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
