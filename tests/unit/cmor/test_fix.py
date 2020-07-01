@@ -76,7 +76,6 @@ class TestGetCube(TestCase):
     def test_get_default(self):
         """Check that the default return the cube (fix is a cube)."""
         self.cube_1.var_name = 'fix'
-        self.vardef.short_name = self.cube_1.var_name
         self.assertIs(self.cube_1, self.fix.get_cube_from_list(self.cubes))
 
 
@@ -156,9 +155,8 @@ class TestFixMetadata(TestCase):
                 with patch('esmvalcore.cmor.fix.get_var_info',
                            return_value=var_info):
                     cube_returned = fix_metadata(
-                        cubes=[
-                            self.cube,
-                            self._create_mock_cube('extra')],
+                        cubes=[self.cube,
+                               self._create_mock_cube('extra')],
                         cmor_name='cmor_name',
                         project='CMIP6',
                         dataset='model',
@@ -198,22 +196,25 @@ class TestFixMetadata(TestCase):
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=checker) as get_mock:
-                fix_metadata(
-                    cubes=[self.cube],
-                    cmor_name='cmor_name',
-                    project='CMIP6',
-                    dataset='dataset',
-                    mip='mip',
-                    frequency='frequency',
-                )
-                get_mock.assert_called_once_with(
-                    automatic_fixes=True,
-                    fail_on_error=False,
-                    frequency='frequency',
-                    mip='mip',
-                    cmor_name='cmor_name',
-                    table='CMIP6',
-                    check_level=CheckLevels.DEFAULT,)
+                with patch('esmvalcore.cmor.table.get_var_info',
+                           return_value=var_info):
+                    fix_metadata(
+                        cubes=[self.cube],
+                        cmor_name='cmor_name',
+                        project='CMIP6',
+                        dataset='dataset',
+                        mip='mip',
+                        frequency='frequency',
+                    )
+                    get_mock.assert_called_once_with(
+                        automatic_fixes=True,
+                        fail_on_error=False,
+                        frequency='frequency',
+                        mip='mip',
+                        cmor_name='cmor_name',
+                        table='CMIP6',
+                        check_level=CheckLevels.DEFAULT,
+                    )
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_metadata.assert_called_once_with()
 

@@ -10,7 +10,6 @@ from netCDF4 import Dataset
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl, Cli, Clw, Tas
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
@@ -22,7 +21,7 @@ def cl_file(tmp_path):
     dataset.createDimension('bnds', size=2)
 
     # Dimensional variables
-    dataset.createVariable('lev', np.float64, dimensions=('lev',))
+    dataset.createVariable('lev', np.float64, dimensions=('lev', ))
     dataset.createVariable('lev_bnds', np.float64, dimensions=('lev', 'bnds'))
     dataset.variables['lev'][:] = [1.0, 2.0]
     dataset.variables['lev'].bounds = 'lev_bnds'
@@ -35,9 +34,9 @@ def cl_file(tmp_path):
         'p0: p0 a: a_bnds b: b_bnds ps: ps')
 
     # Coordinates for derivation of pressure coordinate
-    dataset.createVariable('a', np.float64, dimensions=('lev',))
+    dataset.createVariable('a', np.float64, dimensions=('lev', ))
     dataset.createVariable('a_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.createVariable('b', np.float64, dimensions=('lev',))
+    dataset.createVariable('b', np.float64, dimensions=('lev', ))
     dataset.createVariable('b_bnds', np.float64, dimensions=('lev', 'bnds'))
     dataset.variables['a'][:] = [1.0, 2.0]
     dataset.variables['a'].bounds = 'a_bnds'
@@ -57,8 +56,7 @@ def test_get_cl_fix():
 
 
 @unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath',
-    autospec=True)
+    'esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath', autospec=True)
 def test_cl_fix_file(mock_get_filepath, cl_file, tmp_path):
     """Test ``fix_file`` for ``cl``."""
     mock_get_filepath.return_value = os.path.join(tmp_path,

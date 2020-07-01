@@ -45,9 +45,10 @@ def fix_file(file, cmor_name, project, dataset, mip, output_dir):
         Path to the fixed file
 
     """
-    for fix in Fix.get_fixes(
-            project=project, dataset=dataset, mip=mip,
-            cmor_name=cmor_name):
+    for fix in Fix.get_fixes(project=project,
+                             dataset=dataset,
+                             mip=mip,
+                             cmor_name=cmor_name):
         file = fix.fix_file(file, output_dir)
     return file
 
@@ -96,8 +97,10 @@ def fix_metadata(cubes,
         If the checker detects errors in the metadata that it can not fix.
 
     """
-    fixes = Fix.get_fixes(
-        project=project, dataset=dataset, mip=mip, cmor_name=cmor_name)
+    fixes = Fix.get_fixes(project=project,
+                          dataset=dataset,
+                          mip=mip,
+                          cmor_name=cmor_name)
     short_name = get_var_info(project, mip, cmor_name).short_name
     fixed_cubes = []
     by_file = defaultdict(list)
@@ -109,27 +112,26 @@ def fix_metadata(cubes,
         for fix in fixes:
             cube_list = fix.fix_metadata(cube_list)
 
-        cube = _get_single_cube(cube_list, cmor_name, project, dataset)
-        checker = _get_cmor_checker(
-            frequency=frequency,
-            table=project,
-            mip=mip,
-            cmor_name=cmor_name,
-            check_level=check_level,
-            fail_on_error=False,
-            automatic_fixes=True)
+        cube = _get_single_cube(cube_list, short_name, project, dataset)
+        checker = _get_cmor_checker(frequency=frequency,
+                                    table=project,
+                                    mip=mip,
+                                    cmor_name=cmor_name,
+                                    check_level=check_level,
+                                    fail_on_error=False,
+                                    automatic_fixes=True)
         cube = checker(cube).check_metadata()
         cube.attributes.pop('source_file', None)
         fixed_cubes.append(cube)
     return fixed_cubes
 
 
-def _get_single_cube(cube_list, cmor_name, project, dataset):
+def _get_single_cube(cube_list, short_name, project, dataset):
     if len(cube_list) == 1:
         return cube_list[0]
     cube = None
     for raw_cube in cube_list:
-        if raw_cube.var_name == cmor_name:
+        if raw_cube.var_name == short_name:
             cube = raw_cube
             break
     if not cube:
@@ -137,19 +139,14 @@ def _get_single_cube(cube_list, cmor_name, project, dataset):
             'More than one cube found for variable %s in %s:%s but '
             'none of their var_names match the expected. \n'
             'Full list of cubes encountered: %s' %
-            (cmor_name, project, dataset, cube_list)
-        )
+            (short_name, project, dataset, cube_list))
     logger.warning(
         'Found variable %s in %s:%s, but there were other present in '
         'the file. Those extra variables are usually metadata '
         '(cell area, latitude descriptions) that was not saved '
         'according to CF-conventions. It is possible that errors appear '
         'further on because of this. \nFull list of cubes encountered: %s',
-        cmor_name,
-        project,
-        dataset,
-        cube_list
-    )
+        short_name, project, dataset, cube_list)
     return cube
 
 
@@ -196,16 +193,17 @@ def fix_data(cube,
         If the checker detects errors in the data that it can not fix.
 
     """
-    for fix in Fix.get_fixes(
-            project=project, dataset=dataset, mip=mip, cmor_name=cmor_name):
+    for fix in Fix.get_fixes(project=project,
+                             dataset=dataset,
+                             mip=mip,
+                             cmor_name=cmor_name):
         cube = fix.fix_data(cube)
-    checker = _get_cmor_checker(
-        frequency=frequency,
-        table=project,
-        mip=mip,
-        cmor_name=cmor_name,
-        fail_on_error=False,
-        automatic_fixes=True,
-        check_level=check_level)
+    checker = _get_cmor_checker(frequency=frequency,
+                                table=project,
+                                mip=mip,
+                                cmor_name=cmor_name,
+                                fail_on_error=False,
+                                automatic_fixes=True,
+                                check_level=check_level)
     cube = checker(cube).check_data()
     return cube
