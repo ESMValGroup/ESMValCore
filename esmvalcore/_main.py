@@ -120,34 +120,31 @@ class Config():
 
     """
     @staticmethod
-    def _copy_config_file(filename, overwrite, target_path):
+    def _copy_config_file(filename, overwrite, path):
         import os
         import shutil
         from ._config import configure_logging
         configure_logging(output=None, console_log_level='info')
-        if not target_path:
-            target_path = os.path.join(os.path.expanduser('~/.esmvaltool'),
-                                       filename)
-        if os.path.isfile(target_path):
+        if not path:
+            path = os.path.join(os.path.expanduser('~/.esmvaltool'), filename)
+        if os.path.isfile(path):
             if overwrite:
-                logger.info('Ovwerwriting file %s.', target_path)
+                logger.info('Ovwerwriting file %s.', path)
             else:
-                logger.info('Copy aborted. File %s already exists.',
-                            target_path)
+                logger.info('Copy aborted. File %s already exists.', path)
                 return
 
-        target_folder = os.path.dirname(target_path)
+        target_folder = os.path.dirname(path)
         if not os.path.isdir(target_folder):
             logger.info('Creating folder %s', target_folder)
             os.makedirs(target_folder)
 
-        logger.info('Copying file to %s...', target_path)
-        shutil.copy2(os.path.join(os.path.dirname(__file__), filename),
-                     target_path)
+        logger.info('Copying file to %s...', path)
+        shutil.copy2(os.path.join(os.path.dirname(__file__), filename), path)
         logger.info('Copy finished.')
 
     @classmethod
-    def get_config_user(cls, overwrite=False, target_path=None):
+    def get_config_user(cls, overwrite=False, path=None):
         """
         Copy default config-user.yml file to a given path.
 
@@ -158,15 +155,15 @@ class Config():
         ----------
         overwrite: boolean
             Name of the recipe to get
-        target_path: str
+        path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
 
         """
-        cls._copy_config_file('config-user.yml', overwrite, target_path)
+        cls._copy_config_file('config-user.yml', overwrite, path)
 
     @classmethod
-    def get_config_developer(cls, overwrite=False, target_path=None):
+    def get_config_developer(cls, overwrite=False, path=None):
         """
         Copy default config-developer.yml file to a given path.
 
@@ -177,12 +174,12 @@ class Config():
         ----------
         overwrite: boolean
             Name of the recipe to get
-        target_path: str
+        path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
 
         """
-        cls._copy_config_file('config-developer.yml', overwrite, target_path)
+        cls._copy_config_file('config-developer.yml', overwrite, path)
 
 
 class Recipes():

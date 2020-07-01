@@ -31,16 +31,16 @@ information needed by ESMValTool. It can be reused as many times the user needs
 to before changing any of the options stored in it. This file is essentially
 the gateway between the user and the machine-specific instructions to
 ``esmvaltool``. By default, esmvaltool looks for it in the home directory,
-inside the '.esmvaltool' folder.
+inside the ``.esmvaltool`` folder.
 
 Users can get a copy of this file with default values by running
 
 .. code-block:: bash
 
-  ``esmvaltool config get-config-user --path=${TARGET_FOLDER}``.
+  esmvaltool config get-config-user --path=${TARGET_FOLDER}
 
 If the option ``--path`` is omitted, the file will be created in
-`${HOME}/.esmvaltool`
+``${HOME}/.esmvaltool``
 
 The following shows the default settings from the ``config-user.yml`` file
 with explanations in a commented line above each option:
@@ -155,9 +155,10 @@ the user.
 
 .. note::
 
-   You choose your ``config-user.yml`` file at run time, so you could have several of
+   You can choose your ``config-user.yml`` file at run time, so you could have several of
    them available with different purposes. One for a formalised run, another for
-   debugging, etc.
+   debugging, etc. You can even provide any config user value as a run flag
+   ``--argument_name argument_value``
 
 
 .. _config-developer:
