@@ -45,6 +45,7 @@ requirements:
     - cython  # required by cf-units but not automatically installed
     - esmpy
     - fiona
+    - fire
     - nc-time-axis
     - netCDF4
     - numba

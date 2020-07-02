@@ -13,12 +13,14 @@ It operates on different (time) spans:
 """
 
 import logging
+import re
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
 
 import cf_units
 import iris
 import numpy as np
+import scipy
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +47,35 @@ def _plev_fix(dataset, pl_idx):
     return statj
 
 
+def _quantile(data, axis, quantile):
+    """Calculate quantile.
+
+    Workaround for calling scipy's mquantiles with arrays of >2 dimensions
+    Similar to iris' _percentiles function, see their discussion:
+    https://github.com/SciTools/iris/pull/625
+    """
+    # Ensure that the target axis is the last dimension.
+    data = np.rollaxis(data, axis, start=data.ndim)
+    shape = data.shape[:-1]
+    # Flatten any leading dimensions.
+    if shape:
+        data = data.reshape([np.prod(shape), data.shape[-1]])
+    # Perform the quantile calculation.
+    result = scipy.stats.mstats.mquantiles(data,
+                                           quantile,
+                                           axis=-1,
+                                           alphap=1,
+                                           betap=1)
+    # Ensure to unflatten any leading dimensions.
+    if shape:
+        result = result.reshape(shape)
+    # Check whether to reduce to a scalar result
+    if result.shape == (1, ):
+        result = result[0]
+
+    return result
+
+
 def _compute_statistic(data, statistic_name):
     """Compute multimodel statistic."""
     data = np.ma.array(data)
@@ -60,6 +91,10 @@ def _compute_statistic(data, statistic_name):
         statistic_function = np.ma.max
     elif statistic_name == 'min':
         statistic_function = np.ma.min
+    elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic_name):
+        # percentiles between p0 and p99.99999...
+        quantile = float(statistic_name[1:]) / 100
+        statistic_function = partial(_quantile, quantile=quantile)
     else:
         raise NotImplementedError
 
@@ -255,13 +290,14 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         computation;
         cube attribute of product is the data cube for computing the stats.
     span: str
-        overlap or full; if overlap stas are computed on common time-span;
-        if full stats are computed on full time spans.
+        overlap or full; if overlap, statitsticss are computed on common time-
+        span; if full, statistics are computed on full time spans, ignoring
+        missing data.
     output_products: dict
         dictionary of output products.
     statistics: str
         statistical measure to be computed. Available options: mean, median,
-        max, min, std
+        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
 
     Returns
     -------

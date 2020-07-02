@@ -58,7 +58,7 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             python setup.py test
-            esmvaltool -h
+            esmvaltool version
       - save_cache:
           key: python3-install-{{ .Branch }}
           paths:
@@ -133,7 +133,7 @@ jobs:
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            esmvaltool -h
+            esmvaltool version
             python setup.py test
       - store_artifacts:
           path: /logs
@@ -183,7 +183,7 @@ jobs:
             # Log versions
             conda env export > /logs/environment.yml
             # Test installation
-            esmvaltool -h
+            esmvaltool version
             python -c 'from esmvalcore import *; print(__version__)'
 
 workflows:

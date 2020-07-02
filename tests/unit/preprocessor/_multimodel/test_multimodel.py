@@ -140,6 +140,14 @@ class Test(tests.Test):
         expected = np.ma.ones((3, 2, 2)) * 0.5
         self.assert_array_equal(stat, expected)
 
+    def test_compute_percentile(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "p75")
+        expected = np.ma.ones((3, 2, 2)) * 1.625
+        expected[0, 0, 0] = 0.5
+        self.assert_array_equal(stat, expected)
+
     def test_put_in_cube(self):
         """Test put in cube."""
         cube_data = np.ma.ones((2, 3, 2, 2))
