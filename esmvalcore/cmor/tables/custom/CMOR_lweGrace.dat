@@ -1,0 +1,26 @@
+SOURCE: CMIP5 (adapted from mrsos)
+!============
+variable_entry:    lweGrace
+!============
+modeling_realm:    land
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             m
+cell_methods:      time: mean area: mean where land
+cell_measures:     area: areacella
+long_name:         Liquid Water Equivalent from Grace
+comment:           the liquid water equivalent from Grace
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          lweGrace
+type:              real
+valid_min:         -1000
+valid_max:         1000
+ok_min_mean_abs:   -1
+ok_max_mean_abs:   1
+!----------------------------------
+!
