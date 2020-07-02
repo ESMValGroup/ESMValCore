@@ -188,9 +188,10 @@ class CMIP6Info(object):
             if dimension in generic_levels:
                 coord = CoordinateInfo(dimension)
                 coord.generic_level = True
-                for name, coord in self.coords.items():
-                    if dimension == coord.generic_lev_name:
-                        coord.generic_lev_coords[name] = coord
+                for name in self.coords:
+                    generic_level = self.coords[name].generic_lev_name
+                    if dimension in [generic_level]:
+                        coord.generic_lev_coords[name] = self.coords[name]
             else:
                 try:
                     coord = self.coords[dimension]
@@ -518,7 +519,6 @@ class CoordinateInfo(JsonInfo):
         """Whether bounds are required on this dimension"""
         self.generic_lev_name = ""
         """Generic level name"""
-
     def read_json(self, json_data):
         """
         Read coordinate information from json.
