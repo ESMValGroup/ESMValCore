@@ -258,7 +258,7 @@ def _assemble_data(cubes, statistic, span='overlap'):
     stats_data = np.ma.zeros(new_shape)
 
     # Realize all cubes at once instead of separately for each time slice
-    [cube.data for cube in cubes]
+    _ = [cube.data for cube in cubes]
 
     # Make time slices and compute stats
     for i, time in enumerate(new_times):
