@@ -415,7 +415,8 @@ class CMORCheck():
                 if coordinate.out_name:
                     self.report_critical(
                         f'Coordinate {coordinate.name} '
-                        'has wrong standard_name.',
+                        'has wrong standard_name '
+                        'or is not set.',
                     )
                 else:
                     self.report_critical(
