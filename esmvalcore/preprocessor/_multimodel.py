@@ -237,7 +237,7 @@ def _get_time_slice(cubes, time):
             idx = int(np.argwhere(cube_time == time))
             subset = cube[idx].data
         else:
-            subset = np.ma.empty(list(cubes[0].shape[1:]))
+            subset = np.ma.empty(list(cube.shape[1:]))
             subset.mask = True
         time_slice.append(subset)
     return time_slice
@@ -256,6 +256,9 @@ def _assemble_data(cubes, statistic, span='overlap'):
     # Target array to populate with computed statistics
     new_shape = [n_times] + list(cubes[0].shape[1:])
     stats_data = np.ma.zeros(new_shape)
+
+    # Realize all cubes at once instead of separately for each time slice
+    [cube.data for cube in cubes]
 
     # Make time slices and compute stats
     for i, time in enumerate(new_times):
