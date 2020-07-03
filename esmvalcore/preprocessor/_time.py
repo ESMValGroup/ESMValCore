@@ -768,3 +768,27 @@ def timeseries_filter(cube, window, span,
                                weights=wgts)
 
     return cube
+
+
+def resample_hours(cube, hours):
+    if 24 % hours != 0:
+        raise ValueError('The number of hours must be a divisor of 24')
+    hours = range(0, 24, hours)
+    select_hours = iris.Constraint(
+        time=lambda cell: cell.point.hour in hours)
+    return cube.extract(select_hours)
+
+
+def resample_time(cube, month=None, day=None, hour=None):
+    def compare(date):
+        if month is not None and month != date.month:
+            return False
+        if day is not None and day != date.day:
+            return False
+        if hour is not None and hour != date.hour:
+            return False
+        return True
+
+    resample_constraint = iris.Constraint(
+        time=lambda cell: compare(cell.point))
+    return cube.extract(resample_constraint)
