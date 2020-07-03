@@ -771,6 +771,29 @@ def timeseries_filter(cube, window, span,
 
 
 def resample_hours(cube, hours):
+    """
+    Converts x-hourly data to y-hourly by eliminating extra timesteps
+
+    Converts x-hourly data to y-hourly (y > x) by eliminating the extra
+    timesteps. This is intended to be used only with instantaneous values.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        Input cube.
+    hours: int
+        The frequency of the desired data.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with the new frequency.
+
+    Raises
+    ------
+    ValueError:
+        The specified freuqncy is not a divisor of 24.
+    """
     if 24 % hours != 0:
         raise ValueError('The number of hours must be a divisor of 24')
     hours = range(0, 24, hours)
@@ -780,6 +803,29 @@ def resample_hours(cube, hours):
 
 
 def resample_time(cube, month=None, day=None, hour=None):
+    """
+    Change frequency of data by resampling it.
+
+    Converts data from one frequency to another by extracting the timesteps
+    that match the provided month, day and/or hour. This is meant to be used
+    with instantaneous values when computing statistics is not desired.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        Input cube.
+    month: int, optional
+        Month to extract
+    day: int, optional
+        Day to extract
+    hour: int, optional
+        Hour to extract
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with the new frequency.
+    """
     def compare(date):
         if month is not None and month != date.month:
             return False

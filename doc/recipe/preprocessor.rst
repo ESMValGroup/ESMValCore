@@ -709,12 +709,15 @@ The ``_time.py`` module contains the following preprocessor functions:
 * extract_time_: Extract a time range from a cube.
 * extract_season_: Extract only the times that occur within a specific season.
 * extract_month_: Extract only the times that occur within a specific month.
+* hourly_statistics_: Compute intra-day statistics
 * daily_statistics_: Compute statistics for each day
 * monthly_statistics_: Compute statistics for each month
 * seasonal_statistics_: Compute statistics for each season
 * annual_statistics_: Compute statistics for each year
 * decadal_statistics_: Compute statistics for each decade
 * climate_statistics_: Compute statistics for the full period
+* resample_time_: Resample data
+* resample_hours_: Convert between N-hourly frequencies by resampling
 * anomalies_: Compute (standardized) anomalies
 * regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
@@ -789,6 +792,35 @@ This function only has one argument: ``month``. This value should be an integer
 between 1 and 12 as the named month string will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_month`.
+
+.. _hourly_statistics:
+
+``daily_statistics``
+--------------------
+
+This function produces statistics at a x-hourly frequency.
+
+Parameters:
+    * hours: frequency to use to compute the statistics. Must be a divisor of
+      24.
+
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.daily_statistics`.
+
+.. _monthly_statistics:
+
+``monthly_statistics``
+----------------------
+
+This function produces statistics for each month in the dataset.
+
+Parameters:
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 
 .. _daily_statistics:
 
@@ -905,6 +937,71 @@ Examples:
               period: full
 
 See also :func:`esmvalcore.preprocessor.climate_statistics`.
+
+.. _resample_time:
+
+``resample_time``
+-----------------
+
+This function changes the frequency of the data in the cube by extracting the
+timesteps that meet the criteria. It is important to note that it is mainly
+mean to be used with instantaneous data
+
+Parameters:
+    * month: Extract only timesteps from the given month or do nothing if None.
+      Default is 'None'
+    * day: Extract only timesteps from the given day of month or do nothing if
+      None. Default is 'None'
+    * hour: Extract only timesteps from the given hour or do nothing if None.
+      Default is 'None'
+
+Examples:
+    * Hourly data to daily:
+
+        .. code-block:: yaml
+
+            resample_time:
+              hour: 12
+
+    * Hourly data to monthly:
+
+        .. code-block:: yaml
+
+            resample_time:
+              hour: 12
+              day: 15
+
+    * Daily data to monthly:
+
+        .. code-block:: yaml
+
+            resample_time:
+              day: 15
+
+See also :func:`esmvalcore.preprocessor.resample_time`.
+
+
+resample_hours:
+
+``resample_time``
+-----------------
+
+This function changes the frequency of the data in the cube by extracting the
+timesteps that belongs to the desired frequency. It is important to note that
+it is mainly mean to be used with instantaneous data
+
+Parameters:
+    * hours: New frequency of the data. Must be a divisor of 24
+
+Examples:
+    * Convert to 12-hourly:
+
+        .. code-block:: yaml
+
+            resample_hours:
+              hours: 12
+
+See also :func:`esmvalcore.preprocessor.resample_hours`.
 
 .. _anomalies:
 
