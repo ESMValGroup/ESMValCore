@@ -3,7 +3,6 @@
 import copy
 import unittest
 
-import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
