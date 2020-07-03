@@ -209,7 +209,7 @@ def hourly_statistics(cube, hours, operator='mean'):
     if not cube.coords('hour_group'):
         iris.coord_categorisation.add_categorised_coord(
             cube, 'hour_group', 'time',
-            lambda coord, value:  coord.units.num2date(value).hour // hours,
+            lambda coord, value: coord.units.num2date(value).hour // hours,
             units='1')
     if not cube.coords('day_of_year'):
         iris.coord_categorisation.add_day_of_year(cube, 'time')
@@ -772,7 +772,7 @@ def timeseries_filter(cube, window, span,
 
 def resample_hours(cube, hours):
     """
-    Converts x-hourly data to y-hourly by eliminating extra timesteps
+    Converts x-hourly data to y-hourly by eliminating extra timesteps.
 
     Converts x-hourly data to y-hourly (y > x) by eliminating the extra
     timesteps. This is intended to be used only with instantaneous values.
