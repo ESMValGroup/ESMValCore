@@ -182,6 +182,49 @@ def get_time_weights(cube):
     return time_weights
 
 
+def hourly_statistics(cube, hours, operator='mean'):
+    """
+    Compute hourly statistics.
+
+    Chunks time in x hours periods and computes statistics over them;
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+
+    hours: int
+        Number of hours per period. Must be a divisor of 24
+        (1, 2, 3, 4, 6, 8, 12)
+
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+
+    Returns
+    -------
+    iris.cube.Cube
+        Hourly statistics cube
+    """
+    if not cube.coords('hour_group'):
+        iris.coord_categorisation.add_categorised_coord(
+            cube, 'hour_group', 'time',
+            lambda coord, value:  coord.units.num2date(value).hour // hours,
+            units='1')
+    if not cube.coords('day_of_year'):
+        iris.coord_categorisation.add_day_of_year(cube, 'time')
+    if not cube.coords('year'):
+        iris.coord_categorisation.add_year(cube, 'time')
+
+    operator = get_iris_analysis_operation(operator)
+    cube = cube.aggregated_by(['hour_group', 'day_of_year', 'year'], operator)
+
+    cube.remove_coord('hour_group')
+    cube.remove_coord('day_of_year')
+    cube.remove_coord('year')
+    return cube
+
+
 def daily_statistics(cube, operator='mean'):
     """
     Compute daily statistics.

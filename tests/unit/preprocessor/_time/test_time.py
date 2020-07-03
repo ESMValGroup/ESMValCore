@@ -15,6 +15,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 import tests
 from esmvalcore.preprocessor._time import (annual_statistics, anomalies,
                                            climate_statistics,
+                                           hourly_statistics,
                                            daily_statistics,
                                            decadal_statistics, extract_month,
                                            extract_season, extract_time,
@@ -515,6 +516,70 @@ class TestMonthlyStatistics(tests.Test):
 
         result = monthly_statistics(cube, 'sum')
         expected = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45])
+        assert_array_equal(result.data, expected)
+
+
+class TestHourlyStatistics(tests.Test):
+    """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`"""
+
+    @staticmethod
+    def _create_cube(data, times):
+        time = iris.coords.DimCoord(
+            times,
+            standard_name='time',
+            units=Unit('hours since 1950-01-01', calendar='360_day'))
+        time.guess_bounds()
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        return cube
+
+    def test_mean(self):
+        """Test average of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'mean')
+        expected = np.array([0.5, 2.5, 4.5, 6.5])
+        assert_array_equal(result.data, expected)
+
+    def test_median(self):
+        """Test median of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'median')
+        expected = np.array([0.5, 2.5, 4.5, 6.5])
+        assert_array_equal(result.data, expected)
+
+    def test_min(self):
+        """Test min of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'min')
+        expected = np.array([0., 2., 4., 6.])
+        assert_array_equal(result.data, expected)
+
+    def test_max(self):
+        """Test max of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'max')
+        expected = np.array([1., 3., 5., 7.])
+        assert_array_equal(result.data, expected)
+
+    def test_sum(self):
+        """Test sum of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'sum')
+        expected = np.array([1., 5., 9., 13.])
         assert_array_equal(result.data, expected)
 
 
