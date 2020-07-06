@@ -27,6 +27,7 @@ jobs:
           conda-channels: anaconda, conda-forge, esmvalgroup
       - run: conda --version
       - run: which python
+      - run: python -V
       - run: conda env create -n test_install -f environment.yml
       - run: source activate test_install
       - run: pip install fire fiona nc-time-axis numba prov[dot] yamale
