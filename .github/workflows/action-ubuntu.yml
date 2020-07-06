@@ -28,7 +28,6 @@ jobs:
       - run: conda --version
       - run: which python
       - run: conda env create -n test_install -f environment.yml
-      - run: conda init bash
-      - run: conda activate test_install
+      - run: set +x; conda activate test_install; set -x
       - run: pip install fire fiona nc-time-axis numba prov[dot] yamale
       - run: pip install --index-url https://test.pypi.org/simple/ --no-deps esmvalcore
