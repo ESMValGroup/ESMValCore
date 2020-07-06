@@ -30,8 +30,7 @@ jobs:
       - run: which python
       - run: python -V
       - run: conda env create -n test_install -f environment.yml
-      - run: source /usr/local/miniconda/etc/profile.d/conda.sh
-      - run: eval "$(conda shell.zsh hook)"
+      - run: export PATH=/usr/local/miniconda/bin:$PATH
       - run: conda activate test_install
       - run: pip install fire fiona nc-time-axis numba prov[dot] yamale
       - run: pip install --index-url https://test.pypi.org/simple/ --no-deps esmvalcore
