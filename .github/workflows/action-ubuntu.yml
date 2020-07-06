@@ -27,8 +27,10 @@ jobs:
           conda-channels: anaconda, conda-forge, esmvalgroup
       - run: conda --version
       - run: which python
+      - run: which conda
       - run: python -V
       - run: conda env create -n test_install -f environment.yml
-      - run: source activate test_install
+      - run: source /usr/local/miniconda/etc/profile.d/conda.sh
+      - run: conda activate test_install
       - run: pip install fire fiona nc-time-axis numba prov[dot] yamale
       - run: pip install --index-url https://test.pypi.org/simple/ --no-deps esmvalcore
