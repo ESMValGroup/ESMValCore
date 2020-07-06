@@ -1,4 +1,4 @@
-"""Functions for downloading climate data files"""
+"""Functions for downloading climate data files."""
 import logging
 import os
 import subprocess
@@ -10,14 +10,29 @@ logger = logging.getLogger(__name__)
 
 def synda_search(variable):
     """Search files using synda."""
-    query = {
-        'model': variable.get('dataset'),
-        'project': variable.get('project'),
-        'cmor_table': variable.get('mip'),
-        'ensemble': variable.get('ensemble'),
-        'experiment': variable.get('exp'),
-        'variable': variable.get('short_name'),
-    }
+    project = variable.get('project', '')
+    if project == 'CMIP5':
+        query = {
+            'project': 'CMIP5',
+            'cmor_table': variable.get('mip'),
+            'variable': variable.get('short_name'),
+            'model': variable.get('dataset'),
+            'experiment': variable.get('exp'),
+            'ensemble': variable.get('ensemble'),
+        }
+    elif project == 'CMIP6':
+        query = {
+            'project': 'CMIP6',
+            'activity_id': variable.get('activity'),
+            'table_id': variable.get('mip'),
+            'variable_id': variable.get('short_name'),
+            'source_id': variable.get('dataset'),
+            'experiment_id': variable.get('exp'),
+            'variant_label': variable.get('ensemble'),
+            'grid_label': variable.get('grid'),
+        }
+    else:
+        return []
 
     query = {facet: value for facet, value in query.items() if value}
 
@@ -71,7 +86,7 @@ def synda_download(synda_name, dest_folder):
 
 
 def download(files, dest_folder):
-    """Download files that are not available locally"""
+    """Download files that are not available locally."""
     os.makedirs(dest_folder, exist_ok=True)
 
     local_files = []
