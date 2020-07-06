@@ -26,9 +26,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           conda-channels: anaconda, conda-forge, esmvalgroup
       - run: conda --version
+      - run: which conda
       - run: which python
       - run: python -V
       - run: conda env create -n test_install -f environment.yml
-      - run: source activate test_install
+      - run: conda init zsh
+      - run: conda activate test_install
       - run: pip install fire fiona nc-time-axis numba prov[dot] yamale
       - run: pip install --index-url https://test.pypi.org/simple/ --no-deps esmvalcore
