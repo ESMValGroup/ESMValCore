@@ -984,10 +984,10 @@ def make_map_data(number_years=2):
         range(2),
         standard_name='longitude',
     )
-    data = np.array([[[0], [1], ], [[1], [0], ]]) * times
+    data = np.array([[0, 1], [1, 0]]) * times[:, None, None]
     cube = iris.cube.Cube(
         data,
-        dim_coords_and_dims=[(lon, 0), (lat, 1), (time, 2)]
+        dim_coords_and_dims=[(time, 0), (lat, 1), (lon, 2)],
     )
     return cube
 
@@ -1016,13 +1016,13 @@ def test_standardized_anomalies(period, standardize=True):
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize=standardize)
     if period == 'full':
-        expected_anomalies = (cube.data - np.mean(cube.data, axis=2,
+        expected_anomalies = (cube.data - np.mean(cube.data, axis=0,
                                                   keepdims=True))
         if standardize:
             # NB: default behaviour for np.std is ddof=0, whereas
             #     default behaviour for iris.analysis.STD_DEV is ddof=1
             expected_stdanomalies = expected_anomalies / np.std(
-                 expected_anomalies, axis=2, keepdims=True, ddof=1)
+                 expected_anomalies, axis=0, keepdims=True, ddof=1)
             expected = np.ma.masked_invalid(expected_stdanomalies)
             assert_array_equal(
                 result.data,
@@ -1098,11 +1098,8 @@ def test_anomalies(period, reference, standardize=False):
                 np.arange(315.5, 405),
                 np.arange(315.5, 345),
             ))
-    zeros = np.zeros_like(anom)
-    assert_array_equal(
-        result.data,
-        np.array([[zeros, anom], [anom, zeros]])
-    )
+    expected = anom[:, None, None] * [[0, 1], [1, 0]]
+    assert_array_equal(result.data, expected)
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
 
 
@@ -1211,6 +1208,20 @@ def test_get_time_weights_1d_time_1d_lon():
     assert weights.shape == cube.shape
     np.testing.assert_allclose(weights, [[15.0, 15.0, 15.0],
                                          [30.0, 30.0, 30.0]])
+
+
+def test_climate_statistics_0d_time_1d_lon():
+    """Test climate statistics."""
+    time = iris.coords.DimCoord([1.0], bounds=[[0.0, 2.0]], var_name='time',
+                                standard_name='time',
+                                units='days since 1850-01-01 00:00:00')
+    lons = get_lon_coord()
+    cube = iris.cube.Cube([[1.0, -1.0, 42.0]], var_name='x', units='K',
+                          dim_coords_and_dims=[(time, 0), (lons, 1)])
+    new_cube = climate_statistics(cube, operator='sum', period='full')
+    assert cube.shape == (1, 3)
+    assert new_cube.shape == (3,)
+    np.testing.assert_allclose(new_cube.data, [1.0, -1.0, 42.0])
 
 
 def test_climate_statistics_complex_cube():
