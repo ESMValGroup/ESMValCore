@@ -26,8 +26,9 @@ from ._other import clip
 from ._regrid import extract_levels, extract_point, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
                     daily_statistics, decadal_statistics, extract_month,
-                    extract_season, extract_time, monthly_statistics,
-                    regrid_time, seasonal_statistics, timeseries_filter)
+                    extract_season, extract_time, hourly_statistics,
+                    monthly_statistics, regrid_time, resample_time,
+                    resample_hours, seasonal_statistics, timeseries_filter)
 from ._trend import linear_trend, linear_trend_stderr
 from ._units import convert_units
 from ._volume import (depth_integration, extract_trajectory, extract_transect,
@@ -53,6 +54,8 @@ __all__ = [
     'extract_time',
     'extract_season',
     'extract_month',
+    'resample_hours',
+    'resample_time',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
@@ -99,6 +102,7 @@ __all__ = [
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
+    'hourly_statistics',
     'daily_statistics',
     'monthly_statistics',
     'seasonal_statistics',
