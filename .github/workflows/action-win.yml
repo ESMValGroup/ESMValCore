@@ -1,0 +1,33 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Test Installation from PyPi on Windows
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+    name: Python ${{ matrix.python-version }} example
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup conda
+        uses: s-weigand/setup-conda@v1
+        with:
+          update-conda: true
+          python-version: ${{ matrix.python-version }}
+          conda-channels: anaconda, conda-forge, esmvalgroup
+      - run: conda --version
+      - run: which python
+      - run: conda env create -n test_install -f environment.yml
+      - run: source activate test_install
+      - run: pip install fire fiona nc-time-axis numba prov[dot] yamale
+      - run: pip install --index-url https://test.pypi.org/simple/ --no-deps esmvalcore
