@@ -60,7 +60,7 @@ The ESMValTool preprocessor can be used to perform a broad range of operations
 on the input data before diagnostics or metrics are applied. The preprocessor
 performs these operations in a centralized, documented and efficient way, thus
 reducing the data processing load on the diagnostics side.  For an overview of
-the preprocessor structure see the `recipe overview <https://docs.esmvaltool.org/projects/esmvalcore/en/latest/recipe/overview.html#recipe-section-preprocessors>`_.
+the preprocessor structure see the :ref:`Preprocessors`.
 
 Each of the preprocessor operations is written in a dedicated python module and
 all of them receive and return an Iris `cube
