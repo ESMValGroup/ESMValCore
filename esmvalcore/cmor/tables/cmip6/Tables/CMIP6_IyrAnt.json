@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table IyrAnt", 
         "realm": "landIce", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -40,7 +40,7 @@
             "cell_methods": "area: time: mean where grounded_ice_sheet (comment: mask=sfgrlf)", 
             "cell_measures": "area: areacellg", 
             "long_name": "Geothermal Heat Flux Beneath Land Ice", 
-            "comment": "Upward geothermal heat flux per unit area beneath land ice", 
+            "comment": "Upward geothermal heat flux per unit area into the base of grounded land ice. This is related to the geothermal heat flux out of the bedrock, but may be modified by horizontal transport due to run-off and by melting at the interface.", 
             "dimensions": "xant yant time", 
             "out_name": "hfgeoubed", 
             "type": "real", 

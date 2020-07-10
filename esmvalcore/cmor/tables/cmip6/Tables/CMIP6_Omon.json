@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table Omon", 
         "realm": "ocnBgchem", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -377,7 +377,7 @@
         "chldiaz": {
             "frequency": "mon", 
             "modeling_realm": "ocnBgchem", 
-            "standard_name": "mass_concentration_of_diazotrophs_expressed_as_chlorophyll_in_sea_water", 
+            "standard_name": "mass_concentration_of_diazotrophic_phytoplankton_expressed_as_chlorophyll_in_sea_water", 
             "units": "kg m-3", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello volume: volcello", 
@@ -395,7 +395,7 @@
         "chldiazos": {
             "frequency": "mon", 
             "modeling_realm": "ocnBgchem", 
-            "standard_name": "mass_concentration_of_diazotrophs_expressed_as_chlorophyll_in_sea_water", 
+            "standard_name": "mass_concentration_of_diazotrophic_phytoplankton_expressed_as_chlorophyll_in_sea_water", 
             "units": "kg m-3", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello", 
@@ -2042,7 +2042,7 @@
             "dimensions": "longitude latitude time", 
             "out_name": "hflso", 
             "type": "real", 
-            "positive": "up", 
+            "positive": "down", 
             "valid_min": "", 
             "valid_max": "", 
             "ok_min_mean_abs": "", 
@@ -2182,11 +2182,11 @@
             "cell_methods": "area: mean where ice_free_sea over sea time: mean", 
             "cell_measures": "area: areacello", 
             "long_name": "Surface Downward Sensible Heat Flux", 
-            "comment": "Upward sensible heat flux over sea ice free sea. The surface sensible heat flux, also called turbulent heat flux, is the exchange of heat between the surface and the air by motion of air.", 
+            "comment": "Downward sensible heat flux over sea ice free sea. The surface sensible heat flux, also called turbulent heat flux, is the exchange of heat between the surface and the air by motion of air.", 
             "dimensions": "longitude latitude time", 
             "out_name": "hfsso", 
             "type": "real", 
-            "positive": "up", 
+            "positive": "down", 
             "valid_min": "", 
             "valid_max": "", 
             "ok_min_mean_abs": "", 
@@ -2519,7 +2519,7 @@
         "intppdiaz": {
             "frequency": "mon", 
             "modeling_realm": "ocnBgchem", 
-            "standard_name": "net_primary_mole_productivity_of_biomass_expressed_as_carbon_by_diazotrophs", 
+            "standard_name": "net_primary_mole_productivity_of_biomass_expressed_as_carbon_by_diazotrophic_phytoplankton", 
             "units": "mol m-2 s-1", 
             "cell_methods": "area: mean where sea depth: sum where sea time: mean", 
             "cell_measures": "area: areacello", 
@@ -2627,7 +2627,7 @@
         "limfediaz": {
             "frequency": "mon", 
             "modeling_realm": "ocnBgchem", 
-            "standard_name": "iron_growth_limitation_of_diazotrophs", 
+            "standard_name": "iron_growth_limitation_of_diazotrophic_phytoplankton", 
             "units": "1", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello", 
@@ -2717,7 +2717,7 @@
         "limirrdiaz": {
             "frequency": "mon", 
             "modeling_realm": "ocnBgchem", 
-            "standard_name": "growth_limitation_of_diazotrophs_due_to_solar_irradiance", 
+            "standard_name": "growth_limitation_of_diazotrophic_phytoplankton_due_to_solar_irradiance", 
             "units": "1", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello", 
@@ -2807,7 +2807,7 @@
         "limndiaz": {
             "frequency": "mon", 
             "modeling_realm": "ocnBgchem", 
-            "standard_name": "nitrogen_growth_limitation_of_diazotrophs", 
+            "standard_name": "nitrogen_growth_limitation_of_diazotrophic_phytoplankton", 
             "units": "1", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello", 
@@ -3617,7 +3617,7 @@
         "phydiaz": {
             "frequency": "mon", 
             "modeling_realm": "ocnBgchem", 
-            "standard_name": "mole_concentration_of_diazotrophs_expressed_as_carbon_in_sea_water", 
+            "standard_name": "mole_concentration_of_diazotrophic_phytoplankton_expressed_as_carbon_in_sea_water", 
             "units": "mol m-3", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello volume: volcello", 
@@ -3635,7 +3635,7 @@
         "phydiazos": {
             "frequency": "mon", 
             "modeling_realm": "ocnBgchem", 
-            "standard_name": "mole_concentration_of_diazotrophs_expressed_as_carbon_in_sea_water", 
+            "standard_name": "mole_concentration_of_diazotrophic_phytoplankton_expressed_as_carbon_in_sea_water", 
             "units": "mol m-3", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello", 

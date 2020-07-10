@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table Emon", 
         "realm": "land", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -575,7 +575,7 @@
         "cfadLidarsr532": {
             "frequency": "mon", 
             "modeling_realm": "atmos", 
-            "standard_name": "histogram_of_backscattering_ratio_over_height_above_reference_ellipsoid", 
+            "standard_name": "histogram_of_backscattering_ratio_in_air_over_height_above_reference_ellipsoid", 
             "units": "1", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -1030,7 +1030,7 @@
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
             "long_name": "Aerosol Extinction Coefficient", 
-            "comment": "Aerosol Extinction at 550nm", 
+            "comment": "Aerosol volume extinction coefficient at 550nm wavelength.", 
             "dimensions": "longitude latitude alevel time lambda550nm", 
             "out_name": "ec550aer", 
             "type": "real", 
@@ -1403,7 +1403,7 @@
         "fLulccResidueLut": {
             "frequency": "mon", 
             "modeling_realm": "land", 
-            "standard_name": "carbon_mass_flux_into_soil_and_litter_due_to_anthropogenic_land_use_or_land_cover_change", 
+            "standard_name": "carbon_mass_flux_into_litter_and_soil_due_to_anthropogenic_land_use_or_land_cover_change", 
             "units": "kg m-2 s-1", 
             "cell_methods": "area: time: mean where sector", 
             "cell_measures": "area: areacella", 
@@ -2469,7 +2469,7 @@
             "units": "W m-2", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
-            "long_name": "TOA Clear-Sky longwave Radiative Forcing due to  Aerosols", 
+            "long_name": "TOA Clear-Sky Longwave Radiative Forcing Due to Aerosols", 
             "comment": "Instantaneous forcing is the radiative flux change caused instantaneously by an imposed change in radiative forcing agent (greenhouse gases, aerosol, solar radiation, etc.).", 
             "dimensions": "longitude latitude time", 
             "out_name": "lwtoacsaer", 
@@ -2973,7 +2973,7 @@
             "units": "kg m-2 s-1", 
             "cell_methods": "area: mean where land time: mean", 
             "cell_measures": "area: areacella", 
-            "long_name": "Net Carbon Mass Flux out of Atmosphere due to Net Ecosystem Productivity on Land [kgC m-2 s-1]", 
+            "long_name": "Net Carbon Mass Flux out of Atmosphere Due to Net Ecosystem Productivity on Land [kgC m-2 s-1]", 
             "comment": "Natural flux of CO2 (expressed as a mass flux of carbon) from the atmosphere to the land calculated as the difference between uptake associated will photosynthesis and the release of CO2 from the sum of plant and soil respiration and fire.  Positive flux is into the land.  Emissions from natural fires and human ignition fires as calculated by the fire module of the dynamic vegetation model, but excluding any CO2 flux from fire included in fLuc (CO2 Flux to Atmosphere from Land Use Change).", 
             "dimensions": "longitude latitude time", 
             "out_name": "nep", 
@@ -3167,7 +3167,7 @@
         "ocontempdiff": {
             "frequency": "mon", 
             "modeling_realm": "ocean", 
-            "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_eddy_dianeutral_mixing", 
+            "standard_name": "tendency_of_sea_water_conservative_temperature_expressed_as_heat_content_due_to_parameterized_dianeutral_mixing", 
             "units": "W m-2", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello volume: volcello", 
@@ -3185,7 +3185,7 @@
         "ocontempmint": {
             "frequency": "mon", 
             "modeling_realm": "ocean", 
-            "standard_name": "integral_wrt_depth_of_product_of_sea_water_density_and_conservative_temperature", 
+            "standard_name": "integral_wrt_depth_of_product_of_conservative_temperature_and_sea_water_density", 
             "units": "degC kg m-2", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello", 
@@ -3365,7 +3365,7 @@
         "opottempdiff": {
             "frequency": "mon", 
             "modeling_realm": "ocean", 
-            "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_eddy_dianeutral_mixing", 
+            "standard_name": "tendency_of_sea_water_potential_temperature_expressed_as_heat_content_due_to_parameterized_dianeutral_mixing", 
             "units": "W m-2", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello volume: volcello", 
@@ -3383,7 +3383,7 @@
         "opottempmint": {
             "frequency": "mon", 
             "modeling_realm": "ocean", 
-            "standard_name": "integral_wrt_depth_of_product_of_sea_water_density_and_potential_temperature", 
+            "standard_name": "integral_wrt_depth_of_product_of_potential_temperature_and_sea_water_density", 
             "units": "degC kg m-2", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello", 
@@ -3509,7 +3509,7 @@
         "osaltdiff": {
             "frequency": "mon", 
             "modeling_realm": "ocean", 
-            "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_eddy_dianeutral_mixing", 
+            "standard_name": "tendency_of_sea_water_salinity_expressed_as_salt_content_due_to_parameterized_dianeutral_mixing", 
             "units": "kg m-2 s-1", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello volume: volcello", 
@@ -3743,7 +3743,7 @@
         "ppdiaz": {
             "frequency": "mon", 
             "modeling_realm": "ocnBgchem", 
-            "standard_name": "tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production_by_diazotrophs", 
+            "standard_name": "tendency_of_mole_concentration_of_particulate_organic_matter_expressed_as_carbon_in_sea_water_due_to_net_primary_production_by_diazotrophic_phytoplankton", 
             "units": "mol m-3 s-1", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello volume: volcello", 
@@ -4229,7 +4229,7 @@
         "rainmxrat27": {
             "frequency": "mon", 
             "modeling_realm": "atmos", 
-            "standard_name": "mass_fraction_of_rain_in_air", 
+            "standard_name": "mass_fraction_of_liquid_precipitation_in_air", 
             "units": "1", 
             "cell_methods": "time: mean", 
             "cell_measures": "area: areacella", 
@@ -4247,7 +4247,7 @@
         "reffclic": {
             "frequency": "mon", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_convective_cloud_ice_particle", 
+            "standard_name": "effective_radius_of_convective_cloud_ice_particles", 
             "units": "m", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -4265,7 +4265,7 @@
         "reffclis": {
             "frequency": "mon", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_stratiform_cloud_ice_particle", 
+            "standard_name": "effective_radius_of_stratiform_cloud_ice_particles", 
             "units": "m", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -4283,7 +4283,7 @@
         "reffclwc": {
             "frequency": "mon", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_convective_cloud_liquid_water_particle", 
+            "standard_name": "effective_radius_of_convective_cloud_liquid_water_particles", 
             "units": "m", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -4301,7 +4301,7 @@
         "reffclws": {
             "frequency": "mon", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particle", 
+            "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particles", 
             "units": "m", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -4575,7 +4575,7 @@
             "units": "W m-2", 
             "cell_methods": "area: time: mean where sector", 
             "cell_measures": "area: areacella", 
-            "long_name": "Surface Upwelling Shortwave  on Land-use Tile", 
+            "long_name": "Surface Upwelling Shortwave on Land-Use Tile", 
             "comment": "The surface called 'surface' means the lower boundary of the atmosphere. 'shortwave' means shortwave radiation. Upwelling radiation is radiation from below. It does not mean 'net upward'. When thought of as being incident on a surface, a radiative flux is sometimes called 'irradiance'. In addition, it is identical with the quantity measured by a cosine-collector light-meter and sometimes called 'vector irradiance'. In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics.", 
             "dimensions": "longitude latitude landUse time", 
             "out_name": "rsusLut", 
@@ -4697,7 +4697,7 @@
         "somint": {
             "frequency": "mon", 
             "modeling_realm": "ocean", 
-            "standard_name": "integral_wrt_depth_of_product_of_sea_water_density_and_salinity", 
+            "standard_name": "integral_wrt_depth_of_product_of_salinity_and_sea_water_density", 
             "units": "g m-2", 
             "cell_methods": "area: mean where sea time: mean", 
             "cell_measures": "area: areacello", 
@@ -4845,7 +4845,7 @@
             "units": "W m-2", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
-            "long_name": "clear sky  Shortwave flux due to dust at toa", 
+            "long_name": "Clear Sky Shortwave Flux Due to Dust at Toa", 
             "comment": "Instantaneous forcing is the radiative flux change caused instantaneously by an imposed change in radiative forcing agent (greenhouse gases, aerosol, solar radiation, etc.).", 
             "dimensions": "longitude latitude time", 
             "out_name": "swtoacsdust", 
@@ -5345,7 +5345,7 @@
         "twap": {
             "frequency": "mon", 
             "modeling_realm": "atmos", 
-            "standard_name": "product_of_omega_and_air_temperature", 
+            "standard_name": "product_of_lagrangian_tendency_of_air_pressure_and_air_temperature", 
             "units": "K Pa s-1", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -5507,7 +5507,7 @@
         "uwap": {
             "frequency": "mon", 
             "modeling_realm": "atmos", 
-            "standard_name": "product_of_eastward_wind_and_omega", 
+            "standard_name": "product_of_eastward_wind_and_lagrangian_tendency_of_air_pressure", 
             "units": "Pa m s-2", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -5777,7 +5777,7 @@
         "vwap": {
             "frequency": "mon", 
             "modeling_realm": "atmos", 
-            "standard_name": "product_of_northward_wind_and_omega", 
+            "standard_name": "product_of_northward_wind_and_lagrangian_tendency_of_air_pressure", 
             "units": "Pa m s-2", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 

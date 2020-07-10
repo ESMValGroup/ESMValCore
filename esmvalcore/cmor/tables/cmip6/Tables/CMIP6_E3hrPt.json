@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table E3hrPt", 
         "realm": "atmos", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -125,7 +125,7 @@
         "cfadLidarsr532": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "histogram_of_backscattering_ratio_over_height_above_reference_ellipsoid", 
+            "standard_name": "histogram_of_backscattering_ratio_in_air_over_height_above_reference_ellipsoid", 
             "units": "1", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 

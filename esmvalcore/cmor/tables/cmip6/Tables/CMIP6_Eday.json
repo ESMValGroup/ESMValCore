@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table Eday", 
         "realm": "land", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -107,7 +107,7 @@
         "ccldncl": {
             "frequency": "day", 
             "modeling_realm": "atmos", 
-            "standard_name": "number_concentration_of_convective_cloud_liquid_water_particle_at_convective_liquid_water_cloud_top", 
+            "standard_name": "number_concentration_of_convective_cloud_liquid_water_particles_at_convective_liquid_water_cloud_top", 
             "units": "m-3", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -418,7 +418,7 @@
             "cell_methods": "area: mean where land time: mean", 
             "cell_measures": "area: areacella", 
             "long_name": "Interception Evaporation", 
-            "comment": "'Water' means water in all phases. 'Canopy' means the plant or vegetation canopy. Evaporation is the conversion of liquid or solid into vapor. (The conversion of solid alone into vapor is called 'sublimation'.) In accordance with common usage in geophysical disciplines, 'flux' implies per unit area, called 'flux density' in physics. Unless indicated in the cell_methods attribute, a quantity is assumed to apply to the whole area of each horizontal grid box. Previously, the qualifier where_type was used to specify that the quantity applies only to the part of the grid box of the named type.  Names containing the where_type qualifier are deprecated and newly created data should use the cell_methods attribute to indicate the horizontal area to which the quantity applies.", 
+            "comment": "Evaporation flux from water in all phases on the vegetation canopy.", 
             "dimensions": "longitude latitude time", 
             "out_name": "ec", 
             "type": "real", 
@@ -1385,7 +1385,7 @@
         "reffcclwtop": {
             "frequency": "day", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_convective_cloud_liquid_water_particle_at_convective_liquid_water_cloud_top", 
+            "standard_name": "effective_radius_of_convective_cloud_liquid_water_particles_at_convective_liquid_water_cloud_top", 
             "units": "m", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -1403,7 +1403,7 @@
         "reffsclwtop": {
             "frequency": "day", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particle_at_stratiform_liquid_water_cloud_top", 
+            "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particles_at_stratiform_liquid_water_cloud_top", 
             "units": "m", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -1583,7 +1583,7 @@
         "scldncl": {
             "frequency": "day", 
             "modeling_realm": "atmos", 
-            "standard_name": "number_concentration_of_stratiform_cloud_liquid_water_particle_at_stratiform_liquid_water_cloud_top", 
+            "standard_name": "number_concentration_of_stratiform_cloud_liquid_water_particles_at_stratiform_liquid_water_cloud_top", 
             "units": "m-3", 
             "cell_methods": "area: time: mean", 
             "cell_measures": "area: areacella", 
@@ -1677,7 +1677,7 @@
             "units": "kg m-2", 
             "cell_methods": "area: mean where land time: mean", 
             "cell_measures": "area: areacella", 
-            "long_name": " snow water equivalent intercepted by the vegetation", 
+            "long_name": "Snow Water Equivalent Intercepted by the Vegetation", 
             "comment": "Total water mass of the snowpack (liquid or frozen), averaged over a grid cell and intercepted by the canopy.", 
             "dimensions": "longitude latitude time", 
             "out_name": "snwc", 
