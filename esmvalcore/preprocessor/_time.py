@@ -300,8 +300,8 @@ def seasonal_statistics(cube, operator='mean',
             cube, 'time', name='clim_season', seasons=seasons
         )
     else:
-        old_seasons = set(cube.coord('clim_season').points)
-        if not all([sea in old_seasons for sea in seasons]):
+        old_seasons = list(set(cube.coord('clim_season').points))
+        if not all([osea in seasons for osea in old_seasons]):
             raise ValueError(
                 f"Seasons {seasons} do not match prior season extraction "
                 f"{old_seasons}.")
@@ -342,6 +342,7 @@ def seasonal_statistics(cube, operator='mean',
         return [td[0] <= nd <= td[1] for nd, td in zip(num_days, tar_days)]
 
     correct_seasons = spans_full_season(cube)
+
     return cube[correct_seasons]
 
 
