@@ -63,7 +63,7 @@ class AllVars(Fix):
         #         print('here')
         #         IPython.embed(config=c)
 
-        return fixed_cubes
+#        return fixed_cubes
 
 
     # def fix_file(file, short_name, project, dataset, mip, output_dir):
