@@ -182,7 +182,7 @@ arguments):
 .. _Diagnostics:
 
 Preprocessor operations will be applied using the default order
-as `listed here <https://docs.esmvaltool.org/projects/esmvalcore/en/latest/api/esmvalcore.preprocessor.html#preprocessor-functions)`_.
+as listed in :ref:`preprocessor_functions`.
 Preprocessor tasks can be set to run in the order they are listed in the recipe
 by adding `custom: true` to the preprocessor definition.
 
