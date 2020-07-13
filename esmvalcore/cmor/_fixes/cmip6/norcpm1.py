@@ -1,14 +1,5 @@
-"""Fixes for SAM0-UNICON model."""
-from ..common import ClFixHybridPressureCoord
+"""Fixes for NorCPM1."""
 from ..fix import Fix
-
-Cl = ClFixHybridPressureCoord
-
-
-Cli = ClFixHybridPressureCoord
-
-
-Clw = ClFixHybridPressureCoord
 
 class Nbp(Fix):
     """Fixes for nbp."""
@@ -16,8 +7,6 @@ class Nbp(Fix):
     def fix_data(self, cube):
         """
         Fix data.
-
-        Fixes wrong sign for land surface flux.
 
         Parameters
         ----------
@@ -29,6 +18,6 @@ class Nbp(Fix):
 
         """
         metadata = cube.metadata
-        cube *= -1
+        cube *= 29./44.
         cube.metadata = metadata
         return cube
