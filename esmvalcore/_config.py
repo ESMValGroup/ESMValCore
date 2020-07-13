@@ -31,7 +31,7 @@ def find_diagnostics():
 DIAGNOSTICS_PATH = find_diagnostics()
 
 
-def read_config_user_file(config_file, folder_name, options):
+def read_config_user_file(config_file, folder_name, options=None):
     """Read config user file and store settings in a dictionary."""
     config_file = os.path.abspath(
         os.path.expandvars(os.path.expanduser(config_file)))
@@ -42,6 +42,8 @@ def read_config_user_file(config_file, folder_name, options):
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
+    if options is None:
+        options = dict()
     for key, value in options.items():
         cfg[key] = value
 
