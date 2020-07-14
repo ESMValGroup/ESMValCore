@@ -628,9 +628,10 @@ def _update_statistic_settings(products, order, preproc_dir):
 
     some_product = next(iter(products))
     for statistic in some_product.settings[step]['statistics']:
+        check.valid_multimodel_statistic(statistic)
         attributes = _get_statistic_attributes(products)
         attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
-            statistic.title())
+            statistic.title().replace('.', '-'))
         attributes['filename'] = get_statistic_output_file(
             attributes, preproc_dir)
         common_settings = _get_remaining_common_settings(step, order, products)
@@ -1015,20 +1016,31 @@ class Recipe:
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
+
+        def expand_ensemble(variable):
+            ens = variable.get('ensemble', "")
+            match = regex.search(ens)
+            if match:
+                start, end = match.group(0)[1:-1].split(':')
+                for i in range(int(start), int(end) + 1):
+                    expand = deepcopy(variable)
+                    expand['ensemble'] = regex.sub(str(i), ens, 1)
+                    expand_ensemble(expand)
+            else:
+                expanded.append(variable)
+
         for variable in variables:
             ensemble = variable.get('ensemble', "")
-            if not isinstance(ensemble, str):
+            if isinstance(ensemble, (list, tuple)):
+                for elem in ensemble:
+                    if regex.search(elem):
+                        raise RecipeError(
+                            f"In variable {variable}: ensemble expansion "
+                            "cannot be combined with ensemble lists")
                 expanded.append(variable)
-                continue
-            match = regex.search(ensemble)
-            if not match:
-                expanded.append(variable)
-                continue
-            start, end = match.group(0)[1:-1].split(':')
-            for i in range(int(start), int(end) + 1):
-                expand = deepcopy(variable)
-                expand['ensemble'] = regex.sub(str(i), ensemble, 1)
-                expanded.append(expand)
+            else:
+                expand_ensemble(variable)
+
         return expanded
 
     def _initialize_variables(self, raw_variable, raw_datasets):

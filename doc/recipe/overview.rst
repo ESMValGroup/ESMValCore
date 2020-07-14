@@ -38,7 +38,7 @@ the following:
     documentation:
       description: |
         Recipe to produce time series figures of the derived variable, the
-        Atlantic meriodinal overturning circulation (AMOC).
+        Atlantic meridional overturning circulation (AMOC).
         This recipe also produces transect figures of the stream functions for
         the years 2001-2004.
 
@@ -102,8 +102,8 @@ Here it is an example concatenating the `historical` experiment with `rcp85`
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: [historical, rcp85], ensemble: r1i1p1, start_year: 2001, end_year: 2004}
 
-It is also possible to define the ensemble as a list, although it is useful only
-case the two experiments have different ensemble names
+It is also possible to define the ensemble as a list when the two experiments have different ensemble names.
+In this case, the specified datasets are concatenated into a single cube:
 
 .. code-block:: yaml
 
@@ -113,12 +113,12 @@ case the two experiments have different ensemble names
 ESMValTool also supports a simplified syntax to add multiple ensemble members from the same dataset.
 In the ensemble key, any element in the form `(x:y)` will be replaced with all numbers from x to y (both inclusive),
 adding a dataset entry for each replacement. For example, to add ensemble members r1i1p1 to r10i1p1
-you can use the following abreviatted syntax:
+you can use the following abbreviated syntax:
 
 .. code-block:: yaml
 
     datasets:
-      - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r(1:10)i1p1, start_year: 2001, end_year: 2004}
+      - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: "r(1:10)i1p1", start_year: 2001, end_year: 2004}
 
 It can be included multiple times in one definition. For example, to generate the datasets definitions
 for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:
@@ -126,9 +126,11 @@ for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:
 .. code-block:: yaml
 
     datasets:
-      - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r(1:5)i(1:2)p1, start_year: 2001, end_year: 2004}
+      - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: "r(1:5)i(1:2)p1", start_year: 2001, end_year: 2004}
 
 Please, bear in mind that this syntax can only be used in the ensemble tag.
+Also, note that the combination of multiple experiments and ensembles, like
+exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
@@ -140,7 +142,7 @@ Diagnostics_ section.
 Recipe section: ``preprocessors``
 =================================
 
-The preprocessor section of the recipe includes one or more preprocesors, each
+The preprocessor section of the recipe includes one or more preprocessors, each
 of which may call the execution of one or several preprocessor functions.
 
 Each preprocessor section includes:
@@ -176,6 +178,11 @@ arguments):
    a ``default`` preprocessor consisting of only basic operations like: loading
    data, applying CMOR checks and fixes (:ref:`CMOR check and dataset-specific
    fixes`) and saving the data to disk.
+
+Preprocessor operations will be applied using the default order
+as listed in :ref:`preprocessor_functions`.
+Preprocessor tasks can be set to run in the order they are listed in the recipe
+by adding ``custom_order: true`` to the preprocessor definition.
 
 .. _Diagnostics:
 
@@ -234,6 +241,10 @@ called ``diagnostic_name`` and will result in two tasks:
 The path to the script provided in the ``script`` option should be
 either the absolute path to the script, or the path relative to the
 ``esmvaltool/diag_scripts`` directory.
+
+Depending on the installation configuration, you may get an error of
+"file does not exist" when the system tries to run the diagnostic script
+using relative paths. If this happens, use an absolute path instead.
 
 Ancestor tasks
 --------------

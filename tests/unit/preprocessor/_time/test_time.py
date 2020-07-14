@@ -1,25 +1,27 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
+import copy
 import unittest
-import pytest
-import tests
 
-import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-
-from cf_units import Unit
 import iris
 import iris.coord_categorisation
 import iris.coords
+import numpy as np
+import pytest
+from cf_units import Unit
 from iris.cube import Cube
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
-from esmvalcore.preprocessor._time import (
-    extract_month, extract_season, extract_time,
-    regrid_time,
-    decadal_statistics, annual_statistics, seasonal_statistics,
-    monthly_statistics, daily_statistics, timeseries_filter,
-    climate_statistics, anomalies
-)
+import tests
+from esmvalcore.preprocessor._time import (annual_statistics, anomalies,
+                                           climate_statistics,
+                                           daily_statistics,
+                                           decadal_statistics, extract_month,
+                                           extract_season, extract_time,
+                                           get_time_weights,
+                                           monthly_statistics, regrid_time,
+                                           seasonal_statistics,
+                                           timeseries_filter)
 
 
 def _create_sample_cube():
@@ -251,7 +253,19 @@ class TestClimatology(tests.Test):
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([120.])
+        expected = np.array([4.])
+        assert_array_equal(result.data, expected)
+
+    def test_time_sum_weighted(self):
+        """Test for time sum of a 1D field."""
+        data = np.ones((3))
+        data[1] = 2.0
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[10., 20.], [30., 60.], [73., 77.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='sum')
+        expected = np.array([74.])
         assert_array_equal(result.data, expected)
 
     def test_time_sum_uneven(self):
@@ -970,10 +984,10 @@ def make_map_data(number_years=2):
         range(2),
         standard_name='longitude',
     )
-    data = np.array([[[0], [1], ], [[1], [0], ]]) * times
+    data = np.array([[0, 1], [1, 0]]) * times[:, None, None]
     cube = iris.cube.Cube(
         data,
-        dim_coords_and_dims=[(lon, 0), (lat, 1), (time, 2)]
+        dim_coords_and_dims=[(time, 0), (lat, 1), (lon, 2)],
     )
     return cube
 
@@ -1002,13 +1016,13 @@ def test_standardized_anomalies(period, standardize=True):
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize=standardize)
     if period == 'full':
-        expected_anomalies = (cube.data - np.mean(cube.data, axis=2,
+        expected_anomalies = (cube.data - np.mean(cube.data, axis=0,
                                                   keepdims=True))
         if standardize:
             # NB: default behaviour for np.std is ddof=0, whereas
             #     default behaviour for iris.analysis.STD_DEV is ddof=1
             expected_stdanomalies = expected_anomalies / np.std(
-                 expected_anomalies, axis=2, keepdims=True, ddof=1)
+                 expected_anomalies, axis=0, keepdims=True, ddof=1)
             expected = np.ma.masked_invalid(expected_stdanomalies)
             assert_array_equal(
                 result.data,
@@ -1020,6 +1034,20 @@ def test_standardized_anomalies(period, standardize=True):
                 result.data,
                 expected
             )
+
+
+@pytest.mark.parametrize('period, reference', PARAMETERS)
+def test_anomalies_preserve_metadata(period, reference, standardize=False):
+    cube = make_map_data(number_years=2)
+    cube.var_name = "si"
+    cube.units = "m"
+    metadata = copy.deepcopy(cube.metadata)
+    result = anomalies(cube, period, reference, standardize=standardize)
+    assert result.metadata == metadata
+    for coord_cube, coord_res in zip(cube.coords(), result.coords()):
+        if coord_cube.has_bounds() and coord_res.has_bounds():
+            assert_array_equal(coord_cube.bounds, coord_res.bounds)
+        assert coord_cube == coord_res
 
 
 @pytest.mark.parametrize('period, reference', PARAMETERS)
@@ -1070,14 +1098,139 @@ def test_anomalies(period, reference, standardize=False):
                 np.arange(315.5, 405),
                 np.arange(315.5, 345),
             ))
-    zeros = np.zeros_like(anom)
-    print(anom)
-    print(result.data[0, 1, ...])
-    assert_array_equal(
-        result.data,
-        np.array([[zeros, anom], [anom, zeros]])
-    )
+    expected = anom[:, None, None] * [[0, 1], [1, 0]]
+    assert_array_equal(result.data, expected)
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
+
+
+def get_0d_time():
+    """Get 0D time coordinate."""
+    time = iris.coords.AuxCoord(15.0, bounds=[0.0, 30.0],
+                                standard_name='time',
+                                units='days since 1850-01-01 00:00:00')
+    return time
+
+
+def get_1d_time():
+    """Get 1D time coordinate."""
+    time = iris.coords.DimCoord([20., 45.],
+                                standard_name='time',
+                                bounds=[[15., 30.], [30., 60.]],
+                                units=Unit(
+                                    'days since 1950-01-01',
+                                    calendar='gregorian'))
+    return time
+
+
+def get_lon_coord():
+    """Get longitude coordinate."""
+    lons = iris.coords.DimCoord([1.5, 2.5, 3.5],
+                                standard_name='longitude',
+                                long_name='longitude',
+                                bounds=[[1., 2.], [2., 3.], [3., 4.]],
+                                units='degrees_east')
+    return lons
+
+
+def _make_cube():
+    """Make a test cube."""
+    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    data2 = np.ma.ones((2, 1, 1, 3))
+
+    time = get_1d_time()
+    zcoord = iris.coords.DimCoord([0.5],
+                                  standard_name='air_pressure',
+                                  long_name='air_pressure',
+                                  bounds=[[0., 2.5]],
+                                  units='Pa',
+                                  attributes={'positive': 'down'})
+    lats = iris.coords.DimCoord([1.5],
+                                standard_name='latitude',
+                                long_name='latitude',
+                                bounds=[[1., 2.]],
+                                units='degrees_north',
+                                coord_system=coord_sys)
+    lons = get_lon_coord()
+    coords_spec4 = [(time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+    cube1 = iris.cube.Cube(data2, dim_coords_and_dims=coords_spec4)
+    return cube1
+
+
+def test_get_time_weights():
+    """Test ``get_time_weights`` for complex cube."""
+    cube = _make_cube()
+    weights = get_time_weights(cube)
+    assert weights.shape == cube.shape
+    np.testing.assert_allclose(weights, [[[[15.0, 15.0, 15.0]]],
+                                         [[[30.0, 30.0, 30.0]]]])
+
+
+def test_get_time_weights_0d_time():
+    """Test ``get_time_weights`` for 0D time coordinate."""
+    time = get_0d_time()
+    cube = iris.cube.Cube(0.0, var_name='x', units='K',
+                          aux_coords_and_dims=[(time, ())])
+    weights = get_time_weights(cube)
+    assert weights.shape == cube.shape
+    np.testing.assert_allclose(weights, 30.0)
+
+
+def test_get_time_weights_0d_time_1d_lon():
+    """Test ``get_time_weights`` for 0D time and 1D longitude coordinate."""
+    time = get_0d_time()
+    lons = get_lon_coord()
+    cube = iris.cube.Cube([0.0, 0.0, 0.0], var_name='x', units='K',
+                          aux_coords_and_dims=[(time, ())],
+                          dim_coords_and_dims=[(lons, 0)])
+    weights = get_time_weights(cube)
+    assert weights.shape == cube.shape
+    np.testing.assert_allclose(weights, [30.0, 30.0, 30.0])
+
+
+def test_get_time_weights_1d_time():
+    """Test ``get_time_weights`` for 1D time coordinate."""
+    time = get_1d_time()
+    cube = iris.cube.Cube([0.0, 1.0], var_name='x', units='K',
+                          dim_coords_and_dims=[(time, 0)])
+    weights = get_time_weights(cube)
+    assert weights.shape == cube.shape
+    np.testing.assert_allclose(weights, [15.0, 30.0])
+
+
+def test_get_time_weights_1d_time_1d_lon():
+    """Test ``get_time_weights`` for 1D time and 1D longitude coordinate."""
+    time = get_1d_time()
+    lons = get_lon_coord()
+    cube = iris.cube.Cube([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]], var_name='x',
+                          units='K',
+                          dim_coords_and_dims=[(time, 0), (lons, 1)])
+    weights = get_time_weights(cube)
+    assert weights.shape == cube.shape
+    np.testing.assert_allclose(weights, [[15.0, 15.0, 15.0],
+                                         [30.0, 30.0, 30.0]])
+
+
+def test_climate_statistics_0d_time_1d_lon():
+    """Test climate statistics."""
+    time = iris.coords.DimCoord([1.0], bounds=[[0.0, 2.0]], var_name='time',
+                                standard_name='time',
+                                units='days since 1850-01-01 00:00:00')
+    lons = get_lon_coord()
+    cube = iris.cube.Cube([[1.0, -1.0, 42.0]], var_name='x', units='K',
+                          dim_coords_and_dims=[(time, 0), (lons, 1)])
+    new_cube = climate_statistics(cube, operator='sum', period='full')
+    assert cube.shape == (1, 3)
+    assert new_cube.shape == (3,)
+    np.testing.assert_allclose(new_cube.data, [1.0, -1.0, 42.0])
+
+
+def test_climate_statistics_complex_cube():
+    """Test climate statistics."""
+    cube = _make_cube()
+    new_cube = climate_statistics(cube, operator='sum', period='full')
+    assert cube.shape == (2, 1, 1, 3)
+    assert new_cube.shape == (1, 1, 3)
+    np.testing.assert_allclose(new_cube.data, [[[45.0, 45.0, 45.0]]])
 
 
 if __name__ == '__main__':

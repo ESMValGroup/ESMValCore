@@ -3,18 +3,19 @@
 Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
+import copy
 import datetime
 import logging
 from warnings import filterwarnings
 
 import dask.array as da
 import iris
-import iris.cube
 import iris.coord_categorisation
+import iris.cube
 import iris.exceptions
 import iris.util
-from iris.time import PartialDateTime
 import numpy as np
+from iris.time import PartialDateTime
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
@@ -171,15 +172,13 @@ def get_time_weights(cube):
         Array of time weights for averaging.
     """
     time = cube.coord('time')
-    time_thickness = time.bounds[..., 1] - time.bounds[..., 0]
-
-    # The weights need to match the dimensionality of the cube.
-    slices = [None for i in cube.shape]
-    coord_dim = cube.coord_dims('time')[0]
-    slices[coord_dim] = slice(None)
-    time_thickness = np.abs(time_thickness[tuple(slices)])
-    ones = np.ones_like(cube.data)
-    time_weights = time_thickness * ones
+    time_weights = time.bounds[..., 1] - time.bounds[..., 0]
+    time_weights = time_weights.squeeze()
+    if time_weights.shape == ():
+        time_weights = da.broadcast_to(time_weights, cube.shape)
+    else:
+        time_weights = iris.util.broadcast_to_shape(time_weights, cube.shape,
+                                                    cube.coord_dims('time'))
     return time_weights
 
 
@@ -403,9 +402,14 @@ def climate_statistics(cube, operator='mean', period='full'):
         operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
             time_weights = get_time_weights(cube)
-            cube = cube.collapsed('time',
-                                  operator_method,
-                                  weights=time_weights)
+            if time_weights.min() == time_weights.max():
+                # No weighting needed.
+                cube = cube.collapsed('time',
+                                      operator_method)
+            else:
+                cube = cube.collapsed('time',
+                                      operator_method,
+                                      weights=time_weights)
         else:
             cube = cube.collapsed('time', operator_method)
         return cube
@@ -460,7 +464,9 @@ def anomalies(cube, period, reference=None, standardize=False):
         reference_cube = extract_time(cube, **reference)
     reference = climate_statistics(reference_cube, period=period)
     if period in ['full']:
+        metadata = copy.deepcopy(cube.metadata)
         cube = cube - reference
+        cube.metadata = metadata
         if standardize:
             cube_stddev = climate_statistics(
                 cube, operator='std_dev', period=period)

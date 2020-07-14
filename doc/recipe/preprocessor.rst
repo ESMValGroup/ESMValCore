@@ -59,7 +59,8 @@ Overview
 The ESMValTool preprocessor can be used to perform a broad range of operations
 on the input data before diagnostics or metrics are applied. The preprocessor
 performs these operations in a centralized, documented and efficient way, thus
-reducing the data processing load on the diagnostics side.
+reducing the data processing load on the diagnostics side.  For an overview of
+the preprocessor structure see the :ref:`Preprocessors`.
 
 Each of the preprocessor operations is written in a dedicated python module and
 all of them receive and return an Iris `cube
@@ -647,8 +648,10 @@ to observational data, these biases have a significantly lower statistical
 impact when using a multi-model ensemble. ESMValTool has the capability of
 computing a number of multi-model statistical measures: using the preprocessor
 module ``multi_model_statistics`` will enable the user to ask for either a
-multi-model ``mean``, ``median``, ``max``, ``min`` and / or ``std`` with a set
-of argument parameters passed to ``multi_model_statistics``.
+multi-model ``mean``, ``median``, ``max``, ``min``, ``std``, and / or
+``pXX.YY`` with a set of argument parameters passed to
+``multi_model_statistics``. Percentiles can be specified like ``p1.5`` or
+``p95``. The decimal point will be replaced by a dash in the output file.
 
 Note that current multimodel statistics in ESMValTool are local (not global),
 and are computed along the time axis. As such, can be computed across a common
@@ -673,6 +676,17 @@ dimensionality higher than four: time, vertical axis, two horizontal axes).
           exclude: [NCEP]
 
 see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
+
+When calling the module inside diagnostic scripts, the input must be given
+as a list of cubes. The output will be saved in a dictionary where each
+entry contains the resulting cube with the requested statistic operations.
+
+.. code-block::
+
+    from esmvalcore.preprocessor import multi_model_statistics
+    statistics = multi_model_statistics([cube1,...,cubeN], 'overlap', ['mean', 'median'])
+    mean_cube = statistics['mean']
+    median_cube = statistics['median']
 
 .. note::
 

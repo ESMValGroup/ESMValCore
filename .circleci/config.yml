@@ -20,29 +20,12 @@ jobs:
     # Run tests
     working_directory: /test
     docker:
-      - image: continuumio/miniconda3
+      - image: esmvalgroup/esmvalcore:development
     steps:
       - checkout
       - run:
           command: |
-            # Create a file to checksum as cache key
-            date --rfc-3339 date > cache_key.txt
-            cat environment.yml >> cache_key.txt
-      - restore_cache:
-          key: deps3-{{ .Branch }}-{{ checksum "cache_key.txt" }}
-      - run:
-          # Update/Create Conda environment and run tests
-          command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            # conda update -y conda
-            conda env update
-            conda activate esmvaltool
             python setup.py test --addopts '-m "not installation"'
-      - save_cache:
-          key: deps3-{{ .Branch }}-{{ checksum "cache_key.txt" }}
-          paths:
-            - "/opt/conda/envs/esmvaltool"
-            - ".eggs"
       - store_test_results:
           path: test-reports/
       - store_artifacts:
@@ -75,7 +58,7 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             python setup.py test
-            esmvaltool -h
+            esmvaltool version
       - save_cache:
           key: python3-install-{{ .Branch }}
           paths:
@@ -137,20 +120,20 @@ jobs:
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
-            set -x
             mkdir /logs
             # Install
             # conda update -y conda > /logs/conda.txt 2>&1
             conda env update >> /logs/conda.txt 2>&1
-            set +x; conda activate esmvaltool; set -x
-            conda install -yS r-base r-yaml ncl -c conda-forge
+            conda activate esmvaltool
             pip install -e .[develop] > /logs/install.txt 2>&1
+            # install additional requirements for running all tests
+            conda install -yS r-base r-yaml ncl -c conda-forge
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            esmvaltool -h
+            esmvaltool version
             python setup.py test
       - store_artifacts:
           path: /logs
@@ -200,7 +183,7 @@ jobs:
             # Log versions
             conda env export > /logs/environment.yml
             # Test installation
-            esmvaltool -h
+            esmvaltool version
             python -c 'from esmvalcore import *; print(__version__)'
 
 workflows:
