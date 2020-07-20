@@ -43,7 +43,7 @@ REQUIREMENTS = {
         'scitools-iris>=2.2',
         'shapely[vectorized]',
         'stratify',
-        'yamale',
+        'yamale==2.*',
     ],
     # Test dependencies
     # Execute 'python setup.py test' to run tests
