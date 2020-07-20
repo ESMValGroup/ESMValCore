@@ -383,7 +383,7 @@ class ESMValTool():
 
         cfg['skip-nonexistent'] = skip_nonexistent
         if isinstance(diagnostics, str):
-            diagnostics = (diagnostics, )
+            diagnostics = diagnostics.split(' ')
         cfg['diagnostics'] = {
             pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
             for pattern in diagnostics or ()
