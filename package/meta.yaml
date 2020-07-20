@@ -55,7 +55,7 @@ requirements:
     - pydot
     - pyyaml
     - shapely
-    - yamale  # in esmvalgroup channel
+    - yamale==2.*  # in esmvalgroup channel
 
 test:
   # TODO: add unit tests? This seems to require installing the tests
