@@ -579,6 +579,13 @@ class DiagnosticTask(BaseTask):
                     self.script, self.name)
                 valid = False
             ancestors = set()
+            if isinstance(ancestor_files, str):
+                logger.warning(
+                    "Ancestor file(s) %s specified for recording provenance "
+                    "of %s, created by diagnostic script %s in task %s is "
+                    "a string but should be a list of strings", ancestor_files,
+                    filename, self.script, self.name)
+                ancestor_files = [ancestor_files]
             for ancestor_file in ancestor_files:
                 if ancestor_file in ancestor_products:
                     ancestors.add(ancestor_products[ancestor_file])
