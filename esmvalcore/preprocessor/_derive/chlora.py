@@ -23,9 +23,9 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def calculate(cubes):
-        """Compute shortwave cloud radiative effect."""
+        """Compute surface chlorophyll concentration."""
         chldiatos_cube = cubes.extract_strict(
-            Constraint(name='mass_concentration_of_diatoms_expressed_as'+
+            Constraint(name='mass_concentration_of_diatoms_expressed_as' +
                             '_chlorophyll_in_sea_water'))
         chlmiscos_cube = cubes.extract_strict(
             Constraint(name='mass_concentration_of_miscellaneous' +
