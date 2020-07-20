@@ -26,11 +26,11 @@ class DerivedVariable(DerivedVariableBase):
         """Compute surface chlorophyll concentration."""
         chldiatos_cube = cubes.extract_strict(
             Constraint(name='mass_concentration_of_diatoms_expressed_as' +
-                            '_chlorophyll_in_sea_water'))
+                       '_chlorophyll_in_sea_water'))
         chlmiscos_cube = cubes.extract_strict(
             Constraint(name='mass_concentration_of_miscellaneous' +
-                            '_phytoplankton_expressed_as_chlorophyll' +
-                            '_in_sea_water'))
+                       '_phytoplankton_expressed_as_chlorophyll' +
+                       '_in_sea_water'))
 
         chlora_cube = chldiatos_cube + chlmiscos_cube
 
