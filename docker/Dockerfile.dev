@@ -2,19 +2,8 @@
 # docker build -t ${TAG_OF_YOUR_CHOICE} . -f docker/Dockerfile.dev
 FROM continuumio/miniconda3
 
-# update the conda packages
-RUN conda update -y conda pip
+COPY . /src/ESMValCore
+WORKDIR /src/ESMValCore
 
-# Copy source
-COPY . /home/root/source
-WORKDIR /home/root/source
-
-# Install
-RUN apt-get update
-RUN conda env update --name base --file environment.yml
-RUN pip install -e .[test]
-RUN pip uninstall esmvalcore -y
-
-# Clean up
-RUN rm -r /home/root/source
-RUN conda clean --all -y
+RUN conda update -y conda pip && conda env update --name base --file environment.yml && conda clean --all -y
+RUN pip install .[test] && pip uninstall esmvalcore -y && pip cache purge
