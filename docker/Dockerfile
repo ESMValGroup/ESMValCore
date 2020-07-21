@@ -4,7 +4,6 @@ FROM continuumio/miniconda3
 
 COPY . /src/ESMValCore
 WORKDIR /src/ESMValCore
-RUN ls
 RUN conda update -y conda pip && conda env update --name base --file environment.yml && conda clean --all -y
 RUN pip install . && pip cache purge
 
