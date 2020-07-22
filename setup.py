@@ -164,7 +164,7 @@ setup(
     version=__version__,
     author=read_authors('CITATION.cff'),
     description='ESMValCore: A community tool for pre-processing data from '
-        'Earth system models in CMIP and running analysis scripts.',
+        'Earth system models in CMIP and running analysis scripts',
     long_description=Path('README.md').read_text(),
     long_description_content_type='text/markdown',
     url='https://www.esmvaltool.org',
