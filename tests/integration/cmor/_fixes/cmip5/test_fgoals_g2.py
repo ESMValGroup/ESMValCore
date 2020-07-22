@@ -45,6 +45,11 @@ class TestAll(unittest.TestCase):
                          'day since 1-01-01 00:00:00.000000')
         self.assertEqual(time.units.calendar, 'gregorian')
 
+    def test_fix_metadata_dont_fail_if_not_longitude(self):
+        """Test calendar fix."""
+        self.cube.remove_coord('longitude')
+        self.fix.fix_metadata([self.cube])
+
     def test_fix_metadata_dont_fail_if_not_time(self):
         """Test calendar fix."""
         self.cube.remove_coord('time')
