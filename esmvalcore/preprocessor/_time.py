@@ -471,6 +471,7 @@ def anomalies(cube, period, reference=None, standardize=False):
             cube_stddev = climate_statistics(
                 cube, operator='std_dev', period=period)
             cube = cube / cube_stddev
+            cube.units = '1'
         return cube
 
     cube = _compute_anomalies(cube, reference, period)
@@ -490,6 +491,7 @@ def anomalies(cube, period, reference=None, standardize=False):
             )
         cube.data = cube.core_data() / da.concatenate(
             [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
+        cube.units = '1'
     return cube
 
 
