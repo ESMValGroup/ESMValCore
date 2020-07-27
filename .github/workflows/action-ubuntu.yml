@@ -32,6 +32,8 @@ jobs:
       - run: conda env create -n test_install -f environment.yml
       - run: export PATH=/usr/share/miniconda/bin:$PATH
       - run: source activate test_install
+      - run: conda list numpy
+      - run: conda list cartopy
       - run: python -V
       - run: pip install esmvalcore
       - run: esmvaltool --help
