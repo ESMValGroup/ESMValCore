@@ -2,10 +2,7 @@
 
 name: PyPi Install
 
-on:
-  push:
-    branches:
-      - master
+on: push
 
 jobs:
   linux:
