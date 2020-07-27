@@ -4,27 +4,24 @@ name: PyPi Install
 
 on:
   push:
-    branches: [ github-actions ]
-  pull_request:
-    branches: [ github-actions ]
+    branches:
+      - master
 
 jobs:
-  run-on-linux:
+  linux:
     runs-on: "ubuntu-latest"
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8]
-    name: Linux Python ${{ matrix.python-version }}
+    name: Linux Python3.6
     steps:
       - uses: actions/checkout@v2
       - uses: goanpeca/setup-miniconda@v1
         with:
           activate-environment: esmvaltool
           environment-file: environment.yml
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.6
           miniconda-version: "latest"
-      - name: Install esmvalcore
-      - run: |
+          channels: conda-forge
+      - shell: bash -l {0}
+        run: |
           conda --version
           pip install esmvalcore
           esmvaltool --help
