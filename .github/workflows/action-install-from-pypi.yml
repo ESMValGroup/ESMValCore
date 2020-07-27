@@ -1,4 +1,6 @@
 # Install esmvalcore from PyPi on different OS's
+# and different Python version; test locally with
+# act: https://github.com/nektos/act
 
 name: PyPi Install
 
