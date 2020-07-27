@@ -1,0 +1,32 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Test Installation from PyPi
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  run-on-linux:
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+    name: Linux Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: goanpeca/setup-miniconda@v1
+        with:
+          activate-environment: esmvaltool
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}
+          miniconda-version: "latest"
+      - name: Install esmvalcore
+      - run: |
+          conda --version
+          pip install esmvalcore
+          esmvaltool --help
+          esmvaltool version
