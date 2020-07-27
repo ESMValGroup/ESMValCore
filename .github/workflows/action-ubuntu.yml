@@ -29,10 +29,8 @@ jobs:
       - run: which python
       - run: which conda
       - run: python -V
-      - run: conda env create -n test_install -f environment.yml
-      - run: export PATH=/usr/share/miniconda/bin:$PATH
-      - run: export PATH=/usr/share/miniconda/envs/test_install/lib/python*/site-packages:$PATH
-      - run: export PATH=/usr/share/miniconda/envs/test_install/bin:$PATH
+      - run: conda env create -n esmvaltool -f environment.yml
+      - run: source activate esmvaltool
       - run: python -V
       - run: pip install esmvalcore
       - run: esmvaltool --help
