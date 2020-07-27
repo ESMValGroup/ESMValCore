@@ -10,25 +10,24 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
+  run-on-linux:
+    runs-on: "ubuntu-latest"
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
-    name: Python ${{ matrix.python-version }} example
+    name: Linux Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
-      - name: Setup conda
-        shell: bash -l {0}
-        uses: s-weigand/setup-conda@v1
+      - uses: goanpeca/setup-miniconda@v1
         with:
-          update-conda: true
+          activate-environment: esmvaltool
+          environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          conda-channels: conda-forge, esmvalgroup
-      - run: conda --version
-      - run: conda env create -n esmvaltool -f environment.yml  # compilers esmpy iris graphviz python-stratify
-      - run: conda activate esmvaltool
-      - run: pip install esmvalcore
-      - run: esmvaltool --help
-      - run: esmvaltool version
+          miniconda-version: "latest"
+      - name: Install esmvalcore
+        shell: bash -l {0}
+      - run: |
+          conda --version
+          pip install esmvalcore
+          esmvaltool --help
+          esmvaltool version
