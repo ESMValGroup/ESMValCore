@@ -31,9 +31,8 @@ jobs:
       - run: python -V
       - run: conda env create -n esmvaltool -f environment.yml
       - run: source activate esmvaltool
+      - run: conda list iris
       - run: python -V
-      - run: pip install numpy
-      - run: pip install cartopy
       - run: pip install esmvalcore
       - run: esmvaltool --help
       - run: esmvaltool --version
