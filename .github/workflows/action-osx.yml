@@ -26,13 +26,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           conda-channels: conda-forge, esmvalgroup
       - run: conda --version
-      - run: which conda
-      - run: which python
-      - run: python -V
-      - run: conda env create -n test_install -f environment.yml
-      - run: export PATH=/usr/local/miniconda/bin:$PATH
-      - run: source activate test_install
-      - run: python -V
+      - run: conda install -c conda-forge compilers esmpy iris graphviz python-stratify
       - run: pip install esmvalcore
       - run: esmvaltool --help
       - run: esmvaltool --version
