@@ -1,6 +1,8 @@
 # Install esmvalcore from PyPi on different OS's
 # and different Python version; test locally with
 # act: https://github.com/nektos/act
+# Example how to setup conda workflows:
+# https://github.com/marketplace/actions/setup-miniconda
 
 name: PyPi Install
 
