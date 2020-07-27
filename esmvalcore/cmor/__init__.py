@@ -1,1 +1,1 @@
-"""CMOR module"""
+"""CMOR module."""
