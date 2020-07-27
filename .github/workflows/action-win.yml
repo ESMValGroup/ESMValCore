@@ -26,8 +26,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           conda-channels: conda-forge, esmvalgroup
       - run: conda --version
-      - run: which python
-      - run: conda env create -n test_install -f environment.yml
-      - run: source activate test_install
-      - run: pip install fire fiona nc-time-axis numba prov[dot] yamale
-      - run: pip install --index-url https://test.pypi.org/simple/ --no-deps esmvalcore
+      - run: conda install -c conda-forge compilers esmpy iris graphviz python-stratify
+      - run: pip install esmvalcore
+      - run: esmvaltool --help
+      - run: esmvaltool version
