@@ -38,6 +38,7 @@ requirements:
     - python>=3.6
     - graphviz
     - iris>=2.2.1
+    - libunwind
     - python-stratify
     # Normally installed via pip:
     - cf-units
