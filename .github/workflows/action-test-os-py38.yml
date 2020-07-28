@@ -10,7 +10,7 @@
 #  - can try multiple shells eg pwsh or cmd /C CALL {0} (but overkill for now!);
 # TODO: remove this before merge!
 
-name: Test
+name: TestOSXPy38
 
 on: push
 
