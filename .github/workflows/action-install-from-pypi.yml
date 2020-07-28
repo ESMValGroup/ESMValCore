@@ -24,7 +24,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
           channels: conda-forge
-      - shell: bash -l {0}
+      # - shell: bash -l {0}
       - run: conda --version
       - run: python -V
       - run: pip install esmvalcore
@@ -46,7 +46,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
           channels: conda-forge
-      - shell: bash -l {0}
+      # - shell: bash -l {0}
       - run: conda --version
       - run: python -V
       - run: pip install esmvalcore
