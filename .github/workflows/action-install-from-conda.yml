@@ -1,4 +1,4 @@
-# Install esmvalcore from source on different OS's
+# Install esmvalcore from PyPi on different OS's
 # and different Python version; test locally with
 # act: https://github.com/nektos/act
 # Example how to setup conda workflows:
@@ -10,7 +10,7 @@
 #  - can try multiple shells eg pwsh or cmd /C CALL {0} (but overkill for now!);
 # FIXME OSX/Python3.8: as of 28 July there is no Python 3.8.5
 
-name: Source Install
+name: Conda Base Install
 
 on: push
 
@@ -25,17 +25,15 @@ jobs:
       - uses: actions/checkout@v2
       - uses: goanpeca/setup-miniconda@v1
         with:
-          activate-environment: esmvaltool
-          environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
-          channels: conda-forge
+          channels: esmvalgroup,conda-forge
       - shell: bash -l {0}
         run: conda --version
       - shell: bash -l {0}
         run: python -V
       - shell: bash -l {0}
-        run: pip install -e .[develop]
+        run: conda install esmvalcore
       - shell: bash -l {0}
         run: esmvaltool --help
       - shell: bash -l {0}
@@ -51,17 +49,15 @@ jobs:
       - uses: actions/checkout@v2
       - uses: goanpeca/setup-miniconda@v1
         with:
-          activate-environment: esmvaltool
-          environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
-          channels: conda-forge
+          channels: esmvalgroup,conda-forge
       - shell: bash -l {0}
         run: conda --version
       - shell: bash -l {0}
         run: python -V
       - shell: bash -l {0}
-        run: pip install -e .[develop]
+        run: conda install esmvalcore
       - shell: bash -l {0}
         run: esmvaltool --help
       - shell: bash -l {0}

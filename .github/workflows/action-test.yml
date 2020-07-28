@@ -8,6 +8,7 @@
 #    in one single call; declaring the shell variable makes the action run each
 #    command separately (better for debugging);
 #  - can try multiple shells eg pwsh or cmd /C CALL {0} (but overkill for now!);
+# FIXME OSX/Python3.8: as of 28 July there is no Python 3.8.5
 
 name: Test
 
