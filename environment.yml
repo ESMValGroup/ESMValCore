@@ -8,5 +8,6 @@ dependencies:
   - esmpy
   - iris>=2.2.1
   - graphviz
+  - libunwind  # needed for conda compiler for Python3.7+
   - python>=3.6  # if 3.7 lxml will not import correctly if <4.5.0
   - python-stratify
