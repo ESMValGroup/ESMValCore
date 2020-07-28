@@ -31,6 +31,8 @@ jobs:
       - shell: bash -l {0}
         run: conda --version
       - shell: bash -l {0}
+        run: which conda
+      - shell: bash -l {0}
         run: python -V
       - shell: bash -l {0}
         run: conda install esmvalcore
@@ -54,6 +56,8 @@ jobs:
           channels: esmvalgroup,conda-forge
       - shell: bash -l {0}
         run: conda --version
+      - shell: bash -l {0}
+        run: which conda
       - shell: bash -l {0}
         run: python -V
       - shell: bash -l {0}
