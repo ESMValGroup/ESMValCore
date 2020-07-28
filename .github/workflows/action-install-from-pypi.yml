@@ -3,6 +3,11 @@
 # act: https://github.com/nektos/act
 # Example how to setup conda workflows:
 # https://github.com/marketplace/actions/setup-miniconda
+# Notes:
+#  - you can group commands with | delimiter (or &&) but those will be run
+#    in one single call; declaring the shell variable makes the action run each
+#    command separately (better for debugging);
+#  - can try multiple shells eg pwsh or cmd /C CALL {0} (but overkill for now!);
 
 name: PyPi Install
 
