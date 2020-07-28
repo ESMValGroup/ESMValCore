@@ -24,12 +24,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
           channels: conda-forge
-      # - shell: bash -l {0}
-      - run: conda --version
-      - run: python -V
-      - run: pip install esmvalcore
-      - run: esmvaltool --help
-      - run: esmvaltool version
+      - shell: bash -l {0}
+        run: conda --version
+      - shell: bash -l {0}
+        run: python -V
+      - shell: bash -l {0}
+        run: pip install esmvalcore
+      - shell: bash -l {0}
+        run: esmvaltool --help
+      - shell: bash -l {0}
+        run: esmvaltool version
 
   osx:
     runs-on: "macos-latest"
@@ -46,9 +50,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
           channels: conda-forge
-      # - shell: bash -l {0}
-      - run: conda --version
-      - run: python -V
-      - run: pip install esmvalcore
-      - run: esmvaltool --help
-      - run: esmvaltool version
+      - shell: bash -l {0}
+        run: conda --version
+      - shell: bash -l {0}
+        run: python -V
+      - shell: bash -l {0}
+        run: pip install esmvalcore
+      - shell: bash -l {0}
+        run: esmvaltool --help
+      - shell: bash -l {0}
+        run: esmvaltool version
