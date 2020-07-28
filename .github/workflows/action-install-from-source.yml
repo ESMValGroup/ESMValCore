@@ -25,11 +25,11 @@ jobs:
           miniconda-version: "latest"
           channels: conda-forge
       - shell: bash -l {0}
-        run: |
-          conda --version
-          pip install -e .[develop]
-          esmvaltool --help
-          esmvaltool version
+        run: conda --version
+        run: python -V
+        run: pip install -e .[develop]
+        run: esmvaltool --help
+        run: esmvaltool version
 
   osx:
     runs-on: "macos-latest"
@@ -47,8 +47,8 @@ jobs:
           miniconda-version: "latest"
           channels: conda-forge
       - shell: bash -l {0}
-        run: |
-          conda --version
-          pip install -e .[develop]
-          esmvaltool --help
-          esmvaltool version
+        run: conda --version
+        run: python -V
+        run: pip install -e .[develop]
+        run: esmvaltool --help
+        run: esmvaltool version
