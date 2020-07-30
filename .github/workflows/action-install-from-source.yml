@@ -8,7 +8,9 @@
 #    in one single call; declaring the shell variable makes the action run each
 #    command separately (better for debugging);
 #  - can try multiple shells eg pwsh or cmd /C CALL {0} (but overkill for now!);
-# FIXME OSX/Python3.8: as of 28 July there is no Python 3.8.5
+# FIXME OSX/Python3.8: 3.8.5 available on OSX only from July 20, 2020
+# TODO: read the cron tasking documentation:
+# https://www.netiq.com/documentation/cloud-manager-2-5/ncm-reference/data/bexyssf.html
 
 name: Source Install
 

@@ -17,10 +17,8 @@ name: PyPi Install
 # runs on a push on master and at the end of every day
 on:
   push:
-    branches:
-      - github-actions
   schedule:
-    cron: '*/10 * * * *'  # '0 0 * * *'
+    - cron: '*/10 * * * *'  # '0 0 * * *'
 
 jobs:
   linux:
