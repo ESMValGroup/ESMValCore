@@ -21,8 +21,6 @@ on:
       - github-actions
   schedule:
     cron: '*/10 * * * *'  # '0 0 * * *'
-    branches:
-      - github-actions
 
 jobs:
   linux:
