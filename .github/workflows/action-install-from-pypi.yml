@@ -18,9 +18,6 @@ name: PyPi Install
 on:
   schedule:
     - cron: '*/10 * * * *'  # '0 0 * * *'
-  push:
-    branches:
-      - github-actions
 
 jobs:
   linux:
