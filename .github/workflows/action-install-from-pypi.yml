@@ -12,7 +12,13 @@
 
 name: PyPi Install
 
-on: push
+# runs on a push on master and at the end of every day
+on: 
+  push:
+    branches:
+      - github-actions
+  schedule:
+    - cron: '*/10 * * * *'  # '0 0 * * *'
 
 jobs:
   linux:
@@ -20,6 +26,8 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
+      # fail-fast set to False allows all other tests
+      # in the worflow to run regardless of any fail
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
