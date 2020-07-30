@@ -16,9 +16,19 @@ name: PyPi Install
 
 # runs on a push on master and at the end of every day
 on:
+  # triggering on push without branch name will run tests everytime
+  # there is a push on any branch
+  # turn it on only if needed
   push:
+    branches:
+    - master
+  # run the test only if the PR is to master
+  # turn it on if required
+  #pull_request:
+  #  branches:
+  #  - master
   schedule:
-    - cron: '*/10 * * * *'  # '0 0 * * *'
+    - cron: '0 0 * * *'
 
 jobs:
   linux:
