@@ -22,7 +22,7 @@ on:
   push:
     branches:
     - master
-    - github-actions2
+    - valeriupredoi-patch-1-1
   # run the test only if the PR is to master
   # turn it on if required
   #pull_request:
