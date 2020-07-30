@@ -203,6 +203,7 @@ setup(
     tests_require=REQUIREMENTS['test'],
     extras_require={
         'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
+        'test': REQUIREMENTS['test'],
     },
     entry_points={
         'console_scripts': [
