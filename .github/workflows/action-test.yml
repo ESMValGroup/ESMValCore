@@ -14,7 +14,10 @@
 
 name: Test
 
-on: push
+on:
+  push:
+  schedule:
+    - cron: '*/10 * * * *'  # '0 0 * * *'
 
 jobs:
   linux:
@@ -26,6 +29,8 @@ jobs:
     name: Linux Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: github-actions
       - uses: goanpeca/setup-miniconda@v1
         with:
           activate-environment: esmvaltool
@@ -49,6 +54,8 @@ jobs:
     name: OSX Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: github-actions
       - uses: goanpeca/setup-miniconda@v1
         with:
           activate-environment: esmvaltool
