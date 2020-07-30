@@ -29,8 +29,6 @@ jobs:
     name: Linux Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: github-actions2
       - uses: goanpeca/setup-miniconda@v1
         with:
           activate-environment: esmvaltool
@@ -43,7 +41,7 @@ jobs:
       - shell: bash -l {0}
         run: python -V
       - shell: bash -l {0}
-        run: python setup.py test
+        run: python setup.py test --addopts '-m "not installation"'
 
   osx:
     runs-on: "macos-latest"
@@ -54,8 +52,6 @@ jobs:
     name: OSX Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: github-actions2
       - uses: goanpeca/setup-miniconda@v1
         with:
           activate-environment: esmvaltool
@@ -68,4 +64,4 @@ jobs:
       - shell: bash -l {0}
         run: python -V
       - shell: bash -l {0}
-        run: python setup.py test
+        run: python setup.py test --addopts '-m "not installation"'
