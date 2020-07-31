@@ -65,7 +65,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: Conda_Install_Linux
+          name: Conda_Install_Linux_python_${{ matrix.python-version }}
           path: conda_install_linux_artifacts_python_${{ matrix.python-version }}
 
   osx:
@@ -100,5 +100,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: Conda_Install_OSX
+          name: Conda_Install_OSX_python_${{ matrix.python-version }}
           path: conda_install_osx_artifacts_python_${{ matrix.python-version }}
