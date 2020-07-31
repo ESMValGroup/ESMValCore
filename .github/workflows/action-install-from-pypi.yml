@@ -62,11 +62,11 @@ jobs:
         run: esmvaltool --help
       - shell: bash -l {0}
         run: esmvaltool version
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: PyPi_Install_Linux
-        path: pypi_install_linux_artifacts
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: PyPi_Install_Linux
+          path: pypi_install_linux_artifacts
 
   osx:
     runs-on: "macos-latest"
@@ -96,8 +96,8 @@ jobs:
         run: esmvaltool --help
       - shell: bash -l {0}
         run: esmvaltool version
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: PyPi_Install_OSX
-        path: pypi_install_osx_artifacts
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: PyPi_Install_OSX
+          path: pypi_install_osx_artifacts
