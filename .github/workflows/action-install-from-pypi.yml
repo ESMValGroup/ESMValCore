@@ -61,7 +61,7 @@ jobs:
       - shell: bash -l {0}
         run: esmvaltool --help
       - shell: bash -l {0}
-        run: esmvaltool version
+        run: esmvaltool version 2>&1 | tee pypi_install_linux_artifacts/version.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -95,7 +95,7 @@ jobs:
       - shell: bash -l {0}
         run: esmvaltool --help
       - shell: bash -l {0}
-        run: esmvaltool version
+        run: esmvaltool version 2>&1 | tee pypi_install_osx_artifacts/version.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
