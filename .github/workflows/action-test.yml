@@ -49,11 +49,19 @@ jobs:
           miniconda-version: "latest"
           channels: conda-forge
       - shell: bash -l {0}
-        run: conda --version
+        run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
-        run: python -V
+        run: conda --version 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - shell: bash -l {0}
-        run: python setup.py test --addopts '-m "not installation"'
+        run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - shell: bash -l {0}
+        run: python setup.py test --addopts '-m "not installation"' 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
+      - name: Upload artifacts
+        if: ${{ always() }}  # upload artifacts even if fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: Test_Linux_python_${{ matrix.python-version }}
+          path: test_linux_artifacts_python_${{ matrix.python-version }}
 
   osx:
     runs-on: "macos-latest"
@@ -72,8 +80,16 @@ jobs:
           miniconda-version: "latest"
           channels: conda-forge
       - shell: bash -l {0}
-        run: conda --version
+        run: mkdir -p test_osx_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
-        run: python -V
+        run: conda --version 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - shell: bash -l {0}
-        run: python setup.py test --addopts '-m "not installation"'
+        run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - shell: bash -l {0}
+        run: python setup.py test --addopts '-m "not installation"' 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
+      - name: Upload artifacts
+        if: ${{ always() }}  # upload artifacts even if fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: Test_OSX_python_${{ matrix.python-version }}
+          path: test_osx_artifacts_python_${{ matrix.python-version }}
