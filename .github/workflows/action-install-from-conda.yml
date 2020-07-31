@@ -49,24 +49,24 @@ jobs:
           miniconda-version: "latest"
           channels: esmvalgroup,conda-forge
       - shell: bash -l {0}
-        run: mkdir -p conda_install_linux_artifacts
+        run: mkdir -p conda_install_linux_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
-        run: conda --version 2>&1 | tee conda_install_linux_artifacts/conda_version.txt
+        run: conda --version 2>&1 | tee conda_install_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - shell: bash -l {0}
-        run: which conda 2>&1 | tee conda_install_linux_artifacts/conda_path.txt
+        run: which conda 2>&1 | tee conda_install_linux_artifacts_python_${{ matrix.python-version }}/conda_path.txt
       - shell: bash -l {0}
-        run: python -V 2>&1 | tee conda_install_linux_artifacts/python_version.txt
+        run: python -V 2>&1 | tee conda_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
-        run: conda install esmvalcore 2>&1 | tee conda_install_linux_artifacts/install.txt
+        run: conda install esmvalcore 2>&1 | tee conda_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
         run: esmvaltool --help
       - shell: bash -l {0}
-        run: esmvaltool version 2>&1 | tee conda_install_linux_artifacts/version.txt
+        run: esmvaltool version 2>&1 | tee conda_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: Conda_Install_Linux
-          path: conda_install_linux_artifacts
+          path: conda_install_linux_artifacts_python_${{ matrix.python-version }}
 
   osx:
     runs-on: "macos-latest"
@@ -84,21 +84,21 @@ jobs:
           miniconda-version: "latest"
           channels: esmvalgroup,conda-forge
       - shell: bash -l {0}
-        run: mkdir -p conda_install_osx_artifacts
+        run: mkdir -p conda_install_osx_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
-        run: conda --version 2>&1 | tee conda_install_osx_artifacts/conda_version.txt
+        run: conda --version 2>&1 | tee conda_install_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - shell: bash -l {0}
-        run: which conda 2>&1 | tee conda_install_osx_artifacts/conda_path.txt
+        run: which conda 2>&1 | tee conda_install_osx_artifacts_python_${{ matrix.python-version }}/conda_path.txt
       - shell: bash -l {0}
-        run: python -V 2>&1 | tee conda_install_osx_artifacts/python_version.txt
+        run: python -V 2>&1 | tee conda_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
-        run: conda install esmvalcore 2>&1 | tee conda_install_osx_artifacts/install.txt
+        run: conda install esmvalcore 2>&1 | tee conda_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
         run: esmvaltool --help
       - shell: bash -l {0}
-        run: esmvaltool version 2>&1 | tee conda_install_osx_artifacts/version.txt
+        run: esmvaltool version 2>&1 | tee conda_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: Conda_Install_OSX
-          path: conda_install_osx_artifacts
+          path: conda_install_osx_artifacts_python_${{ matrix.python-version }}
