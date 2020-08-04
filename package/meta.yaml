@@ -5,7 +5,7 @@
 # conda build package -c conda-forge -c esmvalgroup
 
 # Package version number
-{% set version = "2.0.0b9" %}
+{% set version = "2.0.0" %}
 
 package:
   name: esmvalcore
@@ -55,7 +55,7 @@ requirements:
     - pydot
     - pyyaml
     - shapely
-    - yamale  # in esmvalgroup channel
+    - yamale==2.*  # in esmvalgroup channel
 
 test:
   # TODO: add unit tests? This seems to require installing the tests

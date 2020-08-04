@@ -7,6 +7,7 @@
 # - iris
 # - python-stratify
 
+import json
 import os
 import re
 import sys
@@ -43,12 +44,12 @@ REQUIREMENTS = {
         'scitools-iris>=2.2',
         'shapely[vectorized]',
         'stratify',
-        'yamale',
+        'yamale==2.*',
     ],
     # Test dependencies
     # Execute 'python setup.py test' to run tests
     'test': [
-        'pytest>=3.9',
+        'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov',
         'pytest-env',
         'pytest-flake8',
@@ -72,16 +73,6 @@ REQUIREMENTS = {
 }
 
 
-def read_authors(citation_file):
-    """Read the list of authors from .cff file."""
-    authors = re.findall(
-        r'family-names: (.*)$\s*given-names: (.*)',
-        Path(citation_file).read_text(),
-        re.MULTILINE,
-    )
-    return ', '.join(' '.join(author[::-1]) for author in authors)
-
-
 def discover_python_files(paths, ignore):
     """Discover Python files."""
     def _ignore(path):
@@ -101,7 +92,6 @@ def discover_python_files(paths, ignore):
 
 class CustomCommand(Command):
     """Custom Command class."""
-
     def install_deps_temp(self):
         """Try to temporarily install packages needed to run the command."""
         if self.distribution.install_requires:
@@ -159,32 +149,51 @@ class RunLinter(CustomCommand):
         sys.exit(errno)
 
 
+def read_authors(filename):
+    """Read the list of authors from .zenodo.json file."""
+    with Path(filename).open() as file:
+        info = json.load(file)
+        authors = []
+        for author in info['creators']:
+            name = ' '.join(author['name'].split(',')[::-1]).strip()
+            authors.append(name)
+        return ', '.join(authors)
+
+
+def read_description(filename):
+    """Read the description from .zenodo.json file."""
+    with Path(filename).open() as file:
+        info = json.load(file)
+        return info['description']
+
+
 setup(
     name='ESMValCore',
     version=__version__,
-    author=read_authors('CITATION.cff'),
-    description='Earth System Models eValuation Tool Core',
+    author=read_authors('.zenodo.json'),
+    description=read_description('.zenodo.json'),
     long_description=Path('README.md').read_text(),
+    long_description_content_type='text/markdown',
     url='https://www.esmvaltool.org',
     download_url='https://github.com/ESMValGroup/ESMValCore',
     license='Apache License, Version 2.0',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',
         'Topic :: Scientific/Engineering :: Hydrology',
-        'Topic :: Scientific/Engineering :: Physics'
-        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Scientific/Engineering :: Physics',
     ],
     packages=PACKAGES,
     # Include all version controlled files
@@ -194,6 +203,7 @@ setup(
     tests_require=REQUIREMENTS['test'],
     extras_require={
         'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
+        'test': REQUIREMENTS['test'],
     },
     entry_points={
         'console_scripts': [

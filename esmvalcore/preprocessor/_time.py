@@ -172,8 +172,13 @@ def get_time_weights(cube):
         Array of time weights for averaging.
     """
     time = cube.coord('time')
-    time_thickness = time.bounds[..., 1] - time.bounds[..., 0]
-    time_weights = time_thickness * da.ones_like(cube.data)
+    time_weights = time.bounds[..., 1] - time.bounds[..., 0]
+    time_weights = time_weights.squeeze()
+    if time_weights.shape == ():
+        time_weights = da.broadcast_to(time_weights, cube.shape)
+    else:
+        time_weights = iris.util.broadcast_to_shape(time_weights, cube.shape,
+                                                    cube.coord_dims('time'))
     return time_weights
 
 
