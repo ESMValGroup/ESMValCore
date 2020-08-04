@@ -17,6 +17,7 @@ from esmvalcore.preprocessor._multimodel import (_assemble_data,
 
 class Test(tests.Test):
     """Test class for preprocessor/_multimodel.py."""
+
     def setUp(self):
         """Prepare tests."""
         # Make various time arrays
@@ -208,11 +209,6 @@ class Test(tests.Test):
         masked.mask = True
         expected = [self.cube1[0].data, masked]
         self.assert_array_equal(expected, result)
-
-    def test_raise_daily(self):
-        """Test raise for daily input data."""
-        with self.assertRaises(ValueError):
-            _unify_time_coordinates([self.cube6])
 
 
 if __name__ == '__main__':

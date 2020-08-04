@@ -219,7 +219,10 @@ def _unify_time_coordinates(cubes):
             ]
         else:
             # (sub)daily data
-            raise ValueError("Multimodel only supports yearly or monthly data")
+            logger.warning(
+                "Multimodel encountered (sub)daily data. Attempting to"
+                " continue, but might fail for incompatible calendars.")
+            break
 
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord('time').points = [t_unit.date2num(date) for date in dates]
@@ -255,7 +258,7 @@ def _assemble_data(cubes, statistic, span='overlap'):
 
     # Target array to populate with computed statistics
     new_shape = [n_times] + list(cubes[0].shape[1:])
-    stats_data = np.ma.zeros(new_shape)
+    stats_data = np.ma.zeros(new_shape, dtype=np.dtype('float32'))
 
     # Realize all cubes at once instead of separately for each time slice
     _ = [cube.data for cube in cubes]
@@ -312,9 +315,6 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     ------
     ValueError
         If span is neither overlap nor full.
-    ValueError
-        If the time frequency of the input data not yearly or monthly.
-
     """
     logger.debug('Multimodel statistics: computing: %s', statistics)
     if len(products) < 2:
@@ -350,8 +350,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     for statistic in statistics:
         # Compute statistic
         statistic_cube = _assemble_data(cubes, statistic, span)
-        statistic_cube.data = np.ma.array(statistic_cube.data,
-                                          dtype=np.dtype('float32'))
+        # statistic_cube.data = np.ma.array(statistic_cube.data,
+        #                                   dtype=np.dtype('float32'))
 
         if output_products:
             # Add to output product and log provenance
