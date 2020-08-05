@@ -350,8 +350,6 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     for statistic in statistics:
         # Compute statistic
         statistic_cube = _assemble_data(cubes, statistic, span)
-        # statistic_cube.data = np.ma.array(statistic_cube.data,
-        #                                   dtype=np.dtype('float32'))
 
         if output_products:
             # Add to output product and log provenance
