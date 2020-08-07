@@ -185,21 +185,30 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     return stats_cube
 
 
+def _get_consistent_time_unit(cubes):
+    """Return cubes' time unit if consistent, standard calendar otherwise."""
+    t_units = [cube.coord('time').units for cube in cubes]
+    if len(set(t_units)) == 1:
+        return t_units[0]
+    return cf_units.Unit("days since 1850-01-01", calendar="standard")
+
+
 def _unify_time_coordinates(cubes):
     """
-    Make sure all cubes' use the same standard calendar and time units.
+    Make sure all cubes' share the same time coordinate.
 
-    Cubes may have different calendars. This function extracts the date
-    information from the cube and re-constructs a default calendar,
-    resetting the actual dates to the 15th of the month or 1st of july for
-    yearly data (consistent with `regrid_time`), so that there are no
-    mismatches in the time arrays.
+    This function extracts the date information from the cube and
+    reconstructs the time coordinate, resetting the actual dates to the
+    15th of the month or 1st of july for yearly data (consistent with
+    `regrid_time`), so that there are no mismatches in the time arrays.
 
-    Doesn't work for (sub)daily data, because different calendars may have
+    If cubes have different time units, it will use reset the calendar to
+    a default gregorian calendar with unit "days since 1850-01-01".
+
+    Might not work for (sub)daily data, because different calendars may have
     different number of days in the year.
     """
-    # The default time unit
-    t_unit = cf_units.Unit("days since 1850-01-01", calendar="standard")
+    t_unit = _get_consistent_time_unit(cubes)
 
     for cube in cubes:
         # Extract date info from cube
@@ -219,10 +228,12 @@ def _unify_time_coordinates(cubes):
             ]
         else:
             # (sub)daily data
-            logger.warning(
-                "Multimodel encountered (sub)daily data. Attempting to"
-                " continue, but might fail for incompatible calendars.")
-            break
+            if cube.coord('time').units != t_unit:
+                logger.warning(
+                    "Multimodel encountered (sub)daily data and inconsistent "
+                    "time units or calendars. Attempting to continue, but "
+                    "might produce unexpected results.")
+            dates = [cell.point for cell in cube.coord('time').cells()]
 
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord('time').points = [t_unit.date2num(date) for date in dates]
