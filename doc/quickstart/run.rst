@@ -12,8 +12,8 @@ To run a recipe, call ``esmvaltool run`` with the desired recipe:
 
 	esmvaltool run recipe_python.yml
 
-If the config user is not in the default ``{HOME}\.esmvaltool\`` path you can
-pass its path explicitly:
+If the configuration file is not in the default location
+``~/.esmvaltool/config-user.yml``, you can pass its path explicitly:
 
 .. code:: bash
 

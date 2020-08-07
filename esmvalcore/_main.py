@@ -147,7 +147,7 @@ class Config():
         Parameters
         ----------
         overwrite: boolean
-            Name of the recipe to get
+            Overwrite an existing file.
         path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
@@ -166,7 +166,7 @@ class Config():
         Parameters
         ----------
         overwrite: boolean
-            Name of the recipe to get
+            Overwrite an existing file.
         path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
