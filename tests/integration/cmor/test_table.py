@@ -3,6 +3,7 @@
 import os
 import unittest
 
+import esmvalcore.cmor
 from esmvalcore.cmor.table import CMIP3Info, CMIP5Info, CMIP6Info, CustomInfo
 
 
@@ -25,9 +26,8 @@ class TestCMIP6Info(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip6')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip6')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP6Info(cmor_tables_path, default=None, strict=False)
 
@@ -122,9 +122,8 @@ class Testobs4mipsInfo(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip6')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip6')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP6Info(cmor_tables_path, None, True)
 
@@ -190,9 +189,8 @@ class TestCMIP5Info(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip5')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip5')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP5Info(cmor_tables_path, None, True)
 
@@ -265,9 +263,8 @@ class TestCMIP3Info(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip3')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip3')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP3Info(cmor_tables_path, None, True)
 
@@ -337,10 +334,8 @@ class TestCORDEXInfo(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cordex')
-        cmor_tables_path = os.path.abspath(cmor_tables_path)
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cordex')
         CMIP5Info(cmor_tables_path)
 
     def test_get_variable_tas(self):
@@ -367,9 +362,8 @@ class TestCustomInfo(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip5')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip5')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CustomInfo(cmor_tables_path)
 
