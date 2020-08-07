@@ -133,7 +133,7 @@ def _compute_statistic(data, statistic_name):
 
 def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     """Quick cube building and saving."""
-    tunits = cf_units.Unit("days since 1850-01-01", calendar="standard")
+    tunits = template_cube.coord('time').units
     times = iris.coords.DimCoord(t_axis, standard_name='time', units=tunits)
 
     coord_names = [c.long_name for c in template_cube.coords()]
@@ -279,7 +279,7 @@ def _assemble_data(cubes, statistic, span='overlap'):
         time_data = _get_time_slice(cubes, time)
         stats_data[i] = _compute_statistic(time_data, statistic)
 
-    template = cubes[0][:n_times]
+    template = cubes[0]
     stats_cube = _put_in_cube(template, stats_data, statistic, new_times)
     return stats_cube
 
