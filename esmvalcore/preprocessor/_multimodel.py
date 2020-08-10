@@ -212,8 +212,9 @@ def _unify_time_coordinates(cubes):
 
     for cube in cubes:
         # Extract date info from cube
-        years = [cell.point.year for cell in cube.coord('time').cells()]
-        months = [cell.point.month for cell in cube.coord('time').cells()]
+        coord = cube.coord('time')
+        years = [p.year for p in coord.units.num2date(coord.points)]
+        months = [p.year for p in coord.units.num2date(coord.points)]
 
         # Reconstruct default calendar
         if 0 not in np.diff(years):
@@ -228,12 +229,13 @@ def _unify_time_coordinates(cubes):
             ]
         else:
             # (sub)daily data
-            if cube.coord('time').units != t_unit:
+            coord = cube.coord('time')
+            if coord.units != t_unit:
                 logger.warning(
                     "Multimodel encountered (sub)daily data and inconsistent "
                     "time units or calendars. Attempting to continue, but "
                     "might produce unexpected results.")
-            dates = [cell.point for cell in cube.coord('time').cells()]
+            dates = coord.units.num2date(coord.points)
 
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord('time').points = [t_unit.date2num(date) for date in dates]
