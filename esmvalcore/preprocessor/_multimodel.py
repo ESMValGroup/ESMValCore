@@ -236,7 +236,7 @@ def _unify_time_coordinates(cubes):
             dates = [cell.point for cell in cube.coord('time').cells()]
 
         # Update the cubes' time coordinate (both point values and the units!)
-        cube.coord('time').points = [t_unit.date2num(date) for date in dates]
+        cube.coord('time').points = t_unit.date2num(dates)
         cube.coord('time').units = t_unit
         cube.coord('time').bounds = None
         cube.coord('time').guess_bounds()
@@ -249,7 +249,7 @@ def _get_time_slice(cubes, time):
         cube_time = cube.coord('time').points
         if time in cube_time:
             idx = int(np.argwhere(cube_time == time))
-            subset = cube[idx].data
+            subset = cube.data[idx]
         else:
             subset = np.ma.empty(list(cube.shape[1:]))
             subset.mask = True
