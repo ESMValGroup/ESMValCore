@@ -22,21 +22,23 @@ N_AVO = 6.022140857e23
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `xch4`."""
 
-    # Required variables
-    required = [
-        {
-            'short_name': 'ch4'
-        },
-        {
-            'short_name': 'hus'
-        },
-        {
-            'short_name': 'zg'
-        },
-        {
-            'short_name': 'ps'
-        },
-    ]
+    @staticmethod
+    def required(project):
+        required_vars = [
+            {
+                'short_name': 'ch4'
+            },
+            {
+                'short_name': 'hus'
+            },
+            {
+                'short_name': 'zg'
+            },
+            {
+                'short_name': 'ps'
+            },
+        ]
+        return required_vars
 
     @staticmethod
     def calculate(cubes):
