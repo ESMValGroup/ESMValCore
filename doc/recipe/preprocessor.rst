@@ -798,7 +798,7 @@ This function produces statistics for each day in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
@@ -811,7 +811,7 @@ This function produces statistics for each month in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 
@@ -831,7 +831,7 @@ December and remove such biased initial datapoints.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
@@ -844,7 +844,7 @@ This function produces statistics for each year.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.annual_statistics`.
 
@@ -857,7 +857,7 @@ This function produces statistics for each decade.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 
@@ -871,7 +871,7 @@ This function produces statistics for the whole dataset. It can produce scalars
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',
-      'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
     * period: define the granularity of the statistics: get values for the
       full period, for each month or day of year.
@@ -1152,7 +1152,7 @@ areas of the region. This function takes the argument, ``operator``: the name
 of the operation to apply.
 
 This function can be used to apply several different operations in the
-horizontal plane: mean, standard deviation, median variance, minimum and maximum.
+horizontal plane: mean, standard deviation, median, variance, minimum, maximum and root mean square.
 
 Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be

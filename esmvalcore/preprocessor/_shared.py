@@ -42,7 +42,9 @@ def get_iris_analysis_operation(operator):
         operator not in allowed operators list.
         allowed operators: mean, median, std_dev, sum, variance, min, max, rms
     """
-    operators = ['mean', 'median', 'std_dev', 'sum', 'variance', 'min', 'max', 'rms']
+    operators = [
+        'mean', 'median', 'std_dev', 'sum', 'variance', 'min', 'max', 'rms'
+    ]
     operator = operator.lower()
     if operator not in operators:
         raise ValueError("operator {} not recognised. "
