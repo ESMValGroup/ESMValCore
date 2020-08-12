@@ -27,9 +27,9 @@ Running tests
 -------------
 
 Go to the directory where the repository is cloned and run
-``python setup.py test``. Optionally you can skip tests which require
+``pytest``. Optionally you can skip tests which require
 additional dependencies for supported diagnostic script languages by
-adding ``--addopts '-m "not installation"'`` to the previous command.
+adding ``-m 'not installation'`` to the previous command.
 Tests will also be run automatically by
 `CircleCI <https://circleci.com/gh/ESMValGroup/ESMValCore>`__.
 

@@ -25,7 +25,8 @@ jobs:
       - checkout
       - run:
           command: |
-            python setup.py test --addopts '-m "not installation"'
+            pip install .[test]
+            pytest -n 2 -m "not installation"
       - store_test_results:
           path: test-reports/
       - store_artifacts:
@@ -51,13 +52,13 @@ jobs:
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
             conda install -yS r-base r-yaml ncl -c conda-forge
-            pip install . > /logs/install.txt 2>&1
+            pip install .[test] > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            python setup.py test
+            pytest -n 2
             esmvaltool version
       - save_cache:
           key: python3-install-{{ .Branch }}
@@ -134,7 +135,7 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             esmvaltool version
-            python setup.py test
+            pytest -n 2
       - store_artifacts:
           path: /logs
 
@@ -184,10 +185,9 @@ jobs:
             conda env export > /logs/environment.yml
             # Test installation
             esmvaltool version
-            python -c 'from esmvalcore import *; print(__version__)'
 
 workflows:
-  version: 2
+  version: 2.1
   commit:
     jobs:
       - test
