@@ -195,7 +195,7 @@ def daily_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'
 
     Returns
     -------
@@ -228,7 +228,7 @@ def monthly_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'
 
     Returns
     -------
@@ -258,7 +258,7 @@ def seasonal_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'
 
     Returns
     -------
@@ -313,7 +313,7 @@ def annual_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'
 
     Returns
     -------
@@ -345,7 +345,7 @@ def decadal_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'
 
     Returns
     -------
@@ -384,7 +384,7 @@ def climate_statistics(cube, operator='mean', period='full'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'
 
     period: str, optional
         Period to compute the statistic over.
