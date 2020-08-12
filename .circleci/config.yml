@@ -1,5 +1,5 @@
 ---
-version: 2
+version: 2.1
 
 aliases:
   check_changes: &check_changes
@@ -187,7 +187,6 @@ jobs:
             esmvaltool version
 
 workflows:
-  version: 2.1
   commit:
     jobs:
       - test
