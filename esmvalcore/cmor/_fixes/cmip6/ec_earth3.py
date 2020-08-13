@@ -20,7 +20,5 @@ class siconca(Fix):
         iris.cube.Cube
 
         """
-        metadata = cube.metadata
-        cube *= 100
-        cube.metadata = metadata
+        cube.data = cube.core_data() * 100.
         return cube
