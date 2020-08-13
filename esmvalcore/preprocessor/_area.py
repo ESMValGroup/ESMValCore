@@ -99,8 +99,8 @@ def zonal_statistics(cube, operator):
 
     operator: str, optional
         Select operator to apply.
-        Available operators:
-            'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'.
 
     Returns
     -------
@@ -134,8 +134,8 @@ def meridional_statistics(cube, operator):
 
     operator: str, optional
         Select operator to apply.
-        Available operators:
-            'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'.
 
     Returns
     -------
