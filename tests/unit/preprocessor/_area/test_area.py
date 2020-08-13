@@ -107,6 +107,12 @@ class Test(tests.Test):
         expected = np.array([1.])
         self.assert_array_equal(result.data, expected)
 
+    def test_area_statistics_rms(self):
+        """Test for area rms of a 2D field."""
+        result = area_statistics(self.grid, 'rms')
+        expected = np.array([1.])
+        self.assert_array_equal(result.data, expected)
+
     def test_extract_region(self):
         """Test for extracting a region from a 2D field."""
         result = extract_region(self.grid, 1.5, 2.5, 1.5, 2.5)
