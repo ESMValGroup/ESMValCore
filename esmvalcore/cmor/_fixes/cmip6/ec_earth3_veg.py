@@ -2,12 +2,11 @@
 from ..fix import Fix
 
 
-class siconca(Fix):
+class Siconca(Fix):
     """Fixes for siconca."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -20,7 +19,5 @@ class siconca(Fix):
         iris.cube.Cube
 
         """
-        metadata = cube.metadata
-        cube *= 100
-        cube.metadata = metadata
+        cube.data = cube.core_data() * 100.
         return cube

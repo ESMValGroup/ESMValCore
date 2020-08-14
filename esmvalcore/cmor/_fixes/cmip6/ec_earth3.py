@@ -2,12 +2,11 @@
 from ..fix import Fix
 
 
-class siconca(Fix):
+class Siconca(Fix):
     """Fixes for siconca."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
