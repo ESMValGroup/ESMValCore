@@ -1000,7 +1000,7 @@ Parameters:
     * filter_type: the type of filter to be applied; default 'lowpass'.
       Available types: 'lowpass'.
     * filter_stats: the type of statistic to aggregate on the rolling window;
-      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'.
 
 Examples:
     * Lowpass filter with a monthly mean as operator:
@@ -1127,7 +1127,7 @@ Parameters:
 The function calculates the zonal statistics by applying an operator
 along the longitude coordinate. This function takes one argument:
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
 
 See also :func:`esmvalcore.preprocessor.zonal_means`.
 
@@ -1139,7 +1139,7 @@ The function calculates the meridional statistics by applying an
 operator along the latitude coordinate. This function takes one
 argument:
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
 
 See also :func:`esmvalcore.preprocessor.meridional_means`.
 

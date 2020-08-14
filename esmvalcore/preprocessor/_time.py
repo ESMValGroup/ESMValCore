@@ -682,7 +682,8 @@ def timeseries_filter(cube, window, span,
         Available types: 'lowpass'.
     filter_stats: str, optional
         Type of statistic to aggregate on the rolling window; default 'sum'.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'
 
     Returns
     -------
