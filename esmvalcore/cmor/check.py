@@ -467,6 +467,8 @@ class CMORCheck():
             return
         if coord.dtype.kind == 'U':
             return
+        if coord.bounds.shape[1] > 4:
+            return
         if not coord.is_monotonic():
             self.report_critical(self._is_msg, var_name, 'monotonic')
         if len(coord.points) == 1:
