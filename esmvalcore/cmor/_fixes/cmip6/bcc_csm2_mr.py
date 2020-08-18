@@ -11,6 +11,7 @@ Clw = ClFixHybridPressureCoord
 
 class Tos(BaseTos):
     """Fixes for tos."""
+    
     def fix_metadata(self, cubes):
         """Rename ``var_name`` of 1D-``latitude`` and 1D-``longitude``.
 
