@@ -42,6 +42,7 @@ class Tos(BaseTos):
 
 class Thetao(BaseTos):
     """Fixes for thetao and so."""
+
     def fix_metadata(self, cubes):
         """Rename ``var_name`` of 1D-``latitude`` and 1D-``longitude``.
 
