@@ -105,6 +105,7 @@ class DerivedVariable(DerivedVariableBase):
             ch4_cube.collapsed('air_pressure', iris.analysis.SUM) /
             n_dry.collapsed('air_pressure', iris.analysis.SUM))
         xch4_cube.units = ch4_cube.units
+        xch4_cube.convert_units("1")
 
         return xch4_cube
 
