@@ -20,7 +20,8 @@ from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
 from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_fillvalues, mask_glaciated, mask_inside_range,
-                    mask_landsea, mask_landseaice, mask_outside_range)
+                    mask_landsea, mask_landseaice, mask_multimodel,
+                    mask_outside_range)
 from ._multimodel import multi_model_statistics
 from ._other import clip
 from ._regrid import extract_levels, extract_point, regrid
@@ -70,6 +71,7 @@ __all__ = [
     # Point interpolation
     'extract_point',
     # Masking missing values
+    'mask_multimodel',
     'mask_fillvalues',
     'mask_above_threshold',
     'mask_below_threshold',
@@ -135,6 +137,7 @@ FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('save'):]
 
 MULTI_MODEL_FUNCTIONS = {
     'multi_model_statistics',
+    'mask_multimodel',
     'mask_fillvalues',
 }
 

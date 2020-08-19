@@ -11,6 +11,7 @@ import logging
 import os
 
 import cartopy.io.shapereader as shpreader
+import dask.array as da
 import iris
 import numpy as np
 import shapely.vectorized as shp_vect
@@ -525,6 +526,56 @@ def mask_outside_range(cube, minimum, maximum):
     """
     cube.data = np.ma.masked_outside(cube.data, minimum, maximum)
     return cube
+
+
+def mask_multimodel(products):
+    """
+    Apply common mask to all datasets.
+
+    Parameters
+    ----------
+    products : set
+        Data products to be masked.
+
+    Returns
+    -------
+    set
+        Masked data products.
+
+    Raises
+    ------
+    ValueError
+        Datasets have different shapes.
+
+    """
+    logger.debug("Creating commom multimodel mask")
+
+    # Get cubes
+    cubes = iris.cube.CubeList()
+    for product in products:
+        cubes.extend(product.cubes)
+    if not cubes:
+        return products
+
+    # Check shapes
+    shapes = {cube.shape for cube in cubes}
+    if len(shapes) > 1:
+        raise ValueError(
+            f"Expected cubes with identical shapes for preprocessor "
+            f"'mask_multimodel', got shapes {shapes}")
+
+    # Get common mask
+    mask = da.full(list(shapes)[0], False)
+    for product in products:
+        for cube in product.cubes:
+            mask |= da.ma.getmaskarray(cube.core_data())
+
+    # Apply common mask
+    for product in products:
+        for cube in product.cubes:
+            cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
+
+    return products
 
 
 def mask_fillvalues(products,
