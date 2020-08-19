@@ -13,14 +13,6 @@ from esmvalcore.preprocessor._derive.ohc import DerivedVariable
 SHORT_NAME = 'short_name'
 
 
-class MockedCube(mock.MagicMock):
-    """Mock cube with correct convert_units fuction."""
-
-    def __init__(self):
-        """Initialize mock cube."""
-        super().__init__(spec=Cube)
-
-
 @pytest.fixture
 def mock_cubes():
     """Fixture for mock version of :class:`iris.cube.CubeList`."""
@@ -29,8 +21,7 @@ def mock_cubes():
 
 def mock_derived_var_dict(mock_dict, returned_units):
     """Mock the :obj:`dict` containing all derived variables accordingly."""
-    # cube = mock.create_autospec(Cube, instance=True)
-    cube = MockedCube()
+    cube = mock.create_autospec(Cube, instance=True)
     cube.units = returned_units
     calculate_function = mock.Mock(return_value=cube)
     derived_var = mock.Mock(name='DerivedVariable')
@@ -48,7 +39,7 @@ def assert_derived_var_calc_called(mock_dict, *args):
 @mock.patch('esmvalcore.preprocessor._derive.ALL_DERIVED_VARIABLES',
             autospec=True)
 @mock.patch('esmvalcore.preprocessor._derive.logger', autospec=True)
-def test_check_units_None(mock_logger, mock_all_derived_vars, _, mock_cubes):
+def test_check_units_none(mock_logger, mock_all_derived_vars, _, mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
     mock_derived_var_dict(mock_all_derived_vars, None)
     cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name,
@@ -135,12 +126,28 @@ def test_check_units_convertible(mock_logger, mock_all_derived_vars, _,
     cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'g yr-1',
                   standard_name=mock.sentinel.standard_name)
     assert_derived_var_calc_called(mock_all_derived_vars, mock_cubes)
-    assert cube.units == Unit('g yr-1')
+    cube.convert_units.assert_called_once_with('g yr-1')
     assert cube.var_name == SHORT_NAME
     assert cube.long_name == mock.sentinel.long_name
     assert cube.standard_name == mock.sentinel.standard_name
     mock_logger.warning.assert_not_called()
-    cube.convert_units.assert_not_called()
+
+
+@mock.patch('iris.cube.CubeList', side_effect=lambda x: x)
+@mock.patch('esmvalcore.preprocessor._derive.ALL_DERIVED_VARIABLES',
+            autospec=True)
+@mock.patch('esmvalcore.preprocessor._derive.logger', autospec=True)
+def test_check_units_fail(mock_logger, mock_all_derived_vars, _, mock_cubes):
+    """Test units after derivation if derivation scripts returns None."""
+    mock_derived_var_dict(mock_all_derived_vars, Unit('kg'))
+    with pytest.raises(ValueError) as err:
+        derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'm',
+               standard_name=mock.sentinel.standard_name)
+    assert str(err.value) == (
+        "Units 'kg' after executing derivation script of 'short_name' cannot "
+        "be converted to target units 'm'"
+    )
+    mock_logger.warning.assert_not_called()
 
 
 def test_get_required():
@@ -190,7 +197,6 @@ def test_derive_nonstandard_nofx():
 
     alb = derive(cubes, short_name, long_name, units, standard_name)
 
-    print(alb)
     assert alb.var_name == short_name
     assert alb.long_name == long_name
     assert alb.units == units
@@ -206,11 +212,10 @@ def test_derive_noop():
 
     cube = derive([alb], alb.var_name, alb.long_name, alb.units)
 
-    print(cube)
     assert cube is alb
 
 
-def test_derive_mixed_case_with_fx(tmp_path, monkeypatch):
+def test_derive_mixed_case_with_fx(monkeypatch):
     """Test derivation with fx file."""
     short_name = 'ohc'
     long_name = 'Heat content in grid cell'
@@ -218,7 +223,7 @@ def test_derive_mixed_case_with_fx(tmp_path, monkeypatch):
 
     ohc_cube = Cube([])
 
-    def mock_calculate(self, cubes):
+    def mock_calculate(_, cubes):
         assert len(cubes) == 1
         assert cubes[0] == ohc_cube
         return Cube([])
