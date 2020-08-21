@@ -6,7 +6,7 @@ import pytest
 from cf_units import Unit
 from iris.cube import Cube, CubeList
 
-from esmvalcore.preprocessor import derive
+from esmvalcore.preprocessor import _derive, derive
 from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._derive.ohc import DerivedVariable
 
@@ -19,127 +19,115 @@ def mock_cubes():
     return mock.create_autospec(CubeList, spec_set=True, instance=True)
 
 
-def mock_derived_var_dict(mock_dict, returned_units):
+@pytest.fixture
+def patched_derive(mocker):
+    """Fixture for mocked derivation scripts."""
+    mocker.patch('iris.cube.CubeList', side_effect=lambda x: x)
+    mocker.patch.object(_derive, 'ALL_DERIVED_VARIABLES', autospec=True)
+    mocker.patch.object(_derive, 'logger', autospec=True)
+
+
+def mock_all_derived_variables(returned_units):
     """Mock the :obj:`dict` containing all derived variables accordingly."""
     cube = mock.create_autospec(Cube, instance=True)
     cube.units = returned_units
     calculate_function = mock.Mock(return_value=cube)
     derived_var = mock.Mock(name='DerivedVariable')
     derived_var.return_value.calculate = calculate_function
-    mock_dict.__getitem__.return_value = derived_var
+    _derive.ALL_DERIVED_VARIABLES.__getitem__.return_value = derived_var
 
 
-def assert_derived_var_calc_called(mock_dict, *args):
+def assert_derived_var_calc_called_once_with(*args):
     """Assert that derivation script of variable has been called."""
-    (mock_dict.__getitem__.return_value.return_value.calculate.
-     assert_called_once_with(*args))
+    (_derive.ALL_DERIVED_VARIABLES.__getitem__.return_value.return_value.
+     calculate.assert_called_once_with(*args))
 
 
-@mock.patch('iris.cube.CubeList', side_effect=lambda x: x)
-@mock.patch('esmvalcore.preprocessor._derive.ALL_DERIVED_VARIABLES',
-            autospec=True)
-@mock.patch('esmvalcore.preprocessor._derive.logger', autospec=True)
-def test_check_units_none(mock_logger, mock_all_derived_vars, _, mock_cubes):
+@pytest.mark.usefixtures("patched_derive")
+def test_check_units_none(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
-    mock_derived_var_dict(mock_all_derived_vars, None)
+    mock_all_derived_variables(None)
     cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name,
                   mock.sentinel.units,
                   standard_name=mock.sentinel.standard_name)
-    assert_derived_var_calc_called(mock_all_derived_vars, mock_cubes)
+    assert_derived_var_calc_called_once_with(mock_cubes)
     assert cube.units == mock.sentinel.units
     assert cube.var_name == SHORT_NAME
     assert cube.long_name == mock.sentinel.long_name
     assert cube.standard_name == mock.sentinel.standard_name
-    mock_logger.warning.assert_not_called()
+    _derive.logger.warning.assert_not_called()
     cube.convert_units.assert_not_called()
 
 
-@mock.patch('iris.cube.CubeList', side_effect=lambda x: x)
-@mock.patch('esmvalcore.preprocessor._derive.ALL_DERIVED_VARIABLES',
-            autospec=True)
-@mock.patch('esmvalcore.preprocessor._derive.logger', autospec=True)
-def test_check_units_equal(mock_logger, mock_all_derived_vars, _, mock_cubes):
+@pytest.mark.usefixtures("patched_derive")
+def test_check_units_equal(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
-    mock_derived_var_dict(mock_all_derived_vars, Unit('kg m2 s-2'))
+    mock_all_derived_variables(Unit('kg m2 s-2'))
     cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'J',
                   standard_name=mock.sentinel.standard_name)
-    assert_derived_var_calc_called(mock_all_derived_vars, mock_cubes)
+    assert_derived_var_calc_called_once_with(mock_cubes)
     assert cube.units == Unit('J')
     assert cube.var_name == SHORT_NAME
     assert cube.long_name == mock.sentinel.long_name
     assert cube.standard_name == mock.sentinel.standard_name
-    mock_logger.warning.assert_not_called()
+    _derive.logger.warning.assert_not_called()
     cube.convert_units.assert_not_called()
 
 
-@mock.patch('iris.cube.CubeList', side_effect=lambda x: x)
-@mock.patch('esmvalcore.preprocessor._derive.ALL_DERIVED_VARIABLES',
-            autospec=True)
-@mock.patch('esmvalcore.preprocessor._derive.logger', autospec=True)
-def test_check_units_nounit(mock_logger, mock_all_derived_vars, _, mock_cubes):
+@pytest.mark.usefixtures("patched_derive")
+def test_check_units_nounit(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
-    mock_derived_var_dict(mock_all_derived_vars, Unit('no unit'))
+    mock_all_derived_variables(Unit('no unit'))
     cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'J',
                   standard_name=mock.sentinel.standard_name)
-    assert_derived_var_calc_called(mock_all_derived_vars, mock_cubes)
+    assert_derived_var_calc_called_once_with(mock_cubes)
     assert cube.units == Unit('J')
     assert cube.var_name == SHORT_NAME
     assert cube.long_name == mock.sentinel.long_name
     assert cube.standard_name == mock.sentinel.standard_name
-    mock_logger.warning.assert_called_once_with(
+    _derive.logger.warning.assert_called_once_with(
         "Units of cube after executing derivation script of '%s' are '%s', "
         "automatically setting them to '%s'. This might lead to incorrect "
         "data", SHORT_NAME, Unit('no_unit'), 'J')
     cube.convert_units.assert_not_called()
 
 
-@mock.patch('iris.cube.CubeList', side_effect=lambda x: x)
-@mock.patch('esmvalcore.preprocessor._derive.ALL_DERIVED_VARIABLES',
-            autospec=True)
-@mock.patch('esmvalcore.preprocessor._derive.logger', autospec=True)
-def test_check_units_unknown(mock_logger, mock_all_derived_vars, _,
-                             mock_cubes):
+@pytest.mark.usefixtures("patched_derive")
+def test_check_units_unknown(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
-    mock_derived_var_dict(mock_all_derived_vars, Unit('unknown'))
+    mock_all_derived_variables(Unit('unknown'))
     cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'J',
                   standard_name=mock.sentinel.standard_name)
-    assert_derived_var_calc_called(mock_all_derived_vars, mock_cubes)
+    assert_derived_var_calc_called_once_with(mock_cubes)
     assert cube.units == Unit('J')
     assert cube.var_name == SHORT_NAME
     assert cube.long_name == mock.sentinel.long_name
     assert cube.standard_name == mock.sentinel.standard_name
-    mock_logger.warning.assert_called_once_with(
+    _derive.logger.warning.assert_called_once_with(
         "Units of cube after executing derivation script of '%s' are '%s', "
         "automatically setting them to '%s'. This might lead to incorrect "
         "data", SHORT_NAME, Unit('unknown'), 'J')
     cube.convert_units.assert_not_called()
 
 
-@mock.patch('iris.cube.CubeList', side_effect=lambda x: x)
-@mock.patch('esmvalcore.preprocessor._derive.ALL_DERIVED_VARIABLES',
-            autospec=True)
-@mock.patch('esmvalcore.preprocessor._derive.logger', autospec=True)
-def test_check_units_convertible(mock_logger, mock_all_derived_vars, _,
-                                 mock_cubes):
+@pytest.mark.usefixtures("patched_derive")
+def test_check_units_convertible(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
-    mock_derived_var_dict(mock_all_derived_vars, Unit('kg s-1'))
+    mock_all_derived_variables(Unit('kg s-1'))
     cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'g yr-1',
                   standard_name=mock.sentinel.standard_name)
-    assert_derived_var_calc_called(mock_all_derived_vars, mock_cubes)
+    assert_derived_var_calc_called_once_with(mock_cubes)
     cube.convert_units.assert_called_once_with('g yr-1')
     assert cube.var_name == SHORT_NAME
     assert cube.long_name == mock.sentinel.long_name
     assert cube.standard_name == mock.sentinel.standard_name
-    mock_logger.warning.assert_not_called()
+    _derive.logger.warning.assert_not_called()
 
 
-@mock.patch('iris.cube.CubeList', side_effect=lambda x: x)
-@mock.patch('esmvalcore.preprocessor._derive.ALL_DERIVED_VARIABLES',
-            autospec=True)
-@mock.patch('esmvalcore.preprocessor._derive.logger', autospec=True)
-def test_check_units_fail(mock_logger, mock_all_derived_vars, _, mock_cubes):
+@pytest.mark.usefixtures("patched_derive")
+def test_check_units_fail(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
-    mock_derived_var_dict(mock_all_derived_vars, Unit('kg'))
+    mock_all_derived_variables(Unit('kg'))
     with pytest.raises(ValueError) as err:
         derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'm',
                standard_name=mock.sentinel.standard_name)
@@ -147,7 +135,7 @@ def test_check_units_fail(mock_logger, mock_all_derived_vars, _, mock_cubes):
         "Units 'kg' after executing derivation script of 'short_name' cannot "
         "be converted to target units 'm'"
     )
-    mock_logger.warning.assert_not_called()
+    _derive.logger.warning.assert_not_called()
 
 
 def test_get_required():
