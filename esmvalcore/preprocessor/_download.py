@@ -8,8 +8,8 @@ from .._data_finder import get_start_end_year, select_files
 logger = logging.getLogger(__name__)
 
 
-def synda_search(variable):
-    """Search files using synda."""
+def _synda_search_cmd(variable):
+    """Create a synda command for searching for variable."""
     project = variable.get('project', '')
     if project == 'CMIP5':
         query = {
@@ -32,7 +32,8 @@ def synda_search(variable):
             'grid_label': variable.get('grid'),
         }
     else:
-        return []
+        raise NotImplementedError(
+            f"Unknown project {project}, unable to download data.")
 
     query = {facet: value for facet, value in query.items() if value}
 
@@ -41,12 +42,20 @@ def synda_search(variable):
     cmd = ['synda', 'search', '--file']
     cmd.extend(query)
     cmd = ' '.join(cmd)
+    return cmd
+
+
+def synda_search(variable):
+    """Search files using synda."""
+    cmd = _synda_search_cmd(variable)
     logger.debug("Running: %s", cmd)
     result = subprocess.check_output(cmd, shell=True, universal_newlines=True)
     logger.debug('Result:\n%s', result.strip())
 
-    files = [line.split()[-1] for line in result.split('\n')
-             if line.startswith('new')]
+    files = [
+        line.split()[-1] for line in result.split('\n')
+        if line.startswith('new')
+    ]
     if variable.get('frequency', '') != 'fx':
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
