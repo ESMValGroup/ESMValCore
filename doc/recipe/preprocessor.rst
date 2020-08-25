@@ -19,6 +19,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Area operations`
 * :ref:`Volume operations`
 * :ref:`Cycles`
+* :ref:`Trend`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
 * :ref:`Other`
@@ -1312,6 +1313,26 @@ use ``coords: [year, day_of_year]``.
 See also :func:`esmvalcore.preprocessor.amplitude`.
 
 
+.. _trend:
+
+Trend
+=====
+
+The ``_trend.py`` module contains the following preprocessor functions:
+
+* ``linear_trend``: Calculate linear trend long a specified coordinate.
+
+``linear_trend``
+----------------
+
+This function functions calculates the linear trend of a dataset (defined as
+slope of an ordinary linear regression) along a specified coordinate. This
+coordinate is the only argument of the preprocessor (given as :obj:`str`;
+default value is ``'time'``).
+
+See also :func:`esmvalcore.preprocessor.linear_trend`.
+
+
 .. _detrend:
 
 Detrend
@@ -1333,6 +1354,7 @@ If method is ``constant``, detrend will compute the mean along that dimension
 and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
+
 
 .. _unit conversion:
 
