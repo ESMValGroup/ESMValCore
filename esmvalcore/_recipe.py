@@ -1042,6 +1042,31 @@ class Recipe:
                 expand_ensemble(variable)
 
         return expanded
+    
+    @staticmethod
+    def _expand_startdate(variables):
+        """
+        Expand ensemble members to multiple datasets
+
+        Expansion only support ensembles defined as strings, not lists
+        """
+        expanded = []
+        regex = re.compile(r'\(\d{4,8}:\d{4,8}:\d+[DMY]\)')
+        for variable in variables:
+            startdate = variable.get('startdate', "")
+            if not isinstance(startdate, str):
+                expanded.append(variable)
+                continue
+            match = regex.search(startdate)
+            if not match:
+                expanded.append(variable)
+                continue
+            start, end = match.group(0)[1: -1].split(':')
+            for i in range(int(start), int(end) + 1):
+                expand = deepcopy(variable)
+                expand['ensemble'] = regex.sub(str(i), startdate, 1)
+                expanded.append(expand)
+        return expanded
 
     def _initialize_variables(self, raw_variable, raw_datasets):
         """Define variables for all datasets."""

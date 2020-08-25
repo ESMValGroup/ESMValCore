@@ -311,9 +311,9 @@ class CMORCheck():
         rank += len(set(dimensions))
 
         # Check number of dimension coords matches rank
-        if self._cube.ndim != rank:
-            self.report_error(self._does_msg, self._cube.var_name,
-                              'match coordinate rank')
+        # if self._cube.ndim != rank:
+        #     self.report_error(self._does_msg, self._cube.var_name,
+        #                       'match coordinate rank')
 
     def _check_multiple_coords_same_stdname(self):
         standard_names = set()
