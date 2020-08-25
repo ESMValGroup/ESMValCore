@@ -32,7 +32,7 @@ def _get_slope(y_arr, x_arr):
     # Calculate slope
     x_demean = x_arr - x_arr.mean()
     y_demean = y_arr - y_arr.mean()
-    slope = da.sum(x_demean * y_demean) / da.sum(x_demean**2)
+    slope = (x_demean * y_demean).sum() / (x_demean**2).sum()
     return slope
 
 
@@ -65,8 +65,8 @@ def linear_trend(cube, coordinate='time'):
 
     # Calculate trend
     trend_arr = da.apply_along_axis(
-        _get_slope, axis, cube.core_data(), coord.core_points(),
-        dtype=cube.dtype, shape=())
+        _get_slope, axis, cube.data, coord.points, dtype=cube.dtype,
+        shape=())
     trend_arr = da.ma.masked_invalid(trend_arr)
 
     # Create dummy cube by collapsing along dimension and add trend data
@@ -83,8 +83,8 @@ def linear_trend(cube, coordinate='time'):
     coord_units = coord.units
     if coord_units.is_time_reference():
         coord_units = Unit(coord_units.symbol.split()[0])
-    invalid_units = np.any([cube.units is None, cube.units.is_unknown(),
-                            cube.units.is_no_unit(), coord_units.is_no_unit()])
+    invalid_units = any([cube.units is None, cube.units.is_unknown(),
+                         cube.units.is_no_unit(), coord_units.is_no_unit()])
     if not invalid_units:
         cube.units /= coord_units
 
