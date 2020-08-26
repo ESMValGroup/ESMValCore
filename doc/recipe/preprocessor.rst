@@ -1320,17 +1320,30 @@ Trend
 
 The ``_trend.py`` module contains the following preprocessor functions:
 
-* ``linear_trend``: Calculate linear trend long a specified coordinate.
+* ``linear_trend``: Calculate linear trend along a specified coordinate.
+* ``linear_trend_stderr``: Calculate standard error of linear trend along a
+  specified coordinate.
 
 ``linear_trend``
 ----------------
 
-This function functions calculates the linear trend of a dataset (defined as
-slope of an ordinary linear regression) along a specified coordinate. This
-coordinate is the only argument of the preprocessor (given as :obj:`str`;
-default value is ``'time'``).
+This function calculates the linear trend of a dataset (defined as slope of an
+ordinary linear regression) along a specified coordinate. The only argument of
+this preprocessor is ``coordinate`` (given as :obj:`str`; default value is
+``'time'``).
 
 See also :func:`esmvalcore.preprocessor.linear_trend`.
+
+``linear_trend_stderr``
+-----------------------
+
+This function calculates the standard error of the linear trend of a dataset
+(defined as the standard error of the slope in an ordinary linear regression)
+along a specified coordinate. The only argument of this preprocessor is
+``coordinate`` (given as :obj:`str`; default value is ``'time'``). Note that
+the standard error is **not** identical to a confidence interval.
+
+See also :func:`esmvalcore.preprocessor.linear_trend_stderr`.
 
 
 .. _detrend:
