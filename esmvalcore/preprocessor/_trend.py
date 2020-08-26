@@ -69,6 +69,17 @@ def _get_slope_stderr(y_arr, x_arr):
     return slope_stderr
 
 
+def _set_trend_units(cube, coord):
+    """Set correct trend units for cube."""
+    coord_units = coord.units
+    if coord_units.is_time_reference():
+        coord_units = Unit(coord_units.symbol.split()[0])
+    invalid_units = any([cube.units is None, cube.units.is_unknown(),
+                         cube.units.is_no_unit(), coord_units.is_no_unit()])
+    if not invalid_units:
+        cube.units /= coord_units
+
+
 def linear_trend(cube, coordinate='time'):
     """Calculate linear trend of data along a given coordinate.
 
@@ -108,18 +119,12 @@ def linear_trend(cube, coordinate='time'):
     cube = cube.collapsed(coord, aggregator)
     cube.data = trend_arr
 
-    # Add metadata
+    # Adapt metadata
     if cube.var_name is not None:
         cube.var_name += '_trend'
     if cube.long_name is not None:
         cube.long_name += ' (Trend)'
-    coord_units = coord.units
-    if coord_units.is_time_reference():
-        coord_units = Unit(coord_units.symbol.split()[0])
-    invalid_units = any([cube.units is None, cube.units.is_unknown(),
-                         cube.units.is_no_unit(), coord_units.is_no_unit()])
-    if not invalid_units:
-        cube.units /= coord_units
+    _set_trend_units(cube, coord)
 
     return cube
 
@@ -166,17 +171,11 @@ def linear_trend_stderr(cube, coordinate='time'):
     cube = cube.collapsed(coord, aggregator)
     cube.data = trend_stderr_arr
 
-    # Add metadata
+    # Adapt metadata
     if cube.var_name is not None:
         cube.var_name += '_trend_stderr'
     if cube.long_name is not None:
         cube.long_name += ' (Trend Standard Error)'
-    coord_units = coord.units
-    if coord_units.is_time_reference():
-        coord_units = Unit(coord_units.symbol.split()[0])
-    invalid_units = any([cube.units is None, cube.units.is_unknown(),
-                         cube.units.is_no_unit(), coord_units.is_no_unit()])
-    if not invalid_units:
-        cube.units /= coord_units
+    _set_trend_units(cube, coord)
 
     return cube
