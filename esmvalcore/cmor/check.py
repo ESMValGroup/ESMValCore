@@ -465,6 +465,8 @@ class CMORCheck():
         """Check monotonicity and direction of coordinate."""
         if coord.ndim > 1:
             return
+        if coord.dtype.kind == 'U':
+            return
         if not coord.is_monotonic():
             self.report_critical(self._is_msg, var_name, 'monotonic')
         if len(coord.points) == 1:
@@ -567,7 +569,10 @@ class CMORCheck():
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
         if coord_info.requested:
-            cmor_points = [float(val) for val in coord_info.requested]
+            try:
+                cmor_points = [float(val) for val in coord_info.requested]
+            except ValueError:
+                cmor_points = coord_info.requested
             coord_points = list(coord.points)
             for point in cmor_points:
                 if point not in coord_points:
