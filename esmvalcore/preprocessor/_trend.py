@@ -9,16 +9,6 @@ from cf_units import Unit
 logger = logging.getLogger(__name__)
 
 
-def _remove_axis_np(data, axis=None):
-    """Non-lazy aggregator function to remove an axis."""
-    return np.take(data, 0, axis=axis)
-
-
-def _remove_axis_da(data, axis=None):
-    """Lazy aggregator function to remove an axis."""
-    return da.take(data, 0, axis=axis)
-
-
 def _mask_xy(x_arr, y_arr):
     """Mask X and Y arrays."""
     if np.ma.is_masked(y_arr):
@@ -64,7 +54,7 @@ def _get_slope_stderr(y_arr, x_arr):
     slope = _slope(x_arr, y_arr)
     intercept = y_mean - slope * x_mean
     y_estim = slope * x_arr + intercept
-    slope_stderr = da.sqrt(((y_arr - y_estim)**2).sum() / dof /
+    slope_stderr = np.sqrt(((y_arr - y_estim)**2).sum() / dof /
                            ((x_arr - x_mean)**2).sum())
     return slope_stderr
 
@@ -105,19 +95,25 @@ def linear_trend(cube, coordinate='time'):
 
     """
     coord = cube.coord(coordinate, dim_coords=True)
-    axis = cube.coord_dims(coord)[0]
 
-    # Calculate trend
-    trend_arr = da.apply_along_axis(
-        _get_slope, axis, cube.data, coord.points, dtype=cube.dtype,
-        shape=())
-    trend_arr = da.ma.masked_invalid(trend_arr)
+    # Construct aggregator and calculate trend
+    def call_func(data, axis, x_data):
+        """Calculate trend."""
+        trend_arr = np.apply_along_axis(_get_slope, axis, data, x_data)
+        trend_arr = np.ma.masked_invalid(trend_arr)
+        return trend_arr
 
-    # Create dummy cube by collapsing along dimension and add trend data
-    aggregator = iris.analysis.Aggregator('trend', _remove_axis_np,
-                                          lazy_func=_remove_axis_da)
+    def lazy_func(data, axis, x_data):
+        """Calculate trend lazily."""
+        trend_arr = da.apply_along_axis(
+            _get_slope, axis, data, x_data, dtype=data.dtype, shape=())
+        trend_arr = da.ma.masked_invalid(trend_arr)
+        return trend_arr
+
+    aggregator = iris.analysis.Aggregator('trend', call_func,
+                                          lazy_func=lazy_func,
+                                          x_data=coord.points)
     cube = cube.collapsed(coord, aggregator)
-    cube.data = trend_arr
 
     # Adapt metadata
     if cube.var_name is not None:
@@ -157,19 +153,26 @@ def linear_trend_stderr(cube, coordinate='time'):
 
     """
     coord = cube.coord(coordinate, dim_coords=True)
-    axis = cube.coord_dims(coord)[0]
 
-    # Calculate standard error of trends
-    trend_stderr_arr = da.apply_along_axis(
-        _get_slope_stderr, axis, cube.data, coord.points, dtype=cube.dtype,
-        shape=())
-    trend_stderr_arr = da.ma.masked_invalid(trend_stderr_arr)
+    # Construct aggregator and calculate standard error of the trend
+    def call_func(data, axis, x_data):
+        """Calculate trend standard error."""
+        trend_std_arr = np.apply_along_axis(_get_slope_stderr, axis, data,
+                                            x_data)
+        trend_std_arr = np.ma.masked_invalid(trend_std_arr)
+        return trend_std_arr
 
-    # Create dummy cube by collapsing along dimension and add trend data
-    aggregator = iris.analysis.Aggregator('trend_stderr', _remove_axis_np,
-                                          lazy_func=_remove_axis_da)
+    def lazy_func(data, axis, x_data):
+        """Calculate trend standard error lazily."""
+        trend_std_arr = da.apply_along_axis(
+            _get_slope_stderr, axis, data, x_data, dtype=data.dtype, shape=())
+        trend_std_arr = da.ma.masked_invalid(trend_std_arr)
+        return trend_std_arr
+
+    aggregator = iris.analysis.Aggregator('trend_stderr', call_func,
+                                          lazy_func=lazy_func,
+                                          x_data=coord.points)
     cube = cube.collapsed(coord, aggregator)
-    cube.data = trend_stderr_arr
 
     # Adapt metadata
     if cube.var_name is not None:

@@ -1318,7 +1318,7 @@ See also :func:`esmvalcore.preprocessor.amplitude`.
 Trend
 =====
 
-The ``_trend.py`` module contains the following preprocessor functions:
+The trend module contains the following preprocessor functions:
 
 * ``linear_trend``: Calculate linear trend along a specified coordinate.
 * ``linear_trend_stderr``: Calculate standard error of linear trend along a

@@ -1,4 +1,5 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._trend`."""
+import dask.array as da
 import iris
 import iris.coord_categorisation
 import numpy as np
@@ -106,6 +107,23 @@ def test_linear_trend_3_time(cube_3_time):
     cube_trend = linear_trend(cube_3_time)
     assert cube_trend.shape == (2, 2)
     assert_masked_array_equal(cube_trend.data, [[3.5, 4.0], [4.0, 4.0]])
+    assert not cube_trend.coords('time', dim_coords=True)
+    assert cube_trend.coords('latitude', dim_coords=True)
+    assert cube_trend.coords('longitude', dim_coords=True)
+    assert cube_trend.var_name == 'x_trend'
+    assert cube_trend.long_name == 'X (Trend)'
+    assert cube_trend.units == 'kg day-1'
+    assert (iris.coords.CellMethod('trend', coords=('time',)) in
+            cube_trend.cell_methods)
+
+
+def test_linear_trend_3_time_lazy(cube_3_time):
+    """Test lazy calculation of linear trend with three time points."""
+    cube_3_time.data = -2.0 * da.arange(3 * 2 * 2).reshape(3, 2, 2)
+    assert cube_3_time.has_lazy_data()
+    cube_trend = linear_trend(cube_3_time)
+    assert cube_trend.shape == (2, 2)
+    assert_masked_array_equal(cube_trend.data, [[-8.0, -8.0], [-8.0, -8.0]])
     assert not cube_trend.coords('time', dim_coords=True)
     assert cube_trend.coords('latitude', dim_coords=True)
     assert cube_trend.coords('longitude', dim_coords=True)
@@ -249,6 +267,26 @@ def test_linear_trend_stderr_1_time(cube_1_time):
 def test_linear_trend_stderr_3_time(cube_3_time):
     """Test calculation of trend stderr with three time points."""
     cube_3_time.data[0, 0, 0] = 1.0
+    cube_stderr = linear_trend_stderr(cube_3_time)
+    assert cube_stderr.shape == (2, 2)
+    assert_masked_array_equal(cube_stderr.data,
+                              [[0.28867513459482086, 0.0], [0.0, 0.0]])
+    assert not cube_stderr.coords('time', dim_coords=True)
+    assert cube_stderr.coords('latitude', dim_coords=True)
+    assert cube_stderr.coords('longitude', dim_coords=True)
+    assert cube_stderr.var_name == 'x_trend_stderr'
+    assert cube_stderr.long_name == 'X (Trend Standard Error)'
+    assert cube_stderr.units == 'kg day-1'
+    assert (iris.coords.CellMethod('trend_stderr', coords=('time',)) in
+            cube_stderr.cell_methods)
+
+
+def test_linear_trend_stderr_3_time_lazy(cube_3_time):
+    """Test lazy calculation of trend stderr with three time points."""
+    cube_3_time.data = da.array([[[1.0, 1.0], [2.0, 3.0]],
+                                 [[4.0, 5.0], [6.0, 7.0]],
+                                 [[8.0, 9.0], [10.0, 11.0]]])
+    assert cube_3_time.has_lazy_data()
     cube_stderr = linear_trend_stderr(cube_3_time)
     assert cube_stderr.shape == (2, 2)
     assert_masked_array_equal(cube_stderr.data,
