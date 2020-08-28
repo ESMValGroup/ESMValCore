@@ -1028,6 +1028,7 @@ def test_standardized_anomalies(period, standardize=True):
                 result.data,
                 expected
             )
+            assert result.units == '1'
         else:
             expected = np.ma.masked_invalid(expected_anomalies)
             assert_array_equal(
