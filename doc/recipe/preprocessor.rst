@@ -1084,6 +1084,11 @@ Parameters:
     regions in the shape file is masked out. If ``true``, the regions in the
     shapefiles are masked out separately, generating an auxiliary dimension
     for the cube for this.
+  * ``ids``: by default, ``[]``, in this case all the shapes in the file will
+    be used. If a list of IDs is provided, only the shapes matching them will
+    be used. The IDs are assigned from the ``name`` or ``id`` attributes (in
+    that order of priority) ifpresent in the file or from the reading order
+    if not
 
 Examples:
     * Extract the shape of the river Elbe from a shapefile:

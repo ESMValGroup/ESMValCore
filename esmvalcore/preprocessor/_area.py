@@ -525,6 +525,10 @@ def extract_shape(cube,
         Whether or not to retain the sub shapes of the shapefile in the output.
         If this is set to True, the output cube has a dimension for the sub
         shapes.
+    ids: list(str), optional
+        List of shapes to be read from the file. The ids are assigned from
+        the attributes 'name' or 'id' (in that priority order) if present in
+        the file or correspond to the reading order if not.
 
     Returns
     -------
