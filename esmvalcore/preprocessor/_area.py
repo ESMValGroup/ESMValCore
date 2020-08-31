@@ -373,7 +373,7 @@ def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
 def _select_representative_point(shape, lon, lat):
     """Select a representative point for `shape` from `lon` and `lat`."""
     representative_point = shape.representative_point()
-    points = shapely.geometry.MultiPoint(np.stack((lon.flat, lat.flat),
+    points = shapely.geometry.MultiPoint(np.stack((np.ravel(lon), np.ravel(lat)),
                                                   axis=1))
     nearest_point = shapely.ops.nearest_points(points, representative_point)[0]
     nearest_lon, nearest_lat = nearest_point.coords[0]
@@ -409,7 +409,8 @@ def _get_masks_from_geometries(geometries,
                                lon,
                                lat,
                                method='contains',
-                               decomposed=False):
+                               decomposed=False,
+                               ids=[],):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
@@ -417,19 +418,26 @@ def _get_masks_from_geometries(geometries,
             "'representative'.")
 
     selections = dict()
-
+    id_properties = ('name', 'id')
     for i, item in enumerate(geometries):
+        id_ = i
+        for id_prop in id_properties:
+            if id_prop in item['properties']:
+                id_ = item['properties'][id_prop]
+                break
+            if id_prop.upper() in item['properties']:
+                id_ = item['properties'][id_prop.upper()]
+                break
+        id_ = str(id_)
+
+        if ids and id_ not in ids:
+            continue
+
         shape = shapely.geometry.shape(item['geometry'])
         if method == 'contains':
             select = shapely.vectorized.contains(shape, lon, lat)
         if method == 'representative' or not select.any():
             select = _select_representative_point(shape, lon, lat)
-        if 'ID' in item['properties']:
-            id_ = int(item['properties']['ID'])
-        elif 'id' in item['properties']:
-            id_ = int(item['properties']['id'])
-        else:
-            id_ = i
 
         selections[id_] = select
 
@@ -490,7 +498,8 @@ def extract_shape(cube,
                   shapefile,
                   method='contains',
                   crop=True,
-                  decomposed=False):
+                  decomposed=False,
+                  ids=[],):
     """
     Extract a region defined by a shapefile.
 
@@ -553,7 +562,8 @@ def extract_shape(cube,
                                                 lon,
                                                 lat,
                                                 method=method,
-                                                decomposed=decomposed)
+                                                decomposed=decomposed,
+                                                ids=ids)
 
     cubelist = iris.cube.CubeList()
 
