@@ -385,13 +385,21 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     return statistic_products
 
 
-def ensemble_statistics(products, output_products, statistics):
+def ensemble_statistics(products, output_products, statistics: list):
+    """Calculate ensemble statistics.
+
+    Parameters
+    ----------
+    statistics: list
+        List of operators to apply to the data ensemble
+    """
     product_dict = defaultdict(set)
     span = 'overlap'
+
     for product in products:
         dataset = '_'.join([product.attributes['project'],
                             product.attributes['dataset'],
-                            product.attributes['exp']])
+                            ''.join(product.attributes['exp'])])  # TODO: clean this
 
         product_dict[dataset].add(product)
 
