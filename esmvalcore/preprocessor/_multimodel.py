@@ -100,7 +100,7 @@ def _compute_statistic(data, statistic_name):
         quantile = float(statistic_name[1:]) / 100
         statistic_function = partial(_quantile, quantile=quantile)
     else:
-        raise NotImplementedError
+        raise ValueError(f'No such statistic: `{statistic_name}`')
 
     # no plevs
     if len(data[0].shape) < 3:
