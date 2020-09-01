@@ -791,8 +791,9 @@ def _get_preprocessor_products(variables,
         )
         products.add(product)
 
-    _update_statistic_settings(products, order, config_user['preproc_dir'])
-    _update_ensemble_settings(products, order, config_user['preproc_dir'])
+    preproc_dir = config_user['preproc_dir']
+    _update_statistic_settings(products, order, preproc_dir)
+    _update_ensemble_settings(products, order, preproc_dir)
 
     for product in products:
         product.check()
