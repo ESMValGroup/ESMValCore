@@ -398,7 +398,7 @@ class PreprocessingTask(BaseTask):
         """Initialize product provenance."""
         self._initialize_products(self.products)
         self._initialize_multi_model_statistics_provenance()
-        self._initialize_ensemble_statistics_provenance
+        self._initialize_ensemble_statistics_provenance()
 
     def _initialize_multi_model_statistics_provenance(self):
         """Initialize provenance for multi-model statistics."""
