@@ -396,7 +396,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
             statistic_products.add(statistic_product)
         else:
             statistic_products[statistic] = statistic_cube
-    
+
     if output_products:
         products |= statistic_products
         return products
@@ -404,17 +404,22 @@ def multi_model_statistics(products, span, statistics, output_products=None):
 
 
 def ensemble_statistics(products, output_products, statistics):
-    prods = defaultdict(set)
+    product_dict = defaultdict(set)
     span = 'overlap'
-    for p in products:
-        dataset = '_'.join([p.attributes['project'],
-                           p.attributes['dataset'],
-                           p.attributes['exp']])
+    for product in products:
+        dataset = '_'.join([product.attributes['project'],
+                            product.attributes['dataset'],
+                            product.attributes['exp']])
 
-        prods[dataset].add(p)
+        product_dict[dataset].add(product)
 
-    for dataset, ensemble_products in prods.items():
-        statistic_products = multi_model_statistics(ensemble_products, span, statistics, output_products[dataset])
-        products |= statistic_products
+    for dataset, ensemble_products in product_dict.items():
+        statistic_products = multi_model_statistics(
+            ensemble_products,
+            span,
+            statistics,
+            output_products[dataset],
+        )
+        products |= statistic_products  # set union
 
     return products
