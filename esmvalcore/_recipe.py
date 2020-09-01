@@ -576,8 +576,8 @@ def _apply_preprocessor_profile(settings, profile_settings):
             settings[step].update(args)
 
 
-def _get_statistic_attributes(products):
-    """Get attributes for the statistic output products."""
+def _get_common_attributes(products):
+    """Get common attributes for the output products."""
     attributes = {}
     some_product = next(iter(products))
     for key, value in some_product.attributes.items():
@@ -629,7 +629,7 @@ def _update_statistic_settings(products, order, preproc_dir):
 
     some_product = next(iter(products))
     for statistic in some_product.settings[step]['statistics']:
-        attributes = _get_statistic_attributes(products)
+        attributes = _get_common_attributes(products)
         attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
             statistic.title())
         attributes['filename'] = get_statistic_output_file(
@@ -642,35 +642,48 @@ def _update_statistic_settings(products, order, preproc_dir):
                 settings['output_products'] = {}
             settings['output_products'][statistic] = statistic_product
 
+
 def _update_ensemble_settings(products, order, preproc_dir):
     step = 'ensemble_statistics'
-    products = {p for p in products if step in p.settings}
+    products = {product for product in products if step in product.settings}
     if not products:
         return
 
-    prods = defaultdict(set)
+    grouped_products_dict = defaultdict(set)
     for product in products:
         try:
-            dataset = '_'.join([product.attributes['project'],
-                                product.attributes['dataset'],
-                                product.attributes['exp']])
-            prods[dataset].add(product)
+            identifier = '_'.join([product.attributes['project'],
+                                   product.attributes['dataset'],
+                                   product.attributes['exp']])
         except KeyError:
             continue
-    for dataset, grouped_products in prods.items():
+        else:
+            grouped_products_dict[identifier].add(product)
+
+    for identifier, grouped_products in grouped_products_dict.items():
         some_product = next(iter(grouped_products))
-        for statistic in some_product.settings[step]['statistics']:
-            attributes = _get_statistic_attributes(products)
-            attributes['dataset'] = '{}_Ensemble{}'.format(dataset, statistic.title())
-            attributes['filename'] = get_statistic_output_file(
-                attributes, preproc_dir)
+        statistics = some_product.settings[step]['statistics']
+
+        for statistic in statistics:
+            common_attributes = _get_common_attributes(products)
+
+            title = statistic.title()
+            common_attributes['dataset'] = f'{identifier}_Ensemble{title}'
+
+            filename = get_statistic_output_file(common_attributes, preproc_dir)
+            common_attributes['filename'] = filename
+
             common_settings = _get_remaining_common_settings(step, order, products)
-            statistic_product = PreprocessorFile(attributes, common_settings)
+            statistic_product = PreprocessorFile(common_attributes, common_settings)
+
             for product in products:
                 settings = product.settings[step]
+
                 if 'output_products' not in settings:
+                    # assume output products is a nested dict
                     settings['output_products'] = defaultdict(lambda: defaultdict(dict))
-                settings['output_products'][dataset][statistic] = statistic_product
+
+                settings['output_products'][identifier][statistic] = statistic_product
 
 
 def _update_extract_shape(settings, config_user):
