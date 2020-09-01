@@ -387,7 +387,7 @@ class PreprocessingTask(BaseTask):
             debug=None,
             write_ncl_interface=False,
     ):
-        """Initialize"""
+        """Initialize."""
         _check_multi_model_settings(products)
         super().__init__(ancestors=ancestors, name=name, products=products)
         self.order = list(order)
@@ -396,30 +396,43 @@ class PreprocessingTask(BaseTask):
 
     def _initialize_product_provenance(self):
         """Initialize product provenance."""
-        for product in self.products:
-            product.initialize_provenance(self.activity)
+        self._initialize_products(self.products)
+        self._initialize_multi_model_statistics_provenance()
+        self._initialize_ensemble_statistics_provenance
 
-        # Hacky way to initialize the multi model products as well.
+    def _initialize_multi_model_statistics_provenance(self):
+        """Initialize provenance for multi-model statistics."""
         step = 'multi_model_statistics'
-        input_products = [p for p in self.products if step in p.settings]
+        input_products = self._get_input_products(step)
         if input_products:
             statistic_products = input_products[0].settings[step].get(
                 'output_products', {}).values()
-            for product in statistic_products:
-                product.initialize_provenance(self.activity)
 
+            self._initialize_products(statistic_products)
+
+    def _initialize_ensemble_statistics_provenance(self):
+        """Initialize provenance for ensemble statistics."""
         step = 'ensemble_statistics'
-        input_products = [p for p in self.products if step in p.settings]
+        input_products = self._get_input_products(step)
         if input_products:
             statistic_products = set()
+
             for inputs in input_products:
-                for dataset, prods in inputs.settings[step].get('output_products', {}).items():
-                        statistic_products.update(prods.values())
-            for product in statistic_products:
-                product.initialize_provenance(self.activity)
+                items = inputs.settings[step].get('output_products', {}).items()
 
+                for dataset, products in items:
+                    statistic_products.update(products.values())
 
+            self._initialize_products(statistic_products)
 
+    def _get_input_products(self, step):
+        """Get input products."""
+        return [product for product in self.products if step in product.settings]
+
+    def _initialize_products(self, products):
+        """Initialize products."""
+        for product in products:
+            product.initialize_provenance(self.activity)
 
     def _run(self, _):
         """Run the preprocessor."""
