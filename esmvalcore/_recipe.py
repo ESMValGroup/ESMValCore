@@ -682,7 +682,7 @@ def _update_ensemble_settings(products, order, preproc_dir):
 
                 if 'output_products' not in settings:
                     # assume output products is a nested dict
-                    settings['output_products'] = defaultdict(lambda: defaultdict(dict))
+                    settings['output_products'] = defaultdict(dict)
 
                 settings['output_products'][identifier][statistic] = statistic_product
 
