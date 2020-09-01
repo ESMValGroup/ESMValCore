@@ -397,18 +397,18 @@ def ensemble_statistics(products, output_products, statistics: list):
     span = 'overlap'
 
     for product in products:
-        dataset = '_'.join([product.attributes['project'],
+        identifier = '_'.join([product.attributes['project'],
                             product.attributes['dataset'],
                             ''.join(product.attributes['exp'])])  # TODO: clean this
 
-        product_dict[dataset].add(product)
+        product_dict[identifier].add(product)
 
-    for dataset, ensemble_products in product_dict.items():
+    for identifier, ensemble_products in product_dict.items():
         statistic_products = multi_model_statistics(
             ensemble_products,
             span,
             statistics,
-            output_products[dataset],
+            output_products[identifier],
         )
         products |= statistic_products  # set union
 
