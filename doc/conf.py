@@ -419,9 +419,9 @@ intersphinx_mapping = {
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'esmvaltool':
-    ('https://esmvaltool.readthedocs.io/en/%s/' % rtd_version, None),
+    ('https://docs.esmvaltool.org/en/%s/' % rtd_version, None),
     'esmvalcore':
-    ('https://esmvaltool.readthedocs.io/projects/esmvalcore/en/%s/' %
+    ('https://docs.esmvaltool.org/projects/ESMValCore/en/%s/' %
      rtd_version, None),
 }
 

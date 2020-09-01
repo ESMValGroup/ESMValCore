@@ -52,7 +52,7 @@ The standard document on best practices for Python code is
 documentation. We make use of `numpy style
 docstrings <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html>`__
 to document Python functions that are visible on
-`readthedocs <https://esmvaltool.readthedocs.io>`__.
+`readthedocs <https://docs.esmvaltool.org>`__.
 
 Most formatting issues in Python code can be fixed automatically by
 running the commands
@@ -108,14 +108,14 @@ What should be documented
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Any code documentation that is visible on
-`readthedocs <https://esmvaltool.readthedocs.io>`__ should be well
+`readthedocs <https://docs.esmvaltool.org>`__ should be well
 written and adhere to the standards for documentation for the respective
 language. Note that there is no need to write extensive documentation
 for functions that are not visible on readthedocs. However, adding a one
 line docstring describing what a function does is always a good idea.
 When making changes/introducing a new preprocessor function, also update
 the `preprocessor
-documentation <https://esmvaltool.readthedocs.io/projects/esmvalcore/en/latest/esmvalcore/preprocessor.html>`__.
+documentation <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/preprocessor.html>`__.
 
 How to build the documentation locally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
