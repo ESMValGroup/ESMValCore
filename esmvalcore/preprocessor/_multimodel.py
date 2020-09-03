@@ -333,6 +333,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     ValueError
         If span is neither overlap nor full.
     """
+    # breakpoint()
     logger.debug('Multimodel statistics: computing: %s', statistics)
     if len(products) < 2:
         logger.info("Single dataset in list: will not compute statistics.")
@@ -379,9 +380,6 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         else:
             statistic_products[statistic] = statistic_cube
 
-    if output_products:
-        products |= statistic_products
-        return products
     return statistic_products
 
 
@@ -410,6 +408,5 @@ def ensemble_statistics(products, output_products, statistics: list):
             statistics,
             output_products[identifier],
         )
-        products |= statistic_products  # set union
 
-    return products
+    return statistic_products
