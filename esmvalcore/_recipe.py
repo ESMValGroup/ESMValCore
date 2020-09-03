@@ -676,10 +676,8 @@ def _update_ensemble_settings(products, order, preproc_dir):
             common_attributes['filename'] = filename
 
             common_settings = _get_remaining_common_settings(step, order, products)
-            print(common_settings)  # original memory location #0
 
             statistic_product = PreprocessorFile(common_attributes, common_settings, avoid_deepcopy=True)
-            print(statistic_product.settings)  # new memory location #1
 
             for product in products:
                 settings = product.settings[step]
@@ -689,9 +687,6 @@ def _update_ensemble_settings(products, order, preproc_dir):
                     settings['output_products'] = defaultdict(dict)
 
                 settings['output_products'][identifier][statistic] = statistic_product
-            print(statistic_product.settings)  # same memory location #1
-            print()
-    # breakpoint(); exit()
 
 
 def _update_extract_shape(settings, config_user):

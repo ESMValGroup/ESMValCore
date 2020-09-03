@@ -194,7 +194,6 @@ def _check_multi_model_settings(products):
         reference = None
         for product in products:
             settings = product.settings.get(step)
-            print(settings)
             if settings is None:
                 continue
             elif reference is None:
