@@ -194,6 +194,7 @@ def _check_multi_model_settings(products):
         reference = None
         for product in products:
             settings = product.settings.get(step)
+            print(settings)
             if settings is None:
                 continue
             elif reference is None:
@@ -272,11 +273,14 @@ def get_step_blocks(steps, order):
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
 
-    def __init__(self, attributes, settings, ancestors=None):
+    def __init__(self, attributes, settings, ancestors=None, avoid_deepcopy=None):
         super(PreprocessorFile, self).__init__(attributes['filename'],
                                                attributes, ancestors)
 
-        self.settings = copy.deepcopy(settings)
+        if not avoid_deepcopy:
+            self.settings = copy.deepcopy(settings)
+        else:
+            self.settings = copy.copy(settings)
         if 'save' not in self.settings:
             self.settings['save'] = {}
         self.settings['save']['filename'] = self.filename
