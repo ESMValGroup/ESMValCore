@@ -55,8 +55,8 @@ a simple way to check your code!
 Pre-commit
 ~~~~~~~~~~
 
-To run ``pre-commit`` on your code, go to the ESMValTool directory
-(``cd ESMValTool``) and run
+To run ``pre-commit`` on your code, go to the ESMValCore directory
+(``cd ESMValCore``) and run
 
 ::
 
@@ -141,7 +141,7 @@ to add/remove whitespace as required by the standard using `yapf <https://github
 to run `docformatter <https://github.com/myint/docformatter>`__ which helps formatting the doc strings (such as line length, spaces).
 
 To check if your code adheres to the standard, go to the directory where
-the repository is cloned, e.g. ``cd ESMValTool``, and run `prospector <http://prospector.landscape.io/>`__
+the repository is cloned, e.g. ``cd ESMValCore``, and run `prospector <http://prospector.landscape.io/>`__
 
 ::
 
