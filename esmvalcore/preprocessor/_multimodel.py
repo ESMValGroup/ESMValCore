@@ -335,7 +335,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     """
     logger.debug('Multimodel statistics: computing: %s', statistics)
     if len(products) < 2:
-        logger.info("Single dataset in list: will not compute statistics.")
+        logger.warning("Single dataset in list: will not compute statistics.")
         return products
     if output_products:
         cubes = [cube for product in products for cube in product.cubes]
@@ -392,7 +392,6 @@ def ensemble_statistics(products, output_products, statistics: list):
     """
     product_dict = defaultdict(set)
     span = 'overlap'
-
     for product in products:
         identifier = '_'.join([product.attributes['project'],
                             product.attributes['dataset'],
@@ -400,12 +399,14 @@ def ensemble_statistics(products, output_products, statistics: list):
 
         product_dict[identifier].add(product)
 
+    statistic_products = set()
     for identifier, ensemble_products in product_dict.items():
-        statistic_products = multi_model_statistics(
+        statistic_product = multi_model_statistics(
             ensemble_products,
             span,
             statistics,
             output_products[identifier],
         )
+        statistic_products |= statistic_product
 
     return statistic_products
