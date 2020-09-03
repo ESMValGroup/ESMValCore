@@ -333,7 +333,6 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     ValueError
         If span is neither overlap nor full.
     """
-    # breakpoint()
     logger.debug('Multimodel statistics: computing: %s', statistics)
     if len(products) < 2:
         logger.info("Single dataset in list: will not compute statistics.")
