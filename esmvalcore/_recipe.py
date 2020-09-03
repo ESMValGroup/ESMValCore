@@ -630,13 +630,18 @@ def _update_statistic_settings(products, order, preproc_dir):
     some_product = next(iter(products))
     for statistic in some_product.settings[step]['statistics']:
         check.valid_multimodel_statistic(statistic)
-        attributes = _get_common_attributes(products)
-        attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
-            statistic.title().replace('.', '-'))
-        attributes['filename'] = get_statistic_output_file(
-            attributes, preproc_dir)
+
+        common_attributes = _get_common_attributes(products)
+
+        title = 'MultiModel{}'.format(statistic.title().replace('.', '-'))
+        common_attributes['dataset'] = common_attributes['alias'] = title
+
+        filename = get_statistic_output_file(common_attributes, preproc_dir)
+        common_attributes['filename'] = filename
+
         common_settings = _get_remaining_common_settings(step, order, products)
-        statistic_product = PreprocessorFile(attributes, common_settings)
+        statistic_product = PreprocessorFile(common_attributes, common_settings)
+
         for product in products:
             settings = product.settings[step]
             if 'output_products' not in settings:
