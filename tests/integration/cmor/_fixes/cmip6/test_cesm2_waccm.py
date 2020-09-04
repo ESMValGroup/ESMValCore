@@ -56,7 +56,7 @@ def test_get_cl_fix():
     assert fix == [Cl(None)]
 
 
-@pytest.mark.skipif(sys.version_info < (3,7,6),
+@pytest.mark.skipif(sys.version_info < (3, 7, 6),
                     reason="requires python3.7.6 or newer")
 @unittest.mock.patch(
     'esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath',
