@@ -617,6 +617,15 @@ def _update_multi_dataset_settings(variable, settings):
         _exclude_dataset(settings, variable, step)
 
 
+def groupby(iterable, keyfunc: callable) -> dict:
+    grouped = defaultdict(set)
+    for item in iterable:
+        key = keyfunc(item)
+        grouped[key].add(item)
+
+    return grouped
+
+
 def _update_multi_model_settings(products, order, preproc_dir):
     """Define statistic output products."""
     step = 'multi_model_statistics'
@@ -652,23 +661,17 @@ def _update_multi_model_settings(products, order, preproc_dir):
             settings['groupby'] = None
 
 
-def groupby(iterable, keyfunc: callable) -> dict:
-    grouped = defaultdict(set)
-    for item in iterable:
-        key = keyfunc(item)
-        grouped[key].add(item)
-
-    return grouped
-
-
-def _update_ensemble_settings(products, order, preproc_dir):
-    step = 'ensemble_statistics'
-    ensemble_grouping = ('project', 'dataset', 'exp')
+def _update_multi_product_settings(products, order, preproc_dir, step, grouping):
+    # TODO: avoid deep copy?
+    # TODO: title -> identifier.title()?
     products = {p for p in products if step in p.settings}
     if not products:
         return
 
-    grouped_products_dict = groupby(products, keyfunc=lambda p: p.group(ensemble_grouping))
+    if grouping:
+        grouped_products_dict = groupby(products, keyfunc=lambda p: p.group(grouping))
+    else:
+        grouped_products_dict = {'multi_model': products}
 
     for identifier, grouped_products in grouped_products_dict.items():
 
@@ -678,8 +681,8 @@ def _update_ensemble_settings(products, order, preproc_dir):
         for statistic in statistics:
             common_attributes = _get_common_attributes(products)
 
-            statistic_str = statistic.title().replace('.', '-')
-            title = f'Ensemble_{identifier}_{statistic_str}'
+            statistic_str = statistic.replace('.', '-')
+            title = f'{identifier}_{statistic_str}'
             common_attributes['dataset'] = common_attributes['alias'] = title
 
             filename = get_statistic_output_file(common_attributes, preproc_dir)
@@ -697,7 +700,20 @@ def _update_ensemble_settings(products, order, preproc_dir):
                     settings['output_products'] = defaultdict(dict)
 
                 settings['output_products'][identifier][statistic] = statistic_product
-                settings['groupby'] = ensemble_grouping
+                settings['groupby'] = grouping
+
+
+def _update_ensemble_settings(products, order, preproc_dir):
+    step = 'ensemble_statistics'
+    ensemble_grouping = ('project', 'dataset', 'exp')
+
+    _update_multi_product_settings(products, order, preproc_dir, step, grouping=ensemble_grouping)
+
+def _update_multi_model_settings(products, order, preproc_dir):
+    step = 'multi_model_statistics'
+    grouping = None
+
+    _update_multi_product_settings(products, order, preproc_dir, step, grouping=None)
 
 
 def _update_extract_shape(settings, config_user):
