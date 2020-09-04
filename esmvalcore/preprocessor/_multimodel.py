@@ -380,9 +380,57 @@ def multi_model_statistics(products, span, statistics, output_products):
     return statistics_products
 
 
+def _ensemble_statistics_iris(cubes, statistics: list):
+    """Use iris merge/collapsed to perform the aggregation."""
+    from iris.experimental.equalise_cubes import equalise_attributes
+
+    operators = {
+        'COUNT': iris.analysis.COUNT,
+        'GMEAN': iris.analysis.GMEAN,
+        'HMEAN': iris.analysis.HMEAN,
+        'MAX': iris.analysis.MAX,
+        'MEAN': iris.analysis.MEAN,
+        'MEDIAN': iris.analysis.MEDIAN,
+        'MIN': iris.analysis.MIN,
+        'PEAK': iris.analysis.PEAK,
+        # 'PERCENTILE': iris.analysis.PERCENTILE,  # requires additional args
+        # 'PROPORTION': iris.analysis.PROPORTION,  # requires additional args
+        'RMS': iris.analysis.RMS,
+        'STD_DEV': iris.analysis.STD_DEV,
+        'SUM': iris.analysis.SUM,
+        'VARIANCE': iris.analysis.VARIANCE,
+        # 'WPERCENTILE': iris.analysis.WPERCENTILE,  # requires additional args
+    }
+
+    for i, cube in enumerate(cubes):
+        concat_dim = iris.coords.AuxCoord(i, var_name='ens')
+        cube.add_aux_coord(concat_dim)
+
+    equalise_attributes(cubes)
+
+    cubes = iris.cube.CubeList(cubes)
+    cube = cubes.merge_cube()
+
+    statistics_cubes = {}
+    for statistic in statistics:
+        try:
+            operator = operators[statistic.upper()]
+        except KeyError:
+            logger.error(
+                'Statistic %s not supported in ensemble_statistics. '
+                'Choose from %s',
+                statistic, operators.keys())
+
+        statistic_cube = cube.collapsed('ens', operator)
+        statistics_cubes[statistic] = statistic_cube
+
+    return statistics_cubes
+
+
 def _ensemble_statistics(cubes, statistics: list):
-    span = 'overlap'
-    return _multi_model_statistics(cubes, span, statistics)
+    # span = 'overlap'
+    # return _multi_model_statistics(cubes, span, statistics)
+    return _ensemble_statistics_iris(cubes, statistics)
 
 
 def ensemble_statistics(products, output_products, statistics: list):
