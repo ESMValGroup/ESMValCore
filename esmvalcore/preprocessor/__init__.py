@@ -354,6 +354,18 @@ class PreprocessorFile(TrackedFile):
         }
         self.entity.add_attributes(settings)
 
+    def group(self, *keys: str):
+        from collections.abc import Iterable
+
+        identifier = []
+        for key in keys:
+            attribute = self.attributes[key]
+            if isinstance(attribute, Iterable):
+                '-'.join(attribute)
+            identifier.append(attribute)
+
+        return '_'.join(identifier)
+
 
 # TODO: use a custom ProductSet that raises an exception if you try to
 # add the same Product twice
