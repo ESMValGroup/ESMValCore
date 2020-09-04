@@ -471,6 +471,7 @@ def multi_model_statistics(products,
                            output_products,
                            span,
                            groupby=None):
+    """Apply multimodel statistics to esmvalcore preprocessor products."""
     return _grouped_multiproduct_statistics(
         products=products,
         statistics=statistics,
@@ -481,11 +482,11 @@ def multi_model_statistics(products,
 
 
 def ensemble_statistics(products, statistics, output_products, groupby=None):
-    ensemble_grouping = ['project', 'dataset', 'exp']
+    """Apply ensemble statistics to esmvalcore preprocessor products."""
     return _grouped_multiproduct_statistics(
         products=products,
         statistics=statistics,
         output_products=output_products,
-        groupby=ensemble_grouping,
+        groupby=groupby,
         use_iris=True,
     )
