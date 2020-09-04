@@ -136,9 +136,7 @@ INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('cmor_check_data') + 1]
 FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('save'):]
 
 MULTI_MODEL_FUNCTIONS = {
-    'multi_model_statistics',
-    'mask_fillvalues',
-    'ensemble_statistics'
+    'multi_model_statistics', 'mask_fillvalues', 'ensemble_statistics'
 }
 
 
@@ -201,9 +199,10 @@ def _check_multi_model_settings(products):
             elif reference.settings[step] != settings:
                 raise ValueError(
                     "Unable to combine differing multi-dataset settings for "
-                    "{} and {}, {} and {}".format(
-                        reference.filename, product.filename,
-                        reference.settings[step], settings))
+                    "{} and {}, {} and {}".format(reference.filename,
+                                                  product.filename,
+                                                  reference.settings[step],
+                                                  settings))
 
 
 def _get_multi_model_settings(products, step):
@@ -245,8 +244,7 @@ def preprocess(items, step, **settings):
 
     items = []
     for item in result:
-        if isinstance(item,
-                      (PreprocessorFile, Cube, str)):
+        if isinstance(item, (PreprocessorFile, Cube, str)):
             items.append(item)
         else:
             items.extend(item)
@@ -271,8 +269,11 @@ def get_step_blocks(steps, order):
 
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
-
-    def __init__(self, attributes, settings, ancestors=None, avoid_deepcopy=None):
+    def __init__(self,
+                 attributes,
+                 settings,
+                 ancestors=None,
+                 avoid_deepcopy=None):
         super(PreprocessorFile, self).__init__(attributes['filename'],
                                                attributes, ancestors)
 
@@ -378,8 +379,8 @@ def _apply_multimodel(products, step, debug):
     """Apply multi model step to products."""
     settings, exclude = _get_multi_model_settings(products, step)
 
-    logger.debug("Applying %s to\n%s", step, '\n'.join(
-        str(p) for p in products - exclude))
+    logger.debug("Applying %s to\n%s", step,
+                 '\n'.join(str(p) for p in products - exclude))
     result = preprocess(products - exclude, step, **settings)
     products = set(result) | exclude
 
@@ -395,15 +396,14 @@ def _apply_multimodel(products, step, debug):
 
 class PreprocessingTask(BaseTask):
     """Task for running the preprocessor"""
-
     def __init__(
-            self,
-            products,
-            ancestors=None,
-            name='',
-            order=DEFAULT_ORDER,
-            debug=None,
-            write_ncl_interface=False,
+        self,
+        products,
+        ancestors=None,
+        name='',
+        order=DEFAULT_ORDER,
+        debug=None,
+        write_ncl_interface=False,
     ):
         """Initialize."""
         _check_multi_model_settings(products)
@@ -418,34 +418,35 @@ class PreprocessingTask(BaseTask):
         self._initialize_multi_model_statistics_provenance()
         self._initialize_ensemble_statistics_provenance()
 
-    def _initialize_multi_model_statistics_provenance(self):
-        """Initialize provenance for multi-model statistics."""
-        step = 'multi_model_statistics'
-        input_products = self._get_input_products(step)
-        if input_products:
-            statistic_products = input_products[0].settings[step].get(
-                'output_products', {}).values()
-
-            self._initialize_products(statistic_products)
-
-    def _initialize_ensemble_statistics_provenance(self):
-        """Initialize provenance for ensemble statistics."""
-        step = 'ensemble_statistics'
+    def _initialize_multiproduct_provenance(self, step):
         input_products = self._get_input_products(step)
         if input_products:
             statistic_products = set()
 
             for inputs in input_products:
-                items = inputs.settings[step].get('output_products', {}).items()
+                items = input_products[0].settings[step].get(
+                    'output_products', {}).items()
 
                 for dataset, products in items:
                     statistic_products.update(products.values())
 
             self._initialize_products(statistic_products)
 
+    def _initialize_multi_model_statistics_provenance(self):
+        """Initialize provenance for multi-model statistics."""
+        step = 'multi_model_statistics'
+        self._initialize_multiproduct_provenance(step)
+
+    def _initialize_ensemble_statistics_provenance(self):
+        """Initialize provenance for ensemble statistics."""
+        step = 'ensemble_statistics'
+        self._initialize_multiproduct_provenance(step)
+
     def _get_input_products(self, step):
         """Get input products."""
-        return [product for product in self.products if step in product.settings]
+        return [
+            product for product in self.products if step in product.settings
+        ]
 
     def _initialize_products(self, products):
         """Initialize products."""

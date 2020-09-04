@@ -441,9 +441,14 @@ def _grouped_multiproduct_statistics(products,
                                      statistics: list,
                                      output_products,
                                      groupby,
+                                     span=None,
                                      use_iris=False):
     """Apply _multiproduct_statistics on grouped products."""
-    grouped_products = _group(products, groupby=groupby)
+    if groupby is None:
+        grouped_products = {'multi_model': products}
+    else:
+        grouped_products = _group(products, groupby=groupby)
+
     statistics_products = set()
     for identifier, products in grouped_products.items():
         sub_output_products = output_products[identifier]
@@ -452,6 +457,7 @@ def _grouped_multiproduct_statistics(products,
             products=products,
             statistics=statistics,
             output_products=sub_output_products,
+            span=span,
             use_iris=use_iris,
         )
 
@@ -460,16 +466,21 @@ def _grouped_multiproduct_statistics(products,
     return statistics_products
 
 
-def multi_model_statistics(products, span, statistics, output_products):
-    return _multiproduct_statistics(
+def multi_model_statistics(products,
+                           statistics,
+                           output_products,
+                           span,
+                           groupby=None):
+    return _grouped_multiproduct_statistics(
         products=products,
         statistics=statistics,
         output_products=output_products,
+        groupby=groupby,
         span=span,
     )
 
 
-def ensemble_statistics(products, statistics, output_products):
+def ensemble_statistics(products, statistics, output_products, groupby=None):
     ensemble_grouping = ['project', 'dataset', 'exp']
     return _grouped_multiproduct_statistics(
         products=products,
