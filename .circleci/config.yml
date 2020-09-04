@@ -1,19 +1,22 @@
 ---
-version: 2
+version: 2.1
 
-aliases:
-  check_changes: &check_changes
-    name: Check changes
-    command: |
-      if (test "$CIRCLE_BRANCH" = master ||
-          git --no-pager diff --name-only origin/master... |
-          grep -q -E -f .circleci/install_triggers)
-      then
-        echo Running installation tests
-      else
-        echo Skipping installation tests
-        circleci step halt
-      fi
+orbs:
+  coverage-reporter: codacy/coverage-reporter@11.1.1
+
+commands:
+  check_changes:
+    steps:
+      - run: |
+          if (test "$CIRCLE_BRANCH" = master ||
+            git --no-pager diff --name-only origin/master... |
+            grep -q -E -f .circleci/install_triggers)
+          then
+            echo Running installation tests
+          else
+            echo Skipping installation tests
+            circleci step halt
+          fi
 
 jobs:
   test:
@@ -25,7 +28,8 @@ jobs:
       - checkout
       - run:
           command: |
-            python setup.py test --addopts '-m "not installation"'
+            pip install .[test]
+            pytest -n 2 -m "not installation"
       - store_test_results:
           path: test-reports/
       - store_artifacts:
@@ -38,7 +42,7 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
-      - run: *check_changes
+      - check_changes
       - restore_cache:
           key: python3-install-{{ .Branch }}
       - run:
@@ -51,13 +55,13 @@ jobs:
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
             conda install -yS r-base r-yaml ncl -c conda-forge
-            pip install . > /logs/install.txt 2>&1
+            pip install .[test] > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            python setup.py test
+            pytest -n 2
             esmvaltool version
       - save_cache:
           key: python3-install-{{ .Branch }}
@@ -70,17 +74,9 @@ jobs:
           path: test-reports/
       - store_test_results:
           path: test-reports/
-      - run:
-          when: always
-          command: |
-            if [[ -v CODACY_PROJECT_TOKEN ]]
-            then
-              echo Uploading coverage report
-              pip install codacy-coverage
-              python-codacy-coverage -r test-reports/coverage.xml
-            else
-              echo Not uploading coverage report
-            fi
+      - coverage-reporter/send_report:
+          coverage-reports: 'test-reports/coverage.xml'
+          project-token: $CODACY_PROJECT_TOKEN
 
   documentation:
     # Test building documentation
@@ -116,7 +112,7 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
-      - run: *check_changes
+      - check_changes
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
@@ -134,7 +130,7 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             esmvaltool version
-            python setup.py test
+            pytest -n 2
       - store_artifacts:
           path: /logs
 
@@ -145,7 +141,7 @@ jobs:
       - image: continuumio/miniconda3
     steps:
       - checkout
-      - run: *check_changes
+      - check_changes
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
@@ -184,10 +180,8 @@ jobs:
             conda env export > /logs/environment.yml
             # Test installation
             esmvaltool version
-            python -c 'from esmvalcore import *; print(__version__)'
 
 workflows:
-  version: 2
   commit:
     jobs:
       - test
