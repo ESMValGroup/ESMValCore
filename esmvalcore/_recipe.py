@@ -619,13 +619,13 @@ def _update_multi_dataset_settings(variable, settings):
 
 def _update_multi_model_settings(products, order, preproc_dir):
     """Define statistic output products."""
-    # TODO: move this to multi model statistics function?
-    # But how to check, with a dry-run option?
     step = 'multi_model_statistics'
 
     products = {p for p in products if step in p.settings}
     if not products:
         return
+
+    identifier = 'multi_model'
 
     some_product = next(iter(products))
     for statistic in some_product.settings[step]['statistics']:
@@ -633,20 +633,23 @@ def _update_multi_model_settings(products, order, preproc_dir):
 
         common_attributes = _get_common_attributes(products)
 
-        title = 'MultiModel{}'.format(statistic.title().replace('.', '-'))
+        statistic_str = statistic.title().replace('.', '-')
+        title = f'MultiModel_{statistic_str}'
         common_attributes['dataset'] = common_attributes['alias'] = title
 
         filename = get_statistic_output_file(common_attributes, preproc_dir)
         common_attributes['filename'] = filename
 
         common_settings = _get_remaining_common_settings(step, order, products)
+
         statistic_product = PreprocessorFile(common_attributes, common_settings)
 
         for product in products:
             settings = product.settings[step]
             if 'output_products' not in settings:
-                settings['output_products'] = {}
-            settings['output_products'][statistic] = statistic_product
+                settings['output_products'] = defaultdict(dict)
+            settings['output_products'][identifier][statistic] = statistic_product
+            settings['groupby'] = None
 
 
 def groupby(iterable, keyfunc: callable) -> dict:
@@ -660,8 +663,8 @@ def groupby(iterable, keyfunc: callable) -> dict:
 
 def _update_ensemble_settings(products, order, preproc_dir):
     step = 'ensemble_statistics'
-    ensemble_grouping = 'project', 'dataset', 'exp'
-    products = {product for product in products if step in product.settings}
+    ensemble_grouping = ('project', 'dataset', 'exp')
+    products = {p for p in products if step in p.settings}
     if not products:
         return
 
@@ -675,8 +678,9 @@ def _update_ensemble_settings(products, order, preproc_dir):
         for statistic in statistics:
             common_attributes = _get_common_attributes(products)
 
-            title = statistic.title()
-            common_attributes['dataset'] = f'{identifier}_Ensemble{title}'
+            statistic_str = statistic.title().replace('.', '-')
+            title = f'Ensemble_{identifier}_{statistic_str}'
+            common_attributes['dataset'] = common_attributes['alias'] = title
 
             filename = get_statistic_output_file(common_attributes, preproc_dir)
             common_attributes['filename'] = filename
@@ -693,6 +697,7 @@ def _update_ensemble_settings(products, order, preproc_dir):
                     settings['output_products'] = defaultdict(dict)
 
                 settings['output_products'][identifier][statistic] = statistic_product
+                settings['groupby'] = ensemble_grouping
 
 
 def _update_extract_shape(settings, config_user):
