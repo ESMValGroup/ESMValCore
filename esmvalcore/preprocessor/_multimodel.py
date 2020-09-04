@@ -383,24 +383,7 @@ def multi_model_statistics(products, span, statistics, output_products):
 def _ensemble_statistics_iris(cubes, statistics: list):
     """Use iris merge/collapsed to perform the aggregation."""
     from iris.experimental.equalise_cubes import equalise_attributes
-
-    operators = {
-        'COUNT': iris.analysis.COUNT,
-        'GMEAN': iris.analysis.GMEAN,
-        'HMEAN': iris.analysis.HMEAN,
-        'MAX': iris.analysis.MAX,
-        'MEAN': iris.analysis.MEAN,
-        'MEDIAN': iris.analysis.MEDIAN,
-        'MIN': iris.analysis.MIN,
-        'PEAK': iris.analysis.PEAK,
-        # 'PERCENTILE': iris.analysis.PERCENTILE,  # requires additional args
-        # 'PROPORTION': iris.analysis.PROPORTION,  # requires additional args
-        'RMS': iris.analysis.RMS,
-        'STD_DEV': iris.analysis.STD_DEV,
-        'SUM': iris.analysis.SUM,
-        'VARIANCE': iris.analysis.VARIANCE,
-        # 'WPERCENTILE': iris.analysis.WPERCENTILE,  # requires additional args
-    }
+    operators = vars(iris.analysis)
 
     for i, cube in enumerate(cubes):
         concat_dim = iris.coords.AuxCoord(i, var_name='ens')
@@ -414,12 +397,12 @@ def _ensemble_statistics_iris(cubes, statistics: list):
     statistics_cubes = {}
     for statistic in statistics:
         try:
-            operator = operators[statistic.upper()]
+            operator = operators.get(statistic.upper())
         except KeyError:
             logger.error(
                 'Statistic %s not supported in ensemble_statistics. '
-                'Choose from %s',
-                statistic, operators.keys())
+                'Choose supported operator from iris.analysis package.',
+                statistic)
 
         statistic_cube = cube.collapsed('ens', operator)
         statistics_cubes[statistic] = statistic_cube
