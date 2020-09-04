@@ -678,7 +678,7 @@ def _update_multi_model_settings(products, order, preproc_dir):
     step = 'multi_model_statistics'
     grouping = None
 
-    _update_multi_product_settings(products, order, preproc_dir, step, grouping=gruping)
+    _update_multi_product_settings(products, order, preproc_dir, step, grouping=grouping)
 
 
 def _update_extract_shape(settings, config_user):
