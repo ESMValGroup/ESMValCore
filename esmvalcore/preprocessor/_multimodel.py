@@ -364,7 +364,7 @@ def _multi_model_statistics(cubes, span, statistics):
 
 
 def multi_model_statistics(products, span, statistics, output_products):
-    """Wrap _multimodel_statistics to operate on products instead of cubes."""
+    """Apply _multimodel_statistics on products instead of cubes."""
     cubes = [cube for product in products for cube in product.cubes]
     statistics_cubes = _multi_model_statistics(cubes, span, statistics)
 
@@ -380,31 +380,32 @@ def multi_model_statistics(products, span, statistics, output_products):
     return statistics_products
 
 
-def ensemble_statistics(products, output_products, statistics: list):
-    """Calculate ensemble statistics.
-
-    Parameters
-    ----------
-    statistics: list
-        List of operators to apply to the data ensemble
-    """
-    product_dict = defaultdict(set)
+def _ensemble_statistics(cubes, statistics: list):
     span = 'overlap'
+    return _multi_model_statistics(cubes, span, statistics)
+
+
+def ensemble_statistics(products, output_products, statistics: list):
+    """Apply _ensemble_statistics on grouped products."""
+    grouped_products = defaultdict(set)
     for product in products:
         identifier = '_'.join([product.attributes['project'],
                             product.attributes['dataset'],
                             ''.join(product.attributes['exp'])])  # TODO: clean this
 
-        product_dict[identifier].add(product)
+        grouped_products[identifier].add(product)
 
-    statistic_products = set()
-    for identifier, ensemble_products in product_dict.items():
-        statistic_product = multi_model_statistics(
-            ensemble_products,
-            span,
-            statistics,
-            output_products[identifier],
-        )
-        statistic_products |= statistic_product
+    statistics_products = set()
+    for identifier, products in grouped_products.items():
+        cubes = [cube for product in products for cube in product.cubes]
+        statistics_cubes = _ensemble_statistics(cubes, statistics)
 
-    return statistic_products
+        for statistic, cube in statistics_cubes.items():
+            statistics_product = output_products[identifier][statistic]
+            statistics_product.cubes = [cube]
+
+            for product in products:
+                statistics_product.wasderivedfrom(product)
+            statistics_products.add(statistics_product)
+
+    return statistics_products
