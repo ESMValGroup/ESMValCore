@@ -358,6 +358,9 @@ class PreprocessorFile(TrackedFile):
     def group(self, keys: list):
         from collections.abc import Iterable
 
+        if not keys:
+            return ''
+
         if isinstance(keys, str):
             keys = [keys]
 
