@@ -657,14 +657,8 @@ def _update_ensemble_settings(products, order, preproc_dir):
 
     grouped_products_dict = defaultdict(set)
     for product in products:
-        try:
-            identifier = '_'.join([product.attributes['project'],
-                                   product.attributes['dataset'],
-                                   ''.join(product.attributes['exp'])])  # TODO: clean this
-        except KeyError:
-            continue
-        else:
-            grouped_products_dict[identifier].add(product)
+        identifier = product.group('project', 'dataset', 'exp')
+        grouped_products_dict[identifier].add(product)
 
     for identifier, grouped_products in grouped_products_dict.items():
 

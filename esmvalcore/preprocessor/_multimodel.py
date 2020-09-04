@@ -431,11 +431,7 @@ def _group(products, groupby=None):
     grouped_products = defaultdict(set)
     for product in products:
         if groupby == 'ensemble':
-            identifier = '_'.join([
-                product.attributes['project'],
-                product.attributes['dataset'],
-                *product.attributes['exp']
-            ])
+            identifier = product.group('project', 'dataset', 'exp')
 
         grouped_products[identifier].add(product)
 
