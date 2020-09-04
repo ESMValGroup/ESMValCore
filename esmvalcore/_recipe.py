@@ -649,6 +649,15 @@ def _update_multi_model_settings(products, order, preproc_dir):
             settings['output_products'][statistic] = statistic_product
 
 
+def groupby(iterable, keyfunc: callable) -> dict:
+    grouped = defaultdict(set)
+    for item in iterable:
+        key = keyfunc(item)
+        grouped[key].add(item)
+
+    return grouped
+
+
 def _update_ensemble_settings(products, order, preproc_dir):
     step = 'ensemble_statistics'
     ensemble_grouping = 'project', 'dataset', 'exp'
@@ -656,10 +665,7 @@ def _update_ensemble_settings(products, order, preproc_dir):
     if not products:
         return
 
-    grouped_products_dict = defaultdict(set)
-    for product in products:
-        identifier = product.group(ensemble_grouping)
-        grouped_products_dict[identifier].add(product)
+    grouped_products_dict = groupby(products, keyfunc=lambda p: p.group(ensemble_grouping))
 
     for identifier, grouped_products in grouped_products_dict.items():
 
