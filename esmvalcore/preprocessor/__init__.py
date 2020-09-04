@@ -354,8 +354,11 @@ class PreprocessorFile(TrackedFile):
         }
         self.entity.add_attributes(settings)
 
-    def group(self, *keys: str):
+    def group(self, keys: list):
         from collections.abc import Iterable
+
+        if isinstance(keys, str):
+            keys = [keys]
 
         identifier = []
         for key in keys:

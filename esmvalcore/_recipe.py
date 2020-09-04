@@ -651,13 +651,14 @@ def _update_statistic_settings(products, order, preproc_dir):
 
 def _update_ensemble_settings(products, order, preproc_dir):
     step = 'ensemble_statistics'
+    ensemble_grouping = 'project', 'dataset', 'exp'
     products = {product for product in products if step in product.settings}
     if not products:
         return
 
     grouped_products_dict = defaultdict(set)
     for product in products:
-        identifier = product.group('project', 'dataset', 'exp')
+        identifier = product.group(ensemble_grouping)
         grouped_products_dict[identifier].add(product)
 
     for identifier, grouped_products in grouped_products_dict.items():
