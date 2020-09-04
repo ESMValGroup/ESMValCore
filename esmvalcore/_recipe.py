@@ -618,6 +618,7 @@ def _update_multi_dataset_settings(variable, settings):
 
 
 def groupby(iterable, keyfunc: callable) -> dict:
+    """Group iterable by key function."""
     grouped = defaultdict(set)
     for item in iterable:
         key = keyfunc(item)
@@ -626,7 +627,8 @@ def groupby(iterable, keyfunc: callable) -> dict:
     return grouped
 
 
-def _update_multi_product_settings(products, order, preproc_dir, step, grouping):
+def _update_multi_product_settings(products, order, preproc_dir, step, grouping=None):
+    """Define output settings for generic multi-product products."""
     # TODO: avoid deep copy?
     # TODO: title -> identifier.title()?
     products = {p for p in products if step in p.settings}
@@ -669,12 +671,14 @@ def _update_multi_product_settings(products, order, preproc_dir, step, grouping)
 
 
 def _update_ensemble_settings(products, order, preproc_dir):
+    """Define output settings for ensemble products."""
     step = 'ensemble_statistics'
     ensemble_grouping = ('project', 'dataset', 'exp')
 
     _update_multi_product_settings(products, order, preproc_dir, step, grouping=ensemble_grouping)
 
 def _update_multi_model_settings(products, order, preproc_dir):
+    """Define output settings for multi model products."""
     step = 'multi_model_statistics'
     grouping = None
 

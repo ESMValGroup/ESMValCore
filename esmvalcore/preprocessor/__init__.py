@@ -355,7 +355,12 @@ class PreprocessorFile(TrackedFile):
         }
         self.entity.add_attributes(settings)
 
-    def group(self, keys: list):
+    def group(self, keys: list) -> str:
+        """Generate group keyword.
+
+        Returns a string that identifies a group.
+        Concatenates a list of values from .attributes
+        """
         from collections.abc import Iterable
 
         if not keys:
