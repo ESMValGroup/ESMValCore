@@ -288,7 +288,7 @@ def _assemble_data(cubes, statistic, span='overlap'):
     return stats_cube
 
 
-def _multicube_statistics(cubes, span, statistics):
+def _multicube_statistics(cubes, statistics, span):
     """
     Compute multi-model statistics.
 
@@ -397,12 +397,12 @@ def _multicube_statistics_iris(cubes, statistics: list):
     return statistics_cubes
 
 
-def _compute_statistics(products,
-                        statistics,
-                        output_products,
-                        span=None,
-                        use_iris=False):
-    """Compute statistics on grouped products, using iris or esmvalcore functions."""
+def _multiproduct_statistics(products,
+                             statistics,
+                             output_products,
+                             span=None,
+                             use_iris=False):
+    """Compute statistics on (grouped) products, using iris or esmvalcore functions."""
     if use_iris:
         aggregator = _multicube_statistics_iris
     else:
@@ -410,7 +410,7 @@ def _compute_statistics(products,
 
     # Extract cubes from products and compute statistics
     cubes = [cube for product in products for cube in product.cubes]
-    statistics_cubes = aggregator(cubes, span, statistics)
+    statistics_cubes = aggregator(cubes=cubes, statistics=statistics)
 
     # Add statistics to output_products
     statistics_products = set()
@@ -432,9 +432,8 @@ def _group(products, groupby=None):
     for product in products:
         if groupby == 'ensemble':
             identifier = '_'.join([
-                product.attributes['project'],
-                product.attributes['dataset'],
-                *product.attributes['exp']
+                product.attributes['project'], product.attributes['dataset'],
+                ''.join(product.attributes['exp'])
             ])
 
         grouped_products[identifier].add(product)
@@ -442,37 +441,44 @@ def _group(products, groupby=None):
     return grouped_products
 
 
-def _compute_grouped_statistics(products,
-                               output_products,
-                               statistics: list,
-                               groupby,
-                               use_iris=False):
-    """Apply _compute_statistics on grouped products."""
-    grouped_products = _group(products, groupby)
+def _grouped_multiproduct_statistics(products,
+                                     statistics: list,
+                                     output_products,
+                                     groupby,
+                                     use_iris=False):
+    """Apply _multiproduct_statistics on grouped products."""
+    grouped_products = _group(products, groupby=groupby)
     statistics_products = set()
+    # breakpoint()
     for identifier, products in grouped_products.items():
         sub_output_products = output_products[identifier]
 
-        statistics_product = _compute_statistic(products,
-                                                sub_output_products,
-                                                statistics,
-                                                use_iris=use_iris)
+        statistics_product = _multiproduct_statistics(
+            products=products,
+            statistics=statistics,
+            output_products=sub_output_products,
+            use_iris=use_iris,
+        )
 
-        statistics_products.add(statistics_product)
+        statistics_products |= statistics_product
 
     return statistics_products
 
 
 def multi_model_statistics(products, span, statistics, output_products):
-    return _compute_statistics(products,
-                               statistics,
-                               output_products,
-                               span=span)
+    return _multiproduct_statistics(
+        products=products,
+        statistics=statistics,
+        output_products=output_products,
+        span=span,
+    )
 
 
 def ensemble_statistics(products, statistics, output_products):
-    return _compute_grouped_statistics(products,
-                                       statistics,
-                                       output_products,
-                                       groupby='ensemble',
-                                       use_iris=True)
+    return _grouped_multiproduct_statistics(
+        products=products,
+        statistics=statistics,
+        output_products=output_products,
+        groupby='ensemble',
+        use_iris=True,
+    )
