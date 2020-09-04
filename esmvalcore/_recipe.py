@@ -617,7 +617,7 @@ def _update_multi_dataset_settings(variable, settings):
         _exclude_dataset(settings, variable, step)
 
 
-def _update_statistic_settings(products, order, preproc_dir):
+def _update_multi_model_settings(products, order, preproc_dir):
     """Define statistic output products."""
     # TODO: move this to multi model statistics function?
     # But how to check, with a dry-run option?
@@ -795,7 +795,7 @@ def _get_preprocessor_products(variables,
         products.add(product)
 
     preproc_dir = config_user['preproc_dir']
-    _update_statistic_settings(products, order, preproc_dir) # order important!
+    _update_multi_model_settings(products, order, preproc_dir) # order important!
     _update_ensemble_settings(products, order, preproc_dir)
 
     for product in products:
