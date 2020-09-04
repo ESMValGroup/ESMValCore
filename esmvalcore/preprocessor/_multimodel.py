@@ -12,8 +12,10 @@ It operates on different (time) spans:
 
 """
 
+import itertools
 import logging
 import re
+from collections import defaultdict
 from datetime import datetime
 from functools import partial, reduce
 
@@ -21,10 +23,6 @@ import cf_units
 import iris
 import numpy as np
 import scipy
-
-import itertools
-
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -290,7 +288,7 @@ def _assemble_data(cubes, statistic, span='overlap'):
     return stats_cube
 
 
-def _multi_model_statistics(cubes, span, statistics):
+def _multicube_statistics(cubes, span, statistics):
     """
     Compute multi-model statistics.
 
@@ -363,25 +361,14 @@ def _multi_model_statistics(cubes, span, statistics):
     return statistics_cubes
 
 
-def multi_model_statistics(products, span, statistics, output_products):
-    """Apply _multimodel_statistics on products instead of cubes."""
-    cubes = [cube for product in products for cube in product.cubes]
-    statistics_cubes = _multi_model_statistics(cubes, span, statistics)
+def _multicube_statistics_iris(cubes, statistics: list):
+    """Use iris merge/collapsed to perform the aggregation.
 
-    statistics_products = set()
-    for statistic, cube in statistics_cubes.items():
-        # Add to output product and log provenance
-        statistics_product = output_products[statistic]
-        statistics_product.cubes = [cube]
-        for product in products:
-            statistics_product.wasderivedfrom(product)
-        logger.info("Generated %s", statistics_product)
-        statistics_products.add(statistics_product)
-    return statistics_products
-
-
-def _ensemble_statistics_iris(cubes, statistics: list):
-    """Use iris merge/collapsed to perform the aggregation."""
+    Equivalent to _multicube_statistics, but uses iris functions
+    to perform the aggregation. This only works if the input
+    cubes are very homogeneous, e.g. for different ensemble members
+    of the same model/dataset.
+    """
     from iris.experimental.equalise_cubes import equalise_attributes
     operators = vars(iris.analysis)
 
@@ -410,33 +397,82 @@ def _ensemble_statistics_iris(cubes, statistics: list):
     return statistics_cubes
 
 
-def _ensemble_statistics(cubes, statistics: list):
-    # span = 'overlap'
-    # return _multi_model_statistics(cubes, span, statistics)
-    return _ensemble_statistics_iris(cubes, statistics)
+def _compute_statistics(products,
+                        statistics,
+                        output_products,
+                        span=None,
+                        use_iris=False):
+    """Compute statistics on grouped products, using iris or esmvalcore functions."""
+    if use_iris:
+        aggregator = _multicube_statistics_iris
+    else:
+        aggregator = partial(_multicube_statistics, span=span)
+
+    # Extract cubes from products and compute statistics
+    cubes = [cube for product in products for cube in product.cubes]
+    statistics_cubes = aggregator(cubes, span, statistics)
+
+    # Add statistics to output_products
+    statistics_products = set()
+    for statistic, cube in statistics_cubes.items():
+        # Add to output product and log provenance
+        statistics_product = output_products[statistic]
+        statistics_product.cubes = [cube]
+        for product in products:
+            statistics_product.wasderivedfrom(product)
+        logger.info("Generated %s", statistics_product)
+        statistics_products.add(statistics_product)
+
+    return statistics_products
 
 
-def ensemble_statistics(products, output_products, statistics: list):
-    """Apply _ensemble_statistics on grouped products."""
+def _group(products, groupby=None):
+    """Group products."""
     grouped_products = defaultdict(set)
     for product in products:
-        identifier = '_'.join([product.attributes['project'],
-                            product.attributes['dataset'],
-                            ''.join(product.attributes['exp'])])  # TODO: clean this
+        if groupby == 'ensemble':
+            identifier = '_'.join([
+                product.attributes['project'],
+                product.attributes['dataset'],
+                *product.attributes['exp']
+            ])
 
         grouped_products[identifier].add(product)
 
+    return grouped_products
+
+
+def _compute_grouped_statistics(products,
+                               output_products,
+                               statistics: list,
+                               groupby,
+                               use_iris=False):
+    """Apply _compute_statistics on grouped products."""
+    grouped_products = _group(products, groupby)
     statistics_products = set()
     for identifier, products in grouped_products.items():
-        cubes = [cube for product in products for cube in product.cubes]
-        statistics_cubes = _ensemble_statistics(cubes, statistics)
+        sub_output_products = output_products[identifier]
 
-        for statistic, cube in statistics_cubes.items():
-            statistics_product = output_products[identifier][statistic]
-            statistics_product.cubes = [cube]
+        statistics_product = _compute_statistic(products,
+                                                sub_output_products,
+                                                statistics,
+                                                use_iris=use_iris)
 
-            for product in products:
-                statistics_product.wasderivedfrom(product)
-            statistics_products.add(statistics_product)
+        statistics_products.add(statistics_product)
 
     return statistics_products
+
+
+def multi_model_statistics(products, span, statistics, output_products):
+    return _compute_statistics(products,
+                               statistics,
+                               output_products,
+                               span=span)
+
+
+def ensemble_statistics(products, statistics, output_products):
+    return _compute_grouped_statistics(products,
+                                       statistics,
+                                       output_products,
+                                       groupby='ensemble',
+                                       use_iris=True)
