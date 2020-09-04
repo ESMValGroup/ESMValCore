@@ -626,41 +626,6 @@ def groupby(iterable, keyfunc: callable) -> dict:
     return grouped
 
 
-def _update_multi_model_settings(products, order, preproc_dir):
-    """Define statistic output products."""
-    step = 'multi_model_statistics'
-
-    products = {p for p in products if step in p.settings}
-    if not products:
-        return
-
-    identifier = 'multi_model'
-
-    some_product = next(iter(products))
-    for statistic in some_product.settings[step]['statistics']:
-        check.valid_multimodel_statistic(statistic)
-
-        common_attributes = _get_common_attributes(products)
-
-        statistic_str = statistic.title().replace('.', '-')
-        title = f'MultiModel_{statistic_str}'
-        common_attributes['dataset'] = common_attributes['alias'] = title
-
-        filename = get_statistic_output_file(common_attributes, preproc_dir)
-        common_attributes['filename'] = filename
-
-        common_settings = _get_remaining_common_settings(step, order, products)
-
-        statistic_product = PreprocessorFile(common_attributes, common_settings)
-
-        for product in products:
-            settings = product.settings[step]
-            if 'output_products' not in settings:
-                settings['output_products'] = defaultdict(dict)
-            settings['output_products'][identifier][statistic] = statistic_product
-            settings['groupby'] = None
-
-
 def _update_multi_product_settings(products, order, preproc_dir, step, grouping):
     # TODO: avoid deep copy?
     # TODO: title -> identifier.title()?
@@ -713,7 +678,7 @@ def _update_multi_model_settings(products, order, preproc_dir):
     step = 'multi_model_statistics'
     grouping = None
 
-    _update_multi_product_settings(products, order, preproc_dir, step, grouping=None)
+    _update_multi_product_settings(products, order, preproc_dir, step, grouping=gruping)
 
 
 def _update_extract_shape(settings, config_user):
