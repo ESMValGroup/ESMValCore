@@ -118,7 +118,8 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
                                    [6.5, 23.0],
                                    [7.0, 25.0]]]]])
 
-
+@pytest.mark.skipif(sys.version_info < (3,7,6),
+                    reason="requires python3.7.6 or newer")
 @unittest.mock.patch(
     'esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath',
     autospec=True)
