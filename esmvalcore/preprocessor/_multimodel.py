@@ -430,8 +430,7 @@ def _group(products, groupby=None):
     """Group products."""
     grouped_products = defaultdict(set)
     for product in products:
-        if groupby == 'ensemble':
-            identifier = product.group('project', 'dataset', 'exp')
+        identifier = product.group(groupby)
 
         grouped_products[identifier].add(product)
 
@@ -446,7 +445,6 @@ def _grouped_multiproduct_statistics(products,
     """Apply _multiproduct_statistics on grouped products."""
     grouped_products = _group(products, groupby=groupby)
     statistics_products = set()
-    # breakpoint()
     for identifier, products in grouped_products.items():
         sub_output_products = output_products[identifier]
 
@@ -472,10 +470,11 @@ def multi_model_statistics(products, span, statistics, output_products):
 
 
 def ensemble_statistics(products, statistics, output_products):
+    ensemble_grouping = ['project', 'dataset', 'exp']
     return _grouped_multiproduct_statistics(
         products=products,
         statistics=statistics,
         output_products=output_products,
-        groupby='ensemble',
+        groupby=ensemble_grouping,
         use_iris=True,
     )
