@@ -290,7 +290,7 @@ def _assemble_data(cubes, statistic, span='overlap'):
     return stats_cube
 
 
-def multi_model_statistics(products, span, statistics, output_products=None):
+def _multi_model_statistics(cubes, span, statistics):
     """
     Compute multi-model statistics.
 
@@ -308,16 +308,12 @@ def multi_model_statistics(products, span, statistics, output_products=None):
 
     Parameters
     ----------
-    products: list
-        list of data products or cubes to be used in multimodel stat
-        computation;
-        cube attribute of product is the data cube for computing the stats.
+    cubes: list of cubes
+        list of cubes to be used in multimodel stat computation;
     span: str
         overlap or full; if overlap, statitsticss are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
         missing data.
-    output_products: dict
-        dictionary of output products.
     statistics: str
         statistical measure to be computed. Available options: mean, median,
         max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
@@ -334,15 +330,9 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         If span is neither overlap nor full.
     """
     logger.debug('Multimodel statistics: computing: %s', statistics)
-    if len(products) < 2:
+    if len(cubes) < 2:
         logger.warning("Single dataset in list: will not compute statistics.")
-        return products
-    if output_products:
-        cubes = [cube for product in products for cube in product.cubes]
-        statistic_products = set()
-    else:
-        cubes = products
-        statistic_products = {}
+        return cubes
 
     # Reset time coordinates and make cubes share the same calendar
     _unify_time_coordinates(cubes)
@@ -354,7 +344,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         if len(overlap) <= 1:
             logger.info("Time overlap between cubes is none or a single point."
                         "check datasets: will not compute statistics.")
-            return products
+            return cubes
         logger.debug("Using common time overlap between "
                      "datasets to compute statistics.")
     elif span == 'full':
@@ -364,22 +354,30 @@ def multi_model_statistics(products, span, statistics, output_products=None):
             "Unexpected value for span {}, choose from 'overlap', 'full'".
             format(span))
 
+    statistics_cubes = {}
     for statistic in statistics:
         # Compute statistic
         statistic_cube = _assemble_data(cubes, statistic, span)
+        statistics_cubes[statistic] = statistic_cube
 
-        if output_products:
-            # Add to output product and log provenance
-            statistic_product = output_products[statistic]
-            statistic_product.cubes = [statistic_cube]
-            for product in products:
-                statistic_product.wasderivedfrom(product)
-            logger.info("Generated %s", statistic_product)
-            statistic_products.add(statistic_product)
-        else:
-            statistic_products[statistic] = statistic_cube
+    return statistics_cubes
 
-    return statistic_products
+
+def multi_model_statistics(products, span, statistics, output_products):
+    """Wrap _multimodel_statistics to operate on products instead of cubes."""
+    cubes = [cube for product in products for cube in product.cubes]
+    statistics_cubes = _multi_model_statistics(cubes, span, statistics)
+
+    statistics_products = set()
+    for statistic, cube in statistics_cubes.items():
+        # Add to output product and log provenance
+        statistics_product = output_products[statistic]
+        statistics_product.cubes = [cube]
+        for product in products:
+            statistics_product.wasderivedfrom(product)
+        logger.info("Generated %s", statistics_product)
+        statistics_products.add(statistics_product)
+    return statistics_products
 
 
 def ensemble_statistics(products, output_products, statistics: list):
