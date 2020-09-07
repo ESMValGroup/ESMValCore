@@ -627,22 +627,40 @@ def groupby(iterable, keyfunc: callable) -> dict:
     return grouped
 
 
-def _update_multi_product_settings(input_products, order, preproc_dir, step, grouping=None):
+def _patch_multi_model_filename(settings, prefix, tags, statistic_str):
+    """Patch multi-model file name.
+
+    This is necessary to avoid overwriting existing files."""
+    from pathlib import Path
+    multi_model_tag = tags['multi_model_statistics']
+    for multi_model_product in settings['multi_model_statistics']['output_products'][multi_model_tag].values():
+        p = Path(multi_model_product._filename)
+        name = p.name
+        if not name.startswith('Ensemble'):
+            fn = p.with_name(prefix + '_' + name)
+            multi_model_product.settings['save']['filename'] = str(fn)
+            multi_model_product._filename = str(fn)
+
+
+def _update_multi_product_settings(products, order, preproc_dir, step, grouping=None):
     """Define output settings for generic multi-product products."""
     # TODO: avoid deep copy?
     # TODO: title -> identifier.title()?
-
-    products = {p for p in input_products if step in p.settings}
+    products = {p for p in products if step in p.settings}
     if not products:
-        return input_products
+        return
 
-    if grouping:
-        grouped_products_dict = groupby(products, keyfunc=lambda p: p.group(grouping))
-    else:
-        grouped_products_dict = {'multi_model': products}
+    tags = {
+        'multi_model_statistics': 'MultiModel',
+        'ensemble_statistics': 'Ensemble'
+    }
+    tag = tags[step]
 
-    output_products = set()
+    grouped_products_dict = groupby(products, keyfunc=lambda p: p.group(grouping))
+
     for identifier, grouped_products in grouped_products_dict.items():
+        if not identifier:
+            identifier = tag
 
         some_product = next(iter(grouped_products))
         statistics = some_product.settings[step]['statistics']
@@ -651,17 +669,17 @@ def _update_multi_product_settings(input_products, order, preproc_dir, step, gro
             common_attributes = _get_common_attributes(products)
 
             statistic_str = statistic.replace('.', '-')
-            title = f'{identifier}_{statistic_str}'
+            title = f'{identifier}-{statistic_str}'
             common_attributes['dataset'] = common_attributes['alias'] = title
 
             filename = get_statistic_output_file(common_attributes, preproc_dir)
             common_attributes['filename'] = filename
 
             common_settings = _get_remaining_common_settings(step, order, products)
+            if 'multi_model_statistics' in common_settings:
+                _patch_multi_model_filename(common_settings, f'{tag}-{statistic_str}', tags, statistic_str)
 
             statistic_product = PreprocessorFile(common_attributes, common_settings, avoid_deepcopy=True)
-
-            output_products.add(statistic_product)
 
             for product in products:
                 settings = product.settings[step]
@@ -673,22 +691,20 @@ def _update_multi_product_settings(input_products, order, preproc_dir, step, gro
                 settings['output_products'][identifier][statistic] = statistic_product
                 settings['groupby'] = grouping
 
-    return output_products
-
 
 def _update_ensemble_settings(products, order, preproc_dir):
     """Define output settings for ensemble products."""
     step = 'ensemble_statistics'
     ensemble_grouping = ('project', 'dataset', 'exp')
 
-    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=ensemble_grouping,)
+    _update_multi_product_settings(products, order, preproc_dir, step, grouping=ensemble_grouping)
 
 def _update_multi_model_settings(products, order, preproc_dir):
     """Define output settings for multi model products."""
     step = 'multi_model_statistics'
     grouping = None
 
-    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=grouping,)
+    _update_multi_product_settings(products, order, preproc_dir, step, grouping=grouping)
 
 
 def _update_extract_shape(settings, config_user):
@@ -748,9 +764,11 @@ def _get_preprocessor_products(variables,
     and sets the correct ancestry.
     """
     products = set()
+    preproc_dir = config_user['preproc_dir']
+
     for variable in variables:
         variable['filename'] = get_output_file(variable,
-                                               config_user['preproc_dir'])
+                                               preproc_dir)
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
@@ -796,10 +814,8 @@ def _get_preprocessor_products(variables,
         )
         products.add(product)
 
-    preproc_dir = config_user['preproc_dir']
-
-    products = _update_ensemble_settings(products, order, preproc_dir)
-    products = _update_multi_model_settings(products, order, preproc_dir) # order important!
+    _update_multi_model_settings(products, order, preproc_dir) # order important!
+    _update_ensemble_settings(products, order, preproc_dir)
 
     for product in products:
         product.check()

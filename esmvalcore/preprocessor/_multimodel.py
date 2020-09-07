@@ -445,7 +445,7 @@ def _grouped_multiproduct_statistics(products,
                                      use_iris=False):
     """Apply _multiproduct_statistics on grouped products."""
     if groupby is None:
-        grouped_products = {'multi_model': products}
+        grouped_products = {'MultiModel': products}
     else:
         grouped_products = _group(products, groupby=groupby)
 
