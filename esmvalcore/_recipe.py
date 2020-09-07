@@ -627,17 +627,17 @@ def groupby(iterable, keyfunc: callable) -> dict:
     return grouped
 
 
-def _patch_multi_model_filename(settings, prefix, tags, statistic_str):
+def _patch_multi_model_filename(settings, prefix, tags):
     """Patch multi-model file name.
 
-    This is necessary to avoid overwriting existing files."""
+    This is necessary to avoid filename collisions."""
     from pathlib import Path
     multi_model_tag = tags['multi_model_statistics']
     for multi_model_product in settings['multi_model_statistics']['output_products'][multi_model_tag].values():
-        p = Path(multi_model_product._filename)
-        name = p.name
+        path = Path(multi_model_product._filename)
+        name = path.name
         if not name.startswith('Ensemble'):
-            fn = p.with_name(prefix + '_' + name)
+            fn = path.with_name(prefix + '_' + name)
             multi_model_product.settings['save']['filename'] = str(fn)
             multi_model_product._filename = str(fn)
 
@@ -669,7 +669,7 @@ def _update_multi_product_settings(products, order, preproc_dir, step, grouping=
             common_attributes = _get_common_attributes(products)
 
             statistic_str = statistic.replace('.', '-')
-            title = f'{identifier}-{statistic_str}'
+            title = f'{identifier}{statistic_str.title()}'
             common_attributes['dataset'] = common_attributes['alias'] = title
 
             filename = get_statistic_output_file(common_attributes, preproc_dir)
@@ -677,7 +677,11 @@ def _update_multi_product_settings(products, order, preproc_dir, step, grouping=
 
             common_settings = _get_remaining_common_settings(step, order, products)
             if 'multi_model_statistics' in common_settings:
-                _patch_multi_model_filename(common_settings, f'{tag}-{statistic_str}', tags, statistic_str)
+                _patch_multi_model_filename(
+                    common_settings,
+                    f'{tag}{statistic_str.title()}',
+                    tags,
+                )
 
             statistic_product = PreprocessorFile(common_attributes, common_settings, avoid_deepcopy=True)
 
