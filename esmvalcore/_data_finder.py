@@ -94,9 +94,13 @@ def _replace_tags(path, variable):
     path = path.strip('/')
     tlist = re.findall(r'{([^}]*)}', path)
     if 'startdate' in variable:
-        path = re.sub(r'(\b{ensemble}\b)', r'{startdate}-\1', path)
+        paths = [
+            re.sub(r'(\b{ensemble}\b)', r'{startdate}-\1', path),
+            re.sub(r'({ensemble})', r'{startdate}-\1', path)
+            ]
         tlist.append('startdate')
-    paths = [path]
+    else:
+        paths = [path]
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
@@ -246,13 +250,12 @@ def get_input_filelist(variable, rootpath, drs):
     if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
-    if 'startdate' in variable:
-        variable = _update_output_file(variable, files)
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
-        if 'startdate' not in variable:
-            files = select_files(files, variable['start_year'],
-                                 variable['end_year'])
+        if 'startdate' in variable:
+            variable = _update_output_file(variable, files)
+        files = select_files(files, variable['start_year'],
+                             variable['end_year'])
     return (files, dirnames, filenames)
 
 
