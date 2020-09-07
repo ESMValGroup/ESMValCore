@@ -8,8 +8,11 @@ from iris.cube import Cube
 
 from .._provenance import TrackedFile
 from .._task import BaseTask
+from ..cmor.check import cmor_check_data, cmor_check_metadata
+from ..cmor.fix import fix_data, fix_file, fix_metadata
 from ._area import (area_statistics, extract_named_regions, extract_region,
-                    extract_shape, zonal_statistics, meridional_statistics)
+                    extract_shape, meridional_statistics, zonal_statistics)
+from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
 from ._download import download
@@ -20,13 +23,11 @@ from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_landsea, mask_landseaice, mask_outside_range)
 from ._multimodel import multi_model_statistics
 from ._other import clip
-from ._reformat import (cmor_check_data, cmor_check_metadata, fix_data,
-                        fix_file, fix_metadata)
-from ._regrid import extract_levels, regrid, extract_point
+from ._regrid import extract_levels, extract_point, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
                     daily_statistics, decadal_statistics, extract_month,
                     extract_season, extract_time, monthly_statistics,
-                    regrid_time, seasonal_statistics, timeseries_filter,)
+                    regrid_time, seasonal_statistics, timeseries_filter)
 from ._units import convert_units
 from ._volume import (depth_integration, extract_trajectory, extract_transect,
                       extract_volume, volume_statistics)
@@ -53,6 +54,7 @@ __all__ = [
     'extract_month',
     # Data reformatting/CMORization
     'fix_data',
+    'cmor_check_data',
     # Level extraction
     'extract_levels',
     # Weighting
@@ -93,6 +95,7 @@ __all__ = [
     # Time operations
     # 'annual_cycle': annual_cycle,
     # 'diurnal_cycle': diurnal_cycle,
+    'amplitude',
     'zonal_statistics',
     'meridional_statistics',
     'daily_statistics',
@@ -104,7 +107,6 @@ __all__ = [
     'anomalies',
     'regrid_time',
     'timeseries_filter',
-    'cmor_check_data',
     'convert_units',
     # Save to file
     'save',
@@ -128,8 +130,8 @@ TIME_PREPROCESSORS = [
 DEFAULT_ORDER = tuple(__all__)
 
 # The order of initial and final steps cannot be configured
-INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('fix_data') + 1]
-FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('cmor_check_data'):]
+INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('cmor_check_data') + 1]
+FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('save'):]
 
 MULTI_MODEL_FUNCTIONS = {
     'multi_model_statistics',

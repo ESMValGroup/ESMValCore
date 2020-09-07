@@ -628,9 +628,10 @@ def _update_statistic_settings(products, order, preproc_dir):
 
     some_product = next(iter(products))
     for statistic in some_product.settings[step]['statistics']:
+        check.valid_multimodel_statistic(statistic)
         attributes = _get_statistic_attributes(products)
         attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
-            statistic.title())
+            statistic.title().replace('.', '-'))
         attributes['filename'] = get_statistic_output_file(
             attributes, preproc_dir)
         common_settings = _get_remaining_common_settings(step, order, products)
@@ -1015,20 +1016,31 @@ class Recipe:
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
+
+        def expand_tag(variable, input_tag):
+            tag = variable.get(input_tag, "")
+            match = regex.search(tag)
+            if match:
+                start, end = match.group(0)[1:-1].split(':')
+                for i in range(int(start), int(end) + 1):
+                    expand = deepcopy(variable)
+                    expand[input_tag] = regex.sub(str(i), tag, 1)
+                    expand_tag(expand, input_tag)
+            else:
+                expanded.append(variable)
+
         for variable in variables:
             tag = variable.get(input_tag, "")
-            if not isinstance(tag, str):
+            if isinstance(tag, (list, tuple)):
+                for elem in tag:
+                    if regex.search(elem):
+                        raise RecipeError(
+                            f"In variable {variable}: {input_tag} expansion "
+                            f"cannot be combined with {input_tag} lists")
                 expanded.append(variable)
-                continue
-            match = regex.search(tag)
-            if not match:
-                expanded.append(variable)
-                continue
-            start, end = match.group(0)[1:-1].split(':')
-            for i in range(int(start), int(end) + 1):
-                expand = deepcopy(variable)
-                expand[input_tag] = regex.sub(str(i), tag, 1)
-                expanded.append(expand)
+            else:
+                expand_tag(variable, input_tag)
+
         return expanded
 
     def _initialize_variables(self, raw_variable, raw_datasets):
