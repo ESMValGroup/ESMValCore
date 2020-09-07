@@ -627,19 +627,21 @@ def groupby(iterable, keyfunc: callable) -> dict:
     return grouped
 
 
-def _update_multi_product_settings(products, order, preproc_dir, step, grouping=None):
+def _update_multi_product_settings(input_products, order, preproc_dir, step, grouping=None):
     """Define output settings for generic multi-product products."""
     # TODO: avoid deep copy?
     # TODO: title -> identifier.title()?
-    products = {p for p in products if step in p.settings}
+
+    products = {p for p in input_products if step in p.settings}
     if not products:
-        return
+        return input_products
 
     if grouping:
         grouped_products_dict = groupby(products, keyfunc=lambda p: p.group(grouping))
     else:
         grouped_products_dict = {'multi_model': products}
 
+    output_products = set()
     for identifier, grouped_products in grouped_products_dict.items():
 
         some_product = next(iter(grouped_products))
@@ -659,6 +661,8 @@ def _update_multi_product_settings(products, order, preproc_dir, step, grouping=
 
             statistic_product = PreprocessorFile(common_attributes, common_settings, avoid_deepcopy=True)
 
+            output_products.add(statistic_product)
+
             for product in products:
                 settings = product.settings[step]
 
@@ -669,20 +673,22 @@ def _update_multi_product_settings(products, order, preproc_dir, step, grouping=
                 settings['output_products'][identifier][statistic] = statistic_product
                 settings['groupby'] = grouping
 
+    return output_products
+
 
 def _update_ensemble_settings(products, order, preproc_dir):
     """Define output settings for ensemble products."""
     step = 'ensemble_statistics'
     ensemble_grouping = ('project', 'dataset', 'exp')
 
-    _update_multi_product_settings(products, order, preproc_dir, step, grouping=ensemble_grouping)
+    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=ensemble_grouping,)
 
 def _update_multi_model_settings(products, order, preproc_dir):
     """Define output settings for multi model products."""
     step = 'multi_model_statistics'
     grouping = None
 
-    _update_multi_product_settings(products, order, preproc_dir, step, grouping=grouping)
+    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=grouping,)
 
 
 def _update_extract_shape(settings, config_user):
@@ -791,8 +797,9 @@ def _get_preprocessor_products(variables,
         products.add(product)
 
     preproc_dir = config_user['preproc_dir']
-    _update_multi_model_settings(products, order, preproc_dir) # order important!
-    _update_ensemble_settings(products, order, preproc_dir)
+
+    products = _update_ensemble_settings(products, order, preproc_dir)
+    products = _update_multi_model_settings(products, order, preproc_dir) # order important!
 
     for product in products:
         product.check()
