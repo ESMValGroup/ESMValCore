@@ -39,4 +39,4 @@ class TestRecipe:
         ]
 
         with pytest.raises(RecipeError):
-            Recipe._expand_tag(datasets, 'ensembles')
+            Recipe._expand_tag(datasets, 'ensemble')
