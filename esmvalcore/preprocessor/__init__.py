@@ -289,10 +289,6 @@ class PreprocessorFile(TrackedFile):
         self._cubes = None
         self._prepared = False
 
-    def __repr__(self):
-        name = Path(self._filename).name
-        return f'{self.__class__.__name__}({repr(name)})'
-
     def check(self):
         """Check preprocessor settings."""
         check_preprocessor_settings(self.settings)

@@ -2,6 +2,7 @@
 import copy
 import logging
 import os
+from pathlib import Path
 
 from netCDF4 import Dataset
 from PIL import Image
@@ -122,7 +123,8 @@ class TrackedFile(object):
 
     def __str__(self):
         """Return summary string."""
-        return "{}: {}".format(self.__class__.__name__, self.filename)
+        name = Path(self._filename).name
+        return f'{self.__class__.__name__}({repr(name)})'
 
     def copy_provenance(self, target=None):
         """Create a copy with identical provenance information."""
