@@ -656,7 +656,7 @@ def _update_multi_product_settings(input_products,
     """
     products = {p for p in input_products if step in p.settings}
     if not products:
-        return input_products
+        return input_products, dict()
 
     settings = list(products)[0].settings[step]
     downstream_settings = _get_downstream_settings(step, order, products)
@@ -683,6 +683,7 @@ def _update_multi_product_settings(input_products,
 
             statistic_product = PreprocessorFile(common_attributes,
                                                  downstream_settings)
+
             output_products.add(statistic_product)
 
             relevant_settings['output_products'][identifier][
@@ -824,35 +825,45 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             settings=settings,
             ancestors=ancestors,
         )
+
         products.add(product)
 
-    ensemble_products, ensemble_settings = _update_ensemble(
-        products, order, preproc_dir)
-    multimodel_products, multimodel_settings = _update_multimodel(
-        ensemble_products, order, preproc_dir)
+    if 'ensemble_statistics' in profile:
+        ensemble_products, ensemble_settings = _update_ensemble(
+            products, order, preproc_dir)
 
-    # Update multi-product settings (workaround for lack of better ancestry tracking)
-    update_ancestors(
-        ancestors=products,
-        step='ensemble_statistics',
-        downstream_settings=ensemble_settings,
-    )
-    update_ancestors(
-        ancestors=products,
-        step='multi_model_statistics',
-        downstream_settings=multimodel_settings,
-    )
-    update_ancestors(
-        ancestors=ensemble_products,
-        step='multi_model_statistics',
-        downstream_settings=multimodel_settings,
-    )
+        # check for ensemble_settings to bypass tests
+        update_ancestors(
+            ancestors=products,
+            step='ensemble_statistics',
+            downstream_settings=ensemble_settings,
+        )
+    else:
+        ensemble_products = set()
 
-    for product in products | ensemble_products | multimodel_products:
+    if 'multi_model_statistics' in profile:
+        multimodel_products, multimodel_settings = _update_multimodel(
+            ensemble_products, order, preproc_dir)
+
+        # check for multi_model_settings to bypass tests
+        update_ancestors(
+            ancestors=products,
+            step='multi_model_statistics',
+            downstream_settings=multimodel_settings,
+        )
+
+        if 'ensemble_statistics' in profile:
+            # Update multi-product settings (workaround for lack of better ancestry tracking)
+            update_ancestors(
+                ancestors=ensemble_products,
+                step='multi_model_statistics',
+                downstream_settings=multimodel_settings,
+            )
+    else:
+        multimodel_products = set()
+
+    for product in products | multimodel_products | ensemble_products:
         product.check()
-
-    # TODO make groupby keyword work for multi-model statistics
-    # TODO correct naming of identifiers for grouped multimodel
 
     return products
 
