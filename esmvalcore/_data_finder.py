@@ -261,20 +261,23 @@ def get_output_file(variable, preproc_dir):
     return outfile
 
 
-def get_statistic_output_file(variable, preproc_dir):
-    """Get multi model statistic filename depending on settings."""
-    template = os.path.join(
+def get_multiproduct_filename(attributes, preproc_dir):
+    """Get ensemble/multi-model filename depending on settings."""
+    relevant_keys = ['project', 'dataset', 'exp', 'ensemble_statistics',
+                     'multi_model_statistics', 'mip', 'short_name']
+
+    filename_segments = []
+    for key in relevant_keys:
+        if key in attributes:
+            filename_segments.append(attributes[key])
+
+    # Add period and extension
+    segments.append(f"{attributes['start_year']}-{attributes['end_year']}.nc")
+
+    outfile = os.path.join(
         preproc_dir,
-        '{diagnostic}',
-        '{variable_group}',
-        '{dataset}_{mip}_{short_name}_{start_year}-{end_year}.nc',
+        attributes['diagnostic'],
+        attributes['variable_group'],
+        '_'.join(filename_segments),
     )
-
-
-    # if ensemble in variable:
-    #     template = ...{'ensemble'}
-    # if multimodel in variable:
-    #     template = ...
-
-    outfile = template.format(**variable)
     return outfile

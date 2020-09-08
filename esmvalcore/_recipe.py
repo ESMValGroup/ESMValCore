@@ -16,7 +16,7 @@ from . import _recipe_checks as check
 from ._config import (TAGS, get_activity, get_institutes, get_project_config,
                       replace_tags)
 from ._data_finder import (get_input_filelist, get_output_file,
-                           get_statistic_output_file)
+                           get_multiproduct_filename)
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
@@ -627,24 +627,6 @@ def groupby(iterable, keyfunc: callable) -> dict:
     return grouped
 
 
-def get_multi_output_file(attributes, preproc_dir):
-    """Get multi model statistic filename depending on settings."""
-
-    template = os.path.join(
-        preproc_dir,
-        '{attrs[diagnostic]}',
-        '{attrs[variable_group]}',
-        '{attrs[project]}_{attrs[dataset]}_{attrs[exp]}'
-        '{attrs[ensemble_statistics]}'
-        '{attrs[multi_model_statistics]}'
-        '_{attrs[mip]}_{attrs[short_name]}'
-        '_{attrs[start_year]}-{attrs[end_year]}.nc',
-    )
-
-    outfile = template.format(attrs=defaultdict(str, **attributes))
-    return outfile
-
-
 def _update_multi_product_settings(input_products, order, preproc_dir, step, grouping=None):
     """Return new products that are aggregated over multiple datasets.
 
@@ -683,7 +665,7 @@ def _update_multi_product_settings(input_products, order, preproc_dir, step, gro
             step_tag = f'{tag}{statistic_str.title()}'
             common_attributes[step] = step_tag
 
-            filename = get_multi_output_file(common_attributes, preproc_dir)
+            filename = get_multiproduct_filename(common_attributes, preproc_dir)
             common_attributes['filename'] = filename
 
             statistic_product = PreprocessorFile(common_attributes, downstream_settings)
@@ -839,9 +821,6 @@ def _get_preprocessor_products(variables,
 
     # TODO make groupby keyword work for multi-model statistics
     # TODO correct naming of identifiers for grouped multimodel
-    # TODO fix (underscores in) filenames
-    # TODO get back the pretty printing of PreprocessorFile objects
-    # TODO check if get_statistics_filename in _data_finder.py can be removed/replaced by the function above (get_multi_output_file)
 
     return products
 
