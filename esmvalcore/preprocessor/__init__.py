@@ -2,7 +2,6 @@
 import copy
 import inspect
 import logging
-from pathlib import Path
 from pprint import pformat
 
 from iris.cube import Cube
@@ -207,7 +206,7 @@ def _check_multi_model_settings(products):
 
 
 def _get_multi_model_settings(products, step):
-    """Select settings for multi model step"""
+    """Select settings for multi model step."""
     _check_multi_model_settings(products)
     settings = {}
     exclude = set()
@@ -231,7 +230,7 @@ def _run_preproc_function(function, items, kwargs):
 
 
 def preprocess(items, step, **settings):
-    """Run preprocessor"""
+    """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
     itype = _get_itype(step)
@@ -288,10 +287,6 @@ class PreprocessorFile(TrackedFile):
 
         self._cubes = None
         self._prepared = False
-
-    def __repr__(self):
-        name = Path(self._filename).name
-        return f'{self.__class__.__name__}({repr(name)})'
 
     def check(self):
         """Check preprocessor settings."""
@@ -361,11 +356,9 @@ class PreprocessorFile(TrackedFile):
     def group(self, keys: list) -> str:
         """Generate group keyword.
 
-        Returns a string that identifies a group.
-        Concatenates a list of values from .attributes
+        Returns a string that identifies a group. Concatenates a list of
+        values from .attributes
         """
-        from collections.abc import Iterable
-
         if not keys:
             return ''
 
@@ -375,8 +368,8 @@ class PreprocessorFile(TrackedFile):
         identifier = []
         for key in keys:
             attribute = self.attributes[key]
-            if isinstance(attribute, Iterable):
-                '-'.join(attribute)
+            if isinstance(attribute, (list, tuple)):
+                attribute = '-'.join(attribute)
             identifier.append(attribute)
 
         return '_'.join(identifier)
@@ -406,7 +399,7 @@ def _apply_multimodel(products, step, debug):
 
 
 class PreprocessingTask(BaseTask):
-    """Task for running the preprocessor"""
+    """Task for running the preprocessor."""
     def __init__(
         self,
         products,

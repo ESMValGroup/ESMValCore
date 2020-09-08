@@ -9,10 +9,8 @@ dimensions; and obviously consistent units.
 It operates on different (time) spans:
 - full: computes stats on full dataset time;
 - overlap: computes common time overlap between datasets;
-
 """
 
-import itertools
 import logging
 import re
 from collections import defaultdict
@@ -30,10 +28,8 @@ logger = logging.getLogger(__name__)
 def _plev_fix(dataset, pl_idx):
     """Extract valid plev data.
 
-    this function takes care of situations
-    in which certain plevs are completely
-    masked due to unavailable interpolation
-    boundaries.
+    this function takes care of situations in which certain plevs are
+    completely masked due to unavailable interpolation boundaries.
     """
     if np.ma.is_masked(dataset):
         # keep only the valid plevs
@@ -52,9 +48,9 @@ def _plev_fix(dataset, pl_idx):
 def _quantile(data, axis, quantile):
     """Calculate quantile.
 
-    Workaround for calling scipy's mquantiles with arrays of >2 dimensions
-    Similar to iris' _percentiles function, see their discussion:
-    https://github.com/SciTools/iris/pull/625
+    Workaround for calling scipy's mquantiles with arrays of >2
+    dimensions Similar to iris' _percentiles function, see their
+    discussion: https://github.com/SciTools/iris/pull/625
     """
     # Ensure that the target axis is the last dimension.
     data = np.rollaxis(data, axis, start=data.ndim)
@@ -196,8 +192,7 @@ def _get_consistent_time_unit(cubes):
 
 
 def _unify_time_coordinates(cubes):
-    """
-    Make sure all cubes' share the same time coordinate.
+    """Make sure all cubes' share the same time coordinate.
 
     This function extracts the date information from the cube and
     reconstructs the time coordinate, resetting the actual dates to the
@@ -289,8 +284,7 @@ def _assemble_data(cubes, statistic, span='overlap'):
 
 
 def _multicube_statistics(cubes, statistics, span):
-    """
-    Compute multi-model statistics.
+    """Compute multi-model statistics.
 
     Multimodel statistics computed along the time axis. Can be
     computed across a common overlap in time (set span: overlap)
@@ -361,10 +355,10 @@ def _multicube_statistics(cubes, statistics, span):
 def _multicube_statistics_iris(cubes, statistics: list):
     """Use iris merge/collapsed to perform the aggregation.
 
-    Equivalent to _multicube_statistics, but uses iris functions
-    to perform the aggregation. This only works if the input
-    cubes are very homogeneous, e.g. for different ensemble members
-    of the same model/dataset.
+    Equivalent to _multicube_statistics, but uses iris functions to
+    perform the aggregation. This only works if the input cubes are very
+    homogeneous, e.g. for different ensemble members of the same
+    model/dataset.
     """
     from iris.experimental.equalise_cubes import equalise_attributes
     operators = vars(iris.analysis)
@@ -393,6 +387,7 @@ def _multicube_statistics_iris(cubes, statistics: list):
 
     return statistics_cubes
 
+
 def flatten(lst):
     """Return individual elements from a mixed/nested list."""
     for element in lst:
@@ -407,7 +402,8 @@ def _multiproduct_statistics(products,
                              output_products,
                              span=None,
                              engine='esmvalcore'):
-    """Compute statistics on (grouped) products, using iris or esmvalcore functions."""
+    """Compute statistics on (grouped) products, using iris or esmvalcore
+    functions."""
     if engine == 'iris':
         aggregator = _multicube_statistics_iris
     else:
@@ -418,22 +414,23 @@ def _multiproduct_statistics(products,
     cubes = list(flatten(cubes))
 
     if len(cubes) < 2:
-        logger.info('Found only 1 cube; no statistics computed for %r', list(products)[0])
+        logger.info('Found only 1 cube; no statistics computed for %r',
+                    list(products)[0])
         statistics_cubes = {statistic: cubes[0] for statistic in statistics}
     else:
         statistics_cubes = aggregator(cubes=cubes, statistics=statistics)
 
     # Add statistics to output_products
     statistics_products = set()
-    if span:
-        breakpoint()
+
     for statistic, cube in statistics_cubes.items():
         # Add to output product and log provenance
         statistics_product = output_products[statistic]
         statistics_product.cubes = [cube]
         for product in products:
             statistics_product.wasderivedfrom(product)
-        logger.info("Generated %r", statistics_product)
+
+        logger.info("Generated %s", statistics_product)
         statistics_products.add(statistics_product)
 
     return statistics_products
