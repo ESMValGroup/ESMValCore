@@ -679,17 +679,17 @@ def _update_multi_product_settings(input_products, order, preproc_dir, step, gro
 def _update_ensemble(products, order, preproc_dir):
     """Define output settings for ensemble products."""
     step = 'ensemble_statistics'
-    ensemble_grouping = ('project', 'dataset', 'exp')
+    groupby = ('project', 'dataset', 'exp')
 
-    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=ensemble_grouping)
+    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=groupby)
 
 
 def _update_multimodel(products, order, preproc_dir):
     """Define output settings for multi model products."""
     step = 'multi_model_statistics'
-    grouping = None
+    groupby = list(products)[0].settings[step].get('groupby', None)
 
-    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=grouping)
+    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=groupby)
 
 
 def update_ancestors(ancestors, step, downstream_settings):
