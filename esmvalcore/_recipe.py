@@ -596,8 +596,8 @@ def _get_common_attributes(products):
     return attributes
 
 
-def _get_remaining_common_settings(step, order, products):
-    """Get preprocessor settings that are shared between products."""
+def _get_downstream_settings(step, order, products):
+    """Get downstream preprocessor settings that are shared between products."""
     settings = {}
     remaining_steps = order[order.index(step) + 1:]
     some_product = next(iter(products))
@@ -627,28 +627,38 @@ def groupby(iterable, keyfunc: callable) -> dict:
     return grouped
 
 
-def _patch_multi_model_filename(settings, prefix, tags):
-    """Patch multi-model file name.
+def get_multi_output_file(attributes, preproc_dir):
+    """Get multi model statistic filename depending on settings."""
 
-    This is necessary to avoid filename collisions."""
-    from pathlib import Path
-    multi_model_tag = tags['multi_model_statistics']
-    for multi_model_product in settings['multi_model_statistics']['output_products'][multi_model_tag].values():
-        path = Path(multi_model_product._filename)
-        name = path.name
-        if not name.startswith('Ensemble'):
-            fn = path.with_name(prefix + '_' + name)
-            multi_model_product.settings['save']['filename'] = str(fn)
-            multi_model_product._filename = str(fn)
+    template = os.path.join(
+        preproc_dir,
+        '{attrs[diagnostic]}',
+        '{attrs[variable_group]}',
+        '{attrs[project]}_{attrs[dataset]}_{attrs[exp]}'
+        '{attrs[ensemble_statistics]}'
+        '{attrs[multi_model_statistics]}'
+        '_{attrs[mip]}_{attrs[short_name]}'
+        '_{attrs[start_year]}-{attrs[end_year]}.nc',
+    )
+
+    outfile = template.format(attrs=defaultdict(str, **attributes))
+    return outfile
 
 
-def _update_multi_product_settings(products, order, preproc_dir, step, grouping=None):
-    """Define output settings for generic multi-product products."""
-    # TODO: avoid deep copy?
-    # TODO: title -> identifier.title()?
-    products = {p for p in products if step in p.settings}
+def _update_multi_product_settings(input_products, order, preproc_dir, step, grouping=None):
+    """Return new products that are aggregated over multiple datasets.
+
+    These new products will replace the original products at runtime. Therefore, they
+    need to have all the settings for the remaining steps.
+
+    The functions in _multimodel.py take output_products as function arguments. These are
+    the output_products created here. But since those functions are called from the
+    input products, the products that are created here need to be added to their
+    ancestors products' settings ().
+    """
+    products = {p for p in input_products if step in p.settings}
     if not products:
-        return
+        return input_products
 
     tags = {
         'multi_model_statistics': 'MultiModel',
@@ -656,59 +666,56 @@ def _update_multi_product_settings(products, order, preproc_dir, step, grouping=
     }
     tag = tags[step]
 
-    grouped_products_dict = groupby(products, keyfunc=lambda p: p.group(grouping))
+    settings = list(products)[0].settings[step]
+    downstream_settings = _get_downstream_settings(step, order, products)
 
-    for identifier, grouped_products in grouped_products_dict.items():
-        if not identifier:
-            identifier = tag
+    grouped_products = groupby(products, keyfunc=lambda p: p.group(grouping))
 
-        some_product = next(iter(grouped_products))
-        statistics = some_product.settings[step]['statistics']
+    relevant_settings = {'output_products': defaultdict(dict)}  # pass to ancestors
 
-        for statistic in statistics:
-            common_attributes = _get_common_attributes(products)
+    output_products = set()
+    for identifier, products in grouped_products.items():
+        common_attributes = _get_common_attributes(products)
 
-            statistic_str = statistic.replace('.', '-')
-            title = f'{identifier}{statistic_str.title()}'
-            common_attributes['dataset'] = common_attributes['alias'] = title
+        for statistic in settings.get('statistics'):
 
-            filename = get_statistic_output_file(common_attributes, preproc_dir)
+            statistic_str = statistic.replace('.', '-')  # avoid . in filename for percentiles
+            step_tag = f'{tag}{statistic_str.title()}'
+            common_attributes[step] = step_tag
+
+            filename = get_multi_output_file(common_attributes, preproc_dir)
             common_attributes['filename'] = filename
 
-            common_settings = _get_remaining_common_settings(step, order, products)
-            if 'multi_model_statistics' in common_settings:
-                _patch_multi_model_filename(
-                    common_settings,
-                    f'{tag}{statistic_str.title()}',
-                    tags,
-                )
+            statistic_product = PreprocessorFile(common_attributes, downstream_settings)
+            output_products.add(statistic_product)
 
-            statistic_product = PreprocessorFile(common_attributes, common_settings, avoid_deepcopy=True)
+            relevant_settings['output_products'][identifier][statistic] = statistic_product
 
-            for product in products:
-                settings = product.settings[step]
-
-                if 'output_products' not in settings:
-                    # assume output products is a nested dict
-                    settings['output_products'] = defaultdict(dict)
-
-                settings['output_products'][identifier][statistic] = statistic_product
-                settings['groupby'] = grouping
+    return output_products, relevant_settings
 
 
-def _update_ensemble_settings(products, order, preproc_dir):
+def _update_ensemble(products, order, preproc_dir):
     """Define output settings for ensemble products."""
     step = 'ensemble_statistics'
     ensemble_grouping = ('project', 'dataset', 'exp')
 
-    _update_multi_product_settings(products, order, preproc_dir, step, grouping=ensemble_grouping)
+    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=ensemble_grouping)
 
-def _update_multi_model_settings(products, order, preproc_dir):
+
+def _update_multimodel(products, order, preproc_dir):
     """Define output settings for multi model products."""
     step = 'multi_model_statistics'
     grouping = None
 
-    _update_multi_product_settings(products, order, preproc_dir, step, grouping=grouping)
+    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=grouping)
+
+
+def update_ancestors(ancestors, step, downstream_settings):
+    """Retroactively add settings to ancestor products."""
+    for product in ancestors:
+        settings = product.settings[step]
+        for key, value in downstream_settings.items():
+            settings[key] = value
 
 
 def _update_extract_shape(settings, config_user):
@@ -818,11 +825,23 @@ def _get_preprocessor_products(variables,
         )
         products.add(product)
 
-    _update_multi_model_settings(products, order, preproc_dir) # order important!
-    _update_ensemble_settings(products, order, preproc_dir)
 
-    for product in products:
+    ensemble_products, ensemble_settings = _update_ensemble(products, order, preproc_dir)
+    multimodel_products, multimodel_settings = _update_multimodel(ensemble_products, order, preproc_dir)
+
+    # Update multi-product settings (workaround for lack of better ancestry tracking)
+    update_ancestors(ancestors=products, step='ensemble_statistics', downstream_settings=ensemble_settings,)
+    update_ancestors(ancestors=products, step='multi_model_statistics', downstream_settings=multimodel_settings,)
+    update_ancestors(ancestors=ensemble_products, step='multi_model_statistics', downstream_settings=multimodel_settings,)
+
+    for product in products | ensemble_products | multimodel_products:
         product.check()
+
+    # TODO make groupby keyword work for multi-model statistics
+    # TODO correct naming of identifiers for grouped multimodel
+    # TODO fix (underscores in) filenames
+    # TODO get back the pretty printing of PreprocessorFile objects
+    # TODO check if get_statistics_filename in _data_finder.py can be removed/replaced by the function above (get_multi_output_file)
 
     return products
 

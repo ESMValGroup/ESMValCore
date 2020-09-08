@@ -272,15 +272,11 @@ class PreprocessorFile(TrackedFile):
     def __init__(self,
                  attributes,
                  settings,
-                 ancestors=None,
-                 avoid_deepcopy=None):
+                 ancestors=None,):
         super(PreprocessorFile, self).__init__(attributes['filename'],
                                                attributes, ancestors)
 
-        if not avoid_deepcopy:
-            self.settings = copy.deepcopy(settings)
-        else:
-            self.settings = copy.copy(settings)
+        self.settings = copy.deepcopy(settings)
         if 'save' not in self.settings:
             self.settings['save'] = {}
         self.settings['save']['filename'] = self.filename
