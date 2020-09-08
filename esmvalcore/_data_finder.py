@@ -272,7 +272,7 @@ def get_multiproduct_filename(attributes, preproc_dir):
             filename_segments.append(attributes[key])
 
     # Add period and extension
-    segments.append(f"{attributes['start_year']}-{attributes['end_year']}.nc")
+    filename_segments.append(f"{attributes['start_year']}-{attributes['end_year']}.nc")
 
     outfile = os.path.join(
         preproc_dir,

@@ -2,6 +2,7 @@
 import copy
 import inspect
 import logging
+from pathlib import Path
 from pprint import pformat
 
 from iris.cube import Cube
