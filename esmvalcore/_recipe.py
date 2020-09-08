@@ -851,9 +851,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     for product in products | ensemble_products | multimodel_products:
         product.check()
 
-    # TODO make groupby keyword work for multi-model statistics
-    # TODO correct naming of identifiers for grouped multimodel
-
     return products
 
 
