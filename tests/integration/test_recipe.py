@@ -821,7 +821,7 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
               operator: mean
             multi_model_statistics:
               span: overlap
-              statistics: [mean ]
+              statistics: [mean]
           custom:
             custom_order: true
             <<: *default

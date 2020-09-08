@@ -642,8 +642,7 @@ def get_tag(step, identifier, statistic):
 def _update_multi_product_settings(input_products,
                                    order,
                                    preproc_dir,
-                                   step,
-                                   grouping=None):
+                                   step):
     """Return new products that are aggregated over multiple datasets.
 
     These new products will replace the original products at runtime. Therefore, they
@@ -659,6 +658,12 @@ def _update_multi_product_settings(input_products,
         return input_products, dict()
 
     settings = list(products)[0].settings[step]
+
+    if step == 'ensemble_statistics':
+        grouping = ['project', 'dataset', 'exp']
+    else:
+        grouping = settings.get('groupby', None)
+
     downstream_settings = _get_downstream_settings(step, order, products)
 
     grouped_products = groupby(products, keyfunc=lambda p: p.group(grouping))
@@ -690,30 +695,6 @@ def _update_multi_product_settings(input_products,
                 statistic] = statistic_product
 
     return output_products, relevant_settings
-
-
-def _update_ensemble(products, order, preproc_dir):
-    """Define output settings for ensemble products."""
-    step = 'ensemble_statistics'
-    groupby = ['project', 'dataset', 'exp']
-
-    return _update_multi_product_settings(products,
-                                          order,
-                                          preproc_dir,
-                                          step,
-                                          grouping=groupby)
-
-
-def _update_multimodel(products, order, preproc_dir):
-    """Define output settings for multi model products."""
-    step = 'multi_model_statistics'
-    groupby = list(products)[0].settings[step].get('groupby', None)
-
-    return _update_multi_product_settings(products,
-                                          order,
-                                          preproc_dir,
-                                          step,
-                                          grouping=groupby)
 
 
 def update_ancestors(ancestors, step, downstream_settings):
@@ -828,35 +809,38 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
 
         products.add(product)
 
-    if 'ensemble_statistics' in profile:
-        ensemble_products, ensemble_settings = _update_ensemble(
-            products, order, preproc_dir)
+    ensemble_step = 'ensemble_statistics'
+    multi_model_step = 'multi_model_statistics'
+
+    if ensemble_step in profile:
+        ensemble_products, ensemble_settings = _update_multi_product_settings(
+            products, order, preproc_dir, ensemble_step)
 
         # check for ensemble_settings to bypass tests
         update_ancestors(
             ancestors=products,
-            step='ensemble_statistics',
+            step=ensemble_step,
             downstream_settings=ensemble_settings,
         )
     else:
-        ensemble_products = set()
+        ensemble_products = products
 
-    if 'multi_model_statistics' in profile:
-        multimodel_products, multimodel_settings = _update_multimodel(
-            ensemble_products, order, preproc_dir)
+    if multi_model_step in profile:
+        multimodel_products, multimodel_settings = _update_multi_product_settings(
+            ensemble_products, order, preproc_dir, multi_model_step)
 
         # check for multi_model_settings to bypass tests
         update_ancestors(
             ancestors=products,
-            step='multi_model_statistics',
+            step=multi_model_step,
             downstream_settings=multimodel_settings,
         )
 
-        if 'ensemble_statistics' in profile:
+        if ensemble_step in profile:
             # Update multi-product settings (workaround for lack of better ancestry tracking)
             update_ancestors(
                 ancestors=ensemble_products,
-                step='multi_model_statistics',
+                step=multi_model_step,
                 downstream_settings=multimodel_settings,
             )
     else:
