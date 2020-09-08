@@ -22,7 +22,7 @@ from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
 from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_fillvalues, mask_glaciated, mask_inside_range,
                     mask_landsea, mask_landseaice, mask_outside_range)
-from ._multimodel import multi_model_statistics, ensemble_statistics
+from ._multimodel import ensemble_statistics, multi_model_statistics
 from ._other import clip
 from ._regrid import extract_levels, extract_point, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
@@ -270,10 +270,12 @@ def get_step_blocks(steps, order):
 
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
-    def __init__(self,
-                 attributes,
-                 settings,
-                 ancestors=None,):
+    def __init__(
+        self,
+        attributes,
+        settings,
+        ancestors=None,
+    ):
         super(PreprocessorFile, self).__init__(attributes['filename'],
                                                attributes, ancestors)
 

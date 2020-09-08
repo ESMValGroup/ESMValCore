@@ -1,12 +1,12 @@
 """Recipe parser."""
 import fnmatch
+import itertools
 import logging
 import os
 import re
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from pprint import pformat
-import itertools
 
 import yaml
 from netCDF4 import Dataset
@@ -15,8 +15,8 @@ from . import __version__
 from . import _recipe_checks as check
 from ._config import (TAGS, get_activity, get_institutes, get_project_config,
                       replace_tags)
-from ._data_finder import (get_input_filelist, get_output_file,
-                           get_multiproduct_filename)
+from ._data_finder import (get_input_filelist, get_multiproduct_filename,
+                           get_output_file)
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
@@ -40,6 +40,7 @@ def ordered_safe_load(stream):
     """Load a YAML file using OrderedDict instead of dict."""
     class OrderedSafeLoader(yaml.SafeLoader):
         """Loader class that uses OrderedDict to load a map."""
+
     def construct_mapping(loader, node):
         """Load a map as an OrderedDict."""
         loader.flatten_mapping(node)
@@ -468,21 +469,18 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
     if not fx_vars:
         return
 
-    fx_vars = [
-        _get_fx_file(variable, fxvar, config_user)
-        for fxvar in fx_vars
-    ]
+    fx_vars = [_get_fx_file(variable, fxvar, config_user) for fxvar in fx_vars]
 
     fx_dict = {fx_var[1]['short_name']: fx_var[0] for fx_var in fx_vars}
     settings['fx_variables'] = fx_dict
     logger.info('Using fx_files: %s for variable %s during step %s',
-                pformat(settings['fx_variables']),
-                variable['short_name'],
+                pformat(settings['fx_variables']), variable['short_name'],
                 step_name)
 
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
+
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -493,8 +491,8 @@ def _update_fx_settings(settings, variable, config_user):
                     user_fx_vars.append('sftof')
             elif step_name == 'mask_landseaice':
                 user_fx_vars = ['sftgif']
-            elif step_name in ('area_statistics',
-                               'volume_statistics', 'zonal_statistics'):
+            elif step_name in ('area_statistics', 'volume_statistics',
+                               'zonal_statistics'):
                 user_fx_vars = []
         return user_fx_vars
 
@@ -506,8 +504,8 @@ def _update_fx_settings(settings, variable, config_user):
     for step_name, step_settings in settings.items():
         if step_name in fx_steps:
             fx_vars = _get_fx_vars_from_attribute(step_settings, step_name)
-            _update_fx_files(step_name, step_settings,
-                             variable, config_user, fx_vars)
+            _update_fx_files(step_name, step_settings, variable, config_user,
+                             fx_vars)
 
 
 def _read_attributes(filename):
@@ -627,7 +625,11 @@ def groupby(iterable, keyfunc: callable) -> dict:
     return grouped
 
 
-def _update_multi_product_settings(input_products, order, preproc_dir, step, grouping=None):
+def _update_multi_product_settings(input_products,
+                                   order,
+                                   preproc_dir,
+                                   step,
+                                   grouping=None):
     """Return new products that are aggregated over multiple datasets.
 
     These new products will replace the original products at runtime. Therefore, they
@@ -653,7 +655,9 @@ def _update_multi_product_settings(input_products, order, preproc_dir, step, gro
 
     grouped_products = groupby(products, keyfunc=lambda p: p.group(grouping))
 
-    relevant_settings = {'output_products': defaultdict(dict)}  # pass to ancestors
+    relevant_settings = {
+        'output_products': defaultdict(dict)
+    }  # pass to ancestors
 
     output_products = set()
     for identifier, products in grouped_products.items():
@@ -661,17 +665,21 @@ def _update_multi_product_settings(input_products, order, preproc_dir, step, gro
 
         for statistic in settings.get('statistics'):
 
-            statistic_str = statistic.replace('.', '-')  # avoid . in filename for percentiles
+            statistic_str = statistic.replace(
+                '.', '-')  # avoid . in filename for percentiles
             step_tag = f'{tag}{statistic_str.title()}'
             common_attributes[step] = step_tag
 
-            filename = get_multiproduct_filename(common_attributes, preproc_dir)
+            filename = get_multiproduct_filename(common_attributes,
+                                                 preproc_dir)
             common_attributes['filename'] = filename
 
-            statistic_product = PreprocessorFile(common_attributes, downstream_settings)
+            statistic_product = PreprocessorFile(common_attributes,
+                                                 downstream_settings)
             output_products.add(statistic_product)
 
-            relevant_settings['output_products'][identifier][statistic] = statistic_product
+            relevant_settings['output_products'][identifier][
+                statistic] = statistic_product
 
     return output_products, relevant_settings
 
@@ -679,9 +687,13 @@ def _update_multi_product_settings(input_products, order, preproc_dir, step, gro
 def _update_ensemble(products, order, preproc_dir):
     """Define output settings for ensemble products."""
     step = 'ensemble_statistics'
-    groupby = ('project', 'dataset', 'exp')
+    groupby = ['project', 'dataset', 'exp']
 
-    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=groupby)
+    return _update_multi_product_settings(products,
+                                          order,
+                                          preproc_dir,
+                                          step,
+                                          grouping=groupby)
 
 
 def _update_multimodel(products, order, preproc_dir):
@@ -689,7 +701,11 @@ def _update_multimodel(products, order, preproc_dir):
     step = 'multi_model_statistics'
     groupby = list(products)[0].settings[step].get('groupby', None)
 
-    return _update_multi_product_settings(products, order, preproc_dir, step, grouping=groupby)
+    return _update_multi_product_settings(products,
+                                          order,
+                                          preproc_dir,
+                                          step,
+                                          grouping=groupby)
 
 
 def update_ancestors(ancestors, step, downstream_settings):
@@ -745,10 +761,7 @@ def _match_products(products, variables):
     return grouped_products
 
 
-def _get_preprocessor_products(variables,
-                               profile,
-                               order,
-                               ancestor_products,
+def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user):
     """
     Get preprocessor product definitions for a set of datasets.
@@ -760,8 +773,7 @@ def _get_preprocessor_products(variables,
     preproc_dir = config_user['preproc_dir']
 
     for variable in variables:
-        variable['filename'] = get_output_file(variable,
-                                               preproc_dir)
+        variable['filename'] = get_output_file(variable, preproc_dir)
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
@@ -807,14 +819,27 @@ def _get_preprocessor_products(variables,
         )
         products.add(product)
 
-
-    ensemble_products, ensemble_settings = _update_ensemble(products, order, preproc_dir)
-    multimodel_products, multimodel_settings = _update_multimodel(ensemble_products, order, preproc_dir)
+    ensemble_products, ensemble_settings = _update_ensemble(
+        products, order, preproc_dir)
+    multimodel_products, multimodel_settings = _update_multimodel(
+        ensemble_products, order, preproc_dir)
 
     # Update multi-product settings (workaround for lack of better ancestry tracking)
-    update_ancestors(ancestors=products, step='ensemble_statistics', downstream_settings=ensemble_settings,)
-    update_ancestors(ancestors=products, step='multi_model_statistics', downstream_settings=multimodel_settings,)
-    update_ancestors(ancestors=ensemble_products, step='multi_model_statistics', downstream_settings=multimodel_settings,)
+    update_ancestors(
+        ancestors=products,
+        step='ensemble_statistics',
+        downstream_settings=ensemble_settings,
+    )
+    update_ancestors(
+        ancestors=products,
+        step='multi_model_statistics',
+        downstream_settings=multimodel_settings,
+    )
+    update_ancestors(
+        ancestors=ensemble_products,
+        step='multi_model_statistics',
+        downstream_settings=multimodel_settings,
+    )
 
     for product in products | ensemble_products | multimodel_products:
         product.check()
@@ -840,12 +865,11 @@ def _get_single_preprocessor_task(variables,
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
-    products = _get_preprocessor_products(
-        variables=variables,
-        profile=profile,
-        order=order,
-        ancestor_products=ancestor_products,
-        config_user=config_user)
+    products = _get_preprocessor_products(variables=variables,
+                                          profile=profile,
+                                          order=order,
+                                          ancestor_products=ancestor_products,
+                                          config_user=config_user)
 
     if not products:
         raise RecipeError(

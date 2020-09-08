@@ -444,8 +444,6 @@ def _grouped_multiproduct_statistics(products,
                                      span=None,
                                      engine='esmvalcore'):
     """Apply _multiproduct_statistics on grouped products."""
-    breakpoint()
-
     grouped_products = _group(products, groupby=groupby)
 
     statistics_products = set()
