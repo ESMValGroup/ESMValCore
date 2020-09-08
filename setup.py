@@ -7,6 +7,7 @@
 # - iris
 # - python-stratify
 
+import json
 import os
 import re
 import sys
@@ -23,7 +24,6 @@ PACKAGES = [
 REQUIREMENTS = {
     # Installation script (this file) dependencies
     'setup': [
-        'pytest-runner',
         'setuptools_scm',
     ],
     # Installation dependencies
@@ -48,20 +48,23 @@ REQUIREMENTS = {
     # Test dependencies
     # Execute 'python setup.py test' to run tests
     'test': [
-        'pytest>=3.9,!=6.0.0rc1',
-        'pytest-cov',
+        'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
+        'pytest-cov>=2.10.1',
         'pytest-env',
-        'pytest-flake8',
+        'pytest-flake8>=1.0.6',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
         'pytest-mock',
+        'pytest-xdist',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
     'develop': [
         'autodocsumm',
         'codespell',
+        'docformatter',
         'isort',
+        'pre-commit',
         'prospector[with_pyroma]!=1.1.6.3,!=1.1.6.4',
         'sphinx>2',
         'sphinx_rtd_theme',
@@ -70,16 +73,6 @@ REQUIREMENTS = {
         'yapf',
     ],
 }
-
-
-def read_authors(citation_file):
-    """Read the list of authors from .cff file."""
-    authors = re.findall(
-        r'family-names: (.*)$\s*given-names: (.*)',
-        Path(citation_file).read_text(),
-        re.MULTILINE,
-    )
-    return ', '.join(' '.join(author[::-1]) for author in authors)
 
 
 def discover_python_files(paths, ignore):
@@ -101,7 +94,6 @@ def discover_python_files(paths, ignore):
 
 class CustomCommand(Command):
     """Custom Command class."""
-
     def install_deps_temp(self):
         """Try to temporarily install packages needed to run the command."""
         if self.distribution.install_requires:
@@ -159,11 +151,29 @@ class RunLinter(CustomCommand):
         sys.exit(errno)
 
 
+def read_authors(filename):
+    """Read the list of authors from .zenodo.json file."""
+    with Path(filename).open() as file:
+        info = json.load(file)
+        authors = []
+        for author in info['creators']:
+            name = ' '.join(author['name'].split(',')[::-1]).strip()
+            authors.append(name)
+        return ', '.join(authors)
+
+
+def read_description(filename):
+    """Read the description from .zenodo.json file."""
+    with Path(filename).open() as file:
+        info = json.load(file)
+        return info['description']
+
+
 setup(
     name='ESMValCore',
     version=__version__,
-    author=read_authors('CITATION.cff'),
-    description='Earth System Models eValuation Tool Core',
+    author=read_authors('.zenodo.json'),
+    description=read_description('.zenodo.json'),
     long_description=Path('README.md').read_text(),
     long_description_content_type='text/markdown',
     url='https://www.esmvaltool.org',
@@ -195,6 +205,7 @@ setup(
     tests_require=REQUIREMENTS['test'],
     extras_require={
         'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
+        'test': REQUIREMENTS['test'],
     },
     entry_points={
         'console_scripts': [
