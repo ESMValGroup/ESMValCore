@@ -328,9 +328,6 @@ def _multicube_statistics(cubes, statistics, span):
         If span is neither overlap nor full.
     """
     logger.debug('Multimodel statistics: computing: %s', statistics)
-    if len(cubes) < 2:
-        logger.warning("Single dataset in list: will not compute statistics.")
-        return cubes
 
     # Reset time coordinates and make cubes share the same calendar
     _unify_time_coordinates(cubes)
@@ -396,6 +393,14 @@ def _multicube_statistics_iris(cubes, statistics: list):
 
     return statistics_cubes
 
+def flatten(lst):
+    """Return individual elements from a mixed/nested list."""
+    for element in lst:
+        if isinstance(element, (list, tuple)):
+            yield from flatten(element)
+        else:
+            yield element
+
 
 def _multiproduct_statistics(products,
                              statistics,
@@ -410,17 +415,25 @@ def _multiproduct_statistics(products,
 
     # Extract cubes from products and compute statistics
     cubes = [cube for product in products for cube in product.cubes]
-    statistics_cubes = aggregator(cubes=cubes, statistics=statistics)
+    cubes = list(flatten(cubes))
+
+    if len(cubes) < 2:
+        logger.info('Found only 1 cube; no statistics computed for %r', list(products)[0])
+        statistics_cubes = {statistic: cubes[0] for statistic in statistics}
+    else:
+        statistics_cubes = aggregator(cubes=cubes, statistics=statistics)
 
     # Add statistics to output_products
     statistics_products = set()
+    if span:
+        breakpoint()
     for statistic, cube in statistics_cubes.items():
         # Add to output product and log provenance
         statistics_product = output_products[statistic]
         statistics_product.cubes = [cube]
         for product in products:
             statistics_product.wasderivedfrom(product)
-        logger.info("Generated %s", statistics_product)
+        logger.info("Generated %r", statistics_product)
         statistics_products.add(statistics_product)
 
     return statistics_products

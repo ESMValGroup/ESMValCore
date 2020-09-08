@@ -269,7 +269,10 @@ def get_multiproduct_filename(attributes, preproc_dir):
     filename_segments = []
     for key in relevant_keys:
         if key in attributes:
-            filename_segments.append(attributes[key])
+            filename_segments.extend(attributes[key].split('_'))
+
+    # Remove duplicate segments:
+    filename_segments = list(dict.fromkeys(filename_segments))
 
     # Add period and extension
     filename_segments.append(f"{attributes['start_year']}-{attributes['end_year']}.nc")
@@ -280,4 +283,5 @@ def get_multiproduct_filename(attributes, preproc_dir):
         attributes['variable_group'],
         '_'.join(filename_segments),
     )
+
     return outfile

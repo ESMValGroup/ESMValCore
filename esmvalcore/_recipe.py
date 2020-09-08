@@ -625,6 +625,20 @@ def groupby(iterable, keyfunc: callable) -> dict:
     return grouped
 
 
+def get_tag(step, identifier, statistic):
+    # Avoid . in filename for percentiles
+    statistic = statistic.replace('.', '-')
+
+    if step == 'ensemble_statistics':
+        tag = 'Ensemble' + statistic.title()
+    elif identifier == '':
+        tag = 'MultiModel' + statistic.title()
+    else:
+        tag = identifier + statistic.title()
+
+    return tag
+
+
 def _update_multi_product_settings(input_products,
                                    order,
                                    preproc_dir,
@@ -644,12 +658,6 @@ def _update_multi_product_settings(input_products,
     if not products:
         return input_products
 
-    tags = {
-        'multi_model_statistics': 'MultiModel',
-        'ensemble_statistics': 'Ensemble'
-    }
-    tag = tags[step]
-
     settings = list(products)[0].settings[step]
     downstream_settings = _get_downstream_settings(step, order, products)
 
@@ -665,10 +673,9 @@ def _update_multi_product_settings(input_products,
 
         for statistic in settings.get('statistics'):
 
-            statistic_str = statistic.replace(
-                '.', '-')  # avoid . in filename for percentiles
-            step_tag = f'{tag}{statistic_str.title()}'
-            common_attributes[step] = step_tag
+            tag = get_tag(step, identifier, statistic)
+
+            common_attributes[step] = tag
 
             filename = get_multiproduct_filename(common_attributes,
                                                  preproc_dir)
