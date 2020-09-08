@@ -401,9 +401,9 @@ def _multiproduct_statistics(products,
                              statistics,
                              output_products,
                              span=None,
-                             use_iris=False):
+                             engine='esmvalcore'):
     """Compute statistics on (grouped) products, using iris or esmvalcore functions."""
-    if use_iris:
+    if engine == 'iris':
         aggregator = _multicube_statistics_iris
     else:
         aggregator = partial(_multicube_statistics, span=span)
@@ -442,12 +442,9 @@ def _grouped_multiproduct_statistics(products,
                                      output_products,
                                      groupby,
                                      span=None,
-                                     use_iris=False):
+                                     engine='esmvalcore'):
     """Apply _multiproduct_statistics on grouped products."""
-    if groupby is None:
-        grouped_products = {'MultiModel': products}
-    else:
-        grouped_products = _group(products, groupby=groupby)
+    grouped_products = _group(products, groupby=groupby)
 
     statistics_products = set()
     for identifier, products in grouped_products.items():
@@ -458,7 +455,7 @@ def _grouped_multiproduct_statistics(products,
             statistics=statistics,
             output_products=sub_output_products,
             span=span,
-            use_iris=use_iris,
+            engine=engine,
         )
 
         statistics_products |= statistics_product
@@ -481,12 +478,13 @@ def multi_model_statistics(products,
     )
 
 
-def ensemble_statistics(products, statistics, output_products, groupby=None):
+def ensemble_statistics(products, statistics, output_products):
     """Apply ensemble statistics to esmvalcore preprocessor products."""
+    ensemble_grouping = ('project', 'dataset', 'exp')
     return _grouped_multiproduct_statistics(
         products=products,
         statistics=statistics,
         output_products=output_products,
-        groupby=groupby,
-        use_iris=True,
+        groupby=ensemble_grouping,
+        engine='iris',
     )

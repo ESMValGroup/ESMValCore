@@ -270,6 +270,11 @@ def get_statistic_output_file(variable, preproc_dir):
         '{dataset}_{mip}_{short_name}_{start_year}-{end_year}.nc',
     )
 
-    outfile = template.format(**variable)
 
+    # if ensemble in variable:
+    #     template = ...{'ensemble'}
+    # if multimodel in variable:
+    #     template = ...
+
+    outfile = template.format(**variable)
     return outfile
