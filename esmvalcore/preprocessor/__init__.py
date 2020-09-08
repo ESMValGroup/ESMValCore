@@ -360,8 +360,6 @@ class PreprocessorFile(TrackedFile):
         Returns a string that identifies a group.
         Concatenates a list of values from .attributes
         """
-        from collections.abc import Iterable
-
         if not keys:
             return ''
 
@@ -371,8 +369,8 @@ class PreprocessorFile(TrackedFile):
         identifier = []
         for key in keys:
             attribute = self.attributes[key]
-            if isinstance(attribute, Iterable):
-                '-'.join(attribute)
+            if isinstance(attribute, (list, tuple)):
+                attribute = '-'.join(attribute)
             identifier.append(attribute)
 
         return '_'.join(identifier)

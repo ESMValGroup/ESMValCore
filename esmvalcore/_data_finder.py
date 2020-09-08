@@ -269,7 +269,10 @@ def get_multiproduct_filename(attributes, preproc_dir):
     filename_segments = []
     for key in relevant_keys:
         if key in attributes:
-            filename_segments.append(attributes[key])
+            attribute = attributes[key]
+            if isinstance(attribute, (list, tuple)):
+                attribute = '-'.join(attribute)
+            filename_segments.append(attribute)
 
     # Add period and extension
     filename_segments.append(f"{attributes['start_year']}-{attributes['end_year']}.nc")
