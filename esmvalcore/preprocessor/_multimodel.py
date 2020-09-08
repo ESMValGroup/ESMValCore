@@ -214,7 +214,7 @@ def _unify_time_coordinates(cubes):
         # Extract date info from cube
         coord = cube.coord('time')
         years = [p.year for p in coord.units.num2date(coord.points)]
-        months = [p.year for p in coord.units.num2date(coord.points)]
+        months = [p.month for p in coord.units.num2date(coord.points)]
 
         # Reconstruct default calendar
         if 0 not in np.diff(years):
