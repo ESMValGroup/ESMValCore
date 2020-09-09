@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 """Provides regridding for irregular grids."""
 
+import concurrent.futures
+import itertools
+import time as tr
+
 import ESMF
 import iris
 import numpy as np
 
-import time as tr
-import itertools
-import concurrent.futures
-
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
-
 
 ESMF_MANAGER = ESMF.Manager(debug=False)
 
@@ -68,10 +67,10 @@ def coords_iris_to_esmpy(lat, lon, circular):
         if circular:
             lon_corners = lon.bounds[:, 0]
         else:
-            lon_corners = np.concatenate([lon.bounds[:, 0],
-                                          lon.bounds[-1:, 1]])
-        esmpy_lat_corners, esmpy_lon_corners = np.meshgrid(lat_corners,
-                                                           lon_corners)
+            lon_corners = np.concatenate(
+                [lon.bounds[:, 0], lon.bounds[-1:, 1]])
+        esmpy_lat_corners, esmpy_lon_corners = np.meshgrid(
+            lat_corners, lon_corners)
     elif dim == 2:
         esmpy_lat, esmpy_lon = lat.points.T.copy(), lon.points.T.copy()
         esmpy_lat_corners = cf_2d_bounds_to_esmpy_corners(lat.bounds, circular)
@@ -82,8 +81,8 @@ def coords_iris_to_esmpy(lat, lon, circular):
     return esmpy_lat, esmpy_lon, esmpy_lat_corners, esmpy_lon_corners
 
 
-def get_grid(esmpy_lat, esmpy_lon,
-             esmpy_lat_corners, esmpy_lon_corners, circular):
+def get_grid(esmpy_lat, esmpy_lon, esmpy_lat_corners, esmpy_lon_corners,
+             circular):
     """Build EMSF grid from given coordinate information."""
     if circular:
         num_peri_dims = 1
@@ -113,8 +112,7 @@ def is_lon_circular(lon):
         if lon.ndim == 1:
             seam = lon.bounds[-1, 1] - lon.bounds[0, 0]
         elif lon.ndim == 2:
-            seam = (lon.bounds[1:-1, -1, (1, 2)]
-                    - lon.bounds[1:-1, 0, (0, 3)])
+            seam = (lon.bounds[1:-1, -1, (1, 2)] - lon.bounds[1:-1, 0, (0, 3)])
         else:
             raise NotImplementedError('AuxCoord longitude is higher '
                                       'dimensional than 2d. Giving up.')
@@ -204,7 +202,8 @@ def build_regridder_3d(src_rep, dst_rep, regrid_method, mask_threshold):
     no_levels = src_rep.shape[0]
 
     # get the iterator
-    iter_pack = ((src_rep[level], dst_rep[level]) for level in range(no_levels))
+    iter_pack = ((src_rep[level], dst_rep[level])
+                 for level in range(no_levels))
     print("Number of levels to be parallelized:", len(list(iter_pack)))
 
     # run regridder building in parallel
@@ -231,13 +230,13 @@ def build_regridder(src_rep, dst_rep, method, mask_threshold=.99):
     t1 = tr.time()
     regrid_method = ESMF_REGRID_METHODS[method]
     if src_rep.ndim == 2:
-        regridder = build_regridder_2d((src_rep, dst_rep),
-                                       regrid_method, mask_threshold)
+        regridder = build_regridder_2d((src_rep, dst_rep), regrid_method,
+                                       mask_threshold)
     elif src_rep.ndim == 3:
-        regridder = build_regridder_3d(src_rep, dst_rep,
-                                       regrid_method, mask_threshold)
+        regridder = build_regridder_3d(src_rep, dst_rep, regrid_method,
+                                       mask_threshold)
     t2 = tr.time()
-    print("ESMF REGRIDDER TIME for DIM", str(src_rep.ndim), t2-t1) 
+    print("ESMF REGRIDDER TIME for DIM", str(src_rep.ndim), t2 - t1)
     return regridder
 
 
@@ -285,7 +284,7 @@ def get_grid_representants(src, dst):
     src_rep = get_grid_representant(src)
     dst_horiz_rep = get_grid_representant(dst, horizontal_only=True)
     if src_rep.ndim == 3:
-        dst_shape = (src_rep.shape[0],)
+        dst_shape = (src_rep.shape[0], )
         dim_coords = [src_rep.coord(dimensions=[0], dim_coords=True)]
     else:
         dst_shape = tuple()
