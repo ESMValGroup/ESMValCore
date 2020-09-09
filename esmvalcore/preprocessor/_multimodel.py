@@ -1,14 +1,15 @@
-"""multimodel statistics.
+"""Statistics across cubes.
 
-Functions for multi-model operations
-supports a multitude of multimodel statistics
-computations; the only requisite is the ingested
-cubes have (TIME-LAT-LON) or (TIME-PLEV-LAT-LON)
-dimensions; and obviously consistent units.
+This module contains functions to compute statistics
+across multiple cubes or products.
 
-It operates on different (time) spans:
-- full: computes stats on full dataset time;
-- overlap: computes common time overlap between datasets;
+Ensemble statistics uses iris built in functions and
+support lazy evaluation. Multi-model statistics uses
+custom functions that operate directly on numpy arrays.
+
+Wrapper functions separate esmvalcore internals, operating on products,
+from generalized functions that operate on iris cubes.
+These wrappers support grouped execution by passing a groupby keyword.
 """
 
 import logging
@@ -21,6 +22,7 @@ import cf_units
 import iris
 import numpy as np
 import scipy
+from iris.experimental.equalise_cubes import equalise_attributes
 
 logger = logging.getLogger(__name__)
 
@@ -283,38 +285,38 @@ def _assemble_data(cubes, statistic, span='overlap'):
     return stats_cube
 
 
-def _multicube_statistics(cubes, statistics, span):
-    """Compute multi-model statistics.
+def multicube_statistics(cubes, statistics, span):
+    """Compute statistics across input cubes.
 
-    Multimodel statistics computed along the time axis. Can be
-    computed across a common overlap in time (set span: overlap)
-    or across the full length in time of each model (set span: full).
-    Restrictive computation is also available by excluding any set of
-    models that the user will not want to include in the statistics
-    (set exclude: [excluded models list]).
+    This function deals with non-homogeneous cubes by
+    taking the time union (span='full') or intersection
+    (span='overlap'), and extending or subsetting the
+    cubes as necessary. Apart from the time coordinate,
+    cubes must have consistent shapes.
 
-    Restrictions needed by the input data:
-    - model datasets must have consistent shapes,
-    - higher dimensional data is not supported (ie dims higher than four:
-    time, vertical axis, two horizontal axes).
+    This function operates directly on numpy (masked) arrays
+    and rebuilds the resulting cubes from scratch. Therefore,
+    it is not suitable for lazy evaluation.
+
+    This function is restricted to maximum four-dimensional data:
+    time, vertical axis, two horizontal axes.
 
     Parameters
     ----------
     cubes: list of cubes
         list of cubes to be used in multimodel stat computation;
+    statistics: list of strings
+        statistical measures to be computed. Available options: mean, median,
+        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
     span: str
         overlap or full; if overlap, statitsticss are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
         missing data.
-    statistics: str
-        statistical measure to be computed. Available options: mean, median,
-        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
 
     Returns
     -------
-    list
-        list of data products or cubes containing the multimodel stats
-        computed.
+    dict
+        dictionary of statistics cubes with statistics' names as keys.
 
     Raises
     ------
@@ -352,15 +354,34 @@ def _multicube_statistics(cubes, statistics, span):
     return statistics_cubes
 
 
-def _multicube_statistics_iris(cubes, statistics: list):
-    """Use iris merge/collapsed to perform the aggregation.
+def multicube_statistics_iris(cubes, statistics):
+    """Compute statistics across input cubes.
 
-    Equivalent to _multicube_statistics, but uses iris functions to
-    perform the aggregation. This only works if the input cubes are very
-    homogeneous, e.g. for different ensemble members of the same
-    model/dataset.
+    Cubes are merged and subsequently collapsed along a new auxiliary
+    coordinate. Inconsistent attributes will be removed.
+
+    This method uses iris' built in functions, exposing the operators
+    in iris.analysis and supporting lazy evaluation. Input cubes must
+    have consistent shapes.
+
+    Note: some of the operators in iris.analysis require additional
+    arguments, such as percentiles or weights. These operators
+    are currently not supported.
+
+    Parameters
+    ----------
+    cubes: list of cubes
+        list of cubes to be used in multimodel stat computation;
+    statistics: list of strings
+        statistical measures to be computed. Choose from the operators
+        listed in the iris.analysis package.
+
+    Returns
+    -------
+    dict
+        dictionary of statistics cubes with statistics' names as keys.
+
     """
-    from iris.experimental.equalise_cubes import equalise_attributes
     operators = vars(iris.analysis)
 
     for i, cube in enumerate(cubes):
@@ -393,16 +414,43 @@ def _multiproduct_statistics(products,
                              output_products,
                              span='overlap',
                              engine='esmvalcore'):
-    """Compute statistics on (grouped) products, using iris or esmvalcore
-    functions."""
-    if engine == 'iris':
-        aggregator = _multicube_statistics_iris
-    else:
-        aggregator = partial(_multicube_statistics, span=span)
+    """Compute statistics across products.
 
-    # Extract cubes from products and compute statistics
+    Extract cubes from products, calculate the statistics across cubes
+    and assign the resulting output cubes to the output_products.
+
+    Parameters
+    ----------
+    products: list
+        list of PreprocessorFile's
+    statistics: list
+        list of strings describing the statistics that will be computed
+    output_products: dict
+        dict of PreprocessorFile's with statistic names as keys.
+    span: str
+        'full' or 'overlap', whether to calculate the statistics on the
+        time union ('full') or time intersection ('overlap') of the cubes.
+    engine: str
+        'iris' or 'esmvalcore', which function to use to compute the
+        statistics. Iris is more efficient and exposes more operators,
+        but requires highly homogeneous/compatible cubes.
+
+    Returns
+    -------
+    set
+        set of PreprocessorFiles containing the computed
+        statistics cubes.
+
+    """
+    if engine == 'iris':
+        aggregator = multicube_statistics_iris
+    else:
+        aggregator = partial(multicube_statistics, span=span)
+
+    # Extract cubes from products
     cubes = [cube for product in products for cube in product.cubes]
 
+    # Compute statistics
     if len(cubes) < 2:
         logger.info('Found only 1 cube; no statistics computed for %r',
                     list(products)[0])
@@ -410,13 +458,12 @@ def _multiproduct_statistics(products,
     else:
         statistics_cubes = aggregator(cubes=cubes, statistics=statistics)
 
-    # Add statistics to output_products
+    # Add cubes to output products and log provenance
     statistics_products = set()
-
     for statistic, cube in statistics_cubes.items():
-        # Add to output product and log provenance
         statistics_product = output_products[statistic]
         statistics_product.cubes = [cube]
+
         for product in products:
             statistics_product.wasderivedfrom(product)
 
@@ -427,7 +474,10 @@ def _multiproduct_statistics(products,
 
 
 def _group(products, groupby=None):
-    """Group products."""
+    """Group products.
+
+    Returns a dict of product sets with identifiers as keys.
+    """
     grouped_products = defaultdict(set)
     for product in products:
         identifier = product.group(groupby)
@@ -450,7 +500,8 @@ def _grouped_multiproduct_statistics(products,
     for identifier, products in grouped_products.items():
         sub_output_products = output_products[identifier]
 
-        statistics_product = _multiproduct_statistics(
+        # Compute statistics on a single group
+        group_statistics = _multiproduct_statistics(
             products=products,
             statistics=statistics,
             output_products=sub_output_products,
@@ -458,7 +509,7 @@ def _grouped_multiproduct_statistics(products,
             engine=engine,
         )
 
-        statistics_products |= statistics_product
+        statistics_products |= group_statistics
 
     return statistics_products
 
@@ -468,7 +519,14 @@ def multi_model_statistics(products,
                            output_products,
                            span='overlap',
                            groupby=None):
-    """Apply multimodel statistics to esmvalcore preprocessor products."""
+    """ESMValCore entry point for multi model statistics.
+
+    The products are grouped (if groupby argument is specified) and the
+    cubes are extracted from their products. Resulting cubes are added to
+    their corresponding `output_products`.
+
+    Multi-model statistics are computed in `multicube_statistics`.
+    """
     return _grouped_multiproduct_statistics(
         products=products,
         statistics=statistics,
@@ -479,7 +537,13 @@ def multi_model_statistics(products,
 
 
 def ensemble_statistics(products, statistics, output_products):
-    """Apply ensemble statistics to esmvalcore preprocessor products."""
+    """ESMValCore entry point for ensemble statistics.
+
+    The products are grouped and the cubes are extracted from
+    the products. Resulting cubes are assigned to `output_products`.
+
+    Ensemble statistics are computed in `multicube_statistics_iris`.
+    """
     ensemble_grouping = ('project', 'dataset', 'exp')
     return _grouped_multiproduct_statistics(
         products=products,

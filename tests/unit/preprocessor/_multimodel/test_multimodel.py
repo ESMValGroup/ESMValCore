@@ -12,7 +12,7 @@ from esmvalcore.preprocessor._multimodel import (_assemble_data,
                                                  _get_time_slice, _plev_fix,
                                                  _put_in_cube,
                                                  _unify_time_coordinates,
-                                                 _multicube_statistics)
+                                                 multicube_statistics)
 
 
 class Test(tests.Test):
@@ -92,7 +92,7 @@ class Test(tests.Test):
 
     def test_compute_full_statistic_mon_cube(self):
         data = [self.cube1, self.cube2]
-        stats = _multicube_statistics(data, span='full', statistics=['mean'])
+        stats = multicube_statistics(data, span='full', statistics=['mean'])
         expected_full_mean = np.ma.ones((5, 3, 2, 2))
         expected_full_mean.mask = np.ones((5, 3, 2, 2))
         expected_full_mean.mask[1] = False
@@ -100,7 +100,7 @@ class Test(tests.Test):
 
     def test_compute_full_statistic_yr_cube(self):
         data = [self.cube4, self.cube5]
-        stats = _multicube_statistics(data, span='full', statistics=['mean'])
+        stats = multicube_statistics(data, span='full', statistics=['mean'])
         expected_full_mean = np.ma.ones((4, 3, 2, 2))
         expected_full_mean.mask = np.zeros((4, 3, 2, 2))
         expected_full_mean.mask[2:4] = True
@@ -108,7 +108,7 @@ class Test(tests.Test):
 
     def test_compute_overlap_statistic_mon_cube(self):
         data = [self.cube1, self.cube1]
-        stats = _multicube_statistics(
+        stats = multicube_statistics(
             data,
             span='overlap',
             statistics=['mean']
@@ -118,7 +118,7 @@ class Test(tests.Test):
 
     def test_compute_overlap_statistic_yr_cube(self):
         data = [self.cube4, self.cube4]
-        stats = _multicube_statistics(
+        stats = multicube_statistics(
             data,
             span='overlap',
             statistics=['mean']
