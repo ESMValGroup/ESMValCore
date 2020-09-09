@@ -7,12 +7,12 @@ import numpy as np
 from cf_units import Unit
 
 import tests
-from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (_assemble_data,
                                                  _compute_statistic,
                                                  _get_time_slice, _plev_fix,
                                                  _put_in_cube,
-                                                 _unify_time_coordinates)
+                                                 _unify_time_coordinates,
+                                                 _multicube_statistics)
 
 
 class Test(tests.Test):
@@ -92,7 +92,7 @@ class Test(tests.Test):
 
     def test_compute_full_statistic_mon_cube(self):
         data = [self.cube1, self.cube2]
-        stats = multi_model_statistics(data, 'full', ['mean'])
+        stats = _multicube_statistics(data, span='full', statistics=['mean'])
         expected_full_mean = np.ma.ones((5, 3, 2, 2))
         expected_full_mean.mask = np.ones((5, 3, 2, 2))
         expected_full_mean.mask[1] = False
@@ -100,7 +100,7 @@ class Test(tests.Test):
 
     def test_compute_full_statistic_yr_cube(self):
         data = [self.cube4, self.cube5]
-        stats = multi_model_statistics(data, 'full', ['mean'])
+        stats = _multicube_statistics(data, span='full', statistics=['mean'])
         expected_full_mean = np.ma.ones((4, 3, 2, 2))
         expected_full_mean.mask = np.zeros((4, 3, 2, 2))
         expected_full_mean.mask[2:4] = True
@@ -108,13 +108,21 @@ class Test(tests.Test):
 
     def test_compute_overlap_statistic_mon_cube(self):
         data = [self.cube1, self.cube1]
-        stats = multi_model_statistics(data, 'overlap', ['mean'])
+        stats = _multicube_statistics(
+            data,
+            span='overlap',
+            statistics=['mean']
+        )
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
     def test_compute_overlap_statistic_yr_cube(self):
         data = [self.cube4, self.cube4]
-        stats = multi_model_statistics(data, 'overlap', ['mean'])
+        stats = _multicube_statistics(
+            data,
+            span='overlap',
+            statistics=['mean']
+        )
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 

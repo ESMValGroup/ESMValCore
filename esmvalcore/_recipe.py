@@ -1,6 +1,5 @@
 """Recipe parser."""
 import fnmatch
-import itertools
 import logging
 import os
 import re
@@ -595,7 +594,8 @@ def _get_common_attributes(products):
 
 
 def _get_downstream_settings(step, order, products):
-    """Get downstream preprocessor settings that are shared between products."""
+    """Get downstream preprocessor settings that are shared between
+    products."""
     settings = {}
     remaining_steps = order[order.index(step) + 1:]
     some_product = next(iter(products))
@@ -639,19 +639,16 @@ def get_tag(step, identifier, statistic):
     return tag
 
 
-def _update_multi_product_settings(input_products,
-                                   order,
-                                   preproc_dir,
-                                   step):
+def _update_multiproduct(input_products, order, preproc_dir, step):
     """Return new products that are aggregated over multiple datasets.
 
-    These new products will replace the original products at runtime. Therefore, they
-    need to have all the settings for the remaining steps.
+    These new products will replace the original products at runtime.
+    Therefore, they need to have all the settings for the remaining steps.
 
-    The functions in _multimodel.py take output_products as function arguments. These are
-    the output_products created here. But since those functions are called from the
-    input products, the products that are created here need to be added to their
-    ancestors products' settings ().
+    The functions in _multimodel.py take output_products as function arguments.
+    These are the output_products created here. But since those functions are
+    called from the input products, the products that are created here need to
+    be added to their ancestors products' settings ().
     """
     products = {p for p in input_products if step in p.settings}
     if not products:
@@ -752,11 +749,10 @@ def _match_products(products, variables):
 
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user):
-    """
-    Get preprocessor product definitions for a set of datasets.
+    """Get preprocessor product definitions for a set of datasets.
 
-    It updates recipe settings as needed by various preprocessors
-    and sets the correct ancestry.
+    It updates recipe settings as needed by various preprocessors and
+    sets the correct ancestry.
     """
     products = set()
     preproc_dir = config_user['preproc_dir']
@@ -813,7 +809,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     multi_model_step = 'multi_model_statistics'
 
     if ensemble_step in profile:
-        ensemble_products, ensemble_settings = _update_multi_product_settings(
+        ensemble_products, ensemble_settings = _update_multiproduct(
             products, order, preproc_dir, ensemble_step)
 
         # check for ensemble_settings to bypass tests
@@ -826,7 +822,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         ensemble_products = products
 
     if multi_model_step in profile:
-        multimodel_products, multimodel_settings = _update_multi_product_settings(
+        multimodel_products, multimodel_settings = _update_multiproduct(
             ensemble_products, order, preproc_dir, multi_model_step)
 
         # check for multi_model_settings to bypass tests
@@ -837,7 +833,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
 
         if ensemble_step in profile:
-            # Update multi-product settings (workaround for lack of better ancestry tracking)
+            # Update multi-product settings (workaround for lack of better
+            # ancestry tracking)
             update_ancestors(
                 ancestors=ensemble_products,
                 step=multi_model_step,
@@ -1104,8 +1101,7 @@ class Recipe:
 
     @staticmethod
     def _expand_ensemble(variables):
-        """
-        Expand ensemble members to multiple datasets.
+        """Expand ensemble members to multiple datasets.
 
         Expansion only supports ensembles defined as strings, not lists.
         """

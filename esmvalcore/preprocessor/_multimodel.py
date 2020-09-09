@@ -400,7 +400,7 @@ def flatten(lst):
 def _multiproduct_statistics(products,
                              statistics,
                              output_products,
-                             span=None,
+                             span='overlap',
                              engine='esmvalcore'):
     """Compute statistics on (grouped) products, using iris or esmvalcore
     functions."""
@@ -451,7 +451,7 @@ def _grouped_multiproduct_statistics(products,
                                      statistics: list,
                                      output_products,
                                      groupby,
-                                     span=None,
+                                     span='overlap',
                                      engine='esmvalcore'):
     """Apply _multiproduct_statistics on grouped products."""
     grouped_products = _group(products, groupby=groupby)
@@ -476,7 +476,7 @@ def _grouped_multiproduct_statistics(products,
 def multi_model_statistics(products,
                            statistics,
                            output_products,
-                           span,
+                           span='overlap',
                            groupby=None):
     """Apply multimodel statistics to esmvalcore preprocessor products."""
     return _grouped_multiproduct_statistics(
