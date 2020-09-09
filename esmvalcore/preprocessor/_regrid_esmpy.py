@@ -203,7 +203,6 @@ def build_regridder_3d(src_rep, dst_rep, regrid_method, mask_threshold):
     # get the iterator
     iter_pack = ((src_rep[level], dst_rep[level])
                  for level in range(no_levels))
-    print("Number of levels to be parallelized:", len(list(iter_pack)))
 
     # run regridder building in parallel
     with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
