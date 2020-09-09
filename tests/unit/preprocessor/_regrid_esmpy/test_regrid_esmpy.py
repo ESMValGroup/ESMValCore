@@ -455,7 +455,7 @@ class TestHelpers(tests.Test):
         self.cube.data = self.cube.data.data
         self.cube.field = mock.Mock()
         mock.sentinel.dst_rep.field = mock.Mock()
-        build_regridder_2d(self.cube, mock.sentinel.dst_rep,
+        build_regridder_2d((self.cube, mock.sentinel.dst_rep),
                            mock.sentinel.regrid_method, .99)
         expected_kwargs = {
             'src_mask_values': np.array([1]),
@@ -480,7 +480,7 @@ class TestHelpers(tests.Test):
         dst_rep = mock.MagicMock()
         src_rep.field = mock.MagicMock(data=self.data.copy())
         dst_rep.field = mock.MagicMock()
-        build_regridder_2d(src_rep, dst_rep, regrid_method, .99)
+        build_regridder_2d((src_rep, dst_rep), regrid_method, .99)
         expected_calls = [
             mock.call(src_mask_values=np.array([]),
                       dst_mask_values=np.array([]),
@@ -518,7 +518,7 @@ class TestHelpers(tests.Test):
         regrid_method = mock.sentinel.rm_bilinear
         src_rep = mock.MagicMock(data=self.data, dtype=np.float32)
         dst_rep = mock.MagicMock(shape=(4, 4))
-        regridder = build_regridder_2d(src_rep, dst_rep, regrid_method, .99)
+        regridder = build_regridder_2d((src_rep, dst_rep), regrid_method, .99)
         field_regridder.reset_mock()
         regridder(src_rep)
         field_regridder.assert_called_once_with(src_rep.field, dst_rep.field)
@@ -533,7 +533,7 @@ class TestHelpers(tests.Test):
         regrid_method = mock.sentinel.rm_bilinear
         src_rep = mock.MagicMock(data=self.data)
         dst_rep = mock.MagicMock(shape=(4, 4))
-        regridder = build_regridder_2d(src_rep, dst_rep, regrid_method, .99)
+        regridder = build_regridder_2d((src_rep, dst_rep), regrid_method, .99)
         field_regridder.reset_mock()
         regridder(self.cube)
         field_regridder.assert_called_once_with(src_rep.field, dst_rep.field)
@@ -547,7 +547,7 @@ class TestHelpers(tests.Test):
         dst_rep = mock.Mock(ndim=2)
         build_regridder(src_rep, dst_rep, 'nearest')
         mock_regridder_2d.assert_called_once_with(
-            src_rep, dst_rep, mock.sentinel.rm_nearest_stod, .99)
+            (src_rep, dst_rep), mock.sentinel.rm_nearest_stod, .99)
         mock_regridder_3d.assert_not_called()
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.build_regridder_3d')
