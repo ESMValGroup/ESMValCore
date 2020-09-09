@@ -388,15 +388,6 @@ def _multicube_statistics_iris(cubes, statistics: list):
     return statistics_cubes
 
 
-def flatten(lst):
-    """Return individual elements from a mixed/nested list."""
-    for element in lst:
-        if isinstance(element, (list, tuple)):
-            yield from flatten(element)
-        else:
-            yield element
-
-
 def _multiproduct_statistics(products,
                              statistics,
                              output_products,
@@ -411,7 +402,6 @@ def _multiproduct_statistics(products,
 
     # Extract cubes from products and compute statistics
     cubes = [cube for product in products for cube in product.cubes]
-    cubes = list(flatten(cubes))
 
     if len(cubes) < 2:
         logger.info('Found only 1 cube; no statistics computed for %r',
