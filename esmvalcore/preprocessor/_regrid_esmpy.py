@@ -5,6 +5,10 @@ import ESMF
 import iris
 import numpy as np
 
+import time as tr
+import itertools
+import concurrent.futures
+
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
 
 
@@ -144,8 +148,9 @@ def get_representant(cube, ref_to_slice):
     return cube[rep_ind]
 
 
-def build_regridder_2d(src_rep, dst_rep, regrid_method, mask_threshold):
+def build_regridder_2d(iter_pack, regrid_method, mask_threshold):
     """Build regridder for 2d regridding."""
+    src_rep, dst_rep = iter_pack
     dst_field = cube_to_empty_field(dst_rep)
     src_field = cube_to_empty_field(src_rep)
     regridding_arguments = {
@@ -197,11 +202,19 @@ def build_regridder_3d(src_rep, dst_rep, regrid_method, mask_threshold):
     """Build regridder for 2.5d regridding."""
     esmf_regridders = []
     no_levels = src_rep.shape[0]
-    for level in range(no_levels):
-        esmf_regridders.append(
-            build_regridder_2d(src_rep[level], dst_rep[level],
-                               regrid_method, mask_threshold)
-        )
+
+    # get the iterator
+    iter_pack = ((src_rep[level], dst_rep[level]) for level in range(no_levels))
+    print("Number of levels to be parallelized:", len(list(iter_pack)))
+
+    # run regridder building in parallel
+    with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+        for regridder in executor.map(build_regridder_2d,
+                                      iter_pack,
+                                      itertools.repeat(regrid_method),
+                                      itertools.repeat(mask_threshold),
+                                      chunksize=100000000):
+            esmf_regridders.append(regridder)
 
     def regridder(src):
         """Regrid 2.5d for irregular grids."""
@@ -215,13 +228,16 @@ def build_regridder_3d(src_rep, dst_rep, regrid_method, mask_threshold):
 
 def build_regridder(src_rep, dst_rep, method, mask_threshold=.99):
     """Build regridders from representants."""
+    t1 = tr.time()
     regrid_method = ESMF_REGRID_METHODS[method]
     if src_rep.ndim == 2:
-        regridder = build_regridder_2d(src_rep, dst_rep,
+        regridder = build_regridder_2d((src_rep, dst_rep),
                                        regrid_method, mask_threshold)
     elif src_rep.ndim == 3:
         regridder = build_regridder_3d(src_rep, dst_rep,
                                        regrid_method, mask_threshold)
+    t2 = tr.time()
+    print("ESMF REGRIDDER TIME for DIM", str(src_rep.ndim), t2-t1) 
     return regridder
 
 
