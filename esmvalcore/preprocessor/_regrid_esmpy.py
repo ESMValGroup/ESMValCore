@@ -3,7 +3,6 @@
 
 import concurrent.futures
 import itertools
-import time as tr
 
 import ESMF
 import iris
@@ -227,7 +226,6 @@ def build_regridder_3d(src_rep, dst_rep, regrid_method, mask_threshold):
 
 def build_regridder(src_rep, dst_rep, method, mask_threshold=.99):
     """Build regridders from representants."""
-    t1 = tr.time()
     regrid_method = ESMF_REGRID_METHODS[method]
     if src_rep.ndim == 2:
         regridder = build_regridder_2d((src_rep, dst_rep), regrid_method,
@@ -235,8 +233,6 @@ def build_regridder(src_rep, dst_rep, method, mask_threshold=.99):
     elif src_rep.ndim == 3:
         regridder = build_regridder_3d(src_rep, dst_rep, regrid_method,
                                        mask_threshold)
-    t2 = tr.time()
-    print("ESMF REGRIDDER TIME for DIM", str(src_rep.ndim), t2 - t1)
     return regridder
 
 
