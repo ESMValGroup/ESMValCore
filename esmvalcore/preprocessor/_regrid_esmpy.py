@@ -210,7 +210,7 @@ def build_regridder_3d(src_rep, dst_rep, regrid_method, mask_threshold):
                                       iter_pack,
                                       itertools.repeat(regrid_method),
                                       itertools.repeat(mask_threshold),
-                                      chunksize=100000000):
+                                      chunksize=100):
             esmf_regridders.append(regridder)
 
     def regridder(src):
