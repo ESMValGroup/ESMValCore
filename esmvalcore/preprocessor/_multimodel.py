@@ -1,15 +1,15 @@
 """Statistics across cubes.
 
-This module contains functions to compute statistics
-across multiple cubes or products.
+This module contains functions to compute statistics across multiple cubes or
+products.
 
-Ensemble statistics uses iris built in functions and
-support lazy evaluation. Multi-model statistics uses
-custom functions that operate directly on numpy arrays.
+Ensemble statistics uses iris built in functions and support lazy evaluation.
+Multi-model statistics uses custom functions that operate directly on numpy
+arrays.
 
-Wrapper functions separate esmvalcore internals, operating on products,
-from generalized functions that operate on iris cubes.
-These wrappers support grouped execution by passing a groupby keyword.
+Wrapper functions separate esmvalcore internals, operating on products, from
+generalized functions that operate on iris cubes. These wrappers support
+grouped execution by passing a groupby keyword.
 """
 
 import logging
@@ -196,13 +196,13 @@ def _get_consistent_time_unit(cubes):
 def _unify_time_coordinates(cubes):
     """Make sure all cubes' share the same time coordinate.
 
-    This function extracts the date information from the cube and
-    reconstructs the time coordinate, resetting the actual dates to the
-    15th of the month or 1st of july for yearly data (consistent with
-    `regrid_time`), so that there are no mismatches in the time arrays.
+    This function extracts the date information from the cube and reconstructs
+    the time coordinate, resetting the actual dates to the 15th of the month or
+    1st of july for yearly data (consistent with `regrid_time`), so that there
+    are no mismatches in the time arrays.
 
-    If cubes have different time units, it will use reset the calendar to
-    a default gregorian calendar with unit "days since 1850-01-01".
+    If cubes have different time units, it will use reset the calendar to a
+    default gregorian calendar with unit "days since 1850-01-01".
 
     Might not work for (sub)daily data, because different calendars may have
     different number of days in the year.
@@ -288,24 +288,23 @@ def _assemble_data(cubes, statistic, span='overlap'):
 def multicube_statistics(cubes, statistics, span):
     """Compute statistics across input cubes.
 
-    This function deals with non-homogeneous cubes by
-    taking the time union (span='full') or intersection
-    (span='overlap'), and extending or subsetting the
-    cubes as necessary. Apart from the time coordinate,
-    cubes must have consistent shapes.
+    This function deals with non-homogeneous cubes by taking the time union
+    (span='full') or intersection (span='overlap'), and extending or subsetting
+    the cubes as necessary. Apart from the time coordinate, cubes must have
+    consistent shapes.
 
-    This function operates directly on numpy (masked) arrays
-    and rebuilds the resulting cubes from scratch. Therefore,
-    it is not suitable for lazy evaluation.
+    This function operates directly on numpy (masked) arrays and rebuilds the
+    resulting cubes from scratch. Therefore, it is not suitable for lazy
+    evaluation.
 
-    This function is restricted to maximum four-dimensional data:
-    time, vertical axis, two horizontal axes.
+    This function is restricted to maximum four-dimensional data: time,
+    vertical axis, two horizontal axes.
 
     Parameters
     ----------
-    cubes: list of cubes
+    cubes: list
         list of cubes to be used in multimodel stat computation;
-    statistics: list of strings
+    statistics: list
         statistical measures to be computed. Available options: mean, median,
         max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
     span: str
@@ -357,22 +356,24 @@ def multicube_statistics(cubes, statistics, span):
 def multicube_statistics_iris(cubes, statistics):
     """Compute statistics across input cubes.
 
+    Like multicube_statistics, but operates directly on Iris cubes.
+
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
 
-    This method uses iris' built in functions, exposing the operators
-    in iris.analysis and supporting lazy evaluation. Input cubes must
-    have consistent shapes.
+    This method uses iris' built in functions, exposing the operators in
+    iris.analysis and supporting lazy evaluation. Input cubes must have
+    consistent shapes.
 
-    Note: some of the operators in iris.analysis require additional
-    arguments, such as percentiles or weights. These operators
-    are currently not supported.
+    Note: some of the operators in iris.analysis require additional arguments,
+    such as percentiles or weights. These operators are currently not
+    supported.
 
     Parameters
     ----------
-    cubes: list of cubes
+    cubes: list
         list of cubes to be used in multimodel stat computation;
-    statistics: list of strings
+    statistics: list
         statistical measures to be computed. Choose from the operators
         listed in the iris.analysis package.
 
@@ -380,7 +381,6 @@ def multicube_statistics_iris(cubes, statistics):
     -------
     dict
         dictionary of statistics cubes with statistics' names as keys.
-
     """
     operators = vars(iris.analysis)
 
@@ -416,8 +416,8 @@ def _multiproduct_statistics(products,
                              engine='esmvalcore'):
     """Compute statistics across products.
 
-    Extract cubes from products, calculate the statistics across cubes
-    and assign the resulting output cubes to the output_products.
+    Extract cubes from products, calculate the statistics across cubes and
+    assign the resulting output cubes to the output_products.
 
     Parameters
     ----------
@@ -438,9 +438,7 @@ def _multiproduct_statistics(products,
     Returns
     -------
     set
-        set of PreprocessorFiles containing the computed
-        statistics cubes.
-
+        set of PreprocessorFiles containing the computed statistics cubes.
     """
     if engine == 'iris':
         aggregator = multicube_statistics_iris
@@ -525,7 +523,9 @@ def multi_model_statistics(products,
     cubes are extracted from their products. Resulting cubes are added to
     their corresponding `output_products`.
 
-    Multi-model statistics are computed in `multicube_statistics`.
+    See also
+    --------
+    multicube_statistics : core statistics function.
     """
     return _grouped_multiproduct_statistics(
         products=products,
@@ -542,7 +542,9 @@ def ensemble_statistics(products, statistics, output_products):
     The products are grouped and the cubes are extracted from
     the products. Resulting cubes are assigned to `output_products`.
 
-    Ensemble statistics are computed in `multicube_statistics_iris`.
+    See also
+    --------
+    multicube_statistics_iris : core statistics function.
     """
     ensemble_grouping = ('project', 'dataset', 'exp')
     return _grouped_multiproduct_statistics(

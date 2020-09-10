@@ -21,7 +21,8 @@ from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
 from ._mask import (mask_above_threshold, mask_below_threshold,
                     mask_fillvalues, mask_glaciated, mask_inside_range,
                     mask_landsea, mask_landseaice, mask_outside_range)
-from ._multimodel import ensemble_statistics, multi_model_statistics
+from ._multimodel import (ensemble_statistics, multi_model_statistics,
+                          multicube_statistics, multicube_statistics_iris)
 from ._other import clip
 from ._regrid import extract_levels, extract_point, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
@@ -67,6 +68,7 @@ __all__ = [
     'mask_landseaice',
     # Ensemble statistics
     'ensemble_statistics',
+    'multicube_statistics_iris',
     # Regridding
     'regrid',
     # Point interpolation
@@ -88,7 +90,9 @@ __all__ = [
     # 'average_zone': average_zone,
     # 'cross_section': cross_section,
     'detrend',
+    # Multi-model statistics
     'multi_model_statistics',
+    'multicube_statistics',
     # Grid-point operations
     'extract_named_regions',
     'depth_integration',
