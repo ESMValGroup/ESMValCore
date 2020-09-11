@@ -435,7 +435,7 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
     # force mask onto data as nan's
     if da.ma.getmaskarray(cube.core_data()).any():
-        cube.core_data()[da.ma.getmaskarray(cube.core_data())] = np.nan
+        cube.core_data()[tuple(da.ma.getmaskarray(cube.core_data()))] = np.nan
 
     # Now perform the actual vertical interpolation.
     new_data = stratify.interpolate(
