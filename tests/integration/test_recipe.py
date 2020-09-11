@@ -1602,6 +1602,67 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
     assert len(product_out) == len(statistics)
 
 
+def test_groupby_ensemble_statistics(tmp_path, patched_datafinder, config_user):
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+
+    mm_statistics = ['mean', 'max']
+    mm_preprocessor = 'multi_model_statistics'
+    ens_statistics = ['mean', 'median']
+    ens_preprocessor = 'ensemble_statistics'
+
+    groupby = [ens_preprocessor, 'tag']
+
+    content = dedent(f"""
+        preprocessors:
+          default: &default
+            custom_order: true
+            area_statistics:
+              operator: mean
+            {ens_preprocessor}:
+              statistics: {ens_statistics}
+            {mm_preprocessor}:
+              span: overlap
+              groupby: {groupby}
+              statistics: {mm_statistics}
+
+        diagnostics:
+          {diagnostic}:
+            variables:
+              {variable}:
+                project: CMIP5
+                mip: Amon
+                start_year: 2000
+                end_year: 2002
+                preprocessor: default
+                additional_datasets:
+                  - {{dataset: CanESM2, exp: [historical, rcp45], ensemble: "r(1:2)i1p1", tag: group1}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45], ensemble: "r(1:2)i1p1", tag: group2}}
+            scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    datasets = set([var['dataset'] for var in variable])
+
+    products = next(iter(recipe.tasks)).products
+
+    ens_products = _test_output_product_consistency(
+        products,
+        ens_preprocessor,
+        ens_statistics,
+    )
+
+    mm_products = _test_output_product_consistency(
+        products,
+        mm_preprocessor,
+        mm_statistics,
+    )
+
+    assert len(ens_products) == len(datasets) * len(ens_statistics)
+    assert len(mm_products) == len(mm_statistics) * len(ens_statistics) * len(groupby)
+
+
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
