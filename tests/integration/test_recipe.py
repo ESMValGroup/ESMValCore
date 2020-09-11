@@ -1592,7 +1592,7 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
             scripts: null
     """)
 
-    recipe = _get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
     datasets = set([var['dataset'] for var in variable])
 
