@@ -1501,7 +1501,7 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
     assert invalid_arg in str(exc.value)
 
 
-def _get_output_preproc_files(products, preprocessor):
+def _test_output_product_consistency(products, preprocessor, statistics):
     product_out = defaultdict(list)
 
     for i, product in enumerate(products):
@@ -1511,6 +1511,11 @@ def _get_output_preproc_files(products, preprocessor):
         for identifier, statistic_out in output_products.items():
             for statistic, preproc_file in statistic_out.items():
                 product_out[identifier, statistic].append(preproc_file)
+
+    # Make sure that output products are consistent
+    for (identifier, statistic), value in product_out.items():
+        assert statistic in statistics
+        assert len(set(value)) == 1, 'Output products are not equal'
 
     return product_out
 
@@ -1551,12 +1556,7 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
     datasets = set([var['dataset'] for var in variable])
 
     products = next(iter(recipe.tasks)).products
-    product_out = _get_output_preproc_files(products, preprocessor)
-
-    # Make sure that output products are consistent
-    for (identifier, statistic), value in product_out.items():
-        assert statistic in statistics
-        assert len(set(value)) == 1, 'Output products are not equal'
+    product_out = _test_output_product_consistency(products, preprocessor, statistics)
 
     assert len(product_out) == len(datasets) * len(statistics)
 
@@ -1597,13 +1597,7 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
     datasets = set([var['dataset'] for var in variable])
 
     products = next(iter(recipe.tasks)).products
-    product_out = get_output_preproc_files(products, preprocessor)
-
-    # Make sure that output products are consistent
-    for (identifier, statistic), value in product_out.items():
-        assert identifier == ''
-        assert statistic in statistics
-        assert len(set(value)) == 1, 'Output products are not equal'
+    product_out = _test_output_product_consistency(products, preprocessor, statistics)
 
     assert len(product_out) == len(statistics)
 
