@@ -14,6 +14,7 @@ grouped execution by passing a groupby keyword.
 
 import logging
 import re
+import copy
 from collections import defaultdict
 from datetime import datetime
 from functools import partial, reduce
@@ -383,6 +384,8 @@ def multicube_statistics_iris(cubes, statistics):
         dictionary of statistics cubes with statistics' names as keys.
     """
     operators = vars(iris.analysis)
+
+    cubes = copy.deepcopy(cubes)
 
     for i, cube in enumerate(cubes):
         concat_dim = iris.coords.AuxCoord(i, var_name='ens')
