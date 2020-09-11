@@ -396,13 +396,14 @@ def multicube_statistics_iris(cubes, statistics):
     statistics_cubes = {}
     for statistic in statistics:
         try:
-            operator = operators.get(statistic.upper())
+            operator = operators[statistic.upper()]
         except KeyError:
-            logger.error(
-                'Statistic %s not supported in ensemble_statistics. '
-                'Choose supported operator from iris.analysis package.',
-                statistic)
+            raise KeyError(
+                f'Statistic {statistic} not supported in',
+                '`ensemble_statistics`.',
+                'Choose supported operator from `iris.analysis package`.')
 
+        # this will always return a masked array
         statistic_cube = cube.collapsed('ens', operator)
         statistics_cubes[statistic] = statistic_cube
 
