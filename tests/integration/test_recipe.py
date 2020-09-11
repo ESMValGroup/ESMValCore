@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
@@ -1500,9 +1501,21 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
     assert invalid_arg in str(exc.value)
 
 
-def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
-    from collections import defaultdict
+def _get_output_preproc_files(products, preprocessor):
+    product_out = defaultdict(list)
 
+    for i, product in enumerate(products):
+        settings = product.settings[preprocessor]
+        output_products = settings['output_products']
+
+        for identifier, statistic_out in output_products.items():
+            for statistic, preproc_file in statistic_out.items():
+                product_out[identifier, statistic].append(preproc_file)
+
+    return product_out
+
+
+def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
     content = dedent("""
          preprocessors:
            default: &default
@@ -1555,6 +1568,55 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
         assert len(set(value)) == 1, 'Output products are not equal'
 
     assert len(product_out) == len(datasets) * len(statistics)
+
+
+def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
+    statistics = ['mean', 'max']
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+
+    content = dedent(f"""
+         preprocessors:
+           default: &default
+             custom_order: true
+             area_statistics:
+               operator: mean
+             multi_model_statistics:
+               span: overlap
+               statistics: {statistics}
+
+         diagnostics:
+           {diagnostic}:
+             variables:
+               {variable}:
+                 project: CMIP5
+                 mip: Amon
+                 start_year: 2000
+                 end_year: 2002
+                 preprocessor: default
+                 additional_datasets:
+                   - {{dataset: CanESM2, exp: [historical, rcp45], ensemble: "r(1:2)i1p1"}}
+                   - {{dataset: CCSM4, exp: [historical, rcp45], ensemble: "r(1:2)i1p1"}}
+             scripts: null
+    """)
+
+    recipe = _get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    datasets = set([var['dataset'] for var in variable])
+
+    assert len(recipe.tasks) == 1
+    products = next(iter(recipe.tasks)).products
+    assert len(products) == 4
+
+    product_out = get_output_preproc_files(products, 'multi_model_statistics')
+
+    # Make sure that output products are consistent
+    for (identifier, statistic), value in product_out.items():
+        assert identifier == ''
+        assert statistic in statistics
+        assert len(set(value)) == 1, 'Output products are not equal'
+
+    assert len(product_out) == len(statistics)
 
 
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
