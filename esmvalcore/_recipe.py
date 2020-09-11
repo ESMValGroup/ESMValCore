@@ -27,6 +27,7 @@ from .preprocessor import (DEFAULT_ORDER, FINAL_STEPS, INITIAL_STEPS,
 from .preprocessor._derive import get_required
 from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
+from .preprocessor._other import _groupby
 from .preprocessor._regrid import (get_cmor_levels, get_reference_levels,
                                    parse_cell_spec)
 
@@ -615,17 +616,7 @@ def _update_multi_dataset_settings(variable, settings):
         _exclude_dataset(settings, variable, step)
 
 
-def groupby(iterable, keyfunc: callable) -> dict:
-    """Group iterable by key function."""
-    grouped = defaultdict(set)
-    for item in iterable:
-        key = keyfunc(item)
-        grouped[key].add(item)
-
-    return grouped
-
-
-def get_tag(step, identifier, statistic):
+def _get_tag(step, identifier, statistic):
     # Avoid . in filename for percentiles
     statistic = statistic.replace('.', '-')
 
@@ -663,7 +654,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
 
     downstream_settings = _get_downstream_settings(step, order, products)
 
-    grouped_products = groupby(products, keyfunc=lambda p: p.group(grouping))
+    grouped_products = _groupby(products, keyfunc=lambda p: p.group(grouping))
 
     relevant_settings = {
         'output_products': defaultdict(dict)
@@ -675,7 +666,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
 
         for statistic in settings.get('statistics'):
 
-            tag = get_tag(step, identifier, statistic)
+            tag = _get_tag(step, identifier, statistic)
 
             common_attributes[step] = tag
 

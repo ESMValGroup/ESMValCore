@@ -12,10 +12,9 @@ generalized functions that operate on iris cubes. These wrappers support
 grouped execution by passing a groupby keyword.
 """
 
+import copy
 import logging
 import re
-import copy
-from collections import defaultdict
 from datetime import datetime
 from functools import partial, reduce
 
@@ -24,6 +23,8 @@ import iris
 import numpy as np
 import scipy
 from iris.experimental.equalise_cubes import equalise_attributes
+
+from ._other import _groupby
 
 logger = logging.getLogger(__name__)
 
@@ -475,20 +476,6 @@ def _multiproduct_statistics(products,
     return statistics_products
 
 
-def _group(products, groupby=None):
-    """Group products.
-
-    Returns a dict of product sets with identifiers as keys.
-    """
-    grouped_products = defaultdict(set)
-    for product in products:
-        identifier = product.group(groupby)
-
-        grouped_products[identifier].add(product)
-
-    return grouped_products
-
-
 def multi_model_statistics(products,
                            statistics: list,
                            output_products,
@@ -505,7 +492,7 @@ def multi_model_statistics(products,
     --------
     multicube_statistics : core statistics function.
     """
-    grouped_products = _group(products, groupby=groupby)
+    grouped_products = _groupby(products, keyfunc=lambda p: p.group(groupby))
 
     statistics_products = set()
     for identifier, products in grouped_products.items():
