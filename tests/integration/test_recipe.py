@@ -1551,7 +1551,7 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
     datasets = set([var['dataset'] for var in variable])
 
     products = next(iter(recipe.tasks)).products
-    product_out = get_output_preproc_files(products, preprocessor)
+    product_out = _get_output_preproc_files(products, preprocessor)
 
     # Make sure that output products are consistent
     for (identifier, statistic), value in product_out.items():
@@ -1565,7 +1565,7 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
     statistics = ['mean', 'max']
     diagnostic = 'diagnostic_name'
     variable = 'pr'
-    preprocessor = ['multi_model_statistics']
+    preprocessor = 'multi_model_statistics'
 
     content = dedent(f"""
         preprocessors:
