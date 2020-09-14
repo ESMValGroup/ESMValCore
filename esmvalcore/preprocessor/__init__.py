@@ -431,12 +431,12 @@ class PreprocessingTask(BaseTask):
         if input_products:
             statistic_products = set()
 
-            for inputs in input_products:
-                items = input_products[0].settings[step].get(
-                    'output_products', {}).items()
+            for input_product in input_products:
+                step_settings = input_product.settings[step]
+                output_products = step_settings.get('output_products', {})
 
-                for dataset, products in items:
-                    statistic_products.update(products.values())
+                for product in output_products.values():
+                    statistic_products.update(product.values())
 
             self._initialize_products(statistic_products)
 
