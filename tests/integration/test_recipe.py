@@ -1602,7 +1602,7 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
     assert len(product_out) == len(statistics)
 
 
-def test_groupby_ensemble_statistics(tmp_path, patched_datafinder, config_user):
+def test_groupby_combined_statistics(tmp_path, patched_datafinder, config_user):
     diagnostic = 'diagnostic_name'
     variable = 'pr'
 
