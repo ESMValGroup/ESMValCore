@@ -1,26 +1,20 @@
 """Unit test for :func:`esmvalcore.preprocessor._multimodel`."""
-
 import unittest
 
 import iris
 import numpy as np
-from cf_units import Unit
 import pytest
+from cf_units import Unit
 
 import tests
-from esmvalcore.preprocessor._multimodel import (_assemble_data,
-                                                 _compute_statistic,
-                                                 _get_time_slice, _plev_fix,
-                                                 _put_in_cube,
-                                                 _unify_time_coordinates,
-                                                 multicube_statistics,
-                                                 multicube_statistics_iris,
-                                                 )
+from esmvalcore.preprocessor._multimodel import (
+    _assemble_data, _compute_statistic, _get_time_slice, _plev_fix,
+    _put_in_cube, _unify_time_coordinates, multicube_statistics,
+    multicube_statistics_iris)
 
 
 class Test(tests.Test):
     """Test class for preprocessor/_multimodel.py."""
-
     def setUp(self):
         """Prepare tests."""
         # Make various time arrays
@@ -111,35 +105,25 @@ class Test(tests.Test):
 
     def test_compute_overlap_statistic_mon_cube(self):
         data = [self.cube1, self.cube1]
-        stats = multicube_statistics(
-            data,
-            span='overlap',
-            statistics=['mean']
-        )
+        stats = multicube_statistics(data, span='overlap', statistics=['mean'])
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
     def test_compute_overlap_statistic_yr_cube(self):
         data = [self.cube4, self.cube4]
-        stats = multicube_statistics(
-            data,
-            span='overlap',
-            statistics=['mean']
-        )
+        stats = multicube_statistics(data, span='overlap', statistics=['mean'])
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
     def test_multicube_statistics_fail(self):
-        data = [self.cube1, self.cube1*2.0]
+        data = [self.cube1, self.cube1 * 2.0]
         with pytest.raises(ValueError):
-            multicube_statistics(
-                data,
-                span='overlap',
-                statistics=['non-existant']
-            )
+            multicube_statistics(data,
+                                 span='overlap',
+                                 statistics=['non-existant'])
 
     def test_multicube_statistics_iris(self):
-        data = [self.cube1, self.cube1*2.0]
+        data = [self.cube1, self.cube1 * 2.0]
         statistics = ['mean', 'min', 'max']
         stats = multicube_statistics_iris(data, statistics=statistics)
         expected_mean = np.ma.ones((2, 3, 2, 2)) * 1.5
@@ -150,7 +134,7 @@ class Test(tests.Test):
         self.assert_array_equal(stats['max'].data, expected_max)
 
     def test_multicube_statistics_iris_fail(self):
-        data = [self.cube1, self.cube1*2.0]
+        data = [self.cube1, self.cube1 * 2.0]
         with pytest.raises(ValueError):
             multicube_statistics_iris(data, statistics=['non-existent'])
 

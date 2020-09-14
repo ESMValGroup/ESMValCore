@@ -273,13 +273,8 @@ def get_step_blocks(steps, order):
 
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
-
-    def __init__(self,
-                 attributes,
-                 settings,
-                 ancestors=None):
-        super().__init__(attributes['filename'],
-                         attributes, ancestors)
+    def __init__(self, attributes, settings, ancestors=None):
+        super().__init__(attributes['filename'], attributes, ancestors)
 
         self.settings = copy.deepcopy(settings)
         if 'save' not in self.settings:
@@ -403,7 +398,6 @@ def _apply_multimodel(products, step, debug):
 
 class PreprocessingTask(BaseTask):
     """Task for running the preprocessor."""
-
     def __init__(self,
                  products,
                  ancestors=None,

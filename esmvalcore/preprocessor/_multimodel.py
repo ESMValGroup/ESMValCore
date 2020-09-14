@@ -11,7 +11,6 @@ Wrapper functions separate esmvalcore internals, operating on products, from
 generalized functions that operate on iris cubes. These wrappers support
 grouped execution by passing a groupby keyword.
 """
-
 import copy
 import logging
 import re
@@ -513,8 +512,7 @@ def multi_model_statistics(input_products: set,
     return statistics_products
 
 
-def ensemble_statistics(input_products: set,
-                        statistics: list,
+def ensemble_statistics(input_products: set, statistics: list,
                         output_products: set):
     """Entry point for ensemble statistics.
 
