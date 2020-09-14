@@ -493,7 +493,7 @@ def multi_model_statistics(input_products: set,
     multicube_statistics : core statistics function.
     """
     grouped_products = _groupby(input_products,
-        keyfunc=lambda p: p.group(groupby))
+                                keyfunc=lambda p: p.group(groupby))
 
     statistics_products = set()
     for identifier, products in grouped_products.items():

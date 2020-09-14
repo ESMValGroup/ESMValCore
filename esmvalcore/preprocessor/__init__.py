@@ -410,8 +410,7 @@ class PreprocessingTask(BaseTask):
                  name='',
                  order=DEFAULT_ORDER,
                  debug=None,
-                 write_ncl_interface=False,
-    ):
+                 write_ncl_interface=False):
         """Initialize."""
         _check_multi_model_settings(products)
         super().__init__(ancestors=ancestors, name=name, products=products)
