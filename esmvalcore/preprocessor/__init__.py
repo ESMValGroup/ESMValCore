@@ -277,8 +277,7 @@ class PreprocessorFile(TrackedFile):
     def __init__(self,
                  attributes,
                  settings,
-                 ancestors=None,
-    ):
+                 ancestors=None):
         super().__init__(attributes['filename'],
                          attributes, ancestors)
 

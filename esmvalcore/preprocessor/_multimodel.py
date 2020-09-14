@@ -479,20 +479,21 @@ def _multiproduct_statistics(products,
 def multi_model_statistics(input_products: set,
                            statistics: list,
                            output_products: set,
-                           groupby: str=None,
-                           span: str='overlap',
-                           engine: str='esmvalcore'):
+                           groupby: str = None,
+                           span: str = 'overlap',
+                           engine: str = 'esmvalcore'):
     """Entry point for multi model statistics.
 
     The products are grouped (if groupby argument is specified) and the
     cubes are extracted from their products. Resulting cubes are added to
     their corresponding `output_products`.
 
-    See also
+    See Also
     --------
     multicube_statistics : core statistics function.
     """
-    grouped_products = _groupby(input_products, keyfunc=lambda p: p.group(groupby))
+    grouped_products = _groupby(input_products,
+        keyfunc=lambda p: p.group(groupby))
 
     statistics_products = set()
     for identifier, products in grouped_products.items():
@@ -520,7 +521,7 @@ def ensemble_statistics(input_products: set,
     The products are grouped and the cubes are extracted from
     the products. Resulting cubes are assigned to `output_products`.
 
-    See also
+    See Also
     --------
     multicube_statistics_iris : core statistics function.
     """
