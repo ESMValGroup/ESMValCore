@@ -401,11 +401,11 @@ def multicube_statistics_iris(cubes, statistics):
     for statistic in statistics:
         try:
             operator = operators[statistic.upper()]
-        except KeyError:
-            raise KeyError(
+        except KeyError as e:
+            raise ValueError(
                 f'Statistic {statistic} not supported in',
-                '`ensemble_statistics`.',
-                'Choose supported operator from `iris.analysis package`.')
+                '`ensemble_statistics`. Choose supported operator from',
+                '`iris.analysis package`.') from e
 
         # this will always return a masked array
         statistic_cube = cube.collapsed('ens', operator)
@@ -476,13 +476,13 @@ def _multiproduct_statistics(products,
     return statistics_products
 
 
-def multi_model_statistics(products,
+def multi_model_statistics(input_products: set,
                            statistics: list,
-                           output_products,
-                           groupby=None,
-                           span='overlap',
-                           engine='esmvalcore'):
-    """ESMValCore entry point for multi model statistics.
+                           output_products: set,
+                           groupby: str=None,
+                           span: str='overlap',
+                           engine: str='esmvalcore'):
+    """Entry point for multi model statistics.
 
     The products are grouped (if groupby argument is specified) and the
     cubes are extracted from their products. Resulting cubes are added to
@@ -492,7 +492,7 @@ def multi_model_statistics(products,
     --------
     multicube_statistics : core statistics function.
     """
-    grouped_products = _groupby(products, keyfunc=lambda p: p.group(groupby))
+    grouped_products = _groupby(input_products, keyfunc=lambda p: p.group(groupby))
 
     statistics_products = set()
     for identifier, products in grouped_products.items():
@@ -512,8 +512,10 @@ def multi_model_statistics(products,
     return statistics_products
 
 
-def ensemble_statistics(products, statistics, output_products):
-    """ESMValCore entry point for ensemble statistics.
+def ensemble_statistics(input_products: set,
+                        statistics: list,
+                        output_products: set):
+    """Entry point for ensemble statistics.
 
     The products are grouped and the cubes are extracted from
     the products. Resulting cubes are assigned to `output_products`.
@@ -524,7 +526,7 @@ def ensemble_statistics(products, statistics, output_products):
     """
     ensemble_grouping = ('project', 'dataset', 'exp')
     return multi_model_statistics(
-        products=products,
+        input_products=input_products,
         statistics=statistics,
         output_products=output_products,
         groupby=ensemble_grouping,

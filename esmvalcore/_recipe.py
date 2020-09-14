@@ -480,7 +480,6 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
-
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -595,8 +594,7 @@ def _get_common_attributes(products):
 
 
 def _get_downstream_settings(step, order, products):
-    """Get downstream preprocessor settings that are shared between
-    products."""
+    """Get downstream preprocessor settings shared between products."""
     settings = {}
     remaining_steps = order[order.index(step) + 1:]
     some_product = next(iter(products))

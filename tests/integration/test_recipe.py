@@ -1520,7 +1520,6 @@ def _test_output_product_consistency(products, preprocessor, statistics):
     return product_out
 
 
-
 def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
     statistics = ['mean', 'max']
     diagnostic = 'diagnostic_name'
@@ -1546,8 +1545,10 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
                  end_year: 2002
                  preprocessor: default
                  additional_datasets:
-                   - {{dataset: CanESM2, exp: [historical, rcp45], ensemble: "r(1:2)i1p1"}}
-                   - {{dataset: CCSM4, exp: [historical, rcp45], ensemble: "r(1:2)i1p1"}}
+                   - {{dataset: CanESM2, exp: [historical, rcp45],
+                     ensemble: "r(1:2)i1p1"}}
+                   - {{dataset: CCSM4, exp: [historical, rcp45],
+                     ensemble: "r(1:2)i1p1"}}
              scripts: null
     """)
 
@@ -1556,7 +1557,8 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
     datasets = set([var['dataset'] for var in variable])
 
     products = next(iter(recipe.tasks)).products
-    product_out = _test_output_product_consistency(products, preprocessor, statistics)
+    product_out = _test_output_product_consistency(
+        products, preprocessor, statistics)
 
     assert len(product_out) == len(datasets) * len(statistics)
 
@@ -1587,22 +1589,25 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
                 end_year: 2002
                 preprocessor: default
                 additional_datasets:
-                  - {{dataset: CanESM2, exp: [historical, rcp45], ensemble: "r(1:2)i1p1"}}
-                  - {{dataset: CCSM4, exp: [historical, rcp45], ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: CanESM2, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
             scripts: null
     """)
 
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
-    datasets = set([var['dataset'] for var in variable])
 
     products = next(iter(recipe.tasks)).products
-    product_out = _test_output_product_consistency(products, preprocessor, statistics)
+    product_out = _test_output_product_consistency(
+        products, preprocessor, statistics)
 
     assert len(product_out) == len(statistics)
 
 
-def test_groupby_combined_statistics(tmp_path, patched_datafinder, config_user):
+def test_groupby_combined_statistics(
+        tmp_path, patched_datafinder, config_user):
     diagnostic = 'diagnostic_name'
     variable = 'pr'
 
@@ -1636,8 +1641,10 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder, config_user):
                 end_year: 2002
                 preprocessor: default
                 additional_datasets:
-                  - {{dataset: CanESM2, exp: [historical, rcp45], ensemble: "r(1:2)i1p1", tag: group1}}
-                  - {{dataset: CCSM4, exp: [historical, rcp45], ensemble: "r(1:2)i1p1", tag: group2}}
+                  - {{dataset: CanESM2, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1", tag: group1}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1", tag: group2}}
             scripts: null
     """)
 
@@ -1660,7 +1667,8 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder, config_user):
     )
 
     assert len(ens_products) == len(datasets) * len(ens_statistics)
-    assert len(mm_products) == len(mm_statistics) * len(ens_statistics) * len(groupby)
+    assert len(mm_products) == len(
+        mm_statistics) * len(ens_statistics) * len(groupby)
 
 
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):

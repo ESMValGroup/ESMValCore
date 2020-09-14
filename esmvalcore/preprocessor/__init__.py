@@ -273,14 +273,14 @@ def get_step_blocks(steps, order):
 
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
-    def __init__(
-        self,
-        attributes,
-        settings,
-        ancestors=None,
+
+    def __init__(self,
+                 attributes,
+                 settings,
+                 ancestors=None,
     ):
-        super(PreprocessorFile, self).__init__(attributes['filename'],
-                                               attributes, ancestors)
+        super().__init__(attributes['filename'],
+                         attributes, ancestors)
 
         self.settings = copy.deepcopy(settings)
         if 'save' not in self.settings:
@@ -350,7 +350,7 @@ class PreprocessorFile(TrackedFile):
 
     def _initialize_entity(self):
         """Initialize the entity representing the file."""
-        super(PreprocessorFile, self)._initialize_entity()
+        super()._initialize_entity()
         settings = {
             'preprocessor:' + k: str(v)
             for k, v in self.settings.items()
@@ -404,14 +404,14 @@ def _apply_multimodel(products, step, debug):
 
 class PreprocessingTask(BaseTask):
     """Task for running the preprocessor."""
-    def __init__(
-        self,
-        products,
-        ancestors=None,
-        name='',
-        order=DEFAULT_ORDER,
-        debug=None,
-        write_ncl_interface=False,
+
+    def __init__(self,
+                 products,
+                 ancestors=None,
+                 name='',
+                 order=DEFAULT_ORDER,
+                 debug=None,
+                 write_ncl_interface=False,
     ):
         """Initialize."""
         _check_multi_model_settings(products)
@@ -423,8 +423,8 @@ class PreprocessingTask(BaseTask):
     def _initialize_product_provenance(self):
         """Initialize product provenance."""
         self._initialize_products(self.products)
-        self._initialize_multi_model_statistics_provenance()
-        self._initialize_ensemble_statistics_provenance()
+        self._initialize_multi_model_provenance()
+        self._initialize_ensemble_provenance()
 
     def _initialize_multiproduct_provenance(self, step):
         input_products = self._get_input_products(step)
@@ -440,12 +440,12 @@ class PreprocessingTask(BaseTask):
 
             self._initialize_products(statistic_products)
 
-    def _initialize_multi_model_statistics_provenance(self):
+    def _initialize_multi_model_provenance(self):
         """Initialize provenance for multi-model statistics."""
         step = 'multi_model_statistics'
         self._initialize_multiproduct_provenance(step)
 
-    def _initialize_ensemble_statistics_provenance(self):
+    def _initialize_ensemble_provenance(self):
         """Initialize provenance for ensemble statistics."""
         step = 'ensemble_statistics'
         self._initialize_multiproduct_provenance(step)
@@ -503,6 +503,6 @@ class PreprocessingTask(BaseTask):
             self.__class__.__name__,
             order,
             products,
-            super(PreprocessingTask, self).str(),
+            super().str(),
         )
         return txt
