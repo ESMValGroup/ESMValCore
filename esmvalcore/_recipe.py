@@ -480,6 +480,7 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
+
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -798,6 +799,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     multi_model_step = 'multi_model_statistics'
 
     if ensemble_step in profile:
+        check.ensemble_statistics(settings[ensemble_step])
+
         ensemble_products, ensemble_settings = _update_multiproduct(
             products, order, preproc_dir, ensemble_step)
 
@@ -811,6 +814,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         ensemble_products = products
 
     if multi_model_step in profile:
+        check.multi_model_statistics(settings[multi_model_step])
+
         multimodel_products, multimodel_settings = _update_multiproduct(
             ensemble_products, order, preproc_dir, multi_model_step)
 
