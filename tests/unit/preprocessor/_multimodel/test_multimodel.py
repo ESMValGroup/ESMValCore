@@ -132,7 +132,7 @@ class Test(tests.Test):
     def test_multicube_statistics_fail(self):
         data = [self.cube1, self.cube1*2.0]
         with pytest.raises(ValueError):
-            stats = multicube_statistics(
+            multicube_statistics(
                 data,
                 span='overlap',
                 statistics=['non-existant']
@@ -151,7 +151,7 @@ class Test(tests.Test):
 
     def test_multicube_statistics_iris_fail(self):
         data = [self.cube1, self.cube1*2.0]
-        with pytest.raises(KeyError):
+        with pytest.raises(ValueError):
             multicube_statistics_iris(data, statistics=['non-existent'])
 
     def test_compute_std(self):
