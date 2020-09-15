@@ -303,7 +303,7 @@ class DiagnosticTask(BaseTask):
             if self.settings['profile_diagnostic']:
                 profile_file = Path(self.settings['run_dir']) / 'profile.bin'
                 args['py'] = [
-                    '-m', 'vmprof', '--lines', '-o',
+                    '-m', 'vprof', '--lines', '-o',
                     str(profile_file)
                 ]
 
