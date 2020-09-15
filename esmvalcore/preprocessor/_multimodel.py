@@ -23,7 +23,7 @@ import numpy as np
 import scipy
 from iris.experimental.equalise_cubes import equalise_attributes
 
-from ._other import _groupby
+from ._other import _group_products
 
 logger = logging.getLogger(__name__)
 
@@ -491,11 +491,8 @@ def multi_model_statistics(input_products: set,
     --------
     multicube_statistics : core statistics function.
     """
-    grouped_products = _groupby(input_products,
-                                keyfunc=lambda p: p.group(groupby))
-
     statistics_products = set()
-    for identifier, products in grouped_products.items():
+    for identifier, products in _group_products(input_products, by=groupby):
         sub_output_products = output_products[identifier]
 
         # Compute statistics on a single group

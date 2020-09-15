@@ -62,3 +62,12 @@ def _groupby(iterable, keyfunc: callable) -> dict:
         grouped[key].add(item)
 
     return grouped
+
+
+def _group_products(products, by):
+    """Group products by the given list of attributes."""
+    def grouper(product):
+        return product.group(by)
+
+    grouped = _groupby(products, keyfunc=grouper)
+    return grouped.items()
