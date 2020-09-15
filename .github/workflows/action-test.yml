@@ -77,7 +77,7 @@ jobs:
       - uses: goanpeca/setup-miniconda@v1
         with:
           activate-environment: esmvaltool
-          environment-file: environment_osx.yml
+          environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
           channels: conda-forge
