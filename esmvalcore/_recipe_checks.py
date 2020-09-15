@@ -181,8 +181,8 @@ def extract_shape(settings):
                 "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))
 
 
-def _validate_multi_model_statistics(statistics):
-    """Raise error if multi-model statistics cannot be validated."""
+def _verify_multimodel_statistics(statistics):
+    """Raise error if multi-model statistics cannot be verified."""
     valid_names = ["mean", "median", "std", "min", "max"]
     valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
 
@@ -195,8 +195,8 @@ def _validate_multi_model_statistics(statistics):
                 f"or patterns matching {valid_patterns}. Got '{statistic}.'")
 
 
-def _validate_span_value(span):
-    """Raise error if span argument cannot be validated."""
+def _verify_span_value(span):
+    """Raise error if span argument cannot be verified."""
     valid_names = ('overlap', 'full')
     if span not in valid_names:
         raise RecipeError(
@@ -205,8 +205,8 @@ def _validate_span_value(span):
             f"Got {span}.")
 
 
-def _validate_groupby(groupby):
-    """Raise error if groupby arguments cannot be validated."""
+def _verify_groupby(groupby):
+    """Raise error if groupby arguments cannot be verified."""
     if not groupby:
         return
     if not isinstance(groupby, list):
@@ -215,8 +215,8 @@ def _validate_groupby(groupby):
             f"`groupby` must be defined as a list. Got {groupby}.")
 
 
-def _validate_arguments(given, expected):
-    """Raise error if arguments cannot be validated."""
+def _verify_arguments(given, expected):
+    """Raise error if arguments cannot be verified."""
     for key in given:
         if key not in expected:
             raise RecipeError(
@@ -224,26 +224,26 @@ def _validate_arguments(given, expected):
                 "keywords are: {valid_keys}.")
 
 
-def multi_model_statistics(settings):
+def multimodel_statistics(settings):
     """Check that the multi-model settings are valid."""
     valid_keys = ['span', 'groupby', 'statistics']
-    _validate_arguments(settings.keys(), valid_keys)
+    _verify_arguments(settings.keys(), valid_keys)
 
     span = settings.get('span', None)  # optional, default: overlap
     if span:
-        _validate_span_value(span)
+        _verify_span_value(span)
 
     groupby = settings.get('groupby', None)  # optional, default: None
     if groupby:
-        _validate_groupby(groupby)
+        _verify_groupby(groupby)
 
     statistics = settings.get('statistics', None)  # required
     if statistics:
-        _validate_multi_model_statistics(statistics)
+        _verify_multimodel_statistics(statistics)
 
 
-def _validate_ensemble_statistics(statistics):
-    """Raise error if ensemble statistics cannot be validated."""
+def _verify_ensemble_statistics(statistics):
+    """Raise error if ensemble statistics cannot be verified."""
     valid_names = ('count', 'gmean', 'hmean', 'max', 'mean', 'median', 'min',
                    'peak', 'percentile', 'proportion', 'rms', 'std_dev', 'sum',
                    'variance', 'wpercentile')
@@ -259,8 +259,8 @@ def _validate_ensemble_statistics(statistics):
 def ensemble_statistics(settings):
     """Check that the ensemble settings are valid."""
     valid_keys = ['statistics']
-    _validate_arguments(settings.keys(), valid_keys)
+    _verify_arguments(settings.keys(), valid_keys)
 
     statistics = settings.get('statistics', None)
     if statistics:
-        _validate_ensemble_statistics(statistics)
+        _verify_ensemble_statistics(statistics)

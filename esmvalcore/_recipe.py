@@ -809,7 +809,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         ensemble_products = products
 
     if multi_model_step in profile:
-        check.multi_model_statistics(settings[multi_model_step])
+        check.multimodel_statistics(settings[multi_model_step])
 
         multimodel_products, multimodel_settings = _update_multiproduct(
             ensemble_products, order, preproc_dir, multi_model_step)
