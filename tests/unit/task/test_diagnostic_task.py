@@ -86,7 +86,7 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
 
     # Append filenames to expected command
     if ext == '.py' and profile:
-        cmd.append(str(run_dir / 'profile.bin'))
+        cmd.append(str(run_dir / 'profile.json'))
         cmd.append('-c')
         cmd.append('p')
     cmd.append(str(script))
