@@ -301,7 +301,7 @@ class DiagnosticTask(BaseTask):
                 'ncl': ['-n', '-p'],
             }
             if self.settings['profile_diagnostic']:
-                profile_file = Path(self.settings['run_dir']) / 'profile.bin'
+                profile_file = Path(self.settings['run_dir']) / 'profile.json'
                 args['py'] = [
                     '-m', 'vprof', '-o',
                     str(profile_file), '-c', 'p'
