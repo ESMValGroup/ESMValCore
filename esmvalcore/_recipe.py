@@ -703,31 +703,33 @@ def _update_extract_shape(settings, config_user):
 
 def _match_products(products, variables):
     """Match a list of input products to output product attributes."""
-    grouped_products = {}
+    grouped_products = defaultdict(list)
 
     def get_matching(attributes):
         """Find the output filename which matches input attributes best."""
-        score = 0
+        best_score = 0
         filenames = []
         for variable in variables:
             filename = variable['filename']
-            tmp = sum(v == variable.get(k) for k, v in attributes.items())
-            if tmp > score:
-                score = tmp
+            score = sum(v == variable.get(k) for k, v in attributes.items())
+
+            if score > best_score:
+                best_score = score
                 filenames = [filename]
-            elif tmp == score:
+            elif score == best_score:
                 filenames.append(filename)
+
         if not filenames:
             logger.warning(
                 "Unable to find matching output file for input file %s",
                 filename)
+
         return filenames
 
     # Group input files by output file
     for product in products:
-        for filename in get_matching(product.attributes):
-            if filename not in grouped_products:
-                grouped_products[filename] = []
+        matching_filenames = get_matching(product.attributes)
+        for filename in matching_filenames:
             grouped_products[filename].append(product)
 
     return grouped_products
@@ -746,10 +748,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     for variable in variables:
         variable['filename'] = get_output_file(variable, preproc_dir)
 
-    if ancestor_products:
-        grouped_ancestors = _match_products(ancestor_products, variables)
-    else:
-        grouped_ancestors = {}
+    grouped_ancestors = _match_products(ancestor_products, variables)
 
     for variable in variables:
         settings = _get_default_settings(
