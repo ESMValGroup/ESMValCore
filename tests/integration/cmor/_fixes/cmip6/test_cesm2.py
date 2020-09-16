@@ -9,7 +9,7 @@ import pytest
 from cf_units import Unit
 from netCDF4 import Dataset
 
-from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl, Cli, Clw, Tas
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl, Cli, Clw, Tas, Tos
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -267,10 +267,42 @@ def tas_cubes():
     return iris.cube.CubeList([ta_cube, tas_cube])
 
 
+@pytest.fixture
+def tos_cubes():
+    """Cubes to test fixes for ``tos``."""
+    time_coord = iris.coords.DimCoord(
+        [0.0004, 1.09776], var_name='time', standard_name='time',
+        units='days since 1850-01-01 00:00:00')
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
+    lon_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lon', standard_name='longitude', units='degrees')
+    coord_specs = [
+        (time_coord, 0),
+        (lat_coord, 1),
+        (lon_coord, 2),
+    ]
+    tos_cube = iris.cube.Cube(
+        np.ones((2, 2, 2)),
+        var_name='tos',
+        dim_coords_and_dims=coord_specs,
+    )
+    tos_cube.attributes = {}
+    tos_cube.attributes['mipTable'] = 'Omon'
+
+    return iris.cube.CubeList([tos_cube])
+
+
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'tas')
     assert fix == [Tas(None)]
+
+
+def test_get_tos_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'tos')
+    assert fix == [Tos(None)]
 
 
 def test_tas_fix_metadata(tas_cubes):
@@ -297,3 +329,13 @@ def test_tas_fix_metadata(tas_cubes):
         else:
             with pytest.raises(iris.exceptions.CoordinateNotFoundError):
                 cube.coord('height')
+
+
+def test_tos_fix_metadata(tos_cubes):
+    """Test ``fix_metadata`` for ``tos``."""
+    vardef = get_var_info('CMIP6', 'Omon', 'tos')
+    fix = Tos(vardef)
+    out_cubes = fix.fix_metadata(tos_cubes)
+    assert out_cubes is tos_cubes
+    for cube in out_cubes:
+        np.testing.assert_equal(cube.coord("time").points, [0.,  1.1])
