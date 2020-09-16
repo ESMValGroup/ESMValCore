@@ -109,7 +109,9 @@ class Tas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """Add height (2m) coordinate.
+        """
+        Add height (2m) coordinate.
+
         Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
 
         Parameters
@@ -186,7 +188,9 @@ class Tos(Fix):
     """Fixes for tos."""
 
     def fix_metadata(self, cubes):
-        """Round times to 1 d.p. for monthly means.
+        """
+        Round times to 1 d.p. for monthly means.
+
         Required to get hist-GHG and ssp245-GHG Omon tos to concatenate.
 
         Parameters
@@ -204,7 +208,7 @@ class Tos(Fix):
         for cube in cubes:
             if cube.attributes['mipTable'] == 'Omon':
                 cube.coord('time').points = \
-                  np.round(cube.coord('time').points, 1)
+                    np.round(cube.coord('time').points, 1)
         return cubes
 
 
