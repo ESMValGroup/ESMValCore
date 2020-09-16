@@ -3,6 +3,7 @@ import datetime
 import logging
 import logging.config
 import os
+import pprint
 import time
 from pathlib import Path
 
@@ -13,6 +14,11 @@ from .cmor.table import CMOR_TABLES, read_cmor_tables
 logger = logging.getLogger(__name__)
 
 CFG = {}
+
+ESMVALCORE_DIR = Path(__file__).parent
+CONFIG_NAME = 'config-user.yml'
+DEFAULT_SETTINGS = yaml.safe_load(open(str(ESMVALCORE_DIR / CONFIG_NAME)))
+USER_CONFIG_FILE = Path('~/.esmvaltool/') / CONFIG_NAME
 
 
 def find_diagnostics():
@@ -31,7 +37,7 @@ def find_diagnostics():
 DIAGNOSTICS_PATH = find_diagnostics()
 
 
-def read_config_user_file(config_file, folder_name, options=None):
+def read_config_user_file(config_file, folder_name=None, options=None):
     """Read config user file and store settings in a dictionary."""
     config_file = os.path.abspath(
         os.path.expandvars(os.path.expanduser(config_file)))
@@ -47,30 +53,12 @@ def read_config_user_file(config_file, folder_name, options=None):
     for key, value in options.items():
         cfg[key] = value
 
-    # set defaults
-    defaults = {
-        'write_plots': True,
-        'write_netcdf': True,
-        'compress_netcdf': False,
-        'exit_on_warning': False,
-        'output_file_type': 'png',
-        'output_dir': 'esmvaltool_output',
-        'auxiliary_data_dir': 'auxiliary_data',
-        'save_intermediary_cubes': False,
-        'remove_preproc_dir': True,
-        'max_parallel_tasks': None,
-        'run_diagnostic': True,
-        'profile_diagnostic': False,
-        'config_developer_file': None,
-        'drs': {},
-    }
-
-    for key in defaults:
+    for key in DEFAULT_SETTINGS:
         if key not in cfg:
             logger.info(
                 "No %s specification in config file, "
-                "defaulting to %s", key, defaults[key])
-            cfg[key] = defaults[key]
+                "defaulting to %s", key, DEFAULT_SETTINGS[key])
+            cfg[key] = DEFAULT_SETTINGS[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
@@ -85,16 +73,17 @@ def read_config_user_file(config_file, folder_name, options=None):
         else:
             cfg['rootpath'][key] = [_normalize_path(path) for path in root]
 
-    # insert a directory date_time_recipe_usertag in the output paths
-    now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    new_subdir = '_'.join((folder_name, now))
-    cfg['output_dir'] = os.path.join(cfg['output_dir'], new_subdir)
+    if folder_name:
+        # insert a directory date_time_recipe_usertag in the output paths
+        now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        new_subdir = '_'.join((folder_name, now))
+        cfg['output_dir'] = os.path.join(cfg['output_dir'], new_subdir)
 
-    # create subdirectories
-    cfg['preproc_dir'] = os.path.join(cfg['output_dir'], 'preproc')
-    cfg['work_dir'] = os.path.join(cfg['output_dir'], 'work')
-    cfg['plot_dir'] = os.path.join(cfg['output_dir'], 'plots')
-    cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
+        # create subdirectories
+        cfg['preproc_dir'] = os.path.join(cfg['output_dir'], 'preproc')
+        cfg['work_dir'] = os.path.join(cfg['output_dir'], 'work')
+        cfg['plot_dir'] = os.path.join(cfg['output_dir'], 'plots')
+        cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
 
     # Read developer configuration file
     cfg_developer = read_config_developer_file(cfg['config_developer_file'])
@@ -119,7 +108,6 @@ def _normalize_path(path):
     -------
     str:
         Normalized path
-
     """
     if path is None:
         return None
@@ -245,3 +233,69 @@ def get_tag_value(section, tag):
 def replace_tags(section, tags):
     """Replace a list of tags with their values."""
     return tuple(get_tag_value(section, tag) for tag in tags)
+
+
+class Config:
+    """Importable config object."""
+    def __init__(self):
+        super().__init__()
+        self.config_file = None
+        self.default_mapping = DEFAULT_SETTINGS
+        self.load()
+
+    def load(self, config_file: str = USER_CONFIG_FILE):
+        """Load config from config user file."""
+        self.mapping = read_config_user_file(config_file)
+        self.init_session_dir()
+        self.config_file = config_file
+
+    def load_from_dict(self, mapping):
+        """Load config from dictionary."""
+        self.mapping = mapping
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}('{self.config_file}')"
+
+    def __str__(self):
+        return pprint.pformat(self.mapping)
+
+    def __getitem__(self, item):
+        try:
+            return self.mapping[item]
+        except KeyError:
+            return self.default_mapping[item]
+
+    def init_session_dir(self, name: str = 'session'):
+        """Initialize session.
+
+        The `name` is used to name the working directory, e.g.
+        recipe_example_20200916/ If no name is given, such as in an
+        interactive session, defaults to `session`.
+        """
+        now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        session_name = f"{name}_{now}"
+        self._session_dir = Path(self.mapping['output_dir']) / session_name
+
+    @property
+    def session_dir(self):
+        return self._session_dir
+
+    @property
+    def preproc_dir(self):
+        return self.session_dir / 'preproc'
+
+    @property
+    def work_dir(self):
+        return self.session_dir / 'work'
+
+    @property
+    def plot_dir(self):
+        return self.session_dir / 'plots'
+
+    @property
+    def run_dir(self):
+        return self.session_dir / 'run'
+
+
+# initialize config object here, so it can be re-used across modules
+config = Config()
