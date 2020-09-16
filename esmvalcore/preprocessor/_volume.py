@@ -78,13 +78,10 @@ def _create_cube_time(src_cube, data, times):
     Returns
     -------
     cube
-
     .. note::
-
         If there is only one level of interpolation, the resultant cube
         will be collapsed over the associated vertical dimension, and a
         scalar vertical coordinate will be added.
-
     """
     # Get the source cube vertical coordinate and associated dimension.
     src_times = src_cube.coord('time')
@@ -268,12 +265,14 @@ def volume_statistics(
             depth_volume.append(layer_vol)
         # ####
         # Calculate weighted mean over the water volumn
-        result.append(np.average(column, weights=depth_volume))
+        column = np.ma.array(column)
+        depth_volume = np.ma.array(depth_volume)
+        result.append(np.ma.average(column, weights=depth_volume))
 
     # ####
     # Send time series and dummy cube to cube creating tool.
     times = np.array(cube.coord('time').points.astype(float))
-    result = np.array(result)
+    result = np.ma.array(result)
 
     # #####
     # Create a small dummy output array for the output cube

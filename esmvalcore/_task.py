@@ -8,6 +8,7 @@ import numbers
 import os
 import pprint
 import subprocess
+import sys
 import threading
 import time
 from copy import deepcopy
@@ -311,7 +312,10 @@ class DiagnosticTask(BaseTask):
                 raise DiagnosticError(
                     f"{err_msg}: non-executable file with unknown extension "
                     f"'{script_file.suffix}'.")
-            interpreter = which(interpreters[ext])
+            if ext == 'py' and sys.executable:
+                interpreter = sys.executable
+            else:
+                interpreter = which(interpreters[ext])
             if interpreter is None:
                 raise DiagnosticError(
                     f"{err_msg}: program '{interpreters[ext]}' not installed.")
@@ -575,6 +579,13 @@ class DiagnosticTask(BaseTask):
                     self.script, self.name)
                 valid = False
             ancestors = set()
+            if isinstance(ancestor_files, str):
+                logger.warning(
+                    "Ancestor file(s) %s specified for recording provenance "
+                    "of %s, created by diagnostic script %s in task %s is "
+                    "a string but should be a list of strings", ancestor_files,
+                    filename, self.script, self.name)
+                ancestor_files = [ancestor_files]
             for ancestor_file in ancestor_files:
                 if ancestor_file in ancestor_products:
                     ancestors.add(ancestor_products[ancestor_file])

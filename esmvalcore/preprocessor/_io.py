@@ -147,12 +147,12 @@ def _by_two_concatenation(cubes):
     concatenated = iris.cube.CubeList(cubes).concatenate()
     if len(concatenated) == 1:
         return concatenated[0]
+
+    concatenated = _concatenate_overlapping_cubes(concatenated)
+    if len(concatenated) == 2:
+        _get_concatenation_error(concatenated)
     else:
-        concatenated = _concatenate_overlapping_cubes(concatenated)
-        if len(concatenated) == 2:
-            _get_concatenation_error(concatenated)
-        else:
-            return concatenated[0]
+        return concatenated[0]
 
 
 def _get_concatenation_error(cubes):
@@ -174,6 +174,9 @@ def _get_concatenation_error(cubes):
 
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
+    if len(cubes) == 1:
+        return cubes[0]
+
     _fix_cube_attributes(cubes)
 
     if len(cubes) > 1:

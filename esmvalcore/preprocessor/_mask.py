@@ -135,6 +135,8 @@ def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
     if any(fx_files) and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
+            if not fx_file:
+                continue
             fxfile_members = os.path.basename(fx_file).split('_')
             for fx_root in ['sftlf', 'sftof']:
                 if fx_root in fxfile_members:
@@ -216,6 +218,8 @@ def mask_landseaice(cube, fx_variables, mask_out):
     fx_files = fx_variables.values()
     if any(fx_files):
         for fx_file in fx_files:
+            if not fx_file:
+                continue
             fx_cube = iris.load_cube(fx_file)
 
             if _check_dims(cube, fx_cube):
