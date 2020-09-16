@@ -24,7 +24,6 @@ from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
 
-
 # set the start method for multiprocessing
 # on OSX Darwin 10.14.6 it is None, leading to no process being executed
 if mp.get_start_method(allow_none=True) is None:
