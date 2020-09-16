@@ -16,29 +16,30 @@ from esmvalcore.cmor.table import get_var_info
 def siconc_file(tmp_path):
     """Create netcdf file with similar issues as ``cl``."""
     nc_path = os.path.join(tmp_path, 'gfdl_esm4_siconc.nc')
-with Dataset(nc_path, mode='w') as dataset:
-    dataset.createDimension('time', size=1)
-    dataset.createDimension('lat', size=1)
-    dataset.createDimension('lon', size=1)
+    with Dataset(nc_path, mode='w') as dataset:
+        dataset.createDimension('time', size=1)
+        dataset.createDimension('lat', size=1)
+        dataset.createDimension('lon', size=1)
 
-    # Dimensional variables
-    dataset.createVariable('time', np.float64, dimensions=('time',))
-    dataset.createVariable('lat', np.float64, dimensions=('lat',))
-    dataset.createVariable('lon', np.float64, dimensions=('lon',))
-    dataset.variables['time'][:] = [0.0]
-    dataset.variables['time'].standard_name = 'time'
-    dataset.variables['time'].units = 'days since 6543-2-1'
-    dataset.variables['lat'][:] = [-30.0]
-    dataset.variables['lat'].standard_name = 'latitude'
-    dataset.variables['lat'].units = 'degrees_north'
-    dataset.variables['lon'][:] = [30.0]
-    dataset.variables['lon'].standard_name = 'longitude'
-    dataset.variables['lon'].units = 'degrees_east'
-    dataset.createVariable('siconc', np.float64,
-                           dimensions=('time', 'lat', 'lon'))
-    dataset.variables['siconc'][:] = 22.
-    dataset.variables['siconc'].standard_name = 'sea_ice_area_fraction'
-    dataset.variables['siconc'].units = '%'
+        # Dimensional variables
+        dataset.createVariable('time', np.float64, dimensions=('time',))
+        dataset.createVariable('lat', np.float64, dimensions=('lat',))
+        dataset.createVariable('lon', np.float64, dimensions=('lon',))
+        dataset.variables['time'][:] = [0.0]
+        dataset.variables['time'].standard_name = 'time'
+        dataset.variables['time'].units = 'days since 6543-2-1'
+        dataset.variables['lat'][:] = [-30.0]
+        dataset.variables['lat'].standard_name = 'latitude'
+        dataset.variables['lat'].units = 'degrees_north'
+        dataset.variables['lon'][:] = [30.0]
+        dataset.variables['lon'].standard_name = 'longitude'
+        dataset.variables['lon'].units = 'degrees_east'
+        dataset.createVariable('siconc', np.float64,
+                               dimensions=('time', 'lat', 'lon'))
+        dataset.variables['siconc'][:] = 22.
+        dataset.variables['siconc'].standard_name = 'sea_ice_area_fraction'
+        dataset.variables['siconc'].units = '%'
+
     return nc_path
 
 
