@@ -16,7 +16,7 @@ from esmvalcore.cmor.table import get_var_info
 def siconc_file(tmp_path):
     """Create netcdf file with similar issues as ``cl``."""
     nc_path = os.path.join(tmp_path, 'gfdl_esm4_siconc.nc')
-    dataset = Dataset(nc_path, mode='w')
+with Dataset(nc_path, mode='w') as dataset:
     dataset.createDimension('time', size=1)
     dataset.createDimension('lat', size=1)
     dataset.createDimension('lon', size=1)
@@ -39,8 +39,6 @@ def siconc_file(tmp_path):
     dataset.variables['siconc'][:] = 22.
     dataset.variables['siconc'].standard_name = 'sea_ice_area_fraction'
     dataset.variables['siconc'].units = '%'
-
-    dataset.close()
     return nc_path
 
 
