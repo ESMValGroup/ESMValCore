@@ -106,34 +106,36 @@ class ClFixHybridPressureCoord(Fix):
 
 
 class OceanFixGrid(Fix):
-
     """Fixes for tos, siconc in FGOALS-g3."""
 
     def fix_data(self, cube):
-        """Fix data.
+        """
+        Fix data.
+
         Calculate missing latitude/longitude boundaries using interpolation.
-        Based on a similar fix for BCC-CSM2-MR
+        Based on a similar fix for BCC-CSM2-MR.
+
         Parameters
         ----------
         cube: iris.cube.Cube
             Input cube to fix.
+
         Returns
         -------
         iris.cube.Cube
         """
-
         rlat = cube.coord('grid_latitude').points
         rlon = cube.coord('grid_longitude').points
 
         # Guess coordinate bounds in rlat, rlon (following BCC-CSM2-MR-1).
         rlat_idx_bnds = np.zeros((len(rlat), 2))
-        rlat_idx_bnds[:, 0] = np.arange(len(rlat))-0.5
-        rlat_idx_bnds[:, 1] = np.arange(len(rlat))+0.5
+        rlat_idx_bnds[:, 0] = np.arange(len(rlat)) - 0.5
+        rlat_idx_bnds[:, 1] = np.arange(len(rlat)) + 0.5
         rlat_idx_bnds[0, 0] = 0.
-        rlat_idx_bnds[len(rlat)-1, 1] = len(rlat)
+        rlat_idx_bnds[len(rlat) - 1, 1] = len(rlat)
         rlon_idx_bnds = np.zeros((len(rlon), 2))
-        rlon_idx_bnds[:, 0] = np.arange(len(rlon))-0.5
-        rlon_idx_bnds[:, 1] = np.arange(len(rlon))+0.5
+        rlon_idx_bnds[:, 0] = np.arange(len(rlon)) - 0.5
+        rlon_idx_bnds[:, 1] = np.arange(len(rlon)) + 0.5
 
         # Calculate latitude/longitude vertices by interpolation
         lat_vertices = []
@@ -161,11 +163,14 @@ class OceanFixGrid(Fix):
         return cube
 
     def fix_metadata(self, cubes):
-        """Rename ``var_name`` of 1D-``latitude`` and 1D-``longitude``.
+        """
+        Rename ``var_name`` of 1D-``latitude`` and 1D-``longitude``.
+
         Parameters
         ----------
         cubes : iris.cube.CubeList
             Input cubes.
+
         Returns
         -------
         iris.cube.CubeList
