@@ -7,7 +7,8 @@ class Siconc(Fix):
     """Fixes for siconc."""
 
     def fix_metadata(self, cubes):
-        """Fix metadata.
+        """
+        Fix metadata.
 
         Some coordinate points vary for different files of this dataset (for
         different time range). This fix removes these inaccuracies by rounding
@@ -16,6 +17,7 @@ class Siconc(Fix):
         Parameters
         ----------
         cubes: iris.cube.CubeList
+            Input cubes to fix.
 
         Returns
         -------
