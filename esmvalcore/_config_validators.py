@@ -42,8 +42,22 @@ def validate_str(value, none_ok=False):
     return value
 
 
+def validate_str_list(value, none_ok=False):
+    if isinstance(value, (str, Path)):
+        return validate_path(value)
+
+    value = [validate_str(s) for s in value]
+    return value
+
+
 def validate_warn(value):
     print(f'Value `{value}` not validated!')
+    return value
+
+
+def validate_positive(value):
+    if value is not None and value < 1:
+        raise ValueError(f"Must be larger be larger than 0. Got {value}.")
     return value
 
 
@@ -71,4 +85,12 @@ _validators = {
     'drs.CMIP5': validate_str,
     'drs.CORDEX': validate_str,
     'drs.OBS': validate_str,
+
+    # From CLI
+    "skip-nonexistent": validate_bool,
+    "diagnostics": validate_str_list,
+    "check_level": validate_int,
+    "synda_download": validate_bool,
+    'max_years': validate_positive,
+    'max_datasets': validate_positive,
 }
