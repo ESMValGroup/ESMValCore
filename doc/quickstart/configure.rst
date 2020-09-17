@@ -96,6 +96,11 @@ with explanations in a commented line above each option:
   # the amount of memory available in your system.
   max_parallel_tasks: null
 
+  # Use a profiling tool for the diagnostic run [false]/true; profilers tell you where
+  # the stress points of the code are (high CPU usage, high memory intake etc);
+  # for this purpose we use vprof, see below for notes
+  profile_diagnostic: true
+
   # Path to custom config-developer file, to customise project configurations.
   # See config-developer.yml for an example. Set to None to use the default
   config_developer_file: null
@@ -146,6 +151,13 @@ downloaded at runtime.
 
    This setting is not for model or observational datasets, rather it is for
    data files used in plotting such as coastline descriptions and so on.
+
+The ``profile_diagnostic`` setting triggers profiling of Python diagnostics;
+this will give you information on the resources used while running the diagnostic
+(including execution time of different code blocks, memory, CPU usage); for this
+purpose we use `vprof<https://github.com/nvdv/vprof>`_. The profiler outputs
+a json file that can be used to extract the profiling information via e.g.
+``vprof --input-file esmvaltool_output/recipe_output/run/diagnostic/script/profile.json``.
 
 A detailed explanation of the data finding-related sections of the
 ``config-user.yml`` (``rootpath`` and ``drs``) is presented in the
