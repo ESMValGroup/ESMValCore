@@ -1,5 +1,4 @@
 """ESMValTool configuration."""
-import datetime
 import logging
 import logging.config
 import os
@@ -8,16 +7,15 @@ from pathlib import Path
 
 import yaml
 
+from esmvalcore import config
+
+from ._config_object import _load_developer_config
 from .cmor.table import CMOR_TABLES, read_cmor_tables
 
 logger = logging.getLogger(__name__)
 
-CFG = {}
-
-ESMVALCORE_DIR = Path(__file__).parent
-CONFIG_NAME = 'config-user.yml'
-DEFAULT_SETTINGS = yaml.safe_load(open(str(ESMVALCORE_DIR / CONFIG_NAME)))
-USER_CONFIG_FILE = Path('~/.esmvaltool/') / CONFIG_NAME
+CFG = _load_developer_config(config['config_developer_file'])
+read_cmor_tables(CFG)
 
 
 def find_diagnostics():
@@ -34,97 +32,6 @@ def find_diagnostics():
 
 
 DIAGNOSTICS_PATH = find_diagnostics()
-
-
-def read_config_user_file(config_file, folder_name=None, options=None):
-    """Read config user file and store settings in a dictionary."""
-    config_file = os.path.abspath(
-        os.path.expandvars(os.path.expanduser(config_file)))
-    # Read user config file
-    if not os.path.exists(config_file):
-        print(f"ERROR: Config file {config_file} does not exist")
-
-    with open(config_file, 'r') as file:
-        cfg = yaml.safe_load(file)
-
-    if options is None:
-        options = dict()
-    for key, value in options.items():
-        cfg[key] = value
-
-    for key in DEFAULT_SETTINGS:
-        if key not in cfg:
-            logger.info(
-                "No %s specification in config file, "
-                "defaulting to %s", key, DEFAULT_SETTINGS[key])
-            cfg[key] = DEFAULT_SETTINGS[key]
-
-    cfg['output_dir'] = _normalize_path(cfg['output_dir'])
-    cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
-
-    cfg['config_developer_file'] = _normalize_path(
-        cfg['config_developer_file'])
-
-    for key in cfg['rootpath']:
-        root = cfg['rootpath'][key]
-        if isinstance(root, str):
-            cfg['rootpath'][key] = [_normalize_path(root)]
-        else:
-            cfg['rootpath'][key] = [_normalize_path(path) for path in root]
-
-    if folder_name:
-        # insert a directory date_time_recipe_usertag in the output paths
-        now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        new_subdir = '_'.join((folder_name, now))
-        cfg['output_dir'] = os.path.join(cfg['output_dir'], new_subdir)
-
-        # create subdirectories
-        cfg['preproc_dir'] = os.path.join(cfg['output_dir'], 'preproc')
-        cfg['work_dir'] = os.path.join(cfg['output_dir'], 'work')
-        cfg['plot_dir'] = os.path.join(cfg['output_dir'], 'plots')
-        cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
-
-    # Read developer configuration file
-    cfg_developer = read_config_developer_file(cfg['config_developer_file'])
-    for key, value in cfg_developer.items():
-        CFG[key] = value
-    read_cmor_tables(CFG)
-
-    return cfg
-
-
-def _normalize_path(path):
-    """Normalize paths.
-
-    Expand ~ character and environment variables and convert path to absolute.
-
-    Parameters
-    ----------
-    path: str
-        Original path
-
-    Returns
-    -------
-    str:
-        Normalized path
-    """
-    if path is None:
-        return None
-    return os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
-
-
-def read_config_developer_file(cfg_file=None):
-    """Read the developer's configuration file."""
-    if cfg_file is None:
-        cfg_file = os.path.join(
-            os.path.dirname(__file__),
-            'config-developer.yml',
-        )
-
-    with open(cfg_file, 'r') as file:
-        cfg = yaml.safe_load(file)
-
-    return cfg
 
 
 def configure_logging(cfg_file=None, output_dir=None, console_log_level=None):

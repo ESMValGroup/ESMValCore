@@ -6,7 +6,6 @@ from pathlib import Path
 import yaml
 
 from esmvalcore._config_validators import _validators
-from esmvalcore.cmor.table import read_cmor_tables
 
 
 def flatten(d, parent_key='', sep='.'):
@@ -114,6 +113,3 @@ config.update(_load_user_config(USER_CONFIG))
 # TODO: update options from CLI
 
 config_orig = Config(config.copy())
-
-CFG = _load_developer_config(config['config_developer_file'])
-read_cmor_tables(CFG)
