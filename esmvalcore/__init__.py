@@ -2,7 +2,7 @@
 import logging
 import os
 
-from ._config import config
+from ._config_object import config
 from ._locations import locations
 from ._version import __version__
 
