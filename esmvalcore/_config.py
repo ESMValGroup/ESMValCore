@@ -9,12 +9,12 @@ import yaml
 
 from esmvalcore import config
 
-from ._config_object import _load_developer_config
+from ._config_object import _read_developer_config_file
 from .cmor.table import CMOR_TABLES, read_cmor_tables
 
 logger = logging.getLogger(__name__)
 
-CFG = _load_developer_config(config['config_developer_file'])
+CFG = _read_developer_config_file(config['config_developer_file'])
 read_cmor_tables(CFG)
 
 

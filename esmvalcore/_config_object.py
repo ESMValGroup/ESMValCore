@@ -32,6 +32,14 @@ def read_config_file(config_file, folder_name=None):
     return cfg
 
 
+def _read_developer_config_file(filename):
+    if not filename:
+        filename = DEVELOPER_CONFIG
+
+    mapping = read_config_file(filename)
+    return mapping
+
+
 class Config(MutableMapping, dict):
     """Based on `matplotlib.rcParams`."""
     validate = _validators
@@ -85,31 +93,43 @@ class Config(MutableMapping, dict):
     def copy(self):
         return {k: dict.__getitem__(self, k) for k in self}
 
+    def clear(self):
+        """Clear Config dictionary."""
+        dict.clear(self)
+
+
+def _load_default_config(filename):
+    mapping = read_config_file(filename)
+    mapping = flatten(mapping)
+
+    global config_default
+
+    config_default.update(mapping)
+
 
 def _load_user_config(filename):
     mapping = read_config_file(filename)
-    return flatten(mapping)
+    mapping = flatten(mapping)
 
+    global config
+    global config_orig
 
-def _load_developer_config(filename):
-    if not filename:
-        filename = DEVELOPER_CONFIG
+    config.clear()
+    config.update(config_default)
+    config.update(mapping)
 
-    mapping = read_config_file(filename)
-    return mapping
+    config_orig = Config(config.copy())
 
 
 DEVELOPER_CONFIG = Path(__file__).with_name('config-developer.yml')
 DEFAULT_CONFIG = Path(__file__).with_name('config-user.yml')
 USER_CONFIG = Path.home() / '.esmvaltool' / 'config-user.yml'
 
+# initialize placeholders
 config_default = Config()
-config_default.update(_load_user_config(DEFAULT_CONFIG))
-
 config = Config()
-config.update(config_default)
-config.update(_load_user_config(USER_CONFIG))
+config_orig = Config()
 
-# TODO: update options from CLI
-
-config_orig = Config(config.copy())
+# update config objects
+_load_default_config(DEFAULT_CONFIG)
+_load_user_config(USER_CONFIG)
