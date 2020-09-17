@@ -705,6 +705,9 @@ def _match_products(products, variables):
     """Match a list of input products to output product attributes."""
     grouped_products = defaultdict(list)
 
+    if not products:
+        return grouped_products
+
     def get_matching(attributes):
         """Find the output filename which matches input attributes best."""
         best_score = 0
