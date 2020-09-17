@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """Fixes for CMIP6 SAM0-UNICON."""
 from ..fix import Fix
 
@@ -22,3 +23,16 @@ class msftmz(Fix):
             basin = cube.coord('region')
             basin.var_name = 'basin'
         return cubes
+=======
+"""Fixes for SAM0-UNICON model."""
+from ..common import ClFixHybridPressureCoord
+
+
+Cl = ClFixHybridPressureCoord
+
+
+Cli = ClFixHybridPressureCoord
+
+
+Clw = ClFixHybridPressureCoord
+>>>>>>> origin/master

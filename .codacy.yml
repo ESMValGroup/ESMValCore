@@ -20,6 +20,6 @@ engines:
 
 exclude_paths: [
     'doc/conf.py',
-    'esmvaltool/cmor/tables/**',
+    'esmvalcore/cmor/tables/**',
     'tests/**'
 ]

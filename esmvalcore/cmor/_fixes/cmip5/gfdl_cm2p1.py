@@ -1,5 +1,7 @@
 """Fixes for GFDL CM2p1 model."""
 from copy import deepcopy
+import numpy as np
+import cftime
 
 from ..fix import Fix
 from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
@@ -54,6 +56,48 @@ class Sftof(Fix):
         cube *= 100
         cube.metadata = metadata
         return cube
+
+
+class Sit(Fix):
+    """Fixes for sit"""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix metadata.
+
+        Fixes bad bounds
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        time = cube.coord('time')
+        if self._fix_required(time):
+            times = time.units.num2date(time.points)
+            starts = [
+                cftime.DatetimeJulian(c.year, c.month, 1)
+                for c in times
+            ]
+            ends = [
+                cftime.DatetimeJulian(c.year, c.month + 1, 1)
+                if c.month < 12
+                else cftime.DatetimeJulian(c.year + 1, 1, 1)
+                for c in times
+            ]
+            time.bounds = time.units.date2num(np.stack([starts, ends], -1))
+        return cubes
+
+    def _fix_required(self, time):
+        return (
+            self.vardef.frequency == 'mon' and
+            not (time.bounds[-1, 0] < time.points[-1] < time.bounds[-1, 1])
+        )
 
 
 class Tos(Fix):

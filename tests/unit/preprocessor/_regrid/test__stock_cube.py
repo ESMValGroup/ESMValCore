@@ -5,9 +5,9 @@ function.
 """
 
 import unittest
+from unittest import mock
 
 import iris
-import mock
 import numpy as np
 
 import tests
@@ -23,14 +23,14 @@ class Test(tests.Test):
         mid_dx, mid_dy = dx / 2, dy / 2
         if lat_off and lon_off:
             expected_lat_points = np.linspace(
-                _LAT_MIN + mid_dy, _LAT_MAX - mid_dy, _LAT_RANGE / dy)
+                _LAT_MIN + mid_dy, _LAT_MAX - mid_dy, int(_LAT_RANGE / dy))
             expected_lon_points = np.linspace(
-                _LON_MIN + mid_dx, _LON_MAX - mid_dx, _LON_RANGE / dx)
+                _LON_MIN + mid_dx, _LON_MAX - mid_dx, int(_LON_RANGE / dx))
         else:
             expected_lat_points = np.linspace(_LAT_MIN, _LAT_MAX,
-                                              _LAT_RANGE / dy + 1)
+                                              int(_LAT_RANGE / dy) + 1)
             expected_lon_points = np.linspace(_LON_MIN, _LON_MAX - dx,
-                                              _LON_RANGE / dx)
+                                              int(_LON_RANGE / dx))
 
         # Check the stock cube coordinates.
         self.assertEqual(self.mock_DimCoord.call_count, 2)
@@ -38,14 +38,14 @@ class Test(tests.Test):
 
         # Check the latitude coordinate creation.
         [args], kwargs = call_lats
-        self.assertArrayEqual(args, expected_lat_points)
+        self.assert_array_equal(args, expected_lat_points)
         expected_lat_kwargs = dict(
             standard_name='latitude', units='degrees_north', var_name='lat')
         self.assertEqual(kwargs, expected_lat_kwargs)
 
         # Check the longitude coordinate creation.
         [args], kwargs = call_lons
-        self.assertArrayEqual(args, expected_lon_points)
+        self.assert_array_equal(args, expected_lon_points)
         expected_lon_kwargs = dict(
             standard_name='longitude', units='degrees_east', var_name='lon')
         self.assertEqual(kwargs, expected_lon_kwargs)

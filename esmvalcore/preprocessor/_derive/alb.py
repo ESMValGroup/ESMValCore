@@ -5,7 +5,7 @@ authors:
 
 """
 
-from iris import Constraint
+from esmvalcore.iris_helpers import var_name_constraint
 
 from ._baseclass import DerivedVariableBase
 
@@ -18,10 +18,10 @@ class DerivedVariable(DerivedVariableBase):
         """Declare the variables needed for derivation."""
         required = [
             {
-                'short_name': 'rsds'
+                'short_name': 'rsdscs'
             },
             {
-                'short_name': 'rsus'
+                'short_name': 'rsuscs'
             },
         ]
         return required
@@ -29,11 +29,9 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute surface albedo."""
-        rsds_cube = cubes.extract_strict(
-            Constraint(name='surface_downwelling_shortwave_flux_in_air'))
-        rsus_cube = cubes.extract_strict(
-            Constraint(name='surface_upwelling_shortwave_flux_in_air'))
+        rsdscs_cube = cubes.extract_strict(var_name_constraint('rsdscs'))
+        rsuscs_cube = cubes.extract_strict(var_name_constraint('rsuscs'))
 
-        rsns_cube = rsus_cube / rsds_cube
+        rsnscs_cube = rsuscs_cube / rsdscs_cube
 
-        return rsns_cube
+        return rsnscs_cube

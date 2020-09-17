@@ -49,6 +49,7 @@ class AllVars(Fix):
         return CubeList(new_list)
 
 
+<<<<<<< HEAD
 class msftyz(Fix):
     """Fix msftyz."""
 
@@ -61,12 +62,25 @@ class msftyz(Fix):
         Parameters
         ----------
         cube: iris.cube.CubeList
+=======
+class Clcalipso(Fix):
+    """Fixes for ``clcalipso``."""
+
+    def fix_metadata(self, cubes):
+        """Fix ``alt40`` coordinate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes
+>>>>>>> origin/master
 
         Returns
         -------
         iris.cube.CubeList
 
         """
+<<<<<<< HEAD
         new_cubes = []
         for i, cube in enumerate(cubes):
             # Remove unity length longitude coordinate
@@ -106,3 +120,11 @@ class msftyz(Fix):
             # squeeze makes a duplicate of the cube, so it is no longer in cubes.
             cubes[i] = cube
         return cubes
+=======
+        cube = self.get_cube_from_list(cubes)
+        alt_40_coord = cube.coord('height')
+        alt_40_coord.long_name = 'altitude'
+        alt_40_coord.standard_name = 'altitude'
+        alt_40_coord.var_name = 'alt40'
+        return CubeList([cube])
+>>>>>>> origin/master

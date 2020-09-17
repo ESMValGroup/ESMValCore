@@ -4,15 +4,15 @@ import logging
 import logging.config
 import os
 import time
+from pathlib import Path
 
 import yaml
 
-from .cmor.table import read_cmor_tables, CMOR_TABLES
+from .cmor.table import CMOR_TABLES, read_cmor_tables
 
 logger = logging.getLogger(__name__)
 
 CFG = {}
-CFG_USER = {}
 
 
 def find_diagnostics():
@@ -20,17 +20,32 @@ def find_diagnostics():
     try:
         import esmvaltool
     except ImportError:
-        return ''
-    return os.path.dirname(esmvaltool.__file__)
+        return Path.cwd()
+    # avoid a crash when there is a directory called
+    # 'esmvaltool' that is not a Python package
+    if esmvaltool.__file__ is None:
+        return Path.cwd()
+    return Path(esmvaltool.__file__).absolute().parent
 
 
 DIAGNOSTICS_PATH = find_diagnostics()
 
 
-def read_config_user_file(config_file, recipe_name):
+def read_config_user_file(config_file, folder_name, options=None):
     """Read config user file and store settings in a dictionary."""
+    config_file = os.path.abspath(
+        os.path.expandvars(os.path.expanduser(config_file)))
+    # Read user config file
+    if not os.path.exists(config_file):
+        print(f"ERROR: Config file {config_file} does not exist")
+
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
+
+    if options is None:
+        options = dict()
+    for key, value in options.items():
+        cfg[key] = value
 
     # set defaults
     defaults = {
@@ -38,13 +53,12 @@ def read_config_user_file(config_file, recipe_name):
         'write_netcdf': True,
         'compress_netcdf': False,
         'exit_on_warning': False,
-        'max_data_filesize': 100,
-        'output_file_type': 'ps',
-        'output_dir': './output_dir',
-        'auxiliary_data_dir': './auxiliary_data',
+        'output_file_type': 'png',
+        'output_dir': 'esmvaltool_output',
+        'auxiliary_data_dir': 'auxiliary_data',
         'save_intermediary_cubes': False,
-        'remove_preproc_dir': False,
-        'max_parallel_tasks': 1,
+        'remove_preproc_dir': True,
+        'max_parallel_tasks': None,
         'run_diagnostic': True,
         'profile_diagnostic': False,
         'config_developer_file': None,
@@ -73,7 +87,7 @@ def read_config_user_file(config_file, recipe_name):
 
     # insert a directory date_time_recipe_usertag in the output paths
     now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    new_subdir = '_'.join((recipe_name, now))
+    new_subdir = '_'.join((folder_name, now))
     cfg['output_dir'] = os.path.join(cfg['output_dir'], new_subdir)
 
     # create subdirectories
@@ -82,10 +96,6 @@ def read_config_user_file(config_file, recipe_name):
     cfg['plot_dir'] = os.path.join(cfg['output_dir'], 'plots')
     cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
 
-    # Save user configuration in global variable
-    for key, value in cfg.items():
-        CFG_USER[key] = value
-
     # Read developer configuration file
     cfg_developer = read_config_developer_file(cfg['config_developer_file'])
     for key, value in cfg_developer.items():
@@ -93,11 +103,6 @@ def read_config_user_file(config_file, recipe_name):
     read_cmor_tables(CFG)
 
     return cfg
-
-
-def get_config_user_file():
-    """Return user configuration dictionary."""
-    return CFG_USER
 
 
 def _normalize_path(path):
@@ -135,24 +140,33 @@ def read_config_developer_file(cfg_file=None):
     return cfg
 
 
-def configure_logging(cfg_file=None, output=None, console_log_level=None):
+def configure_logging(cfg_file=None, output_dir=None, console_log_level=None):
     """Set up logging."""
     if cfg_file is None:
-        cfg_file = os.path.join(
-            os.path.dirname(__file__), 'config-logging.yml')
-
-    if output is None:
-        output = os.getcwd()
+        cfg_file = os.path.join(os.path.dirname(__file__),
+                                'config-logging.yml')
 
     cfg_file = os.path.abspath(cfg_file)
     with open(cfg_file) as file_handler:
         cfg = yaml.safe_load(file_handler)
 
+    if output_dir is None:
+        cfg['handlers'] = {
+            name: handler
+            for name, handler in cfg['handlers'].items()
+            if 'filename' not in handler
+        }
+        prev_root = cfg['root']['handlers']
+        cfg['root']['handlers'] = [
+            name for name in prev_root if name in cfg['handlers']
+        ]
+
     log_files = []
     for handler in cfg['handlers'].values():
         if 'filename' in handler:
             if not os.path.isabs(handler['filename']):
-                handler['filename'] = os.path.join(output, handler['filename'])
+                handler['filename'] = os.path.join(output_dir,
+                                                   handler['filename'])
             log_files.append(handler['filename'])
         if console_log_level is not None and 'stream' in handler:
             if handler['stream'] in ('ext://sys.stdout', 'ext://sys.stderr'):
@@ -168,7 +182,9 @@ def configure_logging(cfg_file=None, output=None, console_log_level=None):
 def get_project_config(project):
     """Get developer-configuration for project."""
     logger.debug("Retrieving %s configuration", project)
-    return CFG[project]
+    if project in CFG:
+        return CFG[project]
+    raise ValueError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
@@ -196,12 +212,11 @@ def get_activity(variable):
         return None
 
 
-TAGS_CONFIG_FILE = os.path.join(
-    DIAGNOSTICS_PATH, 'config-references.yml')
+TAGS_CONFIG_FILE = os.path.join(DIAGNOSTICS_PATH, 'config-references.yml')
 
 
 def _load_tags(filename=TAGS_CONFIG_FILE):
-    """Load the refence tags used for provenance recording."""
+    """Load the reference tags used for provenance recording."""
     if os.path.exists(filename):
         logger.debug("Loading tags from %s", filename)
         with open(filename) as file:

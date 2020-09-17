@@ -53,15 +53,15 @@ CUBE_OUT_LONG = iris.cube.Cube(
 CUBES_TO_FIX = [
     (CubeList([CUBE_IN_SHORT]), CubeList([CUBE_IN_SHORT])),
     (CubeList([CUBE_IN_LONG]), CubeList([CUBE_OUT_LONG])),
-    (CubeList([CUBE_IN_LONG, CUBE_IN_SHORT]),
-     CubeList([CUBE_OUT_LONG, CUBE_IN_SHORT])),
+    (CubeList([CUBE_IN_LONG,
+               CUBE_IN_SHORT]), CubeList([CUBE_OUT_LONG, CUBE_IN_SHORT])),
 ]
 
 
 @pytest.mark.parametrize('cubes_in,cubes_out', CUBES_TO_FIX)
 def test_tas(cubes_in, cubes_out):
     """Test tas fixes."""
-    fix = Tas()
+    fix = Tas(None)
     new_cubes = fix.fix_metadata(cubes_in)
     assert new_cubes is cubes_in
     assert new_cubes == cubes_out
@@ -69,4 +69,4 @@ def test_tas(cubes_in, cubes_out):
 
 def test_get():
     """Test fix get"""
-    assert Fix.get_fixes('CMIP5', 'NORESM1-ME', 'tas') == [Tas()]
+    assert Fix.get_fixes('CMIP5', 'NORESM1-ME', 'Amon', 'tas') == [Tas(None)]

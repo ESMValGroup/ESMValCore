@@ -1,4 +1,5 @@
 """Fixes for CMIP6 HadGEM-GC31-LL."""
+<<<<<<< HEAD
 from ..fix import Fix
 
 
@@ -50,3 +51,19 @@ class msftyz(Fix):
             print('\nbasin:', basin)
 
         return cubes    
+=======
+from ..common import ClFixHybridHeightCoord
+from .ukesm1_0_ll import AllVars as BaseAllVars
+
+
+AllVars = BaseAllVars
+
+
+Cl = ClFixHybridHeightCoord
+
+
+Cli = ClFixHybridHeightCoord
+
+
+Clw = ClFixHybridHeightCoord
+>>>>>>> origin/master

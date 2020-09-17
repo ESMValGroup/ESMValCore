@@ -277,6 +277,14 @@ def get_grid_representants(src, dst):
     dst_shape += dst_horiz_rep.shape
     dim_coords += dst_horiz_rep.coords(dim_coords=True)
     dim_coords_and_dims = [(c, i) for i, c in enumerate(dim_coords)]
+    aux_coords_and_dims = []
+    for coord in dst_horiz_rep.aux_coords:
+        dims = dst_horiz_rep.coord_dims(coord)
+        if not dims:
+            continue
+        if src_rep.ndim == 3:
+            dims = [dim + 1 for dim in dims]
+        aux_coords_and_dims.append((coord, dims))
     dst_rep = iris.cube.Cube(
         data=get_empty_data(dst_shape, src.dtype),
         standard_name=src.standard_name,
@@ -286,6 +294,7 @@ def get_grid_representants(src, dst):
         attributes=src.attributes,
         cell_methods=src.cell_methods,
         dim_coords_and_dims=dim_coords_and_dims,
+        aux_coords_and_dims=aux_coords_and_dims,
     )
     return src_rep, dst_rep
 

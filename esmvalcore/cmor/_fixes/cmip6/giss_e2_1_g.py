@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """Fixes for GISS-E2-1-G."""
 from ..fix import Fix
 import cf_units
@@ -40,3 +41,16 @@ class msftyz(Fix):
             basin = cube.coord('region')
             basin.var_name = 'basin'
         return cubes
+=======
+"""Fixes for GISS-E2-1-G model."""
+from ..common import ClFixHybridPressureCoord
+
+
+Cl = ClFixHybridPressureCoord
+
+
+Cli = ClFixHybridPressureCoord
+
+
+Clw = ClFixHybridPressureCoord
+>>>>>>> origin/master

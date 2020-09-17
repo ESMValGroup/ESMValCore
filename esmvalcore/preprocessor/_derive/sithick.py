@@ -36,8 +36,9 @@ class DerivedVariable(DerivedVariableBase):
             Cube containing sea ice speed.
 
         """
-        siconc = cubes.extract_strict(Constraint(name='sea_ice_thickness'))
-        sivol = cubes.extract_strict(Constraint(name='sea_ice_area_fraction'))
+        sivol = cubes.extract_strict(Constraint(name='sea_ice_thickness'))
+        siconc = cubes.extract_strict(Constraint(name='sea_ice_area_fraction'))
+        siconc.convert_units('1.0')
 
-        sithick = siconc * sivol
+        sithick = sivol / siconc
         return sithick
