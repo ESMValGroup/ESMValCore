@@ -155,7 +155,7 @@ downloaded at runtime.
 The ``profile_diagnostic`` setting triggers profiling of Python diagnostics;
 this will give you information on the resources used while running the diagnostic
 (including execution time of different code blocks, memory, CPU usage); for this
-purpose we use `vprof<https://github.com/nvdv/vprof>`_. The profiler outputs
+purpose we use `vprof <https://github.com/nvdv/vprof>`_. The profiler outputs
 a json file that can be used to extract the profiling information via e.g.
 ``vprof --input-file esmvaltool_output/recipe_output/run/diagnostic/script/profile.json``.
 
