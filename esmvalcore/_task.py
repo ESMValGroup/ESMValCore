@@ -304,7 +304,7 @@ class DiagnosticTask(BaseTask):
                 profile_file = Path(self.settings['run_dir']) / 'profile.json'
                 args['py'] = [
                     '-m', 'vprof', '-o',
-                    str(profile_file), '-c', 'p'
+                    str(profile_file), '-c', 'c'
                 ]
 
             ext = script_file.suffix.lower()[1:]
