@@ -3,7 +3,6 @@ import datetime
 import logging
 import logging.config
 import os
-import pprint
 import time
 from pathlib import Path
 
@@ -233,69 +232,3 @@ def get_tag_value(section, tag):
 def replace_tags(section, tags):
     """Replace a list of tags with their values."""
     return tuple(get_tag_value(section, tag) for tag in tags)
-
-
-class Config:
-    """Importable config object."""
-    def __init__(self):
-        super().__init__()
-        self.config_file = None
-        self.default_mapping = DEFAULT_SETTINGS
-        self.load()
-
-    def load(self, config_file: str = USER_CONFIG_FILE):
-        """Load config from config user file."""
-        self.mapping = read_config_user_file(config_file)
-        self.init_session_dir()
-        self.config_file = config_file
-
-    def load_from_dict(self, mapping):
-        """Load config from dictionary."""
-        self.mapping = mapping
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}('{self.config_file}')"
-
-    def __str__(self):
-        return pprint.pformat(self.mapping)
-
-    def __getitem__(self, item):
-        try:
-            return self.mapping[item]
-        except KeyError:
-            return self.default_mapping[item]
-
-    def init_session_dir(self, name: str = 'session'):
-        """Initialize session.
-
-        The `name` is used to name the working directory, e.g.
-        recipe_example_20200916/ If no name is given, such as in an
-        interactive session, defaults to `session`.
-        """
-        now = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        session_name = f"{name}_{now}"
-        self._session_dir = Path(self.mapping['output_dir']) / session_name
-
-    @property
-    def session_dir(self):
-        return self._session_dir
-
-    @property
-    def preproc_dir(self):
-        return self.session_dir / 'preproc'
-
-    @property
-    def work_dir(self):
-        return self.session_dir / 'work'
-
-    @property
-    def plot_dir(self):
-        return self.session_dir / 'plots'
-
-    @property
-    def run_dir(self):
-        return self.session_dir / 'run'
-
-
-# initialize config object here, so it can be re-used across modules
-config = Config()

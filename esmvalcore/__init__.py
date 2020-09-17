@@ -3,6 +3,7 @@ import logging
 import os
 
 from ._config import config
+from ._locations import locations
 from ._version import __version__
 
 logger = logging.getLogger(__name__)
@@ -12,6 +13,7 @@ __all__ = [
     '__version__',
     'cmor',
     'config',
+    'locations',
     'preprocessor',
 ]
 
