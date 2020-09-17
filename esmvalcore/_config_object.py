@@ -3,7 +3,10 @@ import re
 from collections.abc import MutableMapping
 from pathlib import Path
 
+import yaml
+
 from esmvalcore._config_validators import _validators
+from esmvalcore.cmor.table import read_cmor_tables
 
 
 def flatten(d, parent_key='', sep='.'):
@@ -16,6 +19,18 @@ def flatten(d, parent_key='', sep='.'):
         else:
             items.append((new_key, val))
     return dict(items)
+
+
+def read_config_file(config_file, folder_name=None):
+    """Read config user file and store settings in a dictionary."""
+    config_file = Path(config_file)
+    if not config_file.exists():
+        print(f"ERROR: Config file {config_file} does not exist")
+
+    with open(config_file, 'r') as file:
+        cfg = yaml.safe_load(file)
+
+    return cfg
 
 
 class Config(MutableMapping, dict):
@@ -72,20 +87,33 @@ class Config(MutableMapping, dict):
         return {k: dict.__getitem__(self, k) for k in self}
 
 
-def _load_config_file(filename):
-    from esmvalcore._config import read_config_user_file
-    mapping = read_config_user_file(filename)
+def _load_user_config(filename):
+    mapping = read_config_file(filename)
     return flatten(mapping)
 
 
+def _load_developer_config(filename):
+    if not filename:
+        filename = DEVELOPER_CONFIG
+
+    mapping = read_config_file(filename)
+    return mapping
+
+
+DEVELOPER_CONFIG = Path(__file__).with_name('config-developer.yml')
 DEFAULT_CONFIG = Path(__file__).with_name('config-user.yml')
 USER_CONFIG = Path.home() / '.esmvaltool' / 'config-user.yml'
 
 config_default = Config()
-config_default.update(_load_config_file(DEFAULT_CONFIG))
+config_default.update(_load_user_config(DEFAULT_CONFIG))
 
 config = Config()
 config.update(config_default)
-config.update(_load_config_file(USER_CONFIG))
+config.update(_load_user_config(USER_CONFIG))
+
+# TODO: update options from CLI
 
 config_orig = Config(config.copy())
+
+CFG = _load_developer_config(config['config_developer_file'])
+read_cmor_tables(CFG)

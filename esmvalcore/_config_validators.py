@@ -19,16 +19,19 @@ def validate_int(value, none_ok=False):
 def validate_path(value, none_ok=True):
     if (value is None) and none_ok:
         return value
-    path = Path(value)
+    path = Path(value).expanduser().absolute()
     # it may be worth checking if a path exists for some cases
     # if not path.exists():
     #     raise ValueError(f'`{path}` does not exist')
     return path
 
 
-def validate_path_list(values):
-    values = [validate_path(value) for value in values]
-    return values
+def validate_path_list(value):
+    if isinstance(value, (str, Path)):
+        return validate_path(value)
+
+    value = [validate_path(p) for p in value]
+    return value
 
 
 def validate_str(value, none_ok=False):
