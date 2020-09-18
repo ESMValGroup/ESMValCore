@@ -61,6 +61,23 @@ def validate_positive(value):
     return value
 
 
+def validate_check_level(value):
+    from .cmor.check import CheckLevels
+
+    return CheckLevels[value.upper()]
+
+
+def validate_diagnostics(diagnostics):
+    from ._recipe import TASKSEP
+
+    if isinstance(diagnostics, str):
+        diagnostics = diagnostics.split(' ')
+    return {
+        pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
+        for pattern in diagnostics or ()
+    }
+
+
 _validators = {
     'write_plots': validate_bool,
     'write_netcdf': validate_bool,
@@ -88,8 +105,8 @@ _validators = {
 
     # From CLI
     "skip-nonexistent": validate_bool,
-    "diagnostics": validate_str_list,
-    "check_level": validate_int,
+    "diagnostics": validate_diagnostics,
+    "check_level": validate_check_level,
     "synda_download": validate_bool,
     'max_years': validate_positive,
     'max_datasets': validate_positive,

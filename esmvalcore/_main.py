@@ -342,8 +342,6 @@ class ESMValTool():
         from esmvalcore import config, locations
 
         from ._config import DIAGNOSTICS_PATH, configure_logging
-        from ._recipe import TASKSEP
-        from .cmor.check import CheckLevels
 
         if config_file:
             from esmvalcore._config_object import _load_user_config
@@ -376,19 +374,17 @@ class ESMValTool():
 
         # Update config with CLI options
         config['skip-nonexistent'] = skip_nonexistent
-        if isinstance(diagnostics, str):
-            diagnostics = diagnostics.split(' ')
-        config['diagnostics'] = {
-            pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
-            for pattern in diagnostics or ()
-        }
-        config['check_level'] = CheckLevels[check_level.upper()]
+        config['diagnostics'] = diagnostics
+        config['check_level'] = check_level
         config['synda_download'] = synda_download
-
         config['max_datasets'] = max_datasets
         config['max_years'] = max_years
 
+        # Add additional command line arguments to config
+        config.update(kwargs)
+
         resource_log = locations.run_dir / 'resource_usage.txt'
+
         from ._task import resource_usage_logger
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
             process_recipe(recipe_file=recipe, config_user=config)
