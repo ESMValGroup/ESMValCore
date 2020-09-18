@@ -108,7 +108,7 @@ def process_recipe(recipe_file):
     logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
 
 
-class Config():
+class ConfigUtils():
     """Manage ESMValTool's configuration.
 
     This group contains utilities to manage ESMValTool configuration
@@ -274,7 +274,7 @@ class ESMValTool():
     """
     def __init__(self):
         self.recipes = Recipes()
-        self.config = Config()
+        self.config = ConfigUtils()
         self._extra_packages = {}
         for entry_point in iter_entry_points('esmvaltool_commands'):
             self._extra_packages[entry_point.dist.project_name] = \
