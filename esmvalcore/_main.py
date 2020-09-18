@@ -22,6 +22,7 @@ http://docs.esmvaltool.org. Have fun!
 """
 
 import logging
+from pathlib import Path
 
 import fire
 from pkg_resources import iter_entry_points
@@ -46,12 +47,11 @@ ______________________________________________________________________
 def process_recipe(recipe_file):
     """Process recipe."""
     import datetime
-    import os
     import shutil
 
     from . import __version__
     from ._recipe import read_recipe_file
-    if not os.path.isfile(recipe_file):
+    if not recipe_file.exists():
         import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
                       recipe_file)
@@ -349,15 +349,15 @@ class ESMValTool():
             from esmvalcore._config_object import _load_user_config
             _load_user_config(config_file)
 
-        if not os.path.exists(recipe):
-            installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes',
-                                            recipe)
-            if os.path.exists(installed_recipe):
-                recipe = installed_recipe
-        recipe = os.path.abspath(os.path.expandvars(
-            os.path.expanduser(recipe)))
+        recipe = Path(recipe)
 
-        recipe_name = os.path.splitext(os.path.basename(recipe))[0]
+        if not recipe.exists():
+            installed_recipe = Path(DIAGNOSTICS_PATH, 'recipes', recipe)
+            if installed_recipe.exists():
+                recipe = installed_recipe
+
+        recipe = recipe.expanduser().absolute()
+        recipe_name = recipe.stem
 
         # init and create run dir
         locations.init_session_dir(recipe_name)
