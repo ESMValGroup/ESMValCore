@@ -742,7 +742,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         products.add(product)
 
-    _update_statistic_settings(products, order, config_user['preproc_dir'])
+    _update_statistic_settings(products, order, locations.preproc_dir)
 
     for product in products:
         product.check()
