@@ -147,7 +147,7 @@ class Config():
         Parameters
         ----------
         overwrite: boolean
-            Name of the recipe to get
+            Overwrite an existing file.
         path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
@@ -166,7 +166,7 @@ class Config():
         Parameters
         ----------
         overwrite: boolean
-            Name of the recipe to get
+            Overwrite an existing file.
         path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
@@ -382,6 +382,8 @@ class ESMValTool():
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
         cfg['skip-nonexistent'] = skip_nonexistent
+        if isinstance(diagnostics, str):
+            diagnostics = diagnostics.split(' ')
         cfg['diagnostics'] = {
             pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
             for pattern in diagnostics or ()
