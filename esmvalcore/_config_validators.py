@@ -13,8 +13,11 @@ def _make_type_validator(cls, *, allow_none=False):
         try:
             return cls(s)
         except ValueError as e:
-            raise ValueError(
-                f'Could not convert {s!r} to {cls.__name__}') from e
+            if isinstance(cls, type):
+                raise ValueError(
+                    f'Could not convert {s!r} to {cls.__name__}') from e
+            else:
+                raise
 
     validator.__name__ = f"validate_{cls.__name__}"
     if allow_none:
@@ -30,6 +33,7 @@ def _listify_validator(scalar_validator,
                        *,
                        n=None,
                        doc=None):
+    """Apply the validator to a list."""
     def f(s):
         if isinstance(s, str):
             try:
@@ -72,6 +76,7 @@ def _listify_validator(scalar_validator,
 
 
 def validate_bool(value, allow_none=False):
+    """Check if the value can be evaluate as a boolean."""
     if (value is None) and allow_none:
         return value
     if not isinstance(value, bool):
@@ -80,10 +85,32 @@ def validate_bool(value, allow_none=False):
 
 
 def validate_path(value, allow_none=False):
+    """Return a path object."""
     if (value is None) and allow_none:
         return value
-    path = Path(value).expanduser().absolute()
-    return path
+    try:
+        path = Path(value).expanduser().absolute()
+    except TypeError as e:
+        raise ValueError(f"Expected a path, but got {value}") from e
+    else:
+        return path
+
+
+def validate_positive(value):
+    """Check if number is positive."""
+    if value < 0:
+        raise ValueError(f'Expected a positive number, but got {value}')
+    return value
+
+
+def _chain_validator(*funcs):
+    """Chain a series of validators."""
+    def chained(value):
+        for func in funcs:
+            value = func(value)
+        return value
+
+    return chained
 
 
 validate_string = _make_type_validator(str)
@@ -97,10 +124,14 @@ validate_float_or_none = _make_type_validator(float, allow_none=True)
 validate_floatlist = _listify_validator(validate_float,
                                         doc='return a list of floats')
 
-validate_path_or_none = _make_type_validator(int, allow_none=True)
+validate_path_or_none = _make_type_validator(validate_path, allow_none=True)
 
 validate_pathlist = _listify_validator(validate_path,
                                        doc='return a list of paths')
+
+validate_int_positive = _chain_validator(validate_int, validate_positive)
+validate_int_positive_or_none = _make_type_validator(validate_int_positive,
+                                                     allow_none=True)
 
 
 def validate_positive(value):
@@ -161,8 +192,8 @@ _validators = {
     "diagnostics": validate_diagnostics,
     "check_level": validate_check_level,
     "synda_download": validate_bool,
-    'max_years': validate_positive,
-    'max_datasets': validate_positive,
+    'max_years': validate_int_positive_or_none,
+    'max_datasets': validate_int_positive_or_none,
 
     # From recipe
     'write_ncl_interface': validate_bool,
