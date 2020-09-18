@@ -274,7 +274,8 @@ def _get_default_settings(variable, config_user, derive=False):
     # Set up downloading using synda if requested.
     if config_user['synda_download']:
         # TODO: make this respect drs or download to preproc dir?
-        download_folder = str(locations.preproc_dir / 'downloads')
+        download_folder = str(locations.preproc_dir /
+                              'downloads')  # TODO: pathlib.Path
         settings['download'] = {
             'dest_folder': download_folder,
         }
@@ -615,7 +616,7 @@ def _update_multi_dataset_settings(variable, settings):
         _exclude_dataset(settings, variable, step)
 
 
-def _update_statistic_settings(products, order, preproc_dir):
+def _update_statistic_settings(products, order):
     """Define statistic output products."""
     # TODO: move this to multi model statistics function?
     # But how to check, with a dry-run option?
@@ -631,8 +632,7 @@ def _update_statistic_settings(products, order, preproc_dir):
         attributes = _get_statistic_attributes(products)
         attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
             statistic.title().replace('.', '-'))
-        attributes['filename'] = get_statistic_output_file(
-            attributes, preproc_dir)
+        attributes['filename'] = get_statistic_output_file(attributes)
         common_settings = _get_remaining_common_settings(step, order, products)
         statistic_product = PreprocessorFile(attributes, common_settings)
         for product in products:
@@ -696,7 +696,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     """
     products = set()
     for variable in variables:
-        variable['filename'] = get_output_file(variable, locations.preproc_dir)
+        variable['filename'] = get_output_file(variable)
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
@@ -742,7 +742,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         products.add(product)
 
-    _update_statistic_settings(products, order, locations.preproc_dir)
+    _update_statistic_settings(products, order)
 
     for product in products:
         product.check()
@@ -1223,9 +1223,14 @@ class Recipe:
             settings['version'] = __version__
             settings['script'] = script_name
             # Add output dirs to settings
-            for dir_name in ('run_dir', 'plot_dir', 'work_dir'):
-                settings[dir_name] = os.path.join(self._cfg[dir_name],
-                                                  diagnostic_name, script_name)
+
+            settings['run_dir'] = (locations.run_dir / diagnostic_name /
+                                   script_name)
+            settings['plot_dir'] = (locations.plot_dir / diagnostic_name /
+                                    script_name)
+            settings['work_dir'] = (locations.work_dir / diagnostic_name /
+                                    script_name)
+
             # Copy other settings
             if self._cfg['write_ncl_interface']:
                 settings['exit_on_ncl_warning'] = self._cfg['exit_on_warning']

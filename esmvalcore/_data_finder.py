@@ -13,6 +13,8 @@ from pathlib import Path
 
 import iris
 
+from esmvalcore import locations
+
 from ._config import get_project_config
 
 logger = logging.getLogger(__name__)
@@ -240,7 +242,7 @@ def get_input_filelist(variable, rootpath, drs):
     return (files, dirnames, filenames)
 
 
-def get_output_file(variable, preproc_dir):
+def get_output_file(variable):
     """Return the full path to the output (preprocessed) file."""
     cfg = get_project_config(variable['project'])
 
@@ -249,27 +251,24 @@ def get_output_file(variable, preproc_dir):
         variable = dict(variable)
         variable['exp'] = '-'.join(variable['exp'])
 
-    outfile = os.path.join(
-        preproc_dir,
-        variable['diagnostic'],
-        variable['variable_group'],
-        _replace_tags(cfg['output_file'], variable)[0],
-    )
+    filename = _replace_tags(cfg['output_file'], variable)[0]
+
     if variable['frequency'] != 'fx':
-        outfile += '_{start_year}-{end_year}'.format(**variable)
-    outfile += '.nc'
-    return outfile
+        filename += '_{start_year}-{end_year}'.format(**variable)
+    filename += '.nc'
+
+    outfile = locations.preproc_dir / variable['diagnostic'] / variable[
+        'variable_group'] / filename
+
+    return str(outfile)  # TODO: pathlib.Path
 
 
-def get_statistic_output_file(variable, preproc_dir):
+def get_statistic_output_file(variable):
     """Get multi model statistic filename depending on settings."""
-    template = os.path.join(
-        preproc_dir,
-        '{diagnostic}',
-        '{variable_group}',
-        '{dataset}_{mip}_{short_name}_{start_year}-{end_year}.nc',
-    )
+    template = '{dataset}_{mip}_{short_name}_{start_year}-{end_year}.nc'
+    filename = template.format(**variable)
 
-    outfile = template.format(**variable)
+    outfile = locations.preproc_dir / variable['diagnostic'] / variable[
+        'variable_group'] / filename
 
-    return outfile
+    return str(outfile)  # pathlib.Path

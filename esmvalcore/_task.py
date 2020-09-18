@@ -19,6 +19,8 @@ from shutil import which
 import psutil
 import yaml
 
+from esmvalcore import locations
+
 from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
@@ -204,7 +206,6 @@ def write_ncl_settings(settings, filename, mode='wt'):
 
 class BaseTask:
     """Base class for defining task classes."""
-
     def __init__(self, ancestors=None, name='', products=None):
         """Initialize task."""
         self.ancestors = [] if ancestors is None else ancestors
@@ -267,7 +268,6 @@ class DiagnosticError(Exception):
 
 class DiagnosticTask(BaseTask):
     """Task for running a diagnostic."""
-
     def __init__(self, script, settings, output_dir, ancestors=None, name=''):
         """Create a diagnostic task."""
         super().__init__(ancestors=ancestors, name=name)
@@ -276,8 +276,8 @@ class DiagnosticTask(BaseTask):
         self.output_dir = output_dir
         self.cmd = self._initialize_cmd()
         self.env = self._initialize_env()
-        self.log = Path(settings['run_dir']) / 'log.txt'
-        self.resource_log = Path(settings['run_dir']) / 'resource_usage.txt'
+        self.log = settings['run_dir'] / 'log.txt'
+        self.resource_log = settings['run_dir'] / 'resource_usage.txt'
 
     def _initialize_cmd(self):
         """Create an executable command from script."""
@@ -301,7 +301,7 @@ class DiagnosticTask(BaseTask):
                 'ncl': ['-n', '-p'],
             }
             if self.settings['profile_diagnostic']:
-                profile_file = Path(self.settings['run_dir']) / 'profile.bin'
+                profile_file = self.settings['run_dir'] / 'profile.bin'
                 args['py'] = [
                     '-m', 'vmprof', '--lines', '-o',
                     str(profile_file)
@@ -346,7 +346,7 @@ class DiagnosticTask(BaseTask):
 
     def write_settings(self):
         """Write settings to file."""
-        run_dir = Path(self.settings['run_dir'])
+        run_dir = locations.run_dir
         run_dir.mkdir(parents=True, exist_ok=True)
 
         filename = run_dir / 'settings.yml'
@@ -361,7 +361,7 @@ class DiagnosticTask(BaseTask):
 
     def _write_ncl_settings(self):
         """Write settings to NCL file."""
-        filename = Path(self.settings['run_dir']) / 'settings.ncl'
+        filename = locations.run_dir / 'settings.ncl'
 
         config_user_keys = {
             'run_dir',
@@ -388,8 +388,8 @@ class DiagnosticTask(BaseTask):
     def _control_ncl_execution(self, process, lines):
         """Check if an error has occurred in an NCL script.
 
-        Apparently NCL does not automatically exit with a non-zero exit code
-        if an error occurs, so we take care of that here.
+        Apparently NCL does not automatically exit with a non-zero exit
+        code if an error occurs, so we take care of that here.
         """
         ignore_warnings = [
             warning.strip()
@@ -431,7 +431,7 @@ class DiagnosticTask(BaseTask):
         """Start the diagnostic script."""
         logger.info("Running command %s", cmd)
         logger.debug("in environment\n%s", pprint.pformat(env))
-        cwd = self.settings['run_dir']
+        cwd = str(self.settings['run_dir'])
         logger.debug("in current working directory: %s", cwd)
         logger.info("Writing output to %s", self.output_dir)
         logger.info("Writing plots to %s", self.settings['plot_dir'])
@@ -526,8 +526,8 @@ class DiagnosticTask(BaseTask):
 
     def _collect_provenance(self):
         """Process provenance information provided by the diagnostic script."""
-        provenance_file = Path(
-            self.settings['run_dir']) / 'diagnostic_provenance.yml'
+        provenance_file = (self.settings['run_dir'] /
+                           'diagnostic_provenance.yml')
         if not provenance_file.is_file():
             logger.warning(
                 "No provenance information was written to %s. Unable to "
@@ -614,7 +614,8 @@ class DiagnosticTask(BaseTask):
                 "are:\n%s", self.script, self.name,
                 '\n'.join(ancestor_products))
         logger.debug("Collecting provenance of task %s took %.1f seconds",
-                     self.name, time.time() - start)
+                     self.name,
+                     time.time() - start)
 
     def __str__(self):
         """Get human readable description."""
