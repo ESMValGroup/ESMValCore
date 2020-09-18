@@ -198,13 +198,13 @@ class Recipes():
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
         logger.info("Showing recipes installed in %s", recipes_folder)
         print('# Installed recipes')
-        for root, _, files in os.walk(recipes_folder):
+        for root, _, files in sorted(os.walk(recipes_folder)):
             root = os.path.relpath(root, recipes_folder)
             if root == '.':
                 root = ''
             if root:
                 print(f"\n# {root.replace(os.sep, ' - ').title()}")
-            for filename in files:
+            for filename in sorted(files):
                 if filename.endswith('.yml'):
                     print(os.path.join(root, filename))
 
