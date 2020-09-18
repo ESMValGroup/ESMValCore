@@ -41,19 +41,19 @@ profile_diagnostic: false
 # Rootpaths to the data from different projects (lists are also possible)
 # these are generic entries to better allow you to enter your own
 # For site-specific entries, see below
-rootpath:
- CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
- OBS: ~/obs_inputpath
- RAWOBS: ~/rawobs_inputpath
- default: ~/default_inputpath
- CORDEX: ~/default_inputpath
+# rootpath:
+#  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
+#  OBS: ~/obs_inputpath
+#  RAWOBS: ~/rawobs_inputpath
+#  default: ~/default_inputpath
+#  CORDEX: ~/default_inputpath
 
 # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
-drs:
- CMIP5: default
- CORDEX: default
- OBS: default
+# drs:
+#  CMIP5: default
+#  CORDEX: default
+#  OBS: default
 
 # Site-specific entries: Jasmin
 # Uncomment the lines below to locate data on JASMIN
