@@ -64,7 +64,10 @@ def validate_positive(value):
 def validate_check_level(value):
     from .cmor.check import CheckLevels
 
-    return CheckLevels[value.upper()]
+    if isinstance(value, str):
+        return CheckLevels[value.upper()]
+
+    return CheckLevels(value)
 
 
 def validate_diagnostics(diagnostics):
@@ -79,6 +82,7 @@ def validate_diagnostics(diagnostics):
 
 
 _validators = {
+    # From user config
     'write_plots': validate_bool,
     'write_netcdf': validate_bool,
     'log_level': validate_str,
@@ -110,4 +114,7 @@ _validators = {
     "synda_download": validate_bool,
     'max_years': validate_positive,
     'max_datasets': validate_positive,
+
+    # From recipe
+    'write_ncl_interface': validate_bool,
 }

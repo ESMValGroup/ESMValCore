@@ -26,6 +26,8 @@ import logging
 import fire
 from pkg_resources import iter_entry_points
 
+from esmvalcore import config, locations
+
 # set up logging
 logger = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ ______________________________________________________________________
 """ + __doc__
 
 
-def process_recipe(recipe_file, config_user):
+def process_recipe(recipe_file):
     """Process recipe."""
     import datetime
     import os
@@ -63,14 +65,14 @@ def process_recipe(recipe_file, config_user):
 
     logger.info(70 * "-")
     logger.info("RECIPE   = %s", recipe_file)
-    logger.info("RUNDIR     = %s", config_user['run_dir'])
-    logger.info("WORKDIR    = %s", config_user["work_dir"])
-    logger.info("PREPROCDIR = %s", config_user["preproc_dir"])
-    logger.info("PLOTDIR    = %s", config_user["plot_dir"])
+    logger.info("RUNDIR     = %s", locations.run_dir)
+    logger.info("WORKDIR    = %s", locations.work_dir)
+    logger.info("PREPROCDIR = %s", locations.preproc_dir)
+    logger.info("PLOTDIR    = %s", locations.plot_dir)
     logger.info(70 * "-")
 
     from multiprocessing import cpu_count
-    n_processes = config_user['max_parallel_tasks'] or cpu_count()
+    n_processes = config['max_parallel_tasks'] or cpu_count()
     logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
@@ -79,7 +81,7 @@ def process_recipe(recipe_file, config_user):
     logger.info("If you experience memory problems, try reducing "
                 "'max_parallel_tasks' in your user configuration file.")
 
-    if config_user['compress_netcdf']:
+    if config['compress_netcdf']:
         logger.warning(
             "You have enabled NetCDF compression. Accessing .nc files can be "
             "much slower than expected if your access pattern does not match "
@@ -89,10 +91,10 @@ def process_recipe(recipe_file, config_user):
             "NetCDF compression.")
 
     # copy recipe to run_dir for future reference
-    shutil.copy2(recipe_file, config_user['run_dir'])
+    shutil.copy2(recipe_file, locations.run_dir)
 
     # parse recipe
-    recipe = read_recipe_file(recipe_file, config_user)
+    recipe = read_recipe_file(recipe_file)
     logger.debug("Recipe summary:\n%s", recipe)
 
     # run
@@ -387,7 +389,7 @@ class ESMValTool():
 
         from ._task import resource_usage_logger
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
-            process_recipe(recipe_file=recipe, config_user=config)
+            process_recipe(recipe_file=recipe)
 
         if locations.preproc_dir.exists() and config["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")

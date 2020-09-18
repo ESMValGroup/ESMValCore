@@ -10,6 +10,8 @@ from pprint import pformat
 import yaml
 from netCDF4 import Dataset
 
+from esmvalcore import config, locations
+
 from . import __version__
 from . import _recipe_checks as check
 from ._config import (TAGS, get_activity, get_institutes, get_project_config,
@@ -39,6 +41,7 @@ def ordered_safe_load(stream):
     """Load a YAML file using OrderedDict instead of dict."""
     class OrderedSafeLoader(yaml.SafeLoader):
         """Loader class that uses OrderedDict to load a map."""
+
     def construct_mapping(loader, node):
         """Load a map as an OrderedDict."""
         loader.flatten_mapping(node)
@@ -65,13 +68,10 @@ def load_raw_recipe(filename):
     return raw_recipe
 
 
-def read_recipe_file(filename, config_user, initialize_tasks=True):
+def read_recipe_file(filename, initialize_tasks=True):
     """Read a recipe from file."""
     raw_recipe = load_raw_recipe(filename)
-    return Recipe(raw_recipe,
-                  config_user,
-                  initialize_tasks,
-                  recipe_file=filename)
+    return Recipe(raw_recipe, initialize_tasks, recipe_file=filename)
 
 
 def _get_value(key, datasets):
@@ -274,7 +274,7 @@ def _get_default_settings(variable, config_user, derive=False):
     # Set up downloading using synda if requested.
     if config_user['synda_download']:
         # TODO: make this respect drs or download to preproc dir?
-        download_folder = os.path.join(config_user['preproc_dir'], 'downloads')
+        download_folder = str(locations.preproc_dir / 'downloads')
         settings['download'] = {
             'dest_folder': download_folder,
         }
@@ -467,21 +467,18 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
     if not fx_vars:
         return
 
-    fx_vars = [
-        _get_fx_file(variable, fxvar, config_user)
-        for fxvar in fx_vars
-    ]
+    fx_vars = [_get_fx_file(variable, fxvar, config_user) for fxvar in fx_vars]
 
     fx_dict = {fx_var[1]['short_name']: fx_var[0] for fx_var in fx_vars}
     settings['fx_variables'] = fx_dict
     logger.info('Using fx_files: %s for variable %s during step %s',
-                pformat(settings['fx_variables']),
-                variable['short_name'],
+                pformat(settings['fx_variables']), variable['short_name'],
                 step_name)
 
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
+
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -492,8 +489,8 @@ def _update_fx_settings(settings, variable, config_user):
                     user_fx_vars.append('sftof')
             elif step_name == 'mask_landseaice':
                 user_fx_vars = ['sftgif']
-            elif step_name in ('area_statistics',
-                               'volume_statistics', 'zonal_statistics'):
+            elif step_name in ('area_statistics', 'volume_statistics',
+                               'zonal_statistics'):
                 user_fx_vars = []
         return user_fx_vars
 
@@ -505,8 +502,8 @@ def _update_fx_settings(settings, variable, config_user):
     for step_name, step_settings in settings.items():
         if step_name in fx_steps:
             fx_vars = _get_fx_vars_from_attribute(step_settings, step_name)
-            _update_fx_files(step_name, step_settings,
-                             variable, config_user, fx_vars)
+            _update_fx_files(step_name, step_settings, variable, config_user,
+                             fx_vars)
 
 
 def _read_attributes(filename):
@@ -688,21 +685,16 @@ def _match_products(products, variables):
     return grouped_products
 
 
-def _get_preprocessor_products(variables,
-                               profile,
-                               order,
-                               ancestor_products,
+def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user):
-    """
-    Get preprocessor product definitions for a set of datasets.
+    """Get preprocessor product definitions for a set of datasets.
 
-    It updates recipe settings as needed by various preprocessors
-    and sets the correct ancestry.
+    It updates recipe settings as needed by various preprocessors and
+    sets the correct ancestry.
     """
     products = set()
     for variable in variables:
-        variable['filename'] = get_output_file(variable,
-                                               config_user['preproc_dir'])
+        variable['filename'] = get_output_file(variable, locations.preproc_dir)
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
@@ -771,12 +763,11 @@ def _get_single_preprocessor_task(variables,
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
-    products = _get_preprocessor_products(
-        variables=variables,
-        profile=profile,
-        order=order,
-        ancestor_products=ancestor_products,
-        config_user=config_user)
+    products = _get_preprocessor_products(variables=variables,
+                                          profile=profile,
+                                          order=order,
+                                          ancestor_products=ancestor_products,
+                                          config_user=config_user)
 
     if not products:
         raise RecipeError(
@@ -929,13 +920,9 @@ class Recipe:
     info_keys = ('project', 'activity', 'dataset', 'exp', 'ensemble',
                  'version')
     """List of keys to be used to compose the alias, ordered by priority."""
-    def __init__(self,
-                 raw_recipe,
-                 config_user,
-                 initialize_tasks=True,
-                 recipe_file=None):
+    def __init__(self, raw_recipe, initialize_tasks=True, recipe_file=None):
         """Parse a recipe file into an object."""
-        self._cfg = deepcopy(config_user)
+        self._cfg = deepcopy(config)
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
         self._filename = os.path.basename(recipe_file)
@@ -1009,8 +996,7 @@ class Recipe:
 
     @staticmethod
     def _expand_ensemble(variables):
-        """
-        Expand ensemble members to multiple datasets.
+        """Expand ensemble members to multiple datasets.
 
         Expansion only supports ensembles defined as strings, not lists.
         """
@@ -1057,7 +1043,7 @@ class Recipe:
             variable.update(dataset)
 
             variable['recipe_dataset_index'] = index
-            if 'end_year' in variable and 'max_years' in self._cfg:
+            if 'end_year' in variable and self._cfg['max_years']:
                 variable['end_year'] = min(
                     variable['end_year'],
                     variable['start_year'] + self._cfg['max_years'] - 1)
