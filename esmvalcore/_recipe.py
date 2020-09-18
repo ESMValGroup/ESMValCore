@@ -521,10 +521,12 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
-    (input_files, dirnames,
-     filenames) = get_input_filelist(variable=variable,
-                                     rootpath=config_user['rootpath'],
-                                     drs=config_user['drs'])
+    rootpath = config_user.select_group('rootpath')
+    drs = config_user.select_group('drs')
+
+    (input_files, dirnames, filenames) = get_input_filelist(variable=variable,
+                                                            rootpath=rootpath,
+                                                            drs=drs)
 
     # Set up downloading using synda if requested.
     # Do not download if files are already available locally.

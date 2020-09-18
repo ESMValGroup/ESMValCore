@@ -28,7 +28,7 @@ def validate_path(value, none_ok=True):
 
 def validate_path_list(value):
     if isinstance(value, (str, Path)):
-        return validate_path(value)
+        return [validate_path(value)]
 
     value = [validate_path(p) for p in value]
     return value

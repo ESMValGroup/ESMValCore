@@ -97,6 +97,11 @@ class Config(MutableMapping, dict):
         """Clear Config dictionary."""
         dict.clear(self)
 
+    def select_group(self, group):
+        prefix = f'{group}.'
+        subset = self.find_all(f'^{prefix}')
+        return dict((key[len(prefix):], item) for key, item in subset.items())
+
 
 def _load_default_config(filename):
     mapping = read_config_file(filename)
