@@ -134,6 +134,10 @@ validate_int_positive_or_none = _make_type_validator(validate_int_positive,
                                                      allow_none=True)
 
 
+def validate_any(value):
+    return value
+
+
 def validate_positive(value):
     """Reject negative values."""
     if value is not None and value < 1:
@@ -176,16 +180,29 @@ _validators = {
     'max_parallel_tasks': validate_int_or_none,
     'config_developer_file': validate_path_or_none,
     'profile_diagnostic': validate_bool,
+    'rootpath.ana4mips': validate_pathlist,
+    'rootpath.CMIP3': validate_pathlist,
     'rootpath.CMIP5': validate_pathlist,
+    'rootpath.CMIP6': validate_pathlist,
     'rootpath.CORDEX': validate_pathlist,
-    'rootpath.OBS': validate_pathlist,
-    'rootpath.RAWOBS': validate_pathlist,
-    'rootpath.native6': validate_pathlist,
-    'rootpath.obs6': validate_pathlist,
     'rootpath.default': validate_pathlist,
+    'rootpath.EMAC': validate_pathlist,
+    'rootpath.native6': validate_pathlist,
+    'rootpath.OBS': validate_pathlist,
+    'rootpath.obs4mips': validate_pathlist,
+    'rootpath.OBS6': validate_pathlist,
+    'rootpath.obs6': validate_pathlist,
+    'rootpath.RAWOBS': validate_pathlist,
+    'drs.ana4mips': validate_string,
+    'drs.CMIP3': validate_string,
     'drs.CMIP5': validate_string,
+    'drs.CMIP6': validate_string,
     'drs.CORDEX': validate_string,
+    'drs.EMAC': validate_string,
+    'drs.native6': validate_string,
     'drs.OBS': validate_string,
+    'drs.obs4mips': validate_string,
+    'drs.OBS6': validate_string,
 
     # From CLI
     "skip-nonexistent": validate_bool,
