@@ -19,7 +19,7 @@ from shutil import which
 import psutil
 import yaml
 
-from esmvalcore import locations
+from esmvalcore import session
 
 from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
@@ -346,7 +346,7 @@ class DiagnosticTask(BaseTask):
 
     def write_settings(self):
         """Write settings to file."""
-        run_dir = locations.run_dir
+        run_dir = session.run_dir
         run_dir.mkdir(parents=True, exist_ok=True)
 
         filename = run_dir / 'settings.yml'
@@ -361,7 +361,7 @@ class DiagnosticTask(BaseTask):
 
     def _write_ncl_settings(self):
         """Write settings to NCL file."""
-        filename = locations.run_dir / 'settings.ncl'
+        filename = session.run_dir / 'settings.ncl'
 
         config_user_keys = {
             'run_dir',

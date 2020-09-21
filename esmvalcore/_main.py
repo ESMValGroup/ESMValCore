@@ -27,7 +27,7 @@ from pathlib import Path
 import fire
 from pkg_resources import iter_entry_points
 
-from esmvalcore import config, locations
+from esmvalcore import config, session
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -65,10 +65,10 @@ def process_recipe(recipe_file):
 
     logger.info(70 * "-")
     logger.info("RECIPE   = %s", recipe_file)
-    logger.info("RUNDIR     = %s", locations.run_dir)
-    logger.info("WORKDIR    = %s", locations.work_dir)
-    logger.info("PREPROCDIR = %s", locations.preproc_dir)
-    logger.info("PLOTDIR    = %s", locations.plot_dir)
+    logger.info("RUNDIR     = %s", session.run_dir)
+    logger.info("WORKDIR    = %s", session.work_dir)
+    logger.info("PREPROCDIR = %s", session.preproc_dir)
+    logger.info("PLOTDIR    = %s", session.plot_dir)
     logger.info(70 * "-")
 
     from multiprocessing import cpu_count
@@ -91,7 +91,7 @@ def process_recipe(recipe_file):
             "NetCDF compression.")
 
     # copy recipe to run_dir for future reference
-    shutil.copy2(recipe_file, locations.run_dir)
+    shutil.copy2(recipe_file, session.run_dir)
 
     # parse recipe
     recipe = read_recipe_file(recipe_file)
@@ -341,7 +341,7 @@ class ESMValTool():
         import os
         import shutil
 
-        from esmvalcore import config, locations
+        from esmvalcore import config, session
 
         from ._config import DIAGNOSTICS_PATH, configure_logging
 
@@ -360,11 +360,11 @@ class ESMValTool():
         recipe_name = recipe.stem
 
         # init and create run dir
-        locations.init_session_dir(recipe_name)
-        locations.run_dir.mkdir(parents=True)
+        session.init_session_dir(recipe_name)
+        session.run_dir.mkdir(parents=True)
 
         # configure logging
-        log_files = configure_logging(output_dir=str(locations.run_dir),
+        log_files = configure_logging(output_dir=str(session.run_dir),
                                       console_log_level=config['log_level'])
 
         # log header
@@ -385,17 +385,17 @@ class ESMValTool():
         # Add additional command line arguments to config
         config.update(kwargs)
 
-        resource_log = locations.run_dir / 'resource_usage.txt'
+        resource_log = session.run_dir / 'resource_usage.txt'
 
         from ._task import resource_usage_logger
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
             process_recipe(recipe_file=recipe)
 
-        if locations.preproc_dir.exists() and config["remove_preproc_dir"]:
+        if session.preproc_dir.exists() and config["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
             logger.info("set remove_preproc_dir to false in config-user.yml")
-            shutil.rmtree(locations.preproc_dir)
+            shutil.rmtree(session.preproc_dir)
         logger.info("Run was successful")
 
 

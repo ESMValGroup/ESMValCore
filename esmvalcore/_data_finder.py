@@ -13,7 +13,7 @@ from pathlib import Path
 
 import iris
 
-from esmvalcore import locations
+from esmvalcore import session
 
 from ._config import get_project_config
 
@@ -257,7 +257,7 @@ def get_output_file(variable):
         filename += '_{start_year}-{end_year}'.format(**variable)
     filename += '.nc'
 
-    outfile = locations.preproc_dir / variable['diagnostic'] / variable[
+    outfile = session.preproc_dir / variable['diagnostic'] / variable[
         'variable_group'] / filename
 
     return str(outfile)  # TODO: pathlib.Path
@@ -268,7 +268,7 @@ def get_statistic_output_file(variable):
     template = '{dataset}_{mip}_{short_name}_{start_year}-{end_year}.nc'
     filename = template.format(**variable)
 
-    outfile = locations.preproc_dir / variable['diagnostic'] / variable[
+    outfile = session.preproc_dir / variable['diagnostic'] / variable[
         'variable_group'] / filename
 
     return str(outfile)  # pathlib.Path

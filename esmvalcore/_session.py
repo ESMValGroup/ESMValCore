@@ -3,8 +3,8 @@ from datetime import datetime
 from esmvalcore._config_object import config
 
 
-class Locations:
-    """Importable config object."""
+class Session:
+    """Importable session object."""
     def __init__(self, session_name: str = 'session'):
         super().__init__()
         self.init_session_dir(session_name)
@@ -48,4 +48,4 @@ class Locations:
 
 
 # must be initialized after config
-locations = Locations()
+session = Session()

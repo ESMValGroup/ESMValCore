@@ -10,7 +10,7 @@ from pprint import pformat
 import yaml
 from netCDF4 import Dataset
 
-from esmvalcore import config, locations
+from esmvalcore import config, session
 
 from . import __version__
 from . import _recipe_checks as check
@@ -274,7 +274,7 @@ def _get_default_settings(variable, config_user, derive=False):
     # Set up downloading using synda if requested.
     if config_user['synda_download']:
         # TODO: make this respect drs or download to preproc dir?
-        download_folder = str(locations.preproc_dir /
+        download_folder = str(session.preproc_dir /
                               'downloads')  # TODO: pathlib.Path
         settings['download'] = {
             'dest_folder': download_folder,
@@ -1224,11 +1224,11 @@ class Recipe:
             settings['script'] = script_name
             # Add output dirs to settings
 
-            settings['run_dir'] = (locations.run_dir / diagnostic_name /
+            settings['run_dir'] = (session.run_dir / diagnostic_name /
                                    script_name)
-            settings['plot_dir'] = (locations.plot_dir / diagnostic_name /
+            settings['plot_dir'] = (session.plot_dir / diagnostic_name /
                                     script_name)
-            settings['work_dir'] = (locations.work_dir / diagnostic_name /
+            settings['work_dir'] = (session.work_dir / diagnostic_name /
                                     script_name)
 
             # Copy other settings
