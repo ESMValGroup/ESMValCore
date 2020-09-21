@@ -1,0 +1,13 @@
+# Site-specific entries: BSC
+# Edit the lines below to locate data at BSC
+---
+
+data_reference_syntax:
+  CMIP5:
+    input_dir: '{type}/{project}/{exp}/{dataset.lower}'
+  OBS:
+    input_dir: '{type}/{institute.lower}/{dataset.lower}/{freq_folder}/{short_name}{freq_base}'
+    input_file: '{short_name}_*.nc'
+  OBS6:
+    input_dir: '{type}/{institute.lower}/{dataset.lower}/{freq_folder}/{short_name}{freq_base}'
+    input_file: '{short_name}_*.nc'

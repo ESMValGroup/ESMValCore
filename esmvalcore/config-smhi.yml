@@ -1,0 +1,7 @@
+# Site-specific entries: SMHI
+# Edit the lines below to locate data at SMHI
+---
+
+data_reference_syntax:
+  CMIP5:
+    input_dir: '{dataset}/{ensemble}/{exp}/{frequency}'

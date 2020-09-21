@@ -1,12 +1,16 @@
 # Site-specific entries: ETHZ
 # Edit the lines below to locate data at ETHZ
-rootpath:
- CMIP6: /net/atmos/data/cmip6
- CMIP5: /net/atmos/data/cmip5
- CMIP3: /net/atmos/data/cmip3
- OBS: /net/exo/landclim/PROJECTS/C3S/datadir/obsdir/
+---
 
-drs:
- CMIP6: ETHZ
- CMIP5: ETHZ
- CMIP3: ETHZ
+data_reference_syntax:
+  CMIP6:
+    rootpath: /net/atmos/data/cmip6
+    input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
+  CMIP5:
+    rootpath: /net/atmos/data/cmip5
+    input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
+  CMIP3:
+    rootpath: /net/atmos/data/cmip3
+    # input_dir: ETHZ???
+  OBS:
+    rootpath: /net/exo/landclim/PROJECTS/C3S/datadir/obsdir/

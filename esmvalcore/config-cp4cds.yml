@@ -1,0 +1,7 @@
+# Site-specific entries: DKRZ
+# Edit the lines below to locate data at CP4CDS
+---
+
+data_reference_syntax:
+  CMIP5:
+    input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{short_name}/latest/'

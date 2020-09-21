@@ -1,0 +1,14 @@
+# Site-specific entries: RCAST
+# Edit the lines below to locate data at RCAST
+---
+
+data_reference_syntax:
+  CMIP5:
+    input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
+  OBS:
+    input_dir: '{dataset}'
+    input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
+  obs4mips:
+    input_dir: '/'
+  ana4mips:
+    input_dir: '/'

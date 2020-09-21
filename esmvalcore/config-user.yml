@@ -38,26 +38,13 @@ config_developer_file: null
 # Only available for Python diagnostics
 profile_diagnostic: false
 
-# Rootpaths to the data from different projects (lists are also possible)
-# these are generic entries to better allow you to enter your own
-# For site-specific entries, see below
-# rootpath:
-#  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
-#  OBS: ~/obs_inputpath
-#  RAWOBS: ~/rawobs_inputpath
-#  default: ~/default_inputpath
-#  CORDEX: ~/default_inputpath
+# Default data location
+default_inputpath: ~/default_inputpath
 
-# Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
-# See config-developer.yml for definitions.
-# drs:
-#  CMIP5: default
-#  CORDEX: default
-#  OBS: default
-
-# Specify below if you are using ESMValTool at a specific site
-# This will override the rootpath/drs variables, must be [jasmin/dkrz/ethz]
-# site: jasmin
-
-# Alternatively, specify the path to a yaml file with settings directly
-# include ~/path/to/config.yml
+# Define your custom data reference syntax:
+# data_reference_syntax:
+#   CMIP6:
+#     - rootpath: ~/cmip6_inputpath1
+#     - rootpath: ~/cmip6_inputpath2
+#   CMIP5:
+#     - rootpath: ~/cmip5_inputpath

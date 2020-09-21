@@ -1,0 +1,13 @@
+# Site-specific entries: BADC
+# Edit the lines below to locate data at BADC
+---
+
+data_reference_syntax:
+  CMIP6:
+    input_dir: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+  CMIP5:
+    input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
+  CMIP3:
+    input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{latestversion}'
+  CORDEX:
+    input_dir: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{latestversion}'
