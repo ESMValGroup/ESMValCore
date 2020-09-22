@@ -10,12 +10,11 @@ from pprint import pformat
 import yaml
 from netCDF4 import Dataset
 
-from esmvalcore import config, session
+from esmvalcore import config, drs_config, session
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import (TAGS, get_activity, get_institutes, get_project_config,
-                      replace_tags)
+from ._config import TAGS, get_activity, get_institutes, replace_tags
 from ._data_finder import (get_input_filelist, get_output_file,
                            get_statistic_output_file)
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -383,10 +382,9 @@ def _get_fx_file(variable, fx_variable, config_user):
     # assemble info from master variable
     var = dict(variable)
     var_project = variable['project']
-    # check if project in config-developer
     try:
-        get_project_config(var_project)
-    except ValueError:
+        drs_config['var_project']
+    except KeyError:
         raise RecipeError(
             f"Requested fx variable '{fx_varname}' with parent variable"
             f"'{variable}' does not have a '{var_project}' project"
@@ -522,16 +520,23 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
-    rootpath = config_user.select_group('rootpath')
-    drs = config_user.select_group('drs')
+    # TODO: what arguments are really needed here?
+    # variable
+    # project
+    # synda_download = False
+
+    from esmvalcore import drs_config
+
+    synda_download = config_user['synda_download']
+    project = variable['project']
+    drs = drs_config[project]
 
     (input_files, dirnames, filenames) = get_input_filelist(variable=variable,
-                                                            rootpath=rootpath,
                                                             drs=drs)
 
     # Set up downloading using synda if requested.
     # Do not download if files are already available locally.
-    if config_user['synda_download'] and not input_files:
+    if synda_download and not input_files:
         input_files = synda_search(variable)
         dirnames = None
         filenames = None

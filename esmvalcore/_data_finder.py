@@ -13,9 +13,7 @@ from pathlib import Path
 
 import iris
 
-from esmvalcore import session
-
-from ._config import get_project_config
+from esmvalcore import drs_config, session
 
 logger = logging.getLogger(__name__)
 
@@ -164,94 +162,82 @@ def _resolve_latestversion(dirname_template):
     return dirname_template
 
 
-def _select_drs(input_type, drs, project):
-    """Select the directory structure of input path."""
-    cfg = get_project_config(project)
-    input_path = cfg[input_type]
-    if isinstance(input_path, str):
-        return input_path
-
-    structure = drs.get(project, 'default')
-    if structure in input_path:
-        return input_path[structure]
-
-    raise KeyError(
-        'drs {} for {} project not specified in config-developer file'.format(
-            structure, project))
-
-
-def get_rootpath(rootpath, project):
-    """Select the rootpath."""
-    if project in rootpath:
-        return rootpath[project]
-    if 'default' in rootpath:
-        return rootpath['default']
-    raise KeyError('default rootpath must be specified in config-user file')
-
-
-def _find_input_dirs(variable, rootpath, drs):
+def _find_input_dirs(drs, variable):
     """Return a the full paths to input directories."""
-    project = variable['project']
-
-    root = get_rootpath(rootpath, project)
-    path_template = _select_drs('input_dir', drs, project)
+    base_path = drs.rootpath
+    path_template = drs['input_dir']
 
     dirnames = []
     for dirname_template in _replace_tags(path_template, variable):
-        for base_path in root:
-            dirname = os.path.join(base_path, dirname_template)
-            dirname = _resolve_latestversion(dirname)
-            matches = glob.glob(dirname)
-            matches = [match for match in matches if os.path.isdir(match)]
-            if matches:
-                for match in matches:
-                    logger.debug("Found %s", match)
-                    dirnames.append(match)
-            else:
-                logger.debug("Skipping non-existent %s", dirname)
+        dirname = _resolve_latestversion(
+            dirname_template)  # why is this not part of _replace_tags?
+        dirname = os.path.join(base_path, dirname)
+        matches = glob.glob(dirname)
+        matches = [match for match in matches if os.path.isdir(match)]
+        if matches:
+            for match in matches:
+                logger.debug("Found %s", match)
+                dirnames.append(match)
+        else:
+            logger.debug("Skipping non-existent %s", dirname)
 
     return dirnames
 
 
-def _get_filenames_glob(variable, drs):
+def _get_filenames_glob(drs, variable):
     """Return patterns that can be used to look for input files."""
-    path_template = _select_drs('input_file', drs, variable['project'])
+    path_template = drs['input_file']
     filenames_glob = _replace_tags(path_template, variable)
     return filenames_glob
 
 
-def _find_input_files(variable, rootpath, drs):
-    input_dirs = _find_input_dirs(variable, rootpath, drs)
-    filenames_glob = _get_filenames_glob(variable, drs)
+def _find_input_files(drs, variable):
+    input_dirs = _find_input_dirs(drs, variable)
+    filenames_glob = _get_filenames_glob(drs, variable)
+
+    # TODO:
+    # input_dirs = drs._find_input_dirs(variable)
+    # filenames_glob = drs._get_filenames_glob(variable)
+
     files = find_files(input_dirs, filenames_glob)
 
     return (files, input_dirs, filenames_glob)
 
 
-def get_input_filelist(variable, rootpath, drs):
+def get_input_filelist(drs, variable):
     """Return the full path to input files."""
+    # TODO: what if drs is a list?
+
+    project = variable['project']
+
     # change ensemble to fixed r0i0p0 for fx variables
     # this is needed and is not a duplicate effort
-    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
+    if project == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
-    (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
+
+    (files, dirnames, filenames) = _find_input_files(drs, variable)
+
     # do time gating only for non-fx variables
-    if variable['frequency'] != 'fx':
+    do_time_gating = variable['frequency'] != 'fx'
+    if do_time_gating:
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
+
     return (files, dirnames, filenames)
 
 
 def get_output_file(variable):
     """Return the full path to the output (preprocessed) file."""
-    cfg = get_project_config(variable['project'])
+    project = variable['project']
+    drs = drs_config[project]
+    output_file = drs['output_file']
 
     # Join different experiment names
     if isinstance(variable.get('exp'), (list, tuple)):
         variable = dict(variable)
         variable['exp'] = '-'.join(variable['exp'])
 
-    filename = _replace_tags(cfg['output_file'], variable)[0]
+    filename = _replace_tags(output_file, variable)[0]
 
     if variable['frequency'] != 'fx':
         filename += '_{start_year}-{end_year}'.format(**variable)

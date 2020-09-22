@@ -127,6 +127,13 @@ class Config(MutableMapping, dict):
 class BaseDRS(Config):
     validate = _drs_validators
 
+    @property
+    def rootpath(self):
+        rootpath = self['rootpath']
+        if not rootpath:
+            rootpath = config['default_inputpath']
+        return rootpath
+
 
 def _load_default_data_reference_syntax(filename):
     drs = yaml.safe_load(open(filename, 'r'))
