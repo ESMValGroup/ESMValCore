@@ -343,7 +343,7 @@ def annual_statistics(cube, operator='mean'):
     for idx, year in enumerate(range(no_years)):
         yearly_cube = cube[12 * year:12 * (year + 1)]
         annual_mean = yearly_cube.aggregated_by('year', operator)
-        annual_mean_cube[idx].core_data = annual_mean.core_data()
+        annual_mean_cube.data[idx] = annual_mean.core_data()
 
     return annual_mean_cube
 
