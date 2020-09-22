@@ -21,6 +21,7 @@ CMIP6:
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP6'
+  cmor_default_table_prefix: ''
 
 CMIP5:
   cmor_strict: true
@@ -28,6 +29,7 @@ CMIP5:
   input_dir: '/'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+  cmor_type: 'CMIP5'
   institutes:
     'ACCESS1-0': ['CSIRO-BOM']
     'ACCESS1-3': ['CSIRO-BOM']
@@ -163,6 +165,7 @@ OBS6:
   input_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
+  cmor_default_table_prefix: ''
 
 native6:
   cmor_strict: false
@@ -193,6 +196,7 @@ ana4mips:
   # TODO: add cmor_path and table and set cmor_strict to true
 
 EMAC:
+  cmor_strict: true
   rootpath: null
   input_dir: '{dataset}'
   input_file: ''
@@ -200,6 +204,7 @@ EMAC:
   cmor_type: 'CMIP5'
 
 CORDEX:
+  cmor_strict: true
   rootpath: null
   input_dir: '/'
   input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
