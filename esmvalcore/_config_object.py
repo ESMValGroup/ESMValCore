@@ -53,14 +53,6 @@ def read_config_file(config_file, folder_name=None):
     return cfg
 
 
-def _read_developer_config_file(filename):
-    if not filename:
-        filename = DEVELOPER_CONFIG
-
-    mapping = read_config_file(filename)
-    return mapping
-
-
 class Config(MutableMapping, dict):
     """Based on `matplotlib.rcParams`."""
     validate = _validators
@@ -138,26 +130,42 @@ class BaseDRS(Config):
 def _load_default_data_reference_syntax(filename):
     drs = yaml.safe_load(open(filename, 'r'))
 
-    for key, value in drs.items():
-        drs[key] = BaseDRS(value)
+    global drs_config_default
 
-    return drs
+    for key, value in drs.items():
+        drs_config_default[key] = BaseDRS(value)
+
+
+def _load_data_reference_syntax(config):
+    drs = config['data_reference_syntax']
+
+    global drs_config
+    global drs_config_orig
+
+    for key, value in drs.items():
+        project = key.split('_')[0]
+
+        if project in drs_config_default:
+            new = drs_config_default[project].copy()
+            new.update(value)
+        else:
+            new = BaseDRS(value)
+
+        drs_config[key] = new
+
+    drs_config_orig = drs_config.copy()
 
 
 def _load_default_config(filename):
     mapping = read_config_file(filename)
-    # mapping = flatten(mapping)
 
     global config_default
 
     config_default.update(mapping)
 
-    # _load_data_reference_syntax(config_default)
-
 
 def _load_user_config(filename):
     mapping = read_config_file(filename)
-    # mapping = flatten(mapping)
 
     global config
     global config_orig
@@ -166,17 +174,9 @@ def _load_user_config(filename):
     config.update(config_default)
     config.update(mapping)
 
-    # _load_data_reference_syntax(config)
-
     config_orig = Config(config.copy())
 
 
-# initialize default data reference syntax
-DEFAULT_DRS = Path(__file__).with_name('data_reference_syntax.yml')
-default_drs_config = _load_default_data_reference_syntax(DEFAULT_DRS)
-drs_config = default_drs_config
-
-DEVELOPER_CONFIG = Path(__file__).with_name('config-developer.yml')
 DEFAULT_CONFIG = Path(__file__).with_name('config-user.yml')
 USER_CONFIG = Path.home() / '.esmvaltool' / 'config-user.yml'
 
@@ -189,13 +189,16 @@ config_orig = Config()
 _load_default_config(DEFAULT_CONFIG)
 _load_user_config(USER_CONFIG)
 
-# TODO: load custom data_reference_syntax
-# in yaml:
-# data_reference_syntax:
-#   CMIP6:
-#     rootpath: asdf
-#   CMIP5:
-#     rootpath: fasf
+DEFAULT_DRS = Path(__file__).with_name('data_reference_syntax.yml')
+
+# initialize placeholders
+drs_config_default = dict()
+drs_config = dict()
+drs_config_orig = dict()
+
+# update data data reference syntax
+_load_default_data_reference_syntax(DEFAULT_DRS)
+_load_data_reference_syntax(config)
 
 # TODO:
 #   organize files in separate config folder
