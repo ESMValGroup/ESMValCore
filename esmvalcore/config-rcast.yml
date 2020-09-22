@@ -3,12 +3,12 @@
 ---
 
 data_reference_syntax:
-  CMIP5:
+  CMIP5_RCAST:
     input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
-  OBS:
+  OBS_RCAST:
     input_dir: '{dataset}'
     input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
-  obs4mips:
+  obs4mips_RCAST:
     input_dir: '/'
-  ana4mips:
+  ana4mips_RCAST:
     input_dir: '/'

@@ -3,11 +3,11 @@
 ---
 
 data_reference_syntax:
-  CMIP5:
+  CMIP5_BSC:
     input_dir: '{type}/{project}/{exp}/{dataset.lower}'
-  OBS:
+  OBS_BSC:
     input_dir: '{type}/{institute.lower}/{dataset.lower}/{freq_folder}/{short_name}{freq_base}'
     input_file: '{short_name}_*.nc'
-  OBS6:
+  OBS6_BSC:
     input_dir: '{type}/{institute.lower}/{dataset.lower}/{freq_folder}/{short_name}{freq_base}'
     input_file: '{short_name}_*.nc'

@@ -3,5 +3,5 @@
 ---
 
 data_reference_syntax:
-  CMIP5:
+  CMIP5_CP4CDS:
     input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{short_name}/latest/'

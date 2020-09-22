@@ -3,5 +3,5 @@
 ---
 
 data_reference_syntax:
-  CMIP5:
+  CMIP5_SMHI:
     input_dir: '{dataset}/{ensemble}/{exp}/{frequency}'

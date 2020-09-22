@@ -3,11 +3,11 @@
 ---
 
 data_reference_syntax:
-  CMIP6:
+  CMIP6_BADC:
     input_dir: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
-  CMIP5:
+  CMIP5_BADC:
     input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
-  CMIP3:
+  CMIP3_BADC:
     input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{latestversion}'
-  CORDEX:
+  CORDEX_BADC:
     input_dir: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{latestversion}'

@@ -3,14 +3,14 @@
 ---
 
 data_reference_syntax:
-  CMIP6:
+  CMIP6_ETHZ:
     rootpath: /net/atmos/data/cmip6
     input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
-  CMIP5:
+  CMIP5_ETHZ:
     rootpath: /net/atmos/data/cmip5
     input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
-  CMIP3:
+  CMIP3_ETHZ:
     rootpath: /net/atmos/data/cmip3
     # input_dir: ETHZ???
-  OBS:
+  OBS_ETHZ:
     rootpath: /net/exo/landclim/PROJECTS/C3S/datadir/obsdir/

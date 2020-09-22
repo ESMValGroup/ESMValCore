@@ -3,27 +3,27 @@
 ---
 
 data_reference_syntax:
-  CMIP6:
+  CMIP6_Jasmin:
     rootpath: /badc/cmip6/data/CMIP6
     input_dir: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
-  CMIP5:
+  CMIP5_Jasmin:
     rootpath: /badc/cmip5/data/cmip5/output1
     input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
-  CMIP3:
+  CMIP3_Jasmin:
     rootpath: /badc/cmip3_drs/data/cmip3/output
     input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{latestversion}'
-  OBS:
+  OBS_Jasmin:
     rootpath: /group_workspaces/jasmin4/esmeval/obsdata-v2
     # input_dir: BADC???
-  OBS6:
+  OBS6_Jasmin:
     rootpath: /group_workspaces/jasmin4/esmeval/obsdata-v2
     # input_dir: BADC???
-  obs4mips:
+  obs4mips_Jasmin:
     rootpath: /group_workspaces/jasmin4/esmeval/obsdata-v2
     # input_dir: BADC???
-  ana4mips:
+  ana4mips_Jasmin:
     rootpath: /group_workspaces/jasmin4/esmeval/obsdata-v2
     # input_dir: BADC???
-  CORDEX:
+  CORDEX_Jasmin:
     rootpath: /badc/cordex/data/CORDEX/output
     input_dir: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{latestversion}'
