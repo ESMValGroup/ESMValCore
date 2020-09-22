@@ -164,22 +164,23 @@ def _resolve_latestversion(dirname_template):
 
 def _find_input_dirs(drs, variable):
     """Return a the full paths to input directories."""
-    base_path = drs.rootpath
+    base_paths = drs.rootpath
     path_template = drs['input_dir']
 
     dirnames = []
     for dirname_template in _replace_tags(path_template, variable):
-        dirname = _resolve_latestversion(
-            dirname_template)  # why is this not part of _replace_tags?
-        dirname = os.path.join(base_path, dirname)
-        matches = glob.glob(dirname)
-        matches = [match for match in matches if os.path.isdir(match)]
-        if matches:
-            for match in matches:
-                logger.debug("Found %s", match)
-                dirnames.append(match)
-        else:
-            logger.debug("Skipping non-existent %s", dirname)
+        for base_path in base_paths:
+            dirname = _resolve_latestversion(
+                dirname_template)  # why is this not part of _replace_tags?
+            dirname = os.path.join(base_path, dirname)
+            matches = glob.glob(dirname)
+            matches = [match for match in matches if os.path.isdir(match)]
+            if matches:
+                for match in matches:
+                    logger.debug("Found %s", match)
+                    dirnames.append(match)
+            else:
+                logger.debug("Skipping non-existent %s", dirname)
 
     return dirnames
 

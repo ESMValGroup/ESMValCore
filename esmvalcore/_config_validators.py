@@ -224,7 +224,7 @@ _validators = {
 
     # restructure
     'data_reference_syntax': validate_drs,
-    'default_inputpath': validate_path,
+    'default_inputpath': validate_pathlist,
 }
 
 _drs_validators = {
