@@ -39,7 +39,14 @@ def read_config_file(config_file, folder_name=None):
     # `rootpath`/`drs`
     include = cfg.pop('include', None)
     if include:
-        include = Path(include).expanduser().absolute()
+        for try_path in (
+                Path(include).expanduser().absolute(),
+                Path(__file__).parent / include,
+        ):
+            if try_path.exists():
+                include = try_path
+                break
+
         include_cfg = read_config_file(include)
         cfg.update(include_cfg)
 
