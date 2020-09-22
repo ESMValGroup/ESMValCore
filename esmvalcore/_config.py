@@ -69,14 +69,6 @@ def configure_logging(cfg_file=None, output_dir=None, console_log_level=None):
     return log_files
 
 
-def get_project_config(project):
-    """Get developer-configuration for project."""
-    logger.debug("Retrieving %s configuration", project)
-    if project in drs_config:
-        return drs_config[project]
-    raise ValueError(f"Project '{project}' not in config-developer.yml")
-
-
 def get_institutes(variable):
     """Return the institutes given the dataset name in CMIP5 and CMIP6."""
     dataset = variable['dataset']
