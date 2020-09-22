@@ -327,11 +327,19 @@ def annual_statistics(cube, operator='mean'):
 
     if not cube.coords('year'):
         iris.coord_categorisation.add_year(cube, 'time')
-    no_years = len(set(cube.coord("year").points))
+    years = set(cube.coord("year").points)
+    no_years = len(years)
     annual_mean_cube = cube[0:no_years, ...]
-    annual_mean_cube.coord("time").points = list(set(cube.coord("year").points))
-    annual_mean_cube.coord("time").standard_name = cube.coord("year").standard_name
-    annual_mean_cube.coord("time").units = cube.coord("year").units
+    time_cells = [
+        datetime.datetime(year, 7, 1, 0, 0, 0) for year in years
+    ]
+    annual_mean_cube.coord("time").points = [
+        cube.coord('time').units.date2num(cl)
+        for cl in time_cells]
+    annual_mean_cube.coord('time').bounds = None
+    annual_mean_cube.coord('time').guess_bounds()
+    annual_mean_cube.remove_coord("year")
+    iris.coord_categorisation.add_year(annual_mean_cube, 'time')
     for idx, year in enumerate(range(no_years)):
         yearly_cube = cube[12 * year:12 * (year + 1)]
         annual_mean = yearly_cube.aggregated_by('year', operator)
