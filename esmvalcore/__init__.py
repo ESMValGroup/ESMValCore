@@ -2,7 +2,7 @@
 import logging
 import os
 
-from ._config_object import config
+from ._config_object import config, drs_config
 from ._session import session
 from ._version import __version__
 
@@ -13,6 +13,7 @@ __all__ = [
     '__version__',
     'cmor',
     'config',
+    'drs_config',
     'session',
     'preprocessor',
 ]

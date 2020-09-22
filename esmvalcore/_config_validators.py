@@ -237,5 +237,5 @@ _drs_validators = {
     'output_file': validate_string,
     'institutes': validate_dict,
     'cmor_default_table_prefix': validate_string,
-    'cmor_path': validate_string,
+    'cmor_path': validate_path,
 }

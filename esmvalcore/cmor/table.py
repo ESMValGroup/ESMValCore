@@ -1,8 +1,7 @@
-"""
-CMOR information reader for ESMValTool.
+"""CMOR information reader for ESMValTool.
 
-Read variable information from CMOR 2 and CMOR 3 tables and make it easily
-available for the other components of ESMValTool
+Read variable information from CMOR 2 and CMOR 3 tables and make it
+easily available for the other components of ESMValTool
 """
 import copy
 import errno
@@ -13,7 +12,7 @@ import os
 from functools import total_ordering
 from pathlib import Path
 
-import yaml
+from esmvalcore import drs_config
 
 logger = logging.getLogger(__name__)
 
@@ -36,32 +35,27 @@ def get_var_info(project, mip, short_name):
     return CMOR_TABLES[project].get_variable(mip, short_name)
 
 
-def read_cmor_tables(cfg_developer=None):
+def load_cmor_tables(drs):
     """Read cmor tables required in the configuration.
 
     Parameters
     ----------
     cfg_developer : dict of str
         Parsed config-developer file
-
     """
-    if cfg_developer is None:
-        cfg_file = Path(__file__).parent.parent / 'config-developer.yml'
-        with cfg_file.open() as file:
-            cfg_developer = yaml.safe_load(file)
-
     custom = CustomInfo()
     CMOR_TABLES.clear()
     CMOR_TABLES['custom'] = custom
-    install_dir = os.path.dirname(os.path.realpath(__file__))
-    for table in cfg_developer:
-        project = cfg_developer[table]
-        cmor_type = project.get('cmor_type', 'CMIP5')
-        default_path = os.path.join(install_dir, 'tables', cmor_type.lower())
-        table_path = project.get('cmor_path', default_path)
-        table_path = os.path.expandvars(os.path.expanduser(table_path))
-        cmor_strict = project.get('cmor_strict', True)
-        default_table_prefix = project.get('cmor_default_table_prefix', '')
+    install_dir = Path(__file__).parent
+
+    for table, project in drs.items():
+        cmor_type = project['cmor_type']
+        cmor_strict = project['cmor_strict']
+
+        try:
+            table_path = Path(project['table_path']).expanduser()
+        except KeyError:
+            table_path = install_dir / 'tables' / cmor_type.lower()
 
         if cmor_type == 'CMIP3':
             CMOR_TABLES[table] = CMIP3Info(
@@ -76,6 +70,8 @@ def read_cmor_tables(cfg_developer=None):
                 strict=cmor_strict,
             )
         elif cmor_type == 'CMIP6':
+            default_table_prefix = project['cmor_default_table_prefix']
+
             CMOR_TABLES[table] = CMIP6Info(
                 table_path,
                 default=custom,
@@ -84,8 +80,7 @@ def read_cmor_tables(cfg_developer=None):
 
 
 class CMIP6Info(object):
-    """
-    Class to read CMIP6-like data request.
+    """Class to read CMIP6-like data request.
 
     This uses CMOR 3 json format
 
@@ -100,7 +95,6 @@ class CMIP6Info(object):
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one
-
     """
 
     _CMIP_5to6_varname = {
@@ -235,8 +229,7 @@ class CMIP6Info(object):
                     pass
 
     def get_table(self, table):
-        """
-        Search and return the table info.
+        """Search and return the table info.
 
         Parameters
         ----------
@@ -248,7 +241,6 @@ class CMIP6Info(object):
         TableInfo
             Return the TableInfo object for the requested table if
             found, returns None if not
-
         """
         try:
             return self.tables[table]
@@ -256,8 +248,7 @@ class CMIP6Info(object):
             return self.tables.get(''.join((self.default_table_prefix, table)))
 
     def get_variable(self, table_name, short_name, derived=False):
-        """
-        Search and return the variable info.
+        """Search and return the variable info.
 
         Parameters
         ----------
@@ -273,7 +264,6 @@ class CMIP6Info(object):
         VariableInfo
             Return the VariableInfo object for the requested variable if
             found, returns None if not
-
         """
         table = self.get_table(table_name)
         if table:
@@ -336,8 +326,7 @@ class TableInfo(dict):
 
 
 class JsonInfo(object):
-    """
-    Base class for the info classes.
+    """Base class for the info classes.
 
     Provides common utility methods to read json variables
     """
@@ -345,8 +334,7 @@ class JsonInfo(object):
         self._json_data = {}
 
     def _read_json_variable(self, parameter, default=''):
-        """
-        Read a json parameter in json_data.
+        """Read a json parameter in json_data.
 
         Parameters
         ----------
@@ -357,15 +345,13 @@ class JsonInfo(object):
         -------
         str
             Option's value or empty string if parameter is not present
-
         """
         if parameter not in self._json_data:
             return default
         return str(self._json_data[parameter])
 
     def _read_json_list_variable(self, parameter):
-        """
-        Read a json list parameter in json_data.
+        """Read a json list parameter in json_data.
 
         Parameters
         ----------
@@ -376,7 +362,6 @@ class JsonInfo(object):
         -------
         str
             Option's value or empty list if parameter is not present
-
         """
         if parameter not in self._json_data:
             return []
@@ -386,14 +371,12 @@ class JsonInfo(object):
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
     def __init__(self, table_type, short_name):
-        """
-        Class to read and store variable information.
+        """Class to read and store variable information.
 
         Parameters
         ----------
         short_name: str
             variable's short name
-
         """
         super(VariableInfo, self).__init__()
         self.table_type = table_type
@@ -428,8 +411,7 @@ class VariableInfo(JsonInfo):
         self._json_data = None
 
     def copy(self):
-        """
-        Return a shallow copy of VariableInfo.
+        """Return a shallow copy of VariableInfo.
 
         Returns
         -------
@@ -439,8 +421,7 @@ class VariableInfo(JsonInfo):
         return copy.copy(self)
 
     def read_json(self, json_data, default_freq):
-        """
-        Read variable information from json.
+        """Read variable information from json.
 
         Non-present options will be set to empty
 
@@ -452,7 +433,6 @@ class VariableInfo(JsonInfo):
 
         default_freq: str
             Default frequency to use if it is not defined at variable level
-
         """
         self._json_data = json_data
 
@@ -472,14 +452,12 @@ class VariableInfo(JsonInfo):
 class CoordinateInfo(JsonInfo):
     """Class to read and store coordinate information."""
     def __init__(self, name):
-        """
-        Class to read and store coordinate information.
+        """Class to read and store coordinate information.
 
         Parameters
         ----------
         name: str
             coordinate's name
-
         """
         super(CoordinateInfo, self).__init__()
         self.name = name
@@ -513,9 +491,9 @@ class CoordinateInfo(JsonInfo):
         """Maximum allowed value"""
         self.must_have_bounds = ""
         """Whether bounds are required on this dimension"""
+
     def read_json(self, json_data):
-        """
-        Read coordinate information from json.
+        """Read coordinate information from json.
 
         Non-present options will be set to empty
 
@@ -524,7 +502,6 @@ class CoordinateInfo(JsonInfo):
         json_data: dict
             dictionary created by the json reader containing
             coordinate information
-
         """
         self._json_data = json_data
 
@@ -543,8 +520,7 @@ class CoordinateInfo(JsonInfo):
 
 
 class CMIP5Info(object):
-    """
-    Class to read CMIP5-like data request.
+    """Class to read CMIP5-like data request.
 
     Parameters
     ----------
@@ -557,7 +533,6 @@ class CMIP5Info(object):
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one
-
     """
     def __init__(self, cmor_tables_path, default=None, strict=True):
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
@@ -683,8 +658,7 @@ class CMIP5Info(object):
         return var
 
     def get_table(self, table):
-        """
-        Search and return the table info.
+        """Search and return the table info.
 
         Parameters
         ----------
@@ -696,13 +670,11 @@ class CMIP5Info(object):
         TableInfo
             Return the TableInfo object for the requested table if
             found, returns None if not
-
         """
         return self.tables.get(table)
 
     def get_variable(self, table, short_name, derived=False):
-        """
-        Search and return the variable info.
+        """Search and return the variable info.
 
         Parameters
         ----------
@@ -718,7 +690,6 @@ class CMIP5Info(object):
         VariableInfo
             Return the VariableInfo object for the requested variable if
             found, returns None if not
-
         """
         var_info = self.tables.get(table, {}).get(short_name, None)
         if var_info:
@@ -740,8 +711,7 @@ class CMIP5Info(object):
 
 
 class CMIP3Info(CMIP5Info):
-    """
-    Class to read CMIP3-like data request.
+    """Class to read CMIP3-like data request.
 
     Parameters
     ----------
@@ -754,7 +724,6 @@ class CMIP3Info(CMIP5Info):
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one
-
     """
     def _read_table_file(self, table_file, table=None):
         for dim in ('zlevel', ):
@@ -779,15 +748,13 @@ class CMIP3Info(CMIP5Info):
 
 
 class CustomInfo(CMIP5Info):
-    """
-    Class to read custom var info for ESMVal.
+    """Class to read custom var info for ESMVal.
 
     Parameters
     ----------
     cmor_tables_path: basestring or None
         Full path to the table or name for the table if it is present in
         ESMValTool repository
-
     """
     def __init__(self, cmor_tables_path=None):
         cwd = os.path.dirname(os.path.realpath(__file__))
@@ -818,8 +785,7 @@ class CustomInfo(CMIP5Info):
                 raise
 
     def get_table(self, table):
-        """
-        Search and return the table info.
+        """Search and return the table info.
 
         Parameters
         ----------
@@ -831,13 +797,11 @@ class CustomInfo(CMIP5Info):
         TableInfo
             Return the TableInfo object for the requested table if
             found, returns None if not
-
         """
         return self.tables.get(table)
 
     def get_variable(self, table, short_name, derived=False):
-        """
-        Search and return the variable info.
+        """Search and return the variable info.
 
         Parameters
         ----------
@@ -853,7 +817,6 @@ class CustomInfo(CMIP5Info):
         VariableInfo
             Return the VariableInfo object for the requested variable if
             found, returns None if not
-
         """
         return self.tables['custom'].get(short_name, None)
 
@@ -878,4 +841,4 @@ class CustomInfo(CMIP5Info):
                     return
 
 
-read_cmor_tables()
+load_cmor_tables(drs_config)

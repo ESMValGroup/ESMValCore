@@ -7,15 +7,11 @@ from pathlib import Path
 
 import yaml
 
-from esmvalcore import config
+from esmvalcore import drs_config
 
-from ._config_object import _read_developer_config_file
-from .cmor.table import CMOR_TABLES, read_cmor_tables
+from .cmor.table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
-
-CFG = _read_developer_config_file(config['config_developer_file'])
-read_cmor_tables(CFG)
 
 
 def find_diagnostics():
@@ -76,8 +72,8 @@ def configure_logging(cfg_file=None, output_dir=None, console_log_level=None):
 def get_project_config(project):
     """Get developer-configuration for project."""
     logger.debug("Retrieving %s configuration", project)
-    if project in CFG:
-        return CFG[project]
+    if project in drs_config:
+        return drs_config[project]
     raise ValueError(f"Project '{project}' not in config-developer.yml")
 
 
@@ -90,7 +86,7 @@ def get_institutes(variable):
         return CMOR_TABLES[project].institutes[dataset]
     except (KeyError, AttributeError):
         pass
-    return CFG.get(project, {}).get('institutes', {}).get(dataset, [])
+    return drs_config.get(project, {}).get('institutes', {}).get(dataset, [])
 
 
 def get_activity(variable):

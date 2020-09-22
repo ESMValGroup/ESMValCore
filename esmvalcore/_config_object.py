@@ -166,7 +166,8 @@ def _load_user_config(filename):
 
 # initialize default data reference syntax
 DEFAULT_DRS = Path(__file__).with_name('data_reference_syntax.yml')
-default_drs = _load_default_data_reference_syntax(DEFAULT_DRS)
+default_drs_config = _load_default_data_reference_syntax(DEFAULT_DRS)
+drs_config = default_drs_config
 
 DEVELOPER_CONFIG = Path(__file__).with_name('config-developer.yml')
 DEFAULT_CONFIG = Path(__file__).with_name('config-user.yml')
