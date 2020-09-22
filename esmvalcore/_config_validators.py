@@ -132,6 +132,7 @@ validate_pathlist = _listify_validator(validate_path,
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(validate_int_positive,
                                                      allow_none=True)
+validate_dict = _make_type_validator(dict)
 
 
 def validate_any(value):
@@ -165,6 +166,12 @@ def validate_diagnostics(diagnostics):
     }
 
 
+def validate_drs(value):
+    value = validate_dict(value)
+    # TODO: make drs class
+    return value
+
+
 _validators = {
     # From user config
     'write_plots': validate_bool,
@@ -180,29 +187,29 @@ _validators = {
     'max_parallel_tasks': validate_int_or_none,
     'config_developer_file': validate_path_or_none,
     'profile_diagnostic': validate_bool,
-    'rootpath.ana4mips': validate_pathlist,
-    'rootpath.CMIP3': validate_pathlist,
-    'rootpath.CMIP5': validate_pathlist,
-    'rootpath.CMIP6': validate_pathlist,
-    'rootpath.CORDEX': validate_pathlist,
-    'rootpath.default': validate_pathlist,
-    'rootpath.EMAC': validate_pathlist,
-    'rootpath.native6': validate_pathlist,
-    'rootpath.OBS': validate_pathlist,
-    'rootpath.obs4mips': validate_pathlist,
-    'rootpath.OBS6': validate_pathlist,
-    'rootpath.obs6': validate_pathlist,
-    'rootpath.RAWOBS': validate_pathlist,
-    'drs.ana4mips': validate_string,
-    'drs.CMIP3': validate_string,
-    'drs.CMIP5': validate_string,
-    'drs.CMIP6': validate_string,
-    'drs.CORDEX': validate_string,
-    'drs.EMAC': validate_string,
-    'drs.native6': validate_string,
-    'drs.OBS': validate_string,
-    'drs.obs4mips': validate_string,
-    'drs.OBS6': validate_string,
+    # 'rootpath.ana4mips': validate_pathlist,
+    # 'rootpath.CMIP3': validate_pathlist,
+    # 'rootpath.CMIP5': validate_pathlist,
+    # 'rootpath.CMIP6': validate_pathlist,
+    # 'rootpath.CORDEX': validate_pathlist,
+    # 'rootpath.default': validate_pathlist,
+    # 'rootpath.EMAC': validate_pathlist,
+    # 'rootpath.native6': validate_pathlist,
+    # 'rootpath.OBS': validate_pathlist,
+    # 'rootpath.obs4mips': validate_pathlist,
+    # 'rootpath.OBS6': validate_pathlist,
+    # 'rootpath.obs6': validate_pathlist,
+    # 'rootpath.RAWOBS': validate_pathlist,
+    # 'drs.ana4mips': validate_string,
+    # 'drs.CMIP3': validate_string,
+    # 'drs.CMIP5': validate_string,
+    # 'drs.CMIP6': validate_string,
+    # 'drs.CORDEX': validate_string,
+    # 'drs.EMAC': validate_string,
+    # 'drs.native6': validate_string,
+    # 'drs.OBS': validate_string,
+    # 'drs.obs4mips': validate_string,
+    # 'drs.OBS6': validate_string,
 
     # From CLI
     "skip-nonexistent": validate_bool,
@@ -214,4 +221,21 @@ _validators = {
 
     # From recipe
     'write_ncl_interface': validate_bool,
+
+    # restructure
+    'data_reference_syntax': validate_drs,
+    'default_inputpath': validate_path,
+}
+
+_drs_validators = {
+    'cmor_strict': validate_bool,
+    'cmor_type': validate_string,
+    'rootpath':
+    validate_path_or_none,  # if none, take config['default_inputpath']
+    'input_dir': validate_string,
+    'input_file': validate_string,
+    'output_file': validate_string,
+    'institutes': validate_dict,
+    'cmor_default_table_prefix': validate_string,
+    'cmor_path': validate_string,
 }

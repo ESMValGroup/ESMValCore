@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from esmvalcore._config_validators import _validators
+from esmvalcore._config_validators import _drs_validators, _validators
 
 
 def flatten(d, parent_key='', sep='.'):
@@ -124,18 +124,33 @@ class Config(MutableMapping, dict):
         return dict((key[len(prefix):], item) for key, item in subset.items())
 
 
+class BaseDRS(Config):
+    validate = _drs_validators
+
+
+def _load_default_data_reference_syntax(filename):
+    drs = yaml.safe_load(open(filename, 'r'))
+
+    for key, value in drs.items():
+        drs[key] = BaseDRS(value)
+
+    return drs
+
+
 def _load_default_config(filename):
     mapping = read_config_file(filename)
-    mapping = flatten(mapping)
+    # mapping = flatten(mapping)
 
     global config_default
 
     config_default.update(mapping)
 
+    # _load_data_reference_syntax(config_default)
+
 
 def _load_user_config(filename):
     mapping = read_config_file(filename)
-    mapping = flatten(mapping)
+    # mapping = flatten(mapping)
 
     global config
     global config_orig
@@ -144,8 +159,14 @@ def _load_user_config(filename):
     config.update(config_default)
     config.update(mapping)
 
+    # _load_data_reference_syntax(config)
+
     config_orig = Config(config.copy())
 
+
+# initialize default data reference syntax
+DEFAULT_DRS = Path(__file__).with_name('data_reference_syntax.yml')
+default_drs = _load_default_data_reference_syntax(DEFAULT_DRS)
 
 DEVELOPER_CONFIG = Path(__file__).with_name('config-developer.yml')
 DEFAULT_CONFIG = Path(__file__).with_name('config-user.yml')
@@ -159,3 +180,15 @@ config_orig = Config()
 # update config objects
 _load_default_config(DEFAULT_CONFIG)
 _load_user_config(USER_CONFIG)
+
+# TODO: load custom data_reference_syntax
+# in yaml:
+# data_reference_syntax:
+#   CMIP6:
+#     rootpath: asdf
+#   CMIP5:
+#     rootpath: fasf
+
+# TODO:
+#   organize files in separate config folder
+#   DRS object to own file
