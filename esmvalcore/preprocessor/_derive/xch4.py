@@ -71,7 +71,7 @@ class DerivedVariable(DerivedVariableBase):
         # international gravity formula depending only on the latitude
         g_0 = np.array(lat)
         g_0 = 9.780327 * (1. + 0.0053024 * (np.sin(lat / 180. * PI))**2
-                         - 0.0000058 * (np.sin(2. * lat / 180. * PI))**2)
+                          - 0.0000058 * (np.sin(2. * lat / 180. * PI))**2)
 
         # approximation of the gravitational acceleration including the
         # free air correction
@@ -83,7 +83,7 @@ class DerivedVariable(DerivedVariableBase):
         # number of dry air particles (air molecules excluding water vapor)
         # within each layer
         n_dry = (hus_cube * -1. + 1.) * N_AVO * p_layer_widths.data / (
-                MW_AIR * g_4d_array)
+            MW_AIR * g_4d_array)
 
         # number of CH4 molecules per layer
         ch4_cube = ch4_cube * n_dry
