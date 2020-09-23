@@ -137,7 +137,7 @@ def _load_default_data_reference_syntax(filename):
 
 
 def _load_data_reference_syntax(config):
-    drs = config['data_reference_syntax']
+    drs = config.get('data_reference_syntax', dict())
 
     global drs_config
     global drs_config_orig
