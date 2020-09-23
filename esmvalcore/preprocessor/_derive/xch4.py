@@ -24,7 +24,8 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def required(project):
-        required_vars = [
+        """Declare the variables needed for derivation."""
+        required = [
             {
                 'short_name': 'ch4'
             },
@@ -38,7 +39,7 @@ class DerivedVariable(DerivedVariableBase):
                 'short_name': 'ps'
             },
         ]
-        return required_vars
+        return required
 
     @staticmethod
     def calculate(cubes):
@@ -63,39 +64,26 @@ class DerivedVariable(DerivedVariableBase):
         p_layer_widths = _pressure_level_widths(
             ch4_cube, ps_cube, top_limit=0.0)
 
-        # iris.save(
-        #     p_layer_widths,
-        #     '/pf/b/b380103/workesm/esmvaltool_output/p_layer_widths.nc'
-        # )
-
         # latitudes (1-dim array)
         lat = ch4_cube.coord('latitude').points
 
-        # gravitational acceleration g0 on the geoid approximated by the
+        # gravitational acceleration g_0 on the geoid approximated by the
         # international gravity formula depending only on the latitude
-        g0 = np.array(lat)
-        g0 = 9.780327 * (1. + 0.0053024 * (np.sin(lat / 180. * PI))**2
+        g_0 = np.array(lat)
+        g_0 = 9.780327 * (1. + 0.0053024 * (np.sin(lat / 180. * PI))**2
                          - 0.0000058 * (np.sin(2. * lat / 180. * PI))**2)
 
         # approximation of the gravitational acceleration including the
         # free air correction
         # note: the formula for g given in Buchwitz & Reuter contains a typo
-        #       and should read: g0**2 - 2*f*zg (i.e. minus instead of +)
-        g_4d_array = iris.util.broadcast_to_shape(g0**2, zg_cube.shape, [2])
+        #       and should read: g_0**2 - 2*f*zg (i.e. minus instead of +)
+        g_4d_array = iris.util.broadcast_to_shape(g_0**2, zg_cube.shape, [2])
         g_4d_array = np.sqrt(g_4d_array.data - 2. * FAIR_COR * zg_cube.data)
-
-        # outcube = ch4_cube.copy(g_4d_array)
-        # iris.save(
-        #     outcube,
-        #     '/pf/b/b380103/workesm/esmvaltool_output/g_4d_array.nc'
-        # )
 
         # number of dry air particles (air molecules excluding water vapor)
         # within each layer
         n_dry = (hus_cube * -1. + 1.) * N_AVO * p_layer_widths.data / (
                 MW_AIR * g_4d_array)
-
-        # iris.save(n_dry, '/pf/b/b380103/workesm/esmvaltool_output/n_dry.nc')
 
         # number of CH4 molecules per layer
         ch4_cube = ch4_cube * n_dry
