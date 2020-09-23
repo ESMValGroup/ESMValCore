@@ -147,7 +147,7 @@ class ConfigUtils():
         filename = f'config-{name}.yml'
 
         if not path:
-            path = Path('~/.esmvaltool').expanduser() / filename
+            path = session.config_dir / filename
         else:
             path = Path(path)
 
@@ -172,7 +172,7 @@ class ConfigUtils():
         """
         pre = '- '
 
-        user_config_folder = Path('~/.esmvaltool').expanduser()
+        user_config_folder = session.config_dir
         drs_config_folder = Path(__file__).parent
 
         print('# Available data reference syntax')

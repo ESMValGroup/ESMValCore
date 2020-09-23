@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from esmvalcore._config_object import config
+from esmvalcore._config_object import USER_CONFIG_DIR, config
 
 
 class Session:
@@ -45,6 +45,10 @@ class Session:
     @property
     def run_dir(self):
         return self.session_dir / 'run'
+
+    @property
+    def config_dir(self):
+        return USER_CONFIG_DIR
 
 
 # must be initialized after config

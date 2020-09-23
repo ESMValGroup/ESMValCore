@@ -177,8 +177,9 @@ def _load_user_config(filename):
     config_orig = Config(config.copy())
 
 
+USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 DEFAULT_CONFIG = Path(__file__).with_name('config-user.yml')
-USER_CONFIG = Path.home() / '.esmvaltool' / 'config-user.yml'
+USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders
 config_default = Config()
