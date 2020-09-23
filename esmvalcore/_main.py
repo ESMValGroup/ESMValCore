@@ -114,8 +114,8 @@ class ConfigUtils():
     This group contains utilities to manage ESMValTool configuration
     files.
     """
-    @classmethod
-    def get(cls, name, overwrite=False, path=None):
+    @staticmethod
+    def get(name, overwrite=False, path=None):
         """Initialize default config-user.yml to a given path.
 
         Copy default config-user.yml file to a given path or, if a path is
@@ -164,13 +164,29 @@ class ConfigUtils():
 
         logger.info('Writing config file to %s.', path)
 
-    @classmethod
-    def list(cls):
+    @staticmethod
+    def list():
+        """List all available configs.
 
-        pass
+        Show all user configs and available configs, grouped by folder.
+        """
+        pre = '- '
 
-        # list user configs in ~/.esmvalcore/
-        # list available configs
+        user_config_folder = Path('~/.esmvaltool').expanduser()
+        drs_config_folder = Path(__file__).parent
+
+        print('# Available data reference syntax')
+        print('# Use `esmvaltool config get [config_name]` to copy them')
+        for path in sorted(drs_config_folder.glob('drs-*.yml')):
+            name = path.stem.split('-', 1)[1]
+            print(f'{pre}{name} ({path.name})')
+        print()
+        print(f'# Available configs in {user_config_folder}')
+        for path in sorted(user_config_folder.glob('*.yml')):
+            if path.stem == 'config-user':
+                print(f'{pre}{path.name} [default]')
+            else:
+                print(f'{pre}{path.name}')
 
 
 class Recipes():
