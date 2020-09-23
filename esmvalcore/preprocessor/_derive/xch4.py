@@ -44,6 +44,7 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Calculate the average-column atmospheric CH4 [1e-9].
+
         The calculation follows the method described in the obs4MIPs
         technical note "Merged SCIMACHY/ENVISAT and TANSO-FTS/GOSAT
         atmospheric column-average dry-air mole fraction of CH4 (XCH4)"
@@ -101,6 +102,7 @@ class DerivedVariable(DerivedVariableBase):
 # Helper functions
 def _pressure_level_widths(ch4_cube, ps_cube, top_limit=0.0):
     """Create a cube with pressure level widths.
+
     This is done by taking a 2D surface pressure field as lower bound.
     Parameters
     ----------
@@ -127,6 +129,7 @@ def _pressure_level_widths(ch4_cube, ps_cube, top_limit=0.0):
 
 def _create_pressure_array(ch4_cube, ps_cube, top_limit):
     """Create an array filled with the `air_pressure` coord values.
+
     The array is created from the `ch4_cube` with the same dimensions
     as `ch4_cube`. This array is then sandwiched with a 2D array
     containing the surface pressure and a 2D array containing the top
@@ -157,6 +160,7 @@ def _create_pressure_array(ch4_cube, ps_cube, top_limit):
 
 def _apply_pressure_level_widths(array, air_pressure_axis=1):
     """Compute pressure level widths.
+
     For a 1D array with pressure level columns, return a 1D array with
     pressure level widths.
     """
@@ -166,6 +170,7 @@ def _apply_pressure_level_widths(array, air_pressure_axis=1):
 @numba.jit()  # ~10x faster
 def _p_level_widths(array):
     """Create pressure level widths.
+
     The array with pressure levels is assumed to be monotonic and the
     values are decreasing.
     The first element is the lower boundary (surface pressure), the last
