@@ -114,64 +114,63 @@ class ConfigUtils():
     This group contains utilities to manage ESMValTool configuration
     files.
     """
-    @staticmethod
-    def _copy_config_file(filename, overwrite, path):
-        import os
-        import shutil
-
-        from ._config import configure_logging
-        configure_logging(console_log_level='info')
-        if not path:
-            path = os.path.join(os.path.expanduser('~/.esmvaltool'), filename)
-        if os.path.isfile(path):
-            if overwrite:
-                logger.info('Overwriting file %s.', path)
-            else:
-                logger.info('Copy aborted. File %s already exists.', path)
-                return
-
-        target_folder = os.path.dirname(path)
-        if not os.path.isdir(target_folder):
-            logger.info('Creating folder %s', target_folder)
-            os.makedirs(target_folder)
-
-        logger.info('Copying file to %s.', path)
-        shutil.copy2(os.path.join(os.path.dirname(__file__), filename), path)
-        logger.info('Copy finished.')
-
     @classmethod
-    def get_config_user(cls, overwrite=False, path=None):
-        """Copy default config-user.yml file to a given path.
+    def get(cls, name, overwrite=False, path=None):
+        """Initialize default config-user.yml to a given path.
 
         Copy default config-user.yml file to a given path or, if a path is
         not provided, install it in the default `${HOME}/.esmvaltool` folder.
 
         Parameters
         ----------
+        name: str
+            Name of the config to get, i.e. jasmin/dkrz/ethz
         overwrite: boolean
             Overwrite an existing file.
         path: str
-            If not provided, the file will be copied to
+            If not provided, the file will be written to
             .esmvaltool in the user's home.
         """
-        cls._copy_config_file('config-user.yml', overwrite, path)
+        from ._config import configure_logging
+        configure_logging(console_log_level='info')
+
+        blank_lines = ['\n']
+
+        config_file = Path(__file__).with_name('config-user.yml')
+        config_lines = open(config_file, 'r').readlines()
+
+        drs_file = Path(__file__).with_name(f'drs-{name}.yml')
+        drs_lines = open(drs_file, 'r').readlines()
+        drs_lines = [line for line in drs_lines if not line.startswith('---')]
+        config_lines = config_lines + blank_lines + drs_lines
+
+        filename = f'config-{name}.yml'
+
+        if not path:
+            path = Path('~/.esmvaltool').expanduser() / filename
+        else:
+            path = Path(path)
+
+        if path.exists():
+            if overwrite:
+                logger.info('Overwriting file %s.', path)
+            else:
+                logger.info('Get config aborted. File %s already exists.',
+                            path)
+                return
+
+        with open(path, 'w') as f:
+            f.writelines(config_lines)
+
+        logger.info('Writing config file to %s.', path)
 
     @classmethod
-    def get_config_developer(cls, overwrite=False, path=None):
-        """Copy default config-developer.yml file to a given path.
+    def list(cls):
 
-        Copy default config-developer.yml file to a given path or, if a path is
-        not provided, install it in the default `${HOME}/.esmvaltool` folder.
+        pass
 
-        Parameters
-        ----------
-        overwrite: boolean
-            Overwrite an existing file.
-        path: str
-            If not provided, the file will be copied to
-            .esmvaltool in the user's home.
-        """
-        cls._copy_config_file('config-developer.yml', overwrite, path)
+        # list user configs in ~/.esmvalcore/
+        # list available configs
 
 
 class Recipes():

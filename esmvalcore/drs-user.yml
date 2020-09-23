@@ -1,0 +1,11 @@
+# Define your custom data reference syntax
+# Uncomment and edit the lines below to locate data on your machine
+---
+
+# data_reference_syntax:
+#   CMIP6:
+#     rootpath:
+#       - ~/cmip6_inputpath1
+#       - ~/cmip6_inputpath2
+#   CMIP5:
+#     rootpath: ~/cmip5_inputpath
