@@ -132,7 +132,7 @@ def _load_default_data_reference_syntax(filename):
 
     global drs_config_default
 
-    for key, value in drs.items():
+    for key, value in drs['data_reference_syntax'].items():
         drs_config_default[key] = BaseDRS(value)
 
 
@@ -178,7 +178,7 @@ def _load_user_config(filename):
 
 
 USER_CONFIG_DIR = Path.home() / '.esmvaltool'
-DEFAULT_CONFIG = Path(__file__).with_name('config-user.yml')
+DEFAULT_CONFIG = Path(__file__).with_name('config-default.yml')
 USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders
@@ -190,7 +190,7 @@ config_orig = Config()
 _load_default_config(DEFAULT_CONFIG)
 _load_user_config(USER_CONFIG)
 
-DEFAULT_DRS = Path(__file__).with_name('data_reference_syntax.yml')
+DEFAULT_DRS = Path(__file__).with_name('drs-default.yml')
 
 # initialize placeholders
 drs_config_default = dict()
