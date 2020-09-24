@@ -24,7 +24,7 @@ def read_config_file(config_file, folder_name=None):
     """Read config user file and store settings in a dictionary."""
     config_file = Path(config_file)
     if not config_file.exists():
-        print(f"ERROR: Config file {config_file} does not exist")
+        raise IOError(f'Config file `{config_file}` does not exist.')
 
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
@@ -164,8 +164,13 @@ def _load_default_config(filename):
     config_default.update(mapping)
 
 
-def _load_user_config(filename):
-    mapping = read_config_file(filename)
+def _load_user_config(filename, raise_exception=True):
+    try:
+        mapping = read_config_file(filename)
+    except IOError:
+        if raise_exception:
+            raise
+        mapping = {}
 
     global config
     global config_orig
@@ -188,7 +193,7 @@ config_orig = Config()
 
 # update config objects
 _load_default_config(DEFAULT_CONFIG)
-_load_user_config(USER_CONFIG)
+_load_user_config(USER_CONFIG, raise_exception=False)
 
 DEFAULT_DRS = Path(__file__).with_name('drs-default.yml')
 
