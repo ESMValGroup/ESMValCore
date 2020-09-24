@@ -115,7 +115,7 @@ class ConfigUtils():
     files.
     """
     @staticmethod
-    def get(name='user', overwrite=False, path=None):
+    def get(name='basic', overwrite=False, path=None):
         """Initialize default config-user.yml to a given path.
 
         Copy default config-user.yml file to a given path or, if a path is
@@ -136,7 +136,7 @@ class ConfigUtils():
 
         blank_lines = ['\n']
 
-        config_file = Path(__file__).with_name('config-user.yml')
+        config_file = Path(__file__).with_name('config-default.yml')
         config_lines = open(config_file, 'r').readlines()
 
         drs_file = Path(__file__).with_name(f'drs-{name}.yml')
@@ -147,7 +147,9 @@ class ConfigUtils():
         filename = f'config-{name}.yml'
 
         if not path:
-            path = session.config_dir / filename
+            path = session.config_dir / 'config-user.yml'
+            if path.exists():
+                path = session.config_dir / filename
         else:
             path = Path(path)
 
@@ -175,17 +177,26 @@ class ConfigUtils():
         user_config_folder = session.config_dir
         drs_config_folder = Path(__file__).parent
 
+        drs_configs = sorted(drs_config_folder.glob('drs-*.yml'))
+        user_configs = sorted(user_config_folder.glob('*.yml'))
+
         print('# Available site-specific configs')
-        print('# Use `esmvaltool config get [config_name]` to copy them')
-        for path in sorted(drs_config_folder.glob('drs-*.yml')):
+        print('# Use `esmvaltool config get CONFIG_NAME` to copy them')
+        for path in drs_configs:
             name = path.stem.split('-', 1)[1]
             if name == 'user':
                 print(f'{pre}{name} [default]')
             else:
                 print(f'{pre}{name}')
         print()
+
+        if not user_configs:
+            return
+
         print(f'# Available configs in {user_config_folder}')
-        for path in sorted(user_config_folder.glob('*.yml')):
+        print('# Select config with '
+              '`esmvaltool run <recipe> --config_file=CONFIG_FILE`')
+        for path in user_configs:
             if path.stem == 'config-user':
                 print(f'{pre}{path.name} [default]')
             else:
