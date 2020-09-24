@@ -14,16 +14,11 @@ data_reference_syntax:
     input_drs: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
   CORDEX_DKRZ:
     rootpath: /mnt/lustre02/work/ik1017/C3SCORDEX/data/c3s-cordex/output
-    # input_drs: DKRZ???
   OBS_DKRZ:
     rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-    # input_drs: DKRZ???
   OBS6_DKRZ:
     rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-    # input_drs: DKRZ???
   obs4mips_DKRZ:
     rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-    # input_drs: DKRZ???
   ana4mips_DKRZ:
     rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-    # input_drs: DKRZ???

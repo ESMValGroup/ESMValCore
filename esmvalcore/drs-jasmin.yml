@@ -14,16 +14,12 @@ data_reference_syntax:
     input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{latestversion}'
   OBS_Jasmin:
     rootpath: /group_workspaces/jasmin4/esmeval/obsdata-v2
-    # input_dir: BADC???
   OBS6_Jasmin:
     rootpath: /group_workspaces/jasmin4/esmeval/obsdata-v2
-    # input_dir: BADC???
   obs4mips_Jasmin:
     rootpath: /group_workspaces/jasmin4/esmeval/obsdata-v2
-    # input_dir: BADC???
   ana4mips_Jasmin:
     rootpath: /group_workspaces/jasmin4/esmeval/obsdata-v2
-    # input_dir: BADC???
   CORDEX_Jasmin:
     rootpath: /badc/cordex/data/CORDEX/output
     input_dir: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{latestversion}'

@@ -11,6 +11,5 @@ data_reference_syntax:
     input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
   CMIP3_ETHZ:
     rootpath: /net/atmos/data/cmip3
-    # input_dir: ETHZ???
   OBS_ETHZ:
     rootpath: /net/exo/landclim/PROJECTS/C3S/datadir/obsdir/
