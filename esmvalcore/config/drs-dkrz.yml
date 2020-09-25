@@ -5,13 +5,13 @@
 data_reference_syntax:
   CMIP6_DKRZ:
     rootpath: /mnt/lustre02/work/ik1017/CMIP6/data/CMIP6
-    input_drs: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+    input_dir: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
   CMIP5_DKRZ:
     rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP5_DKRZ
-    input_drs: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
+    input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
   CMIP3_DKRZ:
     rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP3
-    input_drs: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
+    input_dir: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
   CORDEX_DKRZ:
     rootpath: /mnt/lustre02/work/ik1017/C3SCORDEX/data/c3s-cordex/output
   OBS_DKRZ:

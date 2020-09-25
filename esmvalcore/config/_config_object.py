@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from esmvalcore._config_validators import _drs_validators, _validators
+from ._config_validators import _drs_validators, _validators
 
 
 def flatten(d, parent_key='', sep='.'):
@@ -67,7 +67,7 @@ class Config(MutableMapping, dict):
         except ValueError as ve:
             raise ValueError(f"Key `{key}`: {ve}") from None
         except KeyError as ke:
-            raise KeyError(f"`{key}` is not a valid config parameter.") from ke
+            raise KeyError(f"`{key}` is not a valid config parameter.") from None
 
         dict.__setitem__(self, key, cval)
 
@@ -139,8 +139,12 @@ def _load_default_data_reference_syntax(filename):
 def _load_data_reference_syntax(config):
     drs = config.get('data_reference_syntax', dict())
 
+    global drs_config_default
     global drs_config
     global drs_config_orig
+
+    drs_config.clear()
+    drs_config.update(drs_config_default)
 
     for key, value in drs.items():
         project = key.split('_')[0]
@@ -152,6 +156,7 @@ def _load_data_reference_syntax(config):
             new = BaseDRS(value)
 
         drs_config[key] = new
+        missing_keys.pop(key)
 
     drs_config_orig = drs_config.copy()
 
@@ -182,6 +187,11 @@ def _load_user_config(filename, raise_exception=True):
     config_orig = Config(config.copy())
 
 
+def load(filename):
+    filename = Path(filename).expanduser()
+    _load_user_config(filename)
+
+
 USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 DEFAULT_CONFIG = Path(__file__).with_name('config-default.yml')
 USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
@@ -205,7 +215,3 @@ drs_config_orig = dict()
 # update data data reference syntax
 _load_default_data_reference_syntax(DEFAULT_DRS)
 _load_data_reference_syntax(config)
-
-# TODO:
-#   organize files in separate config folder
-#   DRS object to own file

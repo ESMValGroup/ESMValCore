@@ -147,7 +147,7 @@ def validate_positive(value):
 
 
 def validate_check_level(value):
-    from .cmor.check import CheckLevels
+    from ..cmor.check import CheckLevels
 
     if isinstance(value, str):
         return CheckLevels[value.upper()]
@@ -156,7 +156,7 @@ def validate_check_level(value):
 
 
 def validate_diagnostics(diagnostics):
-    from ._recipe import TASKSEP
+    from .._recipe import TASKSEP
 
     if isinstance(diagnostics, str):
         diagnostics = diagnostics.split(' ')
