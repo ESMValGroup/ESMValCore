@@ -164,10 +164,11 @@ def _resolve_latestversion(dirname_template):
 
 def _find_input_dirs(drs, variable):
     """Return a the full paths to input directories."""
-    base_paths = drs.rootpath
+    dirnames = []
+
+    base_paths = drs['rootpath']
     path_template = drs['input_dir']
 
-    dirnames = []
     for dirname_template in _replace_tags(path_template, variable):
         for base_path in base_paths:
             dirname = _resolve_latestversion(
@@ -205,7 +206,7 @@ def _find_input_files(drs, variable):
     return (files, input_dirs, filenames_glob)
 
 
-def get_input_filelist(drs, variable):
+def get_input_filelist(project_data, variable):
     """Return the full path to input files."""
     # TODO: what if drs is a list?
 
@@ -216,7 +217,8 @@ def get_input_filelist(drs, variable):
     if project == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
 
-    (files, dirnames, filenames) = _find_input_files(drs, variable)
+    for drs in project_data._data:
+        (files, dirnames, filenames) = _find_input_files(drs, variable)
 
     # do time gating only for non-fx variables
     do_time_gating = variable['frequency'] != 'fx'
@@ -231,7 +233,7 @@ def get_output_file(variable):
     """Return the full path to the output (preprocessed) file."""
     project = variable['project']
     drs = drs_config[project]
-    output_file = drs['output_file']
+    output_file = drs.output_file
 
     # Join different experiment names
     if isinstance(variable.get('exp'), (list, tuple)):

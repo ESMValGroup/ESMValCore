@@ -524,14 +524,15 @@ def _get_input_files(variable, config_user):
     # project
     # synda_download = False
 
-    from . import drs_config
+    from . import config
 
     synda_download = config_user['synda_download']
     project = variable['project']
-    drs = drs_config[project]
+    project_data = config[project]
 
-    (input_files, dirnames, filenames) = get_input_filelist(variable=variable,
-                                                            drs=drs)
+    (input_files, dirnames,
+     filenames) = get_input_filelist(variable=variable,
+                                     project_data=project_data)
 
     # Set up downloading using synda if requested.
     # Do not download if files are already available locally.

@@ -138,7 +138,7 @@ def _load_default_data_reference_syntax(filename):
     global drs_config_default
 
     for key, value in drs['data_reference_syntax'].items():
-        drs_config_default[key] = BaseDRS(value)
+        drs_config_default[key].append(BaseDRS(value))
 
 
 def _load_data_reference_syntax(config):
@@ -155,13 +155,15 @@ def _load_data_reference_syntax(config):
         project = key.split('_')[0]
 
         if project in drs_config_default:
-            default = drs_config_default[project]
+            default = drs_config_default[project][0]
             new = BaseDRS(default.copy())
             new.update(value)
         else:
             new = BaseDRS(value)
 
-        drs_config[key] = new
+        new['project'] = project
+        new['name'] = key
+        drs_config[project].append(new)
 
     drs_config_orig = drs_config.copy()
 
@@ -207,11 +209,20 @@ _load_user_config(USER_CONFIG, raise_exception=False)
 
 DEFAULT_DRS = Path(__file__).with_name('drs-default.yml')
 
-# initialize placeholders
-drs_config_default = dict()
-drs_config = dict()
-drs_config_orig = dict()
+from .._projects import ProjectData
+
+for key in ('CMIP6', 'CMIP5', 'CMIP3', 'OBS', 'OBS6', 'native6', 'obs4mips',
+            'ana4mips', 'EMAC', 'CORDEX'):
+
+    output_file = config[key]['output_file']
+
+    # TODO: flatten rootpath list -> make 1 BaseDRS for every rootpath
+    data = [BaseDRS(item) for item in config[key]['data']]
+
+    config[key] = ProjectData(key, output_file=output_file, data=data)
+
+drs_config = config
 
 # update data data reference syntax
-_load_default_data_reference_syntax(DEFAULT_DRS)
-_load_data_reference_syntax(config)
+# _load_default_data_reference_syntax(DEFAULT_DRS)
+# _load_data_reference_syntax(config)

@@ -229,6 +229,18 @@ _validators = {
     # restructure
     'data_reference_syntax': validate_drs,
     'default_inputpath': validate_pathlist,
+
+    # projects
+    'CMIP6': validate_any,
+    'CMIP5': validate_any,
+    'CMIP3': validate_any,
+    'OBS': validate_any,
+    'OBS6': validate_any,
+    'native6': validate_any,
+    'obs4mips': validate_any,
+    'ana4mips': validate_any,
+    'EMAC': validate_any,
+    'CORDEX': validate_any,
 }
 
 _drs_validators = {
@@ -236,4 +248,6 @@ _drs_validators = {
     'input_dir': validate_string,
     'input_file': validate_string,
     'output_file': validate_string,
+    'project': validate_string,
+    'name': validate_string,
 }

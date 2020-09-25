@@ -37,3 +37,73 @@ config_developer_file: null
 # Get profiling information for diagnostics
 # Only available for Python diagnostics
 profile_diagnostic: false
+
+CMIP6:
+  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+  data:
+    - rootpath: ~/data/CMIP6
+      input_dir: ''
+      input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
+
+CMIP5:
+  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+  data:
+    - rootpath: ~/data/CMIP5
+      input_dir: ''
+      input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
+
+CMIP3:
+  output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  data:
+    - rootpath: ~/data/CMIP3
+      input_dir: ''
+      input_file: '{short_name}_*.nc'
+
+OBS:
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+  data:
+    - rootpath: ~/data/OBS
+      input_dir: 'Tier{tier}/{dataset}'
+      input_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
+
+OBS6:
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+  data:
+    - rootpath: ~/data/OBS6
+      input_dir: 'Tier{tier}/{dataset}'
+      input_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
+
+native6:
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+  data:
+    - rootpath: ~/data/native6
+      input_dir: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+      input_file: '*.nc'
+
+obs4mips:
+  output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
+  data:
+    - rootpath: ~/data/obs4mips
+      input_dir: 'Tier{tier}/{dataset}'
+      input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
+
+ana4mips:
+  output_file: '{project}_{mip}_{type}_{dataset}_{short_name}'
+  data:
+    - rootpath: ~/data/ana4mips
+      input_dir: 'Tier{tier}/{dataset}'
+      input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
+
+EMAC:
+  output_file: '{dataset}_{ensemble}_{short_name}'
+  data:
+    - rootpath: ~/data/EMAC
+      input_dir: '{dataset}'
+      input_file: ''
+
+CORDEX:
+  output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
+  data:
+    - rootpath: ~/data/CORDEX
+      input_dir: ''
+      input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
