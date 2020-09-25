@@ -5,7 +5,12 @@ from pathlib import Path
 
 import yaml
 
+from .._exceptions import SuppressedError
 from ._config_validators import _drs_validators, _validators
+
+
+class InvalidConfigParameter(SuppressedError):
+    pass
 
 
 def flatten(d, parent_key='', sep='.'):
@@ -65,9 +70,9 @@ class Config(MutableMapping, dict):
         try:
             cval = self.validate[key](val)
         except ValueError as ve:
-            raise ValueError(f"Key `{key}`: {ve}") from None
+            raise InvalidConfigParameter(f"Key `{key}`: {ve}") from None
         except KeyError:
-            raise KeyError(
+            raise InvalidConfigParameter(
                 f"`{key}` is not a valid config parameter.") from None
 
         dict.__setitem__(self, key, cval)
