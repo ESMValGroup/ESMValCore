@@ -843,6 +843,6 @@ class CustomInfo(CMIP5Info):
 
 # dict of str, obj: CMOR info objects."""
 CMOR_TABLES = {}
-PROJECTS = Path(__file__).parent / 'projects.yml'
+PROJECTS = Path(__file__).parent / 'cmor_config.yml'
 
 load_cmor_tables(PROJECTS)
