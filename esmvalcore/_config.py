@@ -7,7 +7,6 @@ from pathlib import Path
 
 import yaml
 
-from . import drs_config
 from .cmor.table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
@@ -73,11 +72,8 @@ def get_institutes(variable):
     dataset = variable['dataset']
     project = variable['project']
     logger.debug("Retrieving institutes for dataset %s", dataset)
-    try:
-        return CMOR_TABLES[project].institutes[dataset]
-    except (KeyError, AttributeError):
-        pass
-    return drs_config.get(project, {}).get('institutes', {}).get(dataset, [])
+    from .cmor.institutes import get_institute
+    return get_institute(project, dataset)
 
 
 def get_activity(variable):
