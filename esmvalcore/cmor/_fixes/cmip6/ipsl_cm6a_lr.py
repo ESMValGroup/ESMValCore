@@ -1,4 +1,5 @@
 """Fixes for IPSL-CM6A-LR model."""
+import iris
 from iris.cube import CubeList
 from iris.coords import AuxCoord
 from iris.exceptions import ConstraintMismatchError
