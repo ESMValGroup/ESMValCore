@@ -9,6 +9,6 @@ data_reference_syntax:
     input_dir: '{dataset}'
     input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
   obs4mips_RCAST:
-    input_dir: '/'
+    input_dir: ''
   ana4mips_RCAST:
-    input_dir: '/'
+    input_dir: ''

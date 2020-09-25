@@ -18,7 +18,7 @@ data_reference_syntax:
   CMIP6:
     cmor_strict: true
     rootpath: null
-    input_dir: '/'
+    input_dir: ''
     input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
     output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
     cmor_type: 'CMIP6'
@@ -27,7 +27,7 @@ data_reference_syntax:
   CMIP5:
     cmor_strict: true
     rootpath: null
-    input_dir: '/'
+    input_dir: ''
     input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
     output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
     cmor_type: 'CMIP5'
@@ -98,7 +98,7 @@ data_reference_syntax:
   CMIP3:
     cmor_strict: true
     rootpath: null
-    input_dir: '/'
+    input_dir: ''
     input_file: '{short_name}_*.nc'
     output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
     cmor_type: 'CMIP3'
@@ -207,7 +207,7 @@ data_reference_syntax:
   CORDEX:
     cmor_strict: true
     rootpath: null
-    input_dir: '/'
+    input_dir: ''
     input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
     output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
     cmor_type: 'CMIP5'
