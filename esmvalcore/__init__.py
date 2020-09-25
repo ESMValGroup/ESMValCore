@@ -2,9 +2,9 @@
 import logging
 import os
 
-from ._config_object import config, drs_config
 from ._session import session
 from ._version import __version__
+from .configuration import config, drs_config
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

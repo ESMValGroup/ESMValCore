@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from esmvalcore._config_object import USER_CONFIG_DIR, config
+from .configuration import config
+from .configuration._config_object import USER_CONFIG_DIR
 
 
 class Session:

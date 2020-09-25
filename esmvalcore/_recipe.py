@@ -10,10 +10,9 @@ from pprint import pformat
 import yaml
 from netCDF4 import Dataset
 
-from esmvalcore import config, drs_config, session
-
 from . import __version__
 from . import _recipe_checks as check
+from . import config, drs_config, session
 from ._config import TAGS, get_activity, get_institutes, replace_tags
 from ._data_finder import (get_input_filelist, get_output_file,
                            get_statistic_output_file)
@@ -525,7 +524,7 @@ def _get_input_files(variable, config_user):
     # project
     # synda_download = False
 
-    from esmvalcore import drs_config
+    from . import drs_config
 
     synda_download = config_user['synda_download']
     project = variable['project']

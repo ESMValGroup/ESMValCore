@@ -19,11 +19,10 @@ from shutil import which
 import psutil
 import yaml
 
-from esmvalcore import session
-
 from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
+from ._session import session
 
 logger = logging.getLogger(__name__)
 

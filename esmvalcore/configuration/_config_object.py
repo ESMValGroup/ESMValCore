@@ -66,8 +66,9 @@ class Config(MutableMapping, dict):
             cval = self.validate[key](val)
         except ValueError as ve:
             raise ValueError(f"Key `{key}`: {ve}") from None
-        except KeyError as ke:
-            raise KeyError(f"`{key}` is not a valid config parameter.") from None
+        except KeyError:
+            raise KeyError(
+                f"`{key}` is not a valid config parameter.") from None
 
         dict.__setitem__(self, key, cval)
 
@@ -156,7 +157,6 @@ def _load_data_reference_syntax(config):
             new = BaseDRS(value)
 
         drs_config[key] = new
-        missing_keys.pop(key)
 
     drs_config_orig = drs_config.copy()
 

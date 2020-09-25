@@ -27,7 +27,7 @@ from pathlib import Path
 import fire
 from pkg_resources import iter_entry_points
 
-from esmvalcore import config, session
+from . import config, session
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -136,10 +136,10 @@ class ConfigUtils():
 
         blank_lines = ['\n']
 
-        config_file = Path(__file__).with_name('config-default.yml')
+        config_file = Path(__file__).parent / 'config' / 'config-default.yml'
         config_lines = open(config_file, 'r').readlines()
 
-        drs_file = Path(__file__).with_name(f'drs-{name}.yml')
+        drs_file = Path(__file__).parent / 'config' / f'drs-{name}.yml'
         drs_lines = open(drs_file, 'r').readlines()
         drs_lines = [line for line in drs_lines if not line.startswith('---')]
         config_lines = config_lines + blank_lines + drs_lines
@@ -175,7 +175,7 @@ class ConfigUtils():
         pre = '- '
 
         user_config_folder = session.config_dir
-        drs_config_folder = Path(__file__).parent
+        drs_config_folder = Path(__file__).parent / 'config'
 
         drs_configs = sorted(drs_config_folder.glob('drs-*.yml'))
         user_configs = sorted(user_config_folder.glob('*.yml'))
@@ -370,12 +370,11 @@ class ESMValTool():
         import os
         import shutil
 
-        from esmvalcore import config, session
-
+        from . import config, session
         from ._config import DIAGNOSTICS_PATH, configure_logging
 
         if config_file:
-            from esmvalcore._config_object import _load_user_config
+            from ._config_object import _load_user_config
             _load_user_config(config_file)
 
         recipe = Path(recipe)

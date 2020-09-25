@@ -13,7 +13,7 @@ from pathlib import Path
 
 import iris
 
-from esmvalcore import drs_config, session
+from . import drs_config, session
 
 logger = logging.getLogger(__name__)
 

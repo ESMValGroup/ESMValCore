@@ -7,8 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from esmvalcore import drs_config
-
+from . import drs_config
 from .cmor.table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
