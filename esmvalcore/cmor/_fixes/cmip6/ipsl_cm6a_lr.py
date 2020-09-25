@@ -5,6 +5,8 @@ from iris.coords import AuxCoord
 from iris.exceptions import ConstraintMismatchError
 
 from ..fix import Fix
+import cf_units
+import numpy as np
 
 
 class AllVars(Fix):
