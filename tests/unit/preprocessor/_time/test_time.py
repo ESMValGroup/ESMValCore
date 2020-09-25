@@ -922,6 +922,14 @@ def test_annual_sum(existing_coord):
     if existing_coord:
         iris.coord_categorisation.add_year(cube, 'time')
 
+    # no mask
+    result = annual_statistics(cube, 'sum')
+    expected = np.array([12., 12.])
+    assert_array_equal(result.data, expected)
+    expected_time = np.array([180., 540.])
+    assert_array_equal(result.coord('time').points, expected_time)
+
+    # add mask
     cube.data = np.ma.array(cube.data,
                             mask=np.zeros(cube.data.shape, dtype=bool))
     cube.data.mask[0] = True
