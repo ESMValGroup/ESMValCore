@@ -4,6 +4,7 @@ from .cnrm_cm6_1 import Cl as BaseCl
 from .cnrm_cm6_1 import Clcalipso as BaseClcalipso
 from .cnrm_cm6_1 import Cli as BaseCli
 from .cnrm_cm6_1 import Clw as BaseClw
+import cf_units
 
 
 Cl = BaseCl
