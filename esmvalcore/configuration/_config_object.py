@@ -13,18 +13,6 @@ class InvalidConfigParameter(SuppressedError):
     pass
 
 
-def flatten(d, parent_key='', sep='.'):
-    """Flatten nested dictionary."""
-    items = []
-    for key, val in d.items():
-        new_key = f"{parent_key}{sep}{key}" if parent_key else key
-        if isinstance(val, MutableMapping):
-            items.extend(flatten(val, new_key, sep=sep).items())
-        else:
-            items.append((new_key, val))
-    return dict(items)
-
-
 def read_config_file(config_file, folder_name=None):
     """Read config user file and store settings in a dictionary."""
     config_file = Path(config_file)
