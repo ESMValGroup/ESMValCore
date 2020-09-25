@@ -4,12 +4,10 @@ CMIP6:
   cmor_default_table_prefix: ''
   cmor_strict: true
   cmor_type: 'CMIP6'
-  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
 
 CMIP5:
   cmor_strict: true
   cmor_type: 'CMIP5'
-  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   institutes:
     'ACCESS1-0': ['CSIRO-BOM']
     'ACCESS1-3': ['CSIRO-BOM']
@@ -77,7 +75,6 @@ CMIP5:
 CMIP3:
   cmor_strict: true
   cmor_type: 'CMIP3'
-  output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
   institutes:
     'bccr_bcm2_0': ['BCCR']
     'cccma_cgcm3_1': ['CCCMA']
@@ -130,40 +127,33 @@ CMIP3:
 OBS:
   cmor_strict: false
   cmor_type: 'CMIP5'
-  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
 
 OBS6:
   cmor_default_table_prefix: ''
   cmor_strict: false
   cmor_type: 'CMIP6'
-  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
 
 native6:
   cmor_default_table_prefix: 'CMIP6_'
   cmor_strict: false
   cmor_type: 'CMIP6'
-  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
 
 obs4mips:
   cmor_default_table_prefix: 'obs4MIPs_'
   cmor_path: 'obs4mips'
   cmor_strict: false
   cmor_type: 'CMIP6'
-  output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
 
 ana4mips:
   # TODO: add cmor_path and table and set cmor_strict to true
   cmor_strict: false
   cmor_type: 'CMIP5'
-  output_file: '{project}_{mip}_{type}_{dataset}_{short_name}'
 
 EMAC:
   cmor_strict: true
   cmor_type: 'CMIP5'
-  output_file: '{dataset}_{ensemble}_{short_name}'
 
 CORDEX:
   cmor_path: 'cordex'
   cmor_strict: true
   cmor_type: 'CMIP5'
-  output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
