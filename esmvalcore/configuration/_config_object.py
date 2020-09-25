@@ -141,8 +141,6 @@ class BaseDRS(Config):
     @property
     def rootpath(self):
         rootpath = self['rootpath']
-        if not rootpath:
-            rootpath = config['default_inputpath']
         return rootpath
 
 
@@ -169,7 +167,8 @@ def _load_data_reference_syntax(config):
         project = key.split('_')[0]
 
         if project in drs_config_default:
-            new = drs_config_default[project].copy()
+            default = drs_config_default[project]
+            new = BaseDRS(default.copy())
             new.update(value)
         else:
             new = BaseDRS(value)

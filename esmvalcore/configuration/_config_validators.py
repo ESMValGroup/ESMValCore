@@ -232,13 +232,8 @@ _validators = {
 }
 
 _drs_validators = {
-    'cmor_strict': validate_bool,
-    'cmor_type': validate_string,
-    'rootpath': validate_path_or_none,
+    'rootpath': validate_pathlist,
     'input_dir': validate_string,
     'input_file': validate_string,
     'output_file': validate_string,
-    'institutes': validate_dict,
-    'cmor_default_table_prefix': validate_string,
-    'cmor_path': validate_path,
 }
