@@ -217,8 +217,18 @@ def get_input_filelist(project_data, variable):
     if project == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
 
+    # TODO: Make this a method on project_data
+    files = []
+    dirnames = []
+    filenames = []
+
     for drs in project_data._data:
-        (files, dirnames, filenames) = _find_input_files(drs, variable)
+        new_files, new_dirnames, new_filenames = _find_input_files(
+            drs, variable)
+
+        files.extend(new_files)
+        dirnames.extend(new_dirnames)
+        filenames.extend(new_filenames)
 
     # do time gating only for non-fx variables
     do_time_gating = variable['frequency'] != 'fx'
