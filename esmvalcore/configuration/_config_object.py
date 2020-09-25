@@ -116,6 +116,19 @@ class Config(MutableMapping, dict):
         subset = self.find_all(f'^{prefix}')
         return dict((key[len(prefix):], item) for key, item in subset.items())
 
+    @staticmethod
+    def load_from_file(filename):
+        """Reload user configuration from the given file."""
+        path = Path(filename).expanduser()
+        if not path.exists():
+            try_path = USER_CONFIG_DIR / filename
+            if try_path.exists():
+                path = try_path
+            else:
+                raise FileNotFoundError(f'No such file: `{filename}`')
+
+        _load_user_config(path)
+
 
 class BaseDRS(Config):
     validate = _drs_validators
@@ -185,11 +198,6 @@ def _load_user_config(filename, raise_exception=True):
     config.update(mapping)
 
     config_orig = Config(config.copy())
-
-
-def load(filename):
-    filename = Path(filename).expanduser()
-    _load_user_config(filename)
 
 
 USER_CONFIG_DIR = Path.home() / '.esmvaltool'
