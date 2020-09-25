@@ -16,61 +16,61 @@
 
 data_reference_syntax:
   CMIP6:
-    rootpath: null
+    rootpath: ~/data/CMIP6
     input_dir: ''
     input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
     output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
 
   CMIP5:
-    rootpath: null
+    rootpath: ~/data/CMIP5
     input_dir: ''
     input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
     output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
 
   CMIP3:
-    rootpath: null
+    rootpath: ~/data/CMIP3
     input_dir: ''
     input_file: '{short_name}_*.nc'
     output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
 
   OBS:
-    rootpath: null
+    rootpath: ~/data/OBS
     input_dir: 'Tier{tier}/{dataset}'
     input_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
 
   OBS6:
-    rootpath: null
+    rootpath: ~/data/OBS6
     input_dir: 'Tier{tier}/{dataset}'
     input_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
 
   native6:
-    rootpath: null
+    rootpath: ~/data/native6
     input_dir: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
     input_file: '*.nc'
     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
 
   obs4mips:
-    rootpath: null
+    rootpath: ~/data/obs4mips
     input_dir: 'Tier{tier}/{dataset}'
     input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
     output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
 
   ana4mips:
-    rootpath: null
+    rootpath: ~/data/ana4mips
     input_dir: 'Tier{tier}/{dataset}'
     input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
     output_file: '{project}_{mip}_{type}_{dataset}_{short_name}'
 
   EMAC:
-    rootpath: null
+    rootpath: ~/data/EMAC
     input_dir: '{dataset}'
     input_file: ''
     output_file: '{dataset}_{ensemble}_{short_name}'
 
   CORDEX:
-    rootpath: null
+    rootpath: ~/data/CORDEX
     input_dir: ''
     input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
     output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'

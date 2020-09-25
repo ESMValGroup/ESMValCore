@@ -2,10 +2,24 @@
 # Uncomment and edit the lines below to locate data on your machine
 ---
 
-# data_reference_syntax:
-#   CMIP6:
-#     rootpath:
-#       - ~/cmip6_inputpath1
-#       - ~/cmip6_inputpath2
-#   CMIP5:
-#     rootpath: ~/cmip5_inputpath
+data_reference_syntax:
+  CMIP6:
+    rootpath: ~/data/CMIP6
+  CMIP5:
+    rootpath: ~/data/CMIP5
+  CMIP3:
+    rootpath: ~/data/CMIP3
+  OBS:
+    rootpath: ~/data/OBS
+  OBS6:
+    rootpath: ~/data/OBS6
+  native6:
+    rootpath: ~/data/native6
+  obs4mips:
+    rootpath: ~/data/obs4mips
+  ana4mips:
+    rootpath: ~/data/ana4mips
+  EMAC:
+    rootpath: ~/data/EMAC
+  CORDEX:
+    rootpath: ~/data/CORDEX

@@ -37,6 +37,3 @@ config_developer_file: null
 # Get profiling information for diagnostics
 # Only available for Python diagnostics
 profile_diagnostic: false
-
-# Default data location (can be a list)
-default_inputpath: ~/default_inputpath
