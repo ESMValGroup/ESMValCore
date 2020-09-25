@@ -12,12 +12,9 @@ import os
 from functools import total_ordering
 from pathlib import Path
 
-from esmvalcore import drs_config
+import yaml
 
 logger = logging.getLogger(__name__)
-
-CMOR_TABLES = {}
-"""dict of str, obj: CMOR info objects."""
 
 
 def get_var_info(project, mip, short_name):
@@ -35,20 +32,23 @@ def get_var_info(project, mip, short_name):
     return CMOR_TABLES[project].get_variable(mip, short_name)
 
 
-def load_cmor_tables(drs):
+def load_cmor_tables(filename):
     """Read cmor tables required in the configuration.
 
     Parameters
     ----------
-    cfg_developer : dict of str
-        Parsed config-developer file
+    filename : path-like
+        Path with configuration for the cmor tables
     """
+    with open(filename, 'r') as f:
+        projects = yaml.safe_load(f)
+
     custom = CustomInfo()
     CMOR_TABLES.clear()
     CMOR_TABLES['custom'] = custom
     install_dir = Path(__file__).parent
 
-    for table, project in drs.items():
+    for table, project in projects.items():
         cmor_type = project['cmor_type']
         cmor_strict = project['cmor_strict']
 
@@ -841,4 +841,8 @@ class CustomInfo(CMIP5Info):
                     return
 
 
-load_cmor_tables(drs_config)
+# dict of str, obj: CMOR info objects."""
+CMOR_TABLES = {}
+PROJECTS = Path(__file__).parent / 'projects.yml'
+
+load_cmor_tables(PROJECTS)
