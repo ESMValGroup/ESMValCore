@@ -136,10 +136,12 @@ class ConfigUtils():
 
         blank_lines = ['\n']
 
-        config_file = Path(__file__).parent / 'config' / 'config-default.yml'
+        base_config_dir = Path(__file__).parent / 'configuration'
+
+        config_file = base_config_dir / 'config-default.yml'
         config_lines = open(config_file, 'r').readlines()
 
-        drs_file = Path(__file__).parent / 'config' / f'drs-{name}.yml'
+        drs_file = base_config_dir / f'drs-{name}.yml'
         drs_lines = open(drs_file, 'r').readlines()
         drs_lines = [line for line in drs_lines if not line.startswith('---')]
         config_lines = config_lines + blank_lines + drs_lines
