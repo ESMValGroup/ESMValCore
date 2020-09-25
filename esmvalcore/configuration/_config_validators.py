@@ -172,13 +172,40 @@ def validate_drs(value):
     return value
 
 
+class ESMValToolDeprecationWarning(UserWarning):
+    # Custom warning, because DeprecationWarning is hidden by default
+    pass
+
+
+def deprecate(func, variable, version=None):
+    import warnings
+
+    from .._version import __version__ as current_version
+
+    if not version:
+        version = 'a future version'
+
+    if current_version >= version:
+        warnings.warn(f"`{variable}` has been deprecated in {version}",
+                      ESMValToolDeprecationWarning)
+    else:
+        warnings.warn(f"`{variable}` will be deprecated in {version}.",
+                      ESMValToolDeprecationWarning,
+                      stacklevel=2)
+
+    return func
+
+
 _validators = {
+    # deprecate in 2.2.0
+    'write_plots': deprecate(validate_bool, 'write_plots', '2.2.0'),
+    'write_netcdf': deprecate(validate_bool, 'write_netcdf', '2.2.0'),
+    'output_file_type': deprecate(validate_string, 'output_file_type',
+                                  '2.2.0'),
+
     # From user config
-    'write_plots': validate_bool,
-    'write_netcdf': validate_bool,
     'log_level': validate_string,
     'exit_on_warning': validate_bool,
-    'output_file_type': validate_string,
     'output_dir': validate_path,
     'auxiliary_data_dir': validate_path,
     'compress_netcdf': validate_bool,
