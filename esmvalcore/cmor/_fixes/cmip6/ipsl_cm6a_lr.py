@@ -68,3 +68,59 @@ class Clcalipso(Fix):
         alt_40_coord.standard_name = 'altitude'
         alt_40_coord.var_name = 'alt40'
         return CubeList([cube])
+
+
+class msftyz(Fix):
+    """Fix msftyz."""
+
+    def fix_metadata(self, cubes):
+        """
+        Problems:
+         basin has incorrect long name, var.
+         Dimensions are also wrong.
+        Parameters
+        ----------
+        cube: iris.cube.CubeList
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        new_cubes = []
+        for i, cube in enumerate(cubes):
+            # Remove unity length longitude coordinate
+            # note that squeeze doesn't occur in place. cube is no longer
+            # the same cube as in the function argument `cubes`.
+            cube = iris.util.squeeze(cube)
+
+            # Change depth
+            depth = cube.coord('Vertical W levels')
+            depth.var_name = 'depth'
+            depth.standard_name = 'depth'
+            depth.long_name = 'depth'
+
+            # Rename latitude to grid_latitude
+            gridlat = cube.coord('latitude')
+            gridlat.var_name = 'rlat'
+            gridlat.standard_name='grid_latitude'
+            gridlat.units=cf_units.Unit('degrees')
+            gridlat.long_name='Grid Latitude'
+
+
+            values = np.array(['global_ocean', 'atlantic_arctic_ocean',
+                               'indian_pacific_ocean'], dtype='<U21')
+            basin_coord = iris.coords.AuxCoord(
+                values,
+                standard_name=u'region',
+                units=cf_units.Unit('no_unit'),
+                long_name=u'ocean basin',
+                var_name='basin')
+
+            # remove the wrong sub-basin mask DimCoord.
+            cube.remove_coord(cube.coord("Sub-basin mask (1=Global 2=Atlantic 3=Indo-Pacific)"))
+
+            # Replace broken coord with correct one.
+            cube.add_aux_coord(basin_coord, data_dims=1)
+
+            # squeeze makes a duplicate of the cube, so it is no longer in cubes.
+            cubes[i] = cube
+        return cubes
