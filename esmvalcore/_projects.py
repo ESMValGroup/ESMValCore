@@ -1,10 +1,12 @@
 import glob
+import itertools
 import logging
 # from ._data_finder import find_files
 # from ._data_finder import _replace_tags
 # from ._data_finder import _resolve_latestversion
 import os
 from pathlib import Path
+import itertools
 
 from . import _data_finder
 
@@ -95,16 +97,15 @@ class ProjectData(object):
         return CMOR_TABLES[self.name]
 
     def get_input_filelist(self, variable):
-        files = []
-        dirnames = []
-        filenames = []
+        filelist = []
+        for search_location in self.search_locations:
+            new_files = search_location.find_input_files(variable)
+            filelist.append(new_files)
 
-        for search_location in self._search_locations:
-            new_files, new_dirnames, new_filenames = search_location._find_input_files(
-                variable)
+        flatten = itertools.chain.from_iterable
 
-            files.extend(new_files)
-            dirnames.extend(new_dirnames)
-            filenames.extend(new_filenames)
+        files = list(flatten([lst['files'] for lst in filelist]))
+        dirnames = list(flatten([lst['input_dirs'] for lst in filelist]))
+        filenames = list(flatten([lst['filenames_glob'] for lst in filelist]))
 
         return files, dirnames, filenames
