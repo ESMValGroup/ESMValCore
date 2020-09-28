@@ -108,8 +108,8 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     return cube_slice
 
 
-def extract_years(cube, start_year, end_year):
-    """Extract years.
+def extract_timerange(cube, start_year, end_year):
+    """Extract time range given by recipe.
 
     Parameters
     ----------
@@ -118,7 +118,7 @@ def extract_years(cube, start_year, end_year):
     start_year : int
         Start year.
     end_year : int
-        End year
+        End year.
 
     Returns
     -------
