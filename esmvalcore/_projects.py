@@ -3,6 +3,7 @@ import itertools
 import logging
 import os
 from pathlib import Path
+from pprint import pformat
 
 from . import _data_finder
 
@@ -16,13 +17,15 @@ class SearchLocation(object):
         self.rootpath = Path(rootpath)
 
     def __repr__(self):
-        s = f'rootpath: {self.rootpath!r}'
-        s += f'\ninput_dir: {self.input_dir!r}'
-        s += f'\ninput_file: {self.input_file!r}'
-        return s
+        dct = self.to_dict()
+        return f'{self.__class__.__name__}({pformat(dct)})'
 
     def to_dict(self):
-        return self.__dict__
+        return {
+            'rootpath': str(self.rootpath),
+            'input_dir': self.input_dir,
+            'input_file': self.input_file,
+        }
 
     def _find_input_dirs(self, variable):
         """Return a the full paths to input directories."""
