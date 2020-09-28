@@ -1,12 +1,8 @@
 import glob
 import itertools
 import logging
-# from ._data_finder import find_files
-# from ._data_finder import _replace_tags
-# from ._data_finder import _resolve_latestversion
 import os
 from pathlib import Path
-import itertools
 
 from . import _data_finder
 
@@ -14,11 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 class SearchLocation(object):
-    def __init__(self, rootpath, input_dir, input_file):
+    def __init__(self, rootpath: str, input_dir: str, input_file: str):
         self.input_dir = input_dir
         self.input_file = input_file
-        self.rootpath = [Path(path) for path in rootpath]
-        # self.rootpath = Path(rootpath)
+        self.rootpath = Path(rootpath)
 
     def __repr__(self):
         s = f'rootpath: {self.rootpath!r}'
@@ -33,23 +28,21 @@ class SearchLocation(object):
         """Return a the full paths to input directories."""
         dirnames = []
 
-        base_paths = self.rootpath
+        base_path = self.rootpath
         path_template = self.input_dir
 
         for dirname_template in _data_finder._replace_tags(
                 path_template, variable):
-            for base_path in base_paths:
-                dirname = _data_finder._resolve_latestversion(
-                    dirname_template)  # why is this not part of _replace_tags?
-                dirname = os.path.join(base_path, dirname)
-                matches = glob.glob(dirname)
-                matches = [match for match in matches if os.path.isdir(match)]
-                if matches:
-                    for match in matches:
-                        logger.debug("Found %s", match)
-                        dirnames.append(match)
-                else:
-                    logger.debug("Skipping non-existent %s", dirname)
+            dirname = _data_finder._resolve_latestversion(dirname_template)
+            dirname = os.path.join(base_path, dirname)
+            matches = glob.glob(dirname)
+            matches = [match for match in matches if os.path.isdir(match)]
+            if matches:
+                for match in matches:
+                    logger.debug("Found %s", match)
+                    dirnames.append(match)
+            else:
+                logger.debug("Skipping non-existent %s", dirname)
 
         return dirnames
 
@@ -59,32 +52,39 @@ class SearchLocation(object):
         filenames_glob = _data_finder._replace_tags(path_template, variable)
         return filenames_glob
 
-    def _find_input_files(self, variable):
+    def find_input_files(self, variable):
         input_dirs = self._find_input_dirs(variable)
         filenames_glob = self._get_filenames_glob(variable)
         files = _data_finder.find_files(input_dirs, filenames_glob)
 
-        return (files, input_dirs, filenames_glob)
+        return {
+            'files': files,
+            'input_dirs': input_dirs,
+            'filenames_glob': filenames_glob
+        }
 
 
 class ProjectData(object):
     def __init__(self, name, output_file, drs_list):
         self.name = name
 
-        # TODO: Make SearchLocation have a singular rootpath
-        # locations = []
-        # for drs in drs_list:
-        #     input_dir = drs['input_dir']
-        #     input_file = drs['input_file']
-        #     for rootpath in drs['rootpath']:
-        #         locations.append(SearchLocation(input_file=input_file, input_dir=input_dir, rootpath=rootpath))
+        search_locations = []
+        for drs in drs_list:
+            input_dir = drs['input_dir']
+            input_file = drs['input_file']
+            for rootpath in drs['rootpath']:
+                search_locations.append(
+                    SearchLocation(input_file=input_file,
+                                   input_dir=input_dir,
+                                   rootpath=rootpath))
 
-        self._search_locations = [SearchLocation(**item) for item in drs_list]
+        self._search_locations = search_locations
         self._output_file = output_file
 
     def __repr__(self):
         return f'{self.__class__.__name__}({repr(self.name)})'
 
+    @property
     def search_locations(self):
         return self._search_locations
 
@@ -99,13 +99,13 @@ class ProjectData(object):
     def get_input_filelist(self, variable):
         filelist = []
         for search_location in self.search_locations:
-            new_files = search_location.find_input_files(variable)
-            filelist.append(new_files)
+            result = search_location.find_input_files(variable)
+            filelist.append(result)
 
         flatten = itertools.chain.from_iterable
 
-        files = list(flatten([lst['files'] for lst in filelist]))
-        dirnames = list(flatten([lst['input_dirs'] for lst in filelist]))
-        filenames = list(flatten([lst['filenames_glob'] for lst in filelist]))
+        files = list(flatten([dct['files'] for dct in filelist]))
+        dirnames = list(flatten([dct['input_dirs'] for dct in filelist]))
+        filenames = list(flatten([dct['filenames_glob'] for dct in filelist]))
 
         return files, dirnames, filenames

@@ -172,20 +172,7 @@ def get_input_filelist(project_data, variable):
     if project == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
 
-    # TODO: Make this a method on project_data
-    # files = []
-    # dirnames = []
-    # filenames = []
-
     files, dirnames, filenames = project_data.get_input_filelist(variable)
-
-    # for drs in project_data._data:
-    # new_files, new_dirnames, new_filenames = _find_input_files(
-    # drs, variable)
-
-    # files.extend(new_files)
-    # dirnames.extend(new_dirnames)
-    # filenames.extend(new_filenames)
 
     # do time gating only for non-fx variables
     do_time_gating = variable['frequency'] != 'fx'
@@ -199,8 +186,7 @@ def get_input_filelist(project_data, variable):
 def get_output_file(variable):
     """Return the full path to the output (preprocessed) file."""
     project = variable['project']
-    drs = esmvalcore.drs_config[project]
-    output_file = drs.output_file
+    output_file = esmvalcore.drs_config[project].output_file
 
     # Join different experiment names
     if isinstance(variable.get('exp'), (list, tuple)):
