@@ -2,6 +2,6 @@
 # Edit the lines below to locate data at CP4CDS
 ---
 
-data_reference_syntax:
-  CMIP5_CP4CDS:
-    input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{short_name}/latest/'
+CMIP5:
+  data:
+    - input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{short_name}/latest/'

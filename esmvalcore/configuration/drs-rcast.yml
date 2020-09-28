@@ -2,13 +2,16 @@
 # Edit the lines below to locate data at RCAST
 ---
 
-data_reference_syntax:
-  CMIP5_RCAST:
-    input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
-  OBS_RCAST:
-    input_dir: '{dataset}'
-    input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
-  obs4mips_RCAST:
-    input_dir: ''
-  ana4mips_RCAST:
-    input_dir: ''
+CMIP5:
+  data:
+    - input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
+OBS:
+  data:
+    - input_dir: '{dataset}'
+      input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
+obs4mips:
+  data:
+    - input_dir: ''
+ana4mips:
+  data:
+    - input_dir: ''

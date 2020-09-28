@@ -2,23 +2,30 @@
 # Edit the lines below to locate data on Mistral at DKRZ
 ---
 
-data_reference_syntax:
-  CMIP6_DKRZ:
-    rootpath: /mnt/lustre02/work/ik1017/CMIP6/data/CMIP6
-    input_dir: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
-  CMIP5_DKRZ:
-    rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP5_DKRZ
-    input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
-  CMIP3_DKRZ:
-    rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP3
-    input_dir: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
-  CORDEX_DKRZ:
-    rootpath: /mnt/lustre02/work/ik1017/C3SCORDEX/data/c3s-cordex/output
-  OBS_DKRZ:
-    rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-  OBS6_DKRZ:
-    rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-  obs4mips_DKRZ:
-    rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-  ana4mips_DKRZ:
-    rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
+CMIP6:
+  data:
+    - rootpath: /mnt/lustre02/work/ik1017/CMIP6/data/CMIP6
+      input_dir: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+CMIP5:
+  data:
+    - rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP5
+      input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
+CMIP3:
+  data:
+    - rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP3
+      input_dir: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
+CORDEX:
+  data:
+    - rootpath: /mnt/lustre02/work/ik1017/C3SCORDEX/data/c3s-cordex/output
+OBS:
+  data:
+    - rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
+OBS6:
+  data:
+    - rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
+obs4mips:
+  data:
+    - rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
+ana4mips:
+  data:
+    - rootpath: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS

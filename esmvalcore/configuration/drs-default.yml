@@ -6,71 +6,81 @@
 # Each dictionary is structured as follows
 #
 # PROJECT:
-#   rootpath:
-#   input_dir:
-#   input_file:
 #   output_file:
+#   data:
+#     - rootpath:
+#       input_dir:
+#       input_file:
 #
 ###############################################################################
 ---
 
-data_reference_syntax:
-  CMIP6:
-    rootpath: ~/data/CMIP6
-    input_dir: ''
-    input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
-    output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+CMIP6:
+  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+  data:
+    - rootpath: ~/data/CMIP6
+      input_dir: ''
+      input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
 
-  CMIP5:
-    rootpath: ~/data/CMIP5
-    input_dir: ''
-    input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
-    output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+CMIP5:
+  output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+  data:
+    - rootpath: ~/data/CMIP5
+      input_dir: ''
+      input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
 
-  CMIP3:
-    rootpath: ~/data/CMIP3
-    input_dir: ''
-    input_file: '{short_name}_*.nc'
-    output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+CMIP3:
+  output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  data:
+    - rootpath: ~/data/CMIP3
+      input_dir: ''
+      input_file: '{short_name}_*.nc'
 
-  OBS:
-    rootpath: ~/data/OBS
-    input_dir: 'Tier{tier}/{dataset}'
-    input_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
-    output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+OBS:
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+  data:
+    - rootpath: ~/data/OBS
+      input_dir: 'Tier{tier}/{dataset}'
+      input_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
 
-  OBS6:
-    rootpath: ~/data/OBS6
-    input_dir: 'Tier{tier}/{dataset}'
-    input_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
-    output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+OBS6:
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+  data:
+    - rootpath: ~/data/OBS6
+      input_dir: 'Tier{tier}/{dataset}'
+      input_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
 
-  native6:
-    rootpath: ~/data/native6
-    input_dir: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-    input_file: '*.nc'
-    output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+native6:
+  output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+  data:
+    - rootpath: ~/data/native6
+      input_dir: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+      input_file: '*.nc'
 
-  obs4mips:
-    rootpath: ~/data/obs4mips
-    input_dir: 'Tier{tier}/{dataset}'
-    input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
-    output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
+obs4mips:
+  output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
+  data:
+    - rootpath: ~/data/obs4mips
+      input_dir: 'Tier{tier}/{dataset}'
+      input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
 
-  ana4mips:
-    rootpath: ~/data/ana4mips
-    input_dir: 'Tier{tier}/{dataset}'
-    input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
-    output_file: '{project}_{mip}_{type}_{dataset}_{short_name}'
+ana4mips:
+  output_file: '{project}_{mip}_{type}_{dataset}_{short_name}'
+  data:
+    - rootpath: ~/data/ana4mips
+      input_dir: 'Tier{tier}/{dataset}'
+      input_file: '{short_name}_{mip}_{type}_{dataset}_*.nc'
 
-  EMAC:
-    rootpath: ~/data/EMAC
-    input_dir: '{dataset}'
-    input_file: ''
-    output_file: '{dataset}_{ensemble}_{short_name}'
+EMAC:
+  output_file: '{dataset}_{ensemble}_{short_name}'
+  data:
+    - rootpath: ~/data/EMAC
+      input_dir: '{dataset}'
+      input_file: ''
 
-  CORDEX:
-    rootpath: ~/data/CORDEX
-    input_dir: ''
-    input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
-    output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
+CORDEX:
+  output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
+  data:
+    - rootpath: ~/data/CORDEX
+      input_dir: ''
+      input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'

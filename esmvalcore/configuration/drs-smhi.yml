@@ -2,6 +2,6 @@
 # Edit the lines below to locate data at SMHI
 ---
 
-data_reference_syntax:
-  CMIP5_SMHI:
-    input_dir: '{dataset}/{ensemble}/{exp}/{frequency}'
+CMIP5:
+  data:
+    - input_dir: '{dataset}/{ensemble}/{exp}/{frequency}'

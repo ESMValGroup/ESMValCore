@@ -2,14 +2,17 @@
 # Edit the lines below to locate data at ETHZ
 ---
 
-data_reference_syntax:
-  CMIP6_ETHZ:
-    rootpath: /net/atmos/data/cmip6
-    input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
-  CMIP5_ETHZ:
-    rootpath: /net/atmos/data/cmip5
-    input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
-  CMIP3_ETHZ:
-    rootpath: /net/atmos/data/cmip3
-  OBS_ETHZ:
-    rootpath: /net/exo/landclim/PROJECTS/C3S/datadir/obsdir/
+CMIP6:
+  data:
+    - rootpath: /net/atmos/data/cmip6
+      input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
+CMIP5:
+  data:
+    - rootpath: /net/atmos/data/cmip5
+      input_dir: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
+CMIP3:
+  data:
+    - rootpath: /net/atmos/data/cmip3
+OBS:
+  data:
+    - rootpath: /net/exo/landclim/PROJECTS/C3S/datadir/obsdir/
