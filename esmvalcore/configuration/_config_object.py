@@ -22,27 +22,6 @@ def read_config_file(config_file, folder_name=None):
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
-    # short-hand for including site-specific variables
-    site = cfg.pop('site', None)
-    if site:
-        cfg['include'] = Path(__file__).with_name(f'config-{site}.yml')
-
-    # include nested yaml files here to be ahead of dictionary flattening
-    # this is to ensure variables are updated at root level, specifically
-    # `rootpath`/`drs`
-    include = cfg.pop('include', None)
-    if include:
-        for try_path in (
-                Path(include).expanduser().absolute(),
-                Path(__file__).parent / include,
-        ):
-            if try_path.exists():
-                include = try_path
-                break
-
-        include_cfg = read_config_file(include)
-        cfg.update(include_cfg)
-
     return cfg
 
 
