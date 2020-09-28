@@ -1,6 +1,5 @@
-from ._config_object import config, drs_config
+from ._config_object import config
 
 __all__ = [
     'config',
-    'drs_config',
 ]

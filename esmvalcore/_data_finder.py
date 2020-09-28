@@ -12,7 +12,8 @@ from pathlib import Path
 
 import iris
 
-import esmvalcore
+from . import _projects
+from ._session import session
 
 logger = logging.getLogger(__name__)
 
@@ -186,7 +187,7 @@ def get_input_filelist(project_data, variable):
 def get_output_file(variable):
     """Return the full path to the output (preprocessed) file."""
     project = variable['project']
-    output_file = esmvalcore.drs_config[project].output_file
+    output_file = _projects.projects[project].output_file
 
     # Join different experiment names
     if isinstance(variable.get('exp'), (list, tuple)):
@@ -199,8 +200,8 @@ def get_output_file(variable):
         filename += '_{start_year}-{end_year}'.format(**variable)
     filename += '.nc'
 
-    outfile = esmvalcore.session.preproc_dir / variable[
-        'diagnostic'] / variable['variable_group'] / filename
+    outfile = session.preproc_dir / variable['diagnostic'] / variable[
+        'variable_group'] / filename
 
     return str(outfile)  # TODO: pathlib.Path
 
@@ -210,7 +211,7 @@ def get_statistic_output_file(variable):
     template = '{dataset}_{mip}_{short_name}_{start_year}-{end_year}.nc'
     filename = template.format(**variable)
 
-    outfile = esmvalcore.session.preproc_dir / variable[
-        'diagnostic'] / variable['variable_group'] / filename
+    outfile = session.preproc_dir / variable['diagnostic'] / variable[
+        'variable_group'] / filename
 
     return str(outfile)  # pathlib.Path

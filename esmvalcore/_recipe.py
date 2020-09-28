@@ -12,7 +12,7 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from . import config, drs_config, session
+from . import config, projects, session
 from ._config import TAGS, get_activity, get_institutes, replace_tags
 from ._data_finder import (get_input_filelist, get_output_file,
                            get_statistic_output_file)
@@ -382,7 +382,7 @@ def _get_fx_file(variable, fx_variable, config_user):
     var = dict(variable)
     var_project = variable['project']
     try:
-        drs_config['var_project']
+        config[var_project]
     except KeyError:
         raise RecipeError(
             f"Requested fx variable '{fx_varname}' with parent variable"
@@ -528,7 +528,7 @@ def _get_input_files(variable, config_user):
 
     synda_download = config_user['synda_download']
     project = variable['project']
-    project_data = config[project]
+    project_data = projects[project]
 
     (input_files, dirnames,
      filenames) = get_input_filelist(variable=variable,

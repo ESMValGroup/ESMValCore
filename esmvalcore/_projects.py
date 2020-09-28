@@ -6,6 +6,7 @@ from pathlib import Path
 from pprint import pformat
 
 from . import _data_finder
+from .configuration._config_object import BaseDRS, config
 
 logger = logging.getLogger(__name__)
 
@@ -112,3 +113,21 @@ class ProjectData(object):
         filenames = list(flatten([dct['filenames_glob'] for dct in filelist]))
 
         return files, dirnames, filenames
+
+
+def init_projects():
+    projects.clear()
+    for key in ('CMIP6', 'CMIP5', 'CMIP3', 'OBS', 'OBS6', 'native6',
+                'obs4mips', 'ana4mips', 'EMAC', 'CORDEX'):
+
+        output_file = config[key]['output_file']
+
+        drs_list = [BaseDRS(item) for item in config[key]['data']]
+
+        projects[key] = ProjectData(key,
+                                    output_file=output_file,
+                                    drs_list=drs_list)
+
+
+projects = {}
+init_projects()
