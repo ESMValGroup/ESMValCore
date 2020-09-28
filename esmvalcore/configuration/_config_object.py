@@ -126,11 +126,6 @@ class Config(MutableMapping, dict):
 class BaseDRS(Config):
     validate = _drs_validators
 
-    @property
-    def rootpath(self):
-        rootpath = self['rootpath']
-        return rootpath
-
 
 def _load_default_data_reference_syntax(filename):
     drs = yaml.safe_load(open(filename, 'r'))
@@ -209,7 +204,7 @@ _load_user_config(USER_CONFIG, raise_exception=False)
 
 DEFAULT_DRS = Path(__file__).with_name('drs-default.yml')
 
-from .._projects import ProjectData
+from .. import _projects
 
 for key in ('CMIP6', 'CMIP5', 'CMIP3', 'OBS', 'OBS6', 'native6', 'obs4mips',
             'ana4mips', 'EMAC', 'CORDEX'):
@@ -217,9 +212,11 @@ for key in ('CMIP6', 'CMIP5', 'CMIP3', 'OBS', 'OBS6', 'native6', 'obs4mips',
     output_file = config[key]['output_file']
 
     # TODO: flatten rootpath list -> make 1 BaseDRS for every rootpath
-    data = [BaseDRS(item) for item in config[key]['data']]
+    drs_list = [BaseDRS(item) for item in config[key]['data']]
 
-    config[key] = ProjectData(key, output_file=output_file, data=data)
+    config[key] = _projects.ProjectData(key,
+                                        output_file=output_file,
+                                        drs_list=drs_list)
 
 drs_config = config
 

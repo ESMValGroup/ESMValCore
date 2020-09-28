@@ -5,7 +5,6 @@
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
 import fnmatch
-import glob
 import logging
 import os
 import re
@@ -13,7 +12,7 @@ from pathlib import Path
 
 import iris
 
-from . import drs_config, session
+import esmvalcore
 
 logger = logging.getLogger(__name__)
 
@@ -162,50 +161,6 @@ def _resolve_latestversion(dirname_template):
     return dirname_template
 
 
-def _find_input_dirs(drs, variable):
-    """Return a the full paths to input directories."""
-    dirnames = []
-
-    base_paths = drs['rootpath']
-    path_template = drs['input_dir']
-
-    for dirname_template in _replace_tags(path_template, variable):
-        for base_path in base_paths:
-            dirname = _resolve_latestversion(
-                dirname_template)  # why is this not part of _replace_tags?
-            dirname = os.path.join(base_path, dirname)
-            matches = glob.glob(dirname)
-            matches = [match for match in matches if os.path.isdir(match)]
-            if matches:
-                for match in matches:
-                    logger.debug("Found %s", match)
-                    dirnames.append(match)
-            else:
-                logger.debug("Skipping non-existent %s", dirname)
-
-    return dirnames
-
-
-def _get_filenames_glob(drs, variable):
-    """Return patterns that can be used to look for input files."""
-    path_template = drs['input_file']
-    filenames_glob = _replace_tags(path_template, variable)
-    return filenames_glob
-
-
-def _find_input_files(drs, variable):
-    input_dirs = _find_input_dirs(drs, variable)
-    filenames_glob = _get_filenames_glob(drs, variable)
-
-    # TODO:
-    # input_dirs = drs._find_input_dirs(variable)
-    # filenames_glob = drs._get_filenames_glob(variable)
-
-    files = find_files(input_dirs, filenames_glob)
-
-    return (files, input_dirs, filenames_glob)
-
-
 def get_input_filelist(project_data, variable):
     """Return the full path to input files."""
     # TODO: what if drs is a list?
@@ -218,17 +173,19 @@ def get_input_filelist(project_data, variable):
         variable['ensemble'] = 'r0i0p0'
 
     # TODO: Make this a method on project_data
-    files = []
-    dirnames = []
-    filenames = []
+    # files = []
+    # dirnames = []
+    # filenames = []
 
-    for drs in project_data._data:
-        new_files, new_dirnames, new_filenames = _find_input_files(
-            drs, variable)
+    files, dirnames, filenames = project_data.get_input_filelist(variable)
 
-        files.extend(new_files)
-        dirnames.extend(new_dirnames)
-        filenames.extend(new_filenames)
+    # for drs in project_data._data:
+    # new_files, new_dirnames, new_filenames = _find_input_files(
+    # drs, variable)
+
+    # files.extend(new_files)
+    # dirnames.extend(new_dirnames)
+    # filenames.extend(new_filenames)
 
     # do time gating only for non-fx variables
     do_time_gating = variable['frequency'] != 'fx'
@@ -242,7 +199,7 @@ def get_input_filelist(project_data, variable):
 def get_output_file(variable):
     """Return the full path to the output (preprocessed) file."""
     project = variable['project']
-    drs = drs_config[project]
+    drs = esmvalcore.drs_config[project]
     output_file = drs.output_file
 
     # Join different experiment names
@@ -256,8 +213,8 @@ def get_output_file(variable):
         filename += '_{start_year}-{end_year}'.format(**variable)
     filename += '.nc'
 
-    outfile = session.preproc_dir / variable['diagnostic'] / variable[
-        'variable_group'] / filename
+    outfile = esmvalcore.session.preproc_dir / variable[
+        'diagnostic'] / variable['variable_group'] / filename
 
     return str(outfile)  # TODO: pathlib.Path
 
@@ -267,7 +224,7 @@ def get_statistic_output_file(variable):
     template = '{dataset}_{mip}_{short_name}_{start_year}-{end_year}.nc'
     filename = template.format(**variable)
 
-    outfile = session.preproc_dir / variable['diagnostic'] / variable[
-        'variable_group'] / filename
+    outfile = esmvalcore.session.preproc_dir / variable[
+        'diagnostic'] / variable['variable_group'] / filename
 
     return str(outfile)  # pathlib.Path
