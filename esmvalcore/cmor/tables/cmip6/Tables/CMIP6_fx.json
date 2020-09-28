@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table fx", 
         "realm": "land", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -129,7 +129,7 @@
             "units": "%", 
             "cell_methods": "area: mean", 
             "cell_measures": "area: areacella", 
-            "long_name": "Percentage of the grid  cell occupied by land (including lakes)", 
+            "long_name": "Percentage of the Grid Cell Occupied by Land (Including Lakes)", 
             "comment": "Percentage of horizontal area occupied by land.", 
             "dimensions": "longitude latitude", 
             "out_name": "sftlf", 

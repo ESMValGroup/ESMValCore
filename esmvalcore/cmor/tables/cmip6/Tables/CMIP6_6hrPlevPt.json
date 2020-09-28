@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table 6hrPlevPt", 
         "realm": "atmos", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -165,7 +165,7 @@
             "units": "W m-2", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
-            "long_name": "Longwave flux  due to volcanic aerosols at the surface", 
+            "long_name": "Longwave Flux Due to Volcanic Aerosols at the Surface", 
             "comment": "downwelling longwave  flux  due to volcanic aerosols at the surface to be diagnosed through double radiation call", 
             "dimensions": "longitude latitude time1", 
             "out_name": "lwsffluxaero", 
@@ -251,7 +251,7 @@
         "rainmxrat27": {
             "frequency": "6hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "mass_fraction_of_rain_in_air", 
+            "standard_name": "mass_fraction_of_liquid_precipitation_in_air", 
             "units": "1", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
