@@ -96,16 +96,13 @@ with explanations in a commented line above each option:
   # the amount of memory available in your system.
   max_parallel_tasks: null
 
-  # Use a profiling tool for the diagnostic run [false]/true; profilers tell you where
-  # the stress points of the code are (high CPU usage, high memory intake etc);
-  # for this purpose we use vprof, see below for notes
-  profile_diagnostic: true
-
   # Path to custom config-developer file, to customise project configurations.
   # See config-developer.yml for an example. Set to None to use the default
   config_developer_file: null
 
-  # Get profiling information for diagnostics
+  # Use a profiling tool for the diagnostic run [false]/true
+  # A profiler tells you which functions in your code take most time to run.
+  # For this purpose we use vprof, see below for notes
   # Only available for Python diagnostics
   profile_diagnostic: false
 
@@ -152,12 +149,21 @@ downloaded at runtime.
    This setting is not for model or observational datasets, rather it is for
    data files used in plotting such as coastline descriptions and so on.
 
-The ``profile_diagnostic`` setting triggers profiling of Python diagnostics;
-this will give you information on the resources used while running the diagnostic
-(including execution time of different code blocks, memory, CPU usage); for this
-purpose we use `vprof <https://github.com/nvdv/vprof>`_. The profiler outputs
-a json file that can be used to extract the profiling information via e.g.
-``vprof --input-file esmvaltool_output/recipe_output/run/diagnostic/script/profile.json``.
+The ``profile_diagnostic`` setting triggers profiling of Python diagnostics,
+this will tell you which functions in the diagnostic took most time to run.
+For this purpose we use `vprof <https://github.com/nvdv/vprof>`_.
+For each diagnostic script in the recipe, the profiler writes a ``.json`` file
+that can be used to plot a
+`flame graph <https://queue.acm.org/detail.cfm?id=2927301>`__
+of the profiling information by running
+
+.. code-block:: bash
+
+  vprof --input-file esmvaltool_output/recipe_output/run/diagnostic/script/profile.json
+
+Note that it is also possible to use vprof to understand other resources used
+while running the diagnostic, including execution time of different code blocks
+and memory usage.
 
 A detailed explanation of the data finding-related sections of the
 ``config-user.yml`` (``rootpath`` and ``drs``) is presented in the
@@ -198,10 +204,10 @@ Users can get a copy of this file with default values by running
 
 .. code-block:: bash
 
-  ``esmvaltool config get-config-developer --path=${TARGET_FOLDER}``.
+  esmvaltool config get-config-developer --path=${TARGET_FOLDER}
 
 If the option ``--path`` is omitted, the file will be created in
-`${HOME}/.esmvaltool`
+```${HOME}/.esmvaltool``.
 
 .. note::
 
@@ -293,7 +299,7 @@ following documentation section:
 
 .. code-block:: yaml
 
-  documentation
+  documentation:
     authors:
       - demo_le
 
