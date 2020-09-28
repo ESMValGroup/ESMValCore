@@ -306,13 +306,9 @@ def _get_default_settings(variable, config_user, derive=False):
     # Configure time extraction
     if 'start_year' in variable and 'end_year' in variable \
             and variable['frequency'] != 'fx':
-        settings['extract_time'] = {
+        settings['extract_years'] = {
             'start_year': variable['start_year'],
-            'end_year': variable['end_year'] + 1,
-            'start_month': 1,
-            'end_month': 1,
-            'start_day': 1,
-            'end_day': 1,
+            'end_year': variable['end_year'],
         }
 
     if derive:

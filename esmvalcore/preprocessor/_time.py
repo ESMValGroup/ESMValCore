@@ -108,6 +108,32 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     return cube_slice
 
 
+def extract_years(cube, start_year, end_year):
+    """Extract years.
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        Input cube.
+    start_year : int
+        Start year.
+    end_year : int
+        End year
+
+    Returns
+    -------
+    iris.cube.Cube
+        Sliced cube.
+
+    Raises
+    ------
+    ValueError
+        Time ranges are outside the cube's time limits.
+
+    """
+    return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
+
+
 def extract_season(cube, season):
     """
     Slice cube to get only the data belonging to a specific season.

@@ -26,8 +26,9 @@ from ._other import clip
 from ._regrid import extract_levels, extract_point, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
                     daily_statistics, decadal_statistics, extract_month,
-                    extract_season, extract_time, monthly_statistics,
-                    regrid_time, seasonal_statistics, timeseries_filter)
+                    extract_season, extract_time, extract_years,
+                    monthly_statistics, regrid_time, seasonal_statistics,
+                    timeseries_filter)
 from ._units import convert_units
 from ._volume import (depth_integration, extract_trajectory, extract_transect,
                       extract_volume, volume_statistics)
@@ -48,13 +49,15 @@ __all__ = [
     # Concatenate all cubes in one
     'concatenate',
     'cmor_check_metadata',
-    # Time extraction
-    'extract_time',
-    'extract_season',
-    'extract_month',
+    # Extract years given by recipe (start_year and end_year)
+    'extract_years',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
+    # User-defined time extraction
+    'extract_time',
+    'extract_season',
+    'extract_month',
     # Level extraction
     'extract_levels',
     # Weighting
@@ -114,6 +117,7 @@ __all__ = [
 ]
 
 TIME_PREPROCESSORS = [
+    'extract_years',
     'extract_time',
     'extract_season',
     'extract_month',
@@ -204,7 +208,7 @@ def _check_multi_model_settings(products):
 
 
 def _get_multi_model_settings(products, step):
-    """Select settings for multi model step"""
+    """Select settings for multi model step."""
     _check_multi_model_settings(products)
     settings = {}
     exclude = set()
@@ -228,7 +232,7 @@ def _run_preproc_function(function, items, kwargs):
 
 
 def preprocess(items, step, **settings):
-    """Run preprocessor"""
+    """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
     itype = _get_itype(step)
@@ -373,7 +377,7 @@ def _apply_multimodel(products, step, debug):
 
 
 class PreprocessingTask(BaseTask):
-    """Task for running the preprocessor"""
+    """Task for running the preprocessor."""
 
     def __init__(
             self,
@@ -384,7 +388,7 @@ class PreprocessingTask(BaseTask):
             debug=None,
             write_ncl_interface=False,
     ):
-        """Initialize"""
+        """Initialize."""
         _check_multi_model_settings(products)
         super().__init__(ancestors=ancestors, name=name, products=products)
         self.order = list(order)
