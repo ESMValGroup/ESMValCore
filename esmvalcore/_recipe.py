@@ -524,8 +524,6 @@ def _get_input_files(variable, config_user):
     # project
     # synda_download = False
 
-    from . import config
-
     synda_download = config_user['synda_download']
     project = variable['project']
     project_data = projects[project]
@@ -637,7 +635,9 @@ def _update_statistic_settings(products, order):
         attributes = _get_statistic_attributes(products)
         attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
             statistic.title().replace('.', '-'))
-        attributes['filename'] = get_statistic_output_file(attributes)
+        filename = str(session.preproc_dir /
+                       get_statistic_output_file(attributes))
+        attributes['filename'] = filename
         common_settings = _get_remaining_common_settings(step, order, products)
         statistic_product = PreprocessorFile(attributes, common_settings)
         for product in products:
@@ -701,7 +701,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     """
     products = set()
     for variable in variables:
-        variable['filename'] = get_output_file(variable)
+        filename = str(session.preproc_dir / get_output_file(variable))
+        variable['filename'] = filename
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
