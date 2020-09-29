@@ -106,12 +106,16 @@ class BaseDRS(Config):
     validate = _drs_validators
 
 
-def _load_default_config(filename):
+def _load_default_config(filename, drs_filename=None):
     mapping = read_config_file(filename)
 
     global config_default
 
     config_default.update(mapping)
+
+    if drs_filename:
+        drs_mapping = read_config_file(drs_filename)
+        config_default.update(drs_mapping)
 
 
 def _load_user_config(filename, raise_exception=True):
@@ -134,6 +138,7 @@ def _load_user_config(filename, raise_exception=True):
 
 USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 DEFAULT_CONFIG = Path(__file__).with_name('config-default.yml')
+DEFAULT_DRS = Path(__file__).with_name('drs-default.yml')
 USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders
@@ -142,5 +147,5 @@ config = Config()
 config_orig = Config()
 
 # update config objects
-_load_default_config(DEFAULT_CONFIG)
+_load_default_config(DEFAULT_CONFIG, DEFAULT_DRS)
 _load_user_config(USER_CONFIG, raise_exception=False)

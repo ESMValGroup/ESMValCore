@@ -115,7 +115,7 @@ class ConfigUtils():
     files.
     """
     @staticmethod
-    def get(name='basic', overwrite=False, path=None):
+    def get(name='default', overwrite=False, path=None):
         """Initialize default config-user.yml to a given path.
 
         Copy default config-user.yml file to a given path or, if a path is
@@ -132,41 +132,9 @@ class ConfigUtils():
             .esmvaltool in the user's home.
         """
         from ._config import configure_logging
+        from .configuration._config_generator import generate_config
         configure_logging(console_log_level='info')
-
-        blank_lines = ['\n']
-
-        base_config_dir = Path(__file__).parent / 'configuration'
-
-        config_file = base_config_dir / 'config-default.yml'
-        config_lines = open(config_file, 'r').readlines()
-
-        drs_file = base_config_dir / f'drs-{name}.yml'
-        drs_lines = open(drs_file, 'r').readlines()
-        drs_lines = [line for line in drs_lines if not line.startswith('---')]
-        config_lines = config_lines + blank_lines + drs_lines
-
-        filename = f'config-{name}.yml'
-
-        if not path:
-            path = session.config_dir / 'config-user.yml'
-            if path.exists():
-                path = session.config_dir / filename
-        else:
-            path = Path(path)
-
-        if path.exists():
-            if overwrite:
-                logger.info('Overwriting file %s.', path)
-            else:
-                logger.info('Get config aborted. File %s already exists.',
-                            path)
-                return
-
-        with open(path, 'w') as f:
-            f.writelines(config_lines)
-
-        logger.info('Writing config file to %s.', path)
+        generate_config(name=name, overwrite=overwrite, path=path)
 
     @staticmethod
     def list():
@@ -174,35 +142,8 @@ class ConfigUtils():
 
         Show all user configs and available configs, grouped by folder.
         """
-        pre = '- '
-
-        user_config_folder = session.config_dir
-        drs_config_folder = Path(__file__).parent / 'config'
-
-        drs_configs = sorted(drs_config_folder.glob('drs-*.yml'))
-        user_configs = sorted(user_config_folder.glob('*.yml'))
-
-        print('# Available site-specific configs')
-        print('# Use `esmvaltool config get CONFIG_NAME` to copy them')
-        for path in drs_configs:
-            name = path.stem.split('-', 1)[1]
-            if name == 'user':
-                print(f'{pre}{name} [default]')
-            else:
-                print(f'{pre}{name}')
-        print()
-
-        if not user_configs:
-            return
-
-        print(f'# Available configs in {user_config_folder}')
-        print('# Select config with '
-              '`esmvaltool run <recipe> --config_file=CONFIG_FILE`')
-        for path in user_configs:
-            if path.stem == 'config-user':
-                print(f'{pre}{path.name} [default]')
-            else:
-                print(f'{pre}{path.name}')
+        from .configuration._config_generator import list_available_configs
+        list_available_configs()
 
 
 class Recipes():
