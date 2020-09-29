@@ -149,10 +149,6 @@ validate_int_positive_or_none = _make_type_validator(validate_int_positive,
 validate_dict = _make_type_validator(dict)
 
 
-def validate_any(value):
-    return value
-
-
 def validate_positive(value):
     """Reject negative values."""
     if value is not None and value < 1:
@@ -185,7 +181,21 @@ class ESMValToolDeprecationWarning(UserWarning):
     pass
 
 
-def deprecate(func, variable, version=None):
+def deprecate(func, variable, version: str = None):
+    """Wrapper function to mark variables to be deprecated.
+
+    This will give a warning if the function will be/has been deprecated.
+
+    Parameters
+    ----------
+    func:
+        Validator function to wrap
+    variable: str
+        Name of the variable to deprecate
+    version: str
+        Version to deprecate the variable in, should be something
+        like '2.2.3'
+    """
     import warnings
 
     from .._version import __version__ as current_version
@@ -205,6 +215,7 @@ def deprecate(func, variable, version=None):
 
 
 class BaseDRS(ValidatedConfig):
+    """DRS settings as defined in the config file."""
     validate = {
         'rootpath': validate_pathlist,
         'input_dir': validate_string,
@@ -213,16 +224,21 @@ class BaseDRS(ValidatedConfig):
 
 
 def validate_drs(mapping):
+    """Validate data reference syntax mapping."""
     drs = BaseDRS()
     drs.update(mapping)
     return drs
 
 
 validate_drslist = _listify_validator(validate_drs,
-                                      doc='return a list of drs mappings')
+                                      doc='Return a list of drs mappings')
 
 
 def validate_project(value, name):
+    """Validate block with project settings (i.e. CMIP5) from the config file.
+
+    Returns an instance of `ProjectData`.
+    """
     from .._projects import ProjectData
 
     if isinstance(value, ProjectData):
