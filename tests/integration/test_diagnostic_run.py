@@ -16,11 +16,16 @@ def write_config_user_file(dirname):
     cfg = {
         'output_dir': str(dirname / 'output_dir'),
         'auxiliary_data_dir': str(dirname / 'extra_data'),
-        'rootpath': {
-            'default': str(dirname / 'input_dir'),
-        },
-        'drs': {
-            'CMIP5': 'BADC',
+        'CMIP5': {
+            'data': [{
+                'input_dir':
+                '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}',
+                'input_file':
+                '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc',
+                'rootpath': '~/data/CMIP5',
+            }],
+            'output_file':
+            '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}',
         },
         'log_level': 'debug',
     }
