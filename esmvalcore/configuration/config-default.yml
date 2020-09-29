@@ -37,3 +37,5 @@ config_developer_file: null
 # Get profiling information for diagnostics
 # Only available for Python diagnostics
 profile_diagnostic: false
+# Maximum number of years to use.
+max_years: null
