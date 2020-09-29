@@ -1,16 +1,11 @@
 from pathlib import Path
 
-from esmvalcore._config import read_config_developer_file
 from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.cmor.table import __file__ as root
-from esmvalcore.cmor.table import read_cmor_tables
 
 
 def test_read_cmor_tables():
     """Test that the function `read_cmor_tables` loads the tables correctly."""
-    # Read the tables
-    read_cmor_tables(read_config_developer_file())
-
     table_path = Path(root).parent / 'tables'
 
     for project in 'CMIP5', 'CMIP6':

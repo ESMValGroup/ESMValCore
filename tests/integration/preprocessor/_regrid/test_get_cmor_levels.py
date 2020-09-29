@@ -7,8 +7,6 @@ function.
 
 import unittest
 
-from esmvalcore._config import read_config_developer_file
-from esmvalcore.cmor.table import read_cmor_tables
 from esmvalcore.preprocessor import _regrid
 
 
@@ -16,7 +14,7 @@ class TestGetCmorLevels(unittest.TestCase):
     @staticmethod
     def setUpClass():
         """Read cmor tables before testing"""
-        read_cmor_tables(read_config_developer_file())
+        pass
 
     def test_cmip6_alt40(self):
         self.assertListEqual(
