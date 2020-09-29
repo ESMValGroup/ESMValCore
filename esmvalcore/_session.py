@@ -5,7 +5,16 @@ from .configuration._config_object import USER_CONFIG_DIR
 
 
 class Session:
-    """Importable session object."""
+    """Importable session object.
+
+    This class holds information about the current session. Different
+    session directories can be accessed.
+
+    Parameters
+    ----------
+    session_name : str
+        Name of the session to initialize.
+    """
     def __init__(self, session_name: str = 'session'):
         super().__init__()
         self.init_session_dir(session_name)
@@ -20,7 +29,7 @@ class Session:
         """Initialize session.
 
         The `name` is used to name the working directory, e.g.
-        recipe_example_20200916/ If no name is given, such as in an
+        `recipe_example_20200916/`. If no name is given, such as in an
         interactive session, defaults to `session`.
         """
         now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
