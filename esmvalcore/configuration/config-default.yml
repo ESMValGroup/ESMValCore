@@ -39,3 +39,5 @@ config_developer_file: null
 profile_diagnostic: false
 # Maximum number of years to use.
 max_years: null
+# Run the diagnostic
+run_diagnostic: true

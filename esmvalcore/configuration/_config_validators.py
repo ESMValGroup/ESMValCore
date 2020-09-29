@@ -271,6 +271,7 @@ _validators = {
     'max_parallel_tasks': validate_int_or_none,
     'config_developer_file': validate_path_or_none,
     'profile_diagnostic': validate_bool,
+    'run_diagnostic': validate_bool,
 
     # From CLI
     "skip-nonexistent": validate_bool,
