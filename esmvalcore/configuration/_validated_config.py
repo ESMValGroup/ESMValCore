@@ -11,6 +11,11 @@ class InvalidConfigParameter(SuppressedError):
 
 class ValidatedConfig(MutableMapping, dict):
     """Based on `matplotlib.rcParams`."""
+    # The code for this class was take from matplotlib (v3.3) and modified to
+    # fit the needs of ESMValCore. Matplotlib is licenced under the terms of
+    # the the 'Python Software Foundation License'
+    # (https://www.python.org/psf/license)
+
     validate = {}
 
     # validate values on the way in

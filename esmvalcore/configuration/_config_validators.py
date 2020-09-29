@@ -8,6 +8,12 @@ from ._validated_config import ValidatedConfig
 def _make_type_validator(cls, *, allow_none=False):
     """Return a validator that converts inputs to *cls* or raises (and possibly
     allows ``None`` as well)."""
+
+    # The code for this function was take from matplotlib (v3.3) and modified
+    # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
+    # the the 'Python Software Foundation License'
+    # (https://www.python.org/psf/license)
+
     def validator(s):
         if (allow_none
                 and (s is None or isinstance(s, str) and s.lower() == "none")):
@@ -36,6 +42,12 @@ def _listify_validator(scalar_validator,
                        n=None,
                        doc=None):
     """Apply the validator to a list."""
+
+    # The code for this function was take from matplotlib (v3.3) and modified
+    # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
+    # the the 'Python Software Foundation License'
+    # (https://www.python.org/psf/license)
+
     def f(s):
         if isinstance(s, str):
             try:
