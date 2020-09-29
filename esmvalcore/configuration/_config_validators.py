@@ -1,6 +1,8 @@
 from collections.abc import Iterable
-from functools import lru_cache
+from functools import lru_cache, partial
 from pathlib import Path
+
+from ._validated_config import ValidatedConfig
 
 
 def _make_type_validator(cls, *, allow_none=False):
@@ -166,12 +168,6 @@ def validate_diagnostics(diagnostics):
     }
 
 
-def validate_drs(value):
-    value = validate_dict(value)
-    # TODO: make drs class
-    return value
-
-
 class ESMValToolDeprecationWarning(UserWarning):
     # Custom warning, because DeprecationWarning is hidden by default
     pass
@@ -194,6 +190,39 @@ def deprecate(func, variable, version=None):
                       stacklevel=2)
 
     return func
+
+
+class BaseDRS(ValidatedConfig):
+    validate = {
+        'rootpath': validate_pathlist,
+        'input_dir': validate_string,
+        'input_file': validate_string,
+    }
+
+
+def validate_drs(mapping):
+    drs = BaseDRS()
+    drs.update(mapping)
+    return drs
+
+
+validate_drslist = _listify_validator(validate_drs,
+                                      doc='return a list of drs mappings')
+
+
+def validate_project(value, name):
+    from .._projects import ProjectData
+
+    if isinstance(value, ProjectData):
+        return value
+
+    output_file = validate_string(value['output_file'])
+    drs_list = validate_drslist(value['data'])
+
+    project_data = ProjectData(name=name,
+                               output_file=output_file,
+                               drs_list=drs_list)
+    return project_data
 
 
 _validators = {
@@ -226,28 +255,15 @@ _validators = {
     # From recipe
     'write_ncl_interface': validate_bool,
 
-    # restructure
-    'data_reference_syntax': validate_drs,
-    'default_inputpath': validate_pathlist,
-
     # projects
-    'CMIP6': validate_any,
-    'CMIP5': validate_any,
-    'CMIP3': validate_any,
-    'OBS': validate_any,
-    'OBS6': validate_any,
-    'native6': validate_any,
-    'obs4mips': validate_any,
-    'ana4mips': validate_any,
-    'EMAC': validate_any,
-    'CORDEX': validate_any,
-}
-
-_drs_validators = {
-    'rootpath': validate_pathlist,
-    'input_dir': validate_string,
-    'input_file': validate_string,
-    'output_file': validate_string,
-    'project': validate_string,
-    'name': validate_string,
+    'CMIP6': partial(validate_project, name='CMIP6'),
+    'CMIP5': partial(validate_project, name='CMIP5'),
+    'CMIP3': partial(validate_project, name='CMIP3'),
+    'OBS': partial(validate_project, name='OBS'),
+    'OBS6': partial(validate_project, name='OBS6'),
+    'native6': partial(validate_project, name='native6'),
+    'obs4mips': partial(validate_project, name='obs4mips'),
+    'ana4mips': partial(validate_project, name='ana4mips'),
+    'EMAC': partial(validate_project, name='EMAC'),
+    'CORDEX': partial(validate_project, name='CORDEX'),
 }

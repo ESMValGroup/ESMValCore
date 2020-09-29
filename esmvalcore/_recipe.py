@@ -12,7 +12,7 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from . import config, projects, session
+from . import config, session
 from ._config import TAGS, get_activity, get_institutes, replace_tags
 from ._data_finder import (get_input_filelist, get_output_file,
                            get_statistic_output_file)
@@ -526,7 +526,7 @@ def _get_input_files(variable, config_user):
 
     synda_download = config_user['synda_download']
     project = variable['project']
-    project_data = projects[project]
+    project_data = config[project]
 
     (input_files, dirnames,
      filenames) = get_input_filelist(variable=variable,

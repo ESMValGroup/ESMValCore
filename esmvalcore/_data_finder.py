@@ -12,8 +12,6 @@ from pathlib import Path
 
 import iris
 
-from . import _projects
-
 logger = logging.getLogger(__name__)
 
 
@@ -185,8 +183,9 @@ def get_input_filelist(project_data, variable):
 
 def get_output_file(variable):
     """Return the full path to the output (preprocessed) file."""
+    from . import config
     project = variable['project']
-    output_file = _projects.projects[project].output_file
+    output_file = config[project].output_file
 
     # Join different experiment names
     if isinstance(variable.get('exp'), (list, tuple)):
