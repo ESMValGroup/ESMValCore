@@ -52,11 +52,9 @@ def get_user_path(filename, destination=None, overwrite=False):
     specified filename instead.
     """
     if not destination:
-        destination = session.config_dir / 'config-user.yml'
-        if destination.exists():
-            destination = session.config_dir / filename
+        destination = session.config_dir
     else:
-        destination = Path(destination)
+        destination = Path(destination).expanduser() / filename
 
     if destination.exists():
         if overwrite:
@@ -76,13 +74,13 @@ def generate_config(name, overwrite, path):
 
     base_projects = load_yaml(DEFAULT_CONFIG_DIR / 'drs-default.yml')
 
-    if name != 'default':
+    if name == 'default':
+        filename = 'config-user.yml'
+        projects = base_projects
+    else:
         site_projects = load_yaml(DEFAULT_CONFIG_DIR / f'drs-{name}.yml')
         projects = update_projects_dict(base_projects, site_projects)
-    else:
-        projects = base_projects
-
-    filename = f'config-{name}.yml'
+        filename = f'config-{name}.yml'
 
     path = get_user_path(filename, path, overwrite=overwrite)
 

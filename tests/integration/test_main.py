@@ -1,6 +1,6 @@
 """Tests for ESMValTool CLI.
 
-Includes a context manager to temporarly modify sys.argv
+Includes a context manager to temporarily modify sys.argv
 """
 
 import contextlib
@@ -42,7 +42,7 @@ def test_setargs():
 
 @patch('esmvalcore._main.ESMValTool.version', new=wrapper(ESMValTool.version))
 def test_version():
-    """Test version command"""
+    """Test version command."""
     with arguments('esmvaltool', 'version'):
         run()
     with arguments('esmvaltool', 'version', '--extra_parameter=asterisk'):
@@ -52,7 +52,7 @@ def test_version():
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_run():
-    """Test version command"""
+    """Test command to run recipe."""
     with arguments('esmvaltool', 'run', 'recipe.yml'):
         run()
 
@@ -110,7 +110,7 @@ def test_run_fails_with_other_params():
 
 
 def test_recipes_get(tmp_path, monkeypatch):
-    """Test version command"""
+    """Test command to get recipes."""
     src_recipe = tmp_path / 'recipe.yml'
     src_recipe.touch()
     tgt_dir = tmp_path / 'test'
@@ -123,57 +123,59 @@ def test_recipes_get(tmp_path, monkeypatch):
 
 @patch('esmvalcore._main.Recipes.list', new=wrapper(Recipes.list))
 def test_recipes_list():
-    """Test version command"""
+    """Test command to list recipes."""
     with arguments('esmvaltool', 'recipes', 'list'):
         run()
 
 
 @patch('esmvalcore._main.Recipes.list', new=wrapper(Recipes.list))
 def test_recipes_list_do_not_admit_parameters():
-    """Test version command"""
+    """Test command to list recipes."""
     with arguments('esmvaltool', 'recipes', 'list', 'parameter'):
         with pytest.raises(FireExit):
             run()
 
-@pytest.mark.skip(reason="CLI changed")
-# @patch('esmvalcore._main.Config.get_config_developer',
-#        new=wrapper(Config.get_config_developer))
-def test_get_config_developer():
-    """Test version command"""
-    with arguments('esmvaltool', 'config', 'get_config_developer'):
+
+@patch('esmvalcore._main.ConfigUtils.get', new=wrapper(ConfigUtils.get))
+def test_get_config():
+    """Test command to get user config."""
+    with arguments('esmvaltool', 'config', 'get'):
         run()
 
-@pytest.mark.skip(reason="CLI changed")
-# @patch('esmvalcore._main.Config.get_config_user',
-#        new=wrapper(ConfigUtils.get_config_user))
-def test_get_config_user():
-    """Test version command"""
-    with arguments('esmvaltool', 'config', 'get_config_user'):
-        run()
 
-@pytest.mark.skip(reason="CLI changed")
-def test_get_config_user_path(tmp_path):
-    """Test version command"""
-    with arguments('esmvaltool', 'config', 'get_config_user',
-                   f'--path={tmp_path}'):
+def test_get_config_path(tmp_path):
+    """Test command to get user config with path."""
+    with arguments('esmvaltool', 'config', 'get', f'--path={tmp_path}'):
         run()
     assert (tmp_path / 'config-user.yml').is_file()
 
-@pytest.mark.skip(reason="CLI changed")
-def test_get_config_user_overwrite(tmp_path):
-    """Test version command"""
+
+def test_get_config_site(tmp_path):
+    """Test command to get user config."""
+    site = 'dkrz'
+    with arguments('esmvaltool', 'config', 'get', site, f'--path={tmp_path}'):
+        run()
+    assert (tmp_path / f'config-{site}.yml').is_file()
+
+
+def test_get_config_overwrite(tmp_path):
+    """Test command to get user config with overwrite."""
     config_user = tmp_path / 'config-user.yml'
     config_user.touch()
-    with arguments('esmvaltool', 'config', 'get_config_user',
-                   f'--path={tmp_path}', '--overwrite'):
+    with arguments('esmvaltool', 'config', 'get', f'--path={tmp_path}',
+                   '--overwrite'):
         run()
 
-@pytest.mark.skip(reason="CLI changed")
-# @patch('esmvalcore._main.Config.get_config_user',
-#        new=wrapper(Config.get_config_user))
+
+@patch('esmvalcore._main.ConfigUtils.get', new=wrapper(ConfigUtils.get))
 def test_get_config_user_bad_option_fails():
-    """Test version command"""
-    with arguments('esmvaltool', 'config', 'get_config_user',
-                   '--bad_option=path'):
+    """Test command with bad argument."""
+    with arguments('esmvaltool', 'config', 'get', '--bad_option=path'):
         with pytest.raises(FireExit):
             run()
+
+
+def test_get_config_list():
+    """Test command to list configs."""
+    with arguments('esmvaltool', 'config', 'list'):
+        run()
