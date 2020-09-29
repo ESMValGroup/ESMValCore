@@ -52,7 +52,7 @@ def get_user_path(filename, destination=None, overwrite=False):
     specified filename instead.
     """
     if not destination:
-        destination = session.config_dir
+        destination = session.config_dir / filename
     else:
         destination = Path(destination).expanduser() / filename
 
