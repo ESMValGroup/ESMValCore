@@ -23,7 +23,7 @@ def _make_type_validator(cls, *, allow_none=False):
         except ValueError as e:
             if isinstance(cls, type):
                 raise ValueError(
-                    f'Could not convert {s!r} to {cls.__name__}') from e
+                    f'Could not convert {repr(s)} to {cls.__name__}') from e
             else:
                 raise
 
