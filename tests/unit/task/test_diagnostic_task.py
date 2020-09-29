@@ -22,7 +22,7 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
     script.touch()
 
     settings = {
-        'run_dir': str(tmp_path / 'run_dir'),
+        'run_dir': tmp_path / 'run_dir',
         'profile_diagnostic': False,
     }
     task = esmvalcore._task.DiagnosticTask(
