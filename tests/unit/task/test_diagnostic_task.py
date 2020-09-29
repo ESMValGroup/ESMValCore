@@ -73,7 +73,7 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
 
     run_dir = tmp_path / 'run_dir'
     settings = {
-        'run_dir': str(run_dir),
+        'run_dir': run_dir,
         'profile_diagnostic': profile,
     }
 
@@ -110,7 +110,7 @@ def diagnostic_task(mocker, tmp_path):
     mocker.patch.object(esmvalcore._task.DiagnosticTask, '_initialize_env')
 
     settings = {
-        'run_dir': str(tmp_path / 'run_dir'),
+        'run_dir': tmp_path / 'run_dir',
         'profile_diagnostic': False,
         'some_diagnostic_setting': True,
     }

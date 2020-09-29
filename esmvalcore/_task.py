@@ -275,7 +275,7 @@ class DiagnosticTask(BaseTask):
         self.output_dir = output_dir
         self.cmd = self._initialize_cmd()
         self.env = self._initialize_env()
-        self.log = settings['run_dir'] / 'log.txt'
+        self.log = str(settings['run_dir'] / 'log.txt')
         self.resource_log = settings['run_dir'] / 'resource_usage.txt'
 
     def _initialize_cmd(self):
