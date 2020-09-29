@@ -65,9 +65,11 @@ def _load_user_config(filename, raise_exception=True):
     config_orig = ESMValCoreConfig(config.copy())
 
 
+DEFAULT_CONFIG_DIR = Path(__file__).parent
+DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / 'config-default.yml'
+DEFAULT_DRS = DEFAULT_CONFIG_DIR / 'drs-default.yml'
+
 USER_CONFIG_DIR = Path.home() / '.esmvaltool'
-DEFAULT_CONFIG = Path(__file__).with_name('config-default.yml')
-DEFAULT_DRS = Path(__file__).with_name('drs-default.yml')
 USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders

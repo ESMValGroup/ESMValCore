@@ -6,6 +6,7 @@ from pathlib import Path
 import yaml
 
 from .._session import session
+from ._config_object import DEFAULT_CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -71,14 +72,12 @@ def get_user_path(filename, destination=None, overwrite=False):
 def generate_config(name, overwrite, path):
     """Combine the default config with the default/site-specific DRS
     specifications."""
-    base_config_dir = Path(__file__).parent
+    default_config = DEFAULT_CONFIG_DIR / 'config-default.yml'
 
-    default_config = base_config_dir / 'config-default.yml'
-
-    base_projects = load_yaml(base_config_dir / 'drs-default.yml')
+    base_projects = load_yaml(DEFAULT_CONFIG_DIR / 'drs-default.yml')
 
     if name != 'default':
-        site_projects = load_yaml(base_config_dir / f'drs-{name}.yml')
+        site_projects = load_yaml(DEFAULT_CONFIG_DIR / f'drs-{name}.yml')
         projects = update_projects_dict(base_projects, site_projects)
     else:
         projects = base_projects
@@ -105,9 +104,8 @@ def list_available_configs():
     pre = '- '
 
     user_config_folder = session.config_dir
-    base_config_dir = Path(__file__).parent
 
-    base_configs = sorted(base_config_dir.glob('drs-*.yml'))
+    base_configs = sorted(DEFAULT_CONFIG_DIR.glob('drs-*.yml'))
     user_configs = sorted(user_config_folder.glob('*.yml'))
 
     print('# Available site-specific configs')
