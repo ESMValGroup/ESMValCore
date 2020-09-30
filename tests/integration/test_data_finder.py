@@ -6,8 +6,7 @@ import tempfile
 import pytest
 import yaml
 
-import esmvalcore._config
-from esmvalcore._data_finder import get_input_filelist, get_output_file
+from esmvalcore._data_finder import get_output_file
 
 # Load test configuration
 with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:
@@ -77,11 +76,14 @@ def test_get_input_filelist(root, cfg):
     create_tree(root, cfg.get('available_files'),
                 cfg.get('available_symlinks'))
 
+    from esmvalcore._projects import ProjectData
+
+    project_data = ProjectData(name='test', **cfg['drs'])
+    variable = cfg['variable']
+
     # Find files
-    rootpath = {cfg['variable']['project']: [root]}
-    drs = {cfg['variable']['project']: cfg['drs']}
     (input_filelist, dirnames,
-     filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
+     filenames) = project_data.get_input_filelist(variable)
 
     # Test result
     ref_files = [os.path.join(root, file) for file in cfg['found_files']]
