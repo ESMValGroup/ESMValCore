@@ -25,7 +25,7 @@ BADC: &CMIP5_BADC
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   drs_list:
     - rootpath: [~/data/CMIP5]
-    - input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
+      input_dir: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
       input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
 
 get_output_file:
