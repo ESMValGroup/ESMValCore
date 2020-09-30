@@ -61,7 +61,7 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             latitude=(start_latitude, end_latitude),
             ignore_bounds=True,
         )
-        # delete bounds: kluge for issue 799
+        # delete bounds: kluge for https://github.com/ESMValGroup/ESMValCore/issues/799
         # TODO remove the bounds handling after iris fix
         region_subset.coord("longitude").bounds = None
         region_subset = region_subset.intersection(longitude=(0., 360.))
