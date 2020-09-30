@@ -192,7 +192,8 @@ get_input_filelist:
       - MOHC/HadGEM2-ES/rcp45/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_rcp45_r1i1p1_200601-210012.nc
       - MOHC/HadGEM2-ES/rcp85/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_rcp85_r1i1p1_200601-210012.nc
 
-  - drs: ETHZ
+  - drs:
+      <<: *CMIP5_ETHZ
     variable:
       <<: *variable
       start_year: 1980
@@ -212,7 +213,8 @@ get_input_filelist:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
 
-  - drs: ETHZ
+  - drs:
+      <<: *CMIP5_ETHZ
     variable:
       <<: *variable
       start_year: 2000
