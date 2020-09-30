@@ -162,21 +162,7 @@ def _resolve_latestversion(dirname_template):
 def get_input_filelist(project_data, variable):
     """Return the full path to input files."""
     # TODO: what if drs is a list?
-
-    project = variable['project']
-
-    # change ensemble to fixed r0i0p0 for fx variables
-    # this is needed and is not a duplicate effort
-    if project == 'CMIP5' and variable['frequency'] == 'fx':
-        variable['ensemble'] = 'r0i0p0'
-
     files, dirnames, filenames = project_data.get_input_filelist(variable)
-
-    # do time gating only for non-fx variables
-    do_time_gating = variable['frequency'] != 'fx'
-    if do_time_gating:
-        files = select_files(files, variable['start_year'],
-                             variable['end_year'])
 
     return (files, dirnames, filenames)
 

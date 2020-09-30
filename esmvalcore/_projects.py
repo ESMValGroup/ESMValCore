@@ -82,6 +82,8 @@ class SearchLocation(object):
         filenames_glob = self._get_filenames_glob(variable)
         files = _data_finder.find_files(input_dirs, filenames_glob)
 
+        files = do_time_gating(files, variable)
+
         return {
             'files': files,
             'input_dirs': input_dirs,
@@ -147,6 +149,11 @@ class ProjectData(object):
 
     def get_input_filelist(self, variable):
         """Look for input files for the given variable."""
+        # change ensemble to fixed r0i0p0 for fx variables
+        # this is needed and is not a duplicate effort
+
+        patch_CMIP5_fx(self.name, variable)
+
         filelist = []
         for search_location in self.search_locations:
             result = search_location.find_input_files(variable)
@@ -159,3 +166,17 @@ class ProjectData(object):
         filenames = list(flatten([dct['filenames_glob'] for dct in filelist]))
 
         return files, dirnames, filenames
+
+
+def patch_CMIP5_fx(project, variable):
+    if project == 'CMIP5' and variable['frequency'] == 'fx':
+        variable['ensemble'] = 'r0i0p0'
+
+
+def do_time_gating(files, variable):
+    # do time gating only for non-fx variables
+    do_time_gating = variable['frequency'] != 'fx'
+    if do_time_gating:
+        files = _data_finder.select_files(files, variable['start_year'],
+                                          variable['end_year'])
+    return files
