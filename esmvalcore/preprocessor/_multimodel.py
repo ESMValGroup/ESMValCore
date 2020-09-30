@@ -135,6 +135,8 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     """Quick cube building and saving."""
     tunits = template_cube.coord('time').units
     times = iris.coords.DimCoord(t_axis, standard_name='time', units=tunits)
+    times.bounds = None
+    times.guess_bounds()
 
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
