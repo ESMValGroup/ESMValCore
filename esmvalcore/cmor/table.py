@@ -53,7 +53,7 @@ def load_cmor_tables(filename):
         cmor_strict = project['cmor_strict']
 
         try:
-            table_path = Path(project['table_path']).expanduser()
+            table_path = Path(project['cmor_path']).expanduser()
         except KeyError:
             table_path = install_dir / 'tables' / cmor_type.lower()
 
