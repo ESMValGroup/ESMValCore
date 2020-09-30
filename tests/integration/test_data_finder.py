@@ -82,7 +82,9 @@ def test_get_input_filelist(root, cfg):
 
     from esmvalcore._projects import ProjectData
 
-    project_data = ProjectData(name='test', **cfg['drs'])
+    drs = cfg['drs']
+    project_data = ProjectData(name='test', **drs)
+    project_data.set_rootpath(root)
     variable = cfg['variable']
 
     # Find files

@@ -134,6 +134,12 @@ class ProjectData(object):
     def output_file(self):
         return self._output_file
 
+    def set_rootpath(self, path):
+        """Set rootpath for all search locations."""
+        path = Path(path)
+        for search_location in self.search_locations:
+            search_location.rootpath = path
+
     def get_cmor_table(self):
         """Get the CMOR table for this project."""
         from .cmor.table import CMOR_TABLES
