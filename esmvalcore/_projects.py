@@ -55,8 +55,9 @@ class SearchLocation(object):
 
         for dirname_template in _data_finder._replace_tags(
                 path_template, variable):
-            dirname = _data_finder._resolve_latestversion(dirname_template)
-            dirname = os.path.join(base_path, dirname)
+
+            dirname = os.path.join(base_path, dirname_template)
+            dirname = _data_finder._resolve_latestversion(dirname)
             matches = glob.glob(dirname)
             matches = [match for match in matches if os.path.isdir(match)]
 
