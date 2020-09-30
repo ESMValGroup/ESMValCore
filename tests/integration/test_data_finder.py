@@ -56,7 +56,10 @@ def create_tree(path, filenames=None, symlinks=None):
 @pytest.mark.parametrize('cfg', CONFIG['get_output_file'])
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
-    output_file = get_output_file(cfg['variable'], cfg['preproc_dir'])
+    from esmvalcore import session
+
+    output_file = session.preproc_dir / get_output_file(cfg['variable'])
+
     assert output_file == cfg['output_file']
 
 
