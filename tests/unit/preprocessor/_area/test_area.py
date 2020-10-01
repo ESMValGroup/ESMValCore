@@ -582,7 +582,8 @@ def test_crop_cube_with_ne_file():
 
 
 @pytest.mark.parametrize('crop', [True, False])
-def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
+@pytest.mark.parametrize('ids', [None, [0,]])
+def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
     """Test for extracting a region with shapefile"""
     expected = square_shape
     if not crop:
@@ -593,7 +594,8 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
         expected = original
     result = extract_shape(make_testcube,
                            tmp_path / 'test_shape.shp',
-                           crop=crop)
+                           crop=crop,
+                           ids=ids)
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
@@ -604,7 +606,8 @@ def test_extract_shape_natural_earth(make_testcube):
     result = extract_shape(
         make_testcube,
         "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp",
-        crop=False)
+        crop=False,
+    )
     np.testing.assert_array_equal(result.data.data, expected)
 
 
@@ -685,6 +688,43 @@ def test_extract_composite_shape(make_testcube, square_composite_shape,
                            tmp_path / 'test_shape.shp',
                            crop=crop,
                            decomposed=decomposed)
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+
+@pytest.mark.parametrize('ids', [[0], [1], [2], [1, 2]])
+def test_extract_specific_shape(make_testcube, tmp_path, ids):
+    """Test for extracting a region with shapefile"""
+    slat = 2.
+    slon = 2.
+    nshape = 3
+    polyg = []
+    for n in range(nshape):
+        polyg.append(
+            Polygon([(1.0 + n, 1.0 + slat), (1.0 + n, 1.0),
+                     (1.0 + n + slon, 1.0), (1.0 + n + slon, 1.0 + slat)]))
+    write_shapefile(polyg, tmp_path / 'test_shape.shp')
+    write_shapefile(polyg, tmp_path / 'test_shape_negative_bounds.shp',
+                    negative_bounds=True)
+
+    # Make corresponding expected masked array
+    (slat, slon) = np.ceil([slat, slon]).astype(int)
+    vals = np.ones((nshape, min(slat + 2, 5), min(slon + 1 + nshape, 5)))
+    mask = vals.copy()
+    for n in ids:
+        mask[n, 1:1 + slat, 1 + n:1 + n + slon] = 0
+    expected =  np.ma.masked_array(vals, mask)
+
+    # this detour is necessary, otherwise the data will not agree
+    data = expected.data.max(axis=0)
+    mask = expected.max(axis=0).mask
+    expected = np.ma.masked_array(data=data, mask=mask)
+
+    result = extract_shape(make_testcube,
+                           tmp_path / 'test_shape.shp',
+                           crop=True,
+                           decomposed=False,
+                           ids=ids)
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 

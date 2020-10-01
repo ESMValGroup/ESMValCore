@@ -411,7 +411,7 @@ def _get_masks_from_geometries(geometries,
                                lat,
                                method='contains',
                                decomposed=False,
-                               ids=[],):
+                               ids=None,):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
@@ -420,18 +420,24 @@ def _get_masks_from_geometries(geometries,
 
     selections = dict()
     id_properties = ('name', 'id')
+    if ids:
+        ids = [str(id_) for id_ in ids]
     for i, item in enumerate(geometries):
         id_ = i
         for id_prop in id_properties:
+            print(item['properties'])
             if id_prop in item['properties']:
                 id_ = item['properties'][id_prop]
+                print(id_)
                 break
             if id_prop.upper() in item['properties']:
                 id_ = item['properties'][id_prop.upper()]
+                print(id_)
                 break
         id_ = str(id_)
-
+        print(ids)
         if ids and id_ not in ids:
+            print('Skipping...')
             continue
 
         shape = shapely.geometry.shape(item['geometry'])
@@ -439,7 +445,7 @@ def _get_masks_from_geometries(geometries,
             select = shapely.vectorized.contains(shape, lon, lat)
         if method == 'representative' or not select.any():
             select = _select_representative_point(shape, lon, lat)
-
+        print('Shapely done')
         selections[id_] = select
 
     if not decomposed and len(selections) > 1:
@@ -500,7 +506,7 @@ def extract_shape(cube,
                   method='contains',
                   crop=True,
                   decomposed=False,
-                  ids=[],):
+                  ids=None,):
     """
     Extract a region defined by a shapefile.
 
