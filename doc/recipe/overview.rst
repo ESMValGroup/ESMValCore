@@ -317,6 +317,16 @@ define the ``start_year`` and ``end_year`` items in the variable section,
 because the diagnostic script assumes that all the data has the same time
 range.
 
+Variable short names usually do not change between datasets supported by
+ESMValTool, as they are usually changed to match CMIP. Nevertheless, there are
+small changes in variable names in CMIP6 respect to CMIP5 (i.e. sea ice
+concentration changed from ``sic`` to ``siconc``). ESMValTool is aware of some
+of them and can do the automatic translation when needed. It will even do the
+translation in the preprocessed file so the diagnostic does not have to default
+with this complexity. For example, if ``sic`` is requested, ESMValTool will
+find ``sic`` or ``siconc`` depending on the project, but all preprocessed files
+while use ``sic`` as their short_name.
+
 Diagnostic and variable specific datasets
 -----------------------------------------
 The ``additional_datasets`` option can be used to add datasets beyond those
