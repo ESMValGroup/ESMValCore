@@ -46,7 +46,7 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
 CMD = {
     # ext, profile: expected command
     ('.py', False): ['python'],
-    ('.py', True): ['python', '-m', 'vmprof', '--lines', '-o'],
+    ('.py', True): ['python', '-m', 'vprof', '-o'],
     ('.ncl', False): ['ncl', '-n', '-p'],
     ('.ncl', True): ['ncl', '-n', '-p'],
     ('.R', False): ['Rscript'],
@@ -86,9 +86,10 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
 
     # Append filenames to expected command
     if ext == '.py' and profile:
-        cmd.append(str(run_dir / 'profile.bin'))
+        cmd.append(str(run_dir / 'profile.json'))
+        cmd.append('-c')
+        cmd.append('c')
     cmd.append(str(script))
-
     assert task.cmd == cmd
 
 

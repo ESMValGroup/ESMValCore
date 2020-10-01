@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table Lmon", 
         "realm": "land", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -39,7 +39,7 @@
             "units": "%", 
             "cell_methods": "area: mean where land over all_area_types time: mean", 
             "cell_measures": "area: areacella", 
-            "long_name": "Percentage of Entire Grid cell  that is Covered by Burnt Vegetation (All Classes)", 
+            "long_name": "Percentage of Entire Grid Cell That Is Covered by Burnt Vegetation (All Classes)", 
             "comment": "Percentage of grid cell burned due to all fires including natural and anthropogenic fires and those associated with anthropogenic Land-use change", 
             "dimensions": "longitude latitude time typeburnt", 
             "out_name": "burntFractionAll", 

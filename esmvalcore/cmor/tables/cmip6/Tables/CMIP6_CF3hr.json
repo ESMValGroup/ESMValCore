@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table CF3hr", 
         "realm": "atmos", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -611,7 +611,7 @@
         "reffclic": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_convective_cloud_ice_particle", 
+            "standard_name": "effective_radius_of_convective_cloud_ice_particles", 
             "units": "m", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
@@ -629,7 +629,7 @@
         "reffclis": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_stratiform_cloud_ice_particle", 
+            "standard_name": "effective_radius_of_stratiform_cloud_ice_particles", 
             "units": "m", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
@@ -647,7 +647,7 @@
         "reffclwc": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_convective_cloud_liquid_water_particle", 
+            "standard_name": "effective_radius_of_convective_cloud_liquid_water_particles", 
             "units": "m", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
@@ -665,7 +665,7 @@
         "reffclws": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particle", 
+            "standard_name": "effective_radius_of_stratiform_cloud_liquid_water_particles", 
             "units": "m", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
@@ -683,7 +683,7 @@
         "reffgrpls": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_stratiform_cloud_graupel_particle", 
+            "standard_name": "effective_radius_of_stratiform_cloud_graupel_particles", 
             "units": "m", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
@@ -701,7 +701,7 @@
         "reffrainc": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_convective_cloud_rain_particle", 
+            "standard_name": "effective_radius_of_convective_cloud_rain_particles", 
             "units": "m", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
@@ -719,7 +719,7 @@
         "reffrains": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_stratiform_cloud_rain_particle", 
+            "standard_name": "effective_radius_of_stratiform_cloud_rain_particles", 
             "units": "m", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
@@ -737,7 +737,7 @@
         "reffsnowc": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_convective_cloud_snow_particle", 
+            "standard_name": "effective_radius_of_convective_cloud_snow_particles", 
             "units": "m", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
@@ -755,7 +755,7 @@
         "reffsnows": {
             "frequency": "3hrPt", 
             "modeling_realm": "atmos", 
-            "standard_name": "effective_radius_of_stratiform_cloud_snow_particle", 
+            "standard_name": "effective_radius_of_stratiform_cloud_snow_particles", 
             "units": "m", 
             "cell_methods": "area: mean time: point", 
             "cell_measures": "area: areacella", 
