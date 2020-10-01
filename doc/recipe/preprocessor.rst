@@ -1099,6 +1099,21 @@ Examples:
               shapefile: Elbe.shp
               method: contains
 
+    * Extract the shape of several countries:
+
+        .. code-block:: yaml
+
+            extract_shape:
+            shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
+            decomposed: True
+            method: contains
+            ids:
+              - Spain
+              - France
+              - Italy
+              - United Kingdom
+              - Taiwan
+
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
 
