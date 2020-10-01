@@ -582,7 +582,7 @@ def test_crop_cube_with_ne_file():
 
 
 @pytest.mark.parametrize('crop', [True, False])
-@pytest.mark.parametrize('ids', [None, [0,]])
+@pytest.mark.parametrize('ids', [None, [0, ]])
 def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
     """Test for extracting a region with shapefile"""
     expected = square_shape
@@ -713,7 +713,7 @@ def test_extract_specific_shape(make_testcube, tmp_path, ids):
     mask = vals.copy()
     for n in ids:
         mask[n, 1:1 + slat, 1 + n:1 + n + slon] = 0
-    expected =  np.ma.masked_array(vals, mask)
+    expected = np.ma.masked_array(vals, mask)
 
     # this detour is necessary, otherwise the data will not agree
     data = expected.data.max(axis=0)
