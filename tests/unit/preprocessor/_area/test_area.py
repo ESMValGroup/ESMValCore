@@ -1,6 +1,6 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._area` module."""
-
 import unittest
+from pathlib import Path
 
 import fiona
 import iris
@@ -11,6 +11,7 @@ from iris.cube import Cube
 from shapely.geometry import Polygon, mapping
 
 import tests
+import esmvalcore.preprocessor
 from esmvalcore.preprocessor._area import (_crop_cube, area_statistics,
                                            extract_named_regions,
                                            extract_region, extract_shape)
@@ -104,6 +105,12 @@ class Test(tests.Test):
     def test_area_statistics_neg_lon(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.negative_grid, 'mean')
+        expected = np.array([1.])
+        self.assert_array_equal(result.data, expected)
+
+    def test_area_statistics_rms(self):
+        """Test for area rms of a 2D field."""
+        result = area_statistics(self.grid, 'rms')
         expected = np.array([1.])
         self.assert_array_equal(result.data, expected)
 
@@ -569,10 +576,17 @@ def test_crop_cube_with_ne_file_imitation():
     np.testing.assert_allclose(result, expected)
 
 
-def test_crop_cube_with_ne_file():
+@pytest.fixture
+def ne_ocean_shapefile():
+    """Path to natural earth 50m ocean shapefile."""
+    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
+    shapefile = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
+    return str(shapefile)
+
+
+def test_crop_cube_with_ne_file(ne_ocean_shapefile):
     """Test for cropping a cube by shape bounds."""
-    shp_file = "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp"
-    with fiona.open(shp_file) as geometries:
+    with fiona.open(ne_ocean_shapefile) as geometries:
         cube = _create_sample_full_cube()
         result = _crop_cube(cube, *geometries.bounds, cmor_coords=False)
         result = (result.coord("latitude").points[-1],
@@ -582,7 +596,7 @@ def test_crop_cube_with_ne_file():
 
 
 @pytest.mark.parametrize('crop', [True, False])
-@pytest.mark.parametrize('ids', [None, [0,]])
+@pytest.mark.parametrize('ids', [None, [0, ]])
 def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
     """Test for extracting a region with shapefile"""
     expected = square_shape
@@ -600,7 +614,7 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
 
-def test_extract_shape_natural_earth(make_testcube):
+def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
     """Test for extracting a shape from NE file."""
     expected = np.ones((5, 5))
     result = extract_shape(
@@ -611,12 +625,12 @@ def test_extract_shape_natural_earth(make_testcube):
     np.testing.assert_array_equal(result.data.data, expected)
 
 
-def test_extract_shape_ne_check_nans():
+def test_extract_shape_ne_check_nans(ne_ocean_shapefile):
     """Test shape from NE file with check for boundary NaN's."""
     cube = _create_sample_full_cube()
     result = extract_shape(
         cube,
-        "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp",
+        ne_ocean_shapefile,
         crop=False)
     assert not result[:, 90, 180].data.mask.all()
 
@@ -713,7 +727,7 @@ def test_extract_specific_shape(make_testcube, tmp_path, ids):
     mask = vals.copy()
     for n in ids:
         mask[n, 1:1 + slat, 1 + n:1 + n + slon] = 0
-    expected =  np.ma.masked_array(vals, mask)
+    expected = np.ma.masked_array(vals, mask)
 
     # this detour is necessary, otherwise the data will not agree
     data = expected.data.max(axis=0)
