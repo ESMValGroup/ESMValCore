@@ -319,7 +319,7 @@ range.
 
 Variable short names usually do not change between datasets supported by
 ESMValTool, as they are usually changed to match CMIP. Nevertheless, there are
-small changes in variable names in CMIP6 respect to CMIP5 (i.e. sea ice
+small changes in variable names in CMIP6 with respect to CMIP5 (i.e. sea ice
 concentration changed from ``sic`` to ``siconc``). ESMValTool is aware of some
 of them and can do the automatic translation when needed. It will even do the
 translation in the preprocessed file so the diagnostic does not have to default
