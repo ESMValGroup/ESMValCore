@@ -28,6 +28,7 @@ def write_config_user_file(dirname):
             '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}',
         },
         'log_level': 'debug',
+        'max_parallel_tasks': 1,
     }
     config_file.write_text(yaml.safe_dump(cfg, encoding=None))
     return str(config_file)
