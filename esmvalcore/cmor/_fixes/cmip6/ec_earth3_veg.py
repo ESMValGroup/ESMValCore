@@ -13,6 +13,7 @@ class Siconca(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube which needs to be fixed.
 
         Returns
         -------
