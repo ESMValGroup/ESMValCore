@@ -318,11 +318,11 @@ because the diagnostic script assumes that all the data has the same time
 range.
 
 Variable short names usually do not change between datasets supported by
-ESMValTool, as they are usually changed to match CMIP. Nevertheless, there are
+ESMValCore, as they are usually changed to match CMIP. Nevertheless, there are
 small changes in variable names in CMIP6 with respect to CMIP5 (i.e. sea ice
-concentration changed from ``sic`` to ``siconc``). ESMValTool is aware of some
+concentration changed from ``sic`` to ``siconc``). ESMValCore is aware of some
 of them and can do the automatic translation when needed. It will even do the
-translation in the preprocessed file so the diagnostic does not have to default
+translation in the preprocessed file so the diagnostic does not have to deal
 with this complexity, setting the short name in all files to match the one used
 by the recipe. For example, if ``sic`` is requested, ESMValTool will
 find ``sic`` or ``siconc`` depending on the project, but all preprocessed files
