@@ -18,9 +18,5 @@ comment:           liquid water equivalent thickness anomaly
 dimensions:        longitude latitude time
 out_name:          lweGrace
 type:              real
-valid_min:         -1000
-valid_max:         1000
-ok_min_mean_abs:   -1
-ok_max_mean_abs:   1
 !----------------------------------
 !
