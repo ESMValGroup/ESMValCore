@@ -317,8 +317,7 @@ class ESMValTool():
         from ._config import DIAGNOSTICS_PATH, configure_logging
 
         if config_file:
-            from ._config_object import _load_user_config
-            _load_user_config(config_file)
+            config.load_from_file(config_file)
 
         recipe = Path(recipe)
 
