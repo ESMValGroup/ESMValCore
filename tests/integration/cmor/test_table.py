@@ -85,7 +85,7 @@ class TestCMIP6Info(unittest.TestCase):
     def test_get_institute_from_source(self):
         """Get institution for source ACCESS-CM2"""
         institute = self.variables_info.institutes['ACCESS-CM2']
-        self.assertListEqual(institute, ['CSIRO-ARCCSS-BoM'])
+        self.assertListEqual(institute, ['CSIRO-ARCCSS'])
 
     def test_get_activity_from_exp(self):
         """Get activity for experiment 1pctCO2"""
