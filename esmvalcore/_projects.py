@@ -153,7 +153,7 @@ class ProjectData(object):
         # change ensemble to fixed r0i0p0 for fx variables
         # this is needed and is not a duplicate effort
 
-        patch_CMIP5_fx(self.name, variable)
+        patch_cmip5_fx(self.name, variable)
 
         filelist = []
         for search_location in self.search_locations:
@@ -169,7 +169,7 @@ class ProjectData(object):
         return files, dirnames, filenames
 
 
-def patch_CMIP5_fx(project, variable):
+def patch_cmip5_fx(project, variable):
     if project == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
 
