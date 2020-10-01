@@ -99,7 +99,8 @@ def zonal_statistics(cube, operator):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'.
 
     Returns
     -------
@@ -133,7 +134,8 @@ def meridional_statistics(cube, operator):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'.
 
     Returns
     -------
@@ -224,6 +226,8 @@ def area_statistics(cube, operator, fx_variables=None):
     +------------+--------------------------------------------------+
     | `max`      | Maximum value                                    |
     +------------+--------------------------------------------------+
+    | `rms`      | Area weighted root mean square.                  |
+    +------------+--------------------------------------------------+
 
     Parameters
     ----------
@@ -231,7 +235,7 @@ def area_statistics(cube, operator, fx_variables=None):
             Input cube.
         operator: str
             The operation, options: mean, median, min, max, std_dev, sum,
-            variance
+            variance, rms.
         fx_variables: dict
             dictionary of field:filename for the fx_variables
 

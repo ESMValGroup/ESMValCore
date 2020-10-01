@@ -147,7 +147,7 @@ class Config():
         Parameters
         ----------
         overwrite: boolean
-            Name of the recipe to get
+            Overwrite an existing file.
         path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
@@ -166,7 +166,7 @@ class Config():
         Parameters
         ----------
         overwrite: boolean
-            Name of the recipe to get
+            Overwrite an existing file.
         path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
@@ -198,13 +198,13 @@ class Recipes():
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
         logger.info("Showing recipes installed in %s", recipes_folder)
         print('# Installed recipes')
-        for root, _, files in os.walk(recipes_folder):
+        for root, _, files in sorted(os.walk(recipes_folder)):
             root = os.path.relpath(root, recipes_folder)
             if root == '.':
                 root = ''
             if root:
                 print(f"\n# {root.replace(os.sep, ' - ').title()}")
-            for filename in files:
+            for filename in sorted(files):
                 if filename.endswith('.yml'):
                     print(os.path.join(root, filename))
 
@@ -361,8 +361,6 @@ class ESMValTool():
 
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
 
-        if not config_file:
-            config_file = '~/.esmvaltool/config-user.yml'
         cfg = read_config_user_file(config_file, recipe_name, kwargs)
 
         # Create run dir
@@ -382,6 +380,8 @@ class ESMValTool():
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
         cfg['skip-nonexistent'] = skip_nonexistent
+        if isinstance(diagnostics, str):
+            diagnostics = diagnostics.split(' ')
         cfg['diagnostics'] = {
             pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
             for pattern in diagnostics or ()
