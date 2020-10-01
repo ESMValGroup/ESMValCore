@@ -107,7 +107,7 @@ class msftyz(Fix):
             gridlat.standard_name='grid_latitude'
             gridlat.units=cf_units.Unit('degrees')
             gridlat.long_name='Grid Latitude'
-
+            gridlat.points[-1] = gridlat.points[-1] +0.0001 # Needs to be monotonic.
 
             values = np.array(['global_ocean', 'atlantic_arctic_ocean',
                                'indian_pacific_ocean'], dtype='<U21')
