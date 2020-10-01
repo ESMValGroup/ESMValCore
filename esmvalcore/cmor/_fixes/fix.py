@@ -162,7 +162,7 @@ class Fix:
                     f'esmvalcore.cmor._fixes.{project}.{package}')
 
                 classes = inspect.getmembers(fixes_module, inspect.isclass)
-                classes = dict((name.lower(), value) for name, value in classes)
+                classes = dict((name.lower(), val) for name, val in classes)
                 for fix_name in (short_name, 'allvars'):
                     try:
                         fixes.append(classes[fix_name](vardef))
