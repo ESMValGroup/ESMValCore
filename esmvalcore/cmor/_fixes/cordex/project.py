@@ -1,4 +1,4 @@
-"""Fixes for CORDEX project"""
+"""Fixes for CORDEX project."""
 import logging
 import numpy as np
 import iris
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class AllVars(Fix):
-    """Generic fixes for the CORDEX project"""
+    """Generic fixes for the CORDEX project."""
 
     def fix_metadata(self, cubes):
         """Fix metatdata.
@@ -52,8 +52,11 @@ class AllVars(Fix):
         return cubes
 
     def check_grid_differences(self, cube):
-        """Derive lat and lon coordinates from grid coordinates.
-        And warn about the maximum differences"""
+        """
+        Derive lat and lon coordinates from grid coordinates.
+
+        It also warns about the maximum differences
+        """
         x_coord = cube.coord(axis='x', dim_coords=True)
         y_coord = cube.coord(axis='y', dim_coords=True)
         glon, glat = np.meshgrid(x_coord.points, y_coord.points)
@@ -93,7 +96,8 @@ class AllVars(Fix):
     def get_lat_lon_bounds(self, cube):
         """
         Derive lat and lon bounds from grid coordinates.
-        CMOR standard for 2-D coordinate counds is indexing the four vertices
+
+        CMOR standard for 2-D coordinate bounds is indexing the four vertices
         as follows: 0=(j-1,i-1), 1=(j-1,i+1), 2=(j+1,i+1), 3=(j+1,i-1).
         """
         x_coord = cube.coord(axis='x', dim_coords=True)
