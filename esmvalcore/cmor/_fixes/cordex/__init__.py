@@ -1,1 +1,1 @@
-"""Fixes for CORDEX data"""
+"""Fixes for CORDEX data."""
