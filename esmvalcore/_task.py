@@ -13,7 +13,7 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
-from pathlib import Path
+from pathlib import Path, PosixPath
 from shutil import which
 
 import psutil
@@ -349,7 +349,15 @@ class DiagnosticTask(BaseTask):
         run_dir.mkdir(parents=True, exist_ok=True)
 
         filename = run_dir / 'settings.yml'
-        filename.write_text(yaml.safe_dump(self.settings))
+
+        def path_representer(dumper, data):
+            """For printing pathlib.Path objects in yaml files."""
+            return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+
+        yaml.add_representer(Path, path_representer)
+        yaml.add_representer(PosixPath, path_representer)
+
+        filename.write_text(yaml.dump(self.settings))
 
         # If running an NCL script:
         if Path(self.script).suffix.lower() == '.ncl':
