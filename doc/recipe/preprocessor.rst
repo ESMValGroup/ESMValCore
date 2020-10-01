@@ -1087,8 +1087,8 @@ Parameters:
   * ``ids``: by default, ``[]``, in this case all the shapes in the file will
     be used. If a list of IDs is provided, only the shapes matching them will
     be used. The IDs are assigned from the ``name`` or ``id`` attributes (in
-    that order of priority) ifpresent in the file or from the reading order
-    if not.
+    that order of priority) if present in the file or from the reading order
+    if otherwise not present.
 
 Examples:
     * Extract the shape of the river Elbe from a shapefile:
