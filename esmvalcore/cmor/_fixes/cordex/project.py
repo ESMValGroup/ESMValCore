@@ -51,7 +51,8 @@ class AllVars(Fix):
 
         return cubes
 
-    def check_grid_differences(self, cube):
+    @staticmethod
+    def check_grid_differences(cube):
         """
         Derive lat and lon coordinates from grid coordinates.
 
@@ -69,9 +70,10 @@ class AllVars(Fix):
             gr_type = "rotated"
             glon, glat = np.meshgrid(x_coord.points, y_coord.points)
             lons, lats = iris.analysis.cartography.unrotate_pole(
-                                    glon, glat,
-                                    grid_coord_sys.grid_north_pole_longitude,
-                                    grid_coord_sys.grid_north_pole_latitude)
+                glon, glat,
+                grid_coord_sys.grid_north_pole_longitude,
+                grid_coord_sys.grid_north_pole_latitude
+            )
         elif isinstance(grid_coord_sys, iris.coord_systems.LambertConformal):
             gr_type = "lcc"
             ccrs_global = global_coord_sys.as_cartopy_crs()
@@ -87,13 +89,14 @@ class AllVars(Fix):
         dif = np.sqrt(np.square(lats - cube.coord('latitude').points) +
                       np.square(lons - cube.coord('longitude').points))
         if dif.max() != 0:
-            logger.warning(f"There are diffs. betw. {gr_type} and lat-lon.")
-            logger.warning(f"Max diff: {dif.max()} ; Min diff: {dif.min()}")
+            logger.warning("There are diffs. betw. %s and lat-lon.", gr_type)
+            logger.warning("Max diff: %s ; Min diff: %s", dif.max(), dif.min())
             cube.attributes.update({'grid_max_spacial_diff': dif.max()})
             cube.attributes.update({'grid_min_spacial_diff': dif.min()})
         return cube
 
-    def get_lat_lon_bounds(self, cube):
+    @staticmethod
+    def get_lat_lon_bounds(cube):
         """
         Derive lat and lon bounds from grid coordinates.
 
@@ -110,13 +113,14 @@ class AllVars(Fix):
 
         if isinstance(grid_coord_sys, iris.coord_systems.RotatedGeogCS):
             lon_bnds, lat_bnds = iris.analysis.cartography.unrotate_pole(
-                                    glon, glat,
-                                    grid_coord_sys.grid_north_pole_longitude,
-                                    grid_coord_sys.grid_north_pole_latitude)
+                glon, glat,
+                grid_coord_sys.grid_north_pole_longitude,
+                grid_coord_sys.grid_north_pole_latitude
+            )
         elif isinstance(grid_coord_sys, iris.coord_systems.LambertConformal):
             ccrs_global = global_coord_sys.as_cartopy_crs()
-            xyz = ccrs_global.transform_points(grid_coord_sys.as_cartopy_crs(),
-                                               glon, glat)
+            xyz = ccrs_global.transform_points(
+                grid_coord_sys.as_cartopy_crs(), glon, glat)
             lon_bnds = xyz[:, :, 0]
             lat_bnds = xyz[:, :, 1]
         else:
@@ -140,7 +144,8 @@ class AllVars(Fix):
 
         return cube
 
-    def get_lat_lon_coordinates(self, cube):
+    @staticmethod
+    def get_lat_lon_coordinates(cube):
         """Derive lat and lon coordinates from grid coordinates."""
         coord_names = [coord.standard_name for coord in cube.coords()]
         x_coord = cube.coord(axis='x', dim_coords=True)
@@ -154,13 +159,14 @@ class AllVars(Fix):
         if isinstance(grid_coord_sys, iris.coord_systems.RotatedGeogCS):
             glon, glat = np.meshgrid(x_coord.points, y_coord.points)
             lons, lats = iris.analysis.cartography.unrotate_pole(
-                                    glon, glat,
-                                    grid_coord_sys.grid_north_pole_longitude,
-                                    grid_coord_sys.grid_north_pole_latitude)
+                glon, glat,
+                grid_coord_sys.grid_north_pole_longitude,
+                grid_coord_sys.grid_north_pole_latitude
+            )
         elif isinstance(grid_coord_sys, iris.coord_systems.LambertConformal):
             ccrs_global = global_coord_sys.as_cartopy_crs()
-            xyz = ccrs_global.transform_points(grid_coord_sys.as_cartopy_crs(),
-                                               glon, glat)
+            xyz = ccrs_global.transform_points(
+                grid_coord_sys.as_cartopy_crs(), glon, glat)
             lons = xyz[:, :, 0]
             lats = xyz[:, :, 1]
         else:
@@ -198,7 +204,8 @@ class AllVars(Fix):
 
         return cube
 
-    def fix_coordinate_system(self, cube):
+    @staticmethod
+    def fix_coordinate_system(cube):
         """Fix LambertConformal."""
         x_coord = cube.coord(axis='x', dim_coords=True)
         y_coord = cube.coord(axis='y', dim_coords=True)
