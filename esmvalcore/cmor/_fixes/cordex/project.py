@@ -20,10 +20,12 @@ class AllVars(Fix):
         Parameters
         ----------
         cubes: iris.cube.CubeList
+            List of cubes to fix
 
         Returns
         -------
         iris.cube.CubeList
+            Fixed cubes
 
         """
         cube = self.get_cube_from_list(cubes)
@@ -180,13 +182,7 @@ class AllVars(Fix):
                                        standard_name='latitude',
                                        units='degrees',
                                        coord_system=global_coord_sys)
-            if lat.shape[0] == lat.shape[1]:
-                data_dims = np.where(np.array(cube.shape) == lat.shape[0])[0]
-            else:
-                data_dims = [cube.shape.index(lat.shape[0]),
-                             cube.shape.index(lat.shape[1])]
-
-            cube.add_aux_coord(lat, data_dims=data_dims)
+            AllVars._add_coordinate(lat, cube)
 
         if 'longitude' not in coord_names:
             lon = iris.coords.AuxCoord(lons,
@@ -194,15 +190,19 @@ class AllVars(Fix):
                                        standard_name='longitude',
                                        units='degrees',
                                        coord_system=global_coord_sys)
-            if lon.shape[0] == lon.shape[1]:
-                data_dims = np.where(np.array(cube.shape) == lon.shape[0])[0]
-            else:
-                data_dims = [cube.shape.index(lon.shape[0]),
-                             cube.shape.index(lon.shape[1])]
-
-            cube.add_aux_coord(lon, data_dims=data_dims)
+            AllVars._add_coordinate(lon, cube)
 
         return cube
+
+    @staticmethod
+    def _add_coordinate(lat, cube):
+        if lat.shape[0] == lat.shape[1]:
+            data_dims = np.where(np.array(cube.shape) == lat.shape[0])[0]
+        else:
+            data_dims = [cube.shape.index(lat.shape[0]),
+                         cube.shape.index(lat.shape[1])]
+
+        cube.add_aux_coord(lat, data_dims=data_dims)
 
     @staticmethod
     def fix_coordinate_system(cube):
