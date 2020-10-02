@@ -3,16 +3,9 @@
 ###############################################################################
 ---
 
-# Diagnostics create plots? [true]/false
-write_plots: true
-# Diagnostics write NetCDF files? [true]/false
-write_netcdf: true
-# Set the console log level debug, [info], warning, error
 log_level: info
 # Exit on warning (only for NCL diagnostic scripts)? true/[false]
 exit_on_warning: false
-# Plot file format? [png]/pdf/ps/eps/epsi
-output_file_type: png
 # Destination directory
 output_dir: ./esmvaltool_output
 # Auxiliary data directory (used for some additional datasets)
@@ -85,8 +78,8 @@ profile_diagnostic: false
 #  CORDEX: /mnt/lustre02/work/ik1017/C3SCORDEX/data/c3s-cordex/output
 #  OBS: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
 #  OBS6: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-#  obs4mips: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS 
-#  ana4mips: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS 
+#  obs4mips: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
+#  ana4mips: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
 #drs:
 #  CMIP6: DKRZ
 #  CMIP5: DKRZ

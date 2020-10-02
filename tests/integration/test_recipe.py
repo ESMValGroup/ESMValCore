@@ -65,7 +65,6 @@ def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
     cfg['synda_download'] = False
-    cfg['output_file_type'] = 'png'
     cfg['check_level'] = CheckLevels.DEFAULT
     return cfg
 
@@ -1141,7 +1140,7 @@ def test_derive_with_optional_var_nodata(tmp_path,
 
 def create_test_image(basename, cfg):
     """Get a valid path for saving a diagnostic plot."""
-    image = Path(cfg['plot_dir']) / (basename + '.' + cfg['output_file_type'])
+    image = Path(cfg['plot_dir']) / (basename + '.png')
     image.parent.mkdir(parents=True)
     Image.new('RGB', (1, 1)).save(image)
     return str(image)

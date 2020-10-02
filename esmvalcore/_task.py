@@ -367,10 +367,7 @@ class DiagnosticTask(BaseTask):
             'run_dir',
             'plot_dir',
             'work_dir',
-            'output_file_type',
             'log_level',
-            'write_plots',
-            'write_netcdf',
         }
         settings = {'diag_script_info': {}, 'config_user_info': {}}
         for key, value in self.settings.items():
@@ -380,6 +377,13 @@ class DiagnosticTask(BaseTask):
                 settings['diag_script_info'][key] = value
             else:
                 settings[key] = value
+
+        # Still add deprecated keys to config_user_info to avoid
+        # crashing the diagnostic script that need this.
+        # TODO: remove in v2.3
+        for key in ('write_plots', 'write_netcdf', 'output_file_type'):
+            if key in self.settings:
+                settings['config_user_info'][key] = self.settings[key]
 
         write_ncl_settings(settings, filename)
 
@@ -549,15 +553,12 @@ class DiagnosticTask(BaseTask):
             'exit_on_ncl_warning',
             'input_files',
             'log_level',
-            'output_file_type',
             'plot_dir',
             'profile_diagnostic',
             'recipe',
             'run_dir',
             'version',
-            'write_netcdf',
             'write_ncl_interface',
-            'write_plots',
             'work_dir',
         )
         attrs = {

@@ -1242,14 +1242,21 @@ class Recipe:
             if self._cfg['write_ncl_interface']:
                 settings['exit_on_ncl_warning'] = self._cfg['exit_on_warning']
             for key in (
-                    'output_file_type',
                     'log_level',
-                    'write_plots',
-                    'write_netcdf',
                     'profile_diagnostic',
                     'auxiliary_data_dir',
             ):
                 settings[key] = self._cfg[key]
+
+            # Add deprecated settings from configuration file
+            # TODO: remove in v2.3
+            for key in (
+                'output_file_type',
+                'write_plots',
+                'write_netcdf',
+            ):
+                if key not in settings and key in self._cfg:
+                    settings[key] = self._cfg[key]
 
             scripts[script_name] = {
                 'script': script,

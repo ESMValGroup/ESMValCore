@@ -4,6 +4,7 @@ import logging
 import logging.config
 import os
 import time
+import warnings
 from pathlib import Path
 
 import yaml
@@ -44,6 +45,19 @@ def read_config_user_file(config_file, folder_name, options=None):
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
+    # TODO: remove in v2.3
+    for setting in ('write_plots', 'write_netcdf', 'output_file_type'):
+        if setting in cfg:
+            msg = (
+                f"Using '{setting}' in {config_file} is deprecated and will "
+                "be removed in ESMValCore version 2.3. For diagnostics "
+                "that support this setting, it should be set in the "
+                "diagnostic script section of the recipe instead. "
+                f"Remove the setting from {config_file} to get rid of this "
+                "warning message.")
+            print(f"Warning: {msg}")
+            warnings.warn(DeprecationWarning(msg))
+
     if options is None:
         options = dict()
     for key, value in options.items():
@@ -51,11 +65,8 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     # set defaults
     defaults = {
-        'write_plots': True,
-        'write_netcdf': True,
         'compress_netcdf': False,
         'exit_on_warning': False,
-        'output_file_type': 'png',
         'output_dir': 'esmvaltool_output',
         'auxiliary_data_dir': 'auxiliary_data',
         'save_intermediary_cubes': False,
@@ -121,7 +132,6 @@ def _normalize_path(path):
     -------
     str:
         Normalized path
-
     """
     if path is None:
         return None
