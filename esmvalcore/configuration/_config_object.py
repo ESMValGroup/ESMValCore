@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import yaml
@@ -79,12 +80,23 @@ def _load_user_config(filename: str, raise_exception: bool = True):
     config_orig = ESMValCoreConfig(config.copy())
 
 
+def get_user_config_location():
+    """Check if environment variable `ESMVALTOOL_CONFIG` exists, otherwise use
+    the default config location."""
+    try:
+        config_location = Path(os.environ['ESMVALTOOL_CONFIG'])
+    except KeyError:
+        config_location = USER_CONFIG_DIR / 'config-user.yml'
+
+    return config_location
+
+
 DEFAULT_CONFIG_DIR = Path(__file__).parent
 DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / 'config-default.yml'
 DEFAULT_DRS = DEFAULT_CONFIG_DIR / 'drs-default.yml'
 
 USER_CONFIG_DIR = Path.home() / '.esmvaltool'
-USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
+USER_CONFIG = get_user_config_location()
 
 # initialize placeholders
 config_default = ESMValCoreConfig()
