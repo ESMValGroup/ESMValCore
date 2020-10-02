@@ -2,7 +2,6 @@
 import contextlib
 import shutil
 import sys
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -59,89 +58,12 @@ def check(result_file):
     assert not missing
 
 
-SCRIPTS = {
-    # TODO: make independent from ESMValTool installation
-    #     'diagnostic.py':
-    #     dedent("""
-    #         import yaml
-    #         from esmvaltool.diag_scripts.shared import run_diagnostic
-    #
-    #         def main(cfg):
-    #             with open(cfg['setting_name'], 'w') as file:
-    #                 yaml.safe_dump(cfg, file)
-    #
-    #         if __name__ == '__main__':
-    #             with run_diagnostic() as config:
-    #                 main(config)
-    #         """),
-    'diagnostic.ncl':
-    dedent("""
-        begin
-            print("INFO    Loading settings from " + getenv("settings"))
-            loadscript("$settings")
-        end
-        print("INFO Writing " + diag_script_info@setting_name)
-        n = str_get_nl()
-        result = "run_dir: " + config_user_info@run_dir + n +\
-                 "work_dir: " + config_user_info@work_dir + n +\
-                 "plot_dir: " + config_user_info@plot_dir + n +\
-                 "log_level: " + config_user_info@log_level + n +\
-                 "input_files: []" + n
-
-        system("echo '" + result + "' > " + diag_script_info@setting_name)
-        """),
-    'diagnostic.R':
-    dedent("""
-        library(yaml)
-
-        args <- commandArgs(trailingOnly = TRUE)
-        print(paste0("INFO    Loading settings from ", args[1]))
-        settings <- yaml::read_yaml(args[1])
-
-        print(paste0("INFO    Writing settings to ", settings$setting_name))
-        yaml::write_yaml(settings, settings$setting_name)
-        """),
-    # TODO: make independent of YAML library
-    #     'diagnostic.jl':
-    #     dedent("""
-    #         import YAML
-    #         @info "Starting diagnostic script with" ARGS
-    #         config_file = ARGS[1]
-    #         cfg = YAML.load_file(config_file)
-    #         out_file = cfg["setting_name"]
-    #         @info "Copying file to" out_file
-    #         Base.Filesystem.cp(config_file, out_file)
-    #         @info "Done"
-    #     """),
-}
-
-
-def interpreter_not_installed(script):
+def interpreter_not_installed(interpreter):
     """Check if an interpreter is installed for script."""
-    interpreters = {
-        '.jl': 'julia',
-        '.ncl': 'ncl',
-        '.py': 'python',
-        '.R': 'Rscript',
-    }
-    ext = Path(script).suffix
-    interpreter = interpreters[ext]
     return shutil.which(interpreter) is None
 
 
-@pytest.mark.parametrize('script_file, script', [
-    pytest.param(
-        script_file,
-        script,
-        marks=[
-            pytest.mark.installation,
-            pytest.mark.xfail(interpreter_not_installed(script_file),
-                              run=False,
-                              reason="Interpreter not available"),
-        ],
-    ) for script_file, script in SCRIPTS.items()
-])
-def test_diagnostic_run(tmp_path, script_file, script):
+def diagnostic_run(tmp_path, script_file, script):
 
     recipe_file = tmp_path / 'recipe_test.yml'
     script_file = tmp_path / script_file
@@ -176,3 +98,88 @@ def test_diagnostic_run(tmp_path, script_file, script):
         run()
 
     check(result_file)
+
+
+@pytest.mark.installation
+@pytest.mark.xfail(interpreter_not_installed('ncl'),
+                   run=False,
+                   reason="Interpreter not available")
+def test_diagnostic_run_ncl(tmp_path):
+    script_file = 'diagnostic.ncl'
+    script = dedent("""
+        begin
+            print("INFO    Loading settings from " + getenv("settings"))
+            loadscript("$settings")
+        end
+        print("INFO Writing " + diag_script_info@setting_name)
+        n = str_get_nl()
+        result = "run_dir: " + config_user_info@run_dir + n +\
+                 "work_dir: " + config_user_info@work_dir + n +\
+                 "plot_dir: " + config_user_info@plot_dir + n +\
+                 "log_level: " + config_user_info@log_level + n +\
+                 "input_files: []" + n
+
+        system("echo '" + result + "' > " + diag_script_info@setting_name)
+        """)
+    diagnostic_run(tmp_path, script_file, script)
+
+
+@pytest.mark.installation
+@pytest.mark.xfail(interpreter_not_installed('Rscript'),
+                   run=False,
+                   reason="Interpreter not available")
+def test_diagnostic_run_R(tmp_path):
+    script_file = 'diagnostic.R'
+    script = dedent("""
+        library(yaml)
+
+        args <- commandArgs(trailingOnly = TRUE)
+        print(paste0("INFO    Loading settings from ", args[1]))
+        settings <- yaml::read_yaml(args[1])
+
+        print(paste0("INFO    Writing settings to ", settings$setting_name))
+        yaml::write_yaml(settings, settings$setting_name)
+    """)
+    diagnostic_run(tmp_path, script_file, script)
+
+
+@pytest.mark.skip(reason="TODO: make independent of YAML library")
+@pytest.mark.installation
+@pytest.mark.xfail(interpreter_not_installed('julia'),
+                   run=False,
+                   reason="Interpreter not available")
+def test_diagnostic_run_jl(tmp_path):
+    script_file = 'diagnostic.jl'
+    script = dedent("""
+        import YAML
+        @info "Starting diagnostic script with" ARGS
+        config_file = ARGS[1]
+        cfg = YAML.load_file(config_file)
+        out_file = cfg["setting_name"]
+        @info "Copying file to" out_file
+        Base.Filesystem.cp(config_file, out_file)
+        @info "Done"
+    """)
+    diagnostic_run(tmp_path, script_file, script)
+
+
+@pytest.mark.skip(reason="TODO: make independent from ESMValTool installation")
+@pytest.mark.installation
+@pytest.mark.xfail(interpreter_not_installed('python'),
+                   run=False,
+                   reason="Interpreter not available")
+def test_diagnostic_run_py(tmp_path):
+    script_file = 'diagnostic.py'
+    script = dedent("""
+    import yaml
+    from esmvaltool.diag_scripts.shared import run_diagnostic
+
+    def main(cfg):
+        with open(cfg['setting_name'], 'w') as file:
+            yaml.safe_dump(cfg, file)
+
+    if __name__ == '__main__':
+        with run_diagnostic() as config:
+            main(config)
+    """)
+    diagnostic_run(tmp_path, script_file, script)
