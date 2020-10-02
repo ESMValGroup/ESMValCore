@@ -116,6 +116,15 @@
             "affiliation": "Netherlands eScience Center",
             "name": "Kalverla, Peter",
             "orcid": "0000-0002-5025-7862"
+        },
+        {
+            "affiliation": "University of Bremen, Germany",
+            "name": "Galytska, Evgenia",
+            "orcid": "0000-0001-6575-1559"
+        },
+        {
+            "affiliation": "BSC, Spain",
+            "name": "Cos-Espuña, Pep"
         }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
