@@ -86,6 +86,21 @@
         {
             "affiliation": "BSC, Spain",
             "name": "Loosveldt-Tomas, Saskia"
+        },
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Smeets, Stef",
+            "orcid": "0000-0002-5413-9038"
+        },
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Camphuijsen, Jaro",
+            "orcid": "0000-0002-8928-7831"
+        },
+        {
+            "affiliation": "University of Bremen, Germany",
+            "name": "Gier, Bettina K.",
+            "orcid": "0000-0002-2928-8664"
         }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
