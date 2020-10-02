@@ -45,7 +45,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
-    # TODO: remove in v2.3
+    # DEPRECATED: remove in v2.3
     for setting in ('write_plots', 'write_netcdf', 'output_file_type'):
         if setting in cfg:
             msg = (
