@@ -3,6 +3,13 @@ from ..cmip5.fgoals_g2 import Cl as BaseCl
 from ..common import OceanFixGrid
 
 
+from ..common import ClFixmsftmzbasin, ClFixmsftyzbasin
+
+msftmz = ClFixmsftmzbasin
+msftyz = ClFixmsftyzbasin
+
+
+
 Cl = BaseCl
 
 

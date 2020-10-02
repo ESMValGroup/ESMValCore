@@ -1,6 +1,8 @@
 """Fixes for ACCESS-ESM1-5."""
-from ..common import ClFixHybridHeightCoord
+from ..common import ClFixHybridHeightCoord, ClFixmsftmzbasin, ClFixmsftyzbasin
 
+msftmz = ClFixmsftmzbasin
+msftyz = ClFixmsftyzbasin
 
 Cl = ClFixHybridHeightCoord
 

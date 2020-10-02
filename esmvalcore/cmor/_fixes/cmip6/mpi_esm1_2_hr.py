@@ -3,6 +3,9 @@ from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
+from ..common import  ClFixmsftmzbasin
+
+msftmz = ClFixmsftmzbasin
 
 Cl = ClFixHybridPressureCoord
 

@@ -2,6 +2,10 @@
 import numpy as np
 from ..fix import Fix
 
+from ..common import  ClFixmsftmzbasin
+
+msftmz = ClFixmsftmzbasin
+
 
 class Siconc(Fix):
     """Fixes for siconc."""

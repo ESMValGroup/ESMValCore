@@ -1,11 +1,18 @@
 """Fixes for MRI-ESM2-0 model."""
-from ..common import ClFixHybridPressureCoord
+from ..common import ClFixHybridHeightCoord, ClFixmsftyzbasin, ClFixmsftmzbasin
 
 
-Cl = ClFixHybridPressureCoord
+Cl = ClFixHybridHeightCoord
 
 
-Cli = ClFixHybridPressureCoord
+Cli = ClFixHybridHeightCoord
 
 
-Clw = ClFixHybridPressureCoord
+Clw = ClFixHybridHeightCoord
+
+
+msftyz = ClFixmsftyzbasin
+
+
+msftmz = ClFixmsftmzbasin
+
