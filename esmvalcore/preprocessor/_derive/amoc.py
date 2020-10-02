@@ -34,7 +34,7 @@ class DerivedVariable(DerivedVariableBase):
               Output AMOC cube.
         """
         # 0. Load the msft* cube.
-        print(cubes)
+        #print("Dervied AMOC",cubes)
         try:
             cube = cubes.extract_strict(
                 iris.Constraint(
@@ -48,15 +48,15 @@ class DerivedVariable(DerivedVariableBase):
             meridional = False
             lats = cube.coord('grid_latitude').points
 
+        #print("Dervied AMOC",cube.coord('region'))
         # 1: find the relevant region
         atl_constraint = iris.Constraint(region='atlantic_arctic_ocean')
         cube = cube.extract(constraint=atl_constraint)
+        #print("Dervied AMOC", 'cube:', cube)
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.)
         cube = cube.extract(constraint=depth_constraint)
-        print(cube)
-
 
         # 3: Find the latitude closest to 26N
         rapid_location = 26.5
