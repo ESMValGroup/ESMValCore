@@ -34,6 +34,7 @@ class DerivedVariable(DerivedVariableBase):
               Output AMOC cube.
         """
         # 0. Load the msft* cube.
+        print(cubes)
         try:
             cube = cubes.extract_strict(
                 iris.Constraint(
