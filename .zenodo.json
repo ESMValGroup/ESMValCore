@@ -145,6 +145,11 @@
             "affiliation": "Netherlands eScience Center",
             "name": "Alidoost, Sarah",
             "orcid": "0000-0001-8407-6472"
+        },
+        {
+            "affiliation": "Barcelona Supercomputing Center",
+            "name": "Jury, Martin",
+            "orcid": "0000-0003-0590-7843"
         }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
