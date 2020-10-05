@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from esmvalcore import __version__ as current_version
 from esmvalcore.configuration._config_validators import (
     _listify_validator,
     deprecate,
@@ -19,7 +20,6 @@ from esmvalcore.configuration._config_validators import (
     validate_string,
     validate_string_or_none,
 )
-# deprecate
 
 
 def generate_validator_testcases(valid):
@@ -27,12 +27,7 @@ def generate_validator_testcases(valid):
         {
             'validator': validate_bool,
             'success': ((True, True), (False, False)),
-            'fail': ((_, ValueError) for _ in (
-                'fail',
-                2,
-                -1,
-                [],
-            ))
+            'fail': ((_, ValueError) for _ in ('fail', 2, -1, []))
         },
         {
             'validator': validate_check_level,
@@ -127,17 +122,21 @@ def generate_validator_testcases(valid):
                 (1, 1),
                 (1.5, 1.5),
             ),
-            'fail': ((0, ValueError), (-1, ValueError), ('fail', TypeError)),
+            'fail': (
+                (0, ValueError),
+                (-1, ValueError),
+                ('fail', TypeError),
+            ),
         },
         {
             'validator':
-            _listify_validator(validate_string, n=2),
+            _listify_validator(validate_string),
             'success': (
                 ('', []),
                 ('a,b', ['a', 'b']),
-                ('fail', ['fail']),
-                ('fail, ', ['fail']),
-                ('fail, ,', ['fail']),
+                ('abc', ['abc']),
+                ('abc, ', ['abc']),
+                ('abc, ,', ['abc']),
                 (['a', 'b'], ['a', 'b']),
                 (('a', 'b'), ['a', 'b']),
                 (iter(['a', 'b']), ['a', 'b']),
@@ -179,3 +178,15 @@ def test_validator_valid(validator, arg, target):
 def test_validator_invalid(validator, arg, exception_type):
     with pytest.raises(exception_type):
         validator(arg)
+
+
+@pytest.mark.parametrize('version', (current_version, '0.0.1', '9.9.9'))
+def test_deprecate(version):
+    def test_func():
+        pass
+
+    # This always warns
+    with pytest.warns(UserWarning):
+        f = deprecate(test_func, 'test_var', version)
+
+    assert callable(f)
