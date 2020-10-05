@@ -137,6 +137,28 @@ class Tas(Fix):
         """
         return round_coordinates(cubes)
 
+class Pr(Fix):
+    """Fixes for pr."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata.
+
+        Some coordinate points vary for different files of this dataset (for
+        different time range). This fix removes these inaccuracies by rounding
+        the coordinates.
+
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        return round_coordinates(cubes)
+
 
 class Hur(Tas):
     """Fixes for hur."""
