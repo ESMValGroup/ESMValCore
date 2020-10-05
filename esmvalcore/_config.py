@@ -62,6 +62,15 @@ def read_config_user_file(config_file, folder_name, options=None):
         options = dict()
     for key, value in options.items():
         cfg[key] = value
+        # DEPRECATED: remove in v2.3
+        if key in ('write_plots', 'write_netcdf', 'output_file_type'):
+            msg = (
+                f"Setting '{key}' from the command line is deprecated and "
+                "will be removed in ESMValCore version 2.3. For diagnostics "
+                "that support this setting, it should be set in the "
+                "diagnostic script section of the recipe instead.")
+            print(f"Warning: {msg}")
+            warnings.warn(DeprecationWarning(msg))
 
     # set defaults
     defaults = {
@@ -76,6 +85,10 @@ def read_config_user_file(config_file, folder_name, options=None):
         'profile_diagnostic': False,
         'config_developer_file': None,
         'drs': {},
+        # DEPRECATED: remove default settings below in v2.3
+        'write_plots': True,
+        'write_netcdf': True,
+        'output_file_type': 'png',
     }
 
     for key in defaults:
