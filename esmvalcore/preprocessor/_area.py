@@ -99,7 +99,8 @@ def zonal_statistics(cube, operator):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'.
 
     Returns
     -------
@@ -133,7 +134,8 @@ def meridional_statistics(cube, operator):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'.
 
     Returns
     -------
@@ -224,6 +226,8 @@ def area_statistics(cube, operator, fx_variables=None):
     +------------+--------------------------------------------------+
     | `max`      | Maximum value                                    |
     +------------+--------------------------------------------------+
+    | `rms`      | Area weighted root mean square.                  |
+    +------------+--------------------------------------------------+
 
     Parameters
     ----------
@@ -231,7 +235,7 @@ def area_statistics(cube, operator, fx_variables=None):
             Input cube.
         operator: str
             The operation, options: mean, median, min, max, std_dev, sum,
-            variance
+            variance, rms.
         fx_variables: dict
             dictionary of field:filename for the fx_variables
 
@@ -335,7 +339,7 @@ def extract_named_regions(cube, regions):
 
 
 def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
-               end_latitude):
+               end_latitude, cmor_coords=True):
     """Crop cubes on a cartesian grid."""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
@@ -344,11 +348,19 @@ def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
         lon_bound = lon_coord.core_bounds()[0]
         lon_step = lon_bound[1] - lon_bound[0]
         start_longitude -= lon_step
-        if start_longitude < 0:
-            start_longitude = 0
+        if not cmor_coords:
+            if start_longitude < -180.:
+                start_longitude = -180.
+        else:
+            if start_longitude < 0:
+                start_longitude = 0
         end_longitude += lon_step
-        if end_longitude > 360:
-            end_longitude = 360.
+        if not cmor_coords:
+            if end_longitude > 180.:
+                end_longitude = 180.
+        else:
+            if end_longitude > 360:
+                end_longitude = 360.
         lat_bound = lat_coord.core_bounds()[0]
         lat_step = lat_bound[1] - lat_bound[0]
         start_latitude -= lat_step
@@ -371,6 +383,30 @@ def _select_representative_point(shape, lon, lat):
     nearest_lon, nearest_lat = nearest_point.coords[0]
     select = (lon == nearest_lon) & (lat == nearest_lat)
     return select
+
+
+def _correct_coords_from_shapefile(cube, cmor_coords,
+                                   pad_north_pole, pad_hawaii):
+    """Get correct lat and lon from shapefile."""
+    lon = cube.coord(axis='X').points
+    lat = cube.coord(axis='Y').points
+    if cube.coord(axis='X').ndim < 2:
+        lon, lat = np.meshgrid(lon, lat, copy=False)
+
+    if not cmor_coords:
+        # Wrap around longitude coordinate to match data
+        lon = lon.copy()  # ValueError: assignment destination is read-only
+        lon[lon >= 180.] -= 360.
+
+        # the NE mask may not have points at x = -180 and y = +/-90
+        # so we will fool it and apply the mask at (-179, -89, 89) instead
+        if pad_hawaii:
+            lon = np.where(lon == -180., lon + 1., lon)
+    if pad_north_pole:
+        lat_0 = np.where(lat == -90., lat + 1., lat)
+        lat = np.where(lat_0 == 90., lat_0 - 1., lat_0)
+
+    return lon, lat
 
 
 def _get_masks_from_geometries(geometries,
@@ -412,7 +448,10 @@ def _get_masks_from_geometries(geometries,
 
 
 def fix_coordinate_ordering(cube):
-    """ transpose the dimensions such that the order of dimension is
+    """
+    Transpose the dimensions.
+
+    This is done such that the order of dimension is
     in standard order, ie:
 
     [time] [shape_id] [other_coordinates] latitude longitude
@@ -456,7 +495,8 @@ def extract_shape(cube,
                   method='contains',
                   crop=True,
                   decomposed=False):
-    """Extract a region defined by a shapefile.
+    """
+    Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
     prime meridian or poles.
@@ -488,18 +528,30 @@ def extract_shape(cube,
     See Also
     --------
     extract_region : Extract a region from a cube.
-
     """
-
     with fiona.open(shapefile) as geometries:
 
-        if crop:
-            cube = _crop_cube(cube, *geometries.bounds)
+        # get parameters specific to the shapefile (NE used case
+        # eg longitudes [-180, 180] or latitude missing
+        # or overflowing edges)
+        cmor_coords = True
+        pad_north_pole = False
+        pad_hawaii = False
+        if geometries.bounds[0] < 0:
+            cmor_coords = False
+        if geometries.bounds[1] > -90. and geometries.bounds[1] < -85.:
+            pad_north_pole = True
+        if geometries.bounds[0] > -180. and geometries.bounds[0] < 179.:
+            pad_hawaii = True
 
-        lon = cube.coord(axis='X').points
-        lat = cube.coord(axis='Y').points
-        if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
-            lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+        if crop:
+            cube = _crop_cube(cube, *geometries.bounds,
+                              cmor_coords=cmor_coords)
+
+        lon, lat = _correct_coords_from_shapefile(cube,
+                                                  cmor_coords,
+                                                  pad_north_pole,
+                                                  pad_hawaii)
 
         selections = _get_masks_from_geometries(geometries,
                                                 lon,

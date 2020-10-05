@@ -109,7 +109,7 @@ def _add_cmor_info(variable, override=False):
         raise RecipeError(
             f"Unable to load CMOR table (project) '{project}' for variable "
             f"'{short_name}' with mip '{mip}'")
-
+    variable['original_short_name'] = table_entry.short_name
     for key in cmor_keys:
         if key not in variable or override:
             value = getattr(table_entry, key, None)
@@ -348,6 +348,8 @@ def _get_default_settings(variable, config_user, derive=False):
 
     # Configure saving cubes to file
     settings['save'] = {'compress': config_user['compress_netcdf']}
+    if variable['short_name'] != variable['original_short_name']:
+        settings['save']['alias'] = variable['short_name']
 
     return settings
 
@@ -628,9 +630,10 @@ def _update_statistic_settings(products, order, preproc_dir):
 
     some_product = next(iter(products))
     for statistic in some_product.settings[step]['statistics']:
+        check.valid_multimodel_statistic(statistic)
         attributes = _get_statistic_attributes(products)
         attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
-            statistic.title())
+            statistic.title().replace('.', '-'))
         attributes['filename'] = get_statistic_output_file(
             attributes, preproc_dir)
         common_settings = _get_remaining_common_settings(step, order, products)

@@ -5,7 +5,7 @@
 # conda build package -c conda-forge -c esmvalgroup
 
 # Package version number
-{% set version = "2.0.0b9" %}
+{% set version = "2.0.0" %}
 
 package:
   name: esmvalcore
@@ -36,7 +36,6 @@ requirements:
   run:
     # esmvaltool
     - python>=3.6
-    - libunwind  # specifically for Python3.7+
     - graphviz
     - iris>=2.2.1
     - python-stratify
@@ -45,6 +44,7 @@ requirements:
     - cython  # required by cf-units but not automatically installed
     - esmpy
     - fiona
+    - fire
     - nc-time-axis
     - netCDF4
     - numba
@@ -54,17 +54,34 @@ requirements:
     - pydot
     - pyyaml
     - shapely
-    - yamale  # in esmvalgroup channel
+    - yamale==2.*  # in esmvalgroup channel
 
 test:
-  # TODO: add unit tests? This seems to require installing the tests
+  source_files:
+    - tests
+    - setup.cfg
+  requires:
+    - pytest>=3.9,!=6.0.0rc1,!=6.0.0
+    - pytest-cov
+    - pytest-env
+    - pytest-flake8
+    - pytest-html!=2.1.0
+    - pytest-metadata>=1.5.1
+    - pytest-mock
+    - pytest-xdist
+    - r-yaml
+    - ncl
+  commands:
+    - pytest -n 2 --ignore=run_test.py
+    - esmvaltool -- --help
+    - esmvaltool version
   imports:
     - esmvalcore
     - esmvalcore.cmor
+    - esmvalcore.cmor.check
+    - esmvalcore.cmor.fix
     - esmvalcore.preprocessor
 
-  commands:
-    - esmvaltool -h
 
 about:
   home: https://www.esmvaltool.org

@@ -59,7 +59,8 @@ Overview
 The ESMValTool preprocessor can be used to perform a broad range of operations
 on the input data before diagnostics or metrics are applied. The preprocessor
 performs these operations in a centralized, documented and efficient way, thus
-reducing the data processing load on the diagnostics side.
+reducing the data processing load on the diagnostics side.  For an overview of
+the preprocessor structure see the :ref:`Preprocessors`.
 
 Each of the preprocessor operations is written in a dedicated python module and
 all of them receive and return an Iris `cube
@@ -647,8 +648,10 @@ to observational data, these biases have a significantly lower statistical
 impact when using a multi-model ensemble. ESMValTool has the capability of
 computing a number of multi-model statistical measures: using the preprocessor
 module ``multi_model_statistics`` will enable the user to ask for either a
-multi-model ``mean``, ``median``, ``max``, ``min`` and / or ``std`` with a set
-of argument parameters passed to ``multi_model_statistics``.
+multi-model ``mean``, ``median``, ``max``, ``min``, ``std``, and / or
+``pXX.YY`` with a set of argument parameters passed to
+``multi_model_statistics``. Percentiles can be specified like ``p1.5`` or
+``p95``. The decimal point will be replaced by a dash in the output file.
 
 Note that current multimodel statistics in ESMValTool are local (not global),
 and are computed along the time axis. As such, can be computed across a common
@@ -674,7 +677,7 @@ dimensionality higher than four: time, vertical axis, two horizontal axes).
 
 see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
-When calling the module inside diagnostic scripts, the input must be given 
+When calling the module inside diagnostic scripts, the input must be given
 as a list of cubes. The output will be saved in a dictionary where each
 entry contains the resulting cube with the requested statistic operations.
 
@@ -795,7 +798,7 @@ This function produces statistics for each day in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
@@ -808,7 +811,7 @@ This function produces statistics for each month in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 
@@ -828,7 +831,7 @@ December and remove such biased initial datapoints.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
@@ -841,7 +844,7 @@ This function produces statistics for each year.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.annual_statistics`.
 
@@ -854,7 +857,7 @@ This function produces statistics for each decade.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 
@@ -868,7 +871,7 @@ This function produces statistics for the whole dataset. It can produce scalars
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',
-      'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
     * period: define the granularity of the statistics: get values for the
       full period, for each month or day of year.
@@ -997,7 +1000,7 @@ Parameters:
     * filter_type: the type of filter to be applied; default 'lowpass'.
       Available types: 'lowpass'.
     * filter_stats: the type of statistic to aggregate on the rolling window;
-      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'.
 
 Examples:
     * Lowpass filter with a monthly mean as operator:
@@ -1124,7 +1127,7 @@ Parameters:
 The function calculates the zonal statistics by applying an operator
 along the longitude coordinate. This function takes one argument:
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
 
 See also :func:`esmvalcore.preprocessor.zonal_means`.
 
@@ -1136,7 +1139,7 @@ The function calculates the meridional statistics by applying an
 operator along the latitude coordinate. This function takes one
 argument:
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
 
 See also :func:`esmvalcore.preprocessor.meridional_means`.
 
@@ -1149,7 +1152,7 @@ areas of the region. This function takes the argument, ``operator``: the name
 of the operation to apply.
 
 This function can be used to apply several different operations in the
-horizontal plane: mean, standard deviation, median variance, minimum and maximum.
+horizontal plane: mean, standard deviation, median, variance, minimum, maximum and root mean square.
 
 Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be

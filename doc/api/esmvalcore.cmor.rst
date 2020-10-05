@@ -8,10 +8,15 @@ Checking compliance
 
 .. automodule:: esmvalcore.cmor.check
 
-Fixing issues 
--------------
+Automatically fixing issues
+---------------------------
 
 .. automodule:: esmvalcore.cmor.fix
+
+Functions for fixing issues
+---------------------------
+
+.. automodule:: esmvalcore.cmor.fixes
 
 Using CMOR tables
 -----------------

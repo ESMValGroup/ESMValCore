@@ -172,15 +172,13 @@ def get_time_weights(cube):
         Array of time weights for averaging.
     """
     time = cube.coord('time')
-    time_thickness = time.bounds[..., 1] - time.bounds[..., 0]
-
-    # The weights need to match the dimensionality of the cube.
-    slices = [None for i in cube.shape]
-    coord_dim = cube.coord_dims('time')[0]
-    slices[coord_dim] = slice(None)
-    time_thickness = np.abs(time_thickness[tuple(slices)])
-    ones = np.ones_like(cube.data)
-    time_weights = time_thickness * ones
+    time_weights = time.bounds[..., 1] - time.bounds[..., 0]
+    time_weights = time_weights.squeeze()
+    if time_weights.shape == ():
+        time_weights = da.broadcast_to(time_weights, cube.shape)
+    else:
+        time_weights = iris.util.broadcast_to_shape(time_weights, cube.shape,
+                                                    cube.coord_dims('time'))
     return time_weights
 
 
@@ -197,7 +195,8 @@ def daily_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'
 
     Returns
     -------
@@ -230,7 +229,8 @@ def monthly_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'
 
     Returns
     -------
@@ -260,7 +260,8 @@ def seasonal_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'
 
     Returns
     -------
@@ -315,7 +316,8 @@ def annual_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'
 
     Returns
     -------
@@ -347,7 +349,8 @@ def decadal_statistics(cube, operator='mean'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'
 
     Returns
     -------
@@ -386,7 +389,8 @@ def climate_statistics(cube, operator='mean', period='full'):
 
     operator: str, optional
         Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'
 
     period: str, optional
         Period to compute the statistic over.
@@ -404,9 +408,14 @@ def climate_statistics(cube, operator='mean', period='full'):
         operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
             time_weights = get_time_weights(cube)
-            cube = cube.collapsed('time',
-                                  operator_method,
-                                  weights=time_weights)
+            if time_weights.min() == time_weights.max():
+                # No weighting needed.
+                cube = cube.collapsed('time',
+                                      operator_method)
+            else:
+                cube = cube.collapsed('time',
+                                      operator_method,
+                                      weights=time_weights)
         else:
             cube = cube.collapsed('time', operator_method)
         return cube
@@ -468,6 +477,7 @@ def anomalies(cube, period, reference=None, standardize=False):
             cube_stddev = climate_statistics(
                 cube, operator='std_dev', period=period)
             cube = cube / cube_stddev
+            cube.units = '1'
         return cube
 
     cube = _compute_anomalies(cube, reference, period)
@@ -487,6 +497,7 @@ def anomalies(cube, period, reference=None, standardize=False):
             )
         cube.data = cube.core_data() / da.concatenate(
             [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
+        cube.units = '1'
     return cube
 
 
@@ -673,7 +684,8 @@ def timeseries_filter(cube, window, span,
         Available types: 'lowpass'.
     filter_stats: str, optional
         Type of statistic to aggregate on the rolling window; default 'sum'.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
+        'max', 'rms'
 
     Returns
     -------
