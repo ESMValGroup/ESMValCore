@@ -49,10 +49,11 @@ In this case, the recipe will limit the number of datasets per variable to
 NDATASETS and the total amount of years loaded to NYEARS. They can also be used
 separately.
 
+To run a recipe, even if some datasets are not available, use
 
 .. code:: bash
 
-    esmvaltool run --skip_nonexistent=True recipe_python.yml SKIP_NONEXISTENT
+    esmvaltool run --skip_nonexistent=True recipe_python.yml
 
 
 If Synda is installed (see http://prodiguer.github.io/synda/), it is possible
@@ -61,7 +62,7 @@ available locally:
 
 .. code:: bash
 
-    esmvaltool run --synda_download True recipe_python.yml
+    esmvaltool run --synda_download=True recipe_python.yml
 
 It is also possible to select only specific diagnostics to be run. To tun only
 one, just specify its name. To provide more than one diagnostic to filter use
