@@ -112,7 +112,7 @@ def validate_path(value, allow_none=False):
 
 def validate_positive(value):
     """Check if number is positive."""
-    if value < 0:
+    if value is not None and value <= 0:
         raise ValueError(f'Expected a positive number, but got {value}')
     return value
 
@@ -134,7 +134,6 @@ validate_stringlist = _listify_validator(validate_string,
 validate_int = _make_type_validator(int)
 validate_int_or_none = _make_type_validator(int, allow_none=True)
 validate_float = _make_type_validator(float)
-validate_float_or_none = _make_type_validator(float, allow_none=True)
 validate_floatlist = _listify_validator(validate_float,
                                         doc='return a list of floats')
 
@@ -146,30 +145,28 @@ validate_pathlist = _listify_validator(validate_path,
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(validate_int_positive,
                                                      allow_none=True)
-validate_dict = _make_type_validator(dict)
-
-
-def validate_positive(value):
-    """Reject negative values."""
-    if value is not None and value < 1:
-        raise ValueError(f"Must be larger be larger than 0. Got {value}.")
-    return value
 
 
 def validate_check_level(value):
     from ..cmor.check import CheckLevels
 
     if isinstance(value, str):
-        return CheckLevels[value.upper()]
+        try:
+            value = CheckLevels[value.upper()]
+        except KeyError:
+            raise ValueError(f'`{value}` is not a valid strictness level')
 
-    return CheckLevels(value)
+    else:
+        value = CheckLevels(value)
+
+    return value
 
 
 def validate_diagnostics(diagnostics):
     from .._recipe import TASKSEP
 
     if isinstance(diagnostics, str):
-        diagnostics = diagnostics.split(' ')
+        diagnostics = diagnostics.strip().split(' ')
     return {
         pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
         for pattern in diagnostics or ()
