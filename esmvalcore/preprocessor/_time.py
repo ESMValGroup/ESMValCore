@@ -293,7 +293,7 @@ def seasonal_statistics(cube, operator='mean',
 
     if any([len(sea) < 2 for sea in seasons]):
         raise ValueError(
-            f"Minimum of 2 month is required per Seasons: {seasonsl}.")
+            f"Minimum of 2 month is required per Seasons: {seasons}.")
 
     if not cube.coords('clim_season'):
         iris.coord_categorisation.add_season(
