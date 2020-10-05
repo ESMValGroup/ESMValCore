@@ -231,7 +231,7 @@ validate_drslist = _listify_validator(validate_drs,
                                       doc='Return a list of drs mappings')
 
 
-def validate_project(value, name):
+def validate_project_data(value, name):
     """Validate block with project settings (i.e. CMIP5) from the config file.
 
     Returns an instance of `ProjectData`.
@@ -282,14 +282,14 @@ _validators = {
     'write_ncl_interface': validate_bool,
 
     # projects
-    'CMIP6': partial(validate_project, name='CMIP6'),
-    'CMIP5': partial(validate_project, name='CMIP5'),
-    'CMIP3': partial(validate_project, name='CMIP3'),
-    'OBS': partial(validate_project, name='OBS'),
-    'OBS6': partial(validate_project, name='OBS6'),
-    'native6': partial(validate_project, name='native6'),
-    'obs4mips': partial(validate_project, name='obs4mips'),
-    'ana4mips': partial(validate_project, name='ana4mips'),
-    'EMAC': partial(validate_project, name='EMAC'),
-    'CORDEX': partial(validate_project, name='CORDEX'),
+    'CMIP6': partial(validate_project_data, name='CMIP6'),
+    'CMIP5': partial(validate_project_data, name='CMIP5'),
+    'CMIP3': partial(validate_project_data, name='CMIP3'),
+    'OBS': partial(validate_project_data, name='OBS'),
+    'OBS6': partial(validate_project_data, name='OBS6'),
+    'native6': partial(validate_project_data, name='native6'),
+    'obs4mips': partial(validate_project_data, name='obs4mips'),
+    'ana4mips': partial(validate_project_data, name='ana4mips'),
+    'EMAC': partial(validate_project_data, name='EMAC'),
+    'CORDEX': partial(validate_project_data, name='CORDEX'),
 }

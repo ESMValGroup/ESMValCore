@@ -4,12 +4,16 @@ import numpy as np
 import pytest
 
 from esmvalcore import __version__ as current_version
+from esmvalcore._projects import ProjectData
+from esmvalcore.configuration._config_object import ESMValCoreConfig
 from esmvalcore.configuration._config_validators import (
     _listify_validator,
+    BaseDRS,
     deprecate,
     validate_bool,
     validate_check_level,
     validate_diagnostics,
+    validate_drs,
     validate_float,
     validate_int,
     validate_int_or_none,
@@ -17,12 +21,19 @@ from esmvalcore.configuration._config_validators import (
     validate_path,
     validate_path_or_none,
     validate_positive,
+    validate_project_data,
     validate_string,
     validate_string_or_none,
 )
+from esmvalcore.configuration._validated_config import InvalidConfigParameter
 
 
 def generate_validator_testcases(valid):
+    # The code for this function was taken from matplotlib (v3.3) and modified
+    # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
+    # the the 'Python Software Foundation License'
+    # (https://www.python.org/psf/license)
+
     validation_tests = (
         {
             'validator': validate_bool,
@@ -190,3 +201,98 @@ def test_deprecate(version):
         f = deprecate(test_func, 'test_var', version)
 
     assert callable(f)
+
+
+def test_validate_drs():
+    mapping = {
+        'rootpath': 'rootpath_name',
+        'input_dir': 'input_dir_name',
+        'input_file': 'input_file_name',
+    }
+
+    drs = validate_drs(mapping)
+    assert isinstance(drs, BaseDRS)
+
+
+def test_validate_project_data():
+    params = {
+        'name':
+        'project_name',
+        'output_file':
+        'output_file_name',
+        'data': [
+            {
+                'rootpath': 'rootpath_name1',
+                'input_dir': 'input_dir_name1',
+                'input_file': 'input_file_name1',
+            },
+            {
+                'rootpath': 'rootpath_name2',
+                'input_dir': 'input_dir_name2',
+                'input_file': 'input_file_name2',
+            },
+        ]
+    }
+
+    project_data = validate_project_data(params, 'pytest')
+    assert isinstance(project_data, ProjectData)
+
+    project_data = validate_project_data(project_data, 'pytest')
+    assert isinstance(project_data, ProjectData)
+
+
+# def test_Config_class():
+#     pass
+# #     rc = mpl.RcParams({'font.cursive': ['Apple Chancery',
+# #                                         'Textile',
+# #                                         'Zapf Chancery',
+# #                                         'cursive'],
+# #                        'font.family': 'sans-serif',
+# #                        'font.weight': 'normal',
+# #                        'font.size': 12})
+
+# #     expected_repr = """
+# # RcParams({'font.cursive': ['Apple Chancery',
+# #                            'Textile',
+# #                            'Zapf Chancery',
+# #                            'cursive'],
+# #           'font.family': ['sans-serif'],
+# #           'font.size': 12.0,
+# #           'font.weight': 'normal'})""".lstrip()
+
+# #     assert expected_repr == repr(rc)
+
+# #     expected_str = """
+# # font.cursive: ['Apple Chancery', 'Textile', 'Zapf Chancery', 'cursive']
+# # font.family: ['sans-serif']
+# # font.size: 12.0
+# # font.weight: normal""".lstrip()
+
+# #     assert expected_str == str(rc)
+
+# #     # test the find_all functionality
+# #     assert ['font.cursive', 'font.size'] == sorted(rc.find_all('i[vz]'))
+# #     assert ['font.family'] == list(rc.find_all('family'))
+
+
+def test_config_update():
+    config = ESMValCoreConfig({'output_dir': 'directory'})
+    fail_dict = {'output_dir': 123}
+
+    with pytest.raises(InvalidConfigParameter):
+        config.update(fail_dict)
+
+
+def test_config_init():
+    config = ESMValCoreConfig()
+    assert isinstance(config, dict)
+
+
+def test_session():
+    config = ESMValCoreConfig({'output_dir': 'config'})
+
+    session = config.start_session('recipe_name')
+    assert session == config
+
+    session['output_dir'] = 'session'
+    session != config
