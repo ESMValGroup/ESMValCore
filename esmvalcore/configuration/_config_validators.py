@@ -9,7 +9,7 @@ def _make_type_validator(cls, *, allow_none=False):
     """Return a validator that converts inputs to *cls* or raises (and possibly
     allows ``None`` as well)."""
 
-    # The code for this function was take from matplotlib (v3.3) and modified
+    # The code for this function was taken from matplotlib (v3.3) and modified
     # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
     # the the 'Python Software Foundation License'
     # (https://www.python.org/psf/license)
@@ -43,7 +43,7 @@ def _listify_validator(scalar_validator,
                        doc=None):
     """Apply the validator to a list."""
 
-    # The code for this function was take from matplotlib (v3.3) and modified
+    # The code for this function was taken from matplotlib (v3.3) and modified
     # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
     # the the 'Python Software Foundation License'
     # (https://www.python.org/psf/license)
