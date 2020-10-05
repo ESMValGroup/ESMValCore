@@ -27,7 +27,7 @@ from pathlib import Path
 import fire
 from pkg_resources import iter_entry_points
 
-from . import config, session
+from . import config
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ ______________________________________________________________________
 """ + __doc__
 
 
-def process_recipe(recipe_file):
+def process_recipe(recipe_file, session):
     """Process recipe."""
     import datetime
     import shutil
@@ -94,7 +94,7 @@ def process_recipe(recipe_file):
     shutil.copy2(recipe_file, session.run_dir)
 
     # parse recipe
-    recipe = read_recipe_file(recipe_file)
+    recipe = read_recipe_file(recipe_file, cfg=session)
     logger.debug("Recipe summary:\n%s", recipe)
 
     # run
@@ -313,7 +313,7 @@ class ESMValTool():
         import os
         import shutil
 
-        from . import config, session
+        from . import config
         from ._config import DIAGNOSTICS_PATH, configure_logging
 
         if config_file:
@@ -330,12 +330,12 @@ class ESMValTool():
         recipe_name = recipe.stem
 
         # init and create run dir
-        session.init_session_dir(recipe_name)
+        session = config.start_session(recipe_name)
         session.run_dir.mkdir(parents=True)
 
         # configure logging
         log_files = configure_logging(output_dir=str(session.run_dir),
-                                      console_log_level=config['log_level'])
+                                      console_log_level=session['log_level'])
 
         # log header
         logger.info(HEADER)
@@ -345,26 +345,26 @@ class ESMValTool():
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
         # Update config with CLI options
-        config['skip-nonexistent'] = skip_nonexistent
-        config['diagnostics'] = diagnostics
-        config['check_level'] = check_level
-        config['synda_download'] = synda_download
-        config['max_datasets'] = max_datasets
-        config['max_years'] = max_years
+        session['skip-nonexistent'] = skip_nonexistent
+        session['diagnostics'] = diagnostics
+        session['check_level'] = check_level
+        session['synda_download'] = synda_download
+        session['max_datasets'] = max_datasets
+        session['max_years'] = max_years
 
         # Add additional command line arguments to config
-        config.update(kwargs)
+        session.update(kwargs)
 
         resource_log = session.run_dir / 'resource_usage.txt'
 
         from ._task import resource_usage_logger
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
-            process_recipe(recipe_file=recipe)
+            process_recipe(recipe_file=recipe, session=session)
 
-        if session.preproc_dir.exists() and config["remove_preproc_dir"]:
+        if session.preproc_dir.exists() and session["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
-            logger.info("set remove_preproc_dir to false in config-user.yml")
+            logger.info("set `remove_preproc_dir: False` in `config-user.yml`")
             shutil.rmtree(session.preproc_dir)
         logger.info("Run was successful")
 
@@ -373,7 +373,7 @@ def run():
     """Run the `esmvaltool` program, logging any exceptions."""
     import sys
 
-    # Workaroud to avoid using more for the output
+    # Work-around to avoid using more for the output
 
     def display(lines, out):
         text = "\n".join(lines) + "\n"

@@ -5,8 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from .._session import session
-from ._config_object import DEFAULT_CONFIG_DIR
+from ._config_object import DEFAULT_CONFIG_DIR, USER_CONFIG_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ def get_user_path(filename, destination=None, overwrite=False):
     specified filename instead.
     """
     if not destination:
-        destination = session.config_dir / filename
+        destination = USER_CONFIG_DIR / filename
     else:
         destination = Path(destination).expanduser() / filename
 
@@ -101,10 +100,8 @@ def list_available_configs():
     """List available default/site-specific configs."""
     pre = '- '
 
-    user_config_folder = session.config_dir
-
     base_configs = sorted(DEFAULT_CONFIG_DIR.glob('drs-*.yml'))
-    user_configs = sorted(user_config_folder.glob('*.yml'))
+    user_configs = sorted(USER_CONFIG_DIR.glob('*.yml'))
 
     print('# Available site-specific configs')
     print('# Use `esmvaltool config get CONFIG_NAME` to copy them')
@@ -116,7 +113,7 @@ def list_available_configs():
     if not user_configs:
         return
 
-    print(f'# Available configs in {user_config_folder}')
+    print(f'# Available configs in {USER_CONFIG_DIR}')
     print('# Select config with '
           '`esmvaltool run <recipe> --config_file=CONFIG_FILE`')
     for path in user_configs:

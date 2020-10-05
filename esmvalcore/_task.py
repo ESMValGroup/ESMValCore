@@ -22,7 +22,6 @@ import yaml
 from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
-from ._session import session
 
 logger = logging.getLogger(__name__)
 
@@ -347,7 +346,7 @@ class DiagnosticTask(BaseTask):
 
     def write_settings(self):
         """Write settings to file."""
-        run_dir = session.run_dir
+        run_dir = self.settings['run_dir']
         run_dir.mkdir(parents=True, exist_ok=True)
 
         filename = run_dir / 'settings.yml'
@@ -370,7 +369,7 @@ class DiagnosticTask(BaseTask):
 
     def _write_ncl_settings(self):
         """Write settings to NCL file."""
-        filename = session.run_dir / 'settings.ncl'
+        filename = self.settings['run_dir'] / 'settings.ncl'
 
         config_user_keys = {
             'run_dir',
@@ -438,9 +437,10 @@ class DiagnosticTask(BaseTask):
 
     def _start_diagnostic_script(self, cmd, env):
         """Start the diagnostic script."""
+        cwd = str(self.settings['run_dir'])
+
         logger.info("Running command %s", cmd)
         logger.debug("in environment\n%s", pprint.pformat(env))
-        cwd = str(self.settings['run_dir'])
         logger.debug("in current working directory: %s", cwd)
         logger.info("Writing output to %s", self.output_dir)
         logger.info("Writing plots to %s", self.settings['plot_dir'])

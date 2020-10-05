@@ -12,7 +12,7 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from . import config, session
+from . import config
 from ._config import TAGS, get_activity, get_institutes, replace_tags
 from ._data_finder import (get_input_filelist, get_output_file,
                            get_statistic_output_file)
@@ -66,10 +66,15 @@ def load_raw_recipe(filename):
     return raw_recipe
 
 
-def read_recipe_file(filename, initialize_tasks=True):
+def read_recipe_file(filename, cfg=None, initialize_tasks=True):
     """Read a recipe from file."""
     raw_recipe = load_raw_recipe(filename)
-    return Recipe(raw_recipe, initialize_tasks, recipe_file=filename)
+    return Recipe(
+        raw_recipe,
+        cfg=cfg,
+        initialize_tasks=initialize_tasks,
+        recipe_file=filename,
+    )
 
 
 def _get_value(key, datasets):
@@ -272,7 +277,7 @@ def _get_default_settings(variable, config_user, derive=False):
     # Set up downloading using synda if requested.
     if config_user['synda_download']:
         # TODO: make this respect drs or download to preproc dir?
-        download_folder = str(session.preproc_dir /
+        download_folder = str(config_user.preproc_dir /
                               'downloads')  # TODO: pathlib.Path
         settings['download'] = {
             'dest_folder': download_folder,
@@ -526,7 +531,7 @@ def _get_input_files(variable, config_user):
 
     synda_download = config_user['synda_download']
     project = variable['project']
-    project_data = config[project]
+    project_data = config_user[project]
 
     (input_files, dirnames,
      filenames) = get_input_filelist(variable=variable,
@@ -619,7 +624,7 @@ def _update_multi_dataset_settings(variable, settings):
         _exclude_dataset(settings, variable, step)
 
 
-def _update_statistic_settings(products, order):
+def _update_statistic_settings(products, order, config_user):
     """Define statistic output products."""
     # TODO: move this to multi model statistics function?
     # But how to check, with a dry-run option?
@@ -635,7 +640,7 @@ def _update_statistic_settings(products, order):
         attributes = _get_statistic_attributes(products)
         attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
             statistic.title().replace('.', '-'))
-        filename = str(session.preproc_dir /
+        filename = str(config_user.preproc_dir /
                        get_statistic_output_file(attributes))
         attributes['filename'] = filename
         common_settings = _get_remaining_common_settings(step, order, products)
@@ -701,7 +706,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     """
     products = set()
     for variable in variables:
-        filename = str(session.preproc_dir / get_output_file(variable))
+        filename = str(config_user.preproc_dir / get_output_file(variable))
         variable['filename'] = filename
 
     if ancestor_products:
@@ -748,7 +753,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
         products.add(product)
 
-    _update_statistic_settings(products, order)
+    _update_statistic_settings(products, order, config_user=config_user)
 
     for product in products:
         product.check()
@@ -928,9 +933,15 @@ class Recipe:
     info_keys = ('project', 'activity', 'dataset', 'exp', 'ensemble',
                  'version')
     """List of keys to be used to compose the alias, ordered by priority."""
-    def __init__(self, raw_recipe, initialize_tasks=True, recipe_file=None):
+    def __init__(
+        self,
+        raw_recipe,
+        cfg,
+        initialize_tasks=True,
+        recipe_file=None,
+    ):
         """Parse a recipe file into an object."""
-        self._cfg = deepcopy(config)
+        self._cfg = cfg
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
         self._filename = os.path.basename(recipe_file)
@@ -1230,11 +1241,11 @@ class Recipe:
             settings['script'] = script_name
             # Add output dirs to settings
 
-            settings['run_dir'] = (session.run_dir / diagnostic_name /
+            settings['run_dir'] = (self._cfg.run_dir / diagnostic_name /
                                    script_name)
-            settings['plot_dir'] = (session.plot_dir / diagnostic_name /
+            settings['plot_dir'] = (self._cfg.plot_dir / diagnostic_name /
                                     script_name)
-            settings['work_dir'] = (session.work_dir / diagnostic_name /
+            settings['work_dir'] = (self._cfg.work_dir / diagnostic_name /
                                     script_name)
 
             # Copy other settings

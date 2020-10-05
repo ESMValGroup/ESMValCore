@@ -68,7 +68,8 @@ def config_user(tmp_path):
     cfg['synda_download'] = False
     cfg['output_file_type'] = 'png'
     cfg['check_level'] = CheckLevels.DEFAULT
-    return cfg
+    session = cfg.start_session('pytest')
+    return session
 
 
 def create_test_file(filename, tracking_id=None):
@@ -193,7 +194,7 @@ def get_recipe(tempdir, content, cfg):
     # Add mandatory documentation section
     content = str(DEFAULT_DOCUMENTATION + content)
     recipe_file.write_text(content)
-    recipe = read_recipe_file(str(recipe_file), cfg)
+    recipe = read_recipe_file(str(recipe_file), cfg=cfg)
 
     return recipe
 

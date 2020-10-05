@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -23,6 +24,61 @@ class ESMValCoreConfig(ValidatedConfig):
                 raise FileNotFoundError(f'No such file: `{filename}`')
 
         _load_user_config(path)
+
+    def start_session(self, name):
+        return Session(name, self.copy())
+
+
+class Session(ValidatedConfig):
+    """This class holds information about the current session. Different
+    session directories can be accessed.
+
+    Parameters
+    ----------
+    name : str
+        Name of the session to initialize, for example, the name of the
+        recipe (default='session').
+    """
+    validate = _validators
+
+    def __init__(self, name: str = 'session', *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_session_dir(name)
+
+    def init_session_dir(self, name: str = 'session'):
+        """Initialize session.
+
+        The `name` is used to name the working directory, e.g.
+        `recipe_example_20200916/`. If no name is given, such as in an
+        interactive session, defaults to `session`.
+        """
+        now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        session_name = f"{name}_{now}"
+        self._session_dir = self['output_dir'] / session_name
+
+    @property
+    def session_dir(self):
+        return self._session_dir
+
+    @property
+    def preproc_dir(self):
+        return self.session_dir / 'preproc'
+
+    @property
+    def work_dir(self):
+        return self.session_dir / 'work'
+
+    @property
+    def plot_dir(self):
+        return self.session_dir / 'plots'
+
+    @property
+    def run_dir(self):
+        return self.session_dir / 'run'
+
+    @property
+    def config_dir(self):
+        return USER_CONFIG_DIR
 
 
 def read_config_file(config_file):
