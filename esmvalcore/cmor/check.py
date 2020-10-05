@@ -411,6 +411,11 @@ class CMORCheck():
                 level.generic_level = True
                 self._cmor_var.coordinates[coordinate.name] = level
                 self._cmor_var.coordinates.pop(key)
+                self.report_debug_message(
+                    f'Generic level coordinate {key} '
+                    'will be checked against '
+                    f'{coordinate.name} coordinate information'
+                )
             else:
                 if coordinate.out_name:
                     self.report_critical(
