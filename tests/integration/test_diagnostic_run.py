@@ -18,16 +18,18 @@ def write_config_user_file(dirname):
         'CMIP5': {
             'data': [{
                 'input_dir':
-                '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}',
+                ('{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}'
+                 '/{mip}/{ensemble}/{latestversion}/{short_name}'),
                 'input_file':
                 '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc',
-                'rootpath': '~/data/CMIP5',
+                'rootpath':
+                '~/data/CMIP5',
             }],
             'output_file':
             '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}',
         },
         'log_level': 'debug',
-        'max_parallel_tasks': 1,
+        # 'max_parallel_tasks': 1,
     }
     config_file.write_text(yaml.safe_dump(cfg, encoding=None))
     return str(config_file)
@@ -128,7 +130,7 @@ def test_diagnostic_run_ncl(tmp_path):
 @pytest.mark.xfail(interpreter_not_installed('Rscript'),
                    run=False,
                    reason="Interpreter not available")
-def test_diagnostic_run_R(tmp_path):
+def test_diagnostic_run_r(tmp_path):
     script_file = 'diagnostic.R'
     script = dedent("""
         library(yaml)
