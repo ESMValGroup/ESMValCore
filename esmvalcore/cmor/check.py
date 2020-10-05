@@ -409,8 +409,9 @@ class CMORCheck():
                     )
                 level = coordinate.generic_lev_coords[coordinate.name]
                 level.generic_level = True
-                self._cmor_var.coordinates[coordinate.name] = level
-                self._cmor_var.coordinates.pop(key)
+                level.generic_lev_coords = self._cmor_var.coordinates[
+                    key].generic_lev_coords
+                self._cmor_var.coordinates[key] = level
                 self.report_debug_message(
                     f'Generic level coordinate {key} '
                     'will be checked against '
