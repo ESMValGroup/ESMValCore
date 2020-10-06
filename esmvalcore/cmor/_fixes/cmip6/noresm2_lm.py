@@ -14,10 +14,10 @@ class AllVars(Fix):
         if cube.coord('longitude').ndim == 1:
             lon_bnds = cube.coord('longitude').bounds.copy()
             if cube.coord('longitude').points[0] == 0. and \
-                lon_bnds[0][0] == 0.:
+                    lon_bnds[0][0] == 0.:
                 lon_bnds[0][0] = -1.25
             if cube.coord('longitude').points[-1] == 357.5 and \
-                lon_bnds[-1][-1] == 360.:
+                    lon_bnds[-1][-1] == 360.:
                 lon_bnds[-1][-1] = 358.75
             cube.coord('longitude').bounds = lon_bnds
 

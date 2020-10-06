@@ -43,8 +43,8 @@ class AllVars(Fix):
             if cube.coord('longitude').ndim == 1:
                 lon_bnds = cube.coord('longitude').bounds.copy()
                 if cube.coord('longitude').points[0] == 0. and \
-                    cube.coord('longitude').points[-1] == 356.25 and \
-                    lon_bnds[-1][-1] == 360.:
+                        cube.coord('longitude').points[-1] == 356.25 and \
+                        lon_bnds[-1][-1] == 360.:
                     lon_bnds[-1][-1] = 358.125
                 cube.coord('longitude').bounds = lon_bnds
 
