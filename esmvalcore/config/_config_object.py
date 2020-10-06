@@ -99,11 +99,11 @@ def _load_default_config(filename: str, drs_filename: str = None):
 
     global config_default
 
-    config_default.update(mapping)
+    CFG_default.update(mapping)
 
     if drs_filename:
         drs_mapping = read_config_file(drs_filename)
-        config_default.update(drs_mapping)
+        CFG_default.update(drs_mapping)
 
 
 def _load_user_config(filename: str, raise_exception: bool = True):
@@ -126,14 +126,14 @@ def _load_user_config(filename: str, raise_exception: bool = True):
             raise
         mapping = {}
 
-    global config
-    global config_orig
+    global CFG
+    global CFG_orig
 
-    config.clear()
-    config.update(config_default)
-    config.update(mapping)
+    CFG.clear()
+    CFG.update(CFG_default)
+    CFG.update(mapping)
 
-    config_orig = ESMValCoreConfig(config.copy())
+    CFG_orig = ESMValCoreConfig(CFG.copy())
 
 
 def get_user_config_location():
@@ -155,9 +155,9 @@ USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 USER_CONFIG = get_user_config_location()
 
 # initialize placeholders
-config_default = ESMValCoreConfig()
-config = ESMValCoreConfig()
-config_orig = ESMValCoreConfig()
+CFG_default = ESMValCoreConfig()
+CFG = ESMValCoreConfig()
+CFG_orig = ESMValCoreConfig()
 
 # update config objects
 _load_default_config(DEFAULT_CONFIG, DEFAULT_DRS)

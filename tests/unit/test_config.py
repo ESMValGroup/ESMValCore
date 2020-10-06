@@ -5,8 +5,8 @@ import pytest
 
 from esmvalcore import __version__ as current_version
 from esmvalcore._projects import ProjectData
-from esmvalcore.configuration._config_object import ESMValCoreConfig
-from esmvalcore.configuration._config_validators import (
+from esmvalcore.config._config_object import ESMValCoreConfig
+from esmvalcore.config._config_validators import (
     _listify_validator,
     BaseDRS,
     deprecate,
@@ -25,7 +25,7 @@ from esmvalcore.configuration._config_validators import (
     validate_string,
     validate_string_or_none,
 )
-from esmvalcore.configuration._validated_config import InvalidConfigParameter
+from esmvalcore.config._validated_config import InvalidConfigParameter
 
 
 def generate_validator_testcases(valid):

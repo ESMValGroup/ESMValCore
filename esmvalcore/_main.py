@@ -27,7 +27,7 @@ from pathlib import Path
 import fire
 from pkg_resources import iter_entry_points
 
-from . import config
+from . import CFG
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ def process_recipe(recipe_file, session):
     logger.info(70 * "-")
 
     from multiprocessing import cpu_count
-    n_processes = config['max_parallel_tasks'] or cpu_count()
+    n_processes = session['max_parallel_tasks'] or cpu_count()
     logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
@@ -81,7 +81,7 @@ def process_recipe(recipe_file, session):
     logger.info("If you experience memory problems, try reducing "
                 "'max_parallel_tasks' in your user configuration file.")
 
-    if config['compress_netcdf']:
+    if session['compress_netcdf']:
         logger.warning(
             "You have enabled NetCDF compression. Accessing .nc files can be "
             "much slower than expected if your access pattern does not match "
@@ -132,7 +132,7 @@ class ConfigUtils():
             .esmvaltool in the user's home.
         """
         from ._logging import configure_logging
-        from .configuration._config_generator import generate_config
+        from .config._config_generator import generate_config
         configure_logging(console_log_level='info')
         generate_config(name=name, overwrite=overwrite, path=path)
 
@@ -142,7 +142,7 @@ class ConfigUtils():
 
         Show all user configs and available configs, grouped by folder.
         """
-        from .configuration._config_generator import list_available_configs
+        from .config._config_generator import list_available_configs
         list_available_configs()
 
 
@@ -320,7 +320,7 @@ class ESMValTool():
         from ._logging import configure_logging
 
         if config_file:
-            config.load_from_file(config_file)
+            CFG.load_from_file(config_file)
 
         recipe = Path(recipe)
 
@@ -333,7 +333,7 @@ class ESMValTool():
         recipe_name = recipe.stem
 
         # init and create run dir
-        session = config.start_session(recipe_name)
+        session = CFG.start_session(recipe_name)
         session.run_dir.mkdir(parents=True)
 
         # configure logging

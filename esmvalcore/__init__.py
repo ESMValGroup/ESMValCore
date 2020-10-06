@@ -3,7 +3,7 @@ import logging
 import os
 
 from ._version import __version__
-from .configuration import config
+from .config import CFG
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -11,7 +11,7 @@ logger.addHandler(logging.NullHandler())
 __all__ = [
     '__version__',
     'cmor',
-    'config',
+    'CFG',
     'preprocessor',
 ]
 
