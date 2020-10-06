@@ -41,3 +41,18 @@ profile_diagnostic: false
 max_years: null
 # Run the diagnostic
 run_diagnostic: true
+# If True, the run will not fail if some datasets are not available.
+skip-nonexistent: False
+# Only run the selected diagnostics from the recipe.
+diagnostics: null
+# Configure the sensitivity of the CMOR check.
+# Possible values are:
+# `ignore` (all errors will be reported as warnings),
+# `relaxed` (only fail if there are critical errors),
+# `default` (fail if there are any errors),
+# `strict` (fail if there are any warnings).
+check_level: default
+# If True, the tool will try to download missing data using Synda.
+synda_download: False
+# Maximum number of datasets to use.
+max_datasets: null
