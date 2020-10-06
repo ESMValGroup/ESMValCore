@@ -241,38 +241,48 @@ def test_validate_project_data():
     assert isinstance(project_data, ProjectData)
 
 
-# def test_Config_class():
-#     pass
-# #     rc = mpl.RcParams({'font.cursive': ['Apple Chancery',
-# #                                         'Textile',
-# #                                         'Zapf Chancery',
-# #                                         'cursive'],
-# #                        'font.family': 'sans-serif',
-# #                        'font.weight': 'normal',
-# #                        'font.size': 12})
+def test_config_class():
+    config = {
+        'log_level': 'info',
+        'exit_on_warning': False,
+        'output_file_type': 'png',
+        'output_dir': './esmvaltool_output',
+        'auxiliary_data_dir': './auxiliary_data',
+        'save_intermediary_cubes': False,
+        'remove_preproc_dir': True,
+        'max_parallel_tasks': None,
+        'profile_diagnostic': False,
+        'CMIP5': {
+            'data': [{
+                'input_dir': '',
+                'input_file':
+                '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc',
+                'rootpath': '~/data/CMIP5'
+            }],
+            'output_file':
+            '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+        },
+        'CMIP6': {
+            'data': [{
+                'input_dir': '',
+                'input_file':
+                '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc',
+                'rootpath': '~/data/CMIP6'
+            }],
+            'output_file':
+            '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+        },
+    }
 
-# #     expected_repr = """
-# # RcParams({'font.cursive': ['Apple Chancery',
-# #                            'Textile',
-# #                            'Zapf Chancery',
-# #                            'cursive'],
-# #           'font.family': ['sans-serif'],
-# #           'font.size': 12.0,
-# #           'font.weight': 'normal'})""".lstrip()
+    cfg = ESMValCoreConfig(config)
 
-# #     assert expected_repr == repr(rc)
+    assert isinstance(cfg['CMIP5'], ProjectData)
+    assert isinstance(cfg['CMIP6'], ProjectData)
+    assert isinstance(cfg['output_dir'], Path)
+    assert isinstance(cfg['auxiliary_data_dir'], Path)
 
-# #     expected_str = """
-# # font.cursive: ['Apple Chancery', 'Textile', 'Zapf Chancery', 'cursive']
-# # font.family: ['sans-serif']
-# # font.size: 12.0
-# # font.weight: normal""".lstrip()
-
-# #     assert expected_str == str(rc)
-
-# #     # test the find_all functionality
-# #     assert ['font.cursive', 'font.size'] == sorted(rc.find_all('i[vz]'))
-# #     assert ['font.family'] == list(rc.find_all('family'))
+    assert ['CMIP5', 'CMIP6'] == sorted(cfg.find_all('CMIP[56]').keys())
+    assert ['output_dir'] == list(cfg.find_all('output_dir').keys())
 
 
 def test_config_update():
