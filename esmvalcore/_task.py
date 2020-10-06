@@ -20,8 +20,9 @@ import psutil
 import yaml
 
 from ._citation import _write_citation_files
-from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
+from ._diagnostics import DIAGNOSTICS_PATH
 from ._provenance import TrackedFile, get_task_provenance
+from ._utils import TAGS, replace_tags
 
 logger = logging.getLogger(__name__)
 

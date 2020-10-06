@@ -12,12 +12,12 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import TAGS, get_activity, get_institutes, replace_tags
 from ._data_finder import get_output_file, get_statistic_output_file
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
                     run_tasks)
+from ._utils import TAGS, get_activity, get_institutes, replace_tags
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (DEFAULT_ORDER, FINAL_STEPS, INITIAL_STEPS,
                            MULTI_MODEL_FUNCTIONS, PreprocessingTask,
