@@ -131,7 +131,7 @@ class ConfigUtils():
             If not provided, the file will be written to
             .esmvaltool in the user's home.
         """
-        from ._config import configure_logging
+        from ._logging import configure_logging
         from .configuration._config_generator import generate_config
         configure_logging(console_log_level='info')
         generate_config(name=name, overwrite=overwrite, path=path)
@@ -163,7 +163,8 @@ class Recipes():
         """
         import os
 
-        from ._config import DIAGNOSTICS_PATH, configure_logging
+        from ._config import DIAGNOSTICS_PATH
+        from ._logging import configure_logging
         configure_logging(console_log_level='info')
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
         logger.info("Showing recipes installed in %s", recipes_folder)
@@ -192,7 +193,8 @@ class Recipes():
         import os
         import shutil
 
-        from ._config import DIAGNOSTICS_PATH, configure_logging
+        from ._config import DIAGNOSTICS_PATH
+        from ._logging import configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
         if not os.path.exists(installed_recipe):
@@ -216,7 +218,8 @@ class Recipes():
         """
         import os
 
-        from ._config import DIAGNOSTICS_PATH, configure_logging
+        from ._config import DIAGNOSTICS_PATH
+        from ._logging import configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
         if not os.path.exists(installed_recipe):
@@ -313,7 +316,8 @@ class ESMValTool():
         import os
         import shutil
 
-        from ._config import DIAGNOSTICS_PATH, configure_logging
+        from ._config import DIAGNOSTICS_PATH
+        from ._logging import configure_logging
 
         if config_file:
             config.load_from_file(config_file)
