@@ -12,7 +12,6 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from . import config
 from ._config import TAGS, get_activity, get_institutes, replace_tags
 from ._data_finder import (get_input_filelist, get_output_file,
                            get_statistic_output_file)
@@ -387,12 +386,12 @@ def _get_fx_file(variable, fx_variable, config_user):
     var = dict(variable)
     var_project = variable['project']
     try:
-        config[var_project]
+        config_user[var_project]
     except KeyError:
         raise RecipeError(
             f"Requested fx variable '{fx_varname}' with parent variable"
             f"'{variable}' does not have a '{var_project}' project"
-            f"in config-developer.")
+            f"in your config file.")
     cmor_table = CMOR_TABLES[var_project]
     valid_fx_vars = []
 
@@ -706,7 +705,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     """
     products = set()
     for variable in variables:
-        filename = str(config_user.preproc_dir / get_output_file(variable))
+        filename = str(config_user.preproc_dir /
+                       get_output_file(variable, config_user['output_file']))
         variable['filename'] = filename
 
     if ancestor_products:

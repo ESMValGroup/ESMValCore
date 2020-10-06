@@ -167,12 +167,8 @@ def get_input_filelist(project_data, variable):
     return (files, dirnames, filenames)
 
 
-def get_output_file(variable):
+def get_output_file(variable, output_file):
     """Return the full path to the output (preprocessed) file."""
-    from . import config
-    project = variable['project']
-    output_file = config[project].output_file
-
     # Join different experiment names
     if isinstance(variable.get('exp'), (list, tuple)):
         variable = dict(variable)

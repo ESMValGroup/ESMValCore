@@ -313,7 +313,6 @@ class ESMValTool():
         import os
         import shutil
 
-        from . import config
         from ._config import DIAGNOSTICS_PATH, configure_logging
 
         if config_file:

@@ -29,7 +29,9 @@ BADC: &CMIP5_BADC
       input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
 
 get_output_file:
-  - variable: &variable
+  - drs:
+      <<: *CMIP5_default
+    variable: &variable
       variable_group: test
       short_name: ta
       dataset: HadGEM2-ES
@@ -48,7 +50,9 @@ get_output_file:
     preproc_dir: this/is/a/path
     output_file: test_diag/test/CMIP5_HadGEM2-ES_Amon_historical_r1i1p1_ta_1960-1980.nc
 
-  - variable:
+  - drs:
+      <<: *CMIP5_default
+    variable:
       <<: *variable
       exp: [historical, rcp85]
     preproc_dir: /test

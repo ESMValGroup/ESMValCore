@@ -57,7 +57,8 @@ def create_tree(path, filenames=None, symlinks=None):
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
     from pathlib import Path
-    output_file = get_output_file(cfg['variable'])
+    drs = cfg['drs']
+    output_file = get_output_file(cfg['variable'], drs['output_file'])
 
     expected = Path(cfg['output_file'])
 
