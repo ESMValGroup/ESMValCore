@@ -720,7 +720,8 @@ See also :func:`esmvalcore.preprocessor.extract_time`.
 Extract only the times that occur within a specific season.
 
 This function only has one argument: ``season``. This is the named season to
-extract. ie: DJF, MAM, JJA, SON.
+extract. ie: DJF, MAM, JJA, SON, but also all other sequentially correct
+combinations, e.g. JJAS.
 
 Note that this function does not change the time resolution. If your original
 data is in monthly time resolution, then this function will return three
@@ -773,11 +774,11 @@ See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 ``seasonal_statistics``
 -----------------------
 
-This function produces statistics for each season (DJF, MAM, JJA, SON) in the
-dataset. Note that this function will not check for missing time points.
-For instance, if you are looking at the DJF field, but your datasets
-starts on January 1st, the first DJF field will only contain data
-from January and February.
+This function produces statistics for each season (default: "(DJF, MAM, JJA,
+SON)" or custom seasons e.g. "(JJAS, ONDJFMAM)" ) in the dataset. Note that
+this function will not check for missing time points. For instance, if you are
+looking at the DJF field, but your datasets starts on January 1st, the first
+DJF field will only contain data from January and February.
 
 We recommend using the extract_time to start the dataset from the following
 December and remove such biased initial datapoints.
@@ -958,9 +959,9 @@ Extract a shape or a representative point for this shape from
 the data.
 
 Parameters:
-  * ``shapefile``: path to the shapefile containing the geometry of the 
-    region to be extracted. If the file contains multiple shapes behaviour 
-    depends on the decomposed parameter. This path can be relative to 
+  * ``shapefile``: path to the shapefile containing the geometry of the
+    region to be extracted. If the file contains multiple shapes behaviour
+    depends on the decomposed parameter. This path can be relative to
     ``auxiliary_data_dir`` defined in the :ref:`user configuration file`.
   * ``method``: the method to select the region, selecting either all points
 	  contained by the shape or a single representative point. Choose either
@@ -969,9 +970,9 @@ Parameters:
   * ``crop``: by default extract_region_ will be used to crop the data to a
 	  minimal rectangular region containing the shape. Set to ``false`` to only
 	  mask data outside the shape. Data on irregular grids will not be cropped.
-  * ``decomposed``: by default ``false``, in this case the union of all the 
-    regions in the shape file is masked out. If ``true``, the regions in the 
-    shapefiles are masked out seperately, generating an auxiliary dimension 
+  * ``decomposed``: by default ``false``, in this case the union of all the
+    regions in the shape file is masked out. If ``true``, the regions in the
+    shapefiles are masked out seperately, generating an auxiliary dimension
     for the cube for this.
 
 Examples:
