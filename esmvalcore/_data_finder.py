@@ -5,6 +5,7 @@
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
 import fnmatch
+import glob
 import logging
 import os
 import re
@@ -96,8 +97,8 @@ def _replace_tags(path, variable):
         tag, _, _ = _get_caps_options(tag)
 
         if tag == 'latestversion':  # handled separately later
-            continue
-        if tag in variable:
+            replacewith = '*'
+        elif tag in variable:
             replacewith = variable[tag]
         else:
             raise KeyError("Dataset key {} must be specified for {}, check "
@@ -142,29 +143,18 @@ def _apply_caps(original, lower, upper):
 
 def _resolve_latestversion(dirname_template):
     """Resolve the 'latestversion' tag."""
-    if '{latestversion}' not in dirname_template:
+    versions = glob.glob(dirname_template)
+
+    if not versions:
         return dirname_template
 
-    # Find latest version
-    part1, part2 = dirname_template.split('{latestversion}')
-    part2 = part2.lstrip(os.sep)
-    if os.path.exists(part1):
-        versions = os.listdir(part1)
-        versions.sort(reverse=True)
-        for version in ['latest'] + versions:
-            dirname = os.path.join(part1, version, part2)
-            if os.path.isdir(dirname):
-                return dirname
+    # pick 'latest' if it exists,
+    # otherwise take the last sorted == most recent item
+    for version in sorted(versions):
+        if 'latest' in version:
+            break
 
-    return dirname_template
-
-
-def get_input_filelist(project_data, variable):
-    """Return the full path to input files."""
-    # TODO: what if drs is a list?
-    files, dirnames, filenames = project_data.get_input_filelist(variable)
-
-    return (files, dirnames, filenames)
+    return version
 
 
 def get_output_file(variable, output_file):

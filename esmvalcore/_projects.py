@@ -59,6 +59,7 @@ class SearchLocation(object):
             dirname = os.path.join(base_path, dirname_template)
             dirname = _data_finder._resolve_latestversion(dirname)
             matches = glob.glob(dirname)
+
             matches = [match for match in matches if os.path.isdir(match)]
 
             if matches:

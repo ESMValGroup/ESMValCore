@@ -13,8 +13,7 @@ from netCDF4 import Dataset
 from . import __version__
 from . import _recipe_checks as check
 from ._config import TAGS, get_activity, get_institutes, replace_tags
-from ._data_finder import (get_input_filelist, get_output_file,
-                           get_statistic_output_file)
+from ._data_finder import get_output_file, get_statistic_output_file
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
@@ -523,18 +522,12 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
-    # TODO: what arguments are really needed here?
-    # variable
-    # project
-    # synda_download = False
-
     synda_download = config_user['synda_download']
     project = variable['project']
     project_data = config_user[project]
 
-    (input_files, dirnames,
-     filenames) = get_input_filelist(variable=variable,
-                                     project_data=project_data)
+    input_files, dirnames, filenames = project_data.get_input_filelist(
+        variable)
 
     # Set up downloading using synda if requested.
     # Do not download if files are already available locally.
