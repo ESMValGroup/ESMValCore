@@ -698,8 +698,10 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     """
     products = set()
     for variable in variables:
+        project = variable['project']
+        output_file = config_user[project].output_file
         filename = str(config_user.preproc_dir /
-                       get_output_file(variable, config_user['output_file']))
+                       get_output_file(variable, output_file))
         variable['filename'] = filename
 
     if ancestor_products:
