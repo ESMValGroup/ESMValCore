@@ -7,11 +7,10 @@ from ..shared import add_scalar_height_coord
 
 class AllVars(Fix):
     """Fixes for all variables."""
-
     def fix_metadata(self, cubes):
-        """Rename ``var_name`` of latitude and longitude.
-        Longitude boundary description may be wrong (lons=[0, ..., 356.25];
-        lon_bnds=[[-1.875, 1.875], ..., [354.375, 360]]).
+        """Rename ``var_name`` of latitude and longitude. Longitude boundary
+        description may be wrong (lons=[0, ..., 356.25]; lon_bnds=[[-1.875,
+        1.875], ..., [354.375, 360]]).
 
         Parameters
         ----------
@@ -20,7 +19,6 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         coords_to_change = {
             'latitude': 'lat',
@@ -40,23 +38,24 @@ class AllVars(Fix):
                     ' (noleap)', '')
 
         for cube in cubes:
-            if cube.coord('longitude').ndim == 1:
-                lon_bnds = cube.coord('longitude').bounds.copy()
-                if cube.coord('longitude').points[0] == 0. and \
-                        cube.coord('longitude').points[-1] == 356.25 and \
-                        lon_bnds[-1][-1] == 360.:
-                    lon_bnds[-1][-1] = 358.125
-                cube.coord('longitude').bounds = lon_bnds
+            coord_names = [cor.standard_name for cor in cube.coords()]
+            if 'longitude' in coord_names:
+                if cube.coord('longitude').ndim == 1 and \
+                        cube.coord('longitude').has_bounds():
+                    lon_bnds = cube.coord('longitude').bounds.copy()
+                    if cube.coord('longitude').points[0] == 0. and \
+                            cube.coord('longitude').points[-1] == 356.25 and \
+                            lon_bnds[-1][-1] == 360.:
+                        lon_bnds[-1][-1] = 358.125
+                    cube.coord('longitude').bounds = lon_bnds
 
         return cubes
 
 
 class Tas(Fix):
     """Fixes for tas."""
-
     def fix_metadata(self, cubes):
-        """
-        Add height (2m) coordinate.
+        """Add height (2m) coordinate.
 
         Parameters
         ----------
@@ -65,7 +64,6 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 2.0)
