@@ -8,9 +8,9 @@ from ..shared import add_scalar_height_coord
 class AllVars(Fix):
     """Fixes for all variables."""
     def fix_metadata(self, cubes):
-        """Rename ``var_name`` of latitude and longitude. Longitude boundary
-        description may be wrong (lons=[0, ..., 356.25]; lon_bnds=[[-1.875,
-        1.875], ..., [354.375, 360]]).
+        """Rename ``var_name`` of latitude and longitude and fix longitude
+        boundary description may be wrong (lons=[0, ..., 356.25];
+        on_bnds=[[-1.875, 1.875], ..., [354.375, 360]]).
 
         Parameters
         ----------

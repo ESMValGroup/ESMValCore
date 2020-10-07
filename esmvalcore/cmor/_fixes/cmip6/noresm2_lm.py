@@ -9,12 +9,11 @@ class AllVars(Fix):
     def fix_metadata(self, cubes):
         """Longitude boundary description may be wrong (lon=[0, 2.5, ..., 355,
         357.5], lon_bnds=[[0, 1.25], ..., [356.25, 360]])."""
-
         for cube in cubes:
             coord_names = [cor.standard_name for cor in cube.coords()]
             if 'longitude' in coord_names:
                 if cube.coord('longitude').ndim == 1 and \
-                            cube.coord('longitude').has_bounds():
+                        cube.coord('longitude').has_bounds():
                     lon_bnds = cube.coord('longitude').bounds.copy()
                     if cube.coord('longitude').points[0] == 0. and \
                             lon_bnds[0][0] == 0.:
