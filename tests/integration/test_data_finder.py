@@ -93,12 +93,12 @@ def test_get_input_filelist(root, cfg):
      filenames) = project_data.get_input_filelist(variable)
 
     # Test result
-    ref_files = [os.path.join(root, file) for file in cfg['found_files']]
-    if cfg['dirs'] is None:
+    ref_files = [os.path.join(root, file) for file in cfg['expected_files']]
+    if cfg['expected_dirs'] is None:
         ref_dirs = []
     else:
-        ref_dirs = [os.path.join(root, dir) for dir in cfg['dirs']]
-    ref_patterns = cfg['file_patterns']
+        ref_dirs = [os.path.join(root, dir) for dir in cfg['expected_dirs']]
+    ref_patterns = cfg['expected_patterns']
 
     assert sorted(input_filelist) == sorted(ref_files)
     assert sorted(dirnames) == sorted(ref_dirs)
