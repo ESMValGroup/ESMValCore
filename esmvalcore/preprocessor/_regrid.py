@@ -404,7 +404,17 @@ def _create_cube(src_cube, data, src_levels, levels, ):
 
     # Construct the new vertical coordinate for the interpolated
     # z-dimension, using the associated source coordinate metadata.
-    kwargs = deepcopy(src_levels._as_defn())._asdict()
+    metadata = src_levels.metadata
+
+    kwargs = {
+        'standard_name': metadata.standard_name,
+        'long_name': metadata.long_name,
+        'var_name': metadata.var_name,
+        'units': metadata.units,
+        'attributes': metadata.attributes,
+        'coord_system': metadata.coord_system,
+        'climatological': metadata.climatological,
+    }
 
     try:
         coord = iris.coords.DimCoord(levels, **kwargs)
