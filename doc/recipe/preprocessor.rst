@@ -799,7 +799,7 @@ This function produces statistics for each day in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
@@ -812,7 +812,7 @@ This function produces statistics for each month in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 
@@ -832,7 +832,7 @@ December and remove such biased initial datapoints.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
@@ -845,7 +845,7 @@ This function produces statistics for each year.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.annual_statistics`.
 
@@ -858,7 +858,7 @@ This function produces statistics for each decade.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 
@@ -872,7 +872,7 @@ This function produces statistics for the whole dataset. It can produce scalars
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',
-      'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
     * period: define the granularity of the statistics: get values for the
       full period, for each month or day of year.
@@ -1001,7 +1001,7 @@ Parameters:
     * filter_type: the type of filter to be applied; default 'lowpass'.
       Available types: 'lowpass'.
     * filter_stats: the type of statistic to aggregate on the rolling window;
-      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'.
 
 Examples:
     * Lowpass filter with a monthly mean as operator:
@@ -1128,7 +1128,7 @@ Parameters:
 The function calculates the zonal statistics by applying an operator
 along the longitude coordinate. This function takes one argument:
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
 
 See also :func:`esmvalcore.preprocessor.zonal_means`.
 
@@ -1140,7 +1140,7 @@ The function calculates the meridional statistics by applying an
 operator along the latitude coordinate. This function takes one
 argument:
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
 
 See also :func:`esmvalcore.preprocessor.meridional_means`.
 
@@ -1153,7 +1153,7 @@ areas of the region. This function takes the argument, ``operator``: the name
 of the operation to apply.
 
 This function can be used to apply several different operations in the
-horizontal plane: mean, standard deviation, median variance, minimum and maximum.
+horizontal plane: mean, standard deviation, median, variance, minimum, maximum and root mean square.
 
 Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be

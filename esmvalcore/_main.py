@@ -198,13 +198,13 @@ class Recipes():
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
         logger.info("Showing recipes installed in %s", recipes_folder)
         print('# Installed recipes')
-        for root, _, files in os.walk(recipes_folder):
+        for root, _, files in sorted(os.walk(recipes_folder)):
             root = os.path.relpath(root, recipes_folder)
             if root == '.':
                 root = ''
             if root:
                 print(f"\n# {root.replace(os.sep, ' - ').title()}")
-            for filename in files:
+            for filename in sorted(files):
                 if filename.endswith('.yml'):
                     print(os.path.join(root, filename))
 
@@ -336,7 +336,9 @@ class ESMValTool():
         synda_download: bool, optional
             If True, the tool will try to download missing data using Synda.
         diagnostics: list(str), optional
-            Only run the selected diagnostics from the recipe.
+            Only run the selected diagnostics from the recipe. To provide more
+            than one diagnostic to filter use the syntax 'diag1 diag2/script1'
+            or '("diag1", "diag2/script1")' and pay attention to the quotes.
         check_level: str, optional
             Configure the sensitivity of the CMOR check. Possible values are:
             `ignore` (all errors will be reported as warnings),
@@ -361,8 +363,6 @@ class ESMValTool():
 
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
 
-        if not config_file:
-            config_file = '~/.esmvaltool/config-user.yml'
         cfg = read_config_user_file(config_file, recipe_name, kwargs)
 
         # Create run dir
