@@ -19,9 +19,10 @@ def _mask_xy(x_arr, y_arr):
 
 def _slope(x_arr, y_arr):
     """Calculate slope."""
-    x_demean = x_arr - x_arr.mean()
-    y_demean = y_arr - y_arr.mean()
-    slope = (x_demean * y_demean).sum() / (x_demean**2).sum()
+    xy_sum = (x_arr * y_arr).sum()
+    xx_sum = (x_arr * x_arr).sum()
+    x_mean = x_arr.mean()
+    slope = (xy_sum - x_mean * y_arr.sum()) / (xx_sum - x_mean * x_arr.sum())
     return slope
 
 
