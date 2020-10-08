@@ -27,7 +27,7 @@ class DerivedVariable(DerivedVariableBase):
         20 deg C).
 
         """
-        mrsos_cube = cubes.extract_strict(
+        mrsos_cube = cubes.extract_cube(
             Constraint(name='moisture_content_of_soil_layer'))
 
         depth = mrsos_cube.coord('depth').bounds.astype(np.float32)

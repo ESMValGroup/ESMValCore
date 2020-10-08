@@ -199,20 +199,20 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     assert 'b_bnds' in var_names
 
     # Raw cube
-    cube = cubes.extract_strict(var_name_constraint(short_name))
+    cube = cubes.extract_cube(var_name_constraint(short_name))
     air_pressure_coord = cube.coord('air_pressure')
     assert air_pressure_coord.points is not None
     assert air_pressure_coord.bounds is None
     np.testing.assert_allclose(air_pressure_coord.points, AIR_PRESSURE_POINTS)
 
     # Raw ps cube
-    ps_cube = cubes.extract_strict('surface_air_pressure')
+    ps_cube = cubes.extract_cube('surface_air_pressure')
     assert ps_cube.attributes == {'additional_attribute': 'xyz'}
 
     # Apply fix
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes.extract_strict(var_name_constraint(short_name))
+    fixed_cube = fixed_cubes.extract_cube(var_name_constraint(short_name))
     fixed_air_pressure_coord = fixed_cube.coord('air_pressure')
     assert fixed_air_pressure_coord.points is not None
     assert fixed_air_pressure_coord.bounds is not None
@@ -358,7 +358,7 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     assert 'b_bnds' in var_names
 
     # Raw cube
-    cube = cubes.extract_strict(var_name_constraint(short_name))
+    cube = cubes.extract_cube(var_name_constraint(short_name))
     height_coord = cube.coord('altitude')
     assert height_coord.points is not None
     assert height_coord.bounds is not None
@@ -370,7 +370,7 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     # Apply fix
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes.extract_strict(var_name_constraint(short_name))
+    fixed_cube = fixed_cubes.extract_cube(var_name_constraint(short_name))
     fixed_height_coord = fixed_cube.coord('altitude')
     assert fixed_height_coord.points is not None
     assert fixed_height_coord.bounds is not None

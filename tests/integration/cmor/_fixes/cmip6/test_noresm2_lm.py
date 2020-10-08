@@ -62,7 +62,7 @@ def test_siconc_fix_metadata(siconc_file):
     assert siconc_cube.var_name == "siconc"
 
     # Extract siconc cube
-    siconc_cube = cubes.extract_strict('sea_ice_area_fraction')
+    siconc_cube = cubes.extract_cube('sea_ice_area_fraction')
     assert not siconc_cube.coords('typesi')
 
     # Apply fix
@@ -70,7 +70,7 @@ def test_siconc_fix_metadata(siconc_file):
     fix = Siconc(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_siconc_cube = fixed_cubes.extract_strict(
+    fixed_siconc_cube = fixed_cubes.extract_cube(
         'sea_ice_area_fraction')
     fixed_lon = fixed_siconc_cube.coord('longitude')
     fixed_lat = fixed_siconc_cube.coord('latitude')

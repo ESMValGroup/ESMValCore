@@ -46,9 +46,9 @@ class DerivedVariable(DerivedVariableBase):
         upper integration bound of 0 Pa is used.
 
         """
-        tro3_cube = cubes.extract_strict(
+        tro3_cube = cubes.extract_cube(
             iris.Constraint(name='mole_fraction_of_ozone_in_air'))
-        ps_cube = cubes.extract_strict(
+        ps_cube = cubes.extract_cube(
             iris.Constraint(name='surface_air_pressure'))
 
         p_layer_widths = _pressure_level_widths(tro3_cube,

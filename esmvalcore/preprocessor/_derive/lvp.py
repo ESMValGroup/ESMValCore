@@ -31,10 +31,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute Latent Heat Release from Precipitation."""
-        hfls_cube = cubes.extract_strict(
+        hfls_cube = cubes.extract_cube(
             Constraint(name='surface_upward_latent_heat_flux'))
-        pr_cube = cubes.extract_strict(Constraint(name='precipitation_flux'))
-        evspsbl_cube = cubes.extract_strict(
+        pr_cube = cubes.extract_cube(Constraint(name='precipitation_flux'))
+        evspsbl_cube = cubes.extract_cube(
             Constraint(name='water_evaporation_flux'))
 
         lvp_cube = hfls_cube * (pr_cube / evspsbl_cube)
