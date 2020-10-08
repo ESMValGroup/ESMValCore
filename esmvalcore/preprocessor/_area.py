@@ -1,8 +1,7 @@
-"""
-Area operations on data cubes.
+"""Area operations on data cubes.
 
-Allows for selecting data subsets using certain latitude and longitude bounds;
-selecting geographical regions; constructing area averages; etc.
+Allows for selecting data subsets using certain latitude and longitude
+bounds; selecting geographical regions; constructing area averages; etc.
 """
 import logging
 
@@ -14,8 +13,11 @@ import shapely.ops
 from dask import array as da
 from iris.exceptions import CoordinateNotFoundError
 
-from ._shared import (get_iris_analysis_operation, guess_bounds,
-                      operator_accept_weights)
+from ._shared import (
+    get_iris_analysis_operation,
+    guess_bounds,
+    operator_accept_weights,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +25,7 @@ logger = logging.getLogger(__name__)
 # slice cube over a restricted area (box)
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
                    end_latitude):
-    """
-    Extract a region from a cube.
+    """Extract a region from a cube.
 
     Function that subsets a cube on a box (start_longitude, end_longitude,
     start_latitude, end_latitude)
@@ -89,8 +90,7 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
 
 
 def zonal_statistics(cube, operator):
-    """
-    Compute zonal statistics.
+    """Compute zonal statistics.
 
     Parameters
     ----------
@@ -124,8 +124,7 @@ def zonal_statistics(cube, operator):
 
 
 def meridional_statistics(cube, operator):
-    """
-    Compute meridional statistics.
+    """Compute meridional statistics.
 
     Parameters
     ----------
@@ -159,8 +158,7 @@ def meridional_statistics(cube, operator):
 
 
 def tile_grid_areas(cube, fx_files):
-    """
-    Tile the grid area data to match the dataset cube.
+    """Tile the grid area data to match the dataset cube.
 
     Parameters
     ----------
@@ -177,7 +175,7 @@ def tile_grid_areas(cube, fx_files):
     grid_areas = None
     if fx_files:
         for key, fx_file in fx_files.items():
-            if fx_file is None:
+            if not fx_file:
                 continue
             logger.info('Attempting to load %s from file: %s', key, fx_file)
             fx_cube = iris.load_cube(fx_file)
@@ -199,8 +197,7 @@ def tile_grid_areas(cube, fx_files):
 
 # get the area average
 def area_statistics(cube, operator, fx_variables=None):
-    """
-    Apply a statistical operator in the horizontal direction.
+    """Apply a statistical operator in the horizontal direction.
 
     The average in the horizontal direction. We assume that the
     horizontal directions are ['longitude', 'latutude'].
@@ -294,8 +291,7 @@ def area_statistics(cube, operator, fx_variables=None):
 
 
 def extract_named_regions(cube, regions):
-    """
-    Extract a specific named region.
+    """Extract a specific named region.
 
     The region coordinate exist in certain CMIP datasets.
     This preprocessor allows a specific named regions to be extracted.
@@ -338,8 +334,12 @@ def extract_named_regions(cube, regions):
     return cube
 
 
-def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
-               end_latitude, cmor_coords=True):
+def _crop_cube(cube,
+               start_longitude,
+               start_latitude,
+               end_longitude,
+               end_latitude,
+               cmor_coords=True):
     """Crop cubes on a cartesian grid."""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
@@ -385,8 +385,8 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
-def _correct_coords_from_shapefile(cube, cmor_coords,
-                                   pad_north_pole, pad_hawaii):
+def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
+                                   pad_hawaii):
     """Get correct lat and lon from shapefile."""
     lon = cube.coord(axis='X').points
     lat = cube.coord(axis='Y').points
@@ -448,8 +448,7 @@ def _get_masks_from_geometries(geometries,
 
 
 def fix_coordinate_ordering(cube):
-    """
-    Transpose the dimensions.
+    """Transpose the dimensions.
 
     This is done such that the order of dimension is
     in standard order, ie:
@@ -467,7 +466,6 @@ def fix_coordinate_ordering(cube):
     -------
     iris.cube.Cube
         Cube with dimensions transposed to standard order
-
     """
     try:
         time_dim = cube.coord_dims('time')
@@ -495,8 +493,7 @@ def extract_shape(cube,
                   method='contains',
                   crop=True,
                   decomposed=False):
-    """
-    Extract a region defined by a shapefile.
+    """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
     prime meridian or poles.
@@ -545,13 +542,12 @@ def extract_shape(cube,
             pad_hawaii = True
 
         if crop:
-            cube = _crop_cube(cube, *geometries.bounds,
+            cube = _crop_cube(cube,
+                              *geometries.bounds,
                               cmor_coords=cmor_coords)
 
-        lon, lat = _correct_coords_from_shapefile(cube,
-                                                  cmor_coords,
-                                                  pad_north_pole,
-                                                  pad_hawaii)
+        lon, lat = _correct_coords_from_shapefile(cube, cmor_coords,
+                                                  pad_north_pole, pad_hawaii)
 
         selections = _get_masks_from_geometries(geometries,
                                                 lon,
