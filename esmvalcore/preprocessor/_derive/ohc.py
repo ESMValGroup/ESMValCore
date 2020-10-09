@@ -62,6 +62,7 @@ class DerivedVariable(DerivedVariableBase):
         # 2. multiply with each other and with cprho0
         # some juggling with coordinates needed since Iris is very
         # restrictive in this regard
+        cube.convert_units('K')
         try:
             t_coord_dims = cube.coord_dims('time')
         except iris.exceptions.CoordinateNotFoundError:

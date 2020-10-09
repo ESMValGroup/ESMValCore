@@ -16,11 +16,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [{
-            'short_name': 'usi',
-        }, {
-            'short_name': 'vsi',
-        }]
+        if project == 'CMIP6':
+            required = [{'short_name': 'siu'}, {'short_name': 'siv'}]
+        else:
+            required = [{'short_name': 'usi'}, {'short_name': 'vsi'}]
         return required
 
     @staticmethod
