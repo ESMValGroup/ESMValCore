@@ -63,9 +63,11 @@ def cl_file(tmp_path):
                                dimensions=('time', 'lat', 'lon'))
         dataset.variables['a'][:] = [1.0, 2.0]
         dataset.variables['a'].bounds = 'a_bnds'
+        dataset.variables['a'].units = '1'
         dataset.variables['a_bnds'][:] = [[1.5, 3.0], [0.0, 1.5]]  # intended
         dataset.variables['b'][:] = [0.0, 1.0]
         dataset.variables['b'].bounds = 'b_bnds'
+        dataset.variables['b'].units = '1'
         dataset.variables['b_bnds'][:] = [[0.5, 2.0], [-1.0, 0.5]]  # intended
         dataset.variables['p0'][:] = 1.0
         dataset.variables['p0'].units = 'Pa'
