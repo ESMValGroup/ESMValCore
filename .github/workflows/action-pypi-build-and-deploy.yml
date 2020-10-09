@@ -3,12 +3,11 @@ name: PyPi Build and Deploy 🐍📦
 on:
   push:
     branches:
-    # - master
-    - GA_pypi_build_and_deploy
+     - master
 
 jobs:
   build-n-publish:
-    name: Build and publish ESMValCore 2.1 on PyPi
+    name: Build and publish ESMValCore on PyPi
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
@@ -16,12 +15,6 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.8
-    - name: Set PYTHONPATH
-      run: >-
-        echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
-    - name: Check PYTHONPATH
-      run: >-
-        echo $PYTHONPATH
     - name: Install pep517
       run: >-
         python -m
@@ -36,13 +29,13 @@ jobs:
         --binary
         --out-dir dist/
         .
-    - name: Publish distribution 📦 to Test PyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.test_pypi_password }}
-        repository_url: https://test.pypi.org/legacy/
-    #- name: Publish distribution 📦 to PyPI
-    #  if: startsWith(github.ref, 'refs/tags')
+    #- name: Publish distribution 📦 to Test PyPI
     #  uses: pypa/gh-action-pypi-publish@master
     #  with:
-    #    password: ${{ secrets.pypi_password }}
+    #    password: ${{ secrets.test_pypi_password }}
+    #    repository_url: https://test.pypi.org/legacy/
+    - name: Publish distribution 📦 to PyPI
+      if: startsWith(github.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.pypi_password }}
