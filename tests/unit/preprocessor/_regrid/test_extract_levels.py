@@ -179,7 +179,8 @@ class Test(tests.Test):
         # Check the _create_cube args ...
         self.assertEqual(len(args), 4)
         self.assertEqual(args[0].metadata, cube.metadata)
-        coord_comparison = iris.analysis.coord_comparison(args[0], cube)
+        coord_comparison = iris.analysis._dimensional_metadata_comparison(
+            args[0], cube)
         self.assertFalse(coord_comparison['not_equal']
                          or coord_comparison['non_equal_data_dimension'])
         self.assert_array_equal(args[0].data, cube.data)
