@@ -51,6 +51,7 @@ def create_hybrid_pressure_file_without_ap(dataset, short_name):
     dataset.createVariable('ps', np.float64,
                            dimensions=('time', 'lat', 'lon'))
     dataset.variables['b'][:] = [0.0, 1.0]
+    dataset.variables['b'].units = '1'
     dataset.variables['b_bnds'][:] = [[-1.0, 0.5], [0.5, 2.0]]
     dataset.variables['ps'][:] = np.arange(1 * 3 * 4).reshape(1, 3, 4)
     dataset.variables['ps'].standard_name = 'surface_air_pressure'
