@@ -94,8 +94,6 @@ def test_linear_trend_1_time(cube_1_time):
     assert not cube_trend.coords('time', dim_coords=True)
     assert cube_trend.coords('latitude', dim_coords=True)
     assert cube_trend.coords('longitude', dim_coords=True)
-    assert cube_trend.var_name == 'x_trend'
-    assert cube_trend.long_name == 'X (Trend)'
     assert cube_trend.units == 'kg day-1'
     assert (iris.coords.CellMethod('trend', coords=('time',)) in
             cube_trend.cell_methods)
@@ -110,8 +108,6 @@ def test_linear_trend_3_time(cube_3_time):
     assert not cube_trend.coords('time', dim_coords=True)
     assert cube_trend.coords('latitude', dim_coords=True)
     assert cube_trend.coords('longitude', dim_coords=True)
-    assert cube_trend.var_name == 'x_trend'
-    assert cube_trend.long_name == 'X (Trend)'
     assert cube_trend.units == 'kg day-1'
     assert (iris.coords.CellMethod('trend', coords=('time',)) in
             cube_trend.cell_methods)
@@ -127,8 +123,6 @@ def test_linear_trend_3_time_lazy(cube_3_time):
     assert not cube_trend.coords('time', dim_coords=True)
     assert cube_trend.coords('latitude', dim_coords=True)
     assert cube_trend.coords('longitude', dim_coords=True)
-    assert cube_trend.var_name == 'x_trend'
-    assert cube_trend.long_name == 'X (Trend)'
     assert cube_trend.units == 'kg day-1'
     assert (iris.coords.CellMethod('trend', coords=('time',)) in
             cube_trend.cell_methods)
@@ -136,14 +130,10 @@ def test_linear_trend_3_time_lazy(cube_3_time):
 
 def test_linear_trend_3_time_no_metadata(cube_3_time):
     """Test calculation of trend with three time points and no metadata."""
-    cube_3_time.var_name = None
-    cube_3_time.long_name = None
     cube_3_time.units = None
     cube_trend = linear_trend(cube_3_time)
     assert cube_trend.shape == (2, 2)
     assert_masked_array_equal(cube_trend.data, [[4.0, 4.0], [4.0, 4.0]])
-    assert cube_trend.var_name is None
-    assert cube_trend.long_name is None
     assert cube_trend.units == Unit('unknown')
     assert (iris.coords.CellMethod('trend', coords=('time',)) in
             cube_trend.cell_methods)
@@ -191,8 +181,6 @@ def test_linear_trend_3_time_years(cube_3_time_years):
     cube_trend = linear_trend(cube_3_time_years)
     assert cube_trend.shape == (2, 2)
     assert_masked_array_equal(cube_trend.data, [[4.0, 4.0], [4.0, 4.0]])
-    assert cube_trend.var_name == 'x_trend'
-    assert cube_trend.long_name == 'X (Trend)'
     assert cube_trend.units == 'kg yr-1'
     assert (iris.coords.CellMethod('trend', coords=('time',)) in
             cube_trend.cell_methods)
@@ -209,8 +197,6 @@ def test_linear_trend_latitude(cube_3_time):
     assert cube_trend.coords('time', dim_coords=True)
     assert not cube_trend.coords('latitude', dim_coords=True)
     assert cube_trend.coords('longitude', dim_coords=True)
-    assert cube_trend.var_name == 'x_trend'
-    assert cube_trend.long_name == 'X (Trend)'
     assert cube_trend.units == 'kg m-1'
     assert (iris.coords.CellMethod('trend', coords=('latitude',)) in
             cube_trend.cell_methods)
@@ -227,8 +213,6 @@ def test_linear_trend_longitude(cube_3_time):
     assert cube_trend.coords('time', dim_coords=True)
     assert cube_trend.coords('latitude', dim_coords=True)
     assert not cube_trend.coords('longitude', dim_coords=True)
-    assert cube_trend.var_name == 'x_trend'
-    assert cube_trend.long_name == 'X (Trend)'
     assert cube_trend.units == 'kg m-1'
     assert (iris.coords.CellMethod('trend', coords=('longitude',)) in
             cube_trend.cell_methods)
@@ -257,8 +241,6 @@ def test_linear_trend_stderr_1_time(cube_1_time):
     assert not cube_stderr.coords('time', dim_coords=True)
     assert cube_stderr.coords('latitude', dim_coords=True)
     assert cube_stderr.coords('longitude', dim_coords=True)
-    assert cube_stderr.var_name == 'x_trend_stderr'
-    assert cube_stderr.long_name == 'X (Trend Standard Error)'
     assert cube_stderr.units == 'kg day-1'
     assert (iris.coords.CellMethod('trend_stderr', coords=('time',)) in
             cube_stderr.cell_methods)
@@ -274,8 +256,6 @@ def test_linear_trend_stderr_3_time(cube_3_time):
     assert not cube_stderr.coords('time', dim_coords=True)
     assert cube_stderr.coords('latitude', dim_coords=True)
     assert cube_stderr.coords('longitude', dim_coords=True)
-    assert cube_stderr.var_name == 'x_trend_stderr'
-    assert cube_stderr.long_name == 'X (Trend Standard Error)'
     assert cube_stderr.units == 'kg day-1'
     assert (iris.coords.CellMethod('trend_stderr', coords=('time',)) in
             cube_stderr.cell_methods)
@@ -294,8 +274,6 @@ def test_linear_trend_stderr_3_time_lazy(cube_3_time):
     assert not cube_stderr.coords('time', dim_coords=True)
     assert cube_stderr.coords('latitude', dim_coords=True)
     assert cube_stderr.coords('longitude', dim_coords=True)
-    assert cube_stderr.var_name == 'x_trend_stderr'
-    assert cube_stderr.long_name == 'X (Trend Standard Error)'
     assert cube_stderr.units == 'kg day-1'
     assert (iris.coords.CellMethod('trend_stderr', coords=('time',)) in
             cube_stderr.cell_methods)
@@ -303,14 +281,10 @@ def test_linear_trend_stderr_3_time_lazy(cube_3_time):
 
 def test_linear_trend_stderr_3_time_no_metadata(cube_3_time):
     """Test calculation of trend stderr with no metadata."""
-    cube_3_time.var_name = None
-    cube_3_time.long_name = None
     cube_3_time.units = None
     cube_stderr = linear_trend_stderr(cube_3_time)
     assert cube_stderr.shape == (2, 2)
     assert_masked_array_equal(cube_stderr.data, [[0.0, 0.0], [0.0, 0.0]])
-    assert cube_stderr.var_name is None
-    assert cube_stderr.long_name is None
     assert cube_stderr.units == Unit('unknown')
     assert (iris.coords.CellMethod('trend_stderr', coords=('time',)) in
             cube_stderr.cell_methods)
@@ -360,8 +334,6 @@ def test_linear_trend_stderr_3_time_years(cube_3_time_years):
     assert cube_stderr.shape == (2, 2)
     assert_masked_array_equal(cube_stderr.data,
                               [[0.0, 0.0], [0.0, 3.464101615137754]])
-    assert cube_stderr.var_name == 'x_trend_stderr'
-    assert cube_stderr.long_name == 'X (Trend Standard Error)'
     assert cube_stderr.units == 'kg yr-1'
     assert (iris.coords.CellMethod('trend_stderr', coords=('time',)) in
             cube_stderr.cell_methods)
@@ -378,8 +350,6 @@ def test_linear_trend_stderr_latitude(cube_3_time):
     assert cube_stderr.coords('time', dim_coords=True)
     assert not cube_stderr.coords('latitude', dim_coords=True)
     assert cube_stderr.coords('longitude', dim_coords=True)
-    assert cube_stderr.var_name == 'x_trend_stderr'
-    assert cube_stderr.long_name == 'X (Trend Standard Error)'
     assert cube_stderr.units == 'kg m-1'
     assert (iris.coords.CellMethod('trend_stderr', coords=('latitude',)) in
             cube_stderr.cell_methods)
@@ -396,8 +366,6 @@ def test_linear_trend_stderr_longitude(cube_3_time):
     assert cube_stderr.coords('time', dim_coords=True)
     assert cube_stderr.coords('latitude', dim_coords=True)
     assert not cube_stderr.coords('longitude', dim_coords=True)
-    assert cube_stderr.var_name == 'x_trend_stderr'
-    assert cube_stderr.long_name == 'X (Trend Standard Error)'
     assert cube_stderr.units == 'kg m-1'
     assert (iris.coords.CellMethod('trend_stderr', coords=('longitude',)) in
             cube_stderr.cell_methods)

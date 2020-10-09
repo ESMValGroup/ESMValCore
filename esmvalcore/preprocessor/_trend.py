@@ -116,11 +116,7 @@ def linear_trend(cube, coordinate='time'):
                                           x_data=coord.points)
     cube = cube.collapsed(coord, aggregator)
 
-    # Adapt metadata
-    if cube.var_name is not None:
-        cube.var_name += '_trend'
-    if cube.long_name is not None:
-        cube.long_name += ' (Trend)'
+    # Adapt units
     _set_trend_units(cube, coord)
 
     return cube
@@ -175,11 +171,7 @@ def linear_trend_stderr(cube, coordinate='time'):
                                           x_data=coord.points)
     cube = cube.collapsed(coord, aggregator)
 
-    # Adapt metadata
-    if cube.var_name is not None:
-        cube.var_name += '_trend_stderr'
-    if cube.long_name is not None:
-        cube.long_name += ' (Trend Standard Error)'
+    # Adapt units
     _set_trend_units(cube, coord)
 
     return cube
