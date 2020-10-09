@@ -1,4 +1,4 @@
-"""Tests for the fixes of MCM-UA-1-0."""
+"""Tests for the fixes of AWI-CM-1-1-MR."""
 import iris
 import pytest
 

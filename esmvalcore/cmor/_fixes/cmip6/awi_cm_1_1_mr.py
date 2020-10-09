@@ -1,4 +1,4 @@
-"""Fixes for MCM-UA-1-0 model."""
+"""Fixes for AWI-CM-1-1-MR model."""
 from ..fix import Fix
 
 
