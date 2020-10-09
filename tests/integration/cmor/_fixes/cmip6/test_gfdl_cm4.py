@@ -62,6 +62,7 @@ def cl_file(tmp_path):
     dataset.variables['ap'].units = 'Pa'
     dataset.variables['ap_bnds'][:] = [[0.0, 1.5], [1.5, 3.0], [3.0, 6.0]]
     dataset.variables['b'][:] = [0.0, 1.0, 3.0]
+    dataset.variables['b'].units = '1'
     dataset.variables['b_bnds'][:] = [[-1.0, 0.5], [0.5, 2.0], [2.0, 5.0]]
     dataset.variables['ps'][:] = np.arange(1 * 2 * 2).reshape(1, 2, 2)
     dataset.variables['ps'].standard_name = 'surface_air_pressure'
