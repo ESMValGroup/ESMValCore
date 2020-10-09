@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from netCDF4 import Dataset
 
-from esmvalcore.cmor._fixes.cmip6.noresm2_lm import Siconc
+from esmvalcore.cmor._fixes.cmip6.noresm2_lm import AllVars, Siconc
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -21,9 +21,9 @@ def siconc_file(tmp_path):
         dataset.createDimension('lon', size=1)
 
         # Dimensional variables
-        dataset.createVariable('time', np.float64, dimensions=('time',))
-        dataset.createVariable('lat', np.float64, dimensions=('lat',))
-        dataset.createVariable('lon', np.float64, dimensions=('lon',))
+        dataset.createVariable('time', np.float64, dimensions=('time', ))
+        dataset.createVariable('lat', np.float64, dimensions=('lat', ))
+        dataset.createVariable('lon', np.float64, dimensions=('lon', ))
         dataset.variables['time'][:] = [0.2]
         dataset.variables['time'].standard_name = 'time'
         dataset.variables['time'].units = 'days since 1850-01-01'
@@ -33,7 +33,8 @@ def siconc_file(tmp_path):
         dataset.variables['lon'][:] = [30.0]
         dataset.variables['lon'].standard_name = 'longitude'
         dataset.variables['lon'].units = 'degrees_east'
-        dataset.createVariable('siconc', np.float64,
+        dataset.createVariable('siconc',
+                               np.float64,
                                dimensions=('time', 'lat', 'lon'))
         dataset.variables['siconc'][:] = 22.
         dataset.variables['siconc'].standard_name = 'sea_ice_area_fraction'
@@ -42,10 +43,51 @@ def siconc_file(tmp_path):
     return nc_path
 
 
+@pytest.fixture
+def cubes_bounds():
+    lat_coord = iris.coords.DimCoord([0.0],
+                                     var_name='lat',
+                                     standard_name='latitude')
+    correct_lon_coord = iris.coords.DimCoord([0, 357.5],
+                                             bounds=[[-1.25, 1.25],
+                                                     [356.25, 358.75]],
+                                             var_name='lon',
+                                             standard_name='longitude')
+    wrong_lon_coord = iris.coords.DimCoord([0, 357.5],
+                                           bounds=[[0, 1.25], [356.25, 360]],
+                                           var_name='lon',
+                                           standard_name='longitude')
+    correct_cube = iris.cube.Cube(
+        [[10.0, 10.0]],
+        var_name='tas',
+        dim_coords_and_dims=[(lat_coord, 0), (correct_lon_coord, 1)],
+    )
+    wrong_cube = iris.cube.Cube(
+        [[10.0, 10.0]],
+        var_name='tas',
+        dim_coords_and_dims=[(lat_coord, 0), (wrong_lon_coord, 1)],
+    )
+    return iris.cube.CubeList([correct_cube, wrong_cube])
+
+
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'NorESM2-LM', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    assert fix == [Siconc(None), AllVars(None)]
+
+
+def test_allvars_fix_lon_bounds(cubes_bounds):
+    fix = AllVars(None)
+    out_cubes = fix.fix_metadata(cubes_bounds)
+    assert cubes_bounds is out_cubes
+    for cube in out_cubes:
+        try:
+            lon_coord = cube.coord('longitude')
+        except iris.exceptions.CoordinateNotFoundError:
+            pass
+        else:
+            assert lon_coord.bounds[0][0] == -1.25
+            assert lon_coord.bounds[-1][-1] == 358.75
 
 
 def test_siconc_fix_metadata(siconc_file):
@@ -70,8 +112,7 @@ def test_siconc_fix_metadata(siconc_file):
     fix = Siconc(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_siconc_cube = fixed_cubes.extract_cube(
-        'sea_ice_area_fraction')
+    fixed_siconc_cube = fixed_cubes.extract_cube('sea_ice_area_fraction')
     fixed_lon = fixed_siconc_cube.coord('longitude')
     fixed_lat = fixed_siconc_cube.coord('latitude')
     assert fixed_lon.bounds is not None
