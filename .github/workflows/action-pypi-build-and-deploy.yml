@@ -16,6 +16,9 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.8
+    - name: Export CWD to PYTHONPATH
+      run: >-
+        export PYTHONPATH="$PWD:$PYTHONPATH"
     - name: Install pep517
       run: >-
         python -m
