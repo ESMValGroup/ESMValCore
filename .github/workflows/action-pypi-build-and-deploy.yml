@@ -19,6 +19,9 @@ jobs:
     - name: Export CWD to PYTHONPATH
       run: >-
         export PYTHONPATH="$PWD:$PYTHONPATH"
+    - name: Check PYTHONPATH
+      run: >-
+        echo $PYTHONPATH
     - name: Install pep517
       run: >-
         python -m
