@@ -44,7 +44,7 @@ jobs:
       - name: Push the package to anaconda cloud
         shell: bash -l {0}
         run: |
-          export BUILD_FOLDER=/tmp/matchms/_build
+          export BUILD_FOLDER=/tmp/esmvalcore/_build
           anaconda --token ${{ secrets.ANACONDA_TOKEN }} upload --user esmvalgroup --force $BUILD_FOLDER/noarch/*.tar.bz2
   verify:
     name: verify / python-${{ matrix.python-version }} / ${{ matrix.os }}
