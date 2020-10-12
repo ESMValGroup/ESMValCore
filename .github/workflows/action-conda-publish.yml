@@ -4,9 +4,9 @@ on:
   release:
     types: [published]
   # use this to test before actual release and publish
-  # push:
-  #   branches:
-  #   - some_test_branch
+  push:
+    branches:
+      - trigger_pypi_on_release
 
 jobs:
 
@@ -46,6 +46,7 @@ jobs:
             --channel esmvalgroup --channel conda-forge \
             --croot $BUILD_FOLDER \
       - name: Push the package to anaconda cloud
+        if: startsWith(github.ref, 'refs/tags')
         shell: bash -l {0}
         run: |
           export BUILD_FOLDER=/tmp/esmvalcore/_build
@@ -53,6 +54,7 @@ jobs:
           anaconda --token ${{ secrets.ANACONDA_TOKEN }} upload --user esmvalgroup $BUILD_FOLDER/noarch/*.tar.bz2
   verify:
     name: verify / python-${{ matrix.python-version }} / ${{ matrix.os }}
+    if: startsWith(github.ref, 'refs/tags')
     strategy:
       fail-fast: false
       matrix:
