@@ -3,9 +3,10 @@ name: Anaconda Publish
 on:
   release:
     types: [published]
-  push:
-    branches:
-    - conda_publish_GA
+  # use this to test before actual release and publish
+  # push:
+  #   branches:
+  #   - some_test_branch
 
 jobs:
 
@@ -48,7 +49,8 @@ jobs:
         shell: bash -l {0}
         run: |
           export BUILD_FOLDER=/tmp/esmvalcore/_build
-          anaconda --token ${{ secrets.ANACONDA_TOKEN }} upload --user esmvalgroup $BUILD_FOLDER/noarch/*.tar.bz2 --label test
+          # use --label test before actual release and check all works well
+          anaconda --token ${{ secrets.ANACONDA_TOKEN }} upload --user esmvalgroup $BUILD_FOLDER/noarch/*.tar.bz2
   verify:
     name: verify / python-${{ matrix.python-version }} / ${{ matrix.os }}
     strategy:
