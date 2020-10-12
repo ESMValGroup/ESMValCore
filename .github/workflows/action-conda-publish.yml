@@ -13,10 +13,10 @@ jobs:
       - uses: actions/checkout@v2
       - uses: goanpeca/setup-miniconda@v1
         with:
-          activate-environment: esmvaltool
           auto-update-conda: true
-          environment-file: environment.yml
           python-version: "3.8"
+          miniconda-version: "latest"
+          channels: conda-forge
       - name: Show conda config
         shell: bash -l {0}
         run: |
