@@ -48,7 +48,7 @@ jobs:
         shell: bash -l {0}
         run: |
           export BUILD_FOLDER=/tmp/esmvalcore/_build
-          anaconda --token ${{ secrets.ANACONDA_TOKEN }} upload --user esmvalgroup --labels test $BUILD_FOLDER/noarch/*.tar.bz2
+          anaconda --token ${{ secrets.ANACONDA_TOKEN }} upload --user esmvalgroup $BUILD_FOLDER/noarch/*.tar.bz2 --label test
   verify:
     name: verify / python-${{ matrix.python-version }} / ${{ matrix.os }}
     strategy:
