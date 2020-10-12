@@ -251,6 +251,11 @@ regenerate the file .zenodo.json by running the command
 How to make a release
 ---------------------
 
+The release manager makes the release, assisted by the release manager of the
+previous release, or if that person is not available, another previous release
+manager. Perform the steps listed below with two persons, to reduce the risk of
+error.
+
 To make a new release of the package, follow these steps:
 
 1. Check the tests on GitHub Actions and CircleCI
@@ -286,8 +291,8 @@ Make a pull request and get it merged into ``master``.
 3. Create a release branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Create a branch off the ``master`` branch and push it to GitHub.
-Ask someone with administrative permissions to set up branch protection
-rules for it so only you and one other person can push to it.
+Ask someone with administrative permissions to set up branch protection rules
+for it so only you and the person helping you with the release can push to it.
 Announce the name of the branch in an issue and ask the members of the
 `ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
 to run their favourite recipe using this branch.
@@ -305,39 +310,60 @@ the release notes with the latest changes, get it merged into
 5. Make the release on GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Do a final check that all tests completed successfully.
+Do a final check that all tests on CircleCI and GitHub Actions completed
+successfully.
 Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
-and create the new release.
+and create the new release from the release branch (i.e. not from ``master``).
 
 6. Create and upload the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The package is automatically uploaded to the
+`ESMValGroup conda channel <https://anaconda.org/esmvalgroup/esmvalcore>`__
+by a GitHub action.
+If this has failed for some reason, build and upload the package manually by
+following the instructions below.
 
 Follow these steps to create a new conda package:
 
 -  Check out the tag corresponding to the release,
    e.g. ``git checkout tags/v2.1.0``
+-  Make sure your current working directory is clean by checking the output
+   of ``git status`` and by running ``git clean -xdf`` to remove any files
+   ignored by git.
 -  Edit ``package/meta.yaml`` and uncomment the lines starting with ``git_rev`` and
    ``git_url``, remove the line starting with ``path`` in the ``source``
    section.
 -  Activate the base environment ``conda activate base``
+-  Install the required packages:
+   ``conda install -y conda-build conda-verify ripgrep anaconda-client``
 -  Run ``conda build package -c conda-forge -c esmvalgroup`` to build the
    conda package
 -  If the build was successful, upload the package to the esmvalgroup
-   conda channel,
-   e.g. ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.1.0-py_0.tar.bz2``.
+   conda channel, e.g.
+   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.1.0-py_0.tar.bz2``.
 
 7. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The package is automatically uploaded to the
+`PyPI <https://pypi.org/project/ESMValCore/>`__
+by a GitHub action.
+If has failed for some reason, build and upload the package manually by
+following the instructions below.
 
 Follow these steps to create a new Python package:
 
 -  Check out the tag corresponding to the release,
    e.g. ``git checkout tags/v2.1.0``
+-  Make sure your current working directory is clean by checking the output
+   of ``git status`` and by running ``git clean -xdf`` to remove any files
+   ignored by git.
 -  Install the required packages:
-   ``python3 -m pip install --upgrade setuptools wheel twine``
+   ``python3 -m pip install --upgrade pep517 twine``
 -  Build the package:
-   ``python3 setup.py sdist bdist_wheel``
+   ``python3 -m pep517.build --source --binary --out-dir dist/ .``
    This command should generate two files in the ``dist`` directory, e.g.
    ``ESMValCore-2.1.0-py3-none-any.whl`` and ``ESMValCore-2.1.0.tar.gz``.
 -  Upload the package:
