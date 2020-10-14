@@ -191,11 +191,9 @@ OBS6:
 native6:
   cmor_strict: false
   input_dir:
-    default: 'Tier{tier}/{dataset}'
-    era5cli: 'Tier{tier}/{dataset}'
+    default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
   input_file:
-    default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}[_.]*nc'
-    era5cli: 'era5_{era5_name}*{era5_freq}.nc'
+    default: '*.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'

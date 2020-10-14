@@ -3,6 +3,7 @@
 import os
 import unittest
 
+import esmvalcore.cmor
 from esmvalcore.cmor.table import CMIP3Info, CMIP5Info, CMIP6Info, CustomInfo
 
 
@@ -17,7 +18,11 @@ class TestCMIP6Info(unittest.TestCase):
         We read CMIP6Info once to keep tests times manageable
         """
         cls.variables_info = CMIP6Info(
-            'cmip6', default=CustomInfo(), strict=True
+            'cmip6', default=CustomInfo(), strict=True,
+            alt_names=[
+                ['sic', 'siconc'],
+                ['tro3', 'o3'],
+            ]
         )
 
     def setUp(self):
@@ -25,9 +30,8 @@ class TestCMIP6Info(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip6')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip6')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP6Info(cmor_tables_path, default=None, strict=False)
 
@@ -44,8 +48,8 @@ class TestCMIP6Info(unittest.TestCase):
         var = self.variables_info.get_variable('Amon', 'tas')
         self.assertEqual(var.short_name, 'tas')
 
-    def test_get_variable_from_alias(self):
-        """Get a variable from a known alias."""
+    def test_get_variable_from_alt_names(self):
+        """Get a variable from a known alt_names."""
         var = self.variables_info.get_variable('SImon', 'sic')
         self.assertEqual(var.short_name, 'siconc')
 
@@ -85,7 +89,7 @@ class TestCMIP6Info(unittest.TestCase):
     def test_get_institute_from_source(self):
         """Get institution for source ACCESS-CM2"""
         institute = self.variables_info.institutes['ACCESS-CM2']
-        self.assertListEqual(institute, ['CSIRO-ARCCSS-BoM'])
+        self.assertListEqual(institute, ['CSIRO-ARCCSS'])
 
     def test_get_activity_from_exp(self):
         """Get activity for experiment 1pctCO2"""
@@ -122,9 +126,8 @@ class Testobs4mipsInfo(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip6')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip6')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP6Info(cmor_tables_path, None, True)
 
@@ -190,9 +193,8 @@ class TestCMIP5Info(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip5')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip5')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP5Info(cmor_tables_path, None, True)
 
@@ -265,9 +267,8 @@ class TestCMIP3Info(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip3')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip3')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CMIP3Info(cmor_tables_path, None, True)
 
@@ -337,10 +338,8 @@ class TestCORDEXInfo(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cordex')
-        cmor_tables_path = os.path.abspath(cmor_tables_path)
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cordex')
         CMIP5Info(cmor_tables_path)
 
     def test_get_variable_tas(self):
@@ -367,9 +366,8 @@ class TestCustomInfo(unittest.TestCase):
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        cmor_tables_path = os.path.join(cwd, '..', '..', '..', 'esmvalcore',
-                                        'cmor', 'tables', 'cmip5')
+        cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip5')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CustomInfo(cmor_tables_path)
 

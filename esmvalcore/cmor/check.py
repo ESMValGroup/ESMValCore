@@ -338,7 +338,10 @@ class CMORCheck():
             else:
                 try:
                     cube_coord = self._cube.coord(var_name=coordinate.out_name)
-                    if cube_coord.standard_name != coordinate.standard_name:
+                    if (cube_coord.standard_name is None and
+                            coordinate.standard_name == ''):
+                        pass
+                    elif cube_coord.standard_name != coordinate.standard_name:
                         self.report_critical(
                             self._attr_msg,
                             coordinate.out_name,
@@ -465,6 +468,8 @@ class CMORCheck():
         """Check monotonicity and direction of coordinate."""
         if coord.ndim > 1:
             return
+        if coord.dtype.kind == 'U':
+            return
         if not coord.is_monotonic():
             self.report_critical(self._is_msg, var_name, 'monotonic')
         if len(coord.points) == 1:
@@ -504,7 +509,8 @@ class CMORCheck():
             if np.any(coord.points < valid_min):
                 if coord_info.standard_name == 'longitude' and \
                         self.automatic_fixes:
-                    l_fix_coord_value = True
+                    l_fix_coord_value = self._check_longitude_min(
+                        coord, var_name)
                 else:
                     self.report_critical(
                         self._vals_msg, var_name,
@@ -515,7 +521,8 @@ class CMORCheck():
             if np.any(coord.points > valid_max):
                 if coord_info.standard_name == 'longitude' and \
                         self.automatic_fixes:
-                    l_fix_coord_value = True
+                    l_fix_coord_value = self._check_longitude_max(
+                        coord, var_name)
                 else:
                     self.report_critical(
                         self._vals_msg, var_name,
@@ -539,6 +546,22 @@ class CMORCheck():
                 self._cube.remove_coord(coord)
                 self._cube.add_aux_coord(new_coord, dims)
 
+    def _check_longitude_max(self, coord, var_name):
+        if np.any(coord.points > 720):
+            self.report_critical(
+                f'{var_name} longitude coordinate has values > 720 degrees'
+            )
+            return False
+        return True
+
+    def _check_longitude_min(self, coord, var_name):
+        if np.any(coord.points < -360):
+            self.report_critical(
+                f'{var_name} longitude coordinate has values < -360 degrees'
+            )
+            return False
+        return True
+
     @staticmethod
     def _set_range_in_0_360(array):
         while array.min() < 0:
@@ -549,7 +572,10 @@ class CMORCheck():
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
         if coord_info.requested:
-            cmor_points = [float(val) for val in coord_info.requested]
+            try:
+                cmor_points = [float(val) for val in coord_info.requested]
+            except ValueError:
+                cmor_points = coord_info.requested
             coord_points = list(coord.points)
             for point in cmor_points:
                 if point not in coord_points:

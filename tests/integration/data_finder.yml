@@ -4,6 +4,7 @@ get_output_file:
   - variable: &variable
       variable_group: test
       short_name: ta
+      original_short_name: ta
       dataset: HadGEM2-ES
       project: CMIP5
       cmor_table: CMIP5
@@ -41,6 +42,36 @@ get_input_filelist:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tro3
+      original_short_name: o3
+      dataset: HadGEM2-ES
+      project: CMIP6
+      cmor_table: CMIP6
+      institute: [INPE, MOHC]
+      frequency: mon
+      modeling_realm: [atmos]
+      mip: Amon
+      exp: historical
+      ensemble: r1i1p1
+      start_year: 1960
+      end_year: 1980
+      diagnostic: test_diag
+      preprocessor: test_preproc
+      grid: gn
+    available_files:
+      - o3_Amon_HadGEM2-ES_historical_r1i1p1_gn_193412-195911.nc
+      - o3_Amon_HadGEM2-ES_historical_r1i1p1_gn_195912-198411.nc
+      - o3_Amon_HadGEM2-ES_historical_r1i1p1_gn_198412-200511.nc
+    dirs:
+      - ''
+    file_patterns:
+      - o3_Amon_HadGEM2-ES_historical_r1i1p1_gn*.nc
+    found_files:
+      - o3_Amon_HadGEM2-ES_historical_r1i1p1_gn_195912-198411.nc
 
   - drs: default
     variable:
