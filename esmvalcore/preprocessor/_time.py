@@ -463,7 +463,7 @@ def climate_statistics(cube,
             cube = cube.collapsed('time', operator_method)
         return cube
 
-    clim_coord = _get_period_coord(cube, period)
+    clim_coord = _get_period_coord(cube, period, seasons)
     operator = get_iris_analysis_operation(operator)
     clim_cube = cube.aggregated_by(clim_coord, operator)
     clim_cube.remove_coord('time')
@@ -476,7 +476,11 @@ def climate_statistics(cube,
     return clim_cube
 
 
-def anomalies(cube, period, reference=None, standardize=False):
+def anomalies(cube,
+              period,
+              reference=None,
+              standardize=False,
+              seasons=('djf', 'mam', 'jja', 'son')):
     """Compute anomalies using a mean with the specified granularity.
 
     Computes anomalies based on daily, monthly, seasonal or yearly means for
@@ -500,6 +504,8 @@ def anomalies(cube, period, reference=None, standardize=False):
     standardize: bool, optional
         If True standardized anomalies are calculated
 
+    seasons: list(str), optional
+        Seasons to use if needed. Default to ('djf', 'mam', 'jja', 'son')
 
     Returns
     -------
@@ -510,7 +516,9 @@ def anomalies(cube, period, reference=None, standardize=False):
         reference_cube = cube
     else:
         reference_cube = extract_time(cube, **reference)
-    reference = climate_statistics(reference_cube, period=period)
+    reference = climate_statistics(reference_cube,
+                                   period=period,
+                                   seasons=seasons)
     if period in ['full']:
         metadata = copy.deepcopy(cube.metadata)
         cube = cube - reference
@@ -518,12 +526,13 @@ def anomalies(cube, period, reference=None, standardize=False):
         if standardize:
             cube_stddev = climate_statistics(cube,
                                              operator='std_dev',
-                                             period=period)
+                                             period=period,
+                                             seasons=seasons)
             cube = cube / cube_stddev
             cube.units = '1'
         return cube
 
-    cube = _compute_anomalies(cube, reference, period)
+    cube = _compute_anomalies(cube, reference, period, seasons)
 
     # standardize the results if requested
     if standardize:
@@ -543,9 +552,9 @@ def anomalies(cube, period, reference=None, standardize=False):
     return cube
 
 
-def _compute_anomalies(cube, reference, period):
-    cube_coord = _get_period_coord(cube, period)
-    ref_coord = _get_period_coord(reference, period)
+def _compute_anomalies(cube, reference, period, seasons):
+    cube_coord = _get_period_coord(cube, period, seasons)
+    ref_coord = _get_period_coord(reference, period, seasons)
 
     data = cube.core_data()
     cube_time = cube.coord('time')
@@ -565,7 +574,7 @@ def _compute_anomalies(cube, reference, period):
     return cube
 
 
-def _get_period_coord(cube, period):
+def _get_period_coord(cube, period, seasons):
     """Get periods."""
     if period in ['daily', 'day']:
         if not cube.coords('day_of_year'):
@@ -577,7 +586,9 @@ def _get_period_coord(cube, period):
         return cube.coord('month_number')
     if period in ['seasonal', 'season']:
         if not cube.coords('season_number'):
-            iris.coord_categorisation.add_season_number(cube, 'time')
+            iris.coord_categorisation.add_season_number(cube,
+                                                        'time',
+                                                        seasons=seasons)
         return cube.coord('season_number')
     raise ValueError(f"Period '{period}' not supported")
 
