@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.31", 
+        "data_specs_version": "01.00.32", 
         "cmor_version": "3.5", 
         "table_id": "Table E6hrZ", 
         "realm": "atmos", 
-        "table_date": "24 July 2019", 
+        "table_date": "28 May 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 
@@ -14,24 +14,6 @@
         "Conventions": "CF-1.7 CMIP-6.2"
     }, 
     "variable_entry": {
-        "ps": {
-            "frequency": "6hr", 
-            "modeling_realm": "atmos", 
-            "standard_name": "surface_air_pressure", 
-            "units": "Pa", 
-            "cell_methods": "longitude: mean time: mean", 
-            "cell_measures": "", 
-            "long_name": "Surface Air Pressure", 
-            "comment": "surface pressure (not mean sea-level pressure), 2-D field to calculate the 3-D pressure field from hybrid coordinates", 
-            "dimensions": "latitude time", 
-            "out_name": "ps", 
-            "type": "real", 
-            "positive": "", 
-            "valid_min": "", 
-            "valid_max": "", 
-            "ok_min_mean_abs": "", 
-            "ok_max_mean_abs": ""
-        }, 
         "zmlwaero": {
             "frequency": "6hrPt", 
             "modeling_realm": "atmos", 

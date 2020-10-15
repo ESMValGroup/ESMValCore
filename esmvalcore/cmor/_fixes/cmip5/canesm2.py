@@ -1,6 +1,9 @@
-
 """Fixes for CanESM2 model."""
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
+
+
+Cl = ClFixHybridPressureCoord
 
 
 class FgCo2(Fix):
@@ -15,6 +18,7 @@ class FgCo2(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube to fix.
 
         Returns
         -------

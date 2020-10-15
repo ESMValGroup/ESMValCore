@@ -18,7 +18,7 @@ def test_col_is_not_monotonic():
 
 
 def test_keeping_column_length():
-    """Test for level widths keeping column lenght."""
+    """Test for level widths keeping column length."""
     plev = 1000
     top_limit = 5
     col = np.array([1000, 900, 800])

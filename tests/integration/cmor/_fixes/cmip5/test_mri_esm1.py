@@ -7,9 +7,8 @@ from esmvalcore.cmor._fixes.cmip5.mri_esm1 import Msftmyz
 
 class TestMsftmyz(unittest.TestCase):
     """Test msftmyz fixes."""
-
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'MRI-ESM1', 'msftmyz'), [Msftmyz()]
-        )
+            Fix.get_fixes('CMIP5', 'MRI-ESM1', 'Amon', 'msftmyz'),
+            [Msftmyz(None)])

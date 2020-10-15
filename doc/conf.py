@@ -12,10 +12,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -23,7 +23,6 @@ from datetime import datetime
 root = Path(__file__).absolute().parent.parent
 sys.path.insert(0, str(root))
 
-from esmvalcore.utils.doc.gensidebar import generate_sidebar
 from esmvalcore import __version__
 
 # -- RTD configuration ------------------------------------------------
@@ -34,7 +33,7 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 # This is used for linking and such so we link to the thing we're building
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
-if rtd_version not in ["latest"]:  # TODO: add "stable" once we have it
+if rtd_version not in ["latest", "doc"]:  # TODO: add "stable" once we have it
     rtd_version = "latest"
 
 # -- General configuration ------------------------------------------------
@@ -55,18 +54,17 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
+    'autodocsumm',
 ]
 
-autodoc_default_flags = [
-    'members',
-    'undoc-members',
-    'inherited-members',
-    'show-inheritance',
-]
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'inherited-members': True,
+    'show-inheritance': True,
+    'autosummary': True,
+}
 
-# autodoc_mock_imports = ['cf_units', 'iris', 'matplotlib', 'numpy', 'cartopy',
-#                        'cftime', 'netCDF4', 'yaml', 'PIL', 'prov', 'scipy',
-#                        'psutil', 'shapely', 'stratify', 'ESMF']
 autodoc_mock_imports = [
     'iris',
     'stratify',
@@ -90,8 +88,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ESMValTool'
-copyright = (u"{0}, Veronika Eyring, Axel Lauer, Mattia Righi, "
-             u"Martin Evaldsson et al.").format(datetime.now().year)
+copyright = u'{0}, ESMValTool Development Team'.format(datetime.now().year)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -417,17 +414,20 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'iris': ('https://scitools.org.uk/iris/docs/latest/', None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'esmvaltool':
-    ('https://esmvaltool.readthedocs.io/en/%s/' % rtd_version, None),
     'esmvalcore':
-    ('https://esmvaltool.readthedocs.io/projects/esmvalcore/en/%s/' %
-     rtd_version, None),
+    (f'https://docs.esmvaltool.org/projects/esmvalcore/en/{rtd_version}/',
+     None),
+    'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'iris': ('https://scitools.org.uk/iris/docs/latest/', None),
+    'matplotlib': ('https://matplotlib.org/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'python': ('https://docs.python.org/3/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------
+
+sys.path.append(os.path.dirname(__file__))
+from gensidebar import generate_sidebar
 
 generate_sidebar(globals(), "esmvalcore")

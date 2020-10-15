@@ -95,7 +95,7 @@ LAND_FRACTION = [
 @pytest.mark.parametrize('cube,fx_files,fx_cubes,out,err', LAND_FRACTION)
 @mock.patch.object(weighting, 'iris', autospec=True)
 def test_get_land_fraction(mock_iris, cube, fx_files, fx_cubes, out, err):
-    """Test calulation of land fraction."""
+    """Test calculation of land fraction."""
     mock_iris.load_cube.side_effect = fx_cubes
     (land_fraction, errors) = weighting._get_land_fraction(cube, fx_files)
     if land_fraction is None:

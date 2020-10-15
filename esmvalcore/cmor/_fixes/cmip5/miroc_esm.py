@@ -1,9 +1,13 @@
-"""Fixes for MIROC ESM model."""
+"""Fixes for MIROC-ESM model."""
 
 from iris.coords import DimCoord
 from iris.exceptions import CoordinateNotFoundError
 
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
+
+
+Cl = ClFixHybridPressureCoord
 
 
 class Tro3(Fix):
@@ -18,6 +22,7 @@ class Tro3(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -41,11 +46,12 @@ class Co2(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         self.get_cube_from_list(cubes).units = '1.0e-6'
@@ -63,7 +69,8 @@ class AllVars(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------

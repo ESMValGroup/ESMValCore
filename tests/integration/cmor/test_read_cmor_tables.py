@@ -7,7 +7,7 @@ from esmvalcore.cmor.table import read_cmor_tables
 
 
 def test_read_cmor_tables():
-    """Test that the funcion `read_cmor_tables` loads the tables correctly."""
+    """Test that the function `read_cmor_tables` loads the tables correctly."""
     # Read the tables
     read_cmor_tables(read_config_developer_file())
 
