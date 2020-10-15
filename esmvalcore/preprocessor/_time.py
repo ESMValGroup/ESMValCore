@@ -274,7 +274,7 @@ def seasonal_statistics(cube,
         Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
         'max', 'rms'
 
-    season: str, optional
+    seasons: str, optional
         Seasons to build. Available: ('DJF', 'MAM', 'JJA', SON') (default)
         and all sequentially correct combinations holding every month
         of a year: e.g. ('JJAS','ONDJFMAM'), or less in case of prior season
@@ -317,7 +317,7 @@ def seasonal_statistics(cube,
     # Ranging on [29, 31] days makes this calendar-independent
     # the only season this could not work is 'F' but this raises an
     # ValueError
-    def spans_full_season(time):
+    def spans_full_season(cube):
         """Check for all month present in the season.
 
         Parameters

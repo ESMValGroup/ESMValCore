@@ -835,6 +835,9 @@ Parameters:
     * operator: operation to apply. Accepted values are 'mean',
       'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
+    * seasons: seasons to build statistics.
+      Default is '(DJF, MAM, JJA, SON)'
+
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
 .. _annual_statistics:
