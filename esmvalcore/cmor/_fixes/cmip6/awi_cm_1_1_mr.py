@@ -11,6 +11,7 @@ class AllVars(Fix):
         Parameters
         ----------
         cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
