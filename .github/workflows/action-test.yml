@@ -23,7 +23,6 @@ on:
     branches:
     - master
     - github-actions2
-    - iris3  # remove this when finished testing iris3
   # run the test only if the PR is to master
   # turn it on if required
   #pull_request:
@@ -48,7 +47,7 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
-          channels: conda-forge,conda-forge/label/rc_iris
+          channels: conda-forge
       - shell: bash -l {0}
         run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
@@ -81,7 +80,7 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
-          channels: conda-forge,conda-forge/label/rc_iris
+          channels: conda-forge
       - shell: bash -l {0}
         run: mkdir -p test_osx_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}

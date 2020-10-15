@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - master
-      - iris3  # remove this when done testing for iris3 and remove the conda-forge/label/rc_iris --channel
 
 jobs:
 
@@ -45,5 +44,42 @@ jobs:
           mkdir -p $BUILD_FOLDER
           conda build package \
             --channel esmvalgroup --channel conda-forge \
-            --channel conda-forge/label/rc_iris \
             --croot $BUILD_FOLDER \
+      - name: Push the package to anaconda cloud
+        if: startsWith(github.ref, 'refs/tags')
+        shell: bash -l {0}
+        run: |
+          export BUILD_FOLDER=/tmp/esmvalcore/_build
+          # use --label test before actual release and check all works well
+          anaconda --token ${{ secrets.ANACONDA_TOKEN }} upload --user esmvalgroup $BUILD_FOLDER/noarch/*.tar.bz2
+  verify:
+    name: verify / python-${{ matrix.python-version }} / ${{ matrix.os }}
+    if: startsWith(github.ref, 'refs/tags')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest']  # may extent to osx in the future
+        python-version: ["3.6", "3.7", "3.8"]
+    runs-on: ${{ matrix.os }}
+    needs: publish
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+      - uses: goanpeca/setup-miniconda@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+          miniconda-version: "latest"
+          channels: esmvalgroup,conda-forge
+      - shell: bash -l {0}
+        run: conda --version
+      - shell: bash -l {0}
+        run: which conda
+      - shell: bash -l {0}
+        run: python -V
+      - shell: bash -l {0}
+        run: conda install esmvalcore
+      - shell: bash -l {0}
+        run: esmvaltool --help
+      - shell: bash -l {0}
+        run: esmvaltool version
