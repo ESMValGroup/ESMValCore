@@ -24,7 +24,8 @@ class AllVars(Fix):
         for cube in cubes:
             if cube.attributes['table_id'] == 'Amon':
                 time = cube.coord('time')
-                if self._fix_required(cube, time):
+                if cube.attributes['table_id'] == 'Amon' and \
+                        not (time.bounds[0, 1] == time.bounds[1, 0]):
                     times = time.units.num2date(time.points)
                     starts = [
                         cftime.DatetimeNoLeap(c.year, c.month, 1)
@@ -38,7 +39,3 @@ class AllVars(Fix):
                     time.bounds = time.units.date2num(
                         np.stack([starts, ends], -1))
         return cubes
-
-    def _fix_required(self, cube, time):
-        return (cube.attributes['table_id'] == 'Amon'
-                and not (time.bounds[0, 1] == time.bounds[1, 0]))
