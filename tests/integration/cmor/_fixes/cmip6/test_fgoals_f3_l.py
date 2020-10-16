@@ -26,11 +26,14 @@ def cubes():
                                   var_name='tas',
                                   dim_coords_and_dims=[(correct_time_coord, 0)
                                                        ],
-                                  attributes={'table_id': 'Amon'})
+                                  attributes={'table_id': 'Amon'},
+                                  units=Unit('degC'))
     wrong_cube = iris.cube.Cube([10., 10., 10.],
                                 var_name='tas',
                                 dim_coords_and_dims=[(wrong_time_coord, 0)],
-                                attributes={'table_id': 'Amon'})
+                                attributes={'table_id': 'Amon'},
+                                units=Unit('degC'))
+
     return iris.cube.CubeList([correct_cube, wrong_cube])
 
 
