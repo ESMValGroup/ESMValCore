@@ -443,7 +443,7 @@ def round_coordinates(cubes, decimals=5, coord_names=None):
         if not coord_names:
             coords = cube.coords(dim_coords=True)
         else:
-            coords = [cube.coord(name) for name in coord_names]
+            coords = [cube.coord(c) for c in coord_names if cube.coords(c)]
         for coord in coords:
             coord.points = da.round(da.asarray(coord.core_points()), decimals)
             if coord.bounds is not None:

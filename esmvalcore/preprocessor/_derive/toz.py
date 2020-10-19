@@ -26,14 +26,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
-            {
-                'short_name': 'tro3'
-            },
-            {
-                'short_name': 'ps'
-            },
-        ]
+        if project == 'CMIP6':
+            required = [{'short_name': 'o3'}, {'short_name': 'ps'}]
+        else:
+            required = [{'short_name': 'tro3'}, {'short_name': 'ps'}]
         return required
 
     @staticmethod
@@ -64,6 +60,7 @@ class DerivedVariable(DerivedVariableBase):
         toz_cube = toz_cube / MW_O3 * AVOGADRO_CONST
         toz_cube.units = toz_cube.units / MW_O3_UNIT * AVOGADRO_CONST_UNIT
         toz_cube.convert_units(DOBSON_UNIT)
+        toz_cube.units = 'DU'
 
         return toz_cube
 

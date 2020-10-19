@@ -15,7 +15,8 @@ from pathlib import Path
 
 from setuptools import Command, setup
 
-from esmvalcore._version import __version__
+sys.path.insert(0, os.path.dirname(__file__))
+from esmvalcore._version import __version__  # noqa: E402
 
 PACKAGES = [
     'esmvalcore',
@@ -24,7 +25,6 @@ PACKAGES = [
 REQUIREMENTS = {
     # Installation script (this file) dependencies
     'setup': [
-        'pytest-runner',
         'setuptools_scm',
     ],
     # Installation dependencies
@@ -50,23 +50,26 @@ REQUIREMENTS = {
     # Execute 'python setup.py test' to run tests
     'test': [
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
-        'pytest-cov',
+        'pytest-cov>=2.10.1',
         'pytest-env',
-        'pytest-flake8',
+        'pytest-flake8>=1.0.6',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
         'pytest-mock',
+        'pytest-xdist',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
     'develop': [
         'autodocsumm',
         'codespell',
+        'docformatter',
         'isort',
+        'pre-commit',
         'prospector[with_pyroma]!=1.1.6.3,!=1.1.6.4',
         'sphinx>2',
         'sphinx_rtd_theme',
-        'vmprof',
+        'vprof',
         'yamllint',
         'yapf',
     ],

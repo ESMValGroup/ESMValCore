@@ -22,6 +22,8 @@ on:
   push:
     branches:
     - master
+    - github-actions2
+
   # run the test only if the PR is to master
   # turn it on if required
   #pull_request:
@@ -50,15 +52,23 @@ jobs:
           miniconda-version: "latest"
           channels: conda-forge
       - shell: bash -l {0}
-        run: conda --version
+        run: mkdir -p pypi_install_linux_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
-        run: python -V
+        run: conda --version 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - shell: bash -l {0}
-        run: pip install esmvalcore
+        run: python -V 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - shell: bash -l {0}
+        run: pip install esmvalcore 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
         run: esmvaltool --help
       - shell: bash -l {0}
-        run: esmvaltool version
+        run: esmvaltool version 2>&1 | tee pypi_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
+      - name: Upload artifacts
+        if: ${{ always() }}  # upload artifacts even if fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: PyPi_Install_Linux_python_${{ matrix.python-version }}
+          path: pypi_install_linux_artifacts_python_${{ matrix.python-version }}
 
   osx:
     runs-on: "macos-latest"
@@ -77,12 +87,20 @@ jobs:
           miniconda-version: "latest"
           channels: conda-forge
       - shell: bash -l {0}
-        run: conda --version
+        run: mkdir -p pypi_install_osx_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
-        run: python -V
+        run: conda --version 2>&1 | tee pypi_install_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - shell: bash -l {0}
-        run: pip install esmvalcore
+        run: python -V 2>&1 | tee pypi_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - shell: bash -l {0}
+        run: pip install esmvalcore 2>&1 | tee pypi_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
         run: esmvaltool --help
       - shell: bash -l {0}
-        run: esmvaltool version
+        run: esmvaltool version 2>&1 | tee pypi_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt
+      - name: Upload artifacts
+        if: ${{ always() }}  # upload artifacts even if fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: PyPi_Install_OSX_python_${{ matrix.python-version }}
+          path: pypi_install_osx_artifacts_python_${{ matrix.python-version }}
