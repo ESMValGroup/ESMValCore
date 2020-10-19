@@ -56,6 +56,7 @@ jobs:
             conda env update >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
             conda install -yS r-base r-yaml ncl -c conda-forge
+            conda install -c conda-forge -c conda-forge/label/rc_iris iris=3.0.0
             pip install .[test] > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
