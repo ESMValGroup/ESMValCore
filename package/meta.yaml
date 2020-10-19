@@ -53,6 +53,7 @@ requirements:
     - psutil
     - pydot
     - pyyaml
+    - requests
     - shapely
     - yamale==2.*  # in esmvalgroup channel
 
