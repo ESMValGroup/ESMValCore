@@ -1154,29 +1154,6 @@ def test_anomalies_custom_season():
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
 
 
-# def test_anomalies_custom_season():
-#     cube = make_map_data(number_years=2)
-#     result = anomalies(cube, 'season', seasons=('jfmamj', 'jasond'))
-#     anom = np.concatenate((
-#         np.arange(-89.5, 90),
-#         np.arange(-224.5, -135),
-#         np.arange(-224.5, -135),
-#         np.arange(-224.5, -135),
-#         np.arange(15.5, 105),
-#         np.arange(135.5, 225),
-#         np.arange(135.5, 225),
-#         np.arange(135.5, 225),
-#         np.arange(375.5, 405),
-#     ))
-#     zeros = np.zeros_like(anom)
-#     assert_array_equal(
-#         result.data,
-#         np.array([[zeros, anom], [anom, zeros]])
-#     )
-#     assert_array_equal(result.coord('time').points,
-#                        cube.coord('time').points)
-
-
 def get_0d_time():
     """Get 0D time coordinate."""
     time = iris.coords.AuxCoord(15.0,
