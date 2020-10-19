@@ -1,4 +1,4 @@
-"""Tests for MIROC5."""
+"""Tests for EC-Earth3-Veg."""
 import unittest
 
 import iris
