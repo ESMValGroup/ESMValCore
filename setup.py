@@ -42,6 +42,7 @@ REQUIREMENTS = {
         'psutil',
         'pyyaml',
         'scitools-iris>=2.2',
+        'requests',
         'shapely[vectorized]',
         'stratify',
         'yamale==2.*',
