@@ -1362,6 +1362,33 @@ class TestResampleHours(tests.Test):
         with self.assertRaises(ValueError):
             resample_hours(cube, 5)
 
+    def test_resample_invalid_offset(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 1)
+        times = np.arange(0, 48, 1)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, interval=3, offset=6)
+
+    def test_resample_shorter_interval(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 12)
+        times = np.arange(0, 48, 12)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, interval=3)
+
+    def test_resample_same_interval(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 12)
+        times = np.arange(0, 48, 12)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, interval=12)
+
 
 class TestResampleTime(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`"""

@@ -758,9 +758,9 @@ def timeseries_filter(cube,
 
 
 def resample_hours(cube, interval, offset=0):
-    """Converts x-hourly data to y-hourly by eliminating extra timesteps.
+    """Convert x-hourly data to y-hourly by eliminating extra timesteps.
 
-    Converts x-hourly data to y-hourly (y > x) by eliminating the extra
+    Convert x-hourly data to y-hourly (y > x) by eliminating the extra
     timesteps. This is intended to be used only with instantaneous values.
 
     Parameters
@@ -789,6 +789,11 @@ def resample_hours(cube, interval, offset=0):
     if offset >= interval:
         raise ValueError(f'The offset ({offset}) must be lower than '
                          f'the interval ({interval})')
+    time = cube.coord('time')
+    cube_period = time.cell(1).point - time.cell(0).point
+    if cube_period.total_seconds() / 3600 >= interval:
+        raise ValueError(f"Data period ({cube_period}) should be lower than "
+                         f"the interval ({interval})")
     hours = range(0 + offset, 24, interval)
     select_hours = iris.Constraint(time=lambda cell: cell.point.hour in hours)
     return cube.extract(select_hours)
