@@ -79,7 +79,7 @@ structures.
 
 Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``
 ---------------------------------------------------------------------
-Whreas ESMValTool will **always** use the CMOR standard for file naming (please
+Whereas ESMValTool will **always** use the CMOR standard for file naming (please
 refer above), by setting the ``drs`` parameter the user tells the tool what
 type of root paths they need the data from, e.g.:
 

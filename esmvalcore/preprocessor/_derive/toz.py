@@ -22,18 +22,13 @@ DOBSON_UNIT = cf_units.Unit('2.69e20 m^-2')
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `toz`."""
-
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [
-            {
-                'cmor_name': 'tro3'
-            },
-            {
-                'cmor_name': 'ps'
-            },
-        ]
+        if project == 'CMIP6':
+            required = [{'cmor_name': 'o3'}, {'cmor_name': 'ps'}]
+        else:
+            required = [{'cmor_name': 'tro3'}, {'cmor_name': 'ps'}]
         return required
 
     @staticmethod
@@ -44,7 +39,6 @@ class DerivedVariable(DerivedVariableBase):
         ----
         The surface pressure is used as a lower integration bound. A fixed
         upper integration bound of 0 Pa is used.
-
         """
         tro3_cube = cubes.extract_strict(
             iris.Constraint(name='mole_fraction_of_ozone_in_air'))
@@ -64,6 +58,7 @@ class DerivedVariable(DerivedVariableBase):
         toz_cube = toz_cube / MW_O3 * AVOGADRO_CONST
         toz_cube.units = toz_cube.units / MW_O3_UNIT * AVOGADRO_CONST_UNIT
         toz_cube.convert_units(DOBSON_UNIT)
+        toz_cube.units = 'DU'
 
         return toz_cube
 
@@ -87,7 +82,6 @@ def _pressure_level_widths(tro3_cube, ps_cube, top_limit=0.0):
     -------
     iris.cube.Cube
     `Cube` of same shape as `tro3_cube` containing pressure level widths.
-
     """
     pressure_array = _create_pressure_array(tro3_cube, ps_cube, top_limit)
 

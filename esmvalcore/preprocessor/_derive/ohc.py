@@ -1,8 +1,7 @@
 """Derivation of variable `ohc`."""
 import iris
-from iris import Constraint
-
 from cf_units import Unit
+from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
 
@@ -11,7 +10,6 @@ RHO_CP = iris.coords.AuxCoord(4.09169e+6, units=Unit('kg m-3 J kg-1 K-1'))
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `ohc`."""
-
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
@@ -38,8 +36,7 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def calculate(cubes):
-        """
-        Compute ocean heat content.
+        """Compute ocean heat content.
 
         Use c_p*rho_0= 4.09169e+6 J m-3 K-1
         (Kuhlbrodt et al., 2015, Clim. Dyn.)
@@ -62,6 +59,7 @@ class DerivedVariable(DerivedVariableBase):
         # 2. multiply with each other and with cprho0
         # some juggling with coordinates needed since Iris is very
         # restrictive in this regard
+        cube.convert_units('K')
         try:
             t_coord_dims = cube.coord_dims('time')
         except iris.exceptions.CoordinateNotFoundError:

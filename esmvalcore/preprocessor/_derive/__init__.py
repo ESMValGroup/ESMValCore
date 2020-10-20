@@ -18,7 +18,6 @@ def _get_all_derived_variables():
     dict
         All derived variables with `cmor_name` (keys) and the associated
         python classes (values).
-
     """
     derivers = {}
     for path in Path(__file__).parent.glob('[a-z]*.py'):
@@ -50,7 +49,6 @@ def get_required(cmor_name, project):
     -------
     list
         List of dictionaries (including at least the key `cmor_name`).
-
     """
     if cmor_name not in ALL_DERIVED_VARIABLES:
         raise NotImplementedError(
@@ -82,7 +80,6 @@ def derive(cubes, cmor_name, short_name, long_name, units, standard_name=None):
     -------
     iris.cube.Cube
         The new derived variable.
-
     """
     if short_name == cubes[0].var_name:
         return cubes[0]
@@ -105,9 +102,24 @@ def derive(cubes, cmor_name, short_name, long_name, units, standard_name=None):
     cube.var_name = short_name
     cube.standard_name = standard_name if standard_name else None
     cube.long_name = long_name
-    cube.units = units
     for temp in cubes:
         if 'source_file' in temp.attributes:
             cube.attributes['source_file'] = temp.attributes['source_file']
+
+    # Check/convert units
+    if cube.units is None or cube.units == units:
+        cube.units = units
+    elif cube.units.is_no_unit() or cube.units.is_unknown():
+        logger.warning(
+            "Units of cube after executing derivation script of '%s' are "
+            "'%s', automatically setting them to '%s'. This might lead to "
+            "incorrect data", short_name, cube.units, units)
+        cube.units = units
+    elif cube.units.is_convertible(units):
+        cube.convert_units(units)
+    else:
+        raise ValueError(
+            f"Units '{cube.units}' after executing derivation script of "
+            f"'{short_name}' cannot be converted to target units '{units}'")
 
     return cube

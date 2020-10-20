@@ -12,23 +12,43 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import (TAGS, get_activity, get_institutes, get_project_config,
-                      replace_tags)
-from ._data_finder import (get_input_filelist, get_output_file,
-                           get_statistic_output_file)
+from ._config import (
+    TAGS,
+    get_activity,
+    get_institutes,
+    get_project_config,
+    replace_tags,
+)
+from ._data_finder import (
+    get_input_filelist,
+    get_output_file,
+    get_statistic_output_file,
+)
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
-from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
-                    run_tasks)
+from ._task import (
+    DiagnosticTask,
+    get_flattened_tasks,
+    get_independent_tasks,
+    run_tasks,
+)
 from .cmor.table import CMOR_TABLES
-from .preprocessor import (DEFAULT_ORDER, FINAL_STEPS, INITIAL_STEPS,
-                           MULTI_MODEL_FUNCTIONS, PreprocessingTask,
-                           PreprocessorFile)
+from .preprocessor import (
+    DEFAULT_ORDER,
+    FINAL_STEPS,
+    INITIAL_STEPS,
+    MULTI_MODEL_FUNCTIONS,
+    PreprocessingTask,
+    PreprocessorFile,
+)
 from .preprocessor._derive import get_required
 from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
-from .preprocessor._regrid import (get_cmor_levels, get_reference_levels,
-                                   parse_cell_spec)
+from .preprocessor._regrid import (
+    get_cmor_levels,
+    get_reference_levels,
+    parse_cell_spec,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +59,7 @@ def ordered_safe_load(stream):
     """Load a YAML file using OrderedDict instead of dict."""
     class OrderedSafeLoader(yaml.SafeLoader):
         """Loader class that uses OrderedDict to load a map."""
+
     def construct_mapping(loader, node):
         """Load a map as an OrderedDict."""
         loader.flatten_mapping(node)
@@ -110,7 +131,7 @@ def _add_cmor_info(variable, override=False):
         raise RecipeError(
             f"Unable to load CMOR table (project) '{project}' for variable "
             f"'{cmor_name}' with mip '{mip}'")
-
+    variable['original_short_name'] = table_entry.short_name
     for key in cmor_keys:
         if key not in variable or override:
             value = getattr(table_entry, key, None)
@@ -350,6 +371,8 @@ def _get_default_settings(variable, config_user, derive=False):
 
     # Configure saving cubes to file
     settings['save'] = {'compress': config_user['compress_netcdf']}
+    if variable['short_name'] != variable['original_short_name']:
+        settings['save']['alias'] = variable['short_name']
 
     return settings
 
@@ -413,6 +436,10 @@ def _get_fx_file(variable, fx_variable, config_user):
         fx_cmor_variable = cmor_table.get_variable(fx_mip, fx_varname)
         if fx_cmor_variable is not None:
             fx_var_dict = dict(fx_variable)
+            if 'cmor_name' not in fx_var_dict and 'short_name' in fx_var_dict:
+                logger.debug('Assuming short_name of fx variable is equal to '
+                             'the cmor_name')
+                fx_var_dict['cmor_name'] = fx_var_dict['short_name']
             searched_mips.append(fx_mip)
             fx_var_dict['mip'] = fx_mip
             fx_var_dict = _add_fxvar_keys(fx_var_dict, var)
@@ -470,21 +497,18 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
     if not fx_vars:
         return
 
-    fx_vars = [
-        _get_fx_file(variable, fxvar, config_user)
-        for fxvar in fx_vars
-    ]
+    fx_vars = [_get_fx_file(variable, fxvar, config_user) for fxvar in fx_vars]
 
     fx_dict = {fx_var[1]['short_name']: fx_var[0] for fx_var in fx_vars}
     settings['fx_variables'] = fx_dict
     logger.info('Using fx_files: %s for variable %s during step %s',
-                pformat(settings['fx_variables']),
-                variable['short_name'],
+                pformat(settings['fx_variables']), variable['short_name'],
                 step_name)
 
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
+
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -495,8 +519,8 @@ def _update_fx_settings(settings, variable, config_user):
                     user_fx_vars.append('sftof')
             elif step_name == 'mask_landseaice':
                 user_fx_vars = ['sftgif']
-            elif step_name in ('area_statistics',
-                               'volume_statistics', 'zonal_statistics'):
+            elif step_name in ('area_statistics', 'volume_statistics',
+                               'zonal_statistics'):
                 user_fx_vars = []
         return user_fx_vars
 
@@ -508,8 +532,8 @@ def _update_fx_settings(settings, variable, config_user):
     for step_name, step_settings in settings.items():
         if step_name in fx_steps:
             fx_vars = _get_fx_vars_from_attribute(step_settings, step_name)
-            _update_fx_files(step_name, step_settings,
-                             variable, config_user, fx_vars)
+            _update_fx_files(step_name, step_settings, variable, config_user,
+                             fx_vars)
 
 
 def _read_attributes(filename):
@@ -631,9 +655,10 @@ def _update_statistic_settings(products, order, preproc_dir):
 
     some_product = next(iter(products))
     for statistic in some_product.settings[step]['statistics']:
+        check.valid_multimodel_statistic(statistic)
         attributes = _get_statistic_attributes(products)
         attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
-            statistic.title())
+            statistic.title().replace('.', '-'))
         attributes['filename'] = get_statistic_output_file(
             attributes, preproc_dir)
         common_settings = _get_remaining_common_settings(step, order, products)
@@ -690,16 +715,12 @@ def _match_products(products, variables):
     return grouped_products
 
 
-def _get_preprocessor_products(variables,
-                               profile,
-                               order,
-                               ancestor_products,
+def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user):
-    """
-    Get preprocessor product definitions for a set of datasets.
+    """Get preprocessor product definitions for a set of datasets.
 
-    It updates recipe settings as needed by various preprocessors
-    and sets the correct ancestry.
+    It updates recipe settings as needed by various preprocessors and
+    sets the correct ancestry.
     """
     products = set()
     for variable in variables:
@@ -772,12 +793,11 @@ def _get_single_preprocessor_task(variables,
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
-    products = _get_preprocessor_products(
-        variables=variables,
-        profile=profile,
-        order=order,
-        ancestor_products=ancestor_products,
-        config_user=config_user)
+    products = _get_preprocessor_products(variables=variables,
+                                          profile=profile,
+                                          order=order,
+                                          ancestor_products=ancestor_products,
+                                          config_user=config_user)
 
     if not products:
         raise RecipeError(
@@ -1010,8 +1030,7 @@ class Recipe:
 
     @staticmethod
     def _expand_ensemble(variables):
-        """
-        Expand ensemble members to multiple datasets.
+        """Expand ensemble members to multiple datasets.
 
         Expansion only supports ensembles defined as strings, not lists.
         """

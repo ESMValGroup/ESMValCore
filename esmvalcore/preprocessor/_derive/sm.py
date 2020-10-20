@@ -2,14 +2,14 @@
 
 import cf_units
 import numpy as np
-from iris import Constraint
+
+from esmvalcore.iris_helpers import var_name_constraint
 
 from ._baseclass import DerivedVariableBase
 
 
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `sm`."""
-
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
@@ -25,10 +25,8 @@ class DerivedVariable(DerivedVariableBase):
         Convert moisture content of soil layer (kg/m2) into volumetric soil
         moisture (m3/m3), assuming density of water 998.2 kg/m2 (at temperature
         20 deg C).
-
         """
-        mrsos_cube = cubes.extract_strict(
-            Constraint(name='moisture_content_of_soil_layer'))
+        mrsos_cube = cubes.extract_strict(var_name_constraint('mrsos'))
 
         depth = mrsos_cube.coord('depth').bounds.astype(np.float32)
         layer_thickness = depth[..., 1] - depth[..., 0]

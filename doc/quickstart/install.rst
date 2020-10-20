@@ -4,16 +4,68 @@ Installation
 Conda installation
 ------------------
 
-In order to install the Conda package, you will need to install conda first.
-For a minimal conda installation go to https://conda.io/miniconda.html.
+In order to install the Conda package, you will need to install `Conda <https://docs.conda.io>`_ first.
+For a minimal conda installation (recommended) go to https://conda.io/miniconda.html.
 It is recommended that you always use the latest version of conda, as problems have been reported when trying to use older versions.
 
 Once you have installed conda, you can install ESMValCore by running:
 
 .. code-block:: bash
 
-
     conda install -c esmvalgroup -c conda-forge esmvalcore
+
+It is also possible to create a new
+`Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html#managing-environments>`_
+and install ESMValCore into it with a single command:
+
+.. code-block:: bash
+
+    conda create --name esmvalcore -c esmvalgroup -c conda-forge esmvalcore
+
+Don't forget to activate the newly created environment after the installation:
+
+.. code-block:: bash
+
+    conda activate esmvalcore
+
+Of course it is also possible to choose a different name than ``esmvalcore`` for the environment.
+
+.. note::
+
+	  Creating a new Conda environment is often much faster and more reliable than trying to update an existing Conda environment.
+
+Pip installation
+-----------------
+
+It is also possible to install ESMValCore from `PyPI <https://pypi.org/project/ESMValCore/>`_.
+However, this requires first installing dependencies that are not available on PyPI in some other way.
+By far the easiest way to install these dependencies is to use conda_.
+For a minimal conda installation (recommended) go to https://conda.io/miniconda.html.
+
+After installing Conda, download
+`the file with the list of dependencies <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/master/environment.yml>`_:
+
+.. code-block:: bash
+
+    wget https://raw.githubusercontent.com/ESMValGroup/ESMValCore/master/environment.yml
+
+and install these dependencies into a new conda environment with the command
+
+.. code-block:: bash
+
+    conda env create --name esmvalcore --file environment.yml
+
+Finally, activate the newly created environment
+
+.. code-block:: bash
+
+    conda activate esmvalcore
+
+and install ESMValCore as well as any remaining dependencies with the command:
+
+.. code-block:: bash
+
+    pip install esmvalcore
 
 
 Docker installation
@@ -105,8 +157,6 @@ To run the container using the image file ``esmvalcore.sif`` use:
 .. code-block:: bash
 
    singularity run esmvalcore.sif -c ~/config-user.yml ~/recipes/recipe_example.yml
-
-
 
 
 Development installation

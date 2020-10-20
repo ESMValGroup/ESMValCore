@@ -13,12 +13,14 @@ It operates on different (time) spans:
 """
 
 import logging
+import re
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
 
 import cf_units
 import iris
 import numpy as np
+import scipy
 
 from ._time import regrid_time
 
@@ -55,6 +57,35 @@ def _plev_fix(dataset, pl_idx):
     return statj
 
 
+def _quantile(data, axis, quantile):
+    """Calculate quantile.
+
+    Workaround for calling scipy's mquantiles with arrays of >2 dimensions
+    Similar to iris' _percentiles function, see their discussion:
+    https://github.com/SciTools/iris/pull/625
+    """
+    # Ensure that the target axis is the last dimension.
+    data = np.rollaxis(data, axis, start=data.ndim)
+    shape = data.shape[:-1]
+    # Flatten any leading dimensions.
+    if shape:
+        data = data.reshape([np.prod(shape), data.shape[-1]])
+    # Perform the quantile calculation.
+    result = scipy.stats.mstats.mquantiles(data,
+                                           quantile,
+                                           axis=-1,
+                                           alphap=1,
+                                           betap=1)
+    # Ensure to unflatten any leading dimensions.
+    if shape:
+        result = result.reshape(shape)
+    # Check whether to reduce to a scalar result
+    if result.shape == (1, ):
+        result = result[0]
+
+    return result
+
+
 def _compute_statistic(data, statistic_name):
     """Compute multimodel statistic."""
     data = np.ma.array(data)
@@ -70,6 +101,10 @@ def _compute_statistic(data, statistic_name):
         statistic_function = np.ma.max
     elif statistic_name == 'min':
         statistic_function = np.ma.min
+    elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic_name):
+        # percentiles between p0 and p99.99999...
+        quantile = float(statistic_name[1:]) / 100
+        statistic_function = partial(_quantile, quantile=quantile)
     else:
         raise NotImplementedError
 
@@ -113,10 +148,9 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     else:
         unit_name = template_cube.coord('time').units.name
         tunits = cf_units.Unit(unit_name, calendar="standard")
-        times = iris.coords.DimCoord(
-            t_axis,
-            standard_name='time',
-            units=tunits)
+        times = iris.coords.DimCoord(t_axis,
+                                     standard_name='time',
+                                     units=tunits)
 
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
@@ -152,8 +186,9 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     # correct dspec if necessary
     fixed_dspec = np.ma.fix_invalid(cube_data, copy=False, fill_value=1e+20)
     # put in cube
-    stats_cube = iris.cube.Cube(
-        fixed_dspec, dim_coords_and_dims=cspec, long_name=statistic)
+    stats_cube = iris.cube.Cube(fixed_dspec,
+                                dim_coords_and_dims=cspec,
+                                long_name=statistic)
     coord_names = [coord.name() for coord in template_cube.coords()]
     if 'air_pressure' in coord_names:
         if len(template_cube.shape) == 3:
@@ -275,8 +310,10 @@ def _assemble_overlap_data(cubes, interval, statistic):
             for cube, indx in zip(cubes, indices)
         ]
         stats_dats[i] = _compute_statistic(time_data, statistic)
-    stats_cube = _put_in_cube(
-        cubes[0][sl_1:sl_2 + 1], stats_dats, statistic, t_axis=None)
+    stats_cube = _put_in_cube(cubes[0][sl_1:sl_2 + 1],
+                              stats_dats,
+                              statistic,
+                              t_axis=None)
     return stats_cube
 
 
@@ -342,18 +379,21 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         computation;
         cube attribute of product is the data cube for computing the stats.
     span: str
-        overlap or full; if overlap stas are computed on common time-span;
-        if full stats are computed on full time spans.
+        overlap or full; if overlap, statitsticss are computed on common time-
+        span; if full, statistics are computed on full time spans, ignoring
+        missing data.
     output_products: dict
         dictionary of output products.
     statistics: str
         statistical measure to be computed. Available options: mean, median,
-        max, min, std
+        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
+
     Returns
     -------
     list
         list of data products or cubes containing the multimodel stats
         computed.
+
     Raises
     ------
     ValueError
@@ -384,8 +424,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         logger.debug("Using full time spans to compute statistics.")
     else:
         raise ValueError(
-            "Unexpected value for span {}, choose from 'overlap', 'full'"
-            .format(span))
+            "Unexpected value for span {}, choose from 'overlap', 'full'".
+            format(span))
 
     for statistic in statistics:
         # Compute statistic
@@ -393,8 +433,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
             statistic_cube = _assemble_overlap_data(cubes, interval, statistic)
         elif span == 'full':
             statistic_cube = _assemble_full_data(cubes, statistic)
-        statistic_cube.data = np.ma.array(
-            statistic_cube.data, dtype=np.dtype('float32'))
+        statistic_cube.data = np.ma.array(statistic_cube.data,
+                                          dtype=np.dtype('float32'))
 
         if output_products:
             # Add to output product and log provenance

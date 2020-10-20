@@ -179,6 +179,11 @@ arguments):
    data, applying CMOR checks and fixes (:ref:`CMOR check and dataset-specific
    fixes`) and saving the data to disk.
 
+Preprocessor operations will be applied using the default order
+as listed in :ref:`preprocessor_functions`.
+Preprocessor tasks can be set to run in the order they are listed in the recipe
+by adding ``custom_order: true`` to the preprocessor definition.
+
 .. _Diagnostics:
 
 Recipe section: ``diagnostics``
@@ -236,6 +241,10 @@ called ``diagnostic_name`` and will result in two tasks:
 The path to the script provided in the ``script`` option should be
 either the absolute path to the script, or the path relative to the
 ``esmvaltool/diag_scripts`` directory.
+
+Depending on the installation configuration, you may get an error of
+"file does not exist" when the system tries to run the diagnostic script
+using relative paths. If this happens, use an absolute path instead.
 
 Ancestor tasks
 --------------
@@ -307,6 +316,19 @@ over the keys in variables section. For many recipes it makes more sense to
 define the ``start_year`` and ``end_year`` items in the variable section,
 because the diagnostic script assumes that all the data has the same time
 range.
+
+Variable short names usually do not change between datasets supported by
+ESMValCore, as they are usually changed to match CMIP. Nevertheless, there are
+small changes in variable names in CMIP6 with respect to CMIP5 (i.e. sea ice
+concentration changed from ``sic`` to ``siconc``). ESMValCore is aware of some
+of them and can do the automatic translation when needed. It will even do the
+translation in the preprocessed file so the diagnostic does not have to deal
+with this complexity, setting the short name in all files to match the one used
+by the recipe. For example, if ``sic`` is requested, ESMValTool will
+find ``sic`` or ``siconc`` depending on the project, but all preprocessed files
+while use ``sic`` as their short_name. If the recipe requested ``siconc``, the
+preprocessed files will be identical except that they will use the short_name
+``siconc`` instead.
 
 Diagnostic and variable specific datasets
 -----------------------------------------

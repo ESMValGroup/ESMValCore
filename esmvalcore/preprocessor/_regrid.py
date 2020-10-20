@@ -4,9 +4,10 @@ import os
 import re
 from copy import deepcopy
 
+import iris
 import numpy as np
 import stratify
-import iris
+from dask import array as da
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
@@ -61,8 +62,7 @@ VERTICAL_SCHEMES = ('linear', 'nearest',
 
 
 def parse_cell_spec(spec):
-    """
-    Parse an MxN cell specification string.
+    """Parse an MxN cell specification string.
 
     Parameters
     ----------
@@ -103,8 +103,7 @@ def parse_cell_spec(spec):
 
 
 def _stock_cube(spec, lat_offset=True, lon_offset=True):
-    """
-    Create a stock cube.
+    """Create a stock cube.
 
     Create a global cube with M degree-east by N degree-north regular grid
     cells.
@@ -129,7 +128,6 @@ def _stock_cube(spec, lat_offset=True, lon_offset=True):
     Returns
     -------
         A :class:`~iris.cube.Cube`.
-
     """
     dlon, dlat = parse_cell_spec(spec)
     mid_dlon, mid_dlat = dlon / 2, dlat / 2
@@ -149,18 +147,16 @@ def _stock_cube(spec, lat_offset=True, lon_offset=True):
         londata = np.linspace(_LON_MIN, _LON_MAX - dlon,
                               int(_LON_RANGE / dlon))
 
-    lats = iris.coords.DimCoord(
-        latdata,
-        standard_name='latitude',
-        units='degrees_north',
-        var_name='lat')
+    lats = iris.coords.DimCoord(latdata,
+                                standard_name='latitude',
+                                units='degrees_north',
+                                var_name='lat')
     lats.guess_bounds()
 
-    lons = iris.coords.DimCoord(
-        londata,
-        standard_name='longitude',
-        units='degrees_east',
-        var_name='lon')
+    lons = iris.coords.DimCoord(londata,
+                                standard_name='longitude',
+                                units='degrees_east',
+                                var_name='lon')
     lons.guess_bounds()
 
     # Construct the resultant stock cube, with dummy data.
@@ -186,7 +182,7 @@ def _attempt_irregular_regridding(cube, scheme):
 
 
 def extract_point(cube, latitude, longitude, scheme):
-    """Extract a point, with interpolation
+    """Extract a point, with interpolation.
 
     Extracts a single latitude/longitude point from a cube, according
     to the interpolation scheme `scheme`.
@@ -244,7 +240,6 @@ def extract_point(cube, latitude, longitude, scheme):
     array([1, 1, 1, 1, 1, 1, 1, 1]))
     >>> point.data[~point.data.mask].data  # doctest: +SKIP
     array([ 1,  5, 17, 21, 33, 37, 49, 53])
-
     """
 
     msg = f"Unknown interpolation scheme, got {scheme!r}."
@@ -258,8 +253,7 @@ def extract_point(cube, latitude, longitude, scheme):
 
 
 def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
-    """
-    Perform horizontal regridding.
+    """Perform horizontal regridding.
 
     Parameters
     ----------
@@ -293,7 +287,6 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     See Also
     --------
     extract_levels : Perform vertical regridding.
-
     """
     if HORIZONTAL_SCHEMES.get(scheme.lower()) is None:
         emsg = 'Unknown regridding scheme, got {!r}.'
@@ -339,9 +332,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _create_cube(src_cube, data, src_levels, levels, ):
-    """
-    Generate a new cube with the interpolated data.
+def _create_cube(
+    src_cube,
+    data,
+    src_levels,
+    levels,
+):
+    """Generate a new cube with the interpolated data.
 
     The resultant cube is seeded with `src_cube` metadata and coordinates,
     excluding any source coordinates that span the associated vertical
@@ -368,7 +365,6 @@ def _create_cube(src_cube, data, src_levels, levels, ):
         If there is only one level of interpolation, the resultant cube
         will be collapsed over the associated vertical dimension, and a
         scalar vertical coordinate will be added.
-
     """
     # Get the source cube vertical coordinate and associated dimension.
     z_coord = src_cube.coord(axis='z', dim_coords=True)
@@ -429,21 +425,19 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
     # Broadcast the 1d source cube vertical coordinate to fully
     # describe the spatial extent that will be interpolated.
-    src_levels_broadcast = broadcast_to_shape(
-        src_levels.points, cube.shape, cube.coord_dims(src_levels))
+    src_levels_broadcast = broadcast_to_shape(src_levels.points, cube.shape,
+                                              cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
-    if np.ma.is_masked(cube.data):
-        cube.data[cube.data.mask] = np.nan
+    cube.data = da.ma.filled(cube.core_data(), np.nan)
 
     # Now perform the actual vertical interpolation.
-    new_data = stratify.interpolate(
-        levels,
-        src_levels_broadcast,
-        cube.data,
-        axis=z_axis,
-        interpolation=interpolation,
-        extrapolation=extrapolation)
+    new_data = stratify.interpolate(levels,
+                                    src_levels_broadcast,
+                                    cube.core_data(),
+                                    axis=z_axis,
+                                    interpolation=interpolation,
+                                    extrapolation=extrapolation)
 
     # Calculate the mask based on the any NaN values in the interpolated data.
     mask = np.isnan(new_data)
@@ -457,8 +451,7 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
 
 def extract_levels(cube, levels, scheme, coordinate=None):
-    """
-    Perform vertical interpolation.
+    """Perform vertical interpolation.
 
     Parameters
     ----------
@@ -484,7 +477,6 @@ def extract_levels(cube, levels, scheme, coordinate=None):
     See Also
     --------
     regrid : Perform horizontal regridding.
-
     """
     if scheme not in VERTICAL_SCHEMES:
         emsg = 'Unknown vertical interpolation scheme, got {!r}. '
@@ -528,8 +520,8 @@ def extract_levels(cube, levels, scheme, coordinate=None):
             raise ValueError(emsg.format(list(levels), name))
     else:
         # As a last resort, perform vertical interpolation.
-        result = _vertical_interpolate(
-            cube, src_levels, levels, scheme, extrap_scheme)
+        result = _vertical_interpolate(cube, src_levels, levels, scheme,
+                                       extrap_scheme)
 
     return result
 
@@ -553,7 +545,6 @@ def get_cmor_levels(cmor_table, coordinate):
     ValueError:
         If the CMOR table is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
-
     """
     if cmor_table not in CMOR_TABLES:
         raise ValueError(
@@ -576,12 +567,7 @@ def get_cmor_levels(cmor_table, coordinate):
             coordinate, cmor_table))
 
 
-def get_reference_levels(filename,
-                         project,
-                         dataset,
-                         cmor_name,
-                         mip,
-                         frequency,
+def get_reference_levels(filename, project, dataset, cmor_name, mip, frequency,
                          fix_dir):
     """Get level definition from a reference dataset.
 
@@ -599,7 +585,6 @@ def get_reference_levels(filename,
     ValueError:
         If the dataset is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
-
     """
     filename = fix_file(
         file=filename,

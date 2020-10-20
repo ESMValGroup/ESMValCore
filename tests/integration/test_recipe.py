@@ -13,10 +13,9 @@ import esmvalcore
 from esmvalcore._recipe import TASKSEP, read_recipe_file
 from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
+from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
-from esmvalcore.cmor.check import CheckLevels
-
 
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
@@ -65,7 +64,7 @@ DEFAULT_PREPROCESSOR_STEPS = (
 @pytest.fixture
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
-    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test')
+    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
     cfg['synda_download'] = False
     cfg['output_file_type'] = 'png'
     cfg['check_level'] = CheckLevels.DEFAULT
@@ -157,18 +156,22 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
-
     def get_required(cmor_name, _):
         if cmor_name != 'tas':
             assert False
         required = [
-            {'cmor_name': 'pr'},
-            {'cmor_name': 'areacella', 'mip': 'fx', 'optional': True},
+            {
+                'cmor_name': 'pr'
+            },
+            {
+                'cmor_name': 'areacella',
+                'mip': 'fx',
+                'optional': True
+            },
         ]
         return required
 
-    monkeypatch.setattr(
-        esmvalcore._recipe, 'get_required', get_required)
+    monkeypatch.setattr(esmvalcore._recipe, 'get_required', get_required)
 
 
 DEFAULT_DOCUMENTATION = dedent("""
@@ -429,9 +432,8 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
     preproc_dir = os.path.dirname(product.filename)
     assert preproc_dir.startswith(str(tmp_path))
 
-    fix_dir = os.path.join(
-        preproc_dir,
-        'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
+    fix_dir = os.path.join(preproc_dir,
+                           'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
 
     defaults = {
         'load': {
@@ -637,7 +639,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         'exp': 'historical',
         'frequency': '3hr',
         'grid': 'gn',
-        'institute': ['MOHC'],
+        'institute': ['MOHC', 'NERC'],
         'long_name': 'Precipitation',
         'mip': '3hr',
         'modeling_realm': ['atmos'],
@@ -651,8 +653,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         assert variable[key] == reference[key]
 
 
-def test_simple_cordex_recipe(tmp_path, patched_datafinder,
-                              config_user):
+def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
     """Test simple CORDEX recipe."""
     content = dedent("""
         diagnostics:
@@ -701,6 +702,7 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder,
         'recipe_dataset_index': 0,
         'rcm_version': 'v1',
         'short_name': 'tas',
+        'original_short_name': 'tas',
         'standard_name': 'air_temperature',
         'start_year': 1991,
         'units': 'K',
@@ -1015,8 +1017,7 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, config_user):
         assert ancestor_product.filename in all_product_files
 
 
-def test_derive_with_fx_ohc_fail(tmp_path,
-                                 patched_failing_datafinder,
+def test_derive_with_fx_ohc_fail(tmp_path, patched_failing_datafinder,
                                  config_user):
     content = dedent("""
         diagnostics:
@@ -1042,10 +1043,8 @@ def test_derive_with_fx_ohc_fail(tmp_path,
         get_recipe(tmp_path, content, config_user)
 
 
-def test_derive_with_optional_var(tmp_path,
-                                  patched_datafinder,
-                                  patched_tas_derivation,
-                                  config_user):
+def test_derive_with_optional_var(tmp_path, patched_datafinder,
+                                  patched_tas_derivation, config_user):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1083,8 +1082,7 @@ def test_derive_with_optional_var(tmp_path,
 
     # Check ancestors
     assert len(task.ancestors) == 2
-    assert task.ancestors[0].name == (
-        'diagnostic_name/tas_derive_input_pr')
+    assert task.ancestors[0].name == ('diagnostic_name/tas_derive_input_pr')
     assert task.ancestors[1].name == (
         'diagnostic_name/tas_derive_input_areacella')
     for ancestor_product in task.ancestors[0].products:
@@ -1095,10 +1093,8 @@ def test_derive_with_optional_var(tmp_path,
         assert ancestor_product.filename in all_product_files
 
 
-def test_derive_with_optional_var_nodata(tmp_path,
-                                         patched_failing_datafinder,
-                                         patched_tas_derivation,
-                                         config_user):
+def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
+                                         patched_tas_derivation, config_user):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1136,8 +1132,7 @@ def test_derive_with_optional_var_nodata(tmp_path,
 
     # Check ancestors
     assert len(task.ancestors) == 1
-    assert task.ancestors[0].name == (
-        'diagnostic_name/tas_derive_input_pr')
+    assert task.ancestors[0].name == ('diagnostic_name/tas_derive_input_pr')
     for ancestor_product in task.ancestors[0].products:
         assert ancestor_product.attributes['cmor_name'] == 'pr'
         assert ancestor_product.filename in all_product_files
@@ -1217,10 +1212,10 @@ TAGS = {
 
 
 def test_diagnostic_task_provenance(
-        tmp_path,
-        patched_datafinder,
-        monkeypatch,
-        config_user,
+    tmp_path,
+    patched_datafinder,
+    monkeypatch,
+    config_user,
 ):
     monkeypatch.setattr(esmvalcore._config, 'TAGS', TAGS)
     monkeypatch.setattr(esmvalcore._recipe, 'TAGS', TAGS)
@@ -2242,9 +2237,8 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = (
-        "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
-        "with mip 'Omon'")
+    msg = ("Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
+           "with mip 'Omon'")
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, config_user)
     assert str(wrong_proj.value) == msg
