@@ -795,13 +795,13 @@ See also :func:`esmvalcore.preprocessor.extract_month`.
 
 .. _hourly_statistics:
 
-``daily_statistics``
+`hourly_statistics``
 --------------------
 
 This function produces statistics at a x-hourly frequency.
 
 Parameters:
-    * hours: frequency to use to compute the statistics. Must be a divisor of
+    * every_n_hours: frequency to use to compute the statistics. Must be a divisor of
       24.
 
     * operator: operation to apply. Accepted values are 'mean',
@@ -945,15 +945,15 @@ See also :func:`esmvalcore.preprocessor.climate_statistics`.
 
 This function changes the frequency of the data in the cube by extracting the
 timesteps that meet the criteria. It is important to note that it is mainly
-mean to be used with instantaneous data
+meant to be used with instantaneous data.
 
 Parameters:
     * month: Extract only timesteps from the given month or do nothing if None.
-      Default is 'None'
+      Default is `None`
     * day: Extract only timesteps from the given day of month or do nothing if
-      None. Default is 'None'
+      None. Default is `None`
     * hour: Extract only timesteps from the given hour or do nothing if None.
-      Default is 'None'
+      Default is `None`
 
 Examples:
     * Hourly data to daily:
@@ -983,7 +983,7 @@ See also :func:`esmvalcore.preprocessor.resample_time`.
 
 resample_hours:
 
-``resample_time``
+``resample_hours``
 -----------------
 
 This function changes the frequency of the data in the cube by extracting the

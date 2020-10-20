@@ -186,7 +186,7 @@ def hourly_statistics(cube, hours, operator='mean'):
     """
     Compute hourly statistics.
 
-    Chunks time in x hours periods and computes statistics over them;
+    Chunks time in x hours periods and computes statistics over them.
 
     Parameters
     ----------
@@ -195,7 +195,7 @@ def hourly_statistics(cube, hours, operator='mean'):
 
     hours: int
         Number of hours per period. Must be a divisor of 24
-        (1, 2, 3, 4, 6, 8, 12)
+        (1, 2, 3, 4, 6, 8, 12, 24)
 
     operator: str, optional
         Select operator to apply.
@@ -794,8 +794,9 @@ def resample_hours(cube, hours):
     ValueError:
         The specified freuqncy is not a divisor of 24.
     """
-    if 24 % hours != 0:
-        raise ValueError('The number of hours must be a divisor of 24')
+    allowed_hours = (1, 2, 3, 4, 6, 12)
+    if hours not in allowed_hours:
+        raise ValueError(f'The number of hours must be one of {allowed_hours}')
     hours = range(0, 24, hours)
     select_hours = iris.Constraint(
         time=lambda cell: cell.point.hour in hours)
