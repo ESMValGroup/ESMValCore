@@ -2,18 +2,10 @@
 # docker build -t esmvalcore:latest . -f docker/Dockerfile
 FROM continuumio/miniconda3
 
-# update the conda packages
-RUN conda update -y conda pip
-
-
-# install environment packages
-COPY . /home/root/source
-WORKDIR /home/root/source
-RUN conda env update --name base --file environment.yml && conda clean --all -y
-RUN pip install .
-RUN rm -r /home/root/source
-
-# run tests
-RUN esmvaltool -h
+WORKDIR /src/ESMValCore
+COPY environment.yml .
+RUN conda update -y conda pip && conda env update --name base --file environment.yml && conda clean --all -y
+COPY . .
+RUN pip install . && pip cache purge
 
 ENTRYPOINT ["esmvaltool"]
