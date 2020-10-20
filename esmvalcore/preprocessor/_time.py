@@ -827,7 +827,8 @@ def resample_time(cube, month=None, day=None, hour=None):
     iris.cube.Cube
         Cube with the new frequency.
     """
-    def compare(date):
+    def compare(cell):
+        date = cell.point
         if month is not None and month != date.month:
             return False
         if day is not None and day != date.day:
@@ -837,5 +838,5 @@ def resample_time(cube, month=None, day=None, hour=None):
         return True
 
     resample_constraint = iris.Constraint(
-        time=lambda cell: compare(cell.point))
+        time=compare)
     return cube.extract(resample_constraint)
