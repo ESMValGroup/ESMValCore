@@ -29,7 +29,7 @@ jobs:
       - run:
           command: |
             pip install .[test]
-            conda install -c conda-forge -c conda-forge/label/rc_iris iris=3.0.0
+            conda install -c conda-forge -c conda-forge/label/rc_iris iris>=3.0
             pytest -n 2 -m "not installation"
       - store_test_results:
           path: test-reports/

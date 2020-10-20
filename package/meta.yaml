@@ -37,7 +37,7 @@ requirements:
     # esmvaltool
     - python>=3.6
     - graphviz
-    - iris=3.0.0
+    - iris>=3.0
     - python-stratify
     # Normally installed via pip:
     - cf-units
