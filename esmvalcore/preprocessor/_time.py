@@ -41,8 +41,7 @@ for _coord in (
 
 def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
                  end_day):
-    """
-    Extract a time range from a cube.
+    """Extract a time range from a cube.
 
     Given a time range passed in as a series of years, months and days, it
     returns a time-extracted cube with data only within the specified
@@ -74,7 +73,6 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     ------
     ValueError
         if time ranges are outside the cube time limits
-
     """
     time_coord = cube.coord('time')
     time_units = time_coord.units
@@ -83,21 +81,21 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
             start_day = 30
         if end_day > 30:
             end_day = 30
-    t_1 = PartialDateTime(
-        year=int(start_year), month=int(start_month), day=int(start_day))
-    t_2 = PartialDateTime(
-        year=int(end_year), month=int(end_month), day=int(end_day))
+    t_1 = PartialDateTime(year=int(start_year),
+                          month=int(start_month),
+                          day=int(start_day))
+    t_2 = PartialDateTime(year=int(end_year),
+                          month=int(end_month),
+                          day=int(end_day))
 
-    constraint = iris.Constraint(
-        time=lambda t: t_1 <= t.point < t_2)
+    constraint = iris.Constraint(time=lambda t: t_1 <= t.point < t_2)
 
     cube_slice = cube.extract(constraint)
     if cube_slice is None:
         raise ValueError(
             f"Time slice {start_year:0>4d}-{start_month:0>2d}-{start_day:0>2d}"
             f" to {end_year:0>4d}-{end_month:0>2d}-{end_day:0>2d} is outside "
-            f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}."
-        )
+            f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
 
     # Issue when time dimension was removed when only one point as selected.
     if cube_slice.ndim != cube.ndim:
@@ -109,8 +107,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
 
 
 def extract_season(cube, season):
-    """
-    Slice cube to get only the data belonging to a specific season.
+    """Slice cube to get only the data belonging to a specific season.
 
     Parameters
     ----------
@@ -134,8 +131,7 @@ def extract_season(cube, season):
 
 
 def extract_month(cube, month):
-    """
-    Slice cube to get only the data belonging to a specific month.
+    """Slice cube to get only the data belonging to a specific month.
 
     Parameters
     ----------
@@ -152,14 +148,14 @@ def extract_month(cube, month):
     if month not in range(1, 13):
         raise ValueError('Please provide a month number between 1 and 12.')
     if not cube.coords('month_number'):
-        iris.coord_categorisation.add_month_number(cube, 'time',
+        iris.coord_categorisation.add_month_number(cube,
+                                                   'time',
                                                    name='month_number')
     return cube.extract(iris.Constraint(month_number=month))
 
 
 def get_time_weights(cube):
-    """
-    Compute the weighting of the time axis.
+    """Compute the weighting of the time axis.
 
     Parameters
     ----------
@@ -183,8 +179,7 @@ def get_time_weights(cube):
 
 
 def hourly_statistics(cube, hours, operator='mean'):
-    """
-    Compute hourly statistics.
+    """Compute hourly statistics.
 
     Chunks time in x hours periods and computes statistics over them.
 
@@ -208,7 +203,9 @@ def hourly_statistics(cube, hours, operator='mean'):
     """
     if not cube.coords('hour_group'):
         iris.coord_categorisation.add_categorised_coord(
-            cube, 'hour_group', 'time',
+            cube,
+            'hour_group',
+            'time',
             lambda coord, value: coord.units.num2date(value).hour // hours,
             units='1')
     if not cube.coords('day_of_year'):
@@ -226,8 +223,7 @@ def hourly_statistics(cube, hours, operator='mean'):
 
 
 def daily_statistics(cube, operator='mean'):
-    """
-    Compute daily statistics.
+    """Compute daily statistics.
 
     Chunks time in daily periods and computes statistics over them;
 
@@ -260,8 +256,7 @@ def daily_statistics(cube, operator='mean'):
 
 
 def monthly_statistics(cube, operator='mean'):
-    """
-    Compute monthly statistics.
+    """Compute monthly statistics.
 
     Chunks time in monthly periods and computes statistics over them;
 
@@ -291,8 +286,7 @@ def monthly_statistics(cube, operator='mean'):
 
 
 def seasonal_statistics(cube, operator='mean'):
-    """
-    Compute seasonal statistics.
+    """Compute seasonal statistics.
 
     Chunks time in 3-month periods and computes statistics over them;
 
@@ -325,8 +319,7 @@ def seasonal_statistics(cube, operator='mean'):
     # CMOR Units are days so we are safe to operate on days
     # Ranging on [90, 92] days makes this calendar-independent
     def spans_three_months(time):
-        """
-        Check for three months.
+        """Check for three months.
 
         Parameters
         ----------
@@ -345,8 +338,7 @@ def seasonal_statistics(cube, operator='mean'):
 
 
 def annual_statistics(cube, operator='mean'):
-    """
-    Compute annual statistics.
+    """Compute annual statistics.
 
     Note that this function does not weight the annual mean if
     uneven time periods are present. Ie, all data inside the year
@@ -378,8 +370,7 @@ def annual_statistics(cube, operator='mean'):
 
 
 def decadal_statistics(cube, operator='mean'):
-    """
-    Compute decadal statistics.
+    """Compute decadal statistics.
 
     Note that this function does not weight the decadal mean if
     uneven time periods are present. Ie, all data inside the decade
@@ -419,8 +410,7 @@ def decadal_statistics(cube, operator='mean'):
 
 
 def climate_statistics(cube, operator='mean', period='full'):
-    """
-    Compute climate statistics with the specified granularity.
+    """Compute climate statistics with the specified granularity.
 
     Computes statistics for the whole dataset. It is possible to get them for
     the full period or with the data grouped by day, month or season
@@ -453,8 +443,7 @@ def climate_statistics(cube, operator='mean', period='full'):
             time_weights = get_time_weights(cube)
             if time_weights.min() == time_weights.max():
                 # No weighting needed.
-                cube = cube.collapsed('time',
-                                      operator_method)
+                cube = cube.collapsed('time', operator_method)
             else:
                 cube = cube.collapsed('time',
                                       operator_method,
@@ -470,15 +459,14 @@ def climate_statistics(cube, operator='mean', period='full'):
     if clim_cube.coord(clim_coord.name()).is_monotonic():
         iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
     else:
-        clim_cube = iris.cube.CubeList(
-            clim_cube.slices_over(clim_coord.name())).merge_cube()
+        clim_cube = iris.cube.CubeList(clim_cube.slices_over(
+            clim_coord.name())).merge_cube()
     cube.remove_coord(clim_coord)
     return clim_cube
 
 
 def anomalies(cube, period, reference=None, standardize=False):
-    """
-    Compute anomalies using a mean with the specified granularity.
+    """Compute anomalies using a mean with the specified granularity.
 
     Computes anomalies based on daily, monthly, seasonal or yearly means for
     the full available period
@@ -517,8 +505,9 @@ def anomalies(cube, period, reference=None, standardize=False):
         cube = cube - reference
         cube.metadata = metadata
         if standardize:
-            cube_stddev = climate_statistics(
-                cube, operator='std_dev', period=period)
+            cube_stddev = climate_statistics(cube,
+                                             operator='std_dev',
+                                             period=period)
             cube = cube / cube_stddev
             cube.units = '1'
         return cube
@@ -536,8 +525,7 @@ def anomalies(cube, period, reference=None, standardize=False):
             raise ValueError(
                 "Cannot safely apply preprocessor to this dataset, "
                 "since the full time period of this dataset is not "
-                f"a multiple of the period '{period}'"
-            )
+                f"a multiple of the period '{period}'")
         cube.data = cube.core_data() / da.concatenate(
             [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
         cube.units = '1'
@@ -584,8 +572,7 @@ def _get_period_coord(cube, period):
 
 
 def regrid_time(cube, frequency):
-    """
-    Align time axis for cubes so they can be subtracted.
+    """Align time axis for cubes so they can be subtracted.
 
     Operations on time units, time points and auxiliary
     coordinates so that any cube from cubes can be subtracted from any
@@ -609,9 +596,7 @@ def regrid_time(cube, frequency):
     # standardize time points
     time_c = [cell.point for cell in cube.coord('time').cells()]
     if frequency == 'yr':
-        time_cells = [
-            datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c
-        ]
+        time_cells = [datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c]
     elif frequency == 'mon':
         time_cells = [
             datetime.datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
@@ -637,8 +622,8 @@ def regrid_time(cube, frequency):
         ]
 
     cube.coord('time').points = [
-        cube.coord('time').units.date2num(cl)
-        for cl in time_cells]
+        cube.coord('time').units.date2num(cl) for cl in time_cells
+    ]
 
     # uniformize bounds
     cube.coord('time').bounds = None
@@ -662,8 +647,7 @@ def regrid_time(cube, frequency):
 
 
 def low_pass_weights(window, cutoff):
-    """
-    Calculate weights for a low pass Lanczos filter.
+    """Calculate weights for a low pass Lanczos filter.
 
     Method borrowed from `iris example
     <https://scitools.org.uk/iris/docs/latest/examples/General/
@@ -695,10 +679,12 @@ def low_pass_weights(window, cutoff):
     return weights[1:-1]
 
 
-def timeseries_filter(cube, window, span,
-                      filter_type='lowpass', filter_stats='sum'):
-    """
-    Apply a timeseries filter.
+def timeseries_filter(cube,
+                      window,
+                      span,
+                      filter_type='lowpass',
+                      filter_stats='sum'):
+    """Apply a timeseries filter.
 
     Method borrowed from `iris example
     <https://scitools.org.uk/iris/docs/latest/examples/General/
@@ -750,13 +736,14 @@ def timeseries_filter(cube, window, span,
 
     # Construct weights depending on frequency
     # TODO implement more filters!
-    supported_filters = ['lowpass', ]
+    supported_filters = [
+        'lowpass',
+    ]
     if filter_type in supported_filters:
         if filter_type == 'lowpass':
             wgts = low_pass_weights(window, 1. / span)
     else:
-        raise NotImplementedError(
-            "Filter type {} not implemented, \
+        raise NotImplementedError("Filter type {} not implemented, \
             please choose one of {}".format(filter_type,
                                             ", ".join(supported_filters)))
 
@@ -770,9 +757,8 @@ def timeseries_filter(cube, window, span,
     return cube
 
 
-def resample_hours(cube, hours):
-    """
-    Converts x-hourly data to y-hourly by eliminating extra timesteps.
+def resample_hours(cube, interval, offset=0):
+    """Converts x-hourly data to y-hourly by eliminating extra timesteps.
 
     Converts x-hourly data to y-hourly (y > x) by eliminating the extra
     timesteps. This is intended to be used only with instantaneous values.
@@ -781,8 +767,10 @@ def resample_hours(cube, hours):
     ----------
     cube: iris.cube.Cube
         Input cube.
-    hours: int
-        The frequency of the desired data.
+    interval: int
+        The period (hours) of the desired data.
+    offset: int, optional
+        The firs hour (hours) of the desired data.
 
     Returns
     -------
@@ -792,20 +780,22 @@ def resample_hours(cube, hours):
     Raises
     ------
     ValueError:
-        The specified freuqncy is not a divisor of 24.
+        The specified frequency is not a divisor of 24.
     """
-    allowed_hours = (1, 2, 3, 4, 6, 12)
-    if hours not in allowed_hours:
-        raise ValueError(f'The number of hours must be one of {allowed_hours}')
-    hours = range(0, 24, hours)
-    select_hours = iris.Constraint(
-        time=lambda cell: cell.point.hour in hours)
+    allowed_intervals = (1, 2, 3, 4, 6, 12)
+    if interval not in allowed_intervals:
+        raise ValueError(
+            f'The number of hours must be one of {allowed_intervals}')
+    if offset >= interval:
+        raise ValueError(f'The offset ({offset}) must be lower than '
+                         f'the interval ({interval})')
+    hours = range(0 + offset, 24, interval)
+    select_hours = iris.Constraint(time=lambda cell: cell.point.hour in hours)
     return cube.extract(select_hours)
 
 
 def resample_time(cube, month=None, day=None, hour=None):
-    """
-    Change frequency of data by resampling it.
+    """Change frequency of data by resampling it.
 
     Converts data from one frequency to another by extracting the timesteps
     that match the provided month, day and/or hour. This is meant to be used
@@ -837,6 +827,4 @@ def resample_time(cube, month=None, day=None, hour=None):
             return False
         return True
 
-    resample_constraint = iris.Constraint(
-        time=compare)
-    return cube.extract(resample_constraint)
+    return cube.extract(iris.Constraint(time=compare))

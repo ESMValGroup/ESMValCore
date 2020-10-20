@@ -991,7 +991,8 @@ timesteps that belongs to the desired frequency. It is important to note that
 it is mainly mean to be used with instantaneous data
 
 Parameters:
-    * hours: New frequency of the data. Must be a divisor of 24
+    * interval: New frequency of the data. Must be a divisor of 24
+    * offset: First desired hour. Default 0. Must be lower than the interval
 
 Examples:
     * Convert to 12-hourly:
@@ -1270,7 +1271,7 @@ as a CMOR variable can permit):
 
     fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
@@ -1330,7 +1331,7 @@ as a CMOR variable can permit):
 
     fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
