@@ -763,7 +763,10 @@ def resample_hours(cube, interval, offset=0):
     Convert x-hourly data to y-hourly (y > x) by eliminating the extra
     timesteps. This is intended to be used only with instantaneous values.
     
-    For example, `resample_hours(cube, interval=6)` -> Six-hourly intervals at 0:00, 6:00, 12:00, 18:00.
+    For example:
+    - `resample_hours(cube, interval=6)` -> Six-hourly intervals at 0:00, 6:00, 12:00, 18:00.
+    - `resample_hours(cube, interval=6, offset=3)` -> Six-hourly intervals at 3:00, 9:00, 15:00, 21:00.
+    - `resample_hours(cube, interval=12, offset=6)` -> Twelve-hourly intervals at 6:00, 18:00.
 
     Parameters
     ----------
@@ -806,10 +809,18 @@ def resample_time(cube, month=None, day=None, hour=None):
 
     Converts data from one frequency to another by extracting the timesteps
     that match the provided month, day and/or hour. This is meant to be used
-    with instantaneous values when computing statistics is not desired.
+    with instantaneous values when computing statistics is not desired.  
+        
+    For example:
+    - `resample_time(cube, hour=6)` -> Daily values taken at 6:00.
+    - `resample_time(cube, day=15, hour=6)` -> Monthly values taken at 15th 6:00.
+    - `resample_time(cube, month=6)` -> Yearly values, taking in June
+    - `resample_time(cube, month=6, day=1)` -> Yearly values, taking 1st June
     
-    For example, `resample_time(cube, hour=6)` -> Daily values taken at 6:00.
-
+    The condition must yield only one value per interval: the last two samples above 
+    will produce yearly data, but the first one is meant to be used to sample from
+    monthly output and the second one will work better with daily.
+    
     Parameters
     ----------
     cube: iris.cube.Cube
