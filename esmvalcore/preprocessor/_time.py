@@ -190,7 +190,7 @@ def hourly_statistics(cube, hours, operator='mean'):
 
     hours: int
         Number of hours per period. Must be a divisor of 24
-        (1, 2, 3, 4, 6, 8, 12, 24)
+        (1, 2, 3, 4, 6, 8, 12)
 
     operator: str, optional
         Select operator to apply.
@@ -762,6 +762,8 @@ def resample_hours(cube, interval, offset=0):
 
     Convert x-hourly data to y-hourly (y > x) by eliminating the extra
     timesteps. This is intended to be used only with instantaneous values.
+    
+    For example, `resample_hours(cube, interval=6)` -> Six-hourly intervals at 0:00, 6:00, 12:00, 18:00.
 
     Parameters
     ----------
@@ -805,6 +807,8 @@ def resample_time(cube, month=None, day=None, hour=None):
     Converts data from one frequency to another by extracting the timesteps
     that match the provided month, day and/or hour. This is meant to be used
     with instantaneous values when computing statistics is not desired.
+    
+    For example, `resample_time(cube, hour=6)` -> Daily values taken at 6:00.
 
     Parameters
     ----------

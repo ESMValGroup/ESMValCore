@@ -809,19 +809,6 @@ Parameters:
 
 See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
-.. _monthly_statistics:
-
-``monthly_statistics``
-----------------------
-
-This function produces statistics for each month in the dataset.
-
-Parameters:
-    * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
-
-See also :func:`esmvalcore.preprocessor.monthly_statistics`.
-
 .. _daily_statistics:
 
 ``daily_statistics``
