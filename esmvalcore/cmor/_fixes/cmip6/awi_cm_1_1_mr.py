@@ -1,4 +1,5 @@
 """Fixes for AWI-CM-1-1-MR model."""
+
 from ..fix import Fix
 
 
@@ -10,6 +11,7 @@ class AllVars(Fix):
         Parameters
         ----------
         cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------

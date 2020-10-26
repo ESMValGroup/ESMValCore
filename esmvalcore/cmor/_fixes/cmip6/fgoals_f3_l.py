@@ -1,9 +1,6 @@
 """Fixes for CMIP6 FGOALS-f3-L."""
-import iris
+import cftime
 import numpy as np
-from iris import coord_categorisation
-
-from esmvalcore.preprocessor import extract_time
 
 from ..fix import Fix
 
@@ -24,53 +21,21 @@ class AllVars(Fix):
         -------
         iris.cube.CubeList
         """
-        def _get_correct_time_coordinate(wrong_time):
-            # get daily time points
-            time_points = np.arange(int(wrong_time.points[0] - 17),
-                                    int(wrong_time.points[-1] + 18),
-                                    1,
-                                    dtype=float) + 0.5
-            time = iris.coords.DimCoord(time_points,
-                                        var_name=wrong_time.var_name,
-                                        standard_name=wrong_time.standard_name,
-                                        long_name=wrong_time.long_name,
-                                        units=wrong_time.units)
-            time.guess_bounds()
-
-            # init a dummy cube to enable coord_categorisation
-            dummy_cube = iris.cube.Cube(np.zeros(len(time_points), np.int),
-                                        dim_coords_and_dims=[(time, 0)])
-            coord_categorisation.add_year(dummy_cube, 'time', name='year')
-            coord_categorisation.add_month_number(dummy_cube,
-                                                  'time',
-                                                  name='month')
-
-            dummy_cube = dummy_cube.aggregated_by(['year', 'month'],
-                                                  iris.analysis.MEAN)
-
-            # get start and end of the wrong time
-            dates = time.units.num2date(wrong_time.points)
-            start_year = dates[0].year
-            start_month = dates[0].month
-            end_year = dates[-1].year
-            end_month = dates[-1].month
-
-            dummy_cube = extract_time(dummy_cube, start_year, start_month, 1,
-                                      end_year, end_month, 31)
-
-            return dummy_cube.coord('time')
-
         for cube in cubes:
             if cube.attributes['table_id'] == 'Amon':
-                # check if dim is present
-                if 'time' in [coord.standard_name for coord in cube.coords()]:
-                    time = cube.coord('time')
-                    mismatch = ~(time.bounds[1:, 0] == time.bounds[:-1, 1])
-                    if any(mismatch):
-                        correct_time = _get_correct_time_coordinate(time)
-                        if all(time.points == correct_time.points):
-                            time.bounds = correct_time.bounds
-                        else:
-                            raise ValueError("Wrong time bounds")
-
+                time = cube.coord('time')
+                if cube.attributes['table_id'] == 'Amon' and \
+                        not (time.bounds[0, 1] == time.bounds[1, 0]):
+                    times = time.units.num2date(time.points)
+                    starts = [
+                        cftime.DatetimeNoLeap(c.year, c.month, 1)
+                        for c in times
+                    ]
+                    ends = [
+                        cftime.DatetimeNoLeap(c.year, c.month +
+                                              1, 1) if c.month < 12 else
+                        cftime.DatetimeNoLeap(c.year + 1, 1, 1) for c in times
+                    ]
+                    time.bounds = time.units.date2num(
+                        np.stack([starts, ends], -1))
         return cubes
