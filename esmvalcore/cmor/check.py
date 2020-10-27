@@ -4,7 +4,6 @@ from enum import IntEnum
 
 import cf_units
 import datetime
-import calendar as clr
 import iris.coord_categorisation
 import iris.coords
 import iris.exceptions
@@ -463,22 +462,22 @@ class CMORCheck():
                     coord.var_name, var_name
                 )
 
-    def _check_time_bounds(self, time):
+    def _check_time_bounds(self, freq, time):
         cmor = self._cmor_var.coordinates['time']
         if cmor.must_have_bounds == 'yes' and not time.has_bounds():
             if self.automatic_fixes:
-                freq = self.frequency
-                for step in len(time.points):
+                bounds = []
+                for step, point in enumerate(time.points):
                     month = time.cell(step).point.month
                     year = time.cell(step).point.year
                     if freq in ['mon', 'mo']:
-                        next_month = clr.nextmonth(year, month)
+                        next_month = self._get_next_month(month, year)
                         min_bound = time.units.date2num(
                             datetime.datetime(year, month, 1, 0, 0)
                             )
                         max_bound = time.units.date2num(
                             datetime.datetime(
-                                next_month[0], next_month[1], 1, 0, 0)
+                                next_month[1], next_month[0], 1, 0, 0)
                             )
                     elif freq == 'yr':
                         min_bound = time.units.date2num(
@@ -487,12 +486,27 @@ class CMORCheck():
                         max_bound = time.units.date2num(
                             datetime.datetime(year+1, 1, 1, 0, 0)
                             )
-                    # to deal with other freqs
-                    time.bounds = np.array([min_bound, max_bound])
-                    self.report_warning(
-                        'Added guessed bounds to coordinate {0} from var time',
-                        time.var_name
-                        )
+                    else:
+                        delta = {
+                            'day': 12/24,
+                            '6hr': 3/24,
+                            '3hr': 1.5/24,
+                            '1hr': 0.5/24,
+                        }
+                        min_bound = point-delta[freq]
+                        max_bound = point+delta[freq]
+                    bounds.append([min_bound, max_bound])
+                time.bounds = np.array(bounds)
+                self.report_warning(
+                    'Added guessed bounds to coordinate {0} from var {1}',
+                    time.var_name, self._cmor_var.short_name
+                    )
+    
+    def _get_next_month(self, month, year):
+        if month != 12:
+            return month+1, year
+        else:
+            return 1, year+1
 
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
@@ -669,7 +683,6 @@ class CMORCheck():
         tol = 0.001
         intervals = {'dec': (3600, 3660), 'day': (1, 1)}
         freq = self.frequency
-        self._check_time_bounds(coord)
         if freq.lower().endswith('pt'):
             freq = freq[:-2]
         if freq in ['mon', 'mo']:
@@ -718,7 +731,7 @@ class CMORCheck():
                     msg = '{}: Frequency {} does not match input data'
                     self.report_error(msg, var_name, freq)
                     break
-        self._check_time_bounds(coord)
+        self._check_time_bounds(freq, coord)
         # remove time_origin from attributes
         coord.attributes.pop('time_origin', None)
 
