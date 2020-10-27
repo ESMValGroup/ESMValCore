@@ -971,7 +971,7 @@ See also :func:`esmvalcore.preprocessor.resample_time`.
 resample_hours:
 
 ``resample_hours``
------------------
+------------------
 
 This function changes the frequency of the data in the cube by extracting the
 timesteps that belongs to the desired frequency. It is important to note that
@@ -982,12 +982,20 @@ Parameters:
     * offset: First desired hour. Default 0. Must be lower than the interval
 
 Examples:
-    * Convert to 12-hourly:
+    * Convert to 12-hourly, by getting timesteps at 0:00 and 12:00:
 
         .. code-block:: yaml
 
             resample_hours:
               hours: 12
+	      
+    * Convert to 12-hourly, by getting timesteps at 6:00 and 18:00:
+
+        .. code-block:: yaml
+
+            resample_hours:
+              hours: 12
+	      offset: 6
 
 See also :func:`esmvalcore.preprocessor.resample_hours`.
 
