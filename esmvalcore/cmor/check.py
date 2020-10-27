@@ -466,9 +466,9 @@ class CMORCheck():
                 )
 
     def _check_time_bounds(self, freq, time):
-        for coord in self._cmor_var.coordinates:
-            if self._cmor_var.coordinates[coord].axis == 'T':
-                cmor = self._cmor_var.coordinates[coord]
+        times = {'time', 'time1', 'time2', 'time3'}
+        key = times.intersection(self._cmor_var.coordinates)
+        cmor = self._cmor_var.coordinates[" ".join(key)]
         if cmor.must_have_bounds == 'yes' and not time.has_bounds():
             if self.automatic_fixes:
                 bounds = []
