@@ -336,7 +336,9 @@ class ESMValTool():
         synda_download: bool, optional
             If True, the tool will try to download missing data using Synda.
         diagnostics: list(str), optional
-            Only run the selected diagnostics from the recipe.
+            Only run the selected diagnostics from the recipe. To provide more
+            than one diagnostic to filter use the syntax 'diag1 diag2/script1'
+            or '("diag1", "diag2/script1")' and pay attention to the quotes.
         check_level: str, optional
             Configure the sensitivity of the CMOR check. Possible values are:
             `ignore` (all errors will be reported as warnings),

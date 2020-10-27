@@ -15,7 +15,8 @@ from pathlib import Path
 
 from setuptools import Command, setup
 
-from esmvalcore._version import __version__
+sys.path.insert(0, os.path.dirname(__file__))
+from esmvalcore._version import __version__  # noqa: E402
 
 PACKAGES = [
     'esmvalcore',

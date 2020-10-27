@@ -4,13 +4,14 @@ import logging
 
 import iris
 
+from esmvalcore.iris_helpers import var_name_constraint
+
 logger = logging.getLogger(__name__)
 
 
 def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
     """Calculate cloud area fraction for different parameters."""
-    clisccp_cube = cubes.extract_strict(
-        iris.Constraint(name='isccp_cloud_area_fraction'))
+    clisccp_cube = cubes.extract_strict(var_name_constraint('clisccp'))
     new_cube = clisccp_cube
     new_cube = new_cube.extract(tau_constraint & plev_constraint)
     coord_names = [
