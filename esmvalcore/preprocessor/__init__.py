@@ -13,7 +13,8 @@ from ._area import (area_statistics, extract_named_regions, extract_region,
                     area_statistics_mask)
 from ._cycles import amplitude
 from ._derive import derive
-from ._detrend import (detrend, linear_trend)
+from ._detrend import detrend # (detrend, linear_trend) # detrend
+from ._trend import linear_trend, linear_trend_stderr
 from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
                   write_metadata)
