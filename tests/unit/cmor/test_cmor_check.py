@@ -355,8 +355,9 @@ class TestCMORCheck(unittest.TestCase):
     def test_check_missing_coord_strict_flag(self):
         """Test check fails for missing coord other than lat and lon
          with --cmor-check strict"""
-        self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
-                                     }
+        self.var_info.coordinates.update(
+            {'height2m': CoordinateInfoMock('height2m')}
+        )
         self._check_fails_in_metadata(automatic_fixes=False)
 
     def test_check_bad_var_standard_name_relaxed_flag(self):
@@ -431,8 +432,9 @@ class TestCMORCheck(unittest.TestCase):
     def test_check_missing_coord_relaxed_flag(self):
         """Test check reports warning for missing coord other than lat and lon
         with --cmor-check relaxed"""
-        self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
-                                     }
+        self.var_info.coordinates.update(
+            {'height2m': CoordinateInfoMock('height2m')}
+        )
         self._check_warnings_on_metadata(automatic_fixes=False,
                                          check_level=CheckLevels.RELAXED)
 
@@ -511,8 +513,9 @@ class TestCMORCheck(unittest.TestCase):
     def test_check_missing_coord_none_flag(self):
         """Test check reports warning for missing coord other than lat, lon and
         time with --cmor-check ignore"""
-        self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
-                                     }
+        self.var_info.coordinates.update(
+            {'height2m': CoordinateInfoMock('height2m')}
+        )
         self._check_warnings_on_metadata(automatic_fixes=False,
                                          check_level=CheckLevels.IGNORE)
 
