@@ -905,6 +905,78 @@ class TestCMORCheck(unittest.TestCase):
         """Fail at metadata if frequency is not supported."""
         self._check_fails_in_metadata(frequency='wrong_freq')
 
+    def test_hourly_time_bounds(self):
+        """Test time bounds are properly guessed for hourly freq"""
+        cube = self.get_cube(self.var_info, frequency='hr')
+        original_bounds = self.cube.coord('time').bounds
+        self.cube.coord('time').bounds = None
+        self._check_cube(automatic_fixes=True)
+        guessed_bounds = self.cube.coord('time').bounds
+        assert original_bounds.all() == guessed_bounds.all()
+
+    def test_3hourly_time_bounds(self):
+        """Test time bounds are properly guessed for 3hourly freq"""
+        cube = self.get_cube(self.var_info, frequency='3hr')
+        original_bounds = self.cube.coord('time').bounds
+        self.cube.coord('time').bounds = None
+        self._check_cube(automatic_fixes=True)
+        guessed_bounds = self.cube.coord('time').bounds
+        assert original_bounds.all() == guessed_bounds.all()
+
+    def test_6hourly_time_bounds(self):
+        """Test time bounds are properly guessed for 6hourly freq"""
+        cube = self.get_cube(self.var_info, frequency='6hr')
+        original_bounds = self.cube.coord('time').bounds
+        self.cube.coord('time').bounds = None
+        self._check_cube(automatic_fixes=True)
+        guessed_bounds = self.cube.coord('time').bounds
+        assert original_bounds.all() == guessed_bounds.all()
+
+    def test_daily_time_bounds(self):
+        """Test time bounds are properly guessed for daily freq"""
+        original_bounds = self.cube.coord('time').bounds
+        self.cube.coord('time').bounds = None
+        self._check_cube(automatic_fixes=True)
+        guessed_bounds = self.cube.coord('time').bounds
+        assert original_bounds.all() == guessed_bounds.all()
+
+    def test_monthly_time_bounds(self):
+        """Test time bounds are properly guessed for monthly freq"""
+        cube = self.get_cube(self.var_info, frequency='mon')
+        original_bounds = cube.coord('time').bounds
+        self.cube.coord('time').bounds = None
+        self._check_cube(automatic_fixes=True)
+        guessed_bounds = self.cube.coord('time').bounds
+        assert original_bounds.all() == guessed_bounds.all()
+
+    def test_yearly_time_bounds(self):
+        """Test time bounds are properly guessed for yearly freq"""
+        cube = self.get_cube(self.var_info, frequency='yr')
+        original_bounds = cube.coord('time').bounds
+        self.cube.coord('time').bounds = None
+        self._check_cube(automatic_fixes=True)
+        guessed_bounds = self.cube.coord('time').bounds
+        assert original_bounds.all() == guessed_bounds.all()
+
+    def test_dec_time_bounds(self):
+        """Test time bounds are properly guessed for dec freq"""
+        cube = self.get_cube(self.var_info, frequency='dec')
+        original_bounds = cube.coord('time').bounds
+        self.cube.coord('time').bounds = None
+        self._check_cube(automatic_fixes=True)
+        guessed_bounds = self.cube.coord('time').bounds
+        assert original_bounds.all() == guessed_bounds.all()
+
+    def test_no_time_bounds(self):
+        """Test time bounds are not guessed for instantaneous data"""
+        self.var_info.coordinates['time'].must_have_bounds = 'no'
+        self.var_info.coordinates['time1'] = (
+            self.var_info.coordinates.pop('time'))
+        self.cube.coord('time').bounds = None
+        self._check_cube(automatic_fixes=True)
+        guessed_bounds = self.cube.coord('time').bounds
+        assert guessed_bounds is None
+
     def _check_fails_on_data(self):
         checker = CMORCheck(self.cube, self.var_info)
         checker.check_metadata()
@@ -1103,7 +1175,13 @@ class TestCMORCheck(unittest.TestCase):
             delta = 30
         elif frequency == 'day':
             delta = 1
-        elif frequency.ends_with('hr'):
+        elif frequency == 'yr':
+            delta = 360
+        elif frequency == 'dec':
+            delta = 3600
+        elif frequency.endswith('hr'):
+            if frequency == 'hr':
+                frequency = '1hr'
             delta = float(frequency[:-2]) / 24
         else:
             raise Exception('Frequency {} not supported'.format(frequency))
