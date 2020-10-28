@@ -513,6 +513,7 @@ class CMORCheck():
                     'Added guessed bounds to coordinate {0} from var {1}',
                     time.var_name, self._cmor_var.short_name
                     )
+
     def _get_next_month(self, month, year):
         if month != 12:
             return month+1, year
@@ -724,6 +725,8 @@ class CMORCheck():
                 interval = intervals[freq]
                 target_interval = (interval[0] - tol, interval[1] + tol)
             elif freq.endswith('hr'):
+                if freq == 'hr':
+                    freq = '1hr'
                 frequency = freq[:-2]
                 if frequency == 'sub':
                     frequency = 1.0 / 24

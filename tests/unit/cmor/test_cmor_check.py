@@ -908,9 +908,10 @@ class TestCMORCheck(unittest.TestCase):
     def test_hourly_time_bounds(self):
         """Test time bounds are properly guessed for hourly freq"""
         cube = self.get_cube(self.var_info, frequency='hr')
-        original_bounds = self.cube.coord('time').bounds
-        self.cube.coord('time').bounds = None
-        self._check_cube(automatic_fixes=True)
+        original_bounds = cube.coord('time').bounds
+        cube.coord('time').bounds = None
+        self.cube = cube
+        self._check_cube(automatic_fixes=True, frequency='hr')
         guessed_bounds = self.cube.coord('time').bounds
         assert original_bounds.all() == guessed_bounds.all()
 
@@ -918,8 +919,9 @@ class TestCMORCheck(unittest.TestCase):
         """Test time bounds are properly guessed for 3hourly freq"""
         cube = self.get_cube(self.var_info, frequency='3hr')
         original_bounds = self.cube.coord('time').bounds
-        self.cube.coord('time').bounds = None
-        self._check_cube(automatic_fixes=True)
+        cube.coord('time').bounds = None
+        self.cube = cube
+        self._check_cube(automatic_fixes=True, frequency = '3hr')
         guessed_bounds = self.cube.coord('time').bounds
         assert original_bounds.all() == guessed_bounds.all()
 
@@ -927,8 +929,9 @@ class TestCMORCheck(unittest.TestCase):
         """Test time bounds are properly guessed for 6hourly freq"""
         cube = self.get_cube(self.var_info, frequency='6hr')
         original_bounds = self.cube.coord('time').bounds
-        self.cube.coord('time').bounds = None
-        self._check_cube(automatic_fixes=True)
+        cube.coord('time').bounds = None
+        self.cube = cube
+        self._check_cube(automatic_fixes=True, frequency='6hr')
         guessed_bounds = self.cube.coord('time').bounds
         assert original_bounds.all() == guessed_bounds.all()
 
@@ -941,31 +944,28 @@ class TestCMORCheck(unittest.TestCase):
         assert original_bounds.all() == guessed_bounds.all()
 
     def test_monthly_time_bounds(self):
-        """Test time bounds are properly guessed for monthly freq"""
+        """Test time bounds are guessed for monthly freq"""
         cube = self.get_cube(self.var_info, frequency='mon')
-        original_bounds = cube.coord('time').bounds
-        self.cube.coord('time').bounds = None
-        self._check_cube(automatic_fixes=True)
-        guessed_bounds = self.cube.coord('time').bounds
-        assert original_bounds.all() == guessed_bounds.all()
+        cube.coord('time').bounds = None
+        self.cube = cube
+        self._check_cube(automatic_fixes=True, frequency='mon')
+        assert self.cube.coord('time').bounds is not None
 
     def test_yearly_time_bounds(self):
-        """Test time bounds are properly guessed for yearly freq"""
+        """Test time bounds are guessed for yearly freq"""
         cube = self.get_cube(self.var_info, frequency='yr')
-        original_bounds = cube.coord('time').bounds
-        self.cube.coord('time').bounds = None
-        self._check_cube(automatic_fixes=True)
-        guessed_bounds = self.cube.coord('time').bounds
-        assert original_bounds.all() == guessed_bounds.all()
+        cube.coord('time').bounds = None
+        self.cube = cube
+        self._check_cube(automatic_fixes=True, frequency='yr')
+        assert self.cube.coord('time').bounds is not None
 
     def test_dec_time_bounds(self):
-        """Test time bounds are properly guessed for dec freq"""
+        """Test time bounds are guessed for dec freq"""
         cube = self.get_cube(self.var_info, frequency='dec')
-        original_bounds = cube.coord('time').bounds
-        self.cube.coord('time').bounds = None
-        self._check_cube(automatic_fixes=True)
-        guessed_bounds = self.cube.coord('time').bounds
-        assert original_bounds.all() == guessed_bounds.all()
+        cube.coord('time').bounds = None
+        self.cube = cube
+        self._check_cube(automatic_fixes=True, frequency='dec')
+        assert self.cube.coord('time').bounds is not None
 
     def test_no_time_bounds(self):
         """Test time bounds are not guessed for instantaneous data"""
