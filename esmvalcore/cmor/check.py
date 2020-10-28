@@ -2,8 +2,8 @@
 import logging
 from enum import IntEnum
 
-import cf_units
 import datetime
+import cf_units
 import iris.coord_categorisation
 import iris.coords
 import iris.exceptions
@@ -479,34 +479,34 @@ class CMORCheck():
                         next_month = self._get_next_month(month, year)
                         min_bound = time.units.date2num(
                             datetime.datetime(year, month, 1, 0, 0)
-                            )
+                        )
                         max_bound = time.units.date2num(
                             datetime.datetime(
                                 next_month[1], next_month[0], 1, 0, 0)
-                            )
+                        )
                     elif freq == 'yr':
                         min_bound = time.units.date2num(
                             datetime.datetime(year, 1, 1, 0, 0)
-                            )
+                        )
                         max_bound = time.units.date2num(
-                            datetime.datetime(year+1, 1, 1, 0, 0)
-                            )
+                            datetime.datetime(year + 1, 1, 1, 0, 0)
+                        )
                     elif freq == 'dec':
                         min_bound = time.units.date2num(
                             datetime.datetime(year, 1, 1, 0, 0)
-                            )
+                        )
                         max_bound = time.units.date2num(
-                            datetime.datetime(year+10, 1, 1, 0, 0)
-                            )
+                            datetime.datetime(year + 10, 1, 1, 0, 0)
+                        )
                     else:
                         delta = {
-                            'day': 12/24,
-                            '6hr': 3/24,
-                            '3hr': 1.5/24,
-                            '1hr': 0.5/24,
+                            'day': 12 / 24,
+                            '6hr': 3 / 24,
+                            '3hr': 1.5 / 24,
+                            '1hr': 0.5 / 24,
                         }
-                        min_bound = point-delta[freq]
-                        max_bound = point+delta[freq]
+                        min_bound = point - delta[freq]
+                        max_bound = point + delta[freq]
                     bounds.append([min_bound, max_bound])
                 time.bounds = np.array(bounds)
                 self.report_warning(
@@ -514,11 +514,11 @@ class CMORCheck():
                     time.var_name, self._cmor_var.short_name
                     )
 
-    def _get_next_month(self, month, year):
+    @staticmethod
+    def _get_next_month(month, year):
         if month != 12:
-            return month+1, year
-        else:
-            return 1, year+1
+            return month + 1, year
+        return 1, year + 1
 
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
