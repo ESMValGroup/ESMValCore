@@ -41,6 +41,7 @@ REQUIREMENTS = {
         'prov[dot]',
         'psutil',
         'pyyaml',
+        'requests',
         'scitools-iris>=2.2',
         'shapely[vectorized]',
         'stratify',
