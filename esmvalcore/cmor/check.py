@@ -491,6 +491,13 @@ class CMORCheck():
                         max_bound = time.units.date2num(
                             datetime.datetime(year+1, 1, 1, 0, 0)
                             )
+                    elif freq == 'dec':
+                        min_bound = time.units.date2num(
+                            datetime.datetime(year, 1, 1, 0, 0)
+                            )
+                        max_bound = time.units.date2num(
+                            datetime.datetime(year+10, 1, 1, 0, 0)
+                            )
                     else:
                         delta = {
                             'day': 12/24,
@@ -506,7 +513,6 @@ class CMORCheck():
                     'Added guessed bounds to coordinate {0} from var {1}',
                     time.var_name, self._cmor_var.short_name
                     )
-    
     def _get_next_month(self, month, year):
         if month != 12:
             return month+1, year
