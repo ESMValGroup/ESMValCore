@@ -921,7 +921,7 @@ class TestCMORCheck(unittest.TestCase):
         original_bounds = self.cube.coord('time').bounds
         cube.coord('time').bounds = None
         self.cube = cube
-        self._check_cube(automatic_fixes=True, frequency = '3hr')
+        self._check_cube(automatic_fixes=True, frequency='3hr')
         guessed_bounds = self.cube.coord('time').bounds
         assert original_bounds.all() == guessed_bounds.all()
 
