@@ -5,6 +5,7 @@ from ..fix import Fix
 
 class AllVars(Fix):
     """Fixes for all variables."""
+    
     def fix_metadata(self, cubes):
         """Rename ``long_name`` of latitude to latitude (may be Latitude).
 
