@@ -384,7 +384,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         missing data.
     output_products: dict
         dictionary of output products.
-    statistics: str
+    statistics: list
         statistical measure to be computed. Available options: mean, median,
         max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
 
