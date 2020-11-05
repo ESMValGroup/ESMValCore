@@ -1,6 +1,7 @@
 """System test for :func:`esmvalcore.preprocessor._multimodel`."""
 
 import esmvaltool_sample_data
+import numpy as np
 import pytest
 
 from esmvalcore.preprocessor import (
@@ -10,9 +11,13 @@ from esmvalcore.preprocessor import (
 )
 
 
-def preprocess_data(data):
+def preprocess_data(cubes):
+    first_cube = cubes[0]
+    t1, t2 = 0, 50  # time-slicing first N items
+
+    # regrid to first cube
     regrid_kwargs = {
-        'target_grid': '2.5x2.5',
+        'target_grid': first_cube,
         'scheme': 'linear',
     }
     extract_kwargs = {
@@ -20,51 +25,53 @@ def preprocess_data(data):
         'scheme': 'linear',
     }
 
-    data = [regrid(d, **regrid_kwargs) for d in data]
-    data = [extract_levels(d, **extract_kwargs) for d in data]
+    cubes = [cube[t1:t2] for cube in cubes]
+    cubes = [regrid(cube, **regrid_kwargs) for cube in cubes]
+    cubes = [extract_levels(cube, **extract_kwargs) for cube in cubes]
 
-    return data
+    return cubes
 
 
-def get_timeseries_data():
+@pytest.fixture
+def timeseries_cubes():
     """Representative timeseries data."""
-    timeseries_data = esmvaltool_sample_data.load_timeseries_data()
-    timeseries_data = preprocess_data(timeseries_data)
-    return timeseries_data
+    timeseries_cubes = esmvaltool_sample_data.load_timeseries_cubes()
+    timeseries_cubes = preprocess_data(timeseries_cubes)
+    return timeseries_cubes
 
 
-def get_map_data():
-    """Representative timeseries data."""
-    map_data = esmvaltool_sample_data.load_map_data()
-    map_data = preprocess_data(map_data)
-    return map_data
+@pytest.fixture
+def map_cubes():
+    """Representative map data."""
+    map_cubes = esmvaltool_sample_data.load_map_cubes()
+    map_cubes = preprocess_data(map_cubes)
+    return map_cubes
 
 
-def get_profile_data():
-    """Representative timeseries data."""
-    profile_data = esmvaltool_sample_data.load_profile_data()
-    profile_data = preprocess_data(profile_data)
-    return profile_data
+@pytest.fixture
+def profile_cubes():
+    """Representative profile data."""
+    profile_cubes = esmvaltool_sample_data.load_profile_cubes()
+    profile_cubes = preprocess_data(profile_cubes)
+    return profile_cubes
 
 
-data_list = [
-    get_timeseries_data(),
-    # get_map_data(),
-    # get_profile_data(),
-]
-
-
-@pytest.mark.parametrize('data', data_list)
-def test_multimodel_overlap_mean(data):
+@pytest.mark.parametrize('span', ('overlap', 'full'))
+def test_multimodel_overlap(timeseries_cubes, span):
     """Test statistic."""
-    stat = multi_model_statistics(data, span='overlap', statistics=['mean'])
+    cubes = timeseries_cubes
+    statistic = 'mean'
+    statistics = [statistic]
+    expected_shape = cubes[0].shape
 
+    output = multi_model_statistics(cubes, span=span, statistics=statistics)
 
-@pytest.mark.skip('Takes too long to run')
-@pytest.mark.parametrize('data', data_list)
-def test_multimodel_full_mean(data):
-    """Test statistic."""
-    stat = multi_model_statistics(data, span='full', statistics=['mean'])
+    assert isinstance(output, dict)
+    assert all(stat in output for stat in statistics)
 
+    output_cube = output[statistic]
 
-# mean, median, min, max, std, p75
+    # make sure data are not completely masked
+    assert np.all(output_cube.data.mask == False)  # noqa
+
+    assert output_cube.shape == expected_shape
