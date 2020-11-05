@@ -25,6 +25,7 @@ class VariableInfoMock:
         self.valid_max = '100'
         self.frequency = 'day'
         self.positive = ''
+        self.extra_dim = 'False'
 
         generic_level = CoordinateInfoMock('depth')
         generic_level.generic_level = True
@@ -291,6 +292,13 @@ class TestCMORCheck(unittest.TestCase):
         )
         self.cube.add_aux_coord(new_lat, 1)
         self._check_cube()
+
+    def test_rank_extra_dimensions(self):
+        """Debug message if extra dimensions are found with
+        extra_dim set to True"""
+        self.var_info.extra_dim = True
+        self.cube = self.get_cube(self.var_info)
+        self._check_debug_messages_on_metadata(automatic_fixes=True)
 
     def test_check_bad_var_standard_name_strict_flag(self):
         """Test check fails for a bad variable standard_name with

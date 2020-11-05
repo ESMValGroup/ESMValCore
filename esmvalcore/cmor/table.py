@@ -73,6 +73,7 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
     table_path = os.path.expandvars(os.path.expanduser(table_path))
     cmor_strict = project.get('cmor_strict', True)
     default_table_prefix = project.get('cmor_default_table_prefix', '')
+    extra_dim = project.get('extra_dimensions', False)
 
     if cmor_type == 'CMIP3':
         return CMIP3Info(
@@ -97,6 +98,7 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
             strict=cmor_strict,
             default_table_prefix=default_table_prefix,
             alt_names=alt_names,
+            extra_dim=extra_dim
         )
     raise ValueError(f'Unsupported CMOR type {cmor_type}')
 
@@ -254,7 +256,8 @@ class CMIP6Info(InfoBase):
                  default=None,
                  alt_names=None,
                  strict=True,
-                 default_table_prefix=''):
+                 default_table_prefix='',
+                 extra_dim=False):
 
         super().__init__(default, alt_names, strict)
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
@@ -264,6 +267,8 @@ class CMIP6Info(InfoBase):
             self._load_controlled_vocabulary()
 
         self.default_table_prefix = default_table_prefix
+    
+        self.extra_dim = extra_dim
 
         self.var_to_freq = {}
 
@@ -313,6 +318,8 @@ class CMIP6Info(InfoBase):
                 self._assign_dimensions(var, generic_levels)
                 table[var_name] = var
                 self.var_to_freq[table.name][var_name] = var.frequency
+                if self.extra_dim is True:
+                    var.extra_dim = True
 
             if not table.frequency:
                 var_freqs = (var.frequency for var in table.values())
@@ -489,6 +496,7 @@ class VariableInfo(JsonInfo):
         """
         super(VariableInfo, self).__init__()
         self.table_type = table_type
+        self.extra_dim = False
         self.modeling_realm = []
         """Modeling realm"""
         self.short_name = short_name
@@ -577,6 +585,7 @@ class CoordinateInfo(JsonInfo):
         super(CoordinateInfo, self).__init__()
         self.name = name
         self.generic_level = False
+        self.extra_dim = False
 
         self.axis = ""
         """Axis"""

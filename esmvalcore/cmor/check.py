@@ -296,6 +296,13 @@ class CMORCheck():
 
     def _check_rank(self):
         """Check rank, excluding scalar dimensions."""
+        if self._cmor_var.extra_dim is True:
+            self.report_debug_message(
+                'Presence of extra dimensions allowed '
+                'as set in config-developer.yml. '
+                'Skipping check on rank.')
+            return
+
         rank = 0
         dimensions = []
         for coordinate in self._cmor_var.coordinates.values():
