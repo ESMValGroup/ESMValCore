@@ -390,8 +390,8 @@ def multi_model_statistics(products, span, statistics, output_products=None):
 
     Returns
     -------
-    list
-        list of data products or cubes containing the multimodel stats
+    list or dict
+        list data products or dict of cubes containing the multimodel stats
         computed.
 
     Raises
