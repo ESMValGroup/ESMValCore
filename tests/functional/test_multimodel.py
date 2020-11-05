@@ -1,4 +1,4 @@
-"""System test for :func:`esmvalcore.preprocessor._multimodel`."""
+"""Functional test for :func:`esmvalcore.preprocessor._multimodel`."""
 
 import esmvaltool_sample_data
 import numpy as np
