@@ -72,6 +72,7 @@ REQUIREMENTS = {
         'vprof',
         'yamllint',
         'yapf',
+        'ESMValTool_sample_data @ git+https://github.com/ESMValGroup/ESMValTool_sample_data@make_package',
     ],
 }
 
