@@ -33,6 +33,11 @@ adding ``-m 'not installation'`` to the previous command.
 Tests will also be run automatically by
 `CircleCI <https://circleci.com/gh/ESMValGroup/ESMValCore>`__.
 
+Sample data
+-----------
+
+If you need sample data to work with, `this repository <https://github.com/ESMValGroup/ESMValTool_sample_data>`__ contains samples of real data for use with ESMValTool development, demonstration purposes and automated testing. The goal is to keep the repository size small (~ 100 MB), so it can be easily downloaded and distributed.
+
 Code style
 ----------
 
