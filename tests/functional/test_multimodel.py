@@ -56,6 +56,7 @@ def profile_cubes():
     return profile_cubes
 
 
+@pytest.mark.functional
 @pytest.mark.parametrize('span', ('overlap', 'full'))
 def test_multimodel_overlap(timeseries_cubes, span):
     """Test statistic."""
