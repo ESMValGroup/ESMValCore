@@ -1,6 +1,9 @@
 """Functional test for :func:`esmvalcore.preprocessor._multimodel`."""
 
+from pathlib import Path
+
 import esmvaltool_sample_data
+import iris
 import numpy as np
 import pytest
 
@@ -61,6 +64,7 @@ def profile_cubes():
 def test_multimodel_overlap(timeseries_cubes, span):
     """Test statistic."""
     cubes = timeseries_cubes
+    name = 'timeseries'
     statistic = 'mean'
     statistics = [statistic]
     expected_shape = cubes[0].shape
@@ -76,3 +80,15 @@ def test_multimodel_overlap(timeseries_cubes, span):
     assert np.all(output_cube.data.mask == False)  # noqa
 
     assert output_cube.shape == expected_shape
+
+    # NOTE for the regression test
+    # The following test will fail if the data are changed or if the
+    # multimodel code changes significantly. To update the data for the
+    # regression test, remove the corresponding `.nc` files.
+    filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
+    if filename.exists():
+        expected_cube = iris.load(str(filename))[0]
+        assert np.allclose(output_cube.data, expected_cube.data)
+    else:
+        iris.save(output_cube, filename)
+        raise RuntimeError(f'Wrote file {filename.absolute()}')
