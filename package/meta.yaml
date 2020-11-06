@@ -73,6 +73,7 @@ test:
     - r-yaml
     - ncl
   commands:
+    - pytest -n 2 --ignore=run_test.py --ignore=tests/functional
     - esmvaltool -- --help
     - esmvaltool version
   imports:
