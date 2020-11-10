@@ -38,6 +38,10 @@ Sample data
 
 If you need sample data to work with, `this repository <https://github.com/ESMValGroup/ESMValTool_sample_data>`__ contains samples of real data for use with ESMValTool development, demonstration purposes and automated testing. The goal is to keep the repository size small (~ 100 MB), so it can be easily downloaded and distributed.
 
+The data are installed as part of the developer dependencies, and used by the functional tests (i.e. in the `multimodel tests` <https://github.com/ESMValGroup/ESMValCore/tree/master/tests/functional>`__)
+
+To avoid running these tests as they can be time-consuming, use `pytest -m "not functional"`.
+
 Code style
 ----------
 
