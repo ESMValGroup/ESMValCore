@@ -18,7 +18,11 @@ class TestCMIP6Info(unittest.TestCase):
         We read CMIP6Info once to keep tests times manageable
         """
         cls.variables_info = CMIP6Info(
-            'cmip6', default=CustomInfo(), strict=True
+            'cmip6', default=CustomInfo(), strict=True,
+            alt_names=[
+                ['sic', 'siconc'],
+                ['tro3', 'o3'],
+            ]
         )
 
     def setUp(self):
@@ -44,8 +48,8 @@ class TestCMIP6Info(unittest.TestCase):
         var = self.variables_info.get_variable('Amon', 'tas')
         self.assertEqual(var.short_name, 'tas')
 
-    def test_get_variable_from_alias(self):
-        """Get a variable from a known alias."""
+    def test_get_variable_from_alt_names(self):
+        """Get a variable from a known alt_names."""
         var = self.variables_info.get_variable('SImon', 'sic')
         self.assertEqual(var.short_name, 'siconc')
 
@@ -85,7 +89,7 @@ class TestCMIP6Info(unittest.TestCase):
     def test_get_institute_from_source(self):
         """Get institution for source ACCESS-CM2"""
         institute = self.variables_info.institutes['ACCESS-CM2']
-        self.assertListEqual(institute, ['CSIRO-ARCCSS-BoM'])
+        self.assertListEqual(institute, ['CSIRO-ARCCSS'])
 
     def test_get_activity_from_exp(self):
         """Get activity for experiment 1pctCO2"""

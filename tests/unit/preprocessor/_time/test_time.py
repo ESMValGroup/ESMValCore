@@ -417,6 +417,17 @@ class TestClimatology(tests.Test):
         expected = np.array([1.])
         assert_array_equal(result.data, expected)
 
+    def test_time_rms(self):
+        """Test for time rms of a 1D field."""
+        data = np.arange((3))
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube, operator='rms')
+        expected = np.array([(5/3)**0.5])
+        assert_array_equal(result.data, expected)
+
 
 class TestSeasonalStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`"""
