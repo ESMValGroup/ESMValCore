@@ -80,7 +80,7 @@ def multi_model_test(cubes, span, statistic):
 
 @pytest.mark.functional
 @pytest.mark.parametrize('span', ('overlap', 'full'))
-def test_multimodel_overlap(timeseries_cubes, span):
+def test_multimodel(timeseries_cubes, span):
     """Test statistic."""
     cubes = timeseries_cubes
     name = 'timeseries'
@@ -102,7 +102,7 @@ def test_multimodel_overlap(timeseries_cubes, span):
 
 @pytest.mark.functional
 @pytest.mark.parametrize('span', ('overlap', 'full'))
-def test_multimodel_overlap_without_vertical_dimension(timeseries_cubes, span):
+def test_multimodel_without_vertical_dimension(timeseries_cubes, span):
     """Test statistic without vertical dimension."""
     cubes = [cube[0:50, 0] for cube in timeseries_cubes]
     statistic = 'mean'
@@ -111,8 +111,7 @@ def test_multimodel_overlap_without_vertical_dimension(timeseries_cubes, span):
 
 @pytest.mark.functional
 @pytest.mark.parametrize('span', ('overlap', 'full'))
-def test_multimodel_overlap_without_horizontal_dimension(
-        timeseries_cubes, span):
+def test_multimodel_without_horizontal_dimension(timeseries_cubes, span):
     """Test statistic without horizontal dimension."""
     cubes = [cube[0:50, :, 0, 0] for cube in timeseries_cubes]
     # Coordinate not found error
@@ -125,7 +124,7 @@ def test_multimodel_overlap_without_horizontal_dimension(
 
 @pytest.mark.functional
 @pytest.mark.parametrize('span', ('overlap', 'full'))
-def test_multimodel_overlap_only_time_dimension(timeseries_cubes, span):
+def test_multimodel_only_time_dimension(timeseries_cubes, span):
     """Test statistic without only the time dimension."""
     cubes = [cube[0:50, 0, 0, 0] for cube in timeseries_cubes]
     statistic = 'mean'
@@ -134,7 +133,7 @@ def test_multimodel_overlap_only_time_dimension(timeseries_cubes, span):
 
 @pytest.mark.functional
 @pytest.mark.parametrize('span', ('overlap', 'full'))
-def test_multimodel_overlap_no_time_dimension(timeseries_cubes, span):
+def test_multimodel_no_time_dimension(timeseries_cubes, span):
     """Test statistic without time dimension."""
     cubes = [cube[0] for cube in timeseries_cubes]
     statistic = 'mean'
