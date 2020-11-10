@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import esmvaltool_sample_data
 import iris
 import numpy as np
 import pytest
@@ -12,6 +11,8 @@ from esmvalcore.preprocessor import (
     multi_model_statistics,
     regrid,
 )
+
+esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 
 def preprocess_data(cubes):
