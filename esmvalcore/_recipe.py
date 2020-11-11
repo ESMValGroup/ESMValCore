@@ -1010,6 +1010,11 @@ class Recipe:
         raw_variable = deepcopy(raw_variable)
         datasets = self._initialize_datasets(
             raw_datasets + raw_variable.pop('additional_datasets', []))
+        if not datasets:
+            logger.error(f"You have not specified any dataset "
+                         f"or additional_dataset groups "
+                         f"for variable %s Exiting." % raw_variable)
+            sys.exit(1)
         check.duplicate_datasets(datasets)
 
         for index, dataset in enumerate(datasets):
@@ -1252,13 +1257,6 @@ class Recipe:
 
             # Create preprocessor tasks
             for variable_group in diagnostic['preprocessor_output']:
-                if not diagnostic['preprocessor_output'][variable_group]:
-                    logger.warning(f"You have not specified any dataset "
-                                   f"or additional_dataset groups "
-                                   f"for variable %s in diagnostic %s "
-                                   f"so this variable will be skipped!"
-                                   % (variable_group, diagnostic_name))
-                    continue
                 task_name = diagnostic_name + TASKSEP + variable_group
                 logger.info("Creating preprocessor task %s", task_name)
                 task = _get_preprocessor_task(
