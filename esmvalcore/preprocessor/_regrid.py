@@ -501,6 +501,15 @@ def extract_levels(cube, levels, scheme, coordinate=None):
         scheme = 'linear'
         extrap_scheme = 'nearest'
 
+    if scheme == 'nearest_horizontal_nearest_vertical':
+        scheme = 'nearest'
+        extrap_scheme = 'nearest'
+
+    if scheme == 'linear_horizontal_nearest_vertical':
+        scheme = 'linear'
+        extrap_scheme = 'nearest'
+
+
     # Ensure we have a non-scalar array of levels.
     levels = np.array(levels, ndmin=1)
 
