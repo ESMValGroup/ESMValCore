@@ -619,12 +619,15 @@ def _update_multi_dataset_settings(variable, settings):
 
 def _get_tag(step, identifier, statistic):
     # Avoid . in filename for percentiles
-    statistic = statistic.replace('.', '-')
+    if statistic:
+        statistic = statistic.replace('.', '-')
 
     if step == 'ensemble_statistics':
         tag = 'Ensemble' + statistic.title()
     elif identifier == '':
         tag = 'MultiModel' + statistic.title()
+    elif step == 'add_lead_time':
+        tag = identifier
     else:
         tag = identifier + statistic.title()
 
@@ -678,6 +681,49 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
 
             relevant_settings['output_products'][identifier][
                 statistic] = statistic_product
+
+    return output_products, relevant_settings
+
+
+def _update_leadtime_product(input_products, order, preproc_dir, step):
+    """Return new products that are aggregated over multiple datasets.
+
+    These new products will replace the original products at runtime.
+    Therefore, they need to have all the settings for the remaining steps.
+
+    The functions in _multimodel.py take output_products as function arguments.
+    These are the output_products created here. But since those functions are
+    called from the input products, the products that are created here need to
+    be added to their ancestors products' settings ().
+    """
+    products = {p for p in input_products if step in p.settings}
+    if not products:
+        return input_products, dict()
+
+    settings = list(products)[0].settings[step]
+    grouping = settings.get('groupby', ['project', 'dataset', 'exp'])
+
+    downstream_settings = _get_downstream_settings(step, order, products)
+
+    relevant_settings = {
+        'output_products': defaultdict(dict)
+    }  # pass to ancestors
+
+    output_products = set()
+    for identifier, products in _group_products(products, by=grouping):
+        common_attributes = _get_common_attributes(products)
+        common_attributes[step] = _get_tag(step, identifier, None)
+
+        filename = get_multiproduct_filename(common_attributes,
+                                             preproc_dir)
+        common_attributes['filename'] = filename
+
+        leadtime_product = PreprocessorFile(common_attributes,
+                                            downstream_settings)
+
+        output_products.add(leadtime_product)
+
+        relevant_settings['output_products'][identifier] = leadtime_product
 
     return output_products, relevant_settings
 
@@ -797,6 +843,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
 
     ensemble_step = 'ensemble_statistics'
     multi_model_step = 'multi_model_statistics'
+    lead_time_step = 'add_lead_time'
 
     if ensemble_step in profile:
         check.ensemble_statistics(settings[ensemble_step])
@@ -812,6 +859,29 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         )
     else:
         ensemble_products = products
+
+    if lead_time_step in profile:
+
+        # Exclude datasets without startdate
+        input_products = set()
+        for product in products:
+            if 'startdate' in product.attributes:
+                input_products.add(product)
+            else:
+                product.settings.pop(lead_time_step)
+
+        leadtime_products, leadtime_settings = _update_leadtime_product(
+            input_products, order, preproc_dir, lead_time_step)
+
+        # check for multi_model_settings to bypass tests
+        update_ancestors(
+            ancestors=input_products,
+            step=lead_time_step,
+            downstream_settings=leadtime_settings,
+        )
+
+    else:
+        leadtime_products = products
 
     if multi_model_step in profile:
         check.multimodel_statistics(settings[multi_model_step])
@@ -837,7 +907,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     else:
         multimodel_products = set()
 
-    for product in products | multimodel_products | ensemble_products:
+    for product in products | multimodel_products | ensemble_products | leadtime_products:
         product.check()
 
     return products

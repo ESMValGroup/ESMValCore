@@ -286,7 +286,7 @@ def get_multiproduct_filename(attributes, preproc_dir):
     """Get ensemble/multi-model filename depending on settings."""
     relevant_keys = [
         'project', 'dataset', 'exp', 'ensemble_statistics',
-        'multi_model_statistics', 'mip', 'short_name'
+        'multi_model_statistics', 'mip', 'short_name', 'add_lead_time'
     ]
 
     filename_segments = []

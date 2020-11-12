@@ -28,7 +28,8 @@ from ._regrid import extract_levels, extract_point, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
                     daily_statistics, decadal_statistics, extract_month,
                     extract_season, extract_time, monthly_statistics,
-                    regrid_time, seasonal_statistics, timeseries_filter)
+                    regrid_time, seasonal_statistics, timeseries_filter,
+                    add_lead_time)
 from ._trend import linear_trend, linear_trend_stderr
 from ._units import convert_units
 from ._volume import (depth_integration, extract_trajectory, extract_transect,
@@ -57,6 +58,7 @@ __all__ = [
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
+    'add_lead_time',
     # Level extraction
     'extract_levels',
     # Weighting
@@ -134,6 +136,7 @@ TIME_PREPROCESSORS = [
     'climate_statistics',
     'anomalies',
     'regrid_time',
+    'add_lead_time'
 ]
 
 DEFAULT_ORDER = tuple(__all__)
@@ -143,7 +146,7 @@ INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('cmor_check_data') + 1]
 FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('save'):]
 
 MULTI_MODEL_FUNCTIONS = {
-    'multi_model_statistics', 'mask_fillvalues', 'ensemble_statistics'
+    'multi_model_statistics', 'mask_fillvalues', 'ensemble_statistics', 'add_lead_time'
 }
 
 
@@ -420,6 +423,7 @@ class PreprocessingTask(BaseTask):
         self._initialize_products(self.products)
         self._initialize_multimodel_provenance()
         self._initialize_ensemble_provenance()
+        self._initialize_leadtime_provenance()
 
     def _initialize_multiproduct_provenance(self, step):
         input_products = self._get_input_products(step)
@@ -444,6 +448,16 @@ class PreprocessingTask(BaseTask):
         """Initialize provenance for ensemble statistics."""
         step = 'ensemble_statistics'
         self._initialize_multiproduct_provenance(step)
+
+    def _initialize_leadtime_provenance(self):
+        """Initialize provenance for ensemble statistics."""
+        step = 'add_lead_time'
+        input_products = self._get_input_products(step)
+        if input_products:
+            for input_product in input_products:
+                step_settings = input_product.settings[step]
+                output_products = step_settings.get('output_products', {})
+            self._initialize_products(output_products.values())
 
     def _get_input_products(self, step):
         """Get input products."""
