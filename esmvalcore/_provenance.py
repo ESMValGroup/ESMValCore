@@ -2,6 +2,7 @@
 import copy
 import logging
 import os
+from pathlib import Path
 
 from netCDF4 import Dataset
 from PIL import Image
@@ -34,8 +35,8 @@ def get_esmvaltool_provenance():
     namespace = 'software'
     create_namespace(provenance, namespace)
     attributes = {}  # TODO: add dependencies with versions here
-    activity = provenance.activity(
-        namespace + ':esmvaltool==' + __version__, other_attributes=attributes)
+    activity = provenance.activity(namespace + ':esmvaltool==' + __version__,
+                                   other_attributes=attributes)
 
     return activity
 
@@ -79,8 +80,7 @@ def get_recipe_provenance(documentation, filename):
     entity = provenance.entity(
         'recipe:{}'.format(filename), {
             'attribute:description': documentation.get('description', ''),
-            'attribute:references': str(
-                documentation.get('references', [])),
+            'attribute:references': str(documentation.get('references', [])),
         })
 
     attribute_to_authors(entity, documentation.get('authors', []))
@@ -109,7 +109,6 @@ def get_task_provenance(task, recipe_entity):
 
 class TrackedFile(object):
     """File with provenance tracking."""
-
     def __init__(self, filename, attributes, ancestors=None):
         """Create an instance of a file with provenance tracking."""
         self._filename = filename
@@ -122,7 +121,8 @@ class TrackedFile(object):
 
     def __str__(self):
         """Return summary string."""
-        return "{}: {}".format(self.__class__.__name__, self.filename)
+        name = Path(self._filename).name
+        return f'{self.__class__.__name__}({repr(name)})'
 
     def copy_provenance(self, target=None):
         """Create a copy with identical provenance information."""

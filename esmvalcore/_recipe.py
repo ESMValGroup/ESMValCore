@@ -3,6 +3,7 @@ import fnmatch
 import logging
 import os
 import re
+from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from pprint import pformat
 
@@ -13,8 +14,8 @@ from . import __version__
 from . import _recipe_checks as check
 from ._config import (TAGS, get_activity, get_institutes, get_project_config,
                       replace_tags)
-from ._data_finder import (get_input_filelist, get_output_file,
-                           get_statistic_output_file)
+from ._data_finder import (get_input_filelist, get_multiproduct_filename,
+                           get_output_file)
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
@@ -26,6 +27,7 @@ from .preprocessor import (DEFAULT_ORDER, FINAL_STEPS, INITIAL_STEPS,
 from .preprocessor._derive import get_required
 from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
+from .preprocessor._other import _group_products
 from .preprocessor._regrid import (get_cmor_levels, get_reference_levels,
                                    parse_cell_spec)
 
@@ -34,16 +36,59 @@ logger = logging.getLogger(__name__)
 TASKSEP = os.sep
 
 
-def read_recipe_file(filename, config_user, initialize_tasks=True):
-    """Read a recipe from file."""
+def ordered_safe_load(stream):
+    """Load a YAML file using OrderedDict instead of dict."""
+    class OrderedSafeLoader(yaml.SafeLoader):
+        """Loader class that uses OrderedDict to load a map."""
+
+    def construct_mapping(loader, node):
+        """Load a map as an OrderedDict."""
+        loader.flatten_mapping(node)
+        return OrderedDict(loader.construct_pairs(node))
+
+    OrderedSafeLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
+
+    return yaml.load(stream, OrderedSafeLoader)
+
+
+def load_raw_recipe(filename):
+    """Check a recipe file and return it in raw form."""
+    # Note that many checks can only be performed after the automatically
+    # computed entries have been filled in by creating a Recipe object.
     check.recipe_with_schema(filename)
     with open(filename, 'r') as file:
-        raw_recipe = yaml.safe_load(file)
+        contents = file.read()
+        raw_recipe = yaml.safe_load(contents)
+        raw_recipe['preprocessors'] = ordered_safe_load(contents).get(
+            'preprocessors', {})
 
+    check.diagnostics(raw_recipe['diagnostics'])
+    return raw_recipe
+
+
+def read_recipe_file(filename, config_user, initialize_tasks=True):
+    """Read a recipe from file."""
+    raw_recipe = load_raw_recipe(filename)
     return Recipe(raw_recipe,
                   config_user,
                   initialize_tasks,
                   recipe_file=filename)
+
+
+def _get_value(key, datasets):
+    """Get a value for key by looking at the other datasets."""
+    values = {dataset[key] for dataset in datasets if key in dataset}
+
+    if len(values) > 1:
+        raise RecipeError("Ambiguous values {} for property {}".format(
+            values, key))
+
+    value = None
+    if len(values) == 1:
+        value = values.pop()
+
+    return value
 
 
 def _add_cmor_info(variable, override=False):
@@ -426,21 +471,18 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
     if not fx_vars:
         return
 
-    fx_vars = [
-        _get_fx_file(variable, fxvar, config_user)
-        for fxvar in fx_vars
-    ]
+    fx_vars = [_get_fx_file(variable, fxvar, config_user) for fxvar in fx_vars]
 
     fx_dict = {fx_var[1]['short_name']: fx_var[0] for fx_var in fx_vars}
     settings['fx_variables'] = fx_dict
     logger.info('Using fx_files: %s for variable %s during step %s',
-                pformat(settings['fx_variables']),
-                variable['short_name'],
+                pformat(settings['fx_variables']), variable['short_name'],
                 step_name)
 
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
+
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -451,8 +493,8 @@ def _update_fx_settings(settings, variable, config_user):
                     user_fx_vars.append('sftof')
             elif step_name == 'mask_landseaice':
                 user_fx_vars = ['sftgif']
-            elif step_name in ('area_statistics',
-                               'volume_statistics', 'zonal_statistics'):
+            elif step_name in ('area_statistics', 'volume_statistics',
+                               'zonal_statistics'):
                 user_fx_vars = []
         return user_fx_vars
 
@@ -464,8 +506,8 @@ def _update_fx_settings(settings, variable, config_user):
     for step_name, step_settings in settings.items():
         if step_name in fx_steps:
             fx_vars = _get_fx_vars_from_attribute(step_settings, step_name)
-            _update_fx_files(step_name, step_settings,
-                             variable, config_user, fx_vars)
+            _update_fx_files(step_name, step_settings, variable, config_user,
+                             fx_vars)
 
 
 def _read_attributes(filename):
@@ -534,8 +576,8 @@ def _apply_preprocessor_profile(settings, profile_settings):
             settings[step].update(args)
 
 
-def _get_statistic_attributes(products):
-    """Get attributes for the statistic output products."""
+def _get_common_attributes(products):
+    """Get common attributes for the output products."""
     attributes = {}
     some_product = next(iter(products))
     for key, value in some_product.attributes.items():
@@ -554,8 +596,8 @@ def _get_statistic_attributes(products):
     return attributes
 
 
-def _get_remaining_common_settings(step, order, products):
-    """Get preprocessor settings that are shared between products."""
+def _get_downstream_settings(step, order, products):
+    """Get downstream preprocessor settings shared between products."""
     settings = {}
     remaining_steps = order[order.index(step) + 1:]
     some_product = next(iter(products))
@@ -575,31 +617,77 @@ def _update_multi_dataset_settings(variable, settings):
         _exclude_dataset(settings, variable, step)
 
 
-def _update_statistic_settings(products, order, preproc_dir):
-    """Define statistic output products."""
-    # TODO: move this to multi model statistics function?
-    # But how to check, with a dry-run option?
-    step = 'multi_model_statistics'
+def _get_tag(step, identifier, statistic):
+    # Avoid . in filename for percentiles
+    statistic = statistic.replace('.', '-')
 
-    products = {p for p in products if step in p.settings}
+    if step == 'ensemble_statistics':
+        tag = 'Ensemble' + statistic.title()
+    elif identifier == '':
+        tag = 'MultiModel' + statistic.title()
+    else:
+        tag = identifier + statistic.title()
+
+    return tag
+
+
+def _update_multiproduct(input_products, order, preproc_dir, step):
+    """Return new products that are aggregated over multiple datasets.
+
+    These new products will replace the original products at runtime.
+    Therefore, they need to have all the settings for the remaining steps.
+
+    The functions in _multimodel.py take output_products as function arguments.
+    These are the output_products created here. But since those functions are
+    called from the input products, the products that are created here need to
+    be added to their ancestors products' settings ().
+    """
+    products = {p for p in input_products if step in p.settings}
     if not products:
-        return
+        return input_products, dict()
 
-    some_product = next(iter(products))
-    for statistic in some_product.settings[step]['statistics']:
-        check.valid_multimodel_statistic(statistic)
-        attributes = _get_statistic_attributes(products)
-        attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
-            statistic.title().replace('.', '-'))
-        attributes['filename'] = get_statistic_output_file(
-            attributes, preproc_dir)
-        common_settings = _get_remaining_common_settings(step, order, products)
-        statistic_product = PreprocessorFile(attributes, common_settings)
-        for product in products:
-            settings = product.settings[step]
-            if 'output_products' not in settings:
-                settings['output_products'] = {}
-            settings['output_products'][statistic] = statistic_product
+    settings = list(products)[0].settings[step]
+
+    if step == 'ensemble_statistics':
+        grouping = ['project', 'dataset', 'exp']
+    else:
+        grouping = settings.get('groupby', None)
+
+    downstream_settings = _get_downstream_settings(step, order, products)
+
+    relevant_settings = {
+        'output_products': defaultdict(dict)
+    }  # pass to ancestors
+
+    output_products = set()
+    for identifier, products in _group_products(products, by=grouping):
+        common_attributes = _get_common_attributes(products)
+
+        for statistic in settings.get('statistics'):
+
+            common_attributes[step] = _get_tag(step, identifier, statistic)
+
+            filename = get_multiproduct_filename(common_attributes,
+                                                 preproc_dir)
+            common_attributes['filename'] = filename
+
+            statistic_product = PreprocessorFile(common_attributes,
+                                                 downstream_settings)
+
+            output_products.add(statistic_product)
+
+            relevant_settings['output_products'][identifier][
+                statistic] = statistic_product
+
+    return output_products, relevant_settings
+
+
+def update_ancestors(ancestors, step, downstream_settings):
+    """Retroactively add settings to ancestor products."""
+    for product in ancestors:
+        settings = product.settings[step]
+        for key, value in downstream_settings.items():
+            settings[key] = value
 
 
 def _update_extract_shape(settings, config_user):
@@ -617,56 +705,55 @@ def _update_extract_shape(settings, config_user):
 
 def _match_products(products, variables):
     """Match a list of input products to output product attributes."""
-    grouped_products = {}
+    grouped_products = defaultdict(list)
+
+    if not products:
+        return grouped_products
 
     def get_matching(attributes):
         """Find the output filename which matches input attributes best."""
-        score = 0
+        best_score = 0
         filenames = []
         for variable in variables:
             filename = variable['filename']
-            tmp = sum(v == variable.get(k) for k, v in attributes.items())
-            if tmp > score:
-                score = tmp
+            score = sum(v == variable.get(k) for k, v in attributes.items())
+
+            if score > best_score:
+                best_score = score
                 filenames = [filename]
-            elif tmp == score:
+            elif score == best_score:
                 filenames.append(filename)
+
         if not filenames:
             logger.warning(
                 "Unable to find matching output file for input file %s",
                 filename)
+
         return filenames
 
     # Group input files by output file
     for product in products:
-        for filename in get_matching(product.attributes):
-            if filename not in grouped_products:
-                grouped_products[filename] = []
+        matching_filenames = get_matching(product.attributes)
+        for filename in matching_filenames:
             grouped_products[filename].append(product)
 
     return grouped_products
 
 
-def _get_preprocessor_products(variables,
-                               profile,
-                               order,
-                               ancestor_products,
+def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user):
-    """
-    Get preprocessor product definitions for a set of datasets.
+    """Get preprocessor product definitions for a set of datasets.
 
-    It updates recipe settings as needed by various preprocessors
-    and sets the correct ancestry.
+    It updates recipe settings as needed by various preprocessors and
+    sets the correct ancestry.
     """
     products = set()
-    for variable in variables:
-        variable['filename'] = get_output_file(variable,
-                                               config_user['preproc_dir'])
+    preproc_dir = config_user['preproc_dir']
 
-    if ancestor_products:
-        grouped_ancestors = _match_products(ancestor_products, variables)
-    else:
-        grouped_ancestors = {}
+    for variable in variables:
+        variable['filename'] = get_output_file(variable, preproc_dir)
+
+    grouped_ancestors = _match_products(ancestor_products, variables)
 
     for variable in variables:
         settings = _get_default_settings(
@@ -705,11 +792,52 @@ def _get_preprocessor_products(variables,
             settings=settings,
             ancestors=ancestors,
         )
+
         products.add(product)
 
-    _update_statistic_settings(products, order, config_user['preproc_dir'])
+    ensemble_step = 'ensemble_statistics'
+    multi_model_step = 'multi_model_statistics'
 
-    for product in products:
+    if ensemble_step in profile:
+        check.ensemble_statistics(settings[ensemble_step])
+
+        ensemble_products, ensemble_settings = _update_multiproduct(
+            products, order, preproc_dir, ensemble_step)
+
+        # check for ensemble_settings to bypass tests
+        update_ancestors(
+            ancestors=products,
+            step=ensemble_step,
+            downstream_settings=ensemble_settings,
+        )
+    else:
+        ensemble_products = products
+
+    if multi_model_step in profile:
+        check.multimodel_statistics(settings[multi_model_step])
+
+        multimodel_products, multimodel_settings = _update_multiproduct(
+            ensemble_products, order, preproc_dir, multi_model_step)
+
+        # check for multi_model_settings to bypass tests
+        update_ancestors(
+            ancestors=products,
+            step=multi_model_step,
+            downstream_settings=multimodel_settings,
+        )
+
+        if ensemble_step in profile:
+            # Update multi-product settings (workaround for lack of better
+            # ancestry tracking)
+            update_ancestors(
+                ancestors=ensemble_products,
+                step=multi_model_step,
+                downstream_settings=multimodel_settings,
+            )
+    else:
+        multimodel_products = set()
+
+    for product in products | multimodel_products | ensemble_products:
         product.check()
 
     return products
@@ -730,12 +858,11 @@ def _get_single_preprocessor_task(variables,
         check.check_for_temporal_preprocs(profile)
         ancestor_products = None
 
-    products = _get_preprocessor_products(
-        variables=variables,
-        profile=profile,
-        order=order,
-        ancestor_products=ancestor_products,
-        config_user=config_user)
+    products = _get_preprocessor_products(variables=variables,
+                                          profile=profile,
+                                          order=order,
+                                          ancestor_products=ancestor_products,
+                                          config_user=config_user)
 
     if not products:
         raise RecipeError(
@@ -969,8 +1096,7 @@ class Recipe:
 
     @staticmethod
     def _expand_ensemble(variables):
-        """
-        Expand ensemble members to multiple datasets.
+        """Expand ensemble members to multiple datasets.
 
         Expansion only supports ensembles defined as strings, not lists.
         """

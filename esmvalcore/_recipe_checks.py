@@ -2,15 +2,15 @@
 import itertools
 import logging
 import os
+import re
 import subprocess
 from shutil import which
-import re
 
 import yamale
 
 from ._data_finder import get_start_end_year
 from ._task import get_flattened_tasks
-from .preprocessor import PreprocessingTask, TIME_PREPROCESSORS
+from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 
 logger = logging.getLogger(__name__)
 
@@ -181,14 +181,86 @@ def extract_shape(settings):
                 "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))
 
 
-def valid_multimodel_statistic(statistic):
-    """Check that `statistic` is a valid argument for multimodel stats."""
+def _verify_multimodel_statistics(statistics):
+    """Raise error if multi-model statistics cannot be verified."""
     valid_names = ["mean", "median", "std", "min", "max"]
     valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
-    if not (statistic in valid_names or
-            re.match(r'|'.join(valid_patterns), statistic)):
+
+    for statistic in statistics:
+        if not (statistic in valid_names
+                or re.match(r'|'.join(valid_patterns), statistic)):
+            raise RecipeError(
+                "Invalid value encountered for `statistic` in preprocessor "
+                f"`multi_model_statistics`. Valid values are {valid_names} "
+                f"or patterns matching {valid_patterns}. Got '{statistic}.'")
+
+
+def _verify_span_value(span):
+    """Raise error if span argument cannot be verified."""
+    valid_names = ('overlap', 'full')
+    if span not in valid_names:
         raise RecipeError(
-            "Invalid value encountered for `statistic` in preprocessor "
-            f"`multi_model_statistics`. Valid values are {valid_names} "
-            f"or patterns matching {valid_patterns}. Got '{statistic}.'"
-        )
+            "Invalid value encountered for `span` in preprocessor "
+            f"`multi_model_statistics`. Valid values are {valid_names}."
+            f"Got {span}.")
+
+
+def _verify_groupby(groupby):
+    """Raise error if groupby arguments cannot be verified."""
+    if not groupby:
+        return
+    if not isinstance(groupby, list):
+        raise RecipeError(
+            "Invalid value encountered for `groupby` in preprocessor. "
+            f"`groupby` must be defined as a list. Got {groupby}.")
+
+
+def _verify_arguments(given, expected):
+    """Raise error if arguments cannot be verified."""
+    for key in given:
+        if key not in expected:
+            raise RecipeError(
+                f"Unexpected keyword argument encountered: {key}. Valid "
+                "keywords are: {valid_keys}.")
+
+
+def multimodel_statistics(settings):
+    """Check that the multi-model settings are valid."""
+    valid_keys = ['span', 'groupby', 'statistics']
+    _verify_arguments(settings.keys(), valid_keys)
+
+    span = settings.get('span', None)  # optional, default: overlap
+    if span:
+        _verify_span_value(span)
+
+    groupby = settings.get('groupby', None)  # optional, default: None
+    if groupby:
+        _verify_groupby(groupby)
+
+    statistics = settings.get('statistics', None)  # required
+    if statistics:
+        _verify_multimodel_statistics(statistics)
+
+
+def _verify_ensemble_statistics(statistics):
+    """Raise error if ensemble statistics cannot be verified."""
+    valid_names = ('count', 'gmean', 'hmean', 'max', 'mean', 'median', 'min',
+                   'peak', 'percentile', 'proportion', 'rms', 'std_dev', 'sum',
+                   'variance', 'wpercentile')
+
+    for statistic in statistics:
+        if not statistic.lower() in valid_names:
+            raise RecipeError(
+                "Invalid value encountered for `statistic` in preprocessor "
+                f"`multi_model_statistics`. Valid values are {valid_names}."
+                f"Got '{statistic}.'")
+
+
+def ensemble_statistics(settings):
+    """Check that the ensemble settings are valid."""
+    valid_keys = ['statistics']
+    _verify_arguments(settings.keys(), valid_keys)
+
+    statistics = settings.get('statistics', None)
+    if statistics:
+        _verify_ensemble_statistics(statistics)
