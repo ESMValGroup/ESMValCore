@@ -1011,9 +1011,9 @@ class Recipe:
         datasets = self._initialize_datasets(
             raw_datasets + raw_variable.pop('additional_datasets', []))
         if not datasets:
-            raise RecipeError(f"You have not specified any dataset "
-                              f"or additional_dataset groups "
-                              f"for variable %s Exiting." % raw_variable)
+            raise RecipeError("You have not specified any dataset "
+                              "or additional_dataset groups "
+                              f"for variable {raw_variable} Exiting.")
         check.duplicate_datasets(datasets)
 
         for index, dataset in enumerate(datasets):
