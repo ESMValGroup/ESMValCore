@@ -14,7 +14,7 @@ class TestRecipe:
             },
         ]
 
-        expanded = Recipe._expand_ensemble(datasets)
+        expanded = Recipe._expand_tag(datasets, 'ensemble')
 
         ensembles = [
             'r1i2p3',
@@ -39,4 +39,4 @@ class TestRecipe:
         ]
 
         with pytest.raises(RecipeError):
-            Recipe._expand_ensemble(datasets)
+            Recipe._expand_tag(datasets, 'ensemble')
