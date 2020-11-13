@@ -748,8 +748,8 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
         cube with the converted time axis.
 
     """
+    lead_time_products = set()
     for identifier, products in _group_products(input_products, by=groupby):
-        sub_output_products = output_products[identifier]
         cubes = [cube for product in products for cube in product.cubes]
         cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
         cubelist = iris.cube.CubeList()
@@ -761,11 +761,9 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
             try:
                 startdate = int(cube.attributes['sub_experiment_id'][1:])
             except (KeyError, ValueError):
-                logger.warning(
+                logger.error(
                     "Cannot retrieve startdate" +
-                    "from attribute sub_experiment_id. " +
-                    "Skipping preprocessor add_lead_time.")
-                continue
+                    "from attribute sub_experiment_id. ")
 
             cube.attributes = None
 
@@ -793,36 +791,38 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
             cube.add_aux_coord(startdate_coord, ())
 
             cubelist.append(cube)
-        if cubelist:
-            output_cube = cubelist.merge_cube()
+        
+        output_cube = cubelist.merge_cube()
 
-            tindex = iris.coords.DimCoord(
-                np.arange(1, len(tpoints[0])+1),
-                var_name='t',
-                long_name='index along time dimension',
-            )
-            output_cube.add_dim_coord(tindex, 1)
+        tindex = iris.coords.DimCoord(
+            np.arange(1, len(tpoints[0])+1),
+            var_name='t',
+            long_name='index along time dimension')
+        output_cube.add_dim_coord(tindex, 1)
 
-            tcoord = iris.coords.AuxCoord(
-                np.array(tpoints),
-                var_name='time',
-                standard_name='time',
-                long_name='time',
-                units=tunits,
-                bounds=np.array(tbounds))
-            output_cube.add_aux_coord(tcoord, (0, 1))
+        tcoord = iris.coords.AuxCoord(
+            np.array(tpoints),
+            var_name='time',
+            standard_name='time',
+            long_name='time',
+            units=tunits,
+            bounds=np.array(tbounds))
+        output_cube.add_aux_coord(tcoord, (0, 1))
 
-            ltcoord = iris.coords.AuxCoord(
-               ltpoints,
-               var_name='leadtime',
-               long_name='leadtime',
-               units='days',
-               bounds=np.array(ltbounds)
-            )
-            output_cube.add_aux_coord(ltcoord, (0, 1))
-            sub_output_products.cubes = [output_cube]
-        else:
-            sub_output_products.cubes = cubes
+        ltcoord = iris.coords.AuxCoord(
+            ltpoints,
+            var_name='leadtime',
+            long_name='leadtime',
+            units='days',
+            bounds=np.array(ltbounds))
+        output_cube.add_aux_coord(ltcoord, (0, 1))
+
+        lead_time_product = output_products[identifier]
+        lead_time_product.cubes = [output_cube]
+        for product in products:
+            lead_time_product.wasderivedfrom(product)
+        logger.info("Generated %s", lead_time_product)
+        lead_time_products.add(lead_time_product)
 
     a = 1
-    return output_products
+    return lead_time_products

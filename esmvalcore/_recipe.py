@@ -862,6 +862,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
 
     if lead_time_step in profile:
 
+        # Afegir el check
+
+
         # Exclude datasets without startdate
         input_products = set()
         for product in products:
@@ -873,6 +876,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         leadtime_products, leadtime_settings = _update_leadtime_product(
             input_products, order, preproc_dir, lead_time_step)
 
+        # Mirar que passa amb els ancestors i pq no surten
         # check for multi_model_settings to bypass tests
         update_ancestors(
             ancestors=input_products,
