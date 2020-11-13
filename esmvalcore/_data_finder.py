@@ -94,10 +94,10 @@ def _replace_tags(path, variable):
     path = path.strip('/')
     tlist = re.findall(r'{([^}]*)}', path)
     if 'startdate' in variable:
-        paths = [
+        paths = list(set([
             re.sub(r'(\b{ensemble}\b)', r'{startdate}-\1', path),
             re.sub(r'({ensemble})', r'{startdate}-\1', path)
-            ]
+            ]))
         tlist.append('startdate')
     else:
         paths = [path]
