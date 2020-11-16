@@ -301,10 +301,10 @@ class DiagnosticTask(BaseTask):
                 'ncl': ['-n', '-p'],
             }
             if self.settings['profile_diagnostic']:
-                profile_file = Path(self.settings['run_dir']) / 'profile.bin'
+                profile_file = Path(self.settings['run_dir']) / 'profile.json'
                 args['py'] = [
-                    '-m', 'vmprof', '--lines', '-o',
-                    str(profile_file)
+                    '-m', 'vprof', '-o',
+                    str(profile_file), '-c', 'c'
                 ]
 
             ext = script_file.suffix.lower()[1:]
@@ -488,7 +488,12 @@ class DiagnosticTask(BaseTask):
         if ext == '.ncl':
             env['settings'] = settings_file
         else:
-            cmd.append(settings_file)
+            if self.settings['profile_diagnostic']:
+                script_file = cmd.pop()
+                combo_with_settings = script_file + ' ' + str(settings_file)
+                cmd.append(combo_with_settings)
+            else:
+                cmd.append(settings_file)
 
         process = self._start_diagnostic_script(cmd, env)
 
