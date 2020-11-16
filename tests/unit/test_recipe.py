@@ -29,6 +29,30 @@ class TestRecipe:
         for i, ensemble in enumerate(ensembles):
             assert expanded[i] == {'dataset': 'XYZ', 'ensemble': ensemble}
 
+    def test_expand_startdate(self):
+
+        datasets = [
+            {
+                'dataset': 'XYZ',
+                'startdate': 's(1998:2005)',
+            },
+        ]
+
+        expanded = Recipe._expand_tag(datasets, 'startdate')
+
+        startdates = [
+            's1998',
+            's1999',
+            's2000',
+            's2001',
+            's2002',
+            's2003',
+            's2004',
+            's2005',
+        ]
+        for i, startdate in enumerate(startdates):
+            assert expanded[i] == {'dataset': 'XYZ', 'startdate': startdate}
+
     def test_expand_ensemble_nolist(self):
 
         datasets = [
