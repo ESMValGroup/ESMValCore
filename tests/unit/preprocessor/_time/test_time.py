@@ -151,7 +151,7 @@ class TestExtractSeason(tests.Test):
 
     def test_get_djf(self):
         """Test function for winter."""
-        sliced = extract_season(self.cube, 'djf')
+        sliced = extract_season(self.cube, 'DJF')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([1, 2, 12, 1, 2, 12]),
                            sliced.coord('month_number').points)
@@ -165,28 +165,28 @@ class TestExtractSeason(tests.Test):
 
     def test_get_mam(self):
         """Test function for spring."""
-        sliced = extract_season(self.cube, 'mam')
+        sliced = extract_season(self.cube, 'MAM')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([3, 4, 5, 3, 4, 5]),
                            sliced.coord('month_number').points)
 
     def test_get_jja(self):
         """Test function for summer."""
-        sliced = extract_season(self.cube, 'jja')
+        sliced = extract_season(self.cube, 'JJA')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([6, 7, 8, 6, 7, 8]),
                            sliced.coord('month_number').points)
 
     def test_get_son(self):
         """Test function for summer."""
-        sliced = extract_season(self.cube, 'son')
+        sliced = extract_season(self.cube, 'SON')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([9, 10, 11, 9, 10, 11]),
                            sliced.coord('month_number').points)
 
     def test_get_jf(self):
         """Test function for custom seasons."""
-        sliced = extract_season(self.cube, 'jf')
+        sliced = extract_season(self.cube, 'JF')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([1, 2, 1, 2]),
                            sliced.coord('month_number').points)
@@ -475,7 +475,7 @@ class TestSeasonalStatistics(tests.Test):
 
         result = seasonal_statistics(cube,
                                      'mean',
-                                     seasons=('jjas', 'ondjfmam'))
+                                     seasons=('JJAS', 'ondjfmam'))
         expected = np.array([1])
         assert_array_equal(result.data, expected)
 

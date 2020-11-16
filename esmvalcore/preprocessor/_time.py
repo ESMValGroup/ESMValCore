@@ -122,13 +122,13 @@ def extract_season(cube, season):
     iris.cube.Cube
         data cube for specified season.
     """
-    season = season.lower()
+    season = season.upper()
 
-    allmonths = 'jfmamjjasond' * 2
-    if season.lower() not in allmonths:
+    allmonths = 'JFMAMJJASOND' * 2
+    if season not in allmonths:
         raise ValueError(f"Unable to extract Season {season} "
                          f"combination of months not possible.")
-    sstart = allmonths.index(season.lower())
+    sstart = allmonths.index(season)
     res_season = allmonths[sstart + len(season):sstart + 12]
     seasons = [season, res_season]
 
@@ -259,7 +259,7 @@ def monthly_statistics(cube, operator='mean'):
 
 def seasonal_statistics(cube,
                         operator='mean',
-                        seasons=('djf', 'mam', 'jja', 'son')):
+                        seasons=('DJF', 'MAM', 'JJA', 'SON')):
     """Compute seasonal statistics.
 
     Chunks time seasons and computes statistics over them.
@@ -285,7 +285,7 @@ def seasonal_statistics(cube,
     iris.cube.Cube
         Seasonal statistic cube
     """
-    seasons = tuple([sea.lower() for sea in seasons])
+    seasons = tuple([sea.upper() for sea in seasons])
 
     if any([len(sea) < 2 for sea in seasons]):
         raise ValueError(
@@ -417,7 +417,7 @@ def decadal_statistics(cube, operator='mean'):
 def climate_statistics(cube,
                        operator='mean',
                        period='full',
-                       seasons=('djf', 'mam', 'jja', 'son')):
+                       seasons=('DJF', 'MAM', 'JJA', 'SON')):
     """Compute climate statistics with the specified granularity.
 
     Computes statistics for the whole dataset. It is possible to get them for
@@ -439,7 +439,7 @@ def climate_statistics(cube,
         'mon', 'daily', 'day'
 
     seasons: list(str), optional
-        Seasons to use if needed. Default to ('djf', 'mam', 'jja', 'son')
+        Seasons to use if needed. Default to ('DJF', 'MAM', 'JJA', 'SON')
 
     Returns
     -------
@@ -480,7 +480,7 @@ def anomalies(cube,
               period,
               reference=None,
               standardize=False,
-              seasons=('djf', 'mam', 'jja', 'son')):
+              seasons=('DJF', 'MAM', 'JJA', 'SON')):
     """Compute anomalies using a mean with the specified granularity.
 
     Computes anomalies based on daily, monthly, seasonal or yearly means for
@@ -505,7 +505,7 @@ def anomalies(cube,
         If True standardized anomalies are calculated
 
     seasons: list(str), optional
-        Seasons to use if needed. Default to ('djf', 'mam', 'jja', 'son')
+        Seasons to use if needed. Default to ('DJF', 'MAM', 'JJA', 'SON')
 
     Returns
     -------
