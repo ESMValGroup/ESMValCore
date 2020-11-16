@@ -795,7 +795,7 @@ See also :func:`esmvalcore.preprocessor.extract_month`.
 
 .. _hourly_statistics:
 
-`hourly_statistics``
+``hourly_statistics``
 --------------------
 
 This function produces statistics at a x-hourly frequency.
