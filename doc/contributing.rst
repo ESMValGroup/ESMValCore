@@ -288,7 +288,7 @@ re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
 Make a pull request and get it merged into ``master``.
 
-3. Create a release branch
+4. Create a release branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Create a branch off the ``master`` branch and push it to GitHub.
 Ask someone with administrative permissions to set up branch protection rules
@@ -297,7 +297,7 @@ Announce the name of the branch in an issue and ask the members of the
 `ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
 to run their favourite recipe using this branch.
 
-4. Cherry pick bugfixes into the release branch
+5. Cherry pick bugfixes into the release branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If a bug is found and fixed (i.e. pull request merged into the
 ``master`` branch) during the period of testing, use the command
@@ -307,7 +307,7 @@ When the testing period is over, make a pull request to update
 the release notes with the latest changes, get it merged into
 ``master`` and cherry-pick it into the release branch.
 
-5. Make the release on GitHub
+6. Make the release on GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Do a final check that all tests on CircleCI and GitHub Actions completed
@@ -316,7 +316,7 @@ Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
 and create the new release from the release branch (i.e. not from ``master``).
 
-6. Create and upload the Conda package
+7. Create and upload the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
@@ -344,7 +344,7 @@ Follow these steps to create a new conda package:
    conda channel, e.g.
    ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.1.0-py_0.tar.bz2``.
 
-7. Create and upload the PyPI package
+8. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
