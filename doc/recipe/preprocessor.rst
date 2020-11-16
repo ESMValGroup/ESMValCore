@@ -19,6 +19,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Area operations`
 * :ref:`Volume operations`
 * :ref:`Cycles`
+* :ref:`Trend`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
 * :ref:`Other`
@@ -1312,6 +1313,39 @@ use ``coords: [year, day_of_year]``.
 See also :func:`esmvalcore.preprocessor.amplitude`.
 
 
+.. _trend:
+
+Trend
+=====
+
+The trend module contains the following preprocessor functions:
+
+* ``linear_trend``: Calculate linear trend along a specified coordinate.
+* ``linear_trend_stderr``: Calculate standard error of linear trend along a
+  specified coordinate.
+
+``linear_trend``
+----------------
+
+This function calculates the linear trend of a dataset (defined as slope of an
+ordinary linear regression) along a specified coordinate. The only argument of
+this preprocessor is ``coordinate`` (given as :obj:`str`; default value is
+``'time'``).
+
+See also :func:`esmvalcore.preprocessor.linear_trend`.
+
+``linear_trend_stderr``
+-----------------------
+
+This function calculates the standard error of the linear trend of a dataset
+(defined as the standard error of the slope in an ordinary linear regression)
+along a specified coordinate. The only argument of this preprocessor is
+``coordinate`` (given as :obj:`str`; default value is ``'time'``). Note that
+the standard error is **not** identical to a confidence interval.
+
+See also :func:`esmvalcore.preprocessor.linear_trend_stderr`.
+
+
 .. _detrend:
 
 Detrend
@@ -1333,6 +1367,7 @@ If method is ``constant``, detrend will compute the mean along that dimension
 and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
+
 
 .. _unit conversion:
 

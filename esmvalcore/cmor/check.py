@@ -339,7 +339,10 @@ class CMORCheck():
             else:
                 try:
                     cube_coord = self._cube.coord(var_name=coordinate.out_name)
-                    if cube_coord.standard_name != coordinate.standard_name:
+                    if (cube_coord.standard_name is None and
+                            coordinate.standard_name == ''):
+                        pass
+                    elif cube_coord.standard_name != coordinate.standard_name:
                         self.report_critical(
                             self._attr_msg,
                             coordinate.out_name,
