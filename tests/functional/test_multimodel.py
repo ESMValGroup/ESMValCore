@@ -30,19 +30,19 @@ def preprocess_data(cubes):
 @pytest.fixture
 def timeseries_cubes_amon():
     """Representative timeseries data."""
-    timeseries_cubes = esmvaltool_sample_data.load_timeseries_cubes(
+    cubes = esmvaltool_sample_data.load_timeseries_cubes(
         mip_table='Amon')
-    timeseries_cubes = preprocess_data(timeseries_cubes)
-    return timeseries_cubes
+    cubes = preprocess_data(cubes)
+    return cubes
 
 
 @pytest.fixture
 def timeseries_cubes_day():
     """Representative timeseries data."""
-    timeseries_cubes = esmvaltool_sample_data.load_timeseries_cubes(
+    cubes = esmvaltool_sample_data.load_timeseries_cubes(
         mip_table='day')
-    timeseries_cubes = preprocess_data(timeseries_cubes)
-    return timeseries_cubes
+    cubes = preprocess_data(cubes)
+    return cubes
 
 
 def multimodel_test(cubes, span, statistic):
