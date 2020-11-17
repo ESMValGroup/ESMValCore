@@ -57,6 +57,7 @@ def multimodel_regression_test(name, cubes, span):
     statistic = 'mean'
     output = multimodel_test(cubes, span=span, statistic=statistic)
 
+    # this fails for span='overlap', for which `output == cubes` (???)
     assert isinstance(output, dict)
 
     output_cube = output[statistic]
