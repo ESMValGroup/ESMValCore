@@ -357,8 +357,7 @@ def _assemble_full_data(cubes, statistic):
 
 
 def multi_model_statistics(products, span, statistics, output_products=None):
-    """
-    Compute multi-model statistics.
+    """Compute multi-model statistics.
 
     Multimodel statistics computed along the time axis. Can be
     computed across a common overlap in time (set span: overlap)
@@ -383,22 +382,27 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         span; if full, statistics are computed on full time spans, ignoring
         missing data.
     output_products: dict
-        dictionary of output products.
-    statistics: list
-        statistical measure to be computed. Available options: mean, median,
-        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
+        dictionary of output products. MUST be specified if products are NOT
+        cubes
+    statistics: list of str
+        list of statistical measure(s) to be computed. Available options:
+        mean, median, max, min, std, or pXX.YY (for percentile XX.YY; decimal
+        part optional).
 
     Returns
     -------
-    list or dict
-        list data products or dict of cubes containing the multimodel stats
-        computed.
+    set or dict or list
+        Either:
+        - `set` of data products if `output_products` is given
+        - `dict` of cubes if `output_products` is not given
+        containing the multimodel stats computed or:
+        - `list` of input cubes if there is no overlap between cubes when
+            using `span='overlap'`
 
     Raises
     ------
     ValueError
         If span is neither overlap nor full.
-
     """
     logger.debug('Multimodel statistics: computing: %s', statistics)
     if len(products) < 2:
