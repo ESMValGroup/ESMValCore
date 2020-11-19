@@ -144,9 +144,11 @@ def get_representant(cube, ref_to_slice):
     return cube[rep_ind]
 
 
-def regrid_mask_2d(src_field, src_data, dst_field,
-                   regridding_arguments, regrid_method, mask_threshold):
+def regrid_mask_2d(src_data, regridding_arguments, mask_threshold):
     """Regrid the mask from the source field to the destination grid."""
+    src_field = regridding_arguments['srcfield']
+    dst_field = regridding_arguments['dstfield']
+    regrid_method = regridding_arguments['regrid_method']
     original_src_mask = np.ma.getmaskarray(src_data)
     src_field.data[...] = ~original_src_mask.T
     src_mask = src_field.grid.get_item(ESMF.GridItem.MASK,
@@ -178,9 +180,8 @@ def build_regridder_2d(src_rep, dst_rep, regrid_method, mask_threshold):
         'unmapped_action': ESMF.UnmappedAction.IGNORE,
         'ignore_degenerate': True,
     }
-    dst_mask = regrid_mask_2d(src_field, src_rep.data, dst_field,
-                              regridding_arguments,
-                              regrid_method, mask_threshold)
+    dst_mask = regrid_mask_2d(src_rep.data,
+                              regridding_arguments, mask_threshold)
     field_regridder = ESMF.Regrid(src_mask_values=np.array([1]),
                                   dst_mask_values=np.array([1]),
                                   **regridding_arguments)
