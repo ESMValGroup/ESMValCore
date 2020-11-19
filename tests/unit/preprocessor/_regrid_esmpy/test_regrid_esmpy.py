@@ -450,27 +450,6 @@ class TestHelpers(tests.Test):
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.cube_to_empty_field',
                 mock_cube_to_empty_field)
     @mock.patch('ESMF.Regrid')
-    def test_build_regridder_2d_unmasked_data(self, mock_regrid):
-        """Test building of 2d regridder for unmasked data."""
-        self.cube.data = self.cube.data.data
-        self.cube.field = mock.Mock()
-        mock.sentinel.dst_rep.field = mock.Mock()
-        build_regridder_2d(self.cube, mock.sentinel.dst_rep,
-                           mock.sentinel.regrid_method, .99)
-        expected_kwargs = {
-            'src_mask_values': np.array([1]),
-            'dst_mask_values': np.array([1]),
-            'regrid_method': mock.sentinel.regrid_method,
-            'srcfield': self.cube.field,
-            'dstfield': mock.sentinel.dst_rep.field,
-            'unmapped_action': mock.sentinel.ua_ignore,
-            'ignore_degenerate': True,
-        }
-        mock_regrid.assert_called_once_with(**expected_kwargs)
-
-    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.cube_to_empty_field',
-                mock_cube_to_empty_field)
-    @mock.patch('ESMF.Regrid')
     def test_build_regridder_2d_masked_data(self, mock_regrid):
         """Test building of 2d regridder for masked data."""
         mock_regrid.return_value = mock.Mock(return_value=mock.Mock(

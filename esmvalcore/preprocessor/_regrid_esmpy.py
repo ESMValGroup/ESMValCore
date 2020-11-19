@@ -146,7 +146,7 @@ def get_representant(cube, ref_to_slice):
 
 def regrid_mask_2d(src_field, src_data, dst_field,
                    regridding_arguments, regrid_method, mask_threshold):
-    """Regrid the mask from the source field to the destination."""
+    """Regrid the mask from the source field to the destination grid."""
     original_src_mask = np.ma.getmaskarray(src_data)
     src_field.data[...] = ~original_src_mask.T
     src_mask = src_field.grid.get_item(ESMF.GridItem.MASK,
