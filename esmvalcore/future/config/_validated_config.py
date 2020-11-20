@@ -8,15 +8,16 @@ from .._exceptions import SuppressedError
 
 
 class InvalidConfigParameter(SuppressedError):
+    """Config parameter is invalid."""
     pass
 
 
+# The code for this class was take from matplotlib (v3.3) and modified to
+# fit the needs of ESMValCore. Matplotlib is licenced under the terms of
+# the the 'Python Software Foundation License'
+# (https://www.python.org/psf/license)
 class ValidatedConfig(MutableMapping, dict):
     """Based on `matplotlib.rcParams`."""
-    # The code for this class was take from matplotlib (v3.3) and modified to
-    # fit the needs of ESMValCore. Matplotlib is licenced under the terms of
-    # the the 'Python Software Foundation License'
-    # (https://www.python.org/psf/license)
 
     validate = {}
 
@@ -57,8 +58,9 @@ class ValidatedConfig(MutableMapping, dict):
         return dict.__len__(self)
 
     def find_all(self, pattern):
-        """Return the subset of this Config dictionary whose keys match, using
-        `re.search` with the given `pattern`.
+        """Return the subset of this Config dictionary whose keys match.
+
+        Uses `re.search` with the given `pattern`.
 
         Changes to the returned dictionary are *not* propagated to the
         parent Config dictionary.

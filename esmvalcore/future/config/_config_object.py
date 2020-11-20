@@ -54,6 +54,7 @@ class Session(ValidatedConfig):
         Name of the session to initialize, for example, the name of the
         recipe (default='session').
     """
+
     validate = _validators
 
     def __init__(self, name: str = 'session', *args, **kwargs):
@@ -124,12 +125,14 @@ def _load_default_config(filename: str):
 
 
 def _load_user_config(filename: str, raise_exception: bool = True):
-    """Load user configuration from the given file (`filename`).
+    """Load user configuration from the given file.
 
-    The config cleared and updated in-place.
+    The config is cleared and updated in-place.
 
     Parameters
     ----------
+    filename: pathlike
+        Name of the config file, must be yaml format
     raise_exception : bool
         Raise an exception if `filename` can not be found (default).
         Otherwise, silently pass and use the default configuration. This

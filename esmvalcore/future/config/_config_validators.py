@@ -6,15 +6,13 @@ from functools import lru_cache
 from pathlib import Path
 
 
+# The code for this function was taken from matplotlib (v3.3) and modified
+# to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
+# the the 'Python Software Foundation License'
+# (https://www.python.org/psf/license)
 def _make_type_validator(cls, *, allow_none=False):
     """Return a validator that converts inputs to *cls* or raises (and possibly
     allows ``None`` as well)."""
-
-    # The code for this function was taken from matplotlib (v3.3) and modified
-    # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
-    # the the 'Python Software Foundation License'
-    # (https://www.python.org/psf/license)
-
     def validator(s):
         if (allow_none
                 and (s is None or isinstance(s, str) and s.lower() == "none")):
@@ -36,6 +34,10 @@ def _make_type_validator(cls, *, allow_none=False):
     return validator
 
 
+# The code for this function was taken from matplotlib (v3.3) and modified
+# to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
+# the the 'Python Software Foundation License'
+# (https://www.python.org/psf/license)
 @lru_cache()
 def _listify_validator(scalar_validator,
                        allow_stringlist=False,
@@ -43,13 +45,7 @@ def _listify_validator(scalar_validator,
                        n=None,
                        doc=None):
     """Apply the validator to a list."""
-
-    # The code for this function was taken from matplotlib (v3.3) and modified
-    # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
-    # the the 'Python Software Foundation License'
-    # (https://www.python.org/psf/license)
-
-    def f(s):
+    def fnc(s):
         if isinstance(s, str):
             try:
                 val = [
@@ -82,12 +78,12 @@ def _listify_validator(scalar_validator,
         return val
 
     try:
-        f.__name__ = "{}list".format(scalar_validator.__name__)
+        fnc.__name__ = "{}list".format(scalar_validator.__name__)
     except AttributeError:  # class instance.
-        f.__name__ = "{}List".format(type(scalar_validator).__name__)
-    f.__qualname__ = f.__qualname__.rsplit(".", 1)[0] + "." + f.__name__
-    f.__doc__ = doc if doc is not None else scalar_validator.__doc__
-    return f
+        fnc.__name__ = "{}List".format(type(scalar_validator).__name__)
+    fnc.__qualname__ = fnc.__qualname__.rsplit(".", 1)[0] + "." + fnc.__name__
+    fnc.__doc__ = doc if doc is not None else scalar_validator.__doc__
+    return fnc
 
 
 def validate_bool(value, allow_none=False):
@@ -196,14 +192,13 @@ def validate_diagnostics(diagnostics):
     }
 
 
+# Custom warning, because DeprecationWarning is hidden by default
 class ESMValToolDeprecationWarning(UserWarning):
     """Configuration key has been deprecated."""
-    # Custom warning, because DeprecationWarning is hidden by default
-    pass
 
 
 def deprecate(func, variable, version: str = None):
-    """Wrapper function to mark variables to be deprecated.
+    """Wrap function to mark variables to be deprecated.
 
     This will give a warning if the function will be/has been deprecated.
 
