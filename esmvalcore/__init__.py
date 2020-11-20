@@ -9,6 +9,7 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     '__version__',
+    'future'
     'cmor',
     'preprocessor',
 ]
