@@ -33,7 +33,7 @@ def _make_type_validator(cls, *, allow_none=False):
     return validator
 
 
-@lru_cache
+@lru_cache()
 def _listify_validator(scalar_validator,
                        allow_stringlist=False,
                        *,
