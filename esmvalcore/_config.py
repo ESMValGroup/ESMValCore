@@ -99,10 +99,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
 
     # Read developer configuration file
-    cfg_developer = read_config_developer_file(cfg['config_developer_file'])
-    for key, value in cfg_developer.items():
-        CFG[key] = value
-    read_cmor_tables(CFG)
+    load_config_developer(cfg['config_developer_file'])
 
     return cfg
 
@@ -140,6 +137,15 @@ def read_config_developer_file(cfg_file=None):
         cfg = yaml.safe_load(file)
 
     return cfg
+
+
+def load_config_developer(cfg_file=None):
+    """Load the config developer file into the CFG object and initialize cmor
+    tables."""
+    cfg_developer = read_config_developer_file(cfg_file)
+    for key, value in cfg_developer.items():
+        CFG[key] = value
+    read_cmor_tables(CFG)
 
 
 def configure_logging(cfg_file=None, output_dir=None, console_log_level=None):
