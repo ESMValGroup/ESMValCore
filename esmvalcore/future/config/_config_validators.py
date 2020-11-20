@@ -1,3 +1,6 @@
+"""List of config validators."""
+
+import warnings
 from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
@@ -18,10 +21,10 @@ def _make_type_validator(cls, *, allow_none=False):
             return None
         try:
             return cls(s)
-        except ValueError as e:
+        except ValueError as err:
             if isinstance(cls, type):
                 raise ValueError(
-                    f'Could not convert {repr(s)} to {cls.__name__}') from e
+                    f'Could not convert {repr(s)} to {cls.__name__}') from err
             else:
                 raise
 
@@ -102,8 +105,8 @@ def validate_path(value, allow_none=False):
         return value
     try:
         path = Path(value).expanduser().absolute()
-    except TypeError as e:
-        raise ValueError(f"Expected a path, but got {value}") from e
+    except TypeError as err:
+        raise ValueError(f"Expected a path, but got {value}") from err
     else:
         return path
 
@@ -173,7 +176,8 @@ def validate_check_level(value):
         try:
             value = CheckLevels[value.upper()]
         except KeyError:
-            raise ValueError(f'`{value}` is not a valid strictness level')
+            raise ValueError(
+                f'`{value}` is not a valid strictness level') from None
 
     else:
         value = CheckLevels(value)
@@ -193,6 +197,7 @@ def validate_diagnostics(diagnostics):
 
 
 class ESMValToolDeprecationWarning(UserWarning):
+    """Configuration key has been deprecated."""
     # Custom warning, because DeprecationWarning is hidden by default
     pass
 
@@ -212,8 +217,6 @@ def deprecate(func, variable, version: str = None):
         Version to deprecate the variable in, should be something
         like '2.2.3'
     """
-    import warnings
-
     from esmvalcore import __version__ as current_version
 
     if not version:

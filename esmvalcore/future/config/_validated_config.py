@@ -1,3 +1,5 @@
+"""Config validation objects."""
+
 import pprint
 import re
 from collections.abc import MutableMapping
@@ -25,8 +27,8 @@ class ValidatedConfig(MutableMapping, dict):
     def __setitem__(self, key, val):
         try:
             cval = self.validate[key](val)
-        except ValueError as ve:
-            raise InvalidConfigParameter(f"Key `{key}`: {ve}") from None
+        except ValueError as verr:
+            raise InvalidConfigParameter(f"Key `{key}`: {verr}") from None
         except KeyError:
             raise InvalidConfigParameter(
                 f"`{key}` is not a valid config parameter.") from None
@@ -66,6 +68,7 @@ class ValidatedConfig(MutableMapping, dict):
                               if pattern_re.search(key))
 
     def copy(self):
+        """Copy the keys this object to a dict."""
         return {k: dict.__getitem__(self, k) for k in self}
 
     def clear(self):

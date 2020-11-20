@@ -1,3 +1,5 @@
+"""ESMValCore exceptions."""
+
 import sys
 
 
@@ -7,7 +9,6 @@ class SuppressedError(Exception):
     This can be used for simple user-facing errors that do not need the
     full traceback.
     """
-    pass
 
 
 def _suppressed_hook(error, message, traceback):

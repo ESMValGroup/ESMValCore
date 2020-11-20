@@ -1,3 +1,5 @@
+"""Importable config object."""
+
 import os
 from datetime import datetime
 from pathlib import Path
@@ -11,7 +13,8 @@ from ._validated_config import ValidatedConfig
 
 
 class ESMValCoreConfig(ValidatedConfig):
-    """The ESMValCore config object."""
+    """ESMValTool configuration object."""
+
     validate = _validators
 
     @staticmethod
@@ -27,13 +30,23 @@ class ESMValCoreConfig(ValidatedConfig):
 
         _load_user_config(path)
 
-    def start_session(self, name):
+    def start_session(self, name: str):
+        """Start a new session from this configuration object.
+
+        Parameters
+        ----------
+        name: str
+            Name of the session.
+
+        Returns
+        -------
+        Session
+        """
         return Session(name, self.copy())
 
 
 class Session(ValidatedConfig):
-    """This class holds information about the current session. Different
-    session directories can be accessed.
+    """Container class for session configuration and directory information.
 
     Parameters
     ----------
@@ -60,26 +73,32 @@ class Session(ValidatedConfig):
 
     @property
     def session_dir(self):
+        """Return session directory."""
         return self._session_dir
 
     @property
     def preproc_dir(self):
+        """Return preproc directory."""
         return self.session_dir / 'preproc'
 
     @property
     def work_dir(self):
+        """Return work directory."""
         return self.session_dir / 'work'
 
     @property
     def plot_dir(self):
+        """Return plot directory."""
         return self.session_dir / 'plots'
 
     @property
     def run_dir(self):
+        """Return run directory."""
         return self.session_dir / 'run'
 
     @property
     def config_dir(self):
+        """Return user config directory."""
         return USER_CONFIG_DIR
 
 
@@ -99,7 +118,7 @@ def _load_default_config(filename: str):
     """Load the default configuration."""
     mapping = read_config_file(filename)
 
-    global config_default
+    global CFG_default
 
     CFG_default.update(mapping)
 
