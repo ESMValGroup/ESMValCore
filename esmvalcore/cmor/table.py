@@ -267,7 +267,7 @@ class CMIP6Info(InfoBase):
             self._load_controlled_vocabulary()
 
         self.default_table_prefix = default_table_prefix
-    
+
         self.extra_dim = extra_dim
 
         self.var_to_freq = {}
