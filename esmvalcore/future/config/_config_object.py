@@ -119,12 +119,11 @@ def _load_user_config(filename: str, raise_exception: bool = True):
     """
     try:
         mapping = read_config_file(filename)
+        mapping['config_file'] = filename
     except IOError:
         if raise_exception:
             raise
         mapping = {}
-
-    mapping['config_file'] = filename
 
     global CFG
     global CFG_orig
