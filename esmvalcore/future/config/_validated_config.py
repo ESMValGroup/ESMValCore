@@ -56,7 +56,7 @@ class ValidatedConfig(MutableMapping, dict):
     def __len__(self):
         return dict.__len__(self)
 
-    def __del__(self, key):
+    def __delitem__(self, key):
         dict.__delitem__(self, key)
 
     def find_all(self, pattern):
