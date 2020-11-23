@@ -128,6 +128,27 @@ get_input_filelist:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+    dirs:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta
+    file_patterns:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
+    found_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+
+
+  - drs: BADC
+    variable:
+      <<: *variable
+      start_year: 1980
+      end_year: 2002
+    available_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
     available_symlinks:
       - link_name: MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/latest
         target: v20120928
