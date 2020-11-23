@@ -145,10 +145,9 @@ def _apply_caps(original, lower, upper):
 
 def _resolve_latestversion(dirname_template):
     """Resolve the 'latestversion' tag."""
-    versions = glob.glob(dirname_template)
+    versions = glob.glob(dirname_template)  # -> list
 
-    if not versions:
-        return dirname_template
+    version = dirname_template
 
     # pick 'latest' if it exists,
     # otherwise take the last sorted == most recent item
