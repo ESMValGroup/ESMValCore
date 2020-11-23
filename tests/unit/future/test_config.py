@@ -68,7 +68,7 @@ def generate_validator_testcases(valid):
         },
         {
             'validator':
-            _listify_validator(validate_float, n=2),
+            _listify_validator(validate_float, n_items=2),
             'success':
             ((_, [1.5, 2.5])
              for _ in ('1.5, 2.5', [1.5, 2.5], [1.5, 2.5], (1.5, 2.5),
@@ -77,7 +77,7 @@ def generate_validator_testcases(valid):
         },
         {
             'validator':
-            _listify_validator(validate_float, n=2),
+            _listify_validator(validate_float, n_items=2),
             'success':
             ((_, [1.5, 2.5])
              for _ in ('1.5, 2.5', [1.5, 2.5], [1.5, 2.5], (1.5, 2.5),
@@ -86,7 +86,7 @@ def generate_validator_testcases(valid):
         },
         {
             'validator':
-            _listify_validator(validate_int, n=2),
+            _listify_validator(validate_int, n_items=2),
             'success':
             ((_, [1, 2])
              for _ in ('1, 2', [1.5, 2.5], [1, 2], (1, 2), np.array((1, 2)))),
