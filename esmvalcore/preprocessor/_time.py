@@ -32,6 +32,9 @@ for _coord in (
         'month_number',
         'season_year',
         'year',
+        'startdate',
+        'leadtime',
+        'index along t axis',
 ):
     filterwarnings(
         'ignore',
@@ -749,6 +752,8 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
         cube with the converted time axis.
 
     """
+    from ._io import _fix_cube_attributes
+
     lead_time_products = set()
     for identifier, products in _group_products(input_products, by=groupby):
         cubes = [cube for product in products for cube in product.cubes]
@@ -761,6 +766,8 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
         for cube in cubes:
             try:
                 startdate = int(cube.attributes['sub_experiment_id'][1:])
+                #cube.attributes.pop('sub_experiment')
+                #cube.attributes.pop('sub_experiment_id')
             except (KeyError, ValueError):
                 logger.error(
                     "Cannot retrieve startdate" +
@@ -768,12 +775,13 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
             
             try:
                 ensemble = cube.attributes['variant_label']
+               #cube.attributes.pop('variant_label')
             except (KeyError, ValueError):
                 logger.error(
                     "Cannot retrieve ensemble" +
                     "from attribute variant_label. ")
 
-            cube.attributes = None
+            #cube.attributes = None
 
             time = cube.coord('time')
             tpoints[startdate] = time.points
@@ -813,18 +821,19 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
         ltpoints = list(ltpoints.values())
         ltbounds = list(ltbounds.values())
 
+        _fix_cube_attributes(cubelist)
         output_cube = cubelist.merge_cube()
 
-        print(output_cube.coords())
+        position = 2
+        if output_cube.ndim == 3:
+            position = 1
 
         tindex = iris.coords.DimCoord(
             np.arange(1, len(tpoints[0])+1),
             var_name='t',
             long_name='index along time dimension')
         # pending to correct
-        output_cube.add_dim_coord(tindex, 2)
-
-        print(output_cube.coords())
+        output_cube.add_dim_coord(tindex, position)
 
         tcoord = iris.coords.AuxCoord(
             np.array(tpoints),
@@ -833,7 +842,7 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
             long_name='time',
             units=tunits,
             bounds=np.array(tbounds))
-        output_cube.add_aux_coord(tcoord, (0, 2))
+        output_cube.add_aux_coord(tcoord, (0, position))
 
         ltcoord = iris.coords.AuxCoord(
             ltpoints,
@@ -841,7 +850,7 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
             long_name='leadtime',
             units='days',
             bounds=np.array(ltbounds))
-        output_cube.add_aux_coord(ltcoord, (0, 2))
+        output_cube.add_aux_coord(ltcoord, (0, position))
 
         lead_time_product = output_products[identifier]
         lead_time_product.cubes = [output_cube]
@@ -849,6 +858,4 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
             lead_time_product.wasderivedfrom(product)
         logger.info("Generated %s", lead_time_product)
         lead_time_products.add(lead_time_product)
-
-    a = 1
     return lead_time_products
