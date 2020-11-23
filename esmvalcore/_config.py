@@ -118,7 +118,6 @@ def _normalize_path(path):
     -------
     str:
         Normalized path
-
     """
     if path is None:
         return None
@@ -140,8 +139,7 @@ def read_config_developer_file(cfg_file=None):
 
 
 def load_config_developer(cfg_file=None):
-    """Load the config developer file into the CFG object and initialize cmor
-    tables."""
+    """Load the config developer file and initialize CMOR tables."""
     cfg_developer = read_config_developer_file(cfg_file)
     for key, value in cfg_developer.items():
         CFG[key] = value
