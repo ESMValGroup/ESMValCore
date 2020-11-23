@@ -9,7 +9,6 @@ from .._exceptions import SuppressedError
 
 class InvalidConfigParameter(SuppressedError):
     """Config parameter is invalid."""
-    pass
 
 
 # The code for this class was take from matplotlib (v3.3) and modified to
@@ -56,6 +55,9 @@ class ValidatedConfig(MutableMapping, dict):
 
     def __len__(self):
         return dict.__len__(self)
+
+    def __del__(self, key):
+        dict.__delitem__(self, key)
 
     def find_all(self, pattern):
         """Return the subset of this Config dictionary whose keys match.

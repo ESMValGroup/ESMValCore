@@ -11,8 +11,11 @@ from pathlib import Path
 # the the 'Python Software Foundation License'
 # (https://www.python.org/psf/license)
 def _make_type_validator(cls, *, allow_none=False):
-    """Return a validator that converts inputs to *cls* or raises (and possibly
-    allows ``None`` as well)."""
+    """Construct a type validator for `cls`.
+
+    Return a validator that converts inputs to *cls* or raises (and
+    possibly allows ``None`` as well).
+    """
     def validator(s):
         if (allow_none
                 and (s is None or isinstance(s, str) and s.lower() == "none")):
@@ -96,7 +99,7 @@ def validate_bool(value, allow_none=False):
 
 
 def validate_path(value, allow_none=False):
-    """Return a path object."""
+    """Return a `Path` object."""
     if (value is None) and allow_none:
         return value
     try:
@@ -147,16 +150,19 @@ validate_int_positive_or_none = _make_type_validator(validate_int_positive,
 
 
 def validate_oldstyle_rootpath(value):
+    """Validate `rootpath` mapping."""
     mapping = validate_dict(value)
     return mapping
 
 
 def validate_oldstyle_drs(value):
+    """Validate `drs` mapping."""
     mapping = validate_dict(value)
     return mapping
 
 
 def validate_config_developer(value):
+    """Validate and load config developer path."""
     from esmvalcore._config import load_config_developer
     path = validate_path_or_none(value)
 
@@ -166,6 +172,7 @@ def validate_config_developer(value):
 
 
 def validate_check_level(value):
+    """Validate CMOR level check."""
     from esmvalcore.cmor.check import CheckLevels
 
     if isinstance(value, str):
@@ -182,6 +189,7 @@ def validate_check_level(value):
 
 
 def validate_diagnostics(diagnostics):
+    """Validate diagnostic location."""
     from esmvalcore._recipe import TASKSEP
 
     if isinstance(diagnostics, str):

@@ -119,9 +119,9 @@ def _load_default_config(filename: str):
     """Load the default configuration."""
     mapping = read_config_file(filename)
 
-    global CFG_default
+    global CFG_DEFAULT
 
-    CFG_default.update(mapping)
+    CFG_DEFAULT.update(mapping)
 
 
 def _load_user_config(filename: str, raise_exception: bool = True):
@@ -148,18 +148,21 @@ def _load_user_config(filename: str, raise_exception: bool = True):
         mapping = {}
 
     global CFG
-    global CFG_orig
+    global CFG_ORIG
 
     CFG.clear()
-    CFG.update(CFG_default)
+    CFG.update(CFG_DEFAULT)
     CFG.update(mapping)
 
-    CFG_orig = ESMValCoreConfig(CFG.copy())
+    CFG_ORIG = ESMValCoreConfig(CFG.copy())
 
 
 def get_user_config_location():
-    """Check if environment variable `ESMVALTOOL_CONFIG` exists, otherwise use
-    the default config location."""
+    """Get the user config location by looking in the expected places.
+
+    Check if environment variable `ESMVALTOOL_CONFIG` exists, otherwise
+    use the default location in the user config dir (`~/.esmvaltool`).
+    """
     try:
         config_location = Path(os.environ['ESMVALTOOL_CONFIG'])
     except KeyError:
@@ -175,9 +178,9 @@ USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 USER_CONFIG = get_user_config_location()
 
 # initialize placeholders
-CFG_default = ESMValCoreConfig()
+CFG_DEFAULT = ESMValCoreConfig()
 CFG = ESMValCoreConfig()
-CFG_orig = ESMValCoreConfig()
+CFG_ORIG = ESMValCoreConfig()
 
 # update config objects
 _load_default_config(DEFAULT_CONFIG)
