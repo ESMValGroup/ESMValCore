@@ -16,18 +16,18 @@ def _make_type_validator(cls, *, allow_none=False):
     Return a validator that converts inputs to *cls* or raises (and
     possibly allows ``None`` as well).
     """
-    def validator(s):
-        if (allow_none
-                and (s is None or isinstance(s, str) and s.lower() == "none")):
+    def validator(inp):
+        looks_like_none = isinstance(inp, str) and (inp.lower() == "none")
+        if (allow_none and (inp is None or looks_like_none)):
             return None
         try:
-            return cls(s)
+            return cls(inp)
         except ValueError as err:
             if isinstance(cls, type):
                 raise ValueError(
-                    f'Could not convert {repr(s)} to {cls.__name__}') from err
-            else:
-                raise
+                    f'Could not convert {repr(inp)} to {cls.__name__}'
+                ) from err
+            raise
 
     validator.__name__ = f"validate_{cls.__name__}"
     if allow_none:
@@ -45,48 +45,56 @@ def _make_type_validator(cls, *, allow_none=False):
 def _listify_validator(scalar_validator,
                        allow_stringlist=False,
                        *,
-                       n=None,
-                       doc=None):
+                       n_items=None,
+                       docstring=None):
     """Apply the validator to a list."""
-    def fnc(s):
-        if isinstance(s, str):
+    def func(inp):
+        if isinstance(inp, str):
             try:
-                val = [
-                    scalar_validator(v.strip()) for v in s.split(',')
-                    if v.strip()
+                inp = [
+                    scalar_validator(val.strip()) for val in inp.split(',')
+                    if val.strip()
                 ]
             except Exception:
                 if allow_stringlist:
                     # Sometimes, a list of colors might be a single string
                     # of single-letter colornames. So give that a shot.
-                    val = [scalar_validator(v.strip()) for v in s if v.strip()]
+                    inp = [
+                        scalar_validator(val.strip()) for val in inp
+                        if val.strip()
+                    ]
                 else:
                     raise
         # Allow any ordered sequence type -- generators, np.ndarray, pd.Series
         # -- but not sets, whose iteration order is non-deterministic.
-        elif isinstance(s, Iterable) and not isinstance(s, (set, frozenset)):
+        elif isinstance(inp,
+                        Iterable) and not isinstance(inp, (set, frozenset)):
             # The condition on this list comprehension will preserve the
             # behavior of filtering out any empty strings (behavior was
             # from the original validate_stringlist()), while allowing
             # any non-string/text scalar values such as numbers and arrays.
-            val = [
-                scalar_validator(v) for v in s if not isinstance(v, str) or v
+            inp = [
+                scalar_validator(val) for val in inp
+                if not isinstance(val, str) or val
             ]
         else:
             raise ValueError(
-                f"Expected str or other non-set iterable, but got {s}")
-        if n is not None and len(val) != n:
-            raise ValueError(
-                f"Expected {n} values, but there are {len(val)} values in {s}")
-        return val
+                f"Expected str or other non-set iterable, but got {inp}")
+        if n_items is not None and len(inp) != n_items:
+            raise ValueError(f"Expected {n_items} values, "
+                             f"but there are {len(inp)} values in {inp}")
+        return inp
 
     try:
-        fnc.__name__ = "{}list".format(scalar_validator.__name__)
+        func.__name__ = "{}list".format(scalar_validator.__name__)
     except AttributeError:  # class instance.
-        fnc.__name__ = "{}List".format(type(scalar_validator).__name__)
-    fnc.__qualname__ = fnc.__qualname__.rsplit(".", 1)[0] + "." + fnc.__name__
-    fnc.__doc__ = doc if doc is not None else scalar_validator.__doc__
-    return fnc
+        func.__name__ = "{}List".format(type(scalar_validator).__name__)
+    func.__qualname__ = func.__qualname__.rsplit(".",
+                                                 1)[0] + "." + func.__name__
+    if docstring is not None:
+        docstring = scalar_validator.__doc__
+    func.__doc__ = docstring
+    return func
 
 
 def validate_bool(value, allow_none=False):
@@ -130,19 +138,19 @@ def _chain_validator(*funcs):
 validate_string = _make_type_validator(str)
 validate_string_or_none = _make_type_validator(str, allow_none=True)
 validate_stringlist = _listify_validator(validate_string,
-                                         doc='return a list of strings')
+                                         docstring='Return a list of strings.')
 validate_int = _make_type_validator(int)
 validate_int_or_none = _make_type_validator(int, allow_none=True)
 validate_float = _make_type_validator(float)
 validate_floatlist = _listify_validator(validate_float,
-                                        doc='return a list of floats')
+                                        docstring='Return a list of floats.')
 
 validate_dict = _make_type_validator(dict)
 
 validate_path_or_none = _make_type_validator(validate_path, allow_none=True)
 
 validate_pathlist = _listify_validator(validate_path,
-                                       doc='return a list of paths')
+                                       docstring='Return a list of paths.')
 
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(validate_int_positive,
