@@ -42,7 +42,7 @@ class ESMValCoreConfig(ValidatedConfig):
         -------
         Session
         """
-        return Session(name, self.copy())
+        return Session(name, config=self.copy())
 
 
 class Session(ValidatedConfig):
@@ -53,12 +53,14 @@ class Session(ValidatedConfig):
     name : str
         Name of the session to initialize, for example, the name of the
         recipe (default='session').
+    config : dict
+        Dictionary with configuration settings.
     """
 
     validate = _validators
 
-    def __init__(self, name: str = 'session', *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, name: str = 'session', config: dict={}):
+        super().__init__(config)
         self.init_session_dir(name)
 
     def init_session_dir(self, name: str = 'session'):
