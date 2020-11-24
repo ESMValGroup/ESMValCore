@@ -1017,7 +1017,7 @@ class Recipe:
             variable.update(dataset)
 
             variable['recipe_dataset_index'] = index
-            if 'end_year' in variable and 'max_years' in self._cfg:
+            if 'end_year' in variable and self._cfg.get('max_years'):
                 variable['end_year'] = min(
                     variable['end_year'],
                     variable['start_year'] + self._cfg['max_years'] - 1)
