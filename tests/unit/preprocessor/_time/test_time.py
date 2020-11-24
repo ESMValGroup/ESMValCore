@@ -166,8 +166,8 @@ class TestExtractTimerange(tests.Test):
                            sliced.coord('month_number').points)
         assert_array_equal(np.full(12, 1950), sliced.coord('year').points)
 
-    def test_clip_start_end_year_4_years(self):
-        """Test clip_start_end_year with 4 years."""
+    def test_clip_start_end_year_3_years(self):
+        """Test clip_start_end_year with 3 years."""
         sliced = clip_start_end_year(self.cube, 1949, 1951)
         assert sliced == self.cube
 

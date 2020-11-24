@@ -406,6 +406,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
 
 def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
                                            config_user):
+    """Test if default settings are used when ``custom_order`` is ``True``."""
 
     content = dedent("""
         preprocessors:
@@ -869,6 +870,15 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
             <<: *default
           empty_custom:
             custom_order: true
+          with_extract_time:
+            custom_order: true
+            extract_time:
+              start_year: 2001
+              start_month: 3
+              start_day: 14
+              end_year: 2002
+              end_month: 6
+              end_day: 28
 
         diagnostics:
           diagnostic_name:
@@ -890,12 +900,15 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
               chl_empty_custom:
                 <<: *chl
                 preprocessor: empty_custom
+              chl_with_extract_time:
+                <<: *chl
+                preprocessor: with_extract_time
             scripts: null
         """)
 
     recipe = get_recipe(tmp_path, content, config_user)
 
-    assert len(recipe.tasks) == 3
+    assert len(recipe.tasks) == 4
 
     for task in recipe.tasks:
         if task.name == 'diagnostic_name/chl_default':
@@ -909,6 +922,23 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
             product = list(task.products)[0]
             assert set(product.settings.keys()) == set(
                 DEFAULT_PREPROCESSOR_STEPS)
+        elif task.name == 'diagnostic_name/chl_with_extract_time':
+            assert len(task.products) == 1
+            product = list(task.products)[0]
+            steps = set(DEFAULT_PREPROCESSOR_STEPS + tuple(['extract_time']))
+            assert set(product.settings.keys()) == steps
+            assert product.settings['extract_time'] == {
+              'start_year': 2001,
+              'start_month': 3,
+              'start_day': 14,
+              'end_year': 2002,
+              'end_month': 6,
+              'end_day': 28,
+            }
+            assert product.settings['clip_start_end_year'] == {
+              'start_year': 2000,
+              'end_year': 2005,
+            }
         else:
             assert False, f"invalid task {task.name}"
 
