@@ -17,19 +17,6 @@ from ..shared import add_scalar_height_coord
 logger = logging.getLogger(__name__)
 
 
-class Orog(Fix):
-    """Fixes for orography."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        fixed_cubes = []
-        for cube in cubes:
-            cube = remove_time_coordinate(cube)
-            divide_by_gravity(cube)
-            fixed_cubes.append(cube)
-        return iris.cube.CubeList(fixed_cubes)
-
-
 class Pr(Fix):
     """Fixes for pr."""
 
