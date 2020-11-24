@@ -50,12 +50,12 @@ __all__ = [
     # Concatenate all cubes in one
     'concatenate',
     'cmor_check_metadata',
-    # Extract years given by recipe (start_year and end_year)
+    # Extract years given by dataset keys (start_year and end_year)
     'clip_start_end_year',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
-    # User-defined time extraction
+    # Time extraction (as defined in the preprocessor section)
     'extract_time',
     'extract_season',
     'extract_month',
