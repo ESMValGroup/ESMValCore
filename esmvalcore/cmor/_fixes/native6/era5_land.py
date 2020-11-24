@@ -8,9 +8,7 @@ import numpy as np
 from esmvalcore.cmor._fixes.native6.era5 import (get_frequency,
                                                  fix_hourly_time_coordinate,
                                                  fix_accumulated_units,
-                                                 multiply_with_density,
-                                                 remove_time_coordinate,
-                                                 divide_by_gravity)
+                                                 multiply_with_density)
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
