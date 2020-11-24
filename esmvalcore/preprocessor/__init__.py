@@ -55,7 +55,7 @@ __all__ = [
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
-    # User-defined time extraction
+    # Time extraction (as defined in the preprocessor section)
     'extract_time',
     'extract_season',
     'extract_month',
