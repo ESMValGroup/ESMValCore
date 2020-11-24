@@ -109,7 +109,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
 
 
 def extract_timerange(cube, start_year, end_year):
-    """Extract time range given by recipe.
+    """Extract time range given by the dataset keys.
 
     Parameters
     ----------
