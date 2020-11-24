@@ -5,18 +5,34 @@ import logging
 import iris
 import numpy as np
 
+from esmvalcore.cmor._fixes.native6.era5 import (get_frequency,
+                                                 fix_hourly_time_coordinate,
+                                                 fix_accumulated_units,
+                                                 multiply_with_density,
+                                                 remove_time_coordinate,
+                                                 divide_by_gravity)
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
-from era5 import (get_frequency,
-                  fix_hourly_time_coordinate,
-                  fix_accumulated_units,
-                  multiply_with_density)
 
 logger = logging.getLogger(__name__)
 
 
+class Orog(Fix):
+    """Fixes for orography."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        fixed_cubes = []
+        for cube in cubes:
+            cube = remove_time_coordinate(cube)
+            divide_by_gravity(cube)
+            fixed_cubes.append(cube)
+        return iris.cube.CubeList(fixed_cubes)
+
+
 class Pr(Fix):
     """Fixes for pr."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -29,6 +45,7 @@ class Pr(Fix):
 
 class AllVars(Fix):
     """Fixes for all variables."""
+
     def _fix_coordinates(self, cube):
         """Fix coordinates."""
         # Fix coordinate increasing direction
