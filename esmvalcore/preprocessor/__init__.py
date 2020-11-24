@@ -26,7 +26,7 @@ from ._other import clip
 from ._regrid import extract_levels, extract_point, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
                     daily_statistics, decadal_statistics, extract_month,
-                    extract_season, extract_time, extract_timerange,
+                    extract_season, extract_time, clip_start_end_year,
                     monthly_statistics, regrid_time, seasonal_statistics,
                     timeseries_filter)
 from ._trend import linear_trend, linear_trend_stderr
@@ -51,7 +51,7 @@ __all__ = [
     'concatenate',
     'cmor_check_metadata',
     # Extract years given by recipe (start_year and end_year)
-    'extract_timerange',
+    'clip_start_end_year',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
@@ -120,7 +120,7 @@ __all__ = [
 ]
 
 TIME_PREPROCESSORS = [
-    'extract_timerange',
+    'clip_start_end_year',
     'extract_time',
     'extract_season',
     'extract_month',

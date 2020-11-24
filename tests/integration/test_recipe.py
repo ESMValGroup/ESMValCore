@@ -51,7 +51,7 @@ DEFAULT_PREPROCESSOR_STEPS = (
     'cmor_check_data',
     'cmor_check_metadata',
     'concatenate',
-    'extract_timerange',
+    'clip_start_end_year',
     'fix_data',
     'fix_file',
     'fix_metadata',
@@ -113,7 +113,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename):
             'mip': 'Oyr',
             'frequency': 'yr',
         },
-        'extract_timerange': {
+        'clip_start_end_year': {
             'start_year': 2000,
             'end_year': 2005,
         },

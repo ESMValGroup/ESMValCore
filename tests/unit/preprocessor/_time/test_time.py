@@ -18,7 +18,8 @@ from esmvalcore.preprocessor._time import (annual_statistics, anomalies,
                                            daily_statistics,
                                            decadal_statistics, extract_month,
                                            extract_season, extract_time,
-                                           extract_timerange, get_time_weights,
+                                           clip_start_end_year,
+                                           get_time_weights,
                                            monthly_statistics, regrid_time,
                                            seasonal_statistics,
                                            timeseries_filter)
@@ -150,47 +151,47 @@ class TestTimeSlice(tests.Test):
 
 
 class TestExtractTimerange(tests.Test):
-    """Tests for extract_timerange."""
+    """Tests for clip_start_end_year."""
 
     def setUp(self):
         """Prepare tests"""
         self.cube = _create_sample_cube()
 
-    def test_extract_timerange_1_year(self):
-        """Test extract_timerange with 1 year."""
-        sliced = extract_timerange(self.cube, 1950, 1950)
+    def test_clip_start_end_year_1_year(self):
+        """Test clip_start_end_year with 1 year."""
+        sliced = clip_start_end_year(self.cube, 1950, 1950)
         iris.coord_categorisation.add_month_number(sliced, 'time')
         iris.coord_categorisation.add_year(sliced, 'time')
         assert_array_equal(np.arange(1, 13, 1),
                            sliced.coord('month_number').points)
         assert_array_equal(np.full(12, 1950), sliced.coord('year').points)
 
-    def test_extract_timerange_4_years(self):
-        """Test extract_timerange with 4 years."""
-        sliced = extract_timerange(self.cube, 1949, 1951)
+    def test_clip_start_end_year_4_years(self):
+        """Test clip_start_end_year with 4 years."""
+        sliced = clip_start_end_year(self.cube, 1949, 1951)
         assert sliced == self.cube
 
-    def test_extract_timerange_no_slice(self):
-        """Test fail of extract_timerange."""
+    def test_clip_start_end_year_no_slice(self):
+        """Test fail of clip_start_end_year."""
         with self.assertRaises(ValueError) as ctx:
-            extract_timerange(self.cube, 2200, 2200)
+            clip_start_end_year(self.cube, 2200, 2200)
         msg = (
             "Time slice 2200-01-01 to 2201-01-01 is outside"
             " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         assert ctx.exception.args == (msg, )
 
-    def test_extract_timerange_one_time(self):
-        """Test extract_timerange with one time step."""
+    def test_clip_start_end_year_one_time(self):
+        """Test clip_start_end_year with one time step."""
         cube = _create_sample_cube()
         cube.coord('time').guess_bounds()
         cube = cube.collapsed('time', iris.analysis.MEAN)
-        sliced = extract_timerange(cube, 1950, 1952)
+        sliced = clip_start_end_year(cube, 1950, 1952)
         assert_array_equal(np.array([360.]), sliced.coord('time').points)
 
-    def test_extract_timerange_no_time(self):
-        """Test extract_timerange with no time step."""
+    def test_clip_start_end_year_no_time(self):
+        """Test clip_start_end_year with no time step."""
         cube = _create_sample_cube()[0]
-        sliced = extract_timerange(cube, 1950, 1950)
+        sliced = clip_start_end_year(cube, 1950, 1950)
         assert cube == sliced
 
 
