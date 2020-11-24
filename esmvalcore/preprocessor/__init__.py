@@ -50,7 +50,7 @@ __all__ = [
     # Concatenate all cubes in one
     'concatenate',
     'cmor_check_metadata',
-    # Extract years given by recipe (start_year and end_year)
+    # Extract years given by dataset keys (start_year and end_year)
     'extract_timerange',
     # Data reformatting/CMORization
     'fix_data',
