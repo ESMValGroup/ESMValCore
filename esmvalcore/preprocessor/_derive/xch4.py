@@ -3,20 +3,15 @@
 import iris
 from iris import Constraint
 import numpy as np
+from scipy import constants
 
 from ._baseclass import DerivedVariableBase
-from .toz import _pressure_level_widths
+from ._shared import pressure_level_widths
 
 # Constants
-
-# free air correction constant [s-2]
 FAIR_COR = 3.0825958e-6
-# Pi [1]
-PI = 3.1415926536
-# Molecular weight of the atmosphere [kg mol-1]
 MW_AIR = 28.9644e-3
-# Avogadro number [mol-1]
-N_AVO = 6.022140857e23
+AVOGADRO_CONST = constants.value('Avogadro constant')
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -26,18 +21,10 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):
         """Declare the variables needed for derivation."""
         required = [
-            {
-                'short_name': 'ch4'
-            },
-            {
-                'short_name': 'hus'
-            },
-            {
-                'short_name': 'zg'
-            },
-            {
-                'short_name': 'ps'
-            },
+            {'short_name': 'ch4'},
+            {'short_name': 'hus'},
+            {'short_name': 'zg'},
+            {'short_name': 'ps'},
         ]
         return required
 
@@ -62,8 +49,8 @@ class DerivedVariable(DerivedVariableBase):
         # level thickness (note: Buchwitz & Reuter use hPa but we use Pa;
         # in fact, this does not matter as units cancel out when calculating
         # xch4)
-        p_layer_widths = _pressure_level_widths(
-            ch4_cube, ps_cube, top_limit=0.0)
+        p_layer_widths = pressure_level_widths(ch4_cube, ps_cube,
+                                               top_limit=0.0)
 
         # latitudes (1-dim array)
         lat = ch4_cube.coord('latitude').points
@@ -71,8 +58,8 @@ class DerivedVariable(DerivedVariableBase):
         # gravitational acceleration g_0 on the geoid approximated by the
         # international gravity formula depending only on the latitude
         g_0 = np.array(lat)
-        g_0 = 9.780327 * (1. + 0.0053024 * (np.sin(lat / 180. * PI))**2
-                          - 0.0000058 * (np.sin(2. * lat / 180. * PI))**2)
+        g_0 = 9.780327 * (1. + 0.0053024 * (np.sin(lat / 180. * np.pi))**2
+                          - 0.0000058 * (np.sin(2. * lat / 180. * np.pi))**2)
 
         # approximation of the gravitational acceleration including the
         # free air correction
@@ -83,8 +70,8 @@ class DerivedVariable(DerivedVariableBase):
 
         # number of dry air particles (air molecules excluding water vapor)
         # within each layer
-        n_dry = (hus_cube * -1. + 1.) * N_AVO * p_layer_widths.data / (
-            MW_AIR * g_4d_array)
+        n_dry = ((hus_cube * -1.0 + 1.0) * AVOGADRO_CONST *
+                 p_layer_widths.data / (MW_AIR * g_4d_array))
 
         # number of CH4 molecules per layer
         ch4_cube = ch4_cube * n_dry
