@@ -13,16 +13,22 @@ from iris.cube import Cube
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import tests
-from esmvalcore.preprocessor._time import (annual_statistics, anomalies,
-                                           climate_statistics,
-                                           daily_statistics,
-                                           decadal_statistics, extract_month,
-                                           extract_season, extract_time,
-                                           clip_start_end_year,
-                                           get_time_weights,
-                                           monthly_statistics, regrid_time,
-                                           seasonal_statistics,
-                                           timeseries_filter)
+from esmvalcore.preprocessor._time import (
+    annual_statistics,
+    anomalies,
+    climate_statistics,
+    clip_start_end_year,
+    daily_statistics,
+    decadal_statistics,
+    extract_month,
+    extract_season,
+    extract_time,
+    get_time_weights,
+    monthly_statistics,
+    regrid_time,
+    seasonal_statistics,
+    timeseries_filter,
+)
 
 
 def _create_sample_cube():
