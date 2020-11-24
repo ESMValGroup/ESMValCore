@@ -7,6 +7,7 @@ from copy import deepcopy
 import numpy as np
 import stratify
 import iris
+from dask import array as da
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
@@ -433,14 +434,13 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
         src_levels.points, cube.shape, cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
-    if np.ma.is_masked(cube.data):
-        cube.data[cube.data.mask] = np.nan
+    cube.data = da.ma.filled(cube.core_data(), np.nan)
 
     # Now perform the actual vertical interpolation.
     new_data = stratify.interpolate(
         levels,
         src_levels_broadcast,
-        cube.data,
+        cube.core_data(),
         axis=z_axis,
         interpolation=interpolation,
         extrapolation=extrapolation)
