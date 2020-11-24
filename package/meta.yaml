@@ -47,7 +47,6 @@ requirements:
     - fire
     - nc-time-axis
     - netCDF4
-    - numba
     - numpy
     - prov
     - psutil
