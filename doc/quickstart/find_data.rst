@@ -79,7 +79,7 @@ structures.
 
 Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``
 ---------------------------------------------------------------------
-Whreas ESMValTool will **always** use the CMOR standard for file naming (please
+Whereas ESMValTool will **always** use the CMOR standard for file naming (please
 refer above), by setting the ``drs`` parameter the user tells the tool what
 type of root paths they need the data from, e.g.:
 
@@ -257,6 +257,16 @@ Since observational data are organized in Tiers depending on their level of
 public availability, the ``default`` directory must be structured accordingly
 with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
 ``drs: default``.
+
+Data loading
+============
+
+Data loading is done using the data load functionality of `iris`; we will not go into too much detail
+about this since we can point the user to the specific functionality
+`here <https://scitools.org.uk/iris/docs/latest/userguide/loading_iris_cubes.html>`_ but we will underline
+that the initial loading is done by adhering to the CF Conventions that `iris` operates by as well (see
+`CF Conventions Document <http://cfconventions.org/cf-conventions/cf-conventions.html>`_ and the search
+page for CF `standard names <http://cfconventions.org/standard-names.html>`_).
 
 Data concatenation from multiple sources
 ========================================

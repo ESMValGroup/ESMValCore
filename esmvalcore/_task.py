@@ -2,12 +2,12 @@
 import abc
 import contextlib
 import datetime
-import errno
 import logging
 import numbers
 import os
 import pprint
 import subprocess
+import sys
 import threading
 import time
 from copy import deepcopy
@@ -287,35 +287,36 @@ class DiagnosticTask(BaseTask):
             raise DiagnosticError(f"{err_msg}: file does not exist.")
 
         cmd = []
-        if not os.access(script_file, os.X_OK):  # if not executable
-            interpreters = {
-                'jl': 'julia',
-                'ncl': 'ncl',
-                'py': 'python',
-                'r': 'Rscript',
-            }
-            args = {
-                'ncl': ['-n', '-p'],
-            }
-            if self.settings['profile_diagnostic']:
-                profile_file = Path(self.settings['run_dir']) / 'profile.bin'
-                args['py'] = [
-                    '-m', 'vmprof', '--lines', '-o',
-                    str(profile_file)
-                ]
 
-            ext = script_file.suffix.lower()[1:]
-            if ext not in interpreters:
-                raise DiagnosticError(
-                    f"{err_msg}: non-executable file with unknown extension "
-                    f"'{script_file.suffix}'.")
-            interpreter = which(interpreters[ext])
+        interpreters = {
+            'jl': 'julia',
+            'ncl': 'ncl',
+            'py': 'python',
+            'r': 'Rscript',
+        }
+        args = {
+            'ncl': ['-n', '-p'],
+        }
+        if self.settings['profile_diagnostic']:
+            profile_file = Path(self.settings['run_dir'], 'profile.json')
+            args['py'] = ['-m', 'vprof', '-o', str(profile_file), '-c', 'c']
+
+        ext = script_file.suffix.lower()[1:]
+        if ext in interpreters:
+            if ext == 'py' and sys.executable:
+                interpreter = sys.executable
+            else:
+                interpreter = which(interpreters[ext])
             if interpreter is None:
                 raise DiagnosticError(
                     f"{err_msg}: program '{interpreters[ext]}' not installed.")
             cmd.append(interpreter)
-            cmd.extend(args.get(ext, []))
+        elif not os.access(script_file, os.X_OK):
+            raise DiagnosticError(
+                f"{err_msg}: non-executable file with unknown extension "
+                f"'{script_file.suffix}'.")
 
+        cmd.extend(args.get(ext, []))
         cmd.append(str(script_file))
 
         return cmd
@@ -382,8 +383,8 @@ class DiagnosticTask(BaseTask):
     def _control_ncl_execution(self, process, lines):
         """Check if an error has occurred in an NCL script.
 
-        Apparently NCL does not automatically exit with a non-zero exit code
-        if an error occurs, so we take care of that here.
+        Apparently NCL does not automatically exit with a non-zero exit
+        code if an error occurs, so we take care of that here.
         """
         ignore_warnings = [
             warning.strip()
@@ -439,22 +440,15 @@ class DiagnosticTask(BaseTask):
 
         complete_env = dict(os.environ)
         complete_env.update(env)
-        try:
-            process = subprocess.Popen(
-                cmd,
-                bufsize=2**20,  # Use a large buffer to prevent NCL crash
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                cwd=cwd,
-                env=complete_env)
-        except OSError as exc:
-            if exc.errno == errno.ENOEXEC:
-                logger.error(
-                    "Diagnostic script has its executable bit set, but is "
-                    "not executable. To fix this run:\nchmod -x %s", cmd[0])
-                logger.error(
-                    "You may also need to fix this in the git repository.")
-            raise
+
+        process = subprocess.Popen(
+            cmd,
+            bufsize=2**20,  # Use a large buffer to prevent NCL crash
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=cwd,
+            env=complete_env,
+        )
 
         return process
 
@@ -482,7 +476,12 @@ class DiagnosticTask(BaseTask):
         if ext == '.ncl':
             env['settings'] = settings_file
         else:
-            cmd.append(settings_file)
+            if self.settings['profile_diagnostic']:
+                script_file = cmd.pop()
+                combo_with_settings = script_file + ' ' + str(settings_file)
+                cmd.append(combo_with_settings)
+            else:
+                cmd.append(settings_file)
 
         process = self._start_diagnostic_script(cmd, env)
 
@@ -523,8 +522,10 @@ class DiagnosticTask(BaseTask):
         provenance_file = Path(
             self.settings['run_dir']) / 'diagnostic_provenance.yml'
         if not provenance_file.is_file():
-            logger.warning("No provenance information was written to %s",
-                           provenance_file)
+            logger.warning(
+                "No provenance information was written to %s. Unable to "
+                "record provenance for files created by diagnostic script %s "
+                "in task %s", provenance_file, self.script, self.name)
             return
 
         logger.debug("Collecting provenance from %s", provenance_file)
@@ -554,16 +555,40 @@ class DiagnosticTask(BaseTask):
             if key not in ignore:
                 attrs[key] = self.settings[key]
 
-        ancestor_products = {p for a in self.ancestors for p in a.products}
+        ancestor_products = {
+            p.filename: p
+            for a in self.ancestors for p in a.products
+        }
 
+        valid = True
         for filename, attributes in table.items():
             # copy to avoid updating other entries if file contains anchors
             attributes = deepcopy(attributes)
             ancestor_files = attributes.pop('ancestors', [])
-            ancestors = {
-                p
-                for p in ancestor_products if p.filename in ancestor_files
-            }
+            if not ancestor_files:
+                logger.warning(
+                    "No ancestor files specified for recording provenance of "
+                    "%s, created by diagnostic script %s in task %s", filename,
+                    self.script, self.name)
+                valid = False
+            ancestors = set()
+            if isinstance(ancestor_files, str):
+                logger.warning(
+                    "Ancestor file(s) %s specified for recording provenance "
+                    "of %s, created by diagnostic script %s in task %s is "
+                    "a string but should be a list of strings", ancestor_files,
+                    filename, self.script, self.name)
+                ancestor_files = [ancestor_files]
+            for ancestor_file in ancestor_files:
+                if ancestor_file in ancestor_products:
+                    ancestors.add(ancestor_products[ancestor_file])
+                else:
+                    valid = False
+                    logger.warning(
+                        "Invalid ancestor file %s specified for recording "
+                        "provenance of %s, created by diagnostic script %s "
+                        "in task %s", ancestor_file, filename, self.script,
+                        self.name)
 
             attributes.update(deepcopy(attrs))
             for key in attributes:
@@ -575,6 +600,12 @@ class DiagnosticTask(BaseTask):
             product.save_provenance()
             _write_citation_files(product.filename, product.provenance)
             self.products.add(product)
+
+        if not valid:
+            logger.warning(
+                "Valid ancestor files for diagnostic script %s in task %s "
+                "are:\n%s", self.script, self.name,
+                '\n'.join(ancestor_products))
         logger.debug("Collecting provenance of task %s took %.1f seconds",
                      self.name,
                      time.time() - start)

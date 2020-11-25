@@ -1,7 +1,7 @@
+autodocsumm
 dask[array]
 fiona
 netCDF4
-numba
 numpy
 pandas
 pillow
@@ -9,4 +9,5 @@ prov[dot]
 pyyaml
 scipy
 shapely[vectorized]
+sphinx>2
 yamale

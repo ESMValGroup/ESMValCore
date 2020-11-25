@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.native6.era5 import AllVars, Evspsbl, get_frequency
+from esmvalcore.cmor._fixes.native6.era5 import (AllVars, Evspsbl, Zg,
+                                                 get_frequency)
 from esmvalcore.cmor.fix import Fix, fix_metadata
 from esmvalcore.cmor.table import CMOR_TABLES
 
@@ -13,6 +14,12 @@ def test_get_evspsbl_fix():
     """Test whether the right fixes are gathered for a single variable."""
     fix = Fix.get_fixes('native6', 'ERA5', 'E1hr', 'evspsbl')
     assert fix == [Evspsbl(None), AllVars(None)]
+
+
+def test_get_zg_fix():
+    """Test whether the right fix gets found again, for zg as well."""
+    fix = Fix.get_fixes('native6', 'ERA5', 'Amon', 'zg')
+    assert fix == [Zg(None), AllVars(None)]
 
 
 def test_get_frequency_hourly():
@@ -150,6 +157,15 @@ def _cmor_aux_height(value):
                                 units=Unit('m'),
                                 var_name="height",
                                 attributes={'positive': 'up'})
+
+
+def _cmor_height(value):
+    return iris.coords.DimCoord(value,
+                                long_name="pressure",
+                                standard_name="air_pressure",
+                                units=Unit("Pa"),
+                                var_name="plev",
+                                attributes={'positive': 'down'})
 
 
 def _cmor_data(mip):
@@ -729,6 +745,45 @@ def tas_cmor_amon():
     return iris.cube.CubeList([cube])
 
 
+def zg_era5_monthly():
+    time = _era5_time('monthly')
+    data = np.ones((3, 1, 3, 3))
+    cube = iris.cube.Cube(
+        data,
+        long_name='geopotential height',
+        var_name='zg',
+        units='m**2 s**-2',
+        dim_coords_and_dims=[(time, 0), ((_cmor_height(100.), 1)),
+                             (_era5_latitude(), 2),
+                             (_era5_longitude(), 3)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def zg_cmor_amon():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('Amon', 'zg')
+    time = _cmor_time('Amon',  bounds=True)
+    data = np.ones((3, 1, 3, 3))
+    data = data / 9.80665
+    cube = iris.cube.Cube(data.astype('float32'),
+                          long_name=vardef.long_name,
+                          var_name=vardef.short_name,
+                          standard_name=vardef.standard_name,
+                          units=Unit(vardef.units),
+                          dim_coords_and_dims=[(time, 0),
+                                               (_cmor_height(100.), 1),
+                                               (_cmor_latitude(), 2),
+                                               (_cmor_longitude(), 3)],
+                          attributes={
+                              'comment':
+                              'Contains modified '
+                              'Copernicus Climate Change Service '
+                              'Information 2020'
+                          })
+    return iris.cube.CubeList([cube])
+
+
 def tasmax_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
@@ -859,6 +914,7 @@ VARIABLES = [
         (tasmax_era5_hourly(), tasmax_cmor_e1hr(), 'tasmax', 'E1hr'),
         (tasmin_era5_hourly(), tasmin_cmor_e1hr(), 'tasmin', 'E1hr'),
         (uas_era5_hourly(), uas_cmor_e1hr(), 'uas', 'E1hr'),
+        (zg_era5_monthly(), zg_cmor_amon(), 'zg', 'Amon'),
     ]
 ]
 

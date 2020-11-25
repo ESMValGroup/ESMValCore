@@ -7,14 +7,14 @@ import iris
 logger = logging.getLogger(__name__)
 
 
-def _get_land_fraction(cube, fx_files):
+def _get_land_fraction(cube, fx_variables):
     """Extract land fraction as :mod:`dask.array`."""
     land_fraction = None
     errors = []
-    if not fx_files:
+    if not fx_variables:
         errors.append("No fx files given.")
         return (land_fraction, errors)
-    for (fx_var, fx_path) in fx_files.items():
+    for (fx_var, fx_path) in fx_variables.items():
         if not fx_path:
             errors.append(f"File for '{fx_var}' not found.")
             continue
@@ -43,7 +43,7 @@ def _shape_is_broadcastable(shape_1, shape_2):
                for (m, n) in zip(shape_1[::-1], shape_2[::-1]))
 
 
-def weighting_landsea_fraction(cube, fx_files, area_type):
+def weighting_landsea_fraction(cube, fx_variables, area_type):
     """Weight fields using land or sea fraction.
 
     This preprocessor function weights a field with its corresponding land or
@@ -58,7 +58,7 @@ def weighting_landsea_fraction(cube, fx_files, area_type):
     ----------
     cube : iris.cube.Cube
         Data cube to be weighted.
-    fx_files : dict
+    fx_variables : dict
         Dictionary holding ``var_name`` (keys) and full paths (values) to the
         fx files as ``str`` or empty ``list`` (if not available).
     area_type : str
@@ -81,7 +81,7 @@ def weighting_landsea_fraction(cube, fx_files, area_type):
     if area_type not in ('land', 'sea'):
         raise TypeError(
             f"Expected 'land' or 'sea' for area_type, got '{area_type}'")
-    (land_fraction, errors) = _get_land_fraction(cube, fx_files)
+    (land_fraction, errors) = _get_land_fraction(cube, fx_variables)
     if land_fraction is None:
         raise ValueError(
             f"Weighting of '{cube.var_name}' with '{area_type}' fraction "

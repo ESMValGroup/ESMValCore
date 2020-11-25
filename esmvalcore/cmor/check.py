@@ -332,13 +332,17 @@ class CMORCheck():
 
     def _check_dim_names(self):
         """Check dimension names."""
-        for (_, coordinate) in self._cmor_var.coordinates.items():
+        cmor_var_coordinates = self._cmor_var.coordinates.copy()
+        for (key, coordinate) in cmor_var_coordinates.items():
             if coordinate.generic_level:
-                continue
+                self._check_generic_level_dim_names(key, coordinate)
             else:
                 try:
                     cube_coord = self._cube.coord(var_name=coordinate.out_name)
-                    if cube_coord.standard_name != coordinate.standard_name:
+                    if (cube_coord.standard_name is None and
+                            coordinate.standard_name == ''):
+                        pass
+                    elif cube_coord.standard_name != coordinate.standard_name:
                         self.report_critical(
                             self._attr_msg,
                             coordinate.out_name,
@@ -380,11 +384,59 @@ class CMORCheck():
                             self.report_error(
                                 self._does_msg, coordinate.name, 'exist')
 
+    def _check_generic_level_dim_names(self, key, coordinate):
+        if coordinate.generic_lev_coords:
+            for coord in coordinate.generic_lev_coords.values():
+                try:
+                    cube_coord = self._cube.coord(
+                        var_name=coord.out_name
+                    )
+                    coordinate.out_name = coord.out_name
+                    if cube_coord.standard_name == coord.standard_name:
+                        coordinate.standard_name = coord.standard_name
+                        coordinate.name = coord.name
+                except iris.exceptions.CoordinateNotFoundError:
+                    try:
+                        cube_coord = self._cube.coord(
+                            var_name=coord.standard_name
+                        )
+                        coordinate.standard_name = coord.standard_name
+                        coordinate.name = coord.name
+                    except iris.exceptions.CoordinateNotFoundError:
+                        pass
+            if coordinate.standard_name:
+                if not coordinate.out_name:
+                    self.report_error(
+                        f'Coordinate {coordinate.name} '
+                        'has wrong var_name.',
+                    )
+                level = coordinate.generic_lev_coords[coordinate.name]
+                level.generic_level = True
+                level.generic_lev_coords = self._cmor_var.coordinates[
+                    key].generic_lev_coords
+                self._cmor_var.coordinates[key] = level
+                self.report_debug_message(
+                    f'Generic level coordinate {key} '
+                    'will be checked against '
+                    f'{coordinate.name} coordinate information'
+                )
+            else:
+                if coordinate.out_name:
+                    self.report_critical(
+                        f'Coordinate {coordinate.name} '
+                        'has wrong standard_name '
+                        'or is not set.',
+                    )
+                else:
+                    self.report_critical(
+                        self._does_msg, coordinate.name, 'exist'
+                    )
+
     def _check_coords(self):
         """Check coordinates."""
         for coordinate in self._cmor_var.coordinates.values():
             # Cannot check generic_level coords as no CMOR information
-            if coordinate.generic_level:
+            if coordinate.generic_level and not coordinate.out_name:
                 continue
             var_name = coordinate.out_name
 
@@ -465,6 +517,8 @@ class CMORCheck():
         """Check monotonicity and direction of coordinate."""
         if coord.ndim > 1:
             return
+        if coord.dtype.kind == 'U':
+            return
         if not coord.is_monotonic():
             self.report_critical(self._is_msg, var_name, 'monotonic')
         if len(coord.points) == 1:
@@ -504,7 +558,8 @@ class CMORCheck():
             if np.any(coord.points < valid_min):
                 if coord_info.standard_name == 'longitude' and \
                         self.automatic_fixes:
-                    l_fix_coord_value = True
+                    l_fix_coord_value = self._check_longitude_min(
+                        coord, var_name)
                 else:
                     self.report_critical(
                         self._vals_msg, var_name,
@@ -515,7 +570,8 @@ class CMORCheck():
             if np.any(coord.points > valid_max):
                 if coord_info.standard_name == 'longitude' and \
                         self.automatic_fixes:
-                    l_fix_coord_value = True
+                    l_fix_coord_value = self._check_longitude_max(
+                        coord, var_name)
                 else:
                     self.report_critical(
                         self._vals_msg, var_name,
@@ -539,6 +595,22 @@ class CMORCheck():
                 self._cube.remove_coord(coord)
                 self._cube.add_aux_coord(new_coord, dims)
 
+    def _check_longitude_max(self, coord, var_name):
+        if np.any(coord.points > 720):
+            self.report_critical(
+                f'{var_name} longitude coordinate has values > 720 degrees'
+            )
+            return False
+        return True
+
+    def _check_longitude_min(self, coord, var_name):
+        if np.any(coord.points < -360):
+            self.report_critical(
+                f'{var_name} longitude coordinate has values < -360 degrees'
+            )
+            return False
+        return True
+
     @staticmethod
     def _set_range_in_0_360(array):
         while array.min() < 0:
@@ -549,7 +621,10 @@ class CMORCheck():
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
         if coord_info.requested:
-            cmor_points = [float(val) for val in coord_info.requested]
+            try:
+                cmor_points = [float(val) for val in coord_info.requested]
+            except ValueError:
+                cmor_points = coord_info.requested
             coord_points = list(coord.points)
             for point in cmor_points:
                 if point not in coord_points:

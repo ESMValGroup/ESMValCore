@@ -4,6 +4,7 @@ _sidebar.rst.inc
 # Distribution / packaging
 .Python
 build/
+_build/
 c
 develop-eggs/
 dist/

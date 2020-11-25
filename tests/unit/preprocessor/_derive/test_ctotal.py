@@ -46,4 +46,4 @@ def test_ctotal_calculation_cmip5(cubes, project):
         msg = "soil_carbon_content or CMIP6: soil_mass_content_of_carbon"
         with pytest.raises(ValueError) as exp:
             _run_test(cubes)
-        assert msg in str(exp)
+        assert msg in str(exp.value)
