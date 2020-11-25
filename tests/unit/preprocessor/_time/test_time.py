@@ -13,15 +13,22 @@ from iris.cube import Cube
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import tests
-from esmvalcore.preprocessor._time import (annual_statistics, anomalies,
-                                           climate_statistics,
-                                           daily_statistics,
-                                           decadal_statistics, extract_month,
-                                           extract_season, extract_time,
-                                           get_time_weights,
-                                           monthly_statistics, regrid_time,
-                                           seasonal_statistics,
-                                           timeseries_filter)
+from esmvalcore.preprocessor._time import (
+    annual_statistics,
+    anomalies,
+    climate_statistics,
+    clip_start_end_year,
+    daily_statistics,
+    decadal_statistics,
+    extract_month,
+    extract_season,
+    extract_time,
+    get_time_weights,
+    monthly_statistics,
+    regrid_time,
+    seasonal_statistics,
+    timeseries_filter,
+)
 
 
 def _create_sample_cube():
@@ -146,6 +153,51 @@ class TestTimeSlice(tests.Test):
         """Test extract_time with no time step."""
         cube = _create_sample_cube()[0]
         sliced = extract_time(cube, 1950, 1, 1, 1950, 12, 31)
+        assert cube == sliced
+
+
+class TestClipStartEndYear(tests.Test):
+    """Tests for clip_start_end_year."""
+
+    def setUp(self):
+        """Prepare tests"""
+        self.cube = _create_sample_cube()
+
+    def test_clip_start_end_year_1_year(self):
+        """Test clip_start_end_year with 1 year."""
+        sliced = clip_start_end_year(self.cube, 1950, 1950)
+        iris.coord_categorisation.add_month_number(sliced, 'time')
+        iris.coord_categorisation.add_year(sliced, 'time')
+        assert_array_equal(np.arange(1, 13, 1),
+                           sliced.coord('month_number').points)
+        assert_array_equal(np.full(12, 1950), sliced.coord('year').points)
+
+    def test_clip_start_end_year_3_years(self):
+        """Test clip_start_end_year with 3 years."""
+        sliced = clip_start_end_year(self.cube, 1949, 1951)
+        assert sliced == self.cube
+
+    def test_clip_start_end_year_no_slice(self):
+        """Test fail of clip_start_end_year."""
+        with self.assertRaises(ValueError) as ctx:
+            clip_start_end_year(self.cube, 2200, 2200)
+        msg = (
+            "Time slice 2200-01-01 to 2201-01-01 is outside"
+            " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
+        assert ctx.exception.args == (msg, )
+
+    def test_clip_start_end_year_one_time(self):
+        """Test clip_start_end_year with one time step."""
+        cube = _create_sample_cube()
+        cube.coord('time').guess_bounds()
+        cube = cube.collapsed('time', iris.analysis.MEAN)
+        sliced = clip_start_end_year(cube, 1950, 1952)
+        assert_array_equal(np.array([360.]), sliced.coord('time').points)
+
+    def test_clip_start_end_year_no_time(self):
+        """Test clip_start_end_year with no time step."""
+        cube = _create_sample_cube()[0]
+        sliced = clip_start_end_year(cube, 1950, 1950)
         assert cube == sliced
 
 
@@ -584,6 +636,7 @@ class TestDailyStatistics(tests.Test):
 
 class TestRegridTimeYearly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1033,7 +1086,7 @@ def test_standardized_anomalies(period, standardize=True):
             # NB: default behaviour for np.std is ddof=0, whereas
             #     default behaviour for iris.analysis.STD_DEV is ddof=1
             expected_stdanomalies = expected_anomalies / np.std(
-                 expected_anomalies, axis=0, keepdims=True, ddof=1)
+                expected_anomalies, axis=0, keepdims=True, ddof=1)
             expected = np.ma.masked_invalid(expected_stdanomalies)
             assert_array_equal(
                 result.data,
