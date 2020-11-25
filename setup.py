@@ -36,7 +36,6 @@ REQUIREMENTS = {
         'fire',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
-        'numba',
         'numpy',
         'prov[dot]',
         'psutil',
