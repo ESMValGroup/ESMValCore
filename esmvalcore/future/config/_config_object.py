@@ -30,6 +30,11 @@ class ESMValCoreConfig(ValidatedConfig):
 
         _load_user_config(path)
 
+    def reload(self):
+        """Reload the config file."""
+        filename = self.get('config_file', DEFAULT_CONFIG)
+        self.load_from_file(filename)
+
     def start_session(self, name: str):
         """Start a new session from this configuration object.
 
