@@ -150,13 +150,10 @@ def _load_user_config(filename: str, raise_exception: bool = True):
         mapping = {}
 
     global CFG
-    global CFG_ORIG
 
     CFG.clear()
     CFG.update(CFG_DEFAULT)
     CFG.update(mapping)
-
-    CFG_ORIG = ESMValCoreConfig(CFG.copy())
 
 
 def get_user_config_location():
@@ -182,7 +179,6 @@ USER_CONFIG = get_user_config_location()
 # initialize placeholders
 CFG_DEFAULT = ESMValCoreConfig()
 CFG = ESMValCoreConfig()
-CFG_ORIG = ESMValCoreConfig()
 
 # update config objects
 _load_default_config(DEFAULT_CONFIG)

@@ -1,7 +1,6 @@
 """Config validation objects."""
 
 import pprint
-import re
 from collections.abc import MutableMapping
 
 from .._exceptions import SuppressedError
@@ -59,18 +58,6 @@ class ValidatedConfig(MutableMapping, dict):
 
     def __delitem__(self, key):
         dict.__delitem__(self, key)
-
-    def find_all(self, pattern):
-        """Return the subset of this Config dictionary whose keys match.
-
-        Uses `re.search` with the given `pattern`.
-
-        Changes to the returned dictionary are *not* propagated to the
-        parent Config dictionary.
-        """
-        pattern_re = re.compile(pattern)
-        return self.__class__((key, value) for key, value in self.items()
-                              if pattern_re.search(key))
 
     def copy(self):
         """Copy the keys this object to a dict."""
