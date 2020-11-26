@@ -29,13 +29,13 @@ build:
 requirements:
   build:
     - git
-    - python>=3.6,<3.9
+    - python>=3.6
     # Normally installed via pip:
     - pytest-runner
     - setuptools_scm
   run:
     # esmvaltool
-    - python>=3.6,<3.9
+    - python>=3.6
     - graphviz
     - iris>=2.2.1
     - python-stratify
