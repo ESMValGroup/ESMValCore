@@ -426,7 +426,7 @@ class CMORCheck():
             else:
                 if out_name:
                     self.report_critical(
-                        f'Coordinate {name} '
+                        f'Generic level coordinate {key} '
                         'has wrong standard_name '
                         'or is not set.',
                     )
