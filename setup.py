@@ -32,7 +32,6 @@ REQUIREMENTS = {
     'install': [
         'cf-units',
         'dask[array]',
-        'fiona',
         'fire',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
