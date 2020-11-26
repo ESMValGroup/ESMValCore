@@ -410,7 +410,7 @@ class CMORCheck():
             if standard_name:
                 if not out_name:
                     self.report_error(
-                        f'Coordinate {name} '
+                        f'Generic level coordinate {key} '
                         'has wrong var_name.',
                     )
                 level = coordinate.generic_lev_coords[name]
