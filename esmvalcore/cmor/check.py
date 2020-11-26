@@ -385,6 +385,9 @@ class CMORCheck():
                                 self._does_msg, coordinate.name, 'exist')
 
     def _check_generic_level_dim_names(self, key, coordinate):
+        standard_name = None
+        out_name = None
+        name = None
         if coordinate.generic_lev_coords:
             for coord in coordinate.generic_lev_coords.values():
                 try:
