@@ -5,6 +5,7 @@ from pathlib import Path
 import iris
 import numpy as np
 import pytest
+from itertools import groupby
 
 from esmvalcore.preprocessor import multi_model_statistics
 
@@ -53,7 +54,7 @@ def multimodel_test(cubes, span, statistic):
     return output
 
 
-def multimodel_regression_test(name, cubes, span):
+def multimodel_regression_test(cubes, span, name):
     statistic = 'mean'
     output = multimodel_test(cubes, span=span, statistic=statistic)
 
@@ -79,13 +80,7 @@ def multimodel_regression_test(name, cubes, span):
 @pytest.mark.parametrize(
     'span',
     (
-        pytest.param(
-            'overlap',
-            marks=pytest.mark.xfail(
-                reason=
-                '`BUG: multimodel_statistics returns `list` instead of `dict`')
-        ),
-        # 'overlap',
+        'overlap',
         'full',
     ))
 def test_multimodel_regression_amon(timeseries_cubes_amon, span):
@@ -94,8 +89,8 @@ def test_multimodel_regression_amon(timeseries_cubes_amon, span):
     name = 'timeseries'
     multimodel_regression_test(
         name=name,
-        cubes=cubes,
         span=span,
+        cubes=cubes,
     )
 
 
@@ -103,24 +98,27 @@ def test_multimodel_regression_amon(timeseries_cubes_amon, span):
 @pytest.mark.parametrize(
     'span',
     (
-        pytest.param(
-            'overlap',
-            marks=pytest.mark.xfail(
-                reason=
-                '`BUG: multimodel_statistics returns `list` instead of `dict`')
-        ),
-        # 'overlap',
+        'overlap',
         'full',
     ))
 def test_multimodel_regression_day(timeseries_cubes_day, span):
     """Test statistic."""
     cubes = timeseries_cubes_day
-    name = 'timeseries'
-    multimodel_regression_test(
-        name=name,
-        cubes=cubes,
-        span=span,
-    )
+
+    def calendar(cube):
+        return cube.coord('time').units.calendar
+
+    # groupby requires sorted list
+    grouped = groupby(sorted(cubes, key=calendar), key=calendar)
+
+    for key, cube_group in grouped:
+        cube_group = list(cube_group)
+        name = f'timeseries_{key}'
+        multimodel_regression_test(
+            name=name,
+            span=span,
+            cubes=cube_group,
+        )
 
 
 @pytest.mark.functional
