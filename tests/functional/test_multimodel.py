@@ -78,11 +78,14 @@ def timeseries_cubes_month():
 def timeseries_cubes_day():
     """Representative timeseries data sorted by calendar."""
 
+    get_cubes = True
     if CACHE_FILES:
         filename = Path(__file__).with_name('daily.nc')
         if filename.exists():
             cubes = iris.load(str(filename))
-    else:
+            get_cubes = False
+
+    if get_cubes:
         time_slice = {
             'start_year': 2001,
             'end_year': 2002,
