@@ -33,7 +33,7 @@ def preprocess_data(cubes, time_slice: dict = None):
 
 
 @pytest.fixture(scope="module")
-def timeseries_cubes_amon():
+def timeseries_cubes_month():
     """Representative timeseries data."""
 
     if CACHE_FILES:
@@ -117,9 +117,9 @@ def multimodel_regression_test(cubes, span, name):
     'overlap',
     'full',
 ))
-def test_multimodel_regression_amon(timeseries_cubes_amon, span):
+def test_multimodel_regression_month(timeseries_cubes_month, span):
     """Test statistic."""
-    cubes = timeseries_cubes_amon
+    cubes = timeseries_cubes_month
     name = 'timeseries_monthly'
     multimodel_regression_test(
         name=name,
@@ -162,9 +162,9 @@ def test_multimodel_regression_day(timeseries_cubes_day, span):
 @pytest.mark.functional
 @pytest.mark.skip('Fix problems with `multimodel_statistics` first')
 @pytest.mark.parametrize('span', ('overlap', 'full'))
-def test_multimodel_without_vertical_dimension(timeseries_cubes_amon, span):
+def test_multimodel_without_vertical_dimension(timeseries_cubes_month, span):
     """Test statistic without vertical dimension."""
-    cubes = timeseries_cubes_amon
+    cubes = timeseries_cubes_month
     cubes = [cube[0:50, 0] for cube in cubes]
     multimodel_test(cubes, span=span, statistic='mean')
 
@@ -172,9 +172,9 @@ def test_multimodel_without_vertical_dimension(timeseries_cubes_amon, span):
 @pytest.mark.functional
 @pytest.mark.skip('Fix problems with `multimodel_statistics` first')
 @pytest.mark.parametrize('span', ('overlap', 'full'))
-def test_multimodel_without_horizontal_dimension(timeseries_cubes_amon, span):
+def test_multimodel_without_horizontal_dimension(timeseries_cubes_month, span):
     """Test statistic without horizontal dimension."""
-    cubes = timeseries_cubes_amon
+    cubes = timeseries_cubes_month
     cubes = [cube[0:50, :, 0, 0] for cube in cubes]
     # Coordinate not found error
     # iris.exceptions.CoordinateNotFoundError:
@@ -185,9 +185,9 @@ def test_multimodel_without_horizontal_dimension(timeseries_cubes_amon, span):
 @pytest.mark.functional
 @pytest.mark.skip('Fix problems with `multimodel_statistics` first')
 @pytest.mark.parametrize('span', ('overlap', 'full'))
-def test_multimodel_only_time_dimension(timeseries_cubes_amon, span):
+def test_multimodel_only_time_dimension(timeseries_cubes_month, span):
     """Test statistic without only the time dimension."""
-    cubes = timeseries_cubes_amon
+    cubes = timeseries_cubes_month
     cubes = [cube[0:50, 0, 0, 0] for cube in cubes]
     multimodel_test(cubes, span=span, statistic='mean')
 
@@ -195,9 +195,9 @@ def test_multimodel_only_time_dimension(timeseries_cubes_amon, span):
 @pytest.mark.functional
 @pytest.mark.skip('Fix problems with `multimodel_statistics` first')
 @pytest.mark.parametrize('span', ('overlap', 'full'))
-def test_multimodel_no_time_dimension(timeseries_cubes_amon, span):
+def test_multimodel_no_time_dimension(timeseries_cubes_month, span):
     """Test statistic without time dimension."""
-    cubes = timeseries_cubes_amon
+    cubes = timeseries_cubes_month
     cubes = [cube[0] for cube in cubes]
     # ValueError: Cannot guess bounds for a coordinate of length 1.
     multimodel_test(cubes, span=span, statistic='mean')
