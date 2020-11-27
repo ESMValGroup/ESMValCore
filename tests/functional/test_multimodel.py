@@ -16,14 +16,14 @@ CACHE_FILES = False
 CALENDAR_PARAMS = (
     pytest.param(
         '360_day',
-        marks=pytest.mark.xfail(
+        marks=pytest.mark.skip(
             reason='Cannot calculate statistics with single cube in list')),
     '365_day',
     'gregorian',
     'proleptic_gregorian',
     pytest.param(
         'julian',
-        marks=pytest.mark.xfail(
+        marks=pytest.mark.skip(
             reason='Cannot calculate statistics with single cube in list')),
 )
 
