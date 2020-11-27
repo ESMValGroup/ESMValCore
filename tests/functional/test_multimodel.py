@@ -11,7 +11,7 @@ from esmvalcore.preprocessor import extract_time, multi_model_statistics
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
-CACHE_FILES = True
+CACHE_FILES = False
 
 CALENDAR_PARAMS = (
     pytest.param(
@@ -76,7 +76,7 @@ def timeseries_cubes_month():
 
 @pytest.fixture(scope="module")
 def timeseries_cubes_day():
-    """Representative timeseries data sorted by calendar."""
+    """Representative timeseries data grouped by calendar."""
 
     get_cubes = True
     if CACHE_FILES:
@@ -134,6 +134,11 @@ def multimodel_regression_test(cubes, span, name):
     if filename.exists():
         expected_cube = iris.load(str(filename))[0]
         assert np.allclose(output_cube.data, expected_cube.data)
+        assert expected_cube.coords() == output_cube.coords()
+        # remove Conventions which are added by Iris on save
+        output_cube.attributes.pop('Conventions')
+        assert expected_cube.metadata == output_cube.metadata
+
     else:
         iris.save(output_cube, filename)
         raise RuntimeError(f'Wrote file {filename.absolute()}')
