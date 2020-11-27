@@ -88,6 +88,8 @@ def multimodel_test(cubes, span, statistic):
     statistics = [statistic]
 
     output = multi_model_statistics(cubes, span=span, statistics=statistics)
+    assert isinstance(output, dict)
+    assert statistic in output
 
     return output
 
@@ -95,10 +97,6 @@ def multimodel_test(cubes, span, statistic):
 def multimodel_regression_test(cubes, span, name):
     statistic = 'mean'
     output = multimodel_test(cubes, span=span, statistic=statistic)
-
-    # this fails for span='overlap', for which `output == cubes` (???)
-    assert isinstance(output, dict)
-
     output_cube = output[statistic]
 
     # NOTE for the regression test
@@ -109,9 +107,9 @@ def multimodel_regression_test(cubes, span, name):
     if filename.exists():
         expected_cube = iris.load(str(filename))[0]
         assert np.allclose(output_cube.data, expected_cube.data)
-    # else:
-    #     iris.save(output_cube, filename)
-    #     raise RuntimeError(f'Wrote file {filename.absolute()}')
+    else:
+        iris.save(output_cube, filename)
+        raise RuntimeError(f'Wrote file {filename.absolute()}')
 
 
 @pytest.mark.functional
@@ -122,7 +120,7 @@ def multimodel_regression_test(cubes, span, name):
 def test_multimodel_regression_amon(timeseries_cubes_amon, span):
     """Test statistic."""
     cubes = timeseries_cubes_amon
-    name = 'timeseries'
+    name = 'timeseries_monthly'
     multimodel_regression_test(
         name=name,
         span=span,
@@ -147,7 +145,13 @@ def test_multimodel_regression_day(timeseries_cubes_day, span):
 
     for key, cube_group in grouped:
         cube_group = list(cube_group)
-        name = f'timeseries_{key}'
+
+        # skip groups with 1 member
+        if len(cube_group) <= 1:
+            print('skipping', key)
+            continue
+
+        name = f'timeseries_daily_{key}'
         multimodel_regression_test(
             name=name,
             span=span,
