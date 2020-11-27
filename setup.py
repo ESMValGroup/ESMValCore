@@ -32,6 +32,7 @@ REQUIREMENTS = {
     'install': [
         'cf-units',
         'dask[array]',
+        'fiona',  # 1.8.18/py39, they seem weary to build manylinux wheels so we may have to install from conda-forge in the future
         'fire',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
