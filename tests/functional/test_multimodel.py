@@ -13,6 +13,22 @@ esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 CACHE_FILES = True
 
+CALENDAR_PARAMS = (
+    pytest.param(
+        '360_day',
+        marks=pytest.mark.xfail(
+            reason='Cannot calculate statistics with single cube in list')),
+    '365_day',
+    'gregorian',
+    'proleptic_gregorian',
+    pytest.param(
+        'julian',
+        marks=pytest.mark.xfail(
+            reason='Cannot calculate statistics with single cube in list')),
+)
+
+SPAN_PARAMS = ('overlap', 'full')
+
 
 def preprocess_data(cubes, time_slice: dict = None):
     """Regrid the data to the first cube and optional time-slicing."""
@@ -60,28 +76,36 @@ def timeseries_cubes_month():
 
 @pytest.fixture(scope="module")
 def timeseries_cubes_day():
-    """Representative timeseries data."""
+    """Representative timeseries data sorted by calendar."""
 
     if CACHE_FILES:
         filename = Path(__file__).with_name('daily.nc')
         if filename.exists():
-            return iris.load(str(filename))
+            cubes = iris.load(str(filename))
+    else:
+        time_slice = {
+            'start_year': 2001,
+            'end_year': 2002,
+            'start_month': 12,
+            'end_month': 1,
+            'start_day': 1,
+            'end_day': 30,
+        }
+        cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='day')
+        cubes = preprocess_data(cubes, time_slice=time_slice)
 
-    time_slice = {
-        'start_year': 2001,
-        'end_year': 2002,
-        'start_month': 12,
-        'end_month': 1,
-        'start_day': 1,
-        'end_day': 30,
-    }
-    cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='day')
-    cubes = preprocess_data(cubes, time_slice=time_slice)
+        if CACHE_FILES:
+            iris.save(cubes, filename)
 
-    if CACHE_FILES:
-        iris.save(cubes, filename)
+    def calendar(cube):
+        return cube.coord('time').units.calendar
 
-    return cubes
+    # groupby requires sorted list
+    grouped = groupby(sorted(cubes, key=calendar), key=calendar)
+
+    cube_dict = {key: list(group) for key, group in grouped}
+
+    return cube_dict
 
 
 def multimodel_test(cubes, span, statistic):
@@ -129,48 +153,34 @@ def test_multimodel_regression_month(timeseries_cubes_month, span):
 
 
 @pytest.mark.functional
+@pytest.mark.parametrize('calendar', CALENDAR_PARAMS)
 @pytest.mark.parametrize('span', (
     'overlap',
     'full',
 ))
-def test_multimodel_regression_day(timeseries_cubes_day, span):
+def test_multimodel_regression_day(timeseries_cubes_day, span, calendar):
     """Test statistic."""
-    cubes = timeseries_cubes_day
-
-    def calendar(cube):
-        return cube.coord('time').units.calendar
-
-    # groupby requires sorted list
-    grouped = groupby(sorted(cubes, key=calendar), key=calendar)
-
-    for key, cube_group in grouped:
-        cube_group = list(cube_group)
-
-        # skip groups with 1 member
-        if len(cube_group) <= 1:
-            print('skipping', key)
-            continue
-
-        name = f'timeseries_daily_{key}'
-        multimodel_regression_test(
-            name=name,
-            span=span,
-            cubes=cube_group,
-        )
+    cubes = timeseries_cubes_day[calendar]
+    name = f'timeseries_daily_{calendar}'
+    multimodel_regression_test(
+        name=name,
+        span=span,
+        cubes=cubes,
+    )
 
 
 @pytest.mark.functional
-@pytest.mark.parametrize('span', ('overlap', 'full'))
+@pytest.mark.parametrize('span', SPAN_PARAMS)
 def test_multimodel_month_no_vertical_dimension(timeseries_cubes_month, span):
     """Test statistic without vertical dimension."""
     cubes = timeseries_cubes_month
-    cubes = [cube[0:50, 0] for cube in cubes]
+    cubes = [cube[:, 0] for cube in cubes]
     multimodel_test(cubes, span=span, statistic='mean')
 
 
 @pytest.mark.functional
 @pytest.mark.xfail('iris.exceptions.CoordinateNotFoundError')
-@pytest.mark.parametrize('span', ('overlap', 'full'))
+@pytest.mark.parametrize('span', SPAN_PARAMS)
 def test_multimodel_month_no_horizontal_dimension(timeseries_cubes_month,
                                                   span):
     """Test statistic without horizontal dimension."""
@@ -183,7 +193,7 @@ def test_multimodel_month_no_horizontal_dimension(timeseries_cubes_month,
 
 
 @pytest.mark.functional
-@pytest.mark.parametrize('span', ('overlap', 'full'))
+@pytest.mark.parametrize('span', SPAN_PARAMS)
 def test_multimodel_month_only_time_dimension(timeseries_cubes_month, span):
     """Test statistic without only the time dimension."""
     cubes = timeseries_cubes_month
@@ -192,12 +202,61 @@ def test_multimodel_month_only_time_dimension(timeseries_cubes_month, span):
 
 
 @pytest.mark.functional
-@pytest.mark.xfail(
-    'ValueError: Cannot guess bounds for a coordinate of length 1.')
-@pytest.mark.parametrize('span', ('overlap', 'full'))
+@pytest.mark.xfail('ValueError')
+@pytest.mark.parametrize('span', SPAN_PARAMS)
 def test_multimodel_month_no_time_dimension(timeseries_cubes_month, span):
     """Test statistic without time dimension."""
     cubes = timeseries_cubes_month
+    cubes = [cube[0] for cube in cubes]
+    # ValueError: Cannot guess bounds for a coordinate of length 1.
+    multimodel_test(cubes, span=span, statistic='mean')
+
+
+@pytest.mark.functional
+@pytest.mark.parametrize('calendar', CALENDAR_PARAMS)
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_day_no_vertical_dimension(timeseries_cubes_day, span,
+                                              calendar):
+    """Test statistic without vertical dimension."""
+    cubes = timeseries_cubes_day[calendar]
+    cubes = [cube[:, 0] for cube in cubes]
+    multimodel_test(cubes, span=span, statistic='mean')
+
+
+@pytest.mark.functional
+@pytest.mark.xfail('iris.exceptions.CoordinateNotFoundError')
+@pytest.mark.parametrize('calendar', CALENDAR_PARAMS)
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_day_no_horizontal_dimension(timeseries_cubes_day, span,
+                                                calendar):
+    """Test statistic without horizontal dimension."""
+    cubes = timeseries_cubes_day[calendar]
+    cubes = [cube[:, :, 0, 0] for cube in cubes]
+    # Coordinate not found error
+    # iris.exceptions.CoordinateNotFoundError:
+    # 'Expected to find exactly 1 depth coordinate, but found none.'
+    multimodel_test(cubes, span=span, statistic='mean')
+
+
+@pytest.mark.functional
+@pytest.mark.parametrize('calendar', CALENDAR_PARAMS)
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_day_only_time_dimension(timeseries_cubes_day, span,
+                                            calendar):
+    """Test statistic without only the time dimension."""
+    cubes = timeseries_cubes_day[calendar]
+    cubes = [cube[:, 0, 0, 0] for cube in cubes]
+    multimodel_test(cubes, span=span, statistic='mean')
+
+
+@pytest.mark.functional
+@pytest.mark.xfail('ValueError')
+@pytest.mark.parametrize('calendar', CALENDAR_PARAMS)
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_day_no_time_dimension(timeseries_cubes_day, span,
+                                          calendar):
+    """Test statistic without time dimension."""
+    cubes = timeseries_cubes_day[calendar]
     cubes = [cube[0] for cube in cubes]
     # ValueError: Cannot guess bounds for a coordinate of length 1.
     multimodel_test(cubes, span=span, statistic='mean')
