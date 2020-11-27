@@ -61,9 +61,9 @@ def timeseries_cubes_month():
         'start_year': 1985,
         'end_year': 1987,
         'start_month': 12,
-        'end_month': 1,
+        'end_month': 2,
         'start_day': 1,
-        'end_day': 30,
+        'end_day': 1,
     }
     cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='Amon')
     cubes = preprocess_data(cubes, time_slice=time_slice)
@@ -87,9 +87,9 @@ def timeseries_cubes_day():
             'start_year': 2001,
             'end_year': 2002,
             'start_month': 12,
-            'end_month': 1,
+            'end_month': 2,
             'start_day': 1,
-            'end_day': 30,
+            'end_day': 1,
         }
         cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='day')
         cubes = preprocess_data(cubes, time_slice=time_slice)
