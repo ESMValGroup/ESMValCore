@@ -1,20 +1,25 @@
 """Functional test for :func:`esmvalcore.preprocessor._multimodel`."""
 
+from itertools import groupby
 from pathlib import Path
 
 import iris
 import numpy as np
 import pytest
-from itertools import groupby
 
-from esmvalcore.preprocessor import multi_model_statistics
+from esmvalcore.preprocessor import extract_time, multi_model_statistics
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
+CACHE_FILES = True
 
-def preprocess_data(cubes):
+
+def preprocess_data(cubes, time_slice: dict = None):
+    """Regrid the data to the first cube and optional time-slicing."""
+    if time_slice:
+        cubes = [extract_time(cube, **time_slice) for cube in cubes]
+
     first_cube = cubes[0]
-    t1, t2 = 0, 50  # time-slicing first N items
 
     # regrid to first cube
     regrid_kwargs = {
@@ -22,27 +27,60 @@ def preprocess_data(cubes):
         'scheme': iris.analysis.Linear(),
     }
 
-    cubes = [cube[t1:t2] for cube in cubes]
     cubes = [cube.regrid(**regrid_kwargs) for cube in cubes]
 
     return cubes
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def timeseries_cubes_amon():
     """Representative timeseries data."""
-    cubes = esmvaltool_sample_data.load_timeseries_cubes(
-        mip_table='Amon')
-    cubes = preprocess_data(cubes)
+
+    if CACHE_FILES:
+        filename = Path(__file__).with_name('monthly.nc')
+        if filename.exists():
+            return iris.load(str(filename))
+
+    time_slice = {
+        'start_year': 1985,
+        'end_year': 1986,
+        'start_month': 12,
+        'end_month': 1,
+        'start_day': 1,
+        'end_day': 30,
+    }
+    cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='Amon')
+    cubes = preprocess_data(cubes, time_slice=time_slice)
+
+    if CACHE_FILES:
+        iris.save(cubes, filename)
+
     return cubes
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def timeseries_cubes_day():
     """Representative timeseries data."""
-    cubes = esmvaltool_sample_data.load_timeseries_cubes(
-        mip_table='day')
-    cubes = preprocess_data(cubes)
+
+    if CACHE_FILES:
+        filename = Path(__file__).with_name('daily.nc')
+        if filename.exists():
+            return iris.load(str(filename))
+
+    time_slice = {
+        'start_year': 2001,
+        'end_year': 2002,
+        'start_month': 12,
+        'end_month': 1,
+        'start_day': 1,
+        'end_day': 30,
+    }
+    cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='day')
+    cubes = preprocess_data(cubes, time_slice=time_slice)
+
+    if CACHE_FILES:
+        iris.save(cubes, filename)
+
     return cubes
 
 
@@ -77,12 +115,10 @@ def multimodel_regression_test(cubes, span, name):
 
 
 @pytest.mark.functional
-@pytest.mark.parametrize(
-    'span',
-    (
-        'overlap',
-        'full',
-    ))
+@pytest.mark.parametrize('span', (
+    'overlap',
+    'full',
+))
 def test_multimodel_regression_amon(timeseries_cubes_amon, span):
     """Test statistic."""
     cubes = timeseries_cubes_amon
@@ -95,12 +131,10 @@ def test_multimodel_regression_amon(timeseries_cubes_amon, span):
 
 
 @pytest.mark.functional
-@pytest.mark.parametrize(
-    'span',
-    (
-        'overlap',
-        'full',
-    ))
+@pytest.mark.parametrize('span', (
+    'overlap',
+    'full',
+))
 def test_multimodel_regression_day(timeseries_cubes_day, span):
     """Test statistic."""
     cubes = timeseries_cubes_day
