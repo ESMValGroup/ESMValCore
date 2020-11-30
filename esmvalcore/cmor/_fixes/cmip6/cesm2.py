@@ -1,5 +1,6 @@
 """Fixes for CESM2 model."""
 from shutil import copyfile
+from cf_units import Unit
 
 from netCDF4 import Dataset
 import numpy as np
@@ -213,3 +214,32 @@ class Tos(Fix):
 
 
 Siconc = Addtypesi
+
+
+class Thetao(Fix):
+    """Fixes for tos."""
+
+    def fix_metadata(self, cubes):
+        """
+        Convert vertical level units to meters.
+
+        Possible replication needed to all marine variables.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        broken_mips = ["Oyr", "Omon", "Oday"]
+
+        for cube in cubes:
+            if cube.attributes['mipTable'] in broken_mips:
+                olev_coord = cube.coord('lev')
+                olev_coord.convert_units(Unit('m'))
+        return cubes
