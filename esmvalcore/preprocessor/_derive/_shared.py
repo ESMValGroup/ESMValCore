@@ -5,6 +5,7 @@ from copy import deepcopy
 
 import iris
 import numpy as np
+from cf_units import Unit
 
 from esmvalcore.iris_helpers import var_name_constraint
 
@@ -27,6 +28,37 @@ def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
         new_cube = new_cube.collapsed('air_pressure', iris.analysis.SUM)
 
     return new_cube
+
+
+def get_absolute_time_units(units):
+    """Convert time reference units to absolute ones.
+
+    This function converts reference time units (like ``'days since YYYY'``) to
+    absolute ones (like ``'days'``).
+
+    Parameters
+    ----------
+    units : cf_units.Unit
+        Time units to convert.
+
+    Returns
+    -------
+    cf_units.Unit
+        Absolute time units.
+
+    Raises
+    ------
+    ValueError
+        If conversion failed (e.g. input units are not time units).
+
+    """
+    units = Unit(units)
+    if units.is_time_reference():
+        units = Unit(units.symbol.split()[0])
+    if not units.is_time():
+        raise ValueError(
+            f"Cannot convert units '{units}' to reasonable time units")
+    return units
 
 
 def pressure_level_widths(cube, ps_cube, top_limit=0.0):

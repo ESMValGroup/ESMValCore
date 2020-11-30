@@ -2,8 +2,43 @@
 
 import numpy as np
 import pytest
+from cf_units import Unit
 
-from esmvalcore.preprocessor._derive._shared import _get_pressure_level_widths
+from esmvalcore.preprocessor._derive._shared import (
+    get_absolute_time_units,
+    _get_pressure_level_widths,
+)
+
+
+UNITS = [
+    ('kg', ValueError),
+    ('m', ValueError),
+    ('s m-1', ValueError),
+    ('s', 's'),
+    ('day', 'day'),
+    ('year', 'year'),
+    ('s since 1900-01-01 00:00:00', 's'),
+    ('days since 2000-01-01 00:00:00', 'day'),
+    (Unit('kg'), ValueError),
+    (Unit('m'), ValueError),
+    (Unit('s m-1'), ValueError),
+    (Unit('s'), 's'),
+    (Unit('day'), 'day'),
+    (Unit('year'), 'year'),
+    (Unit('s since 1900-01-01 00:00:00'), 's'),
+    (Unit('days since 2000-01-01 00:00:00'), 'day'),
+]
+
+
+@pytest.mark.parametrize('units_in,units_out', UNITS)
+def test_get_absolute_time_units(units_in, units_out):
+    """Test ``get_absolute_time_units``."""
+    if isinstance(units_out, type):
+        with pytest.raises(units_out):
+            get_absolute_time_units(units_in)
+        return
+    out = get_absolute_time_units(units_in)
+    assert out == units_out
 
 
 def test_col_is_not_monotonic():

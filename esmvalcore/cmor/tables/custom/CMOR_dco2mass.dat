@@ -1,0 +1,21 @@
+SOURCE: CMIP5
+!============
+variable_entry:    dco2mass
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg s-1
+cell_methods:      area: time: mean
+cell_measures:     area: areacella
+long_name:         Rate of Change of Total Atmospheric Mass of CO2
+comment:           Rate of change of total atmospheric mass of Carbon Dioxide
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+type:              real
+!----------------------------------
+!
