@@ -1,5 +1,6 @@
 """Functional test for :func:`esmvalcore.preprocessor._multimodel`."""
 
+import pickle
 from itertools import groupby
 from pathlib import Path
 
@@ -49,43 +50,44 @@ def preprocess_data(cubes, time_slice: dict = None):
 
 
 @pytest.fixture(scope="module")
-def timeseries_cubes_month():
+def timeseries_cubes_month(request):
     """Representative timeseries data."""
 
-    if CACHE_FILES:
-        filename = Path(__file__).with_name('monthly.nc')
-        if filename.exists():
-            return iris.load(str(filename))
+    # cache the cubes to save about 30-60 seconds on repeat use
+    data = request.config.cache.get("functional/monthly", None)
 
-    time_slice = {
-        'start_year': 1985,
-        'end_year': 1987,
-        'start_month': 12,
-        'end_month': 2,
-        'start_day': 1,
-        'end_day': 1,
-    }
-    cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='Amon')
-    cubes = preprocess_data(cubes, time_slice=time_slice)
+    if data:
+        cubes = pickle.loads(data.encode('latin1'))
+    else:
+        time_slice = {
+            'start_year': 1985,
+            'end_year': 1987,
+            'start_month': 12,
+            'end_month': 2,
+            'start_day': 1,
+            'end_day': 1,
+        }
+        cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='Amon')
+        cubes = preprocess_data(cubes, time_slice=time_slice)
 
-    if CACHE_FILES:
-        iris.save(cubes, filename)
+        # cubes are not serializable via json, so we must go via pickle
+        request.config.cache.set("functional/monthly",
+                                 pickle.dumps(cubes).decode('latin1'))
 
     return cubes
 
 
 @pytest.fixture(scope="module")
-def timeseries_cubes_day():
+def timeseries_cubes_day(request):
     """Representative timeseries data grouped by calendar."""
 
-    get_cubes = True
-    if CACHE_FILES:
-        filename = Path(__file__).with_name('daily.nc')
-        if filename.exists():
-            cubes = iris.load(str(filename))
-            get_cubes = False
+    # cache the cubes to save about 30-60 seconds on repeat use
+    data = request.config.cache.get("functional/daily", None)
 
-    if get_cubes:
+    if data:
+        cubes = pickle.loads(data.encode('latin1'))
+
+    else:
         time_slice = {
             'start_year': 2001,
             'end_year': 2002,
@@ -97,8 +99,9 @@ def timeseries_cubes_day():
         cubes = esmvaltool_sample_data.load_timeseries_cubes(mip_table='day')
         cubes = preprocess_data(cubes, time_slice=time_slice)
 
-        if CACHE_FILES:
-            iris.save(cubes, filename)
+        # cubes are not serializable via json, so we must go via pickle
+        request.config.cache.set("functional/daily",
+                                 pickle.dumps(cubes).decode('latin1'))
 
     def calendar(cube):
         return cube.coord('time').units.calendar
