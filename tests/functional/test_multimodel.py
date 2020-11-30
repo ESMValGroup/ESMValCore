@@ -12,8 +12,6 @@ from esmvalcore.preprocessor import extract_time, multi_model_statistics
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
-CACHE_FILES = False
-
 CALENDAR_PARAMS = (
     pytest.param(
         '360_day',
@@ -29,6 +27,13 @@ CALENDAR_PARAMS = (
 )
 
 SPAN_PARAMS = ('overlap', 'full')
+
+
+def assert_array_equal(a, b):
+    """Assert that array a equals array b."""
+    np.testing.assert_array_equal(a, b)
+    if np.ma.isMaskedArray(a) or np.ma.isMaskedArray(b):
+        np.testing.assert_array_equal(a.mask, b.mask)
 
 
 def preprocess_data(cubes, time_slice: dict = None):
@@ -127,7 +132,7 @@ def multimodel_test(cubes, span, statistic):
 def multimodel_regression_test(cubes, span, name):
     statistic = 'mean'
     output = multimodel_test(cubes, span=span, statistic=statistic)
-    output_cube = output[statistic]
+    this_cube = output[statistic]
 
     # NOTE for the regression test
     # The following test will fail if the data are changed or if the
@@ -135,15 +140,21 @@ def multimodel_regression_test(cubes, span, name):
     # regression test, remove the corresponding `.nc` files.
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
     if filename.exists():
-        expected_cube = iris.load(str(filename))[0]
-        assert np.allclose(output_cube.data, expected_cube.data)
-        assert expected_cube.coords() == output_cube.coords()
+        other_cube = iris.load(str(filename))[0]
+        assert_array_equal(this_cube.data, other_cube.data)
+
+        # Compare coords
+        for this_coord, other_coord in zip(this_cube.coords(),
+                                           other_cube.coords()):
+            assert this_coord == other_coord
+
         # remove Conventions which are added by Iris on save
-        output_cube.attributes.pop('Conventions')
-        assert expected_cube.metadata == output_cube.metadata
+        other_cube.attributes.pop('Conventions', None)
+
+        assert other_cube.metadata == this_cube.metadata
 
     else:
-        iris.save(output_cube, filename)
+        iris.save(this_cube, filename)
         raise RuntimeError(f'Wrote file {filename.absolute()}')
 
 
