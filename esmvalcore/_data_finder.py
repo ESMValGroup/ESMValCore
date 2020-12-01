@@ -98,9 +98,9 @@ def _replace_tags(path, variable):
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
 
-        if tag == 'latestversion':
-            replacewith = '*'
-        elif tag in variable:
+        if tag == 'latestversion':  # handled separately later
+            continue
+        if tag in variable:
             replacewith = variable[tag]
         else:
             raise KeyError("Dataset key {} must be specified for {}, check "
@@ -145,17 +145,21 @@ def _apply_caps(original, lower, upper):
 
 def _resolve_latestversion(dirname_template):
     """Resolve the 'latestversion' tag."""
-    versions = glob.glob(dirname_template)  # -> list
+    if '{latestversion}' not in dirname_template:
+        return dirname_template
 
-    version = dirname_template
+    # Find latest version
+    part1, part2 = dirname_template.split('{latestversion}')
+    part2 = part2.lstrip(os.sep)
+    if os.path.exists(part1):
+        versions = os.listdir(part1)
+        versions.sort(reverse=True)
+        for version in ['latest'] + versions:
+            dirname = os.path.join(part1, version, part2)
+            if os.path.isdir(dirname):
+                return dirname
 
-    # pick 'latest' if it exists,
-    # otherwise take the last sorted == most recent item
-    for version in sorted(versions):
-        if 'latest' in version:
-            break
-
-    return version
+    return dirname_template
 
 
 def _select_drs(input_type, drs, project):
