@@ -150,7 +150,8 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
         tunits = cf_units.Unit(unit_name, calendar="standard")
         times = iris.coords.DimCoord(t_axis,
                                      standard_name='time',
-                                     units=tunits)
+                                     units=tunits,
+                                     var_name='time')
 
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
