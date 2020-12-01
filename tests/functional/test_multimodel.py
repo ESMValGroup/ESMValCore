@@ -29,11 +29,11 @@ CALENDAR_PARAMS = (
 SPAN_PARAMS = ('overlap', 'full')
 
 
-def assert_array_equal(a, b):
-    """Assert that array a equals array b."""
-    np.testing.assert_array_equal(a, b)
-    if np.ma.isMaskedArray(a) or np.ma.isMaskedArray(b):
-        np.testing.assert_array_equal(a.mask, b.mask)
+def assert_array_equal(this, other):
+    """Assert that array `this` equals array `other`."""
+    np.testing.assert_array_equal(this, other)
+    if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
+        np.testing.assert_array_equal(this.mask, other.mask)
 
 
 def preprocess_data(cubes, time_slice: dict = None):
@@ -56,8 +56,7 @@ def preprocess_data(cubes, time_slice: dict = None):
 
 @pytest.fixture(scope="module")
 def timeseries_cubes_month(request):
-    """Representative timeseries data."""
-
+    """Load representative timeseries data."""
     # cache the cubes to save about 30-60 seconds on repeat use
     data = request.config.cache.get("functional/monthly", None)
 
@@ -84,8 +83,7 @@ def timeseries_cubes_month(request):
 
 @pytest.fixture(scope="module")
 def timeseries_cubes_day(request):
-    """Representative timeseries data grouped by calendar."""
-
+    """Load representative timeseries data grouped by calendar."""
     # cache the cubes to save about 30-60 seconds on repeat use
     data = request.config.cache.get("functional/daily", None)
 
@@ -120,6 +118,7 @@ def timeseries_cubes_day(request):
 
 
 def multimodel_test(cubes, span, statistic):
+    """Run multimodel test with some simple checks."""
     statistics = [statistic]
 
     output = multi_model_statistics(cubes, span=span, statistics=statistics)
@@ -130,14 +129,18 @@ def multimodel_test(cubes, span, statistic):
 
 
 def multimodel_regression_test(cubes, span, name):
+    """Run multimodel regression test.
+
+    This test will fail if the input data or multimodel code changed. To
+    update the data for the regression test, remove the corresponding
+    `.nc` files in this directory and re-run the tests. The tests will
+    fail the first time with a RuntimeError, because the reference data
+    are being written.
+    """
     statistic = 'mean'
     output = multimodel_test(cubes, span=span, statistic=statistic)
     this_cube = output[statistic]
 
-    # NOTE for the regression test
-    # The following test will fail if the data are changed or if the
-    # multimodel code changes significantly. To update the data for the
-    # regression test, remove the corresponding `.nc` files.
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
     if filename.exists():
         other_cube = iris.load(str(filename))[0]
@@ -154,8 +157,9 @@ def multimodel_regression_test(cubes, span, name):
         assert other_cube.metadata == this_cube.metadata
 
     else:
+        # The test will fail if no regression data are available.
         iris.save(this_cube, filename)
-        raise RuntimeError(f'Wrote file {filename.absolute()}')
+        raise RuntimeError(f'Wrote reference data to {filename.absolute()}')
 
 
 @pytest.mark.functional
