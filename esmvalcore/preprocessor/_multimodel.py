@@ -393,12 +393,10 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     Returns
     -------
     set or dict or list
-        Either:
-        - `set` of data products if `output_products` is given
-        - `dict` of cubes if `output_products` is not given
-        containing the multimodel stats computed or:
-        - `list` of input cubes if there is no overlap between cubes when
-            using `span='overlap'`
+        `set` of data products if `output_products` is given
+        `dict` of cubes if `output_products` is not given
+        `list` of input cubes if there is no overlap between cubes when
+        using `span='overlap'`
 
     Raises
     ------
