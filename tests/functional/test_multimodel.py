@@ -195,7 +195,9 @@ def test_multimodel_no_vertical_dimension(timeseries_cubes_month):
 
 
 @pytest.mark.functional
-@pytest.mark.xfail('https://github.com/ESMValGroup/ESMValCore/issues/891')
+@pytest.mark.xfail(
+    'iris.exceptions.CoordinateNotFoundError',
+    reason='https://github.com/ESMValGroup/ESMValCore/issues/891')
 def test_multimodel_no_horizontal_dimension(timeseries_cubes_month):
     """Test statistic without horizontal dimension using monthly data."""
     span = 'full'
@@ -217,7 +219,9 @@ def test_multimodel_only_time_dimension(timeseries_cubes_month):
 
 
 @pytest.mark.functional
-@pytest.mark.xfail('https://github.com/ESMValGroup/ESMValCore/issues/890')
+@pytest.mark.xfail(
+    'ValueError',
+    reason='https://github.com/ESMValGroup/ESMValCore/issues/890')
 def test_multimodel_no_time_dimension(timeseries_cubes_month):
     """Test statistic without time dimension using monthly data."""
     span = 'full'
