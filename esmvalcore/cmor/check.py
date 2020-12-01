@@ -432,7 +432,7 @@ class CMORCheck():
                     )
                 else:
                     self.report_critical(
-                        self._does_msg, name, 'exist'
+                        self._does_msg, key, 'exist'
                     )
 
     def _check_coords(self):
