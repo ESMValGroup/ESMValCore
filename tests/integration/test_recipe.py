@@ -215,14 +215,14 @@ def test_recipe_no_datasets(tmp_path, config_user):
                 end_year: 2002
             scripts: null
         """)
-    exc_message = \
-        "You have not specified any dataset " + \
-        "or additional_dataset groups for variable " + \
-        "{'preprocessor': 'preprocessor_name', 'project': 'CMIP5'," + \
-        " 'mip': 'Amon', 'exp': 'historical', 'ensemble': 'r1i1p1'" + \
-        ", 'start_year': 1999, 'end_year': 2002, 'variable_group':" + \
-        " 'ta', 'short_name': 'ta', 'diagnostic': " + \
-        "'diagnostic_name'} Exiting."
+    exc_message = (
+        "You have not specified any dataset "
+        "or additional_dataset groups for variable "
+        "{'preprocessor': 'preprocessor_name', 'project': 'CMIP5',"
+        " 'mip': 'Amon', 'exp': 'historical', 'ensemble': 'r1i1p1'"
+        ", 'start_year': 1999, 'end_year': 2002, 'variable_group':"
+        " 'ta', 'short_name': 'ta', 'diagnostic': "
+        "'diagnostic_name'} Exiting.")
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, config_user)
     assert str(exc.value) == exc_message
