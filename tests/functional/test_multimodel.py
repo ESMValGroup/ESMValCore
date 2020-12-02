@@ -32,7 +32,7 @@ SPAN_PARAMS = ('overlap', 'full')
 def assert_array_almost_equal(this, other):
     """Assert that array `this` almost equals array `other`."""
     if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
-        np.testing.assert_array_almost_equal(this.mask, other.mask)
+        np.testing.assert_array_equal(this.mask, other.mask)
 
     np.testing.assert_array_almost_equal(this, other)
 
