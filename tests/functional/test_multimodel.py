@@ -34,8 +34,7 @@ def assert_array_almost_equal(this, other):
     if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
         np.testing.assert_array_almost_equal(this.mask, other.mask)
 
-    np.testing.assert_array_almost_equal(this[this.mask == False],
-                                         other[other.mask == False])
+    np.testing.assert_array_almost_equal(this, other)
 
 
 def preprocess_data(cubes, time_slice: dict = None):
