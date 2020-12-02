@@ -68,6 +68,7 @@ jobs:
           paths:
             - "/opt/conda/pkgs"
             - ".eggs"
+            - ".pytest_cache"
       - store_artifacts:
           path: /logs
       - store_artifacts:
