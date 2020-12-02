@@ -1,4 +1,4 @@
-"""Functional test for :func:`esmvalcore.preprocessor._multimodel`."""
+"""Test using sample data for :func:`esmvalcore.preprocessor._multimodel`."""
 
 import pickle
 from itertools import groupby
@@ -59,7 +59,7 @@ def preprocess_data(cubes, time_slice: dict = None):
 def timeseries_cubes_month(request):
     """Load representative timeseries data."""
     # cache the cubes to save about 30-60 seconds on repeat use
-    data = request.config.cache.get("functional/monthly", None)
+    data = request.config.cache.get("sample_data/monthly", None)
 
     if data:
         cubes = pickle.loads(data.encode('latin1'))
@@ -76,7 +76,7 @@ def timeseries_cubes_month(request):
         cubes = preprocess_data(cubes, time_slice=time_slice)
 
         # cubes are not serializable via json, so we must go via pickle
-        request.config.cache.set("functional/monthly",
+        request.config.cache.set("sample_data/monthly",
                                  pickle.dumps(cubes).decode('latin1'))
 
     return cubes
@@ -86,7 +86,7 @@ def timeseries_cubes_month(request):
 def timeseries_cubes_day(request):
     """Load representative timeseries data grouped by calendar."""
     # cache the cubes to save about 30-60 seconds on repeat use
-    data = request.config.cache.get("functional/daily", None)
+    data = request.config.cache.get("sample_data/daily", None)
 
     if data:
         cubes = pickle.loads(data.encode('latin1'))
@@ -104,7 +104,7 @@ def timeseries_cubes_day(request):
         cubes = preprocess_data(cubes, time_slice=time_slice)
 
         # cubes are not serializable via json, so we must go via pickle
-        request.config.cache.set("functional/daily",
+        request.config.cache.set("sample_data/daily",
                                  pickle.dumps(cubes).decode('latin1'))
 
     def calendar(cube):
@@ -163,7 +163,7 @@ def multimodel_regression_test(cubes, span, name):
         raise RuntimeError(f'Wrote reference data to {filename.absolute()}')
 
 
-@pytest.mark.functional
+@pytest.mark.use_sample_data
 @pytest.mark.parametrize('span', SPAN_PARAMS)
 def test_multimodel_regression_month(timeseries_cubes_month, span):
     """Test statistic."""
@@ -176,7 +176,7 @@ def test_multimodel_regression_month(timeseries_cubes_month, span):
     )
 
 
-@pytest.mark.functional
+@pytest.mark.use_sample_data
 @pytest.mark.parametrize('calendar', CALENDAR_PARAMS)
 @pytest.mark.parametrize('span', SPAN_PARAMS)
 def test_multimodel_regression_day(timeseries_cubes_day, span, calendar):
@@ -190,7 +190,7 @@ def test_multimodel_regression_day(timeseries_cubes_day, span, calendar):
     )
 
 
-@pytest.mark.functional
+@pytest.mark.use_sample_data
 def test_multimodel_no_vertical_dimension(timeseries_cubes_month):
     """Test statistic without vertical dimension using monthly data."""
     span = 'full'
@@ -199,7 +199,7 @@ def test_multimodel_no_vertical_dimension(timeseries_cubes_month):
     multimodel_test(cubes, span=span, statistic='mean')
 
 
-@pytest.mark.functional
+@pytest.mark.use_sample_data
 @pytest.mark.xfail(
     'iris.exceptions.CoordinateNotFoundError',
     reason='https://github.com/ESMValGroup/ESMValCore/issues/891')
@@ -214,7 +214,7 @@ def test_multimodel_no_horizontal_dimension(timeseries_cubes_month):
     multimodel_test(cubes, span=span, statistic='mean')
 
 
-@pytest.mark.functional
+@pytest.mark.use_sample_data
 def test_multimodel_only_time_dimension(timeseries_cubes_month):
     """Test statistic without only the time dimension using monthly data."""
     cubes = timeseries_cubes_month
@@ -223,7 +223,7 @@ def test_multimodel_only_time_dimension(timeseries_cubes_month):
     multimodel_test(cubes, span=span, statistic='mean')
 
 
-@pytest.mark.functional
+@pytest.mark.use_sample_data
 @pytest.mark.xfail(
     'ValueError',
     reason='https://github.com/ESMValGroup/ESMValCore/issues/890')
