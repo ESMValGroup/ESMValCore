@@ -476,7 +476,12 @@ def extract_levels(cube, levels, scheme, coordinate=None):
         'nearest_horizontal_extrapolate_vertical',
         'linear_horizontal_extrapolate_vertical'.
     coordinate :  optional str
-        The coordinate to interpolate
+        The coordinate to interpolate. If specified, pressure levels
+        (if present) can be converted to height levels and vice versa using
+        the US standard atmosphere. E.g. 'coordinate = altitude' will convert
+        existing pressure levels (air_pressure) to height levels (altitude);
+        'coordinate = air_pressure' will convert existing height levels
+        (altitude) to pressure levels (air_pressure).
 
     Returns
     -------
