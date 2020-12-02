@@ -29,6 +29,21 @@ def _get_altitude_to_pressure_func():
 altitude_to_pressure = _get_altitude_to_pressure_func()  # noqa
 
 
+def _get_pressure_to_altitude_func():
+    """Get function converting air pressure [Pa] to altitude [m]."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    source_file = os.path.join(base_dir, 'us_standard_atmosphere.csv')
+    data_frame = pd.read_csv(source_file, comment='#')
+    func = interp1d(data_frame['Pressure [Pa]'],
+                    data_frame['Altitude [m]'],
+                    kind='cubic',
+                    fill_value='extrapolate')
+    return func
+
+
+pressure_to_altitude = _get_pressure_to_altitude_func()  # noqa
+
+
 class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
     """Defines an atmosphere sigma coordinate factory."""
 
@@ -269,6 +284,39 @@ def add_plev_from_altitude(cube):
         return
     raise ValueError(
         "Cannot add 'air_pressure' coordinate, 'altitude' coordinate not "
+        "available")
+
+
+def add_altitude_from_plev(cube):
+    """Add altitude coordinate from pressure level coordinate.
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        Input cube.
+
+    Raises
+    ------
+    ValueError
+        ``cube`` does not contain coordinate ``air_pressure``.
+
+    """
+    if cube.coords('air_pressure'):
+        plev_coord = cube.coord('air_pressure')
+        if plev_coord.units != 'Pa':
+            plev_coord.convert_units('Pa')
+        altitude_points = pressure_to_altitude(plev_coord.core_points())
+        #altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
+        altitude_coord = iris.coords.AuxCoord(altitude_points,
+                                              #bounds=altitude_bounds,
+                                              var_name='alt',
+                                              standard_name='altitude',
+                                              long_name='altitude',
+                                              units='m')
+        cube.add_aux_coord(altitude_coord, cube.coord_dims(plev_coord))
+        return
+    raise ValueError(
+        "Cannot add 'altitude' coordinate, 'air_pressure' coordinate not "
         "available")
 
 

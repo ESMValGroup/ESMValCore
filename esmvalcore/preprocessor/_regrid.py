@@ -17,6 +17,8 @@ from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 
+from ..cmor._fixes.shared import add_plev_from_altitude, add_altitude_from_plev
+
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
     r'''\A
@@ -506,6 +508,16 @@ def extract_levels(cube, levels, scheme, coordinate=None):
 
     # Get the source cube vertical coordinate, if available.
     if coordinate:
+        coord_names = [coord.name() for coord in cube.coords()]
+        if (coordinate not in coord_names):
+            # Try to calculate air_pressure from altitude coordinate or
+            # vice versa using US standard atmosphere for conversion.
+            if coordinate == 'air_pressure' and 'altitude' in coord_names:
+                # Calculate pressure level coordinate from altitude.
+                add_plev_from_altitude(cube)
+            if coordinate == 'altitude' and 'air_pressure' in coord_names:
+                # Calculate altitude coordinate from pressure levels.
+                add_altitude_from_plev(cube)
         src_levels = cube.coord(coordinate)
     else:
         src_levels = cube.coord(axis='z', dim_coords=True)
