@@ -29,11 +29,13 @@ CALENDAR_PARAMS = (
 SPAN_PARAMS = ('overlap', 'full')
 
 
-def assert_array_equal(this, other):
-    """Assert that array `this` equals array `other`."""
-    np.testing.assert_array_equal(this, other)
+def assert_array_almost_equal(this, other):
+    """Assert that array `this` almost equals array `other`."""
     if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
-        np.testing.assert_array_equal(this.mask, other.mask)
+        np.testing.assert_array_almost_equal(this.mask, other.mask)
+
+    np.testing.assert_array_almost_equal(this[this.mask == False],
+                                         other[other.mask == False])
 
 
 def preprocess_data(cubes, time_slice: dict = None):
@@ -144,7 +146,7 @@ def multimodel_regression_test(cubes, span, name):
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
     if filename.exists():
         other_cube = iris.load(str(filename))[0]
-        assert_array_equal(this_cube.data, other_cube.data)
+        assert_array_almost_equal(this_cube.data, other_cube.data)
 
         # Compare coords
         for this_coord, other_coord in zip(this_cube.coords(),
