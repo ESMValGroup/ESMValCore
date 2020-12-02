@@ -509,7 +509,7 @@ def extract_levels(cube, levels, scheme, coordinate=None):
     # Get the source cube vertical coordinate, if available.
     if coordinate:
         coord_names = [coord.name() for coord in cube.coords()]
-        if (coordinate not in coord_names):
+        if coordinate not in coord_names:
             # Try to calculate air_pressure from altitude coordinate or
             # vice versa using US standard atmosphere for conversion.
             if coordinate == 'air_pressure' and 'altitude' in coord_names:
