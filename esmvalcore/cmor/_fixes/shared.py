@@ -306,9 +306,9 @@ def add_altitude_from_plev(cube):
         if plev_coord.units != 'Pa':
             plev_coord.convert_units('Pa')
         altitude_points = pressure_to_altitude(plev_coord.core_points())
-        #altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
+        # altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
         altitude_coord = iris.coords.AuxCoord(altitude_points,
-                                              #bounds=altitude_bounds,
+                                              # bounds=altitude_bounds,
                                               var_name='alt',
                                               standard_name='altitude',
                                               long_name='altitude',
