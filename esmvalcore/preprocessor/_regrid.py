@@ -4,20 +4,19 @@ import os
 import re
 from copy import deepcopy
 
+import iris
 import numpy as np
 import stratify
-import iris
 from dask import array as da
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
+from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
-
-from ..cmor._fixes.shared import add_plev_from_altitude, add_altitude_from_plev
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
