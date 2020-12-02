@@ -273,7 +273,10 @@ def add_plev_from_altitude(cube):
         if height_coord.units != 'm':
             height_coord.convert_units('m')
         pressure_points = altitude_to_pressure(height_coord.core_points())
-        pressure_bounds = altitude_to_pressure(height_coord.core_bounds())
+        if height_coord.core_bounds() is None:
+            pressure_bounds = None
+        else:
+            pressure_bounds = altitude_to_pressure(height_coord.core_bounds())
         pressure_coord = iris.coords.AuxCoord(pressure_points,
                                               bounds=pressure_bounds,
                                               var_name='plev',
@@ -306,9 +309,12 @@ def add_altitude_from_plev(cube):
         if plev_coord.units != 'Pa':
             plev_coord.convert_units('Pa')
         altitude_points = pressure_to_altitude(plev_coord.core_points())
-        # altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
+        if plev_coord.core_bounds() is None:
+            altitude_bounds = None
+        else:
+            altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
         altitude_coord = iris.coords.AuxCoord(altitude_points,
-                                              # bounds=altitude_bounds,
+                                              bounds=altitude_bounds,
                                               var_name='alt',
                                               standard_name='altitude',
                                               long_name='altitude',
