@@ -26,7 +26,8 @@ class Config(ValidatedConfig):
             if try_path.exists():
                 path = try_path
             else:
-                raise FileNotFoundError(f'No such file: `{filename}`')
+                raise FileNotFoundError(f'Cannot find: `{filename}`'
+                                        f'locally or in `{try_path}`')
 
         _load_user_config(path)
 
