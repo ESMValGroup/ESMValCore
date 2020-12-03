@@ -40,7 +40,9 @@ If you need sample data to work with, `this repository <https://github.com/ESMVa
 
 The data are installed as part of the developer dependencies, and used by some larger tests (i.e. in the `multimodel tests` <https://github.com/ESMValGroup/ESMValCore/tree/master/tests/sample_data>`__)
 
-To avoid running these tests as they can be time-consuming, use `pytest -m "not use_sample_data"`.
+The loading and preprocessing of the data can be somewhat time-consuming (~30 secs) and are cached by ``pytest`` to make the tests more performant.
+Clear the cache by using running pytest with the ``--cache-clear`` flag. To avoid running these tests using sample data, use `pytest -m "not use_sample_data"`.
+If you are adding new tests using sample data, please use the decorator ``@pytest.mark.use_sample_data``.
 
 Code style
 ----------
