@@ -1,0 +1,21 @@
+SOURCE: CMIP5
+!============
+variable_entry:    fco2fosg
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     tendency_of_atmosphere_mass_content_of_carbon_dioxide_expressed_as_carbon_due_to_emission_from_fossil_fuel_combustion
+units:             kg s-1
+cell_methods:      area: time: mean
+cell_measures:
+long_name:         Global Carbon Mass Flux into Atmosphere Due to Fossil Fuel Emissions of CO2 [kgC s-1]
+comment:           This is the global anthropogenic CO2 flux from fossil fuel use, including cement production, and flaring (but not from land-use changes, agricultural burning, forest regrowth, etc.)
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+type:              real
+!----------------------------------
+!
