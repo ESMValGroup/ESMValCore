@@ -12,7 +12,7 @@ from ._config_validators import _validators
 from ._validated_config import ValidatedConfig
 
 
-class ESMValCoreConfig(ValidatedConfig):
+class Config(ValidatedConfig):
     """ESMValTool configuration object."""
 
     validate = _validators
@@ -143,7 +143,7 @@ def _load_user_config(filename: str, raise_exception: bool = True):
     raise_exception : bool
         Raise an exception if `filename` can not be found (default).
         Otherwise, silently pass and use the default configuration. This
-        setting is necessary for the case where `.esmvalcore/config-user.yml`
+        setting is necessary for the case where `.esmvaltool/config-user.yml`
         has not been defined (i.e. first start).
     """
     try:
@@ -182,8 +182,8 @@ USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 USER_CONFIG = get_user_config_location()
 
 # initialize placeholders
-CFG_DEFAULT = ESMValCoreConfig()
-CFG = ESMValCoreConfig()
+CFG_DEFAULT = Config()
+CFG = Config()
 
 # update config objects
 _load_default_config(DEFAULT_CONFIG)

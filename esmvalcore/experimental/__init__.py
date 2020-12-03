@@ -1,4 +1,4 @@
-"""ESMValCore future API module."""
+"""ESMValCore experimental API module."""
 
 import warnings
 

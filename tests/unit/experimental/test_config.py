@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 
 from esmvalcore import __version__ as current_version
-from esmvalcore.future.config._config_object import ESMValCoreConfig
-from esmvalcore.future.config._config_validators import (
+from esmvalcore.experimental.config._config_object import Config
+from esmvalcore.experimental.config._config_validators import (
     _listify_validator,
     deprecate,
     validate_bool,
@@ -21,7 +21,8 @@ from esmvalcore.future.config._config_validators import (
     validate_string,
     validate_string_or_none,
 )
-from esmvalcore.future.config._validated_config import InvalidConfigParameter
+from esmvalcore.experimental.config._validated_config import (
+    InvalidConfigParameter, )
 
 
 def generate_validator_testcases(valid):
@@ -218,7 +219,7 @@ def test_config_class():
         },
     }
 
-    cfg = ESMValCoreConfig(config)
+    cfg = Config(config)
 
     assert isinstance(cfg['output_dir'], Path)
     assert isinstance(cfg['auxiliary_data_dir'], Path)
@@ -228,7 +229,7 @@ def test_config_class():
 
 
 def test_config_update():
-    config = ESMValCoreConfig({'output_dir': 'directory'})
+    config = Config({'output_dir': 'directory'})
     fail_dict = {'output_dir': 123}
 
     with pytest.raises(InvalidConfigParameter):
@@ -236,12 +237,12 @@ def test_config_update():
 
 
 def test_config_init():
-    config = ESMValCoreConfig()
+    config = Config()
     assert isinstance(config, dict)
 
 
 def test_session():
-    config = ESMValCoreConfig({'output_dir': 'config'})
+    config = Config({'output_dir': 'config'})
 
     session = config.start_session('recipe_name')
     assert session == config
