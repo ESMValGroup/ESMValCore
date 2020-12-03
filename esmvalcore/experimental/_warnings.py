@@ -1,3 +1,5 @@
+"""ESMValTool Warnings."""
+
 import warnings
 
 
