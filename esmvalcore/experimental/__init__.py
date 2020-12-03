@@ -7,7 +7,7 @@ warnings.warn(
     '\n  Note that this API is experimental and may be subject to change.'
     '\n  More info: https://github.com/ESMValGroup/ESMValCore/issues/498', )
 
-from .config import CFG
+from .config import CFG  # noqa: E402
 
 __all__ = [
     'CFG',
