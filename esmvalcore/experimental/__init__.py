@@ -1,6 +1,6 @@
 """ESMValCore experimental API module."""
 
-import warnings
+from ._warnings import warnings
 
 warnings.warn(
     '\n  Thank you for trying out the new ESMValCore API.'
