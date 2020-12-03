@@ -25,6 +25,7 @@ class ValidatedConfig(MutableMapping, dict):
         self.update(*args, **kwargs)
 
     def __setitem__(self, key, val):
+        """Map key to value."""
         try:
             cval = self.validate[key](val)
         except ValueError as verr:
@@ -36,9 +37,11 @@ class ValidatedConfig(MutableMapping, dict):
         dict.__setitem__(self, key, cval)
 
     def __getitem__(self, key):
+        """Return value mapped by key."""
         return dict.__getitem__(self, key)
 
     def __repr__(self):
+        """Return canonical string representation."""
         class_name = self.__class__.__name__
         indent = len(class_name) + 1
         repr_split = pprint.pformat(dict(self), indent=1,
@@ -47,6 +50,7 @@ class ValidatedConfig(MutableMapping, dict):
         return '{}({})'.format(class_name, repr_indented)
 
     def __str__(self):
+        """Return string representation."""
         return '\n'.join(map('{0[0]}: {0[1]}'.format, sorted(self.items())))
 
     def __iter__(self):
@@ -54,15 +58,17 @@ class ValidatedConfig(MutableMapping, dict):
         yield from sorted(dict.__iter__(self))
 
     def __len__(self):
+        """Return number of config keys."""
         return dict.__len__(self)
 
     def __delitem__(self, key):
+        """Delete key/value from config."""
         dict.__delitem__(self, key)
 
     def copy(self):
-        """Copy the keys this object to a dict."""
+        """Copy the keys/values of this object to a dict."""
         return {k: dict.__getitem__(self, k) for k in self}
 
     def clear(self):
-        """Clear Config dictionary."""
+        """Clear Config."""
         dict.clear(self)
