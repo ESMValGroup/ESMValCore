@@ -1,4 +1,4 @@
-"""Fixes for ACCESS-ESM1-5."""
+"""Fixes for ACCESS-ESM1-5."""  # pylint:disable=duplicate-code
 import iris
 
 from ..common import ClFixHybridHeightCoord
