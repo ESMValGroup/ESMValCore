@@ -478,7 +478,8 @@ class DiagnosticTask(BaseTask):
         else:
             if self.settings['profile_diagnostic']:
                 script_file = cmd.pop()
-                combo_with_settings = script_file + ' ' + str(settings_file)
+                combo_with_settings = ().join(['"', script_file, ' ',
+                                               str(settings_file), '"'])
                 cmd.append(combo_with_settings)
             else:
                 cmd.append(settings_file)
