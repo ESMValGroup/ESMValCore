@@ -8,8 +8,7 @@ class Cl(ClFixHybridHeightCoord):
     """Fixes for cl."""
 
     def fix_metadata(self, cubes):
-        """Fix hybrid coefficient b, then call fix_metadata from
-           ClFixHybridHeightCoord.
+        """Fix hybrid coefficient b, then call fix_metadata from parent.
 
         Parameters
         ----------

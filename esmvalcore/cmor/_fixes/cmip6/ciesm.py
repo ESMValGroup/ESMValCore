@@ -1,4 +1,4 @@
-"""Fixes for CIESM model."""
+"""Fixes for CIESM model."""  # pylint:disable=duplicate-code
 from ..fix import Fix
 
 
