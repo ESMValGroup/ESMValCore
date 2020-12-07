@@ -66,9 +66,9 @@ class Session(ValidatedConfig):
 
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
-        self.init_session_dir(name)
+        self.set_session_name(name)
 
-    def init_session_dir(self, name: str = 'session'):
+    def set_session_name(self, name: str = 'session'):
         """Initialize session.
 
         The `name` is used to name the working directory, e.g.
@@ -76,13 +76,12 @@ class Session(ValidatedConfig):
         interactive session, defaults to `session`.
         """
         now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        session_name = f"{name}_{now}"
-        self._session_dir = self['output_dir'] / session_name
+        self.session_name = f"{name}_{now}"
 
     @property
     def session_dir(self):
         """Return session directory."""
-        return self._session_dir
+        return self['output_dir'] / self.session_name
 
     @property
     def preproc_dir(self):
