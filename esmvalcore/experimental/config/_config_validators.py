@@ -6,6 +6,15 @@ from functools import lru_cache
 from pathlib import Path
 
 
+class ValidationError(ValueError):
+    """Custom validation error."""
+
+
+# Custom warning, because DeprecationWarning is hidden by default
+class ESMValToolDeprecationWarning(UserWarning):
+    """Configuration key has been deprecated."""
+
+
 # The code for this function was taken from matplotlib (v3.3) and modified
 # to fit the needs of ESMValCore. Matplotlib is licenced under the terms of
 # the the 'Python Software Foundation License'
@@ -24,7 +33,7 @@ def _make_type_validator(cls, *, allow_none=False):
             return cls(inp)
         except ValueError as err:
             if isinstance(cls, type):
-                raise ValueError(
+                raise ValidationError(
                     f'Could not convert {repr(inp)} to {cls.__name__}'
                 ) from err
             raise
@@ -78,11 +87,11 @@ def _listify_validator(scalar_validator,
                 if not isinstance(val, str) or val
             ]
         else:
-            raise ValueError(
+            raise ValidationError(
                 f"Expected str or other non-set iterable, but got {inp}")
         if n_items is not None and len(inp) != n_items:
-            raise ValueError(f"Expected {n_items} values, "
-                             f"but there are {len(inp)} values in {inp}")
+            raise ValidationError(f"Expected {n_items} values, "
+                                  f"but there are {len(inp)} values in {inp}")
         return inp
 
     try:
@@ -102,7 +111,7 @@ def validate_bool(value, allow_none=False):
     if (value is None) and allow_none:
         return value
     if not isinstance(value, bool):
-        raise ValueError(f"Could not convert `{value}` to `bool`")
+        raise ValidationError(f"Could not convert `{value}` to `bool`")
     return value
 
 
@@ -113,7 +122,7 @@ def validate_path(value, allow_none=False):
     try:
         path = Path(value).expanduser().absolute()
     except TypeError as err:
-        raise ValueError(f"Expected a path, but got {value}") from err
+        raise ValidationError(f"Expected a path, but got {value}") from err
     else:
         return path
 
@@ -121,7 +130,7 @@ def validate_path(value, allow_none=False):
 def validate_positive(value):
     """Check if number is positive."""
     if value is not None and value <= 0:
-        raise ValueError(f'Expected a positive number, but got {value}')
+        raise ValidationError(f'Expected a positive number, but got {value}')
     return value
 
 
@@ -187,7 +196,7 @@ def validate_check_level(value):
         try:
             value = CheckLevels[value.upper()]
         except KeyError:
-            raise ValueError(
+            raise ValidationError(
                 f'`{value}` is not a valid strictness level') from None
 
     else:
@@ -206,11 +215,6 @@ def validate_diagnostics(diagnostics):
         pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
         for pattern in diagnostics or ()
     }
-
-
-# Custom warning, because DeprecationWarning is hidden by default
-class ESMValToolDeprecationWarning(UserWarning):
-    """Configuration key has been deprecated."""
 
 
 def deprecate(func, variable, version: str = None):

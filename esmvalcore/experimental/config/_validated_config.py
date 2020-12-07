@@ -5,6 +5,7 @@ import warnings
 from collections.abc import MutableMapping
 
 from .._exceptions import SuppressedError
+from ._config_validators import ValidationError
 
 
 class InvalidConfigParameter(SuppressedError):
@@ -35,7 +36,7 @@ class ValidatedConfig(MutableMapping, dict):
         """Map key to value."""
         try:
             cval = self._validate[key](val)
-        except ValueError as verr:
+        except ValidationError as verr:
             raise InvalidConfigParameter(f"Key `{key}`: {verr}") from None
         except KeyError:
             raise InvalidConfigParameter(
