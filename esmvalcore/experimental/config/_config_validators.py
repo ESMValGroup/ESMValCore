@@ -234,10 +234,10 @@ def deprecate(func, variable, version: str = None):
         version = 'a future version'
 
     if current_version >= version:
-        warnings.warn(f"`{variable}` has been deprecated in {version}",
+        warnings.warn(f"`{variable}` has been removed in {version}",
                       ESMValToolDeprecationWarning)
     else:
-        warnings.warn(f"`{variable}` will be deprecated in {version}.",
+        warnings.warn(f"`{variable}` will be removed in {version}.",
                       ESMValToolDeprecationWarning,
                       stacklevel=2)
 
