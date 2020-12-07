@@ -109,7 +109,7 @@ At this moment, ``session`` is essentially a copy of ``CFG``:
     False
 
 A ``Session`` also knows about the directories where the data will stored.
-The session name is used to previx the directories.
+The session name is used to prefix the directories.
 
 .. code-block:: python
 
