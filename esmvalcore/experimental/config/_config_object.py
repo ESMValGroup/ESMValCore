@@ -10,11 +10,18 @@ import esmvalcore
 from ._config_validators import _validators
 from ._validated_config import ValidatedConfig
 
+URL = ('https://docs.esmvaltool.org/projects/'
+       'ESMValCore/en/latest/quickstart/configure.html')
+
 
 class Config(ValidatedConfig):
     """ESMValTool configuration object."""
 
     _validate = _validators
+    _warn_if_missing = (
+        ('drs', URL),
+        ('rootpath', URL),
+    )
 
     @staticmethod
     def load_from_file(filename):

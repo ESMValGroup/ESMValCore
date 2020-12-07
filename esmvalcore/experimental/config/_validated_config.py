@@ -1,6 +1,7 @@
 """Config validation objects."""
 
 import pprint
+import warnings
 from collections.abc import MutableMapping
 
 from .._exceptions import SuppressedError
@@ -8,6 +9,10 @@ from .._exceptions import SuppressedError
 
 class InvalidConfigParameter(SuppressedError):
     """Config parameter is invalid."""
+
+
+class MissingConfigParameter(UserWarning):
+    """Config parameter is missing."""
 
 
 # The code for this class was take from matplotlib (v3.3) and modified to
@@ -18,11 +23,13 @@ class ValidatedConfig(MutableMapping, dict):
     """Based on `matplotlib.rcParams`."""
 
     _validate = {}
+    _warn_if_missing = ()
 
     # validate values on the way in
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.update(*args, **kwargs)
+        self.check_missing()
 
     def __setitem__(self, key, val):
         """Map key to value."""
@@ -64,6 +71,14 @@ class ValidatedConfig(MutableMapping, dict):
     def __delitem__(self, key):
         """Delete key/value from config."""
         dict.__delitem__(self, key)
+
+    def check_missing(self):
+        """Check and warn for missing variables."""
+        for (key, more_info) in self._warn_if_missing:
+            if key not in self:
+                more_info = f' ({more_info})' if more_info else ''
+                warnings.warn(f'`{key}` is not defined{more_info}',
+                              MissingConfigParameter)
 
     def copy(self):
         """Copy the keys/values of this object to a dict."""
