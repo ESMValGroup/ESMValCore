@@ -1,6 +1,5 @@
 """Importable config object."""
 
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -162,25 +161,11 @@ def _load_user_config(filename: str, raise_exception: bool = True):
     CFG.update(mapping)
 
 
-def get_user_config_location():
-    """Get the user config location by looking in the expected places.
-
-    Check if environment variable `ESMVALTOOL_CONFIG` exists, otherwise
-    use the default location in the user config dir (`~/.esmvaltool`).
-    """
-    try:
-        config_location = Path(os.environ['ESMVALTOOL_CONFIG'])
-    except KeyError:
-        config_location = USER_CONFIG_DIR / 'config-user.yml'
-
-    return config_location
-
-
 DEFAULT_CONFIG_DIR = Path(esmvalcore.__file__).parent
 DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / 'config-user.yml'
 
 USER_CONFIG_DIR = Path.home() / '.esmvaltool'
-USER_CONFIG = get_user_config_location()
+USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders
 CFG_DEFAULT = Config()
