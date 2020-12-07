@@ -104,7 +104,7 @@ At this moment, ``session`` is essentially a copy of ``CFG``:
 
     >>> print(session == CFG)
     True
-    >>> session['output_dir'] = '~/session_output'
+    >>> session['output_dir'] = '~/my_output_dir'
     >>> print(session == CFG)  # False
     False
 
@@ -114,17 +114,17 @@ The session name is used to prefix the directories.
 .. code-block:: python
 
     >>> session.session_dir
-    /home/user/esmvaltool_output/my_session_20201203_155821
+    /home/user/my_output_dir/my_session_20201203_155821
     >>> session.run_dir
-    /home/user/esmvaltool_output/my_session_20201203_155821/run
+    /home/user/my_output_dir/my_session_20201203_155821/run
     >>> session.work_dir
-    /home/user/esmvaltool_output/my_session_20201203_155821/work
+    /home/user/my_output_dir/my_session_20201203_155821/work
     >>> session.preproc_dir
-    /home/user/esmvaltool_output/my_session_20201203_155821/preproc
+    /home/user/my_output_dir/my_session_20201203_155821/preproc
     >>> session.plot_dir
-    /home/user/esmvaltool_output/my_session_20201203_155821/plots
+    /home/user/my_output_dir/my_session_20201203_155821/plots
 
-``Session`` objects are persistent, so multiple sessions can be initiated from the ``Config``.
+Unlike the global configuration, of which only one can exist, multiple sessions can be initiated from the ``Config``.
 
 
 API reference
