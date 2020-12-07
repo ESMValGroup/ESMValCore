@@ -144,7 +144,7 @@ def multimodel_regression_test(cubes, span, name):
 
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
     if filename.exists():
-        reference_cube = iris.load(str(filename))[0]
+        reference_cube = iris.load_cube(str(filename))
         assert_array_almost_equal(result_cube.data, reference_cube.data)
 
         # Compare coords
