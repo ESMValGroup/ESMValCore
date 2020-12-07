@@ -124,9 +124,6 @@ def _read_config_file(config_file):
 def _load_default_config(filename: str):
     """Load the default configuration."""
     mapping = _read_config_file(filename)
-
-    global CFG_DEFAULT
-
     CFG_DEFAULT.update(mapping)
 
 
@@ -152,8 +149,6 @@ def _load_user_config(filename: str, raise_exception: bool = True):
         if raise_exception:
             raise
         mapping = {}
-
-    global CFG
 
     CFG.clear()
     CFG.update(CFG_DEFAULT)
