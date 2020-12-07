@@ -14,7 +14,7 @@ from ._validated_config import ValidatedConfig
 class Config(ValidatedConfig):
     """ESMValTool configuration object."""
 
-    validate = _validators
+    _validate = _validators
 
     @staticmethod
     def load_from_file(filename):
@@ -62,7 +62,7 @@ class Session(ValidatedConfig):
         recipe (default='session').
     """
 
-    validate = _validators
+    _validate = _validators
 
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
@@ -110,7 +110,7 @@ class Session(ValidatedConfig):
         return USER_CONFIG_DIR
 
 
-def read_config_file(config_file):
+def _read_config_file(config_file):
     """Read config user file and store settings in a dictionary."""
     config_file = Path(config_file)
     if not config_file.exists():
@@ -124,7 +124,7 @@ def read_config_file(config_file):
 
 def _load_default_config(filename: str):
     """Load the default configuration."""
-    mapping = read_config_file(filename)
+    mapping = _read_config_file(filename)
 
     global CFG_DEFAULT
 
@@ -147,7 +147,7 @@ def _load_user_config(filename: str, raise_exception: bool = True):
         has not been defined (i.e. first start).
     """
     try:
-        mapping = read_config_file(filename)
+        mapping = _read_config_file(filename)
         mapping['config_file'] = filename
     except IOError:
         if raise_exception:

@@ -17,7 +17,7 @@ class InvalidConfigParameter(SuppressedError):
 class ValidatedConfig(MutableMapping, dict):
     """Based on `matplotlib.rcParams`."""
 
-    validate = {}
+    _validate = {}
 
     # validate values on the way in
     def __init__(self, *args, **kwargs):
@@ -27,7 +27,7 @@ class ValidatedConfig(MutableMapping, dict):
     def __setitem__(self, key, val):
         """Map key to value."""
         try:
-            cval = self.validate[key](val)
+            cval = self._validate[key](val)
         except ValueError as verr:
             raise InvalidConfigParameter(f"Key `{key}`: {verr}") from None
         except KeyError:
