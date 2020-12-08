@@ -27,8 +27,50 @@ class Config(ValidatedConfig):
         ('rootpath', URL),
     )
 
-    @staticmethod
-    def load_from_file(filename):
+    @classmethod
+    def _load_user_config(cls, filename: str, raise_exception: bool = True):
+        """Load user configuration from the given file.
+
+        The config is cleared and updated in-place.
+
+        Parameters
+        ----------
+        filename: pathlike
+            Name of the config file, must be yaml format
+        raise_exception : bool
+            Raise an exception if `filename` can not be found (default).
+            Otherwise, silently pass and use the default configuration. This
+            setting is necessary for the case where
+            `.esmvaltool/config-user.yml` has not been defined (i.e. first
+            start).
+        """
+        new = cls()
+
+        try:
+            mapping = _read_config_file(filename)
+            mapping['config_file'] = filename
+        except IOError:
+            if raise_exception:
+                raise
+            mapping = {}
+
+        new.clear()
+        new.update(CFG_DEFAULT)
+        new.update(mapping)
+
+        return new
+
+    @classmethod
+    def _load_default_config(cls, filename: str):
+        """Load the default configuration."""
+        new = cls()
+
+        mapping = _read_config_file(filename)
+        new.update(mapping)
+
+        return new
+
+    def load_from_file(self, filename):
         """Load user configuration from the given file."""
         path = Path(filename).expanduser()
         if not path.exists():
@@ -39,7 +81,8 @@ class Config(ValidatedConfig):
                 raise FileNotFoundError(f'Cannot find: `{filename}`'
                                         f'locally or in `{try_path}`')
 
-        _load_user_config(path)
+        self.clear()
+        self.update(Config._load_user_config(path))
 
     def reload(self):
         """Reload the config file."""
@@ -135,40 +178,6 @@ def _read_config_file(config_file):
     return cfg
 
 
-def _load_default_config(filename: str):
-    """Load the default configuration."""
-    mapping = _read_config_file(filename)
-    CFG_DEFAULT.update(mapping)
-
-
-def _load_user_config(filename: str, raise_exception: bool = True):
-    """Load user configuration from the given file.
-
-    The config is cleared and updated in-place.
-
-    Parameters
-    ----------
-    filename: pathlike
-        Name of the config file, must be yaml format
-    raise_exception : bool
-        Raise an exception if `filename` can not be found (default).
-        Otherwise, silently pass and use the default configuration. This
-        setting is necessary for the case where `.esmvaltool/config-user.yml`
-        has not been defined (i.e. first start).
-    """
-    try:
-        mapping = _read_config_file(filename)
-        mapping['config_file'] = filename
-    except IOError:
-        if raise_exception:
-            raise
-        mapping = {}
-
-    CFG.clear()
-    CFG.update(CFG_DEFAULT)
-    CFG.update(mapping)
-
-
 DEFAULT_CONFIG_DIR = Path(esmvalcore.__file__).parent
 DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / 'config-user.yml'
 
@@ -176,9 +185,5 @@ USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders
-CFG_DEFAULT = Config()
-CFG = Config()
-
-# update config objects
-_load_default_config(DEFAULT_CONFIG)
-_load_user_config(USER_CONFIG, raise_exception=False)
+CFG_DEFAULT = Config._load_default_config(DEFAULT_CONFIG)
+CFG = Config._load_user_config(USER_CONFIG, raise_exception=False)
