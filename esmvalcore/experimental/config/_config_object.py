@@ -15,7 +15,11 @@ URL = ('https://docs.esmvaltool.org/projects/'
 
 
 class Config(ValidatedConfig):
-    """ESMValTool configuration object."""
+    """ESMValTool configuration object.
+
+    Do not instantiate this class directly, but use
+    :obj:`esmvalcore.experimental.CFG` instead.
+    """
 
     _validate = _validators
     _warn_if_missing = (
@@ -59,6 +63,9 @@ class Config(ValidatedConfig):
 
 class Session(ValidatedConfig):
     """Container class for session configuration and directory information.
+
+    Do not instantiate this class directly, but use
+    :obj:`CFG.start_session` instead.
 
     Parameters
     ----------

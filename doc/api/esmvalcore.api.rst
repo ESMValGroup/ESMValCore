@@ -130,10 +130,14 @@ Unlike the global configuration, of which only one can exist, multiple sessions 
 API reference
 *************
 
-.. autoclass:: esmvalcore.experimental.config._config_object.Config
+.. autoclass:: esmvalcore.experimental.config.CFG
     :no-inherited-members:
     :no-show-inheritance:
 
-.. autoclass:: esmvalcore.experimental.config._config_object.Session
+.. autoclass:: esmvalcore.experimental.config.Config
+    :no-inherited-members:
+    :no-show-inheritance:
+
+.. autoclass:: esmvalcore.experimental.config.Session
     :no-inherited-members:
     :no-show-inheritance:
