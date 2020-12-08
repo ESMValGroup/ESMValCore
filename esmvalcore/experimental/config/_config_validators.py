@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
 
+from esmvalcore import __version__ as current_version
 from esmvalcore._config import load_config_developer
 from esmvalcore._recipe import TASKSEP
 from esmvalcore.cmor.check import CheckLevels
@@ -231,8 +232,6 @@ def deprecate(func, variable, version: str = None):
         Version to deprecate the variable in, should be something
         like '2.2.3'
     """
-    from esmvalcore import __version__ as current_version
-
     if not version:
         version = 'a future version'
 
