@@ -45,7 +45,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
-    # DEPRECATED: remove in v2.3
+    # DEPRECATED: remove in v2.4
     for setting in ('write_plots', 'write_netcdf', 'output_file_type'):
         if setting in cfg:
             msg = (
@@ -62,7 +62,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         options = dict()
     for key, value in options.items():
         cfg[key] = value
-        # DEPRECATED: remove in v2.3
+        # DEPRECATED: remove in v2.4
         if key in ('write_plots', 'write_netcdf', 'output_file_type'):
             msg = (
                 f"Setting '{key}' from the command line is deprecated and "
@@ -85,7 +85,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         'profile_diagnostic': False,
         'config_developer_file': None,
         'drs': {},
-        # DEPRECATED: remove default settings below in v2.3
+        # DEPRECATED: remove default settings below in v2.4
         'write_plots': True,
         'write_netcdf': True,
         'output_file_type': 'png',

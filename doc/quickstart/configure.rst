@@ -107,11 +107,11 @@ with explanations in a commented line above each option:
     CMIP5: default
 
 ..
-   DEPRECATED: remove in v2.3
+   DEPRECATED: remove in v2.4
 
 There used to be a setting ``write_plots``, ``write_netcdf``, and ``output_file_type``
 in the config user file, but these have been deprecated since ESMValCore v2.1 and
-will be removed in v2.3, because only some diagnostic scripts supported these settings.
+will be removed in v2.4, because only some diagnostic scripts supported these settings.
 For those diagnostic scripts that do support these settings, they can now be configured
 in the diagnostic script section of the recipe.
 

@@ -1249,7 +1249,7 @@ class Recipe:
                 settings[key] = self._cfg[key]
 
             # Add deprecated settings from configuration file
-            # DEPRECATED: remove in v2.3
+            # DEPRECATED: remove in v2.4
             for key in (
                     'output_file_type',
                     'write_plots',

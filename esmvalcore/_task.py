@@ -380,7 +380,7 @@ class DiagnosticTask(BaseTask):
 
         # Still add deprecated keys to config_user_info to avoid
         # crashing the diagnostic script that need this.
-        # DEPRECATED: remove in v2.3
+        # DEPRECATED: remove in v2.4
         for key in ('write_plots', 'write_netcdf', 'output_file_type'):
             if key in self.settings:
                 settings['config_user_info'][key] = self.settings[key]
