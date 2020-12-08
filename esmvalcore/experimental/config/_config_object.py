@@ -54,7 +54,6 @@ class Config(ValidatedConfig):
                 raise
             mapping = {}
 
-        new.clear()
         new.update(CFG_DEFAULT)
         new.update(mapping)
 
