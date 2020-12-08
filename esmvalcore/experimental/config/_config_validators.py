@@ -5,6 +5,10 @@ from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
 
+from esmvalcore._config import load_config_developer
+from esmvalcore._recipe import TASKSEP
+from esmvalcore.cmor.check import CheckLevels
+
 
 class ValidationError(ValueError):
     """Custom validation error."""
@@ -180,7 +184,6 @@ def validate_oldstyle_drs(value):
 
 def validate_config_developer(value):
     """Validate and load config developer path."""
-    from esmvalcore._config import load_config_developer
     path = validate_path_or_none(value)
 
     load_config_developer(path)
@@ -190,8 +193,6 @@ def validate_config_developer(value):
 
 def validate_check_level(value):
     """Validate CMOR level check."""
-    from esmvalcore.cmor.check import CheckLevels
-
     if isinstance(value, str):
         try:
             value = CheckLevels[value.upper()]
@@ -207,8 +208,6 @@ def validate_check_level(value):
 
 def validate_diagnostics(diagnostics):
     """Validate diagnostic location."""
-    from esmvalcore._recipe import TASKSEP
-
     if isinstance(diagnostics, str):
         diagnostics = diagnostics.strip().split(' ')
     return {
