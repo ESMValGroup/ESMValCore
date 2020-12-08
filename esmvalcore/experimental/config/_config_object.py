@@ -126,11 +126,10 @@ class Session(ValidatedConfig):
         self.set_session_name(name)
 
     def set_session_name(self, name: str = 'session'):
-        """Initialize session.
+        """Set the name for the session.
 
-        The `name` is used to name the working directory, e.g.
-        `recipe_example_20200916/`. If no name is given, such as in an
-        interactive session, defaults to `session`.
+        The `name` is used to name the session directory, e.g.
+        `session_20201208_132800/`. The date is suffixed automatically.
         """
         now = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         self.session_name = f"{name}_{now}"
