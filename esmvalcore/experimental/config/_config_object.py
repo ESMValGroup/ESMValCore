@@ -29,7 +29,7 @@ class Config(ValidatedConfig):
 
     @staticmethod
     def load_from_file(filename):
-        """Reload user configuration from the given file."""
+        """Load user configuration from the given file."""
         path = Path(filename).expanduser()
         if not path.exists():
             try_path = USER_CONFIG_DIR / filename
