@@ -5,8 +5,6 @@ import pytest
 from cf_units import Unit
 
 from esmvalcore.cmor._fixes.shared import (
-    _get_altitude_to_pressure_func,
-    _get_pressure_to_altitude_func,
     add_altitude_from_plev,
     add_aux_coords_from_cubes,
     add_plev_from_altitude,
@@ -15,20 +13,19 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_typeland_coord,
     add_scalar_typesea_coord,
     add_sigma_factory,
-    altitude_to_pressure,
     cube_to_aux_coord,
     fix_bounds,
+    get_altitude_to_pressure_func,
     get_bounds_cube,
-    pressure_to_altitude,
+    get_pressure_to_altitude_func,
     round_coordinates,
 )
 from esmvalcore.iris_helpers import var_name_constraint
 
 
-@pytest.mark.parametrize('func', [altitude_to_pressure,
-                                  _get_altitude_to_pressure_func()])
-def test_altitude_to_pressure_func(func):
+def test_altitude_to_pressure_func():
     """Test altitude to pressure function."""
+    func = get_altitude_to_pressure_func()
     assert callable(func)
     np.testing.assert_allclose(func(-6000.0), 196968.01058487315)
     np.testing.assert_allclose(func(-5000.0), 177687.0)
@@ -40,10 +37,9 @@ def test_altitude_to_pressure_func(func):
                                [101325.0, 100129.0])
 
 
-@pytest.mark.parametrize('func', [pressure_to_altitude,
-                                  _get_pressure_to_altitude_func()])
-def test_pressure_to_altitude_func(func):
+def test_pressure_to_altitude_func():
     """Test pressure to altitude function."""
+    func = get_pressure_to_altitude_func()
     assert callable(func)
     np.testing.assert_allclose(func(200000.0), -6166.332306480035)
     np.testing.assert_allclose(func(177687.0), -5000.0)
