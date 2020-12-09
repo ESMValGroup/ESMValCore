@@ -243,6 +243,13 @@ the name of the desired coordinate:
           scheme: linear_horizontal_extrapolate_vertical
           coordinate: air_pressure
 
+If ``coordinate`` is specified, pressure levels (if present) can be converted
+to height levels and vice versa using the US standard atmosphere. E.g.
+``coordinate = altitude`` will convert existing pressure levels
+(air_pressure) to height levels (altitude);
+``coordinate = air_pressure`` will convert existing height levels
+(altitude) to pressure levels (air_pressure).
+
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
 
