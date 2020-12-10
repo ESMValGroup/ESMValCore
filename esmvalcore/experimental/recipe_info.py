@@ -24,18 +24,22 @@ class Author:
         self.institute = institute
         self.orcid = orcid
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return canonical string representation."""
         return (f'{self.__class__.__name__}({self.name!r},'
                 f' institute={self.institute!r}, orcid={self.orcid!r})')
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representation."""
         s = f'{self.name} ({self.institute}'
         if self.orcid:
             s += f'; {self.orcid}'
         s += ')'
         return s
+
+    def _repr_markdown_(self):
+        """Represent using markdown renderer in a notebook environment."""
+        return str(self)
 
     @classmethod
     def from_tag(cls, tag: str):
@@ -54,20 +58,20 @@ class Author:
 
 class Project:
     """Contains author information."""
-    def __init__(self, project):
+    def __init__(self, project: str):
         self.project = project
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return canonical string representation."""
         return f'{self.__class__.__name__}({self.project!r})'
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representation."""
         s = f'{self.project}'
         return s
 
     @classmethod
-    def from_tag(cls, tag):
+    def from_tag(cls, tag: str):
         """Return an instance of Project from a tag (TAGS).
 
         The project tags are defined in `config-references.yml`.
@@ -77,6 +81,7 @@ class Project:
 
 
 class Reference:
+    """Contains reference information."""
     def __init__(self, filename):
         parser = bibtex.Parser(strict=False)
         try:
@@ -94,7 +99,12 @@ class Reference:
         self._filename = filename
 
     @classmethod
-    def from_tag(cls, tag):
+    def from_tag(cls, tag: str):
+        """Return an instance of Reference from a bibtex tag.
+
+        The bibtex tags resolved as
+        `esmvaltool/references/{tag}.bibtex`.
+        """
         filename = Path(REFERENCES_PATH, f'{tag}.bibtex')
         return cls(filename)
 
@@ -104,21 +114,22 @@ class Reference:
 
     def __str__(self):
         """Return string representation."""
-        return self.render(backend='plaintext')
+        return self.render(renderer='plaintext')
 
     def _repr_markdown_(self):
         """Represent using markdown renderer in a notebook environment."""
-        return self.render(backend='markdown')
+        return self.render(renderer='markdown')
 
-    def render(self, backend: str = 'plaintext') -> str:
+    def render(self, renderer: str = 'plaintext') -> str:
         """
         Parameters
         ----------
-        backend : str
+        renderer : str
+            Choose the Renderer for the string representation.
             Must be one of: 'plaintext', 'markdown', 'html', 'latex'
         """
         style = 'plain'  # alpha, plain, unsrt, unsrtalpha
-        backend = pybtex.plugin.find_plugin('pybtex.backends', backend)()
+        backend = pybtex.plugin.find_plugin('pybtex.backends', renderer)()
         style = pybtex.plugin.find_plugin('pybtex.style.formatting', style)()
 
         try:
@@ -131,8 +142,14 @@ class Reference:
 
 
 class RecipeInfo():
-    """Contains Recipe metadata."""
-    def __init__(self, path):
+    """Contains Recipe metadata.
+
+    Parameters
+    ----------
+    path : pathlike
+        Path to the recipe.
+    """
+    def __init__(self, path: str):
         self.path = path
 
         self._mapping = None
@@ -141,20 +158,32 @@ class RecipeInfo():
         self._references = None
         self._description = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return canonical string representation."""
-        return f'{self.__class__.__name__}({str(self.path)!r})'
+        return f'{self.__class__.__name__}({self.name!r})'
 
-    def _repr_markdown_(self):
+    def _repr_markdown_(self) -> str:
         """Represent using markdown renderer in a notebook environment."""
-        return self.to_markdown()
+        return self.render('markdown')
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representation."""
-        return self.to_markdown()
+        return self.render('plaintext')
 
     def to_markdown(self) -> str:
         """Return markdown formatted string."""
+        return self.render('markdown')
+
+    def render(self, renderer: str = 'plaintext') -> str:
+        """Return formatted string.
+
+        Parameters
+        ----------
+        renderer : str
+            Choose the renderer for the string representation.
+            Must be one of 'plaintext', 'markdown'
+        """
+        bullet = '\n - '
         s = f'## {self.name}'
 
         s += '\n\n'
@@ -162,30 +191,31 @@ class RecipeInfo():
 
         s += '\n\n### Authors'
         for author in self.authors:
-            s += f'\n- {author}'
+            s += f'{bullet}{author}'
 
         if self.projects:
             s += '\n\n### Projects'
             for project in self.projects:
-                s += f'\n- {project}'
+                s += f'{bullet}{project}'
 
         if self.references:
             s += '\n\n### References'
             for reference in self.references:
-                s += f'\n- {reference}'
+                s += bullet + reference.render(renderer)
 
         s += '\n'
 
         return s
 
     @property
-    def mapping(self):
+    def mapping(self) -> dict:
+        """Dictionary representation of the recipe."""
         if self._mapping is None:
             self._mapping = yaml.safe_load(open(self.path, 'r'))
         return self._mapping
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Name of the recipe."""
         return self.path.stem.replace('_', ' ').capitalize()
 

@@ -8,10 +8,11 @@ from esmvalcore._config import DIAGNOSTICS_PATH
 from .recipe_info import RecipeInfo
 
 
-def get_recipes_list() -> list:
+def get_recipes() -> list:
     """Return a list of all available recipes."""
     rootdir = Path(DIAGNOSTICS_PATH, 'recipes')
-    return list(rootdir.glob('**/*.yml'))
+    files = rootdir.glob('**/*.yml')
+    return [RecipeInfo(file) for file in files]
 
 
 def find_recipes(query: str) -> list:
@@ -31,16 +32,15 @@ def find_recipes(query: str) -> list:
     recipes : list
         Returns a list of recipes matching the search query.
     """
-    recipes = get_recipes_list()
+    recipes = get_recipes()
 
     query = re.compile(query, flags=re.IGNORECASE)
 
     result = []
 
     for recipe in recipes:
-        recipe_info = RecipeInfo(recipe)
-        match = re.search(query, recipe_info.to_markdown())
+        match = re.search(query, str(recipe))
         if match:
-            result.append(recipe_info)
+            result.append(recipe)
 
     return result
