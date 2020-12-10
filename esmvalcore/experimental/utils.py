@@ -39,7 +39,7 @@ def find_recipes(query: str) -> list:
 
     for recipe in recipes:
         recipe_info = RecipeInfo(recipe)
-        match = re.search(query, recipe_info.info())
+        match = re.search(query, recipe_info.to_markdown())
         if match:
             result.append(recipe_info)
 

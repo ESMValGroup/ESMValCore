@@ -76,6 +76,11 @@ REQUIREMENTS = {
         'yamllint',
         'yapf',
     ],
+    # Dependencies for API
+    # Use pip install .[api] to install
+    'api': [
+        'pybtex',
+    ]
 }
 
 
@@ -210,6 +215,7 @@ setup(
     extras_require={
         'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
         'test': REQUIREMENTS['test'],
+        'api': REQUIREMENTS['api'],
     },
     entry_points={
         'console_scripts': [

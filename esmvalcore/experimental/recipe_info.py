@@ -3,12 +3,18 @@
 import textwrap
 from pathlib import Path
 
+import pybtex
 import yaml
+from pybtex.database.input import bibtex
 
 from esmvalcore._citation import REFERENCES_PATH
 from esmvalcore._config import TAGS
 
 # TODO: Look into `functools.cached_property` for lazy evaluation (python 3.8+)
+
+
+class RenderError(BaseException):
+    """Error during rendering of object."""
 
 
 class Author:
@@ -21,13 +27,14 @@ class Author:
     def __repr__(self):
         """Return canonical string representation."""
         return (f'{self.__class__.__name__}({self.name!r},'
-                ' institute={self.institute!r}, orcid={self.orcid!r})')
+                f' institute={self.institute!r}, orcid={self.orcid!r})')
 
     def __str__(self):
         """Return string representation."""
-        s = f'{self.name} ({self.institute})'
+        s = f'{self.name} ({self.institute}'
         if self.orcid:
-            s += f'\n{self.orcid}'
+            s += f'; {self.orcid}'
+        s += ')'
         return s
 
     @classmethod
@@ -69,6 +76,60 @@ class Project:
         return cls(project=project)
 
 
+class Reference:
+    def __init__(self, filename):
+        parser = bibtex.Parser(strict=False)
+        try:
+            bib_data = parser.parse_file(filename)
+        except Exception as err:
+            raise IOError(f'Error parsing {filename}: {err}') from None
+
+        if len(bib_data.entries) > 1:
+            raise NotImplementedError(
+                f'{self.__class__.__name__} cannot handle bibtex files '
+                'with more than 1 entry.')
+
+        self._bib_data = bib_data
+        self._key, self._entry = list(bib_data.entries.items())[0]
+        self._filename = filename
+
+    @classmethod
+    def from_tag(cls, tag):
+        filename = Path(REFERENCES_PATH, f'{tag}.bibtex')
+        return cls(filename)
+
+    def __repr__(self):
+        """Return canonical string representation."""
+        return f'{self.__class__.__name__}({self._key!r})'
+
+    def __str__(self):
+        """Return string representation."""
+        return self.render(backend='plaintext')
+
+    def _repr_markdown_(self):
+        """Represent using markdown renderer in a notebook environment."""
+        return self.render(backend='markdown')
+
+    def render(self, backend: str = 'plaintext') -> str:
+        """
+        Parameters
+        ----------
+        backend : str
+            Must be one of: 'plaintext', 'markdown', 'html', 'latex'
+        """
+        style = 'plain'  # alpha, plain, unsrt, unsrtalpha
+        backend = pybtex.plugin.find_plugin('pybtex.backends', backend)()
+        style = pybtex.plugin.find_plugin('pybtex.style.formatting', style)()
+
+        try:
+            formatter = style.format_entry(self._key, self._entry)
+            rendered = formatter.text.render(backend)
+        except Exception as e:
+            raise RenderError(f'Could not render {self._key!r}: {e}') from None
+
+        return rendered
+
+
 class RecipeInfo():
     """Contains Recipe metadata."""
     def __init__(self, path):
@@ -83,6 +144,10 @@ class RecipeInfo():
     def __repr__(self):
         """Return canonical string representation."""
         return f'{self.__class__.__name__}({str(self.path)!r})'
+
+    def _repr_markdown_(self):
+        """Represent using markdown renderer in a notebook environment."""
+        return self.to_markdown()
 
     def __str__(self):
         """Return string representation."""
@@ -152,8 +217,6 @@ class RecipeInfo():
     def references(self) -> tuple:
         """List of project references."""
         if self._references is None:
-            references = self.mapping['documentation'].get('references', [])
-            self._references = tuple(
-                Path(REFERENCES_PATH, f'{reference}.bibtex')
-                for reference in references)
+            tags = self.mapping['documentation'].get('references', [])
+            self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
