@@ -242,4 +242,5 @@ class Thetao(Fix):
             if cube.attributes['mipTable'] in broken_mips:
                 olev_coord = cube.coord('lev')
                 olev_coord.convert_units(Unit('m'))
+                olev_coord.standard_name = "depth"
         return cubes
