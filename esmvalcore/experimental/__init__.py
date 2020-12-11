@@ -9,11 +9,11 @@ warnings.warn(
 
 from .config import CFG  # noqa: E402
 from .recipe_info import RecipeInfo  # noqa: E402
-from .utils import find_recipes, get_recipes  # noqa: E402
+from .utils import RecipeList, get_recipes  # noqa: E402
 
 __all__ = [
     'CFG',
     'get_recipes',
-    'find_recipes',
     'RecipeInfo',
+    'RecipeList',
 ]
