@@ -246,6 +246,10 @@ Depending on the installation configuration, you may get an error of
 "file does not exist" when the system tries to run the diagnostic script
 using relative paths. If this happens, use an absolute path instead.
 
+Note that the script should either have the extension for a supported language,
+i.e. ``.py``, ``.R``, ``.ncl``, or ``.jl`` for Python, R, NCL, and Julia diagnostics
+respectively, or be executable if it is written in any other language.
+
 Ancestor tasks
 --------------
 Some tasks require the result of other tasks to be ready before they can start,

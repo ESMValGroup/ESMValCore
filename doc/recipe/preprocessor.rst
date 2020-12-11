@@ -19,6 +19,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Area operations`
 * :ref:`Volume operations`
 * :ref:`Cycles`
+* :ref:`Trend`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
 * :ref:`Other`
@@ -241,6 +242,13 @@ the name of the desired coordinate:
           levels: ERA-Interim
           scheme: linear_horizontal_extrapolate_vertical
           coordinate: air_pressure
+
+If ``coordinate`` is specified, pressure levels (if present) can be converted
+to height levels and vice versa using the US standard atmosphere. E.g.
+``coordinate = altitude`` will convert existing pressure levels
+(air_pressure) to height levels (altitude);
+``coordinate = air_pressure`` will convert existing height levels
+(altitude) to pressure levels (air_pressure).
 
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
@@ -767,7 +775,8 @@ See also :func:`esmvalcore.preprocessor.extract_time`.
 Extract only the times that occur within a specific season.
 
 This function only has one argument: ``season``. This is the named season to
-extract. ie: DJF, MAM, JJA, SON.
+extract, i.e. DJF, MAM, JJA, SON, but also all other sequentially correct
+combinations, e.g. JJAS.
 
 Note that this function does not change the time resolution. If your original
 data is in monthly time resolution, then this function will return three
@@ -820,11 +829,11 @@ See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 ``seasonal_statistics``
 -----------------------
 
-This function produces statistics for each season (DJF, MAM, JJA, SON) in the
-dataset. Note that this function will not check for missing time points.
-For instance, if you are looking at the DJF field, but your datasets
-starts on January 1st, the first DJF field will only contain data
-from January and February.
+This function produces statistics for each season (default: "(DJF, MAM, JJA,
+SON)" or custom seasons e.g. "(JJAS, ONDJFMAM)" ) in the dataset. Note that
+this function will not check for missing time points. For instance, if you are
+looking at the DJF field, but your datasets starts on January 1st, the first
+DJF field will only contain data from January and February.
 
 We recommend using the extract_time to start the dataset from the following
 December and remove such biased initial datapoints.
@@ -832,6 +841,9 @@ December and remove such biased initial datapoints.
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
       'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+
+    * seasons: seasons to build statistics.
+      Default is '(DJF, MAM, JJA, SON)'
 
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
@@ -878,6 +890,9 @@ Parameters:
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
 
+    * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
+      Default is '(DJF, MAM, JJA, SON)'
+
 Examples:
     * Monthly climatology:
 
@@ -923,7 +938,8 @@ Parameters:
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
-
+    * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
+      Default is '(DJF, MAM, JJA, SON)'
 Examples:
     * Anomalies from the full period climatology:
 
@@ -1172,7 +1188,7 @@ as a CMOR variable can permit):
 
     fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
@@ -1232,7 +1248,7 @@ as a CMOR variable can permit):
 
     fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
@@ -1312,6 +1328,39 @@ use ``coords: [year, day_of_year]``.
 See also :func:`esmvalcore.preprocessor.amplitude`.
 
 
+.. _trend:
+
+Trend
+=====
+
+The trend module contains the following preprocessor functions:
+
+* ``linear_trend``: Calculate linear trend along a specified coordinate.
+* ``linear_trend_stderr``: Calculate standard error of linear trend along a
+  specified coordinate.
+
+``linear_trend``
+----------------
+
+This function calculates the linear trend of a dataset (defined as slope of an
+ordinary linear regression) along a specified coordinate. The only argument of
+this preprocessor is ``coordinate`` (given as :obj:`str`; default value is
+``'time'``).
+
+See also :func:`esmvalcore.preprocessor.linear_trend`.
+
+``linear_trend_stderr``
+-----------------------
+
+This function calculates the standard error of the linear trend of a dataset
+(defined as the standard error of the slope in an ordinary linear regression)
+along a specified coordinate. The only argument of this preprocessor is
+``coordinate`` (given as :obj:`str`; default value is ``'time'``). Note that
+the standard error is **not** identical to a confidence interval.
+
+See also :func:`esmvalcore.preprocessor.linear_trend_stderr`.
+
+
 .. _detrend:
 
 Detrend
@@ -1333,6 +1382,7 @@ If method is ``constant``, detrend will compute the mean along that dimension
 and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
+
 
 .. _unit conversion:
 

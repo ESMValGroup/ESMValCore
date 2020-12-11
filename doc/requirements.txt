@@ -2,7 +2,6 @@ autodocsumm
 dask[array]
 fiona
 netCDF4
-numba
 numpy
 pandas
 pillow
