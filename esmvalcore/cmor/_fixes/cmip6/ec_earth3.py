@@ -26,6 +26,7 @@ class Siconca(Fix):
 
 class Tas(Fix):
     """Fixes for tas."""
+    
     def fix_metadata(self, cubes):
         """Fix latitude points and bounds.
 
