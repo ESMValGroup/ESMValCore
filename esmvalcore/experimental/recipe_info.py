@@ -17,8 +17,8 @@ class RenderError(BaseException):
     """Error during rendering of object."""
 
 
-class Author:
-    """Contains author information."""
+class Contributor:
+    """Contains contributor (author or maintainer) information."""
     def __init__(self, name: str, institute: str, orcid: str = None):
         self.name = name
         self.institute = institute
@@ -43,9 +43,10 @@ class Author:
 
     @classmethod
     def from_tag(cls, tag: str):
-        """Return an instance of Author from a tag (TAGS).
+        """Return an instance of Contributor from a tag (TAGS).
 
-        The author tags are defined in `config-references.yml`.
+        Contributors are defined by author tags in
+        `config-references.yml`.
         """
         mapping = TAGS['authors'][tag]
 
@@ -154,6 +155,7 @@ class RecipeInfo():
 
         self._mapping = None
         self._authors = None
+        self._maintainers = None
         self._projects = None
         self._references = None
         self._description = None
@@ -189,7 +191,7 @@ class RecipeInfo():
         s += '\n\n'
         s += f'{self.description}'
 
-        s += '\n\n### Authors'
+        s += '\n\n### Contributors'
         for author in self.authors:
             s += f'{bullet}{author}'
 
@@ -232,8 +234,17 @@ class RecipeInfo():
         """List of recipe authors."""
         if self._authors is None:
             tags = self.mapping['documentation']['authors']
-            self._authors = tuple(Author.from_tag(tag) for tag in tags)
+            self._authors = tuple(Contributor.from_tag(tag) for tag in tags)
         return self._authors
+
+    @property
+    def maintainers(self) -> tuple:
+        """List of recipe maintainers."""
+        if self._maintainers is None:
+            tags = self.mapping['documentation']['maintainer']
+            self._maintainers = tuple(
+                Contributor.from_tag(tag) for tag in tags)
+        return self._maintainers
 
     @property
     def projects(self) -> tuple:
