@@ -775,7 +775,8 @@ See also :func:`esmvalcore.preprocessor.extract_time`.
 Extract only the times that occur within a specific season.
 
 This function only has one argument: ``season``. This is the named season to
-extract. ie: DJF, MAM, JJA, SON.
+extract, i.e. DJF, MAM, JJA, SON, but also all other sequentially correct
+combinations, e.g. JJAS.
 
 Note that this function does not change the time resolution. If your original
 data is in monthly time resolution, then this function will return three
@@ -828,11 +829,11 @@ See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 ``seasonal_statistics``
 -----------------------
 
-This function produces statistics for each season (DJF, MAM, JJA, SON) in the
-dataset. Note that this function will not check for missing time points.
-For instance, if you are looking at the DJF field, but your datasets
-starts on January 1st, the first DJF field will only contain data
-from January and February.
+This function produces statistics for each season (default: "(DJF, MAM, JJA,
+SON)" or custom seasons e.g. "(JJAS, ONDJFMAM)" ) in the dataset. Note that
+this function will not check for missing time points. For instance, if you are
+looking at the DJF field, but your datasets starts on January 1st, the first
+DJF field will only contain data from January and February.
 
 We recommend using the extract_time to start the dataset from the following
 December and remove such biased initial datapoints.
@@ -840,6 +841,9 @@ December and remove such biased initial datapoints.
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
       'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+
+    * seasons: seasons to build statistics.
+      Default is '(DJF, MAM, JJA, SON)'
 
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
@@ -886,6 +890,9 @@ Parameters:
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
 
+    * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
+      Default is '(DJF, MAM, JJA, SON)'
+
 Examples:
     * Monthly climatology:
 
@@ -931,7 +938,8 @@ Parameters:
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
-
+    * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
+      Default is '(DJF, MAM, JJA, SON)'
 Examples:
     * Anomalies from the full period climatology:
 
@@ -1180,7 +1188,7 @@ as a CMOR variable can permit):
 
     fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
@@ -1240,7 +1248,7 @@ as a CMOR variable can permit):
 
     fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
