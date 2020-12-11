@@ -43,10 +43,10 @@ class Contributor:
 
     @classmethod
     def from_tag(cls, tag: str):
-        """Return an instance of Contributor from a tag (TAGS).
+        """Return an instance of Contributor from a tag (``TAGS``).
 
         Contributors are defined by author tags in
-        `config-references.yml`.
+        ``config-references.yml``.
         """
         mapping = TAGS['authors'][tag]
 
@@ -73,9 +73,9 @@ class Project:
 
     @classmethod
     def from_tag(cls, tag: str):
-        """Return an instance of Project from a tag (TAGS).
+        """Return an instance of Project from a tag (``TAGS``).
 
-        The project tags are defined in `config-references.yml`.
+        The project tags are defined in ``config-references.yml``.
         """
         project = TAGS['projects'][tag]
         return cls(project=project)
@@ -104,7 +104,7 @@ class Reference:
         """Return an instance of Reference from a bibtex tag.
 
         The bibtex tags resolved as
-        `esmvaltool/references/{tag}.bibtex`.
+        ``esmvaltool/references/{tag}.bibtex``.
         """
         filename = Path(REFERENCES_PATH, f'{tag}.bibtex')
         return cls(filename)
@@ -122,12 +122,18 @@ class Reference:
         return self.render(renderer='markdown')
 
     def render(self, renderer: str = 'plaintext') -> str:
-        """
+        """Render the reference.
+
         Parameters
         ----------
         renderer : str
-            Choose the Renderer for the string representation.
+            Choose the renderer for the string representation.
             Must be one of: 'plaintext', 'markdown', 'html', 'latex'
+
+        Returns
+        -------
+        str
+            Rendered reference
         """
         style = 'plain'  # alpha, plain, unsrt, unsrtalpha
         backend = pybtex.plugin.find_plugin('pybtex.backends', renderer)()
