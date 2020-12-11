@@ -388,4 +388,5 @@ def test_thetao_fix_metadata(thetao_cubes):
     assert out_cubes is thetao_cubes
     expected_levs = [5., 10.]
     for cube in out_cubes:
-        np.testing.assert_equal(cube.coord("lev").points, expected_levs)
+        assert cube.coord(var_name="lev").standard_name == "depth"
+        np.testing.assert_equal(cube.coord("depth").points, expected_levs)
