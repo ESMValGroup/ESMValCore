@@ -151,9 +151,11 @@ class RecipeInfo():
         Path to the recipe.
     """
     def __init__(self, path: str):
-        self.path = path
+        self.path = Path(path)
+        if not self.path.exists():
+            raise FileNotFoundError(f'Cannot find recipe: `{path}`.')
 
-        self._mapping = None
+        self._data = None
         self._authors = None
         self._maintainers = None
         self._projects = None
@@ -210,11 +212,11 @@ class RecipeInfo():
         return s
 
     @property
-    def mapping(self) -> dict:
+    def data(self) -> dict:
         """Dictionary representation of the recipe."""
-        if self._mapping is None:
-            self._mapping = yaml.safe_load(open(self.path, 'r'))
-        return self._mapping
+        if self._data is None:
+            self._data = yaml.safe_load(open(self.path, 'r'))
+        return self._data
 
     @property
     def name(self) -> str:
@@ -225,7 +227,7 @@ class RecipeInfo():
     def description(self) -> str:
         """Recipe description."""
         if self._description is None:
-            description = self.mapping['documentation']['description']
+            description = self.data['documentation']['description']
             self._description = '\n'.join(textwrap.wrap(description))
         return self._description
 
@@ -233,7 +235,7 @@ class RecipeInfo():
     def authors(self) -> tuple:
         """List of recipe authors."""
         if self._authors is None:
-            tags = self.mapping['documentation']['authors']
+            tags = self.data['documentation']['authors']
             self._authors = tuple(Contributor.from_tag(tag) for tag in tags)
         return self._authors
 
@@ -241,7 +243,7 @@ class RecipeInfo():
     def maintainers(self) -> tuple:
         """List of recipe maintainers."""
         if self._maintainers is None:
-            tags = self.mapping['documentation']['maintainer']
+            tags = self.data['documentation']['maintainer']
             self._maintainers = tuple(
                 Contributor.from_tag(tag) for tag in tags)
         return self._maintainers
@@ -250,7 +252,7 @@ class RecipeInfo():
     def projects(self) -> tuple:
         """List of recipe projects."""
         if self._projects is None:
-            tags = self.mapping['documentation'].get('projects', [])
+            tags = self.data['documentation'].get('projects', [])
             self._projects = tuple(Project.from_tag(tag) for tag in tags)
         return self._projects
 
@@ -258,6 +260,6 @@ class RecipeInfo():
     def references(self) -> tuple:
         """List of project references."""
         if self._references is None:
-            tags = self.mapping['documentation'].get('references', [])
+            tags = self.data['documentation'].get('references', [])
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
