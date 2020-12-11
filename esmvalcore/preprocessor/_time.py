@@ -464,7 +464,7 @@ def climate_statistics(cube,
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
         'mon', 'daily', 'day'
 
-    seasons: list(str), optional
+    seasons: list or tuple of str, optional
         Seasons to use if needed. Default to ('DJF', 'MAM', 'JJA', 'SON')
 
     Returns
