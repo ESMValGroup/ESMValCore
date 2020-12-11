@@ -530,7 +530,7 @@ def anomalies(cube,
     standardize: bool, optional
         If True standardized anomalies are calculated
 
-    seasons: list(str), optional
+    seasons: list or tuple of str, optional
         Seasons to use if needed. Default to ('DJF', 'MAM', 'JJA', 'SON')
 
     Returns
