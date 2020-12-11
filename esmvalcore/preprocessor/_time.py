@@ -300,7 +300,7 @@ def seasonal_statistics(cube,
         Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
         'max', 'rms'
 
-    seasons: str, optional
+    seasons: list or tuple of str, optional
         Seasons to build. Available: ('DJF', 'MAM', 'JJA', SON') (default)
         and all sequentially correct combinations holding every month
         of a year: e.g. ('JJAS','ONDJFMAM'), or less in case of prior season
