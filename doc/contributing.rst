@@ -33,6 +33,17 @@ adding ``-m 'not installation'`` to the previous command.
 Tests will also be run automatically by
 `CircleCI <https://circleci.com/gh/ESMValGroup/ESMValCore>`__.
 
+Sample data
+-----------
+
+If you need sample data to work with, `this repository <https://github.com/ESMValGroup/ESMValTool_sample_data>`__ contains samples of real data for use with ESMValTool development, demonstration purposes and automated testing. The goal is to keep the repository size small (~ 100 MB), so it can be easily downloaded and distributed.
+
+The data are installed as part of the developer dependencies, and used by some larger tests (i.e. in the `multimodel tests <https://github.com/ESMValGroup/ESMValCore/tree/master/tests/sample_data>`__)
+
+The loading and preprocessing of the data can be somewhat time-consuming (~30 secs) and are cached by ``pytest`` to make the tests more performant.
+Clear the cache by using running pytest with the ``--cache-clear`` flag. To avoid running these tests using sample data, use `pytest -m "not use_sample_data"`.
+If you are adding new tests using sample data, please use the decorator ``@pytest.mark.use_sample_data``.
+
 Code style
 ----------
 
@@ -288,7 +299,7 @@ re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
 Make a pull request and get it merged into ``master``.
 
-3. Create a release branch
+4. Create a release branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 Create a branch off the ``master`` branch and push it to GitHub.
 Ask someone with administrative permissions to set up branch protection rules
@@ -297,7 +308,7 @@ Announce the name of the branch in an issue and ask the members of the
 `ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
 to run their favourite recipe using this branch.
 
-4. Cherry pick bugfixes into the release branch
+5. Cherry pick bugfixes into the release branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If a bug is found and fixed (i.e. pull request merged into the
 ``master`` branch) during the period of testing, use the command
@@ -307,7 +318,7 @@ When the testing period is over, make a pull request to update
 the release notes with the latest changes, get it merged into
 ``master`` and cherry-pick it into the release branch.
 
-5. Make the release on GitHub
+6. Make the release on GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Do a final check that all tests on CircleCI and GitHub Actions completed
@@ -316,7 +327,7 @@ Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
 and create the new release from the release branch (i.e. not from ``master``).
 
-6. Create and upload the Conda package
+7. Create and upload the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
@@ -344,7 +355,7 @@ Follow these steps to create a new conda package:
    conda channel, e.g.
    ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.1.0-py_0.tar.bz2``.
 
-7. Create and upload the PyPI package
+8. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
