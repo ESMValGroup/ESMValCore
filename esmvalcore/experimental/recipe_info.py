@@ -19,6 +19,7 @@ class RenderError(BaseException):
 
 class Contributor:
     """Contains contributor (author or maintainer) information."""
+
     def __init__(self, name: str, institute: str, orcid: str = None):
         self.name = name
         self.institute = institute
@@ -31,11 +32,11 @@ class Contributor:
 
     def __str__(self) -> str:
         """Return string representation."""
-        s = f'{self.name} ({self.institute}'
+        string = f'{self.name} ({self.institute}'
         if self.orcid:
-            s += f'; {self.orcid}'
-        s += ')'
-        return s
+            string += f'; {self.orcid}'
+        string += ')'
+        return string
 
     def _repr_markdown_(self):
         """Represent using markdown renderer in a notebook environment."""
@@ -59,6 +60,7 @@ class Contributor:
 
 class Project:
     """Contains author information."""
+
     def __init__(self, project: str):
         self.project = project
 
@@ -68,8 +70,8 @@ class Project:
 
     def __str__(self) -> str:
         """Return string representation."""
-        s = f'{self.project}'
-        return s
+        string = f'{self.project}'
+        return string
 
     @classmethod
     def from_tag(cls, tag: str):
@@ -83,6 +85,7 @@ class Project:
 
 class Reference:
     """Contains reference information."""
+
     def __init__(self, filename):
         parser = bibtex.Parser(strict=False)
         try:
@@ -142,8 +145,9 @@ class Reference:
         try:
             formatter = style.format_entry(self._key, self._entry)
             rendered = formatter.text.render(backend)
-        except Exception as e:
-            raise RenderError(f'Could not render {self._key!r}: {e}') from None
+        except Exception as err:
+            raise RenderError(
+                f'Could not render {self._key!r}: {err}') from None
 
         return rendered
 
@@ -156,6 +160,7 @@ class RecipeInfo():
     path : pathlike
         Path to the recipe.
     """
+
     def __init__(self, path: str):
         self.path = Path(path)
         if not self.path.exists():
@@ -194,32 +199,32 @@ class RecipeInfo():
             Must be one of 'plaintext', 'markdown'
         """
         bullet = '\n - '
-        s = f'## {self.name}'
+        string = f'## {self.name}'
 
-        s += '\n\n'
-        s += f'{self.description}'
+        string += '\n\n'
+        string += f'{self.description}'
 
-        s += '\n\n### Contributors'
+        string += '\n\n### Contributors'
         for author in self.authors:
-            s += f'{bullet}{author}'
+            string += f'{bullet}{author}'
 
         if self.projects:
-            s += '\n\n### Projects'
+            string += '\n\n### Projects'
             for project in self.projects:
-                s += f'{bullet}{project}'
+                string += f'{bullet}{project}'
 
         if self.references:
-            s += '\n\n### References'
+            string += '\n\n### References'
             for reference in self.references:
-                s += bullet + reference.render(renderer)
+                string += bullet + reference.render(renderer)
 
-        s += '\n'
+        string += '\n'
 
-        return s
+        return string
 
     @property
     def data(self) -> dict:
-        """Dictionary representation of the recipe."""
+        """Return dictionary representation of the recipe."""
         if self._data is None:
             self._data = yaml.safe_load(open(self.path, 'r'))
         return self._data
