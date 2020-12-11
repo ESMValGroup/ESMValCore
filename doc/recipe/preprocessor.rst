@@ -768,7 +768,7 @@ See also :func:`esmvalcore.preprocessor.extract_time`.
 Extract only the times that occur within a specific season.
 
 This function only has one argument: ``season``. This is the named season to
-extract. ie: DJF, MAM, JJA, SON, but also all other sequentially correct
+extract, i.e. DJF, MAM, JJA, SON, but also all other sequentially correct
 combinations, e.g. JJAS.
 
 Note that this function does not change the time resolution. If your original
