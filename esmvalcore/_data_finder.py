@@ -144,7 +144,11 @@ def _apply_caps(original, lower, upper):
 
 
 def _resolve_latestversion(dirname_template):
-    """Resolve the 'latestversion' tag."""
+    """Resolve the 'latestversion' tag.
+
+    This implementation avoid globbing on centralized clusters with very
+    large data root dirs (i.e. ESGF nodes like Jasmin/DKRZ).
+    """
     if '{latestversion}' not in dirname_template:
         return dirname_template
 

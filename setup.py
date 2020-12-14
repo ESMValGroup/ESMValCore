@@ -36,12 +36,13 @@ REQUIREMENTS = {
         'fire',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
-        'numba',
         'numpy',
         'prov[dot]',
         'psutil',
         'pyyaml',
+        'requests',
         'scitools-iris>=2.2',
+        'requests',
         'shapely[vectorized]',
         'stratify',
         'yamale==2.*',
@@ -57,6 +58,8 @@ REQUIREMENTS = {
         'pytest-metadata>=1.5.1',
         'pytest-mock',
         'pytest-xdist',
+        ('ESMValTool_sample_data @ '
+         'git+https://github.com/ESMValGroup/ESMValTool_sample_data@v0.0.1'),
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
