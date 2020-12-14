@@ -19,7 +19,6 @@ class RenderError(BaseException):
 
 class Contributor:
     """Contains contributor (author or maintainer) information."""
-
     def __init__(self, name: str, institute: str, orcid: str = None):
         self.name = name
         self.institute = institute
@@ -46,8 +45,8 @@ class Contributor:
     def from_tag(cls, tag: str):
         """Return an instance of Contributor from a tag (``TAGS``).
 
-        Contributors are defined by author tags in
-        ``config-references.yml``.
+        Contributors are defined by author tags in ``config-
+        references.yml``.
         """
         mapping = TAGS['authors'][tag]
 
@@ -60,7 +59,6 @@ class Contributor:
 
 class Project:
     """Contains author information."""
-
     def __init__(self, project: str):
         self.project = project
 
@@ -85,13 +83,9 @@ class Project:
 
 class Reference:
     """Contains reference information."""
-
     def __init__(self, filename):
         parser = bibtex.Parser(strict=False)
-        try:
-            bib_data = parser.parse_file(filename)
-        except Exception as err:
-            raise IOError(f'Error parsing {filename}: {err}') from None
+        bib_data = parser.parse_file(filename)
 
         if len(bib_data.entries) > 1:
             raise NotImplementedError(
@@ -160,7 +154,6 @@ class RecipeInfo():
     path : pathlike
         Path to the recipe.
     """
-
     def __init__(self, path: str):
         self.path = Path(path)
         if not self.path.exists():
