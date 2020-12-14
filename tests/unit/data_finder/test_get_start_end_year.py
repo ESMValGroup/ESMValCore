@@ -8,6 +8,7 @@ from esmvalcore._data_finder import get_start_end_year
 FILENAME_CASES = [
     ['var_whatever_1980-1981', 1980, 1981],
     ['var_whatever_1980.nc', 1980, 1980],
+    ['a.b.x_yz_185001-200512.nc', 1850, 2005],
     ['var_whatever_19800101-19811231.nc1', 1980, 1981],
     ['var_whatever_19800101.nc', 1980, 1980],
     ['1980-1981_var_whatever.nc', 1980, 1981],
