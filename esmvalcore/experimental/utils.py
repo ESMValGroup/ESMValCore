@@ -10,7 +10,6 @@ from .recipe_info import RecipeInfo
 
 class RecipeList(list):
     """Container for recipes."""
-
     def find(self, query: str):
         """Search for recipes matching the search query or pattern.
 
@@ -40,16 +39,24 @@ class RecipeList(list):
         return matches
 
 
-def get_all_recipes() -> list:
+def get_all_recipes(subdir: str = None) -> list:
     """Return a list of all available recipes.
+
+    Parameters
+    ----------
+    subdir : str
+        Sub-directory of the ``DIAGNOSTICS_PATH`` to look for
+        recipes, e.g. ``get_all_recipes(subdir='examples')``.
 
     Returns
     -------
     RecipeList
         List of available recipes
     """
+    if not subdir:
+        subdir = '**'
     rootdir = Path(DIAGNOSTICS_PATH, 'recipes')
-    files = rootdir.glob('**/*.yml')
+    files = rootdir.glob(f'{subdir}/*.yml')
     return RecipeList(RecipeInfo(file) for file in files)
 
 
