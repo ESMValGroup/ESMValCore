@@ -10,8 +10,6 @@ from pybtex.database.input import bibtex
 from esmvalcore._citation import REFERENCES_PATH
 from esmvalcore._config import TAGS
 
-# TODO: Look into `functools.cached_property` for lazy evaluation (python 3.8+)
-
 
 class RenderError(BaseException):
     """Error during rendering of object."""
@@ -19,6 +17,7 @@ class RenderError(BaseException):
 
 class Contributor:
     """Contains contributor (author or maintainer) information."""
+
     def __init__(self, name: str, institute: str, orcid: str = None):
         self.name = name
         self.institute = institute
@@ -59,6 +58,7 @@ class Contributor:
 
 class Project:
     """Contains author information."""
+
     def __init__(self, project: str):
         self.project = project
 
@@ -83,6 +83,7 @@ class Project:
 
 class Reference:
     """Contains reference information."""
+
     def __init__(self, filename):
         parser = bibtex.Parser(strict=False)
         bib_data = parser.parse_file(filename)
@@ -154,6 +155,7 @@ class RecipeInfo():
     path : pathlike
         Path to the recipe.
     """
+
     def __init__(self, path: str):
         self.path = Path(path)
         if not self.path.exists():
