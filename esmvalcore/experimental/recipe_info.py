@@ -57,7 +57,7 @@ class Contributor:
 
 
 class Project:
-    """Contains author information."""
+    """Contains project information."""
 
     def __init__(self, project: str):
         self.project = project
