@@ -1,40 +1,46 @@
 """Fixes for KIOST-ESM model."""
-import iris
-
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
+
 class Hurs(Fix):
     """Fixes for hurs."""
+
     def fix_metadata(self, cubes):
-        """Add height (2m) coordinate.
+        """
+        Add height (2m) coordinate.
 
         Parameters
         ----------
         cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 2.0)
         return cubes
 
 
-
 class Huss(Fix):
     """Fixes for huss."""
+
     def fix_metadata(self, cubes):
-        """Add height (2m) coordinate.
+        """
+        Add height (2m) coordinate.
 
         Parameters
         ----------
         cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 2.0)
@@ -43,16 +49,20 @@ class Huss(Fix):
 
 class SfcWind(Fix):
     """Fixes for sfcWind."""
+
     def fix_metadata(self, cubes):
-        """Add height (10m) coordinate.
+        """
+        Add height (10m) coordinate.
 
         Parameters
         ----------
         cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
@@ -61,6 +71,7 @@ class SfcWind(Fix):
 
 class Tas(Fix):
     """Fixes for tas."""
+
     def fix_metadata(self, cubes):
         """Add height (2m) coordinate.
 
@@ -79,16 +90,20 @@ class Tas(Fix):
 
 class Uas(Fix):
     """Fixes for uas."""
+
     def fix_metadata(self, cubes):
-        """Add height (10m) coordinate.
+        """
+        Add height (10m) coordinate.
 
         Parameters
         ----------
         cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
@@ -97,16 +112,20 @@ class Uas(Fix):
 
 class Vas(Fix):
     """Fixes for vas."""
+
     def fix_metadata(self, cubes):
-        """Add height (10m) coordinate.
+        """
+        Add height (10m) coordinate.
 
         Parameters
         ----------
         cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
