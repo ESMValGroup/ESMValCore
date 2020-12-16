@@ -273,3 +273,33 @@ class RecipeInfo():
             tags = self.data['documentation'].get('references', [])
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
+
+    def load(self, session=None):
+        """Load the recipe.
+
+        Parameters
+        ----------
+        session : :obj:`Session`
+            Defines the config parameters and location where the recipe
+            output will be stored.
+        """
+
+        if not session:
+            from . import CFG
+            session = CFG.start_session(self.path.stem)
+
+        config_user = session.copy()
+        config_user['run_dir'] = session.run_dir
+        config_user['work_dir'] = session.work_dir
+        config_user['preproc_dir'] = session.preproc_dir
+        config_user['plot_dir'] = session.plot_dir
+
+        # Multiprocessing results in pickling errors in a notebook
+        config_user['max_parallel_tasks'] = 1
+
+        session.run_dir.mkdir(parents=True)
+
+        from esmvalcore._recipe import Recipe
+        recipe = Recipe(self.data, config_user, recipe_file=self.path)
+
+        return recipe
