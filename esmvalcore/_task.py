@@ -12,7 +12,7 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
-from pathlib import Path
+from pathlib import Path, PosixPath
 from shutil import which
 
 import psutil
@@ -21,6 +21,23 @@ import yaml
 from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
+from .cmor.check import CheckLevels
+
+
+def path_representer(dumper, data):
+    """For printing pathlib.Path objects in yaml files."""
+    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+
+
+def check_levels_representer(dumper, data):
+    """For CheckLevel enums in yaml files."""
+    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+
+
+yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
+yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
+yaml.representer.SafeRepresenter.add_representer(CheckLevels,
+                                                 check_levels_representer)
 
 logger = logging.getLogger(__name__)
 
