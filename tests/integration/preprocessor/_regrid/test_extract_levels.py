@@ -101,6 +101,34 @@ class Test(tests.Test):
         del self.shape[self.z_dim]
         self.assertEqual(result.shape, tuple(self.shape))
 
+    def test_add_alt_coord(self):
+        assert self.cube.coords('air_pressure')
+        assert not self.cube.coords('altitude')
+        result = extract_levels(self.cube, [1, 2],
+                                'linear_horizontal_extrapolate_vertical',
+                                coordinate='altitude')
+        assert not result.coords('air_pressure')
+        assert result.coords('altitude')
+        assert result.shape == (2, 2, 2, 2)
+        np.testing.assert_allclose(result.coord('altitude').points,
+                                   [1.0, 2.0])
+
+    def test_add_plev_coord(self):
+        self.cube.coord('air_pressure').standard_name = 'altitude'
+        self.cube.coord('altitude').var_name = 'alt'
+        self.cube.coord('altitude').long_name = 'altitude'
+        self.cube.coord('altitude').units = 'm'
+        assert not self.cube.coords('air_pressure')
+        assert self.cube.coords('altitude')
+        result = extract_levels(self.cube, [1, 2],
+                                'linear_horizontal_extrapolate_vertical',
+                                coordinate='air_pressure')
+        assert result.coords('air_pressure')
+        assert not result.coords('altitude')
+        assert result.shape == (2, 2, 2, 2)
+        np.testing.assert_allclose(result.coord('air_pressure').points,
+                                   [1.0, 2.0])
+
 
 if __name__ == '__main__':
     unittest.main()
