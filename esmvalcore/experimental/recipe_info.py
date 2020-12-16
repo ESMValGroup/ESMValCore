@@ -199,9 +199,13 @@ class RecipeInfo():
         string += '\n\n'
         string += f'{self.description}'
 
-        string += '\n\n### Contributors'
+        string += '\n\n### Authors'
         for author in self.authors:
             string += f'{bullet}{author}'
+
+        string += '\n\n### Maintainers'
+        for maintainer in self.maintainers:
+            string += f'{bullet}{maintainer}'
 
         if self.projects:
             string += '\n\n### Projects'
