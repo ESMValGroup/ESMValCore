@@ -174,7 +174,10 @@ validate_int_positive_or_none = _make_type_validator(validate_int_positive,
 def validate_oldstyle_rootpath(value):
     """Validate `rootpath` mapping."""
     mapping = validate_dict(value)
-    return mapping
+    new_mapping = {}
+    for key, paths in mapping.items():
+        new_mapping[key] = validate_pathlist(paths)
+    return new_mapping
 
 
 def validate_oldstyle_drs(value):
