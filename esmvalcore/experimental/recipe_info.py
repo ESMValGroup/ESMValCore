@@ -12,6 +12,8 @@ from pybtex.database.input import bibtex
 from esmvalcore._citation import REFERENCES_PATH
 from esmvalcore._config import TAGS
 
+from ._logging import log_to_dir
+
 logger = logging.getLogger(__file__)
 
 
@@ -317,33 +319,8 @@ class RecipeInfo():
             from . import CFG
             session = CFG.start_session(self.path.stem)
 
-        session.run_dir.mkdir(parents=True)
-
-        # create file handler which logs even debug messages
-        debug_log_file = logging.FileHandler(session.run_dir /
-                                             'main_log_debug.txt')
-        debug_log_file.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            '%(asctime)s UTC [%(process)d] %(levelname)-7s'
-            ' %(name)s:%(lineno)s %(message)s')
-        debug_log_file.setFormatter(formatter)
-
-        # create file handler which logs simple info messages
-        simple_log_file = logging.FileHandler(session.run_dir / 'main_log.txt')
-        simple_log_file.setLevel(logging.INFO)
-        formatter = logging.Formatter(
-            '%(levelname)-7s [%(process)d] %(message)s')
-        simple_log_file.setFormatter(formatter)
-
-        # add the handlers to root logger
-        logging.root.addHandler(debug_log_file)
-        logging.root.addHandler(simple_log_file)
-
-        recipe = self.load(session=session)
-        output = recipe.run()
-
-        # recipe has finished, so loggers can be removed
-        logging.root.removeHandler(debug_log_file)
-        logging.root.removeHandler(simple_log_file)
+        with log_to_dir(session.run_dir):
+            recipe = self.load(session=session)
+            output = recipe.run()
 
         return output
