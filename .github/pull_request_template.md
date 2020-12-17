@@ -12,6 +12,7 @@
 
     Please fill in the GitHub issue that is closed by this pull request, e.g. Closes #1903
 -->
+
 - Closes/Fixes: #issue_number
 - Link to documentation:
 
@@ -33,10 +34,11 @@
 - [ ] [Unit tests](https://docs.esmvaltool.org/projects/esmvalcore/projects/esmvalcore/en/latest/contributing.html#contributing-to-the-esmvalcore-package) are available
 
 If you make backwards incompatible changes to the recipe format:
+
 - [ ] Update [ESMValTool](https://github.com/esmvalgroup/esmvaltool) and link the pull request(s) in the description
 
-***
+* * *
 
 To help with the number pull requests:
 
--  🙏 We kindly ask you to [review](https://docs.esmvaltool.org/en/latest/community/review.html#review-of-pull-requests) two other [open pull requests](https://github.com/ESMValGroup/ESMValTool/pulls) in this repository
+- 🙏 We kindly ask you to [review](https://docs.esmvaltool.org/en/latest/community/review.html#review-of-pull-requests) two other [open pull requests](https://github.com/ESMValGroup/ESMValTool/pulls) in this repository
