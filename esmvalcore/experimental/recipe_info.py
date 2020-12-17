@@ -255,7 +255,7 @@ class RecipeInfo():
     def maintainers(self) -> tuple:
         """List of recipe maintainers."""
         if self._maintainers is None:
-            tags = self.data['documentation']['maintainer']
+            tags = self.data['documentation'].get('maintainer', [])
             self._maintainers = tuple(
                 Contributor.from_tag(tag) for tag in tags)
         return self._maintainers
