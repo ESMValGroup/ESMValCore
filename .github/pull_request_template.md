@@ -33,7 +33,7 @@
 - [ ] [Unit tests](https://docs.esmvaltool.org/projects/esmvalcore/projects/esmvalcore/en/latest/contributing.html#contributing-to-the-esmvalcore-package) are available
 
 If you make backwards incompatible changes to the recipe format:
-- [ ] Update [ESMValTool](https://github.com/esmvalgroup/esmvaltool) and add a link above
+- [ ] Update [ESMValTool](https://github.com/esmvalgroup/esmvaltool) and link the pull request(s) in the description
 
 ***
 
