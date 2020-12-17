@@ -14,7 +14,7 @@ def cubes():
     xch4_cube = get_cube([[[[1.0]], [[2.0]]]], air_pressure_coord=True,
                          standard_name='mole_fraction_of_methane_in_air',
                          var_name='ch4', units='1e-3')
-    hus_cube = get_cube([[[[20.0]], [[20.0]]]], air_pressure_coord=True,
+    hus_cube = get_cube([[[[0.2]], [[0.2]]]], air_pressure_coord=True,
                         standard_name='specific_humidity', var_name='hus',
                         units='%')
     zg_cube = get_cube([[[100.0]]], air_pressure_coord=False,

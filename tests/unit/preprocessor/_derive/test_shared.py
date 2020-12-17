@@ -35,8 +35,8 @@ def test_column_average():
     """Test calculation of column-average."""
     cube = get_cube([[[[1.0]], [[2.0]]]], air_pressure_coord=True,
                     var_name='ch4', units='1')
-    hus_cube = get_cube([[[[20.0]], [[20.0]]]], air_pressure_coord=True,
-                        var_name='hus', units='%')
+    hus_cube = get_cube([[[[0.2]], [[0.2]]]], air_pressure_coord=True,
+                        var_name='hus', units='1')
     zg_cube = get_cube([[[100.0]]], air_pressure_coord=False, var_name='zg',
                        units='m')
     ps_cube = get_cube([[[100000.0]]], air_pressure_coord=False, var_name='ps',

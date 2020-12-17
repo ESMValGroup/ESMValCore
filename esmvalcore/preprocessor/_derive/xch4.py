@@ -1,4 +1,4 @@
-"""Derivation of variable `xch4`."""
+"""Derivation of variable ``xch4``."""
 
 from iris import Constraint
 
@@ -7,7 +7,7 @@ from ._shared import column_average
 
 
 class DerivedVariable(DerivedVariableBase):
-    """Derivation of variable `xch4`."""
+    """Derivation of variable ``xch4``."""
 
     @staticmethod
     def required(project):
