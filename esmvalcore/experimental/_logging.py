@@ -10,10 +10,10 @@ def log_to_dir(drc: str) -> None:
     running a recipe. Handlers are attached to the root logger, and removed
     at the end of the block.
 
-    Usage
-    -----
+    Examples
+    --------
     >>> with log_to_dir('run_dir'):
-    >>>    logger.info('Redirected')
+    >>>     logger.info('Redirected')
 
     Parameters
     ----------
