@@ -1,7 +1,27 @@
 """Fixes for GFDL-ESM4 model."""
 import iris
-from ..fix import Fix
 
+from ..fix import Fix
+from ..shared import add_scalar_depth_coord
+
+
+class Fgco2(Fix):
+    """Fixes for fgco2."""
+    def fix_metadata(self, cubes):
+        """Add depth (0m) coordinate.
+
+        Parameters
+        ----------
+        cube : iris.cube.CubeList
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_depth_coord(cube)
+        return cubes
 
 class Siconc(Fix):
     """Fixes for siconc."""

@@ -1,17 +1,7 @@
-"""Fixes for CMIP6 MIROC-ES2L."""
+"""Fixes for CMIP6 INM-CM4-8."""
 from ..fix import Fix
-from ..common import ClFixHybridPressureCoord
 
-
-Cl = ClFixHybridPressureCoord
-
-
-Cli = ClFixHybridPressureCoord
-
-
-Clw = ClFixHybridPressureCoord
-
-class Fgco2(Fix):
+class Nbp(Fix):
     """Fixes for fgco2."""
 
     def fix_data(self, cube):

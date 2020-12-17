@@ -3,6 +3,26 @@ import numpy as np
 
 from ..fix import Fix
 
+class co2(Fix):
+    """Fixes for co2."""
+
+    def fix_data(self, cube):
+        """
+        Fix data.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        metadata = cube.metadata
+        cube *= 29./44.
+        cube.metadata = metadata
+        return cube
 
 class AllVars(Fix):
     """Fixes for all variables."""

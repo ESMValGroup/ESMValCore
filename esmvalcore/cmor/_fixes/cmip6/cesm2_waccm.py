@@ -3,7 +3,25 @@ from netCDF4 import Dataset
 
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Tas as BaseTas
+from ..fix import Fix
+from ..shared import (add_scalar_depth_coord)
 
+class Fgco2(Fix):
+    """Fixes for fgco2."""
+    def fix_metadata(self, cubes):
+        """Add depth (0m) coordinate.
+        Parameters
+        ----------
+        cube : iris.cube.CubeList
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_depth_coord(cube)
+        return cubes
 
 class Cl(BaseCl):
     """Fixes for cl."""
@@ -45,6 +63,5 @@ Cli = Cl
 
 
 Clw = Cl
-
 
 Tas = BaseTas

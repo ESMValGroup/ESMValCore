@@ -1,6 +1,7 @@
 """Fixes for CMIP6 UKESM1-0-LL."""
-from ..common import ClFixHybridHeightCoord
+from .hadgem3_gc31_ll import AllVars as BaseAllVars
 from ..fix import Fix
+from ..common import ClFixHybridHeightCoord
 
 
 class AllVars(Fix):
@@ -29,6 +30,29 @@ class AllVars(Fix):
                 pass
         return cubes
 
+class Fgco2(Fix):
+    """Fixes for fgco2."""
+
+    def fix_data(self, cube):
+        """
+        Fix data.
+
+        Reported in kg of CO2 rather than kg of carbon. (Retracted but still
+        in Mistral)
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        metadata = cube.metadata
+        cube *= 12./44.
+        cube.metadata = metadata
+        return cube
 
 Cl = ClFixHybridHeightCoord
 
