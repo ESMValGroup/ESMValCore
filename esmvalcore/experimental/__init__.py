@@ -7,9 +7,16 @@ warnings.warn(
     '\n  Note that this API is experimental and may be subject to change.'
     '\n  More info: https://github.com/ESMValGroup/ESMValCore/issues/498', )
 
+import logging  # noqa: E402
+import sys  # noqa: E402
+
 from .config import CFG  # noqa: E402
 from .recipe_info import RecipeInfo  # noqa: E402
 from .utils import RecipeList, get_all_recipes, get_recipe  # noqa: E402
+
+logging.basicConfig(format='%(message)s',
+                    level=logging.INFO,
+                    stream=sys.stdout)
 
 __all__ = [
     'CFG',

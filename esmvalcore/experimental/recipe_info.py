@@ -1,5 +1,7 @@
 """Recipe metadata."""
 
+import logging
+import pprint
 import textwrap
 from pathlib import Path
 
@@ -10,6 +12,8 @@ from pybtex.database.input import bibtex
 from esmvalcore._citation import REFERENCES_PATH
 from esmvalcore._config import TAGS
 
+logger = logging.getLogger(__file__)
+
 
 class RenderError(BaseException):
     """Error during rendering of object."""
@@ -17,7 +21,6 @@ class RenderError(BaseException):
 
 class Contributor:
     """Contains contributor (author or maintainer) information."""
-
     def __init__(self, name: str, institute: str, orcid: str = None):
         self.name = name
         self.institute = institute
@@ -58,7 +61,6 @@ class Contributor:
 
 class Project:
     """Contains project information."""
-
     def __init__(self, project: str):
         self.project = project
 
@@ -83,7 +85,6 @@ class Project:
 
 class Reference:
     """Contains reference information."""
-
     def __init__(self, filename):
         parser = bibtex.Parser(strict=False)
         bib_data = parser.parse_file(filename)
@@ -155,7 +156,6 @@ class RecipeInfo():
     path : pathlike
         Path to the recipe.
     """
-
     def __init__(self, path: str):
         self.path = Path(path)
         if not self.path.exists():
@@ -274,7 +274,7 @@ class RecipeInfo():
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def load(self, session=None):
+    def load(self, session: dict = None):
         """Load the recipe.
 
         Parameters
@@ -283,11 +283,6 @@ class RecipeInfo():
             Defines the config parameters and location where the recipe
             output will be stored.
         """
-
-        if not session:
-            from . import CFG
-            session = CFG.start_session(self.path.stem)
-
         config_user = session.copy()
         config_user['run_dir'] = session.run_dir
         config_user['work_dir'] = session.work_dir
@@ -297,9 +292,58 @@ class RecipeInfo():
         # Multiprocessing results in pickling errors in a notebook
         config_user['max_parallel_tasks'] = 1
 
-        session.run_dir.mkdir(parents=True)
+        logger.info(pprint.pformat(config_user))
 
         from esmvalcore._recipe import Recipe
         recipe = Recipe(self.data, config_user, recipe_file=self.path)
 
         return recipe
+
+    def run(self, session: dict = None):
+        """Run the recipe.
+
+        Parameters
+        ----------
+        session : :obj:`Session`
+            Defines the config parameters and location where the recipe
+            output will be stored.
+
+        Returns
+        -------
+        output : None
+            Output of the recipe (Not implemented yet)
+        """
+        if not session:
+            from . import CFG
+            session = CFG.start_session(self.path.stem)
+
+        session.run_dir.mkdir(parents=True)
+
+        # create file handler which logs even debug messages
+        debug_log_file = logging.FileHandler(session.run_dir /
+                                             'main_log_debug.txt')
+        debug_log_file.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            '%(asctime)s UTC [%(process)d] %(levelname)-7s'
+            ' %(name)s:%(lineno)s %(message)s')
+        debug_log_file.setFormatter(formatter)
+
+        # create file handler which logs simple info messages
+        simple_log_file = logging.FileHandler(session.run_dir / 'main_log.txt')
+        simple_log_file.setLevel(logging.INFO)
+        formatter = logging.Formatter(
+            '%(levelname)-7s [%(process)d] %(message)s')
+        simple_log_file.setFormatter(formatter)
+
+        # add the handlers to root logger
+        logging.root.addHandler(debug_log_file)
+        logging.root.addHandler(simple_log_file)
+
+        recipe = self.load(session=session)
+        output = recipe.run()
+
+        # recipe has finished, so loggers can be removed
+        logging.root.removeHandler(debug_log_file)
+        logging.root.removeHandler(simple_log_file)
+
+        return output
