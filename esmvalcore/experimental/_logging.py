@@ -10,17 +10,16 @@ def log_to_dir(drc: str) -> None:
     running a recipe. Handlers are attached to the root logger, and removed
     at the end of the block.
 
-    Examples
-    --------
-    >>> with log_to_dir('run_dir'):
-    >>>     logger.info('Redirected')
+    .. code-block python
+
+        with log_to_dir(session.run_dir):
+            logger.info('redirected')
 
     Parameters
     ----------
     drc : str
         Location where the logs should be stored.
     """
-
     drc.mkdir(parents=True, exist_ok=True)
 
     # create file handler which logs even debug messages
