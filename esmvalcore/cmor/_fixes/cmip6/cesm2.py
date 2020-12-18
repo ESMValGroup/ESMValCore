@@ -10,6 +10,41 @@ from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
 from .gfdl_esm4 import Siconc as Addtypesi
 
 
+class AllVars(Fix):
+    """Fixes latitude longitude bounds for all variables."""
+
+    def fix_metadata(self, cubes):
+        """
+
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+
+        for cube in cubes:
+            latitude = cube.coord('latitude')
+            if latitude.bounds is None:
+                latitude.guess_bounds()
+            latitude.bounds = latitude.bounds.astype(np.float64)
+            latitude.bounds = np.round(latitude.bounds, 4)
+            longitude = cube.coord('longitude')
+            if longitude.bounds is None:
+                longitude.guess_bounds()
+            longitude.bounds = longitude.bounds.astype(np.float64)
+            longitude.bounds = np.round(longitude.bounds, 4)
+
+        return cubes
+
+
 class Cl(Fix):
     """Fixes for ``cl``."""
 
@@ -112,8 +147,6 @@ class Tas(Fix):
         """
         Add height (2m) coordinate.
 
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
-
         Parameters
         ----------
         cubes : iris.cube.CubeList
@@ -126,18 +159,6 @@ class Tas(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube)
-
-        for cube in cubes:
-            latitude = cube.coord('latitude')
-            if latitude.bounds is None:
-                latitude.guess_bounds()
-            latitude.bounds = latitude.bounds.astype(np.float64)
-            latitude.bounds = np.round(latitude.bounds, 4)
-            longitude = cube.coord('longitude')
-            if longitude.bounds is None:
-                longitude.guess_bounds()
-            longitude.bounds = longitude.bounds.astype(np.float64)
-            longitude.bounds = np.round(longitude.bounds, 4)
 
         return cubes
 
