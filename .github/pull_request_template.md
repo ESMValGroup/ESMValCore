@@ -16,7 +16,7 @@
 -   Closes/Fixes: #issue_number
 -   Link to documentation:
 
-** *
+***
 
 ## Before you get started
 
@@ -37,7 +37,7 @@ If you make backwards incompatible changes to the recipe format:
 
 -   \[ \] Update [ESMValTool](https://github.com/esmvalgroup/esmvaltool) and link the pull request(s) in the description
 
-* * *
+***
 
 To help with the number pull requests:
 
