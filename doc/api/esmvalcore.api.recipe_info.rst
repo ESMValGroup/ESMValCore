@@ -60,3 +60,8 @@ Sessions can also be explicitly specified.
     <log messages>
 
 :py:meth:`esmvalcore.experimental.RecipeInfo.run` returns an object that contains the locations of the data and figures (not implemented yet).
+
+API reference
+*************
+
+.. automodule:: esmvalcore.experimental.recipe_info
