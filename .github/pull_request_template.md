@@ -24,7 +24,7 @@
 
 ## Checklist
 
--   [ ] PR has a descriptive title for the [changelog(https://docs.esmvaltool.org/projects/esmvalcore/en/latest/contributing.html#branches-pull-requests-and-code-review)
+-   [ ] PR has a descriptive title for the [changelog](https://docs.esmvaltool.org/projects/esmvalcore/en/latest/contributing.html#branches-pull-requests-and-code-review)
 -   [ ] Code follows the [style guide](https://docs.esmvaltool.org/projects/esmvalcore/en/latest/contributing.html#code-style)
 -   [ ] [Documentation](https://docs.esmvaltool.org/projects/esmvalcore/en/latest/contributing.html#documentation) is available for new functionality
 -   [ ] YAML files pass [`pre-commit`](https://docs.esmvaltool.org/projects/esmvalcore/en/latest/contributing.html#pre-commit) or [`yamllint`](https://docs.esmvaltool.org/projects/esmvalcore/en/latest/community/introduction.html#yaml) checks
