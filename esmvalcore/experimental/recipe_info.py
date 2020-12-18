@@ -284,12 +284,13 @@ class RecipeInfo():
         session : :obj:`Session`
             Defines the config parameters and location where the recipe
             output will be stored.
+
+        Returns
+        -------
+        recipe : :obj:`esmvalcore._recipe.Recipe`
+            Return an instance of the Recipe
         """
-        config_user = session.copy()
-        config_user['run_dir'] = session.run_dir
-        config_user['work_dir'] = session.work_dir
-        config_user['preproc_dir'] = session.preproc_dir
-        config_user['plot_dir'] = session.plot_dir
+        config_user = session.to_config_user()
 
         # Multiprocessing results in pickling errors in a notebook
         config_user['max_parallel_tasks'] = 1
@@ -297,7 +298,9 @@ class RecipeInfo():
         logger.info(pprint.pformat(config_user))
 
         from esmvalcore._recipe import Recipe
-        recipe = Recipe(self.data, config_user, recipe_file=self.path)
+        recipe = Recipe(raw_recipe=self.data,
+                        config_user=config_user,
+                        recipe_file=self.path)
 
         return recipe
 
