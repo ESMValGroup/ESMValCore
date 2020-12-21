@@ -17,6 +17,7 @@ from esmvalcore.preprocessor._time import (
     annual_statistics,
     anomalies,
     climate_statistics,
+    clip_start_end_year,
     daily_statistics,
     decadal_statistics,
     extract_month,
@@ -146,6 +147,49 @@ class TestTimeSlice(tests.Test):
         assert cube == sliced
 
 
+class TestClipStartEndYear(tests.Test):
+    """Tests for clip_start_end_year."""
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = _create_sample_cube()
+
+    def test_clip_start_end_year_1_year(self):
+        """Test clip_start_end_year with 1 year."""
+        sliced = clip_start_end_year(self.cube, 1950, 1950)
+        iris.coord_categorisation.add_month_number(sliced, 'time')
+        iris.coord_categorisation.add_year(sliced, 'time')
+        assert_array_equal(np.arange(1, 13, 1),
+                           sliced.coord('month_number').points)
+        assert_array_equal(np.full(12, 1950), sliced.coord('year').points)
+
+    def test_clip_start_end_year_3_years(self):
+        """Test clip_start_end_year with 3 years."""
+        sliced = clip_start_end_year(self.cube, 1949, 1951)
+        assert sliced == self.cube
+
+    def test_clip_start_end_year_no_slice(self):
+        """Test fail of clip_start_end_year."""
+        with self.assertRaises(ValueError) as ctx:
+            clip_start_end_year(self.cube, 2200, 2200)
+        msg = ("Time slice 2200-01-01 to 2201-01-01 is outside"
+               " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
+        assert ctx.exception.args == (msg, )
+
+    def test_clip_start_end_year_one_time(self):
+        """Test clip_start_end_year with one time step."""
+        cube = _create_sample_cube()
+        cube.coord('time').guess_bounds()
+        cube = cube.collapsed('time', iris.analysis.MEAN)
+        sliced = clip_start_end_year(cube, 1950, 1952)
+        assert_array_equal(np.array([360.]), sliced.coord('time').points)
+
+    def test_clip_start_end_year_no_time(self):
+        """Test clip_start_end_year with no time step."""
+        cube = _create_sample_cube()[0]
+        sliced = clip_start_end_year(cube, 1950, 1950)
+        assert cube == sliced
+
+
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""
     def setUp(self):
@@ -154,7 +198,7 @@ class TestExtractSeason(tests.Test):
 
     def test_get_djf(self):
         """Test function for winter."""
-        sliced = extract_season(self.cube, 'djf')
+        sliced = extract_season(self.cube, 'DJF')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([1, 2, 12, 1, 2, 12]),
                            sliced.coord('month_number').points)
@@ -168,23 +212,30 @@ class TestExtractSeason(tests.Test):
 
     def test_get_mam(self):
         """Test function for spring."""
-        sliced = extract_season(self.cube, 'mam')
+        sliced = extract_season(self.cube, 'MAM')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([3, 4, 5, 3, 4, 5]),
                            sliced.coord('month_number').points)
 
     def test_get_jja(self):
         """Test function for summer."""
-        sliced = extract_season(self.cube, 'jja')
+        sliced = extract_season(self.cube, 'JJA')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([6, 7, 8, 6, 7, 8]),
                            sliced.coord('month_number').points)
 
     def test_get_son(self):
         """Test function for summer."""
-        sliced = extract_season(self.cube, 'son')
+        sliced = extract_season(self.cube, 'SON')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([9, 10, 11, 9, 10, 11]),
+                           sliced.coord('month_number').points)
+
+    def test_get_jf(self):
+        """Test function for custom seasons."""
+        sliced = extract_season(self.cube, 'JF')
+        iris.coord_categorisation.add_month_number(sliced, 'time')
+        assert_array_equal(np.array([1, 2, 1, 2]),
                            sliced.coord('month_number').points)
 
 
@@ -292,6 +343,21 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='mean', period='season')
         expected = np.array([1., 1., 1.])
+        assert_array_equal(result.data, expected)
+
+    def test_custom_season_climatology(self):
+        """Test for time avg of a realisitc time axis and 365 day calendar."""
+        data = np.ones((8, ))
+        times = np.array([15, 45, 74, 105, 135, 166, 195, 225])
+        bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
+                           [151, 181], [181, 212], [212, 243]])
+        cube = self._create_cube(data, times, bounds)
+
+        result = climate_statistics(cube,
+                                    operator='mean',
+                                    period='season',
+                                    seasons=('jfmamj', 'jasond'))
+        expected = np.array([1., 1.])
         assert_array_equal(result.data, expected)
 
     def test_monthly(self):
@@ -434,6 +500,30 @@ class TestSeasonalStatistics(tests.Test):
 
         result = seasonal_statistics(cube, 'sum')
         expected = np.array([9., 18., 27.])
+        assert_array_equal(result.data, expected)
+
+    def test_season_custom_mean(self):
+        """Test for season average of a 1D field."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+
+        result = seasonal_statistics(cube,
+                                     'mean',
+                                     seasons=('jfmamj', 'jasond'))
+        expected = np.array([2.5, 8.5])
+        assert_array_equal(result.data, expected)
+
+    def test_season_custom_spans_full_season(self):
+        """Test for season average of a 1D field."""
+        data = np.ones(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+
+        result = seasonal_statistics(cube,
+                                     'mean',
+                                     seasons=('JJAS', 'ondjfmam'))
+        expected = np.array([1])
         assert_array_equal(result.data, expected)
 
 
@@ -1155,6 +1245,20 @@ def test_anomalies(period, reference, standardize=False):
                 np.arange(315.5, 405),
                 np.arange(315.5, 345),
             ))
+    expected = anom[:, None, None] * [[0, 1], [1, 0]]
+    assert_array_equal(result.data, expected)
+    assert_array_equal(result.coord('time').points, cube.coord('time').points)
+
+
+def test_anomalies_custom_season():
+    cube = make_map_data(number_years=2)
+    result = anomalies(cube, 'season', seasons=('jfmamj', 'jasond'))
+    anom = np.concatenate((
+        np.arange(-269.5, -90),
+        np.arange(-269.5, -90),
+        np.arange(90.5, 270),
+        np.arange(90.5, 270),
+    ))
     expected = anom[:, None, None] * [[0, 1], [1, 0]]
     assert_array_equal(result.data, expected)
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
