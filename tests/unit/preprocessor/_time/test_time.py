@@ -24,8 +24,11 @@ from esmvalcore.preprocessor._time import (
     extract_season,
     extract_time,
     get_time_weights,
+    hourly_statistics,
     monthly_statistics,
     regrid_time,
+    resample_hours,
+    resample_time,
     seasonal_statistics,
     timeseries_filter,
 )
@@ -146,9 +149,8 @@ class TestTimeSlice(tests.Test):
 
 class TestClipStartEndYear(tests.Test):
     """Tests for clip_start_end_year."""
-
     def setUp(self):
-        """Prepare tests"""
+        """Prepare tests."""
         self.cube = _create_sample_cube()
 
     def test_clip_start_end_year_1_year(self):
@@ -169,9 +171,8 @@ class TestClipStartEndYear(tests.Test):
         """Test fail of clip_start_end_year."""
         with self.assertRaises(ValueError) as ctx:
             clip_start_end_year(self.cube, 2200, 2200)
-        msg = (
-            "Time slice 2200-01-01 to 2201-01-01 is outside"
-            " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
+        msg = ("Time slice 2200-01-01 to 2201-01-01 is outside"
+               " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         assert ctx.exception.args == (msg, )
 
     def test_clip_start_end_year_one_time(self):
@@ -593,6 +594,69 @@ class TestMonthlyStatistics(tests.Test):
         assert_array_equal(result.data, expected)
 
 
+class TestHourlyStatistics(tests.Test):
+    """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`"""
+    @staticmethod
+    def _create_cube(data, times):
+        time = iris.coords.DimCoord(times,
+                                    standard_name='time',
+                                    units=Unit('hours since 1950-01-01',
+                                               calendar='360_day'))
+        time.guess_bounds()
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        return cube
+
+    def test_mean(self):
+        """Test average of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'mean')
+        expected = np.array([0.5, 2.5, 4.5, 6.5])
+        assert_array_equal(result.data, expected)
+
+    def test_median(self):
+        """Test median of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'median')
+        expected = np.array([0.5, 2.5, 4.5, 6.5])
+        assert_array_equal(result.data, expected)
+
+    def test_min(self):
+        """Test min of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'min')
+        expected = np.array([0., 2., 4., 6.])
+        assert_array_equal(result.data, expected)
+
+    def test_max(self):
+        """Test max of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'max')
+        expected = np.array([1., 3., 5., 7.])
+        assert_array_equal(result.data, expected)
+
+    def test_sum(self):
+        """Test sum of a 1D field."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        cube = self._create_cube(data, times)
+
+        result = hourly_statistics(cube, 12, 'sum')
+        expected = np.array([1., 5., 9., 13.])
+        assert_array_equal(result.data, expected)
+
+
 class TestDailyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`"""
     @staticmethod
@@ -658,7 +722,6 @@ class TestDailyStatistics(tests.Test):
 
 class TestRegridTimeYearly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1340,6 +1403,141 @@ def test_climate_statistics_complex_cube():
     assert cube.shape == (2, 1, 1, 3)
     assert new_cube.shape == (1, 1, 3)
     np.testing.assert_allclose(new_cube.data, [[[45.0, 45.0, 45.0]]])
+
+
+class TestResampleHours(tests.Test):
+    """Test :func:`esmvalcore.preprocessor._time.resample_hours`"""
+    @staticmethod
+    def _create_cube(data, times):
+        time = iris.coords.DimCoord(times,
+                                    standard_name='time',
+                                    units=Unit('hours since 1950-01-01',
+                                               calendar='360_day'))
+        time.guess_bounds()
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        return cube
+
+    def test_resample_1_to_6(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 1)
+        times = np.arange(0, 48, 1)
+        cube = self._create_cube(data, times)
+
+        result = resample_hours(cube, 6)
+        expected = np.arange(0, 48, 6)
+        assert_array_equal(result.data, expected)
+
+    def test_resample_3_to_6(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 3)
+        times = np.arange(0, 48, 3)
+        cube = self._create_cube(data, times)
+
+        result = resample_hours(cube, 6)
+        expected = np.arange(0, 48, 6)
+        assert_array_equal(result.data, expected)
+
+    def test_resample_1_to_3(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 1)
+        times = np.arange(0, 48, 1)
+        cube = self._create_cube(data, times)
+
+        result = resample_hours(cube, 3)
+        expected = np.arange(0, 48, 3)
+        assert_array_equal(result.data, expected)
+
+    def test_resample_1_to_3_with_offset2(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 1)
+        times = np.arange(0, 48, 1)
+        cube = self._create_cube(data, times)
+
+        result = resample_hours(cube, 3, 2)
+        expected = np.arange(2, 48, 3)
+        assert_array_equal(result.data, expected)
+
+    def test_resample_invalid(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 1)
+        times = np.arange(0, 48, 1)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, 5)
+
+    def test_resample_invalid_offset(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 1)
+        times = np.arange(0, 48, 1)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, interval=3, offset=6)
+
+    def test_resample_shorter_interval(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 12)
+        times = np.arange(0, 48, 12)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, interval=3)
+
+    def test_resample_same_interval(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 12)
+        times = np.arange(0, 48, 12)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, interval=12)
+
+
+class TestResampleTime(tests.Test):
+    """Test :func:`esmvalcore.preprocessor._time.resample_hours`"""
+    @staticmethod
+    def _create_cube(data, times):
+        time = iris.coords.DimCoord(times,
+                                    standard_name='time',
+                                    units=Unit('hours since 1950-01-01',
+                                               calendar='360_day'))
+        time.guess_bounds()
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        return cube
+
+    def test_resample_hourly_to_daily(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 48, 1)
+        times = np.arange(0, 48, 1)
+        cube = self._create_cube(data, times)
+
+        result = resample_time(cube, hour=12)
+        expected = np.arange(12, 48, 24)
+        assert_array_equal(result.data, expected)
+
+    def test_resample_hourly_to_monthly(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 24 * 60, 3)
+        times = np.arange(0, 24 * 60, 3)
+        cube = self._create_cube(data, times)
+
+        result = resample_time(cube, hour=12, day=15)
+        expected = np.array([12 + 14 * 24, 12 + 44 * 24])
+        assert_array_equal(result.data, expected)
+
+    def test_resample_daily_to_monthly(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 60 * 24, 24)
+        times = np.arange(0, 60 * 24, 24)
+        cube = self._create_cube(data, times)
+
+        result = resample_time(cube, day=15)
+        expected = np.array([
+            14 * 24,
+            44 * 24,
+        ])
+        assert_array_equal(result.data, expected)
 
 
 if __name__ == '__main__':
