@@ -10,5 +10,5 @@ pybtex
 pyyaml
 scipy
 shapely[vectorized]
-sphinx>2
+sphinx>2,<3.4
 yamale
