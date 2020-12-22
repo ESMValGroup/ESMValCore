@@ -20,7 +20,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
 For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
 """
-
+# pylint: disable=import-outside-toplevel
 import logging
 
 import fire
