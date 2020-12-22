@@ -6,6 +6,7 @@ numpy
 pandas
 pillow
 prov[dot]
+pybtex
 pyyaml
 scipy
 shapely[vectorized]

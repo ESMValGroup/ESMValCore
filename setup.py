@@ -39,6 +39,7 @@ REQUIREMENTS = {
         'numpy',
         'prov[dot]',
         'psutil',
+        'pybtex',
         'pyyaml',
         'requests',
         'scitools-iris>=2.2',
