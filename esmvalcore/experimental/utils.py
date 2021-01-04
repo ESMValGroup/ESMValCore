@@ -10,7 +10,6 @@ from .recipe_info import RecipeInfo
 
 class RecipeList(list):
     """Container for recipes."""
-
     def find(self, query: str):
         """Search for recipes matching the search query or pattern.
 
@@ -74,11 +73,15 @@ def get_recipe(name: str) -> 'RecipeInfo':
     RecipeInfo
     """
     locations = Path(), Path(DIAGNOSTICS_PATH, 'recipes')
-    filenames = name, name + '.yml'
+
+    if isinstance(name, Path):
+        filenames = name,
+    else:
+        filenames = name, name + '.yml'
 
     for location in locations:
         for filename in filenames:
-            try_path = Path(location, filename)
+            try_path = Path(location, filename).expanduser()
             if try_path.exists():
                 return RecipeInfo(try_path)
 
