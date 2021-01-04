@@ -10,7 +10,7 @@ standard_name:
 units:             K
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         Near-Surface Air Temperature Uncertainty
+long_name:         Near-Surface Air Temperature Uncertainty Range
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
