@@ -292,9 +292,6 @@ class RecipeInfo():
         """
         config_user = session.to_config_user()
 
-        # Multiprocessing results in pickling errors in a notebook
-        config_user['max_parallel_tasks'] = 1
-
         logger.info(pprint.pformat(config_user))
 
         from esmvalcore._recipe import Recipe
