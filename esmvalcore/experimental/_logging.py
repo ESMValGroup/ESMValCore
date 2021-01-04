@@ -1,3 +1,5 @@
+"""Logging utilities."""
+
 import logging
 from contextlib import contextmanager
 
