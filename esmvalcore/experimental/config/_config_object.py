@@ -56,6 +56,7 @@ class Config(ValidatedConfig):
 
         new.update(CFG_DEFAULT)
         new.update(mapping)
+        new.check_missing()
 
         return new
 
