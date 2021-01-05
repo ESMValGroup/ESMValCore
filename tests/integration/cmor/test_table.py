@@ -364,7 +364,7 @@ class TestCustomInfo(unittest.TestCase):
         """Get none if a variable is not in the given table."""
         self.assertIsNone(self.variables_info.get_variable('Omon', 'badvar'))
 
-    def test_get_variable_tasConf5(self):
+    def test_get_variable_tasconf5(self):
         """Get tas variable."""
         CustomInfo()
         var = self.variables_info.get_variable('Amon', 'tasConf5')
@@ -373,7 +373,7 @@ class TestCustomInfo(unittest.TestCase):
                          'Near-Surface Air Temperature Uncertainty Range')
         self.assertEqual(var.units, 'K')
 
-    def test_get_variable_tasConf95(self):
+    def test_get_variable_tasconf95(self):
         """Get tas variable."""
         CustomInfo()
         var = self.variables_info.get_variable('Amon', 'tasConf95')
