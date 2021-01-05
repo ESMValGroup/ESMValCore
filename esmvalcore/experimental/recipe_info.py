@@ -22,7 +22,17 @@ class RenderError(BaseException):
 
 
 class Contributor:
-    """Contains contributor (author or maintainer) information."""
+    """Contains contributor (author or maintainer) information.".
+
+    Parameters
+    ----------
+    name : str
+        Name of the author, i.e. ``'John Doe'``
+    institute : str
+        Name of the institute
+    orcid : str, optional
+        ORCID url
+    """
     def __init__(self, name: str, institute: str, orcid: str = None):
         self.name = name
         self.institute = institute
@@ -41,16 +51,19 @@ class Contributor:
         string += ')'
         return string
 
-    def _repr_markdown_(self):
+    def _repr_markdown_(self) -> str:
         """Represent using markdown renderer in a notebook environment."""
         return str(self)
 
     @classmethod
-    def from_tag(cls, tag: str):
+    def from_tag(cls, tag: str) -> 'Contributor':
         """Return an instance of Contributor from a tag (``TAGS``).
 
-        Contributors are defined by author tags in ``config-
-        references.yml``.
+        Parameters
+        ----------
+        tag : str
+            The contributor tags are defined in the authors section in
+            ``config-references.yml``.
         """
         mapping = TAGS['authors'][tag]
 
@@ -62,7 +75,13 @@ class Contributor:
 
 
 class Project:
-    """Contains project information."""
+    """Contains project information.
+
+    Parameters
+    ----------
+    project : str
+        Defines the project title.
+    """
     def __init__(self, project: str):
         self.project = project
 
@@ -76,18 +95,32 @@ class Project:
         return string
 
     @classmethod
-    def from_tag(cls, tag: str):
+    def from_tag(cls, tag: str) -> 'Project':
         """Return an instance of Project from a tag (``TAGS``).
 
-        The project tags are defined in ``config-references.yml``.
+        Parameters
+        ----------
+        tag : str
+            The project tags are defined in ``config-references.yml``.
         """
         project = TAGS['projects'][tag]
         return cls(project=project)
 
 
 class Reference:
-    """Contains reference information."""
-    def __init__(self, filename):
+    """Contains reference information.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the bibtex file.
+
+    Raises
+    ------
+    NotImplementedError
+        If the bibtex file contains more than 1 entry.
+    """
+    def __init__(self, filename: str):
         parser = bibtex.Parser(strict=False)
         bib_data = parser.parse_file(filename)
 
@@ -101,24 +134,27 @@ class Reference:
         self._filename = filename
 
     @classmethod
-    def from_tag(cls, tag: str):
+    def from_tag(cls, tag: str) -> 'Reference':
         """Return an instance of Reference from a bibtex tag.
 
-        The bibtex tags resolved as
-        ``esmvaltool/references/{tag}.bibtex``.
+        Parameters
+        ----------
+        tag : str
+            The bibtex tags resolved as ``esmvaltool/references/{tag}.bibtex``
+            or the corresponding directory as defined by the diagnostics path.
         """
         filename = Path(REFERENCES_PATH, f'{tag}.bibtex')
         return cls(filename)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return canonical string representation."""
         return f'{self.__class__.__name__}({self._key!r})'
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representation."""
         return self.render(renderer='plaintext')
 
-    def _repr_markdown_(self):
+    def _repr_markdown_(self) -> str:
         """Represent using markdown renderer in a notebook environment."""
         return self.render(renderer='markdown')
 
@@ -152,6 +188,8 @@ class Reference:
 
 class RecipeInfo():
     """Contains Recipe metadata.
+
+    This class can be used to inspect and run the recipe.
 
     Parameters
     ----------
@@ -194,6 +232,11 @@ class RecipeInfo():
         renderer : str
             Choose the renderer for the string representation.
             Must be one of 'plaintext', 'markdown'
+
+        Returns
+        -------
+        str
+            Rendered representation of the recipe documentation.
         """
         bullet = '\n - '
         string = f'## {self.name}'
@@ -279,11 +322,15 @@ class RecipeInfo():
     def load(self, session: dict = None):
         """Load the recipe.
 
+        This method loads the recipe into the internal ESMValCore Recipe
+        format.
+
         Parameters
         ----------
-        session : :obj:`Session`
+        session : :obj:`Session`, optional
             Defines the config parameters and location where the recipe
-            output will be stored.
+            output will be stored. If ``None``, a new session will be
+            started automatically.
 
         Returns
         -------
@@ -304,11 +351,15 @@ class RecipeInfo():
     def run(self, session: dict = None):
         """Run the recipe.
 
+        This function loads the recipe into the ESMValCore recipe format
+        and runs it.
+
         Parameters
         ----------
-        session : :obj:`Session`
+        session : :obj:`Session`, optional
             Defines the config parameters and location where the recipe
-            output will be stored.
+            output will be stored. If ``None``, a new session will be
+            started automatically.
 
         Returns
         -------

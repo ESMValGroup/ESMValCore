@@ -13,8 +13,8 @@ class RecipeList(list):
     def find(self, query: str):
         """Search for recipes matching the search query or pattern.
 
-        This function will search the recipe description, author list, and
-        project information.
+        This method will search the recipe description, author list, and
+        project information for the query. All matches are returned.
 
         Parameters
         ----------
@@ -42,9 +42,12 @@ class RecipeList(list):
 def get_all_recipes(subdir: str = None) -> list:
     """Return a list of all available recipes.
 
+    This function returns a list of all recipes in the directory defined
+    by the diagnostics path.
+
     Parameters
     ----------
-    subdir : str
+    subdir : str, optional
         Sub-directory of the ``DIAGNOSTICS_PATH`` to look for
         recipes, e.g. ``get_all_recipes(subdir='examples')``.
 
@@ -63,21 +66,32 @@ def get_all_recipes(subdir: str = None) -> list:
 def get_recipe(name: str) -> 'RecipeInfo':
     """Get a recipe by its name.
 
+    The function looks first in the local directory, and second in the
+    repository defined by the diagnostic path. The recipe name can be
+    specified with or without extension. The first match will be returned.
+
     Parameters
     ----------
-    name : str
-        Name of the recipe, i.e. ``examples/recipe_python.yml``
+    name : str, pathlike
+        Name of the recipe file, i.e. ``examples/recipe_python.yml``
 
     Returns
     -------
     RecipeInfo
+        Instance of :obj:`RecipeInfo` which can be used to inspect and run
+        the recipe.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the name cannot be resolved to a recipe file.
     """
     locations = Path(), Path(DIAGNOSTICS_PATH, 'recipes')
 
     if isinstance(name, Path):
-        filenames = name,
+        filenames = (name, )
     else:
-        filenames = name, name + '.yml'
+        filenames = (name, name + '.yml')
 
     for location in locations:
         for filename in filenames:
