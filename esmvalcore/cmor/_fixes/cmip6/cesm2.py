@@ -2,10 +2,12 @@
 from shutil import copyfile
 
 from netCDF4 import Dataset
+import numpy as np
 
 from ..fix import Fix
 from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
                       add_scalar_typeland_coord, add_scalar_typesea_coord)
+from .gfdl_esm4 import Siconc as Addtypesi
 
 
 class Cl(Fix):
@@ -103,11 +105,12 @@ class Fgco2(Fix):
         return cubes
 
 
-class Tas(Fix):
+class Prw(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """Add height (2m) coordinate.
+        """
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
 
         Parameters
         ----------
@@ -119,8 +122,46 @@ class Tas(Fix):
         iris.cube.CubeList
 
         """
+        for cube in cubes:
+            latitude = cube.coord('latitude')
+            if latitude.bounds is None:
+                latitude.guess_bounds()
+            latitude.bounds = latitude.bounds.astype(np.float64)
+            latitude.bounds = np.round(latitude.bounds, 4)
+            longitude = cube.coord('longitude')
+            if longitude.bounds is None:
+                longitude.guess_bounds()
+            longitude.bounds = longitude.bounds.astype(np.float64)
+            longitude.bounds = np.round(longitude.bounds, 4)
+
+        return cubes
+
+
+class Tas(Prw):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """
+        Add height (2m) coordinate.
+
+        Fix also done for prw.
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        super().fix_metadata(cubes)
+        # Specific code for tas
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube)
+
         return cubes
 
 
@@ -164,3 +205,34 @@ class Sftof(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_typesea_coord(cube)
         return cubes
+
+
+class Tos(Fix):
+    """Fixes for tos."""
+
+    def fix_metadata(self, cubes):
+        """
+        Round times to 1 d.p. for monthly means.
+
+        Required to get hist-GHG and ssp245-GHG Omon tos to concatenate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+
+        for cube in cubes:
+            if cube.attributes['mipTable'] == 'Omon':
+                cube.coord('time').points = \
+                    np.round(cube.coord('time').points, 1)
+        return cubes
+
+
+Siconc = Addtypesi

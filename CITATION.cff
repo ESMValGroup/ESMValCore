@@ -51,6 +51,7 @@ authors:
     affiliation: "DLR, Germany"
     family-names: Schlund
     given-names: Manuel
+    orcid: "https://orcid.org/0000-0001-5251-0158"
   -
     affiliation: "BSC, Spain"
     family-names: Vegas-Regidor
@@ -60,6 +61,7 @@ authors:
     affiliation: "SMHI, Sweden"
     family-names: Zimmermann
     given-names: Klaus
+    orcid: "https://orcid.org/0000-0003-3994-2057"
   -
     affiliation: "DLR, Germany"
     family-names: Bock
@@ -90,13 +92,77 @@ authors:
     affiliation: "BSC, Spain"
     family-names: Loosveldt-Tomas
     given-names: Saskia
+  -
+    "affiliation": "NLeSC, Netherlands"
+    "family-names": "Smeets"
+    "given-names": "Stef"
+    "orcid": "https://orcid.org/0000-0002-5413-9038"
+  -
+    "affiliation": "NLeSC, Netherlands"
+    "family-names": "Camphuijsen"
+    "given-names": "Jaro"
+    "orcid": "https://orcid.org/0000-0002-8928-7831"
+  -
+    "affiliation": "University of Bremen, Germany"
+    "family-names": "Gier"
+    "given-names": "Bettina K."
+    "orcid": "https://orcid.org/0000-0002-2928-8664"
+  -
+    "affiliation": "University of Bremen, Germany"
+    "family-names": "Weigel"
+    "given-names": "Katja"
+    "orcid": "https://orcid.org/0000-0001-6133-7801"
+  -
+    "affiliation": "Institute for Atmospheric and Climate Science, ETH Zurich, Zurich, Switzerland"
+    "family-names": "Hauser"
+    "given-names": "Mathias"
+    "orcid": "https://orcid.org/0000-0002-0057-4878"
+  -
+    "affiliation": "Netherlands eScience Center"
+    "family-names": "Kalverla"
+    "given-names": "Peter"
+    "orcid": "https://orcid.org/0000-0002-5025-7862"
+  -
+    "affiliation": "University of Bremen, Germany"
+    "family-names": "Galytska"
+    "given-names": "Evgenia"
+    "orcid": "https://orcid.org/0000-0001-6575-1559"
+  -
+    "affiliation": "BSC, Spain"
+    "family-names": "Cos-Espuña"
+    "given-names": "Pep"
+  -
+    "affiliation": "Netherlands eScience Center"
+    "family-names": "Pelupessy"
+    "given-names": "Inti"
+    "orcid": "https://orcid.org/0000-0002-8024-0412"
+  -
+    "affiliation": "Max Planck Institute for Biogeochemistry, Germany"
+    "family-names": "Koirala"
+    "given-names": "Sujan"
+    "orcid": "https://orcid.org/0000-0001-5681-1986"
+  -
+    "affiliation": "Helmholtz-Zentrum Geesthacht, Germany "
+    "family-names": "Stacke"
+    "given-names": "Tobias"
+    "orcid": "https://orcid.org/0000-0003-4637-5337"
+  -
+    "affiliation": "Netherlands eScience Center"
+    "family-names": "Alidoost"
+    "given-names": "Sarah"
+    "orcid": "https://orcid.org/0000-0001-8407-6472"
+  -
+    "affiliation": "Barcelona Supercomputing Center"
+    "family-names": "Jury"
+    "given-names": "Martin"
+    "orcid": "https://orcid.org/0000-0003-0590-7843"
 
 cff-version: "1.0.3"
-date-released: 2020-02-12
+date-released: 2020-10-12
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.0.0b9"
+version: "v2.1.0"
 ...

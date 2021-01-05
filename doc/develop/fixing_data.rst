@@ -23,7 +23,7 @@ known errors that can be fixed automatically.
   Implementing CMORization as a fix removes this redundancy, as the fixes are applied 'on the fly' when
   running a recipe. **ERA5** is the first dataset for which this 'CMORization on the fly' is supported.
   For more information about CMORization, see:
-  `Contributing a CMORizing script for an observational dataset <https://esmvaltool.readthedocs.io/en/latest/esmvaldiag/observations.html>`_.
+  `Contributing a CMORizing script for an observational dataset <https://docs.esmvaltool.org/en/latest/input.html#observations>`_.
 
 Fix structure
 =============
