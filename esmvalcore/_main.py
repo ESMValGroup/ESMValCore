@@ -20,7 +20,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
 For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
 """
-
+# pylint: disable=import-outside-toplevel
 import logging
 
 import fire
@@ -43,11 +43,12 @@ ______________________________________________________________________
 
 def process_recipe(recipe_file, config_user):
     """Process recipe."""
-    from . import __version__
-    from ._recipe import read_recipe_file
     import datetime
     import os
     import shutil
+
+    from . import __version__
+    from ._recipe import read_recipe_file
     if not os.path.isfile(recipe_file):
         import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
@@ -106,16 +107,17 @@ def process_recipe(recipe_file, config_user):
 
 
 class Config():
-    """
-    Manage ESMValTool's configuration.
+    """Manage ESMValTool's configuration.
 
-    This group contains utilities to manage ESMValTool configuration files.
-
+    This group contains utilities to manage ESMValTool configuration
+    files.
     """
+
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
         import os
         import shutil
+
         from ._config import configure_logging
         configure_logging(console_log_level='info')
         if not path:
@@ -138,8 +140,7 @@ class Config():
 
     @classmethod
     def get_config_user(cls, overwrite=False, path=None):
-        """
-        Copy default config-user.yml file to a given path.
+        """Copy default config-user.yml file to a given path.
 
         Copy default config-user.yml file to a given path or, if a path is
         not provided, install it in the default `${HOME}/.esmvaltool` folder.
@@ -147,18 +148,16 @@ class Config():
         Parameters
         ----------
         overwrite: boolean
-            Name of the recipe to get
+            Overwrite an existing file.
         path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
-
         """
         cls._copy_config_file('config-user.yml', overwrite, path)
 
     @classmethod
     def get_config_developer(cls, overwrite=False, path=None):
-        """
-        Copy default config-developer.yml file to a given path.
+        """Copy default config-developer.yml file to a given path.
 
         Copy default config-developer.yml file to a given path or, if a path is
         not provided, install it in the default `${HOME}/.esmvaltool` folder.
@@ -166,18 +165,16 @@ class Config():
         Parameters
         ----------
         overwrite: boolean
-            Name of the recipe to get
+            Overwrite an existing file.
         path: str
             If not provided, the file will be copied to
             .esmvaltool in the user's home.
-
         """
         cls._copy_config_file('config-developer.yml', overwrite, path)
 
 
 class Recipes():
-    """
-    List, show and retrieve installed recipes.
+    """List, show and retrieve installed recipes.
 
     This group contains utilities to explore and manage the recipes available
     in your installation of ESMValTool.
@@ -185,33 +182,33 @@ class Recipes():
     Documentation for recipes included with ESMValTool is available at
     https://docs.esmvaltool.org/en/latest/recipes/index.html.
     """
+
     @staticmethod
     def list():
-        """
-        List all installed recipes.
+        """List all installed recipes.
 
         Show all installed recipes, grouped by folder.
         """
         import os
-        from ._config import configure_logging, DIAGNOSTICS_PATH
+
+        from ._config import DIAGNOSTICS_PATH, configure_logging
         configure_logging(console_log_level='info')
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
         logger.info("Showing recipes installed in %s", recipes_folder)
         print('# Installed recipes')
-        for root, _, files in os.walk(recipes_folder):
+        for root, _, files in sorted(os.walk(recipes_folder)):
             root = os.path.relpath(root, recipes_folder)
             if root == '.':
                 root = ''
             if root:
                 print(f"\n# {root.replace(os.sep, ' - ').title()}")
-            for filename in files:
+            for filename in sorted(files):
                 if filename.endswith('.yml'):
                     print(os.path.join(root, filename))
 
     @staticmethod
     def get(recipe):
-        """
-        Get a copy of any installed recipe in the current working directory.
+        """Get a copy of any installed recipe in the current working directory.
 
         Use this command to get a local copy of any installed recipe.
 
@@ -222,7 +219,8 @@ class Recipes():
         """
         import os
         import shutil
-        from ._config import configure_logging, DIAGNOSTICS_PATH
+
+        from ._config import DIAGNOSTICS_PATH, configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
         if not os.path.exists(installed_recipe):
@@ -235,8 +233,7 @@ class Recipes():
 
     @staticmethod
     def show(recipe):
-        """
-        Show the given recipe in console.
+        """Show the given recipe in console.
 
         Use this command to see the contents of any installed recipe.
 
@@ -246,7 +243,8 @@ class Recipes():
             Name of the recipe to get, including any subdirectories.
         """
         import os
-        from ._config import configure_logging, DIAGNOSTICS_PATH
+
+        from ._config import DIAGNOSTICS_PATH, configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
         if not os.path.exists(installed_recipe):
@@ -261,8 +259,7 @@ class Recipes():
 
 
 class ESMValTool():
-    """
-    A community tool for routine evaluation of Earth system models.
+    """A community tool for routine evaluation of Earth system models.
 
     The Earth System Model Evaluation Tool (ESMValTool) is a community
     diagnostics and performance metrics tool for the evaluation of Earth
@@ -274,8 +271,8 @@ class ESMValTool():
 
     To report issues or ask for improvements, please visit
     https://github.com/ESMValGroup/ESMValTool.
-
     """
+
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
@@ -290,12 +287,11 @@ class ESMValTool():
             self.__setattr__(entry_point.name, entry_point.load()())
 
     def version(self):
-        """
-        Show versions of all packages that conform ESMValTool.
+        """Show versions of all packages that conform ESMValTool.
 
         In particular, this command will show the version ESMValCore and
-        any other package that adds a subcommand to 'esmvaltool' command.
-
+        any other package that adds a subcommand to 'esmvaltool'
+        command.
         """
         from . import __version__
         print(f'ESMValCore: {__version__}')
@@ -312,8 +308,7 @@ class ESMValTool():
             diagnostics=None,
             check_level='default',
             **kwargs):
-        """
-        Execute an ESMValTool recipe.
+        """Execute an ESMValTool recipe.
 
         `esmvaltool run` executes the given recipe. To see a list of available
         recipes or create a local copy of any of them, use the
@@ -336,7 +331,9 @@ class ESMValTool():
         synda_download: bool, optional
             If True, the tool will try to download missing data using Synda.
         diagnostics: list(str), optional
-            Only run the selected diagnostics from the recipe.
+            Only run the selected diagnostics from the recipe. To provide more
+            than one diagnostic to filter use the syntax 'diag1 diag2/script1'
+            or '("diag1", "diag2/script1")' and pay attention to the quotes.
         check_level: str, optional
             Configure the sensitivity of the CMOR check. Possible values are:
             `ignore` (all errors will be reported as warnings),
@@ -346,10 +343,14 @@ class ESMValTool():
         """
         import os
         import shutil
-        from .cmor.check import CheckLevels
-        from ._config import configure_logging, read_config_user_file
-        from ._config import DIAGNOSTICS_PATH
+
+        from ._config import (
+            DIAGNOSTICS_PATH,
+            configure_logging,
+            read_config_user_file,
+        )
         from ._recipe import TASKSEP
+        from .cmor.check import CheckLevels
 
         if not os.path.exists(recipe):
             installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes',
@@ -361,8 +362,6 @@ class ESMValTool():
 
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
 
-        if not config_file:
-            config_file = '~/.esmvaltool/config-user.yml'
         cfg = read_config_user_file(config_file, recipe_name, kwargs)
 
         # Create run dir
@@ -436,11 +435,18 @@ def run():
             logging.basicConfig()
         logger.exception(
             "Program terminated abnormally, see stack trace "
-            "below for more information",
+            "below for more information:",
             exc_info=True)
         logger.info(
-            "If you suspect this is a bug or need help, please open an issue "
-            "on https://github.com/ESMValGroup/ESMValTool/issues and attach "
-            "the run/recipe_*.yml and run/main_log_debug.txt files from the "
-            "output directory.")
+            "\n"
+            "If you have a question or need help, please start a new "
+            "discussion on "
+            "https://github.com/ESMValGroup/ESMValTool/discussions"
+            "\n"
+            "If you suspect this is a bug, please open an issue on "
+            "https://github.com/ESMValGroup/ESMValTool/issues"
+            "\n"
+            "To make it easier to find out what the problem is, please "
+            "consider attaching the files run/recipe_*.yml and "
+            "run/main_log_debug.txt from the output directory.")
         sys.exit(1)

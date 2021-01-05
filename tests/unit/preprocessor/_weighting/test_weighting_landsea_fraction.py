@@ -1,5 +1,4 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._weighting`."""
-from collections import OrderedDict
 from unittest import mock
 
 import iris
@@ -31,27 +30,27 @@ CUBE_4 = iris.cube.Cube(
 )
 FRAC_SFTLF = np.array([0.1, 0.0, 1.0])
 FRAC_SFTOF = np.array([0.0, 1.0, 0.5, 0.3])
-EMPTY_FX_FILES = OrderedDict([
-    ('sftlf', []),
-    ('sftof', []),
-])
-L_FX_FILES = OrderedDict([
-    ('sftlf', 'not/a/real/path'),
-    ('sftof', []),
-])
-O_FX_FILES = OrderedDict([
-    ('sftlf', []),
-    ('sftof', 'not/a/real/path'),
-])
-FX_FILES = OrderedDict([
-    ('sftlf', 'not/a/real/path'),
-    ('sftof', 'i/was/mocked'),
-])
-WRONG_FX_FILES = OrderedDict([
-    ('wrong', 'test'),
-    ('sftlf', 'not/a/real/path'),
-    ('sftof', 'i/was/mocked'),
-])
+EMPTY_FX_FILES = {
+    'sftlf': [],
+    'sftof': [],
+}
+L_FX_FILES = {
+    'sftlf': 'not/a/real/path',
+    'sftof': [],
+}
+O_FX_FILES = {
+    'sftlf': [],
+    'sftof': 'not/a/real/path',
+}
+FX_FILES = {
+    'sftlf': 'not/a/real/path',
+    'sftof': 'i/was/mocked',
+}
+WRONG_FX_FILES = {
+    'wrong': 'test',
+    'sftlf': 'not/a/real/path',
+    'sftof': 'i/was/mocked',
+}
 
 LAND_FRACTION = [
     (CUBE_3, {}, [], None, ["No fx files given"]),

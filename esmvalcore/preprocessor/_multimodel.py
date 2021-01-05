@@ -96,7 +96,7 @@ def _compute_statistic(data, statistic_name):
         quantile = float(statistic_name[1:]) / 100
         statistic_function = partial(_quantile, quantile=quantile)
     else:
-        raise NotImplementedError
+        raise ValueError(f'No such statistic: `{statistic_name}`')
 
     # no plevs
     if len(data[0].shape) < 3:
@@ -289,8 +289,7 @@ def _assemble_data(cubes, statistic, span='overlap'):
 
 
 def multi_model_statistics(products, span, statistics, output_products=None):
-    """
-    Compute multi-model statistics.
+    """Compute multi-model statistics.
 
     Multimodel statistics computed along the time axis. Can be
     computed across a common overlap in time (set span: overlap)
@@ -315,16 +314,20 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         span; if full, statistics are computed on full time spans, ignoring
         missing data.
     output_products: dict
-        dictionary of output products.
-    statistics: str
-        statistical measure to be computed. Available options: mean, median,
-        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
+        dictionary of output products. MUST be specified if products are NOT
+        cubes
+    statistics: list of str
+        list of statistical measure(s) to be computed. Available options:
+        mean, median, max, min, std, or pXX.YY (for percentile XX.YY; decimal
+        part optional).
 
     Returns
     -------
-    list
-        list of data products or cubes containing the multimodel stats
-        computed.
+    set or dict or list
+        `set` of data products if `output_products` is given
+        `dict` of cubes if `output_products` is not given
+        `list` of input cubes if there is no overlap between cubes when
+        using `span='overlap'`
 
     Raises
     ------

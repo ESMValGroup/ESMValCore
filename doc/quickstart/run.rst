@@ -12,8 +12,8 @@ To run a recipe, call ``esmvaltool run`` with the desired recipe:
 
 	esmvaltool run recipe_python.yml
 
-If the config user is not in the default ``{HOME}\.esmvaltool\`` path you can
-pass its path explicitly:
+If the configuration file is not in the default location
+``~/.esmvaltool/config-user.yml``, you can pass its path explicitly:
 
 .. code:: bash
 
@@ -25,11 +25,62 @@ It is also possible to explicitly change values from the config file using flags
 
 	esmvaltool run --argument_name argument_value recipe_python.yml
 
+To control the strictness of the CMOR checker, use the flag ``--check_level``:
+
+.. code:: bash
+
+	esmvaltool run --check_level=relaxed recipe_python.yml
+
+Possible values are:
+
+  - `ignore`: all errors will be reported as warnings
+  - `relaxed`: only fail if there are critical errors
+  - `default`: fail if there are any errors
+  - `strict`: fail if there are any warnings
+
+
+To run a reduced version of the recipe, usually for testing purpose you can use
+
+.. code:: bash
+
+	esmvaltool run --max_datasets=NDATASETS --max_years=NYEARS recipe_python.yml
+
+In this case, the recipe will limit the number of datasets per variable to
+NDATASETS and the total amount of years loaded to NYEARS. They can also be used
+separately.
+
+To run a recipe, even if some datasets are not available, use
+
+.. code:: bash
+
+    esmvaltool run --skip_nonexistent=True recipe_python.yml
+
+
+If Synda is installed (see http://prodiguer.github.io/synda/), it is possible
+to use it to automatically download the requested data from ESGF if it is not
+available locally:
+
+.. code:: bash
+
+    esmvaltool run --synda_download=True recipe_python.yml
+
+It is also possible to select only specific diagnostics to be run. To tun only
+one, just specify its name. To provide more than one diagnostic to filter use
+the syntax 'diag1 diag2/script1' or '("diag1", "diag2/script1")' and pay
+attention to the quotes.
+
+.. code:: bash
+
+    esmvaltool run --diagnostics=diagnostic1 recipe_python.yml
+
+
+
 To get help on additional commands, please use
 
 .. code:: bash
 
 	esmvaltool --help
+
 
 
 .. note::

@@ -37,8 +37,37 @@ def cubes():
     return iris.cube.CubeList([correct_cube, wrong_cube, scalar_cube])
 
 
+@pytest.fixture
+def cubes_bounds():
+    lat_coord = iris.coords.DimCoord([0.0],
+                                     var_name='lat',
+                                     standard_name='latitude')
+    correct_lon_coord = iris.coords.DimCoord([0, 356.25],
+                                             bounds=[[-1.875, 1.875],
+                                                     [354.375, 358.125]],
+                                             var_name='lon',
+                                             standard_name='longitude')
+    wrong_lon_coord = iris.coords.DimCoord([0, 356.25],
+                                           bounds=[[-1.875, 1.875],
+                                                   [354.375, 360]],
+                                           var_name='lon',
+                                           standard_name='longitude')
+    correct_cube = iris.cube.Cube(
+        [[10.0, 10.0]],
+        var_name='tas',
+        dim_coords_and_dims=[(lat_coord, 0), (correct_lon_coord, 1)],
+    )
+    wrong_cube = iris.cube.Cube(
+        [[10.0, 10.0]],
+        var_name='tas',
+        dim_coords_and_dims=[(lat_coord, 0), (wrong_lon_coord, 1)],
+    )
+    return iris.cube.CubeList([correct_cube, wrong_cube])
+
+
 def test_get_allvars_fix():
-    fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Amon', 'arbitrary_var_name')
+    fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Amon',
+                        'arbitrary_var_name_and_wrong_lon_bnds')
     assert fix == [AllVars(None)]
 
 
@@ -69,6 +98,19 @@ def test_allvars_fix_metadata(cubes):
         if 'parent_time_units' in cube.attributes:
             assert cube.attributes['parent_time_units'] == (
                 'days since 0000-00-00')
+
+
+def test_allvars_fix_lon_bounds(cubes_bounds):
+    fix = AllVars(None)
+    out_cubes = fix.fix_metadata(cubes_bounds)
+    assert cubes_bounds is out_cubes
+    for cube in out_cubes:
+        try:
+            lon_coord = cube.coord('longitude')
+        except iris.exceptions.CoordinateNotFoundError:
+            pass
+        else:
+            assert lon_coord.bounds[-1][-1] == 358.125
 
 
 def test_tas_fix_metadata(cubes):
