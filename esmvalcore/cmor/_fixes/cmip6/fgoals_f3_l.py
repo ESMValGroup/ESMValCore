@@ -1,12 +1,13 @@
-"""Fixes for FGOALS-f3-L model."""
+"""Fixes for CMIP6 FGOALS-f3-L model."""
 import cftime
-import numpy as np
 import dask.array as da
+import numpy as np
+
 from ..fix import Fix
+
 
 class AllVars(Fix):
     """Fixes for all vars."""
-
     def fix_metadata(self, cubes):
         """Fix parent time units.
 
@@ -42,7 +43,6 @@ class AllVars(Fix):
 
 class Sftlf(Fix):
     """Fixes for sftlf."""
-
     def fix_data(self, cube):
         """Fix data.
 
