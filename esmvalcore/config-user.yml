@@ -34,19 +34,19 @@ profile_diagnostic: false
 # Rootpaths to the data from different projects (lists are also possible)
 # these are generic entries to better allow you to enter your own
 # For site-specific entries, see below
-#rootpath:
-#  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
-#  OBS: ~/obs_inputpath
-#  RAWOBS: ~/rawobs_inputpath
-#  default: ~/default_inputpath
-#  CORDEX: ~/default_inputpath
+# rootpath:
+#   CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
+#   OBS: ~/obs_inputpath
+#   RAWOBS: ~/rawobs_inputpath
+#   default: ~/default_inputpath
+#   CORDEX: ~/default_inputpath
 
 # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
-#drs:
-#  CMIP5: default
-#  CORDEX: default
-#  OBS: default
+# drs:
+#   CMIP5: default
+#   CORDEX: default
+#   OBS: default
 
 # Site-specific entries: Jasmin
 # Uncomment the lines below to locate data on JASMIN
@@ -80,15 +80,18 @@ profile_diagnostic: false
 #  OBS6: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
 #  obs4mips: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
 #  ana4mips: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
+#  native6: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/RAWOBS
+#  RAWOBS: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/RAWOBS
 #drs:
 #  CMIP6: DKRZ
 #  CMIP5: DKRZ
 #  CMIP3: DKRZ
-#  CORDEX: DKRZ
-#  OBS: DKRZ
-#  OBS6: DKRZ
-#  obs4mips: DKRZ
-#  ana4mips: DKRZ
+#  CORDEX: BADC
+#  obs4mips: default
+#  ana4mips: default
+#  OBS: default
+#  OBS6: default
+#  native6: default
 
 # Site-specific entries: ETHZ
 # Uncomment the lines below to locate data at ETHZ
