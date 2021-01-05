@@ -6,6 +6,6 @@ from esmvalcore.cmor._fixes.native6.era5 import (Pr,
 
 
 logger = logging.getLogger(__name__)
-logger.info("Load classes from era.py")
+logger.info("Load classes from era5.py")
 logger.info(Pr)
 logger.info(AllVars)
