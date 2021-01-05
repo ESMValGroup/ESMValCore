@@ -29,17 +29,18 @@ build:
 requirements:
   build:
     - git
-    - python>=3.6
+    - python>=3.6,<3.9
     # Normally installed via pip:
     - pytest-runner
     - setuptools_scm
   run:
     # esmvaltool
-    - python>=3.6
+    - python>=3.6,<3.9
     - graphviz
     - iris>=2.2.1
     - python-stratify
     # Normally installed via pip:
+    - cftime>=1.3.0  # years<999 get a 0 instead of empty space
     - cf-units
     - cython  # required by cf-units but not automatically installed
     - esmpy
@@ -47,10 +48,10 @@ requirements:
     - fire
     - nc-time-axis
     - netCDF4
-    - numba
     - numpy
     - prov
     - psutil
+    - pybtex
     - pydot
     - pyyaml
     - requests
@@ -82,7 +83,7 @@ test:
     - esmvalcore.cmor.check
     - esmvalcore.cmor.fix
     - esmvalcore.preprocessor
-
+    - esmvalcore.experimental
 
 about:
   home: https://www.esmvaltool.org
