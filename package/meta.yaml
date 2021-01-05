@@ -51,6 +51,7 @@ requirements:
     - numpy
     - prov
     - psutil
+    - pybtex
     - pydot
     - pyyaml
     - requests
@@ -82,7 +83,7 @@ test:
     - esmvalcore.cmor.check
     - esmvalcore.cmor.fix
     - esmvalcore.preprocessor
-
+    - esmvalcore.experimental
 
 about:
   home: https://www.esmvaltool.org

@@ -1026,6 +1026,10 @@ class Recipe:
         raw_variable = deepcopy(raw_variable)
         datasets = self._initialize_datasets(
             raw_datasets + raw_variable.pop('additional_datasets', []))
+        if not datasets:
+            raise RecipeError("You have not specified any dataset "
+                              "or additional_dataset groups "
+                              f"for variable {raw_variable} Exiting.")
         check.duplicate_datasets(datasets)
 
         for index, dataset in enumerate(datasets):
@@ -1033,7 +1037,7 @@ class Recipe:
             variable.update(dataset)
 
             variable['recipe_dataset_index'] = index
-            if 'end_year' in variable and 'max_years' in self._cfg:
+            if 'end_year' in variable and self._cfg.get('max_years'):
                 variable['end_year'] = min(
                     variable['end_year'],
                     variable['start_year'] + self._cfg['max_years'] - 1)

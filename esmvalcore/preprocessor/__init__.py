@@ -53,8 +53,11 @@ from ._time import (
     extract_month,
     extract_season,
     extract_time,
+    hourly_statistics,
     monthly_statistics,
     regrid_time,
+    resample_hours,
+    resample_time,
     seasonal_statistics,
     timeseries_filter,
 )
@@ -86,6 +89,12 @@ __all__ = [
     'cmor_check_metadata',
     # Extract years given by dataset keys (start_year and end_year)
     'clip_start_end_year',
+    # Time extraction
+    'extract_time',
+    'extract_season',
+    'extract_month',
+    'resample_hours',
+    'resample_time',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
@@ -136,6 +145,7 @@ __all__ = [
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
+    'hourly_statistics',
     'daily_statistics',
     'monthly_statistics',
     'seasonal_statistics',
@@ -239,9 +249,10 @@ def _check_multi_model_settings(products):
             elif reference.settings[step] != settings:
                 raise ValueError(
                     "Unable to combine differing multi-dataset settings for "
-                    "{} and {}, {} and {}".format(
-                        reference.filename, product.filename,
-                        reference.settings[step], settings))
+                    "{} and {}, {} and {}".format(reference.filename,
+                                                  product.filename,
+                                                  reference.settings[step],
+                                                  settings))
 
 
 def _get_multi_model_settings(products, step):
@@ -283,8 +294,7 @@ def preprocess(items, step, **settings):
 
     items = []
     for item in result:
-        if isinstance(item,
-                      (PreprocessorFile, Cube, str)):
+        if isinstance(item, (PreprocessorFile, Cube, str)):
             items.append(item)
         else:
             items.extend(item)
@@ -309,7 +319,6 @@ def get_step_blocks(steps, order):
 
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
-
     def __init__(self, attributes, settings, ancestors=None):
         super(PreprocessorFile, self).__init__(attributes['filename'],
                                                attributes, ancestors)
@@ -398,8 +407,8 @@ def _apply_multimodel(products, step, debug):
     """Apply multi model step to products."""
     settings, exclude = _get_multi_model_settings(products, step)
 
-    logger.debug("Applying %s to\n%s", step, '\n'.join(
-        str(p) for p in products - exclude))
+    logger.debug("Applying %s to\n%s", step,
+                 '\n'.join(str(p) for p in products - exclude))
     result = preprocess(products - exclude, step, **settings)
     products = set(result) | exclude
 
@@ -415,15 +424,14 @@ def _apply_multimodel(products, step, debug):
 
 class PreprocessingTask(BaseTask):
     """Task for running the preprocessor."""
-
     def __init__(
-            self,
-            products,
-            ancestors=None,
-            name='',
-            order=DEFAULT_ORDER,
-            debug=None,
-            write_ncl_interface=False,
+        self,
+        products,
+        ancestors=None,
+        name='',
+        order=DEFAULT_ORDER,
+        debug=None,
+        write_ncl_interface=False,
     ):
         """Initialize."""
         _check_multi_model_settings(products)

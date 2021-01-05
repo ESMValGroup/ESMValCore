@@ -8,3 +8,4 @@ library. This section documents the public API of ESMValCore.
 
    esmvalcore.cmor
    esmvalcore.preprocessor
+   esmvalcore.api

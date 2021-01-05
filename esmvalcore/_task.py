@@ -435,7 +435,11 @@ class DiagnosticTask(BaseTask):
         rerun_msg = 'cd {}; '.format(cwd)
         if env:
             rerun_msg += ' '.join('{}="{}"'.format(k, env[k]) for k in env)
-        rerun_msg += ' ' + ' '.join(cmd)
+        if "vprof" in cmd:
+            script_args = ' "' + cmd[-1] + '"'
+            rerun_msg += ' ' + ' '.join(cmd[:-1]) + script_args
+        else:
+            rerun_msg += ' ' + ' '.join(cmd)
         logger.info("To re-run this diagnostic script, run:\n%s", rerun_msg)
 
         complete_env = dict(os.environ)
