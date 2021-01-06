@@ -319,7 +319,7 @@ class RecipeInfo():
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def load(self, session: dict = None):
+    def load(self, session: dict):
         """Load the recipe.
 
         This method loads the recipe into the internal ESMValCore Recipe
@@ -327,7 +327,7 @@ class RecipeInfo():
 
         Parameters
         ----------
-        session : :obj:`Session`, optional
+        session : :obj:`Session`
             Defines the config parameters and location where the recipe
             output will be stored. If ``None``, a new session will be
             started automatically.
@@ -372,6 +372,10 @@ class RecipeInfo():
 
         with log_to_dir(session.run_dir):
             recipe = self.load(session=session)
-            output = recipe.run()
+            recipe.run()
 
-        return output
+        out = {}
+        for task in recipe.tasks:
+            out[task.name] = task.settings
+
+        return out
