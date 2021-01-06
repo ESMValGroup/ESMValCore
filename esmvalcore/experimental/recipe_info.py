@@ -22,7 +22,7 @@ class RenderError(BaseException):
 
 
 class Contributor:
-    """Contains contributor (author or maintainer) information.".
+    """Contains contributor (author or maintainer) information.
 
     Parameters
     ----------
