@@ -5,6 +5,7 @@ from copy import deepcopy
 
 import iris
 import numpy as np
+from scipy import constants
 
 from esmvalcore.iris_helpers import var_name_constraint
 
@@ -29,6 +30,82 @@ def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
     return new_cube
 
 
+def column_average(cube, hus_cube, zg_cube, ps_cube):
+    """Calculate column-averaged mole fractions.
+
+    The calculation follows the method described in the obs4MIPs technical note
+    "Merged SCIMACHY/ENVISAT and TANSO-FTS/GOSAT atmospheric column-average
+    dry-air mole fraction of CH4 (XCH4)".
+    by M. Buchwitz and M. Reuter, available at:
+    http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_obs4mips/
+        esacci/ghg/data/obs4mips/crdp_3/CH4/v100/
+        TechNote_SCIAGOSAT_L3_CRDP3_001_XCH4_FINAL.pdf
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        Cube containing a mole fraction of a gas (must be 4D with coordinates
+        ``time``, ``air_pressure``, ``latitude`` and ``longitude``).
+        ``latitude`` and ``air_pressure``).
+    hus_cube : iris.cube.Cube
+        Cube containing ``specific_humidity`` (must be 4D with coordinates
+        ``time``, ``air_pressure``, ``latitude`` and ``longitude``).
+        ``latitude`` and ``air_pressure``).
+    zg_cube : iris.cube.Cube
+        Cube containing ``geopotential_height`` (must be 3D with coordinates
+        ``time``, ``latitude`` and ``longitude``).
+    ps_cube : iris.cube.Cube
+        Cube containing ``surface_air_pressure`` (must be 3D with coordinates
+        ``time``, ``latitude`` and ``longitude``).
+
+    Returns
+    -------
+    iris.cube.Cube
+        Column-averaged mole fraction of a gas.
+
+    """
+    # Convert units of data
+    hus_cube.convert_units('1')
+    zg_cube.convert_units('m')
+    ps_cube.convert_units('Pa')
+
+    # Level thickness (note: Buchwitz & Reuter use hPa but we use Pa; in fact,
+    # this does not matter as units cancel out when calculating column-average
+    p_layer_widths = pressure_level_widths(cube, ps_cube, top_limit=0.0)
+
+    # Latitudes (1-dim array)
+    lat = cube.coord('latitude').points
+
+    # Gravitational acceleration g_0 on the geoid approximated by the
+    # international gravity formula depending only on the latitude
+    g_0 = np.array(lat)
+    g_0 = 9.780327 * (1.0 + 0.0053024 * (np.sin(lat / 180.0 * np.pi))**2 -
+                      0.0000058 * (np.sin(2.0 * lat / 180.0 * np.pi))**2)
+
+    # Approximation of the gravitational acceleration including the
+    # free air correction
+    # Note: the formula for g given in Buchwitz & Reuter contains a typo and
+    # should read: g_0**2 - 2*f*zg (i.e. minus instead of +)
+    fair_cor = 3.0825958e-6
+    g_4d_array = iris.util.broadcast_to_shape(g_0**2, zg_cube.shape, [2])
+    g_4d_array = np.sqrt(g_4d_array.data - 2.0 * fair_cor * zg_cube.data)
+
+    # Number of dry air particles (air molecules excluding water vapor) within
+    # each layer
+    mw_air = 28.9644e-3
+    n_dry = ((hus_cube * -1.0 + 1.0) * constants.value('Avogadro constant') *
+             p_layer_widths.data / (mw_air * g_4d_array))
+
+    # Number of gas molecules per layer
+    cube = cube * n_dry
+
+    # Column-average
+    x_cube = (
+        cube.collapsed('air_pressure', iris.analysis.SUM) /
+        n_dry.collapsed('air_pressure', iris.analysis.SUM))
+    return x_cube
+
+
 def pressure_level_widths(cube, ps_cube, top_limit=0.0):
     """Create a cube with pressure level widths.
 
@@ -37,7 +114,7 @@ def pressure_level_widths(cube, ps_cube, top_limit=0.0):
     Parameters
     ----------
     cube : iris.cube.Cube
-        Cube containing ``air_pressure`` coordiante.
+        Cube containing ``air_pressure`` coordinate.
     ps_cube : iris.cube.Cube
         Cube containing ``surface_air_pressure``.
     top_limit : float
