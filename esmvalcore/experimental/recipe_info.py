@@ -337,6 +337,10 @@ class RecipeInfo():
         recipe : :obj:`esmvalcore._recipe.Recipe`
             Return an instance of the Recipe
         """
+        if not session:
+            from . import CFG
+            session = CFG.start_session(self.path.stem)
+
         config_user = session.to_config_user()
 
         logger.info(pprint.pformat(config_user))
@@ -366,10 +370,6 @@ class RecipeInfo():
         output : None
             Output of the recipe (Not implemented yet)
         """
-        if not session:
-            from . import CFG
-            session = CFG.start_session(self.path.stem)
-
         with log_to_dir(session.run_dir):
             recipe = self.load(session=session)
             output = recipe.run()
