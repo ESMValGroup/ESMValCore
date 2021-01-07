@@ -12,6 +12,7 @@ from esmvalcore.experimental import CFG, RecipeInfo, get_recipe
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 CFG.update(esmvaltool_sample_data.get_rootpaths())
+CFG['max_parallel_tasks'] = 1
 
 
 @pytest.fixture
@@ -20,6 +21,7 @@ def recipe():
     return recipe
 
 
+@pytest.mark.use_sample_data
 def test_run_recipe(recipe, tmp_path):
     """Test running a basic recipe using sample data."""
     CFG['output_dir'] = tmp_path
