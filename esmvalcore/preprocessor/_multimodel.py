@@ -134,7 +134,8 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     times = iris.coords.DimCoord(t_axis,
                                  standard_name='time',
                                  units=tunits,
-                                 var_name='time')
+                                 var_name='time',
+                                 long_name='time')
     times.bounds = None
     times.guess_bounds()
 
