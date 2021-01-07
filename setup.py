@@ -60,7 +60,7 @@ REQUIREMENTS = {
         'pytest-mock',
         'pytest-xdist',
         ('ESMValTool_sample_data @ '
-         'git+https://github.com/ESMValGroup/ESMValTool_sample_data@v0.0.2'),
+         'git+https://github.com/ESMValGroup/ESMValTool_sample_data@367929e'),
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
