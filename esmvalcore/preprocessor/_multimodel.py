@@ -9,7 +9,6 @@ dimensions; and obviously consistent units.
 It operates on different (time) spans:
 - full: computes stats on full dataset time;
 - overlap: computes common time overlap between datasets;
-
 """
 
 import logging
@@ -28,10 +27,8 @@ logger = logging.getLogger(__name__)
 def _plev_fix(dataset, pl_idx):
     """Extract valid plev data.
 
-    this function takes care of situations
-    in which certain plevs are completely
-    masked due to unavailable interpolation
-    boundaries.
+    this function takes care of situations in which certain plevs are
+    completely masked due to unavailable interpolation boundaries.
     """
     if np.ma.is_masked(dataset):
         # keep only the valid plevs
@@ -50,9 +47,9 @@ def _plev_fix(dataset, pl_idx):
 def _quantile(data, axis, quantile):
     """Calculate quantile.
 
-    Workaround for calling scipy's mquantiles with arrays of >2 dimensions
-    Similar to iris' _percentiles function, see their discussion:
-    https://github.com/SciTools/iris/pull/625
+    Workaround for calling scipy's mquantiles with arrays of >2
+    dimensions Similar to iris' _percentiles function, see their
+    discussion: https://github.com/SciTools/iris/pull/625
     """
     # Ensure that the target axis is the last dimension.
     data = np.rollaxis(data, axis, start=data.ndim)
@@ -199,8 +196,7 @@ def _get_consistent_time_unit(cubes):
 
 
 def _unify_time_coordinates(cubes):
-    """
-    Make sure all cubes' share the same time coordinate.
+    """Make sure all cubes' share the same time coordinate.
 
     This function extracts the date information from the cube and
     reconstructs the time coordinate, resetting the actual dates to the
@@ -220,27 +216,34 @@ def _unify_time_coordinates(cubes):
         coord = cube.coord('time')
         years = [p.year for p in coord.units.num2date(coord.points)]
         months = [p.month for p in coord.units.num2date(coord.points)]
+        days = [p.day for p in coord.units.num2date(coord.points)]
 
         # Reconstruct default calendar
         if 0 not in np.diff(years):
             # yearly data
-            dates = [datetime(year, 7, 1) for year in years]
+            dates = [datetime(year, 7, 1, 0, 0, 0) for year in years]
 
         elif 0 not in np.diff(months):
             # monthly data
             dates = [
-                datetime(year, month, 15)
+                datetime(year, month, 15, 0, 0, 0)
                 for year, month in zip(years, months)
             ]
-        else:
-            # (sub)daily data
-            coord = cube.coord('time')
+        elif 0 not in np.diff(days):
+            # daily data
+            dates = [
+                datetime(year, month, day, 0, 0, 0)
+                for year, month, day in zip(years, months, days)
+            ]
             if coord.units != t_unit:
                 logger.warning(
                     "Multimodel encountered (sub)daily data and inconsistent "
                     "time units or calendars. Attempting to continue, but "
                     "might produce unexpected results.")
-            dates = coord.units.num2date(coord.points)
+        else:
+            raise ValueError(
+                "Multimodel statistics preprocessor currently does not "
+                "support sub-daily data.")
 
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord('time').points = t_unit.date2num(dates)
