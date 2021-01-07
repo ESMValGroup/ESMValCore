@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 class RecipeError(Exception):
     """Recipe contains an error."""
     def __init__(self, msg):
+        super().__init__(self)
         self.message = msg
 
     def __str__(self):

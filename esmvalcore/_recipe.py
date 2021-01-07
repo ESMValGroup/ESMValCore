@@ -716,10 +716,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             except RecipeError as ex:
                 if config_user.get('skip-nonexistent') and not ancestors:
                     logger.info("Skipping: %s", ex.message)
-                    continue
                 else:
                     missing_vars.add(ex.message)
-                    continue
+                continue
         product = PreprocessorFile(
             attributes=variable,
             settings=settings,
@@ -938,7 +937,7 @@ class Recipe:
             logger.error(ex.message)
             for task in ex.failed_tasks:
                 logger.error(task.message)
-            raise RecipeError('Some tasks could not be initalized')
+            raise RecipeError('Some tasks could not be initalized') from ex
 
     @staticmethod
     def _need_ncl(raw_diagnostics):
