@@ -6,16 +6,20 @@ from contextlib import contextmanager
 
 @contextmanager
 def log_to_dir(drc: str) -> None:
-    """Add handlers to log to `main_log.txt` / `main_log_debug.txt`.
+    """Log messages to the specified directory.
 
     This is a context manager to temporarily redirect the logging when
-    running a recipe. Handlers are attached to the root logger, and removed
-    at the end of the block.
+    running a recipe. Messages will be printed to the console, as well as
+    the specified directory. Handlers are attached to the root logger, and
+    removed at the end of the block.
+
+    Messages will be logged to `<drc>/main_log.txt` and
+    `<drc>/main_log_debug.txt`.
 
     .. code-block python
 
         with log_to_dir(session.run_dir):
-            logger.info('redirected')
+            logger.info('/home/user/some/path')
 
     Parameters
     ----------
