@@ -1,7 +1,6 @@
 """ESMValTool configuration."""
 import datetime
 import logging
-import logging.config
 import os
 from pathlib import Path
 

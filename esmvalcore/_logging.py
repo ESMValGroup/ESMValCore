@@ -1,6 +1,7 @@
 """Configure logging."""
 
 import logging
+import logging.config
 import os
 import time
 from pathlib import Path
