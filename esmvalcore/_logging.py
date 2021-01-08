@@ -10,7 +10,7 @@ import yaml
 
 
 def _purge_file_handlers(cfg: dict) -> None:
-    """Removes handlers with filename set.
+    """Remove handlers with filename set.
 
     This is used to remove file handlers which require an output
     directory to be set.
