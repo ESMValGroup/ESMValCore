@@ -253,6 +253,40 @@ def get_recipe(tempdir, content, cfg):
     return recipe
 
 
+def test_recipe_no_datasets(tmp_path, config_user):
+    content = dedent("""
+        preprocessors:
+          preprocessor_name:
+            extract_levels:
+              levels: 85000
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: preprocessor_name
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                start_year: 1999
+                end_year: 2002
+            scripts: null
+        """)
+    exc_message = (
+        "You have not specified any dataset "
+        "or additional_dataset groups for variable "
+        "{'preprocessor': 'preprocessor_name', 'project': 'CMIP5',"
+        " 'mip': 'Amon', 'exp': 'historical', 'ensemble': 'r1i1p1'"
+        ", 'start_year': 1999, 'end_year': 2002, 'variable_group':"
+        " 'ta', 'short_name': 'ta', 'diagnostic': "
+        "'diagnostic_name'} Exiting.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, config_user)
+    assert str(exc.value) == exc_message
+
+
 def test_simple_recipe(tmp_path, patched_datafinder, config_user):
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
