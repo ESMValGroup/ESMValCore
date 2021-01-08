@@ -42,8 +42,6 @@ class RecipeList(list):
 def get_all_recipes(subdir: str = None) -> list:
     """Return a list of all available recipes.
 
-    This function returns a list of all recipes in the directory defined
-    by the diagnostics path.
 
     Parameters
     ----------
