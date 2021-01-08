@@ -43,7 +43,7 @@ def _get_log_files(cfg: dict, output_dir: str = None) -> list:
 
 
 def _update_stream_level(cfg: dict, level=None):
-    """Update the stream level for the stream handlers."""
+    """Update the log level for the stream handlers."""
     handlers = cfg['handlers']
 
     for handler in handlers.values():
