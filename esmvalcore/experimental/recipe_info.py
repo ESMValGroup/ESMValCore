@@ -187,7 +187,7 @@ class Reference:
 
 
 class RecipeInfo():
-    """Contains Recipe metadata.
+    """API wrapper for the esmvalcore Recipe object.
 
     This class can be used to inspect and run the recipe.
 
