@@ -108,7 +108,7 @@ class Project:
 
 
 class Reference:
-    """Contains reference information.
+    """Parse reference information from bibtex entries.
 
     Parameters
     ----------
