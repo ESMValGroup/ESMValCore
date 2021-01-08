@@ -8,7 +8,7 @@ from pathlib import Path
 import yaml
 
 
-def _purge_handlers_with_filename(cfg: dict) -> None:
+def _purge_file_handlers(cfg: dict) -> None:
     """Removes handlers with filename set.
 
     This is used to remove file handlers which require an output
@@ -80,7 +80,7 @@ def configure_logging(cfg_file: str = None,
         cfg = yaml.safe_load(file_handler)
 
     if output_dir is None:
-        _purge_handlers_with_filename(cfg)
+        _purge_file_handlers(cfg)
 
     log_files = _get_log_files(cfg, output_dir=output_dir)
     _update_stream_level(cfg, level=console_log_level)
