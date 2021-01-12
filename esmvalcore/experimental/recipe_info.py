@@ -75,12 +75,12 @@ class Contributor:
 
 
 class Project:
-    """Contains project information.
+    """Use this class to acknowledge a project associated with the recipe.
 
     Parameters
     ----------
     project : str
-        Defines the project title.
+        The project title.
     """
     def __init__(self, project: str):
         self.project = project
