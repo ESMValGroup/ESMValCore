@@ -39,6 +39,7 @@ requirements:
     - graphviz
     - iris>=2.2.1
     - python-stratify
+    - scipy<1.6  # until ESMValGroup/ESMValCore/issues/927 gets resolved
     # Normally installed via pip:
     - cftime>=1.3.0  # years<999 get a 0 instead of empty space
     - cf-units
