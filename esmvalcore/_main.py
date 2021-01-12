@@ -4,11 +4,11 @@ http://www.esmvaltool.org
 
 CORE DEVELOPMENT TEAM AND CONTACTS:
   Birgit Hassler (Co-PI; DLR, Germany - birgit.hassler@dlr.de)
-  Aistair Sellar (Co-PI; Met Office, UK - alistair.sellar@metoffice.gov.uk)
-  Bouwe Andela (NLESC, Netherlands - b.andela@esciencecenter.nl)
+  Alistair Sellar (Co-PI; Met Office, UK - alistair.sellar@metoffice.gov.uk)
+  Bouwe Andela (NLeSC, Netherlands - b.andela@esciencecenter.nl)
   Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
   Lee de Mora (PML, UK - ledm@pml.ac.uk)
-  Niels Drost (NLESC, Netherlands - n.drost@esciencecenter.nl)
+  Niels Drost (NLeSC, Netherlands - n.drost@esciencecenter.nl)
   Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
   Remi Hosseini Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
   Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
