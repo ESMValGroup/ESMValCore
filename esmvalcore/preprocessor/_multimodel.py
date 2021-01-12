@@ -328,16 +328,16 @@ def _assemble_full_data(cubes, statistic):
 
     # assemble an array to hold all time data
     # for all cubes; shape is (ncubes,(plev), lat, lon)
-    new_arr = np.ma.empty([len(cubes)] + list(new_shape[1:]))
+    new_arr = np.ma.empty([len(cubes)] + list(new_shape[1:]), dtype='float32')
 
     # data array for stats computation
-    stats_dats = np.ma.zeros(new_shape)
+    stats_dats = np.ma.zeros(new_shape, dtype='float32')
 
     # assemble indices list to chop new_arr on
     indices_list = []
 
     # empty data array to hold time slices
-    empty_arr = np.ma.empty(new_shape)
+    empty_arr = np.ma.empty(new_shape, dtype='float32')
 
     # loop through cubes and populate empty_arr with points
     for cube in cubes:
