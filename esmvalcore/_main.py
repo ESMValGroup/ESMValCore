@@ -191,10 +191,10 @@ class Recipes():
         """
         import os
 
-        from ._diagnostics import DIAGNOSTICS_PATH
+        from ._diagnostics import DIAGNOSTICS
         from ._logging import configure_logging
         configure_logging(console_log_level='info')
-        recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
+        recipes_folder = DIAGNOSTICS.recipes
         logger.info("Showing recipes installed in %s", recipes_folder)
         print('# Installed recipes')
         for root, _, files in sorted(os.walk(recipes_folder)):
@@ -218,19 +218,19 @@ class Recipes():
         recipe: str
             Name of the recipe to get, including any subdirectories.
         """
-        import os
         import shutil
+        from pathlib import Path
 
-        from ._diagnostics import DIAGNOSTICS_PATH
+        from ._diagnostics import DIAGNOSTICS
         from ._logging import configure_logging
         configure_logging(console_log_level='info')
-        installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
-        if not os.path.exists(installed_recipe):
+        installed_recipe = DIAGNOSTICS.recipes / recipe
+        if not installed_recipe.exists():
             ValueError(
                 f'Recipe {recipe} not found. To list all available recipes, '
                 'execute "esmvaltool list"')
         logger.info('Copying installed recipe to the current folder...')
-        shutil.copy(installed_recipe, os.path.basename(recipe))
+        shutil.copy(installed_recipe, Path(recipe).name)
         logger.info('Recipe %s successfully copied', recipe)
 
     @staticmethod
@@ -244,13 +244,11 @@ class Recipes():
         recipe: str
             Name of the recipe to get, including any subdirectories.
         """
-        import os
-
-        from ._diagnostics import DIAGNOSTICS_PATH
+        from ._diagnostics import DIAGNOSTICS
         from ._logging import configure_logging
         configure_logging(console_log_level='info')
-        installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
-        if not os.path.exists(installed_recipe):
+        installed_recipe = DIAGNOSTICS.recipes / recipe
+        if not installed_recipe.exists():
             ValueError(
                 f'Recipe {recipe} not found. To list all available recipes, '
                 'execute "esmvaltool list"')
@@ -348,14 +346,13 @@ class ESMValTool():
         import shutil
 
         from ._config import read_config_user_file
-        from ._diagnostics import DIAGNOSTICS_PATH
+        from ._diagnostics import DIAGNOSTICS
         from ._logging import configure_logging
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
 
         if not os.path.exists(recipe):
-            installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes',
-                                            recipe)
+            installed_recipe = str(DIAGNOSTICS.recipes / recipe)
             if os.path.exists(installed_recipe):
                 recipe = installed_recipe
         recipe = os.path.abspath(os.path.expandvars(

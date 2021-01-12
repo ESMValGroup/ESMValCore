@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 
-from esmvalcore._diagnostics import DIAGNOSTICS_PATH
+from esmvalcore._diagnostics import DIAGNOSTICS
 
 from .recipe_info import RecipeInfo
 
@@ -46,7 +46,7 @@ def get_all_recipes(subdir: str = None) -> list:
     Parameters
     ----------
     subdir : str
-        Sub-directory of the ``DIAGNOSTICS_PATH`` to look for
+        Sub-directory of the ``DIAGNOSTICS.path`` to look for
         recipes, e.g. ``get_all_recipes(subdir='examples')``.
 
     Returns
@@ -56,7 +56,7 @@ def get_all_recipes(subdir: str = None) -> list:
     """
     if not subdir:
         subdir = '**'
-    rootdir = Path(DIAGNOSTICS_PATH, 'recipes')
+    rootdir = DIAGNOSTICS.recipes
     files = rootdir.glob(f'{subdir}/*.yml')
     return RecipeList(RecipeInfo(file) for file in files)
 
@@ -73,7 +73,7 @@ def get_recipe(name: str) -> 'RecipeInfo':
     -------
     RecipeInfo
     """
-    locations = Path(), Path(DIAGNOSTICS_PATH, 'recipes')
+    locations = Path(), DIAGNOSTICS.recipes
     filenames = name, name + '.yml'
 
     for location in locations:

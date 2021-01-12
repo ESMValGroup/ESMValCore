@@ -7,8 +7,7 @@ import pybtex
 import yaml
 from pybtex.database.input import bibtex
 
-from esmvalcore._citation import REFERENCES_PATH
-from esmvalcore._diagnostics import TAGS
+from esmvalcore._diagnostics import DIAGNOSTICS, TAGS
 
 
 class RenderError(BaseException):
@@ -104,7 +103,7 @@ class Reference:
         The bibtex tags resolved as
         ``esmvaltool/references/{tag}.bibtex``.
         """
-        filename = Path(REFERENCES_PATH, f'{tag}.bibtex')
+        filename = DIAGNOSTICS.references / f'{tag}.bibtex'
         return cls(filename)
 
     def __repr__(self):

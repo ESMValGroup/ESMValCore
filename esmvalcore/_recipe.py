@@ -17,7 +17,7 @@ from ._data_finder import (
     get_output_file,
     get_statistic_output_file,
 )
-from ._diagnostics import TAGS, replace_tags
+from ._diagnostics import TAGS
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import (
@@ -935,9 +935,8 @@ class Recipe:
     def _initialize_provenance(self, raw_documentation):
         """Initialize the recipe provenance."""
         doc = deepcopy(raw_documentation)
-        for key in doc:
-            if key in TAGS:
-                doc[key] = replace_tags(key, doc[key])
+
+        TAGS.replace_tags_in_dict(doc)
 
         return get_recipe_provenance(doc, self._filename)
 
