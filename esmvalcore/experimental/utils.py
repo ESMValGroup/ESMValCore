@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 
-from esmvalcore._config import DIAGNOSTICS_PATH
+from esmvalcore._diagnostics import DIAGNOSTICS_PATH
 
 from .recipe_info import RecipeInfo
 

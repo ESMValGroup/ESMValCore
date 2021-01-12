@@ -8,7 +8,7 @@ import yaml
 from pybtex.database.input import bibtex
 
 from esmvalcore._citation import REFERENCES_PATH
-from esmvalcore._config import TAGS
+from esmvalcore._diagnostics import TAGS
 
 
 class RenderError(BaseException):

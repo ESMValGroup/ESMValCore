@@ -191,7 +191,7 @@ class Recipes():
         """
         import os
 
-        from ._config import DIAGNOSTICS_PATH
+        from ._diagnostics import DIAGNOSTICS_PATH
         from ._logging import configure_logging
         configure_logging(console_log_level='info')
         recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
@@ -221,7 +221,7 @@ class Recipes():
         import os
         import shutil
 
-        from ._config import DIAGNOSTICS_PATH
+        from ._diagnostics import DIAGNOSTICS_PATH
         from ._logging import configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
@@ -246,7 +246,7 @@ class Recipes():
         """
         import os
 
-        from ._config import DIAGNOSTICS_PATH
+        from ._diagnostics import DIAGNOSTICS_PATH
         from ._logging import configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
@@ -347,7 +347,8 @@ class ESMValTool():
         import os
         import shutil
 
-        from ._config import DIAGNOSTICS_PATH, read_config_user_file
+        from ._config import read_config_user_file
+        from ._diagnostics import DIAGNOSTICS_PATH
         from ._logging import configure_logging
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels

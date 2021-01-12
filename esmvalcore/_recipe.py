@@ -11,18 +11,13 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import (
-    TAGS,
-    get_activity,
-    get_institutes,
-    get_project_config,
-    replace_tags,
-)
+from ._config import get_activity, get_institutes, get_project_config
 from ._data_finder import (
     get_input_filelist,
     get_output_file,
     get_statistic_output_file,
 )
+from ._diagnostics import TAGS, replace_tags
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import (
