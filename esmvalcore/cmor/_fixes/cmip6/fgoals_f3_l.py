@@ -1,5 +1,6 @@
-"""Fixes for CMIP6 FGOALS-f3-L."""
+"""Fixes for CMIP6 FGOALS-f3-L model."""
 import cftime
+import dask.array as da
 import numpy as np
 
 from ..fix import Fix
@@ -7,7 +8,6 @@ from ..fix import Fix
 
 class AllVars(Fix):
     """Fixes for all vars."""
-
     def fix_metadata(self, cubes):
         """Fix parent time units.
 
@@ -39,3 +39,25 @@ class AllVars(Fix):
                     time.bounds = time.units.date2num(
                         np.stack([starts, ends], -1))
         return cubes
+
+
+class Sftlf(Fix):
+    """Fixes for sftlf."""
+    def fix_data(self, cube):
+        """Fix data.
+
+        Unit is %, values are <= 1.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Cube to fix
+
+        Returns
+        -------
+        iris.cube.Cube
+            Fixed cube. It can be a difference instance.
+        """
+        if cube.units == "%" and da.max(cube.core_data()).compute() <= 1.:
+            cube.data = cube.core_data() * 100.
+        return cube
