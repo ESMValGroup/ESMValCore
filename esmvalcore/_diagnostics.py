@@ -89,7 +89,12 @@ class TagsManager(dict):
         """Retrieve a list of tags with their values."""
         return tuple(self.get_tag_value(section, tag) for tag in tags)
 
-    def replace_tags_in_dict(self, dct):
+    def replace_tags_in_dict(self, dct: dict):
+        """Resolves tags and updates the given dict in-place.
+
+        Tags are updated one level deep, and only if the corresponding
+        section exists in the ``TagsManager``.
+        """
         for key in dct:
             if key in self:
                 tags = dct[key]
