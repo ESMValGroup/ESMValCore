@@ -5,7 +5,7 @@ from esmvalcore.experimental.recipe_info import Contributor, Project, Reference
 
 pytest.importorskip(
     'esmvaltool',
-    reason='The behaviour of these tests depends on what ``DIAGNOSTICS_PATH``'
+    reason='The behaviour of these tests depends on what ``DIAGNOSTICS.path``'
     'points to. This is defined by a forward-reference to ESMValTool, which'
     'is not installed in the CI, but likely to be available in a developer'
     'or user installation.')
