@@ -54,12 +54,15 @@ class Diagnostics:
         try:
             import esmvaltool
         except ImportError:
-            return Path.cwd()
-        # avoid a crash when there is a directory called
-        # 'esmvaltool' that is not a Python package
-        if esmvaltool.__file__ is None:
-            return Path.cwd()
-        return cls(Path(esmvaltool.__file__).absolute().parent)
+            path = Path.cwd()
+        else:
+            # avoid a crash when there is a directory called
+            # 'esmvaltool' that is not a Python package
+            if esmvaltool.__file__ is None:
+                path = Path.cwd()
+            else:
+                path = Path(esmvaltool.__file__).absolute().parent
+        return cls(path)
 
 
 class TagsManager(dict):
