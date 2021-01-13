@@ -10,7 +10,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
   Lee de Mora (PML, UK - ledm@pml.ac.uk)
   Niels Drost (NLeSC, Netherlands - n.drost@esciencecenter.nl)
   Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
-  Remi Hosseini Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
+  Remi Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
   Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
   Axel Lauer (DLR, Germany - axel.lauer@dlr.de)
   Benjamin Mueller (LMU, Germany - b.mueller@iggf.geo.uni-muenchen.de)
