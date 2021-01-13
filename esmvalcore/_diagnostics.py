@@ -21,6 +21,7 @@ class Diagnostics:
         ├── recipes
         └── references
     """
+
     def __init__(self, path):
         self.path = Path(path)
 
@@ -67,6 +68,7 @@ class Diagnostics:
 
 class TagsManager(dict):
     """Tag manager."""
+
     @classmethod
     def from_file(cls, filename: str):
         """Load the reference tags used for provenance recording."""
@@ -93,7 +95,7 @@ class TagsManager(dict):
         return tuple(self.get_tag_value(section, tag) for tag in tags)
 
     def replace_tags_in_dict(self, dct: dict):
-        """Resolves tags and updates the given dict in-place.
+        """Resolve tags and updates the given dict in-place.
 
         Tags are updated one level deep, and only if the corresponding
         section exists in the ``TagsManager``.
