@@ -27,7 +27,7 @@ def cubes():
     return iris.cube.CubeList([co2_cube, hus_cube, zg_cube, ps_cube])
 
 
-def test_xch4_calculate(cubes):
+def test_xco2_calculate(cubes):
     """Test function ``calculate``."""
     derived_var = xco2.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
