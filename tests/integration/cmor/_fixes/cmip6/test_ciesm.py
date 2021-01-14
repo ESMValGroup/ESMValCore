@@ -3,6 +3,7 @@ import iris
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.ciesm import Cl
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
 
 
@@ -22,6 +23,11 @@ def cl_cube():
         units='%',
     )
     return cube
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert issubclass(Cl, ClFixHybridPressureCoord)
 
 
 def test_cl_fix_data(cl_cube):

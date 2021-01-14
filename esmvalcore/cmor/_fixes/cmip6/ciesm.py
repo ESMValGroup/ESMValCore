@@ -1,15 +1,15 @@
 """Fixes for CIESM model."""
-from ..fix import Fix
+from ..common import ClFixHybridPressureCoord
 
 
-class Cl(Fix):
+class Cl(ClFixHybridPressureCoord):
     """Fixes for cl."""
 
     def fix_data(self, cube):
         """
         Fix data.
 
-        Fixes discrepancy between declared units and real units
+        Fixes discrepancy between declared units and real units.
 
         Parameters
         ----------
