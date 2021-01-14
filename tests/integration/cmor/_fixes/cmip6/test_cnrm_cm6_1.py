@@ -1,5 +1,4 @@
 """Tests for the fixes of CNRM-CM6-1."""
-import os
 
 import iris
 import numpy as np
@@ -8,9 +7,6 @@ import pytest
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl, Clcalipso, Cli, Clw
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-
-SAMPLE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           os.pardir, 'sample_data')
 
 
 @pytest.fixture
@@ -40,10 +36,10 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
                                    [9.0, 21.0]]]]])
 
 
-def test_cl_fix_metadata():
+def test_cl_fix_metadata(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
-    nc_path = os.path.join(SAMPLE_PATH, 'cnrm_cm6_1_cl.nc')
-    cubes = iris.load(nc_path)
+    nc_path = test_data_path / 'cnrm_cm6_1_cl.nc'
+    cubes = iris.load(str(nc_path))
 
     # Raw cubes
     assert len(cubes) == 6

@@ -12,9 +12,6 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl, Cli, Clw, Tas, Tos
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
-SAMPLE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           os.pardir, 'sample_data')
-
 
 def test_get_cl_fix():
     """Test getting of fix."""
@@ -59,10 +56,10 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
 @unittest.mock.patch(
     'esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath',
     autospec=True)
-def test_cl_fix_file(mock_get_filepath, tmp_path):
+def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     """Test ``fix_file`` for ``cl``."""
-    nc_path = os.path.join(SAMPLE_PATH, 'cesm2_cl.nc')
-    cubes = iris.load(nc_path)
+    nc_path = test_data_path / 'cesm2_cl.nc'
+    cubes = iris.load(str(nc_path))
 
     # Raw cubes
     assert len(cubes) == 5

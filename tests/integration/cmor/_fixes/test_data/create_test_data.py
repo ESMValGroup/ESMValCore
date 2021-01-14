@@ -1,4 +1,4 @@
-"""Create sample data for tests."""
+"""Create test data for tests of CMOR fixes."""
 import os
 
 import numpy as np

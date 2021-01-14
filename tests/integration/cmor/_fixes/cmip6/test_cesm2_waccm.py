@@ -11,9 +11,6 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl, Cli, Clw, Tas
 from esmvalcore.cmor.fix import Fix
 
-SAMPLE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           os.pardir, 'sample_data')
-
 
 def test_get_cl_fix():
     """Test getting of fix."""
@@ -26,14 +23,14 @@ def test_get_cl_fix():
 @unittest.mock.patch(
     'esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath',
     autospec=True)
-def test_cl_fix_file(mock_get_filepath, tmp_path):
+def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     """Test ``fix_file`` for ``cl``."""
-    nc_path = os.path.join(SAMPLE_PATH, 'cesm2_waccm_cl.nc')
+    nc_path = test_data_path / 'cesm2_waccm_cl.nc'
     mock_get_filepath.return_value = os.path.join(tmp_path,
                                                   'fixed_cesm2_waccm_cl.nc')
     fix = Cl(None)
-    fixed_file = fix.fix_file(nc_path, tmp_path)
-    mock_get_filepath.assert_called_once_with(tmp_path, nc_path)
+    fixed_file = fix.fix_file(str(nc_path), tmp_path)
+    mock_get_filepath.assert_called_once_with(tmp_path, str(nc_path))
     fixed_cube = iris.load_cube(fixed_file)
     lev_coord = fixed_cube.coord(var_name='lev')
     a_coord = fixed_cube.coord(var_name='a')

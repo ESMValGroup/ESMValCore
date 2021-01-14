@@ -1,6 +1,4 @@
 """Test for common fixes used for multiple datasets."""
-import os
-
 import iris
 import numpy as np
 
@@ -10,10 +8,6 @@ from esmvalcore.cmor._fixes.common import (
 )
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import var_name_constraint
-
-SAMPLE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           'sample_data')
-
 
 AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0, 1.0, 1.0],
                                   [1.0, 1.0, 1.0, 1.0],
@@ -47,10 +41,9 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
                                    [7.0, 25.0]]]]])
 
 
-def hybrid_pressure_coord_fix_metadata(nc_filename, short_name, fix):
+def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     """Test ``fix_metadata`` of file with hybrid pressure coord."""
-    nc_path = os.path.join(SAMPLE_PATH, nc_filename)
-    cubes = iris.load(nc_path)
+    cubes = iris.load(str(nc_path))
 
     # Raw cubes
     assert len(cubes) == 4
@@ -87,19 +80,21 @@ def hybrid_pressure_coord_fix_metadata(nc_filename, short_name, fix):
     return var_names
 
 
-def test_cl_hybrid_pressure_coord_fix_metadata_with_a():
+def test_cl_hybrid_pressure_coord_fix_metadata_with_a(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
+    nc_path = test_data_path / 'common_cl_a.nc'
     var_names = hybrid_pressure_coord_fix_metadata(
-        'common_cl_a.nc', 'cl', ClFixHybridPressureCoord(vardef))
+        nc_path, 'cl', ClFixHybridPressureCoord(vardef))
     assert 'a_bnds' in var_names
 
 
-def test_cl_hybrid_pressure_coord_fix_metadata_with_ap():
+def test_cl_hybrid_pressure_coord_fix_metadata_with_ap(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
+    nc_path = test_data_path / 'common_cl_ap.nc'
     var_names = hybrid_pressure_coord_fix_metadata(
-        'common_cl_ap.nc', 'cl', ClFixHybridPressureCoord(vardef))
+        nc_path, 'cl', ClFixHybridPressureCoord(vardef))
     assert 'ap_bnds' in var_names
 
 
@@ -121,10 +116,9 @@ PRESSURE_BOUNDS = np.array([[[[101318.99243691, 101306.9780559],
                               [101300.97123885, 101264.93559234]]]])
 
 
-def hybrid_height_coord_fix_metadata(nc_filename, short_name, fix):
+def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     """Test ``fix_metadata`` of file with hybrid height coord."""
-    nc_path = os.path.join(SAMPLE_PATH, nc_filename)
-    cubes = iris.load(nc_path)
+    cubes = iris.load(str(nc_path))
 
     # Raw cubes
     assert len(cubes) == 3
@@ -162,8 +156,9 @@ def hybrid_height_coord_fix_metadata(nc_filename, short_name, fix):
     assert air_pressure_coord.units == 'Pa'
 
 
-def test_cl_hybrid_height_coord_fix_metadata():
+def test_cl_hybrid_height_coord_fix_metadata(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
-    hybrid_height_coord_fix_metadata('common_cl_hybrid_height.nc', 'cl',
+    nc_path = test_data_path / 'common_cl_hybrid_height.nc'
+    hybrid_height_coord_fix_metadata(nc_path, 'cl',
                                      ClFixHybridHeightCoord(vardef))

@@ -1,15 +1,10 @@
 """Tests for the fixes of GFDL-CM4."""
-import os
-
 import iris
 import numpy as np
 
 from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import Cl, Cli, Clw
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-
-SAMPLE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           os.pardir, 'sample_data')
 
 
 def test_get_cl_fix():
@@ -38,10 +33,10 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
                                    [9.0, 21.0]]]]])
 
 
-def test_cl_fix_metadata():
+def test_cl_fix_metadata(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
-    nc_path = os.path.join(SAMPLE_PATH, 'gfdl_cm4_cl.nc')
-    cubes = iris.load(nc_path)
+    nc_path = test_data_path / 'gfdl_cm4_cl.nc'
+    cubes = iris.load(str(nc_path))
 
     # Raw cubes
     assert len(cubes) == 6
