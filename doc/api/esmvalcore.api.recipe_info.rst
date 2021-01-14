@@ -45,7 +45,7 @@ To run the recipe, call the :py:meth:`esmvalcore.experimental.RecipeInfo.run` me
 
 .. code-block:: python
 
-    >>> output = recipe_info.run()
+    >>> output = recipe.run()
     <log messages>
 
 By default, a new :py:class:`esmvalcore.experimental.config.Session` is automatically created, so that data are never overwritten.
@@ -56,7 +56,7 @@ Sessions can also be explicitly specified.
 
     >>> from esmvalcore.experimental import CFG
     >>> session = CFG.start_session('my_session')
-    >>> output = recipe_info.run(session)
+    >>> output = recipe.run(session)
     <log messages>
 
 :py:meth:`esmvalcore.experimental.RecipeInfo.run` returns an object that contains the locations of the data and figures (not implemented yet).

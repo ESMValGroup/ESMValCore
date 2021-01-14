@@ -22,7 +22,7 @@ class RenderError(BaseException):
 
 
 class Contributor:
-    """Contains contributor (author or maintainer) information.".
+    """Contains contributor (author or maintainer) information.
 
     Parameters
     ----------
@@ -75,12 +75,12 @@ class Contributor:
 
 
 class Project:
-    """Contains project information.
+    """Use this class to acknowledge a project associated with the recipe.
 
     Parameters
     ----------
     project : str
-        Defines the project title.
+        The project title.
     """
     def __init__(self, project: str):
         self.project = project
@@ -108,7 +108,7 @@ class Project:
 
 
 class Reference:
-    """Contains reference information.
+    """Parse reference information from bibtex entries.
 
     Parameters
     ----------
@@ -187,7 +187,7 @@ class Reference:
 
 
 class RecipeInfo():
-    """Contains Recipe metadata.
+    """API wrapper for the esmvalcore Recipe object.
 
     This class can be used to inspect and run the recipe.
 
@@ -319,7 +319,7 @@ class RecipeInfo():
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def load(self, session: dict):
+    def _load(self, session: dict):
         """Load the recipe.
 
         This method loads the recipe into the internal ESMValCore Recipe
@@ -341,12 +341,10 @@ class RecipeInfo():
 
         logger.info(pprint.pformat(config_user))
 
-        from esmvalcore._recipe import Recipe
-        recipe = Recipe(raw_recipe=self.data,
-                        config_user=config_user,
-                        recipe_file=self.path)
-
-        return recipe
+        from esmvalcore._recipe import Recipe as RecipeEngine
+        self.recipe_engine = RecipeEngine(raw_recipe=self.data,
+                                          config_user=config_user,
+                                          recipe_file=self.path)
 
     def run(self, session: dict = None):
         """Run the recipe.
@@ -371,11 +369,11 @@ class RecipeInfo():
             session = CFG.start_session(self.path.stem)
 
         with log_to_dir(session.run_dir):
-            recipe = self.load(session=session)
-            recipe.run()
+            self._load(session=session)
+            self.recipe_engine.run()
 
         out = {}
-        for task in recipe.tasks:
+        for task in self.recipe_engine.tasks:
             out[task.name] = task.settings
 
         return out

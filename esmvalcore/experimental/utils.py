@@ -13,8 +13,8 @@ class RecipeList(list):
     def find(self, query: str):
         """Search for recipes matching the search query or pattern.
 
-        This method will search the recipe description, author list, and
-        project information for the query. All matches are returned.
+        Searches in the description, authors and project information fields.
+        All matches are returned.
 
         Parameters
         ----------
@@ -41,9 +41,6 @@ class RecipeList(list):
 
 def get_all_recipes(subdir: str = None) -> list:
     """Return a list of all available recipes.
-
-    This function returns a list of all recipes in the directory defined
-    by the diagnostics path.
 
     Parameters
     ----------
@@ -99,4 +96,4 @@ def get_recipe(name: str) -> 'RecipeInfo':
             if try_path.exists():
                 return RecipeInfo(try_path)
 
-    raise FileNotFoundError(f'Could not find `{name}')
+    raise FileNotFoundError(f'Could not find `{name}` in {locations}.')
