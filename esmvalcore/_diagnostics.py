@@ -24,7 +24,6 @@ class Diagnostics:
 
     def __init__(self, path):
         self.path = Path(path)
-        logger.debug('Using diagnostics from %s', self.path)
 
     @property
     def recipes(self):
@@ -64,6 +63,7 @@ class Diagnostics:
                 path = Path.cwd()
             else:
                 path = Path(esmvaltool.__file__).absolute().parent
+        logger.debug('Using diagnostics from %s', self.path)
         return cls(path)
 
 
