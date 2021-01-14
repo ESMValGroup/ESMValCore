@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 def _plev_fix(dataset, pl_idx):
     """Extract valid plev data.
 
-    this function takes care of situations in which certain plevs are
+    This function takes care of situations in which certain plevs are
     completely masked due to unavailable interpolation boundaries.
     """
     if np.ma.is_masked(dataset):
