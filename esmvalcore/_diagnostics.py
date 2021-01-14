@@ -63,7 +63,7 @@ class Diagnostics:
                 path = Path.cwd()
             else:
                 path = Path(esmvaltool.__file__).absolute().parent
-        logger.debug('Using diagnostics from %s', self.path)
+        logger.debug('Using diagnostics from %s', path)
         return cls(path)
 
 
