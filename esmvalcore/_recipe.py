@@ -3,7 +3,7 @@ import fnmatch
 import logging
 import os
 import re
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from copy import deepcopy
 from pprint import pformat
 
@@ -12,10 +12,18 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import (TAGS, get_activity, get_institutes, get_project_config,
-                      replace_tags)
-from ._data_finder import (get_input_filelist, get_multiproduct_filename,
-                           get_output_file)
+from ._config import (
+    TAGS,
+    get_activity,
+    get_institutes,
+    get_project_config,
+    replace_tags,
+)
+from ._data_finder import (
+    get_input_filelist,
+    get_multiproduct_filename,
+    get_output_file,
+)
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import (
@@ -37,8 +45,11 @@ from .preprocessor._derive import get_required
 from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
 from .preprocessor._other import _group_products
-from .preprocessor._regrid import (get_cmor_levels, get_reference_levels,
-                                   parse_cell_spec)
+from .preprocessor._regrid import (
+    get_cmor_levels,
+    get_reference_levels,
+    parse_cell_spec,
+)
 
 logger = logging.getLogger(__name__)
 

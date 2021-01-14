@@ -8,9 +8,15 @@ from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor._multimodel import (
-    _assemble_data, _compute_statistic, _get_time_slice, _plev_fix,
-    _put_in_cube, _unify_time_coordinates, multicube_statistics,
-    multicube_statistics_iris)
+    _assemble_data,
+    _compute_statistic,
+    _get_time_slice,
+    _plev_fix,
+    _put_in_cube,
+    _unify_time_coordinates,
+    multicube_statistics,
+    multicube_statistics_iris,
+)
 
 
 class Test(tests.Test):
