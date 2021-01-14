@@ -29,7 +29,7 @@ on:
   #  branches:
   #  - master
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 4 * * *'
 
 jobs:
   linux:
@@ -43,7 +43,7 @@ jobs:
     name: Linux Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
-      - uses: goanpeca/setup-miniconda@v1
+      - uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
@@ -78,7 +78,7 @@ jobs:
     name: OSX Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
-      - uses: goanpeca/setup-miniconda@v1
+      - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
           python-version: ${{ matrix.python-version }}

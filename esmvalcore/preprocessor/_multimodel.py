@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def _plev_fix(dataset, pl_idx):
     """Extract valid plev data.
 
-    this function takes care of situations in which certain plevs are
+    This function takes care of situations in which certain plevs are
     completely masked due to unavailable interpolation boundaries.
     """
     if np.ma.is_masked(dataset):
@@ -135,7 +135,11 @@ def _compute_statistic(data, statistic_name):
 def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     """Quick cube building and saving."""
     tunits = template_cube.coord('time').units
-    times = iris.coords.DimCoord(t_axis, standard_name='time', units=tunits)
+    times = iris.coords.DimCoord(t_axis,
+                                 standard_name='time',
+                                 units=tunits,
+                                 var_name='time',
+                                 long_name='time')
     times.bounds = None
     times.guess_bounds()
 
@@ -217,27 +221,34 @@ def _unify_time_coordinates(cubes):
         coord = cube.coord('time')
         years = [p.year for p in coord.units.num2date(coord.points)]
         months = [p.month for p in coord.units.num2date(coord.points)]
+        days = [p.day for p in coord.units.num2date(coord.points)]
 
         # Reconstruct default calendar
         if 0 not in np.diff(years):
             # yearly data
-            dates = [datetime(year, 7, 1) for year in years]
+            dates = [datetime(year, 7, 1, 0, 0, 0) for year in years]
 
         elif 0 not in np.diff(months):
             # monthly data
             dates = [
-                datetime(year, month, 15)
+                datetime(year, month, 15, 0, 0, 0)
                 for year, month in zip(years, months)
             ]
-        else:
-            # (sub)daily data
-            coord = cube.coord('time')
+        elif 0 not in np.diff(days):
+            # daily data
+            dates = [
+                datetime(year, month, day, 0, 0, 0)
+                for year, month, day in zip(years, months, days)
+            ]
             if coord.units != t_unit:
                 logger.warning(
                     "Multimodel encountered (sub)daily data and inconsistent "
                     "time units or calendars. Attempting to continue, but "
                     "might produce unexpected results.")
-            dates = coord.units.num2date(coord.points)
+        else:
+            raise ValueError(
+                "Multimodel statistics preprocessor currently does not "
+                "support sub-daily data.")
 
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord('time').points = t_unit.date2num(dates)
@@ -326,6 +337,9 @@ def multicube_statistics(cubes, statistics, span):
         If span is neither overlap nor full.
     """
     logger.debug('Multimodel statistics: computing: %s', statistics)
+
+    # Reset time coordinates and make cubes share the same calendar
+    _unify_time_coordinates(cubes)
 
     # Reset time coordinates and make cubes share the same calendar
     _unify_time_coordinates(cubes)

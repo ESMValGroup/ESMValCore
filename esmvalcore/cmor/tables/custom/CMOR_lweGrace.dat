@@ -1,0 +1,22 @@
+SOURCE: CMIP5 (adapted from mrsos)
+!============
+variable_entry:    lweGrace
+!============
+modeling_realm:    land
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             m
+cell_methods:      time: mean area: mean where land
+cell_measures:     area: areacella
+long_name:         Liquid Water Equivalent Thickness Anomaly
+comment:           liquid water equivalent thickness anomaly
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          lweGrace
+type:              real
+!----------------------------------
+!
