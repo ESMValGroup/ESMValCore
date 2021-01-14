@@ -1,19 +1,19 @@
-.. _api_recipe_info:
+.. _api_recipe:
 
 Recipes
 =======
 
-This section describes the :py:mod:`esmvalcore.experimental.recipe_info` submodule of the API.
+This section describes the :py:mod:`esmvalcore.experimental.recipe` submodule of the API.
 
 Recipe metadata
 ***************
 
-:py:class:`esmvalcore.experimental.recipe_info.RecipeInfo` info is a class that holds metadata from a recipe.
+:py:class:`esmvalcore.experimental.recipe.Recipe` info is a class that holds metadata from a recipe.
 
 .. code-block:: python
 
-    >>> RecipeInfo('path/to/recipe_python.yml')
-    recipe = RecipeInfo('Recipe Python')
+    >>> Recipe('path/to/recipe_python.yml')
+    recipe = Recipe('Recipe Python')
 
 Printing the recipe will give a nice overview of the recipe:
 
@@ -41,7 +41,7 @@ Printing the recipe will give a nice overview of the recipe:
 Running a recipe
 ****************
 
-To run the recipe, call the :py:meth:`esmvalcore.experimental.RecipeInfo.run` method.
+To run the recipe, call the :py:meth:`esmvalcore.experimental.Recipe.run` method.
 
 .. code-block:: python
 
@@ -59,9 +59,9 @@ Sessions can also be explicitly specified.
     >>> output = recipe.run(session)
     <log messages>
 
-:py:meth:`esmvalcore.experimental.RecipeInfo.run` returns an object that contains the locations of the data and figures (not implemented yet).
+:py:meth:`esmvalcore.experimental.Recipe.run` returns an object that contains the locations of the data and figures (not implemented yet).
 
 API reference
 *************
 
-.. automodule:: esmvalcore.experimental.recipe_info
+.. automodule:: esmvalcore.experimental.recipe

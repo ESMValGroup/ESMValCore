@@ -5,7 +5,7 @@ from pathlib import Path
 
 from esmvalcore._config import DIAGNOSTICS_PATH
 
-from .recipe_info import RecipeInfo
+from .recipe import Recipe
 
 
 class RecipeList(list):
@@ -57,10 +57,10 @@ def get_all_recipes(subdir: str = None) -> list:
         subdir = '**'
     rootdir = Path(DIAGNOSTICS_PATH, 'recipes')
     files = rootdir.glob(f'{subdir}/*.yml')
-    return RecipeList(RecipeInfo(file) for file in files)
+    return RecipeList(Recipe(file) for file in files)
 
 
-def get_recipe(name: str) -> 'RecipeInfo':
+def get_recipe(name: str) -> 'Recipe':
     """Get a recipe by its name.
 
     The function looks first in the local directory, and second in the
@@ -74,8 +74,8 @@ def get_recipe(name: str) -> 'RecipeInfo':
 
     Returns
     -------
-    RecipeInfo
-        Instance of :obj:`RecipeInfo` which can be used to inspect and run
+    Recipe
+        Instance of :obj:`Recipe` which can be used to inspect and run
         the recipe.
 
     Raises
@@ -94,6 +94,6 @@ def get_recipe(name: str) -> 'RecipeInfo':
         for filename in filenames:
             try_path = Path(location, filename).expanduser()
             if try_path.exists():
-                return RecipeInfo(try_path)
+                return Recipe(try_path)
 
     raise FileNotFoundError(f'Could not find `{name}` in {locations}.')

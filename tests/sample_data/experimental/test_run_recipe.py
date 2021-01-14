@@ -1,13 +1,13 @@
 """Tests running a recipe using sample data.
 
-Runs recipes using :meth:`esmvalcore.experimental.RecipeInfo.run`.
+Runs recipes using :meth:`esmvalcore.experimental.Recipe.run`.
 """
 
 from pathlib import Path
 
 import pytest
 
-from esmvalcore.experimental import CFG, RecipeInfo, get_recipe
+from esmvalcore.experimental import CFG, Recipe, get_recipe
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -26,7 +26,7 @@ def test_run_recipe(recipe, tmp_path):
     """Test running a basic recipe using sample data."""
     CFG['output_dir'] = tmp_path
 
-    assert isinstance(recipe, RecipeInfo)
+    assert isinstance(recipe, Recipe)
 
     output = recipe.run()
 

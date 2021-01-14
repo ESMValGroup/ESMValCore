@@ -5,7 +5,7 @@ import sys
 
 from ._warnings import warnings  # prints experimental API warning
 from .config import CFG
-from .recipe_info import RecipeInfo
+from .recipe import Recipe
 from .utils import RecipeList, get_all_recipes, get_recipe
 
 logging.basicConfig(format='%(message)s',
@@ -16,7 +16,7 @@ __all__ = [
     'CFG',
     'get_all_recipes',
     'get_recipe',
-    'RecipeInfo',
+    'Recipe',
     'RecipeList',
     'warnings',
 ]

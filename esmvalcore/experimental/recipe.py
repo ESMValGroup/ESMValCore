@@ -186,7 +186,7 @@ class Reference:
         return rendered
 
 
-class RecipeInfo():
+class Recipe():
     """API wrapper for the esmvalcore Recipe object.
 
     This class can be used to inspect and run the recipe.
