@@ -106,7 +106,7 @@ def _compute_statistic(data, statistic_name):
         quantile = float(statistic_name[1:]) / 100
         statistic_function = partial(_quantile, quantile=quantile)
     else:
-        raise NotImplementedError
+        raise ValueError(f'No such statistic: `{statistic_name}`')
 
     # no plevs
     if len(data[0].shape) < 3:
@@ -150,7 +150,8 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
         tunits = cf_units.Unit(unit_name, calendar="standard")
         times = iris.coords.DimCoord(t_axis,
                                      standard_name='time',
-                                     units=tunits)
+                                     units=tunits,
+                                     var_name='time')
 
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
@@ -327,16 +328,16 @@ def _assemble_full_data(cubes, statistic):
 
     # assemble an array to hold all time data
     # for all cubes; shape is (ncubes,(plev), lat, lon)
-    new_arr = np.ma.empty([len(cubes)] + list(new_shape[1:]))
+    new_arr = np.ma.empty([len(cubes)] + list(new_shape[1:]), dtype='float32')
 
     # data array for stats computation
-    stats_dats = np.ma.zeros(new_shape)
+    stats_dats = np.ma.zeros(new_shape, dtype='float32')
 
     # assemble indices list to chop new_arr on
     indices_list = []
 
     # empty data array to hold time slices
-    empty_arr = np.ma.empty(new_shape)
+    empty_arr = np.ma.empty(new_shape, dtype='float32')
 
     # loop through cubes and populate empty_arr with points
     for cube in cubes:
@@ -357,8 +358,7 @@ def _assemble_full_data(cubes, statistic):
 
 
 def multi_model_statistics(products, span, statistics, output_products=None):
-    """
-    Compute multi-model statistics.
+    """Compute multi-model statistics.
 
     Multimodel statistics computed along the time axis. Can be
     computed across a common overlap in time (set span: overlap)
@@ -383,22 +383,25 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         span; if full, statistics are computed on full time spans, ignoring
         missing data.
     output_products: dict
-        dictionary of output products.
-    statistics: str
-        statistical measure to be computed. Available options: mean, median,
-        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
+        dictionary of output products. MUST be specified if products are NOT
+        cubes
+    statistics: list of str
+        list of statistical measure(s) to be computed. Available options:
+        mean, median, max, min, std, or pXX.YY (for percentile XX.YY; decimal
+        part optional).
 
     Returns
     -------
-    list
-        list of data products or cubes containing the multimodel stats
-        computed.
+    set or dict or list
+        `set` of data products if `output_products` is given
+        `dict` of cubes if `output_products` is not given
+        `list` of input cubes if there is no overlap between cubes when
+        using `span='overlap'`
 
     Raises
     ------
     ValueError
         If span is neither overlap nor full.
-
     """
     logger.debug('Multimodel statistics: computing: %s', statistics)
     if len(products) < 2:
