@@ -127,7 +127,6 @@ def clip_start_end_year(cube, start_year, end_year):
     ------
     ValueError
         Time ranges are outside the cube's time limits.
-
     """
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
 
@@ -218,6 +217,50 @@ def get_time_weights(cube):
         time_weights = iris.util.broadcast_to_shape(time_weights, cube.shape,
                                                     cube.coord_dims('time'))
     return time_weights
+
+
+def hourly_statistics(cube, hours, operator='mean'):
+    """Compute hourly statistics.
+
+    Chunks time in x hours periods and computes statistics over them.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+
+    hours: int
+        Number of hours per period. Must be a divisor of 24
+        (1, 2, 3, 4, 6, 8, 12)
+
+    operator: str, optional
+        Select operator to apply.
+        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+
+    Returns
+    -------
+    iris.cube.Cube
+        Hourly statistics cube
+    """
+    if not cube.coords('hour_group'):
+        iris.coord_categorisation.add_categorised_coord(
+            cube,
+            'hour_group',
+            'time',
+            lambda coord, value: coord.units.num2date(value).hour // hours,
+            units='1')
+    if not cube.coords('day_of_year'):
+        iris.coord_categorisation.add_day_of_year(cube, 'time')
+    if not cube.coords('year'):
+        iris.coord_categorisation.add_year(cube, 'time')
+
+    operator = get_iris_analysis_operation(operator)
+    cube = cube.aggregated_by(['hour_group', 'day_of_year', 'year'], operator)
+
+    cube.remove_coord('hour_group')
+    cube.remove_coord('day_of_year')
+    cube.remove_coord('year')
+    return cube
 
 
 def daily_statistics(cube, operator='mean'):
@@ -803,3 +846,107 @@ def timeseries_filter(cube,
                                weights=wgts)
 
     return cube
+
+
+def resample_hours(cube, interval, offset=0):
+    """Convert x-hourly data to y-hourly by eliminating extra timesteps.
+
+    Convert x-hourly data to y-hourly (y > x) by eliminating the extra
+    timesteps. This is intended to be used only with instantaneous values.
+
+    For example:
+
+    - resample_hours(cube, interval=6): Six-hourly intervals at 0:00, 6:00,
+      12:00, 18:00.
+
+    - resample_hours(cube, interval=6, offset=3): Six-hourly intervals at
+      3:00, 9:00, 15:00, 21:00.
+
+    - resample_hours(cube, interval=12, offset=6): Twelve-hourly intervals
+      at 6:00, 18:00.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        Input cube.
+    interval: int
+        The period (hours) of the desired data.
+    offset: int, optional
+        The firs hour (hours) of the desired data.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with the new frequency.
+
+    Raises
+    ------
+    ValueError:
+        The specified frequency is not a divisor of 24.
+    """
+    allowed_intervals = (1, 2, 3, 4, 6, 12)
+    if interval not in allowed_intervals:
+        raise ValueError(
+            f'The number of hours must be one of {allowed_intervals}')
+    if offset >= interval:
+        raise ValueError(f'The offset ({offset}) must be lower than '
+                         f'the interval ({interval})')
+    time = cube.coord('time')
+    cube_period = time.cell(1).point - time.cell(0).point
+    if cube_period.total_seconds() / 3600 >= interval:
+        raise ValueError(f"Data period ({cube_period}) should be lower than "
+                         f"the interval ({interval})")
+    hours = range(0 + offset, 24, interval)
+    select_hours = iris.Constraint(time=lambda cell: cell.point.hour in hours)
+    return cube.extract(select_hours)
+
+
+def resample_time(cube, month=None, day=None, hour=None):
+    """Change frequency of data by resampling it.
+
+    Converts data from one frequency to another by extracting the timesteps
+    that match the provided month, day and/or hour. This is meant to be used
+    with instantaneous values when computing statistics is not desired.
+
+    For example:
+
+    - resample_time(cube, hour=6): Daily values taken at 6:00.
+
+    - resample_time(cube, day=15, hour=6): Monthly values taken at 15th
+      6:00.
+
+    - resample_time(cube, month=6): Yearly values, taking in June
+
+    - resample_time(cube, month=6, day=1): Yearly values, taking 1st June
+
+    The condition must yield only one value per interval: the last two samples
+    above will produce yearly data, but the first one is meant to be used to
+    sample from monthly output and the second one will work better with daily.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        Input cube.
+    month: int, optional
+        Month to extract
+    day: int, optional
+        Day to extract
+    hour: int, optional
+        Hour to extract
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with the new frequency.
+    """
+    def compare(cell):
+        date = cell.point
+        if month is not None and month != date.month:
+            return False
+        if day is not None and day != date.day:
+            return False
+        if hour is not None and hour != date.hour:
+            return False
+        return True
+
+    return cube.extract(iris.Constraint(time=compare))

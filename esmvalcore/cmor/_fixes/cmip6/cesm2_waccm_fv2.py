@@ -1,11 +1,17 @@
 """Fixes for CESM2-WACCM-FV2 model."""
-from shutil import copyfile
 
-from netCDF4 import Dataset
-
+from .cesm2_waccm import Cl as BaseCl, Cli as BaseCli, Clw as BaseClw
 from ..fix import Fix
 from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
                       add_scalar_typeland_coord, add_scalar_typesea_coord)
+
+Cl = BaseCl
+
+
+Cli = BaseCli
+
+
+Clw = BaseClw
 
 class Tas(Fix):
     """Fixes for tas."""
@@ -46,3 +52,4 @@ class Fgco2(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_depth_coord(cube)
         return cubes
+

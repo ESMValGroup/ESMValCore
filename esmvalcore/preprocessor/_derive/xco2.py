@@ -1,4 +1,4 @@
-"""Derivation of variable ``xch4``."""
+"""Derivation of variable ``xco2``."""
 
 from iris import Constraint
 
@@ -30,7 +30,7 @@ class DerivedVariable(DerivedVariableBase):
         zg_cube = cubes.extract_strict(Constraint(name='geopotential_height'))
         ps_cube = cubes.extract_strict(Constraint(name='surface_air_pressure'))
 
-        # Column-averaged CH4
+        # Column-averaged CO2
         xco2_cube = column_average(co2_cube, hus_cube, zg_cube, ps_cube)
         xco2_cube.convert_units('1')
 

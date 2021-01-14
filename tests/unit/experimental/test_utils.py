@@ -26,8 +26,6 @@ def test_get_all_recipes():
     recipes = get_all_recipes()
     assert isinstance(recipes, list)
 
-    recipes.find('')
-
 
 def test_recipe_list_find():
     """Get all recipes."""
