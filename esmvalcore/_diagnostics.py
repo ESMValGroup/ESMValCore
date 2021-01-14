@@ -24,6 +24,7 @@ class Diagnostics:
 
     def __init__(self, path):
         self.path = Path(path)
+        logger.debug('Using diagnostics from %s', self.path)
 
     @property
     def recipes(self):
