@@ -8,7 +8,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
   Bouwe Andela (NLeSC, Netherlands - b.andela@esciencecenter.nl)
   Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
   Lee de Mora (PML, UK - ledm@pml.ac.uk)
-  Niels Drost (NLeSC, Netherlands - n.drost@esciencecenter.nl)
+  Niels Drost (Netherlands eScience Center, Netherlands - n.drost@esciencecenter.nl)
   Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
   Remi Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
   Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
