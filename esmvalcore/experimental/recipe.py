@@ -11,6 +11,7 @@ from pybtex.database.input import bibtex
 
 from esmvalcore._citation import REFERENCES_PATH
 from esmvalcore._config import TAGS
+from esmvalcore._recipe import Recipe as RecipeEngine
 
 from ._logging import log_to_dir
 
@@ -33,6 +34,7 @@ class Contributor:
     orcid : str, optional
         ORCID url
     """
+
     def __init__(self, name: str, institute: str, orcid: str = None):
         self.name = name
         self.institute = institute
@@ -82,6 +84,7 @@ class Project:
     project : str
         The project title.
     """
+
     def __init__(self, project: str):
         self.project = project
 
@@ -120,6 +123,7 @@ class Reference:
     NotImplementedError
         If the bibtex file contains more than 1 entry.
     """
+
     def __init__(self, filename: str):
         parser = bibtex.Parser(strict=False)
         bib_data = parser.parse_file(filename)
@@ -186,7 +190,7 @@ class Reference:
         return rendered
 
 
-class RecipeInfo():
+class Recipe():
     """API wrapper for the esmvalcore Recipe object.
 
     This class can be used to inspect and run the recipe.
@@ -196,6 +200,7 @@ class RecipeInfo():
     path : pathlike
         Path to the recipe.
     """
+
     def __init__(self, path: str):
         self.path = Path(path)
         if not self.path.exists():
@@ -207,6 +212,7 @@ class RecipeInfo():
         self._projects = None
         self._references = None
         self._description = None
+        self._recipe_engine = None
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
@@ -341,10 +347,9 @@ class RecipeInfo():
 
         logger.info(pprint.pformat(config_user))
 
-        from esmvalcore._recipe import Recipe as RecipeEngine
-        self.recipe_engine = RecipeEngine(raw_recipe=self.data,
-                                          config_user=config_user,
-                                          recipe_file=self.path)
+        self._recipe_engine = RecipeEngine(raw_recipe=self.data,
+                                           config_user=config_user,
+                                           recipe_file=self.path)
 
     def run(self, session: dict = None):
         """Run the recipe.
@@ -370,10 +375,10 @@ class RecipeInfo():
 
         with log_to_dir(session.run_dir):
             self._load(session=session)
-            self.recipe_engine.run()
+            self._recipe_engine.run()
 
         out = {}
-        for task in self.recipe_engine.tasks:
+        for task in self._recipe_engine.tasks:
             out[task.name] = task.settings
 
         return out
