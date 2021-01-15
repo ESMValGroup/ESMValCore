@@ -25,7 +25,7 @@ class Co2(Fix):
 
 
 class Gpp(Fix):
-    """Fixes for gpp, land values set to 0 instead of masked."""
+    """Fixes for gpp, ocean values set to 0 instead of masked."""
 
     def fix_data(self, cube):
         """
