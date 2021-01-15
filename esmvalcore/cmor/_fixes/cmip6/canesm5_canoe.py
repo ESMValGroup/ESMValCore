@@ -2,6 +2,7 @@
 from ..fix import Fix
 import numpy as np
 
+
 class Co2(Fix):
     """Fixes for co2."""
     def fix_metadata(self, cubes):
@@ -22,6 +23,7 @@ class Co2(Fix):
         cube.metadata = metadata
         return cubes
 
+
 class Gpp(Fix):
     """Fixes for fgco2, land values set to 0 instead of masked."""
 
@@ -38,5 +40,5 @@ class Gpp(Fix):
         iris.cube.Cube
 
         """
-        cube.data = np.ma.masked_where(cube.data==0, cube.data)
+        cube.data = np.ma.masked_where(cube.data == 0, cube.data)
         return cube

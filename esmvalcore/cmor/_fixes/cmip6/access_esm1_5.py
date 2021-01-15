@@ -5,6 +5,7 @@ import numpy as np
 from ..common import ClFixHybridHeightCoord
 from ..fix import Fix
 
+
 class Zg(Fix):
     """Fixes for zg."""
     def fix_metadata(self, cubes):
@@ -22,6 +23,7 @@ class Zg(Fix):
         cube.coord('air_pressure').bounds = \
             np.round(cube.coord('air_pressure').bounds, 0)
         return cubes
+
 
 class Hus(Fix):
     """Fixes for hus."""
