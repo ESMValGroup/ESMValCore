@@ -1,7 +1,7 @@
 from pathlib import Path
 from pprint import pformat
 
-from .recipe_metadata import Contributor, Project, Reference
+from .recipe_metadata import Contributor, Reference
 
 
 class OutputItem():
@@ -10,6 +10,8 @@ class OutputItem():
     Use `OutputItem.create(path='<filename>')` to initialize a suitable
     subclass.
     """
+    kind = None
+
     def __init__(self, filename, attributes={}):
         self.attributes = attributes
         self.filename = Path(filename)
@@ -19,7 +21,12 @@ class OutputItem():
 
     def __repr__(self):
         """Return canonical string representation."""
-        return f'{self.__class__.__name__}(filename={self.filename.name!r},\nattributes={pformat(self.attributes)})'
+        return (f'{self.__class__.__name__}(filename={self.filename.name!r},'
+                f'\nattributes={pformat(self.attributes)})')
+
+    def __str__(self):
+        """Return canonical string representation."""
+        return f'{self.__class__.__name__}(filename={self.filename.name!r})'
 
     @property
     def authors(self) -> tuple:
@@ -95,6 +102,9 @@ class OutputItem():
 
 class ImageItem(OutputItem):
     """Container for image output."""
+
+    kind = 'image'
+
     def _repr_png_(self):
         """Render png as image in Jupyter Notebook."""
         from IPython.display import Image
@@ -103,6 +113,9 @@ class ImageItem(OutputItem):
 
 class DataItem(OutputItem):
     """Container for image output."""
+
+    kind = 'data'
+
     def load_xarray(self):
         """Load data using xarray."""
         import xarray as xr
