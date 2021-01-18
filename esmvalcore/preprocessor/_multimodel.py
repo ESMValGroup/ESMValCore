@@ -7,6 +7,7 @@ Wrapper functions separate esmvalcore internals, operating on products, from
 generalized functions that operate on iris cubes.
 """
 
+import copy
 import logging
 import re
 from datetime import datetime
@@ -16,6 +17,7 @@ import cf_units
 import iris
 import numpy as np
 import scipy
+from iris.experimental.equalise_cubes import equalise_attributes
 
 logger = logging.getLogger(__name__)
 
@@ -358,10 +360,68 @@ def multicube_statistics(cubes, statistics, span):
     return statistics_cubes
 
 
+def multicube_statistics_iris(cubes, statistics):
+    """Compute statistics across input cubes.
+
+    Like multicube_statistics, but operates directly on Iris cubes. Cubes are
+    merged and subsequently collapsed along a new auxiliary coordinate.
+    Inconsistent attributes will be removed.
+
+    This method uses iris' built in functions, exposing the operators in
+    iris.analysis and supporting lazy evaluation. Input cubes must have
+    consistent shapes.
+
+    Note: some of the operators in iris.analysis require additional
+    arguments, such as percentiles or weights. These operators are
+    currently not supported.
+
+    Parameters
+    ----------
+    cubes: list
+        list of cubes to be used in multimodel stat computation;
+        statistics: list statistical measures to be computed. Choose from the
+        operators listed in the iris.analysis package.
+
+    Returns
+    -------
+    dict
+        dictionary of statistics cubes with statistics' names as keys.
+    """
+    operators = vars(iris.analysis)
+
+    cubes = copy.deepcopy(cubes)
+
+    for i, cube in enumerate(cubes):
+        concat_dim = iris.coords.AuxCoord(i, var_name='ens')
+        cube.add_aux_coord(concat_dim)
+
+    equalise_attributes(cubes)
+
+    cubes = iris.cube.CubeList(cubes)
+    cube = cubes.merge_cube()
+
+    statistics_cubes = {}
+    for statistic in statistics:
+        try:
+            operator = operators[statistic.upper()]
+        except KeyError as err:
+            raise ValueError(
+                f'Statistic `{statistic}` not supported in',
+                '`ensemble_statistics`. Choose supported operator from',
+                '`iris.analysis package`.') from err
+
+        # this will always return a masked array
+        statistic_cube = cube.collapsed('ens', operator)
+        statistics_cubes[statistic] = statistic_cube
+
+    return statistics_cubes
+
+
 def _multiproduct_statistics(products,
                              statistics,
                              output_products,
-                             span='overlap'):
+                             span='overlap',
+                             engine='esmvalcore'):
     """Compute statistics across ESMValCore products.
 
     Extract cubes from products, calculate the statistics across cubes and
@@ -381,12 +441,21 @@ def _multiproduct_statistics(products,
     span: str
         'full' or 'overlap', whether to calculate the statistics on the time
         union ('full') or time intersection ('overlap') of the cubes.
+    engine: str
+        'iris' or 'esmvalcore', which function to use to compute the
+        statistics. Iris is more efficient and exposes more operators,
+        but requires highly homogeneous/compatible cubes.
 
     Returns
     -------
     set
         set of PreprocessorFiles containing the computed statistics cubes.
     """
+    if engine == 'iris':
+        aggregator = multicube_statistics_iris
+    else:
+        aggregator = partial(multicube_statistics, span=span)
+
     # Extract cubes from products
     cubes = [cube for product in products for cube in product.cubes]
 
@@ -396,9 +465,7 @@ def _multiproduct_statistics(products,
                     list(products)[0])
         statistics_cubes = {statistic: cubes[0] for statistic in statistics}
     else:
-        statistics_cubes = multicube_statistics(cubes=cubes,
-                                                statistics=statistics,
-                                                span=span)
+        statistics_cubes = aggregator(cubes=cubes, statistics=statistics)
 
     # Add cubes to output products and log provenance
     statistics_products = set()
@@ -418,7 +485,8 @@ def _multiproduct_statistics(products,
 def multi_model_statistics(products: set,
                            statistics: list,
                            output_products: set,
-                           span: str = 'overlap'):
+                           span: str = 'overlap',
+                           engine: str = 'esmvalcore'):
     """Entry point for ESMValCore's multi-model statistics preprocessor.
 
     Compute statistics across cubes from different models.
@@ -432,6 +500,7 @@ def multi_model_statistics(products: set,
         statistics=statistics,
         output_products=output_products,
         span=span,
+        engine=engine,
     )
 
     return statistics_products
