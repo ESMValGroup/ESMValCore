@@ -13,6 +13,7 @@ from esmvalcore._citation import REFERENCES_PATH
 from esmvalcore._config import TAGS
 from esmvalcore._recipe import Recipe as RecipeEngine
 
+from . import CFG
 from ._logging import log_to_dir
 
 logger = logging.getLogger(__file__)
@@ -34,7 +35,6 @@ class Contributor:
     orcid : str, optional
         ORCID url
     """
-
     def __init__(self, name: str, institute: str, orcid: str = None):
         self.name = name
         self.institute = institute
@@ -84,7 +84,6 @@ class Project:
     project : str
         The project title.
     """
-
     def __init__(self, project: str):
         self.project = project
 
@@ -123,7 +122,6 @@ class Reference:
     NotImplementedError
         If the bibtex file contains more than 1 entry.
     """
-
     def __init__(self, filename: str):
         parser = bibtex.Parser(strict=False)
         bib_data = parser.parse_file(filename)
@@ -200,7 +198,6 @@ class Recipe():
     path : pathlike
         Path to the recipe.
     """
-
     def __init__(self, path: str):
         self.path = Path(path)
         if not self.path.exists():
