@@ -1302,7 +1302,7 @@ class Recipe:
 
         # Select only requested tasks
         tasks = get_flattened_tasks(tasks)
-        if not self._cfg.get('run_diagnostic'):
+        if not self._cfg.get('run_diagnostic', True):
             tasks = {t for t in tasks if isinstance(t, PreprocessingTask)}
         if self._cfg.get('diagnostics'):
             names = {t.name for t in tasks}
