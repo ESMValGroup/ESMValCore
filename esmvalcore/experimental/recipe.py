@@ -370,7 +370,6 @@ class Recipe():
             Output of the recipe (Not implemented yet)
         """
         if not session:
-            from . import CFG
             session = CFG.start_session(self.path.stem)
 
         with log_to_dir(session.run_dir):
