@@ -14,6 +14,7 @@ from esmvalcore._config import TAGS
 from esmvalcore._recipe import Recipe as RecipeEngine
 
 from ._logging import log_to_dir
+from .recipe_output import OutputItem
 
 logger = logging.getLogger(__file__)
 
@@ -366,8 +367,9 @@ class Recipe():
 
         Returns
         -------
-        output : None
-            Output of the recipe (Not implemented yet)
+        output : dict
+            Returns output of the recipe as instances of :obj:`OutputItem`
+            grouped by diagnostic task.
         """
         if not session:
             from . import CFG
@@ -377,8 +379,24 @@ class Recipe():
             self._load(session=session)
             self._recipe_engine.run()
 
-        out = {}
-        for task in self._recipe_engine.tasks:
-            out[task.name] = task.settings
+        return self.get_output()
 
-        return out
+    def get_output(self) -> dict:
+        """Get output from recipe.
+
+        Returns
+        -------
+        output : dict
+            Returns output of the recipe as instances of :obj:`OutputItem`
+            grouped by diagnostic task.
+        """
+        product_filenames = self._recipe_engine.get_product_filenames()
+
+        output = {}
+
+        for task, filenames in product_filenames.items():
+            output[task] = [
+                OutputItem.create(filename) for filename in filenames
+            ]
+
+        return output
