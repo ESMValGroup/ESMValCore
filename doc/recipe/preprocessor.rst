@@ -456,17 +456,17 @@ Missing values masks
 --------------------
 
 Missing (masked) values can be a nuisance especially when dealing with
-multimodel ensembles and having to compute multimodel statistics; different
+multi-model ensembles and having to compute multi-model statistics; different
 numbers of missing data from dataset to dataset may introduce biases and
-artificially assign more weight to the datasets that have less missing
-data. This is handled in ESMValTool via the missing values masks: two types of
-such masks are available, one for the multimodel case and another for the
-single model case.
+artificially assign more weight to the datasets that have less missing data.
+This is handled in ESMValTool via the missing values masks: two types of such
+masks are available, one for the multi-model case and another for the single
+model case.
 
-The multimodel missing values mask (``mask_fillvalues``) is a preprocessor step
+The multi-model missing values mask (``mask_fillvalues``) is a preprocessor step
 that usually comes after all the single-model steps (regridding, area selection
 etc) have been performed; in a nutshell, it combines missing values masks from
-individual models into a multimodel missing values mask; the individual model
+individual models into a multi-model missing values mask; the individual model
 masks are built according to common criteria: the user chooses a time window in
 which missing data points are counted, and if the number of missing data points
 relative to the number of total data points in a window is less than a chosen
@@ -492,11 +492,11 @@ See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
 Common mask for multiple models
 -------------------------------
 
-It is possible to use ``mask_fillvalues`` to create a combined multimodel
-mask (all the masks from all the analyzed models combined into a single
-mask); for that purpose setting the ``threshold_fraction`` to 0 will not
-discard any time windows, essentially keeping the original model masks and
-combining them into a single mask; here is an example:
+It is possible to use ``mask_fillvalues`` to create a combined multi-model mask
+(all the masks from all the analyzed models combined into a single mask); for
+that purpose setting the ``threshold_fraction`` to 0 will not discard any time
+windows, essentially keeping the original model masks and combining them into a
+single mask; here is an example:
 
 .. code-block:: yaml
 
@@ -530,13 +530,12 @@ Horizontal regridding
 
 Regridding is necessary when various datasets are available on a variety of
 `lat-lon` grids and they need to be brought together on a common grid (for
-various statistical operations e.g. multimodel statistics or for e.g. direct
+various statistical operations e.g. multi-model statistics or for e.g. direct
 inter-comparison or comparison with observational datasets). Regridding is
 conceptually a very similar process to interpolation (in fact, the regridder
 engine uses interpolation and extrapolation, with various schemes). The primary
 difference is that interpolation is based on sample data points, while
-regridding is based on the horizontal grid of another cube (the reference
-grid).
+regridding is based on the horizontal grid of another cube (the reference grid).
 
 The underlying regridding mechanism in ESMValTool uses the `cube.regrid()
 <https://scitools.org.uk/iris/docs/latest/iris/iris/cube.html#iris.cube.Cube.regrid>`_
@@ -651,20 +650,15 @@ Multi-model statistics
 ======================
 Computing multi-model statistics is an integral part of model analysis and
 evaluation: individual models display a variety of biases depending on model
-set-up, initial conditions, forcings and implementation; comparing model data
-to observational data, these biases have a significantly lower statistical
-impact when using a multi-model ensemble. ESMValTool has the capability of
-computing a number of multi-model statistical measures: using the preprocessor
-module ``multi_model_statistics`` will enable the user to ask for either a
-multi-model ``mean``, ``median``, ``max``, ``min``, ``std``, and / or
-``pXX.YY`` with a set of argument parameters passed to
-``multi_model_statistics``. Percentiles can be specified like ``p1.5`` or
-``p95``. The decimal point will be replaced by a dash in the output file.
-
-Note that current multimodel statistics in ESMValTool are local (not global),
-and are computed along the time axis. As such, can be computed across a common
-overlap in time (by specifying ``span: overlap`` argument) or across the full
-length in time of each model (by specifying ``span: full`` argument).
+set-up, initial conditions, forcings and implementation; comparing model data to
+observational data, these biases have a significantly lower statistical impact
+when using a multi-model ensemble. ESMValTool has the capability of computing a
+number of multi-model statistical measures: using the preprocessor module
+``multi_model_statistics`` will enable the user to ask for either a multi-model
+``mean``, ``median``, ``max``, ``min``, ``std``, and / or ``pXX.YY`` with a set
+of argument parameters passed to ``multi_model_statistics``. Percentiles can be
+specified like ``p1.5`` or ``p95``. The decimal point will be replaced by a dash
+in the output file.
 
 Restrictive computation is also available by excluding  any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
@@ -681,7 +675,7 @@ days in a year may vary between calendars, (sub-)daily data are not supported.
 .. code-block:: yaml
 
     preprocessors:
-      multimodel_preprocessor:
+      multi_model_preprocessor:
         multi_model_statistics:
           span: overlap
           statistics: [mean, median]
@@ -702,11 +696,11 @@ entry contains the resulting cube with the requested statistic operations.
 
 .. note::
 
-   Note that the multimodel array operations, albeit performed in
+   Note that the multi-model array operations, albeit performed in
    per-time/per-horizontal level loops to save memory, could, however, be
    rather memory-intensive (since they are not performed lazily as
    yet). The Section on :ref:`Memory use` details the memory intake
-   for different run scenarios, but as a thumb rule, for the multimodel
+   for different run scenarios, but as a thumb rule, for the multi-model
    preprocessor, the expected maximum memory intake could be approximated as
    the number of datasets multiplied by the average size in memory for one
    dataset.
@@ -1512,14 +1506,14 @@ In the most general case, we can set upper limits on the maximum memory the
 analysis will require:
 
 
-``Ms = (R + N) x F_eff - F_eff`` - when no multimodel analysis is performed;
+``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
 
-``Mm = (2R + N) x F_eff - 2F_eff`` - when multimodel analysis is performed;
+``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
 
 where
 
 * ``Ms``: maximum memory for non-multimodel module
-* ``Mm``: maximum memory for multimodel module
+* ``Mm``: maximum memory for multi-model module
 * ``R``: computational efficiency of module; `R` is typically 2-3
 * ``N``: number of datasets
 * ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
@@ -1538,7 +1532,7 @@ where
 ``Mm = 1.5 x (N - 2)`` GB
 
 As a rule of thumb, the maximum required memory at a certain time for
-multimodel analysis could be estimated by multiplying the number of datasets by
+multi-model analysis could be estimated by multiplying the number of datasets by
 the average file size of all the datasets; this memory intake is high but also
 assumes that all data is fully realized in memory; this aspect will gradually
 change and the amount of realized data will decrease with the increase of
