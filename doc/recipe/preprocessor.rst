@@ -663,10 +663,15 @@ in the output file.
 Restrictive computation is also available by excluding  any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
 [excluded models list]`` argument). The implementation has a few restrictions
-that apply to the input data: model datasets must have consistent shapes, and
-from a statistical point of view, this is needed since weights are not yet
-implemented; also higher dimensional data is not supported (i.e. anything with
-dimensionality higher than four: time, vertical axis, two horizontal axes).
+that apply to the input data: model datasets must have consistent shapes, apart
+from the time dimension; and cubes with more than four dimensions (time,
+vertical axis, two horizontal axes) are not supported.
+
+Input datasets may have different time coordinates. Statistics can be computed
+across overlapping times only (``span: overlap``) or across the full time span
+of the combined models (``span: full``). The preprocessor sets a common time
+coordinate on all datasets. As the number of days in a year may vary between
+calendars, (sub-)daily data with different calendars are not supported.
 
 Input datasets may have different time coordinates. The multi-model statistics
 preprocessor sets a common time coordinate on all datasets. As the number of
@@ -696,14 +701,12 @@ entry contains the resulting cube with the requested statistic operations.
 
 .. note::
 
-   Note that the multi-model array operations, albeit performed in
-   per-time/per-horizontal level loops to save memory, could, however, be
-   rather memory-intensive (since they are not performed lazily as
-   yet). The Section on :ref:`Memory use` details the memory intake
-   for different run scenarios, but as a thumb rule, for the multi-model
-   preprocessor, the expected maximum memory intake could be approximated as
-   the number of datasets multiplied by the average size in memory for one
-   dataset.
+   The multi-model array operations can be rather memory-intensive (since they
+   are not performed lazily as yet). The Section on :ref:`Memory use` details
+   the memory intake for different run scenarios, but as a thumb rule, for the
+   multi-model preprocessor, the expected maximum memory intake could be
+   approximated as the number of datasets multiplied by the average size in
+   memory for one dataset.
 
 .. _time operations:
 
