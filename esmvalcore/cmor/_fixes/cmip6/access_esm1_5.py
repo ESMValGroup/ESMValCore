@@ -8,8 +8,10 @@ from ..fix import Fix
 
 class Zg(Fix):
     """Fixes for zg."""
+
     def fix_metadata(self, cubes):
         """Correctly round air pressure coordinate.
+
         Parameters
         ----------
         cube : iris.cube.CubeList
@@ -27,8 +29,10 @@ class Zg(Fix):
 
 class Hus(Fix):
     """Fixes for hus."""
+
     def fix_metadata(self, cubes):
         """Correctly round air pressure coordinate.
+
         Parameters
         ----------
         cube : iris.cube.CubeList

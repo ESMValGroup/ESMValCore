@@ -1,12 +1,13 @@
 """Fixes for CanESM5-CanOE model."""
-from ..fix import Fix
 import numpy as np
+from ..fix import Fix
 
 
 class Co2(Fix):
     """Fixes for co2."""
+
     def fix_metadata(self, cubes):
-        """Corrects units.
+        """Correct units from ppmv to 1.
 
         Parameters
         ----------
@@ -28,8 +29,7 @@ class Gpp(Fix):
     """Fixes for gpp, ocean values set to 0 instead of masked."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix masked values.
 
         Parameters
         ----------
