@@ -306,7 +306,7 @@ def _get_default_settings(variable, config_user, derive=False):
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
     }
     # Configure final CMOR data check
-    settings['cmor_check_data'] = settings['cmor_check_metadata']
+    settings['cmor_check_data'] = dict(settings['cmor_check_metadata'])
 
     # Clean up fixed files
     if not config_user['save_intermediary_cubes']:
