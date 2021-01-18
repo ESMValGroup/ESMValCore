@@ -8,7 +8,8 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.preprocessor import extract_time, multi_model_statistics
+from esmvalcore.preprocessor import extract_time
+from esmvalcore.preprocessor._multimodel import multicube_statistics
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -118,11 +119,11 @@ def timeseries_cubes_day(request):
     return cube_dict
 
 
-def multimodel_test(cubes, span, statistic):
+def multimodel_test(cubes, statistic, span):
     """Run multimodel test with some simple checks."""
     statistics = [statistic]
 
-    result = multi_model_statistics(cubes, span=span, statistics=statistics)
+    result = multicube_statistics(cubes, statistics=statistics, span=span)
     assert isinstance(result, dict)
     assert statistic in result
 
@@ -139,7 +140,7 @@ def multimodel_regression_test(cubes, span, name):
     are being written.
     """
     statistic = 'mean'
-    result = multimodel_test(cubes, span=span, statistic=statistic)
+    result = multimodel_test(cubes, statistic=statistic, span=span)
     result_cube = result[statistic]
 
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
