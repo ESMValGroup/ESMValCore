@@ -29,15 +29,8 @@ def path_representer(dumper, data):
     return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
 
 
-def check_levels_representer(dumper, data):
-    """For CheckLevel enums in yaml files."""
-    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
-
-
 yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
 yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
-yaml.representer.SafeRepresenter.add_representer(CheckLevels,
-                                                 check_levels_representer)
 
 logger = logging.getLogger(__name__)
 
