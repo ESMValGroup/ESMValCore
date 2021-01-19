@@ -14,10 +14,12 @@ class Zg(Fix):
 
         Parameters
         ----------
-        cube : iris.cube.CubeList
+        cubes : iris.cube.CubeList
+
         Returns
         -------
         iris.cube.Cube
+
         """
         cube = self.get_cube_from_list(cubes)
         cube.coord('air_pressure').points = \
@@ -35,10 +37,12 @@ class Hus(Fix):
 
         Parameters
         ----------
-        cube : iris.cube.CubeList
+        cubes : iris.cube.CubeList
+
         Returns
         -------
         iris.cube.Cube
+
         """
         cube = self.get_cube_from_list(cubes)
         cube.coord('air_pressure').points = \
