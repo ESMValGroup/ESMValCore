@@ -1,6 +1,7 @@
 """Test using sample data for :func:`esmvalcore.preprocessor._multimodel`."""
 
 import pickle
+from functools import partial
 from itertools import groupby
 from pathlib import Path
 
@@ -9,7 +10,10 @@ import numpy as np
 import pytest
 
 from esmvalcore.preprocessor import extract_time
-from esmvalcore.preprocessor._multimodel import multicube_statistics
+from esmvalcore.preprocessor._multimodel import (
+    multicube_statistics,
+    multicube_statistics_iris,
+)
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -28,6 +32,11 @@ CALENDAR_PARAMS = (
 )
 
 SPAN_PARAMS = ('overlap', 'full')
+
+ENGINE_PARAMS = (
+    'esmvalcore',
+    pytest.param('iris', marks=pytest.mark.xfail),
+)
 
 
 def assert_array_almost_equal(this, other):
@@ -119,18 +128,23 @@ def timeseries_cubes_day(request):
     return cube_dict
 
 
-def multimodel_test(cubes, statistic, span):
+def multimodel_test(cubes, statistic, span, engine=None):
     """Run multimodel test with some simple checks."""
     statistics = [statistic]
 
-    result = multicube_statistics(cubes, statistics=statistics, span=span)
+    if engine == 'iris':
+        aggregator = multicube_statistics_iris
+    else:
+        aggregator = partial(multicube_statistics, span=span)
+
+    result = aggregator(cubes, statistics=statistics)
     assert isinstance(result, dict)
     assert statistic in result
 
     return result
 
 
-def multimodel_regression_test(cubes, span, name):
+def multimodel_regression_test(cubes, span, name, engine):
     """Run multimodel regression test.
 
     This test will fail if the input data or multimodel code changed. To
@@ -140,7 +154,10 @@ def multimodel_regression_test(cubes, span, name):
     are being written.
     """
     statistic = 'mean'
-    result = multimodel_test(cubes, statistic=statistic, span=span)
+    result = multimodel_test(cubes,
+                             statistic=statistic,
+                             span=span,
+                             engine=engine)
     result_cube = result[statistic]
 
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
@@ -165,8 +182,9 @@ def multimodel_regression_test(cubes, span, name):
 
 
 @pytest.mark.use_sample_data
+@pytest.mark.parametrize('engine', ENGINE_PARAMS)
 @pytest.mark.parametrize('span', SPAN_PARAMS)
-def test_multimodel_regression_month(timeseries_cubes_month, span):
+def test_multimodel_regression_month(timeseries_cubes_month, span, engine):
     """Test statistic."""
     cubes = timeseries_cubes_month
     name = 'timeseries_monthly'
@@ -174,13 +192,16 @@ def test_multimodel_regression_month(timeseries_cubes_month, span):
         name=name,
         span=span,
         cubes=cubes,
+        engine=engine,
     )
 
 
 @pytest.mark.use_sample_data
+@pytest.mark.parametrize('engine', ENGINE_PARAMS)
 @pytest.mark.parametrize('calendar', CALENDAR_PARAMS)
 @pytest.mark.parametrize('span', SPAN_PARAMS)
-def test_multimodel_regression_day(timeseries_cubes_day, span, calendar):
+def test_multimodel_regression_day(timeseries_cubes_day, span, calendar,
+                                   engine):
     """Test statistic."""
     cubes = timeseries_cubes_day[calendar]
     name = f'timeseries_daily_{calendar}'
@@ -188,6 +209,7 @@ def test_multimodel_regression_day(timeseries_cubes_day, span, calendar):
         name=name,
         span=span,
         cubes=cubes,
+        engine=engine,
     )
 
 
