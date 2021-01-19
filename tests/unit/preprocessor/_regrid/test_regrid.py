@@ -12,8 +12,6 @@ import tests
 from esmvalcore.preprocessor import regrid
 from esmvalcore.preprocessor._regrid import _CACHE, HORIZONTAL_SCHEMES
 
-_CACHE.clear()
-
 
 class Test(tests.Test):
     def _check(self, tgt_grid, scheme, spec=False):
@@ -101,6 +99,8 @@ class Test(tests.Test):
             self._check(self.tgt_grid, scheme)
 
     def test_regrid__cell_specification(self):
+        _CACHE.clear()
+
         specs = ['1x1', '2x2', '3x3', '4x4', '5x5']
         scheme = 'linear'
         for spec in specs:
