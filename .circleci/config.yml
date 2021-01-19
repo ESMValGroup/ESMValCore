@@ -53,7 +53,7 @@ jobs:
       - checkout
       - check_changes
       - restore_cache:
-          key: install-{{ .Branch }}
+          key: install-{{ .Branch }}-{{ checksum "setup.py" }}
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
@@ -73,7 +73,7 @@ jobs:
             pytest -n 2
             esmvaltool version
       - save_cache:
-          key: install-{{ .Branch }}
+          key: install-{{ .Branch }}-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/pkgs"
             - ".eggs"
