@@ -12,6 +12,8 @@ import tests
 from esmvalcore.preprocessor import regrid
 from esmvalcore.preprocessor._regrid import _CACHE, HORIZONTAL_SCHEMES
 
+_CACHE.clear()
+
 
 class Test(tests.Test):
     def _check(self, tgt_grid, scheme, spec=False):
