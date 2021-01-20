@@ -27,7 +27,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: test-{{ .Branch }}-{{ checksum "setup.py" }}
+          key: test-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "environment.yml" }}
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
@@ -35,7 +35,7 @@ jobs:
             pip install .[test]
             pytest -n 2 -m "not installation"
       - save_cache:
-          key: test-{{ .Branch }}-{{ checksum "setup.py" }}
+          key: test-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "environment.yml" }}
           paths:
             - ".eggs"
             - ".pytest_cache"
@@ -53,7 +53,7 @@ jobs:
       - checkout
       - check_changes
       - restore_cache:
-          key: install-{{ .Branch }}-{{ checksum "setup.py" }}
+          key: install-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "environment.yml" }}
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
@@ -73,7 +73,7 @@ jobs:
             pytest -n 2
             esmvaltool version
       - save_cache:
-          key: install-{{ .Branch }}-{{ checksum "setup.py" }}
+          key: install-{{ .Branch }}-{{ checksum "setup.py" }}-{{ checksum "environment.yml" }}
           paths:
             - "/opt/conda/pkgs"
             - ".eggs"
