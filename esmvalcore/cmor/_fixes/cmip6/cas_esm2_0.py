@@ -1,4 +1,4 @@
 """Fixes for CAS-ESM2-0 model."""
-from ..common import ClFixHybridPressureCoord
+from .ciesm import Cl as BaseCl
 
-Cl = ClFixHybridPressureCoord
+Cl = BaseCl

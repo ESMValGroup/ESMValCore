@@ -1,6 +1,6 @@
 """Tests for the fixes of CAS-ESM2-0."""
 from esmvalcore.cmor._fixes.cmip6.cas_esm2_0 import Cl
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.cmip6.ciesm import Cl as BaseCl
 from esmvalcore.cmor.fix import Fix
 
 
@@ -12,4 +12,4 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl is ClFixHybridPressureCoord
+    assert Cl is BaseCl
