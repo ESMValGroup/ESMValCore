@@ -11,4 +11,6 @@ The API is under development, so use at your own risk!
 
    esmvalcore.api.config
    esmvalcore.api.recipe
+   esmvalcore.api.recipe_output
+   esmvalcore.api.recipe_metadata
    esmvalcore.api.utils

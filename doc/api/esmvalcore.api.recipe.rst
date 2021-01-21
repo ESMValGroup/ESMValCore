@@ -59,7 +59,37 @@ Sessions can also be explicitly specified.
     >>> output = recipe.run(session)
     <log messages>
 
-:py:meth:`esmvalcore.experimental.Recipe.run` returns an object that contains the locations of the data and figures (not implemented yet).
+:py:meth:`esmvalcore.experimental.Recipe.run` returns an dictionary of objects that can be used to inspect
+the output of the recipe. The output is an instance of :py:class:`esmvalcore.experimental.recipe_output.ImageItem` or
+:py:class:`esmvalcore.experimental.recipe_output.ImageItem` depending on its type.
+
+Recipe output
+*************
+
+After running a recipe, output can also be retrieved using:
+
+.. code-block:: python
+
+    >>> output = recipe.get_output()
+
+Output comes in two kinds, :py:class:`DataOutput`, which correspond to data files in `.nc` format and :py:class:`ImageOutput` which correspond to plots in `.png` format.
+
+Image output uses IPython magic to plot themselves in a notebook environment, whereas data output have special methods to load the data using :py:mod:`xarray`,
+
+.. code-block:: python
+
+    >>> data = item.load_xarray()
+    >>> type(data)
+    xarray.core.dataset.Dataset
+
+or :py:mod:`iris`,
+
+.. code-block:: python
+
+    >>> cube = item.load_iris()
+    >>> type(cube)
+    xarray.core.dataset.Dataset
+
 
 API reference
 *************
