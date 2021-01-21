@@ -12,7 +12,7 @@ from esmvalcore._recipe import Recipe as RecipeEngine
 from . import CFG
 from ._logging import log_to_dir
 from .recipe_metadata import Contributor, Project, Reference
-from .recipe_output import OutputItem
+from .recipe_output import RecipeOutput
 
 logger = logging.getLogger(__file__)
 
@@ -218,14 +218,6 @@ class Recipe():
         if not self._recipe_engine:
             raise AttributeError('Run the recipe first using `.run()`.')
 
-        recipe_output = self._recipe_engine.get_product_output()
+        raw_output = self._recipe_engine.get_product_output()
 
-        output = {}
-
-        for task, product_output in recipe_output.items():
-            output[task] = [
-                OutputItem.create(filename, attributes)
-                for filename, attributes in product_output.items()
-            ]
-
-        return output
+        return RecipeOutput(raw_output)

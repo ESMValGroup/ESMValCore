@@ -1,16 +1,85 @@
 """API for handing recipe output."""
 
 import base64
+import textwrap
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from pprint import pformat
+
+from esmvalcore.experimental.recipe_output import *
 
 from .recipe_metadata import Contributor, Reference
 
 
-class OutputItem():
-    """Base container for recipe output.
+class TaskOutput(Sequence):
+    """Container for task output."""
 
-    Use `OutputItem.create(path='<filename>')` to initialize a suitable
+    def __init__(self, output_items):
+        self._output_files = tuple(
+            OutputFile.create(filename, attributes)
+            for filename, attributes in output_items.items())
+
+    def __repr__(self):
+        """Return canonical string representation."""
+        return '\n'.join(str(item) for item in self._output_files)
+
+    def __len__(self):
+        """Return number of output objects."""
+        return len(self._output_files)
+
+    def __getitem__(self, key: str):
+        """Get item indexed by `key`."""
+        return self._output_files[key]
+
+    @property
+    def image_files(self) -> tuple:
+        """Return a tuple of image objects."""
+        return tuple(item for item in self._output_files
+                     if item.kind == 'image')
+
+    @property
+    def data_files(self) -> tuple:
+        """Return a tuple of data objects."""
+        return tuple(item for item in self._output_files
+                     if item.kind == 'data')
+
+
+class RecipeOutput(Mapping):
+    """Container for recipe output."""
+
+    def __init__(self, raw_output):
+        self._raw_output = raw_output
+        self._task_output = {}
+        for task, product_output in raw_output.items():
+            self._task_output[task] = TaskOutput(product_output)
+
+    def __repr__(self):
+        """Return canonical string representation."""
+        string = ''
+        for key, value in self._task_output.items():
+            string += f'{key}:\n'
+            string += textwrap.indent(str(value), prefix=' ')
+            string += '\n'
+
+        return string
+
+    def __getitem__(self, key: str):
+        """Get task indexed by `key`."""
+        return self._task_output[key]
+
+    def __iter__(self):
+        """Iterate over tasks."""
+        yield from self._task_output
+
+    def __len__(self):
+        """Return number of tasks."""
+        return len(self._task_output)
+
+
+class OutputFile():
+    """Base container for recipe output files.
+
+    Use `OutputFile.create(path='<filename>')` to initialize a suitable
     subclass.
 
     Parameters
@@ -35,12 +104,7 @@ class OutputItem():
 
     def __repr__(self):
         """Return canonical string representation."""
-        return (f'{self.__class__.__name__}(filename={self.filename.name!r},'
-                f'\nattributes={pformat(self.attributes)})')
-
-    def __str__(self):
-        """Return string representation."""
-        return f'{self.__class__.__name__}(filename={self.filename.name!r})'
+        return f'{self.__class__.__name__}({self.filename.name!r})'
 
     @property
     def authors(self) -> tuple:
@@ -99,22 +163,22 @@ class OutputItem():
 
     @classmethod
     def create(cls, filename: str, attributes: dict = None):
-        """Construct new instances of OutputItem.
+        """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.
         """
         ext = Path(filename).suffix
         if ext in ('.png', ):
-            item_class = ImageItem
+            item_class = ImageFile
         elif ext in ('.nc', ):
-            item_class = DataItem
+            item_class = DataFile
         else:
             item_class = cls
 
         return item_class(filename=filename, attributes=attributes)
 
 
-class OutputImage(OutputItem):
+class ImageFile(OutputFile):
     """Container for image output."""
 
     kind = 'image'
@@ -129,7 +193,7 @@ class OutputImage(OutputItem):
         return f"{caption}<img src='data:image/png;base64,{html_string}'/>"
 
 
-class OutputData(OutputItem):
+class DataFile(OutputFile):
     """Container for data output."""
 
     kind = 'data'
