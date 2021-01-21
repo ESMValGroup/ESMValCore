@@ -4,9 +4,6 @@ import base64
 import textwrap
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from pprint import pformat
-
-from esmvalcore.experimental.recipe_output import *
 
 from .recipe_metadata import Contributor, Reference
 
