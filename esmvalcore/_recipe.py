@@ -1332,3 +1332,21 @@ class Recipe:
         """Run all tasks in the recipe."""
         run_tasks(self.tasks,
                   max_parallel_tasks=self._cfg['max_parallel_tasks'])
+
+    def get_product_output(self) -> dict:
+        """Return the paths to the output plots and data.
+
+        Returns
+        -------
+        product_filenames : dict
+            Lists of products/attributes grouped by task.
+        """
+        product_filenames = {}
+
+        for task in self.tasks:
+            product_filenames[task.name] = {
+                product.filename: product.attributes
+                for product in task.products
+            }
+
+        return product_filenames

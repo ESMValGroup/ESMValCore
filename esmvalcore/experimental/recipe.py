@@ -26,7 +26,6 @@ class Recipe():
     path : pathlike
         Path to the recipe.
     """
-
     def __init__(self, path: str):
         self.path = Path(path)
         if not self.path.exists():
@@ -192,12 +191,40 @@ class Recipe():
 
         Returns
         -------
-        output : None
-            Output of the recipe (Not implemented yet)
+        output : dict
+            Returns output of the recipe as instances of :obj:`OutputItem`
+            grouped by diagnostic task.
         """
         if not session:
+            from . import CFG
             session = CFG.start_session(self.path.stem)
 
         with log_to_dir(session.run_dir):
             self._load(session=session)
             self._recipe_engine.run()
+
+        return self.get_output()
+
+    def get_output(self) -> dict:
+        """Get output from recipe.
+
+        Returns
+        -------
+        output : dict
+            Returns output of the recipe as instances of :obj:`OutputItem`
+            grouped by diagnostic task.
+        """
+        if not self._recipe_engine:
+            raise AttributeError('Run the recipe first using `.run()`.')
+
+        recipe_output = self._recipe_engine.get_product_output()
+
+        output = {}
+
+        for task, product_output in recipe_output.items():
+            output[task] = [
+                OutputItem.create(filename, attributes)
+                for filename, attributes in product_output.items()
+            ]
+
+        return output
