@@ -114,7 +114,7 @@ class OutputItem():
         return item_class(filename=filename, attributes=attributes)
 
 
-class ImageItem(OutputItem):
+class OutputImage(OutputItem):
     """Container for image output."""
 
     kind = 'image'
@@ -129,7 +129,7 @@ class ImageItem(OutputItem):
         return f"{caption}<img src='data:image/png;base64,{html_string}'/>"
 
 
-class DataItem(OutputItem):
+class OutputData(OutputItem):
     """Container for data output."""
 
     kind = 'data'
