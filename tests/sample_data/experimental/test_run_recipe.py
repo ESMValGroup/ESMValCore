@@ -9,7 +9,11 @@ import iris
 import pytest
 
 from esmvalcore.experimental import CFG, Recipe, get_recipe
-from esmvalcore.experimental.recipe_output import DataItem
+from esmvalcore.experimental.recipe_output import (
+    DataFile,
+    RecipeOutput,
+    TaskOutput,
+)
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -36,13 +40,15 @@ def test_run_recipe(recipe, tmp_path):
     output = recipe.run()
 
     assert len(output) > 0
-    assert isinstance(output, dict)
+    assert isinstance(output, RecipeOutput)
 
-    for task, items in output.items():
-        assert len(items) > 0
-        for item in items:
-            assert isinstance(item, DataItem)
-            assert item.filename.exists()
+    for task, task_output in output.items():
+        assert isinstance(task_output, TaskOutput)
+        assert len(task_output) > 0
 
-            cube = item.load_iris()
+        for data_file in task_output.data_files:
+            assert isinstance(data_file, DataFile)
+            assert data_file.filename.exists()
+
+            cube = data_file.load_iris()
             assert isinstance(cube, iris.cube.CubeList)
