@@ -27,6 +27,7 @@ class Recipe():
     path : pathlike
         Path to the recipe.
     """
+
     def __init__(self, path: str):
         self.path = Path(path)
         if not self.path.exists():

@@ -1,5 +1,6 @@
 """API for handing recipe output."""
 
+import base64
 from pathlib import Path
 from pprint import pformat
 
@@ -98,7 +99,7 @@ class OutputItem():
 
     @classmethod
     def create(cls, filename: str, attributes: dict = None):
-        """Constructor for new instances of OutputItem.
+        """Constructs new instances of OutputItem.
 
         Chooses a derived class if suitable.
         """
@@ -120,9 +121,9 @@ class ImageItem(OutputItem):
 
     def _repr_html_(self):
         """Render png as html in Jupyter notebook."""
-        import base64
-        with open(self.filename, "rb") as f:
-            encoded = base64.b64encode(f.read())
+        with open(self.filename, "rb") as file:
+            encoded = base64.b64encode(file.read())
+
         html_string = encoded.decode('utf-8')
         caption = self.attributes['caption']
         return f"{caption}<img src='data:image/png;base64,{html_string}'/>"
