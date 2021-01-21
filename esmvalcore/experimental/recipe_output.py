@@ -118,10 +118,14 @@ class ImageItem(OutputItem):
 
     kind = 'image'
 
-    def _repr_png_(self):
-        """Render png as image in Jupyter Notebook."""
-        from IPython.display import Image
-        return Image(self.filename).data
+    def _repr_html_(self):
+        """Render png as html in Jupyter notebook."""
+        import base64
+        with open(self.filename, "rb") as f:
+            encoded = base64.b64encode(f.read())
+        html_string = encoded.decode('utf-8')
+        caption = self.attributes['caption']
+        return f"{caption}<img src='data:image/png;base64,{html_string}'/>"
 
 
 class DataItem(OutputItem):
