@@ -5,9 +5,12 @@ Runs recipes using :meth:`esmvalcore.experimental.Recipe.run`.
 
 from pathlib import Path
 
+import iris
 import pytest
+import xarray
 
 from esmvalcore.experimental import CFG, Recipe, get_recipe
+from esmvalcore.experimental.recipe_output import DataItem
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -23,11 +26,25 @@ def recipe():
 
 @pytest.mark.use_sample_data
 def test_run_recipe(recipe, tmp_path):
-    """Test running a basic recipe using sample data."""
+    """Test running a basic recipe using sample data.
+
+    Recipe contains no provenance and no diagnostics.
+    """
     CFG['output_dir'] = tmp_path
 
     assert isinstance(recipe, Recipe)
 
     output = recipe.run()
 
-    assert not output  # output is not yet defined
+    assert len(output) > 0
+    assert isinstance(output, dict)
+
+    for task, items in output.items():
+        assert len(items) > 0
+        for item in items:
+            assert isinstance(item, DataItem)
+
+            cube = item.load_iris()
+            assert isinstance(cube, iris.cube.CubeList)
+            data = item.load_xarray()
+            assert isinstance(data, xarray.core.dataset.Dataset)
