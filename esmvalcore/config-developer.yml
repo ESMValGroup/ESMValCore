@@ -192,8 +192,10 @@ native6:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+    EMAC: '{type}/{mip}' # TODO This is a temporary fix, a proper solution should be implemented
   input_file:
     default: '*.nc'
+    EMAC: '*.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
