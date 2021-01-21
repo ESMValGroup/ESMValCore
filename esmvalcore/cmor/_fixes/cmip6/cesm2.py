@@ -105,13 +105,11 @@ class Fgco2(Fix):
         return cubes
 
 
-class Tas(Fix):
+class Prw(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
         """
-        Add height (2m) coordinate.
-
         Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
 
         Parameters
@@ -124,9 +122,6 @@ class Tas(Fix):
         iris.cube.CubeList
 
         """
-        cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord(cube)
-
         for cube in cubes:
             latitude = cube.coord('latitude')
             if latitude.bounds is None:
@@ -138,6 +133,34 @@ class Tas(Fix):
                 longitude.guess_bounds()
             longitude.bounds = longitude.bounds.astype(np.float64)
             longitude.bounds = np.round(longitude.bounds, 4)
+
+        return cubes
+
+
+class Tas(Prw):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """
+        Add height (2m) coordinate.
+
+        Fix also done for prw.
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        super().fix_metadata(cubes)
+        # Specific code for tas
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_height_coord(cube)
 
         return cubes
 
