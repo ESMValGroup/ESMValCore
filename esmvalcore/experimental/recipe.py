@@ -9,6 +9,7 @@ import yaml
 
 from esmvalcore._recipe import Recipe as RecipeEngine
 
+from . import CFG
 from ._logging import log_to_dir
 from .recipe_metadata import Contributor, Project, Reference
 from .recipe_output import OutputItem
@@ -196,7 +197,6 @@ class Recipe():
             grouped by diagnostic task.
         """
         if not session:
-            from . import CFG
             session = CFG.start_session(self.path.stem)
 
         with log_to_dir(session.run_dir):

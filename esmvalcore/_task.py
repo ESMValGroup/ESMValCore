@@ -268,6 +268,7 @@ class BaseTask:
         return txt
 
     def __repr__(self):
+        """Return canonical string representation."""
         return f"{self.__class__.__name__}({repr(self.name)})"
 
 

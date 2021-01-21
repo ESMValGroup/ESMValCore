@@ -1,3 +1,5 @@
+"""API for handing recipe output."""
+
 from pathlib import Path
 from pprint import pformat
 
@@ -9,10 +11,21 @@ class OutputItem():
 
     Use `OutputItem.create(path='<filename>')` to initialize a suitable
     subclass.
+
+    Parameters
+    ----------
+    filename : str
+        Name of output file
+    attributes : dict
+        Attributes corresponding to the recipe output
     """
+
     kind = None
 
-    def __init__(self, filename, attributes={}):
+    def __init__(self, filename: str, attributes: dict = None):
+        if not attributes:
+            attributes = {}
+
         self.attributes = attributes
         self.filename = Path(filename)
 
@@ -25,7 +38,7 @@ class OutputItem():
                 f'\nattributes={pformat(self.attributes)})')
 
     def __str__(self):
-        """Return canonical string representation."""
+        """Return string representation."""
         return f'{self.__class__.__name__}(filename={self.filename.name!r})'
 
     @property
@@ -84,7 +97,7 @@ class OutputItem():
         return self._get_derived_filename('_provenance', '.xml')
 
     @classmethod
-    def create(cls, filename, attributes={}):
+    def create(cls, filename: str, attributes: dict = None):
         """Constructor for new instances of OutputItem.
 
         Chooses a derived class if suitable.
