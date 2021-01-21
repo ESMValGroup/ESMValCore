@@ -267,6 +267,9 @@ class BaseTask:
             for task in self.ancestors) if self.ancestors else 'None')
         return txt
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}({repr(self.name)})"
+
 
 class DiagnosticError(Exception):
     """Error in diagnostic."""
@@ -625,12 +628,12 @@ class DiagnosticTask(BaseTask):
 
     def __str__(self):
         """Get human readable description."""
-        txt = "{}:\nscript: {}\n{}\nsettings:\n{}\n".format(
-            self.__class__.__name__,
-            self.script,
-            pprint.pformat(self.settings, indent=2),
-            super(DiagnosticTask, self).str(),
-        )
+        settings_string = pprint.pformat(self.settings, indent=2)
+        txt = (f"{self.__class__.__name__}:\n"
+               f"script: {self.script}\n"
+               f"settings:\n{settings_string}\n"
+               f"{super(DiagnosticTask, self)}\n")
+
         return txt
 
 
