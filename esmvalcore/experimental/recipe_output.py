@@ -99,7 +99,7 @@ class OutputItem():
 
     @classmethod
     def create(cls, filename: str, attributes: dict = None):
-        """Constructs new instances of OutputItem.
+        """Construct new instances of OutputItem.
 
         Chooses a derived class if suitable.
         """
