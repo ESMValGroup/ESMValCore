@@ -1,62 +1,80 @@
 """API for handing recipe output."""
 
 import base64
-import textwrap
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from .recipe_metadata import Contributor, Reference
 
 
-class TaskOutput(Sequence):
-    """Container for task output."""
+class TaskOutput:
+    """Container for task output.
 
-    def __init__(self, output_items):
-        self._output_files = tuple(
+    Parameters
+    ----------
+    name : str
+        Name of the task
+    output :
+        Mapping of the filenames with the associated attributes.
+    """
+
+    def __init__(self, name: str, output: dict):
+        self.name = name
+        self.files = tuple(
             OutputFile.create(filename, attributes)
-            for filename, attributes in output_items.items())
+            for filename, attributes in output.items())
+
+    def __str__(self):
+        """Return string representation."""
+        return str(self.files)
 
     def __repr__(self):
         """Return canonical string representation."""
-        return '\n'.join(str(item) for item in self._output_files)
+        indent = '  '
+        string = f'{self.name}:\n'
+        for file in self.files:
+            string += f'{indent}{file}\n'
+        return string
 
     def __len__(self):
-        """Return number of output objects."""
-        return len(self._output_files)
+        """Return number of files."""
+        return len(self.files)
 
     def __getitem__(self, key: str):
         """Get item indexed by `key`."""
-        return self._output_files[key]
+        return self.files[key]
 
     @property
     def image_files(self) -> tuple:
         """Return a tuple of image objects."""
-        return tuple(item for item in self._output_files
-                     if item.kind == 'image')
+        return tuple(item for item in self.files if item.kind == 'image')
 
     @property
     def data_files(self) -> tuple:
         """Return a tuple of data objects."""
-        return tuple(item for item in self._output_files
-                     if item.kind == 'data')
+        return tuple(item for item in self.files if item.kind == 'data')
 
 
 class RecipeOutput(Mapping):
-    """Container for recipe output."""
+    """Container for recipe output.
 
-    def __init__(self, raw_output):
+    Parameters
+    ----------
+    raw_output : dict
+        Dictonary with recipe output grouped by task name. Each task value is
+        a mapping of the filenames with the product attributes.
+    """
+
+    def __init__(self, raw_output: dict):
         self._raw_output = raw_output
         self._task_output = {}
         for task, product_output in raw_output.items():
-            self._task_output[task] = TaskOutput(product_output)
+            self._task_output[task] = TaskOutput(name=task,
+                                                 output=product_output)
 
     def __repr__(self):
         """Return canonical string representation."""
-        string = ''
-        for key, value in self._task_output.items():
-            string += f'{key}:\n'
-            string += textwrap.indent(str(value), prefix=' ')
-            string += '\n'
+        string = '\n'.join(repr(item) for item in self._task_output.values())
 
         return string
 
@@ -76,8 +94,8 @@ class RecipeOutput(Mapping):
 class OutputFile():
     """Base container for recipe output files.
 
-    Use `OutputFile.create(path='<filename>')` to initialize a suitable
-    subclass.
+    Use `OutputFile.create(path='<filename>', attributes=attributes)` to
+    initialize a suitable subclass.
 
     Parameters
     ----------
