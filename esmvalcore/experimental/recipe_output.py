@@ -1,7 +1,7 @@
 """API for handing recipe output."""
 
 import base64
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from pathlib import Path
 
 from .recipe_metadata import Contributor, Reference
