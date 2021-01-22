@@ -1,5 +1,7 @@
 """Recipe metadata."""
 
+import logging
+import pprint
 import textwrap
 from pathlib import Path
 
@@ -8,6 +10,13 @@ import yaml
 from pybtex.database.input import bibtex
 
 from esmvalcore._diagnostics import DIAGNOSTICS, TAGS
+from esmvalcore._citation import REFERENCES_PATH
+from esmvalcore._recipe import Recipe as RecipeEngine
+
+from . import CFG
+from ._logging import log_to_dir
+
+logger = logging.getLogger(__file__)
 
 
 class RenderError(BaseException):
@@ -15,7 +24,17 @@ class RenderError(BaseException):
 
 
 class Contributor:
-    """Contains contributor (author or maintainer) information."""
+    """Contains contributor (author or maintainer) information.
+
+    Parameters
+    ----------
+    name : str
+        Name of the author, i.e. ``'John Doe'``
+    institute : str
+        Name of the institute
+    orcid : str, optional
+        ORCID url
+    """
 
     def __init__(self, name: str, institute: str, orcid: str = None):
         self.name = name
@@ -35,16 +54,19 @@ class Contributor:
         string += ')'
         return string
 
-    def _repr_markdown_(self):
+    def _repr_markdown_(self) -> str:
         """Represent using markdown renderer in a notebook environment."""
         return str(self)
 
     @classmethod
-    def from_tag(cls, tag: str):
+    def from_tag(cls, tag: str) -> 'Contributor':
         """Return an instance of Contributor from a tag (``TAGS``).
 
-        Contributors are defined by author tags in ``config-
-        references.yml``.
+        Parameters
+        ----------
+        tag : str
+            The contributor tags are defined in the authors section in
+            ``config-references.yml``.
         """
         mapping = TAGS['authors'][tag]
 
@@ -56,7 +78,13 @@ class Contributor:
 
 
 class Project:
-    """Contains project information."""
+    """Use this class to acknowledge a project associated with the recipe.
+
+    Parameters
+    ----------
+    project : str
+        The project title.
+    """
 
     def __init__(self, project: str):
         self.project = project
@@ -71,19 +99,33 @@ class Project:
         return string
 
     @classmethod
-    def from_tag(cls, tag: str):
+    def from_tag(cls, tag: str) -> 'Project':
         """Return an instance of Project from a tag (``TAGS``).
 
-        The project tags are defined in ``config-references.yml``.
+        Parameters
+        ----------
+        tag : str
+            The project tags are defined in ``config-references.yml``.
         """
         project = TAGS['projects'][tag]
         return cls(project=project)
 
 
 class Reference:
-    """Contains reference information."""
+    """Parse reference information from bibtex entries.
 
-    def __init__(self, filename):
+    Parameters
+    ----------
+    filename : str
+        Name of the bibtex file.
+
+    Raises
+    ------
+    NotImplementedError
+        If the bibtex file contains more than 1 entry.
+    """
+
+    def __init__(self, filename: str):
         parser = bibtex.Parser(strict=False)
         bib_data = parser.parse_file(filename)
 
@@ -97,24 +139,27 @@ class Reference:
         self._filename = filename
 
     @classmethod
-    def from_tag(cls, tag: str):
+    def from_tag(cls, tag: str) -> 'Reference':
         """Return an instance of Reference from a bibtex tag.
 
-        The bibtex tags resolved as
-        ``esmvaltool/references/{tag}.bibtex``.
+        Parameters
+        ----------
+        tag : str
+            The bibtex tags resolved as ``esmvaltool/references/{tag}.bibtex``
+            or the corresponding directory as defined by the diagnostics path.
         """
         filename = DIAGNOSTICS.references / f'{tag}.bibtex'
         return cls(filename)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return canonical string representation."""
         return f'{self.__class__.__name__}({self._key!r})'
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representation."""
         return self.render(renderer='plaintext')
 
-    def _repr_markdown_(self):
+    def _repr_markdown_(self) -> str:
         """Represent using markdown renderer in a notebook environment."""
         return self.render(renderer='markdown')
 
@@ -146,8 +191,10 @@ class Reference:
         return rendered
 
 
-class RecipeInfo():
-    """Contains Recipe metadata.
+class Recipe():
+    """API wrapper for the esmvalcore Recipe object.
+
+    This class can be used to inspect and run the recipe.
 
     Parameters
     ----------
@@ -166,6 +213,7 @@ class RecipeInfo():
         self._projects = None
         self._references = None
         self._description = None
+        self._recipe_engine = None
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
@@ -191,6 +239,11 @@ class RecipeInfo():
         renderer : str
             Choose the renderer for the string representation.
             Must be one of 'plaintext', 'markdown'
+
+        Returns
+        -------
+        str
+            Rendered representation of the recipe documentation.
         """
         bullet = '\n - '
         string = f'## {self.name}'
@@ -252,7 +305,7 @@ class RecipeInfo():
     def maintainers(self) -> tuple:
         """List of recipe maintainers."""
         if self._maintainers is None:
-            tags = self.data['documentation']['maintainer']
+            tags = self.data['documentation'].get('maintainer', [])
             self._maintainers = tuple(
                 Contributor.from_tag(tag) for tag in tags)
         return self._maintainers
@@ -272,3 +325,54 @@ class RecipeInfo():
             tags = self.data['documentation'].get('references', [])
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
+
+    def _load(self, session: dict):
+        """Load the recipe.
+
+        This method loads the recipe into the internal ESMValCore Recipe
+        format.
+
+        Parameters
+        ----------
+        session : :obj:`Session`
+            Defines the config parameters and location where the recipe
+            output will be stored. If ``None``, a new session will be
+            started automatically.
+
+        Returns
+        -------
+        recipe : :obj:`esmvalcore._recipe.Recipe`
+            Return an instance of the Recipe
+        """
+        config_user = session.to_config_user()
+
+        logger.info(pprint.pformat(config_user))
+
+        self._recipe_engine = RecipeEngine(raw_recipe=self.data,
+                                           config_user=config_user,
+                                           recipe_file=self.path)
+
+    def run(self, session: dict = None):
+        """Run the recipe.
+
+        This function loads the recipe into the ESMValCore recipe format
+        and runs it.
+
+        Parameters
+        ----------
+        session : :obj:`Session`, optional
+            Defines the config parameters and location where the recipe
+            output will be stored. If ``None``, a new session will be
+            started automatically.
+
+        Returns
+        -------
+        output : None
+            Output of the recipe (Not implemented yet)
+        """
+        if not session:
+            session = CFG.start_session(self.path.stem)
+
+        with log_to_dir(session.run_dir):
+            self._load(session=session)
+            self._recipe_engine.run()

@@ -99,6 +99,11 @@ class Test(tests.Test):
             self._check(self.tgt_grid, scheme)
 
     def test_regrid__cell_specification(self):
+        # Clear cache before and after the test to avoid poisoning
+        # the cache with Mocked cubes
+        # https://github.com/ESMValGroup/ESMValCore/issues/953
+        _CACHE.clear()
+
         specs = ['1x1', '2x2', '3x3', '4x4', '5x5']
         scheme = 'linear'
         for spec in specs:
@@ -106,6 +111,8 @@ class Test(tests.Test):
             self.assertEqual(result, self.regridded_cube)
             self._check(spec, scheme, spec=True)
         self.assertEqual(set(_CACHE.keys()), set(specs))
+
+        _CACHE.clear()
 
 
 if __name__ == '__main__':

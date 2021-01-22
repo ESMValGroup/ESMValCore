@@ -18,7 +18,7 @@ If you already know which recipe you want to load, call :py:func:`esmvalcore.exp
 
     from esmvalcore.experimental import get_recipe
     >>> get_recipe('examples/recipe_python')
-    RecipeInfo('Recipe python')
+    Recipe('Recipe python')
 
 Call the :py:func:`esmvalcore.experimental.utils.get_all_recipes` function to get a list of all available recipes.
 
@@ -27,32 +27,32 @@ Call the :py:func:`esmvalcore.experimental.utils.get_all_recipes` function to ge
     >>> from esmvalcore.experimental import get_all_recipes
     >>> recipes = get_all_recipes()
     >>> recipes
-    [RecipeInfo('Recipe perfmetrics cmip5 4cds'),
-     RecipeInfo('Recipe martin18grl'),
+    [Recipe('Recipe perfmetrics cmip5 4cds'),
+     Recipe('Recipe martin18grl'),
      ...
-     RecipeInfo('Recipe wflow'),
-     RecipeInfo('Recipe pcrglobwb')]
+     Recipe('Recipe wflow'),
+     Recipe('Recipe pcrglobwb')]
 
 To search for a specific recipe, you can use the :py:meth:`esmvalcore.experimental.utils.RecipeList.find` method. This takes a search query that looks through the recipe metadata and returns any matches. The query can be a regex pattern, so you can make it as complex as you like.
 
 .. code-block:: python
 
     >>> results = recipes.find('climwip')
-    [RecipeInfo('Recipe climwip')]
+    [Recipe('Recipe climwip')]
 
-The recipes are loaded in a :py:class:`esmvalcore.experimental.recipe_info.RecipeInfo` object, which knows about the documentation, authors, project, and related references of the recipe. It resolves all the tags, so that it knows which institute an author belongs to and which references are associated with the recipe.
+The recipes are loaded in a :py:class:`esmvalcore.experimental.recipe.Recipe` object, which knows about the documentation, authors, project, and related references of the recipe. It resolves all the tags, so that it knows which institute an author belongs to and which references are associated with the recipe.
 
 This means you can search for something like this:
 
 .. code-block:: python
 
     >>> recipes.find('Geophysical Research Letters')
-    [RecipeInfo('Recipe martin18grl'),
-     RecipeInfo('Recipe climwip'),
-     RecipeInfo('Recipe ecs constraints'),
-     RecipeInfo('Recipe ecs scatter'),
-     RecipeInfo('Recipe ecs'),
-     RecipeInfo('Recipe seaice')]
+    [Recipe('Recipe martin18grl'),
+     Recipe('Recipe climwip'),
+     Recipe('Recipe ecs constraints'),
+     Recipe('Recipe ecs scatter'),
+     Recipe('Recipe ecs'),
+     Recipe('Recipe seaice')]
 
 
 API reference
