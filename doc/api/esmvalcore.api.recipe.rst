@@ -8,7 +8,7 @@ This section describes the :py:mod:`esmvalcore.experimental.recipe` submodule of
 Recipe metadata
 ***************
 
-:py:class:`esmvalcore.experimental.recipe.Recipe` info is a class that holds metadata from a recipe.
+:py:class:`esmvalcore.experimental.recipe.Recipe` is a class that holds metadata from a recipe.
 
 .. code-block:: python
 
@@ -63,32 +63,7 @@ Sessions can also be explicitly specified.
 the output of the recipe. The output is an instance of :py:class:`esmvalcore.experimental.recipe_output.ImageItem` or
 :py:class:`esmvalcore.experimental.recipe_output.ImageItem` depending on its type.
 
-Recipe output
-*************
-
-After running a recipe, output can also be retrieved using:
-
-.. code-block:: python
-
-    >>> output = recipe.get_output()
-
-Output comes in two kinds, :py:class:`DataOutput`, which correspond to data files in `.nc` format and :py:class:`ImageOutput` which correspond to plots in `.png` format.
-
-Image output uses IPython magic to plot themselves in a notebook environment, whereas data output have special methods to load the data using :py:mod:`xarray`,
-
-.. code-block:: python
-
-    >>> data = item.load_xarray()
-    >>> type(data)
-    xarray.core.dataset.Dataset
-
-or :py:mod:`iris`,
-
-.. code-block:: python
-
-    >>> cube = item.load_iris()
-    >>> type(cube)
-    xarray.core.dataset.Dataset
+For working with recipe output, see: ref:`_api_recipe_output`.
 
 
 API reference
