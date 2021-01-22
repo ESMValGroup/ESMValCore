@@ -10,7 +10,6 @@ import yaml
 from pybtex.database.input import bibtex
 
 from esmvalcore._diagnostics import DIAGNOSTICS, TAGS
-from esmvalcore._citation import REFERENCES_PATH
 from esmvalcore._recipe import Recipe as RecipeEngine
 
 from . import CFG
