@@ -30,7 +30,6 @@ class ValidatedConfig(MutableMapping, dict):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.update(*args, **kwargs)
-        self.check_missing()
 
     def __setitem__(self, key, val):
         """Map key to value."""

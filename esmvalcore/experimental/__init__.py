@@ -1,14 +1,22 @@
 """ESMValCore experimental API module."""
 
-from ._warnings import warnings
+import logging
+import sys
 
-warnings.warn(
-    '\n  Thank you for trying out the new ESMValCore API.'
-    '\n  Note that this API is experimental and may be subject to change.'
-    '\n  More info: https://github.com/ESMValGroup/ESMValCore/issues/498', )
+from ._warnings import warnings  # prints experimental API warning
+from .config import CFG
+from .recipe import Recipe
+from .utils import RecipeList, get_all_recipes, get_recipe
 
-from .config import CFG  # noqa: E402
+logging.basicConfig(format='%(message)s',
+                    level=logging.INFO,
+                    stream=sys.stdout)
 
 __all__ = [
     'CFG',
+    'get_all_recipes',
+    'get_recipe',
+    'Recipe',
+    'RecipeList',
+    'warnings',
 ]

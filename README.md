@@ -6,7 +6,7 @@
 [![CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore/tree/master.svg?style=svg)](https://circleci.com/gh/ESMValGroup/ESMValCore/tree/master)
 [![Codacy Badge](https://app.codacy.com/project/badge/Coverage/5d496dea9ef64ec68e448a6df5a65783)](https://www.codacy.com/gh/ESMValGroup/ESMValCore?utm_source=github.com&utm_medium=referral&utm_content=ESMValGroup/ESMValCore&utm_campaign=Badge_Coverage)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5d496dea9ef64ec68e448a6df5a65783)](https://www.codacy.com/gh/ESMValGroup/ESMValCore?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ESMValGroup/ESMValCore&amp;utm_campaign=Badge_Grade)
-[![Docker Build Status](https://img.shields.io/docker/build/esmvalgroup/esmvalcore.svg)](https://hub.docker.com/r/esmvalgroup/esmvalcore/)
+[![Docker Build Status](https://img.shields.io/docker/cloud/build/esmvalgroup/esmvalcore)](https://hub.docker.com/r/esmvalgroup/esmvalcore/)
 [![Anaconda-Server Badge](https://anaconda.org/esmvalgroup/esmvalcore/badges/installer/conda.svg)](https://conda.anaconda.org/esmvalgroup)
 
 ESMValCore: core functionalities for the ESMValTool, a community diagnostic
