@@ -10,5 +10,5 @@ The API is under development, so use at your own risk!
 .. toctree::
 
    esmvalcore.api.config
-   esmvalcore.api.recipe_info
+   esmvalcore.api.recipe
    esmvalcore.api.utils
