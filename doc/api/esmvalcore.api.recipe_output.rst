@@ -77,14 +77,47 @@ It is also possible to select the image files or data files only:
     DataFile('CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_2000-2000.nc')
 
 
+Working with output files
+*************************
+
+Output comes in two kinds, :py:class:`esmvalcore.experimental.recipe_output.DataFile` corresponds to data
+files in ``.nc`` format and :py:class:`esmvalcore.experimental.recipe_output.ImageFile` corresponds to plots
+in ``.png`` format (see below). Both object are derived from the same base class
+(:py:class:`esmvalcore.experimental.recipe_output.OutputFile`) and therefore share most of the functionality.
+
+For example, author information can be accessed as instances of :py:class:`esmvalcore.experimental.recipe_metadata.Contributor`  via
+
+.. code:: python
+
+    >>> output_file = task_output[0]
+    >>> output_file.authors
+    (Contributor('Andela, Bouwe', institute='NLeSC, Netherlands', orcid='https://orcid.org/0000-0001-9005-8940'),
+     Contributor('Righi, Mattia', institute='DLR, Germany', orcid='https://orcid.org/0000-0003-3827-5950'))
+
+And associated references as instances of :py:class:`esmvalcore.experimental.recipe_metadata.Reference` via
+
+.. code:: python
+
+    >>> output_file.references
+    (Reference('acknow_project'),)
+
+:py:class:`esmvalcore.experimental.recipe_output.OutputFile` also knows about associated files
+
+.. code:: python
+
+    >>> data_file.citation_file
+    Path('.../tas_global_CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_1850-2000_citation.bibtex')
+    >>> data_file.data_citation_file
+    Path('.../tas_global_CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_1850-2000_data_citation_info.txt')
+    >>> data_file.provenance_svg_file
+    Path('.../tas_global_CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_1850-2000_provenance.svg')
+    >>> data_file.provenance_xml_file
+    Path('.../tas_global_CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_1850-2000_provenance.xml')
+
+
 
 Working with image files
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Output comes in two kinds, ``DataFile``s, which correspond to data
-files in ``.nc`` format and ``ImageFile``s which correspond to plots
-in ``.png`` format. Both object are derived from the same base class
-(``OutputFile``) and therefore share most of the functionality.
+************************
 
 Image output uses IPython magic to plot themselves in a notebook
 environment.
@@ -110,8 +143,8 @@ Using :py:mod:`IPython.display`, it is possible to show all image files.
     >>>      display(image_file)
 
 
-Working with data output
-~~~~~~~~~~~~~~~~~~~~~~~~
+Working with data files
+***********************
 
 Data files can be easily loaded using ``xarray``:
 
