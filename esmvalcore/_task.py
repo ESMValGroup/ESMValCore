@@ -717,8 +717,8 @@ class TaskSet(set):
                     n_done = n_tasks - n_scheduled - n_running
                     logger.info(
                         "Progress: %s tasks running, %s tasks waiting for "
-                        "ancestors, %s/%s done", n_running, n_scheduled, n_done,
-                        n_tasks)
+                        "ancestors, %s/%s done", n_running, n_scheduled,
+                        n_done, n_tasks)
 
             logger.info("Successfully completed all tasks.")
             pool.close()
