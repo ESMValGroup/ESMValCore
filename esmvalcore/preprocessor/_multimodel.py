@@ -1,4 +1,4 @@
-"""This module contains functions to compute multi-cube statistics."""
+"""Functions to compute multi-cube statistics."""
 
 import logging
 import re
@@ -322,8 +322,8 @@ def _multicube_statistics(cubes, statistics, span):
         logger.info('Found only 1 cube; no statistics computed for %r',
                     list(cubes)[0])
         return {statistic: cubes[0] for statistic in statistics}
-    else:
-        logger.debug('Multicube statistics: computing: %s', statistics)
+
+    logger.debug('Multicube statistics: computing: %s', statistics)
 
     # Reset time coordinates and make cubes share the same calendar
     _unify_time_coordinates(cubes)
@@ -355,12 +355,7 @@ def _multicube_statistics(cubes, statistics, span):
     return statistics_cubes
 
 
-def _multiproduct_statistics(
-    products,
-    statistics,
-    output_products,
-    span=None,
-):
+def _multiproduct_statistics(products, statistics, output_products, span=None):
     """Compute multi-cube statistics on ESMValCore products.
 
     Extract cubes from products, calculate multicube statistics and
@@ -431,7 +426,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
             statistics=statistics,
             span=span,
         )
-    elif all(type(p).__name__ == 'PreprocessorFile' for p in products):
+    if all(type(p).__name__ == 'PreprocessorFile' for p in products):
         # Avoid circular input: https://stackoverflow.com/q/16964467
         return _multiproduct_statistics(
             products=products,
@@ -439,8 +434,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
             output_products=output_products,
             span=span,
         )
-    else:
-        raise ValueError(
-            "Input type for multi_model_statistics not understood. Expected "
-            "iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
-            "got {}".format(products))
+    raise ValueError(
+        "Input type for multi_model_statistics not understood. Expected "
+        "iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
+        "got {}".format(products))
