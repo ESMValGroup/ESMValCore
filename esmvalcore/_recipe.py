@@ -25,12 +25,7 @@ from ._data_finder import (
 )
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
-from ._task import (
-    DiagnosticTask,
-    get_flattened_tasks,
-    get_independent_tasks,
-    run_tasks,
-)
+from ._task import DiagnosticTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (
@@ -1259,7 +1254,7 @@ class Recipe:
     def initialize_tasks(self):
         """Define tasks in recipe."""
         logger.info("Creating tasks from recipe")
-        tasks = set()
+        tasks = TaskSet()
 
         priority = 0
         for diagnostic_name, diagnostic in self.diagnostics.items():
@@ -1301,7 +1296,7 @@ class Recipe:
         self._resolve_diagnostic_ancestors(tasks)
 
         # Select only requested tasks
-        tasks = get_flattened_tasks(tasks)
+        tasks = tasks.flatten()
         if not self._cfg.get('run_diagnostic', True):
             tasks = {t for t in tasks if isinstance(t, PreprocessingTask)}
         if self._cfg.get('diagnostics'):
@@ -1311,7 +1306,7 @@ class Recipe:
                 selection |= set(fnmatch.filter(names, pattern))
             tasks = {t for t in tasks if t.name in selection}
 
-        tasks = get_flattened_tasks(tasks)
+        tasks = tasks.flatten()
         logger.info("These tasks will be executed: %s",
                     ', '.join(t.name for t in tasks))
 
@@ -1322,7 +1317,7 @@ class Recipe:
         # TODO: check that no loops are created (will throw RecursionError)
 
         # Return smallest possible set of tasks
-        return get_independent_tasks(tasks)
+        return tasks.get_independent()
 
     def __str__(self):
         """Get human readable summary."""
@@ -1330,5 +1325,4 @@ class Recipe:
 
     def run(self):
         """Run all tasks in the recipe."""
-        run_tasks(self.tasks,
-                  max_parallel_tasks=self._cfg['max_parallel_tasks'])
+        self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
