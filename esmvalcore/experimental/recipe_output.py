@@ -4,6 +4,8 @@ import base64
 from collections.abc import Mapping
 from pathlib import Path
 
+import iris
+
 from .recipe_metadata import Contributor, Reference
 
 
@@ -220,5 +222,4 @@ class DataFile(OutputFile):
 
     def load_iris(self):
         """Load data using iris."""
-        import iris
         return iris.load(str(self.filename))
