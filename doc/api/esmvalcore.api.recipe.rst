@@ -60,10 +60,10 @@ Sessions can also be explicitly specified.
     <log messages>
 
 :py:meth:`esmvalcore.experimental.Recipe.run` returns an dictionary of objects that can be used to inspect
-the output of the recipe. The output is an instance of :py:class:`esmvalcore.experimental.recipe_output.ImageItem` or
-:py:class:`esmvalcore.experimental.recipe_output.ImageItem` depending on its type.
+the output of the recipe. The output is an instance of :py:class:`esmvalcore.experimental.recipe_output.ImageFile` or
+:py:class:`esmvalcore.experimental.recipe_output.ImageFile` depending on its type.
 
-For working with recipe output, see: :ref:`_api_recipe_output`.
+For working with recipe output, see: :ref:`api_recipe_output`.
 
 
 API reference
