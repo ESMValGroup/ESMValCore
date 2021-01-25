@@ -63,7 +63,7 @@ Sessions can also be explicitly specified.
 the output of the recipe. The output is an instance of :py:class:`esmvalcore.experimental.recipe_output.ImageItem` or
 :py:class:`esmvalcore.experimental.recipe_output.ImageItem` depending on its type.
 
-For working with recipe output, see: ref:`_api_recipe_output`.
+For working with recipe output, see: :ref:`_api_recipe_output`.
 
 
 API reference
