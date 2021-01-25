@@ -1344,9 +1344,6 @@ class Recipe:
         product_filenames = {}
 
         for task in self.tasks:
-            product_filenames[task.name] = {
-                product.filename: product.attributes
-                for product in task.products
-            }
+            product_filenames[task.name] = task.get_product_attributes()
 
         return product_filenames

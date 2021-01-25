@@ -12,7 +12,7 @@ from esmvalcore._recipe import Recipe as RecipeEngine
 from . import CFG
 from ._logging import log_to_dir
 from .recipe_metadata import Contributor, Project, Reference
-from .recipe_output import RecipeOutput
+from .recipe_output import RecipeOutput, TaskOutput
 
 logger = logging.getLogger(__file__)
 
@@ -39,7 +39,7 @@ class Recipe():
         self._projects = None
         self._references = None
         self._description = None
-        self._recipe_engine = None
+        self._engine = None
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
@@ -174,9 +174,9 @@ class Recipe():
 
         logger.info(pprint.pformat(config_user))
 
-        self._recipe_engine = RecipeEngine(raw_recipe=self.data,
-                                           config_user=config_user,
-                                           recipe_file=self.path)
+        self._engine = RecipeEngine(raw_recipe=self.data,
+                                    config_user=config_user,
+                                    recipe_file=self.path)
 
     def run(self, session: dict = None):
         """Run the recipe.
@@ -202,7 +202,7 @@ class Recipe():
 
         with log_to_dir(session.run_dir):
             self._load(session=session)
-            self._recipe_engine.run()
+            self._engine.run()
 
         return self.get_output()
 
@@ -212,12 +212,57 @@ class Recipe():
         Returns
         -------
         output : dict
-            Returns output of the recipe as instances of :obj:`OutputItem`
+            Returns output of the recipe as instances of :obj:`OutputFile`
             grouped by diagnostic task.
         """
-        if not self._recipe_engine:
+        if not self._engine:
             raise AttributeError('Run the recipe first using `.run()`.')
 
-        raw_output = self._recipe_engine.get_product_output()
+        raw_output = self._engine.get_product_output()
 
         return RecipeOutput(raw_output)
+
+    @property
+    def diagnostics(self) -> dict:
+        """Return a mapping of diagnostics.
+
+        Returns
+        -------
+        diagnostics : dict
+            Diagnostics described in the recipe.
+        """
+        diagnostics = {}
+        for task in self._engine.tasks:
+            diagnostics[task.name] = task
+
+        return diagnostics
+
+    def run_diagnostic(self, diagnostic: str, session: dict = None):
+        """Run a single diagnostic from the recipe.
+
+        Parameters
+        ----------
+        diagnostic : str
+            Name of the diagnostic to run.
+            Use `.diagnostics` for a list of available diagnostics.
+        session : :obj:`Session`, optional
+            Defines the config parameters and location where the recipe
+            output will be stored. If ``None``, a new session will be
+            started automatically.
+
+        Returns
+        -------
+        output : :obj:`TaskOutput`
+            Returns task output as an instance of :obj:`TaskOutput`
+        """
+        if not session:
+            session = CFG.start_session(self.path.stem)
+
+        task = self.diagnostics[diagnostic]
+
+        with log_to_dir(session.run_dir):
+            task.run()
+
+        output = TaskOutput.from_task(task)
+
+        return output

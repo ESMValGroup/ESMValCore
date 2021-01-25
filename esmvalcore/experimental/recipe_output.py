@@ -56,6 +56,11 @@ class TaskOutput:
         """Return a tuple of data objects."""
         return tuple(item for item in self.files if item.kind == 'data')
 
+    @classmethod
+    def from_task(cls, task):
+        product_attributes = task.get_product_attributes()
+        return cls(name=task.name, output=product_attributes)
+
 
 class RecipeOutput(Mapping):
     """Container for recipe output.
