@@ -217,6 +217,7 @@ class DataFile(OutputFile):
 
     def load_xarray(self):
         """Load data using xarray."""
+        # local import because `ESMValCore` does not depend on `xarray`
         import xarray as xr
         return xr.load_dataset(self.filename)
 
