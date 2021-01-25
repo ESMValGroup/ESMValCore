@@ -14,7 +14,7 @@ from esmvalcore.preprocessor._multimodel import (
     _plev_fix,
     _put_in_cube,
     _unify_time_coordinates,
-    multicube_statistics,
+    multi_model_statistics,
 )
 
 
@@ -94,9 +94,9 @@ class Test(tests.Test):
 
     def test_compute_full_statistic_mon_cube(self):
         data = [self.cube1, self.cube2]
-        stats = multicube_statistics(cubes=data,
-                                     statistics=['mean'],
-                                     span='full')
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='full')
         expected_full_mean = np.ma.ones((5, 3, 2, 2))
         expected_full_mean.mask = np.ones((5, 3, 2, 2))
         expected_full_mean.mask[1] = False
@@ -104,9 +104,9 @@ class Test(tests.Test):
 
     def test_compute_full_statistic_yr_cube(self):
         data = [self.cube4, self.cube5]
-        stats = multicube_statistics(cubes=data,
-                                     statistics=['mean'],
-                                     span='full')
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='full')
         expected_full_mean = np.ma.ones((4, 3, 2, 2))
         expected_full_mean.mask = np.zeros((4, 3, 2, 2))
         expected_full_mean.mask[2:4] = True
@@ -114,17 +114,17 @@ class Test(tests.Test):
 
     def test_compute_overlap_statistic_mon_cube(self):
         data = [self.cube1, self.cube1]
-        stats = multicube_statistics(cubes=data,
-                                     statistics=['mean'],
-                                     span='overlap')
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='overlap')
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
     def test_compute_overlap_statistic_yr_cube(self):
         data = [self.cube4, self.cube4]
-        stats = multicube_statistics(cubes=data,
-                                     statistics=['mean'],
-                                     span='overlap')
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='overlap')
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 

@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from esmvalcore.preprocessor import extract_time
-from esmvalcore.preprocessor._multimodel import multicube_statistics
+from esmvalcore.preprocessor._multimodel import multi_model_statistics
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -123,7 +123,9 @@ def multimodel_test(cubes, statistic, span):
     """Run multimodel test with some simple checks."""
     statistics = [statistic]
 
-    result = multicube_statistics(cubes, statistics=statistics, span=span)
+    result = multi_model_statistics(products=cubes,
+                                    statistics=statistics,
+                                    span=span)
     assert isinstance(result, dict)
     assert statistic in result
 

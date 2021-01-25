@@ -1,11 +1,4 @@
-"""Statistics across cubes.
-
-This module contains functions to compute statistics across multiple cubes or
-products.
-
-Wrapper functions separate esmvalcore internals, operating on products, from
-generalized functions that operate on iris cubes.
-"""
+"""This module contains functions to compute multi-cube statistics."""
 
 import logging
 import re
@@ -291,23 +284,22 @@ def _assemble_data(cubes, statistic, span='overlap'):
     return stats_cube
 
 
-def multicube_statistics(cubes, statistics, span):
-    """Compute statistics across input cubes.
+def _multicube_statistics(cubes, statistics, span):
+    """Compute statistics over multiple cubes.
 
-    This function deals with non-homogeneous cubes by taking the time union
-    (span='full') or intersection (span='overlap'), and extending or subsetting
-    the cubes as necessary. Apart from the time coordinate, cubes must have
-    consistent shapes.
+    Can be used e.g. for ensemble or multi-model statistics.
 
-    This function operates directly on numpy (masked) arrays and rebuilds the
-    resulting cubes from scratch. Therefore, it is not suitable for lazy
-    evaluation. This function is restricted to maximum four-dimensional data:
+    This function was designed to work on (max) four-dimensional data:
     time, vertical axis, two horizontal axes.
+
+    Apart from the time coordinate, cubes must have consistent shapes. There
+    are two options to combine time coordinates of different lengths, see
+    the `span` argument.
 
     Parameters
     ----------
     cubes: list
-        list of cubes across which the statistics will be computed;
+        list of cubes over which the statistics will be computed;
     statistics: list
         statistical metrics to be computed. Available options: mean, median,
         max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
@@ -326,7 +318,12 @@ def multicube_statistics(cubes, statistics, span):
     ValueError
         If span is neither overlap nor full.
     """
-    logger.debug('Multicube statistics: computing: %s', statistics)
+    if len(cubes) < 2:
+        logger.info('Found only 1 cube; no statistics computed for %r',
+                    list(cubes)[0])
+        return {statistic: cubes[0] for statistic in statistics}
+    else:
+        logger.debug('Multicube statistics: computing: %s', statistics)
 
     # Reset time coordinates and make cubes share the same calendar
     _unify_time_coordinates(cubes)
@@ -358,49 +355,21 @@ def multicube_statistics(cubes, statistics, span):
     return statistics_cubes
 
 
-def _multiproduct_statistics(products,
-                             statistics,
-                             output_products,
-                             span='overlap'):
-    """Compute statistics across ESMValCore products.
+def _multiproduct_statistics(
+    products,
+    statistics,
+    output_products,
+    span=None,
+):
+    """Compute multi-cube statistics on ESMValCore products.
 
-    Extract cubes from products, calculate the statistics across cubes and
+    Extract cubes from products, calculate multicube statistics and
     assign the resulting output cubes to the output_products.
-
-    This function separates the ESMValCore internals (products) from the actual
-    statistics function that operates on Iris cubes.
-
-    Parameters
-    ----------
-    products: list
-        list of PreprocessorFile's
-    statistics: list
-        list of strings describing the statistics that will be computed
-    output_products: dict
-        dict of PreprocessorFile's with statistic names as keys.
-    span: str
-        'full' or 'overlap', whether to calculate the statistics on the time
-        union ('full') or time intersection ('overlap') of the cubes.
-
-    Returns
-    -------
-    set
-        set of PreprocessorFiles containing the computed statistics cubes.
     """
-    # Extract cubes from products
     cubes = [cube for product in products for cube in product.cubes]
-
-    # Compute statistics
-    if len(cubes) < 2:
-        logger.info('Found only 1 cube; no statistics computed for %r',
-                    list(products)[0])
-        statistics_cubes = {statistic: cubes[0] for statistic in statistics}
-    else:
-        statistics_cubes = multicube_statistics(cubes=cubes,
-                                                statistics=statistics,
-                                                span=span)
-
-    # Add cubes to output products and log provenance
+    statistics_cubes = _multicube_statistics(cubes=cubes,
+                                             statistics=statistics,
+                                             span=span)
     statistics_products = set()
     for statistic, cube in statistics_cubes.items():
         statistics_product = output_products[statistic]
@@ -415,23 +384,63 @@ def _multiproduct_statistics(products,
     return statistics_products
 
 
-def multi_model_statistics(products: set,
-                           statistics: list,
-                           output_products: set,
-                           span: str = 'overlap'):
-    """Entry point for ESMValCore's multi-model statistics preprocessor.
+def multi_model_statistics(products, span, statistics, output_products=None):
+    """Compute multi-model statistics.
 
-    Compute statistics across cubes from different models.
+    This function computes multi-model statistics on cubes or products.
+    Products (or: preprocessorfiles) are used internally by ESMValCore to store
+    workflow and provenance information, and this option should typically be
+    ignored.
 
-    See Also
-    --------
-    multicube_statistics : core statistics function.
+    This function was designed to work on (max) four-dimensional data: time,
+    vertical axis, two horizontal axes. Apart from the time coordinate, cubes
+    must have consistent shapes. There are two options to combine time
+    coordinates of different lengths, see the `span` argument.
+
+    Parameters
+    ----------
+    products: list
+        Cubes (or products) over which the statistics will be computed.
+    statistics: list
+        Statistical metrics to be computed. Available options: mean, median,
+        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
+    span: str
+        Overlap or full; if overlap, statitstics are computed on common time-
+        span; if full, statistics are computed on full time spans, ignoring
+        missing data.
+    output_products: dict
+        For internal use only. A dict with statistics names as keys and
+        preprocessorfiles as values. If products are passed as input, the
+        statistics cubes will be assigned to these output products.
+
+    Returns
+    -------
+    dict
+        A dictionary of statistics cubes with statistics' names as keys. (If
+        input type is products, then it will return a set of output_products.)
+
+    Raises
+    ------
+    ValueError
+        If span is neither overlap nor full, or if input type is neither cubes
+        nor products.
     """
-    statistics_products = _multiproduct_statistics(
-        products=products,
-        statistics=statistics,
-        output_products=output_products,
-        span=span,
-    )
-
-    return statistics_products
+    if all(isinstance(p, iris.cube.Cube) for p in products):
+        return _multicube_statistics(
+            cubes=products,
+            statistics=statistics,
+            span=span,
+        )
+    elif all(type(p).__name__ == 'PreprocessorFile' for p in products):
+        # Avoid circular input: https://stackoverflow.com/q/16964467
+        return _multiproduct_statistics(
+            products=products,
+            statistics=statistics,
+            output_products=output_products,
+            span=span,
+        )
+    else:
+        raise ValueError(
+            "Input type for multi_model_statistics not understood. Expected "
+            "iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
+            "got {}".format(products))
