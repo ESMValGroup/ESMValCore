@@ -56,6 +56,7 @@ class Config(ValidatedConfig):
 
         new.update(CFG_DEFAULT)
         new.update(mapping)
+        new.check_missing()
 
         return new
 
@@ -162,6 +163,19 @@ class Session(ValidatedConfig):
     def config_dir(self):
         """Return user config directory."""
         return USER_CONFIG_DIR
+
+    def to_config_user(self) -> dict:
+        """Turn the `Session` object into a recipe-compatible dict.
+
+        This dict is compatible with the `config-user` argument in
+        :obj:`esmvalcore._recipe.Recipe`.
+        """
+        dct = self.copy()
+        dct['run_dir'] = self.run_dir
+        dct['work_dir'] = self.work_dir
+        dct['preproc_dir'] = self.preproc_dir
+        dct['plot_dir'] = self.plot_dir
+        return dct
 
 
 def _read_config_file(config_file):
