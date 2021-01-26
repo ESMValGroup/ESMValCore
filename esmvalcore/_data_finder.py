@@ -144,7 +144,11 @@ def _apply_caps(original, lower, upper):
 
 
 def _resolve_latestversion(dirname_template):
-    """Resolve the 'latestversion' tag."""
+    """Resolve the 'latestversion' tag.
+
+    This implementation avoid globbing on centralized clusters with very
+    large data root dirs (i.e. ESGF nodes like Jasmin/DKRZ).
+    """
     if '{latestversion}' not in dirname_template:
         return dirname_template
 
@@ -219,10 +223,12 @@ def _get_filenames_glob(variable, drs):
 
 
 def _find_input_files(variable, rootpath, drs):
+    short_name = variable['short_name']
+    variable['short_name'] = variable['original_short_name']
     input_dirs = _find_input_dirs(variable, rootpath, drs)
     filenames_glob = _get_filenames_glob(variable, drs)
     files = find_files(input_dirs, filenames_glob)
-
+    variable['short_name'] = short_name
     return (files, input_dirs, filenames_glob)
 
 

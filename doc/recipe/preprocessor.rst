@@ -19,6 +19,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Area operations`
 * :ref:`Volume operations`
 * :ref:`Cycles`
+* :ref:`Trend`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
 * :ref:`Other`
@@ -241,6 +242,13 @@ the name of the desired coordinate:
           levels: ERA-Interim
           scheme: linear_horizontal_extrapolate_vertical
           coordinate: air_pressure
+
+If ``coordinate`` is specified, pressure levels (if present) can be converted
+to height levels and vice versa using the US standard atmosphere. E.g.
+``coordinate = altitude`` will convert existing pressure levels
+(air_pressure) to height levels (altitude);
+``coordinate = air_pressure`` will convert existing height levels
+(altitude) to pressure levels (air_pressure).
 
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
@@ -666,6 +674,10 @@ from a statistical point of view, this is needed since weights are not yet
 implemented; also higher dimensional data is not supported (i.e. anything with
 dimensionality higher than four: time, vertical axis, two horizontal axes).
 
+Input datasets may have different time coordinates. The multi-model statistics
+preprocessor sets a common time coordinate on all datasets. As the number of
+days in a year may vary between calendars, (sub-)daily data are not supported.
+
 .. code-block:: yaml
 
     preprocessors:
@@ -708,12 +720,15 @@ The ``_time.py`` module contains the following preprocessor functions:
 * extract_time_: Extract a time range from a cube.
 * extract_season_: Extract only the times that occur within a specific season.
 * extract_month_: Extract only the times that occur within a specific month.
+* hourly_statistics_: Compute intra-day statistics
 * daily_statistics_: Compute statistics for each day
 * monthly_statistics_: Compute statistics for each month
 * seasonal_statistics_: Compute statistics for each season
 * annual_statistics_: Compute statistics for each year
 * decadal_statistics_: Compute statistics for each decade
 * climate_statistics_: Compute statistics for the full period
+* resample_time_: Resample data
+* resample_hours_: Convert between N-hourly frequencies by resampling
 * anomalies_: Compute (standardized) anomalies
 * regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
@@ -767,7 +782,8 @@ See also :func:`esmvalcore.preprocessor.extract_time`.
 Extract only the times that occur within a specific season.
 
 This function only has one argument: ``season``. This is the named season to
-extract. ie: DJF, MAM, JJA, SON.
+extract, i.e. DJF, MAM, JJA, SON, but also all other sequentially correct
+combinations, e.g. JJAS.
 
 Note that this function does not change the time resolution. If your original
 data is in monthly time resolution, then this function will return three
@@ -788,6 +804,22 @@ This function only has one argument: ``month``. This value should be an integer
 between 1 and 12 as the named month string will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_month`.
+
+.. _hourly_statistics:
+
+``hourly_statistics``
+---------------------
+
+This function produces statistics at a x-hourly frequency.
+
+Parameters:
+    * every_n_hours: frequency to use to compute the statistics. Must be a divisor of
+      24.
+
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
 .. _daily_statistics:
 
@@ -820,11 +852,11 @@ See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 ``seasonal_statistics``
 -----------------------
 
-This function produces statistics for each season (DJF, MAM, JJA, SON) in the
-dataset. Note that this function will not check for missing time points.
-For instance, if you are looking at the DJF field, but your datasets
-starts on January 1st, the first DJF field will only contain data
-from January and February.
+This function produces statistics for each season (default: "(DJF, MAM, JJA,
+SON)" or custom seasons e.g. "(JJAS, ONDJFMAM)" ) in the dataset. Note that
+this function will not check for missing time points. For instance, if you are
+looking at the DJF field, but your datasets starts on January 1st, the first
+DJF field will only contain data from January and February.
 
 We recommend using the extract_time to start the dataset from the following
 December and remove such biased initial datapoints.
@@ -832,6 +864,9 @@ December and remove such biased initial datapoints.
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
       'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+
+    * seasons: seasons to build statistics.
+      Default is '(DJF, MAM, JJA, SON)'
 
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
@@ -878,6 +913,9 @@ Parameters:
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
 
+    * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
+      Default is '(DJF, MAM, JJA, SON)'
+
 Examples:
     * Monthly climatology:
 
@@ -905,6 +943,80 @@ Examples:
 
 See also :func:`esmvalcore.preprocessor.climate_statistics`.
 
+.. _resample_time:
+
+``resample_time``
+-----------------
+
+This function changes the frequency of the data in the cube by extracting the
+timesteps that meet the criteria. It is important to note that it is mainly
+meant to be used with instantaneous data.
+
+Parameters:
+    * month: Extract only timesteps from the given month or do nothing if None.
+      Default is `None`
+    * day: Extract only timesteps from the given day of month or do nothing if
+      None. Default is `None`
+    * hour: Extract only timesteps from the given hour or do nothing if None.
+      Default is `None`
+
+Examples:
+    * Hourly data to daily:
+
+        .. code-block:: yaml
+
+            resample_time:
+              hour: 12
+
+    * Hourly data to monthly:
+
+        .. code-block:: yaml
+
+            resample_time:
+              hour: 12
+              day: 15
+
+    * Daily data to monthly:
+
+        .. code-block:: yaml
+
+            resample_time:
+              day: 15
+
+See also :func:`esmvalcore.preprocessor.resample_time`.
+
+
+resample_hours:
+
+``resample_hours``
+------------------
+
+This function changes the frequency of the data in the cube by extracting the
+timesteps that belongs to the desired frequency. It is important to note that
+it is mainly mean to be used with instantaneous data
+
+Parameters:
+    * interval: New frequency of the data. Must be a divisor of 24
+    * offset: First desired hour. Default 0. Must be lower than the interval
+
+Examples:
+    * Convert to 12-hourly, by getting timesteps at 0:00 and 12:00:
+
+        .. code-block:: yaml
+
+            resample_hours:
+              hours: 12
+
+    * Convert to 12-hourly, by getting timesteps at 6:00 and 18:00:
+
+        .. code-block:: yaml
+
+            resample_hours:
+              hours: 12
+	      offset: 6
+
+See also :func:`esmvalcore.preprocessor.resample_hours`.
+
 .. _anomalies:
 
 ``anomalies``
@@ -923,7 +1035,8 @@ Parameters:
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
-
+    * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
+      Default is '(DJF, MAM, JJA, SON)'
 Examples:
     * Anomalies from the full period climatology:
 
@@ -1192,7 +1305,7 @@ as a CMOR variable can permit):
 
     fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
@@ -1252,7 +1365,7 @@ as a CMOR variable can permit):
 
     fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
@@ -1332,6 +1445,39 @@ use ``coords: [year, day_of_year]``.
 See also :func:`esmvalcore.preprocessor.amplitude`.
 
 
+.. _trend:
+
+Trend
+=====
+
+The trend module contains the following preprocessor functions:
+
+* ``linear_trend``: Calculate linear trend along a specified coordinate.
+* ``linear_trend_stderr``: Calculate standard error of linear trend along a
+  specified coordinate.
+
+``linear_trend``
+----------------
+
+This function calculates the linear trend of a dataset (defined as slope of an
+ordinary linear regression) along a specified coordinate. The only argument of
+this preprocessor is ``coordinate`` (given as :obj:`str`; default value is
+``'time'``).
+
+See also :func:`esmvalcore.preprocessor.linear_trend`.
+
+``linear_trend_stderr``
+-----------------------
+
+This function calculates the standard error of the linear trend of a dataset
+(defined as the standard error of the slope in an ordinary linear regression)
+along a specified coordinate. The only argument of this preprocessor is
+``coordinate`` (given as :obj:`str`; default value is ``'time'``). Note that
+the standard error is **not** identical to a confidence interval.
+
+See also :func:`esmvalcore.preprocessor.linear_trend_stderr`.
+
+
 .. _detrend:
 
 Detrend
@@ -1353,6 +1499,7 @@ If method is ``constant``, detrend will compute the mean along that dimension
 and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
+
 
 .. _unit conversion:
 

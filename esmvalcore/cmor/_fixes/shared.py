@@ -2,6 +2,7 @@
 import logging
 import os
 import warnings
+from functools import lru_cache
 
 import dask.array as da
 import iris
@@ -12,21 +13,6 @@ from scipy.interpolate import interp1d
 from esmvalcore.iris_helpers import var_name_constraint
 
 logger = logging.getLogger(__name__)
-
-
-def _get_altitude_to_pressure_func():
-    """Get function converting altitude [m] to air pressure [Pa]."""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    source_file = os.path.join(base_dir, 'us_standard_atmosphere.csv')
-    data_frame = pd.read_csv(source_file, comment='#')
-    func = interp1d(data_frame['Altitude [m]'],
-                    data_frame['Pressure [Pa]'],
-                    kind='cubic',
-                    fill_value='extrapolate')
-    return func
-
-
-altitude_to_pressure = _get_altitude_to_pressure_func()  # noqa
 
 
 class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
@@ -257,8 +243,12 @@ def add_plev_from_altitude(cube):
         height_coord = cube.coord('altitude')
         if height_coord.units != 'm':
             height_coord.convert_units('m')
+        altitude_to_pressure = get_altitude_to_pressure_func()
         pressure_points = altitude_to_pressure(height_coord.core_points())
-        pressure_bounds = altitude_to_pressure(height_coord.core_bounds())
+        if height_coord.core_bounds() is None:
+            pressure_bounds = None
+        else:
+            pressure_bounds = altitude_to_pressure(height_coord.core_bounds())
         pressure_coord = iris.coords.AuxCoord(pressure_points,
                                               bounds=pressure_bounds,
                                               var_name='plev',
@@ -269,6 +259,43 @@ def add_plev_from_altitude(cube):
         return
     raise ValueError(
         "Cannot add 'air_pressure' coordinate, 'altitude' coordinate not "
+        "available")
+
+
+def add_altitude_from_plev(cube):
+    """Add altitude coordinate from pressure level coordinate.
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        Input cube.
+
+    Raises
+    ------
+    ValueError
+        ``cube`` does not contain coordinate ``air_pressure``.
+
+    """
+    if cube.coords('air_pressure'):
+        plev_coord = cube.coord('air_pressure')
+        if plev_coord.units != 'Pa':
+            plev_coord.convert_units('Pa')
+        pressure_to_altitude = get_pressure_to_altitude_func()
+        altitude_points = pressure_to_altitude(plev_coord.core_points())
+        if plev_coord.core_bounds() is None:
+            altitude_bounds = None
+        else:
+            altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
+        altitude_coord = iris.coords.AuxCoord(altitude_points,
+                                              bounds=altitude_bounds,
+                                              var_name='alt',
+                                              standard_name='altitude',
+                                              long_name='altitude',
+                                              units='m')
+        cube.add_aux_coord(altitude_coord, cube.coord_dims(plev_coord))
+        return
+    raise ValueError(
+        "Cannot add 'altitude' coordinate, 'air_pressure' coordinate not "
         "available")
 
 
@@ -345,6 +372,26 @@ def cube_to_aux_coord(cube):
     )
 
 
+@lru_cache()
+def get_altitude_to_pressure_func():
+    """Get function converting altitude [m] to air pressure [Pa].
+
+    Returns
+    -------
+    callable
+        Function that converts altitude to air pressure.
+
+    """
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    source_file = os.path.join(base_dir, 'us_standard_atmosphere.csv')
+    data_frame = pd.read_csv(source_file, comment='#')
+    func = interp1d(data_frame['Altitude [m]'],
+                    data_frame['Pressure [Pa]'],
+                    kind='cubic',
+                    fill_value='extrapolate')
+    return func
+
+
 def get_bounds_cube(cubes, coord_var_name):
     """Find bound cube for a given variable in a :class:`iris.cube.CubeList`.
 
@@ -380,6 +427,26 @@ def get_bounds_cube(cubes, coord_var_name):
     raise ValueError(
         f"No bounds for coordinate variable '{coord_var_name}' available in "
         f"cubes\n{cubes}")
+
+
+@lru_cache()
+def get_pressure_to_altitude_func():
+    """Get function converting air pressure [Pa] to altitude [m].
+
+    Returns
+    -------
+    callable
+        Function that converts air pressure to altitude.
+
+    """
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    source_file = os.path.join(base_dir, 'us_standard_atmosphere.csv')
+    data_frame = pd.read_csv(source_file, comment='#')
+    func = interp1d(data_frame['Pressure [Pa]'],
+                    data_frame['Altitude [m]'],
+                    kind='cubic',
+                    fill_value='extrapolate')
+    return func
 
 
 def fix_bounds(cube, cubes, coord_var_names):
