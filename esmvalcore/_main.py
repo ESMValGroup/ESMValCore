@@ -134,8 +134,9 @@ class Config():
             logger.info('Creating folder %s', target_folder)
             os.makedirs(target_folder)
 
-        logger.info('Copying file to %s.', path)
-        shutil.copy2(os.path.join(os.path.dirname(__file__), filename), path)
+        conf_file = os.path.join(os.path.dirname(__file__), filename)
+        logger.info('Copying file %s to path %s.', conf_file, path)
+        shutil.copy2(conf_file, path)
         logger.info('Copy finished.')
 
     @classmethod
