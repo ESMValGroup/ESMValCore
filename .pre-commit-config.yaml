@@ -3,6 +3,7 @@
 ---
 exclude: |
   (?x)
+  ^doc/conf.py|
   ^esmvalcore/cmor/tables/|
   ^esmvalcore/preprocessor/ne_masks/
 repos:

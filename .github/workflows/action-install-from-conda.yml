@@ -29,21 +29,21 @@ on:
   #  branches:
   #  - master
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 4 * * *'
 
 jobs:
   linux:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8, 3.9]
       # fail-fast set to False allows all other tests
       # in the worflow to run regardless of any fail
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
-      - uses: goanpeca/setup-miniconda@v1
+      - uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
@@ -73,12 +73,12 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: [3.6, 3.7]  # 3.8 not working as of 07-Sep-2020
+        python-version: [3.6, 3.7]  # 3.8 not working as of 07-Sep-2020; 3.9 unchartered
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
-      - uses: goanpeca/setup-miniconda@v1
+      - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
           python-version: ${{ matrix.python-version }}

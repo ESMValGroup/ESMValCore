@@ -1,0 +1,25 @@
+SOURCE: CMIP5
+!============
+variable_entry:    tasConf5
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     
+units:             K
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Near-Surface Air Temperature Uncertainty Range
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+out_name:          tasConf5
+type:              real
+valid_min:         0
+valid_max:         20.
+ok_min_mean_abs:   0
+ok_max_mean_abs:   20.
+!----------------------------------
+!

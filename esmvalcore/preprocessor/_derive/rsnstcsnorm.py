@@ -5,7 +5,7 @@ authors:
 
 """
 from iris import Constraint
-
+from cf_units import Unit
 from ._baseclass import DerivedVariableBase
 
 
@@ -53,5 +53,6 @@ class DerivedVariable(DerivedVariableBase):
 
         rsnstcsnorm_cube = (((rsdt_cube - rsutcs_cube) -
                              (rsdscs_cube - rsuscs_cube)) / rsdt_cube) * 100.0
+        rsnstcsnorm_cube.units = Unit('percent')
 
         return rsnstcsnorm_cube
