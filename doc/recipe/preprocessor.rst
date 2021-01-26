@@ -674,6 +674,10 @@ from a statistical point of view, this is needed since weights are not yet
 implemented; also higher dimensional data is not supported (i.e. anything with
 dimensionality higher than four: time, vertical axis, two horizontal axes).
 
+Input datasets may have different time coordinates. The multi-model statistics
+preprocessor sets a common time coordinate on all datasets. As the number of
+days in a year may vary between calendars, (sub-)daily data are not supported.
+
 .. code-block:: yaml
 
     preprocessors:
