@@ -5,12 +5,14 @@ from ..shared import add_scalar_height_coord
 
 class Tas(Fix):
     """Fixes for tas."""
+
     def fix_metadata(self, cubes):
         """Add height (2m) coordinate.
 
         Parameters
         ----------
         cubes : iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
@@ -31,6 +33,7 @@ class Huss(Tas):
 
 class SfcWind(Fix):
     """Fixes for sfcWind."""
+
     def fix_metadata(self, cubes):
         """Add height (10m) coordinate.
 
@@ -41,7 +44,7 @@ class SfcWind(Fix):
 
         Returns
         -------
-        iris.cube.CubeList
+        iris.cube.Cube
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
