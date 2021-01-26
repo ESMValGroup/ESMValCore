@@ -87,7 +87,7 @@ def test_siconc_fix_metadata(siconc_cubes):
     assert siconc_cube.var_name == "siconc"
 
     # Extract siconc cube
-    siconc_cube = cubes.extract_cube('sea_ice_area_fraction')
+    siconc_cube = siconc_cubes.extract_cube('sea_ice_area_fraction')
     assert not siconc_cube.coords('typesi')
 
     # Apply fix
