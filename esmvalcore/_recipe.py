@@ -689,21 +689,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             )
         except RecipeError as ex:
             missing_vars.add(ex.message)
-        _update_extract_shape(settings, config_user)
-        _update_weighting_settings(settings, variable)
-        _update_fx_settings(settings=settings,
-                            variable=variable,
-                            config_user=config_user)
-        try:
-            _update_target_grid(
-                variable=variable,
-                variables=variables,
-                settings=settings,
-                config_user=config_user,
-            )
-        except RecipeError as ex:
-            missing_vars.add(ex.message)
-        _update_regrid_time(variable, settings)
+        _update_preproc_functions(settings, config_user, variable, variables,
+                                  missing_vars)
         ancestors = grouped_ancestors.get(variable['filename'])
         if not ancestors:
             try:
@@ -732,6 +719,25 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         product.check()
 
     return products
+
+
+def _update_preproc_functions(settings, config_user, variable, variables,
+                              missing_vars):
+    _update_extract_shape(settings, config_user)
+    _update_weighting_settings(settings, variable)
+    _update_fx_settings(settings=settings,
+                        variable=variable,
+                        config_user=config_user)
+    try:
+        _update_target_grid(
+            variable=variable,
+            variables=variables,
+            settings=settings,
+            config_user=config_user,
+        )
+    except RecipeError as ex:
+        missing_vars.add(ex.message)
+    _update_regrid_time(variable, settings)
 
 
 def _get_single_preprocessor_task(variables,

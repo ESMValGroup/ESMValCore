@@ -23,6 +23,7 @@ class RecipeError(Exception):
         self.failed_tasks = []
 
     def __str__(self):
+        """Return message string."""
         return self.message
 
 
