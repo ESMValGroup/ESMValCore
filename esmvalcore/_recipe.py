@@ -932,7 +932,7 @@ class Recipe:
             logger.error(ex.message)
             for task in ex.failed_tasks:
                 logger.error(task.message)
-            raise RecipeError('Some tasks could not be initalized') from ex
+            raise
 
     @staticmethod
     def _need_ncl(raw_diagnostics):
@@ -1316,7 +1316,7 @@ class Recipe:
                 priority += 1
         if failed_tasks:
             ex = RecipeError('Could not create all tasks')
-            ex.failed_tasks = failed_tasks
+            ex.failed_tasks.extend(failed_tasks)
             raise ex
         check.tasks_valid(tasks)
 

@@ -20,6 +20,7 @@ class RecipeError(Exception):
     def __init__(self, msg):
         super().__init__(self)
         self.message = msg
+        self.failed_tasks = []
 
     def __str__(self):
         return self.message
