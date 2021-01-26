@@ -37,7 +37,7 @@ requirements:
     # esmvaltool
     - python>=3.6
     - graphviz
-    - iris=3.0.0
+    - iris>=2.2.1
     - python-stratify
     - scipy<1.6  # until ESMValGroup/ESMValCore/issues/927 gets resolved
     # Normally installed via pip:
