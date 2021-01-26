@@ -776,6 +776,7 @@ def _get_next_month(month, year):
         return month + 1, year
     return 1, year + 1
 
+
 def low_pass_weights(window, cutoff):
     """Calculate weights for a low pass Lanczos filter.
 
