@@ -813,7 +813,7 @@ class CMORCheck():
         return len(self._debug_messages) > 0
 
     def report(self, level, message, *args):
-        """Generic method to report a message from the checker.
+        """Report a message from the checker.
 
         Parameters
         ----------
