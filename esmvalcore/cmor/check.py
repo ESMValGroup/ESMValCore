@@ -1,5 +1,4 @@
 """Module for checking iris cubes against their CMOR definitions."""
-import datetime
 import logging
 from enum import IntEnum
 
@@ -501,52 +500,16 @@ class CMORCheck():
                     coord.var_name, var_name)
 
     def _check_time_bounds(self, freq, time):
+        from esmvalcore.preprocessor._time import _get_time_bounds
         times = {'time', 'time1', 'time2', 'time3'}
         key = times.intersection(self._cmor_var.coordinates)
         cmor = self._cmor_var.coordinates[" ".join(key)]
         if cmor.must_have_bounds == 'yes' and not time.has_bounds():
             if self.automatic_fixes:
-                bounds = []
-                for step, point in enumerate(time.points):
-                    month = time.cell(step).point.month
-                    year = time.cell(step).point.year
-                    if freq in ['mon', 'mo']:
-                        next_month = self._get_next_month(month, year)
-                        min_bound = time.units.date2num(
-                            datetime.datetime(year, month, 1, 0, 0))
-                        max_bound = time.units.date2num(
-                            datetime.datetime(next_month[1], next_month[0], 1,
-                                              0, 0))
-                    elif freq == 'yr':
-                        min_bound = time.units.date2num(
-                            datetime.datetime(year, 1, 1, 0, 0))
-                        max_bound = time.units.date2num(
-                            datetime.datetime(year + 1, 1, 1, 0, 0))
-                    elif freq == 'dec':
-                        min_bound = time.units.date2num(
-                            datetime.datetime(year, 1, 1, 0, 0))
-                        max_bound = time.units.date2num(
-                            datetime.datetime(year + 10, 1, 1, 0, 0))
-                    else:
-                        delta = {
-                            'day': 12 / 24,
-                            '6hr': 3 / 24,
-                            '3hr': 1.5 / 24,
-                            '1hr': 0.5 / 24,
-                        }
-                        min_bound = point - delta[freq]
-                        max_bound = point + delta[freq]
-                    bounds.append([min_bound, max_bound])
-                time.bounds = np.array(bounds)
+                time.bounds = _get_time_bounds(time, freq)
                 self.report_warning(
                     'Added guessed bounds to coordinate {0} from var {1}',
                     time.var_name, self._cmor_var.short_name)
-
-    @staticmethod
-    def _get_next_month(month, year):
-        if month != 12:
-            return month + 1, year
-        return 1, year + 1
 
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
