@@ -4,6 +4,7 @@ from ..fix import Fix
 
 class AllVars(Fix):
     """Fixes for all vars."""
+
     def fix_metadata(self, cubes):
         """Fix parent time units.
 
