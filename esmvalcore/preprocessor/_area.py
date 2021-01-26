@@ -378,8 +378,7 @@ def _select_representative_point(shape, lon, lat):
     """Select a representative point for `shape` from `lon` and `lat`."""
     representative_point = shape.representative_point()
     points = shapely.geometry.MultiPoint(
-        np.stack((np.ravel(lon), np.ravel(lat)), axis=1)
-    )
+        np.stack((np.ravel(lon), np.ravel(lat)), axis=1))
     nearest_point = shapely.ops.nearest_points(points, representative_point)[0]
     nearest_lon, nearest_lat = nearest_point.coords[0]
     select = (lon == nearest_lon) & (lat == nearest_lat)
@@ -410,12 +409,14 @@ def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
     return lon, lat
 
 
-def _get_masks_from_geometries(geometries,
-                               lon,
-                               lat,
-                               method='contains',
-                               decomposed=False,
-                               ids=None,):
+def _get_masks_from_geometries(
+    geometries,
+    lon,
+    lat,
+    method='contains',
+    decomposed=False,
+    ids=None,
+):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
@@ -423,25 +424,21 @@ def _get_masks_from_geometries(geometries,
             "'representative'.")
 
     selections = dict()
-    id_properties = ('name', 'id')
+    id_properties = ('name', 'NAME', 'id', 'ID')
     if ids:
         ids = [str(id_) for id_ in ids]
     for i, item in enumerate(geometries):
         id_ = i
         for id_prop in id_properties:
-            print(item['properties'])
             if id_prop in item['properties']:
                 id_ = item['properties'][id_prop]
-                print(id_)
-                break
-            if id_prop.upper() in item['properties']:
-                id_ = item['properties'][id_prop.upper()]
-                print(id_)
                 break
         id_ = str(id_)
-        print(ids)
+        logger.debug(
+            'Shape %s found',
+            id_,
+        )
         if ids and id_ not in ids:
-            print('Skipping...')
             continue
 
         shape = shapely.geometry.shape(item['geometry'])
@@ -449,8 +446,12 @@ def _get_masks_from_geometries(geometries,
             select = shapely.vectorized.contains(shape, lon, lat)
         if method == 'representative' or not select.any():
             select = _select_representative_point(shape, lon, lat)
-        print('Shapely done')
         selections[id_] = select
+
+    if ids:
+        missing = set(ids) - set(selections.keys())
+        if missing:
+            raise ValueError('Shapes %s not found', ' '.join(missing))
 
     if not decomposed and len(selections) > 1:
         selection = np.zeros(lat.shape, dtype=bool)
@@ -503,14 +504,15 @@ def fix_coordinate_ordering(cube):
     return cube
 
 
-def extract_shape(cube,
-                  shapefile,
-                  method='contains',
-                  crop=True,
-                  decomposed=False,
-                  ids=None,):
-    """
-    Extract a region defined by a shapefile.
+def extract_shape(
+    cube,
+    shapefile,
+    method='contains',
+    crop=True,
+    decomposed=False,
+    ids=None,
+):
+    """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
     prime meridian or poles.
