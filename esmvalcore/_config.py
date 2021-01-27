@@ -44,7 +44,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         cfg = yaml.safe_load(file)
 
     # DEPRECATED: remove in v2.4
-    for setting in ('write_plots', 'write_netcdf', 'output_file_type'):
+    for setting in ('write_plots', 'write_netcdf'):
         if setting in cfg:
             msg = (
                 f"Using '{setting}' in {config_file} is deprecated and will "
@@ -61,7 +61,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     for key, value in options.items():
         cfg[key] = value
         # DEPRECATED: remove in v2.4
-        if key in ('write_plots', 'write_netcdf', 'output_file_type'):
+        if key in ('write_plots', 'write_netcdf'):
             msg = (
                 f"Setting '{key}' from the command line is deprecated and "
                 "will be removed in ESMValCore version 2.4. For diagnostics "
@@ -74,6 +74,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     defaults = {
         'compress_netcdf': False,
         'exit_on_warning': False,
+        'output_file_type': 'png',
         'output_dir': 'esmvaltool_output',
         'auxiliary_data_dir': 'auxiliary_data',
         'save_intermediary_cubes': False,
@@ -86,7 +87,6 @@ def read_config_user_file(config_file, folder_name, options=None):
         # DEPRECATED: remove default settings below in v2.4
         'write_plots': True,
         'write_netcdf': True,
-        'output_file_type': 'png',
     }
 
     for key in defaults:

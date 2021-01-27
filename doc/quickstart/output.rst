@@ -68,7 +68,9 @@ the results should be saved to the work directory.
 Plots
 =====
 
-The plots directory is where diagnostics save their output figures.
+The plots directory is where diagnostics save their output figures. These
+plots are saved in the format requested by the option `output_file_type` in the
+config-user.yml file.
 
 
 Settings.yml
@@ -87,6 +89,7 @@ disk of the metadata.yml file (described below).
 
     input_files:[[...]recipe_ocean_bgc_20190118_134855/preproc/diag_timeseries_scalars/mfo/metadata.yml]
     log_level: debug
+    output_file_type: png
     plot_dir: [...]recipe_ocean_bgc_20190118_134855/plots/diag_timeseries_scalars/Scalar_timeseries
     profile_diagnostic: false
     recipe: recipe_ocean_bgc.yml

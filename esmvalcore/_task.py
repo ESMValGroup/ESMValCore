@@ -375,6 +375,7 @@ class DiagnosticTask(BaseTask):
             'run_dir',
             'plot_dir',
             'work_dir',
+            'output_file_type',
             'log_level',
         }
         settings = {'diag_script_info': {}, 'config_user_info': {}}
@@ -389,7 +390,7 @@ class DiagnosticTask(BaseTask):
         # Still add deprecated keys to config_user_info to avoid
         # crashing the diagnostic script that need this.
         # DEPRECATED: remove in v2.4
-        for key in ('write_plots', 'write_netcdf', 'output_file_type'):
+        for key in ('write_plots', 'write_netcdf'):
             if key in self.settings:
                 settings['config_user_info'][key] = self.settings[key]
 
@@ -558,6 +559,7 @@ class DiagnosticTask(BaseTask):
             'exit_on_ncl_warning',
             'input_files',
             'log_level',
+            'output_file_type',
             'plot_dir',
             'profile_diagnostic',
             'recipe',

@@ -253,8 +253,6 @@ _validators = {
     # deprecate in 2.2.0
     'write_plots': deprecate(validate_bool, 'write_plots', '2.2.0'),
     'write_netcdf': deprecate(validate_bool, 'write_netcdf', '2.2.0'),
-    'output_file_type': deprecate(validate_string, 'output_file_type',
-                                  '2.2.0'),
 
     # From user config
     'log_level': validate_string,
@@ -268,6 +266,7 @@ _validators = {
     'config_developer_file': validate_config_developer,
     'profile_diagnostic': validate_bool,
     'run_diagnostic': validate_bool,
+    'output_file_type': validate_string,
 
     # From CLI
     "skip-nonexistent": validate_bool,

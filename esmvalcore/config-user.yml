@@ -6,6 +6,8 @@
 log_level: info
 # Exit on warning (only for NCL diagnostic scripts)? true/[false]
 exit_on_warning: false
+# Plot file format? [png]/pdf/ps/eps/epsi
+output_file_type: png
 # Destination directory
 output_dir: ./esmvaltool_output
 # Auxiliary data directory (used for some additional datasets)
