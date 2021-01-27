@@ -282,8 +282,14 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.remove_coord('latitude')
         iris.util.demote_dim_coord_to_aux_coord(self.cube, 'longitude')
         new_lat = iris.coords.AuxCoord(
-            points=self.cube.coord('longitude').points / 4,
-            bounds=self.cube.coord('longitude').bounds / 4,
+            points=np.concatenate(
+                self.cube.coord('longitude').bounds[0:10] / 4,
+                self.cube.coord('longitude').bounds[0:10] / 4
+            ),
+            bounds=np.concatenate(
+                self.cube.coord('longitude').bounds[0:10, ...] / 4,
+                self.cube.coord('longitude').bounds[0:10, ...] / 4,
+            ),
             var_name='lat',
             standard_name='latitude',
             long_name='Latitude',

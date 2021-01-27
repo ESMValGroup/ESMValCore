@@ -79,6 +79,7 @@ class CMORCheck():
         self._errors = list()
         self._warnings = list()
         self._debug_messages = list()
+        self._is_unestructured_grid = False
         self._cmor_var = var_info
         if not frequency:
             frequency = self._cmor_var.frequency
@@ -382,6 +383,14 @@ class CMORCheck():
 
     def _check_coords(self):
         """Check coordinates."""
+        if self._cube.coords('latitude') and self._cube.coords('longitude'):
+            self._is_unestructured_grid = (
+                self._cube.coord('latitude').ndim == 1 and
+                (
+                    self._cube.coord_dims('latitude') ==
+                    self._cube.coord_dims('longitude')
+                )
+            )
         for coordinate in self._cmor_var.coordinates.values():
             # Cannot check generic_level coords as no CMOR information
             if coordinate.generic_level:
@@ -467,8 +476,16 @@ class CMORCheck():
             return
         if coord.dtype.kind == 'U':
             return
-        if coord.bounds.shape[1] > 4:
+
+        if self._is_unestructured_grid and \
+           coord.standard_name in ['latitude', 'longitude']:
+            self.report_debug_message(
+                f'Coordinate {coord.standard_name} appears to belong to '
+                'an unstructured grid. Skipping monotonicity and '
+                'direction tests.'
+            )
             return
+
         if not coord.is_monotonic():
             self.report_critical(self._is_msg, var_name, 'monotonic')
         if len(coord.points) == 1:
