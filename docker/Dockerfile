@@ -4,8 +4,12 @@ FROM continuumio/miniconda3
 
 WORKDIR /src/ESMValCore
 COPY environment.yml .
-RUN conda update -y conda pip && conda env update --name base --file environment.yml && conda clean --all -y
+RUN conda update -y conda && conda env create --name esmvaltool --file environment.yml && conda clean --all -y
+
+# Make RUN commands use the new environment:
+SHELL ["conda", "run", "--name", "esmvaltool", "/bin/bash", "-c"]
+
 COPY . .
 RUN pip install . && pip cache purge
 
-ENTRYPOINT ["esmvaltool"]
+ENTRYPOINT ["conda", "run", "--name", "esmvaltool", "esmvaltool"]

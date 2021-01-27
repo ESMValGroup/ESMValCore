@@ -57,6 +57,14 @@ class TestSave(unittest.TestCase):
         loaded_cube = iris.load_cube(path)
         self._compare_cubes(cube, loaded_cube)
 
+    def test_save_alias(self):
+        """Test save"""
+        cube, filename = self._create_sample_cube()
+        path = save([cube], filename, alias='alias')
+        loaded_cube = iris.load_cube(path)
+        self._compare_cubes(cube, loaded_cube)
+        self.assertEqual(loaded_cube.var_name, 'alias')
+
     def test_save_zlib(self):
         """Test save"""
         cube, filename = self._create_sample_cube()
