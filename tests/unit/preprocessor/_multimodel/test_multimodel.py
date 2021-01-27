@@ -7,6 +7,7 @@ import numpy as np
 from cf_units import Unit
 
 import tests
+from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._multimodel import (
     _assemble_data,
     _compute_statistic,
@@ -14,7 +15,6 @@ from esmvalcore.preprocessor._multimodel import (
     _plev_fix,
     _put_in_cube,
     _unify_time_coordinates,
-    multi_model_statistics,
 )
 
 
