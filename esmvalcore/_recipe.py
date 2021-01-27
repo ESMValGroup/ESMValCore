@@ -31,6 +31,7 @@ from ._task import (
     get_independent_tasks,
     run_tasks,
 )
+from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (
     DEFAULT_ORDER,
@@ -249,7 +250,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings = {}
 
     # Set up downloading using synda if requested.
-    if config_user['synda_download']:
+    if config_user.get('synda_download'):
         # TODO: make this respect drs or download to preproc dir?
         download_folder = os.path.join(config_user['preproc_dir'], 'downloads')
         settings['download'] = {
@@ -276,7 +277,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_file']['output_dir'] = fix_dir
     # Cube fixes
     fix['frequency'] = variable['frequency']
-    fix['check_level'] = config_user['check_level']
+    fix['check_level'] = config_user.get('check_level', CheckLevels.DEFAULT)
     settings['fix_metadata'] = dict(fix)
     settings['fix_data'] = dict(fix)
 
@@ -302,16 +303,10 @@ def _get_default_settings(variable, config_user, derive=False):
         'mip': variable['mip'],
         'short_name': variable['short_name'],
         'frequency': variable['frequency'],
-        'check_level': config_user['check_level']
+        'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
     }
     # Configure final CMOR data check
-    settings['cmor_check_data'] = {
-        'cmor_table': variable['project'],
-        'mip': variable['mip'],
-        'short_name': variable['short_name'],
-        'frequency': variable['frequency'],
-        'check_level': config_user['check_level']
-    }
+    settings['cmor_check_data'] = dict(settings['cmor_check_metadata'])
 
     # Clean up fixed files
     if not config_user['save_intermediary_cubes']:
@@ -506,7 +501,7 @@ def _get_input_files(variable, config_user):
 
     # Set up downloading using synda if requested.
     # Do not download if files are already available locally.
-    if config_user['synda_download'] and not input_files:
+    if config_user.get('synda_download') and not input_files:
         input_files = synda_search(variable)
         dirnames = None
         filenames = None
@@ -1314,7 +1309,7 @@ class Recipe:
 
         # Select only requested tasks
         tasks = get_flattened_tasks(tasks)
-        if not self._cfg.get('run_diagnostic'):
+        if not self._cfg.get('run_diagnostic', True):
             tasks = {t for t in tasks if isinstance(t, PreprocessingTask)}
         if self._cfg.get('diagnostics'):
             names = {t.name for t in tasks}
@@ -1344,3 +1339,21 @@ class Recipe:
         """Run all tasks in the recipe."""
         run_tasks(self.tasks,
                   max_parallel_tasks=self._cfg['max_parallel_tasks'])
+
+    def get_product_output(self) -> dict:
+        """Return the paths to the output plots and data.
+
+        Returns
+        -------
+        product_filenames : dict
+            Lists of products/attributes grouped by task.
+        """
+        product_filenames = {}
+
+        for task in self.tasks:
+            product_filenames[task.name] = {
+                product.filename: product.attributes
+                for product in task.products
+            }
+
+        return product_filenames

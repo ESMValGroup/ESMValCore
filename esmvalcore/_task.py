@@ -12,7 +12,7 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
-from pathlib import Path
+from pathlib import Path, PosixPath
 from shutil import which
 
 import psutil
@@ -21,6 +21,15 @@ import yaml
 from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
+
+
+def path_representer(dumper, data):
+    """For printing pathlib.Path objects in yaml files."""
+    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+
+
+yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
+yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
 
 logger = logging.getLogger(__name__)
 
@@ -257,6 +266,10 @@ class BaseTask:
             _indent(str(task))
             for task in self.ancestors) if self.ancestors else 'None')
         return txt
+
+    def __repr__(self):
+        """Return canonical string representation."""
+        return f"{self.__class__.__name__}({repr(self.name)})"
 
 
 class DiagnosticError(Exception):
@@ -617,12 +630,12 @@ class DiagnosticTask(BaseTask):
 
     def __str__(self):
         """Get human readable description."""
-        txt = "{}:\nscript: {}\n{}\nsettings:\n{}\n".format(
-            self.__class__.__name__,
-            self.script,
-            pprint.pformat(self.settings, indent=2),
-            super(DiagnosticTask, self).str(),
-        )
+        settings_string = pprint.pformat(self.settings, indent=2)
+        txt = (f"{self.__class__.__name__}:\n"
+               f"script: {self.script}\n"
+               f"settings:\n{settings_string}\n"
+               f"{super(DiagnosticTask, self)}\n")
+
         return txt
 
 
