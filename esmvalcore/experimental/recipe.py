@@ -178,7 +178,7 @@ class Recipe():
                                     config_user=config_user,
                                     recipe_file=self.path)
 
-    def run(self, session: dict = None):
+    def run(self, task: str = None, session: dict = None):
         """Run the recipe.
 
         This function loads the recipe into the ESMValCore recipe format
@@ -186,6 +186,9 @@ class Recipe():
 
         Parameters
         ----------
+        task : str
+            Specify the name of the diagnostic or preprocessor to run a
+            single task.
         session : :obj:`Session`, optional
             Defines the config parameters and location where the recipe
             output will be stored. If ``None``, a new session will be
@@ -199,6 +202,9 @@ class Recipe():
         """
         if not session:
             session = CFG.start_session(self.path.stem)
+
+        if task:
+            session['diagnostics'] = task
 
         with log_to_dir(session.run_dir):
             self._load(session=session)
@@ -221,48 +227,3 @@ class Recipe():
         raw_output = self._engine.get_product_output()
 
         return RecipeOutput(raw_output)
-
-    @property
-    def diagnostics(self) -> dict:
-        """Return a mapping of diagnostics.
-
-        Returns
-        -------
-        diagnostics : dict
-            Diagnostics described in the recipe.
-        """
-        diagnostics = {}
-        for task in self._engine.tasks:
-            diagnostics[task.name] = task
-
-        return diagnostics
-
-    def run_diagnostic(self, diagnostic: str, session: dict = None):
-        """Run a single diagnostic from the recipe.
-
-        Parameters
-        ----------
-        diagnostic : str
-            Name of the diagnostic to run.
-            Use `.diagnostics` for a list of available diagnostics.
-        session : :obj:`Session`, optional
-            Defines the config parameters and location where the recipe
-            output will be stored. If ``None``, a new session will be
-            started automatically.
-
-        Returns
-        -------
-        output : :obj:`TaskOutput`
-            Returns task output as an instance of :obj:`TaskOutput`
-        """
-        if not session:
-            session = CFG.start_session(self.path.stem)
-
-        task = self.diagnostics[diagnostic]
-
-        with log_to_dir(session.run_dir):
-            task.run()
-
-        output = TaskOutput.from_task(task)
-
-        return output
