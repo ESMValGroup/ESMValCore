@@ -33,7 +33,6 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             pip install .[test]
-            conda install -c conda-forge iris=3.0.0
             pytest -n 2 -m "not installation"
       - save_cache:
           key: test-{{ .Branch }}
