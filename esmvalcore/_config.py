@@ -50,7 +50,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         if setting in cfg:
             msg = (
                 f"Using '{setting}' in {config_file} is deprecated and will "
-                "be removed in ESMValCore version 2.3. For diagnostics "
+                "be removed in ESMValCore version 2.4. For diagnostics "
                 "that support this setting, it should be set in the "
                 "diagnostic script section of the recipe instead. "
                 f"Remove the setting from {config_file} to get rid of this "
@@ -66,7 +66,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         if key in ('write_plots', 'write_netcdf', 'output_file_type'):
             msg = (
                 f"Setting '{key}' from the command line is deprecated and "
-                "will be removed in ESMValCore version 2.3. For diagnostics "
+                "will be removed in ESMValCore version 2.4. For diagnostics "
                 "that support this setting, it should be set in the "
                 "diagnostic script section of the recipe instead.")
             print(f"Warning: {msg}")
