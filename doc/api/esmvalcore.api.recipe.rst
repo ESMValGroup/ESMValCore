@@ -65,6 +65,46 @@ the output of the recipe. The output is an instance of :py:class:`esmvalcore.exp
 
 For working with recipe output, see: :ref:`api_recipe_output`.
 
+Running a single diagnostic or preprocessor task
+************************************************
+
+The python example recipe contains 5 preprocessors:
+
+Preprocessors:
+
+- ``timeseries/tas_amsterdam``
+- ``timeseries/script1``
+- ``map/tas``
+
+Diagnostics:
+
+- ``timeseries/tas_global``
+- ``map/script1``
+
+To run a single diagnostic or preprocessor, the name of the task can be passed
+as an argument to :py:meth:`~esmvalcore.experimental.recipe.Recipe.run`. If a diagnostic
+is passed, all ancestors will automatically be run too.
+
+.. code-block:: python
+
+    >>> output = recipe.run('map/script1')
+    >>> output
+    map/script1:
+      DataFile('CMIP5_CanESM2_Amon_historical_r1i1p1_tas_2000-2000.nc')
+      DataFile('CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_2000-2000.nc')
+      ImageFile('CMIP5_CanESM2_Amon_historical_r1i1p1_tas_2000-2000.png')
+      ImageFile('CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_2000-2000.png')
+
+It is also possible to run a single preprocessor task:
+
+.. code-block:: python
+
+    >>> output = recipe.run('map/tas')
+    >>> output
+    map/tas:
+      DataFile('CMIP5_CanESM2_Amon_historical_r1i1p1_tas_2000-2000.nc')
+      DataFile('CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_2000-2000.nc')
+
 
 API reference
 *************
