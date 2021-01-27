@@ -79,6 +79,7 @@ class CMORCheck():
         self._errors = list()
         self._warnings = list()
         self._debug_messages = list()
+        self._is_unestructured_grid = False
         self._cmor_var = var_info
         if not frequency:
             frequency = self._cmor_var.frequency
@@ -437,6 +438,17 @@ class CMORCheck():
 
     def _check_coords(self):
         """Check coordinates."""
+        if self._cube.coords('latitude') and self._cube.coords('longitude'):
+            try:
+                lat = self._cube.coord('latitude')
+                lon = self._cube.coord('longitude')
+            except iris.exceptions.CoordinateNotFoundError:
+                pass
+            else:
+                if lat.ndim == 1 and (self._cube.coord_dims(lat) ==
+                   self._cube.coord_dims(lon)):
+                   self._is_unestructured_grid = True
+
         for coordinate in self._cmor_var.coordinates.values():
             # Cannot check generic_level coords as no CMOR information
             if coordinate.generic_level and not coordinate.out_name:
@@ -522,6 +534,16 @@ class CMORCheck():
             return
         if coord.dtype.kind == 'U':
             return
+
+        if self._is_unestructured_grid and \
+           coord.standard_name in ['latitude', 'longitude']:
+            self.report_debug_message(
+                f'Coordinate {coord.standard_name} appears to belong to '
+                'an unstructured grid. Skipping monotonicity and '
+                'direction tests.'
+            )
+            return
+
         if not coord.is_monotonic():
             self.report_critical(self._is_msg, var_name, 'monotonic')
         if len(coord.points) == 1:
@@ -911,7 +933,7 @@ def _get_cmor_checker(table,
 def cmor_check_metadata(cube, cmor_table, mip,
                         short_name, frequency,
                         check_level=CheckLevels.DEFAULT):
-    """Check if metadata conforms to variable's CMOR definiton.
+    """Check if metadata conforms to variable's CMOR definition.
 
     None of the checks at this step will force the cube to load the data.
 
@@ -940,7 +962,7 @@ def cmor_check_metadata(cube, cmor_table, mip,
 
 def cmor_check_data(cube, cmor_table, mip, short_name, frequency,
                     check_level=CheckLevels.DEFAULT):
-    """Check if data conforms to variable's CMOR definiton.
+    """Check if data conforms to variable's CMOR definition.
 
     The checks performed at this step require the data in memory.
 
@@ -967,7 +989,7 @@ def cmor_check_data(cube, cmor_table, mip, short_name, frequency,
 
 
 def cmor_check(cube, cmor_table, mip, short_name, frequency, check_level):
-    """Check if cube conforms to variable's CMOR definiton.
+    """Check if cube conforms to variable's CMOR definition.
 
     Equivalent to calling cmor_check_metadata and cmor_check_data
     consecutively.
