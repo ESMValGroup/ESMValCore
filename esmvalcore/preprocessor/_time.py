@@ -338,9 +338,6 @@ def annual_statistics(cube, operator='mean'):
 
     if not cube.coords('year'):
         iris.coord_categorisation.add_year(cube, 'time')
-    #cubelist = iris.cube.CubeList()
-    #for cube_slice in cube.slices_over('startdate'):
-    #    cubelist.append(cube_slice.aggregated_by('year', operator))
 
     return cube.aggregated_by('year', operator)
 
@@ -424,7 +421,6 @@ def climate_statistics(cube, operator='mean', period='full'):
                 cube = cube.collapsed('time',
                                       operator_method)
             else:
-                print(cube.lazy_data().chunksize)
                 cube = cube.collapsed('time',
                                       operator_method,
                                       weights=time_weights)
@@ -769,6 +765,10 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
         tbounds = {}
         ltpoints = {}
         ltbounds = {}
+        remove_coords = [
+            'clim_season', 'day_of_year', 'decade', 'month',
+            'month_number', 'season', 'season_year', 'year',
+            ]
         for cube in cubes:
             try:
                 startdate = int(cube.attributes['sub_experiment_id'][1:])
@@ -787,10 +787,10 @@ def add_lead_time(input_products: set, output_products: set, groupby: str = ('pr
                     "Cannot retrieve ensemble" +
                     "from attribute variant_label. ")
 
-            # TO DO: remove time stats coordinates such as year and others
-            #if cube.coord('year'):
-            #    cube.remove_coord('year')
-            #####
+            for aux_coord in cube.aux_coords:
+                if aux_coord.long_name in remove_coords:
+                    cube.remove_coord(aux_coord.long_name)
+
             time = cube.coord('time')
             tpoints[startdate] = time.points
             tbounds[startdate] = time.bounds
