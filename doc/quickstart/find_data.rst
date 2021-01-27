@@ -151,7 +151,7 @@ Explaining ``config-user/rootpath:``
 
   .. code-block:: yaml
 
-    OBS: /group_workspaces/jasmin4/esmeval/obsdata-v2
+    OBS: /gws/nopw/j04/esmeval/obsdata-v2
 
 * ``default``: this is the `root` path(s) to where files are stored without any
   DRS-like directory structure; in a nutshell, this is a single directory that
@@ -238,7 +238,7 @@ using the ``OBS`` root path set to:
 
   .. code-block:: yaml
 
-    OBS: /group_workspaces/jasmin4/esmeval/obsdata-v2
+    OBS: /gws/nopw/j04/esmeval/obsdata-v2
 
 and the dataset:
 
@@ -251,7 +251,7 @@ CMOR-DRS_ are used again and the file will be automatically found:
 
 .. code-block::
 
-  /group_workspaces/jasmin4/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
+  /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
 
 Since observational data are organized in Tiers depending on their level of
 public availability, the ``default`` directory must be structured accordingly

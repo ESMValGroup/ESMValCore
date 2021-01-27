@@ -8,7 +8,7 @@ This section describes the :py:mod:`esmvalcore.experimental.recipe` submodule of
 Recipe metadata
 ***************
 
-:py:class:`esmvalcore.experimental.recipe.Recipe` info is a class that holds metadata from a recipe.
+:py:class:`esmvalcore.experimental.recipe.Recipe` is a class that holds metadata from a recipe.
 
 .. code-block:: python
 
@@ -59,7 +59,12 @@ Sessions can also be explicitly specified.
     >>> output = recipe.run(session)
     <log messages>
 
-:py:meth:`esmvalcore.experimental.Recipe.run` returns an object that contains the locations of the data and figures (not implemented yet).
+:py:meth:`esmvalcore.experimental.Recipe.run` returns an dictionary of objects that can be used to inspect
+the output of the recipe. The output is an instance of :py:class:`esmvalcore.experimental.recipe_output.ImageFile` or
+:py:class:`esmvalcore.experimental.recipe_output.ImageFile` depending on its type.
+
+For working with recipe output, see: :ref:`api_recipe_output`.
+
 
 API reference
 *************
