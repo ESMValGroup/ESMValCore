@@ -1261,6 +1261,9 @@ class Recipe:
         logger.info("Creating tasks from recipe")
         tasks = set()
 
+        run_diagnostic = self._cfg.get('run_diagnostic', True)
+        tasknames_to_run = self._cfg.get('diagnostics')
+
         priority = 0
         for diagnostic_name, diagnostic in self.diagnostics.items():
             logger.info("Creating tasks for diagnostic %s", diagnostic_name)
@@ -1302,12 +1305,12 @@ class Recipe:
 
         # Select only requested tasks
         tasks = get_flattened_tasks(tasks)
-        if not self._cfg.get('run_diagnostic', True):
+        if not run_diagnostic:
             tasks = {t for t in tasks if isinstance(t, PreprocessingTask)}
-        if self._cfg.get('diagnostics'):
+        if tasknames_to_run:
             names = {t.name for t in tasks}
             selection = set()
-            for pattern in self._cfg.get('diagnostics'):
+            for pattern in tasknames_to_run:
                 selection |= set(fnmatch.filter(names, pattern))
             tasks = {t for t in tasks if t.name in selection}
 
@@ -1330,6 +1333,9 @@ class Recipe:
 
     def run(self):
         """Run all tasks in the recipe."""
+        if not self.tasks:
+            raise RecipeError('No tasks to run!')
+
         run_tasks(self.tasks,
                   max_parallel_tasks=self._cfg['max_parallel_tasks'])
 
