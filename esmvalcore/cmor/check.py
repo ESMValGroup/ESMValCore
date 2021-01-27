@@ -447,7 +447,7 @@ class CMORCheck():
             else:
                 if lat.ndim == 1 and (self._cube.coord_dims(lat) ==
                    self._cube.coord_dims(lon)):
-                   self._is_unestructured_grid = True
+                    self._is_unestructured_grid = True
 
         for coordinate in self._cmor_var.coordinates.values():
             # Cannot check generic_level coords as no CMOR information
