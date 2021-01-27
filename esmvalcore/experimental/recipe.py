@@ -12,7 +12,7 @@ from esmvalcore._recipe import Recipe as RecipeEngine
 from . import CFG
 from ._logging import log_to_dir
 from .recipe_metadata import Contributor, Project, Reference
-from .recipe_output import RecipeOutput, TaskOutput
+from .recipe_output import RecipeOutput
 
 logger = logging.getLogger(__file__)
 
