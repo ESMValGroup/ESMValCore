@@ -3,17 +3,22 @@
 http://www.esmvaltool.org
 
 CORE DEVELOPMENT TEAM AND CONTACTS:
-  Veronika Eyring (PI; DLR, Germany - veronika.eyring@dlr.de)
-  Bouwe Andela (NLESC, Netherlands - b.andela@esciencecenter.nl)
-  Bjoern Broetz (DLR, Germany - bjoern.broetz@dlr.de)
+  Birgit Hassler (Co-PI; DLR, Germany - birgit.hassler@dlr.de)
+  Alistair Sellar (Co-PI; Met Office, UK - alistair.sellar@metoffice.gov.uk)
+  Bouwe Andela (Netherlands eScience Center, The Netherlands
+    - b.andela@esciencecenter.nl)
+  Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
   Lee de Mora (PML, UK - ledm@pml.ac.uk)
-  Niels Drost (NLESC, Netherlands - n.drost@esciencecenter.nl)
+  Niels Drost (Netherlands eScience Center, The Netherlands
+    - n.drost@esciencecenter.nl)
+  Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
+  Remi Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
   Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
   Axel Lauer (DLR, Germany - axel.lauer@dlr.de)
   Benjamin Mueller (LMU, Germany - b.mueller@iggf.geo.uni-muenchen.de)
   Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-  Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
   Manuel Schlund (DLR, Germany - manuel.schlund@dlr.de)
+  Breixo Solino Fernandez (DLR, Germany - breixo.solinofernandez@dlr.de)
   Javier Vegas-Regidor (BSC, Spain - javier.vegas@bsc.es)
   Klaus Zimmermann (SMHI, Sweden - klaus.zimmermann@smhi.se)
 
