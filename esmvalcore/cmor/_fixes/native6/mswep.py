@@ -51,4 +51,4 @@ class Pr(Fix):
         """Convert units from mm/month to kg m-3 s-1 units."""
         cube.units = Unit(self.vardef.units)
         # divide by number of seconds in a month
-        cube.data /= 60 * 60 * 24 * 30
+        cube.data = cube.core_data() / 60 * 60 * 24 * 30
