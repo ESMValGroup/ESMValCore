@@ -63,8 +63,8 @@ class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
         # Check bounds
         if sigma.nbounds not in (0, 2):
             raise ValueError(
-                "Invalid 'sigma' coordinate: must have either 0 or 2 bounds, "
-                "got {sigma.nbounds:d}")
+                f"Invalid 'sigma' coordinate: must have either 0 or 2 bounds, "
+                f"got {sigma.nbounds:d}")
         for coord in (pressure_at_top, surface_air_pressure):
             if coord.nbounds:
                 msg = (f"Coordinate '{coord.name()}' has bounds. These will "
@@ -72,15 +72,18 @@ class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
                 warnings.warn(msg, UserWarning, stacklevel=2)
 
         # Check units
+        if sigma.units.is_unknown():
+            sigma.units = Unit('1')
         if not sigma.units.is_dimensionless():
             raise ValueError(
-                "Invalid units: 'sigma' must be dimensionless, got "
-                "'{sigma.units}'")
+                f"Invalid units: 'sigma' must be dimensionless, got "
+                f"'{sigma.units}'")
         if pressure_at_top.units != surface_air_pressure.units:
             raise ValueError(
-                "Incompatible units: 'pressure_at_top' and "
-                "'surface_air_pressure' must have the same units, got "
-                "'{pressure_at_top.units}' and '{surface_air_pressure.units}'")
+                f"Incompatible units: 'pressure_at_top' and "
+                f"'surface_air_pressure' must have the same units, got "
+                f"'{pressure_at_top.units}' and "
+                f"'{surface_air_pressure.units}'")
         if not pressure_at_top.units.is_convertible('Pa'):
             raise ValueError(
                 "Invalid units: 'pressure_at_top' and 'surface_air_pressure' "
