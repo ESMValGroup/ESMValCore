@@ -81,7 +81,11 @@ def _interpolate(cubes, func):
     """Expand or subset cubes so they share a common time span."""
     _unify_time_coordinates(cubes)
     time_spans = [cube.coord('time').points for cube in cubes]
+
     new_times = reduce(func, time_spans)
+    if len(new_times) == 0:
+        raise ValueError("No time overlap found between input cubes.")
+
     # new_times = cubes[0].coord('time').units.num2date(new_times)
     sample_points = [('time', new_times)]
     scheme = iris.analysis.Nearest(extrapolation_mode='nan')
@@ -144,44 +148,18 @@ def _compute(cube, statistic, dim='new_dim'):
                 '`ensemble_statistics`. Choose supported operator from',
                 '`iris.analysis package`.') from err
 
+    logger.debug('Multicube statistics: computing: %s', statistic)
     # This will always return a masked array
     return cube.collapsed('concat_dim', operator, **kwargs)
 
 
 def _multicube_statistics(cubes, statistics, span):
-    """Compute multi-cube statistics.
+    """Compute statistics over multiple cubes.
+
+    Can be used e.g. for ensemble or multi-model statistics.
 
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
-
-    This function deals with non-homogeneous cubes by taking the time union
-    computed across a common overlap in time (set span: overlap) or across the
-    full length in time of each model (set span: full). Apart from the time
-    coordinate, cubes must have consistent shapes.
-
-    This method uses iris' built in functions, exposing the operators in
-    iris.analysis and supporting lazy evaluation.
-
-    Note: some of the operators in iris.analysis require additional
-    arguments, such as percentiles or weights. These operators are
-    currently not supported.
-
-    Parameters
-    ----------
-    cubes: list
-        list of cubes to be used in multimodel stat computation;
-    statistics: list
-        statistical measures to be computed. Choose from the
-        operators listed in the iris.analysis package.
-    span: str
-        'overlap' or 'full'. If 'overlap', statitsticss are computed on common
-        time span; if 'full', statistics are computed on full time spans,
-        ignoring missing data.
-
-    Returns
-    -------
-    dict
-        dictionary of statistics cubes with statistics' names as keys.
     """
     aligned_cubes = _align(cubes, span=span)
     big_cube = _combine(aligned_cubes)
@@ -224,18 +202,25 @@ def multi_model_statistics(products, span, statistics, output_products=None):
     workflow and provenance information, and this option should typically be
     ignored.
 
-    This function was designed to work on (max) four-dimensional data: time,
-    vertical axis, two horizontal axes. Apart from the time coordinate, cubes
-    must have consistent shapes. There are two options to combine time
-    coordinates of different lengths, see the `span` argument.
+    Apart from the time coordinate, cubes must have consistent shapes. There
+    are two options to combine time coordinates of different lengths, see the
+    `span` argument.
+
+    Uses the statistical operators in iris.analysis, including 'mean',
+    'median', 'min', 'max', and 'std'. Percentiles are also supported and can
+    be specified like pXX.YY (for percentile XX.YY; decimal part optional).
+
+    Note: some of the operators in iris.analysis require additional arguments.
+    Except for percentiles, these operators are currently not supported.
 
     Parameters
     ----------
     products: list
         Cubes (or products) over which the statistics will be computed.
     statistics: list
-        Statistical metrics to be computed. Available options: mean, median,
-        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
+        Statistical metrics to be computed, e.g. ['mean', 'max']. Choose from
+        the operators listed in the iris.analysis package. Percentiles can be
+        specified like 'pXX.YY'.
     span: str
         Overlap or full; if overlap, statitstics are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
