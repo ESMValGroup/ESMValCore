@@ -1098,8 +1098,7 @@ See also :func:`esmvalcore.preprocessor.regrid_time`.
 This function allows the user to apply a filter to the timeseries data. This filter may be
 of the user's choice (currently only the ``low-pass`` Lanczos filter is implemented); the
 implementation is inspired by this `iris example
-<https://scitools-iris.readthedocs.io/en/latest/examples/General/
-SOI_filtering.html?highlight=running%20mean>`_ and uses aggregation via a
+<https://scitools-iris.readthedocs.io/en/latest/generated/gallery/general/plot_SOI_filtering.html>`_ and uses aggregation via a
 `rolling window <https://scitools-iris.readthedocs.io/en/latest/generated/api/iris/cube.html#iris.cube.Cube.rolling_window>`_.
 
 Parameters:
