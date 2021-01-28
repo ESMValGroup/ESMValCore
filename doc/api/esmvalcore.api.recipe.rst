@@ -68,7 +68,7 @@ For working with recipe output, see: :ref:`api_recipe_output`.
 Running a single diagnostic or preprocessor task
 ************************************************
 
-The python example recipe contains 5 preprocessors:
+The python example recipe contains 5 tasks:
 
 Preprocessors:
 
