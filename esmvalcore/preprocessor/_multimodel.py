@@ -1,6 +1,7 @@
 """Functions to compute multi-cube statistics."""
 
 import logging
+import re
 from datetime import datetime
 from functools import reduce
 
@@ -126,18 +127,25 @@ def _combine(cubes, dim='new_dim'):
 
 def _compute(cube, statistic, dim='new_dim'):
     """Compute statistic."""
-    operators = vars(iris.analysis)
 
-    try:
-        operator = operators[statistic.upper()]
-    except KeyError as err:
-        raise ValueError(
-            f'Statistic `{statistic}` not supported in',
-            '`ensemble_statistics`. Choose supported operator from',
-            '`iris.analysis package`.') from err
+    if re.match(r"^(p\d{1,2})(\.\d*)?$", statistic):
+        # percentiles between p0 and p99.99999...
+        percentile = float(statistic[1:])
+        operator = iris.analysis.PERCENTILE
+        kwargs = {'percent': percentile}
+    else:
+        try:
+            operators = vars(iris.analysis)
+            operator = operators[statistic.upper()]
+            kwargs = {}
+        except KeyError as err:
+            raise ValueError(
+                f'Statistic `{statistic}` not supported in',
+                '`ensemble_statistics`. Choose supported operator from',
+                '`iris.analysis package`.') from err
 
     # This will always return a masked array
-    return cube.collapsed('concat_dim', operator)
+    return cube.collapsed('concat_dim', operator, **kwargs)
 
 
 def _multicube_statistics(cubes, statistics, span):
