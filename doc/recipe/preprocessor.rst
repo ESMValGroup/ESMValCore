@@ -607,7 +607,7 @@ the horizontal regridding functionality directly map to their corresponding
 implementations in Iris:
 
 * ``linear``: `Linear(extrapolation_mode='mask') <https://scitools-iris.readthedocs.io/en/latest/generated/api/iris/analysis.html#iris.analysis.Linear>`_.
-* ``linear_extrapolate``: `Linear(extrapolation_mode='extrapolate') <https://scitools-iris.readthedocs.io/en/latest/iris/iris/analysis.html#iris.analysis.Linear>`_.
+* ``linear_extrapolate``: `Linear(extrapolation_mode='extrapolate') <https://scitools-iris.readthedocs.io/en/latest/generated/api/iris/analysis.html#iris.analysis.Linear>`_.
 * ``nearest``: `Nearest(extrapolation_mode='mask') <https://scitools-iris.readthedocs.io/en/latest/generated/api/irisanalysis.html#iris.analysis.Nearest>`_.
 * ``area_weighted``: `AreaWeighted() <https://scitools-iris.readthedocs.io/en/latest/generated/api/iris/analysis.html#iris.analysis.AreaWeighted>`_.
 * ``unstructured_nearest``: `UnstructuredNearest() <https://scitools-iris.readthedocs.io/en/latest/generated/api/iris/analysis.html#iris.analysis.UnstructuredNearest>`_.
