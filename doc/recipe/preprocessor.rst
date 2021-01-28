@@ -65,7 +65,7 @@ the preprocessor structure see the :ref:`Preprocessors`.
 
 Each of the preprocessor operations is written in a dedicated python module and
 all of them receive and return an Iris `cube
-<https://scitools.org.uk/iris/docs/v2.0/iris/iris/cube.html>`_ , working
+<https://scitools-iris.readthedocs.io/en/v2.0/iris/iris/cube.html>`_ , working
 sequentially on the data with no interactions between them. The order in which
 the preprocessor operations is applied is set by default to minimize
 the loss of information due to, for example, temporal and spatial subsetting or
@@ -538,7 +538,7 @@ difference is that interpolation is based on sample data points, while
 regridding is based on the horizontal grid of another cube (the reference grid).
 
 The underlying regridding mechanism in ESMValTool uses the `cube.regrid()
-<https://scitools.org.uk/iris/docs/latest/iris/iris/cube.html#iris.cube.Cube.regrid>`_
+<https://scitools-iris.readthedocs.io/en/latest/iris/iris/cube.html#iris.cube.Cube.regrid>`_
 from Iris.
 
 The use of the horizontal regridding functionality is flexible depending on
@@ -606,11 +606,11 @@ The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
 implementations in Iris:
 
-* ``linear``: `Linear(extrapolation_mode='mask') <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.Linear>`_.
-* ``linear_extrapolate``: `Linear(extrapolation_mode='extrapolate') <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.Linear>`_.
-* ``nearest``: `Nearest(extrapolation_mode='mask') <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.Nearest>`_.
-* ``area_weighted``: `AreaWeighted() <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.AreaWeighted>`_.
-* ``unstructured_nearest``: `UnstructuredNearest() <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.UnstructuredNearest>`_.
+* ``linear``: `Linear(extrapolation_mode='mask') <https://scitools-iris.readthedocs.io/en/latest/iris/iris/analysis.html#iris.analysis.Linear>`_.
+* ``linear_extrapolate``: `Linear(extrapolation_mode='extrapolate') <https://scitools-iris.readthedocs.io/en/latest/iris/iris/analysis.html#iris.analysis.Linear>`_.
+* ``nearest``: `Nearest(extrapolation_mode='mask') <https://scitools-iris.readthedocs.io/en/latest/iris/iris/analysis.html#iris.analysis.Nearest>`_.
+* ``area_weighted``: `AreaWeighted() <https://scitools-iris.readthedocs.io/en/latest/iris/iris/analysis.html#iris.analysis.AreaWeighted>`_.
+* ``unstructured_nearest``: `UnstructuredNearest() <https://scitools-iris.readthedocs.io/en/latest/iris/iris/analysis.html#iris.analysis.UnstructuredNearest>`_.
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
@@ -1098,9 +1098,9 @@ See also :func:`esmvalcore.preprocessor.regrid_time`.
 This function allows the user to apply a filter to the timeseries data. This filter may be
 of the user's choice (currently only the ``low-pass`` Lanczos filter is implemented); the
 implementation is inspired by this `iris example
-<https://scitools.org.uk/iris/docs/latest/examples/General/
+<https://scitools-iris.readthedocs.io/en/latest/examples/General/
 SOI_filtering.html?highlight=running%20mean>`_ and uses aggregation via a
-`rolling window <https://scitools.org.uk/iris/docs/v2.0/iris/iris/cube.html#iris.cube.Cube.rolling_window>`_.
+`rolling window <https://scitools-iris.readthedocs.io/en/v2.0/iris/iris/cube.html#iris.cube.Cube.rolling_window>`_.
 
 Parameters:
     * window: the length of the filter window (in units of cube time coordinate).
@@ -1413,7 +1413,7 @@ value) of a field aggregated over specified coordinates. Its only argument is
 ``coords``, which can either be a single coordinate (given as :obj:`str`) or
 multiple coordinates (given as :obj:`list` of :obj:`str`). Usually, these
 coordinates refer to temporal `categorised coordinates
-<https://scitools.org.uk/iris/docs/latest/iris/iris/coord_categorisation.html>`_
+<https://scitools-iris.readthedocs.io/en/latest/iris/iris/coord_categorisation.html>`_
 like `year`, `month`, `day of year`, etc. For example, to extract the amplitude
 of the annual cycle for every single year in the data, use ``coords: year``; to
 extract the amplitude of the diurnal cycle for every single day in the data,
