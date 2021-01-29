@@ -166,7 +166,7 @@ def _resolve_latestversion(dirname_template):
     return dirname_template
 
 
-def _select_drs(input_type, drs, project):
+def _select_drs(input_type, drs, project, dataset):
     """Select the directory structure of input path."""
     cfg = get_project_config(project)
     input_path = cfg[input_type]
@@ -174,6 +174,10 @@ def _select_drs(input_type, drs, project):
         return input_path
 
     structure = drs.get(project, 'default')
+
+    if project == 'native6' and dataset in input_path:
+        return input_path[dataset]
+
     if structure in input_path:
         return input_path[structure]
 
@@ -194,9 +198,10 @@ def get_rootpath(rootpath, project):
 def _find_input_dirs(variable, rootpath, drs):
     """Return a the full paths to input directories."""
     project = variable['project']
+    dataset = variable['dataset']
 
     root = get_rootpath(rootpath, project)
-    path_template = _select_drs('input_dir', drs, project)
+    path_template = _select_drs('input_dir', drs, project, dataset)
 
     dirnames = []
     for dirname_template in _replace_tags(path_template, variable):
@@ -217,7 +222,9 @@ def _find_input_dirs(variable, rootpath, drs):
 
 def _get_filenames_glob(variable, drs):
     """Return patterns that can be used to look for input files."""
-    path_template = _select_drs('input_file', drs, variable['project'])
+    project = variable['project']
+    dataset = variable['dataset']
+    path_template = _select_drs('input_file', drs, project, dataset)
     filenames_glob = _replace_tags(path_template, variable)
     return filenames_glob
 
