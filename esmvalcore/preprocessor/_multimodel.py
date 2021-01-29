@@ -89,19 +89,8 @@ def _resolve_span(all_times, span):
             return new_times
         raise ValueError("No time overlap found between input cubes.")
 
-    # new_times = cubes[0].coord('time').units.num2date(new_times)
-    sample_points = [('time', new_times)]
-    scheme = iris.analysis.Nearest(extrapolation_mode='nan')
-    return [cube.interpolate(sample_points, scheme) for cube in cubes]
-
-
-def _extend(cubes):
-    return _interpolate(cubes, np.union1d)
-
-
-def _subset(cubes):
-    """Only keep the times that are present in all cubes."""
-    return _interpolate(cubes, np.intersect1d)
+    raise ValueError("Unknown value for span. Expected 'full' or 'overlap'"
+                     "got {}".format(span))
 
 
 def _align(cubes, span):
