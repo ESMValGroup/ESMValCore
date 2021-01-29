@@ -4,7 +4,7 @@ channels:
   - conda-forge
 
 dependencies:
-  - cftime=1.2.1  # iris3 needs <=1.2.1; >=1.3.0 - years<999 get a 0 instead of empty space
+  - cftime  # iris=3.0.1 needs <=1.2.1; >=1.3.0 - years<999 get a 0 instead of empty space
   - compilers
   - esmpy
   - iris>=3.0.1
