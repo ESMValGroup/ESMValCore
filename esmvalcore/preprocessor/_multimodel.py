@@ -130,7 +130,7 @@ def _compute(cube, statistic, dim='new_dim'):
         operator = iris.analysis.PERCENTILE
         kwargs = {'percent': percentile}
     elif statistic == 'std':
-        statistic = 'std_dev'
+        operator = iris.analysis.STD_DEV
         logger.warning(
             "Multicube statistics is aligning its behaviour with iris.analysis"
             ". Please consider replacing 'std' with 'std_dev' in your code.")
