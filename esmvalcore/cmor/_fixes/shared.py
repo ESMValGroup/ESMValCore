@@ -28,19 +28,16 @@ class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
                         (surface_air_pressure(n, j, i) - pressure_at_top)
 
         """
+        self._metadata_manager = iris.common.metadata_manager_factory(
+            iris.common.CoordMetadata)
         super().__init__()
         self._check_dependencies(pressure_at_top, sigma, surface_air_pressure)
+        self.units = pressure_at_top.units
         self.pressure_at_top = pressure_at_top
         self.sigma = sigma
         self.surface_air_pressure = surface_air_pressure
         self.standard_name = 'air_pressure'
         self.attributes = {}
-
-    @property
-    def units(self):
-        """Units."""
-        units = self.pressure_at_top.units
-        return units
 
     @staticmethod
     def _check_dependencies(pressure_at_top, sigma, surface_air_pressure):
