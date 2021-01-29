@@ -79,7 +79,7 @@ class CMORCheck():
         self._errors = list()
         self._warnings = list()
         self._debug_messages = list()
-        self._is_unestructured_grid = False
+        self._is_unstructured_grid = False
         self._cmor_var = var_info
         if not frequency:
             frequency = self._cmor_var.frequency
@@ -447,7 +447,7 @@ class CMORCheck():
             else:
                 if lat.ndim == 1 and (self._cube.coord_dims(lat) ==
                    self._cube.coord_dims(lon)):
-                    self._is_unestructured_grid = True
+                    self._is_unstructured_grid = True
 
         for coordinate in self._cmor_var.coordinates.values():
             # Cannot check generic_level coords as no CMOR information
@@ -535,7 +535,7 @@ class CMORCheck():
         if coord.dtype.kind == 'U':
             return
 
-        if self._is_unestructured_grid and \
+        if self._is_unstructured_grid and \
            coord.standard_name in ['latitude', 'longitude']:
             self.report_debug_message(
                 f'Coordinate {coord.standard_name} appears to belong to '
