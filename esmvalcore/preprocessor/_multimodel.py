@@ -77,40 +77,32 @@ def _unify_time_coordinates(cubes):
         cube.coord('time').guess_bounds()
 
 
-def _interpolate(cubes, func):
-    """Expand or subset cubes so they share a common time span."""
-    _unify_time_coordinates(cubes)
-    time_spans = [cube.coord('time').points for cube in cubes]
+def _resolve_span(all_times, span):
+    """Construct new time array based on the span parameter."""
+    if span == 'full':
+        new_times = reduce(np.union1d, all_times)
+        return new_times
 
-    new_times = reduce(func, time_spans)
-    if len(new_times) == 0:
+    if span == 'overlap':
+        new_times = reduce(np.intersect1d, all_times)
+        if new_times.size > 0:
+            return new_times
         raise ValueError("No time overlap found between input cubes.")
 
-    # new_times = cubes[0].coord('time').units.num2date(new_times)
-    sample_points = [('time', new_times)]
-    scheme = iris.analysis.Nearest(extrapolation_mode='nan')
-    return [cube.interpolate(sample_points, scheme) for cube in cubes]
-
-
-def _extend(cubes):
-    return _interpolate(cubes, np.intersect1d)
-
-
-def _subset(cubes):
-    """Only keep the times that are present in all cubes."""
-    return _interpolate(cubes, np.union1d)
+    raise ValueError("Unknown value for span. Expected 'full' or 'overlap'"
+                     "got {}".format(span))
 
 
 def _align(cubes, span):
     """Expand or subset cubes so they share a common time span."""
+    _unify_time_coordinates(cubes)
+    all_time_arrays = [cube.coord('time').points for cube in cubes]
+    new_times = _resolve_span(all_time_arrays, span)
 
-    if span == 'overlap':
-        new_cubes = _subset(cubes)
-    elif span == 'full':
-        new_cubes = _extend(cubes)
-    else:
-        raise ValueError("Unknown value for span. Expected 'full' or 'overlap'"
-                         "got {}".format(span))
+    # new_times = cubes[0].coord('time').units.num2date(new_times)
+    sample_points = [('time', new_times)]
+    scheme = iris.analysis.Nearest(extrapolation_mode='nan')
+    new_cubes = [cube.interpolate(sample_points, scheme) for cube in cubes]
 
     for cube in new_cubes:
         cube.coord('time').guess_bounds()
@@ -150,7 +142,7 @@ def _compute(cube, statistic, dim='new_dim'):
 
     logger.debug('Multicube statistics: computing: %s', statistic)
     # This will always return a masked array
-    return cube.collapsed('concat_dim', operator, **kwargs)
+    return cube.collapsed(dim, operator, **kwargs)
 
 
 def _multicube_statistics(cubes, statistics, span):
