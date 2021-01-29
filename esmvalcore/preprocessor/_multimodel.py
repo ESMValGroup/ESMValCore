@@ -124,11 +124,12 @@ def _combine(cubes, dim='new_dim'):
 def _compute(cube, statistic, dim='new_dim'):
     """Compute statistic."""
 
+    kwargs = {}
     if re.match(r"^(p\d{1,2})(\.\d*)?$", statistic):
         # percentiles between p0 and p99.99999...
         percentile = float(statistic[1:])
         operator = iris.analysis.PERCENTILE
-        kwargs = {'percent': percentile}
+        kwargs['percent'] = percentile
     elif statistic == 'std':
         operator = iris.analysis.STD_DEV
         logger.warning(
@@ -138,7 +139,6 @@ def _compute(cube, statistic, dim='new_dim'):
         try:
             operators = vars(iris.analysis)
             operator = operators[statistic.upper()]
-            kwargs = {}
         except KeyError as err:
             raise ValueError(
                 f'Statistic `{statistic}` not supported in',
