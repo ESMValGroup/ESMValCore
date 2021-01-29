@@ -26,5 +26,6 @@ class DerivedVariable(DerivedVariableBase):
 
         et_cube = hfls_cube * 24.0 * 3600.0 / LATENT_HEAT_VAPORIZATION
         et_cube.units = cf_units.Unit('mm day-1')
+        et_cube.attributes.pop('positive', None)
 
         return et_cube

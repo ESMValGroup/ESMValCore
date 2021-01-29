@@ -1,12 +1,52 @@
-"""Tests for the fixes of GFDL-ESM4."""
+"""Tests for the fixes of NorESM2-LM."""
 
 import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.noresm2_lm import AllVars, Siconc
+from esmvalcore.cmor._fixes.cmip6.noresm2_lm import (
+    AllVars,
+    Cl,
+    Cli,
+    Clw,
+    Siconc,
+)
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'NorESM2-LM', 'Amon', 'cl')
+    assert fix == [Cl(None), AllVars(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is ClFixHybridPressureCoord
+
+
+def test_get_cli_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'NorESM2-LM', 'Amon', 'cli')
+    assert fix == [Cli(None), AllVars(None)]
+
+
+def test_cli_fix():
+    """Test fix for ``cli``."""
+    assert Cli is ClFixHybridPressureCoord
+
+
+def test_get_clw_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'NorESM2-LM', 'Amon', 'clw')
+    assert fix == [Clw(None), AllVars(None)]
+
+
+def test_clw_fix():
+    """Test fix for ``clw``."""
+    assert Clw is ClFixHybridPressureCoord
 
 
 @pytest.fixture
