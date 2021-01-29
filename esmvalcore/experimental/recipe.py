@@ -39,7 +39,7 @@ class Recipe():
         self._projects = None
         self._references = None
         self._description = None
-        self._recipe_engine = None
+        self._engine = None
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
@@ -174,11 +174,11 @@ class Recipe():
 
         logger.info(pprint.pformat(config_user))
 
-        self._recipe_engine = RecipeEngine(raw_recipe=self.data,
-                                           config_user=config_user,
-                                           recipe_file=self.path)
+        self._engine = RecipeEngine(raw_recipe=self.data,
+                                    config_user=config_user,
+                                    recipe_file=self.path)
 
-    def run(self, session: dict = None):
+    def run(self, task: str = None, session: dict = None):
         """Run the recipe.
 
         This function loads the recipe into the ESMValCore recipe format
@@ -186,6 +186,9 @@ class Recipe():
 
         Parameters
         ----------
+        task : str
+            Specify the name of the diagnostic or preprocessor to run a
+            single task.
         session : :obj:`Session`, optional
             Defines the config parameters and location where the recipe
             output will be stored. If ``None``, a new session will be
@@ -200,9 +203,12 @@ class Recipe():
         if not session:
             session = CFG.start_session(self.path.stem)
 
+        if task:
+            session['diagnostics'] = task
+
         with log_to_dir(session.run_dir):
             self._load(session=session)
-            self._recipe_engine.run()
+            self._engine.run()
 
         return self.get_output()
 
@@ -212,12 +218,12 @@ class Recipe():
         Returns
         -------
         output : dict
-            Returns output of the recipe as instances of :obj:`OutputItem`
+            Returns output of the recipe as instances of :obj:`OutputFile`
             grouped by diagnostic task.
         """
-        if not self._recipe_engine:
+        if not self._engine:
             raise AttributeError('Run the recipe first using `.run()`.')
 
-        raw_output = self._recipe_engine.get_product_output()
+        raw_output = self._engine.get_product_output()
 
         return RecipeOutput(raw_output)
