@@ -47,14 +47,6 @@ with explanations in a commented line above each option:
 
 .. code-block:: yaml
 
-  # Diagnostics create plots? [true]/false
-  # turning it off will turn off graphical output from diagnostic
-  write_plots: true
-
-  # Diagnostics write NetCDF files? [true]/false
-  # turning it off will turn off netCDF output from diagnostic
-  write_netcdf: true
-
   # Set the console log level debug, [info], warning, error
   # for much more information printed to screen set log_level: debug
   log_level: info
@@ -117,19 +109,14 @@ with explanations in a commented line above each option:
   drs:
     CMIP5: default
 
-Most of these settings are fairly self-explanatory, e.g.:
+..
+   DEPRECATED: remove in v2.4
 
-.. code-block:: yaml
-
-  # Diagnostics create plots? [true]/false
-  write_plots: true
-  # Diagnostics write NetCDF files? [true]/false
-  write_netcdf: true
-
-The ``write_plots`` setting is used to inform ESMValTool diagnostics about your
-preference for creating figures. Similarly, the ``write_netcdf`` setting is a
-boolean which turns on or off the writing of netCDF files by the diagnostic
-scripts.
+There used to be a setting ``write_plots`` and ``write_netcdf``
+in the config user file, but these have been deprecated since ESMValCore v2.2 and
+will be removed in v2.4, because only some diagnostic scripts supported these settings.
+For those diagnostic scripts that do support these settings, they can now be configured
+in the diagnostic script section of the recipe.
 
 .. code-block:: yaml
 
