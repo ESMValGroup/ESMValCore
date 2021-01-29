@@ -2,6 +2,7 @@
 from datetime import datetime
 
 import cf_units
+import numpy as np
 from cf_units import Unit
 
 from ..fix import Fix
@@ -47,35 +48,77 @@ class Pr(Fix):
     """Fixes for pr."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        frequency = self.vardef.frequency
-
-        if frequency == 'day':
-            fix_time = fix_time_day
-            fix_units = self._fix_units_day
-        elif frequency == 'mon':
-            fix_units = self._fix_units_month
-            fix_time = fix_time_month
-        else:
-            raise ValueError(f'Cannot fix frequency: {frequency!r}')
+        self._init_frequency_specific_fixes()
 
         for cube in cubes:
-            cube.var_name = self.vardef.short_name
-            cube.standard_name = self.vardef.standard_name
-            cube.long_name = self.vardef.long_name
-
-            fix_units(cube)
-            fix_time(cube)
+            self._fix_names(cube)
+            self._fix_units(cube)
+            self._fix_time(cube)
+            self._fix_longitude(cube)
+            self._fix_bounds(cube)
 
         return cubes
 
+    def _init_frequency_specific_fixes(self):
+        """Set frequency specific fixes (day/mon)."""
+        frequency = self.vardef.frequency
+
+        if frequency == 'day':
+            self._fix_units = self._fix_units_day
+            self._fix_time = fix_time_day
+        elif frequency == 'mon':
+            self._fix_units = self._fix_units_month
+            self._fix_time = fix_time_month
+        else:
+            raise ValueError(f'Cannot fix frequency: {frequency!r}')
+
     def _fix_units_month(self, cube):
-        """Convert units from mm/month to kg m-3 s-1 units."""
+        """Convert units from mm/month to kg m-2 s-1 units."""
         cube.units = Unit(self.vardef.units)
         # divide by number of seconds in a month
         cube.data = cube.core_data() / 60 * 60 * 24 * 30
 
     def _fix_units_day(self, cube):
-        """Convert units from mm/month to kg m-3 s-1 units."""
+        """Convert units from mm/month to kg m-2 s-1 units."""
         cube.units = Unit(self.vardef.units)
         # divide by number of seconds in a day
         cube.data = cube.core_data() / 60 * 60 * 24
+
+    def _fix_longitude(self, cube):
+        """Fix longitude coordinate from -180:180 to 0:360."""
+        lon = cube.coord(axis='X')
+
+        # roll data because iris forces `lon.points` to be strictly monotonic.
+        shift = np.sum(lon.points < 0)
+        points = np.roll(lon.points, shift) % 360
+        cube.data = np.roll(cube.core_data(), shift, axis=-1)
+
+        lon.points = points
+
+    def _fix_bounds(self, cube):
+        """Add bounds to coords."""
+        coord_defs = tuple(coord_def
+                           for coord_def in self.vardef.coordinates.values())
+
+        for coord_def in coord_defs:
+            if not coord_def.must_have_bounds == 'yes':
+                continue
+
+            coord = cube.coord(axis=coord_def.axis)
+
+            if coord.bounds is None:
+                coord.guess_bounds()
+
+    def _fix_names(self, cube):
+        """Fix miscellaneous."""
+        cube.var_name = self.vardef.short_name
+        cube.standard_name = self.vardef.standard_name
+        cube.long_name = self.vardef.long_name
+
+        coord_defs = tuple(coord_def
+                           for coord_def in self.vardef.coordinates.values())
+
+        for coord_def in coord_defs:
+            coord = cube.coord(axis=coord_def.axis)
+            if not coord.long_name:
+                coord.long_name = coord_def.long_name
