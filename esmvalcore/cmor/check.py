@@ -510,6 +510,10 @@ class CMORCheck():
                 self.report_warning(
                     'Added guessed bounds to coordinate {0} from var {1}',
                     time.var_name, self._cmor_var.short_name)
+            else:
+                self.report_warning(
+                    'Coordinate {0} from var {1} does not have bounds',
+                    time.var_name, self._cmor_var.short_name)
 
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
