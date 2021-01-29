@@ -8,14 +8,14 @@ from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor import multi_model_statistics
-from esmvalcore.preprocessor._multimodel import (
-    _assemble_data,
-    _compute_statistic,
-    _get_time_slice,
-    _plev_fix,
-    _put_in_cube,
-    _unify_time_coordinates,
-)
+# from esmvalcore.preprocessor._multimodel import (
+#     _assemble_data,
+#     _compute_statistic,
+#     _get_time_slice,
+#     _plev_fix,
+#     _put_in_cube,
+#     _unify_time_coordinates,
+# )
 
 
 class Test(tests.Test):
@@ -82,15 +82,15 @@ class Test(tests.Test):
         coords_spec6 = [(daily1, 0), (zcoord, 1), (lats, 2), (lons, 3)]
         self.cube6 = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec6)
 
-    def test_compute_statistic(self):
-        """Test statistic."""
-        data = [self.cube1.data[0], self.cube2.data[0]]
-        stat_mean = _compute_statistic(data, "mean")
-        stat_median = _compute_statistic(data, "median")
-        expected_mean = np.ma.ones((3, 2, 2))
-        expected_median = np.ma.ones((3, 2, 2))
-        self.assert_array_equal(stat_mean, expected_mean)
-        self.assert_array_equal(stat_median, expected_median)
+    # def test_compute_statistic(self):
+    #     """Test statistic."""
+    #     data = [self.cube1.data[0], self.cube2.data[0]]
+    #     stat_mean = _compute_statistic(data, "mean")
+    #     stat_median = _compute_statistic(data, "median")
+    #     expected_mean = np.ma.ones((3, 2, 2))
+    #     expected_median = np.ma.ones((3, 2, 2))
+    #     self.assert_array_equal(stat_mean, expected_mean)
+    #     self.assert_array_equal(stat_median, expected_median)
 
     def test_compute_full_statistic_mon_cube(self):
         data = [self.cube1, self.cube2]
@@ -128,97 +128,97 @@ class Test(tests.Test):
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
-    def test_compute_std(self):
-        """Test statistic."""
-        data = [self.cube1.data[0], self.cube2.data[0] * 2]
-        stat = _compute_statistic(data, "std")
-        expected = np.ma.ones((3, 2, 2)) * 0.5
-        expected[0, 0, 0] = 0
-        self.assert_array_equal(stat, expected)
+    # def test_compute_std(self):
+    #     """Test statistic."""
+    #     data = [self.cube1.data[0], self.cube2.data[0] * 2]
+    #     stat = _compute_statistic(data, "std")
+    #     expected = np.ma.ones((3, 2, 2)) * 0.5
+    #     expected[0, 0, 0] = 0
+    #     self.assert_array_equal(stat, expected)
 
-    def test_compute_max(self):
-        """Test statistic."""
-        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
-        stat = _compute_statistic(data, "max")
-        expected = np.ma.ones((3, 2, 2)) * 2
-        expected[0, 0, 0] = 0.5
-        self.assert_array_equal(stat, expected)
+    # def test_compute_max(self):
+    #     """Test statistic."""
+    #     data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+    #     stat = _compute_statistic(data, "max")
+    #     expected = np.ma.ones((3, 2, 2)) * 2
+    #     expected[0, 0, 0] = 0.5
+    #     self.assert_array_equal(stat, expected)
 
-    def test_compute_min(self):
-        """Test statistic."""
-        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
-        stat = _compute_statistic(data, "min")
-        expected = np.ma.ones((3, 2, 2)) * 0.5
-        self.assert_array_equal(stat, expected)
+    # def test_compute_min(self):
+    #     """Test statistic."""
+    #     data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+    #     stat = _compute_statistic(data, "min")
+    #     expected = np.ma.ones((3, 2, 2)) * 0.5
+    #     self.assert_array_equal(stat, expected)
 
-    def test_compute_percentile(self):
-        """Test statistic."""
-        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
-        stat = _compute_statistic(data, "p75")
-        expected = np.ma.ones((3, 2, 2)) * 1.625
-        expected[0, 0, 0] = 0.5
-        self.assert_array_equal(stat, expected)
+    # def test_compute_percentile(self):
+    #     """Test statistic."""
+    #     data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+    #     stat = _compute_statistic(data, "p75")
+    #     expected = np.ma.ones((3, 2, 2)) * 1.625
+    #     expected[0, 0, 0] = 0.5
+    #     self.assert_array_equal(stat, expected)
 
-    def test_put_in_cube(self):
-        """Test put in cube."""
-        cube_data = np.ma.ones((2, 3, 2, 2))
-        stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=[1, 2])
-        self.assert_array_equal(stat_cube.data, self.cube1.data)
+    # def test_put_in_cube(self):
+    #     """Test put in cube."""
+    #     cube_data = np.ma.ones((2, 3, 2, 2))
+    #     stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=[1, 2])
+    #     self.assert_array_equal(stat_cube.data, self.cube1.data)
 
-    def test_assemble_overlap_data(self):
-        """Test overlap data."""
-        comp_ovlap_mean = _assemble_data([self.cube1, self.cube1],
-                                         "mean",
-                                         span='overlap')
-        expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
-        self.assert_array_equal(comp_ovlap_mean.data, expected_ovlap_mean)
+    # # def test_assemble_overlap_data(self):
+    # #     """Test overlap data."""
+    # #     comp_ovlap_mean = _assemble_data([self.cube1, self.cube1],
+    # #                                      "mean",
+    # #                                      span='overlap')
+    # #     expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
+    # #     self.assert_array_equal(comp_ovlap_mean.data, expected_ovlap_mean)
 
-    def test_assemble_full_data(self):
-        """Test full data."""
-        comp_full_mean = _assemble_data([self.cube1, self.cube2],
-                                        "mean",
-                                        span='full')
-        expected_full_mean = np.ma.ones((5, 3, 2, 2))
-        expected_full_mean.mask = np.ones((5, 3, 2, 2))
-        expected_full_mean.mask[1] = False
-        self.assert_array_equal(comp_full_mean.data, expected_full_mean)
+    # # def test_assemble_full_data(self):
+    # #     """Test full data."""
+    # #     comp_full_mean = _assemble_data([self.cube1, self.cube2],
+    # #                                     "mean",
+    # #                                     span='full')
+    # #     expected_full_mean = np.ma.ones((5, 3, 2, 2))
+    # #     expected_full_mean.mask = np.ones((5, 3, 2, 2))
+    # #     expected_full_mean.mask[1] = False
+    # #     self.assert_array_equal(comp_full_mean.data, expected_full_mean)
 
-    def test_plev_fix(self):
-        """Test plev fix."""
-        fixed_data = _plev_fix(self.cube2.data, 1)
-        expected_data = np.ma.ones((3, 2, 2))
-        self.assert_array_equal(expected_data, fixed_data)
+    # def test_plev_fix(self):
+    #     """Test plev fix."""
+    #     fixed_data = _plev_fix(self.cube2.data, 1)
+    #     expected_data = np.ma.ones((3, 2, 2))
+    #     self.assert_array_equal(expected_data, fixed_data)
 
-    def test_unify_time_coordinates(self):
-        """Test set common calenar."""
-        cube1 = self.cube1
-        time1 = cube1.coord('time')
-        t_unit1 = time1.units
-        dates = t_unit1.num2date(time1.points)
+    # def test_unify_time_coordinates(self):
+    #     """Test set common calenar."""
+    #     cube1 = self.cube1
+    #     time1 = cube1.coord('time')
+    #     t_unit1 = time1.units
+    #     dates = t_unit1.num2date(time1.points)
 
-        t_unit2 = Unit('days since 1850-01-01', calendar='gregorian')
-        time2 = t_unit2.date2num(dates)
-        cube2 = self.cube1.copy()
-        cube2.coord('time').points = time2
-        cube2.coord('time').units = t_unit2
-        _unify_time_coordinates([cube1, cube2])
-        self.assertEqual(cube1.coord('time'), cube2.coord('time'))
+    #     t_unit2 = Unit('days since 1850-01-01', calendar='gregorian')
+    #     time2 = t_unit2.date2num(dates)
+    #     cube2 = self.cube1.copy()
+    #     cube2.coord('time').points = time2
+    #     cube2.coord('time').units = t_unit2
+    #     _unify_time_coordinates([cube1, cube2])
+    #     self.assertEqual(cube1.coord('time'), cube2.coord('time'))
 
-    def test_get_time_slice_all(self):
-        """Test get time slice if all cubes have data."""
-        cubes = [self.cube1, self.cube2]
-        result = _get_time_slice(cubes, time=45)
-        expected = [self.cube1[1].data, self.cube2[0].data]
-        self.assert_array_equal(expected, result)
+    # def test_get_time_slice_all(self):
+    #     """Test get time slice if all cubes have data."""
+    #     cubes = [self.cube1, self.cube2]
+    #     result = _get_time_slice(cubes, time=45)
+    #     expected = [self.cube1[1].data, self.cube2[0].data]
+    #     self.assert_array_equal(expected, result)
 
-    def test_get_time_slice_part(self):
-        """Test get time slice if all cubes have data."""
-        cubes = [self.cube1, self.cube2]
-        result = _get_time_slice(cubes, time=14)
-        masked = np.ma.empty(list(cubes[0].shape[1:]))
-        masked.mask = True
-        expected = [self.cube1[0].data, masked]
-        self.assert_array_equal(expected, result)
+    # def test_get_time_slice_part(self):
+    #     """Test get time slice if all cubes have data."""
+    #     cubes = [self.cube1, self.cube2]
+    #     result = _get_time_slice(cubes, time=14)
+    #     masked = np.ma.empty(list(cubes[0].shape[1:]))
+    #     masked.mask = True
+    #     expected = [self.cube1[0].data, masked]
+    #     self.assert_array_equal(expected, result)
 
 
 if __name__ == '__main__':

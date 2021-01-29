@@ -23,7 +23,7 @@ result = multi_model_statistics([cube1, cube3], span='overlap', statistics=['mea
 expected = iris.cube.Cube([2], dim_coords_and_dims=[(timecoord([1]), 0)])
 assert np.all(result.data == expected.data)
 
-overlap between cube 2 and 3
+# overlap between cube 2 and 3
 result = multi_model_statistics([cube2, cube3], span='overlap', statistics=['mean'])['mean']
 expected = iris.cube.Cube([2.5, 2.5], dim_coords_and_dims=[(timecoord([1, 3]), 0)])
 assert np.all(result.data == expected.data)
