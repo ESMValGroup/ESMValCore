@@ -257,6 +257,13 @@ class BaseTask:
     def _run(self, input_files):
         """Run task."""
 
+    def get_product_attributes(self) -> dict:
+        """Return a mapping of product attributes."""
+        return {
+            product.filename: product.attributes
+            for product in self.products
+        }
+
     def str(self):
         """Return a nicely formatted description."""
         def _indent(txt):
@@ -627,15 +634,14 @@ class DiagnosticTask(BaseTask):
                      self.name,
                      time.time() - start)
 
-    def __str__(self):
+    def __repr__(self):
         """Get human readable description."""
-        settings_string = pprint.pformat(self.settings, indent=2)
-        txt = (f"{self.__class__.__name__}:\n"
-               f"script: {self.script}\n"
-               f"settings:\n{settings_string}\n"
-               f"{super(DiagnosticTask, self)}\n")
+        settings_string = pprint.pformat(self.settings)
+        string = (f"{self.__class__.__name__}: {self.name}\n"
+                  f"script: {self.script}\n"
+                  f"settings:\n{settings_string}\n")
 
-        return txt
+        return string
 
 
 def get_flattened_tasks(tasks):
