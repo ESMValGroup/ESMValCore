@@ -606,11 +606,11 @@ The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
 implementations in Iris:
 
-* ``linear``: <Linear(extrapolation_mode='mask') :obj:`iris.analysis.Linear`>.
-* ``linear_extrapolate``: <Linear(extrapolation_mode='extrapolate') :obj:`iris.analysis.Linear`>.
-* ``nearest``: <Nearest(extrapolation_mode='mask') :obj:`iris.analysis.Nearest`>.
-* ``area_weighted``: <AreaWeighted() :obj:`iris.analysis.AreaWeighted`>.
-* ``unstructured_nearest``: <UnstructuredNearest() :obj:`iris.analysis.UnstructuredNearest`>.
+* ``linear``: Linear(extrapolation_mode='mask'), see :obj:`iris.analysis.Linear`.
+* ``linear_extrapolate``: Linear(extrapolation_mode='extrapolate'), see :obj:`iris.analysis.Linear`.
+* ``nearest``: Nearest(extrapolation_mode='mask'), see :obj:`iris.analysis.Nearest`.
+* ``area_weighted``: AreaWeighted() :obj:`iris.analysis.AreaWeighted`.
+* ``unstructured_nearest``: UnstructuredNearest(), see :obj:`iris.analysis.UnstructuredNearest`.
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
