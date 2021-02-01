@@ -783,7 +783,7 @@ def timeseries_filter(cube,
     keyword argument. A weighted sum is required because the magnitude of
     the weights are just as important as their relative sizes.
 
-    See also the iris rolling window obj:`iris.cube.Cube.rolling_window`.
+    See also the iris rolling window :obj:`iris.cube.Cube.rolling_window`.
 
     Parameters
     ----------

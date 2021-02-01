@@ -64,7 +64,7 @@ reducing the data processing load on the diagnostics side.  For an overview of
 the preprocessor structure see the :ref:`Preprocessors`.
 
 Each of the preprocessor operations is written in a dedicated python module and
-all of them receive and return an Iris cube
+all of them receive and return an instance of
 :obj:`iris.cube.Cube`, working
 sequentially on the data with no interactions between them. The order in which
 the preprocessor operations is applied is set by default to minimize
@@ -537,7 +537,7 @@ engine uses interpolation and extrapolation, with various schemes). The primary
 difference is that interpolation is based on sample data points, while
 regridding is based on the horizontal grid of another cube (the reference grid).
 
-The underlying regridding mechanism in ESMValTool uses the cube.regrid()
+The underlying regridding mechanism in ESMValTool uses
 :obj:`iris.cube.Cube.regrid`
 from Iris.
 
@@ -606,11 +606,11 @@ The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
 implementations in Iris:
 
-* ``linear``: Linear(extrapolation_mode='mask'), see :obj:`iris.analysis.Linear`.
-* ``linear_extrapolate``: Linear(extrapolation_mode='extrapolate'), see :obj:`iris.analysis.Linear`.
-* ``nearest``: Nearest(extrapolation_mode='mask'), see :obj:`iris.analysis.Nearest`.
-* ``area_weighted``: AreaWeighted() :obj:`iris.analysis.AreaWeighted`.
-* ``unstructured_nearest``: UnstructuredNearest(), see :obj:`iris.analysis.UnstructuredNearest`.
+* ``linear``: ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`.
+* ``linear_extrapolate``: ``Linear(extrapolation_mode='extrapolate')``, see :obj:`iris.analysis.Linear`.
+* ``nearest``: ``Nearest(extrapolation_mode='mask')``, see :obj:`iris.analysis.Nearest`.
+* ``area_weighted``: ``AreaWeighted()``, see :obj:`iris.analysis.AreaWeighted`.
+* ``unstructured_nearest``: ``UnstructuredNearest()``, see :obj:`iris.analysis.UnstructuredNearest`.
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
@@ -1098,8 +1098,7 @@ See also :func:`esmvalcore.preprocessor.regrid_time`.
 This function allows the user to apply a filter to the timeseries data. This filter may be
 of the user's choice (currently only the ``low-pass`` Lanczos filter is implemented); the
 implementation is inspired by this `iris example
-<https://scitools-iris.readthedocs.io/en/latest/generated/gallery/general/plot_SOI_filtering.html>`_ and uses aggregation via a
-rolling window obj:`iris.cube.Cube.rolling_window`.
+<https://scitools-iris.readthedocs.io/en/latest/generated/gallery/general/plot_SOI_filtering.html>`_ and uses aggregation via :obj:`iris.cube.Cube.rolling_window`.
 
 Parameters:
     * window: the length of the filter window (in units of cube time coordinate).
@@ -1412,7 +1411,7 @@ value) of a field aggregated over specified coordinates. Its only argument is
 ``coords``, which can either be a single coordinate (given as :obj:`str`) or
 multiple coordinates (given as :obj:`list` of :obj:`str`). Usually, these
 coordinates refer to temporal categorised coordinates
-obj:`iris.coord_categorisation`
+:obj:`iris.coord_categorisation`
 like `year`, `month`, `day of year`, etc. For example, to extract the amplitude
 of the annual cycle for every single year in the data, use ``coords: year``; to
 extract the amplitude of the diurnal cycle for every single day in the data,
