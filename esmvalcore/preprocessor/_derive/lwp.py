@@ -37,8 +37,8 @@ class DerivedVariable(DerivedVariableBase):
         """
         # CMIP5 and CMIP6 names are slightly different, so use
         # variable name instead to extract cubes
-        clwvi_cube = cubes.extract_strict(var_name_constraint('clwvi'))
-        clivi_cube = cubes.extract_strict(var_name_constraint('clivi'))
+        clwvi_cube = cubes.extract_cube(var_name_constraint('clwvi'))
+        clivi_cube = cubes.extract_cube(var_name_constraint('clivi'))
 
         # CMIP5 and CMIP6 have different global attributes that we use
         # to determine model name and project name:

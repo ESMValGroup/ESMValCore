@@ -1214,12 +1214,19 @@ class Recipe:
             for key in (
                     'output_file_type',
                     'log_level',
-                    'write_plots',
-                    'write_netcdf',
                     'profile_diagnostic',
                     'auxiliary_data_dir',
             ):
                 settings[key] = self._cfg[key]
+
+            # Add deprecated settings from configuration file
+            # DEPRECATED: remove in v2.4
+            for key in (
+                    'write_plots',
+                    'write_netcdf',
+            ):
+                if key not in settings and key in self._cfg:
+                    settings[key] = self._cfg[key]
 
             scripts[script_name] = {
                 'script': script,
@@ -1255,6 +1262,9 @@ class Recipe:
         """Define tasks in recipe."""
         logger.info("Creating tasks from recipe")
         tasks = TaskSet()
+
+        run_diagnostic = self._cfg.get('run_diagnostic', True)
+        tasknames_to_run = self._cfg.get('diagnostics')
 
         priority = 0
         for diagnostic_name, diagnostic in self.diagnostics.items():
@@ -1297,12 +1307,12 @@ class Recipe:
 
         # Select only requested tasks
         tasks = tasks.flatten()
-        if not self._cfg.get('run_diagnostic', True):
+        if not run_diagnostic:
             tasks = {t for t in tasks if isinstance(t, PreprocessingTask)}
-        if self._cfg.get('diagnostics'):
+        if tasknames_to_run:
             names = {t.name for t in tasks}
             selection = set()
-            for pattern in self._cfg.get('diagnostics'):
+            for pattern in tasknames_to_run:
                 selection |= set(fnmatch.filter(names, pattern))
             tasks = {t for t in tasks if t.name in selection}
 
@@ -1325,6 +1335,9 @@ class Recipe:
 
     def run(self):
         """Run all tasks in the recipe."""
+        if not self.tasks:
+            raise RecipeError('No tasks to run!')
+        
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
 
     def get_product_output(self) -> dict:
@@ -1338,9 +1351,6 @@ class Recipe:
         product_filenames = {}
 
         for task in self.tasks:
-            product_filenames[task.name] = {
-                product.filename: product.attributes
-                for product in task.products
-            }
+            product_filenames[task.name] = task.get_product_attributes()
 
         return product_filenames
