@@ -46,6 +46,7 @@ def fix_time_day(cube):
 
 class Pr(Fix):
     """Fixes for pr."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         self._init_frequency_specific_fixes()
@@ -89,7 +90,8 @@ class Pr(Fix):
         lon_axis = cube.coord_dims('longitude')
         lon = cube.coord(axis='X')
 
-        assert lon.is_monotonic(), "Data must be monotonic to fix longitude."
+        if not lon.is_monotonic():
+            raise ValueError("Data must be monotonic to fix longitude.")
 
         # roll data because iris forces `lon.points` to be strictly monotonic.
         shift = np.sum(lon.points < 0)
