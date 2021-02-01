@@ -63,14 +63,14 @@ class Pr(Fix):
         """Set frequency specific fixes (day/mon)."""
         frequency = self.vardef.frequency
 
-        if frequency == 'day':
+        if frequency in ('day', '3hr'):
             self._fix_units = self._fix_units_day
             self._fix_time = fix_time_day
         elif frequency == 'mon':
             self._fix_units = self._fix_units_month
             self._fix_time = fix_time_month
         else:
-            raise ValueError(f'Cannot fix frequency: {frequency!r}')
+            raise ValueError(f'No fixes for frequency: {frequency!r}')
 
     def _fix_units_month(self, cube):
         """Convert units from mm/month to kg m-2 s-1 units."""
