@@ -1,7 +1,7 @@
 import pytest
 
 from esmvalcore.experimental import get_recipe
-from esmvalcore.experimental.recipe_info import Contributor, Project, Reference
+from esmvalcore.experimental.recipe import Contributor, Project, Reference
 
 pytest.importorskip(
     'esmvaltool',
@@ -39,8 +39,8 @@ def test_project():
     assert isinstance(str(project), str)
 
 
-def test_recipe_info():
-    """Coverage test for RecipeInfo."""
+def test_recipe():
+    """Coverage test for Recipe."""
     recipe = get_recipe('examples/recipe_python')
 
     assert isinstance(repr(recipe), str)

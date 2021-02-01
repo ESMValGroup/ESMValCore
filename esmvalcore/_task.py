@@ -12,7 +12,7 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
-from pathlib import Path
+from pathlib import Path, PosixPath
 from shutil import which
 
 import psutil
@@ -21,6 +21,15 @@ import yaml
 from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
+
+
+def path_representer(dumper, data):
+    """For printing pathlib.Path objects in yaml files."""
+    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+
+
+yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
+yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
 
 logger = logging.getLogger(__name__)
 
@@ -248,6 +257,13 @@ class BaseTask:
     def _run(self, input_files):
         """Run task."""
 
+    def get_product_attributes(self) -> dict:
+        """Return a mapping of product attributes."""
+        return {
+            product.filename: product.attributes
+            for product in self.products
+        }
+
     def str(self):
         """Return a nicely formatted description."""
         def _indent(txt):
@@ -257,6 +273,10 @@ class BaseTask:
             _indent(str(task))
             for task in self.ancestors) if self.ancestors else 'None')
         return txt
+
+    def __repr__(self):
+        """Return canonical string representation."""
+        return f"{self.__class__.__name__}({repr(self.name)})"
 
 
 class DiagnosticError(Exception):
@@ -614,15 +634,14 @@ class DiagnosticTask(BaseTask):
                      self.name,
                      time.time() - start)
 
-    def __str__(self):
+    def __repr__(self):
         """Get human readable description."""
-        txt = "{}:\nscript: {}\n{}\nsettings:\n{}\n".format(
-            self.__class__.__name__,
-            self.script,
-            pprint.pformat(self.settings, indent=2),
-            super(DiagnosticTask, self).str(),
-        )
-        return txt
+        settings_string = pprint.pformat(self.settings)
+        string = (f"{self.__class__.__name__}: {self.name}\n"
+                  f"script: {self.script}\n"
+                  f"settings:\n{settings_string}\n")
+
+        return string
 
 
 def get_flattened_tasks(tasks):

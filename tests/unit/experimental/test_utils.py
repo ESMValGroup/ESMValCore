@@ -1,6 +1,6 @@
 import pytest
 
-from esmvalcore.experimental.recipe_info import RecipeInfo
+from esmvalcore.experimental.recipe import Recipe
 from esmvalcore.experimental.utils import (
     RecipeList,
     get_all_recipes,
@@ -18,7 +18,7 @@ pytest.importorskip(
 def test_get_recipe():
     """Get single recipe."""
     recipe = get_recipe('examples/recipe_python.yml')
-    assert isinstance(recipe, RecipeInfo)
+    assert isinstance(recipe, Recipe)
 
 
 def test_get_all_recipes():
