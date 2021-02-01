@@ -86,12 +86,15 @@ class Pr(Fix):
 
     def _fix_longitude(self, cube):
         """Fix longitude coordinate from -180:180 to 0:360."""
+        lon_axis = cube.coord_dims('longitude')
         lon = cube.coord(axis='X')
+
+        assert lon.is_monotonic(), "Data must be monotonic to fix longitude."
 
         # roll data because iris forces `lon.points` to be strictly monotonic.
         shift = np.sum(lon.points < 0)
-        points = np.roll(lon.points, shift) % 360
-        cube.data = np.roll(cube.core_data(), shift, axis=-1)
+        points = np.roll(lon.points, -shift) % 360
+        cube.data = np.roll(cube.core_data(), -shift, axis=lon_axis)
 
         lon.points = points
 
