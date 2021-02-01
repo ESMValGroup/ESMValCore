@@ -89,12 +89,6 @@ __all__ = [
     'cmor_check_metadata',
     # Extract years given by dataset keys (start_year and end_year)
     'clip_start_end_year',
-    # Time extraction
-    'extract_time',
-    'extract_season',
-    'extract_month',
-    'resample_hours',
-    'resample_time',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
@@ -102,6 +96,8 @@ __all__ = [
     'extract_time',
     'extract_season',
     'extract_month',
+    'resample_hours',
+    'resample_time',
     # Level extraction
     'extract_levels',
     # Weighting

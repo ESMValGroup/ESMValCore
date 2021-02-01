@@ -52,7 +52,7 @@ def test_cl_fix_metadata(test_data_path):
     assert 'ps' in var_names
 
     # Raw cl cube
-    cl_cube = cubes.extract_strict('cloud_area_fraction_in_atmosphere_layer')
+    cl_cube = cubes.extract_cube('cloud_area_fraction_in_atmosphere_layer')
     assert not cl_cube.coords('air_pressure')
 
     # Apply fix
@@ -60,7 +60,7 @@ def test_cl_fix_metadata(test_data_path):
     fix = Cl(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_cl_cube = fixed_cubes.extract_strict(
+    fixed_cl_cube = fixed_cubes.extract_cube(
         'cloud_area_fraction_in_atmosphere_layer')
     fixed_air_pressure_coord = fixed_cl_cube.coord('air_pressure')
     assert fixed_air_pressure_coord.points is not None

@@ -4,8 +4,6 @@ function.
 
 """
 
-import unittest
-
 import iris
 import numpy as np
 from numpy import ma
@@ -156,8 +154,27 @@ class Test(tests.Test):
         lons = self.cube.coord('longitude')
         lats = self.cube.coord('latitude')
         x, y = np.meshgrid(lons.points, lats.points)
-        lats = iris.coords.AuxCoord(x, **lats._as_defn()._asdict())
-        lons = iris.coords.AuxCoord(y, **lons._as_defn()._asdict())
+
+        lats = iris.coords.AuxCoord(
+            x,
+            standard_name=lats.metadata.standard_name,
+            long_name=lats.metadata.long_name,
+            var_name=lats.metadata.var_name,
+            units=lats.metadata.units,
+            attributes=lats.metadata.attributes,
+            coord_system=lats.metadata.coord_system,
+            climatological=lats.metadata.climatological)
+
+        lons = iris.coords.AuxCoord(
+            y,
+            standard_name=lons.metadata.standard_name,
+            long_name=lons.metadata.long_name,
+            var_name=lons.metadata.var_name,
+            units=lons.metadata.units,
+            attributes=lons.metadata.attributes,
+            coord_system=lons.metadata.coord_system,
+            climatological=lons.metadata.climatological)
+
         self.cube.remove_coord('longitude')
         self.cube.remove_coord('latitude')
         self.cube.remove_coord('Pressure Slice')
@@ -166,7 +183,3 @@ class Test(tests.Test):
         result = regrid(self.cube, grid, 'unstructured_nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
-
-
-if __name__ == '__main__':
-    unittest.main()
