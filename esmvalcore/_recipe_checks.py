@@ -2,9 +2,9 @@
 import itertools
 import logging
 import os
+import re
 import subprocess
 from shutil import which
-import re
 
 import yamale
 
@@ -17,6 +17,14 @@ logger = logging.getLogger(__name__)
 
 class RecipeError(Exception):
     """Recipe contains an error."""
+    def __init__(self, msg):
+        super().__init__(self)
+        self.message = msg
+        self.failed_tasks = []
+
+    def __str__(self):
+        """Return message string."""
+        return self.message
 
 
 def ncl_version():
@@ -116,7 +124,8 @@ def data_availability(input_files, var, dirnames, filenames):
                 "Looked for files matching %s, but did not find any existing "
                 "input directory", filenames)
         logger.error("Set 'log_level' to 'debug' to get more information")
-        raise RecipeError("Missing data")
+        raise RecipeError(
+            f"Missing data for {var['alias']}: {var['short_name']}")
 
     # check time avail only for non-fx variables
     if var['frequency'] == 'fx':
@@ -185,10 +194,9 @@ def valid_multimodel_statistic(statistic):
     """Check that `statistic` is a valid argument for multimodel stats."""
     valid_names = ["mean", "median", "std", "min", "max"]
     valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
-    if not (statistic in valid_names or
-            re.match(r'|'.join(valid_patterns), statistic)):
+    if not (statistic in valid_names
+            or re.match(r'|'.join(valid_patterns), statistic)):
         raise RecipeError(
             "Invalid value encountered for `statistic` in preprocessor "
             f"`multi_model_statistics`. Valid values are {valid_names} "
-            f"or patterns matching {valid_patterns}. Got '{statistic}.'"
-        )
+            f"or patterns matching {valid_patterns}. Got '{statistic}.'")
