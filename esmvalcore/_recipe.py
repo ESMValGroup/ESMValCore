@@ -1308,13 +1308,14 @@ class Recipe:
         # Select only requested tasks
         tasks = tasks.flatten()
         if not run_diagnostic:
-            tasks = {t for t in tasks if isinstance(t, PreprocessingTask)}
+            tasks = TaskSet(t for t in tasks
+                            if isinstance(t, PreprocessingTask))
         if tasknames_to_run:
             names = {t.name for t in tasks}
             selection = set()
             for pattern in tasknames_to_run:
                 selection |= set(fnmatch.filter(names, pattern))
-            tasks = {t for t in tasks if t.name in selection}
+            tasks = TaskSet(t for t in tasks if t.name in selection)
 
         tasks = tasks.flatten()
         logger.info("These tasks will be executed: %s",
@@ -1337,7 +1338,7 @@ class Recipe:
         """Run all tasks in the recipe."""
         if not self.tasks:
             raise RecipeError('No tasks to run!')
-        
+
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
 
     def get_product_output(self) -> dict:
