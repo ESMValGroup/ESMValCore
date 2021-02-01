@@ -12,28 +12,38 @@ from esmvalcore.cmor.table import get_var_info
 def cubes():
     correct_lat_coord = iris.coords.DimCoord([0.0],
                                              var_name='lat',
-                                             standard_name='latitude')
+                                             standard_name=' latitude  ',
+                                             long_name='  latitude')
     wrong_lat_coord = iris.coords.DimCoord([0.0],
                                            var_name='latitudeCoord',
-                                           standard_name='latitude')
+                                           standard_name='  latitude',
+                                           long_name='latitude')
     correct_lon_coord = iris.coords.DimCoord([0.0],
                                              var_name='lon',
-                                             standard_name='longitude')
+                                             standard_name='  longitude  ',
+                                             long_name='longitude  ')
     wrong_lon_coord = iris.coords.DimCoord([0.0],
                                            var_name='longitudeCoord',
-                                           standard_name='longitude')
+                                           standard_name='longitude',
+                                           long_name='  longitude')
     correct_cube = iris.cube.Cube(
         [[10.0]],
         var_name='tas',
+        standard_name='air_temperature   ',
+        long_name='   Air Temperature   ',
         dim_coords_and_dims=[(correct_lat_coord, 0), (correct_lon_coord, 1)],
     )
     wrong_cube = iris.cube.Cube(
         [[10.0]],
         var_name='ta',
+        standard_name='   air_temperature   ',
+        long_name='Air Temperature',
         dim_coords_and_dims=[(wrong_lat_coord, 0), (wrong_lon_coord, 1)],
         attributes={'parent_time_units': 'days since 0000-00-00 (noleap)'},
     )
-    scalar_cube = iris.cube.Cube(0.0, var_name='ps')
+    scalar_cube = iris.cube.Cube(0.0, var_name='ps',
+                                 standard_name='air_pressure   ',
+                                 long_name=' Air pressure  ')
     return iris.cube.CubeList([correct_cube, wrong_cube, scalar_cube])
 
 
@@ -81,20 +91,30 @@ def test_allvars_fix_metadata(cubes):
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
+        if cube.var_name == 'ps':
+            assert cube.standard_name == 'air_pressure'
+            assert cube.long_name == 'Air pressure'
+        elif cube.var_name == 'tas' or cube.var_name == 'ta':
+            assert cube.standard_name == 'air_temperature'
+            assert cube.long_name == 'Air Temperature'
+        else:
+            assert False, "Invalid var_name"
         try:
             lat_coord = cube.coord('latitude')
         except iris.exceptions.CoordinateNotFoundError:
-            pass
+            assert cube.var_name == 'ps'
         else:
             assert lat_coord.var_name == 'lat'
             assert lat_coord.standard_name == 'latitude'
+            assert lat_coord.long_name == 'latitude'
         try:
             lon_coord = cube.coord('longitude')
         except iris.exceptions.CoordinateNotFoundError:
-            pass
+            assert cube.var_name == 'ps'
         else:
             assert lon_coord.var_name == 'lon'
             assert lon_coord.standard_name == 'longitude'
+            assert lon_coord.long_name == 'longitude'
         if 'parent_time_units' in cube.attributes:
             assert cube.attributes['parent_time_units'] == (
                 'days since 0000-00-00')
