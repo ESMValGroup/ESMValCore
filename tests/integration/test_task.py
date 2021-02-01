@@ -5,14 +5,13 @@ from multiprocessing.pool import ThreadPool
 import pytest
 
 import esmvalcore
-from esmvalcore._task import (BaseTask, _run_tasks_parallel,
-                              _run_tasks_sequential, run_tasks)
+from esmvalcore._task import BaseTask, TaskSet
 
 
 @pytest.fixture
 def example_tasks():
     """Example tasks for testing the task runners."""
-    tasks = set()
+    tasks = TaskSet()
     for i in range(3):
         task = BaseTask(
             name=f'task{i}',
@@ -53,7 +52,7 @@ def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks):
 
     monkeypatch.setattr(BaseTask, '_run', _run)
 
-    run_tasks(example_tasks, max_parallel_tasks)
+    example_tasks.run(max_parallel_tasks=max_parallel_tasks)
 
     for task in example_tasks:
         print(task.name, task.output_files)
@@ -61,8 +60,8 @@ def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks):
 
 
 @pytest.mark.parametrize('runner', [
-    _run_tasks_sequential,
-    partial(_run_tasks_parallel, max_parallel_tasks=1),
+    TaskSet._run_sequential,
+    partial(TaskSet._run_parallel, max_parallel_tasks=1),
 ])
 def test_runner_uses_priority(monkeypatch, runner, example_tasks):
     """Check that the runner tries to respect task priority."""

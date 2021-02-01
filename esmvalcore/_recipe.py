@@ -25,12 +25,7 @@ from ._data_finder import (
 )
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
-from ._task import (
-    DiagnosticTask,
-    get_flattened_tasks,
-    get_independent_tasks,
-    run_tasks,
-)
+from ._task import DiagnosticTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (
@@ -1266,7 +1261,7 @@ class Recipe:
     def initialize_tasks(self):
         """Define tasks in recipe."""
         logger.info("Creating tasks from recipe")
-        tasks = set()
+        tasks = TaskSet()
 
         run_diagnostic = self._cfg.get('run_diagnostic', True)
         tasknames_to_run = self._cfg.get('diagnostics')
@@ -1311,17 +1306,18 @@ class Recipe:
         self._resolve_diagnostic_ancestors(tasks)
 
         # Select only requested tasks
-        tasks = get_flattened_tasks(tasks)
+        tasks = tasks.flatten()
         if not run_diagnostic:
-            tasks = {t for t in tasks if isinstance(t, PreprocessingTask)}
+            tasks = TaskSet(t for t in tasks
+                            if isinstance(t, PreprocessingTask))
         if tasknames_to_run:
             names = {t.name for t in tasks}
             selection = set()
             for pattern in tasknames_to_run:
                 selection |= set(fnmatch.filter(names, pattern))
-            tasks = {t for t in tasks if t.name in selection}
+            tasks = TaskSet(t for t in tasks if t.name in selection)
 
-        tasks = get_flattened_tasks(tasks)
+        tasks = tasks.flatten()
         logger.info("These tasks will be executed: %s",
                     ', '.join(t.name for t in tasks))
 
@@ -1332,7 +1328,7 @@ class Recipe:
         # TODO: check that no loops are created (will throw RecursionError)
 
         # Return smallest possible set of tasks
-        return get_independent_tasks(tasks)
+        return tasks.get_independent()
 
     def __str__(self):
         """Get human readable summary."""
@@ -1343,8 +1339,7 @@ class Recipe:
         if not self.tasks:
             raise RecipeError('No tasks to run!')
 
-        run_tasks(self.tasks,
-                  max_parallel_tasks=self._cfg['max_parallel_tasks'])
+        self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
 
     def get_product_output(self) -> dict:
         """Return the paths to the output plots and data.
