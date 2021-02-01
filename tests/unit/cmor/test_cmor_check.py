@@ -921,67 +921,18 @@ class TestCMORCheck(unittest.TestCase):
         """Fail at metadata if frequency is not supported."""
         self._check_fails_in_metadata(frequency='wrong_freq')
 
-    def test_hourly_time_bounds(self):
-        """Test time bounds are properly guessed for hourly freq"""
-        cube = self.get_cube(self.var_info, frequency='hr')
-        original_bounds = cube.coord('time').bounds
-        cube.coord('time').bounds = None
-        self.cube = cube
-        self._check_cube(automatic_fixes=True, frequency='hr')
-        guessed_bounds = self.cube.coord('time').bounds
-        assert original_bounds.all() == guessed_bounds.all()
-
-    def test_3hourly_time_bounds(self):
-        """Test time bounds are properly guessed for 3hourly freq"""
-        cube = self.get_cube(self.var_info, frequency='3hr')
-        original_bounds = self.cube.coord('time').bounds
-        cube.coord('time').bounds = None
-        self.cube = cube
-        self._check_cube(automatic_fixes=True, frequency='3hr')
-        guessed_bounds = self.cube.coord('time').bounds
-        assert original_bounds.all() == guessed_bounds.all()
-
-    def test_6hourly_time_bounds(self):
-        """Test time bounds are properly guessed for 6hourly freq"""
-        cube = self.get_cube(self.var_info, frequency='6hr')
-        original_bounds = self.cube.coord('time').bounds
-        cube.coord('time').bounds = None
-        self.cube = cube
-        self._check_cube(automatic_fixes=True, frequency='6hr')
-        guessed_bounds = self.cube.coord('time').bounds
-        assert original_bounds.all() == guessed_bounds.all()
-
-    def test_daily_time_bounds(self):
-        """Test time bounds are properly guessed for daily freq"""
-        original_bounds = self.cube.coord('time').bounds
-        self.cube.coord('time').bounds = None
-        self._check_cube(automatic_fixes=True)
-        guessed_bounds = self.cube.coord('time').bounds
-        assert original_bounds.all() == guessed_bounds.all()
-
-    def test_monthly_time_bounds(self):
-        """Test time bounds are guessed for monthly freq"""
-        cube = self.get_cube(self.var_info, frequency='mon')
-        cube.coord('time').bounds = None
-        self.cube = cube
-        self._check_cube(automatic_fixes=True, frequency='mon')
-        assert self.cube.coord('time').bounds is not None
-
-    def test_yearly_time_bounds(self):
-        """Test time bounds are guessed for yearly freq"""
-        cube = self.get_cube(self.var_info, frequency='yr')
-        cube.coord('time').bounds = None
-        self.cube = cube
-        self._check_cube(automatic_fixes=True, frequency='yr')
-        assert self.cube.coord('time').bounds is not None
-
-    def test_dec_time_bounds(self):
-        """Test time bounds are guessed for dec freq"""
-        cube = self.get_cube(self.var_info, frequency='dec')
-        cube.coord('time').bounds = None
-        self.cube = cube
-        self._check_cube(automatic_fixes=True, frequency='dec')
-        assert self.cube.coord('time').bounds is not None
+    def test_time_bounds(self):
+        """Test time bounds are guessed for all frequencies"""
+        freqs = ['hr', '3hr', '6hr', 'day', 'mon', 'yr', 'dec']
+        guessed = []
+        for freq in freqs:
+            cube = self.get_cube(self.var_info, frequency=freq)
+            cube.coord('time').bounds = None
+            self.cube = cube
+            self._check_cube(automatic_fixes=True, frequency=freq)
+            if cube.coord('time').bounds is not None:
+                guessed.append(True)
+        assert len(guessed) == len(freqs)
 
     def test_no_time_bounds(self):
         """Test time bounds are not guessed for instantaneous data"""

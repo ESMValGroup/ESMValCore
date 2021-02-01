@@ -8,6 +8,7 @@ import iris.coord_categorisation
 import iris.coords
 import numpy as np
 import pytest
+import datetime
 from cf_units import Unit
 from iris.cube import Cube
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -764,6 +765,17 @@ class TestRegridTimeYearly(tests.Test):
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
         assert_array_equal(diff_cube.data, expected)
+        # test bounds are set at [01-01-YEAR 00:00, 01-01-NEXT_YEAR 00:00]
+        timeunit_1 = newcube_1.coord('time').units
+        for i, time in enumerate(newcube_1.coord('time').points):
+            year_1 = timeunit_1.num2date(time).year
+            expected_minbound = timeunit_1.date2num(
+                datetime.datetime(year_1, 1, 1))
+            expected_maxbound = timeunit_1.date2num(
+                datetime.datetime(year_1+1, 1, 1))
+            assert_array_equal(
+                newcube_1.coord('time').bounds[i],
+                np.array([expected_minbound, expected_maxbound]))
 
 
 class TestRegridTimeMonthly(tests.Test):
@@ -800,6 +812,24 @@ class TestRegridTimeMonthly(tests.Test):
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
         assert_array_equal(diff_cube.data, expected)
+        # test bounds are set at
+        # [01-MONTH-YEAR 00:00, 01-NEXT_MONTH-YEAR 00:00]
+        timeunit_1 = newcube_1.coord('time').units
+        for i, time in enumerate(newcube_1.coord('time').points):
+            month_1 = timeunit_1.num2date(time).month
+            year_1 = timeunit_1.num2date(time).year
+            next_month = month_1 + 1
+            next_year = year_1
+            if month_1 == 12:
+                next_month = 1
+                next_year += 1
+            expected_minbound = timeunit_1.date2num(
+                datetime.datetime(year_1, month_1, 1))
+            expected_maxbound = timeunit_1.date2num(
+                datetime.datetime(next_year, next_month, 1))
+            assert_array_equal(
+                newcube_1.coord('time').bounds[i],
+                np.array([expected_minbound, expected_maxbound]))
 
 
 class TestRegridTimeDaily(tests.Test):
@@ -846,6 +876,13 @@ class TestRegridTimeDaily(tests.Test):
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
         self.assert_array_equal(diff_cube.data, expected)
+        # test bounds are set with a dt = 12/24 days
+        for i, time in enumerate(newcube_1.coord('time').points):
+            expected_minbound = time - 12/24
+            expected_maxbound = time + 12/24
+            assert_array_equal(
+                newcube_1.coord('time').bounds[i],
+                np.array([expected_minbound, expected_maxbound]))
 
 
 class TestRegridTime6Hourly(tests.Test):
@@ -892,6 +929,13 @@ class TestRegridTime6Hourly(tests.Test):
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
         self.assert_array_equal(diff_cube.data, expected)
+        # test bounds are set with a dt = 3/24 days
+        for i, time in enumerate(newcube_1.coord('time').points):
+            expected_minbound = time - 3/24
+            expected_maxbound = time + 3/24
+            assert_array_equal(
+                newcube_1.coord('time').bounds[i],
+                np.array([expected_minbound, expected_maxbound]))
 
 
 class TestRegridTime3Hourly(tests.Test):
@@ -938,6 +982,13 @@ class TestRegridTime3Hourly(tests.Test):
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
         self.assert_array_equal(diff_cube.data, expected)
+        # test bounds are set with a dt = 1.5/24 days
+        for i, time in enumerate(newcube_1.coord('time').points):
+            expected_minbound = time - 1.5/24
+            expected_maxbound = time + 1.5/24
+            assert_array_equal(
+                newcube_1.coord('time').bounds[i],
+                np.array([expected_minbound, expected_maxbound]))
 
 
 class TestRegridTime1Hourly(tests.Test):
@@ -984,6 +1035,13 @@ class TestRegridTime1Hourly(tests.Test):
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
         self.assert_array_equal(diff_cube.data, expected)
+        # test bounds are set with a dt = 0.5/24 days
+        for i, time in enumerate(newcube_1.coord('time').points):
+            expected_minbound = time - 0.5/24
+            expected_maxbound = time + 0.5/24
+            assert_array_equal(
+                newcube_1.coord('time').bounds[i],
+                np.array([expected_minbound, expected_maxbound]))
 
 
 class TestTimeseriesFilter(tests.Test):
