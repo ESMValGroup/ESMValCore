@@ -97,7 +97,7 @@ class CMORCheck():
                 pass
             else:
                 if lat.ndim == 1 and (self._cube.coord_dims(lat) ==
-                   self._cube.coord_dims(lon)):
+                                      self._cube.coord_dims(lon)):
                     self._unstructured = True
         return self._unstructured
 
