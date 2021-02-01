@@ -45,9 +45,9 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute mole fraction of CO2 at surface."""
-        co2_cube = cubes.extract_strict(
+        co2_cube = cubes.extract_cube(
             iris.Constraint(name='mole_fraction_of_carbon_dioxide_in_air'))
-        ps_cube = cubes.extract_strict(
+        ps_cube = cubes.extract_cube(
             iris.Constraint(name='surface_air_pressure'))
 
         # Fill masked data if necessary (interpolation fails with masked data)
