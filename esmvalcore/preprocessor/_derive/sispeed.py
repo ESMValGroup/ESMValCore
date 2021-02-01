@@ -36,8 +36,8 @@ class DerivedVariable(DerivedVariableBase):
             Cube containing sea ice speed.
 
         """
-        siu = cubes.extract_strict(Constraint(name='sea_ice_x_velocity'))
-        siv = cubes.extract_strict(Constraint(name='sea_ice_y_velocity'))
+        siu = cubes.extract_cube(Constraint(name='sea_ice_x_velocity'))
+        siv = cubes.extract_cube(Constraint(name='sea_ice_y_velocity'))
         try:
             return DerivedVariable._get_speed(siu, siv)
         except ValueError:

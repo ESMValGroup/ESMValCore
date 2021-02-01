@@ -9,7 +9,6 @@ import re
 import yamale
 
 from ._data_finder import get_start_end_year
-from ._task import get_flattened_tasks
 from .preprocessor import PreprocessingTask, TIME_PREPROCESSORS
 
 logger = logging.getLogger(__name__)
@@ -140,7 +139,7 @@ def tasks_valid(tasks):
     """Check that tasks are consistent."""
     filenames = set()
     msg = "Duplicate preprocessor filename {}, please file a bug report."
-    for task in get_flattened_tasks(tasks):
+    for task in tasks.flatten():
         if isinstance(task, PreprocessingTask):
             for product in task.products:
                 if product.filename in filenames:
