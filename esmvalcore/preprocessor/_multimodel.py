@@ -101,7 +101,7 @@ def _align(cubes, span):
 
     # new_times = cubes[0].coord('time').units.num2date(new_times)
     sample_points = [('time', new_times)]
-    scheme = iris.analysis.Nearest(extrapolation_mode='nan')
+    scheme = iris.analysis.Nearest(extrapolation_mode='mask')
     new_cubes = [cube.interpolate(sample_points, scheme) for cube in cubes]
 
     for cube in new_cubes:

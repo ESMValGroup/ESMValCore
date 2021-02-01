@@ -8,6 +8,7 @@ from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor import multi_model_statistics
+
 # from esmvalcore.preprocessor._multimodel import (
 #     _assemble_data,
 #     _compute_statistic,
@@ -16,6 +17,56 @@ from esmvalcore.preprocessor import multi_model_statistics
 #     _put_in_cube,
 #     _unify_time_coordinates,
 # )
+
+"""
+# What tests to do?
+test_get_consistent_time_unit
+    --> pass multiple cubes
+        - if they have the same calendar: return that calendar
+        - if they have different calendars: return default calendar
+
+test_unify_time_coordinates(cubes)
+    --> pass multiple cubes with all kinds of different calendars
+        - Check that output cubes all have the same calendar
+        - check that the dates in the output correspond to the dates in the input
+        - do this for different time frequencies
+        - check warning/error for (sub)daily data
+
+test_resolve_span(all_times, span)
+    --> pass a list of lists with time points (integers)
+    --> span arguments: 'overlap' or 'full'
+    --> check that either the union or the intersection is correct
+
+test_align(cubes, span)
+    --> pass multiple cubes with different time coords
+    --> check that the returned cubes have consistent shapes and calendars
+    --> check that if a cube is extended, the extended points are masked (not NaN!)
+
+test_combine(cubes, dim='new_dim')
+    --> pass multiple combinations of cubes
+        - if cubes have the same shape, check that they are combined along a new dimension
+        - if they have inconsistent shapes, check that iris raises an error
+        - if they have inconsistent variable names, they should not be combined
+
+test_compute(cube, statistic, dim='new_dim')
+    --> make one big cube with a dimension called 'new dim'
+        - call with multiple different statistics
+        - check that the resulting data (computed statistics) is correct
+        - check that the output has a correct variable name
+        - check that the 'new_dim' dimension is removed again
+        - what happens if some of the input data is masked or NaN?
+        - test with COUNT statistics whether masked points are treated as expected.
+
+test_multi_model_statistics (cubes, ..., ...)
+    --> currently: span: overlap/full, freq: monthly/yearly, statistics: mean
+    --> different data frequencies ((sub)daily, monthly, yearly)
+    --> different statistics
+    --> different span arguments
+    --> different mask options
+    --> different combinations of coordinates
+    --> check return type is dict with all requested statistics as keys
+"""
+
 
 
 class Test(tests.Test):
