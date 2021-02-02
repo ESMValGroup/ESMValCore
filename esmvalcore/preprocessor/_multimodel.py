@@ -418,9 +418,9 @@ def multi_model_statistics(products,
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
-    keep_originals: bool
-        If True, the output_products will include the input products.
-        If False, only the statistics products will be returned.
+    keep_input_datasets: bool
+        If True, the output will include the input datasets.
+        If False, only the computed statistics will be returned.
 
     Returns
     -------
