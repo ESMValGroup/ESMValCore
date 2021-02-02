@@ -264,12 +264,12 @@ class BaseTask:
             for product in self.products
         }
 
-    def str(self):
+    def print_ancestors(self):
         """Return a nicely formatted description."""
         def _indent(txt):
-            return '\n'.join('\t' + line for line in txt.split('\n'))
+            return '\n'.join('  ' + line for line in txt.split('\n'))
 
-        txt = 'ancestors:\n{}'.format('\n\n'.join(
+        txt = 'ancestors:\n{}'.format('\n'.join(
             _indent(str(task))
             for task in self.ancestors) if self.ancestors else 'None')
         return txt
@@ -643,7 +643,7 @@ class DiagnosticTask(BaseTask):
         string = (f"{self.__class__.__name__}: {self.name}\n"
                   f"script: {self.script}\n"
                   f"settings:\n{settings_string}\n"
-                  f"{super().str()}\n")
+                  f"{self.print_ancestors()}\n")
         return string
 
 

@@ -488,10 +488,11 @@ class PreprocessingTask(BaseTask):
         ]
         products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
                                for p in self.products)
-        txt = "{}:\norder: {}\n{}\n{}".format(
+        txt = "{}: {}\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
+            self.name,
             order,
             products,
-            super().str(),
+            self.print_ancestors(),
         )
         return txt
