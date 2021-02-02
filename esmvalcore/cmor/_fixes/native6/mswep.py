@@ -62,10 +62,9 @@ def fix_longitude(cube):
 
 class Pr(Fix):
     """Fixes for pr."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        self._init_frequency_specific_fixes()
-
         for cube in cubes:
             self._fix_names(cube)
             self._fix_units(cube)
