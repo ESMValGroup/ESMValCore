@@ -1,11 +1,40 @@
-import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
+from pathlib import Path
 
 import pytest
 
 import esmvalcore
 from esmvalcore._task import BaseTask, TaskSet
+from esmvalcore.experimental import CFG, Recipe
+
+esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
+
+CFG.update(esmvaltool_sample_data.get_rootpaths())
+
+
+@pytest.fixture
+def recipe():
+    recipe = Recipe(Path(__file__).with_name('recipe_task_test.yml'))
+    return recipe
+
+
+@pytest.mark.use_sample_data
+@pytest.mark.parametrize('max_parallel_tasks', [1, 2, 3, 4, 16, None])
+def test_run_tasks(max_parallel_tasks, recipe, tmp_path):
+    session = CFG.start_session(str(max_parallel_tasks))
+    session['output_dir'] = tmp_path
+    session['max_parallel_tasks'] = max_parallel_tasks
+
+    _ = recipe.run()
+
+    for task in recipe._engine.tasks:
+        # assert not output_file.exists()
+        # assert len(ancestor.output_files) == 1
+        # assert ancestor.output_files[0].startswith(output_file)
+        # assert str(tmp_path / ancestor.name) in input_files
+        print(task.name, task.output_files)
+        assert task.output_files
 
 
 @pytest.fixture
@@ -24,39 +53,6 @@ def example_tasks():
         tasks.add(task)
 
     return tasks
-
-
-@pytest.mark.parametrize('max_parallel_tasks', [1, 2, 3, 4, 16, None])
-def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks):
-    """Check that tasks are run correctly."""
-    def _run(self, input_files):
-        output_file = tmp_path / self.name
-
-        msg = ('running {} in thread {}, using input {}, generating {}'.format(
-            self.name, os.getpid(), input_files, output_file))
-        print(msg)
-
-        # Check that the output is created just once
-        assert not output_file.exists()
-        output_file.write_text(msg)
-        output_file = str(output_file)
-
-        # Check that ancestor results are provided correctly
-        assert len(self.ancestors) == len(input_files)
-        for ancestor in self.ancestors:
-            assert len(ancestor.output_files) == 1
-            assert ancestor.output_files[0].startswith(output_file)
-            assert str(tmp_path / ancestor.name) in input_files
-
-        return [output_file]
-
-    monkeypatch.setattr(BaseTask, '_run', _run)
-
-    example_tasks.run(max_parallel_tasks=max_parallel_tasks)
-
-    for task in example_tasks:
-        print(task.name, task.output_files)
-        assert task.output_files
 
 
 @pytest.mark.parametrize('runner', [
