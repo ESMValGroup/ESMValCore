@@ -3,6 +3,7 @@ import abc
 import contextlib
 import datetime
 import logging
+import multiprocessing as mp
 import numbers
 import os
 import pprint
@@ -21,6 +22,9 @@ import yaml
 from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
+
+if mp.get_start_method(allow_none=True) is None:
+    mp.set_start_method('spawn', force=True)
 
 
 def path_representer(dumper, data):
