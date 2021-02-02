@@ -380,10 +380,10 @@ def _multiproduct_statistics(products,
         logger.info("Generated %s", statistics_product)
         statistics_products.add(statistics_product)
 
-    if keep_input_datasets:
-        return products | statistics_products
-    else:
+    if not keep_input_datasets:
         return statistics_products
+
+    return products | statistics_products
 
 
 def multi_model_statistics(products,
