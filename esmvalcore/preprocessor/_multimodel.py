@@ -355,7 +355,11 @@ def _multicube_statistics(cubes, statistics, span):
     return statistics_cubes
 
 
-def _multiproduct_statistics(products, statistics, output_products, span=None):
+def _multiproduct_statistics(products,
+                             statistics,
+                             output_products,
+                             span=None,
+                             keep_originals=None):
     """Compute multi-cube statistics on ESMValCore products.
 
     Extract cubes from products, calculate multicube statistics and
@@ -376,10 +380,17 @@ def _multiproduct_statistics(products, statistics, output_products, span=None):
         logger.info("Generated %s", statistics_product)
         statistics_products.add(statistics_product)
 
-    return statistics_products
+    if keep_originals:
+        return products | statistics_products
+    else:
+        return statistics_products
 
 
-def multi_model_statistics(products, span, statistics, output_products=None):
+def multi_model_statistics(products,
+                           span,
+                           statistics,
+                           output_products=None,
+                           keep_originals=True):
     """Compute multi-model statistics.
 
     This function computes multi-model statistics on cubes or products.
@@ -407,6 +418,9 @@ def multi_model_statistics(products, span, statistics, output_products=None):
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
+    keep_originals: bool
+        If True, the output_products will include the input products.
+        If False, only the statistics products will be returned.
 
     Returns
     -------
@@ -433,6 +447,7 @@ def multi_model_statistics(products, span, statistics, output_products=None):
             statistics=statistics,
             output_products=output_products,
             span=span,
+            keep_originals=keep_originals,
         )
     raise ValueError(
         "Input type for multi_model_statistics not understood. Expected "
