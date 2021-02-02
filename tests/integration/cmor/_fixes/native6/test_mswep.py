@@ -1,4 +1,4 @@
-"""Tests for the fixes of ERA5."""
+"""Tests for the fixes of MSWEP."""
 from pathlib import Path
 
 import iris
