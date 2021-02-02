@@ -322,11 +322,11 @@ ERA5
 MSWEP
 -----
 
-- Supported variables: `pr`
-- Supported frequencies: `mon`, `day`, `3hr`.
+- Supported variables: ``pr``
+- Supported frequencies: ``mon``, ``day``, `3hr``.
 - Tier: 3
 
-The data must be placed in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
+For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
 
 .. note::
   For monthly data (V220), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
