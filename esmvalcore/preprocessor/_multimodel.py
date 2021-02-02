@@ -359,7 +359,7 @@ def _multiproduct_statistics(products,
                              statistics,
                              output_products,
                              span=None,
-                             keep_originals=None):
+                             keep_input_datasets=None):
     """Compute multi-cube statistics on ESMValCore products.
 
     Extract cubes from products, calculate multicube statistics and
@@ -380,7 +380,7 @@ def _multiproduct_statistics(products,
         logger.info("Generated %s", statistics_product)
         statistics_products.add(statistics_product)
 
-    if keep_originals:
+    if keep_input_datasets:
         return products | statistics_products
     else:
         return statistics_products
@@ -390,7 +390,7 @@ def multi_model_statistics(products,
                            span,
                            statistics,
                            output_products=None,
-                           keep_originals=True):
+                           keep_input_datasets=True):
     """Compute multi-model statistics.
 
     This function computes multi-model statistics on cubes or products.
@@ -447,7 +447,7 @@ def multi_model_statistics(products,
             statistics=statistics,
             output_products=output_products,
             span=span,
-            keep_originals=keep_originals,
+            keep_input_datasets=keep_input_datasets,
         )
     raise ValueError(
         "Input type for multi_model_statistics not understood. Expected "

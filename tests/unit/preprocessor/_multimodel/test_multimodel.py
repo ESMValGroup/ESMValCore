@@ -12,6 +12,7 @@ from esmvalcore.preprocessor._multimodel import (
     _assemble_data,
     _compute_statistic,
     _get_time_slice,
+    _multiproduct_statistics,
     _plev_fix,
     _put_in_cube,
     _unify_time_coordinates,
@@ -219,6 +220,47 @@ class Test(tests.Test):
         masked.mask = True
         expected = [self.cube1[0].data, masked]
         self.assert_array_equal(expected, result)
+
+    def test_return_products(self):
+        """Check that the right product set is returned."""
+        input1 = PreprocessorFile(self.cube1)
+        input2 = PreprocessorFile(self.cube2)
+        output = PreprocessorFile()
+        products = set([input1, input2])
+        output_products = {'mean': output}
+        result1 = _multiproduct_statistics(products,
+                                           statistics=['mean'],
+                                           output_products=output_products,
+                                           span='full',
+                                           keep_input_datasets=True)
+        result2 = _multiproduct_statistics(products,
+                                           statistics=['mean'],
+                                           output_products=output_products,
+                                           span='full',
+                                           keep_input_datasets=False)
+        result3 = multi_model_statistics(products,
+                                         statistics=['mean'],
+                                         output_products=output_products,
+                                         span='full')
+        result4 = multi_model_statistics(products,
+                                         statistics=['mean'],
+                                         output_products=output_products,
+                                         span='full',
+                                         keep_input_datasets=False)
+        assert result1 == set([input1, input2, output])
+        assert result2 == set([output])
+        assert result3 == result1
+        assert result4 == result2
+
+
+class PreprocessorFile:
+    """Mockup to test output of multimodel."""
+    def __init__(self, cube=None):
+        if cube:
+            self.cubes = [cube]
+
+    def wasderivedfrom(self, product):
+        pass
 
 
 if __name__ == '__main__':
