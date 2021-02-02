@@ -44,9 +44,24 @@ def fix_time_day(cube):
     time_coord.convert_units('days since 1850-1-1 00:00:00.0')
 
 
+def fix_longitude(cube):
+    """Fix longitude coordinate from -180:180 to 0:360."""
+    lon_axis = cube.coord_dims('longitude')
+    lon = cube.coord(axis='X')
+
+    if not lon.is_monotonic():
+        raise ValueError("Data must be monotonic to fix longitude.")
+
+    # roll data because iris forces `lon.points` to be strictly monotonic.
+    shift = np.sum(lon.points < 0)
+    points = np.roll(lon.points, -shift) % 360
+    cube.data = np.roll(cube.core_data(), -shift, axis=lon_axis)
+
+    lon.points = points
+
+
 class Pr(Fix):
     """Fixes for pr."""
-
     def fix_metadata(self, cubes):
         """Fix metadata."""
         self._init_frequency_specific_fixes()
@@ -55,50 +70,36 @@ class Pr(Fix):
             self._fix_names(cube)
             self._fix_units(cube)
             self._fix_time(cube)
-            self._fix_longitude(cube)
+            fix_longitude(cube)
             self._fix_bounds(cube)
 
         return cubes
 
-    def _init_frequency_specific_fixes(self):
-        """Set frequency specific fixes (day/mon)."""
+    def _fix_time(self, cube):
+        """Fix time."""
         frequency = self.vardef.frequency
 
         if frequency in ('day', '3hr'):
-            self._fix_units = self._fix_units_day
-            self._fix_time = fix_time_day
+            fix_time_day(cube)
         elif frequency == 'mon':
-            self._fix_units = self._fix_units_month
-            self._fix_time = fix_time_month
+            fix_time_month(cube)
         else:
-            raise ValueError(f'No fixes for frequency: {frequency!r}')
+            raise ValueError(f'Cannot fix time for frequency: {frequency!r}')
 
-    def _fix_units_month(self, cube):
-        """Convert units from mm/month to kg m-2 s-1 units."""
+    def _fix_units(self, cube):
+        """Convert units from mm/[t] to kg m-2 s-1 units."""
+        frequency = self.vardef.frequency
+
         cube.units = Unit(self.vardef.units)
-        # divide by number of seconds in a month
-        cube.data = cube.core_data() / 60 * 60 * 24 * 30
 
-    def _fix_units_day(self, cube):
-        """Convert units from mm/month to kg m-2 s-1 units."""
-        cube.units = Unit(self.vardef.units)
-        # divide by number of seconds in a day
-        cube.data = cube.core_data() / 60 * 60 * 24
-
-    def _fix_longitude(self, cube):
-        """Fix longitude coordinate from -180:180 to 0:360."""
-        lon_axis = cube.coord_dims('longitude')
-        lon = cube.coord(axis='X')
-
-        if not lon.is_monotonic():
-            raise ValueError("Data must be monotonic to fix longitude.")
-
-        # roll data because iris forces `lon.points` to be strictly monotonic.
-        shift = np.sum(lon.points < 0)
-        points = np.roll(lon.points, -shift) % 360
-        cube.data = np.roll(cube.core_data(), -shift, axis=lon_axis)
-
-        lon.points = points
+        if frequency in ('day', '3hr'):
+            # divide by number of seconds in a month
+            cube.data = cube.core_data() / 60 * 60 * 24 * 30
+        elif frequency == 'mon':
+            # divide by number of seconds in a day
+            cube.data = cube.core_data() / 60 * 60 * 24
+        else:
+            raise ValueError(f'Cannot fix units for frequency: {frequency!r}')
 
     def _fix_bounds(self, cube):
         """Add bounds to coords."""

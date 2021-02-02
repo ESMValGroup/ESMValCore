@@ -7,6 +7,7 @@ import pytest
 
 from esmvalcore.cmor._fixes.native6.mswep import (
     Pr,
+    fix_longitude,
     fix_time_day,
     fix_time_month,
 )
@@ -74,13 +75,13 @@ def test_fix_names(fix_month, cube_month):
 
 def test_fix_units_month(fix_month, cube_month):
     """Test `Pr._fix_units_month`."""
-    fix_month._fix_units_month(cube_month)
+    fix_month._fix_units(cube_month)
     assert cube_month.units == fix_month.vardef.units
 
 
 def test_fix_units_day(fix_day, cube_day):
     """Test `Pr._fix_units_day`."""
-    fix_day._fix_units_day(cube_day)
+    fix_day._fix_units(cube_day)
     assert cube_day.units == fix_day.vardef.units
 
 
@@ -106,7 +107,7 @@ def test_fix_longitude(fix_month, cube_month):
     unfixed_lon = cube_month.coord(axis='X')
     shift = (unfixed_lon.points < 0).sum()
 
-    fix_month._fix_longitude(cube_month)
+    fix_longitude(cube_month)
 
     lon = cube_month.coord(axis='X')
 
