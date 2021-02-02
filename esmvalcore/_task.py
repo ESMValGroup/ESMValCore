@@ -642,8 +642,8 @@ class DiagnosticTask(BaseTask):
         settings_string = pprint.pformat(self.settings)
         string = (f"{self.__class__.__name__}: {self.name}\n"
                   f"script: {self.script}\n"
-                  f"settings:\n{settings_string}\n")
-
+                  f"settings:\n{settings_string}\n"
+                  f"{super().str()}\n")
         return string
 
 

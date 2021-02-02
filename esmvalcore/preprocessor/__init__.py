@@ -492,6 +492,6 @@ class PreprocessingTask(BaseTask):
             self.__class__.__name__,
             order,
             products,
-            super(PreprocessingTask, self).str(),
+            super().str(),
         )
         return txt
