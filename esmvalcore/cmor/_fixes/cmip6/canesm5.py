@@ -6,19 +6,18 @@ from ..fix import Fix
 class Co2(Fix):
     """Fixes for co2."""
 
-    def fix_metadata(self, cubes):
+    def fix_data(self, cube):
         """Convert units from ppmv to 1.
 
         Parameters
         ----------
-        cubes : iris.cube.CubeList
+        cube : iris.cube.Cube
 
         Returns
         -------
         iris.cube.Cube
 
         """
-        cube = self.get_cube_from_list(cubes)
         metadata = cube.metadata
         cube *= 1.e-6
         cube.metadata = metadata

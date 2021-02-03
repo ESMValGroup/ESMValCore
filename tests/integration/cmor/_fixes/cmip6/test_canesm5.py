@@ -1,0 +1,56 @@
+"""Tests for the fixes of CIESM."""
+import iris
+import pytest
+
+from esmvalcore.cmor._fixes.cmip6.ciesm import Co2, Gpp
+from esmvalcore.cmor.fix import Fix
+
+
+def test_get_co2_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CanESM5', 'Amon', 'co2')
+    assert fix == [Co2(None)]
+
+
+@pytest.fixture
+def co2_cube():
+    """``co2`` cube."""
+    cube = iris.cube.Cube(
+        [1.0],
+        var_name='co2',
+        standard_name='mole_fraction_of_carbon_dioxide_in_air',
+        units='mol mol-1',
+    )
+    return cube
+
+
+def test_co2_fix_data(co2_cube):
+    """Test ``fix_data`` for ``co2``."""
+    fix = Co2(None)
+    out_cube = fix.fix_data(co2_cube)
+    assert out_cube.data == [1.e-6]
+
+
+def gpp_cube():
+    """``gpp`` cube."""
+    cube = iris.cube.Cube(
+        [0],
+        var_name='gpp',
+        standard_name=
+        'gross_primary_productivity_of_biomass_expressed_as_carbon',
+        units='kg m-2 s-1',
+    )
+    return cube
+
+
+def test_get_gpp_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CanESM5', 'Lmon', 'gpp')
+    assert fix == [Gpp(None)]
+
+
+def test_gpp_fix_data(gpp_cube):
+    """Test ``fix_data`` for ``co2``."""
+    fix = Gpp(None)
+    out_cube = fix.fix_data(gpp_cube)
+    assert out_cube.data.mask
