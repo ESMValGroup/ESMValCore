@@ -445,8 +445,39 @@ def extract_named_regions(cube, regions):
     return cube
 
 
-def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
-               end_latitude):
+# def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
+#                end_latitude):
+#     """Crop cubes on a cartesian grid."""
+#     lon_coord = cube.coord(axis='X')
+#     lat_coord = cube.coord(axis='Y')
+#     if lon_coord.ndim == 1 and lat_coord.ndim == 1:
+#         # add a padding of one cell around the cropped cube
+#         lon_bound = lon_coord.core_bounds()[0]
+#         lon_step = lon_bound[1] - lon_bound[0]
+#         start_longitude -= lon_step
+#         if start_longitude < 0:
+#             start_longitude = 0
+#         end_longitude += lon_step
+#         if end_longitude > 360:
+#             end_longitude = 360.
+#         lat_bound = lat_coord.core_bounds()[0]
+#         lat_step = lat_bound[1] - lat_bound[0]
+#         start_latitude -= lat_step
+#         if start_latitude < -90:
+#             start_latitude = -90.
+#         end_latitude += lat_step
+#         if end_latitude > 90.:
+#             end_latitude = 90.
+#         cube = extract_region(cube, start_longitude, end_longitude,
+#                               start_latitude, end_latitude)
+#     return cube
+
+def _crop_cube(cube,
+               start_longitude,
+               start_latitude,
+               end_longitude,
+               end_latitude,
+               cmor_coords=True):
     """Crop cubes on a cartesian grid."""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
@@ -455,11 +486,19 @@ def _crop_cube(cube, start_longitude, start_latitude, end_longitude,
         lon_bound = lon_coord.core_bounds()[0]
         lon_step = lon_bound[1] - lon_bound[0]
         start_longitude -= lon_step
-        if start_longitude < 0:
-            start_longitude = 0
+        if not cmor_coords:
+            if start_longitude < -180.:
+                start_longitude = -180.
+        else:
+            if start_longitude < 0:
+                start_longitude = 0
         end_longitude += lon_step
-        if end_longitude > 360:
-            end_longitude = 360.
+        if not cmor_coords:
+            if end_longitude > 180.:
+                end_longitude = 180.
+        else:
+            if end_longitude > 360:
+                end_longitude = 360.
         lat_bound = lat_coord.core_bounds()[0]
         lat_step = lat_bound[1] - lat_bound[0]
         start_latitude -= lat_step
@@ -602,15 +641,92 @@ def extract_shape(cube,
 
     """
 
+
+
+def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
+                                   pad_hawaii):
+    """Get correct lat and lon from shapefile."""
+    lon = cube.coord(axis='X').points
+    lat = cube.coord(axis='Y').points
+    if cube.coord(axis='X').ndim < 2:
+        lon, lat = np.meshgrid(lon, lat, copy=False)
+
+    if not cmor_coords:
+        # Wrap around longitude coordinate to match data
+        lon = lon.copy()  # ValueError: assignment destination is read-only
+        lon[lon >= 180.] -= 360.
+
+        # the NE mask may not have points at x = -180 and y = +/-90
+        # so we will fool it and apply the mask at (-179, -89, 89) instead
+        if pad_hawaii:
+            lon = np.where(lon == -180., lon + 1., lon)
+    if pad_north_pole:
+        lat_0 = np.where(lat == -90., lat + 1., lat)
+        lat = np.where(lat_0 == 90., lat_0 - 1., lat_0)
+
+    return lon, lat
+
+
+def extract_shape(cube,
+                  shapefile,
+                  method='contains',
+                  crop=True,
+                  decomposed=False):
+    """Extract a region defined by a shapefile.
+
+    Note that this function does not work for shapes crossing the
+    prime meridian or poles.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+       input cube.
+    shapefile: str
+        A shapefile defining the region(s) to extract.
+    method: str, optional
+        Select all points contained by the shape or select a single
+        representative point. Choose either 'contains' or 'representative'.
+        If 'contains' is used, but not a single grid point is contained by the
+        shape, a representative point will selected.
+    crop: bool, optional
+        Crop the resulting cube using `extract_region()`. Note that data on
+        irregular grids will not be cropped.
+    decomposed: bool, optional
+        Whether or not to retain the sub shapes of the shapefile in the output.
+        If this is set to True, the output cube has a dimension for the sub
+        shapes.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube containing the extracted region.
+
+    See Also
+    --------
+    extract_region : Extract a region from a cube.
+    """
     with fiona.open(shapefile) as geometries:
 
-        if crop:
-            cube = _crop_cube(cube, *geometries.bounds)
+        # get parameters specific to the shapefile (NE used case
+        # eg longitudes [-180, 180] or latitude missing
+        # or overflowing edges)
+        cmor_coords = True
+        pad_north_pole = False
+        pad_hawaii = False
+        if geometries.bounds[0] < 0:
+            cmor_coords = False
+        if geometries.bounds[1] > -90. and geometries.bounds[1] < -85.:
+            pad_north_pole = True
+        if geometries.bounds[0] > -180. and geometries.bounds[0] < 179.:
+            pad_hawaii = True
 
-        lon = cube.coord(axis='X').points
-        lat = cube.coord(axis='Y').points
-        if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
-            lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+        if crop:
+            cube = _crop_cube(cube,
+                              *geometries.bounds,
+                              cmor_coords=cmor_coords)
+
+        lon, lat = _correct_coords_from_shapefile(cube, cmor_coords,
+                                                  pad_north_pole, pad_hawaii)
 
         selections = _get_masks_from_geometries(geometries,
                                                 lon,
@@ -632,3 +748,33 @@ def extract_shape(cube,
     cube = cubelist.merge_cube()
 
     return fix_coordinate_ordering(cube)
+    # with fiona.open(shapefile) as geometries:
+
+    #     if crop:
+    #         cube = _crop_cube(cube, *geometries.bounds)
+
+    #     lon = cube.coord(axis='X').points
+    #     lat = cube.coord(axis='Y').points
+    #     if cube.coord(axis='X').ndim == 1 and cube.coord(axis='Y').ndim == 1:
+    #         lon, lat = np.meshgrid(lon.flat, lat.flat, copy=False)
+
+    #     selections = _get_masks_from_geometries(geometries,
+    #                                             lon,
+    #                                             lat,
+    #                                             method=method,
+    #                                             decomposed=decomposed)
+
+    # cubelist = iris.cube.CubeList()
+
+    # for id_, select in selections.items():
+    #     _cube = cube.copy()
+    #     _cube.add_aux_coord(
+    #         iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
+
+    #     select = da.broadcast_to(select, _cube.shape)
+    #     _cube.data = da.ma.masked_where(~select, _cube.core_data())
+    #     cubelist.append(_cube)
+
+    # cube = cubelist.merge_cube()
+
+    # return fix_coordinate_ordering(cube)
