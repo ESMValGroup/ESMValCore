@@ -650,6 +650,9 @@ def regrid_cdo(cube, target_grid, scheme, tmp_dir):
     # # clean up, this won't work ...
     # for fname in [cube_fname, grid_fname, rcube_fname]:
     #     os.remove(fname)
+    # so clean up just a little bit
+    for fname in [cube_fname, grid_fname]:
+        os.remove(fname)
 
     return rcube
 
