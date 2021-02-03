@@ -13,6 +13,7 @@ class Co2(Fix):
         Parameters
         ----------
         cube : iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -34,6 +35,7 @@ class Gpp(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
