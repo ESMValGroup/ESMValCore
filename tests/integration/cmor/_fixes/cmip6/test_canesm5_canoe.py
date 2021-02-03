@@ -22,6 +22,6 @@ def test_get_gpp_fix():
     assert fix == [Gpp(None)]
 
 
-def test_cli_fix():
+def test_gpp_fix():
     """Test fix for ``gpp``."""
     assert Gpp is BaseGpp

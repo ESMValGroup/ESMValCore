@@ -1,8 +1,9 @@
 """Tests for the fixes of CanESM5."""
 import iris
 import pytest
+import numpy as np
 
-from esmvalcore.cmor._fixes.cmip6.ciesm import Co2, Gpp
+from esmvalcore.cmor._fixes.cmip6.canesm5 import Co2, Gpp
 from esmvalcore.cmor.fix import Fix
 
 
@@ -37,8 +38,7 @@ def gpp_cube():
     cube = iris.cube.Cube(
         [0, 1],
         var_name='gpp',
-        standard_name=
-        'gross_primary_productivity_of_biomass_expressed_as_carbon',
+        standard_name='gross_primary_productivity_of_biomass_expressed_as_carbon',
         units='kg m-2 s-1',
     )
     return cube
