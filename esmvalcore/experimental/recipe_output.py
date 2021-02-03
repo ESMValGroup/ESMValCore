@@ -56,6 +56,15 @@ class TaskOutput:
         """Return a tuple of data objects."""
         return tuple(item for item in self.files if item.kind == 'data')
 
+    @classmethod
+    def from_task(cls, task) -> 'TaskOutput':
+        """Create an instance of `TaskOutput` from a Task.
+
+        Where task is an instance of `esmvalcore._task.BaseTask`.
+        """
+        product_attributes = task.get_product_attributes()
+        return cls(name=task.name, output=product_attributes)
+
 
 class RecipeOutput(Mapping):
     """Container for recipe output.

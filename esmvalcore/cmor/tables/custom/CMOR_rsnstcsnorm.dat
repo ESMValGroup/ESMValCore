@@ -6,7 +6,7 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     
+standard_name:
 units:             %
 cell_methods:      time: mean
 cell_measures:     area: areacella
@@ -17,6 +17,6 @@ comment:           (For definition see: DeAngelis et al. 2015)
 !----------------------------------
 dimensions:        longitude latitude time
 type:              real
-positive:          up
+
 !----------------------------------
 !
