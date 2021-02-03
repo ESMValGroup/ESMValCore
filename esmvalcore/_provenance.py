@@ -258,4 +258,8 @@ class TrackedFile(object):
                          self.filename)
         else:
             figure = prov_to_dot(self.provenance)
-            figure.write_svg(filename + '.svg')
+            try:
+                figure.write_svg(filename + '.svg')
+            except AssertionError:
+                logger.debug("Some AssertionError is raised for the provenance tree of %s",
+                            self.filename)
