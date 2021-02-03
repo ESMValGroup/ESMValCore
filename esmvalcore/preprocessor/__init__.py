@@ -13,7 +13,7 @@ from ._area import (area_statistics, extract_named_regions, extract_region,
                     area_statistics_mask)
 from ._cycles import amplitude
 from ._derive import derive
-from ._detrend import detrend # (detrend, linear_trend) # detrend
+from ._detrend import detrend
 from ._trend import linear_trend, linear_trend_stderr
 from ._download import download
 from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
@@ -29,7 +29,8 @@ from ._regrid import extract_levels, extract_point, regrid
 from ._time import (annual_statistics, anomalies, climate_statistics,
                     daily_statistics, decadal_statistics, extract_month,
                     extract_season, extract_time, monthly_statistics,
-                    regrid_time, seasonal_statistics, timeseries_filter)
+                    regrid_time, seasonal_statistics, timeseries_filter,
+                    low_pass_weights)
 from ._units import convert_units
 from ._volume import (depth_integration, extract_trajectory, extract_transect,
                       extract_volume, volume_statistics)
