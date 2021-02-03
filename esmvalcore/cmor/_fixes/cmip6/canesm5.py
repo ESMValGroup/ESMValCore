@@ -21,7 +21,7 @@ class Co2(Fix):
         metadata = cube.metadata
         cube *= 1.e-6
         cube.metadata = metadata
-        return cubes
+        return cube
 
 
 class Gpp(Fix):

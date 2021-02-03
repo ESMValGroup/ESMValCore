@@ -1,4 +1,4 @@
-"""Tests for the fixes of CIESM."""
+"""Tests for the fixes of CanESM5."""
 import iris
 import pytest
 
@@ -31,10 +31,11 @@ def test_co2_fix_data(co2_cube):
     assert out_cube.data == [1.e-6]
 
 
+@pytest.fixture
 def gpp_cube():
     """``gpp`` cube."""
     cube = iris.cube.Cube(
-        [0],
+        [0, 1],
         var_name='gpp',
         standard_name=
         'gross_primary_productivity_of_biomass_expressed_as_carbon',
@@ -50,7 +51,9 @@ def test_get_gpp_fix():
 
 
 def test_gpp_fix_data(gpp_cube):
-    """Test ``fix_data`` for ``co2``."""
+    """Test ``fix_data`` for ``gpp``."""
     fix = Gpp(None)
     out_cube = fix.fix_data(gpp_cube)
-    assert out_cube.data.mask
+    np.testing.assert_allclose(out_cube.data,
+                               np.ma.masked_invalid([np.nan, 1]))
+    assert np.array_equal(out_cube.data.mask, [True, False])
