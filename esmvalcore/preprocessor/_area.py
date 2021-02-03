@@ -157,45 +157,6 @@ def meridional_statistics(cube, operator):
         raise ValueError(msg)
 
 
-def tile_grid_areas(cube, fx_files):
-    """Tile the grid area data to match the dataset cube.
-
-    Parameters
-    ----------
-    cube: iris.cube.Cube
-        input cube.
-    fx_files: dict
-        dictionary of field:filename for the fx_files
-
-    Returns
-    -------
-    iris.cube.Cube
-        Freshly tiled grid areas cube.
-    """
-    grid_areas = None
-    if fx_files:
-        for key, fx_file in fx_files.items():
-            if not fx_file:
-                continue
-            logger.info('Attempting to load %s from file: %s', key, fx_file)
-            fx_cube = iris.load_cube(fx_file)
-
-            grid_areas = fx_cube.core_data()
-            if cube.ndim == 4 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas,
-                                     [cube.shape[0], cube.shape[1], 1, 1])
-            elif cube.ndim == 4 and grid_areas.ndim == 3:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
-            elif cube.ndim == 3 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
-            else:
-                raise ValueError('Grid and dataset number of dimensions not '
-                                 'recognised: {} and {}.'
-                                 ''.format(cube.ndim, grid_areas.ndim))
-    return grid_areas
-
-
-# get the area average
 def area_statistics(cube, operator, fx_variables=None):
     """Apply a statistical operator in the horizontal direction.
 
@@ -248,7 +209,15 @@ def area_statistics(cube, operator, fx_variables=None):
     ValueError
         if input data cube has different shape than grid area weights
     """
-    grid_areas = tile_grid_areas(cube, fx_variables)
+    grid_areas = None
+    try:
+        grid_areas = cube.cell_measure('cell_area').core_data()
+    except iris.exceptions.CellMeasureNotFoundError:
+        logger.info(
+            'Cell measure "cell_area" not found in cube. '
+            'Check fx_file availability.'
+            )
+        logger.info('Attempting to calculate grid cell area...')
 
     if not fx_variables and cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
@@ -269,7 +238,7 @@ def area_statistics(cube, operator, fx_variables=None):
                 cube.coord('latitude'))
 
     coord_names = ['longitude', 'latitude']
-    if grid_areas is None or not grid_areas.any():
+    if grid_areas is None:
         cube = guess_bounds(cube, coord_names)
         grid_areas = iris.analysis.cartography.area_weights(cube)
         logger.info('Calculated grid area shape: %s', grid_areas.shape)

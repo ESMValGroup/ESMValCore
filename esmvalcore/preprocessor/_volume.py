@@ -211,26 +211,17 @@ def volume_statistics(
     # Load z coordinate field and figure out which dim is which.
     t_dim = cube.coord_dims('time')[0]
 
-    grid_volume_found = False
-    grid_volume = None
-    if fx_variables:
-        for key, fx_file in fx_variables.items():
-            if fx_file is None:
-                continue
-            logger.info('Attempting to load %s from file: %s', key, fx_file)
-            fx_cube = iris.load_cube(fx_file)
+    try:
+        grid_volume = cube.cell_measure('ocean_volume').core_data()
+    except iris.exceptions.CellMeasureNotFoundError:
+        logger.info(
+            'Cell measure "ocean_volume" not found in cube. '
+            'Check fx_file availability.'
+            )
+        logger.info('Attempting to calculate grid cell volume...')
 
-            grid_volume = fx_cube.data
-            grid_volume_found = True
-            cube_shape = cube.data.shape
-
-    if not grid_volume_found:
+    if not fx_variables:
         grid_volume = calculate_volume(cube)
-
-    # Check whether the dimensions are right.
-    if cube.data.ndim == 4 and grid_volume.ndim == 3:
-        grid_volume = np.tile(grid_volume,
-                              [cube_shape[0], 1, 1, 1])
 
     if cube.data.shape != grid_volume.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '

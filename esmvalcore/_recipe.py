@@ -260,6 +260,7 @@ def _get_default_settings(variable, config_user, derive=False):
     # Configure loading
     settings['load'] = {
         'callback': concatenate_callback,
+        'fx_variables': None
     }
     # Configure concatenation
     settings['concatenate'] = {}
@@ -469,14 +470,22 @@ def _update_fx_settings(settings, variable, config_user):
 
     fx_steps = [
         'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
-        'area_statistics', 'volume_statistics', 'zonal_statistics'
+        'zonal_statistics'
     ]
 
+    cell_measure_steps = [
+        'area_statistics', 'volume_statistics'
+    ]
     for step_name, step_settings in settings.items():
         if step_name in fx_steps:
             fx_vars = _get_fx_vars_from_attribute(step_settings, step_name)
             _update_fx_files(step_name, step_settings,
                              variable, config_user, fx_vars)
+        elif step_name in cell_measure_steps:
+            fx_vars = _get_fx_vars_from_attribute(step_settings, step_name)
+            _update_fx_files('load', settings['load'],
+                             variable, config_user, fx_vars)
+
 
 
 def _read_attributes(filename):
