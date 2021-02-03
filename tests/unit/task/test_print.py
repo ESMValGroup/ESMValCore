@@ -144,6 +144,7 @@ def test_repr_full_tree(preproc_task, diagnostic_task):
            'save': {'filename': '/output/preproc/file.nc'}}
           ancestors:
           None
+
           PreprocessingTask: diag_1/tas_derive_input_2
           order: ['extract_levels', 'save']
           PreprocessorFile: /output/preproc/file.nc

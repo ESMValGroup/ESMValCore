@@ -8,6 +8,7 @@ import os
 import pprint
 import subprocess
 import sys
+import textwrap
 import threading
 import time
 from copy import deepcopy
@@ -266,11 +267,8 @@ class BaseTask:
 
     def print_ancestors(self):
         """Return a nicely formatted description."""
-        def _indent(txt):
-            return '\n'.join('  ' + line for line in txt.split('\n'))
-
-        txt = 'ancestors:\n{}'.format('\n'.join(
-            _indent(str(task))
+        txt = 'ancestors:\n{}'.format('\n\n'.join(
+            textwrap.indent(str(task), prefix='  ')
             for task in self.ancestors) if self.ancestors else 'None')
         return txt
 
