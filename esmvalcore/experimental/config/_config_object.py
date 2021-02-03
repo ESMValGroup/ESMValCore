@@ -164,6 +164,14 @@ class Session(ValidatedConfig):
         """Return user config directory."""
         return USER_CONFIG_DIR
 
+    def read_debug_log(self) -> str:
+        """Read the debug log."""
+        return (self.run_dir / 'main_log_debug.txt').read_text()
+
+    def read_log(self) -> str:
+        """Read the main log."""
+        return (self.run_dir / 'main_log.txt').read_text()
+
     def to_config_user(self) -> dict:
         """Turn the `Session` object into a recipe-compatible dict.
 
