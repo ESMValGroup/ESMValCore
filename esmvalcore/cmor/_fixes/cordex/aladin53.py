@@ -5,23 +5,56 @@ from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
-# import IPython
-# from traitlets.config import get_config
-# c = get_config()
-# c.InteractiveShellEmbed.colors = "Linux"
+import IPython
+from traitlets.config import get_config
+c = get_config()
+c.InteractiveShellEmbed.colors = "Linux"
 
 from esmvalcore.preprocessor._shared import guess_bounds
 import numpy as np
+import copy
+
+class Orog(Fix):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """
+        Issue: For some reason, orog coordinates deviate by a factor of 4.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        fixed_cubes = iris.cube.CubeList()
+        for cube in cubes:
+            for cname, cindex in zip(['projection_x_coordinate',
+                                      'projection_y_coordinate'],
+                                     [1, 0]):
+                coord = copy.deepcopy(cube.coords(dimensions=cindex)[0])
+                coord = coord / 4.
+                cube.remove_coord(cname)
+                cube.add_dim_coord(coord, cindex)
+            fixed_cubes.append(cube)
+
+        return fixed_cubes
 
 
 class AllVars(Fix):
     """Fixes for all variables."""
 
     def fix_metadata(self, cubes):
-        """Fix metadata."""
+        """Fix metadata.
+
+        Fails to reate 'x' and 'y' dimension coordinate:
+        DimCoord points array must be strictly monotonic"""
         fixed_cubes = iris.cube.CubeList()
 
-        # IPython.embed(config=c)
         for cube in cubes:
             if cube.attributes['CORDEX_domain'] == 'EUR-11':
                 if len(cube.dim_coords) < 2 and len(cube.shape) > 1:
