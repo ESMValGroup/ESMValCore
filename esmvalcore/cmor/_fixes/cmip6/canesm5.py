@@ -1,5 +1,5 @@
 """Fixes for CanESM5 model."""
-import numpy as np
+import dask.array as da
 from ..fix import Fix
 
 
@@ -39,5 +39,5 @@ class Gpp(Fix):
         iris.cube.Cube
 
         """
-        cube.data = np.ma.masked_where(cube.data == 0, cube.data)
+        cube.data = da.ma.masked_equal(cube.core_data(), 0.0)
         return cube
