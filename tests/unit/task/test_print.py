@@ -27,14 +27,16 @@ def preproc_task(preproc_file):
 
 
 @pytest.fixture
-def diagnostic_task(monkeypatch):
-    script = '/some/where/esmvaltool/diag_scripts/test.py'
+def diagnostic_task(tmp_path):
+    mock_script = tmp_path / 'script.py'
+    mock_script.touch()
     settings = {
         'run_dir': str('/output/run'),
+        'profile_diagnostic': False,
     }
-
-    monkeypatch.setattr(DiagnosticTask, '_initialize_cmd', lambda self: None)
-    return DiagnosticTask(script, settings, output_dir='/output/run')
+    task = DiagnosticTask(mock_script, settings, output_dir='/output/run')
+    task.script = '/some/where/esmvaltool/diag_scripts/test.py'
+    return task
 
 
 def test_repr_preproc_task(preproc_task):
@@ -66,7 +68,7 @@ def test_repr_diagnostic_task(diagnostic_task):
     DiagnosticTask: diag_1/script_1
     script: /some/where/esmvaltool/diag_scripts/test.py
     settings:
-    {'run_dir': '/output/run'}
+    {'profile_diagnostic': False, 'run_dir': '/output/run'}
     ancestors:
     None
     """)
@@ -86,7 +88,7 @@ def test_repr_simple_tree(preproc_task, diagnostic_task):
     DiagnosticTask: diag_1/script_1
     script: /some/where/esmvaltool/diag_scripts/test.py
     settings:
-    {'run_dir': '/output/run'}
+    {'profile_diagnostic': False, 'run_dir': '/output/run'}
     ancestors:
       PreprocessingTask: diag_1/tas
       order: ['extract_levels', 'save']
@@ -124,12 +126,12 @@ def test_repr_full_tree(preproc_task, diagnostic_task):
     DiagnosticTask: diag_1/script_2
     script: /some/where/esmvaltool/diag_scripts/test.py
     settings:
-    {'run_dir': '/output/run'}
+    {'profile_diagnostic': False, 'run_dir': '/output/run'}
     ancestors:
       DiagnosticTask: diag_1/script_1
       script: /some/where/esmvaltool/diag_scripts/test.py
       settings:
-      {'run_dir': '/output/run'}
+      {'profile_diagnostic': False, 'run_dir': '/output/run'}
       ancestors:
         PreprocessingTask: diag_1/tas
         order: ['extract_levels', 'save']
