@@ -211,7 +211,22 @@ class AllVars(Fix):
             # there are some badly defined coordinate systems:
             if grid_coord_sys.ellipsoid:
                 if grid_coord_sys.ellipsoid.semi_minor_axis == float('-inf'):
-                    grid_coord_sys.ellipsoid.semi_minor_axis = None
+                    # IPython.embed(config=c)
+                    # some issure with regcm4_6
+                    # LambertConformal(central_lat=48.0, central_lon=9.75, false_easting=-6000.0, false_northing=-6000.0, secant_latitudes=(30.0, 65.0), ellipsoid=GeogCS(semi_major_axis=6371229.0, semi_minor_axis=-inf))
+                    # TypeError: illegal data type for attribute b'semi_minor_axis', must be one of dict_keys(['S1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'i8', 'u8', 'f4', 'f8']), got O
+                    # 2021-02-03 08:57:32,641 UTC [14451] INFO    If you suspect this is a bug or need help, please open an issue on https://github.com/ESMValGroup/ESMValTool/issues and attach the run/recipe_*.yml and run/main_log_debug.txt files from the output directory.
+                    # this seems to be a netcdf4 issue
+                    # https://github.com/pydata/xarray/issues/2868
+                    # doesnt affect the differences for regcm4_6
+                    # Max diff: 5.368298627528341e-06 ; Min diff: 1.4210854715202004e-14
+                    # Max diff: 5.368298627528341e-06 ; Min diff: 1.4210854715202004e-14
+                    # IPython.embed(config=c)
+                    # so had to change from
+                    # grid_coord_sys.ellipsoid.semi_minor_axis = None
+                    # to
+                    grid_coord_sys.ellipsoid = iris.coord_systems.GeogCS(
+                        grid_coord_sys.ellipsoid.semi_major_axis)
             else:
                 grid_coord_sys.ellipsoid = global_coord_sys
 
