@@ -1,7 +1,7 @@
 """Tests for the fixes of CanESM5."""
 import iris
-import pytest
 import numpy as np
+import pytest
 
 from esmvalcore.cmor._fixes.cmip6.canesm5 import Co2, Gpp
 from esmvalcore.cmor.fix import Fix
@@ -29,7 +29,7 @@ def test_co2_fix_data(co2_cube):
     """Test ``fix_data`` for ``co2``."""
     fix = Co2(None)
     out_cube = fix.fix_data(co2_cube)
-    assert out_cube.data == [1.e-6]
+    np.testing.assert_allclose(out_cube.data, [1.e-6])
 
 
 @pytest.fixture
@@ -38,7 +38,8 @@ def gpp_cube():
     cube = iris.cube.Cube(
         [0, 1],
         var_name='gpp',
-        standard_name='gross_primary_productivity_of_biomass_expressed_as_carbon',
+        standard_name='gross_primary_productivity_of_biomass_expressed_as_'
+        'carbon',
         units='kg m-2 s-1',
     )
     return cube

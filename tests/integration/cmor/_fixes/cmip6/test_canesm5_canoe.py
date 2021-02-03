@@ -13,7 +13,7 @@ def test_get_co2_fix():
 
 def test_co2_fix():
     """Test fix for ``co2``."""
-    assert issubclass (Co2, BaseCo2)
+    assert issubclass(Co2, BaseCo2)
 
 
 def test_get_gpp_fix():
@@ -24,4 +24,4 @@ def test_get_gpp_fix():
 
 def test_gpp_fix():
     """Test fix for ``gpp``."""
-    assert issubclass (Gpp, BaseGpp)
+    assert issubclass(Gpp, BaseGpp)
