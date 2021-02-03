@@ -16,6 +16,13 @@ datasets:
 diagnostics:
   example:
     variables:
-      ta:
+      ta1:
         mip: Amon
+        short_name: ta
+      ta2:
+        mip: Amon
+        short_name: ta
+      ta3:
+        mip: Amon
+        short_name: ta
     scripts:

@@ -26,7 +26,11 @@ def test_run_tasks(max_parallel_tasks, recipe, tmp_path):
     session['output_dir'] = tmp_path
     session['max_parallel_tasks'] = max_parallel_tasks
 
-    _ = recipe.run()
+    output = recipe.run(session=session)
+
+    assert session.session_dir.exists()
+    assert session.run_dir.exists()
+    assert (session.run_dir / 'main_log.txt').exists()
 
     for task in recipe._engine.tasks:
         # assert not output_file.exists()
