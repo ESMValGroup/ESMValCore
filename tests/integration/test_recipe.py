@@ -51,7 +51,7 @@ DEFAULT_PREPROCESSOR_STEPS = (
     'cmor_check_data',
     'cmor_check_metadata',
     'concatenate',
-    'extract_time',
+    'clip_start_end_year',
     'fix_data',
     'fix_file',
     'fix_metadata',
@@ -59,13 +59,14 @@ DEFAULT_PREPROCESSOR_STEPS = (
     'save',
 )
 
+INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
+
 
 @pytest.fixture
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
     cfg['synda_download'] = False
-    cfg['output_file_type'] = 'png'
     cfg['check_level'] = CheckLevels.DEFAULT
     return cfg
 
@@ -81,6 +82,65 @@ def create_test_file(filename, tracking_id=None):
     cube = iris.cube.Cube([], attributes=attributes)
 
     iris.save(cube, filename)
+
+
+def _get_default_settings_for_chl(fix_dir, save_filename):
+    """Get default preprocessor settings for chl."""
+    defaults = {
+        'load': {
+            'callback': concatenate_callback,
+        },
+        'concatenate': {},
+        'fix_file': {
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'chl',
+            'mip': 'Oyr',
+            'output_dir': fix_dir,
+        },
+        'fix_data': {
+            'check_level': CheckLevels.DEFAULT,
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'chl',
+            'mip': 'Oyr',
+            'frequency': 'yr',
+        },
+        'fix_metadata': {
+            'check_level': CheckLevels.DEFAULT,
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'chl',
+            'mip': 'Oyr',
+            'frequency': 'yr',
+        },
+        'clip_start_end_year': {
+            'start_year': 2000,
+            'end_year': 2005,
+        },
+        'cmor_check_metadata': {
+            'check_level': CheckLevels.DEFAULT,
+            'cmor_table': 'CMIP5',
+            'mip': 'Oyr',
+            'short_name': 'chl',
+            'frequency': 'yr',
+        },
+        'cmor_check_data': {
+            'check_level': CheckLevels.DEFAULT,
+            'cmor_table': 'CMIP5',
+            'mip': 'Oyr',
+            'short_name': 'chl',
+            'frequency': 'yr',
+        },
+        'cleanup': {
+            'remove': [fix_dir]
+        },
+        'save': {
+            'compress': False,
+            'filename': save_filename,
+        }
+    }
+    return defaults
 
 
 def _get_filenames(root_path, filenames, tracking_id):
@@ -155,18 +215,22 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
-
     def get_required(short_name, _):
         if short_name != 'tas':
             assert False
         required = [
-            {'short_name': 'pr'},
-            {'short_name': 'areacella', 'mip': 'fx', 'optional': True},
+            {
+                'short_name': 'pr'
+            },
+            {
+                'short_name': 'areacella',
+                'mip': 'fx',
+                'optional': True
+            },
         ]
         return required
 
-    monkeypatch.setattr(
-        esmvalcore._recipe, 'get_required', get_required)
+    monkeypatch.setattr(esmvalcore._recipe, 'get_required', get_required)
 
 
 DEFAULT_DOCUMENTATION = dedent("""
@@ -192,6 +256,39 @@ def get_recipe(tempdir, content, cfg):
     recipe = read_recipe_file(str(recipe_file), cfg)
 
     return recipe
+
+
+def test_recipe_no_datasets(tmp_path, config_user):
+    content = dedent("""
+        preprocessors:
+          preprocessor_name:
+            extract_levels:
+              levels: 85000
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: preprocessor_name
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                start_year: 1999
+                end_year: 2002
+            scripts: null
+        """)
+    exc_message = ("You have not specified any dataset "
+                   "or additional_dataset groups for variable "
+                   "{'preprocessor': 'preprocessor_name', 'project': 'CMIP5',"
+                   " 'mip': 'Amon', 'exp': 'historical', 'ensemble': 'r1i1p1'"
+                   ", 'start_year': 1999, 'end_year': 2002, 'variable_group':"
+                   " 'ta', 'short_name': 'ta', 'diagnostic': "
+                   "'diagnostic_name'} Exiting.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, config_user)
+    assert str(exc.value) == exc_message
 
 
 def test_simple_recipe(tmp_path, patched_datafinder, config_user):
@@ -309,7 +406,8 @@ def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):
            "permitted on fx vars, please remove them from recipe")
     with pytest.raises(Exception) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-    assert str(rec_err_exp.value) == msg
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert str(rec_err_exp.value.failed_tasks[0].message) == msg
 
 
 def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
@@ -341,64 +439,47 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
 
     fix_dir = os.path.join(
         preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
-    defaults = {
-        'load': {
-            'callback': concatenate_callback,
-        },
-        'concatenate': {},
-        'fix_file': {
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
-            'output_dir': fix_dir,
-        },
-        'fix_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
-            'frequency': 'yr',
-        },
-        'fix_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
-            'frequency': 'yr',
-        },
-        'extract_time': {
-            'start_year': 2000,
-            'end_year': 2006,
-            'start_month': 1,
-            'end_month': 1,
-            'start_day': 1,
-            'end_day': 1,
-        },
-        'cmor_check_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'Oyr',
-            'short_name': 'chl',
-            'frequency': 'yr',
-        },
-        'cmor_check_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'Oyr',
-            'short_name': 'chl',
-            'frequency': 'yr',
-        },
-        'cleanup': {
-            'remove': [fix_dir]
-        },
-        'save': {
-            'compress': False,
-            'filename': product.filename,
-        }
-    }
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
+    assert product.settings == defaults
+
+
+def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
+                                           config_user):
+    """Test if default settings are used when ``custom_order`` is ``True``."""
+
+    content = dedent("""
+        preprocessors:
+          default_custom_order:
+            custom_order: true
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl:
+                preprocessor: default_custom_order
+                project: CMIP5
+                mip: Oyr
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    preproc_dir = os.path.dirname(product.filename)
+    assert preproc_dir.startswith(str(tmp_path))
+
+    fix_dir = os.path.join(
+        preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
     assert product.settings == defaults
 
 
@@ -427,9 +508,8 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
     preproc_dir = os.path.dirname(product.filename)
     assert preproc_dir.startswith(str(tmp_path))
 
-    fix_dir = os.path.join(
-        preproc_dir,
-        'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
+    fix_dir = os.path.join(preproc_dir,
+                           'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
 
     defaults = {
         'load': {
@@ -633,7 +713,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         'exp': 'historical',
         'frequency': '3hr',
         'grid': 'gn',
-        'institute': ['MOHC'],
+        'institute': ['MOHC', 'NERC'],
         'long_name': 'Precipitation',
         'mip': '3hr',
         'modeling_realm': ['atmos'],
@@ -648,8 +728,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         assert variable[key] == reference[key]
 
 
-def test_simple_cordex_recipe(tmp_path, patched_datafinder,
-                              config_user):
+def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
     """Test simple CORDEX recipe."""
     content = dedent("""
         diagnostics:
@@ -697,6 +776,7 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder,
         'recipe_dataset_index': 0,
         'rcm_version': 'v1',
         'short_name': 'tas',
+        'original_short_name': 'tas',
         'standard_name': 'air_temperature',
         'start_year': 1991,
         'units': 'K',
@@ -825,6 +905,17 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
           custom:
             custom_order: true
             <<: *default
+          empty_custom:
+            custom_order: true
+          with_extract_time:
+            custom_order: true
+            extract_time:
+              start_year: 2001
+              start_month: 3
+              start_day: 14
+              end_year: 2002
+              end_month: 6
+              end_day: 28
 
         diagnostics:
           diagnostic_name:
@@ -843,20 +934,50 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
               chl_custom:
                 <<: *chl
                 preprocessor: custom
+              chl_empty_custom:
+                <<: *chl
+                preprocessor: empty_custom
+              chl_with_extract_time:
+                <<: *chl
+                preprocessor: with_extract_time
             scripts: null
         """)
 
     recipe = get_recipe(tmp_path, content, config_user)
 
-    assert len(recipe.tasks) == 2
+    assert len(recipe.tasks) == 4
 
-    default = next(t for t in recipe.tasks if tuple(t.order) == DEFAULT_ORDER)
-    custom = next(t for t in recipe.tasks if tuple(t.order) != DEFAULT_ORDER)
-
-    assert custom.order.index('area_statistics') < custom.order.index(
-        'multi_model_statistics')
-    assert default.order.index('area_statistics') > default.order.index(
-        'multi_model_statistics')
+    for task in recipe.tasks:
+        if task.name == 'diagnostic_name/chl_default':
+            assert task.order.index('area_statistics') > task.order.index(
+                'multi_model_statistics')
+        elif task.name == 'diagnostic_name/chl_custom':
+            assert task.order.index('area_statistics') < task.order.index(
+                'multi_model_statistics')
+        elif task.name == 'diagnostic_name/chl_empty_custom':
+            assert len(task.products) == 1
+            product = list(task.products)[0]
+            assert set(
+                product.settings.keys()) == set(DEFAULT_PREPROCESSOR_STEPS)
+        elif task.name == 'diagnostic_name/chl_with_extract_time':
+            assert len(task.products) == 1
+            product = list(task.products)[0]
+            steps = set(DEFAULT_PREPROCESSOR_STEPS + tuple(['extract_time']))
+            assert set(product.settings.keys()) == steps
+            assert product.settings['extract_time'] == {
+                'start_year': 2001,
+                'start_month': 3,
+                'start_day': 14,
+                'end_year': 2002,
+                'end_month': 6,
+                'end_day': 28,
+            }
+            assert product.settings['clip_start_end_year'] == {
+                'start_year': 2000,
+                'end_year': 2005,
+            }
+        else:
+            assert False, f"invalid task {task.name}"
 
 
 def test_derive(tmp_path, patched_datafinder, config_user):
@@ -1011,8 +1132,7 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, config_user):
         assert ancestor_product.filename in all_product_files
 
 
-def test_derive_with_fx_ohc_fail(tmp_path,
-                                 patched_failing_datafinder,
+def test_derive_with_fx_ohc_fail(tmp_path, patched_failing_datafinder,
                                  config_user):
     content = dedent("""
         diagnostics:
@@ -1038,10 +1158,8 @@ def test_derive_with_fx_ohc_fail(tmp_path,
         get_recipe(tmp_path, content, config_user)
 
 
-def test_derive_with_optional_var(tmp_path,
-                                  patched_datafinder,
-                                  patched_tas_derivation,
-                                  config_user):
+def test_derive_with_optional_var(tmp_path, patched_datafinder,
+                                  patched_tas_derivation, config_user):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1079,8 +1197,7 @@ def test_derive_with_optional_var(tmp_path,
 
     # Check ancestors
     assert len(task.ancestors) == 2
-    assert task.ancestors[0].name == (
-        'diagnostic_name/tas_derive_input_pr')
+    assert task.ancestors[0].name == ('diagnostic_name/tas_derive_input_pr')
     assert task.ancestors[1].name == (
         'diagnostic_name/tas_derive_input_areacella')
     for ancestor_product in task.ancestors[0].products:
@@ -1091,10 +1208,8 @@ def test_derive_with_optional_var(tmp_path,
         assert ancestor_product.filename in all_product_files
 
 
-def test_derive_with_optional_var_nodata(tmp_path,
-                                         patched_failing_datafinder,
-                                         patched_tas_derivation,
-                                         config_user):
+def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
+                                         patched_tas_derivation, config_user):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1132,8 +1247,7 @@ def test_derive_with_optional_var_nodata(tmp_path,
 
     # Check ancestors
     assert len(task.ancestors) == 1
-    assert task.ancestors[0].name == (
-        'diagnostic_name/tas_derive_input_pr')
+    assert task.ancestors[0].name == ('diagnostic_name/tas_derive_input_pr')
     for ancestor_product in task.ancestors[0].products:
         assert ancestor_product.attributes['short_name'] == 'pr'
         assert ancestor_product.filename in all_product_files
@@ -1213,10 +1327,10 @@ TAGS = {
 
 
 def test_diagnostic_task_provenance(
-        tmp_path,
-        patched_datafinder,
-        monkeypatch,
-        config_user,
+    tmp_path,
+    patched_datafinder,
+    monkeypatch,
+    config_user,
 ):
     monkeypatch.setattr(esmvalcore._config, 'TAGS', TAGS)
     monkeypatch.setattr(esmvalcore._recipe, 'TAGS', TAGS)
@@ -1496,8 +1610,10 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
 
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, config_user)
-    assert 'extract_shape' in str(exc.value)
-    assert invalid_arg in str(exc.value)
+
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert 'extract_shape' in exc.value.failed_tasks[0].message
+    assert invalid_arg in exc.value.failed_tasks[0].message
 
 
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
@@ -1681,7 +1797,8 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
         """)
     with pytest.raises(RecipeError) as exc_info:
         get_recipe(tmp_path, content, config_user)
-    assert str(exc_info.value) == (
+    assert str(exc_info.value) == INITIALIZATION_ERROR_MSG
+    assert str(exc_info.value.failed_tasks[0].message) == (
         'Preprocessor landfrac_weighting uses alternative_dataset, but '
         'alternative_dataset is not defined for variable gpp of diagnostic '
         'diagnostic_name')
@@ -2238,12 +2355,12 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = (
-        "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
-        "with mip 'Omon'")
+    msg = ("Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
+           "with mip 'Omon'")
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, config_user)
-    assert str(wrong_proj.value) == msg
+    assert str(wrong_proj.value) == INITIALIZATION_ERROR_MSG
+    assert str(wrong_proj.value.failed_tasks[0].message) == msg
 
 
 def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
@@ -2277,4 +2394,5 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
            "'fx'-related CMOR table")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-    assert msg in str(rec_err_exp.value)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in rec_err_exp.value.failed_tasks[0].message
