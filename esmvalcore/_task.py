@@ -8,6 +8,7 @@ import os
 import pprint
 import subprocess
 import sys
+import textwrap
 import threading
 import time
 from copy import deepcopy
@@ -264,13 +265,10 @@ class BaseTask:
             for product in self.products
         }
 
-    def str(self):
+    def print_ancestors(self):
         """Return a nicely formatted description."""
-        def _indent(txt):
-            return '\n'.join('\t' + line for line in txt.split('\n'))
-
         txt = 'ancestors:\n{}'.format('\n\n'.join(
-            _indent(str(task))
+            textwrap.indent(str(task), prefix='  ')
             for task in self.ancestors) if self.ancestors else 'None')
         return txt
 
@@ -642,8 +640,8 @@ class DiagnosticTask(BaseTask):
         settings_string = pprint.pformat(self.settings)
         string = (f"{self.__class__.__name__}: {self.name}\n"
                   f"script: {self.script}\n"
-                  f"settings:\n{settings_string}\n")
-
+                  f"settings:\n{settings_string}\n"
+                  f"{self.print_ancestors()}\n")
         return string
 
 
