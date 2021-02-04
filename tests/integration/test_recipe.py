@@ -87,6 +87,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename):
     defaults = {
         'load': {
             'callback': concatenate_callback,
+            'fx_variables': None
         },
         'concatenate': {},
         'fix_file': {
@@ -509,6 +510,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
     defaults = {
         'load': {
             'callback': concatenate_callback,
+            'fx_variables': None
         },
         'concatenate': {},
         'fix_file': {
