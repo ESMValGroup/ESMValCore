@@ -2,7 +2,6 @@
 import abc
 import contextlib
 import datetime
-import errno
 import logging
 import numbers
 import os
@@ -13,7 +12,7 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
-from pathlib import Path
+from pathlib import Path, PosixPath
 from shutil import which
 
 import psutil
@@ -22,6 +21,15 @@ import yaml
 from ._citation import _write_citation_files
 from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
 from ._provenance import TrackedFile, get_task_provenance
+
+
+def path_representer(dumper, data):
+    """For printing pathlib.Path objects in yaml files."""
+    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+
+
+yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
+yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
 
 logger = logging.getLogger(__name__)
 
@@ -204,7 +212,6 @@ def write_ncl_settings(settings, filename, mode='wt'):
 
 class BaseTask:
     """Base class for defining task classes."""
-
     def __init__(self, ancestors=None, name='', products=None):
         """Initialize task."""
         self.ancestors = [] if ancestors is None else ancestors
@@ -250,6 +257,13 @@ class BaseTask:
     def _run(self, input_files):
         """Run task."""
 
+    def get_product_attributes(self) -> dict:
+        """Return a mapping of product attributes."""
+        return {
+            product.filename: product.attributes
+            for product in self.products
+        }
+
     def str(self):
         """Return a nicely formatted description."""
         def _indent(txt):
@@ -260,6 +274,10 @@ class BaseTask:
             for task in self.ancestors) if self.ancestors else 'None')
         return txt
 
+    def __repr__(self):
+        """Return canonical string representation."""
+        return f"{self.__class__.__name__}({repr(self.name)})"
+
 
 class DiagnosticError(Exception):
     """Error in diagnostic."""
@@ -267,7 +285,6 @@ class DiagnosticError(Exception):
 
 class DiagnosticTask(BaseTask):
     """Task for running a diagnostic."""
-
     def __init__(self, script, settings, output_dir, ancestors=None, name=''):
         """Create a diagnostic task."""
         super().__init__(ancestors=ancestors, name=name)
@@ -290,28 +307,22 @@ class DiagnosticTask(BaseTask):
             raise DiagnosticError(f"{err_msg}: file does not exist.")
 
         cmd = []
-        if not os.access(script_file, os.X_OK):  # if not executable
-            interpreters = {
-                'jl': 'julia',
-                'ncl': 'ncl',
-                'py': 'python',
-                'r': 'Rscript',
-            }
-            args = {
-                'ncl': ['-n', '-p'],
-            }
-            if self.settings['profile_diagnostic']:
-                profile_file = Path(self.settings['run_dir']) / 'profile.bin'
-                args['py'] = [
-                    '-m', 'vmprof', '--lines', '-o',
-                    str(profile_file)
-                ]
 
-            ext = script_file.suffix.lower()[1:]
-            if ext not in interpreters:
-                raise DiagnosticError(
-                    f"{err_msg}: non-executable file with unknown extension "
-                    f"'{script_file.suffix}'.")
+        interpreters = {
+            'jl': 'julia',
+            'ncl': 'ncl',
+            'py': 'python',
+            'r': 'Rscript',
+        }
+        args = {
+            'ncl': ['-n', '-p'],
+        }
+        if self.settings['profile_diagnostic']:
+            profile_file = Path(self.settings['run_dir'], 'profile.json')
+            args['py'] = ['-m', 'vprof', '-o', str(profile_file), '-c', 'c']
+
+        ext = script_file.suffix.lower()[1:]
+        if ext in interpreters:
             if ext == 'py' and sys.executable:
                 interpreter = sys.executable
             else:
@@ -320,8 +331,12 @@ class DiagnosticTask(BaseTask):
                 raise DiagnosticError(
                     f"{err_msg}: program '{interpreters[ext]}' not installed.")
             cmd.append(interpreter)
-            cmd.extend(args.get(ext, []))
+        elif not os.access(script_file, os.X_OK):
+            raise DiagnosticError(
+                f"{err_msg}: non-executable file with unknown extension "
+                f"'{script_file.suffix}'.")
 
+        cmd.extend(args.get(ext, []))
         cmd.append(str(script_file))
 
         return cmd
@@ -369,8 +384,6 @@ class DiagnosticTask(BaseTask):
             'work_dir',
             'output_file_type',
             'log_level',
-            'write_plots',
-            'write_netcdf',
         }
         settings = {'diag_script_info': {}, 'config_user_info': {}}
         for key, value in self.settings.items():
@@ -381,6 +394,13 @@ class DiagnosticTask(BaseTask):
             else:
                 settings[key] = value
 
+        # Still add deprecated keys to config_user_info to avoid
+        # crashing the diagnostic script that need this.
+        # DEPRECATED: remove in v2.4
+        for key in ('write_plots', 'write_netcdf'):
+            if key in self.settings:
+                settings['config_user_info'][key] = self.settings[key]
+
         write_ncl_settings(settings, filename)
 
         return filename
@@ -388,8 +408,8 @@ class DiagnosticTask(BaseTask):
     def _control_ncl_execution(self, process, lines):
         """Check if an error has occurred in an NCL script.
 
-        Apparently NCL does not automatically exit with a non-zero exit code
-        if an error occurs, so we take care of that here.
+        Apparently NCL does not automatically exit with a non-zero exit
+        code if an error occurs, so we take care of that here.
         """
         ignore_warnings = [
             warning.strip()
@@ -440,27 +460,24 @@ class DiagnosticTask(BaseTask):
         rerun_msg = 'cd {}; '.format(cwd)
         if env:
             rerun_msg += ' '.join('{}="{}"'.format(k, env[k]) for k in env)
-        rerun_msg += ' ' + ' '.join(cmd)
+        if "vprof" in cmd:
+            script_args = ' "' + cmd[-1] + '"'
+            rerun_msg += ' ' + ' '.join(cmd[:-1]) + script_args
+        else:
+            rerun_msg += ' ' + ' '.join(cmd)
         logger.info("To re-run this diagnostic script, run:\n%s", rerun_msg)
 
         complete_env = dict(os.environ)
         complete_env.update(env)
-        try:
-            process = subprocess.Popen(
-                cmd,
-                bufsize=2**20,  # Use a large buffer to prevent NCL crash
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                cwd=cwd,
-                env=complete_env)
-        except OSError as exc:
-            if exc.errno == errno.ENOEXEC:
-                logger.error(
-                    "Diagnostic script has its executable bit set, but is "
-                    "not executable. To fix this run:\nchmod -x %s", cmd[0])
-                logger.error(
-                    "You may also need to fix this in the git repository.")
-            raise
+
+        process = subprocess.Popen(
+            cmd,
+            bufsize=2**20,  # Use a large buffer to prevent NCL crash
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=cwd,
+            env=complete_env,
+        )
 
         return process
 
@@ -488,7 +505,12 @@ class DiagnosticTask(BaseTask):
         if ext == '.ncl':
             env['settings'] = settings_file
         else:
-            cmd.append(settings_file)
+            if self.settings['profile_diagnostic']:
+                script_file = cmd.pop()
+                combo_with_settings = script_file + ' ' + str(settings_file)
+                cmd.append(combo_with_settings)
+            else:
+                cmd.append(settings_file)
 
         process = self._start_diagnostic_script(cmd, env)
 
@@ -550,9 +572,7 @@ class DiagnosticTask(BaseTask):
             'recipe',
             'run_dir',
             'version',
-            'write_netcdf',
             'write_ncl_interface',
-            'write_plots',
             'work_dir',
         )
         attrs = {
@@ -614,17 +634,17 @@ class DiagnosticTask(BaseTask):
                 "are:\n%s", self.script, self.name,
                 '\n'.join(ancestor_products))
         logger.debug("Collecting provenance of task %s took %.1f seconds",
-                     self.name, time.time() - start)
+                     self.name,
+                     time.time() - start)
 
-    def __str__(self):
+    def __repr__(self):
         """Get human readable description."""
-        txt = "{}:\nscript: {}\n{}\nsettings:\n{}\n".format(
-            self.__class__.__name__,
-            self.script,
-            pprint.pformat(self.settings, indent=2),
-            super(DiagnosticTask, self).str(),
-        )
-        return txt
+        settings_string = pprint.pformat(self.settings)
+        string = (f"{self.__class__.__name__}: {self.name}\n"
+                  f"script: {self.script}\n"
+                  f"settings:\n{settings_string}\n")
+
+        return string
 
 
 def get_flattened_tasks(tasks):

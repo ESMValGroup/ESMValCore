@@ -3,7 +3,6 @@ import fnmatch
 import logging
 import os
 import re
-from collections import OrderedDict
 from copy import deepcopy
 from pprint import pformat
 
@@ -12,81 +11,60 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import (TAGS, get_activity, get_institutes, get_project_config,
-                      replace_tags)
-from ._data_finder import (get_input_filelist, get_output_file,
-                           get_statistic_output_file)
+from ._config import (
+    TAGS,
+    get_activity,
+    get_institutes,
+    get_project_config,
+    replace_tags,
+)
+from ._data_finder import (
+    get_input_filelist,
+    get_output_file,
+    get_statistic_output_file,
+)
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
-from ._task import (DiagnosticTask, get_flattened_tasks, get_independent_tasks,
-                    run_tasks)
+from ._task import (
+    DiagnosticTask,
+    get_flattened_tasks,
+    get_independent_tasks,
+    run_tasks,
+)
+from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
-from .preprocessor import (DEFAULT_ORDER, FINAL_STEPS, INITIAL_STEPS,
-                           MULTI_MODEL_FUNCTIONS, PreprocessingTask,
-                           PreprocessorFile)
+from .preprocessor import (
+    DEFAULT_ORDER,
+    FINAL_STEPS,
+    INITIAL_STEPS,
+    MULTI_MODEL_FUNCTIONS,
+    PreprocessingTask,
+    PreprocessorFile,
+)
 from .preprocessor._derive import get_required
 from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
-from .preprocessor._regrid import (get_cmor_levels, get_reference_levels,
-                                   parse_cell_spec)
+from .preprocessor._regrid import (
+    get_cmor_levels,
+    get_reference_levels,
+    parse_cell_spec,
+)
 
 logger = logging.getLogger(__name__)
 
 TASKSEP = os.sep
 
 
-def ordered_safe_load(stream):
-    """Load a YAML file using OrderedDict instead of dict."""
-    class OrderedSafeLoader(yaml.SafeLoader):
-        """Loader class that uses OrderedDict to load a map."""
-    def construct_mapping(loader, node):
-        """Load a map as an OrderedDict."""
-        loader.flatten_mapping(node)
-        return OrderedDict(loader.construct_pairs(node))
-
-    OrderedSafeLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, construct_mapping)
-
-    return yaml.load(stream, OrderedSafeLoader)
-
-
-def load_raw_recipe(filename):
-    """Check a recipe file and return it in raw form."""
-    # Note that many checks can only be performed after the automatically
-    # computed entries have been filled in by creating a Recipe object.
-    check.recipe_with_schema(filename)
-    with open(filename, 'r') as file:
-        contents = file.read()
-        raw_recipe = yaml.safe_load(contents)
-        raw_recipe['preprocessors'] = ordered_safe_load(contents).get(
-            'preprocessors', {})
-
-    check.diagnostics(raw_recipe['diagnostics'])
-    return raw_recipe
-
-
 def read_recipe_file(filename, config_user, initialize_tasks=True):
     """Read a recipe from file."""
-    raw_recipe = load_raw_recipe(filename)
+    check.recipe_with_schema(filename)
+    with open(filename, 'r') as file:
+        raw_recipe = yaml.safe_load(file)
+
     return Recipe(raw_recipe,
                   config_user,
                   initialize_tasks,
                   recipe_file=filename)
-
-
-def _get_value(key, datasets):
-    """Get a value for key by looking at the other datasets."""
-    values = {dataset[key] for dataset in datasets if key in dataset}
-
-    if len(values) > 1:
-        raise RecipeError("Ambiguous values {} for property {}".format(
-            values, key))
-
-    value = None
-    if len(values) == 1:
-        value = values.pop()
-
-    return value
 
 
 def _add_cmor_info(variable, override=False):
@@ -109,7 +87,7 @@ def _add_cmor_info(variable, override=False):
         raise RecipeError(
             f"Unable to load CMOR table (project) '{project}' for variable "
             f"'{short_name}' with mip '{mip}'")
-
+    variable['original_short_name'] = table_entry.short_name
     for key in cmor_keys:
         if key not in variable or override:
             value = getattr(table_entry, key, None)
@@ -272,7 +250,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings = {}
 
     # Set up downloading using synda if requested.
-    if config_user['synda_download']:
+    if config_user.get('synda_download'):
         # TODO: make this respect drs or download to preproc dir?
         download_folder = os.path.join(config_user['preproc_dir'], 'downloads')
         settings['download'] = {
@@ -299,20 +277,16 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_file']['output_dir'] = fix_dir
     # Cube fixes
     fix['frequency'] = variable['frequency']
-    fix['check_level'] = config_user['check_level']
+    fix['check_level'] = config_user.get('check_level', CheckLevels.DEFAULT)
     settings['fix_metadata'] = dict(fix)
     settings['fix_data'] = dict(fix)
 
     # Configure time extraction
     if 'start_year' in variable and 'end_year' in variable \
             and variable['frequency'] != 'fx':
-        settings['extract_time'] = {
+        settings['clip_start_end_year'] = {
             'start_year': variable['start_year'],
-            'end_year': variable['end_year'] + 1,
-            'start_month': 1,
-            'end_month': 1,
-            'start_day': 1,
-            'end_day': 1,
+            'end_year': variable['end_year'],
         }
 
     if derive:
@@ -329,16 +303,10 @@ def _get_default_settings(variable, config_user, derive=False):
         'mip': variable['mip'],
         'short_name': variable['short_name'],
         'frequency': variable['frequency'],
-        'check_level': config_user['check_level']
+        'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
     }
     # Configure final CMOR data check
-    settings['cmor_check_data'] = {
-        'cmor_table': variable['project'],
-        'mip': variable['mip'],
-        'short_name': variable['short_name'],
-        'frequency': variable['frequency'],
-        'check_level': config_user['check_level']
-    }
+    settings['cmor_check_data'] = dict(settings['cmor_check_metadata'])
 
     # Clean up fixed files
     if not config_user['save_intermediary_cubes']:
@@ -348,6 +316,8 @@ def _get_default_settings(variable, config_user, derive=False):
 
     # Configure saving cubes to file
     settings['save'] = {'compress': config_user['compress_netcdf']}
+    if variable['short_name'] != variable['original_short_name']:
+        settings['save']['alias'] = variable['short_name']
 
     return settings
 
@@ -531,7 +501,7 @@ def _get_input_files(variable, config_user):
 
     # Set up downloading using synda if requested.
     # Do not download if files are already available locally.
-    if config_user['synda_download'] and not input_files:
+    if config_user.get('synda_download') and not input_files:
         input_files = synda_search(variable)
         dirnames = None
         filenames = None
@@ -974,6 +944,7 @@ class Recipe:
     def _initialize_diagnostics(self, raw_diagnostics, raw_datasets):
         """Define diagnostics in recipe."""
         logger.debug("Retrieving diagnostics from recipe")
+        check.diagnostics(raw_diagnostics)
 
         diagnostics = {}
 
@@ -1050,6 +1021,10 @@ class Recipe:
         raw_variable = deepcopy(raw_variable)
         datasets = self._initialize_datasets(
             raw_datasets + raw_variable.pop('additional_datasets', []))
+        if not datasets:
+            raise RecipeError("You have not specified any dataset "
+                              "or additional_dataset groups "
+                              f"for variable {raw_variable} Exiting.")
         check.duplicate_datasets(datasets)
 
         for index, dataset in enumerate(datasets):
@@ -1057,7 +1032,7 @@ class Recipe:
             variable.update(dataset)
 
             variable['recipe_dataset_index'] = index
-            if 'end_year' in variable and 'max_years' in self._cfg:
+            if 'end_year' in variable and self._cfg.get('max_years'):
                 variable['end_year'] = min(
                     variable['end_year'],
                     variable['start_year'] + self._cfg['max_years'] - 1)
@@ -1244,12 +1219,19 @@ class Recipe:
             for key in (
                     'output_file_type',
                     'log_level',
-                    'write_plots',
-                    'write_netcdf',
                     'profile_diagnostic',
                     'auxiliary_data_dir',
             ):
                 settings[key] = self._cfg[key]
+
+            # Add deprecated settings from configuration file
+            # DEPRECATED: remove in v2.4
+            for key in (
+                    'write_plots',
+                    'write_netcdf',
+            ):
+                if key not in settings and key in self._cfg:
+                    settings[key] = self._cfg[key]
 
             scripts[script_name] = {
                 'script': script,
@@ -1285,6 +1267,9 @@ class Recipe:
         """Define tasks in recipe."""
         logger.info("Creating tasks from recipe")
         tasks = set()
+
+        run_diagnostic = self._cfg.get('run_diagnostic', True)
+        tasknames_to_run = self._cfg.get('diagnostics')
 
         priority = 0
         for diagnostic_name, diagnostic in self.diagnostics.items():
@@ -1327,12 +1312,12 @@ class Recipe:
 
         # Select only requested tasks
         tasks = get_flattened_tasks(tasks)
-        if not self._cfg.get('run_diagnostic'):
+        if not run_diagnostic:
             tasks = {t for t in tasks if isinstance(t, PreprocessingTask)}
-        if self._cfg.get('diagnostics'):
+        if tasknames_to_run:
             names = {t.name for t in tasks}
             selection = set()
-            for pattern in self._cfg.get('diagnostics'):
+            for pattern in tasknames_to_run:
                 selection |= set(fnmatch.filter(names, pattern))
             tasks = {t for t in tasks if t.name in selection}
 
@@ -1355,5 +1340,23 @@ class Recipe:
 
     def run(self):
         """Run all tasks in the recipe."""
+        if not self.tasks:
+            raise RecipeError('No tasks to run!')
+
         run_tasks(self.tasks,
                   max_parallel_tasks=self._cfg['max_parallel_tasks'])
+
+    def get_product_output(self) -> dict:
+        """Return the paths to the output plots and data.
+
+        Returns
+        -------
+        product_filenames : dict
+            Lists of products/attributes grouped by task.
+        """
+        product_filenames = {}
+
+        for task in self.tasks:
+            product_filenames[task.name] = task.get_product_attributes()
+
+        return product_filenames

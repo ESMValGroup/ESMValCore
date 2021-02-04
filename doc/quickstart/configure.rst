@@ -47,14 +47,6 @@ with explanations in a commented line above each option:
 
 .. code-block:: yaml
 
-  # Diagnostics create plots? [true]/false
-  # turning it off will turn off graphical output from diagnostic
-  write_plots: true
-
-  # Diagnostics write NetCDF files? [true]/false
-  # turning it off will turn off netCDF output from diagnostic
-  write_netcdf: true
-
   # Set the console log level debug, [info], warning, error
   # for much more information printed to screen set log_level: debug
   log_level: info
@@ -100,7 +92,9 @@ with explanations in a commented line above each option:
   # See config-developer.yml for an example. Set to None to use the default
   config_developer_file: null
 
-  # Get profiling information for diagnostics
+  # Use a profiling tool for the diagnostic run [false]/true
+  # A profiler tells you which functions in your code take most time to run.
+  # For this purpose we use vprof, see below for notes
   # Only available for Python diagnostics
   profile_diagnostic: false
 
@@ -115,19 +109,14 @@ with explanations in a commented line above each option:
   drs:
     CMIP5: default
 
-Most of these settings are fairly self-explanatory, e.g.:
+..
+   DEPRECATED: remove in v2.4
 
-.. code-block:: yaml
-
-  # Diagnostics create plots? [true]/false
-  write_plots: true
-  # Diagnostics write NetCDF files? [true]/false
-  write_netcdf: true
-
-The ``write_plots`` setting is used to inform ESMValTool diagnostics about your
-preference for creating figures. Similarly, the ``write_netcdf`` setting is a
-boolean which turns on or off the writing of netCDF files by the diagnostic
-scripts.
+There used to be a setting ``write_plots`` and ``write_netcdf``
+in the config user file, but these have been deprecated since ESMValCore v2.2 and
+will be removed in v2.4, because only some diagnostic scripts supported these settings.
+For those diagnostic scripts that do support these settings, they can now be configured
+in the diagnostic script section of the recipe.
 
 .. code-block:: yaml
 
@@ -146,6 +135,22 @@ downloaded at runtime.
 
    This setting is not for model or observational datasets, rather it is for
    data files used in plotting such as coastline descriptions and so on.
+
+The ``profile_diagnostic`` setting triggers profiling of Python diagnostics,
+this will tell you which functions in the diagnostic took most time to run.
+For this purpose we use `vprof <https://github.com/nvdv/vprof>`_.
+For each diagnostic script in the recipe, the profiler writes a ``.json`` file
+that can be used to plot a
+`flame graph <https://queue.acm.org/detail.cfm?id=2927301>`__
+of the profiling information by running
+
+.. code-block:: bash
+
+  vprof --input-file esmvaltool_output/recipe_output/run/diagnostic/script/profile.json
+
+Note that it is also possible to use vprof to understand other resources used
+while running the diagnostic, including execution time of different code blocks
+and memory usage.
 
 A detailed explanation of the data finding-related sections of the
 ``config-user.yml`` (``rootpath`` and ``drs``) is presented in the
@@ -186,10 +191,10 @@ Users can get a copy of this file with default values by running
 
 .. code-block:: bash
 
-  ``esmvaltool config get-config-developer --path=${TARGET_FOLDER}``.
+  esmvaltool config get-config-developer --path=${TARGET_FOLDER}
 
 If the option ``--path`` is omitted, the file will be created in
-`${HOME}/.esmvaltool`
+```${HOME}/.esmvaltool``.
 
 .. note::
 
@@ -281,7 +286,7 @@ following documentation section:
 
 .. code-block:: yaml
 
-  documentation
+  documentation:
     authors:
       - demo_le
 

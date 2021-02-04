@@ -51,7 +51,7 @@ DEFAULT_PREPROCESSOR_STEPS = (
     'cmor_check_data',
     'cmor_check_metadata',
     'concatenate',
-    'extract_time',
+    'clip_start_end_year',
     'fix_data',
     'fix_file',
     'fix_metadata',
@@ -65,7 +65,6 @@ def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
     cfg['synda_download'] = False
-    cfg['output_file_type'] = 'png'
     cfg['check_level'] = CheckLevels.DEFAULT
     return cfg
 
@@ -81,6 +80,65 @@ def create_test_file(filename, tracking_id=None):
     cube = iris.cube.Cube([], attributes=attributes)
 
     iris.save(cube, filename)
+
+
+def _get_default_settings_for_chl(fix_dir, save_filename):
+    """Get default preprocessor settings for chl."""
+    defaults = {
+        'load': {
+            'callback': concatenate_callback,
+        },
+        'concatenate': {},
+        'fix_file': {
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'chl',
+            'mip': 'Oyr',
+            'output_dir': fix_dir,
+        },
+        'fix_data': {
+            'check_level': CheckLevels.DEFAULT,
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'chl',
+            'mip': 'Oyr',
+            'frequency': 'yr',
+        },
+        'fix_metadata': {
+            'check_level': CheckLevels.DEFAULT,
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'chl',
+            'mip': 'Oyr',
+            'frequency': 'yr',
+        },
+        'clip_start_end_year': {
+            'start_year': 2000,
+            'end_year': 2005,
+        },
+        'cmor_check_metadata': {
+            'check_level': CheckLevels.DEFAULT,
+            'cmor_table': 'CMIP5',
+            'mip': 'Oyr',
+            'short_name': 'chl',
+            'frequency': 'yr',
+        },
+        'cmor_check_data': {
+            'check_level': CheckLevels.DEFAULT,
+            'cmor_table': 'CMIP5',
+            'mip': 'Oyr',
+            'short_name': 'chl',
+            'frequency': 'yr',
+        },
+        'cleanup': {
+            'remove': [fix_dir]
+        },
+        'save': {
+            'compress': False,
+            'filename': save_filename,
+        }
+    }
+    return defaults
 
 
 def _get_filenames(root_path, filenames, tracking_id):
@@ -192,6 +250,40 @@ def get_recipe(tempdir, content, cfg):
     recipe = read_recipe_file(str(recipe_file), cfg)
 
     return recipe
+
+
+def test_recipe_no_datasets(tmp_path, config_user):
+    content = dedent("""
+        preprocessors:
+          preprocessor_name:
+            extract_levels:
+              levels: 85000
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: preprocessor_name
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                start_year: 1999
+                end_year: 2002
+            scripts: null
+        """)
+    exc_message = (
+        "You have not specified any dataset "
+        "or additional_dataset groups for variable "
+        "{'preprocessor': 'preprocessor_name', 'project': 'CMIP5',"
+        " 'mip': 'Amon', 'exp': 'historical', 'ensemble': 'r1i1p1'"
+        ", 'start_year': 1999, 'end_year': 2002, 'variable_group':"
+        " 'ta', 'short_name': 'ta', 'diagnostic': "
+        "'diagnostic_name'} Exiting.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, config_user)
+    assert str(exc.value) == exc_message
 
 
 def test_simple_recipe(tmp_path, patched_datafinder, config_user):
@@ -341,64 +433,47 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
 
     fix_dir = os.path.join(
         preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
-    defaults = {
-        'load': {
-            'callback': concatenate_callback,
-        },
-        'concatenate': {},
-        'fix_file': {
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
-            'output_dir': fix_dir,
-        },
-        'fix_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
-            'frequency': 'yr',
-        },
-        'fix_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
-            'frequency': 'yr',
-        },
-        'extract_time': {
-            'start_year': 2000,
-            'end_year': 2006,
-            'start_month': 1,
-            'end_month': 1,
-            'start_day': 1,
-            'end_day': 1,
-        },
-        'cmor_check_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'Oyr',
-            'short_name': 'chl',
-            'frequency': 'yr',
-        },
-        'cmor_check_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'Oyr',
-            'short_name': 'chl',
-            'frequency': 'yr',
-        },
-        'cleanup': {
-            'remove': [fix_dir]
-        },
-        'save': {
-            'compress': False,
-            'filename': product.filename,
-        }
-    }
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
+    assert product.settings == defaults
+
+
+def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
+                                           config_user):
+    """Test if default settings are used when ``custom_order`` is ``True``."""
+
+    content = dedent("""
+        preprocessors:
+          default_custom_order:
+            custom_order: true
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl:
+                preprocessor: default_custom_order
+                project: CMIP5
+                mip: Oyr
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    preproc_dir = os.path.dirname(product.filename)
+    assert preproc_dir.startswith(str(tmp_path))
+
+    fix_dir = os.path.join(
+        preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
     assert product.settings == defaults
 
 
@@ -633,7 +708,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         'exp': 'historical',
         'frequency': '3hr',
         'grid': 'gn',
-        'institute': ['MOHC'],
+        'institute': ['MOHC', 'NERC'],
         'long_name': 'Precipitation',
         'mip': '3hr',
         'modeling_realm': ['atmos'],
@@ -697,6 +772,7 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder,
         'recipe_dataset_index': 0,
         'rcm_version': 'v1',
         'short_name': 'tas',
+        'original_short_name': 'tas',
         'standard_name': 'air_temperature',
         'start_year': 1991,
         'units': 'K',
@@ -825,6 +901,17 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
           custom:
             custom_order: true
             <<: *default
+          empty_custom:
+            custom_order: true
+          with_extract_time:
+            custom_order: true
+            extract_time:
+              start_year: 2001
+              start_month: 3
+              start_day: 14
+              end_year: 2002
+              end_month: 6
+              end_day: 28
 
         diagnostics:
           diagnostic_name:
@@ -843,20 +930,50 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
               chl_custom:
                 <<: *chl
                 preprocessor: custom
+              chl_empty_custom:
+                <<: *chl
+                preprocessor: empty_custom
+              chl_with_extract_time:
+                <<: *chl
+                preprocessor: with_extract_time
             scripts: null
         """)
 
     recipe = get_recipe(tmp_path, content, config_user)
 
-    assert len(recipe.tasks) == 2
+    assert len(recipe.tasks) == 4
 
-    default = next(t for t in recipe.tasks if tuple(t.order) == DEFAULT_ORDER)
-    custom = next(t for t in recipe.tasks if tuple(t.order) != DEFAULT_ORDER)
-
-    assert custom.order.index('area_statistics') < custom.order.index(
-        'multi_model_statistics')
-    assert default.order.index('area_statistics') > default.order.index(
-        'multi_model_statistics')
+    for task in recipe.tasks:
+        if task.name == 'diagnostic_name/chl_default':
+            assert task.order.index('area_statistics') > task.order.index(
+                'multi_model_statistics')
+        elif task.name == 'diagnostic_name/chl_custom':
+            assert task.order.index('area_statistics') < task.order.index(
+                'multi_model_statistics')
+        elif task.name == 'diagnostic_name/chl_empty_custom':
+            assert len(task.products) == 1
+            product = list(task.products)[0]
+            assert set(product.settings.keys()) == set(
+                DEFAULT_PREPROCESSOR_STEPS)
+        elif task.name == 'diagnostic_name/chl_with_extract_time':
+            assert len(task.products) == 1
+            product = list(task.products)[0]
+            steps = set(DEFAULT_PREPROCESSOR_STEPS + tuple(['extract_time']))
+            assert set(product.settings.keys()) == steps
+            assert product.settings['extract_time'] == {
+              'start_year': 2001,
+              'start_month': 3,
+              'start_day': 14,
+              'end_year': 2002,
+              'end_month': 6,
+              'end_day': 28,
+            }
+            assert product.settings['clip_start_end_year'] == {
+              'start_year': 2000,
+              'end_year': 2005,
+            }
+        else:
+            assert False, f"invalid task {task.name}"
 
 
 def test_derive(tmp_path, patched_datafinder, config_user):
