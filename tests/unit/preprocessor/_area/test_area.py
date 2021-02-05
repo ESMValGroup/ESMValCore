@@ -60,6 +60,12 @@ class Test(tests.Test):
         self.negative_grid = iris.cube.Cube(ndata,
                                             dim_coords_and_dims=coords_spec)
 
+    def test_area_statistics_mean(self):
+        """Test for area average of a 2D field."""
+        result = area_statistics(self.grid, 'mean')
+        expected = np.array([1.])
+        self.assert_array_equal(result.data, expected)
+
     def test_area_statistics_cell_measure_mean(self):
         """
         Test for area average of a 2D field.
