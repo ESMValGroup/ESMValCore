@@ -1,6 +1,7 @@
 """Test using sample data for :func:`esmvalcore.preprocessor._multimodel`."""
 
 import pickle
+import sys
 from itertools import groupby
 from pathlib import Path
 
@@ -8,7 +9,8 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.preprocessor import extract_time, multi_model_statistics
+from esmvalcore.preprocessor import extract_time
+from esmvalcore.preprocessor._multimodel import multi_model_statistics
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
@@ -55,11 +57,26 @@ def preprocess_data(cubes, time_slice: dict = None):
     return cubes
 
 
+def get_cache_key(value):
+    """Get a cache key that is hopefully unique enough for unpickling.
+
+    If this doesn't avoid problems with unpickling the cached data,
+    manually clean the pytest cache with the command `pytest --cache-clear`.
+    """
+    return ' '.join([
+        str(value),
+        iris.__version__,
+        np.__version__,
+        sys.version,
+    ])
+
+
 @pytest.fixture(scope="module")
 def timeseries_cubes_month(request):
     """Load representative timeseries data."""
     # cache the cubes to save about 30-60 seconds on repeat use
-    data = request.config.cache.get("sample_data/monthly", None)
+    cache_key = get_cache_key("sample_data/monthly")
+    data = request.config.cache.get(cache_key, None)
 
     if data:
         cubes = pickle.loads(data.encode('latin1'))
@@ -76,7 +93,7 @@ def timeseries_cubes_month(request):
         cubes = preprocess_data(cubes, time_slice=time_slice)
 
         # cubes are not serializable via json, so we must go via pickle
-        request.config.cache.set("sample_data/monthly",
+        request.config.cache.set(cache_key,
                                  pickle.dumps(cubes).decode('latin1'))
 
     return cubes
@@ -86,7 +103,8 @@ def timeseries_cubes_month(request):
 def timeseries_cubes_day(request):
     """Load representative timeseries data grouped by calendar."""
     # cache the cubes to save about 30-60 seconds on repeat use
-    data = request.config.cache.get("sample_data/daily", None)
+    cache_key = get_cache_key("sample_data/daily")
+    data = request.config.cache.get(cache_key, None)
 
     if data:
         cubes = pickle.loads(data.encode('latin1'))
@@ -104,7 +122,7 @@ def timeseries_cubes_day(request):
         cubes = preprocess_data(cubes, time_slice=time_slice)
 
         # cubes are not serializable via json, so we must go via pickle
-        request.config.cache.set("sample_data/daily",
+        request.config.cache.set(cache_key,
                                  pickle.dumps(cubes).decode('latin1'))
 
     def calendar(cube):
@@ -118,11 +136,13 @@ def timeseries_cubes_day(request):
     return cube_dict
 
 
-def multimodel_test(cubes, span, statistic):
+def multimodel_test(cubes, statistic, span):
     """Run multimodel test with some simple checks."""
     statistics = [statistic]
 
-    result = multi_model_statistics(cubes, span=span, statistics=statistics)
+    result = multi_model_statistics(products=cubes,
+                                    statistics=statistics,
+                                    span=span)
     assert isinstance(result, dict)
     assert statistic in result
 
@@ -139,7 +159,7 @@ def multimodel_regression_test(cubes, span, name):
     are being written.
     """
     statistic = 'mean'
-    result = multimodel_test(cubes, span=span, statistic=statistic)
+    result = multimodel_test(cubes, statistic=statistic, span=span)
     result_cube = result[statistic]
 
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')

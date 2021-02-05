@@ -8,16 +8,19 @@ from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor import multi_model_statistics
-from esmvalcore.preprocessor._multimodel import (_assemble_data,
-                                                 _compute_statistic,
-                                                 _get_time_slice, _plev_fix,
-                                                 _put_in_cube,
-                                                 _unify_time_coordinates)
+from esmvalcore.preprocessor._multimodel import (
+    _assemble_data,
+    _compute_statistic,
+    _get_time_slice,
+    _multiproduct_statistics,
+    _plev_fix,
+    _put_in_cube,
+    _unify_time_coordinates,
+)
 
 
 class Test(tests.Test):
     """Test class for preprocessor/_multimodel.py."""
-
     def setUp(self):
         """Prepare tests."""
         # Make various time arrays
@@ -92,7 +95,9 @@ class Test(tests.Test):
 
     def test_compute_full_statistic_mon_cube(self):
         data = [self.cube1, self.cube2]
-        stats = multi_model_statistics(data, 'full', ['mean'])
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='full')
         expected_full_mean = np.ma.ones((5, 3, 2, 2))
         expected_full_mean.mask = np.ones((5, 3, 2, 2))
         expected_full_mean.mask[1] = False
@@ -100,7 +105,9 @@ class Test(tests.Test):
 
     def test_compute_full_statistic_yr_cube(self):
         data = [self.cube4, self.cube5]
-        stats = multi_model_statistics(data, 'full', ['mean'])
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='full')
         expected_full_mean = np.ma.ones((4, 3, 2, 2))
         expected_full_mean.mask = np.zeros((4, 3, 2, 2))
         expected_full_mean.mask[2:4] = True
@@ -108,13 +115,17 @@ class Test(tests.Test):
 
     def test_compute_overlap_statistic_mon_cube(self):
         data = [self.cube1, self.cube1]
-        stats = multi_model_statistics(data, 'overlap', ['mean'])
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='overlap')
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
     def test_compute_overlap_statistic_yr_cube(self):
         data = [self.cube4, self.cube4]
-        stats = multi_model_statistics(data, 'overlap', ['mean'])
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='overlap')
         expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
 
@@ -209,6 +220,47 @@ class Test(tests.Test):
         masked.mask = True
         expected = [self.cube1[0].data, masked]
         self.assert_array_equal(expected, result)
+
+    def test_return_products(self):
+        """Check that the right product set is returned."""
+        input1 = PreprocessorFile(self.cube1)
+        input2 = PreprocessorFile(self.cube2)
+        output = PreprocessorFile()
+        products = set([input1, input2])
+        output_products = {'mean': output}
+        result1 = _multiproduct_statistics(products,
+                                           statistics=['mean'],
+                                           output_products=output_products,
+                                           span='full',
+                                           keep_input_datasets=True)
+        result2 = _multiproduct_statistics(products,
+                                           statistics=['mean'],
+                                           output_products=output_products,
+                                           span='full',
+                                           keep_input_datasets=False)
+        result3 = multi_model_statistics(products,
+                                         statistics=['mean'],
+                                         output_products=output_products,
+                                         span='full')
+        result4 = multi_model_statistics(products,
+                                         statistics=['mean'],
+                                         output_products=output_products,
+                                         span='full',
+                                         keep_input_datasets=False)
+        assert result1 == set([input1, input2, output])
+        assert result2 == set([output])
+        assert result3 == result1
+        assert result4 == result2
+
+
+class PreprocessorFile:
+    """Mockup to test output of multimodel."""
+    def __init__(self, cube=None):
+        if cube:
+            self.cubes = [cube]
+
+    def wasderivedfrom(self, product):
+        pass
 
 
 if __name__ == '__main__':
