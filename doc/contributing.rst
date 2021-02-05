@@ -227,6 +227,11 @@ early, as this will cause CircleCI to run the unit tests and Codacy to
 analyse your code. It’s also easier to get help from other developers if
 your code is visible in a pull request.
 
+You also must assign at least one `label <https://docs.github.com/en/github/managing-your-work-on-github/managing-labels#applying-labels-to-issues-and-pull-requests>`__
+to it as they are used to organize the changelog. At least one of the following
+ones must be used: `bug`, `deprecated feature`, `fix for dataset`,
+`preprocessor`, `cmor`, `api`, `testing`, `documentation` or `enhancement`.
+
 You can view the results of the automatic checks below your pull
 request. If one of the tests shows a red cross instead of a green
 approval sign, please click the link and try to solve the issue. Note
