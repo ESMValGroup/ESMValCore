@@ -89,8 +89,16 @@ class TagsManager(dict):
             logger.debug("No tags loaded, file %s not present", filename)
             return cls()
 
-    def get_tag_value(self, section, tag):
-        """Retrieve the value of a tag."""
+    def get_tag_value(self, section: str, tag: str):
+        """Retrieve the value of a tag.
+
+        Parameters
+        ----------
+        section : str
+            Name of the subsection
+        tag : str
+            Name of the tag
+        """
         if section not in self:
             postfix = f' in {self._source_file}' if self._source_file else ''
             raise ValueError(f"Section '{section}' does not exist{postfix}")
@@ -102,8 +110,16 @@ class TagsManager(dict):
 
         return self[section][tag]
 
-    def get_tag_values(self, section, tags):
-        """Retrieve a list of tags with their values."""
+    def get_tag_values(self, section: str, tags: tuple):
+        """Retrieve a list of tags with their values.
+
+        Parameters
+        ----------
+        section : str
+            Name of the subsection
+        tag : tuple[str] or list[str]
+            List or tuple with tag names
+        """
         return tuple(self.get_tag_value(section, tag) for tag in tags)
 
     def replace_tags_in_dict(self, dct: dict):
