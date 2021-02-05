@@ -6,6 +6,18 @@ Changelog
 v2.2.0
 ------
 
+Highlights
+~~~~~~~~~~
+
+ESMValCore is now using the recently released `Iris 3 <https://scitools-iris.readthedocs.io/en/latest/whatsnew/3.0.html>`.
+We acknowledge that this change may impact your work, as Iris 3 introduces
+several breaking changes, but we think that moving forward is the best
+decision for the tool in the long term.
+
+This release is also the first one including support for downloading CMIP6 data
+using Synda. Give it a try!
+
+
 This release includes
 
 Bug fixes
