@@ -92,11 +92,11 @@ class Pr(Fix):
         cube.units = Unit(self.vardef.units)
 
         if frequency in ('day', '3hr'):
-            # divide by number of seconds in a month
-            cube.data = cube.core_data() / 60 * 60 * 24 * 30
-        elif frequency == 'mon':
             # divide by number of seconds in a day
-            cube.data = cube.core_data() / 60 * 60 * 24
+            cube.data = cube.core_data() / (60 * 60 * 24)
+        elif frequency == 'mon':
+            # divide by number of seconds in a month
+            cube.data = cube.core_data() / (60 * 60 * 24 * 30)
         else:
             raise ValueError(f'Cannot fix units for frequency: {frequency!r}')
 
