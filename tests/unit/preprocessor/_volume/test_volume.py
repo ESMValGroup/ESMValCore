@@ -10,7 +10,7 @@ import tests
 from esmvalcore.preprocessor._volume import (volume_statistics,
                                              depth_integration,
                                              extract_trajectory,
-                                             extract_transect, 
+                                             extract_transect,
                                              extract_volume,
                                              calculate_volume)
 
@@ -87,7 +87,7 @@ class Test(tests.Test):
 
     def test_extract_volume_mean(self):
         """
-        Test to extract the top two layers and compute the 
+        Test to extract the top two layers and compute the
         weighted average of a cube."""
         grid_volume = calculate_volume(self.grid_4d)
         measure = iris.coords.CellMeasure(
@@ -120,7 +120,7 @@ class Test(tests.Test):
             standard_name='ocean_volume',
             units='m3',
             measure='volume')
-        self.grid.add_cell_measure(measure, range(0, measure.ndim))
+        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
         result = volume_statistics(self.grid_4d, 'mean')
         expected = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result.data, expected)
