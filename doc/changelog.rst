@@ -9,7 +9,7 @@ v2.2.0
 Highlights
 ~~~~~~~~~~
 
-ESMValCore is now using the recently released `Iris 3 <https://scitools-iris.readthedocs.io/en/latest/whatsnew/3.0.html>`.
+ESMValCore is now using the recently released `Iris 3 <https://scitools-iris.readthedocs.io/en/latest/whatsnew/3.0.html>`__.
 We acknowledge that this change may impact your work, as Iris 3 introduces
 several breaking changes, but we think that moving forward is the best
 decision for the tool in the long term.
@@ -84,10 +84,10 @@ Preprocessor
 -  Add possibility of custom season extraction. (`#247 <https://github.com/ESMValGroup/ESMValCore/pull/247>`__) `mwjury <https://github.com/mwjury>`__
 -  Adding the ability to derive xch4  (`#783 <https://github.com/ESMValGroup/ESMValCore/pull/783>`__) `Birgit Hassler <https://github.com/hb326>`__
 -  Add preprocessor function to resample time and compute x-hourly statistics (`#696 <https://github.com/ESMValGroup/ESMValCore/pull/696>`__) `Javier Vegas-Regidor <https://github.com/jvegasbsc>`__
--  Fix duplication in preprocessors DEFAULT_ORDER introduced in `#696 <https://github.com/ESMValGroup/ESMValCore/pull/696>`  (`#973 <https://github.com/ESMValGroup/ESMValCore/pull/973>`__) `Javier Vegas-Regidor <https://github.com/jvegasbsc>`__
+-  Fix duplication in preprocessors DEFAULT_ORDER introduced in `#696 <https://github.com/ESMValGroup/ESMValCore/pull/696>`__  (`#973 <https://github.com/ESMValGroup/ESMValCore/pull/973>`__) `Javier Vegas-Regidor <https://github.com/jvegasbsc>`__
 -  Use consistent precision in multi-model statistics calculation and update reference data for tests (`#941 <https://github.com/ESMValGroup/ESMValCore/pull/941>`__) `Peter Kalverla <https://github.com/Peter9192>`__
 -  Refactor multi-model statistics code to facilitate ensemble stats and lazy evaluation (`#949 <https://github.com/ESMValGroup/ESMValCore/pull/949>`__) `Peter Kalverla <https://github.com/Peter9192>`__
--  Add option to exclude input cubes in output of multimodel statistics to solve an issue introduced by `#949 <https://github.com/ESMValGroup/ESMValCore/pull/949>` (`#978 <https://github.com/ESMValGroup/ESMValCore/pull/978>`__) `Peter Kalverla <https://github.com/Peter9192>`__
+-  Add option to exclude input cubes in output of multimodel statistics to solve an issue introduced by `#949 <https://github.com/ESMValGroup/ESMValCore/pull/949>`__ (`#978 <https://github.com/ESMValGroup/ESMValCore/pull/978>`__) `Peter Kalverla <https://github.com/Peter9192>`__
 
 
 Automatic testing
