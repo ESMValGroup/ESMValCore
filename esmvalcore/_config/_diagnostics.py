@@ -21,7 +21,6 @@ class Diagnostics:
         ├── recipes
         └── references
     """
-
     def __init__(self, path):
         self.path = Path(path)
 
@@ -69,7 +68,6 @@ class Diagnostics:
 
 class TagsManager(dict):
     """Tag manager."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -82,7 +80,7 @@ class TagsManager(dict):
             logger.debug("Loading tags from %s", filename)
             with open(filename) as file:
                 tags = cls(yaml.safe_load(file))
-                tags._source_file = file
+                tags._source_file = filename
                 return tags
         else:
             # This happens if no diagnostics are installed
