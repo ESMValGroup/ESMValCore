@@ -11,11 +11,11 @@ Highlights
 
 ESMValCore is now using the recently released `Iris 3 <https://scitools-iris.readthedocs.io/en/latest/whatsnew/3.0.html>`__.
 We acknowledge that this change may impact your work, as Iris 3 introduces
-several breaking changes, but we think that moving forward is the best
+several changes that are not backward-compatible, but we think that moving forward is the best
 decision for the tool in the long term.
 
 This release is also the first one including support for downloading CMIP6 data
-using Synda. Give it a try!
+using Synda and we have also started supporting Python 3.9. Give it a try!
 
 
 This release includes
