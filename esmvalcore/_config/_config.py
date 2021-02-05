@@ -3,10 +3,11 @@ import datetime
 import logging
 import os
 import warnings
+from pathlib import Path
 
 import yaml
 
-from .cmor.table import CMOR_TABLES, read_cmor_tables
+from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 
 logger = logging.getLogger(__name__)
 
@@ -132,10 +133,7 @@ def _normalize_path(path):
 def read_config_developer_file(cfg_file=None):
     """Read the developer's configuration file."""
     if cfg_file is None:
-        cfg_file = os.path.join(
-            os.path.dirname(__file__),
-            'config-developer.yml',
-        )
+        cfg_file = Path(__file__).parents[1] / 'config-developer.yml'
 
     with open(cfg_file, 'r') as file:
         cfg = yaml.safe_load(file)

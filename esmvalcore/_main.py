@@ -123,7 +123,7 @@ class Config():
         import os
         import shutil
 
-        from ._logging import configure_logging
+        from ._config import configure_logging
         configure_logging(console_log_level='info')
         if not path:
             path = os.path.join(os.path.expanduser('~/.esmvaltool'), filename)
@@ -197,8 +197,7 @@ class Recipes():
         """
         import os
 
-        from ._diagnostics import DIAGNOSTICS
-        from ._logging import configure_logging
+        from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
         recipes_folder = DIAGNOSTICS.recipes
         logger.info("Showing recipes installed in %s", recipes_folder)
@@ -227,8 +226,7 @@ class Recipes():
         import shutil
         from pathlib import Path
 
-        from ._diagnostics import DIAGNOSTICS
-        from ._logging import configure_logging
+        from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
@@ -250,8 +248,7 @@ class Recipes():
         recipe: str
             Name of the recipe to get, including any subdirectories.
         """
-        from ._diagnostics import DIAGNOSTICS
-        from ._logging import configure_logging
+        from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
@@ -351,9 +348,11 @@ class ESMValTool():
         import os
         import shutil
 
-        from ._config import read_config_user_file
-        from ._diagnostics import DIAGNOSTICS
-        from ._logging import configure_logging
+        from ._config import (
+            DIAGNOSTICS,
+            configure_logging,
+            read_config_user_file,
+        )
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
 

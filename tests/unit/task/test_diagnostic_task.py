@@ -5,7 +5,7 @@ import pytest
 import yaml
 
 import esmvalcore._task
-from esmvalcore._diagnostics import TagsManager
+from esmvalcore._config._diagnostics import TagsManager
 
 
 @pytest.mark.parametrize("ext", ['.jl', '.py', '.ncl', '.R'])
@@ -15,7 +15,7 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
                         lambda self: None)
 
     esmvaltool_path = tmp_path / 'esmvaltool'
-    monkeypatch.setattr(esmvalcore._diagnostics.DIAGNOSTICS, 'path',
+    monkeypatch.setattr(esmvalcore._config.DIAGNOSTICS, 'path',
                         esmvaltool_path)
 
     diagnostics_path = esmvaltool_path / 'diag_scripts'

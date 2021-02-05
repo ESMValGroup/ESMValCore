@@ -7,7 +7,7 @@ from functools import lru_cache
 
 import requests
 
-from ._diagnostics import DIAGNOSTICS
+from ._config import DIAGNOSTICS
 
 logger = logging.getLogger(__name__)
 

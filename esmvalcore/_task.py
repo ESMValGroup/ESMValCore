@@ -19,7 +19,7 @@ import psutil
 import yaml
 
 from ._citation import _write_citation_files
-from ._diagnostics import DIAGNOSTICS, TAGS
+from ._config import DIAGNOSTICS, TAGS
 from ._provenance import TrackedFile, get_task_provenance
 
 

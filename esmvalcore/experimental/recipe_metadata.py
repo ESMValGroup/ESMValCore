@@ -3,7 +3,7 @@
 import pybtex
 from pybtex.database.input import bibtex
 
-from esmvalcore._diagnostics import DIAGNOSTICS, TAGS
+from esmvalcore._config import DIAGNOSTICS, TAGS
 
 
 class RenderError(BaseException):
