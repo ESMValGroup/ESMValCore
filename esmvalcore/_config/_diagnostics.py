@@ -21,6 +21,7 @@ class Diagnostics:
         ├── recipes
         └── references
     """
+
     def __init__(self, path):
         self.path = Path(path)
 
@@ -68,6 +69,7 @@ class Diagnostics:
 
 class TagsManager(dict):
     """Tag manager."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -98,11 +100,11 @@ class TagsManager(dict):
             Name of the tag
         """
         if section not in self:
-            postfix = f' in {self._source_file}' if self._source_file else ''
+            postfix = f' in {self.source_file}' if self.source_file else ''
             raise ValueError(f"Section '{section}' does not exist{postfix}")
 
         if tag not in self[section]:
-            postfix = f' of {self._source_file}' if self._source_file else ''
+            postfix = f' of {self.source_file}' if self.source_file else ''
             raise ValueError(
                 f"Tag '{tag}' does not exist in section '{section}'{postfix}")
 
