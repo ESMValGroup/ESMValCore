@@ -1,4 +1,4 @@
-"""ESMValTool configuration."""
+"""Functions dealing with config-user.yml / config-developer.yml."""
 import datetime
 import logging
 import os

@@ -1,3 +1,4 @@
+"""ESMValTool configuration."""
 from ._config import (
     get_activity,
     get_institutes,

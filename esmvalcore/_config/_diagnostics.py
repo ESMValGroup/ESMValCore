@@ -71,7 +71,7 @@ class TagsManager(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._source_file = None
+        self.source_file = None
 
     @classmethod
     def from_file(cls, filename: str):
@@ -80,7 +80,7 @@ class TagsManager(dict):
             logger.debug("Loading tags from %s", filename)
             with open(filename) as file:
                 tags = cls(yaml.safe_load(file))
-                tags._source_file = filename
+                tags.source_file = filename
                 return tags
         else:
             # This happens if no diagnostics are installed
@@ -88,7 +88,7 @@ class TagsManager(dict):
             return cls()
 
     def get_tag_value(self, section: str, tag: str):
-        """Retrieve the value of a tag.
+        """Retrieve the value of a tag from a section.
 
         Parameters
         ----------
@@ -109,7 +109,7 @@ class TagsManager(dict):
         return self[section][tag]
 
     def get_tag_values(self, section: str, tags: tuple):
-        """Retrieve a list of tags with their values.
+        """Retrieve the values for a list of tags from a section.
 
         Parameters
         ----------
