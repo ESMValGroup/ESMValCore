@@ -70,13 +70,20 @@ class Diagnostics:
 class TagsManager(dict):
     """Tag manager."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._source_file = None
+
     @classmethod
     def from_file(cls, filename: str):
         """Load the reference tags used for provenance recording."""
         if os.path.exists(filename):
             logger.debug("Loading tags from %s", filename)
             with open(filename) as file:
-                return cls(yaml.safe_load(file))
+                tags = cls(yaml.safe_load(file))
+                tags._source_file = file
+                return tags
         else:
             # This happens if no diagnostics are installed
             logger.debug("No tags loaded, file %s not present", filename)
@@ -85,10 +92,14 @@ class TagsManager(dict):
     def get_tag_value(self, section, tag):
         """Retrieve the value of a tag."""
         if section not in self:
-            raise ValueError(f"Section '{section}' does not exist in {self}")
+            postfix = f' in {self._source_file}' if self._source_file else ''
+            raise ValueError(f"Section '{section}' does not exist{postfix}")
+
         if tag not in self[section]:
+            postfix = f' of {self._source_file}' if self._source_file else ''
             raise ValueError(
-                f"Tag '{tag}' does not exist in section '{section}' of {self}")
+                f"Tag '{tag}' does not exist in section '{section}'{postfix}")
+
         return self[section][tag]
 
     def get_tag_values(self, section, tags):
