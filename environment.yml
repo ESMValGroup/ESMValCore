@@ -6,6 +6,7 @@ channels:
 dependencies:
   - cftime  # iris=3.0.1 needs <=1.2.1; >=1.3.0 - years<999 get a 0 instead of empty space
   - compilers
+  - fiona  # 1.8.18/py39, they seem weary to build manylinux wheels and pypi ver built with older gdal
   - esmpy
   - iris>=3.0.1
   - graphviz
