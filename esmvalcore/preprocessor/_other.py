@@ -70,7 +70,7 @@ def add_cell_measure(cube, fx_variables, project, dataset, check_level):
     from esmvalcore.cmor.check import cmor_check_metadata, cmor_check_data
 
     if not fx_variables:
-        return
+        return cube
     fx_cubes = iris.cube.CubeList()
     for fx_files in fx_variables.values():
         for fx_file in fx_files:
