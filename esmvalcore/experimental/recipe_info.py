@@ -1,6 +1,8 @@
 import textwrap
 from pathlib import Path
 
+import yaml
+
 from .recipe_metadata import Contributor, Project, Reference
 from .templates import get_template
 
@@ -39,6 +41,12 @@ class RecipeInfo():
     def __str__(self) -> str:
         """Return string representation."""
         return self.info.render('plaintext')
+
+    @classmethod
+    def from_yaml(cls, filename: str):
+        """Return instance of 'RecipeInfo' from a recipe in yaml format."""
+        data = yaml.safe_load(open(filename, 'r'))
+        return cls(data, filename=filename)
 
     @property
     def name(self) -> str:

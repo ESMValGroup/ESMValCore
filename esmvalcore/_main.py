@@ -33,7 +33,7 @@ from pathlib import Path
 import fire
 from pkg_resources import iter_entry_points
 
-from esmvalcore.experimental import recipe_output
+from esmvalcore.experimental.recipe_output import RecipeOutput
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -50,10 +50,10 @@ ______________________________________________________________________
 """ + __doc__
 
 
-def write_html_summary(recipe, output_dir: str=None):
+def write_html_summary(recipe, output_dir: str = None):
     """Write summary html file to the output dir."""
     filename = 'output.html'
-    last_filename = 'last_'+filename
+    last_filename = 'last_' + filename
 
     output_dir = Path(output_dir)
 
@@ -61,8 +61,11 @@ def write_html_summary(recipe, output_dir: str=None):
     last_html_file = output_dir.parent / last_filename
 
     raw_output = recipe.get_product_output()
-    output = recipe_output.RecipeOutput(raw_output)
-    output.to_html(file=html_file)
+    output = RecipeOutput.from_raw_recipe_output(raw_output)
+    html_output = output.render()
+
+    with open(html_file, 'w') as f:
+        f.write(html_output)
 
     shutil.copy2(html_file, last_html_file)
     logger.info("Wrote recipe output to:\nfile://%s", html_file)

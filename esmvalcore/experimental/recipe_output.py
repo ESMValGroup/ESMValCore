@@ -6,8 +6,8 @@ from pathlib import Path
 
 import iris
 
+from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
-
 from .templates import get_template
 
 
@@ -48,6 +48,10 @@ class TaskOutput:
         """Get item indexed by `key`."""
         return self.files[key]
 
+    def _repr_html_(self):
+        """Render html in IPython environment."""
+        return self.render()
+
     @property
     def image_files(self) -> tuple:
         """Return a tuple of image objects."""
@@ -67,9 +71,6 @@ class TaskOutput:
         product_attributes = task.get_product_attributes()
         return cls(name=task.name, output=product_attributes)
 
-    def _repr_html_(self):
-        return '\n'.join(file._repr_html_() for file in self.files)
-
 
 class RecipeOutput(Mapping):
     """Container for recipe output.
@@ -80,13 +81,7 @@ class RecipeOutput(Mapping):
         Dictionary with recipe output grouped by task name. Each task value is
         a mapping of the filenames with the product attributes.
     """
-
-    def __init__(
-        self,
-        raw_output: dict,
-        session=None,
-        info=None
-    ):
+    def __init__(self, raw_output: dict, session=None, info=None):
         self._raw_output = raw_output
         self._task_output = {}
         self.info = info
@@ -114,7 +109,19 @@ class RecipeOutput(Mapping):
         return len(self._task_output)
 
     def _repr_html_(self):
-        return '\n'.join(file._repr_html_() for file in self.values())
+        """Render html in IPython environment."""
+        return self.render()
+
+    @classmethod
+    def from_raw_recipe_output(cls, recipe_output: dict):
+        raw_output = recipe_output['raw_output']
+        raw_recipe = recipe_output['raw_recipe']
+        session = recipe_output['recipe_config']
+        filename = recipe_output['recipe_filename']
+
+        info = RecipeInfo(raw_recipe, filename=filename)
+
+        return cls(raw_output, session=session, info=info)
 
     def render(self):
         """Render output as html."""

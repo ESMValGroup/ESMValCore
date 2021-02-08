@@ -919,6 +919,7 @@ class Recipe:
         self._cfg = deepcopy(config_user)
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
+        self._raw_recipe = raw_recipe
         self._filename = os.path.basename(recipe_file)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
@@ -1378,9 +1379,14 @@ class Recipe:
         product_filenames : dict
             Lists of products/attributes grouped by task.
         """
-        product_filenames = {}
+        output = {}
+
+        output['recipe_config'] = self._cfg
+        output['recipe_filename'] = self._filename
+        output['raw_recipe'] = self._raw_recipe
+        output['raw_output'] = {}
 
         for task in self.tasks:
-            product_filenames[task.name] = task.get_product_attributes()
+            output['raw_output'][task.name] = task.get_product_attributes()
 
-        return product_filenames
+        return output
