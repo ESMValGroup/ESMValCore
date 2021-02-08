@@ -37,6 +37,6 @@ class Ua(Fix):
         time_idx = cube.coord_dims('time')[0]
         slice_idx = [slice(None)] * cube.ndim
         slice_idx[time_idx] = idx_sorted
-        cube.data = cube.data[slice_idx]
+        cube.data = cube.core_data()[slice_idx]
         iris.util.promote_aux_coord_to_dim_coord(cube, 'time')
         return cubes
