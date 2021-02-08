@@ -8,6 +8,7 @@ import os
 import pprint
 import subprocess
 import sys
+import textwrap
 import threading
 import time
 from copy import deepcopy
@@ -230,7 +231,7 @@ class BaseTask:
 
     def flatten(self):
         """Return a flattened set of all ancestor tasks and task itself."""
-        tasks = set()
+        tasks = TaskSet()
         for task in self.ancestors:
             tasks.update(task.flatten())
         tasks.add(self)
@@ -264,13 +265,10 @@ class BaseTask:
             for product in self.products
         }
 
-    def str(self):
+    def print_ancestors(self):
         """Return a nicely formatted description."""
-        def _indent(txt):
-            return '\n'.join('\t' + line for line in txt.split('\n'))
-
         txt = 'ancestors:\n{}'.format('\n\n'.join(
-            _indent(str(task))
+            textwrap.indent(str(task), prefix='  ')
             for task in self.ancestors) if self.ancestors else 'None')
         return txt
 
@@ -642,95 +640,100 @@ class DiagnosticTask(BaseTask):
         settings_string = pprint.pformat(self.settings)
         string = (f"{self.__class__.__name__}: {self.name}\n"
                   f"script: {self.script}\n"
-                  f"settings:\n{settings_string}\n")
-
+                  f"settings:\n{settings_string}\n"
+                  f"{self.print_ancestors()}\n")
         return string
 
 
-def get_flattened_tasks(tasks):
-    """Return a set of all tasks and their ancestors in `tasks`."""
-    return set(t for task in tasks for t in task.flatten())
+class TaskSet(set):
+    """Container for tasks."""
 
+    def flatten(self) -> 'TaskSet':
+        """Flatten the list of tasks."""
+        return TaskSet(t for task in self for t in task.flatten())
 
-def get_independent_tasks(tasks):
-    """Return a set of independent tasks."""
-    independent_tasks = set()
-    all_tasks = get_flattened_tasks(tasks)
-    for task in all_tasks:
-        if not any(task in t.ancestors for t in all_tasks):
-            independent_tasks.add(task)
-    return independent_tasks
+    def get_independent(self) -> 'TaskSet':
+        """Return a set of independent tasks."""
+        independent_tasks = TaskSet()
+        all_tasks = self.flatten()
+        for task in all_tasks:
+            if not any(task in t.ancestors for t in all_tasks):
+                independent_tasks.add(task)
+        return independent_tasks
 
+    def run(self, max_parallel_tasks: int = None) -> None:
+        """Run tasks.
 
-def run_tasks(tasks, max_parallel_tasks=None):
-    """Run tasks."""
-    if max_parallel_tasks == 1:
-        _run_tasks_sequential(tasks)
-    else:
-        _run_tasks_parallel(tasks, max_parallel_tasks)
+        Parameters
+        ----------
+        max_parallel_tasks : int
+            Number of processes to run. If `1`, run the tasks sequentially.
+        """
+        if max_parallel_tasks == 1:
+            self._run_sequential()
+        else:
+            self._run_parallel(max_parallel_tasks)
 
+    def _run_sequential(self) -> None:
+        """Run tasks sequentially."""
+        n_tasks = len(self.flatten())
+        logger.info("Running %s tasks sequentially", n_tasks)
 
-def _run_tasks_sequential(tasks):
-    """Run tasks sequentially."""
-    n_tasks = len(get_flattened_tasks(tasks))
-    logger.info("Running %s tasks sequentially", n_tasks)
+        tasks = self.get_independent()
+        for task in sorted(tasks, key=lambda t: t.priority):
+            task.run()
 
-    tasks = get_independent_tasks(tasks)
-    for task in sorted(tasks, key=lambda t: t.priority):
-        task.run()
+    def _run_parallel(self, max_parallel_tasks: int = None) -> None:
+        """Run tasks in parallel."""
+        scheduled = self.flatten()
+        running = {}
 
+        n_tasks = n_scheduled = len(scheduled)
+        n_running = 0
 
-def _run_tasks_parallel(tasks, max_parallel_tasks=None):
-    """Run tasks in parallel."""
-    scheduled = get_flattened_tasks(tasks)
-    running = {}
+        if max_parallel_tasks is None:
+            max_parallel_tasks = os.cpu_count()
+        max_parallel_tasks = min(max_parallel_tasks, n_tasks)
+        logger.info("Running %s tasks using %s processes", n_tasks,
+                    max_parallel_tasks)
 
-    n_tasks = n_scheduled = len(scheduled)
-    n_running = 0
+        def done(task):
+            """Assume a task is done if it not scheduled or running."""
+            return not (task in scheduled or task in running)
 
-    if max_parallel_tasks is None:
-        max_parallel_tasks = os.cpu_count()
-    max_parallel_tasks = min(max_parallel_tasks, n_tasks)
-    logger.info("Running %s tasks using %s processes", n_tasks,
-                max_parallel_tasks)
+        with Pool(processes=max_parallel_tasks) as pool:
+            while scheduled or running:
+                # Submit new tasks to pool
+                for task in sorted(scheduled, key=lambda t: t.priority):
+                    if len(running) >= max_parallel_tasks:
+                        break
+                    if all(done(t) for t in task.ancestors):
+                        future = pool.apply_async(_run_task, [task])
+                        running[task] = future
+                        scheduled.remove(task)
 
-    def done(task):
-        """Assume a task is done if it not scheduled or running."""
-        return not (task in scheduled or task in running)
+                # Handle completed tasks
+                ready = {t for t in running if running[t].ready()}
+                for task in ready:
+                    _copy_results(task, running[task])
+                    running.pop(task)
 
-    with Pool(processes=max_parallel_tasks) as pool:
-        while scheduled or running:
-            # Submit new tasks to pool
-            for task in sorted(scheduled, key=lambda t: t.priority):
-                if len(running) >= max_parallel_tasks:
-                    break
-                if all(done(t) for t in task.ancestors):
-                    future = pool.apply_async(_run_task, [task])
-                    running[task] = future
-                    scheduled.remove(task)
+                # Wait if there are still tasks running
+                if running:
+                    time.sleep(0.1)
 
-            # Handle completed tasks
-            ready = {t for t in running if running[t].ready()}
-            for task in ready:
-                _copy_results(task, running[task])
-                running.pop(task)
+                # Log progress message
+                if len(scheduled) != n_scheduled or len(running) != n_running:
+                    n_scheduled, n_running = len(scheduled), len(running)
+                    n_done = n_tasks - n_scheduled - n_running
+                    logger.info(
+                        "Progress: %s tasks running, %s tasks waiting for "
+                        "ancestors, %s/%s done", n_running, n_scheduled,
+                        n_done, n_tasks)
 
-            # Wait if there are still tasks running
-            if running:
-                time.sleep(0.1)
-
-            # Log progress message
-            if len(scheduled) != n_scheduled or len(running) != n_running:
-                n_scheduled, n_running = len(scheduled), len(running)
-                n_done = n_tasks - n_scheduled - n_running
-                logger.info(
-                    "Progress: %s tasks running, %s tasks waiting for "
-                    "ancestors, %s/%s done", n_running, n_scheduled, n_done,
-                    n_tasks)
-
-        logger.info("Successfully completed all tasks.")
-        pool.close()
-        pool.join()
+            logger.info("Successfully completed all tasks.")
+            pool.close()
+            pool.join()
 
 
 def _copy_results(task, future):
