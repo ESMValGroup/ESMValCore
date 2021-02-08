@@ -49,16 +49,16 @@ def add_cell_measure(cube, fx_variables, project, dataset, check_level):
     Parameters
     ----------
     cube: iris.cube.Cube
-        iris cube 
+        Iris cube with input data.
     fx_variables: dict
-        path to the needed fx_files
+        Path to the needed fx_files.
     project: str
 
     dataset: str
 
     check_level: CheckLevels
-        Level of strictness of the checks
-        
+        Level of strictness of the checks.
+
 
     Returns
     -------
