@@ -176,7 +176,7 @@ To install from source for development, follow these instructions.
    ``.cshrc``/``.tcshrc`` file instead.
 -  Update conda: ``conda update -y conda``
 -  Clone the ESMValCore Git repository:
-   ``git clone git@github.com:ESMValGroup/ESMValCore``
+   ``git clone https://github.com/ESMValGroup/ESMValCore.git``
 -  Go to the source code directory: ``cd ESMValCore``
 -  Create the esmvalcore conda environment
    ``conda env create --name esmvalcore --file environment.yml``
