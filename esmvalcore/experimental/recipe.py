@@ -2,7 +2,6 @@
 
 import logging
 import pprint
-import textwrap
 from pathlib import Path
 
 import yaml
@@ -11,7 +10,7 @@ from esmvalcore._recipe import Recipe as RecipeEngine
 
 from . import CFG
 from ._logging import log_to_dir
-from .recipe_metadata import Contributor, Project, Reference
+from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
 
 logger = logging.getLogger(__file__)
@@ -33,13 +32,10 @@ class Recipe():
         if not self.path.exists():
             raise FileNotFoundError(f'Cannot find recipe: `{path}`.')
 
-        self._data = None
-        self._authors = None
-        self._maintainers = None
-        self._projects = None
-        self._references = None
-        self._description = None
         self._engine = None
+        self._data = None
+        self.last_session = None
+        self.info = RecipeInfo(self.data, filename=self.path)
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
@@ -47,57 +43,19 @@ class Recipe():
 
     def _repr_markdown_(self) -> str:
         """Represent using markdown renderer in a notebook environment."""
-        return self.render('markdown')
+        return self.info.render('markdown')
 
     def __str__(self) -> str:
         """Return string representation."""
-        return self.render('plaintext')
+        return self.info.render('plaintext')
+
+    @property
+    def name(self):
+        return self.info.name
 
     def to_markdown(self) -> str:
         """Return markdown formatted string."""
-        return self.render('markdown')
-
-    def render(self, renderer: str = 'plaintext') -> str:
-        """Return formatted string.
-
-        Parameters
-        ----------
-        renderer : str
-            Choose the renderer for the string representation.
-            Must be one of 'plaintext', 'markdown'
-
-        Returns
-        -------
-        str
-            Rendered representation of the recipe documentation.
-        """
-        bullet = '\n - '
-        string = f'## {self.name}'
-
-        string += '\n\n'
-        string += f'{self.description}'
-
-        string += '\n\n### Authors'
-        for author in self.authors:
-            string += f'{bullet}{author}'
-
-        string += '\n\n### Maintainers'
-        for maintainer in self.maintainers:
-            string += f'{bullet}{maintainer}'
-
-        if self.projects:
-            string += '\n\n### Projects'
-            for project in self.projects:
-                string += f'{bullet}{project}'
-
-        if self.references:
-            string += '\n\n### References'
-            for reference in self.references:
-                string += bullet + reference.render(renderer)
-
-        string += '\n'
-
-        return string
+        return self.info.render('markdown')
 
     @property
     def data(self) -> dict:
@@ -105,52 +63,6 @@ class Recipe():
         if self._data is None:
             self._data = yaml.safe_load(open(self.path, 'r'))
         return self._data
-
-    @property
-    def name(self) -> str:
-        """Name of the recipe."""
-        return self.path.stem.replace('_', ' ').capitalize()
-
-    @property
-    def description(self) -> str:
-        """Recipe description."""
-        if self._description is None:
-            description = self.data['documentation']['description']
-            self._description = '\n'.join(textwrap.wrap(description))
-        return self._description
-
-    @property
-    def authors(self) -> tuple:
-        """List of recipe authors."""
-        if self._authors is None:
-            tags = self.data['documentation']['authors']
-            self._authors = tuple(Contributor.from_tag(tag) for tag in tags)
-        return self._authors
-
-    @property
-    def maintainers(self) -> tuple:
-        """List of recipe maintainers."""
-        if self._maintainers is None:
-            tags = self.data['documentation'].get('maintainer', [])
-            self._maintainers = tuple(
-                Contributor.from_tag(tag) for tag in tags)
-        return self._maintainers
-
-    @property
-    def projects(self) -> tuple:
-        """List of recipe projects."""
-        if self._projects is None:
-            tags = self.data['documentation'].get('projects', [])
-            self._projects = tuple(Project.from_tag(tag) for tag in tags)
-        return self._projects
-
-    @property
-    def references(self) -> tuple:
-        """List of project references."""
-        if self._references is None:
-            tags = self.data['documentation'].get('references', [])
-            self._references = tuple(Reference.from_tag(tag) for tag in tags)
-        return self._references
 
     def _load(self, session: dict):
         """Load the recipe.
