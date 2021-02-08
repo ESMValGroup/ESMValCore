@@ -8,6 +8,8 @@ import iris
 
 from .recipe_metadata import Contributor, Reference
 
+from .templates import get_template
+
 
 class TaskOutput:
     """Container for task output.
@@ -65,6 +67,9 @@ class TaskOutput:
         product_attributes = task.get_product_attributes()
         return cls(name=task.name, output=product_attributes)
 
+    def _repr_html_(self):
+        return '\n'.join(file._repr_html_() for file in self.files)
+
 
 class RecipeOutput(Mapping):
     """Container for recipe output.
@@ -76,9 +81,16 @@ class RecipeOutput(Mapping):
         a mapping of the filenames with the product attributes.
     """
 
-    def __init__(self, raw_output: dict):
+    def __init__(
+        self,
+        raw_output: dict,
+        session=None,
+        info=None
+    ):
         self._raw_output = raw_output
         self._task_output = {}
+        self.info = info
+        self.session = session
         for task, product_output in raw_output.items():
             self._task_output[task] = TaskOutput(name=task,
                                                  output=product_output)
@@ -101,23 +113,15 @@ class RecipeOutput(Mapping):
         """Return number of tasks."""
         return len(self._task_output)
 
-    def to_html(self, file: str=None):
-        string = """<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Title!</title>
-  </head>
-  <body>
-    <h1>Hello World!</h1>
-  </body>
-</html>"""
-        if file:
-            with open(file, 'w') as f:
-                f.write(string)
-        else:
-            return string
+    def _repr_html_(self):
+        return '\n'.join(file._repr_html_() for file in self.values())
+
+    def render(self):
+        """Render output as html."""
+        template = get_template('recipe_output.j2')
+        rendered = template.render(tasks=self.values(), info=self.info)
+
+        return rendered
 
 
 class OutputFile():
@@ -149,6 +153,10 @@ class OutputFile():
     def __repr__(self):
         """Return canonical string representation."""
         return f'{self.__class__.__name__}({self.filename.name!r})'
+
+    @property
+    def caption(self) -> str:
+        return self.attributes['caption']
 
     @property
     def authors(self) -> tuple:
@@ -227,14 +235,15 @@ class ImageFile(OutputFile):
 
     kind = 'image'
 
-    def _repr_html_(self):
-        """Render png as html in Jupyter notebook."""
+    def to_base64(self):
         with open(self.filename, "rb") as file:
             encoded = base64.b64encode(file.read())
+        return encoded.decode('utf-8')
 
-        html_string = encoded.decode('utf-8')
-        caption = self.attributes['caption']
-        return f"{caption}<img src='data:image/png;base64,{html_string}'/>"
+    def _repr_html_(self):
+        """Render png as html in Jupyter notebook."""
+        html_image = self.to_base64()
+        return f"{self.caption}<img src='data:image/png;base64,{html_image}'/>"
 
 
 class DataFile(OutputFile):

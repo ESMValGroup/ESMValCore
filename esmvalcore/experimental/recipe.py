@@ -122,6 +122,8 @@ class Recipe():
             self._load(session=session)
             self._engine.run()
 
+        self.last_session = session
+
         return self.get_output()
 
     def get_output(self) -> dict:
@@ -138,4 +140,8 @@ class Recipe():
 
         raw_output = self._engine.get_product_output()
 
-        return RecipeOutput(raw_output)
+        return RecipeOutput(
+            raw_output=raw_output['raw_output'],
+            session=self.last_session,
+            info=self.info,
+        )
