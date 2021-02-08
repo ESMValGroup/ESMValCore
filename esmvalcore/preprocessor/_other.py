@@ -78,44 +78,33 @@ def add_cell_measure(cube, fx_variables, project, dataset, check_level):
             short_name = loaded_cube[0].var_name
             mip = loaded_cube[0].attributes['table_id']
             freq = loaded_cube[0].attributes['frequency']
-            loaded_cube = fix_metadata(
-                loaded_cube,
-                short_name=short_name,
-                project=project,
-                dataset=dataset,
-                mip=mip,
-                frequency=freq,
-                check_level=check_level)
+
+            loaded_cube = fix_metadata(loaded_cube, short_name=short_name,
+                                       project=project, dataset=dataset,
+                                       mip=mip, frequency=freq,
+                                       check_level=check_level)
             fx_cubes.append(loaded_cube[0])
+
         fx_cube = concatenate(fx_cubes)
-        fx_cube = cmor_check_metadata(
-            fx_cube,
-            cmor_table=project,
-            mip=mip,
-            short_name=short_name,
-            frequency=freq,
-            check_level=check_level)
-        fx_cube = fix_data(
-            fx_cube,
-            short_name=short_name,
-            project=project,
-            dataset=dataset,
-            mip=mip,
-            frequency=freq,
-            check_level=check_level)
-        fx_cube = cmor_check_data(
-            fx_cube,
-            cmor_table=project,
-            mip=mip,
-            short_name=fx_cube.var_name,
-            frequency=freq,
-            check_level=check_level)
+
+        fx_cube = cmor_check_metadata(fx_cube, cmor_table=project, mip=mip,
+                                      short_name=short_name, frequency=freq,
+                                      check_level=check_level)
+
+        fx_cube = fix_data(fx_cube, short_name=short_name, project=project,
+                           dataset=dataset, mip=mip, frequency=freq,
+                           check_level=check_level)
+
+        fx_cube = cmor_check_data(fx_cube, cmor_table=project, mip=mip,
+                                  short_name=fx_cube.var_name, frequency=freq,
+                                  check_level=check_level)
 
         measure_name = {
             'areacella': 'area',
             'areacello': 'area',
             'volcello': 'volume'
             }
+
         if fx_cube.var_name in measure_name.keys():
             try:
                 fx_data = da.broadcast_to(
