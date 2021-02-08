@@ -47,6 +47,7 @@ MANDATORY_SCRIPT_SETTINGS_KEYS = (
 )
 
 DEFAULT_PREPROCESSOR_STEPS = (
+    'add_cell_measure',
     'cleanup',
     'cmor_check_data',
     'cmor_check_metadata',
@@ -87,7 +88,6 @@ def _get_default_settings_for_chl(fix_dir, save_filename):
     defaults = {
         'load': {
             'callback': concatenate_callback,
-            'fx_variables': None
         },
         'concatenate': {},
         'fix_file': {
@@ -130,6 +130,12 @@ def _get_default_settings_for_chl(fix_dir, save_filename):
             'mip': 'Oyr',
             'short_name': 'chl',
             'frequency': 'yr',
+        },
+        'add_cell_measure': {
+            'fx_variables': None,
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'check_level': CheckLevels.DEFAULT,
         },
         'cleanup': {
             'remove': [fix_dir]
@@ -510,7 +516,6 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
     defaults = {
         'load': {
             'callback': concatenate_callback,
-            'fx_variables': None
         },
         'concatenate': {},
         'fix_file': {
@@ -549,6 +554,12 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'mip': 'fx',
             'short_name': 'sftlf',
             'frequency': 'fx',
+        },
+        'add_cell_measure': {
+            'fx_variables': None,
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'check_level': CheckLevels.DEFAULT,
         },
         'cleanup': {
             'remove': [fix_dir]
@@ -2093,8 +2104,8 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     fx_variables = settings['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Omon_' in fx_variables['volcello']
-    assert '_Ofx_' not in fx_variables['volcello']
+    assert '_Omon_' in fx_variables['volcello'][0]
+    assert '_Ofx_' not in fx_variables['volcello'][0]
 
 
 def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
@@ -2140,9 +2151,9 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     fx_variables = settings['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Oyr_' in fx_variables['volcello']
-    assert '_piControl_' in fx_variables['volcello']
-    assert '_Omon_' not in fx_variables['volcello']
+    assert '_Oyr_' in fx_variables['volcello'][0]
+    assert '_piControl_' in fx_variables['volcello'][0]
+    assert '_Omon_' not in fx_variables['volcello'][0]
 
 
 def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
@@ -2239,8 +2250,8 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
     fx_variables = settings['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello']
-    assert '_Omon_' in fx_variables['volcello']
+    assert '_Ofx_' not in fx_variables['volcello'][0]
+    assert '_Omon_' in fx_variables['volcello'][0]
 
 
 def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
@@ -2285,8 +2296,8 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
     fx_variables = settings['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello']
-    assert '_Oyr_' in fx_variables['volcello']
+    assert '_Ofx_' not in fx_variables['volcello'][0]
+    assert '_Oyr_' in fx_variables['volcello'][0]
 
 
 def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
