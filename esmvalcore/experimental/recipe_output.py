@@ -72,7 +72,7 @@ class RecipeOutput(Mapping):
     Parameters
     ----------
     raw_output : dict
-        Dictonary with recipe output grouped by task name. Each task value is
+        Dictionary with recipe output grouped by task name. Each task value is
         a mapping of the filenames with the product attributes.
     """
 
@@ -100,6 +100,24 @@ class RecipeOutput(Mapping):
     def __len__(self):
         """Return number of tasks."""
         return len(self._task_output)
+
+    def to_html(self, file: str=None):
+        string = """<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Title!</title>
+  </head>
+  <body>
+    <h1>Hello World!</h1>
+  </body>
+</html>"""
+        if file:
+            with open(file, 'w') as f:
+                f.write(string)
+        else:
+            return string
 
 
 class OutputFile():

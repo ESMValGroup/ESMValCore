@@ -27,9 +27,13 @@ http://docs.esmvaltool.org. Have fun!
 """
 # pylint: disable=import-outside-toplevel
 import logging
+import shutil
+from pathlib import Path
 
 import fire
 from pkg_resources import iter_entry_points
+
+from esmvalcore.experimental import recipe_output
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -46,11 +50,28 @@ ______________________________________________________________________
 """ + __doc__
 
 
+def write_html_summary(recipe, output_dir: str=None):
+    """Write summary html file to the output dir."""
+    filename = 'output.html'
+    last_filename = 'last_'+filename
+
+    output_dir = Path(output_dir)
+
+    html_file = output_dir / filename
+    last_html_file = output_dir.parent / last_filename
+
+    raw_output = recipe.get_product_output()
+    output = recipe_output.RecipeOutput(raw_output)
+    output.to_html(file=html_file)
+
+    shutil.copy2(html_file, last_html_file)
+    logger.info("Wrote recipe output to:\nfile://%s", html_file)
+
+
 def process_recipe(recipe_file, config_user):
     """Process recipe."""
     import datetime
     import os
-    import shutil
 
     from . import __version__
     from ._recipe import read_recipe_file
@@ -102,6 +123,7 @@ def process_recipe(recipe_file, config_user):
 
     # run
     recipe.run()
+    write_html_summary(recipe, output_dir=config_user['output_dir'])
 
     # End time timing
     timestamp2 = datetime.datetime.utcnow()
