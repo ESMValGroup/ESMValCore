@@ -41,7 +41,7 @@ from ._mask import (
     mask_outside_range,
 )
 from ._multimodel import multi_model_statistics
-from ._other import clip
+from ._other import clip, add_cell_measure
 from ._regrid import extract_levels, extract_point, regrid
 from ._time import (
     annual_statistics,
@@ -98,6 +98,7 @@ __all__ = [
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
+    'add_cell_measure',
     # Time extraction (as defined in the preprocessor section)
     'extract_time',
     'extract_season',
@@ -181,7 +182,7 @@ TIME_PREPROCESSORS = [
 DEFAULT_ORDER = tuple(__all__)
 
 # The order of initial and final steps cannot be configured
-INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('cmor_check_data') + 1]
+INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_cell_measure') + 1]
 FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('save'):]
 
 MULTI_MODEL_FUNCTIONS = {

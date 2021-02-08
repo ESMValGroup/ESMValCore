@@ -6,7 +6,6 @@ import shutil
 from itertools import groupby
 from warnings import catch_warnings, filterwarnings
 
-import dask.array as da
 import iris
 import iris.exceptions
 import numpy as np
@@ -102,7 +101,7 @@ def concatenate_callback(raw_cube, field, _):
                 coord.units = units
 
 
-def load(file, callback=None, fx_variables=None):
+def load(file, callback=None):
     """Load iris cubes from files."""
     logger.debug("Loading:\n%s", file)
     with catch_warnings():
@@ -123,23 +122,6 @@ def load(file, callback=None, fx_variables=None):
     if not raw_cubes:
         raise Exception('Can not load cubes from {0}'.format(file))
     for cube in raw_cubes:
-        if fx_variables:
-            for fx_file in fx_variables.values():
-                fx_cube = iris.load_raw(fx_file, callback=callback)[0]
-                measure_name = {
-                    'areacella': 'area',
-                    'areacello': 'area',
-                    'volcello': 'volume'
-                }
-                if fx_cube.var_name in measure_name.keys():
-                    fx_data = da.broadcast_to(
-                        fx_cube.core_data(), raw_cubes[0].shape)
-                    measure = iris.coords.CellMeasure(
-                        fx_data,
-                        standard_name=fx_cube.standard_name,
-                        units=fx_cube.units,
-                        measure=measure_name[fx_cube.var_name])
-                    cube.add_cell_measure(measure, range(0, measure.ndim))
         cube.attributes['source_file'] = file
     return raw_cubes
 

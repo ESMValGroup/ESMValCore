@@ -260,7 +260,6 @@ def _get_default_settings(variable, config_user, derive=False):
     # Configure loading
     settings['load'] = {
         'callback': concatenate_callback,
-        'fx_variables': None
     }
     # Configure concatenation
     settings['concatenate'] = {}
@@ -319,6 +318,13 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['save'] = {'compress': config_user['compress_netcdf']}
     if variable['short_name'] != variable['original_short_name']:
         settings['save']['alias'] = variable['short_name']
+
+    settings['add_cell_measure'] = {
+        'fx_variables': None,
+        'project': variable['project'],
+        'dataset': variable['dataset'],
+        'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
+    }
 
     return settings
 
@@ -393,6 +399,7 @@ def _get_fx_file(variable, fx_variable, config_user):
             if fx_files:
                 logger.debug("Found fx variables '%s':\n%s", fx_varname,
                              pformat(fx_files))
+                fx_variable['mip'] = fx_mip
                 break
 
     # If fx variable was not found in any table, raise exception
@@ -407,7 +414,8 @@ def _get_fx_file(variable, fx_variable, config_user):
 
     # allow for empty lists corrected for by NE masks
     if fx_files:
-        fx_files = fx_files[0]
+        if 'fx' in fx_variable['mip']:
+            fx_files = fx_files[0]
     if valid_fx_vars:
         valid_fx_vars = valid_fx_vars[0]
 
@@ -478,8 +486,9 @@ def _update_fx_settings(settings, variable, config_user):
             _update_fx_files(step_name, step_settings,
                              variable, config_user, fx_vars)
             if step_name in ['area_statistics', 'volume_statistics']:
-                _update_fx_files('load', settings['load'],
-                                 variable, config_user, fx_vars)
+                _update_fx_files(
+                    'add_cell_measure', settings['add_cell_measure'],
+                    variable, config_user, fx_vars)
 
 
 def _read_attributes(filename):
