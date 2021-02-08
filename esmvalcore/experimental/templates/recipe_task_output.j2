@@ -1,0 +1,34 @@
+{% for task in tasks %}
+    <h2>{{ task.name }}</h2>
+
+    {% for file in task.image_files %}
+
+        <p>
+
+            {{ file.caption }}
+
+        </p>
+        <p>
+
+            <img width='50%' src='data:image/png;base64, {{ file.to_base64() }}'/>
+
+        </p>
+
+    {% endfor %}
+
+    {% for file in task.data_files %}
+
+        <p>
+
+            {{ file.caption }}
+
+        </p>
+        <p>
+
+            <a href='{{ file.href }}'>{{ file.filename.name }}</a>
+
+        </p>
+
+    {% endfor %}
+
+{% endfor %}
