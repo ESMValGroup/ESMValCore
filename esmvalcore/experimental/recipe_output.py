@@ -19,7 +19,7 @@ class TaskOutput:
     ----------
     name : str
         Name of the task
-    output :
+    output : dict
         Mapping of the filenames with the associated attributes.
     """
 
@@ -142,6 +142,14 @@ class RecipeOutput(Mapping):
         )
 
         return rendered
+
+    def read_main_log(self):
+        """Read log file."""
+        return self.session.main_log.read_text()
+
+    def read_main_log_debug(self) -> str:
+        """Read debug log file."""
+        return self.session.main_log_debug.read_text()
 
 
 class OutputFile():

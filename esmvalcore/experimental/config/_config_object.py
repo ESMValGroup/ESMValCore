@@ -164,6 +164,16 @@ class Session(ValidatedConfig):
         """Return user config directory."""
         return USER_CONFIG_DIR
 
+    @property
+    def main_log(self):
+        """Return main log file."""
+        return self.run_dir / 'main_log.txt'
+
+    @property
+    def main_log_debug(self):
+        """Return main log debug file."""
+        return self.run_dir / 'main_log_debug.txt'
+
     def to_config_user(self) -> dict:
         """Turn the `Session` object into a recipe-compatible dict.
 
