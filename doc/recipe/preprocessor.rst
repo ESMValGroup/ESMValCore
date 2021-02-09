@@ -325,8 +325,11 @@ experiment is preferred for fx data retrieval:
         weighting_landsea_fraction:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
-          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
-
+          fx_variables: 
+            sftlf:
+              exp: piControl
+            sftof:
+              exp: piControl
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
@@ -388,7 +391,11 @@ experiment is preferred for fx data retrieval:
       landmask:
         mask_landsea:
           mask_out: sea
-          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+          fx_variables: 
+            sftlf: 
+              exp: piControl
+            sftof:
+              exp: piControl
 
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
@@ -428,7 +435,9 @@ experiment is preferred for fx data retrieval:
       landseaicemask:
         mask_landseaice:
           mask_out: sea
-          fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+          fx_variables: 
+            sftgif:
+              exp: piControl
 
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
@@ -1267,18 +1276,24 @@ region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
 The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it as a list of variables e.g.
+the user may specify it calling the variables e.g.
 
 .. code-block:: yaml
 
-    fx_variables: ['areacello', 'volcello']
+    fx_variables: 
+      areacello:
+      volcello:
 
-or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
+or calling the variables and adding specific variable parameters (they key-value pair may be as specific
 as a CMOR variable can permit):
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
+    fx_variables: 
+      areacello:
+        mip: Omon
+      volcello:
+        mip: fx
 
 The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
@@ -1327,18 +1342,24 @@ No depth coordinate is required as this is determined by Iris. This function
 works best when the ``fx_variables`` provide the cell volume.
 
 The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it as a list of variables e.g.
+the user may specify it calling the variables e.g.
 
 .. code-block:: yaml
 
-    fx_variables: ['areacello', 'volcello']
+    fx_variables: 
+      areacello:
+      volcello:
 
-or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
+or calling the variables and adding specific variable parameters (they key-value pair may be as specific
 as a CMOR variable can permit):
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
+    fx_variables: 
+      areacello:
+        mip: Omon
+      volcello:
+        mip: fx
 
 The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.

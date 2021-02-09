@@ -1870,17 +1870,22 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
           landmask:
             mask_landsea:
               mask_out: sea
-              fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}]
+              fx_variables:
+                sftlf:
+                  exp: piControl
             mask_landseaice:
               mask_out: sea
-              fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+              fx_variables:
+                sftgif:
+                  exp: piControl
             volume_statistics:
               operator: mean
             area_statistics:
               operator: mean
-              fx_variables: [{'short_name': 'areacello', 'mip': 'fx',
-                         'exp': 'piControl'}]
-
+              fx_variables:
+                areacello:
+                  mip: fx
+                  exp: piControl
         diagnostics:
           diagnostic_name:
             variables:
@@ -1924,9 +1929,9 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
 
     # volume statistics
     settings = product.settings['volume_statistics']
-    assert len(settings) == 1
+    assert len(settings) == 2
     assert settings['operator'] == 'mean'
-    assert 'fx_variables' not in settings
+    assert settings['fx_variables'] == {}
 
     # area statistics
     settings = product.settings['area_statistics']
@@ -1993,14 +1998,14 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
           preproc:
            area_statistics:
              operator: mean
-             fx_variables: [
-               'areacella',
-               'areacello',
-               'clayfrac',
-               'sftlf',
-               'sftgif',
-               'sftof',
-             ]
+             fx_variables:
+               areacella:
+               areacello:
+               clayfrac:
+               sftlf:
+               sftgif:
+                 mip: fx
+               sftof:
            mask_landsea:
              mask_out: sea
 
@@ -2069,7 +2074,8 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables: 
+               volcello:
 
         diagnostics:
           diagnostic_name:
@@ -2115,8 +2121,10 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: [{'short_name': 'volcello', 'mip': 'Oyr',
-                         'exp': 'piControl'}]
+             fx_variables: 
+               volcello:
+                 mip: Oyr
+                 exp: piControl
 
         diagnostics:
           diagnostic_name:
@@ -2203,9 +2211,9 @@ def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
     assert product.files
     assert 'area_statistics' in product.settings
     settings = product.settings['area_statistics']
-    assert len(settings) == 1
+    assert len(settings) == 2
     assert settings['operator'] == 'mean'
-    assert 'fx_variables' not in settings
+    assert settings['fx_variables'] == {}
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
@@ -2215,7 +2223,9 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables: 
+               volcello:
+                 mip: Omon
 
         diagnostics:
           diagnostic_name:
@@ -2261,7 +2271,9 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables: 
+               volcello:
+                 mip: Oyr
 
         diagnostics:
           diagnostic_name:
@@ -2307,7 +2319,8 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables: 
+               volcello:
 
         diagnostics:
           diagnostic_name:
@@ -2351,7 +2364,8 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables: 
+               volcello:
 
         diagnostics:
           diagnostic_name:
@@ -2382,10 +2396,9 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
           preproc:
            area_statistics:
              operator: mean
-             fx_variables: [
-               'areacella',
-               'wrong_fx_variable',
-             ]
+             fx_variables:
+               areacella:
+               wrong_fx_variable:
 
         diagnostics:
           diagnostic_name:
@@ -2404,7 +2417,7 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
     msg = ("Requested fx variable 'wrong_fx_variable' not available in any "
-           "'fx'-related CMOR table")
+           "CMOR table")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
