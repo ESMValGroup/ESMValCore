@@ -28,7 +28,7 @@ class DerivedVariable(DerivedVariableBase):
         20 deg C).
 
         """
-        mrsos_cube = cubes.extract_strict(var_name_constraint('mrsos'))
+        mrsos_cube = cubes.extract_cube(var_name_constraint('mrsos'))
 
         depth = mrsos_cube.coord('depth').bounds.astype(np.float32)
         layer_thickness = depth[..., 1] - depth[..., 0]

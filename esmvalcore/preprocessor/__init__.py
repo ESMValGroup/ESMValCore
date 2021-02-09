@@ -10,28 +10,66 @@ from .._provenance import TrackedFile
 from .._task import BaseTask
 from ..cmor.check import cmor_check_data, cmor_check_metadata
 from ..cmor.fix import fix_data, fix_file, fix_metadata
-from ._area import (area_statistics, extract_named_regions, extract_region,
-                    extract_shape, meridional_statistics, zonal_statistics)
+from ._area import (
+    area_statistics,
+    extract_named_regions,
+    extract_region,
+    extract_shape,
+    meridional_statistics,
+    zonal_statistics,
+)
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
 from ._download import download
-from ._io import (_get_debug_filename, cleanup, concatenate, load, save,
-                  write_metadata)
-from ._mask import (mask_above_threshold, mask_below_threshold,
-                    mask_fillvalues, mask_glaciated, mask_inside_range,
-                    mask_landsea, mask_landseaice, mask_outside_range)
+from ._io import (
+    _get_debug_filename,
+    cleanup,
+    concatenate,
+    load,
+    save,
+    write_metadata,
+)
+from ._mask import (
+    mask_above_threshold,
+    mask_below_threshold,
+    mask_fillvalues,
+    mask_glaciated,
+    mask_inside_range,
+    mask_landsea,
+    mask_landseaice,
+    mask_outside_range,
+)
 from ._multimodel import multi_model_statistics
 from ._other import clip
 from ._regrid import extract_levels, extract_point, regrid
-from ._time import (annual_statistics, anomalies, climate_statistics,
-                    daily_statistics, decadal_statistics, extract_month,
-                    extract_season, extract_time, monthly_statistics,
-                    regrid_time, seasonal_statistics, timeseries_filter)
+from ._time import (
+    annual_statistics,
+    anomalies,
+    climate_statistics,
+    clip_start_end_year,
+    daily_statistics,
+    decadal_statistics,
+    extract_month,
+    extract_season,
+    extract_time,
+    hourly_statistics,
+    monthly_statistics,
+    regrid_time,
+    resample_hours,
+    resample_time,
+    seasonal_statistics,
+    timeseries_filter,
+)
 from ._trend import linear_trend, linear_trend_stderr
 from ._units import convert_units
-from ._volume import (depth_integration, extract_trajectory, extract_transect,
-                      extract_volume, volume_statistics)
+from ._volume import (
+    depth_integration,
+    extract_trajectory,
+    extract_transect,
+    extract_volume,
+    volume_statistics,
+)
 from ._weighting import weighting_landsea_fraction
 
 logger = logging.getLogger(__name__)
@@ -49,13 +87,17 @@ __all__ = [
     # Concatenate all cubes in one
     'concatenate',
     'cmor_check_metadata',
-    # Time extraction
-    'extract_time',
-    'extract_season',
-    'extract_month',
+    # Extract years given by dataset keys (start_year and end_year)
+    'clip_start_end_year',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
+    # Time extraction (as defined in the preprocessor section)
+    'extract_time',
+    'extract_season',
+    'extract_month',
+    'resample_hours',
+    'resample_time',
     # Level extraction
     'extract_levels',
     # Weighting
@@ -99,6 +141,7 @@ __all__ = [
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
+    'hourly_statistics',
     'daily_statistics',
     'monthly_statistics',
     'seasonal_statistics',
@@ -117,6 +160,7 @@ __all__ = [
 ]
 
 TIME_PREPROCESSORS = [
+    'clip_start_end_year',
     'extract_time',
     'extract_season',
     'extract_month',
@@ -201,13 +245,14 @@ def _check_multi_model_settings(products):
             elif reference.settings[step] != settings:
                 raise ValueError(
                     "Unable to combine differing multi-dataset settings for "
-                    "{} and {}, {} and {}".format(
-                        reference.filename, product.filename,
-                        reference.settings[step], settings))
+                    "{} and {}, {} and {}".format(reference.filename,
+                                                  product.filename,
+                                                  reference.settings[step],
+                                                  settings))
 
 
 def _get_multi_model_settings(products, step):
-    """Select settings for multi model step"""
+    """Select settings for multi model step."""
     _check_multi_model_settings(products)
     settings = {}
     exclude = set()
@@ -231,7 +276,7 @@ def _run_preproc_function(function, items, kwargs):
 
 
 def preprocess(items, step, **settings):
-    """Run preprocessor"""
+    """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
     itype = _get_itype(step)
@@ -245,8 +290,7 @@ def preprocess(items, step, **settings):
 
     items = []
     for item in result:
-        if isinstance(item,
-                      (PreprocessorFile, Cube, str)):
+        if isinstance(item, (PreprocessorFile, Cube, str)):
             items.append(item)
         else:
             items.extend(item)
@@ -271,7 +315,6 @@ def get_step_blocks(steps, order):
 
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
-
     def __init__(self, attributes, settings, ancestors=None):
         super(PreprocessorFile, self).__init__(attributes['filename'],
                                                attributes, ancestors)
@@ -360,8 +403,8 @@ def _apply_multimodel(products, step, debug):
     """Apply multi model step to products."""
     settings, exclude = _get_multi_model_settings(products, step)
 
-    logger.debug("Applying %s to\n%s", step, '\n'.join(
-        str(p) for p in products - exclude))
+    logger.debug("Applying %s to\n%s", step,
+                 '\n'.join(str(p) for p in products - exclude))
     result = preprocess(products - exclude, step, **settings)
     products = set(result) | exclude
 
@@ -376,18 +419,17 @@ def _apply_multimodel(products, step, debug):
 
 
 class PreprocessingTask(BaseTask):
-    """Task for running the preprocessor"""
-
+    """Task for running the preprocessor."""
     def __init__(
-            self,
-            products,
-            ancestors=None,
-            name='',
-            order=DEFAULT_ORDER,
-            debug=None,
-            write_ncl_interface=False,
+        self,
+        products,
+        ancestors=None,
+        name='',
+        order=DEFAULT_ORDER,
+        debug=None,
+        write_ncl_interface=False,
     ):
-        """Initialize"""
+        """Initialize."""
         _check_multi_model_settings(products)
         super().__init__(ancestors=ancestors, name=name, products=products)
         self.order = list(order)
@@ -446,10 +488,11 @@ class PreprocessingTask(BaseTask):
         ]
         products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
                                for p in self.products)
-        txt = "{}:\norder: {}\n{}\n{}".format(
+        txt = "{}: {}\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
+            self.name,
             order,
             products,
-            super(PreprocessingTask, self).str(),
+            self.print_ancestors(),
         )
         return txt

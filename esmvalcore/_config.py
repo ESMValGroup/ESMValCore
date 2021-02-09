@@ -1,9 +1,8 @@
 """ESMValTool configuration."""
 import datetime
 import logging
-import logging.config
 import os
-import time
+import warnings
 from pathlib import Path
 
 import yaml
@@ -44,15 +43,35 @@ def read_config_user_file(config_file, folder_name, options=None):
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
+    # DEPRECATED: remove in v2.4
+    for setting in ('write_plots', 'write_netcdf'):
+        if setting in cfg:
+            msg = (
+                f"Using '{setting}' in {config_file} is deprecated and will "
+                "be removed in ESMValCore version 2.4. For diagnostics "
+                "that support this setting, it should be set in the "
+                "diagnostic script section of the recipe instead. "
+                f"Remove the setting from {config_file} to get rid of this "
+                "warning message.")
+            print(f"Warning: {msg}")
+            warnings.warn(DeprecationWarning(msg))
+
     if options is None:
         options = dict()
     for key, value in options.items():
         cfg[key] = value
+        # DEPRECATED: remove in v2.4
+        if key in ('write_plots', 'write_netcdf'):
+            msg = (
+                f"Setting '{key}' from the command line is deprecated and "
+                "will be removed in ESMValCore version 2.4. For diagnostics "
+                "that support this setting, it should be set in the "
+                "diagnostic script section of the recipe instead.")
+            print(f"Warning: {msg}")
+            warnings.warn(DeprecationWarning(msg))
 
     # set defaults
     defaults = {
-        'write_plots': True,
-        'write_netcdf': True,
         'compress_netcdf': False,
         'exit_on_warning': False,
         'output_file_type': 'png',
@@ -65,6 +84,9 @@ def read_config_user_file(config_file, folder_name, options=None):
         'profile_diagnostic': False,
         'config_developer_file': None,
         'drs': {},
+        # DEPRECATED: remove default settings below in v2.4
+        'write_plots': True,
+        'write_netcdf': True,
     }
 
     for key in defaults:
@@ -99,10 +121,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     cfg['run_dir'] = os.path.join(cfg['output_dir'], 'run')
 
     # Read developer configuration file
-    cfg_developer = read_config_developer_file(cfg['config_developer_file'])
-    for key, value in cfg_developer.items():
-        CFG[key] = value
-    read_cmor_tables(CFG)
+    load_config_developer(cfg['config_developer_file'])
 
     return cfg
 
@@ -121,7 +140,6 @@ def _normalize_path(path):
     -------
     str:
         Normalized path
-
     """
     if path is None:
         return None
@@ -142,43 +160,12 @@ def read_config_developer_file(cfg_file=None):
     return cfg
 
 
-def configure_logging(cfg_file=None, output_dir=None, console_log_level=None):
-    """Set up logging."""
-    if cfg_file is None:
-        cfg_file = os.path.join(os.path.dirname(__file__),
-                                'config-logging.yml')
-
-    cfg_file = os.path.abspath(cfg_file)
-    with open(cfg_file) as file_handler:
-        cfg = yaml.safe_load(file_handler)
-
-    if output_dir is None:
-        cfg['handlers'] = {
-            name: handler
-            for name, handler in cfg['handlers'].items()
-            if 'filename' not in handler
-        }
-        prev_root = cfg['root']['handlers']
-        cfg['root']['handlers'] = [
-            name for name in prev_root if name in cfg['handlers']
-        ]
-
-    log_files = []
-    for handler in cfg['handlers'].values():
-        if 'filename' in handler:
-            if not os.path.isabs(handler['filename']):
-                handler['filename'] = os.path.join(output_dir,
-                                                   handler['filename'])
-            log_files.append(handler['filename'])
-        if console_log_level is not None and 'stream' in handler:
-            if handler['stream'] in ('ext://sys.stdout', 'ext://sys.stderr'):
-                handler['level'] = console_log_level.upper()
-
-    logging.config.dictConfig(cfg)
-    logging.Formatter.converter = time.gmtime
-    logging.captureWarnings(True)
-
-    return log_files
+def load_config_developer(cfg_file=None):
+    """Load the config developer file and initialize CMOR tables."""
+    cfg_developer = read_config_developer_file(cfg_file)
+    for key, value in cfg_developer.items():
+        CFG[key] = value
+    read_cmor_tables(CFG)
 
 
 def get_project_config(project):

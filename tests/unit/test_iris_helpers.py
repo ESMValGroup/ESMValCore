@@ -30,8 +30,8 @@ def test_var_name_constraint(cubes):
         iris.cube.Cube(0.0, var_name='c', long_name='d'),
     ])
     with pytest.raises(iris.exceptions.ConstraintMismatchError):
-        cubes.extract_strict(var_name_constraint('a'))
+        cubes.extract_cube(var_name_constraint('a'))
     with pytest.raises(iris.exceptions.ConstraintMismatchError):
-        cubes.extract_strict(var_name_constraint('b'))
-    out_cube = cubes.extract_strict(var_name_constraint('c'))
+        cubes.extract_cube(var_name_constraint('b'))
+    out_cube = cubes.extract_cube(var_name_constraint('c'))
     assert out_cube == iris.cube.Cube(0.0, var_name='c', long_name='d')

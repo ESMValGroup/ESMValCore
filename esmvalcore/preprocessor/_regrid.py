@@ -4,13 +4,14 @@ import os
 import re
 from copy import deepcopy
 
+import iris
 import numpy as np
 import stratify
-import iris
 from dask import array as da
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
+from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
 from ._io import concatenate_callback, load
@@ -404,7 +405,17 @@ def _create_cube(src_cube, data, src_levels, levels, ):
 
     # Construct the new vertical coordinate for the interpolated
     # z-dimension, using the associated source coordinate metadata.
-    kwargs = deepcopy(src_levels._as_defn())._asdict()
+    metadata = src_levels.metadata
+
+    kwargs = {
+        'standard_name': metadata.standard_name,
+        'long_name': metadata.long_name,
+        'var_name': metadata.var_name,
+        'units': metadata.units,
+        'attributes': metadata.attributes,
+        'coord_system': metadata.coord_system,
+        'climatological': metadata.climatological,
+    }
 
     try:
         coord = iris.coords.DimCoord(levels, **kwargs)
@@ -475,7 +486,12 @@ def extract_levels(cube, levels, scheme, coordinate=None):
         'nearest_horizontal_extrapolate_vertical',
         'linear_horizontal_extrapolate_vertical'.
     coordinate :  optional str
-        The coordinate to interpolate
+        The coordinate to interpolate. If specified, pressure levels
+        (if present) can be converted to height levels and vice versa using
+        the US standard atmosphere. E.g. 'coordinate = altitude' will convert
+        existing pressure levels (air_pressure) to height levels (altitude);
+        'coordinate = air_pressure' will convert existing height levels
+        (altitude) to pressure levels (air_pressure).
 
     Returns
     -------
@@ -506,6 +522,16 @@ def extract_levels(cube, levels, scheme, coordinate=None):
 
     # Get the source cube vertical coordinate, if available.
     if coordinate:
+        coord_names = [coord.name() for coord in cube.coords()]
+        if coordinate not in coord_names:
+            # Try to calculate air_pressure from altitude coordinate or
+            # vice versa using US standard atmosphere for conversion.
+            if coordinate == 'air_pressure' and 'altitude' in coord_names:
+                # Calculate pressure level coordinate from altitude.
+                add_plev_from_altitude(cube)
+            if coordinate == 'altitude' and 'air_pressure' in coord_names:
+                # Calculate altitude coordinate from pressure levels.
+                add_altitude_from_plev(cube)
         src_levels = cube.coord(coordinate)
     else:
         src_levels = cube.coord(axis='z', dim_coords=True)
