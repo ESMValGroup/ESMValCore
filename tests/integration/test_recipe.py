@@ -2074,8 +2074,9 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: 
+             fx_variables:
                volcello:
+                 mip: Ofx
 
         diagnostics:
           diagnostic_name:
@@ -2110,8 +2111,8 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     fx_variables = settings['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Omon_' in fx_variables['volcello'][0]
-    assert '_Ofx_' not in fx_variables['volcello'][0]
+    assert '_Omon_' not in fx_variables['volcello'][0]
+    assert '_Ofx_' in fx_variables['volcello'][0]
 
 
 def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
@@ -2121,7 +2122,7 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: 
+             fx_variables:
                volcello:
                  mip: Oyr
                  exp: piControl
@@ -2223,7 +2224,7 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: 
+             fx_variables:
                volcello:
                  mip: Omon
 
@@ -2271,7 +2272,7 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: 
+             fx_variables:
                volcello:
                  mip: Oyr
 
@@ -2319,7 +2320,7 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: 
+             fx_variables:
                volcello:
 
         diagnostics:
@@ -2364,7 +2365,7 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: 
+             fx_variables:
                volcello:
 
         diagnostics:

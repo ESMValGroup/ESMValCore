@@ -328,6 +328,7 @@ def _add_fxvar_keys(fx_info, variable):
     """Add keys specific to fx variable to use get_input_filelist."""
     fx_variable = deepcopy(variable)
     fx_variable.update(fx_info)
+    fx_variable['variable_group'] = fx_info['short_name']
 
     # add special ensemble for CMIP5 only
     if fx_variable['project'] == 'CMIP5':
@@ -335,7 +336,6 @@ def _add_fxvar_keys(fx_info, variable):
 
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
-
 
     return fx_variable
 
