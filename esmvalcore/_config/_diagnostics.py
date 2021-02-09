@@ -117,7 +117,7 @@ class TagsManager(dict):
         ----------
         section : str
             Name of the subsection
-        tag : tuple[str] or list[str]
+        tags : tuple[str] or list[str]
             List or tuple with tag names
         """
         return tuple(self.get_tag_value(section, tag) for tag in tags)
