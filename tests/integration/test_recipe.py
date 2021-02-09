@@ -2111,8 +2111,8 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     fx_variables = settings['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Omon_' not in fx_variables['volcello'][0]
-    assert '_Ofx_' in fx_variables['volcello'][0]
+    assert '_Omon_' not in fx_variables['volcello']
+    assert '_Ofx_' in fx_variables['volcello']
 
 
 def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
