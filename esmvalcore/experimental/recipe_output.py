@@ -6,6 +6,7 @@ from pathlib import Path
 
 import iris
 
+from .config import Session
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
@@ -116,17 +117,29 @@ class RecipeOutput(Mapping):
     def from_raw_recipe_output(cls, recipe_output: dict):
         raw_output = recipe_output['raw_output']
         raw_recipe = recipe_output['raw_recipe']
-        session = recipe_output['recipe_config']
+        recipe_config = recipe_output['recipe_config']
         filename = recipe_output['recipe_filename']
 
+        session = Session.from_config_user(recipe_config)
         info = RecipeInfo(raw_recipe, filename=filename)
 
         return cls(raw_output, session=session, info=info)
 
-    def render(self):
+    def write_html(self, file: str):
+        """Write output summary to html document."""
+        html_dump = self.render(template='recipe_output_page.j2')
+
+        with open(file, 'w') as f:
+            f.write(html_dump)
+
+    def render(self, template: str = 'recipe_output_body.j2'):
         """Render output as html."""
-        template = get_template('recipe_output.j2')
-        rendered = template.render(tasks=self.values(), info=self.info)
+        template = get_template(template)
+        rendered = template.render(
+            tasks=self.values(),
+            session=self.session,
+            info=self.info,
+        )
 
         return rendered
 
@@ -199,6 +212,10 @@ class OutputFile():
         if not suffix:
             suffix = self.filename.suffix
         return self.filename.with_name(self.filename.stem + append + suffix)
+
+    def relative_to(self, location: str):
+        """Return the path relative to the given location."""
+        return self.filename.relative_to(location)
 
     @property
     def citation_file(self):

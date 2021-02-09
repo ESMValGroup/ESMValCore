@@ -175,7 +175,27 @@ class Session(ValidatedConfig):
         dct['work_dir'] = self.work_dir
         dct['preproc_dir'] = self.preproc_dir
         dct['plot_dir'] = self.plot_dir
+        dct['output_dir'] = self.session_dir
         return dct
+
+    @classmethod
+    def from_config_user(cls, config_user: dict) -> 'Session':
+        """Convert `config-user` dict to API-compatible session object."""
+        dct = config_user.copy()
+        dct.pop('run_dir')
+        dct.pop('work_dir')
+        dct.pop('preproc_dir')
+        dct.pop('plot_dir')
+
+        session = cls(dct)
+
+        output_dir = Path(dct['output_dir']).parent
+        session_name = Path(dct['output_dir']).name
+
+        session['output_dir'] = output_dir
+        session.session_name = session_name
+
+        return session
 
 
 def _read_config_file(config_file):

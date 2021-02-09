@@ -10,7 +10,7 @@
         </p>
         <p>
 
-            <img width='50%' src='data:image/png;base64, {{ file.to_base64() }}'/>
+            <img width='80%' src='{{ file.relative_to(session.session_dir) }}' alt='{{ file.caption }}'/>
 
         </p>
 
@@ -25,7 +25,7 @@
         </p>
         <p>
 
-            <a href='{{ file.href }}'>{{ file.filename.name }}</a>
+            <a href='{{ file.relative_to(session.session_dir) }}'>{{ file.filename.name }}</a>
 
         </p>
 
