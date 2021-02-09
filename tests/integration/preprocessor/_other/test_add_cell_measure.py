@@ -105,7 +105,7 @@ class Test:
             cube = add_cell_measure(
                 cube, {fx_var: fx_file}, 'CMIP6',
                 'EC-Earth3', CheckLevels.IGNORE)
-            assert cube.cell_measure(self.fx_volume.standard_name) is not None 
+            assert cube.cell_measure(self.fx_volume.standard_name) is not None
 
     def test_no_cell_measure(self):
         cube = iris.cube.Cube(self.new_cube_3D_data,
