@@ -197,4 +197,3 @@ yourself if you are just running diagnostics:
  - CEDA-JASMIN: `esmvaltool` is available on the scientific compute nodes (`sciX.jasmin.ac.uk` where
    `X = 1, 2,`3, 4, 5`) after login and module loading via `module load esmvaltool`; see the helper page at
    `CEDA <https://help.jasmin.ac.uk/article/4955-community-software-esmvaltool>`__ ;
- - DKRZ: Bjoern please
