@@ -73,6 +73,10 @@ def add_cell_measure(cube, fx_variables, project, dataset, check_level):
         return cube
     fx_cubes = iris.cube.CubeList()
     for fx_files in fx_variables.values():
+        if isinstance(fx_files, str):
+            fx_files = [fx_files]
+        if not fx_files:
+            continue
         for fx_file in fx_files:
             loaded_cube = iris.load(fx_file)
             short_name = loaded_cube[0].var_name
@@ -123,4 +127,6 @@ def add_cell_measure(cube, fx_variables, project, dataset, check_level):
                 var_name=fx_cube.var_name,
                 attributes=fx_cube.attributes)
             cube.add_cell_measure(measure, range(0, measure.ndim))
+            logger.info(f'Added {fx_cube.var_name} '
+                        f'as cell measure in cube of {cube.var_name}')
     return cube
