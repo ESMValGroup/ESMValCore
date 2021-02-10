@@ -6,13 +6,15 @@ Integration tests for the
 function.
 
 """
-
+import logging
 import iris
 import numpy as np
 import pytest
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.preprocessor._other import add_cell_measure
+
+logger = logging.getLogger(__name__)
 
 
 class Test:
@@ -42,15 +44,20 @@ class Test:
                                           bounds=[[0, 1], [1, 2], [2, 3]],
                                           units='m',
                                           long_name='ocean depth coordinate')
-        self.times = iris.coords.DimCoord([0, 1.5, 2.5, 3.5],
-                                          standard_name='time',
-                                          bounds=[[0, 1], [1, 2], [2, 3],
-                                                  [3, 4]],
-                                          units='hours')
-        self.time2 = iris.coords.DimCoord([0, 1.5, 2.5],
-                                          standard_name='time',
-                                          bounds=[[0, 1], [1, 2], [2, 3]],
-                                          units='hours')
+        self.monthly_times = iris.coords.DimCoord(
+            [15.5, 45, 74.5, 105, 135.5, 166,
+             196.5, 227.5, 258, 288.5, 319, 349.5,],
+            standard_name='time',
+            bounds=[[0, 31], [31, 59], [59, 90],
+                    [90, 120], [120, 151], [151, 181],
+                    [181, 212], [212, 243], [243, 273],
+                    [273, 304], [304, 334], [334, 365]],
+            units='days since 1950-01-01 00:00:00')
+        self.yearly_times = iris.coords.DimCoord(
+            [182.5, 547.5],
+            standard_name='time',
+            bounds=[[0, 365], [365, 730]],
+            units='days since 1950-01-01 00:00')
         self.coords_spec = [(self.lats, 0), (self.lons, 1)]
         self.fx_area = iris.cube.Cube(fx_area_data,
                                       dim_coords_and_dims=self.coords_spec)
@@ -62,7 +69,7 @@ class Test:
                                             ])
 
     def test_add_cell_measure_area(self, tmp_path):
-        """Test mask_landsea func."""
+        """Test add area fx variables as cell measures."""
         fx_vars = {
             'areacella': {'table_id': 'fx', 'frequency': 'fx'},
             'areacello': {'table_id': 'Ofx', 'frequency': 'fx'}
@@ -83,7 +90,7 @@ class Test:
             assert cube.cell_measure(self.fx_area.standard_name) is not None
 
     def test_add_cell_measure_volume(self, tmp_path):
-        """Test mask_landsea func."""
+        """Test add volume as cell measure."""
         fx_vars = {
             'volcello': {'table_id': 'Ofx', 'frequency': 'fx'}
             }
@@ -108,6 +115,7 @@ class Test:
             assert cube.cell_measure(self.fx_volume.standard_name) is not None
 
     def test_no_cell_measure(self):
+        """Test no cell measure is added."""
         cube = iris.cube.Cube(self.new_cube_3D_data,
                               dim_coords_and_dims=[
                                   (self.depth, 0),
@@ -116,3 +124,61 @@ class Test:
         cube = add_cell_measure(cube, {'areacello': None}, 'CMIP6',
                                 'EC-Earth3', CheckLevels.IGNORE)
         assert cube.cell_measures() == []
+
+    def test_invalid_cell_measure(self, tmp_path, caplog):
+        """Test invalid variable is not added as cell measure."""
+        self.fx_area.var_name = 'sftlf'
+        self.fx_area.standard_name = "land_area_fraction"
+        self.fx_area.units = '%'
+        self.fx_area.attributes['table_id'] = 'fx'
+        self.fx_area.attributes['frequency'] = 'fx'
+        fx_file = str(tmp_path / f'{self.fx_area.var_name}.nc')
+        iris.save(self.fx_area, fx_file)
+        cube = iris.cube.Cube(self.new_cube_data,
+                              dim_coords_and_dims=self.coords_spec)
+        cube.var_name = 'tas'
+        with caplog.at_level(logging.INFO):
+            cube = add_cell_measure(
+                cube, {self.fx_area.var_name: fx_file}, 'CMIP6',
+                'EC-Earth3', CheckLevels.IGNORE)
+        msg = (f'Fx variable {self.fx_area.var_name} '
+               'cannot be added as a cell measure '
+               f'in cube of {cube.var_name}.')
+        assert msg in caplog.text
+        assert cube.cell_measures() == []
+
+    def test_wrong_time_frequency(self, tmp_path):
+        """
+        Test error is raised when cube and fx cube
+        frequencies do not match.
+        """
+        volume_data = np.ones((2, 3, 3, 3))
+        volume_cube = iris.cube.Cube(
+            volume_data,
+            dim_coords_and_dims=[(self.yearly_times, 0),
+                                 (self.depth, 1),
+                                 (self.lats, 2),
+                                 (self.lons, 3)])
+        volume_cube.standard_name = 'ocean_volume'
+        volume_cube.var_name = 'volcello'
+        volume_cube.units = 'm3'
+        volume_cube.attributes['table_id'] = 'Oyr'
+        volume_cube.attributes['frequency'] = 'yr'
+        fx_file = str(tmp_path / f'{volume_cube.var_name}.nc')
+        iris.save(volume_cube, fx_file)
+        data = np.ones((12, 3, 3, 3))
+        cube = iris.cube.Cube(
+            data,
+            dim_coords_and_dims=[(self.monthly_times, 0),
+                                 (self.depth, 1),
+                                 (self.lats, 2),
+                                 (self.lons, 3)])
+        cube.var_name = 'thetao'
+        with pytest.raises(ValueError) as excinfo:
+            cube = add_cell_measure(
+                cube, {volume_cube.var_name: fx_file}, 'CMIP6',
+                'EC-Earth3', CheckLevels.IGNORE)
+        msg = (f"Frequencies of {cube.var_name} and "
+               f"{volume_cube.var_name} cubes do not match.")
+        assert msg in str(excinfo.value)
+       
