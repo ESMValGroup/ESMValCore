@@ -25,6 +25,10 @@ class Diagnostics:
     def __init__(self, path):
         self.path = Path(path)
 
+    def __repr__(self):
+        """Return canonical class representation."""
+        return f"{self.__class__.__name__}({self.path!r})"
+
     @property
     def recipes(self):
         """Return the location of the recipes."""
