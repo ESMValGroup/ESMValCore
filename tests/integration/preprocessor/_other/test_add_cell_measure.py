@@ -46,7 +46,7 @@ class Test:
                                           long_name='ocean depth coordinate')
         self.monthly_times = iris.coords.DimCoord(
             [15.5, 45, 74.5, 105, 135.5, 166,
-             196.5, 227.5, 258, 288.5, 319, 349.5,],
+             196.5, 227.5, 258, 288.5, 319, 349.5],
             standard_name='time',
             bounds=[[0, 31], [31, 59], [59, 90],
                     [90, 120], [120, 151], [151, 181],
@@ -181,4 +181,3 @@ class Test:
         msg = (f"Frequencies of {cube.var_name} and "
                f"{volume_cube.var_name} cubes do not match.")
         assert msg in str(excinfo.value)
-       
