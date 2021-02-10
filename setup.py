@@ -59,7 +59,7 @@ REQUIREMENTS = {
         'pytest-metadata>=1.5.1',
         'pytest-mock',
         'pytest-xdist',
-        'ESMValTool_sample_data>=v0.0.3',
+        'ESMValTool_sample_data==0.0.3',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
