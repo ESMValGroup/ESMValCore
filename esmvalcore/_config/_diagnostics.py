@@ -27,7 +27,7 @@ class Diagnostics:
 
     def __repr__(self):
         """Return canonical class representation."""
-        return f"{self.__class__.__name__}({self.path!r})"
+        return f"{self.__class__.__name__}({self.path!s})"
 
     @property
     def recipes(self):
