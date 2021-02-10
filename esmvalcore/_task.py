@@ -20,7 +20,7 @@ import psutil
 import yaml
 
 from ._citation import _write_citation_files
-from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
+from ._config import DIAGNOSTICS, TAGS
 from ._provenance import TrackedFile, get_task_provenance
 
 
@@ -296,7 +296,7 @@ class DiagnosticTask(BaseTask):
 
     def _initialize_cmd(self):
         """Create an executable command from script."""
-        diagnostics_root = DIAGNOSTICS_PATH / 'diag_scripts'
+        diagnostics_root = DIAGNOSTICS.scripts
         script = self.script
         script_file = (diagnostics_root / Path(script).expanduser()).absolute()
 
@@ -348,11 +348,11 @@ class DiagnosticTask(BaseTask):
             env['MPLBACKEND'] = 'Agg'
         if ext in ('.r', '.ncl'):
             # Make diag_scripts path available to diagostic script
-            env['diag_scripts'] = str(DIAGNOSTICS_PATH / 'diag_scripts')
+            env['diag_scripts'] = str(DIAGNOSTICS.scripts)
         if ext == '.jl':
             # Set the julia virtual environment
             env['JULIA_LOAD_PATH'] = "{}:{}".format(
-                DIAGNOSTICS_PATH / 'install' / 'Julia',
+                DIAGNOSTICS.path / 'install' / 'Julia',
                 os.environ.get('JULIA_LOAD_PATH', ''),
             )
         return env
@@ -616,9 +616,8 @@ class DiagnosticTask(BaseTask):
                         self.name)
 
             attributes.update(deepcopy(attrs))
-            for key in attributes:
-                if key in TAGS:
-                    attributes[key] = replace_tags(key, attributes[key])
+
+            TAGS.replace_tags_in_dict(attributes)
 
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)

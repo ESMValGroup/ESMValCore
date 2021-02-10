@@ -47,7 +47,7 @@ def read_cmor_tables(cfg_developer=None):
 
     """
     if cfg_developer is None:
-        cfg_file = Path(__file__).parent.parent / 'config-developer.yml'
+        cfg_file = Path(__file__).parents[1] / 'config-developer.yml'
         with cfg_file.open() as file:
             cfg_developer = yaml.safe_load(file)
 
