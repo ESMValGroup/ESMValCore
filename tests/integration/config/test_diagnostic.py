@@ -52,6 +52,6 @@ def test_tags_manager_fails():
 
 def test_load_tags_from_non_existant_file():
     """Test fallback if no diagnostics are installed."""
-    tags = TagsManager.from_file('non-existant')
+    tags = TagsManager.from_file('non-existent')
     assert isinstance(tags, TagsManager)
     assert tags == {}
