@@ -30,17 +30,39 @@ class RecipeInfo():
         """Return canonical string representation."""
         return f'{self.__class__.__name__}({self.name!r})'
 
-    def _repr_markdown_(self) -> str:
-        """Represent using markdown renderer in a notebook environment."""
-        return self.info.render('markdown')
+    def __str__(self) -> str:
+        """Return string representation."""
+        bullet = '\n - '
+        string = f'## {self.name}'
+
+        string += '\n\n'
+        string += f'{self.description}'
+
+        string += '\n\n### Authors'
+        for author in self.authors:
+            string += f'{bullet}{author}'
+
+        string += '\n\n### Maintainers'
+        for maintainer in self.maintainers:
+            string += f'{bullet}{maintainer}'
+
+        if self.projects:
+            string += '\n\n### Projects'
+            for project in self.projects:
+                string += f'{bullet}{project}'
+
+        if self.references:
+            string += '\n\n### References'
+            for reference in self.references:
+                string += bullet + reference.render('plaintext')
+
+        string += '\n'
+
+        return string
 
     def _repr_html_(self) -> str:
         """Represent using html renderer in a notebook environment."""
-        return self.info.render('markdown')
-
-    def __str__(self) -> str:
-        """Return string representation."""
-        return self.info.render('plaintext')
+        return self.info.render()
 
     @classmethod
     def from_yaml(cls, filename: str):
@@ -94,52 +116,7 @@ class RecipeInfo():
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def to_html(self):
-        """Render info object to html."""
-        template = get_template('recipe_info.j2')
+    def render(self, template: str = 'recipe_info_section.j2'):
+        """Render output as html."""
+        template = get_template(template)
         return template.render(info=self)
-
-    def render(self, renderer: str = 'plaintext') -> str:
-        """Return formatted string.
-
-        Parameters
-        ----------
-        renderer : str
-            Choose the renderer for the string representation.
-            Must be one of 'plaintext', 'markdown', 'html'
-
-        Returns
-        -------
-        str
-            Rendered representation of the recipe documentation.
-        """
-        if renderer == 'html':
-            return self.to_html()
-
-        bullet = '\n - '
-        string = f'## {self.name}'
-
-        string += '\n\n'
-        string += f'{self.description}'
-
-        string += '\n\n### Authors'
-        for author in self.authors:
-            string += f'{bullet}{author}'
-
-        string += '\n\n### Maintainers'
-        for maintainer in self.maintainers:
-            string += f'{bullet}{maintainer}'
-
-        if self.projects:
-            string += '\n\n### Projects'
-            for project in self.projects:
-                string += f'{bullet}{project}'
-
-        if self.references:
-            string += '\n\n### References'
-            for reference in self.references:
-                string += bullet + reference.render(renderer)
-
-        string += '\n'
-
-        return string

@@ -41,21 +41,17 @@ class Recipe():
         """Return canonical string representation."""
         return f'{self.__class__.__name__}({self.name!r})'
 
-    def _repr_markdown_(self) -> str:
-        """Represent using markdown renderer in a notebook environment."""
-        return self.info.render('markdown')
-
     def __str__(self) -> str:
         """Return string representation."""
-        return self.info.render('plaintext')
+        return str(self.info)
+
+    def _repr_html_(self) -> str:
+        """Return html representation."""
+        return self.info.render()
 
     @property
     def name(self):
         return self.info.name
-
-    def to_markdown(self) -> str:
-        """Return markdown formatted string."""
-        return self.info.render('markdown')
 
     @property
     def data(self) -> dict:

@@ -132,7 +132,7 @@ class RecipeOutput(Mapping):
         with open(file, 'w') as f:
             f.write(html_dump)
 
-    def render(self, template: str = 'recipe_output_body.j2'):
+    def render(self, template: str = 'recipe_output_section.j2'):
         """Render output as html."""
         template = get_template(template)
         rendered = template.render(
