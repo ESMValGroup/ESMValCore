@@ -1,8 +1,0 @@
-{% include 'recipe_task_output.j2' %}
-
-<h2>Logs</h2>
-
-<p>
-  <a href='{{ session.main_log.relative_to(session.session_dir) }}'>{{ session.main_log.name }}</a> |
-  <a href='{{ session.main_log_debug.relative_to(session.session_dir) }}'>{{ session.main_log_debug.name }}</a>
-</p>

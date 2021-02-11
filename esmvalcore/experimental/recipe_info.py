@@ -62,7 +62,7 @@ class RecipeInfo():
 
     def _repr_html_(self) -> str:
         """Represent using html renderer in a notebook environment."""
-        return self.info.render()
+        return self.render()
 
     @classmethod
     def from_yaml(cls, filename: str):
@@ -116,7 +116,14 @@ class RecipeInfo():
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def render(self, template: str = 'recipe_info_section.j2'):
-        """Render output as html."""
-        template = get_template(template)
-        return template.render(info=self)
+    def render(self, template=None):
+        """Render output as html.
+
+        template : :obj:`Template`
+            Instance of :obj:`jinja2.Template`
+        """
+        if not template:
+            template = get_template(self.__class__.__name__ + '.j2')
+        rendered = template.render(info=self)
+
+        return rendered

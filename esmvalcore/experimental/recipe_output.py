@@ -1,6 +1,7 @@
 """API for handing recipe output."""
 
 import base64
+import logging
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -10,6 +11,9 @@ from .config import Session
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TaskOutput:
@@ -48,10 +52,6 @@ class TaskOutput:
     def __getitem__(self, key: str):
         """Get item indexed by `key`."""
         return self.files[key]
-
-    def _repr_html_(self):
-        """Render html in IPython environment."""
-        return self.render()
 
     @property
     def image_files(self) -> tuple:
@@ -109,10 +109,6 @@ class RecipeOutput(Mapping):
         """Return number of tasks."""
         return len(self._task_output)
 
-    def _repr_html_(self):
-        """Render html in IPython environment."""
-        return self.render()
-
     @classmethod
     def from_raw_recipe_output(cls, recipe_output: dict):
         raw_output = recipe_output['raw_output']
@@ -127,14 +123,22 @@ class RecipeOutput(Mapping):
 
     def write_html(self, file: str):
         """Write output summary to html document."""
-        html_dump = self.render(template='recipe_output_page.j2')
+        template = get_template('recipe_output_page.j2')
+        html_dump = self.render(template=template)
 
         with open(file, 'w') as f:
             f.write(html_dump)
 
-    def render(self, template: str = 'recipe_output_section.j2'):
-        """Render output as html."""
-        template = get_template(template)
+        logger.info("Wrote recipe output to:\nfile://%s", html_file)
+
+    def render(self, template=None):
+        """Render output as html.
+
+        template : :obj:`Template`
+            Instance of :obj:`jinja2.Template`
+        """
+        if not template:
+            template = get_template(self.__class__.__name__ + '.j2')
         rendered = template.render(
             tasks=self.values(),
             session=self.session,
