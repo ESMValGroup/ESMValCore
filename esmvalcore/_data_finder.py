@@ -89,11 +89,18 @@ def select_files(filenames, start_year, end_year):
     return selection
 
 
-def _replace_tags(path, variable):
+def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
-    path = path.strip('/')
-    tlist = re.findall(r'{([^}]*)}', path)
-    paths = [path]
+    if isinstance(paths, str):
+        paths = (paths, )
+    new_paths = []
+    tlist = set()
+    for path in paths:
+        path = path.strip('/')
+        tlist = tlist.union(re.findall(r'{([^}]*)}', path))
+        new_paths.append(path)
+    logger.debug(tlist)
+
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
