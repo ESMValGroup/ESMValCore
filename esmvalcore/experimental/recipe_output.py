@@ -120,8 +120,13 @@ class RecipeOutput(Mapping):
 
         return cls(raw_output, session=session, info=info)
 
-    def write_html(self, filename: str):
-        """Write output summary to html document."""
+    def write_html(self):
+        """Write output summary to html document.
+
+        A html file `index.html` gets written to the session dir.
+        """
+        filename = self.session.session_dir / 'index.html'
+
         template = get_template('recipe_output_page.j2')
         html_dump = self.render(template=template)
 

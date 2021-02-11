@@ -1390,3 +1390,11 @@ class Recipe:
             output['raw_output'][task.name] = task.get_product_attributes()
 
         return output
+
+    def write_html_summary(self):
+        """Write summary html file to the output dir."""
+        # keep RecipeOutput here to avoid circular import
+        from esmvalcore.experimental.recipe_output import RecipeOutput
+        raw_output = self.get_product_output()
+        output = RecipeOutput.from_raw_recipe_output(raw_output)
+        output.write_html()

@@ -129,7 +129,7 @@ class Recipe():
         self.last_session = session
 
         output = self.get_output()
-        output.write_html(filename=session.session_dir / 'index.html')
+        output.write_html()
 
         return output
 
