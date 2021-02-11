@@ -305,3 +305,30 @@ strictness to the highest:
 - ``strict``: fail if there are any warnings, this is the highest level of
     strictness. Mostly useful for checking datasets that you have produced, to
     be sure that future users will not be distracted by inoffensive warnings.
+
+
+Natively supported non-CMOR datasets
+====================================
+
+Fixed datasets are supported through the ``native6`` project. Below is a list of
+datasets currently supported.
+
+ERA5
+----
+
+- Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
+- Tier: 3
+
+MSWEP
+-----
+
+- Supported variables: ``pr``
+- Supported frequencies: ``mon``, ``day``, `3hr``.
+- Tier: 3
+
+For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
+
+.. note::
+  For monthly data (V220), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
+
+For more info: http://www.gloh2o.org/

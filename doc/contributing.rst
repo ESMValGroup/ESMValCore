@@ -227,6 +227,11 @@ early, as this will cause CircleCI to run the unit tests and Codacy to
 analyse your code. It’s also easier to get help from other developers if
 your code is visible in a pull request.
 
+You also must assign at least one `label <https://docs.github.com/en/github/managing-your-work-on-github/managing-labels#applying-labels-to-issues-and-pull-requests>`__
+to it as they are used to organize the changelog. At least one of the following
+ones must be used: `bug`, `deprecated feature`, `fix for dataset`,
+`preprocessor`, `cmor`, `api`, `testing`, `documentation` or `enhancement`.
+
 You can view the results of the automatic checks below your pull
 request. If one of the tests shows a red cross instead of a green
 approval sign, please click the link and try to solve the issue. Note
@@ -353,7 +358,7 @@ Follow these steps to create a new conda package:
    conda package
 -  If the build was successful, upload the package to the esmvalgroup
    conda channel, e.g.
-   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.1.0-py_0.tar.bz2``.
+   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.2.0-py_0.tar.bz2``.
 
 8. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -376,7 +381,7 @@ Follow these steps to create a new Python package:
 -  Build the package:
    ``python3 -m pep517.build --source --binary --out-dir dist/ .``
    This command should generate two files in the ``dist`` directory, e.g.
-   ``ESMValCore-2.1.0-py3-none-any.whl`` and ``ESMValCore-2.1.0.tar.gz``.
+   ``ESMValCore-2.2.0-py3-none-any.whl`` and ``ESMValCore-2.2.0.tar.gz``.
 -  Upload the package:
    ``python3 -m twine upload dist/*``
    You will be prompted for an API token if you have not set this up

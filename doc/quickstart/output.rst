@@ -81,7 +81,7 @@ will produce a unique settings.yml file.
 
 The settings.yml file passes several global level keys to diagnostic scripts.
 This includes several flags from the config-user.yml file (such as
-'write_netcdf', 'write_plots', etc...), several paths which are specific to the
+'log_level'), several paths which are specific to the
 diagnostic being run (such as 'plot_dir' and 'run_dir') and the location on
 disk of the metadata.yml file (described below).
 
@@ -97,8 +97,6 @@ disk of the metadata.yml file (described below).
     script: Scalar_timeseries
     version: 2.0a1
     work_dir: [...]recipe_ocean_bgc_20190118_134855/work/diag_timeseries_scalars/Scalar_timeseries
-    write_netcdf: true
-    write_plots: true
 
 The first item in the settings file will be a list of `Metadata.yml`_ files.
 There is a metadata.yml file generated for each field in each diagnostic.
@@ -146,5 +144,5 @@ As you can see, this is effectively a dictionary with several items including
 data paths, metadata and other information.
 
 There are  several tools available in python which are built to read and parse
-these files. The tools are avaialbe in the shared directory in the diagnostics
+these files. The tools are available in the shared directory in the diagnostics
 directory.

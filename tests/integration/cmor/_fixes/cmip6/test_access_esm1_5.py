@@ -5,9 +5,10 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.access_esm1_5 import Cl, Cli, Clw
+from esmvalcore.cmor._fixes.cmip6.access_esm1_5 import Cl, Cli, Clw, Hus, Zg
 from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 B_POINTS = [
     0.99771648645401, 0.990881502628326, 0.979542553424835,
@@ -117,3 +118,75 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is Cl
+
+
+@pytest.fixture
+def cubes_with_wrong_air_pressure():
+    """Cubes with wrong ``air_pressure`` coordinate."""
+    air_pressure_coord = iris.coords.DimCoord(
+        [1000.09, 600.6, 200.0],
+        bounds=[[1200.00001, 800], [800, 400.8], [400.8, 1.9]],
+        var_name='plev',
+        standard_name='air_pressure',
+        units='pa',
+    )
+    hus_cube = iris.cube.Cube(
+        [0.0, 1.0, 2.0],
+        var_name='hus',
+        dim_coords_and_dims=[(air_pressure_coord, 0)],
+    )
+    zg_cube = hus_cube.copy()
+    zg_cube.var_name = 'zg'
+    return iris.cube.CubeList([hus_cube, zg_cube])
+
+
+def test_get_hus_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'ACCESS-ESM1-5', 'Amon', 'hus')
+    assert fix == [Hus(None)]
+
+
+def test_hus_fix_metadata(cubes_with_wrong_air_pressure):
+    """Test ``fix_metadata`` for ``hus``."""
+    vardef = get_var_info('CMIP6', 'Amon', 'hus')
+    fix = Hus(vardef)
+    out_cubes = fix.fix_metadata(cubes_with_wrong_air_pressure)
+    assert len(out_cubes) == 2
+    hus_cube = out_cubes.extract_cube('hus')
+    zg_cube = out_cubes.extract_cube('zg')
+    assert hus_cube.var_name == 'hus'
+    assert zg_cube.var_name == 'zg'
+    np.testing.assert_allclose(hus_cube.coord('air_pressure').points,
+                               [1000.0, 601.0, 200.0])
+    np.testing.assert_allclose(hus_cube.coord('air_pressure').bounds,
+                               [[1200.0, 800.0], [800.0, 401.0], [401.0, 2.0]])
+    np.testing.assert_allclose(zg_cube.coord('air_pressure').points,
+                               [1000.09, 600.6, 200.0])
+    np.testing.assert_allclose(zg_cube.coord('air_pressure').bounds,
+                               [[1200.00001, 800], [800, 400.8], [400.8, 1.9]])
+
+
+def test_get_zg_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'ACCESS-ESM1-5', 'Amon', 'zg')
+    assert fix == [Zg(None)]
+
+
+def test_zg_fix_metadata(cubes_with_wrong_air_pressure):
+    """Test ``fix_metadata`` for ``zg``."""
+    vardef = get_var_info('CMIP6', 'Amon', 'zg')
+    fix = Zg(vardef)
+    out_cubes = fix.fix_metadata(cubes_with_wrong_air_pressure)
+    assert len(out_cubes) == 2
+    hus_cube = out_cubes.extract_cube('hus')
+    zg_cube = out_cubes.extract_cube('zg')
+    assert hus_cube.var_name == 'hus'
+    assert zg_cube.var_name == 'zg'
+    np.testing.assert_allclose(hus_cube.coord('air_pressure').points,
+                               [1000.09, 600.6, 200.0])
+    np.testing.assert_allclose(hus_cube.coord('air_pressure').bounds,
+                               [[1200.00001, 800], [800, 400.8], [400.8, 1.9]])
+    np.testing.assert_allclose(zg_cube.coord('air_pressure').points,
+                               [1000.0, 601.0, 200.0])
+    np.testing.assert_allclose(zg_cube.coord('air_pressure').bounds,
+                               [[1200.0, 800.0], [800.0, 401.0], [401.0, 2.0]])

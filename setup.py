@@ -32,9 +32,6 @@ REQUIREMENTS = {
     'install': [
         'cf-units',
         'dask[array]',
-        # fiona: 1.8.18/py39, they seem weary to build manylinux wheels
-        # so we may have to install from conda-forge in the future
-        'fiona',
         'fire',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
@@ -44,7 +41,7 @@ REQUIREMENTS = {
         'pybtex',
         'pyyaml',
         'requests',
-        'scitools-iris>=2.2',
+        'scitools-iris>=3.0.1',
         'requests',
         'shapely[vectorized]',
         'stratify',

@@ -3,11 +3,6 @@
 ###############################################################################
 ---
 
-# Diagnostics create plots? [true]/false
-write_plots: true
-# Diagnostics write NetCDF files? [true]/false
-write_netcdf: true
-# Set the console log level debug, [info], warning, error
 log_level: info
 # Exit on warning (only for NCL diagnostic scripts)? true/[false]
 exit_on_warning: false
@@ -22,7 +17,7 @@ compress_netcdf: false
 # Save intermediary cubes in the preprocessor true/[false]
 save_intermediary_cubes: false
 # Remove the preproc dir if all fine
-remove_preproc_dir: true
+remove_preproc_dir: false
 # Run at most this many tasks in parallel [null]/1/2/3/4/..
 # Set to null to use the number of available CPUs.
 # If you run out of memory, try setting max_parallel_tasks to 1 and check the
