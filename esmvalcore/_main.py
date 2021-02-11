@@ -58,7 +58,7 @@ def write_html_summary(recipe, output_dir: str = None):
 
     raw_output = recipe.get_product_output()
     output = RecipeOutput.from_raw_recipe_output(raw_output)
-    output.write_html(file=html_file)
+    output.write_html(filename=html_file)
 
 
 def process_recipe(recipe_file, config_user):

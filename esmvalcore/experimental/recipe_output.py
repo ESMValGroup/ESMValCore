@@ -11,7 +11,6 @@ from .config import Session
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -121,15 +120,15 @@ class RecipeOutput(Mapping):
 
         return cls(raw_output, session=session, info=info)
 
-    def write_html(self, file: str):
+    def write_html(self, filename: str):
         """Write output summary to html document."""
         template = get_template('recipe_output_page.j2')
         html_dump = self.render(template=template)
 
-        with open(file, 'w') as f:
-            f.write(html_dump)
+        with open(filename, 'w') as file:
+            file.write(html_dump)
 
-        logger.info("Wrote recipe output to:\nfile://%s", html_file)
+        logger.info("Wrote recipe output to:\nfile://%s", filename)
 
     def render(self, template=None):
         """Render output as html.
@@ -188,7 +187,8 @@ class OutputFile():
 
     @property
     def caption(self) -> str:
-        return self.attributes['caption']
+        """Return the caption of the file (fallback to filename)."""
+        return self.attributes.get('caption', str(self.filename))
 
     @property
     def authors(self) -> tuple:

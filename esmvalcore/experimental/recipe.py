@@ -47,7 +47,15 @@ class Recipe():
 
     def _repr_html_(self) -> str:
         """Return html representation."""
-        return self.info.render()
+        self.render()
+
+    def render(self, template=None):
+        """Render output as html.
+
+        template : :obj:`Template`
+            Instance of :obj:`jinja2.Template`
+        """
+        return self.info.render(template=template)
 
     @property
     def name(self):
@@ -121,7 +129,7 @@ class Recipe():
         self.last_session = session
 
         output = self.get_output()
-        output.write(file=session.session_dir / 'index.html')
+        output.write_html(filename=session.session_dir / 'index.html')
 
         return output
 
