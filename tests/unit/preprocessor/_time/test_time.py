@@ -35,13 +35,13 @@ from esmvalcore.preprocessor._time import (
 )
 
 
-def _create_sample_cube():
+def _create_sample_cube(calendar='gregorian'):
     cube = Cube(np.arange(1, 25), var_name='co2', units='J')
     cube.add_dim_coord(
         iris.coords.DimCoord(
             np.arange(15., 720., 30.),
             standard_name='time',
-            units=Unit('days since 1950-01-01 00:00:00', calendar='gregorian'),
+            units=Unit('days since 1950-01-01 00:00:00', calendar=calendar),
         ),
         0,
     )
@@ -830,6 +830,19 @@ class TestRegridTimeMonthly(tests.Test):
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
+
+    def test_regrid_time_different_calendar_bounds(self):
+        """Test bounds in different calendars."""
+        cube_360 = _create_sample_cube(calendar='360_day')
+        # Same cubes but differing time units
+        newcube_360 = regrid_time(cube_360, frequency='mon')
+        newcube_gregorian = regrid_time(self.cube_1, frequency='mon')
+        bounds_360 = newcube_360.coord('time').bounds
+        bounds_gregorian = newcube_gregorian.coord('time').bounds
+        # test value of the bounds is not the same
+        assert (bounds_360 != bounds_gregorian).any()
+        # assert length of the 360_day bounds interval is 30 days
+        assert (bounds_360[:, 1] - bounds_360[:, 0] == 30).all()
 
 
 class TestRegridTimeDaily(tests.Test):
