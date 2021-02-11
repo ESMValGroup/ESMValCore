@@ -190,7 +190,10 @@ class Session(ValidatedConfig):
 
     @classmethod
     def from_config_user(cls, config_user: dict) -> 'Session':
-        """Convert `config-user` dict to API-compatible session object."""
+        """Convert `config-user` dict to API-compatible `Session` object.
+
+        For example, `_recipe.Recipe._cfg`.
+        """
         dct = config_user.copy()
         dct.pop('run_dir')
         dct.pop('work_dir')

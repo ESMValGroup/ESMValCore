@@ -1,3 +1,4 @@
+"""Handles recipe metadata (under 'documentation' section)."""
 import textwrap
 from pathlib import Path
 
@@ -17,6 +18,7 @@ class RecipeInfo():
     filename : pathlike
         Path to the recipe.
     """
+
     def __init__(self, data, filename: str = None):
         self.filename = Path(filename)
         self.data = data
@@ -120,7 +122,8 @@ class RecipeInfo():
         """Render output as html.
 
         template : :obj:`Template`
-            Instance of :obj:`jinja2.Template`
+            An instance of :py:class:`jinja2.Template` can be passed to
+            customize the output.
         """
         if not template:
             template = get_template(self.__class__.__name__ + '.j2')

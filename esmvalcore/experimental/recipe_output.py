@@ -110,6 +110,19 @@ class RecipeOutput(Mapping):
 
     @classmethod
     def from_raw_recipe_output(cls, recipe_output: dict):
+        """Construct instance from `_recipe.Recipe` output.
+
+        The core recipe format is not directly compatible with the API. This
+        constructor does the following:
+
+        1. Convert `config-user` dict to an instance of :obj:`Session`
+        2. Converts the raw recipe dict to :obj:`RecipeInfo`
+
+        Parameters
+        ----------
+        recipe_output : dict
+            Output from `_recipe.Recipe.get_product_output`
+        """
         raw_output = recipe_output['raw_output']
         raw_recipe = recipe_output['raw_recipe']
         recipe_config = recipe_output['recipe_config']
@@ -123,7 +136,7 @@ class RecipeOutput(Mapping):
     def write_html(self):
         """Write output summary to html document.
 
-        A html file `index.html` gets written to the session dir.
+        A html file `index.html` gets written to the session directory.
         """
         filename = self.session.session_dir / 'index.html'
 
@@ -139,7 +152,8 @@ class RecipeOutput(Mapping):
         """Render output as html.
 
         template : :obj:`Template`
-            Instance of :obj:`jinja2.Template`
+            An instance of :py:class:`jinja2.Template` can be passed to
+            customize the output.
         """
         if not template:
             template = get_template(self.__class__.__name__ + '.j2')
@@ -151,7 +165,7 @@ class RecipeOutput(Mapping):
 
         return rendered
 
-    def read_main_log(self):
+    def read_main_log(self) -> str:
         """Read log file."""
         return self.session.main_log.read_text()
 
@@ -276,7 +290,8 @@ class ImageFile(OutputFile):
 
     kind = 'image'
 
-    def to_base64(self):
+    def to_base64(self) -> str:
+        """Encodes image as base64 to embed in a Jupyter notebook."""
         with open(self.filename, "rb") as file:
             encoded = base64.b64encode(file.read())
         return encoded.decode('utf-8')

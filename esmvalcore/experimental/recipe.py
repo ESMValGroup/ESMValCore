@@ -53,12 +53,14 @@ class Recipe():
         """Render output as html.
 
         template : :obj:`Template`
-            Instance of :obj:`jinja2.Template`
+            An instance of :py:class:`jinja2.Template` can be passed to
+            customize the output.
         """
         return self.info.render(template=template)
 
     @property
     def name(self):
+        """Return the name of the recipe."""
         return self.info.name
 
     @property
