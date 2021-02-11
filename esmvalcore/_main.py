@@ -51,8 +51,7 @@ ______________________________________________________________________
 
 def write_html_summary(recipe, output_dir: str = None):
     """Write summary html file to the output dir."""
-    filename = 'output.html'
-    last_filename = 'last_' + filename
+    filename = 'index.html'
 
     output_dir = Path(output_dir)
     html_file = output_dir / filename
@@ -60,13 +59,6 @@ def write_html_summary(recipe, output_dir: str = None):
     raw_output = recipe.get_product_output()
     output = RecipeOutput.from_raw_recipe_output(raw_output)
     output.write_html(file=html_file)
-
-    # create symlink in global output directory for quick access
-    last_html_file = output_dir.parent / last_filename
-    last_html_file.unlink(missing_ok=True)
-    last_html_file.symlink_to(html_file)
-
-    logger.info("Wrote recipe output to:\nfile://%s", html_file)
 
 
 def process_recipe(recipe_file, config_user):

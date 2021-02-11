@@ -120,7 +120,10 @@ class Recipe():
 
         self.last_session = session
 
-        return self.get_output()
+        output = self.get_output()
+        output.write(file=session.session_dir / 'index.html')
+
+        return output
 
     def get_output(self) -> dict:
         """Get output from recipe.
