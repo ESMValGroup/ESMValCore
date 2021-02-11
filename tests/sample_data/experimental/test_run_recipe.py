@@ -43,6 +43,10 @@ def test_run_recipe(task, recipe, tmp_path):
 
     assert len(output) > 0
     assert isinstance(output, RecipeOutput)
+    assert (output.session.session_dir / 'index.html').exists()
+
+    assert isinstance(output.read_main_log, str)
+    assert isinstance(output.read_main_log_debug, str)
 
     for task, task_output in output.items():
         assert isinstance(task_output, TaskOutput)

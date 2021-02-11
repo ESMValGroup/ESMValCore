@@ -21,6 +21,18 @@ def test_contributor():
     assert isinstance(str(contributor), str)
 
 
+def test_contributor_from_dict():
+    """Test Contributor init from dict."""
+    name = 'John'
+    institute = 'Institute'
+    orcid = 'https://orcid.org/0000'
+    attributes = {'name': name, 'institute': institute, 'orcid': orcid}
+    author = Contributor.from_dict(attributes=attributes)
+    assert author.name == name
+    assert author.institute == institute
+    assert author.orcid == orcid
+
+
 def test_reference():
     """Coverage test for Reference."""
     reference = Reference.from_tag('acknow_project')
