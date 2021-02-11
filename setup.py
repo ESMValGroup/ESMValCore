@@ -33,6 +33,7 @@ REQUIREMENTS = {
         'cf-units',
         'dask[array]',
         'fire',
+        'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numpy',
