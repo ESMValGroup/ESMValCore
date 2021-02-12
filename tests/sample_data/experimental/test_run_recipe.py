@@ -8,8 +8,6 @@ from pathlib import Path
 import iris
 import pytest
 
-import esmvalcore
-from esmvalcore._config._diagnostics import TagsManager
 from esmvalcore._recipe import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (
@@ -19,26 +17,6 @@ from esmvalcore.experimental.recipe_output import (
 )
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
-
-pytest.importorskip(
-    'esmvaltool',
-    reason='The behaviour of these tests depends on what ``DIAGNOSTICS.path``'
-    'points to. This is defined by a forward-reference to ESMValTool, which'
-    'is not installed in the CI, but likely to be available in a developer'
-    'or user installation.')
-
-TAGS = TagsManager({
-    'authors': {
-        'doe_john': {
-            'name': 'Doe, John',
-            'institute': 'Testing Institute',
-            'orcid': 'https://orcid.org/0000-0002-6887-4885',
-        }
-    },
-    'projects': {
-        'test_project': 'Test Project',
-    }
-})
 
 CFG.update(esmvaltool_sample_data.get_rootpaths())
 CFG['max_parallel_tasks'] = 1
@@ -52,13 +30,11 @@ def recipe():
 
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize('task', (None, 'example/ta'))
-def test_run_recipe(monkeypatch, task, recipe, tmp_path):
+def test_run_recipe(task, recipe, tmp_path):
     """Test running a basic recipe using sample data.
 
     Recipe contains no provenance and no diagnostics.
     """
-    monkeypatch.setattr(esmvalcore.experimental.recipe_metadata, 'TAGS', TAGS)
-
     CFG['output_dir'] = tmp_path
 
     assert isinstance(recipe, Recipe)
