@@ -2,6 +2,7 @@
 
 import logging
 import pprint
+import shutil
 from pathlib import Path
 
 import yaml
@@ -47,7 +48,7 @@ class Recipe():
 
     def _repr_html_(self) -> str:
         """Return html representation."""
-        self.render()
+        return self.render()
 
     def render(self, template=None):
         """Render output as html.
@@ -121,6 +122,8 @@ class Recipe():
         if not session:
             session = CFG.start_session(self.path.stem)
 
+        self.last_session = session
+
         if task:
             session['diagnostics'] = task
 
@@ -128,7 +131,7 @@ class Recipe():
             self._load(session=session)
             self._engine.run()
 
-        self.last_session = session
+        shutil.copy2(self.path, session.recipe_file)
 
         output = self.get_output()
         output.write_html()

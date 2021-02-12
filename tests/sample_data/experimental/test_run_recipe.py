@@ -38,6 +38,7 @@ def test_run_recipe(task, recipe, tmp_path):
     CFG['output_dir'] = tmp_path
 
     assert isinstance(recipe, Recipe)
+    assert isinstance(recipe._repr_html_(), str)
 
     output = recipe.run(task=task)
 
@@ -45,6 +46,7 @@ def test_run_recipe(task, recipe, tmp_path):
     assert isinstance(output, RecipeOutput)
     assert (output.session.session_dir / 'index.html').exists()
 
+    assert output.session.recipe_file.exists()
     assert isinstance(output.read_main_log(), str)
     assert isinstance(output.read_main_log_debug(), str)
 
