@@ -20,6 +20,13 @@ from esmvalcore.experimental.recipe_output import (
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
+pytest.importorskip(
+    'esmvaltool',
+    reason='The behaviour of these tests depends on what ``DIAGNOSTICS.path``'
+    'points to. This is defined by a forward-reference to ESMValTool, which'
+    'is not installed in the CI, but likely to be available in a developer'
+    'or user installation.')
+
 TAGS = TagsManager({
     'authors': {
         'doe_john': {
