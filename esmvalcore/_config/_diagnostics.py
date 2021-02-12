@@ -81,7 +81,7 @@ class TagsManager(dict):
         default_author = {
             'name': 'Doe, John',
             'institute': 'Testing',
-            'orcid':'https://orcid.org/0000-0000-0000-0000',
+            'orcid': 'https://orcid.org/0000-0000-0000-0000',
         }
         self.set_tag_value('authors', 'doe_john', default_author)
         self.source_file = None
