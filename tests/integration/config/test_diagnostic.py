@@ -19,6 +19,28 @@ def test_diagnostics_class():
     assert isinstance(diagnostics.load_tags(), TagsManager)
 
 
+def test_tags_manager_setters():
+    """Test TagsManager setters."""
+    tags = TagsManager()
+    tags.set_tag_value('section', 'tag1', 'value1')
+    assert tags.get_tag_value('section', 'tag1') == 'value1'
+
+    tags.set_tag_values({
+        'section': {
+            'tag2': 'value2',
+        },
+        'other': {
+            'tag1': 'value1',
+            'tag2': 'value2',
+        },
+    })
+
+    assert tags.get_tag_value('section', 'tag1') == 'value1'
+    assert tags.get_tag_value('section', 'tag2') == 'value2'
+    assert tags.get_tag_value('other', 'tag1') == 'value1'
+    assert tags.get_tag_value('other', 'tag2') == 'value2'
+
+
 def test_tags_manager():
     """Test TagsManager functionality."""
     tags = TagsManager({'section': {'tag1': 123, 'tag2': 345}})
@@ -54,4 +76,6 @@ def test_load_tags_from_non_existant_file():
     """Test fallback if no diagnostics are installed."""
     tags = TagsManager.from_file('non-existent')
     assert isinstance(tags, TagsManager)
-    assert tags == {}
+    assert len(tags) == 1
+    assert 'authors' in tags
+    assert tags.get_tag_value('authors', 'doe_john')
