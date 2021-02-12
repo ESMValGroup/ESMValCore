@@ -10,7 +10,7 @@ import yaml
 from PIL import Image
 
 import esmvalcore
-from esmvalcore._config._diagnostics import TagsManager
+from esmvalcore._config import TAGS
 from esmvalcore._recipe import TASKSEP, read_recipe_file
 from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
@@ -20,6 +20,29 @@ from esmvalcore.preprocessor._io import concatenate_callback
 
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
+
+TAGS.set_tag_values({
+    'projects': {
+        'c3s-magic': 'C3S MAGIC project',
+    },
+    'themes': {
+        'phys': 'physics',
+    },
+    'realms': {
+        'atmos': 'atmosphere',
+    },
+    'statistics': {
+        'mean': 'mean',
+        'var': 'variability',
+    },
+    'domains': {
+        'et': 'extra tropics',
+        'trop': 'tropics',
+    },
+    'plot_types': {
+        'zonal': 'zonal',
+    },
+})
 
 MANDATORY_DATASET_KEYS = (
     'dataset',
@@ -238,7 +261,7 @@ DEFAULT_DOCUMENTATION = dedent("""
     documentation:
       description: This is a test recipe.
       authors:
-        - andela_bouwe
+        - doe_john
       references:
         - contact_authors
         - acknow_project
@@ -1282,7 +1305,7 @@ def simulate_diagnostic_run(diagnostic_task):
         'statistics': ['mean', 'var'],
         'domains': ['trop', 'et'],
         'plot_types': ['zonal'],
-        'authors': ['andela_bouwe'],
+        'authors': ['doe_john'],
         'references': ['acknow_project'],
         'ancestors': input_files,
     }
@@ -1298,45 +1321,11 @@ def simulate_diagnostic_run(diagnostic_task):
     return record
 
 
-TAGS = TagsManager({
-    'authors': {
-        'andela_bouwe': {
-            'name': 'Bouwe Andela',
-        },
-    },
-    'projects': {
-        'c3s-magic': 'C3S MAGIC project',
-    },
-    'themes': {
-        'phys': 'physics',
-    },
-    'realms': {
-        'atmos': 'atmosphere',
-    },
-    'statistics': {
-        'mean': 'mean',
-        'var': 'variability',
-    },
-    'domains': {
-        'et': 'extra tropics',
-        'trop': 'tropics',
-    },
-    'plot_types': {
-        'zonal': 'zonal',
-    },
-})
-
-
 def test_diagnostic_task_provenance(
     tmp_path,
     patched_datafinder,
-    monkeypatch,
     config_user,
 ):
-    monkeypatch.setattr(esmvalcore._config, 'TAGS', TAGS)
-    monkeypatch.setattr(esmvalcore._recipe, 'TAGS', TAGS)
-    monkeypatch.setattr(esmvalcore._task, 'TAGS', TAGS)
-
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
 
