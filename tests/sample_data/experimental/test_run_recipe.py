@@ -8,6 +8,7 @@ from pathlib import Path
 import iris
 import pytest
 
+from esmvalcore._config import TAGS
 from esmvalcore._recipe import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (
@@ -18,12 +19,18 @@ from esmvalcore.experimental.recipe_output import (
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
-pytest.importorskip(
-    'esmvaltool',
-    reason='The behaviour of these tests depends on what ``DIAGNOSTICS.path``'
-    'points to. This is defined by a forward-reference to ESMValTool, which'
-    'is not installed in the CI, but likely to be available in a developer'
-    'or user installation.')
+TAGS.update({
+    'authors': {
+        'doe_john': {
+            'name': 'Doe, John',
+            'institute': 'Testing Institute',
+            'orcid': 'https://orcid.org/0000-0002-6887-4885',
+        }
+    },
+    'projects': {
+        'test_project': 'Test Project',
+    }
+})
 
 CFG.update(esmvaltool_sample_data.get_rootpaths())
 CFG['max_parallel_tasks'] = 1
@@ -52,8 +59,8 @@ def test_run_recipe(task, recipe, tmp_path):
     assert isinstance(output, RecipeOutput)
     assert (output.session.session_dir / 'index.html').exists()
 
-    assert isinstance(output.read_main_log, str)
-    assert isinstance(output.read_main_log_debug, str)
+    assert isinstance(output.read_main_log(), str)
+    assert isinstance(output.read_main_log_debug(), str)
 
     for task, task_output in output.items():
         assert isinstance(task_output, TaskOutput)
