@@ -1,4 +1,4 @@
-"""ESMValTool configuration."""
+"""Functions dealing with config-user.yml / config-developer.yml."""
 import datetime
 import logging
 import os
@@ -7,27 +7,11 @@ from pathlib import Path
 
 import yaml
 
-from .cmor.table import CMOR_TABLES, read_cmor_tables
+from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 
 logger = logging.getLogger(__name__)
 
 CFG = {}
-
-
-def find_diagnostics():
-    """Try to find installed diagnostic scripts."""
-    try:
-        import esmvaltool
-    except ImportError:
-        return Path.cwd()
-    # avoid a crash when there is a directory called
-    # 'esmvaltool' that is not a Python package
-    if esmvaltool.__file__ is None:
-        return Path.cwd()
-    return Path(esmvaltool.__file__).absolute().parent
-
-
-DIAGNOSTICS_PATH = find_diagnostics()
 
 
 def read_config_user_file(config_file, folder_name, options=None):
@@ -149,10 +133,7 @@ def _normalize_path(path):
 def read_config_developer_file(cfg_file=None):
     """Read the developer's configuration file."""
     if cfg_file is None:
-        cfg_file = os.path.join(
-            os.path.dirname(__file__),
-            'config-developer.yml',
-        )
+        cfg_file = Path(__file__).parents[1] / 'config-developer.yml'
 
     with open(cfg_file, 'r') as file:
         cfg = yaml.safe_load(file)
@@ -199,38 +180,3 @@ def get_activity(variable):
         return CMOR_TABLES[project].activities[exp][0]
     except (KeyError, AttributeError):
         return None
-
-
-TAGS_CONFIG_FILE = os.path.join(DIAGNOSTICS_PATH, 'config-references.yml')
-
-
-def _load_tags(filename=TAGS_CONFIG_FILE):
-    """Load the reference tags used for provenance recording."""
-    if os.path.exists(filename):
-        logger.debug("Loading tags from %s", filename)
-        with open(filename) as file:
-            return yaml.safe_load(file)
-    else:
-        # This happens if no diagnostics are installed
-        logger.debug("No tags loaded, file %s not present", filename)
-        return {}
-
-
-TAGS = _load_tags()
-
-
-def get_tag_value(section, tag):
-    """Retrieve the value of a tag."""
-    if section not in TAGS:
-        raise ValueError("Section '{}' does not exist in {}".format(
-            section, TAGS_CONFIG_FILE))
-    if tag not in TAGS[section]:
-        raise ValueError(
-            "Tag '{}' does not exist in section '{}' of {}".format(
-                tag, section, TAGS_CONFIG_FILE))
-    return TAGS[section][tag]
-
-
-def replace_tags(section, tags):
-    """Replace a list of tags with their values."""
-    return tuple(get_tag_value(section, tag) for tag in tags)

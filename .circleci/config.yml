@@ -43,6 +43,9 @@ jobs:
           path: test-reports/
       - store_artifacts:
           path: test-reports/
+      - coverage-reporter/send_report:
+          coverage-reports: 'test-reports/coverage.xml'
+          project-token: $CODACY_PROJECT_TOKEN
 
   install:
     # Test installation
@@ -84,9 +87,6 @@ jobs:
           path: test-reports/
       - store_test_results:
           path: test-reports/
-      - coverage-reporter/send_report:
-          coverage-reports: 'test-reports/coverage.xml'
-          project-token: $CODACY_PROJECT_TOKEN
 
   documentation:
     # Test building documentation
