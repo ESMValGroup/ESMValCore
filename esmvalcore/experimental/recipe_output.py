@@ -291,7 +291,7 @@ class ImageFile(OutputFile):
     kind = 'image'
 
     def to_base64(self) -> str:
-        """Encodes image as base64 to embed in a Jupyter notebook."""
+        """Encode image as base64 to embed in a Jupyter notebook."""
         with open(self.filename, "rb") as file:
             encoded = base64.b64encode(file.read())
         return encoded.decode('utf-8')
