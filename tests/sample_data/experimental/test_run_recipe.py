@@ -8,7 +8,8 @@ from pathlib import Path
 import iris
 import pytest
 
-from esmvalcore._config import TAGS
+import esmvalcore
+from esmvalcore._config._diagnostics import TagsManager
 from esmvalcore._recipe import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (
@@ -19,7 +20,7 @@ from esmvalcore.experimental.recipe_output import (
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
-TAGS.update({
+TAGS = TagsManager({
     'authors': {
         'doe_john': {
             'name': 'Doe, John',
@@ -44,11 +45,13 @@ def recipe():
 
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize('task', (None, 'example/ta'))
-def test_run_recipe(task, recipe, tmp_path):
+def test_run_recipe(monkeypatch, task, recipe, tmp_path):
     """Test running a basic recipe using sample data.
 
     Recipe contains no provenance and no diagnostics.
     """
+    monkeypatch.setattr(esmvalcore.experimental.recipe_metadata, 'TAGS', TAGS)
+
     CFG['output_dir'] = tmp_path
 
     assert isinstance(recipe, Recipe)
@@ -83,5 +86,5 @@ def test_run_recipe_diagnostic_failing(recipe, tmp_path):
     CFG['output_dir'] = tmp_path
 
     with pytest.raises(RecipeError):
-        task = 'example/FAIL'
+        task = 'example/non-existant'
         _ = recipe.run(task)
