@@ -11,13 +11,7 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import (
-    TAGS,
-    get_activity,
-    get_institutes,
-    get_project_config,
-    replace_tags,
-)
+from ._config import TAGS, get_activity, get_institutes, get_project_config
 from ._data_finder import (
     get_input_filelist,
     get_output_file,
@@ -952,9 +946,8 @@ class Recipe:
     def _initialize_provenance(self, raw_documentation):
         """Initialize the recipe provenance."""
         doc = deepcopy(raw_documentation)
-        for key in doc:
-            if key in TAGS:
-                doc[key] = replace_tags(key, doc[key])
+
+        TAGS.replace_tags_in_dict(doc)
 
         return get_recipe_provenance(doc, self._filename)
 

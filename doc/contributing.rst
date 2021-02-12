@@ -283,16 +283,26 @@ and the
 `GitHub Actions run <https://github.com/ESMValGroup/ESMValCore/actions>`__.
 All tests should pass before making a release (branch).
 
-2. Increase the version number
+2. Create a release branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Create a branch off the ``master`` branch and push it to GitHub.
+Ask someone with administrative permissions to set up branch protection rules
+for it so only you and the person helping you with the release can push to it.
+Announce the name of the branch in an issue and ask the members of the
+`ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
+to run their favourite recipe using this branch.
+
+3. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The version number is stored in ``esmvalcore/_version.py``,
 ``package/meta.yaml``, ``CITATION.cff``. Make sure to update all files.
 Also update the release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
-Make a pull request and get it merged into ``master``.
+Make a pull request and get it merged into ``master`` and cherry pick it into
+the release branch.
 
-3. Add release notes
+4. Add release notes
 ~~~~~~~~~~~~~~~~~~~~
 Use the script
 `esmvaltool/utils/draft_release_notes.py <https://docs.esmvaltool.org/en/latest/utils.html#draft-release-notes-py>`__
@@ -302,16 +312,8 @@ previous release.
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
-Make a pull request and get it merged into ``master``.
-
-4. Create a release branch
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-Create a branch off the ``master`` branch and push it to GitHub.
-Ask someone with administrative permissions to set up branch protection rules
-for it so only you and the person helping you with the release can push to it.
-Announce the name of the branch in an issue and ask the members of the
-`ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
-to run their favourite recipe using this branch.
+Make a pull request and get it merged into ``master`` and cherry pick it into
+the release branch..
 
 5. Cherry pick bugfixes into the release branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

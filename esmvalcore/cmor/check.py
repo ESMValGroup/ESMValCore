@@ -187,7 +187,7 @@ class CMORCheck():
             If any errors were reported before calling this method.
         """
         if self.has_errors():
-            msg = 'There were errors in variable {}:\n{}\nin cube:\n{}'
+            msg = 'There were errors in variable {}:\n{}\n in cube:\n{}'
             msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
                              self._cube)
             raise CMORCheckError(msg)
@@ -393,9 +393,7 @@ class CMORCheck():
         if coordinate.generic_lev_coords:
             for coord in coordinate.generic_lev_coords.values():
                 try:
-                    cube_coord = self._cube.coord(
-                        var_name=coord.out_name
-                    )
+                    cube_coord = self._cube.coord(var_name=coord.out_name)
                     out_name = coord.out_name
                     if cube_coord.standard_name == coord.standard_name:
                         standard_name = coord.standard_name
@@ -403,8 +401,7 @@ class CMORCheck():
                 except iris.exceptions.CoordinateNotFoundError:
                     try:
                         cube_coord = self._cube.coord(
-                            var_name=coord.standard_name
-                        )
+                            var_name=coord.standard_name)
                         standard_name = coord.standard_name
                         name = coord.name
                     except iris.exceptions.CoordinateNotFoundError:
@@ -413,29 +410,23 @@ class CMORCheck():
                 if not out_name:
                     self.report_error(
                         f'Generic level coordinate {key} '
-                        'has wrong var_name.',
-                    )
+                        'has wrong var_name.', )
                 level = coordinate.generic_lev_coords[name]
                 level.generic_level = True
                 level.generic_lev_coords = self._cmor_var.coordinates[
                     key].generic_lev_coords
                 self._cmor_var.coordinates[key] = level
-                self.report_debug_message(
-                    f'Generic level coordinate {key} '
-                    'will be checked against '
-                    f'{name} coordinate information'
-                )
+                self.report_debug_message(f'Generic level coordinate {key} '
+                                          'will be checked against '
+                                          f'{name} coordinate information')
             else:
                 if out_name:
                     self.report_critical(
                         f'Generic level coordinate {key} '
                         'has wrong standard_name '
-                        'or is not set.',
-                    )
+                        'or is not set.', )
                 else:
-                    self.report_critical(
-                        self._does_msg, key, 'exist'
-                    )
+                    self.report_critical(self._does_msg, key, 'exist')
 
     def _check_coords(self):
         """Check coordinates."""
@@ -837,7 +828,8 @@ class CMORCheck():
                 self._warnings.append(msg)
         else:
             if self._failerr:
-                raise CMORCheckError(msg + '\nin cube:\n{}'.format(self._cube))
+                raise CMORCheckError(msg +
+                                     '\n in cube:\n{}'.format(self._cube))
             self._errors.append(msg)
 
     def report_critical(self, message, *args):

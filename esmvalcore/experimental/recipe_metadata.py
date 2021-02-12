@@ -1,12 +1,9 @@
 """API for recipe metadata."""
 
-from pathlib import Path
-
 import pybtex
 from pybtex.database.input import bibtex
 
-from esmvalcore._citation import REFERENCES_PATH
-from esmvalcore._config import TAGS
+from esmvalcore._config import DIAGNOSTICS, TAGS
 
 
 class RenderError(BaseException):
@@ -152,7 +149,7 @@ class Reference:
             The bibtex tags resolved as ``esmvaltool/references/{tag}.bibtex``
             or the corresponding directory as defined by the diagnostics path.
         """
-        filename = Path(REFERENCES_PATH, f'{tag}.bibtex')
+        filename = DIAGNOSTICS.references / f'{tag}.bibtex'
         return cls(filename)
 
     def __repr__(self) -> str:
