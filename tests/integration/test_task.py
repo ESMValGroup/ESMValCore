@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 from functools import partial
 from multiprocessing.pool import ThreadPool
@@ -51,10 +52,13 @@ def example_tasks(tmp_path):
     return tasks
 
 
+@pytest.mark.parametrize('mpmethod', ["spawn", "fork"])
 @pytest.mark.parametrize('max_parallel_tasks', [1, 2, 3, 4, 16, None])
-def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks):
+def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks,
+                   mpmethod):
     """Check that tasks are run correctly."""
-
+    monkeypatch.setattr(esmvalcore._task, 'Pool',
+                        multiprocessing.get_context(mpmethod).Pool)
     example_tasks.run(max_parallel_tasks=max_parallel_tasks)
 
     for task in example_tasks:
