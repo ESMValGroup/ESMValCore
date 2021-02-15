@@ -220,7 +220,7 @@ Input file paths
 ----------------
 
 When looking for input files, the ``esmvaltool`` command provided by
-ESMValCore replaces the placeholders ``[item]`` in
+ESMValCore replaces the placeholders ``{item}`` in
 ``input_dir`` and ``input_file`` with the values supplied in the recipe.
 ESMValCore will try to automatically fill in the values for institute, frequency,
 and modeling_realm based on the information provided in the CMOR tables
@@ -239,6 +239,21 @@ The resulting directory path would look something like this:
 .. code-block:: bash
 
     CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Omon/tos/gn/latest
+
+Please, bear in mind that ``input_dirs`` can also be a list for those  cases in
+which may be needed:
+
+.. code-block:: yaml
+
+  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{latestversion}'
+  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{latestversion}'
+
+In that case, the resultant directories will be:
+
+.. code-block:: bash
+
+  historical/r1i1p1f3/original/Omon/tos/gn/latest
+  historical/r1i1p1f3/computed/Omon/tos/gn/latest
 
 For a more in-depth description of how to configure ESMValCore so it can find
 your data please see :ref:`CMOR-DRS`.
