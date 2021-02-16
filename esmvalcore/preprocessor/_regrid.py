@@ -451,6 +451,10 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     """
     # logger.info(f"{type(scheme)}")
     if type(scheme) == OrderedDict:
+        if 'real_target_grid' in scheme.keys():
+            real_target_grid = scheme['real_target_grid']
+        else:
+            real_target_grid = None
         tmp_dir = scheme['tmp_dir']
         scheme = scheme['method']
 
@@ -515,7 +519,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     # Perform the horizontal regridding.
     if 'cdo' in scheme:
-        cube = regrid_cdo(cube, target_grid, scheme, tmp_dir)
+        cube = regrid_cdo(cube, target_grid, scheme, real_target_grid, tmp_dir)
     elif _attempt_irregular_regridding(cube, scheme):
         cube = esmpy_regrid(cube, target_grid, scheme)
     else:
@@ -524,7 +528,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     return cube
 
 
-def regrid_cdo(cube, target_grid, scheme, tmp_dir):
+def regrid_cdo(cube, target_grid, scheme, real_target_grid, tmp_dir):
     """
     Regrid cube using a CDO regrid scheme
 
@@ -536,6 +540,8 @@ def regrid_cdo(cube, target_grid, scheme, tmp_dir):
     scheme : str
         The regridding scheme to perform, choose from
         'cdo_remapcon',
+    real_target_grid: str
+        possible grid file
     tmp_dir : str
         path to directory where cube, target_grid are saved to run cdo
 
@@ -640,7 +646,11 @@ def regrid_cdo(cube, target_grid, scheme, tmp_dir):
     iris.save(target_grid, grid_fname, fill_value=1e20)
 
     if cdo_scheme == 'remapcon':
-        cdo.Cdo().remapcon(grid_fname, input=cube_fname, output=rcube_fname)
+        if real_target_grid:
+            cdo.Cdo().remapcon(real_target_grid, input=cube_fname,
+                               output=rcube_fname)
+        else:
+            cdo.Cdo().remapcon(grid_fname, input=cube_fname, output=rcube_fname)
     else:
         emsg = f'Unknown regridding scheme, got {cdo_scheme}.'
         raise ValueError(emsg.format(scheme))
