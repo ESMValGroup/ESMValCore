@@ -1,8 +1,9 @@
 """Fixes for CESM2 model."""
 from shutil import copyfile
 
-import numpy as np
 from netCDF4 import Dataset
+import numpy as np
+import iris
 
 from ..fix import Fix
 from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
@@ -12,6 +13,7 @@ from .gfdl_esm4 import Siconc as Addtypesi
 
 class Cl(Fix):
     """Fixes for ``cl``."""
+
     def _fix_formula_terms(self, filepath, output_dir):
         """Fix ``formula_terms`` attribute."""
         new_path = self.get_fixed_filepath(output_dir, filepath)
@@ -36,8 +38,9 @@ class Cl(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
-        (z_axis, ) = cube.coord_dims(cube.coord(axis='Z', dim_coords=True))
+        (z_axis,) = cube.coord_dims(cube.coord(axis='Z', dim_coords=True))
         indices = [slice(None)] * cube.ndim
         indices[z_axis] = slice(None, None, -1)
         cube = cube[tuple(indices)]
@@ -66,6 +69,7 @@ class Cl(Fix):
         -------
         str
             Path to the fixed file.
+
         """
         new_path = self._fix_formula_terms(filepath, output_dir)
         dataset = Dataset(new_path, mode='a')
@@ -77,11 +81,53 @@ class Cl(Fix):
 
 Cli = Cl
 
+
 Clw = Cl
+
+
+class AllVars(Fix):
+    """Fixes for all vars."""
+    def fix_metadata(self, cubes):
+        """Fix daily timecoord and bounds.
+
+        Issue
+        -----
+        Bounds might be wrong by one day
+        DimCoord([2010-01-01 00:00:00, 2010-01-02 00:00:00, ...],
+            bounds=[[2009-12-31 00:00:00, 2010-01-01 00:00:00],
+                    [2010-01-01 00:00:00, 2010-01-02 00:00:00], ...], ...)
+        For SSPs bounds of 2015-01-01 violate strictly monotonic rule:
+            bounds=[[2015-01-01 00:00:00, 2015-01-01 00:00:00],..]
+            leading to time coordinate treated as aux coord
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        if cube.attributes['mipTable'] == 'day':
+            # coorect time coord points and bounds
+            time = cube.coord('time')
+            times = time.units.num2date(time.points)
+            if np.all(np.array([c.hour for c in times]) == 0):
+                time.points = time.points + 0.5
+                time.bounds = None
+                time.guess_bounds()
+            # set time to dim_coord
+            if time not in cube.coords(dim_coords=True):
+                iris.util.promote_aux_coord_to_dim_coord(cube, 'time')
+        return cubes
 
 
 class Fgco2(Fix):
     """Fixes for fgco2."""
+
     def fix_metadata(self, cubes):
         """Add depth (0m) coordinate.
 
@@ -93,17 +139,18 @@ class Fgco2(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_depth_coord(cube)
         return cubes
 
 
-class Tas(Fix):
+class Prw(Fix):
     """Fixes for tas."""
-    def fix_metadata(self, cubes):
-        """Add height (2m) coordinate.
 
+    def fix_metadata(self, cubes):
+        """
         Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
 
         Parameters
@@ -114,10 +161,8 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.CubeList
-        """
-        cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord(cube)
 
+        """
         for cube in cubes:
             latitude = cube.coord('latitude')
             if latitude.bounds is None:
@@ -133,8 +178,37 @@ class Tas(Fix):
         return cubes
 
 
+class Tas(Prw):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """
+        Add height (2m) coordinate.
+
+        Fix also done for prw.
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        super().fix_metadata(cubes)
+        # Specific code for tas
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_height_coord(cube)
+
+        return cubes
+
+
 class Sftlf(Fix):
     """Fixes for sftlf."""
+
     def fix_metadata(self, cubes):
         """Add typeland coordinate.
 
@@ -146,6 +220,7 @@ class Sftlf(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_typeland_coord(cube)
@@ -154,6 +229,7 @@ class Sftlf(Fix):
 
 class Sftof(Fix):
     """Fixes for sftof."""
+
     def fix_metadata(self, cubes):
         """Add typesea coordinate.
 
@@ -165,6 +241,7 @@ class Sftof(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_typesea_coord(cube)
@@ -173,8 +250,10 @@ class Sftof(Fix):
 
 class Tos(Fix):
     """Fixes for tos."""
+
     def fix_metadata(self, cubes):
-        """Round times to 1 d.p. for monthly means.
+        """
+        Round times to 1 d.p. for monthly means.
 
         Required to get hist-GHG and ssp245-GHG Omon tos to concatenate.
 
@@ -186,6 +265,7 @@ class Tos(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
 

@@ -1,18 +1,22 @@
-"""Fixes for CESM2-FV2 model."""
-from .cesm2 import Cl as BaseCl
+"""Fixes for CESM2-WACCM-FV2 model."""
 from .cesm2 import Tas as BaseTas
+from .cesm2_waccm import Cl as BaseCl
+from .cesm2_waccm import Cli as BaseCli
+from .cesm2_waccm import Clw as BaseClw
 
 from ..fix import Fix
 import numpy as np
 import iris
 
+from ..shared import add_scalar_height_coord
+
 Cl = BaseCl
 
 
-Cli = Cl
+Cli = BaseCli
 
 
-Clw = Cl
+Clw = BaseClw
 
 
 Tas = BaseTas
@@ -55,4 +59,31 @@ class AllVars(Fix):
             # set time to dim_coord
             if time not in cube.coords(dim_coords=True):
                 iris.util.promote_aux_coord_to_dim_coord(cube, 'time')
+        return cubes
+
+
+class Tas(Fix):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """
+        Add height (2m) coordinate.
+
+        Fix also done for prw.
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        # Specific code for tas
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_height_coord(cube)
+
         return cubes
