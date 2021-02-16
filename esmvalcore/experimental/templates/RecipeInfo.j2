@@ -32,6 +32,6 @@
 
 <ul>
   {% for reference in info.references %}
-    <li>{{ reference.render('html') }}</li>
+    <li>{{ reference.render('html') | safe }}</li>
   {% endfor %}
 </ul>
