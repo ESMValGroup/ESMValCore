@@ -95,7 +95,7 @@ def linear_trend(cube, coordinate='time'):
         ``cube``.
 
     """
-    coord = cube.coord(coordinate, dim_coords=True)
+    coord = cube.coord(coordinate)# , dim_coords=True)
 
     # Construct aggregator and calculate trend
     def call_func(data, axis, x_data):
