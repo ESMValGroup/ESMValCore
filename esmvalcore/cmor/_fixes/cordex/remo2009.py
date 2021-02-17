@@ -1,0 +1,15 @@
+"""Fixes for MPI-CSC-REMO2009 model."""
+import iris
+
+from ..fix import Fix
+
+class AllVars(Fix):
+    """Fixes for all variables."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        fixed_cubes = iris.cube.CubeList()
+        for cube in cubes:
+            cube.data = cube.core_data().astype('float32')
+            fixed_cubes.append(cube)
+
+        return fixed_cubes
