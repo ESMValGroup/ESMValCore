@@ -1,4 +1,4 @@
-"""Fixes for the ACCESS1-0 model."""
+"""Fixes for the EC-EARTH model."""
 import logging
 import iris
 from cf_units import Unit

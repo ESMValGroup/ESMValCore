@@ -1,4 +1,4 @@
-"""Fixes for the ACCESS1-0 model."""
+"""Fixes for the GFDL-CM3 model."""
 from esmvalcore.preprocessor._shared import guess_bounds
 
 from ..fix import Fix
