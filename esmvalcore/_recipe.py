@@ -320,8 +320,10 @@ def _add_fxvar_keys(fx_var_dict, variable):
     fx_variable['variable_group'] = fx_var_dict['short_name']
 
     # add special ensemble for CMIP5 only
-    if fx_variable['project'] == 'CMIP5':
+    if fx_variable['project'] in ['CMIP5', 'MPIGE']:
         fx_variable['ensemble'] = 'r0i0p0'
+    elif fx_variable['project'] in ['CORDEX']:
+        fx_variable['ensemble'] = [fx_variable['ensemble'], 'r0i0p0']
 
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
@@ -444,7 +446,7 @@ def _update_fx_settings(settings, variable, config_user):
         if not user_fx_vars:
             if step_name in ('mask_landsea', 'weighting_landsea_fraction'):
                 user_fx_vars = ['sftlf']
-                if variable['project'] != 'obs4mips':
+                if not variable['project'] in ['obs4mips', 'CORDEX']:
                     user_fx_vars.append('sftof')
             elif step_name == 'mask_landseaice':
                 user_fx_vars = ['sftgif']
