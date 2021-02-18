@@ -3,10 +3,14 @@
 import os
 import re
 from copy import deepcopy
+import logging
+import time
+from collections import OrderedDict
 
 import iris
 import numpy as np
 import stratify
+import cdo
 from dask import array as da
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
@@ -17,6 +21,9 @@ from ..cmor.table import CMOR_TABLES
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+from ._shared import guess_bounds
+
+logger = logging.getLogger(__name__)
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -54,6 +61,7 @@ HORIZONTAL_SCHEMES = {
     'nearest': Nearest(extrapolation_mode='mask'),
     'area_weighted': AreaWeighted(),
     'unstructured_nearest': UnstructuredNearest(),
+    'cdo_remapcon': 'remapcon',
 }
 
 # Supported vertical interpolation schemes.
@@ -297,6 +305,16 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     extract_levels : Perform vertical regridding.
 
     """
+    if isinstance(scheme, (dict, OrderedDict)):
+        # add possibility of giving a file as target
+        if 'real_target_grid' in scheme.keys():
+            real_target_grid = scheme['real_target_grid']
+        else:
+            real_target_grid = None
+        # get tmp_dir for cdo and method
+        tmp_dir = scheme['tmp_dir']
+        scheme = scheme['method']
+
     if HORIZONTAL_SCHEMES.get(scheme.lower()) is None:
         emsg = 'Unknown regridding scheme, got {!r}.'
         raise ValueError(emsg.format(scheme))
@@ -318,6 +336,14 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             ycoord = target_grid.coord(axis='y', dim_coords=True)
             xcoord.coord_system = src_cs
             ycoord.coord_system = src_cs
+            target_grid.data = target_grid.data.astype('float32')
+
+    # check if target_grid has coord system, if not assume global
+    if target_grid.coord_system() == None:
+        tar_coord_system = iris.coord_systems.GeogCS(semi_major_axis=6378137.0,
+                                semi_minor_axis=6356752.31424)
+        target_grid.coord('latitude').coord_system = tar_coord_system
+        target_grid.coord('longitude').coord_system = tar_coord_system
 
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError('Expecting a cube, got {}.'.format(target_grid))
@@ -333,12 +359,141 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                 cube.remove_coord(coord)
 
     # Perform the horizontal regridding.
-    if _attempt_irregular_regridding(cube, scheme):
+    if 'cdo' in scheme:
+        cube = regrid_cdo(cube, target_grid, scheme, real_target_grid, tmp_dir)
+    elif _attempt_irregular_regridding(cube, scheme):
         cube = esmpy_regrid(cube, target_grid, scheme)
     else:
         cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
 
     return cube
+
+
+def regrid_cdo(cube, target_grid, scheme, real_target_grid, tmp_dir):
+    """
+    Regrid cube using a CDO regrid scheme
+
+    cube : cube
+        The source cube to be regridded.
+    target_grid : cube or str
+        The cube that specifies the target or reference grid for the regridding
+        operation.
+    scheme : str
+        The regridding scheme to perform, choose from
+        'cdo_remapcon',
+    real_target_grid: str
+        possible grid file
+    tmp_dir : str
+        path to directory where cube, target_grid are saved to run cdo
+
+    Returns
+    -------
+    cube
+
+
+    Sideline info: Redoing the IPCC Atlas regrid function:
+    Note that the Atlas is doing it seperately for land sea data
+    (Ch 10 only deals with data over land so incomming cube data is already
+    masked)
+
+    # #####################
+    # # The atlas procedure
+    # #####################
+    # # Make input landmask binary
+    # #cd /oceano/gmeteo/WORK/PROYECTOS/2018_IPCC/data/CMIP6/mask_and_refGrid
+    # cdo -setrtoc,-1,0.999,0 -setrtoc,0.999,2,1 ${masknc} maskland.nc
+    # cdo mulc,-1 -setrtoc,0.001,2,0 -setrtoc,-1,0.001,-1 ${masknc} masksea.nc
+    # # Sharp change at 0.5 land fraction
+    # # cdo -setrtoc,-1,0.5,0 -setrtoc,0.5,2,1 ${masknc} maskland.nc
+    # # cdo mulc,0.5 -setmisstoc,1 -setrtoc,-0.5,0.5,2 maskland.nc masksea.nc
+    # # Global destination grid (from cdo)
+    # #cdo -f nc4 topo orogdest.nc
+    # #cdo setrtoc,-20000,20000,1 -setrtomiss,-20000,0 orogdest.nc ${maskdestnc}
+    # cdo -P 4 gencon,${maskdestnc} -seltimestep,1 ${datanc} weights.nc
+
+    # #if test "${LSMASK}" -eq 1; then
+    #   cdo div ${datanc} -setctomiss,0 maskland.nc land.nc
+    #   cdo div ${datanc} -setctomiss,0 masksea.nc sea.nc
+    #   cdo remap,${maskdestnc},weights.nc land.nc landr.nc
+    #   cdo remap,${maskdestnc},weights.nc sea.nc sear.nc
+    #   cdo ifthenelse -setmisstoc,0 ${maskdestnc} landr.nc sear.nc merged.nc
+    #   # Fill the gaps with unconstrained remapping (doremap preferred option)
+    #   cdo setmisstoc,1 -setrtoc,-9999999,9999999,0 merged.nc gaps.nc
+    #   cdo remap,${maskdestnc},weights.nc ${datanc} unconstrained.nc
+    #   cdo ifthenelse gaps.nc unconstrained.nc merged.nc ${outfile}
+    #   # Fill the gaps by nearest neigbours
+    # #  cdo setmisstonn landr.nc landrfilled.nc
+    # #  cdo setmisstonn sear.nc searfilled.nc
+    # #  cdo ifthenelse -setmisstoc,0 ${maskdestnc} landrfilled.nc searfilled.nc ${outfile}
+    # #else
+    # #  cdo remap,${maskdestnc},weights.nc ${datanc} ${outfile}
+    # #fi
+    """
+    cdo_scheme = scheme.split('cdo_')[1]
+
+    unique_id = str(time.time()) + str(np.random.rand())
+    unique_id = unique_id.replace('.', '-')
+
+    cube_fname = os.path.join(tmp_dir, f'cube{unique_id}.nc')
+    grid_fname = os.path.join(tmp_dir, f'grid{unique_id}.nc')
+    rcube_fname = os.path.join(tmp_dir, f'rcube{unique_id}.nc')
+
+    # get the x, y coordinates named longitude, latitude
+    coord_names = [coord.standard_name for coord in cube.coords()]
+    x_name = cube.coord(axis='x', dim_coords=True).standard_name
+    if x_name != 'longitude':
+        cube = guess_bounds(cube, [x_name])
+        if 'longitude' in coord_names:
+            cube.remove_coord('longitude')
+        cube.coord(x_name).rename('longitude')
+
+    y_name = cube.coord(axis='y', dim_coords=True).standard_name
+    if y_name != 'latitude':
+        cube = guess_bounds(cube, [y_name])
+        if 'latitude' in coord_names:
+            cube.remove_coord('latitude')
+        cube.coord(y_name).rename('latitude')
+
+    # check if the target has a time axis and remove it
+    coord_names = [coord.standard_name for coord in target_grid.coords()]
+    if 'time' in coord_names:
+        target_grid = target_grid[0]
+
+    # for some reason cdo crashes when there are bounds
+    if isinstance(cube.coord('latitude').coord_system,
+                  iris.coord_systems.LambertConformal):
+        cube.coord('latitude').bounds = None
+        cube.coord('longitude').bounds = None
+
+    iris.save(cube, cube_fname, fill_value=1e20)
+    iris.save(target_grid, grid_fname, fill_value=1e20)
+
+    if cdo_scheme == 'remapcon':
+        if real_target_grid:
+            try:
+                cdo.Cdo().remapcon(real_target_grid, input=cube_fname,
+                                   output=rcube_fname)
+            except cdo.CDOException as e:
+                logger.error(e.stderr)
+        else:
+            try:
+                cdo.Cdo().remapcon(grid_fname, input=cube_fname,
+                                   output=rcube_fname)
+            except cdo.CDOException as e:
+                logger.error(e.stderr)
+        # import time
+        # time.sleep(1)
+    else:
+        emsg = f'Unknown regridding scheme, got {cdo_scheme}.'
+        raise ValueError(emsg.format(scheme))
+
+    rcube = iris.load_cube(rcube_fname)
+
+    # clean up a little bit
+    for fname in [cube_fname, grid_fname]:
+        os.remove(fname)
+
+    return rcube
 
 
 def _create_cube(src_cube, data, src_levels, levels, ):
