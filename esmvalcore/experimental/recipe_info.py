@@ -16,11 +16,11 @@ class RecipeInfo():
     Parameters
     ----------
     filename : pathlike
-        Path to the recipe.
+        Name of recipe file
     """
 
     def __init__(self, data, filename: str = None):
-        self.filename = Path(filename)
+        self.filename = Path(filename).name
         self.data = data
         self._authors = None
         self._maintainers = None
@@ -67,10 +67,10 @@ class RecipeInfo():
         return self.render()
 
     @classmethod
-    def from_yaml(cls, filename: str):
+    def from_yaml(cls, path: str):
         """Return instance of 'RecipeInfo' from a recipe in yaml format."""
-        data = yaml.safe_load(open(filename, 'r'))
-        return cls(data, filename=filename)
+        data = yaml.safe_load(open(path, 'r'))
+        return cls(data, filename=path)
 
     @property
     def name(self) -> str:

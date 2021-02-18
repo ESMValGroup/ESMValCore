@@ -36,7 +36,7 @@ class Recipe():
         self._engine = None
         self._data = None
         self.last_session = None
-        self.info = RecipeInfo(self.data, filename=self.path)
+        self.info = RecipeInfo(self.data, filename=self.path.name)
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
@@ -150,10 +150,11 @@ class Recipe():
         if not self._engine:
             raise AttributeError('Run the recipe first using `.run()`.')
 
-        raw_output = self._engine.get_product_output()
+        output = self._engine.get_output()
+        task_output = output['task_output']
 
         return RecipeOutput(
-            raw_output=raw_output['raw_output'],
+            task_output=task_output,
             session=self.last_session,
             info=self.info,
         )

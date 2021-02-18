@@ -1364,7 +1364,7 @@ class Recipe:
 
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
 
-    def get_product_output(self) -> dict:
+    def get_output(self) -> dict:
         """Return the paths to the output plots and data.
 
         Returns
@@ -1376,11 +1376,11 @@ class Recipe:
 
         output['recipe_config'] = self._cfg
         output['recipe_filename'] = self._filename
-        output['raw_recipe'] = self._raw_recipe
-        output['raw_output'] = {}
+        output['recipe_data'] = self._raw_recipe
+        output['task_output'] = {}
 
         for task in self.tasks:
-            output['raw_output'][task.name] = task.get_product_attributes()
+            output['task_output'][task.name] = task.get_product_attributes()
 
         return output
 
@@ -1388,6 +1388,6 @@ class Recipe:
         """Write summary html file to the output dir."""
         # keep RecipeOutput here to avoid circular import
         from esmvalcore.experimental.recipe_output import RecipeOutput
-        raw_output = self.get_product_output()
-        output = RecipeOutput.from_raw_recipe_output(raw_output)
+        output = self.get_output()
+        output = RecipeOutput.from_core_recipe_output(output)
         output.write_html()

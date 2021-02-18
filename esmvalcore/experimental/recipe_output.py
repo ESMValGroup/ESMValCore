@@ -22,15 +22,14 @@ class TaskOutput:
     ----------
     name : str
         Name of the task
-    output : dict
+    files : dict
         Mapping of the filenames with the associated attributes.
     """
-
-    def __init__(self, name: str, output: dict):
+    def __init__(self, name: str, files: dict):
         self.name = name
         self.files = tuple(
             OutputFile.create(filename, attributes)
-            for filename, attributes in output.items())
+            for filename, attributes in files.items())
 
     def __str__(self):
         """Return string representation."""
@@ -77,18 +76,18 @@ class RecipeOutput(Mapping):
 
     Parameters
     ----------
-    raw_output : dict
+    task_output : dict
         Dictionary with recipe output grouped by task name. Each task value is
         a mapping of the filenames with the product attributes.
     """
-    def __init__(self, raw_output: dict, session=None, info=None):
-        self._raw_output = raw_output
+    def __init__(self, task_output: dict, session=None, info=None):
+        self._raw_task_output = task_output
         self._task_output = {}
         self.info = info
         self.session = session
-        for task, product_output in raw_output.items():
-            self._task_output[task] = TaskOutput(name=task,
-                                                 output=product_output)
+        for task_name, files in task_output.items():
+            self._task_output[task_name] = TaskOutput(name=task_name,
+                                                      files=files)
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -109,7 +108,7 @@ class RecipeOutput(Mapping):
         return len(self._task_output)
 
     @classmethod
-    def from_raw_recipe_output(cls, recipe_output: dict):
+    def from_core_recipe_output(cls, recipe_output: dict):
         """Construct instance from `_recipe.Recipe` output.
 
         The core recipe format is not directly compatible with the API. This
@@ -123,15 +122,15 @@ class RecipeOutput(Mapping):
         recipe_output : dict
             Output from `_recipe.Recipe.get_product_output`
         """
-        raw_output = recipe_output['raw_output']
-        raw_recipe = recipe_output['raw_recipe']
+        task_output = recipe_output['task_output']
+        recipe_data = recipe_output['recipe_data']
         recipe_config = recipe_output['recipe_config']
-        filename = recipe_output['recipe_filename']
+        recipe_filename = recipe_output['recipe_filename']
 
         session = Session.from_config_user(recipe_config)
-        info = RecipeInfo(raw_recipe, filename=filename)
+        info = RecipeInfo(recipe_data, filename=recipe_filename)
 
-        return cls(raw_output, session=session, info=info)
+        return cls(task_output, session=session, info=info)
 
     def write_html(self):
         """Write output summary to html document.
