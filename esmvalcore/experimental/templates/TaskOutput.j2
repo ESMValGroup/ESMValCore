@@ -6,7 +6,7 @@
         {{ file.caption }}
     </p>
     <p>
-        <img width='80%' src='{{ file.relative_to(session.session_dir) }}' alt='{{ file.caption }}'/>
+        <img width='80%' src='{{ file.path.relative_to(session.session_dir) }}' alt='{{ file.caption }}'/>
     </p>
 
 {% endfor %}
@@ -17,7 +17,7 @@
         {{ file.caption }}
     </p>
     <p>
-        <a href='{{ file.relative_to(session.session_dir) }}'>{{ file.filename.name }}</a>
+        <a href='{{ file.path.relative_to(session.session_dir) }}'>{{ file.path.name }}</a>
     </p>
 
 {% endfor %}

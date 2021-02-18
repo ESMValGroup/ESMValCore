@@ -56,7 +56,7 @@ def test_run_recipe(task, recipe, tmp_path):
 
         for data_file in task_output.data_files:
             assert isinstance(data_file, DataFile)
-            assert data_file.filename.exists()
+            assert data_file.path.exists()
 
             cube = data_file.load_iris()
             assert isinstance(cube, iris.cube.CubeList)
