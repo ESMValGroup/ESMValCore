@@ -261,6 +261,13 @@ def area_statistics(cube, operator, fx_variables=None):
             cube_tmp.coord('grid_longitude').rename('longitude')
             grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
             logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        elif 'projection_y_coordinate' in coord_names and \
+            'projection_x_coordinate' in coord_names:
+            # TODO this has to be done correctly,
+            # iris.analysis.cartography.area_weights raises
+            # ValueError: Units of degrees or radians required
+            grid_areas = np.ones(cube.shape)
+            logger.info('Assumed grid areas of same size for lcc projection')
         else:
             logger.error(
                 'fx_file needed to calculate grid cell area for irregular '
