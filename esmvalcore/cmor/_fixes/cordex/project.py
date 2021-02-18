@@ -52,7 +52,8 @@ class AllVars(Fix):
         return cubes
 
 
-    def check_grid_differences(self, cube):
+    @staticmethod
+    def check_grid_differences(cube):
         """Derive lat and lon coordinates from grid coordinates.
         And warn about the maximum differences"""
         x_coord = cube.coord(axis='x', dim_coords=True)
@@ -92,7 +93,8 @@ class AllVars(Fix):
         return cube
 
 
-    def get_lat_lon_bounds(self, cube):
+    @staticmethod
+    def get_lat_lon_bounds(cube):
         """
         Derive lat and lon bounds from grid coordinates.
         CMOR standard for 2-D coordinate counds is indexing the four vertices
@@ -139,7 +141,8 @@ class AllVars(Fix):
         return cube
 
 
-    def get_lat_lon_coordinates(self, cube):
+    @staticmethod
+    def get_lat_lon_coordinates(cube):
         """Derive lat and lon coordinates from grid coordinates."""
         coord_names = [coord.standard_name for coord in cube.coords()]
         x_coord = cube.coord(axis='x', dim_coords=True)
@@ -198,7 +201,8 @@ class AllVars(Fix):
         return cube
 
 
-    def fix_coordinate_system(self, cube):
+    @staticmethod
+    def fix_coordinate_system(cube):
         """Fix LambertConformal."""
         x_coord = cube.coord(axis='x', dim_coords=True)
         y_coord = cube.coord(axis='y', dim_coords=True)
@@ -211,7 +215,6 @@ class AllVars(Fix):
             # there are some badly defined coordinate systems:
             if grid_coord_sys.ellipsoid:
                 if grid_coord_sys.ellipsoid.semi_minor_axis == float('-inf'):
-                    # IPython.embed(config=c)
                     # some issure with regcm4_6
                     # LambertConformal(central_lat=48.0, central_lon=9.75, false_easting=-6000.0, false_northing=-6000.0, secant_latitudes=(30.0, 65.0), ellipsoid=GeogCS(semi_major_axis=6371229.0, semi_minor_axis=-inf))
                     # TypeError: illegal data type for attribute b'semi_minor_axis', must be one of dict_keys(['S1', 'i1', 'u1', 'i2', 'u2', 'i4', 'u4', 'i8', 'u8', 'f4', 'f8']), got O
