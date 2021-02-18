@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from esmvalcore.experimental.recipe_output import (
     DataFile,
     ImageFile,
