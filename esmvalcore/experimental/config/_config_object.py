@@ -121,6 +121,13 @@ class Session(ValidatedConfig):
 
     _validate = _validators
 
+    relative_preproc_dir = Path('preproc')
+    relative_work_dir = Path('work')
+    relative_plot_dir = Path('plots')
+    relative_run_dir = Path('run')
+    relative_main_log = Path('run', 'main_log.txt')
+    relative_main_log_debug = Path('run', 'main_log_debug.txt')
+
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
         self.set_session_name(name)
@@ -142,22 +149,22 @@ class Session(ValidatedConfig):
     @property
     def preproc_dir(self):
         """Return preproc directory."""
-        return self.session_dir / 'preproc'
+        return self.session_dir / self.relative_preproc_dir
 
     @property
     def work_dir(self):
         """Return work directory."""
-        return self.session_dir / 'work'
+        return self.session_dir / self.relative_work_dir
 
     @property
     def plot_dir(self):
         """Return plot directory."""
-        return self.session_dir / 'plots'
+        return self.session_dir / self.relative_plot_dir
 
     @property
     def run_dir(self):
         """Return run directory."""
-        return self.session_dir / 'run'
+        return self.session_dir / self.relative_run_dir
 
     @property
     def config_dir(self):
@@ -167,12 +174,12 @@ class Session(ValidatedConfig):
     @property
     def main_log(self):
         """Return main log file."""
-        return self.run_dir / 'main_log.txt'
+        return self.session_dir / self.relative_main_log
 
     @property
     def main_log_debug(self):
         """Return main log debug file."""
-        return self.run_dir / 'main_log_debug.txt'
+        return self.session_dir / self.relative_main_log_debug
 
     def to_config_user(self) -> dict:
         """Turn the `Session` object into a recipe-compatible dict.

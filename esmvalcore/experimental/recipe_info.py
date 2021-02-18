@@ -75,7 +75,7 @@ class RecipeInfo():
     @property
     def name(self) -> str:
         """Name of the recipe."""
-        return self.filename.stem.replace('_', ' ').capitalize()
+        return Path(self.filename).stem.replace('_', ' ').capitalize()
 
     @property
     def description(self) -> str:
