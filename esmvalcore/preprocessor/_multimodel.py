@@ -97,8 +97,11 @@ def _align(cubes, span):
     """Expand or subset cubes so they share a common time span."""
     _unify_time_coordinates(cubes)
     all_time_arrays = [cube.coord('time').points for cube in cubes]
-    new_times = _resolve_span(all_time_arrays, span)
+    if reduce(np.array_equal, all_times):
+        # cubes are already aligned
+        return cubes
 
+    new_times = _resolve_span(all_time_arrays, span)
     # new_times = cubes[0].coord('time').units.num2date(new_times)
     sample_points = [('time', new_times)]
     scheme = iris.analysis.Nearest(extrapolation_mode='mask')
