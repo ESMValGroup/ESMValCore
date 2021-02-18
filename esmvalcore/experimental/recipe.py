@@ -131,7 +131,7 @@ class Recipe():
             self._load(session=session)
             self._engine.run()
 
-        shutil.copy2(self.path, session.recipe_file)
+        shutil.copy2(self.path, session.run_dir)
 
         output = self.get_output()
         output.write_html()

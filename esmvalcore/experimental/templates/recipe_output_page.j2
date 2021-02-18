@@ -18,7 +18,7 @@
   <p>
     <a href='{{ session.main_log.relative_to(session.session_dir) }}'>{{ session.main_log.name }}</a> |
     <a href='{{ session.main_log_debug.relative_to(session.session_dir) }}'>{{ session.main_log_debug.name }}</a> |
-    <a href='{{ session.recipe_file.relative_to(session.session_dir) }}'>{{ session.recipe_file.name }}</a>
+    <a href='{{ session.run_dir.relative_to(session.session_dir) / info.filename }}'>{{ info.filename }}</a>
   </p>
 
 </html>

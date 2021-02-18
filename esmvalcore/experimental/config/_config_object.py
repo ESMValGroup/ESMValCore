@@ -165,11 +165,6 @@ class Session(ValidatedConfig):
         return USER_CONFIG_DIR
 
     @property
-    def recipe_file(self):
-        """Return location of recipe in output directory."""
-        return self.run_dir / 'recipe.yml'
-
-    @property
     def main_log(self):
         """Return main log file."""
         return self.run_dir / 'main_log.txt'

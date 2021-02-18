@@ -94,8 +94,7 @@ def process_recipe(recipe_file, config_user):
             "NetCDF compression.")
 
     # copy recipe to run_dir for future reference
-    shutil.copy2(recipe_file, os.path.join(config_user['run_dir'],
-                                           'recipe.yml'))
+    shutil.copy2(recipe_file, config_user['run_dir'])
 
     # parse recipe
     recipe = read_recipe_file(recipe_file, config_user)
