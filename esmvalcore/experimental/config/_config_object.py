@@ -130,6 +130,7 @@ class Session(ValidatedConfig):
 
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
+        self.session_name = None
         self.set_session_name(name)
 
     def set_session_name(self, name: str = 'session'):
