@@ -431,9 +431,7 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
         if 'short_name' not in fx_info:
             fx_info.update({'short_name': fx_var})
         fx_files, fx_info = _get_fx_files(variable, fx_info, config_user)
-        settings[step_name]['fx_variables'].update({
-            fx_var: fx_files
-            })
+        settings[step_name]['fx_variables'].update({fx_var: fx_files})
         if step_name in ['area_statistics', 'volume_statistics'] and fx_files:
             fx_info['filename'] = fx_files
             settings['add_cell_measure']['fx_variables'].update({

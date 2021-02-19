@@ -217,7 +217,7 @@ def volume_statistics(
         logger.info(
             'Cell measure "ocean_volume" not found in cube. '
             'Check fx_file availability.'
-            )
+        )
         logger.info('Attempting to calculate grid cell volume...')
 
     if not fx_variables:

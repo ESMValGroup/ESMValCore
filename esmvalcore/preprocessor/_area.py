@@ -216,7 +216,7 @@ def area_statistics(cube, operator, fx_variables=None):
         logger.info(
             'Cell measure "cell_area" not found in cube. '
             'Check fx_file availability.'
-            )
+        )
         logger.info('Attempting to calculate grid cell area...')
 
     if not fx_variables and cube.coord('latitude').points.ndim == 2:

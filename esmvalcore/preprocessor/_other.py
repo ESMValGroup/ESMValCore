@@ -104,17 +104,17 @@ def add_cell_measure(cube, fx_variables, check_level):
             'areacella': 'area',
             'areacello': 'area',
             'volcello': 'volume'
-            }
+        }
 
         if fx_cube.var_name in measure_name.keys():
             try:
                 fx_data = da.broadcast_to(
                     fx_cube.core_data(), cube.shape)
-            except ValueError:
+            except ValueError as exc:
                 raise ValueError(
                     f"Frequencies of {cube.var_name} and "
                     f"{fx_cube.var_name} cubes do not match."
-                )
+                ) from exc
             measure = iris.coords.CellMeasure(
                 fx_data,
                 standard_name=fx_cube.standard_name,
@@ -123,10 +123,9 @@ def add_cell_measure(cube, fx_variables, check_level):
                 var_name=fx_cube.var_name,
                 attributes=fx_cube.attributes)
             cube.add_cell_measure(measure, range(0, measure.ndim))
-            logger.info(f'Added {fx_cube.var_name} '
-                        f'as cell measure in cube of {cube.var_name}.')
+            logger.info('Added %s as cell measure in cube of %s.',
+                        fx_cube.var_name, {cube.var_name})
         else:
-            logger.info(f'Fx variable {fx_cube.var_name} '
-                        'cannot be added as a cell measure '
-                        f'in cube of {cube.var_name}.')
+            logger.info('Fx variable %s cannot be added as a cell measure '
+                        'in cube of %s.', fx_cube.var_name, cube.var_name)
     return cube
