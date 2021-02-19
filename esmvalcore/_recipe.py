@@ -1393,5 +1393,10 @@ class Recipe:
             # keep RecipeOutput here to avoid circular import
             from esmvalcore.experimental.recipe_output import RecipeOutput
             output = self.get_output()
-            output = RecipeOutput.from_core_recipe_output(output)
-            output.write_html()
+
+            try:
+                output = RecipeOutput.from_core_recipe_output(output)
+            except LookupError as error:
+                logging.debug("Could not write HTML report. %s", error)
+            else:
+                output.write_html()

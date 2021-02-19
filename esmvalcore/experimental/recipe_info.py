@@ -89,7 +89,7 @@ class RecipeInfo():
     def authors(self) -> tuple:
         """List of recipe authors."""
         if self._authors is None:
-            tags = self.data['documentation']['authors']
+            tags = self.data['documentation'].get('authors', ())
             self._authors = tuple(Contributor.from_tag(tag) for tag in tags)
         return self._authors
 
@@ -97,7 +97,7 @@ class RecipeInfo():
     def maintainers(self) -> tuple:
         """List of recipe maintainers."""
         if self._maintainers is None:
-            tags = self.data['documentation'].get('maintainer', [])
+            tags = self.data['documentation'].get('maintainer', ())
             self._maintainers = tuple(
                 Contributor.from_tag(tag) for tag in tags)
         return self._maintainers
@@ -130,3 +130,20 @@ class RecipeInfo():
         rendered = template.render(info=self)
 
         return rendered
+
+    def resolve(self) -> None:
+        """Force resolve of all tags in recipe.
+
+        Raises
+        ------
+        LookupError
+            Raised when some tags in the recipe cannot be resolved
+        """
+        try:
+            self.authors()
+            self.maintainers()
+            self.projects()
+            self.references()
+        except BaseException as error:
+            message = f"Some tags in the recipe could not be resolved: {error}"
+            raise LookupError(message)

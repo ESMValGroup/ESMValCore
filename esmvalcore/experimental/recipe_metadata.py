@@ -55,7 +55,7 @@ class Contributor:
             The contributor tags are defined in the authors section in
             ``config-references.yml``.
         """
-        mapping = TAGS['authors'][tag]
+        mapping = TAGS.get_tag_value(section='authors', tag=tag)
 
         name = ' '.join(reversed(mapping['name'].split(', ')))
         institute = mapping.get('institute', 'No affiliation')

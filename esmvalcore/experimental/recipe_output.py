@@ -129,6 +129,7 @@ class RecipeOutput(Mapping):
 
         session = Session.from_config_user(recipe_config)
         info = RecipeInfo(recipe_data, filename=recipe_filename)
+        info.resolve()
 
         return cls(task_output, session=session, info=info)
 
