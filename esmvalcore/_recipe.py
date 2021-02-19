@@ -3,6 +3,7 @@ import fnmatch
 import logging
 import os
 import re
+import warnings
 from copy import deepcopy
 from pprint import pformat
 
@@ -1386,8 +1387,11 @@ class Recipe:
 
     def write_html_summary(self):
         """Write summary html file to the output dir."""
-        # keep RecipeOutput here to avoid circular import
-        from esmvalcore.experimental.recipe_output import RecipeOutput
-        output = self.get_output()
-        output = RecipeOutput.from_core_recipe_output(output)
-        output.write_html()
+        with warnings.catch_warnings():
+            # ignore import warnings
+            warnings.simplefilter("ignore")
+            # keep RecipeOutput here to avoid circular import
+            from esmvalcore.experimental.recipe_output import RecipeOutput
+            output = self.get_output()
+            output = RecipeOutput.from_core_recipe_output(output)
+            output.write_html()
