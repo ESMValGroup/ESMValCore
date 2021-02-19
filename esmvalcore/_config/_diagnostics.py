@@ -76,14 +76,6 @@ class TagsManager(dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Set a default author for testing purposes
-        default_author = {
-            'name': 'Doe, John',
-            'institute': 'Testing',
-            'orcid': 'https://orcid.org/0000-0000-0000-0000',
-        }
-        self.set_tag_value('authors', 'doe_john', default_author)
         self.source_file = None
 
     @classmethod

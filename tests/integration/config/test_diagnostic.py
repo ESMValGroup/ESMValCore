@@ -76,6 +76,4 @@ def test_load_tags_from_non_existant_file():
     """Test fallback if no diagnostics are installed."""
     tags = TagsManager.from_file('non-existent')
     assert isinstance(tags, TagsManager)
-    assert len(tags) == 1
-    assert 'authors' in tags
-    assert tags.get_tag_value('authors', 'doe_john')
+    assert tags == {}

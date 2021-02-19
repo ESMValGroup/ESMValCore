@@ -21,7 +21,15 @@ from esmvalcore.preprocessor._io import concatenate_callback
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
 
+# Set a default author for testing purposes
 TAGS.set_tag_values({
+    'authors': {
+        'doe_john': {
+            'name': 'Doe, John',
+            'institute': 'Testing',
+            'orcid': 'https://orcid.org/0000-0000-0000-0000',
+        },
+    },
     'projects': {
         'c3s-magic': 'C3S MAGIC project',
     },

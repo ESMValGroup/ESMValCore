@@ -140,10 +140,11 @@ class RecipeInfo():
             Raised when some tags in the recipe cannot be resolved
         """
         try:
-            self.authors()
-            self.maintainers()
-            self.projects()
-            self.references()
+            # calling these attributes forces the tags to be resolved.
+            _ = self.authors
+            _ = self.maintainers
+            _ = self.projects
+            _ = self.references
         except BaseException as error:
             message = f"Some tags in the recipe could not be resolved: {error}"
             raise LookupError(message)

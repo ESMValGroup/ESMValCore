@@ -47,6 +47,7 @@ requirements:
     - esmpy
     - fiona
     - fire
+    - jinja2
     - nc-time-axis
     - netCDF4
     - numpy

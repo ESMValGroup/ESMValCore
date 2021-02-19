@@ -1397,6 +1397,7 @@ class Recipe:
             try:
                 output = RecipeOutput.from_core_recipe_output(output)
             except LookupError as error:
+                # See https://github.com/ESMValGroup/ESMValCore/issues/28
                 logging.debug("Could not write HTML report. %s", error)
             else:
                 output.write_html()
