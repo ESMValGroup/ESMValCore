@@ -134,9 +134,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename):
             'frequency': 'yr',
         },
         'add_cell_measure': {
-            'fx_variables': None,
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
+            'fx_variables': {},
             'check_level': CheckLevels.DEFAULT,
         },
         'cleanup': {
@@ -561,9 +559,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'frequency': 'fx',
         },
         'add_cell_measure': {
-            'fx_variables': None,
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
+            'fx_variables': {},
             'check_level': CheckLevels.DEFAULT,
         },
         'cleanup': {

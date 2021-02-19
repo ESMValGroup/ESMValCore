@@ -41,7 +41,7 @@ def clip(cube, minimum=None, maximum=None):
     return cube
 
 
-def add_cell_measure(cube, fx_variables, project, dataset, check_level):
+def add_cell_measure(cube, fx_variables, check_level):
     """
     Load requested fx files, check with CMOR standards and add the
     fx variables as cell measures in the cube containing the data.
@@ -51,11 +51,7 @@ def add_cell_measure(cube, fx_variables, project, dataset, check_level):
     cube: iris.cube.Cube
         Iris cube with input data.
     fx_variables: dict
-        Path to the needed fx_files.
-    project: str
-
-    dataset: str
-
+        Dictionary with fx_variable information.
     check_level: CheckLevels
         Level of strictness of the checks.
 
@@ -72,17 +68,18 @@ def add_cell_measure(cube, fx_variables, project, dataset, check_level):
     if not fx_variables:
         return cube
     fx_cubes = iris.cube.CubeList()
-    for fx_files in fx_variables.values():
-        if isinstance(fx_files, str):
-            fx_files = [fx_files]
-        if not fx_files:
+    for _, fx_info in fx_variables.items():
+        if not fx_info:
             continue
-        for fx_file in fx_files:
+        if isinstance(fx_info['filename'], str):
+            fx_info['filename'] = [fx_info['filename']]
+        for fx_file in fx_info['filename']:
             loaded_cube = iris.load(fx_file)
-            short_name = loaded_cube[0].var_name
-            mip = loaded_cube[0].attributes['table_id']
-            freq = loaded_cube[0].attributes['frequency']
-
+            short_name = fx_info['short_name']
+            project = fx_info['project']
+            dataset = fx_info['dataset']
+            mip = fx_info['mip']
+            freq = fx_info['frequency']
             loaded_cube = fix_metadata(loaded_cube, short_name=short_name,
                                        project=project, dataset=dataset,
                                        mip=mip, frequency=freq,

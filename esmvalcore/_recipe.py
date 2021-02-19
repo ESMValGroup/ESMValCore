@@ -315,9 +315,7 @@ def _get_default_settings(variable, config_user, derive=False):
         settings['save']['alias'] = variable['short_name']
 
     settings['add_cell_measure'] = {
-        'fx_variables': None,
-        'project': variable['project'],
-        'dataset': variable['dataset'],
+        'fx_variables': {},
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
     }
 
@@ -397,7 +395,7 @@ def _get_fx_files(variable, fx_info, config_user):
         if fx_info['frequency'] == 'fx':
             fx_files = fx_files[0]
 
-    return fx_files
+    return fx_files, fx_info
 
 
 def _exclude_dataset(settings, variable, step):
@@ -421,8 +419,8 @@ def _update_weighting_settings(settings, variable):
 
 def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
     """Update settings with mask fx file list or dict."""
-    if 'fx_variables' not in settings:
-        settings.update({'fx_variables': {}})
+    if 'fx_variables' not in settings[step_name]:
+        settings[step_name].update({'fx_variables': {}})
     if not fx_vars:
         return
     for fx_var, fx_info in fx_vars.items():
@@ -432,14 +430,19 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
             fx_info.update({'mip': None})
         if 'short_name' not in fx_info:
             fx_info.update({'short_name': fx_var})
-        fx_files = _get_fx_files(variable, fx_info, config_user)
-        settings['fx_variables'].update({
+        fx_files, fx_info = _get_fx_files(variable, fx_info, config_user)
+        settings[step_name]['fx_variables'].update({
             fx_var: fx_files
+            })
+        if step_name in ['area_statistics', 'volume_statistics'] and fx_files:
+            fx_info['filename'] = fx_files
+            settings['add_cell_measure']['fx_variables'].update({
+                fx_var: fx_info
             })
 
     logger.info('Using fx_files: %s for variable %s during step %s',
-                pformat(settings['fx_variables']), variable['short_name'],
-                step_name)
+                pformat(settings[step_name]['fx_variables']),
+                variable['short_name'], step_name)
 
 
 def _update_fx_settings(settings, variable, config_user):
@@ -464,14 +467,12 @@ def _update_fx_settings(settings, variable, config_user):
         'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
         'zonal_statistics', 'area_statistics', 'volume_statistics'
     ]
-    for step_name, step_settings in settings.items():
+    for step_name in settings:
         if step_name in fx_steps:
-            fx_vars = _get_fx_vars_from_attribute(step_settings, step_name)
-            _update_fx_files(step_name, step_settings, variable, config_user,
+            fx_vars = _get_fx_vars_from_attribute(settings[step_name],
+                                                  step_name)
+            _update_fx_files(step_name, settings, variable, config_user,
                              fx_vars)
-            if step_name in ['area_statistics', 'volume_statistics']:
-                settings['add_cell_measure']['fx_variables'] = (
-                    step_settings['fx_variables'])
 
 
 def _read_attributes(filename):

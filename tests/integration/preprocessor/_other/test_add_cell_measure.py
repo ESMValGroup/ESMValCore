@@ -71,48 +71,56 @@ class Test:
     def test_add_cell_measure_area(self, tmp_path):
         """Test add area fx variables as cell measures."""
         fx_vars = {
-            'areacella': {'table_id': 'fx', 'frequency': 'fx'},
-            'areacello': {'table_id': 'Ofx', 'frequency': 'fx'}
+            'areacella': {
+                'short_name': 'areacella',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'fx',
+                'frequency': 'fx'},
+            'areacello': {
+                'short_name': 'areacello',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'Ofx',
+                'frequency': 'fx'
+            }
             }
         for fx_var in fx_vars:
             self.fx_area.var_name = fx_var
             self.fx_area.standard_name = 'cell_area'
             self.fx_area.units = 'm2'
-            self.fx_area.attributes['table_id'] = fx_vars[fx_var]['table_id']
-            self.fx_area.attributes['frequency'] = fx_vars[fx_var]['frequency']
             fx_file = str(tmp_path / f'{fx_var}.nc')
+            fx_vars[fx_var].update({'filename': fx_file})
             iris.save(self.fx_area, fx_file)
             cube = iris.cube.Cube(self.new_cube_data,
                                   dim_coords_and_dims=self.coords_spec)
             cube = add_cell_measure(
-                cube, {fx_var: fx_file}, 'CMIP6',
-                'EC-Earth3', CheckLevels.IGNORE)
+                cube, {fx_var: fx_vars[fx_var]}, CheckLevels.IGNORE)
             assert cube.cell_measure(self.fx_area.standard_name) is not None
 
     def test_add_cell_measure_volume(self, tmp_path):
         """Test add volume as cell measure."""
         fx_vars = {
-            'volcello': {'table_id': 'Ofx', 'frequency': 'fx'}
+            'volcello': {
+                'short_name': 'volcello',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'Ofx',
+                'frequency': 'fx'}
             }
-        for fx_var in fx_vars:
-            self.fx_volume.var_name = fx_var
-            self.fx_volume.standard_name = 'ocean_volume'
-            self.fx_volume.units = 'm3'
-            self.fx_volume.attributes['table_id'] = (
-                fx_vars[fx_var]['table_id'])
-            self.fx_volume.attributes['frequency'] = (
-                fx_vars[fx_var]['frequency'])
-            fx_file = str(tmp_path / f'{fx_var}.nc')
-            iris.save(self.fx_volume, fx_file)
-            cube = iris.cube.Cube(self.new_cube_3D_data,
-                                  dim_coords_and_dims=[
-                                      (self.depth, 0),
-                                      (self.lats, 1),
-                                      (self.lons, 2)])
-            cube = add_cell_measure(
-                cube, {fx_var: fx_file}, 'CMIP6',
-                'EC-Earth3', CheckLevels.IGNORE)
-            assert cube.cell_measure(self.fx_volume.standard_name) is not None
+        self.fx_volume.var_name = 'volcello'
+        self.fx_volume.standard_name = 'ocean_volume'
+        self.fx_volume.units = 'm3'
+        fx_file = str(tmp_path / 'volcello.nc')
+        iris.save(self.fx_volume, fx_file)
+        fx_vars['volcello'].update({'filename': fx_file})
+        cube = iris.cube.Cube(self.new_cube_3D_data,
+                              dim_coords_and_dims=[
+                                  (self.depth, 0),
+                                  (self.lats, 1),
+                                  (self.lons, 2)])
+        cube = add_cell_measure(cube, fx_vars, CheckLevels.IGNORE)
+        assert cube.cell_measure(self.fx_volume.standard_name) is not None
 
     def test_no_cell_measure(self):
         """Test no cell measure is added."""
@@ -121,8 +129,7 @@ class Test:
                                   (self.depth, 0),
                                   (self.lats, 1),
                                   (self.lons, 2)])
-        cube = add_cell_measure(cube, {'areacello': None}, 'CMIP6',
-                                'EC-Earth3', CheckLevels.IGNORE)
+        cube = add_cell_measure(cube, {'areacello': None}, CheckLevels.IGNORE)
         assert cube.cell_measures() == []
 
     def test_invalid_cell_measure(self, tmp_path, caplog):
@@ -130,17 +137,23 @@ class Test:
         self.fx_area.var_name = 'sftlf'
         self.fx_area.standard_name = "land_area_fraction"
         self.fx_area.units = '%'
-        self.fx_area.attributes['table_id'] = 'fx'
-        self.fx_area.attributes['frequency'] = 'fx'
         fx_file = str(tmp_path / f'{self.fx_area.var_name}.nc')
         iris.save(self.fx_area, fx_file)
+        fx_vars = {
+            'sftlf': {
+                'short_name': 'sftlf',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'fx',
+                'frequency': 'fx',
+                'filename': fx_file}
+        }
         cube = iris.cube.Cube(self.new_cube_data,
                               dim_coords_and_dims=self.coords_spec)
         cube.var_name = 'tas'
         with caplog.at_level(logging.INFO):
             cube = add_cell_measure(
-                cube, {self.fx_area.var_name: fx_file}, 'CMIP6',
-                'EC-Earth3', CheckLevels.IGNORE)
+                cube, fx_vars, CheckLevels.IGNORE)
         msg = (f'Fx variable {self.fx_area.var_name} '
                'cannot be added as a cell measure '
                f'in cube of {cube.var_name}.')
@@ -162,10 +175,17 @@ class Test:
         volume_cube.standard_name = 'ocean_volume'
         volume_cube.var_name = 'volcello'
         volume_cube.units = 'm3'
-        volume_cube.attributes['table_id'] = 'Oyr'
-        volume_cube.attributes['frequency'] = 'yr'
         fx_file = str(tmp_path / f'{volume_cube.var_name}.nc')
         iris.save(volume_cube, fx_file)
+        fx_vars = {
+            'volcello': {
+                'short_name': 'volcello',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'Oyr',
+                'frequency': 'yr',
+                'filename': fx_file}
+            }
         data = np.ones((12, 3, 3, 3))
         cube = iris.cube.Cube(
             data,
@@ -176,8 +196,7 @@ class Test:
         cube.var_name = 'thetao'
         with pytest.raises(ValueError) as excinfo:
             cube = add_cell_measure(
-                cube, {volume_cube.var_name: fx_file}, 'CMIP6',
-                'EC-Earth3', CheckLevels.IGNORE)
+                cube, fx_vars, CheckLevels.IGNORE)
         msg = (f"Frequencies of {cube.var_name} and "
                f"{volume_cube.var_name} cubes do not match.")
         assert msg in str(excinfo.value)
