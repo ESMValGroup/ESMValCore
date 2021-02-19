@@ -1,5 +1,6 @@
 import pytest
 
+from esmvalcore._config import DIAGNOSTICS, TAGS
 from esmvalcore.experimental import get_recipe
 
 pytest.importorskip(
@@ -12,6 +13,8 @@ pytest.importorskip(
 
 def test_recipe():
     """Coverage test for Recipe."""
+    TAGS.set_tag_values(DIAGNOSTICS.load_tags())
+
     recipe = get_recipe('examples/recipe_python')
 
     assert isinstance(repr(recipe), str)

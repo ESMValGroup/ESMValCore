@@ -21,6 +21,34 @@ from esmvalcore.preprocessor._io import concatenate_callback
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
 
+TAGS_FOR_TESTING = {
+    'authors': {
+        'andela_bouwe': {
+            'name': 'Bouwe, Andela',
+        },
+    },
+    'projects': {
+        'c3s-magic': 'C3S MAGIC project',
+    },
+    'themes': {
+        'phys': 'physics',
+    },
+    'realms': {
+        'atmos': 'atmosphere',
+    },
+    'statistics': {
+        'mean': 'mean',
+        'var': 'variability',
+    },
+    'domains': {
+        'et': 'extra tropics',
+        'trop': 'tropics',
+    },
+    'plot_types': {
+        'zonal': 'zonal',
+    },
+}
+
 MANDATORY_DATASET_KEYS = (
     'dataset',
     'diagnostic',
@@ -1306,35 +1334,7 @@ def test_diagnostic_task_provenance(
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
 
-    TAGS.set_tag_values({
-        'authors': {
-            'doe_john': {
-                'name': 'Doe, John',
-                'institute': 'Testing',
-                'orcid': 'https://orcid.org/0000-0000-0000-0000',
-            },
-        },
-        'projects': {
-            'c3s-magic': 'C3S MAGIC project',
-        },
-        'themes': {
-            'phys': 'physics',
-        },
-        'realms': {
-            'atmos': 'atmosphere',
-        },
-        'statistics': {
-            'mean': 'mean',
-            'var': 'variability',
-        },
-        'domains': {
-            'et': 'extra tropics',
-            'trop': 'tropics',
-        },
-        'plot_types': {
-            'zonal': 'zonal',
-        },
-    })
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent("""
         diagnostics:
@@ -1531,6 +1531,8 @@ def test_ensemble_expansion(tmp_path, patched_datafinder, config_user):
 
 
 def test_extract_shape(tmp_path, patched_datafinder, config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           test:
@@ -1570,6 +1572,8 @@ def test_extract_shape(tmp_path, patched_datafinder, config_user):
                          ['shapefile', 'method', 'crop', 'decomposed'])
 def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
                               invalid_arg):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     # Create shapefile
     shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
     shapefile.parent.mkdir(parents=True, exist_ok=True)
@@ -1614,6 +1618,8 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
 
 
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           landfrac_weighting:
@@ -1972,6 +1978,8 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
 
 
 def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           preproc:
@@ -2048,6 +2056,8 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
 
 def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
                                        config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           preproc:
@@ -2361,6 +2371,8 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
 
 
 def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           preproc:
