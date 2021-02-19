@@ -147,4 +147,4 @@ class RecipeInfo():
             _ = self.references
         except BaseException as error:
             message = f"Some tags in the recipe could not be resolved: {error}"
-            raise LookupError(message)
+            raise LookupError(message) from error
