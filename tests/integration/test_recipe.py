@@ -10,6 +10,7 @@ import yaml
 from PIL import Image
 
 import esmvalcore
+from esmvalcore._config._diagnostics import TagsManager
 from esmvalcore._recipe import TASKSEP, read_recipe_file
 from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
@@ -1306,7 +1307,7 @@ def simulate_diagnostic_run(diagnostic_task):
     return record
 
 
-TAGS = {
+TAGS = TagsManager({
     'authors': {
         'andela_bouwe': {
             'name': 'Bouwe Andela',
@@ -1332,7 +1333,7 @@ TAGS = {
     'plot_types': {
         'zonal': 'zonal',
     },
-}
+})
 
 
 def test_diagnostic_task_provenance(

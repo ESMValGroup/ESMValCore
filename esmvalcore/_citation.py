@@ -7,11 +7,9 @@ from functools import lru_cache
 
 import requests
 
-from ._config import DIAGNOSTICS_PATH
+from ._config import DIAGNOSTICS
 
 logger = logging.getLogger(__name__)
-
-REFERENCES_PATH = DIAGNOSTICS_PATH / 'references'
 
 CMIP6_URL_STEM = 'https://cera-www.dkrz.de/WDCC/ui/cerasearch'
 
@@ -196,7 +194,7 @@ def _json_to_bibtex(data):
 @lru_cache(maxsize=1024)
 def _collect_bibtex_citation(tag):
     """Collect information from bibtex files."""
-    bibtex_file = REFERENCES_PATH / f'{tag}.bibtex'
+    bibtex_file = DIAGNOSTICS.references / f'{tag}.bibtex'
     if bibtex_file.is_file():
         entry = bibtex_file.read_text()
     else:
