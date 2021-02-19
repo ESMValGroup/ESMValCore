@@ -71,7 +71,7 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     assert 'ps' in var_names
 
     # Raw cl cube
-    raw_cube = cubes.extract_strict('cloud_area_fraction_in_atmosphere_layer')
+    raw_cube = cubes.extract_cube('cloud_area_fraction_in_atmosphere_layer')
     assert not raw_cube.coords('air_pressure')
 
     # Apply fix
@@ -85,7 +85,7 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     var_names = [cube.var_name for cube in fixed_cubes]
     assert 'cl' in var_names
     assert 'ps' in var_names
-    fixed_cl_cube = fixed_cubes.extract_strict(
+    fixed_cl_cube = fixed_cubes.extract_cube(
         'cloud_area_fraction_in_atmosphere_layer')
     fixed_air_pressure_coord = fixed_cl_cube.coord('air_pressure')
     assert fixed_air_pressure_coord.points is not None

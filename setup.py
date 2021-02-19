@@ -32,8 +32,6 @@ REQUIREMENTS = {
     'install': [
         'cf-units',
         'dask[array]',
-        # fiona: 1.8.18/py39, they seem weary to build manylinux wheels
-        # so we may have to install from conda-forge in the future
         'fiona',
         'fire',
         'nc-time-axis',  # needed by iris.plot
@@ -44,7 +42,7 @@ REQUIREMENTS = {
         'pybtex',
         'pyyaml',
         'requests',
-        'scitools-iris>=2.2',
+        'scitools-iris>=3.0.1',
         'requests',
         'shapely[vectorized]',
         'stratify',
@@ -61,8 +59,7 @@ REQUIREMENTS = {
         'pytest-metadata>=1.5.1',
         'pytest-mock',
         'pytest-xdist',
-        ('ESMValTool_sample_data @ '
-         'git+https://github.com/ESMValGroup/ESMValTool_sample_data@v0.0.3'),
+        'ESMValTool_sample_data==0.0.3',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode

@@ -3,9 +3,9 @@
 Recipe output
 =============
 
-This section describes the :py:mod:`esmvalcore.experimental.recipe_output` submodule of the API.
+This section describes the :py:mod:`~esmvalcore.experimental.recipe_output` submodule of the API (:py:mod:`esmvalcore.experimental`).
 
-After running a recipe, output is returned by the :py:meth:`esmvalcore.experimental.recipe.Recipe.run` method. Alternatively, it can be retrieved using the :py:meth:`esmvalcore.experimental.recipe.Recipe.get_output` method.
+After running a recipe, output is returned by the :py:meth:`~esmvalcore.experimental.recipe.Recipe.run` method. Alternatively, it can be retrieved using the :py:meth:`~esmvalcore.experimental.recipe.Recipe.get_output` method.
 
 .. code:: python
 
@@ -53,7 +53,7 @@ a dictionary.
 
 The task output has a list of files associated with them, usually image
 (``.png``) or data files (``.nc``). To get a list of all files, use
-``.files``:
+`:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.files`.
 
 .. code:: python
 
@@ -62,7 +62,7 @@ The task output has a list of files associated with them, usually image
     ..., ImageFile('CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_2000-2000.png'))
 
 
-It is also possible to select the image files or data files only:
+It is also possible to select the image (`:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.image_files`) files or data files (`:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.data_files`) only.
 
 .. code:: python
 
@@ -80,12 +80,12 @@ It is also possible to select the image files or data files only:
 Working with output files
 *************************
 
-Output comes in two kinds, :py:class:`esmvalcore.experimental.recipe_output.DataFile` corresponds to data
-files in ``.nc`` format and :py:class:`esmvalcore.experimental.recipe_output.ImageFile` corresponds to plots
+Output comes in two kinds, :py:class:`~esmvalcore.experimental.recipe_output.DataFile` corresponds to data
+files in ``.nc`` format and :py:class:`~esmvalcore.experimental.recipe_output.ImageFile` corresponds to plots
 in ``.png`` format (see below). Both object are derived from the same base class
-(:py:class:`esmvalcore.experimental.recipe_output.OutputFile`) and therefore share most of the functionality.
+(:py:class:`~esmvalcore.experimental.recipe_output.OutputFile`) and therefore share most of the functionality.
 
-For example, author information can be accessed as instances of :py:class:`esmvalcore.experimental.recipe_metadata.Contributor`  via
+For example, author information can be accessed as instances of :py:class:`~esmvalcore.experimental.recipe_metadata.Contributor`  via
 
 .. code:: python
 
@@ -94,14 +94,14 @@ For example, author information can be accessed as instances of :py:class:`esmva
     (Contributor('Andela, Bouwe', institute='NLeSC, Netherlands', orcid='https://orcid.org/0000-0001-9005-8940'),
      Contributor('Righi, Mattia', institute='DLR, Germany', orcid='https://orcid.org/0000-0003-3827-5950'))
 
-And associated references as instances of :py:class:`esmvalcore.experimental.recipe_metadata.Reference` via
+And associated references as instances of :py:class:`~esmvalcore.experimental.recipe_metadata.Reference` via
 
 .. code:: python
 
     >>> output_file.references
     (Reference('acknow_project'),)
 
-:py:class:`esmvalcore.experimental.recipe_output.OutputFile` also knows about associated files
+:py:class:`~esmvalcore.experimental.recipe_output.OutputFile` also knows about associated files
 
 .. code:: python
 

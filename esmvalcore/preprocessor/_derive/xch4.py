@@ -23,11 +23,11 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Calculate the column-averaged atmospheric CH4 [1e-9]."""
-        ch4_cube = cubes.extract_strict(
+        ch4_cube = cubes.extract_cube(
             Constraint(name='mole_fraction_of_methane_in_air'))
-        hus_cube = cubes.extract_strict(Constraint(name='specific_humidity'))
-        zg_cube = cubes.extract_strict(Constraint(name='geopotential_height'))
-        ps_cube = cubes.extract_strict(Constraint(name='surface_air_pressure'))
+        hus_cube = cubes.extract_cube(Constraint(name='specific_humidity'))
+        zg_cube = cubes.extract_cube(Constraint(name='geopotential_height'))
+        ps_cube = cubes.extract_cube(Constraint(name='surface_air_pressure'))
 
         # Column-averaged CH4
         xch4_cube = column_average(ch4_cube, hus_cube, zg_cube, ps_cube)
