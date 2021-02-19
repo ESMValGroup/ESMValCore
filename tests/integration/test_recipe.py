@@ -21,37 +21,6 @@ from esmvalcore.preprocessor._io import concatenate_callback
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
 
-# Set a default author for testing purposes
-TAGS.set_tag_values({
-    'authors': {
-        'doe_john': {
-            'name': 'Doe, John',
-            'institute': 'Testing',
-            'orcid': 'https://orcid.org/0000-0000-0000-0000',
-        },
-    },
-    'projects': {
-        'c3s-magic': 'C3S MAGIC project',
-    },
-    'themes': {
-        'phys': 'physics',
-    },
-    'realms': {
-        'atmos': 'atmosphere',
-    },
-    'statistics': {
-        'mean': 'mean',
-        'var': 'variability',
-    },
-    'domains': {
-        'et': 'extra tropics',
-        'trop': 'tropics',
-    },
-    'plot_types': {
-        'zonal': 'zonal',
-    },
-})
-
 MANDATORY_DATASET_KEYS = (
     'dataset',
     'diagnostic',
@@ -1336,6 +1305,36 @@ def test_diagnostic_task_provenance(
 ):
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
+
+    TAGS.set_tag_values({
+        'authors': {
+            'doe_john': {
+                'name': 'Doe, John',
+                'institute': 'Testing',
+                'orcid': 'https://orcid.org/0000-0000-0000-0000',
+            },
+        },
+        'projects': {
+            'c3s-magic': 'C3S MAGIC project',
+        },
+        'themes': {
+            'phys': 'physics',
+        },
+        'realms': {
+            'atmos': 'atmosphere',
+        },
+        'statistics': {
+            'mean': 'mean',
+            'var': 'variability',
+        },
+        'domains': {
+            'et': 'extra tropics',
+            'trop': 'tropics',
+        },
+        'plot_types': {
+            'zonal': 'zonal',
+        },
+    })
 
     content = dedent("""
         diagnostics:

@@ -8,6 +8,7 @@ from pathlib import Path
 import iris
 import pytest
 
+from esmvalcore._config import TAGS
 from esmvalcore._recipe import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (
@@ -35,6 +36,14 @@ def test_run_recipe(task, recipe, tmp_path):
 
     Recipe contains no provenance and no diagnostics.
     """
+    TAGS.set_tag_value(section='authors',
+                       tag='doe_john',
+                       value={
+                           'name': 'Doe, John',
+                           'institute': 'Testing',
+                           'orcid': 'https://orcid.org/0000-0000-0000-0000',
+                       })
+
     CFG['output_dir'] = tmp_path
 
     assert isinstance(recipe, Recipe)
