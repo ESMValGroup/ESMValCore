@@ -22,6 +22,16 @@ esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 CFG.update(esmvaltool_sample_data.get_rootpaths())
 CFG['max_parallel_tasks'] = 1
 
+AUTHOR_TAGS = {
+    'authors': {
+        'doe_john': {
+            'name': 'Doe, John',
+            'institute': 'Testing',
+            'orcid': 'https://orcid.org/0000-0000-0000-0000',
+        }
+    }
+}
+
 
 @pytest.fixture
 def recipe():
@@ -36,13 +46,7 @@ def test_run_recipe(task, recipe, tmp_path):
 
     Recipe contains no provenance and no diagnostics.
     """
-    TAGS.set_tag_value(section='authors',
-                       tag='doe_john',
-                       value={
-                           'name': 'Doe, John',
-                           'institute': 'Testing',
-                           'orcid': 'https://orcid.org/0000-0000-0000-0000',
-                       })
+    TAGS.set_tag_values(AUTHOR_TAGS)
 
     CFG['output_dir'] = tmp_path
 
@@ -77,6 +81,8 @@ def test_run_recipe_diagnostic_failing(recipe, tmp_path):
 
     Recipe contains no provenance and no diagnostics.
     """
+    TAGS.set_tag_values(AUTHOR_TAGS)
+
     CFG['output_dir'] = tmp_path
 
     with pytest.raises(RecipeError):

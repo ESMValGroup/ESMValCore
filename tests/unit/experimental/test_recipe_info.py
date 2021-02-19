@@ -10,6 +10,14 @@ DIAGNOSTICS = Diagnostics(Path(__file__).parent)
 
 def test_contributor():
     """Coverage test for Contributor."""
+    TAGS.set_tag_value(section='authors',
+                       tag='doe_john',
+                       value={
+                           'name': 'Doe, John',
+                           'institute': 'Testing',
+                           'orcid': 'https://orcid.org/0000-0000-0000-0000',
+                       })
+
     contributor = Contributor.from_tag('doe_john')
 
     assert contributor.name == 'John Doe'
