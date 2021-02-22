@@ -49,10 +49,17 @@ def preprocess_data(cubes, time_slice: dict = None):
     # regrid to first cube
     regrid_kwargs = {
         'grid': first_cube,
-        'scheme': iris.analysis.Linear(),
+        'scheme': iris.analysis.Nearest(),
     }
 
     cubes = [cube.regrid(**regrid_kwargs) for cube in cubes]
+
+    for cube in cubes:
+        # Make sure cubes have sensible values
+        # https://github.com/ESMValGroup/ESMValCore/issues/1014
+        # https://github.com/ESMValGroup/ESMValTool_sample_data/issues/24
+        assert cube.data.min() > -2e16
+        assert cube.data.max() < 2e16
 
     return cubes
 
@@ -61,7 +68,8 @@ def get_cache_key(value):
     """Get a cache key that is hopefully unique enough for unpickling.
 
     If this doesn't avoid problems with unpickling the cached data,
-    manually clean the pytest cache with the command `pytest --cache-clear`.
+    manually clean the pytest cache with the command `pytest --cache-
+    clear`.
     """
     return ' '.join([
         str(value),
