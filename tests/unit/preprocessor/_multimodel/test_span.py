@@ -23,8 +23,11 @@ def timecoord(dates, calendar='gregorian'):
     points = unit.date2num(dates)
     return iris.coords.DimCoord(points, standard_name='time', units=unit)
 
-# lons = iris.coords.DimCoord([0,], standard_name='longitude', units='degrees_east')
-# lats = iris.coords.DimCoord([0,], standard_name='latitude', units='degrees_north')
+
+# lons = iris.coords.DimCoord([0,],
+#                             standard_name='longitude', units='degrees_east')
+# lats = iris.coords.DimCoord([0,],
+#                             standard_name='latitude', units='degrees_north')
 
 
 def get_cubes(frequency):
@@ -69,7 +72,8 @@ def test_multimodel_statistics(span, frequency):
     results = multi_model_statistics(cubes, span, statistics)
 
     assert isinstance(results, dict)
-    assert results.keys == statistics
+
+    assert results.keys() == statistics
 
     for statistic, result in results.items():
         expected = np.ma.array(verification_data[statistic], mask=False)

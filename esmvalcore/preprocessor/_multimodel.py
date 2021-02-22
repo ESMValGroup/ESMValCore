@@ -8,7 +8,7 @@ from functools import reduce
 import cf_units
 import iris
 import numpy as np
-from iris.experimental.equalise_cubes import equalise_attributes
+from iris.util import equalise_attributes
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ def _align(cubes, span):
     """Expand or subset cubes so they share a common time span."""
     _unify_time_coordinates(cubes)
     all_time_arrays = [cube.coord('time').points for cube in cubes]
-    if reduce(np.array_equal, all_times):
+    if reduce(np.array_equal, all_time_arrays):
         # cubes are already aligned
         return cubes
 
@@ -109,18 +109,20 @@ def _align(cubes, span):
 
     for cube in new_cubes:
         cube.coord('time').guess_bounds()
+
     return new_cubes
 
 
 def _combine(cubes, dim='new_dim'):
     """Merge iris cubes into a single big cube with new dimension."""
-    equalise_attributes(cubes)
+    equalise_attributes(cubes)  # in-place
 
     for i, cube in enumerate(cubes):
         concat_dim = iris.coords.AuxCoord(i, var_name=dim)
         cube.add_aux_coord(concat_dim)
 
     cubes = iris.cube.CubeList(cubes)
+
     return cubes.merge_cube()
 
 

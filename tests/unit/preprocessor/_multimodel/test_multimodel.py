@@ -29,8 +29,8 @@ import pytest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.preprocessor import multi_model_statistics
 import esmvalcore.preprocessor._multimodel as mm
+from esmvalcore.preprocessor import multi_model_statistics
 
 SPAN_OPTIONS = ('overlap', 'full')
 
@@ -119,7 +119,11 @@ def test_get_consistent_time_unit():
     time1 = timecoord('monthly', '360_day')
     cube1 = Cube([1, 1, 1], dim_coords_and_dims=[(time1, 0)])
     time2 = timecoord('monthly', '365_day')
-    cube2 = Cube([1, 1, 1,], dim_coords_and_dims=[(time2, 0)])
+    cube2 = Cube([
+        1,
+        1,
+        1,
+    ], dim_coords_and_dims=[(time2, 0)])
 
     result1 = mm._get_consistent_time_unit([cube1, cube1])
     result2 = mm._get_consistent_time_unit([cube1, cube2])
