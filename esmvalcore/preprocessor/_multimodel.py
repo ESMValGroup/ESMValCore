@@ -12,6 +12,24 @@ from iris.util import equalise_attributes
 
 logger = logging.getLogger(__name__)
 
+STATISTIC_MAPPING = {
+    'count': iris.analysis.COUNT,
+    'gmean': iris.analysis.GMEAN,
+    'hmean': iris.analysis.HMEAN,
+    'mean': iris.analysis.MEAN,
+    'median': iris.analysis.MEDIAN,
+    'min': iris.analysis.MIN,
+    'max': iris.analysis.MAX,
+    'peak': iris.analysis.PEAK,
+    'percentile': iris.analysis.PERCENTILE,
+    'proportion': iris.analysis.PROPORTION,
+    'rms': iris.analysis.RMS,
+    'std_dev': iris.analysis.STD_DEV,
+    'sum': iris.analysis.SUM,
+    'variance': iris.analysis.VARIANCE,
+    'wpercentile': iris.analysis.WPERCENTILE,
+}
+
 
 def _get_consistent_time_unit(cubes):
     """Return cubes' time unit if consistent, standard calendar otherwise."""
@@ -126,31 +144,49 @@ def _combine(cubes, dim='new_dim'):
     return cubes.merge_cube()
 
 
-def _compute(cube, statistic, dim='new_dim'):
-    """Compute statistic."""
+def _compute(cube, statistic: str, dim: str = 'new_dim'):
+    """Compute statistic.
 
+    Parameters
+    ----------
+    cube : :obj:`iris.cube.Cube`
+    statistic : str
+        Name of the statistic to calculate. Must be available via
+        :mod:`iris.analysis`.
+    dim : str
+        Collapse cube along this coordinate.
+
+    Returns
+    -------
+    :obj:`iris.cube.Cube`
+        Collapsed cube.
+    """
+
+    statistic = statistic.lower()
     kwargs = {}
-    if re.match(r"^(p\d{1,2})(\.\d*)?$", statistic):
-        # percentiles between p0 and p99.99999...
-        percentile = float(statistic[1:])
-        operator = iris.analysis.PERCENTILE
-        kwargs['percent'] = percentile
-    elif statistic == 'std':
-        operator = iris.analysis.STD_DEV
+
+    # special cases
+    if statistic == 'dev':
         logger.warning(
             "Multicube statistics is aligning its behaviour with iris.analysis"
             ". Please consider replacing 'std' with 'std_dev' in your code.")
-    else:
-        try:
-            operators = vars(iris.analysis)
-            operator = operators[statistic.upper()]
-        except KeyError as err:
-            raise ValueError(
-                f'Statistic `{statistic}` not supported in',
-                '`ensemble_statistics`. Choose supported operator from',
-                '`iris.analysis package`.') from err
+        statistic = 'std_dev'
+
+    elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic):
+        # percentiles between p0 and p99.99999...
+        percentile = float(statistic[1:])
+        kwargs['percent'] = percentile
+        statistic = 'percentile'
+
+    try:
+        operator = STATISTIC_MAPPING[statistic]
+    except KeyError as err:
+        raise ValueError(
+            f'Statistic `{statistic}` not supported by multicube statistics. '
+            f'Must be one of {tuple(STATISTIC_MAPPING.keys())}.') from err
 
     logger.debug('Multicube statistics: computing: %s', statistic)
+
     # This will always return a masked array
     return cube.collapsed(dim, operator, **kwargs)
 
