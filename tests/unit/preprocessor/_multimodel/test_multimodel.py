@@ -1,25 +1,4 @@
-"""Unit test for :func:`esmvalcore.preprocessor._multimodel`
-
-test_align(cubes, span)
-    --> pass multiple cubes with different time coords
-    --> check that the returned cubes have consistent shapes and calendars
-    --> check that if a cube is extended, the extended points are masked (not NaN!)
-
-test_combine(cubes, dim='new_dim')
-    --> pass multiple combinations of cubes
-        - if cubes have the same shape, check that they are combined along a new dimension
-        - if they have inconsistent shapes, check that iris raises an error
-        - if they have inconsistent variable names, they should not be combined
-
-test_compute(cube, statistic, dim='new_dim')
-    --> make one big cube with a dimension called 'new dim'
-        - call with multiple different statistics
-        - check that the resulting data (computed statistics) is correct
-        - check that the output has a correct variable name
-        - check that the 'new_dim' dimension is removed again
-        - what happens if some of the input data is masked or NaN?
-        - test with COUNT statistics whether masked points are treated as expected.
-"""
+"""Unit test for :func:`esmvalcore.preprocessor._multimodel`"""
 
 from datetime import datetime
 
@@ -72,10 +51,25 @@ def get_cubes(frequency):
     return [cube1, cube2, cube3]
 
 
+VALIDATION_DATA = {
+    # For span=overlap, take the first 2 items.
+    # Span = full --> statistic computed on [1, 1, 1], [-, 5, 5], [9, 9, -]
+    # Span = overlap --> statistic computed on [1, 1], [-, 5], [9, 9]
+    'mean': [5, 5, 3],
+    'std': [5.656854249492381, 4, 2.8284271247461903],
+    'std_dev': [5.656854249492381, 4, 2.8284271247461903],
+    'min': [1, 1, 1],
+    'max': [9, 9, 5],
+    'median': [5, 5, 3],
+    'p50': [5, 5, 3],
+    'p99.5': [8.96, 8.96, 4.98],
+}
+
+
 @pytest.mark.parametrize('frequency', FREQUENCY_OPTIONS)
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
-# @pytest.mark.parametrize('stats', STATISTICS_OPTIONS)
-def test_multimodel_statistics(span, frequency):
+@pytest.mark.parametrize('statistic', VALIDATION_DATA)
+def test_multimodel_statistics(span, frequency, statistic):
     """High level test for multicube statistics function.
 
     - Should work for multiple data frequencies
@@ -85,32 +79,44 @@ def test_multimodel_statistics(span, frequency):
     - Return type should be a dict with all requested statistics as keys
     """
     cubes = get_cubes(frequency)
-    verification_data = {
-        # For span=overlap, take the first 2 items.
-        # Span = full --> statistic computed on [1, 1, 1], [-, 5, 5], [9, 9, -]
-        # Span = overlap --> statistic computed on [1, 1], [-, 5], [9, 9]
-        'mean': [5, 5, 3],
-        'std': [5.656854249492381, 4, 2.8284271247461903],
-        'std_dev': [5.656854249492381, 4, 2.8284271247461903],
-        'min': [1, 1, 1],
-        'max': [9, 9, 5],
-        'median': [5, 5, 3],
-        'p50': [5, 5, 3],
-        'p99.5': [8.96, 8.96, 4.98],
+
+    statistics = (statistic, )
+
+    result = multi_model_statistics(cubes, span, statistics)
+
+    assert isinstance(result, dict)
+    assert len(result.keys()) == 1
+    assert statistic in result
+
+    expected = np.ma.array(VALIDATION_DATA[statistic], mask=False)
+    if span == 'overlap':
+        expected = expected[:2]
+
+    result_cube = result[statistic]
+    np.testing.assert_array_equal(result_cube.data.mask, expected.mask)
+    np.testing.assert_array_almost_equal(result_cube.data, expected.data)
+
+
+def generate_failing_tests():
+    """Generate failing tests."""
+    failing_tests = {
+        'percentile': ValueError,
+        'wpercentile': ValueError,
+        'count': TypeError,
+        'peak': TypeError,
+        'proportion': TypeError,
     }
 
-    statistics = verification_data.keys()
-    results = multi_model_statistics(cubes, span, statistics)
+    yield from failing_tests.items()
 
-    assert isinstance(results, dict)
-    assert results.keys() == statistics
 
-    for statistic, result in results.items():
-        expected = np.ma.array(verification_data[statistic], mask=False)
-        if span == 'overlap':
-            expected = expected[:2]
-        np.testing.assert_array_equal(result.data.mask, expected.mask)
-        np.testing.assert_array_almost_equal(result.data, expected.data)
+@pytest.mark.parametrize('statistic, error', generate_failing_tests())
+def test_all_statistics(statistic, error):
+    cubes = get_cubes('monthly')
+    span = 'overlap'
+    statistics = (statistic, )
+    with pytest.raises(error):
+        result = multi_model_statistics(cubes, span, statistics)
 
 
 def test_get_consistent_time_unit():
@@ -192,12 +198,53 @@ def test_resolve_span():
         mm._resolve_span([span1, span4], span='overlap')
 
 
-# test edge cases
+def test_align():
+    """
+    --> pass multiple cubes with different time coords
+    --> check that the returned cubes have consistent shapes and calendars
+    --> check that if a cube is extended,
+        the extended points are masked (not NaN!)
+    """
+    # cubes = ?
+    # span = ?
+    pass
 
-# different time offsets in calendar
-# different calendars
-# no overlap
-# statistic without kwargs
-# time points not in middle of months
-# fail for sub-daily data
-#
+
+def test_combine():
+    """
+    --> pass multiple combinations of cubes
+        - if cubes have the same shape,
+            check that they are combined along a new dimension
+        - if they have inconsistent shapes, check that iris raises an error
+        - if they have inconsistent variable names, they should not be combined
+    """
+    # cubes = ?
+    dim = 'new_dim'
+
+
+def test_compute():
+    """
+    --> make one big cube with a dimension called 'new dim'
+        - call with multiple different statistics
+        - check that the resulting data (computed statistics) is correct
+        - check that the output has a correct variable name
+        - check that the 'new_dim' dimension is removed again
+        - what happens if some of the input data is masked or NaN?
+        - test with COUNT statistics whether masked points are treated as
+            expected.
+    """
+    # cube = ?
+    # statistic = ?
+    dim = 'new_dim'
+
+
+def test_edge_cases():
+    """
+    # different time offsets in calendar
+    # different calendars
+    # no overlap
+    # statistic without kwargs
+    # time points not in middle of months
+    # fail for sub-daily data
+    """
+    pass

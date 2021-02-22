@@ -166,7 +166,7 @@ def _compute(cube, statistic: str, dim: str = 'new_dim'):
     kwargs = {}
 
     # special cases
-    if statistic == 'dev':
+    if statistic == 'std':
         logger.warning(
             "Multicube statistics is aligning its behaviour with iris.analysis"
             ". Please consider replacing 'std' with 'std_dev' in your code.")
