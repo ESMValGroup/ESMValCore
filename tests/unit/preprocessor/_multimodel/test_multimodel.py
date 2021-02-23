@@ -30,16 +30,16 @@ def timecoord(frequency,
               num=3):
     """Return a time coordinate with the given time points and calendar."""
 
-    time_data = range(1, num + 1)
+    time_points = range(1, num + 1)
 
     if frequency == 'hourly':
-        dates = [datetime(1850, 1, 1, i, 0, 0) for i in time_data]
+        dates = [datetime(1850, 1, 1, i, 0, 0) for i in time_points]
     if frequency == 'daily':
-        dates = [datetime(1850, 1, i, 0, 0, 0) for i in time_data]
+        dates = [datetime(1850, 1, i, 0, 0, 0) for i in time_points]
     elif frequency == 'monthly':
-        dates = [datetime(1850, i, 15, 0, 0, 0) for i in time_data]
+        dates = [datetime(1850, i, 15, 0, 0, 0) for i in time_points]
     elif frequency == 'yearly':
-        dates = [datetime(1850, 7, i, 0, 0, 0) for i in time_data]
+        dates = [datetime(1850, 7, i, 0, 0, 0) for i in time_points]
 
     unit = Unit(offset, calendar=calendar)
     points = unit.date2num(dates)
@@ -126,12 +126,13 @@ VALIDATION_DATA_FAIL = (
 
 
 @pytest.mark.parametrize('statistic, error', VALIDATION_DATA_FAIL)
-def test_all_statistics(statistic, error):
+def test_unsupported_statistics_fail(statistic, error):
+    """Check that unsupported statistics raise an exception."""
     cubes = get_cubes('monthly')
     span = 'overlap'
     statistics = (statistic, )
     with pytest.raises(error):
-        result = multi_model_statistics(cubes, span, statistics)
+        _ = multi_model_statistics(cubes, span, statistics)
 
 
 def test_get_consistent_time_unit():
@@ -296,24 +297,137 @@ def test_combine_inconsistent_var_names_fail():
         _ = mm._combine(cubes, dim=test_dim)
 
 
-def test_compute():
-    """
-    --> make one big cube with a dimension called 'new dim'
-        - call with multiple different statistics
-        - check that the resulting data (computed statistics) is correct
-        - check that the output has a correct variable name
-        - check that the 'new_dim' dimension is removed again
-        - what happens if some of the input data is masked or NaN?
-    """
-    # cube = ?
-    # statistic = ?
-    dim = 'new_dim'
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_edge_case_different_time_offsets(span):
+    time1 = timecoord('monthly', '360_day', offset='days since 1888-01-01')
+    cube1 = Cube([1, 1, 1], dim_coords_and_dims=[(time1, 0)])
+    time2 = timecoord('monthly', '360_day', offset='days since 1899-01-01')
+    cube2 = Cube([1, 1, 1], dim_coords_and_dims=[(time2, 0)])
+
+    cubes = (cube1, cube2)
+    statistic = 'min'
+    statistics = (statistic, )
+
+    result = multi_model_statistics(cubes, span, statistics)
+
+    result_cube = result[statistic]
+
+    time_coord = result_cube.coord('time')
+
+    assert time_coord.units.calendar == 'gregorian'
+    assert time_coord.units.origin == 'days since 1850-01-01'
+
+    desired = np.array((14., 45., 73.))
+    np.testing.assert_array_equal(time_coord.points, desired)
+
+    # old coords are updated in-place
+    np.testing.assert_array_equal(time1.points, desired)
+    np.testing.assert_array_equal(time2.points, desired)
 
 
-def test_edge_cases():
-    """# different time offsets in calendar
+def generate_cube_from_dates(dates):
+    """Generate cube from list of dates."""
+    unit = Unit('days since 1850-01-01', calendar='gregorian')
 
-    # different calendars # no overlap # statistic without kwargs # time
-    points not in middle of months # fail for sub-daily data
+    time = iris.coords.DimCoord(unit.date2num(dates),
+                                standard_name='time',
+                                units=unit)
+
+    return Cube([1, 1, 1], dim_coords_and_dims=[(time, 0)])
+
+
+def generate_cubes_with_non_overlapping_timecoords():
+    """Generate sample data where time coords do not overlap."""
+    time_points = range(1, 4)
+    dates1 = [datetime(1850, i, 15, 0, 0, 0) for i in time_points]
+    dates2 = [datetime(1950, i, 15, 0, 0, 0) for i in time_points]
+
+    return (
+        generate_cube_from_dates(dates1),
+        generate_cube_from_dates(dates2),
+    )
+
+
+def test_edge_case_time_no_overlap_fail():
+    """Test case when time coords do not overlap using span='overlap'.
+
+    Expected behaviour: `multi_model_statistics` should fail if time
+    points are not overlapping.
     """
-    pass
+    cubes = generate_cubes_with_non_overlapping_timecoords()
+
+    statistic = 'min'
+    statistics = (statistic, )
+
+    with pytest.raises(ValueError):
+        _ = multi_model_statistics(cubes, 'overlap', statistics)
+
+
+def test_edge_case_time_no_overlap_success():
+    """Test case when time coords do not overlap using span='full'.
+
+    Expected behaviour: `multi_model_statistics` should use all
+    available time points.
+    """
+    cubes = generate_cubes_with_non_overlapping_timecoords()
+
+    statistic = 'min'
+    statistics = (statistic, )
+
+    result = multi_model_statistics(cubes, 'full', statistics)
+    result_cube = result[statistic]
+
+    assert result_cube.coord('time').shape == (6, )
+
+
+def generate_cubes_with_time_not_in_middle_of_month():
+    """Generate sample data where time coords do not overlap."""
+    time_points = range(1, 4)
+    dates1 = [datetime(1850, i, 12, 0, 0, 0) for i in time_points]
+    dates2 = [datetime(1850, i, 25, 0, 0, 0) for i in time_points]
+
+    return (
+        generate_cube_from_dates(dates1),
+        generate_cube_from_dates(dates2),
+    )
+
+
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_edge_case_time_not_in_middle_of_months(span):
+    """Test case when time coords are not on 15th for monthly data.
+
+    Expected behaviour: `multi_model_statistics` will set all dates to
+    the 15th.
+    """
+    cubes = generate_cubes_with_time_not_in_middle_of_month()
+
+    statistic = 'min'
+    statistics = (statistic, )
+
+    result = multi_model_statistics(cubes, span, statistics)
+    result_cube = result[statistic]
+
+    time_coord = result_cube.coord('time')
+
+    desired = np.array((14., 45., 73.))
+    np.testing.assert_array_equal(time_coord.points, desired)
+
+    # input cubes are updated in-place
+    for cube in cubes:
+        np.testing.assert_array_equal(cube.coord('time').points, desired)
+
+
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_edge_case_sub_daily_data_fail(span):
+    """Test case when cubes with sub-daily time coords are passed."""
+    time_points = range(1, 4)
+    dates = [datetime(1850, 1, 1, i, 0, 0) for i in time_points]
+
+    cube = generate_cube_from_dates(dates)
+    cubes = (cube, cube)
+
+    statistic = 'min'
+    statistics = (statistic, )
+
+    with pytest.raises(ValueError):
+        _ = multi_model_statistics(cubes, span, statistics)
