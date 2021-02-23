@@ -6,10 +6,29 @@ import iris
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.gfdl_cm2p1 import (AllVars, Areacello, Sftof,
-                                                     Sit)
+from esmvalcore.cmor._fixes.cmip5.gfdl_cm2p1 import (AllVars, Areacello, Cl,
+                                                     Sftof, Sit)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+
+
+class TestCl(unittest.TestCase):
+    """Test cl fix."""
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = Cube([1.0], var_name='cl', units='%')
+        self.fix = Cl(None)
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'cl'),
+            [Cl(None), AllVars(None)])
+
+    def test_fix_data(self):
+        """Test data fix."""
+        cube = self.fix.fix_data(self.cube)
+        self.assertEqual(cube.data[0], 100)
 
 
 class TestSftof(unittest.TestCase):

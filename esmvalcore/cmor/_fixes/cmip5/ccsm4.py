@@ -7,7 +7,27 @@ from ..fix import Fix
 from ..shared import round_coordinates
 
 
-Cl = ClFixHybridPressureCoord
+class Cl(ClFixHybridPressureCoord):
+    def fix_data(self, cube):
+        """
+        Fix data.
+
+        Fixes discrepancy between declared units and real units
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Input cube to fix.
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        metadata = cube.metadata
+        cube *= 100
+        cube.metadata = metadata
+        return cube
 
 
 class Csoil(Fix):
