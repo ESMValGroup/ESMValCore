@@ -6,6 +6,8 @@ from ..fix import Fix
 
 
 class Cl(Fix):
+    """Fixes for cl."""
+
     def fix_data(self, cube):
         """
         Fix data.
