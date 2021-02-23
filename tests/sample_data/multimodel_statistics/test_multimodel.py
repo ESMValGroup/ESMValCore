@@ -39,6 +39,18 @@ def assert_array_almost_equal(this, other):
     np.testing.assert_array_almost_equal(this, other)
 
 
+def fix_metadata(cubes):
+    """Fix metadata."""
+    for cube in cubes:
+        cube.coord('air_pressure').bounds = None
+
+        for coord in cube.coords():
+            coord.long_name = None
+            coord.attributes = None
+
+        cube.cell_methods = None
+
+
 def preprocess_data(cubes, time_slice: dict = None):
     """Regrid the data to the first cube and optional time-slicing."""
     if time_slice:
@@ -61,7 +73,8 @@ def get_cache_key(value):
     """Get a cache key that is hopefully unique enough for unpickling.
 
     If this doesn't avoid problems with unpickling the cached data,
-    manually clean the pytest cache with the command `pytest --cache-clear`.
+    manually clean the pytest cache with the command `pytest --cache-
+    clear`.
     """
     return ' '.join([
         str(value),
@@ -96,6 +109,8 @@ def timeseries_cubes_month(request):
         request.config.cache.set(cache_key,
                                  pickle.dumps(cubes).decode('latin1'))
 
+    fix_metadata(cubes)
+
     return cubes
 
 
@@ -124,6 +139,8 @@ def timeseries_cubes_day(request):
         # cubes are not serializable via json, so we must go via pickle
         request.config.cache.set(cache_key,
                                  pickle.dumps(cubes).decode('latin1'))
+
+    fix_metadata(cubes)
 
     def calendar(cube):
         return cube.coord('time').units.calendar
