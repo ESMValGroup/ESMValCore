@@ -142,6 +142,10 @@ class Hur(Tas):
     """Fixes for hur."""
 
 
+class Pr(Tas):
+    """Fixes for pr."""
+
+
 class Tos(Fix):
     """Fixes for tos."""
 

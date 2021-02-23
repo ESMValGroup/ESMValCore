@@ -1,5 +1,6 @@
 """Fixes for MCM-UA-1-0 model."""
 import iris
+import numpy as np
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
@@ -90,3 +91,36 @@ class Tas(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 2.0)
         return [cube]
+
+
+class Tos(Fix):
+    """Fixes for tos."""
+
+    def fix_metadata(self, cubes):
+        """Fix negative longitude coordinate 
+        ([-0.9375, 0.9375, ..., 357.1875]) to 
+        ([0.9375, ..., 357.1875, 359.0625]) and set longitude
+        boundary accordingly.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+
+        Returns
+        -------
+        iris.cube.Cube
+        """
+        for cube in cubes:
+            coord_names = [cor.standard_name for cor in cube.coords()]
+            if 'longitude' in coord_names:
+                if cube.coord('longitude').ndim == 1 and \
+                        cube.coord('longitude').has_bounds():
+                    lon_coord = cube.coord('longitude').points.copy()
+                    lon_bnds = cube.coord('longitude').bounds.copy()
+                    if cube.coord('longitude').points[0] < 0.0:
+                        lon_coord[0] += 360.
+                        cube.coord('longitude').points = np.roll(lon_coord, -1)
+                        lon_bnds[0] += 360.
+                        cube.coord('longitude').bounds = np.roll(lon_bnds, -1, axis=0)
+
+        return cubes
