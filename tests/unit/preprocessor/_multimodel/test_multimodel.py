@@ -16,16 +16,30 @@ SPAN_OPTIONS = ('overlap', 'full')
 FREQUENCY_OPTIONS = ('daily', 'monthly', 'yearly')  # hourly
 
 
-def timecoord(frequency, calendar='gregorian', offset='days since 1850-01-01'):
+def assert_array_almost_equal(this, other):
+    """Assert that array `this` almost equals array `other`."""
+    if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
+        np.testing.assert_array_equal(this.mask, other.mask)
+
+    np.testing.assert_array_almost_equal(this, other)
+
+
+def timecoord(frequency,
+              calendar='gregorian',
+              offset='days since 1850-01-01',
+              num=3):
     """Return a time coordinate with the given time points and calendar."""
+
+    time_data = range(1, num + 1)
+
     if frequency == 'hourly':
-        dates = [datetime(1850, 1, 1, i, 0, 0) for i in [1, 2, 3]]
+        dates = [datetime(1850, 1, 1, i, 0, 0) for i in time_data]
     if frequency == 'daily':
-        dates = [datetime(1850, 1, i, 0, 0, 0) for i in [1, 2, 3]]
+        dates = [datetime(1850, 1, i, 0, 0, 0) for i in time_data]
     elif frequency == 'monthly':
-        dates = [datetime(1850, i, 15, 0, 0, 0) for i in [1, 2, 3]]
+        dates = [datetime(1850, i, 15, 0, 0, 0) for i in time_data]
     elif frequency == 'yearly':
-        dates = [datetime(1850, 7, i, 0, 0, 0) for i in [1, 2, 3]]
+        dates = [datetime(1850, 7, i, 0, 0, 0) for i in time_data]
 
     unit = Unit(offset, calendar=calendar)
     points = unit.date2num(dates)
@@ -51,25 +65,32 @@ def get_cubes(frequency):
     return [cube1, cube2, cube3]
 
 
-VALIDATION_DATA = {
-    # For span=overlap, take the first 2 items.
-    # Span = full --> statistic computed on [1, 1, 1], [-, 5, 5], [9, 9, -]
-    # Span = overlap --> statistic computed on [1, 1], [-, 5], [9, 9]
-    'mean': [5, 5, 3],
-    'std': [5.656854249492381, 4, 2.8284271247461903],
-    'std_dev': [5.656854249492381, 4, 2.8284271247461903],
-    'min': [1, 1, 1],
-    'max': [9, 9, 5],
-    'median': [5, 5, 3],
-    'p50': [5, 5, 3],
-    'p99.5': [8.96, 8.96, 4.98],
-}
+VALIDATION_DATA_SUCCESS = (
+    ('full', 'mean', (5, 5, 3)),
+    ('full', 'std', (5.656854249492381, 4, 2.8284271247461903)),
+    ('full', 'std_dev', (5.656854249492381, 4, 2.8284271247461903)),
+    ('full', 'min', (1, 1, 1)),
+    ('full', 'max', (9, 9, 5)),
+    ('full', 'median', (5, 5, 3)),
+    ('full', 'p50', (5, 5, 3)),
+    ('full', 'p99.5', (8.96, 8.96, 4.98)),
+    ('overlap', 'mean', (5, 5)),
+    ('overlap', 'std', (5.656854249492381, 4)),
+    ('overlap', 'std_dev', (5.656854249492381, 4)),
+    ('overlap', 'min', (1, 1)),
+    ('overlap', 'max', (9, 9)),
+    ('overlap', 'median', (5, 5)),
+    ('overlap', 'p50', (5, 5)),
+    ('overlap', 'p99.5', (8.96, 8.96)),
+    # test multiple statistics
+    ('overlap', ('min', 'max'), ((1, 1), (9, 9))),
+    ('full', ('min', 'max'), ((1, 1, 1), (9, 9, 5))),
+)
 
 
 @pytest.mark.parametrize('frequency', FREQUENCY_OPTIONS)
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-@pytest.mark.parametrize('statistic', VALIDATION_DATA)
-def test_multimodel_statistics(span, frequency, statistic):
+@pytest.mark.parametrize('span, statistics, expected', VALIDATION_DATA_SUCCESS)
+def test_multimodel_statistics(frequency, span, statistics, expected):
     """High level test for multicube statistics function.
 
     - Should work for multiple data frequencies
@@ -80,37 +101,31 @@ def test_multimodel_statistics(span, frequency, statistic):
     """
     cubes = get_cubes(frequency)
 
-    statistics = (statistic, )
+    if isinstance(statistics, str):
+        statistics = (statistics, )
+        expected = (expected, )
 
     result = multi_model_statistics(cubes, span, statistics)
 
     assert isinstance(result, dict)
-    assert len(result.keys()) == 1
-    assert statistic in result
+    assert set(result.keys()) == set(statistics)
 
-    expected = np.ma.array(VALIDATION_DATA[statistic], mask=False)
-    if span == 'overlap':
-        expected = expected[:2]
-
-    result_cube = result[statistic]
-    np.testing.assert_array_equal(result_cube.data.mask, expected.mask)
-    np.testing.assert_array_almost_equal(result_cube.data, expected.data)
+    for i, statistic in enumerate(statistics):
+        result_cube = result[statistic]
+        expected_data = np.ma.array(expected[i], mask=False)
+        assert_array_almost_equal(result_cube.data, expected_data)
 
 
-def generate_failing_tests():
-    """Generate failing tests."""
-    failing_tests = {
-        'percentile': ValueError,
-        'wpercentile': ValueError,
-        'count': TypeError,
-        'peak': TypeError,
-        'proportion': TypeError,
-    }
-
-    yield from failing_tests.items()
+VALIDATION_DATA_FAIL = (
+    ('percentile', ValueError),
+    ('wpercentile', ValueError),
+    ('count', TypeError),
+    ('peak', TypeError),
+    ('proportion', TypeError),
+)
 
 
-@pytest.mark.parametrize('statistic, error', generate_failing_tests())
+@pytest.mark.parametrize('statistic, error', VALIDATION_DATA_FAIL)
 def test_all_statistics(statistic, error):
     cubes = get_cubes('monthly')
     span = 'overlap'
@@ -121,15 +136,10 @@ def test_all_statistics(statistic, error):
 
 def test_get_consistent_time_unit():
     """Test same calendar returned or default if calendars differ."""
-
     time1 = timecoord('monthly', '360_day')
     cube1 = Cube([1, 1, 1], dim_coords_and_dims=[(time1, 0)])
     time2 = timecoord('monthly', '365_day')
-    cube2 = Cube([
-        1,
-        1,
-        1,
-    ], dim_coords_and_dims=[(time2, 0)])
+    cube2 = Cube([1, 1, 1], dim_coords_and_dims=[(time2, 0)])
 
     result1 = mm._get_consistent_time_unit([cube1, cube1])
     result2 = mm._get_consistent_time_unit([cube1, cube2])
@@ -198,28 +208,92 @@ def test_resolve_span():
         mm._resolve_span([span1, span4], span='overlap')
 
 
-def test_align():
-    """
-    --> pass multiple cubes with different time coords
-    --> check that the returned cubes have consistent shapes and calendars
-    --> check that if a cube is extended,
-        the extended points are masked (not NaN!)
-    """
-    # cubes = ?
-    # span = ?
-    pass
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_align(span):
+    """Test _align function."""
+
+    # TODO --> check that if a cube is extended,
+    #          the extended points are masked (not NaN!)
+
+    test_calendars = ('360_day', '365_day', 'gregorian', 'proleptic_gregorian',
+                      'julian')
+    data = [1, 1, 1]
+    cubes = []
+
+    for calendar in test_calendars:
+        time_coord = timecoord('monthly', '360_day')
+        cube = Cube(data, dim_coords_and_dims=[(time_coord, 0)])
+        cubes.append(cube)
+
+    result_cubes = mm._align(cubes, span)
+
+    calendars = set(cube.coord('time').units.calendar for cube in result_cubes)
+
+    assert len(calendars) == 1
+
+    shapes = set(cube.shape for cube in result_cubes)
+
+    assert len(shapes) == 1
+    assert tuple(shapes)[0] == (len(data), )
 
 
-def test_combine():
-    """
-    --> pass multiple combinations of cubes
-        - if cubes have the same shape,
-            check that they are combined along a new dimension
-        - if they have inconsistent shapes, check that iris raises an error
-        - if they have inconsistent variable names, they should not be combined
-    """
-    # cubes = ?
-    dim = 'new_dim'
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_combine_same_shape(span):
+    """Test _combine with same shape of cubes."""
+    len_data = 3
+    num_cubes = 5
+    test_dim = 'test_dim'
+    cubes = []
+    time_coord = timecoord('monthly', '360_day')
+
+    for i in range(num_cubes):
+        cube = Cube([i] * len_data, dim_coords_and_dims=[(time_coord, 0)])
+        cubes.append(cube)
+
+    result_cube = mm._combine(cubes, dim=test_dim)
+
+    dim_coord = result_cube.coord(test_dim)
+    assert dim_coord.var_name == test_dim
+    assert result_cube.shape == (num_cubes, len_data)
+
+    desired = np.linspace((0, ) * len_data,
+                          num_cubes - 1,
+                          num=num_cubes,
+                          dtype=int)
+    np.testing.assert_equal(result_cube.data, desired)
+
+
+def test_combine_different_shape_fail():
+    """Test _combine with inconsistent data."""
+    num_cubes = 5
+    test_dim = 'test_dim'
+    cubes = []
+
+    for num in range(1, num_cubes + 1):
+        time_coord = timecoord('monthly', '360_day', num=num)
+        cube = Cube([1] * num, dim_coords_and_dims=[(time_coord, 0)])
+        cubes.append(cube)
+
+    with pytest.raises(iris.exceptions.MergeError):
+        _ = mm._combine(cubes, dim=test_dim)
+
+
+def test_combine_inconsistent_var_names_fail():
+    """Test _combine with inconsistent var names."""
+    num_cubes = 5
+    test_dim = 'test_dim'
+    data = [1, 1, 1]
+    cubes = []
+
+    for num in range(num_cubes):
+        time_coord = timecoord('monthly', '360_day')
+        cube = Cube(data,
+                    dim_coords_and_dims=[(time_coord, 0)],
+                    var_name=f'test_var_{num}')
+        cubes.append(cube)
+
+    with pytest.raises(iris.exceptions.MergeError):
+        _ = mm._combine(cubes, dim=test_dim)
 
 
 def test_compute():
@@ -230,8 +304,6 @@ def test_compute():
         - check that the output has a correct variable name
         - check that the 'new_dim' dimension is removed again
         - what happens if some of the input data is masked or NaN?
-        - test with COUNT statistics whether masked points are treated as
-            expected.
     """
     # cube = ?
     # statistic = ?
@@ -239,12 +311,9 @@ def test_compute():
 
 
 def test_edge_cases():
-    """
-    # different time offsets in calendar
-    # different calendars
-    # no overlap
-    # statistic without kwargs
-    # time points not in middle of months
-    # fail for sub-daily data
+    """# different time offsets in calendar
+
+    # different calendars # no overlap # statistic without kwargs # time
+    points not in middle of months # fail for sub-daily data
     """
     pass
