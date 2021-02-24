@@ -15,6 +15,9 @@ SPAN_OPTIONS = ('overlap', 'full')
 
 FREQUENCY_OPTIONS = ('daily', 'monthly', 'yearly')  # hourly
 
+CALENDAR_OPTIONS = ('360_day', '365_day', 'gregorian', 'proleptic_gregorian',
+                    'julian')
+
 
 def assert_array_almost_equal(this, other):
     """Assert that array `this` almost equals array `other`."""
@@ -46,22 +49,64 @@ def timecoord(frequency,
     return iris.coords.DimCoord(points, standard_name='time', units=unit)
 
 
+def generate_cube_from_dates(
+    dates,
+    calendar='gregorian',
+    offset='days since 1850-01-01',
+    fill_val=1,
+    len_data=3,
+    var_name=None,
+):
+    """Generate test cube from list of dates / frequency specification.
+
+    Parameters
+    ----------
+    calendar : str or list
+        Date frequency: 'hourly' / 'daily' / 'monthly' / 'yearly' or
+        list of datetimes.
+    offset : str
+        Offset to use
+    fill_val : int
+        Value to fill the data with
+    len_data : int
+        Number of data / time points
+    var_name : str
+        Name of the data variable
+
+    Returns
+    -------
+    iris.cube.Cube
+    """
+    if isinstance(dates, str):
+        time = timecoord(dates, calendar, offset=offset, num=len_data)
+    else:
+        unit = Unit(offset, calendar=calendar)
+        time = iris.coords.DimCoord(unit.date2num(dates),
+                                    standard_name='time',
+                                    units=unit)
+
+    return Cube((fill_val, ) * len_data,
+                dim_coords_and_dims=[(time, 0)],
+                var_name=var_name)
+
+
 def get_cubes(frequency):
     """Set up cubes used for testing multimodel statistics."""
 
     # Simple 1d cube with standard time cord
-    time = timecoord(frequency)
-    cube1 = Cube([1, 1, 1], dim_coords_and_dims=[(time, 0)])
+    cube1 = generate_cube_from_dates(frequency)
 
     # Cube with masked data
     cube2 = cube1.copy()
     cube2.data = np.ma.array([5, 5, 5], mask=[True, False, False])
 
     # Cube with deviating time coord
-    time = timecoord(frequency,
-                     calendar='360_day',
-                     offset='days since 1950-01-01')[:2]
-    cube3 = Cube([9, 9], dim_coords_and_dims=[(time, 0)])
+    cube3 = generate_cube_from_dates(frequency,
+                                     calendar='360_day',
+                                     offset='days since 1950-01-01',
+                                     len_data=2,
+                                     fill_val=9)
+
     return [cube1, cube2, cube3]
 
 
@@ -135,17 +180,28 @@ def test_unsupported_statistics_fail(statistic, error):
         _ = multi_model_statistics(cubes, span, statistics)
 
 
-def test_get_consistent_time_unit():
-    """Test same calendar returned or default if calendars differ."""
-    time1 = timecoord('monthly', '360_day')
-    cube1 = Cube([1, 1, 1], dim_coords_and_dims=[(time1, 0)])
-    time2 = timecoord('monthly', '365_day')
-    cube2 = Cube([1, 1, 1], dim_coords_and_dims=[(time2, 0)])
+@pytest.mark.parametrize('calendar1, calendar2, expected', (
+    ('360_day', '360_day', '360_day'),
+    ('365_day', '365_day', '365_day'),
+    ('365_day', '360_day', 'gregorian'),
+    ('360_day', '365_day', 'gregorian'),
+    ('gregorian', '365_day', 'gregorian'),
+    ('proleptic_gregorian', 'julian', 'gregorian'),
+    ('julian', '365_day', 'gregorian'),
+))
+def test_get_consistent_time_unit(calendar1, calendar2, expected):
+    """Test same calendar returned or default if calendars differ.
 
-    result1 = mm._get_consistent_time_unit([cube1, cube1])
-    result2 = mm._get_consistent_time_unit([cube1, cube2])
-    assert result1.calendar == '360_day'
-    assert result2.calendar == 'gregorian'
+    Expected behaviour: If the calendars are the same, return that one.
+    If the calendars are not the same, return 'gregorian'.
+    """
+    cubes = (
+        generate_cube_from_dates('monthly', calendar=calendar1),
+        generate_cube_from_dates('monthly', calendar=calendar2),
+    )
+
+    result = mm._get_consistent_time_unit(cubes)
+    assert result.calendar == expected
 
 
 def test_unify_time_coordinates():
@@ -216,14 +272,14 @@ def test_align(span):
     # TODO --> check that if a cube is extended,
     #          the extended points are masked (not NaN!)
 
-    test_calendars = ('360_day', '365_day', 'gregorian', 'proleptic_gregorian',
-                      'julian')
-    data = [1, 1, 1]
+    len_data = 3
+
     cubes = []
 
-    for calendar in test_calendars:
-        time_coord = timecoord('monthly', '360_day')
-        cube = Cube(data, dim_coords_and_dims=[(time_coord, 0)])
+    for calendar in CALENDAR_OPTIONS:
+        cube = generate_cube_from_dates('monthly',
+                                        calendar=calendar,
+                                        len_data=3)
         cubes.append(cube)
 
     result_cubes = mm._align(cubes, span)
@@ -235,7 +291,7 @@ def test_align(span):
     shapes = set(cube.shape for cube in result_cubes)
 
     assert len(shapes) == 1
-    assert tuple(shapes)[0] == (len(data), )
+    assert tuple(shapes)[0] == (len_data, )
 
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
@@ -245,10 +301,12 @@ def test_combine_same_shape(span):
     num_cubes = 5
     test_dim = 'test_dim'
     cubes = []
-    time_coord = timecoord('monthly', '360_day')
 
     for i in range(num_cubes):
-        cube = Cube([i] * len_data, dim_coords_and_dims=[(time_coord, 0)])
+        cube = generate_cube_from_dates('monthly',
+                                        '360_day',
+                                        fill_val=i,
+                                        len_data=len_data)
         cubes.append(cube)
 
     result_cube = mm._combine(cubes, dim=test_dim)
@@ -271,8 +329,7 @@ def test_combine_different_shape_fail():
     cubes = []
 
     for num in range(1, num_cubes + 1):
-        time_coord = timecoord('monthly', '360_day', num=num)
-        cube = Cube([1] * num, dim_coords_and_dims=[(time_coord, 0)])
+        cube = generate_cube_from_dates('monthly', '360_day', len_data=num)
         cubes.append(cube)
 
     with pytest.raises(iris.exceptions.MergeError):
@@ -283,14 +340,12 @@ def test_combine_inconsistent_var_names_fail():
     """Test _combine with inconsistent var names."""
     num_cubes = 5
     test_dim = 'test_dim'
-    data = [1, 1, 1]
     cubes = []
 
     for num in range(num_cubes):
-        time_coord = timecoord('monthly', '360_day')
-        cube = Cube(data,
-                    dim_coords_and_dims=[(time_coord, 0)],
-                    var_name=f'test_var_{num}')
+        cube = generate_cube_from_dates('monthly',
+                                        '360_day',
+                                        var_name=f'test_var_{num}')
         cubes.append(cube)
 
     with pytest.raises(iris.exceptions.MergeError):
@@ -299,12 +354,15 @@ def test_combine_inconsistent_var_names_fail():
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_edge_case_different_time_offsets(span):
-    time1 = timecoord('monthly', '360_day', offset='days since 1888-01-01')
-    cube1 = Cube([1, 1, 1], dim_coords_and_dims=[(time1, 0)])
-    time2 = timecoord('monthly', '360_day', offset='days since 1899-01-01')
-    cube2 = Cube([1, 1, 1], dim_coords_and_dims=[(time2, 0)])
+    cubes = (
+        generate_cube_from_dates('monthly',
+                                 '360_day',
+                                 offset='days since 1888-01-01'),
+        generate_cube_from_dates('monthly',
+                                 '360_day',
+                                 offset='days since 1899-01-01'),
+    )
 
-    cubes = (cube1, cube2)
     statistic = 'min'
     statistics = (statistic, )
 
@@ -320,20 +378,9 @@ def test_edge_case_different_time_offsets(span):
     desired = np.array((14., 45., 73.))
     np.testing.assert_array_equal(time_coord.points, desired)
 
-    # old coords are updated in-place
-    np.testing.assert_array_equal(time1.points, desired)
-    np.testing.assert_array_equal(time2.points, desired)
-
-
-def generate_cube_from_dates(dates):
-    """Generate cube from list of dates."""
-    unit = Unit('days since 1850-01-01', calendar='gregorian')
-
-    time = iris.coords.DimCoord(unit.date2num(dates),
-                                standard_name='time',
-                                units=unit)
-
-    return Cube([1, 1, 1], dim_coords_and_dims=[(time, 0)])
+    # input cubes are updated in-place
+    for cube in cubes:
+        np.testing.assert_array_equal(cube.coord('time').points, desired)
 
 
 def generate_cubes_with_non_overlapping_timecoords():
@@ -380,18 +427,6 @@ def test_edge_case_time_no_overlap_success():
     assert result_cube.coord('time').shape == (6, )
 
 
-def generate_cubes_with_time_not_in_middle_of_month():
-    """Generate sample data where time coords do not overlap."""
-    time_points = range(1, 4)
-    dates1 = [datetime(1850, i, 12, 0, 0, 0) for i in time_points]
-    dates2 = [datetime(1850, i, 25, 0, 0, 0) for i in time_points]
-
-    return (
-        generate_cube_from_dates(dates1),
-        generate_cube_from_dates(dates2),
-    )
-
-
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_edge_case_time_not_in_middle_of_months(span):
     """Test case when time coords are not on 15th for monthly data.
@@ -399,7 +434,14 @@ def test_edge_case_time_not_in_middle_of_months(span):
     Expected behaviour: `multi_model_statistics` will set all dates to
     the 15th.
     """
-    cubes = generate_cubes_with_time_not_in_middle_of_month()
+    time_points = range(1, 4)
+    dates1 = [datetime(1850, i, 12, 0, 0, 0) for i in time_points]
+    dates2 = [datetime(1850, i, 25, 0, 0, 0) for i in time_points]
+
+    cubes = (
+        generate_cube_from_dates(dates1),
+        generate_cube_from_dates(dates2),
+    )
 
     statistic = 'min'
     statistics = (statistic, )
