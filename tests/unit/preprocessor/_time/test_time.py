@@ -241,6 +241,15 @@ class TestExtractSeason(tests.Test):
         assert_array_equal(np.array([6, 7, 8, 6, 7, 8]),
                            sliced.coord('month_number').points)
 
+    def test_get_multiple_seasons(self):
+        """Test function for two seasons."""
+        sliced = [extract_season(self.cube, seas) for seas in ["JJA", "SON"]]
+        clim_coords = [sin_sli.coord("clim_season") for sin_sli in sliced]
+        assert_array_equal(clim_coords[0].points,
+                           ['JJA', 'JJA', 'JJA', 'JJA', 'JJA', 'JJA'])
+        assert_array_equal(clim_coords[1].points,
+                           ['SON', 'SON', 'SON', 'SON', 'SON', 'SON'])
+
     def test_get_son(self):
         """Test function for summer."""
         sliced = extract_season(self.cube, 'SON')
