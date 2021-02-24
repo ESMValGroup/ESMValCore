@@ -5,25 +5,19 @@ import numpy as np
 from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Cl, Gpp, Nbp
+from esmvalcore.cmor._fixes.cmip5.cesm1_cam5 import Cl as BaseCl
 from esmvalcore.cmor.fix import Fix
 
 
-class TestCl(unittest.TestCase):
-    """Test cl fix."""
-    def setUp(self):
-        """Prepare tests."""
-        self.cube = Cube([1.0], var_name='cl', units='%')
-        self.fix = Cl(None)
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'cl')
+    assert fix == [Cl(None)]
 
-    def test_get(self):
-        """Test fix get"""
-        self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'cl'), [Cl(None)])
 
-    def test_fix_data(self):
-        """Test data fix."""
-        cube = self.fix.fix_data(self.cube)
-        self.assertEqual(cube.data[0], 100)
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is BaseCl
 
 
 class TestGpp(unittest.TestCase):

@@ -5,6 +5,10 @@ import cftime
 
 from ..fix import Fix
 from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
+from .cesm1_cam5 import Cl as BaseCl
+
+
+Cl = BaseCl
 
 
 class AllVars(BaseAllVars):
@@ -32,31 +36,6 @@ class Areacello(Fix):
         cube = self.get_cube_from_list(cubes)
         cube.units = 'm2'
         return cubes
-
-
-class Cl(Fix):
-    """Fixes for cl."""
-
-    def fix_data(self, cube):
-        """
-        Fix data.
-
-        Fixes discrepancy between declared units and real units
-
-        Parameters
-        ----------
-        cube: iris.cube.Cube
-            Input cube to fix.
-
-        Returns
-        -------
-        iris.cube.Cube
-
-        """
-        metadata = cube.metadata
-        cube *= 100
-        cube.metadata = metadata
-        return cube
 
 
 class Sftof(Fix):

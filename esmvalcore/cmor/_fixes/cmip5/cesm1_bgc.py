@@ -3,31 +3,10 @@
 from dask import array as da
 
 from ..fix import Fix
+from .cesm1_cam5 import Cl as BaseCl
 
 
-class Cl(Fix):
-    """Fixes for cl."""
-
-    def fix_data(self, cube):
-        """
-        Fix data.
-
-        Fixes discrepancy between declared units and real units
-
-        Parameters
-        ----------
-        cube: iris.cube.Cube
-            Input cube to fix.
-
-        Returns
-        -------
-        iris.cube.Cube
-
-        """
-        metadata = cube.metadata
-        cube *= 100
-        cube.metadata = metadata
-        return cube
+Cl = BaseCl
 
 
 class Gpp(Fix):
