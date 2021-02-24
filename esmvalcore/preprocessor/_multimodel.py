@@ -97,18 +97,21 @@ def _unify_time_coordinates(cubes):
 
 def _resolve_span(all_times, span):
     """Construct new time array based on the span parameter."""
-    if span == 'full':
+    if len(all_times) == 1:
+        new_times = np.array(all_times[0])
+
+    elif span == 'full':
         new_times = reduce(np.union1d, all_times)
-        return new_times
 
-    if span == 'overlap':
+    elif span == 'overlap':
         new_times = reduce(np.intersect1d, all_times)
-        if new_times.size > 0:
-            return new_times
-        raise ValueError("No time overlap found between input cubes.")
+        if new_times.size < 1:
+            raise ValueError("No time overlap found between input cubes.")
+    else:
+        raise ValueError("Unknown value for span. Expected 'full' or 'overlap'"
+                         "got {}".format(span))
 
-    raise ValueError("Unknown value for span. Expected 'full' or 'overlap'"
-                     "got {}".format(span))
+    return new_times
 
 
 def _align(cubes, span):

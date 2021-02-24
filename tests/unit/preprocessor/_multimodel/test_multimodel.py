@@ -90,7 +90,7 @@ def generate_cube_from_dates(
                 var_name=var_name)
 
 
-def get_cubes(frequency):
+def get_cubes_for_validation_test(frequency):
     """Set up cubes used for testing multimodel statistics."""
 
     # Simple 1d cube with standard time cord
@@ -144,7 +144,7 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
     - Should deal correctly with different mask options
     - Return type should be a dict with all requested statistics as keys
     """
-    cubes = get_cubes(frequency)
+    cubes = get_cubes_for_validation_test(frequency)
 
     if isinstance(statistics, str):
         statistics = (statistics, )
@@ -173,7 +173,7 @@ VALIDATION_DATA_FAIL = (
 @pytest.mark.parametrize('statistic, error', VALIDATION_DATA_FAIL)
 def test_unsupported_statistics_fail(statistic, error):
     """Check that unsupported statistics raise an exception."""
-    cubes = get_cubes('monthly')
+    cubes = get_cubes_for_validation_test('monthly')
     span = 'overlap'
     statistics = (statistic, )
     with pytest.raises(error):
@@ -204,65 +204,47 @@ def test_get_consistent_time_unit(calendar1, calendar2, expected):
     assert result.calendar == expected
 
 
-def test_unify_time_coordinates():
-    """Test whether the time coordinates are made consistent."""
+def generate_resolve_span_cases(valid):
+    """Generate test cases for _resolve_span."""
+    points_1 = (1, 2, 3)
+    points_2 = (2, 3, 4)
+    points_3 = (3, 4, 5)
+    points_4 = (4, 5, 6)
+    empty_tuple = ()
 
-    # # Check that monthly data have midpoints at 15th day
-    # cube1 = Cube([1, 1, 1], )
-
-    # hourly = {
-    #     'input1': timecoord([datetime(1850, 1, 1, i, 0, 0) for i in [1, 2, 3]],
-    #               calendar='standard'),
-    #     'input2' timecoord([datetime(1850, 1, 1, i, 0, 0) for i in [1, 2, 3]]),
-    #               calendar='gregorian'),
-    #     'output': timecoord([datetime(1850, 1, 1, i, 0, 0) for i in [1, 2, 3]],
-    #               calendar='gregorian')
-    # }
-
-    # daily = ([datetime(1850, 1, i, 0, 0, 0) for i in [1, 2, 3]],
-    #          [datetime(1850, 1, i, 12, 0, 0) for i in [1, 2, 3]])
-    # monthly = ([datetime(1850, i, 1, 0, 0, 0) for i in [1, 2, 3]],
-    #            [datetime(1850, i, 15, 0, 0, 0) for i in [1, 2, 3]])
-    # yearly = ([datetime(1850+i, 1, 7, 0, 0, 0) for i in [1, 2, 3]],
-    #           [datetime(1850+i, 1, 1, 0, 0, 0) for i in [1, 2, 3]])
-
-    # time_sets = [hourly, daily, monthly, yearly]
-    # calendars_sets = [
-    #     ('standard', 'gregorian'),
-    #     ('360_day', '360_day'),
-    #     ('365_day', 'proleptic_gregorian'),
-    #     ('standard', 'standard'),
-    # ]
-
-    # for (time1, time2), (calendar1, calendar2) in zip(time_sets, calendar_sets):
-    #     cube1 = [Cube([1, 1, 1], dim_coords_and_dims=[(timecoord(time1, calendar1), 0)])
-    #     cube2 = [Cube([1, 1, 1], dim_coords_and_dims=[(timecoord(time2, calendar2), 0)])
-    #     cubes = mm._unify_time_coordinates([cube1, cube2])
-
-    # --> pass multiple cubes with all kinds of different calendars
-    #     - Check that output cubes all have the same calendar
-    #     - check that the dates in the output correspond to the dates in the input
-    #     - do this for different time frequencies
-    #     - check warning/error for (sub)daily data
+    if valid:
+        yield from (
+            ((points_1, ), 'overlap', points_1),
+            ((points_1, ), 'full', points_1),
+            ((points_1, points_2), 'overlap', (2, 3)),
+            ((points_1, points_2), 'full', (1, 2, 3, 4)),
+            ((points_1, points_2, points_3), 'overlap', (3, )),
+            ((points_1, points_2, points_3), 'full', (1, 2, 3, 4, 5)),
+            ((points_1, points_4), 'full', (1, 2, 3, 4, 5, 6)),
+        )
+    else:
+        yield from (
+            (empty_tuple, 'overlap', TypeError),
+            (empty_tuple, 'full', TypeError),
+            ((points_1, points_4), 'overlap', ValueError),
+        )
 
 
-def test_resolve_span():
+@pytest.mark.parametrize('points, span, expected',
+                         generate_resolve_span_cases(True))
+def test_resolve_span(points, span, expected):
     """Check that resolve_span returns the correct union/intersection."""
-    span1 = [1, 2, 3]
-    span2 = [2, 3, 4]
-    span3 = [3, 4, 5]
-    span4 = [4, 5, 6]
+    result = mm._resolve_span(points, span=span)
+    assert isinstance(result, np.ndarray)
+    np.testing.assert_equal(result, expected)
 
-    assert all(mm._resolve_span([span1, span2], span='overlap') == [2, 3])
-    assert all(mm._resolve_span([span1, span2], span='full') == [1, 2, 3, 4])
 
-    assert all(mm._resolve_span([span1, span2, span3], span='overlap') == [3])
-    assert all(
-        mm._resolve_span([span1, span2, span3], span='full') ==
-        [1, 2, 3, 4, 5])
-
-    with pytest.raises(ValueError):
-        mm._resolve_span([span1, span4], span='overlap')
+@pytest.mark.parametrize('points, span, error',
+                         generate_resolve_span_cases(False))
+def test_resolve_span_fail(points, span, error):
+    """Test failing case for _resolve_span."""
+    with pytest.raises(error):
+        mm._resolve_span(points, span=span)
 
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
@@ -287,6 +269,7 @@ def test_align(span):
     calendars = set(cube.coord('time').units.calendar for cube in result_cubes)
 
     assert len(calendars) == 1
+    assert list(calendars)[0] == 'gregorian'
 
     shapes = set(cube.shape for cube in result_cubes)
 
