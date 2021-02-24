@@ -6,11 +6,16 @@ import unittest
 import iris
 import iris.coord_categorisation
 import iris.coords
+import iris.exceptions
 import numpy as np
 import pytest
 from cf_units import Unit
 from iris.cube import Cube
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import (
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_raises,
+)
 
 import tests
 from esmvalcore.preprocessor._time import (
@@ -202,6 +207,10 @@ class TestExtractSeason(tests.Test):
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([1, 2, 12, 1, 2, 12]),
                            sliced.coord('month_number').points)
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('clim_season')
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('season_year')
 
     def test_get_djf_caps(self):
         """Test function works when season specified in caps."""
@@ -209,6 +218,10 @@ class TestExtractSeason(tests.Test):
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([1, 2, 12, 1, 2, 12]),
                            sliced.coord('month_number').points)
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('clim_season')
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('season_year')
 
     def test_get_mam(self):
         """Test function for spring."""
@@ -216,6 +229,10 @@ class TestExtractSeason(tests.Test):
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([3, 4, 5, 3, 4, 5]),
                            sliced.coord('month_number').points)
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('clim_season')
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('season_year')
 
     def test_get_jja(self):
         """Test function for summer."""
@@ -224,12 +241,25 @@ class TestExtractSeason(tests.Test):
         assert_array_equal(np.array([6, 7, 8, 6, 7, 8]),
                            sliced.coord('month_number').points)
 
+    def test_get_multiple_seasons(self):
+        """Test function for two seasons."""
+        sliced = [extract_season(self.cube, seas) for seas in ["JJA", "SON"]]
+        clim_coords = [sin_sli.coord("clim_season") for sin_sli in sliced]
+        assert_array_equal(clim_coords[0].points,
+                           ['JJA', 'JJA', 'JJA', 'JJA', 'JJA', 'JJA'])
+        assert_array_equal(clim_coords[1].points,
+                           ['SON', 'SON', 'SON', 'SON', 'SON', 'SON'])
+
     def test_get_son(self):
         """Test function for summer."""
         sliced = extract_season(self.cube, 'SON')
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([9, 10, 11, 9, 10, 11]),
                            sliced.coord('month_number').points)
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('clim_season')
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('season_year')
 
     def test_get_jf(self):
         """Test function for custom seasons."""
@@ -237,6 +267,10 @@ class TestExtractSeason(tests.Test):
         iris.coord_categorisation.add_month_number(sliced, 'time')
         assert_array_equal(np.array([1, 2, 1, 2]),
                            sliced.coord('month_number').points)
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('clim_season')
+        with assert_raises(iris.exceptions.CoordinateNotFoundError):
+            self.cube.coord('season_year')
 
 
 class TestClimatology(tests.Test):
