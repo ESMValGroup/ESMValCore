@@ -164,7 +164,6 @@ def _compute(cube, statistic: str, dim: str = 'new_dim'):
     :obj:`iris.cube.Cube`
         Collapsed cube.
     """
-
     statistic = statistic.lower()
     kwargs = {}
 
