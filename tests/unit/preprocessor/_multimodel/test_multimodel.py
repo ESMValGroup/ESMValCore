@@ -445,10 +445,7 @@ def test_edge_case_time_not_in_middle_of_months(span):
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_edge_case_sub_daily_data_fail(span):
     """Test case when cubes with sub-daily time coords are passed."""
-    time_points = range(1, 4)
-    dates = [datetime(1850, 1, 1, i, 0, 0) for i in time_points]
-
-    cube = generate_cube_from_dates(dates)
+    cube = generate_cube_from_dates('hourly')
     cubes = (cube, cube)
 
     statistic = 'min'
