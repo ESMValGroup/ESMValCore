@@ -7,8 +7,8 @@ from ..fix import Fix
 from ..shared import add_scalar_height_coord, cube_to_aux_coord
 
 
-class allvars(Fix):
-    """Common fixes to all vars"""
+class pr(Fix):
+    """Fixes for pr."""
 
     def fix_metadata(self, cubes):
         """
