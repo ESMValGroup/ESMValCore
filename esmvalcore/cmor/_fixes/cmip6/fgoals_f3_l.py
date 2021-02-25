@@ -8,6 +8,34 @@ from ..fix import Fix
 
 class AllVars(Fix):
     """Fixes for all vars."""
+
+    def fix_data(self, cube):
+        """Fix data.
+        Calculate missing latitude/longitude boundaries
+        using contiguous_bounds method
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+        Returns
+        -------
+        iris.cube.Cube
+        """
+        cube.coord('latitude').bounds = None
+        cube.coord('longitude').bounds = None
+        xbounds = cube.coord('longitude').contiguous_bounds()
+        ybounds = cube.coord('latitude').contiguous_bounds()
+        xbnd = np.zeros((xbounds.size-1, 2))
+        ybnd = np.zeros((ybounds.size-1, 2))
+        xbnd[:, 0] = xbounds[0:-1]
+        xbnd[:, 1] = xbounds[1:  ]
+        ybnd[:, 0] = ybounds[0:-1]
+        ybnd[:, 1] = ybounds[1:  ]
+        cube.coord('longitude').bounds = xbnd
+        cube.coord('latitude').bounds = ybnd
+
+        return cube
+
+
     def fix_metadata(self, cubes):
         """Fix parent time units.
 
