@@ -61,7 +61,7 @@ def preprocess_data(cubes, time_slice: dict = None):
     # regrid to first cube
     regrid_kwargs = {
         'grid': first_cube,
-        'scheme': iris.analysis.Linear(),
+        'scheme': iris.analysis.Nearest(),
     }
 
     cubes = [cube.regrid(**regrid_kwargs) for cube in cubes]
