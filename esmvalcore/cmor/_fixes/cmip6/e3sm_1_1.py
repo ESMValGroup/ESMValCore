@@ -1,4 +1,4 @@
-"""Fixes for MCM-UA-1-0 model."""
+"""Fixes for E3SM-1-1 model."""
 import iris
 
 from ..fix import Fix
