@@ -24,7 +24,7 @@ def assert_array_almost_equal(this, other):
     if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
         np.testing.assert_array_equal(this.mask, other.mask)
 
-    np.testing.assert_array_almost_equal(this, other)
+    np.testing.assert_allclose(this, other)
 
 
 def timecoord(frequency,
