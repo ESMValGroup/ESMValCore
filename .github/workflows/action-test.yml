@@ -22,15 +22,14 @@ on:
   push:
     branches:
     - master
-    - run_test_hourly
   # run the test only if the PR is to master
   # turn it on if required
   #pull_request:
   #  branches:
   #  - master
   schedule:
-    # - cron: '0 0 * * *'
-    - cron: '0 * * * *'
+    # - cron: '0 0 * * *'  # nightly
+    - cron: '0 */3 * * *'  # every 3 hours
 
 jobs:
   linux:
