@@ -43,6 +43,23 @@ def assert_array_almost_equal(this, other):
     np.testing.assert_array_almost_equal(this, other)
 
 
+def assert_coords_equal(this: list, other: list):
+    """Assert coords list `this` equals coords list `other`."""
+    for this_coord, other_coord in zip(this, other):
+        np.testing.assert_equal(this_coord.points, other_coord.points)
+        assert this_coord.var_name == other_coord.var_name
+        assert this_coord.standard_name == other_coord.standard_name
+        assert this_coord.units == other_coord.units
+
+
+def assert_metadata_equal(this, other):
+    """Assert metadata `this` are equal to metadata `other`."""
+    assert this.standard_name == other.standard_name
+    assert this.long_name == other.long_name
+    assert this.var_name == other.var_name
+    assert this.units == other.units
+
+
 def fix_metadata(cubes):
     """Fix metadata."""
     for cube in cubes:
@@ -183,17 +200,10 @@ def multimodel_regression_test(cubes, span, name):
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
     if filename.exists():
         reference_cube = iris.load_cube(str(filename))
+
         assert_array_almost_equal(result_cube.data, reference_cube.data)
-
-        # Compare coords
-        for this_coord, other_coord in zip(result_cube.coords(),
-                                           reference_cube.coords()):
-            assert this_coord == other_coord
-
-        # remove Conventions which are added by Iris on save
-        reference_cube.attributes.pop('Conventions', None)
-
-        assert reference_cube.metadata == result_cube.metadata
+        assert_metadata_equal(result_cube.metadata, reference_cube.metadata)
+        assert_coords_equal(result_cube.coords(), reference_cube.coords())
 
     else:
         # The test will fail if no regression data are available.
