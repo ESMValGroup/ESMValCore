@@ -1,7 +1,7 @@
 """Test using sample data for :func:`esmvalcore.preprocessor._multimodel`."""
 
 import pickle
-import sys
+import platform
 from itertools import groupby
 from pathlib import Path
 
@@ -80,12 +80,9 @@ def get_cache_key(value):
     manually clean the pytest cache with the command `pytest --cache-
     clear`.
     """
-    return ' '.join([
-        str(value),
-        iris.__version__,
-        np.__version__,
-        sys.version,
-    ])
+    py_version = platform.python_version()
+    return (f'{value}_iris-{iris.__version__}_'
+            f'numpy-{np.__version__}_python-{py_version}')
 
 
 @pytest.fixture(scope="module")
