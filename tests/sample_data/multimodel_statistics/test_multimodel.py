@@ -21,7 +21,11 @@ CALENDAR_PARAMS = (
             reason='Cannot calculate statistics with single cube in list')),
     '365_day',
     'gregorian',
-    'proleptic_gregorian',
+    pytest.param(
+        'proleptic_gregorian',
+        marks=pytest.mark.xfail(
+            raises=iris.exceptions.MergeError,
+            reason='https://github.com/ESMValGroup/ESMValCore/issues/956')),
     pytest.param(
         'julian',
         marks=pytest.mark.skip(
@@ -200,6 +204,9 @@ def multimodel_regression_test(cubes, span, name):
         raise RuntimeError(f'Wrote reference data to {filename.absolute()}')
 
 
+@pytest.mark.xfail(
+    raises=iris.exceptions.MergeError,
+    reason='https://github.com/ESMValGroup/ESMValCore/issues/956')
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize('span', SPAN_PARAMS)
 def test_multimodel_regression_month(timeseries_cubes_month, span):
@@ -238,8 +245,11 @@ def test_multimodel_no_vertical_dimension(timeseries_cubes_month):
 
 @pytest.mark.use_sample_data
 @pytest.mark.xfail(
-    'iris.exceptions.CoordinateNotFoundError',
-    reason='https://github.com/ESMValGroup/ESMValCore/issues/891')
+    raises=iris.exceptions.MergeError,
+    reason='https://github.com/ESMValGroup/ESMValCore/issues/956')
+# @pytest.mark.xfail(
+#     raises=iris.exceptions.CoordinateNotFoundError,
+#     reason='https://github.com/ESMValGroup/ESMValCore/issues/891')
 def test_multimodel_no_horizontal_dimension(timeseries_cubes_month):
     """Test statistic without horizontal dimension using monthly data."""
     span = 'full'
@@ -262,7 +272,7 @@ def test_multimodel_only_time_dimension(timeseries_cubes_month):
 
 @pytest.mark.use_sample_data
 @pytest.mark.xfail(
-    'ValueError',
+    raises=ValueError,
     reason='https://github.com/ESMValGroup/ESMValCore/issues/890')
 def test_multimodel_no_time_dimension(timeseries_cubes_month):
     """Test statistic without time dimension using monthly data."""
