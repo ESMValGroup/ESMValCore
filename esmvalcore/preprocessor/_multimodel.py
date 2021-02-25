@@ -13,20 +13,22 @@ from iris.util import equalise_attributes
 logger = logging.getLogger(__name__)
 
 STATISTIC_MAPPING = {
-    'count': iris.analysis.COUNT,
     'gmean': iris.analysis.GMEAN,
     'hmean': iris.analysis.HMEAN,
-    'mean': iris.analysis.MEAN,
+    'max': iris.analysis.MAX,
     'median': iris.analysis.MEDIAN,
     'min': iris.analysis.MIN,
-    'max': iris.analysis.MAX,
+    'rms': iris.analysis.RMS,
+    'sum': iris.analysis.SUM,
+    # lazy via dask
+    'mean': iris.analysis.MEAN,
+    'std_dev': iris.analysis.STD_DEV,
+    'variance': iris.analysis.VARIANCE,
+    # not directly supported
+    'count': iris.analysis.COUNT,
     'peak': iris.analysis.PEAK,
     'percentile': iris.analysis.PERCENTILE,
     'proportion': iris.analysis.PROPORTION,
-    'rms': iris.analysis.RMS,
-    'std_dev': iris.analysis.STD_DEV,
-    'sum': iris.analysis.SUM,
-    'variance': iris.analysis.VARIANCE,
     'wpercentile': iris.analysis.WPERCENTILE,
 }
 
