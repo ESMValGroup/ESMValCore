@@ -467,7 +467,7 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
-def extract_levels(cube, levels, scheme, coordinate=None):
+def extract_levels(cube, levels, scheme, coordinate=None, squeeze=False):
     """
     Perform vertical interpolation.
 
@@ -556,6 +556,9 @@ def extract_levels(cube, levels, scheme, coordinate=None):
         # As a last resort, perform vertical interpolation.
         result = _vertical_interpolate(
             cube, src_levels, levels, scheme, extrap_scheme)
+
+    if squeeze:
+        result = iris.util.squeeze(result)
 
     return result
 
