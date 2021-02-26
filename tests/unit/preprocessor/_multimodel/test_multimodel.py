@@ -117,7 +117,7 @@ VALIDATION_DATA_SUCCESS = (
         'std', (5.656854249492381, 4, 2.8284271247461903),
         marks=pytest.mark.xfail(
             raises=AssertionError,
-            reason='Iris 3.0.1 uses `ddof=1` for calculation of std. dev.')),
+            reason='https://github.com/ESMValGroup/ESMValCore/issues/1024')),
     ('full', 'min', (1, 1, 1)),
     ('full', 'max', (9, 9, 5)),
     ('full', 'median', (5, 5, 3)),
@@ -129,7 +129,7 @@ VALIDATION_DATA_SUCCESS = (
         'std', (5.656854249492381, 4),
         marks=pytest.mark.xfail(
             raises=AssertionError,
-            reason='Iris 3.0.1 uses `ddof=1` for calculation of std. dev.')),
+            reason='https://github.com/ESMValGroup/ESMValCore/issues/1024')),
     ('overlap', 'min', (1, 1)),
     ('overlap', 'max', (9, 9)),
     ('overlap', 'median', (5, 5)),
