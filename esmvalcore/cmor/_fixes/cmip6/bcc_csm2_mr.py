@@ -132,3 +132,7 @@ class Siconc(BaseTos):
 
 class Sos(Tos):
     """Fixes for sos."""
+
+
+class Siconc(Tos):
+    """Fixes for sos."""
