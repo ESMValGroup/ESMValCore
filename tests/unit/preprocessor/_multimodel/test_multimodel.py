@@ -312,3 +312,65 @@ def test_edge_case_sub_daily_data_fail(span):
 
     with pytest.raises(ValueError):
         _ = multi_model_statistics(cubes, span, statistics)
+
+
+def test_unify_time_coordinates():
+    """Test set common calendar."""
+    cube1 = generate_cube_from_dates('monthly',
+                                     calendar='360_day',
+                                     offset='days since 1850-01-01')
+    cube2 = generate_cube_from_dates('monthly',
+                                     calendar='gregorian',
+                                     offset='days since 1943-05-16')
+
+    mm._unify_time_coordinates([cube1, cube2])
+
+    assert cube1.coord('time') == cube2.coord('time')
+
+
+class PreprocessorFile:
+    """Mockup to test output of multimodel."""
+    def __init__(self, cube=None):
+        if cube:
+            self.cubes = [cube]
+
+    def wasderivedfrom(self, product):
+        pass
+
+
+def test_return_products():
+    """Check that the right product set is returned."""
+    cube1 = generate_cube_from_dates('monthly', fill_val=1)
+    cube2 = generate_cube_from_dates('monthly', fill_val=9)
+
+    input1 = PreprocessorFile(cube1)
+    input2 = PreprocessorFile(cube2)
+
+    products = set([input1, input2])
+
+    output = PreprocessorFile()
+    output_products = {'mean': output}
+
+    kwargs = {
+        'statistics': ['mean'],
+        'span': 'full',
+        'output_products': output_products
+    }
+
+    result1 = mm._multiproduct_statistics(products,
+                                          keep_input_datasets=True,
+                                          **kwargs)
+    result2 = mm._multiproduct_statistics(products,
+                                          keep_input_datasets=False,
+                                          **kwargs)
+
+    assert result1 == set([input1, input2, output])
+    assert result2 == set([output])
+
+    result3 = mm.multi_model_statistics(products, **kwargs)
+    result4 = mm.multi_model_statistics(products,
+                                        keep_input_datasets=False,
+                                        **kwargs)
+
+    assert result3 == result1
+    assert result4 == result2
