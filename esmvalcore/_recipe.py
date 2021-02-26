@@ -3,6 +3,7 @@ import fnmatch
 import logging
 import os
 import re
+import warnings
 from copy import deepcopy
 from pprint import pformat
 
@@ -913,6 +914,7 @@ class Recipe:
         self._cfg = deepcopy(config_user)
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
+        self._raw_recipe = raw_recipe
         self._filename = os.path.basename(recipe_file)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
@@ -1363,7 +1365,7 @@ class Recipe:
 
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
 
-    def get_product_output(self) -> dict:
+    def get_output(self) -> dict:
         """Return the paths to the output plots and data.
 
         Returns
@@ -1371,9 +1373,31 @@ class Recipe:
         product_filenames : dict
             Lists of products/attributes grouped by task.
         """
-        product_filenames = {}
+        output = {}
+
+        output['recipe_config'] = self._cfg
+        output['recipe_filename'] = self._filename
+        output['recipe_data'] = self._raw_recipe
+        output['task_output'] = {}
 
         for task in self.tasks:
-            product_filenames[task.name] = task.get_product_attributes()
+            output['task_output'][task.name] = task.get_product_attributes()
 
-        return product_filenames
+        return output
+
+    def write_html_summary(self):
+        """Write summary html file to the output dir."""
+        with warnings.catch_warnings():
+            # ignore import warnings
+            warnings.simplefilter("ignore")
+            # keep RecipeOutput here to avoid circular import
+            from esmvalcore.experimental.recipe_output import RecipeOutput
+            output = self.get_output()
+
+            try:
+                output = RecipeOutput.from_core_recipe_output(output)
+            except LookupError as error:
+                # See https://github.com/ESMValGroup/ESMValCore/issues/28
+                logging.debug("Could not write HTML report. %s", error)
+            else:
+                output.write_html()

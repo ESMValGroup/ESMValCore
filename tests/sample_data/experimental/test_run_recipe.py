@@ -8,6 +8,7 @@ from pathlib import Path
 import iris
 import pytest
 
+from esmvalcore._config import TAGS
 from esmvalcore._recipe import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (
@@ -20,6 +21,16 @@ esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 CFG.update(esmvaltool_sample_data.get_rootpaths())
 CFG['max_parallel_tasks'] = 1
+
+AUTHOR_TAGS = {
+    'authors': {
+        'doe_john': {
+            'name': 'Doe, John',
+            'institute': 'Testing',
+            'orcid': 'https://orcid.org/0000-0000-0000-0000',
+        }
+    }
+}
 
 
 @pytest.fixture
@@ -35,14 +46,22 @@ def test_run_recipe(task, recipe, tmp_path):
 
     Recipe contains no provenance and no diagnostics.
     """
+    TAGS.set_tag_values(AUTHOR_TAGS)
+
     CFG['output_dir'] = tmp_path
 
     assert isinstance(recipe, Recipe)
+    assert isinstance(recipe._repr_html_(), str)
 
     output = recipe.run(task=task)
 
     assert len(output) > 0
     assert isinstance(output, RecipeOutput)
+    assert (output.session.session_dir / 'index.html').exists()
+
+    assert (output.session.run_dir / output.info.filename).exists()
+    assert isinstance(output.read_main_log(), str)
+    assert isinstance(output.read_main_log_debug(), str)
 
     for task, task_output in output.items():
         assert isinstance(task_output, TaskOutput)
@@ -50,7 +69,7 @@ def test_run_recipe(task, recipe, tmp_path):
 
         for data_file in task_output.data_files:
             assert isinstance(data_file, DataFile)
-            assert data_file.filename.exists()
+            assert data_file.path.exists()
 
             cube = data_file.load_iris()
             assert isinstance(cube, iris.cube.CubeList)
@@ -62,8 +81,10 @@ def test_run_recipe_diagnostic_failing(recipe, tmp_path):
 
     Recipe contains no provenance and no diagnostics.
     """
+    TAGS.set_tag_values(AUTHOR_TAGS)
+
     CFG['output_dir'] = tmp_path
 
     with pytest.raises(RecipeError):
-        task = 'example/FAIL'
+        task = 'example/non-existant'
         _ = recipe.run(task)
