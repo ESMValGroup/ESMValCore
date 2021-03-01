@@ -136,7 +136,7 @@ VALIDATION_DATA_SUCCESS = (
     ('overlap', 'mean', (5, 5)),
     ('overlap', 'std_dev', (5.656854249492381, 4)),
     pytest.param(
-        'full',
+        'overlap',
         'std', (5.656854249492381, 4),
         marks=pytest.mark.xfail(
             raises=AssertionError,
