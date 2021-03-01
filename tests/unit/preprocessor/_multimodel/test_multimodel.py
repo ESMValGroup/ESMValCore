@@ -2,6 +2,7 @@
 
 from datetime import datetime
 
+import dask.array as da
 import iris
 import numpy as np
 import pytest
@@ -56,6 +57,7 @@ def generate_cube_from_dates(
     fill_val=1,
     len_data=3,
     var_name=None,
+    lazy=False,
 ):
     """Generate test cube from list of dates / frequency specification.
 
@@ -85,27 +87,34 @@ def generate_cube_from_dates(
                                     standard_name='time',
                                     units=unit)
 
-    return Cube((fill_val, ) * len_data,
-                dim_coords_and_dims=[(time, 0)],
-                var_name=var_name)
+    data = np.array((fill_val, ) * len_data)
+
+    if lazy:
+        data = da.from_array(data)
+
+    return Cube(data, dim_coords_and_dims=[(time, 0)], var_name=var_name)
 
 
-def get_cubes_for_validation_test(frequency):
+def get_cubes_for_validation_test(frequency, lazy=False):
     """Set up cubes used for testing multimodel statistics."""
 
     # Simple 1d cube with standard time cord
-    cube1 = generate_cube_from_dates(frequency)
+    cube1 = generate_cube_from_dates(frequency, lazy=lazy)
 
     # Cube with masked data
     cube2 = cube1.copy()
-    cube2.data = np.ma.array([5, 5, 5], mask=[True, False, False])
+    data2 = np.ma.array([5, 5, 5], mask=[True, False, False])
+    if lazy:
+        data2 = da.from_array(data2)
+    cube2.data = data2
 
     # Cube with deviating time coord
     cube3 = generate_cube_from_dates(frequency,
                                      calendar='360_day',
                                      offset='days since 1950-01-01',
                                      len_data=2,
-                                     fill_val=9)
+                                     fill_val=9,
+                                     lazy=lazy)
 
     return [cube1, cube2, cube3]
 
@@ -159,6 +168,42 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
         result_cube = result[statistic]
         expected_data = np.ma.array(expected[i], mask=False)
         assert_array_almost_equal(result_cube.data, expected_data)
+
+
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_lazy_data_consistent_times(span):
+    cubes = (
+        generate_cube_from_dates('monthly', fill_val=1, lazy=True),
+        generate_cube_from_dates('monthly', fill_val=3, lazy=True),
+        generate_cube_from_dates('monthly', fill_val=6, lazy=True),
+    )
+
+    for cube in cubes:
+        assert cube.has_lazy_data()
+
+    statistic = 'sum'
+    statistics = (statistic, )
+
+    result = mm._multicube_statistics(cubes, span=span, statistics=statistics)
+
+    result_cube = result[statistic]
+    assert result_cube.has_lazy_data()
+
+
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_lazy_data_inconsistent_times(span):
+    cubes = get_cubes_for_validation_test('monthly', lazy=True)
+
+    for cube in cubes:
+        assert cube.has_lazy_data()
+
+    statistic = 'sum'
+    statistics = (statistic, )
+
+    result = mm._multicube_statistics(cubes, span=span, statistics=statistics)
+
+    result_cube = result[statistic]
+    assert result_cube.has_lazy_data()
 
 
 VALIDATION_DATA_FAIL = (
