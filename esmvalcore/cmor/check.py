@@ -9,6 +9,7 @@ import iris.exceptions
 import iris.util
 import numpy as np
 
+from esmvalcore.preprocessor._time import _get_time_bounds
 from .table import CMOR_TABLES
 
 CheckLevels = IntEnum('CheckLevels', 'DEBUG STRICT DEFAULT RELAXED IGNORE')
@@ -508,7 +509,6 @@ class CMORCheck():
                     coord.var_name, var_name)
 
     def _check_time_bounds(self, freq, time):
-        from esmvalcore.preprocessor._time import _get_time_bounds
         times = {'time', 'time1', 'time2', 'time3'}
         key = times.intersection(self._cmor_var.coordinates)
         cmor = self._cmor_var.coordinates[" ".join(key)]
