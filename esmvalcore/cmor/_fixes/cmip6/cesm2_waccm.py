@@ -4,6 +4,9 @@ from netCDF4 import Dataset
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Tas as BaseTas
 from .gfdl_esm4 import Siconc as Addtypesi
+from ..fix import Fix
+from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
+                      add_scalar_typeland_coord, add_scalar_typesea_coord
 
 
 class Cl(BaseCl):
@@ -52,3 +55,21 @@ Tas = BaseTas
 
 
 Siconc = Addtypesi
+
+
+class Fgco2(Fix):
+    """Fixes for fgco2."""
+
+    def fix_metadata(self, cubes):
+        """Add depth (0m) coordinate.
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_depth_coord(cube)
+        return cubes

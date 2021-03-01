@@ -1,16 +1,5 @@
-"""Fixes for GISS-E2-1-G model."""
-from ..common import ClFixHybridPressureCoord
+"""Fixes for GISS-E2-1-G-CC model."""
 from ..fix import Fix
-
-
-Cl = ClFixHybridPressureCoord
-
-
-Cli = ClFixHybridPressureCoord
-
-
-Clw = ClFixHybridPressureCoord
-
 
 class Nbp(Fix):
     """Fixes for nbp."""
@@ -18,7 +7,6 @@ class Nbp(Fix):
     def fix_data(self, cube):
         """
         Fix data.
-        Fixes wrong sign for land surface flux.
         Parameters
         ----------
         cube: iris.cube.Cube

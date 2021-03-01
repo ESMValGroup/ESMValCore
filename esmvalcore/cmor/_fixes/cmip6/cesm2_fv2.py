@@ -2,6 +2,7 @@
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Tas as BaseTas
 from .gfdl_esm4 import Siconc as Addtypesi
+from .cesm2 import Fgco2 as BaseFgco2
 
 
 Cl = BaseCl
@@ -17,3 +18,6 @@ Tas = BaseTas
 
 
 Siconc = Addtypesi
+
+
+Fgco2 = BaseFgco2
