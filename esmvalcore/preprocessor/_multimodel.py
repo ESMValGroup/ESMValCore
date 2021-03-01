@@ -13,23 +13,22 @@ from iris.util import equalise_attributes
 logger = logging.getLogger(__name__)
 
 STATISTIC_MAPPING = {
-    'gmean': iris.analysis.GMEAN,
-    'hmean': iris.analysis.HMEAN,
+    'gmean': iris.analysis.GMEAN,  # not lazy in iris
+    'hmean': iris.analysis.HMEAN,  # not lazy in iris
     'max': iris.analysis.MAX,
     'median': iris.analysis.MEDIAN,
     'min': iris.analysis.MIN,
     'rms': iris.analysis.RMS,
     'sum': iris.analysis.SUM,
-    # lazy via dask
     'mean': iris.analysis.MEAN,
     'std_dev': iris.analysis.STD_DEV,
     'variance': iris.analysis.VARIANCE,
     # not directly supported
     'count': iris.analysis.COUNT,
     'peak': iris.analysis.PEAK,
-    'percentile': iris.analysis.PERCENTILE,
-    'proportion': iris.analysis.PROPORTION,
-    'wpercentile': iris.analysis.WPERCENTILE,
+    'percentile': iris.analysis.PERCENTILE,  # not lazy in iris
+    'proportion': iris.analysis.PROPORTION,  # not lazy in iris
+    'wpercentile': iris.analysis.WPERCENTILE,  # not lazy in iris
 }
 
 
@@ -128,6 +127,14 @@ def _time_coords_are_aligned(cubes):
     return True
 
 
+def _subset(cube, times):
+    """Subset cube to given time range."""
+    begin = cube.coord('time').units.num2date(times[0])
+    end = cube.coord('time').units.num2date(times[-1])
+    constraint = iris.Constraint(time=lambda cell: begin <= cell.point <= end)
+    return cube.extract(constraint)
+
+
 def _align(cubes, span):
     """Expand or subset cubes so they share a common time span."""
     _unify_time_coordinates(cubes)
@@ -137,13 +144,19 @@ def _align(cubes, span):
 
     all_time_arrays = [cube.coord('time').points for cube in cubes]
 
-    new_times = _resolve_span(all_time_arrays, span)
-    # new_times = cubes[0].coord('time').units.num2date(new_times)
-    sample_points = [('time', new_times)]
-    scheme = iris.analysis.Nearest(extrapolation_mode='mask')
-    new_cubes = [cube.interpolate(sample_points, scheme) for cube in cubes]
+    if span == 'overlap':
+        common_times = reduce(np.intersect1d, all_time_arrays)
+        new_cubes = [_subset(cube, common_times) for cube in cubes]
+    else:
+        new_times = _resolve_span(all_time_arrays, span)
+        # new_times = cubes[0].coord('time').units.num2date(new_times)
+        sample_points = [('time', new_times)]
+        scheme = iris.analysis.Nearest(extrapolation_mode='mask')
+        new_cubes = [cube.interpolate(sample_points, scheme) for cube in cubes]
 
     for cube in new_cubes:
+        # Make sure bounds exist and are consistent
+        cube.coord('time').bounds = None
         cube.coord('time').guess_bounds()
 
     return new_cubes
