@@ -159,7 +159,13 @@ def _combine(cubes, dim='new_dim'):
 
     cubes = iris.cube.CubeList(cubes)
 
-    return cubes.merge_cube()
+    merged_cube = cubes.merge_cube()
+
+    # Clean up after merge, because new dimension is no longer needed
+    for cube in cubes:
+        cube.remove_coord(dim)
+
+    return merged_cube
 
 
 def _compute(cube, statistic: str, dim: str = 'new_dim'):

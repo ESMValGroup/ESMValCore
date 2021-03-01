@@ -557,9 +557,18 @@ def test_return_products():
     result1 = mm._multiproduct_statistics(products,
                                           keep_input_datasets=True,
                                           **kwargs)
+
     result2 = mm._multiproduct_statistics(products,
                                           keep_input_datasets=False,
                                           **kwargs)
 
     assert result1 == set([input1, input2, output])
     assert result2 == set([output])
+
+    result3 = mm.multi_model_statistics(products, **kwargs)
+    result4 = mm.multi_model_statistics(products,
+                                        keep_input_datasets=False,
+                                        **kwargs)
+
+    assert result3 == result1
+    assert result4 == result2
