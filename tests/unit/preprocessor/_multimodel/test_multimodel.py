@@ -19,8 +19,8 @@ CALENDAR_OPTIONS = ('360_day', '365_day', 'gregorian', 'proleptic_gregorian',
                     'julian')
 
 
-def assert_array_almost_equal(this, other):
-    """Assert that array `this` almost equals array `other`."""
+def assert_array_allclose(this, other):
+    """Assert that array `this` is close to array `other`."""
     if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
         np.testing.assert_array_equal(this.mask, other.mask)
 
@@ -166,7 +166,7 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
     for i, statistic in enumerate(statistics):
         result_cube = result[statistic]
         expected_data = np.ma.array(expected[i], mask=False)
-        assert_array_almost_equal(result_cube.data, expected_data)
+        assert_array_allclose(result_cube.data, expected_data)
 
 
 @pytest.mark.parametrize('calendar1, calendar2, expected', (
