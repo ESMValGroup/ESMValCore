@@ -127,12 +127,21 @@ def _time_coords_are_aligned(cubes):
     return True
 
 
-def _subset(cube, times):
+def _subset(cube, time_points):
     """Subset cube to given time range."""
-    begin = cube.coord('time').units.num2date(times[0])
-    end = cube.coord('time').units.num2date(times[-1])
+    begin = cube.coord('time').units.num2date(time_points[0])
+    end = cube.coord('time').units.num2date(time_points[-1])
     constraint = iris.Constraint(time=lambda cell: begin <= cell.point <= end)
     return cube.extract(constraint)
+
+
+def _extend(cube, time_points):
+    """Extend cube to a specified time range."""
+    time_points = cube.coord('time').units.num2date(time_points)
+    sample_points = [('time', time_points)]
+    scheme = iris.analysis.Nearest(extrapolation_mode='mask')
+
+    return cube.interpolate(sample_points, scheme)
 
 
 def _align(cubes, span):
@@ -145,14 +154,14 @@ def _align(cubes, span):
     all_time_arrays = [cube.coord('time').points for cube in cubes]
 
     if span == 'overlap':
-        common_times = reduce(np.intersect1d, all_time_arrays)
-        new_cubes = [_subset(cube, common_times) for cube in cubes]
+        common_time_points = reduce(np.intersect1d, all_time_arrays)
+        new_cubes = [_subset(cube, common_time_points) for cube in cubes]
+    elif span == 'full':
+        all_time_points = reduce(np.union1d, all_time_arrays)
+        new_cubes = [_extend(cube, all_time_points) for cube in cubes]
     else:
-        new_times = _resolve_span(all_time_arrays, span)
-        # new_times = cubes[0].coord('time').units.num2date(new_times)
-        sample_points = [('time', new_times)]
-        scheme = iris.analysis.Nearest(extrapolation_mode='mask')
-        new_cubes = [cube.interpolate(sample_points, scheme) for cube in cubes]
+        raise ValueError(f"Invalid argument for span: {span!r}"
+                         "Must be one of 'overlap', 'full'.")
 
     for cube in new_cubes:
         # Make sure bounds exist and are consistent
