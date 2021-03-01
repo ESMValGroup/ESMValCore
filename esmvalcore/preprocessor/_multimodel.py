@@ -116,13 +116,26 @@ def _resolve_span(all_times, span):
     return new_times
 
 
+def _time_coords_are_aligned(cubes):
+    """Return `True` if time coords are aligned."""
+    first_time_array = cubes[0].coord('time').points
+
+    for cube in cubes[1:]:
+        other_time_array = cube.coord('time').points
+        if not np.array_equal(first_time_array, other_time_array):
+            return False
+
+    return True
+
+
 def _align(cubes, span):
     """Expand or subset cubes so they share a common time span."""
     _unify_time_coordinates(cubes)
-    all_time_arrays = [cube.coord('time').points for cube in cubes]
-    if reduce(np.array_equal, all_time_arrays):
-        # cubes are already aligned
+
+    if _time_coords_are_aligned(cubes):
         return cubes
+
+    all_time_arrays = [cube.coord('time').points for cube in cubes]
 
     new_times = _resolve_span(all_time_arrays, span)
     # new_times = cubes[0].coord('time').units.num2date(new_times)
