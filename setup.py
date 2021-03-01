@@ -34,6 +34,7 @@ REQUIREMENTS = {
         'dask[array]',
         'fiona',
         'fire',
+        'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numpy',
@@ -43,7 +44,6 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scitools-iris>=3.0.1',
-        'requests',
         'shapely[vectorized]',
         'stratify',
         'yamale==2.*',

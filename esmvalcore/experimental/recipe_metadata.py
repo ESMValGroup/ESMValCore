@@ -55,7 +55,7 @@ class Contributor:
             The contributor tags are defined in the authors section in
             ``config-references.yml``.
         """
-        mapping = TAGS['authors'][tag]
+        mapping = TAGS.get_tag_value(section='authors', tag=tag)
 
         name = ' '.join(reversed(mapping['name'].split(', ')))
         institute = mapping.get('institute', 'No affiliation')
@@ -160,11 +160,11 @@ class Reference:
         """Return string representation."""
         return self.render(renderer='plaintext')
 
-    def _repr_markdown_(self) -> str:
+    def _repr_html_(self) -> str:
         """Represent using markdown renderer in a notebook environment."""
-        return self.render(renderer='markdown')
+        return self.render(renderer='html')
 
-    def render(self, renderer: str = 'plaintext') -> str:
+    def render(self, renderer: str = 'html') -> str:
         """Render the reference.
 
         Parameters

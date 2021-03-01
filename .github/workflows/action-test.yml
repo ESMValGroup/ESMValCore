@@ -22,14 +22,13 @@ on:
   push:
     branches:
     - master
-    - github-actions2
   # run the test only if the PR is to master
   # turn it on if required
   #pull_request:
   #  branches:
   #  - master
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *'  # nightly
 
 jobs:
   linux:

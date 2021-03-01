@@ -1,6 +1,7 @@
 autodocsumm
 dask[array]
 fiona
+jinja2
 netCDF4
 numpy
 pandas

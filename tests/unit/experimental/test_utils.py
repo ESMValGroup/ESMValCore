@@ -1,5 +1,6 @@
 import pytest
 
+from esmvalcore._config import DIAGNOSTICS, TAGS
 from esmvalcore.experimental.recipe import Recipe
 from esmvalcore.experimental.utils import (
     RecipeList,
@@ -29,6 +30,8 @@ def test_get_all_recipes():
 
 def test_recipe_list_find():
     """Get all recipes."""
+    TAGS.set_tag_values(DIAGNOSTICS.load_tags())
+
     recipes = get_all_recipes(subdir='examples')
 
     assert isinstance(recipes, RecipeList)
