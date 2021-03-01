@@ -22,14 +22,14 @@ on:
   push:
     branches:
     - master
-    - github-actions2
   # run the test only if the PR is to master
   # turn it on if required
   #pull_request:
   #  branches:
   #  - master
   schedule:
-    - cron: '0 0 * * *'
+    # - cron: '0 0 * * *'  # nightly
+    - cron: '0 */3 * * *'  # every 3 hours
 
 jobs:
   linux:
@@ -57,7 +57,7 @@ jobs:
       - shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
-        run: pytest -n 2 -m "not installation" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
+        run: pytest -n 1 -m "not installation" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
         uses: actions/upload-artifact@v2
@@ -90,7 +90,7 @@ jobs:
       - shell: bash -l {0}
         run: pip install -e .[develop] --use-feature=2020-resolver 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
-        run: pytest -n 2 -m "not installation" 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
+        run: pytest -n 1 -m "not installation" 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
         uses: actions/upload-artifact@v2

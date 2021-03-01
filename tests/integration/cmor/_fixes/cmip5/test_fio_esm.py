@@ -5,7 +5,19 @@ from cf_units import Unit
 from iris.cube import Cube
 
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.fio_esm import Ch4, Co2
+from esmvalcore.cmor._fixes.cmip5.fio_esm import Ch4, Cl, Co2
+from esmvalcore.cmor._fixes.cmip5.cesm1_cam5 import Cl as BaseCl
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'FIO-ESM', 'Amon', 'cl')
+    assert fix == [Cl(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is BaseCl
 
 
 class TestCh4(unittest.TestCase):

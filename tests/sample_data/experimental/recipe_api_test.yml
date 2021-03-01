@@ -5,10 +5,10 @@ documentation:
   description: Recipe for testing API.
 
   authors:
-    - smeets_stef
+    - doe_john
 
   maintainer:
-    - smeets_stef
+    - doe_john
 
 datasets:
   - {dataset: CanESM5, project: CMIP6, exp: historical, grid: gn, ensemble: r1i1p1f1, start_year: 2000, end_year: 2001}

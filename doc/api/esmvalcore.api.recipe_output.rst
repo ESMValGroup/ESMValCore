@@ -53,7 +53,7 @@ a dictionary.
 
 The task output has a list of files associated with them, usually image
 (``.png``) or data files (``.nc``). To get a list of all files, use
-`:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.files`.
+:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.files`.
 
 .. code:: python
 
@@ -62,7 +62,7 @@ The task output has a list of files associated with them, usually image
     ..., ImageFile('CMIP6_BCC-ESM1_Amon_historical_r1i1p1f1_tas_2000-2000.png'))
 
 
-It is also possible to select the image (`:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.image_files`) files or data files (`:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.data_files`) only.
+It is also possible to select the image (:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.image_files`) files or data files (:py:meth:`~esmvalcore.experimental.recipe_output.TaskOutput.data_files`) only.
 
 .. code:: python
 
