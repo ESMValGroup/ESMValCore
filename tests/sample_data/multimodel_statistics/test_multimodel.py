@@ -65,12 +65,6 @@ def fix_metadata(cubes):
     for cube in cubes:
         cube.coord('air_pressure').bounds = None
 
-        for coord in cube.coords():
-            coord.long_name = None
-            coord.attributes = None
-
-        cube.cell_methods = None
-
 
 def preprocess_data(cubes, time_slice: dict = None):
     """Regrid the data to the first cube and optional time-slicing."""

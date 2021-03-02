@@ -211,16 +211,28 @@ def _combine(cubes, dim='new_dim'):
     equalise_attributes(cubes)  # in-place
 
     for i, cube in enumerate(cubes):
+        try:
+            # since cubes are updated in-place, new coord may already exist
+            cube.remove_coord(dim)
+        except iris.exceptions.CoordinateNotFoundError:
+            pass
+
         concat_dim = iris.coords.AuxCoord(i, var_name=dim)
         cube.add_aux_coord(concat_dim)
+
+        # Clear some metadata that can cause merge to fail
+        # https://scitools-iris.readthedocs.io/en/stable/userguide/
+        #    merge_and_concat.html#common-issues-with-merge-and-concatenate
+
+        cube.cell_methods = None
+
+        for coord in cube.coords():
+            coord.long_name = None
+            coord.attributes = None
 
     cubes = iris.cube.CubeList(cubes)
 
     merged_cube = cubes.merge_cube()
-
-    # Clean up after merge, because new dimension is no longer needed
-    for cube in cubes:
-        cube.remove_coord(dim)
 
     return merged_cube
 
