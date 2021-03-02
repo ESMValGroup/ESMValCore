@@ -82,6 +82,7 @@ def generate_cube_from_dates(
     if isinstance(dates, str):
         time = timecoord(dates, calendar, offset=offset, num=len_data)
     else:
+        len_data = len(dates)
         unit = Unit(offset, calendar=calendar)
         time = iris.coords.DimCoord(unit.date2num(dates),
                                     standard_name='time',
@@ -202,7 +203,15 @@ def test_lazy_data_consistent_times(span):
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_lazy_data_inconsistent_times(span):
-    cubes = get_cubes_for_validation_test('monthly', lazy=True)
+
+    cubes = (
+        generate_cube_from_dates(
+            [datetime(1850, i, 15, 0, 0, 0) for i in range(1, 10)], lazy=True),
+        generate_cube_from_dates(
+            [datetime(1850, i, 15, 0, 0, 0) for i in range(3, 8)], lazy=True),
+        generate_cube_from_dates(
+            [datetime(1850, i, 15, 0, 0, 0) for i in range(2, 9)], lazy=True),
+    )
 
     for cube in cubes:
         assert cube.has_lazy_data()

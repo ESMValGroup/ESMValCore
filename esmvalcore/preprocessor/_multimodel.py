@@ -6,6 +6,7 @@ from datetime import datetime
 from functools import reduce
 
 import cf_units
+import dask.array as da
 import iris
 import numpy as np
 from iris.util import equalise_attributes
@@ -137,11 +138,45 @@ def _subset(cube, time_points):
 
 def _extend(cube, time_points):
     """Extend cube to a specified time range."""
-    time_points = cube.coord('time').units.num2date(time_points)
-    sample_points = [('time', time_points)]
-    scheme = iris.analysis.Nearest(extrapolation_mode='mask')
+    cube.coord('time').bounds = None
+    cube_points = cube.coord('time').points
 
-    return cube.interpolate(sample_points, scheme)
+    if not np.all(np.diff(cube_points) > 0):
+        raise ValueError('Time points are not monotonic')
+
+    begin = cube_points[0]
+    end = cube_points[-1]
+
+    pad_begin = time_points[time_points < begin]
+    pad_end = time_points[time_points > end]
+
+    if (len(pad_begin)) == 0 and (len(pad_end) == 0):
+        return cube
+
+    template_cube = cube[:1].copy()
+    template_cube.data = np.ma.array(da.zeros_like(template_cube.data),
+                                     mask=True,
+                                     dtype=template_cube.data.dtype)
+
+    cube_list = []
+
+    for time_point in pad_begin:
+        new_slice = template_cube.copy()
+        new_slice.coord('time').points = float(time_point)
+        cube_list.append(new_slice)
+
+    cube_list.append(cube)
+
+    for time_point in pad_end:
+        new_slice = template_cube.copy()
+        new_slice.coord('time').points = float(time_point)
+        cube_list.append(new_slice)
+
+    cube_list = iris.cube.CubeList(cube_list)
+
+    new_cube = cube_list.concatenate_cube()
+
+    return new_cube
 
 
 def _align(cubes, span):
