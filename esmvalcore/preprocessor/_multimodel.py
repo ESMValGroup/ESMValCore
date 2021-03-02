@@ -17,7 +17,7 @@ STATISTIC_MAPPING = {
     'gmean': iris.analysis.GMEAN,  # not lazy in iris
     'hmean': iris.analysis.HMEAN,  # not lazy in iris
     'max': iris.analysis.MAX,
-    'median': iris.analysis.MEDIAN,
+    'median': iris.analysis.MEDIAN,  # not lazy in iris
     'min': iris.analysis.MIN,
     'rms': iris.analysis.RMS,
     'sum': iris.analysis.SUM,

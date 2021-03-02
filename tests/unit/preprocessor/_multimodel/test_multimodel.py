@@ -123,12 +123,7 @@ def get_cubes_for_validation_test(frequency, lazy=False):
 VALIDATION_DATA_SUCCESS = (
     ('full', 'mean', (5, 5, 3)),
     ('full', 'std_dev', (5.656854249492381, 4, 2.8284271247461903)),
-    pytest.param(
-        'full',
-        'std', (5.656854249492381, 4, 2.8284271247461903),
-        marks=pytest.mark.xfail(
-            raises=AssertionError,
-            reason='https://github.com/ESMValGroup/ESMValCore/issues/1024')),
+    ('full', 'std', (5.656854249492381, 4, 2.8284271247461903)),
     ('full', 'min', (1, 1, 1)),
     ('full', 'max', (9, 9, 5)),
     ('full', 'median', (5, 5, 3)),
@@ -136,12 +131,7 @@ VALIDATION_DATA_SUCCESS = (
     ('full', 'p99.5', (8.96, 8.96, 4.98)),
     ('overlap', 'mean', (5, 5)),
     ('overlap', 'std_dev', (5.656854249492381, 4)),
-    pytest.param(
-        'overlap',
-        'std', (5.656854249492381, 4),
-        marks=pytest.mark.xfail(
-            raises=AssertionError,
-            reason='https://github.com/ESMValGroup/ESMValCore/issues/1024')),
+    ('overlap', 'std', (5.656854249492381, 4)),
     ('overlap', 'min', (1, 1)),
     ('overlap', 'max', (9, 9)),
     ('overlap', 'median', (5, 5)),
@@ -156,14 +146,7 @@ VALIDATION_DATA_SUCCESS = (
 @pytest.mark.parametrize('frequency', FREQUENCY_OPTIONS)
 @pytest.mark.parametrize('span, statistics, expected', VALIDATION_DATA_SUCCESS)
 def test_multimodel_statistics(frequency, span, statistics, expected):
-    """High level test for multicube statistics function.
-
-    - Should work for multiple data frequencies
-    - Should be able to deal with multiple statistics
-    - Should work for both span arguments
-    - Should deal correctly with different mask options
-    - Return type should be a dict with all requested statistics as keys
-    """
+    """High level test for multicube statistics function."""
     cubes = get_cubes_for_validation_test(frequency)
 
     if isinstance(statistics, str):
@@ -183,6 +166,7 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_lazy_data_consistent_times(span):
+    """Test laziness of multimodel statistics with consistent time axis."""
     cubes = (
         generate_cube_from_dates('monthly', fill_val=1, lazy=True),
         generate_cube_from_dates('monthly', fill_val=3, lazy=True),
@@ -203,6 +187,11 @@ def test_lazy_data_consistent_times(span):
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_lazy_data_inconsistent_times(span):
+    """Test laziness of multimodel statistics with inconsistent time axis.
+
+    This hits `_align`, which adds additional computations which must be
+    lazy.
+    """
 
     cubes = (
         generate_cube_from_dates(
