@@ -231,6 +231,7 @@ def _compute(cube, statistic: str, dim: str = 'new_dim'):
     Parameters
     ----------
     cube : :obj:`iris.cube.Cube`
+        Input cube.
     statistic : str
         Name of the statistic to calculate. Must be available via
         :mod:`iris.analysis`.
