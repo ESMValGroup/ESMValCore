@@ -12,10 +12,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -414,19 +414,20 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'iris': ('https://scitools.org.uk/iris/docs/latest/', None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'esmvaltool':
-    ('https://docs.esmvaltool.org/en/%s/' % rtd_version, None),
     'esmvalcore':
-    ('https://docs.esmvaltool.org/projects/ESMValCore/en/%s/' %
-     rtd_version, None),
+    (f'https://docs.esmvaltool.org/projects/esmvalcore/en/{rtd_version}/',
+     None),
+    'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
+    'matplotlib': ('https://matplotlib.org/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'python': ('https://docs.python.org/3/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------
 
 sys.path.append(os.path.dirname(__file__))
 from gensidebar import generate_sidebar
+
 generate_sidebar(globals(), "esmvalcore")

@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 import esmvalcore._task
+from esmvalcore._config._diagnostics import TagsManager
 
 
 @pytest.mark.parametrize("ext", ['.jl', '.py', '.ncl', '.R'])
@@ -14,7 +15,8 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
                         lambda self: None)
 
     esmvaltool_path = tmp_path / 'esmvaltool'
-    monkeypatch.setattr(esmvalcore._task, 'DIAGNOSTICS_PATH', esmvaltool_path)
+    monkeypatch.setattr(esmvalcore._config.DIAGNOSTICS, 'path',
+                        esmvaltool_path)
 
     diagnostics_path = esmvaltool_path / 'diag_scripts'
     diagnostics_path.mkdir(parents=True)
@@ -46,7 +48,7 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
 CMD = {
     # ext, profile: expected command
     ('.py', False): ['python'],
-    ('.py', True): ['python', '-m', 'vmprof', '--lines', '-o'],
+    ('.py', True): ['python', '-m', 'vprof', '-o'],
     ('.ncl', False): ['ncl', '-n', '-p'],
     ('.ncl', True): ['ncl', '-n', '-p'],
     ('.R', False): ['Rscript'],
@@ -86,9 +88,10 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
 
     # Append filenames to expected command
     if ext == '.py' and profile:
-        cmd.append(str(run_dir / 'profile.bin'))
+        cmd.append(str(run_dir / 'profile.json'))
+        cmd.append('-c')
+        cmd.append('c')
     cmd.append(str(script))
-
     assert task.cmd == cmd
 
 
@@ -98,10 +101,8 @@ def diagnostic_task(mocker, tmp_path):
         provenance = None
 
     mocker.patch.object(esmvalcore._task, 'TrackedFile', autospec=TrackedFile)
-    mocker.patch.dict(esmvalcore._task.TAGS,
-                      {'plot_type': {
-                          'tag': 'tag_value'
-                      }})
+    tags = TagsManager({'plot_type': {'tag': 'tag_value'}})
+    mocker.patch.dict(esmvalcore._task.TAGS, tags)
     mocker.patch.object(esmvalcore._task,
                         '_write_citation_files',
                         autospec=True)

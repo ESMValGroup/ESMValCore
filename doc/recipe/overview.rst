@@ -246,6 +246,10 @@ Depending on the installation configuration, you may get an error of
 "file does not exist" when the system tries to run the diagnostic script
 using relative paths. If this happens, use an absolute path instead.
 
+Note that the script should either have the extension for a supported language,
+i.e. ``.py``, ``.R``, ``.ncl``, or ``.jl`` for Python, R, NCL, and Julia diagnostics
+respectively, or be executable if it is written in any other language.
+
 Ancestor tasks
 --------------
 Some tasks require the result of other tasks to be ready before they can start,
@@ -316,6 +320,19 @@ over the keys in variables section. For many recipes it makes more sense to
 define the ``start_year`` and ``end_year`` items in the variable section,
 because the diagnostic script assumes that all the data has the same time
 range.
+
+Variable short names usually do not change between datasets supported by
+ESMValCore, as they are usually changed to match CMIP. Nevertheless, there are
+small changes in variable names in CMIP6 with respect to CMIP5 (i.e. sea ice
+concentration changed from ``sic`` to ``siconc``). ESMValCore is aware of some
+of them and can do the automatic translation when needed. It will even do the
+translation in the preprocessed file so the diagnostic does not have to deal
+with this complexity, setting the short name in all files to match the one used
+by the recipe. For example, if ``sic`` is requested, ESMValTool will
+find ``sic`` or ``siconc`` depending on the project, but all preprocessed files
+while use ``sic`` as their short_name. If the recipe requested ``siconc``, the
+preprocessed files will be identical except that they will use the short_name
+``siconc`` instead.
 
 Diagnostic and variable specific datasets
 -----------------------------------------

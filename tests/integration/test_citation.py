@@ -26,8 +26,7 @@ def test_references(tmp_path, monkeypatch):
     # Create fake bibtex references tag file
     references_path = tmp_path / 'references'
     references_path.mkdir()
-    monkeypatch.setattr(esmvalcore._citation, 'REFERENCES_PATH',
-                        references_path)
+    monkeypatch.setattr(esmvalcore._citation.DIAGNOSTICS, 'path', tmp_path)
     fake_bibtex_file = references_path / 'test_tag.bibtex'
     fake_bibtex = "Fake bibtex file content\n"
     fake_bibtex_file.write_text(fake_bibtex)

@@ -73,6 +73,8 @@ class CoordinateInfoMock:
         self.stored_direction = "increasing"
         self.must_have_bounds = "yes"
         self.requested = []
+        self.generic_lev_coords = {}
+        self.generic_lev_name = ""
 
         valid_limits = {'lat': ('-90', '90'), 'lon': ('0', '360')}
         if name in valid_limits:
@@ -281,9 +283,23 @@ class TestCMORCheck(unittest.TestCase):
         lat_points = lat_points / 3.0 - 50.
         self.cube.remove_coord('latitude')
         iris.util.demote_dim_coord_to_aux_coord(self.cube, 'longitude')
+        lat_points = np.concatenate(
+            (
+                self.cube.coord('longitude').points[0:10] / 4,
+                self.cube.coord('longitude').points[0:10] / 4
+            ),
+            axis=0
+        )
+        lat_bounds = np.concatenate(
+            (
+                self.cube.coord('longitude').bounds[0:10] / 4,
+                self.cube.coord('longitude').bounds[0:10] / 4
+            ),
+            axis=0
+        )
         new_lat = iris.coords.AuxCoord(
-            points=self.cube.coord('longitude').points / 4,
-            bounds=self.cube.coord('longitude').bounds / 4,
+            points=lat_points,
+            bounds=lat_bounds,
             var_name='lat',
             standard_name='latitude',
             long_name='Latitude',
@@ -291,6 +307,20 @@ class TestCMORCheck(unittest.TestCase):
         )
         self.cube.add_aux_coord(new_lat, 1)
         self._check_cube()
+
+    def test_bad_generic_level(self):
+        """Test check fails in metadata if generic level coord
+        has wrong var_name."""
+        depth_coord = CoordinateInfoMock('depth')
+        depth_coord.axis = 'Z'
+        depth_coord.generic_lev_name = 'olevel'
+        depth_coord.out_name = 'lev'
+        depth_coord.name = 'depth_coord'
+        depth_coord.long_name = 'ocean depth coordinate'
+        self.var_info.coordinates['depth'].generic_lev_coords = {
+            'depth_coord': depth_coord}
+        self.var_info.coordinates['depth'].out_name = ""
+        self._check_fails_in_metadata()
 
     def test_check_bad_var_standard_name_strict_flag(self):
         """Test check fails for a bad variable standard_name with
@@ -355,8 +385,9 @@ class TestCMORCheck(unittest.TestCase):
     def test_check_missing_coord_strict_flag(self):
         """Test check fails for missing coord other than lat and lon
          with --cmor-check strict"""
-        self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
-                                     }
+        self.var_info.coordinates.update(
+            {'height2m': CoordinateInfoMock('height2m')}
+        )
         self._check_fails_in_metadata(automatic_fixes=False)
 
     def test_check_bad_var_standard_name_relaxed_flag(self):
@@ -431,8 +462,9 @@ class TestCMORCheck(unittest.TestCase):
     def test_check_missing_coord_relaxed_flag(self):
         """Test check reports warning for missing coord other than lat and lon
         with --cmor-check relaxed"""
-        self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
-                                     }
+        self.var_info.coordinates.update(
+            {'height2m': CoordinateInfoMock('height2m')}
+        )
         self._check_warnings_on_metadata(automatic_fixes=False,
                                          check_level=CheckLevels.RELAXED)
 
@@ -511,8 +543,9 @@ class TestCMORCheck(unittest.TestCase):
     def test_check_missing_coord_none_flag(self):
         """Test check reports warning for missing coord other than lat, lon and
         time with --cmor-check ignore"""
-        self.var_info.coordinates = {'height2m': CoordinateInfoMock('height2m')
-                                     }
+        self.var_info.coordinates.update(
+            {'height2m': CoordinateInfoMock('height2m')}
+        )
         self._check_warnings_on_metadata(automatic_fixes=False,
                                          check_level=CheckLevels.IGNORE)
 
@@ -902,6 +935,29 @@ class TestCMORCheck(unittest.TestCase):
         """Fail at metadata if frequency is not supported."""
         self._check_fails_in_metadata(frequency='wrong_freq')
 
+    def test_time_bounds(self):
+        """Test time bounds are guessed for all frequencies"""
+        freqs = ['hr', '3hr', '6hr', 'day', 'mon', 'yr', 'dec']
+        guessed = []
+        for freq in freqs:
+            cube = self.get_cube(self.var_info, frequency=freq)
+            cube.coord('time').bounds = None
+            self.cube = cube
+            self._check_cube(automatic_fixes=True, frequency=freq)
+            if cube.coord('time').bounds is not None:
+                guessed.append(True)
+        assert len(guessed) == len(freqs)
+
+    def test_no_time_bounds(self):
+        """Test time bounds are not guessed for instantaneous data"""
+        self.var_info.coordinates['time'].must_have_bounds = 'no'
+        self.var_info.coordinates['time1'] = (
+            self.var_info.coordinates.pop('time'))
+        self.cube.coord('time').bounds = None
+        self._check_cube(automatic_fixes=True)
+        guessed_bounds = self.cube.coord('time').bounds
+        assert guessed_bounds is None
+
     def _check_fails_on_data(self):
         checker = CMORCheck(self.cube, self.var_info)
         checker.check_metadata()
@@ -1100,7 +1156,13 @@ class TestCMORCheck(unittest.TestCase):
             delta = 30
         elif frequency == 'day':
             delta = 1
-        elif frequency.ends_with('hr'):
+        elif frequency == 'yr':
+            delta = 360
+        elif frequency == 'dec':
+            delta = 3600
+        elif frequency.endswith('hr'):
+            if frequency == 'hr':
+                frequency = '1hr'
             delta = float(frequency[:-2]) / 24
         else:
             raise Exception('Frequency {} not supported'.format(frequency))

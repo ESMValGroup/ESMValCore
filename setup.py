@@ -15,7 +15,8 @@ from pathlib import Path
 
 from setuptools import Command, setup
 
-from esmvalcore._version import __version__
+sys.path.insert(0, os.path.dirname(__file__))
+from esmvalcore._version import __version__  # noqa: E402
 
 PACKAGES = [
     'esmvalcore',
@@ -33,14 +34,16 @@ REQUIREMENTS = {
         'dask[array]',
         'fiona',
         'fire',
+        'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
-        'numba',
         'numpy',
         'prov[dot]',
         'psutil',
+        'pybtex',
         'pyyaml',
-        'scitools-iris>=2.2',
+        'requests',
+        'scitools-iris>=3.0.1',
         'shapely[vectorized]',
         'stratify',
         'yamale==2.*',
@@ -56,6 +59,7 @@ REQUIREMENTS = {
         'pytest-metadata>=1.5.1',
         'pytest-mock',
         'pytest-xdist',
+        'ESMValTool_sample_data==0.0.3',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
@@ -68,7 +72,7 @@ REQUIREMENTS = {
         'prospector[with_pyroma]!=1.1.6.3,!=1.1.6.4',
         'sphinx>2',
         'sphinx_rtd_theme',
-        'vmprof',
+        'vprof',
         'yamllint',
         'yapf',
     ],

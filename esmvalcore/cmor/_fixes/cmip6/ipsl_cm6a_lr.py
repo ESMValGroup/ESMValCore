@@ -24,7 +24,7 @@ class AllVars(Fix):
 
         """
         try:
-            cell_area = cubes.extract_strict('cell_area')
+            cell_area = cubes.extract_cube('cell_area')
         except ConstraintMismatchError:
             return cubes
 

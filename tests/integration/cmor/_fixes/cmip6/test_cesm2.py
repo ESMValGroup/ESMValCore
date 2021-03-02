@@ -7,82 +7,10 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from netCDF4 import Dataset
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl, Cli, Clw, Tas, Tos
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-
-
-@pytest.fixture
-def cl_file(tmp_path):
-    """Create netcdf file with similar issues as ``cl``."""
-    nc_path = os.path.join(tmp_path, 'cesm2_cl.nc')
-    with Dataset(nc_path, mode='w') as dataset:
-        dataset.createDimension('time', size=1)
-        dataset.createDimension('lev', size=2)
-        dataset.createDimension('lat', size=3)
-        dataset.createDimension('lon', size=4)
-        dataset.createDimension('bnds', size=2)
-
-        # Dimensional variables
-        dataset.createVariable('time', np.float64, dimensions=('time',))
-        dataset.createVariable('lev', np.float64, dimensions=('lev',))
-        dataset.createVariable('lev_bnds', np.float64, dimensions=('lev',
-                                                                   'bnds'))
-        dataset.createVariable('lat', np.float64, dimensions=('lat',))
-        dataset.createVariable('lon', np.float64, dimensions=('lon',))
-        dataset.variables['time'][:] = [0.0]
-        dataset.variables['time'].standard_name = 'time'
-        dataset.variables['time'].units = 'days since 6543-2-1'
-        dataset.variables['lev'][:] = [1.0, 2.0]
-        dataset.variables['lev'].bounds = 'lev_bnds'
-        dataset.variables['lev'].units = 'hPa'
-        dataset.variables['lev_bnds'][:] = [[0.5, 1.5], [1.5, 3.0]]
-        dataset.variables['lev_bnds'].standard_name = (
-            'atmosphere_hybrid_sigma_pressure_coordinate')
-        dataset.variables['lev_bnds'].units = '1'
-        dataset.variables['lev_bnds'].formula_terms = (
-            'p0: p0 a: a_bnds b: b_bnds ps: ps')
-        dataset.variables['lat'][:] = [-30.0, 0.0, 30.0]
-        dataset.variables['lat'].standard_name = 'latitude'
-        dataset.variables['lat'].units = 'degrees_north'
-        dataset.variables['lon'][:] = [30.0, 60.0, 90.0, 120.0]
-        dataset.variables['lon'].standard_name = 'longitude'
-        dataset.variables['lon'].units = 'degrees_east'
-
-        # Coordinates for derivation of pressure coordinate
-        dataset.createVariable('a', np.float64, dimensions=('lev',))
-        dataset.createVariable('a_bnds', np.float64, dimensions=('lev',
-                                                                 'bnds'))
-        dataset.createVariable('b', np.float64, dimensions=('lev',))
-        dataset.createVariable('b_bnds', np.float64, dimensions=('lev',
-                                                                 'bnds'))
-        dataset.createVariable('p0', np.float64, dimensions=())
-        dataset.createVariable('ps', np.float64,
-                               dimensions=('time', 'lat', 'lon'))
-        dataset.variables['a'][:] = [1.0, 2.0]
-        dataset.variables['a'].bounds = 'a_bnds'
-        dataset.variables['a_bnds'][:] = [[1.5, 3.0], [0.0, 1.5]]  # intended
-        dataset.variables['b'][:] = [0.0, 1.0]
-        dataset.variables['b'].bounds = 'b_bnds'
-        dataset.variables['b_bnds'][:] = [[0.5, 2.0], [-1.0, 0.5]]  # intended
-        dataset.variables['p0'][:] = 1.0
-        dataset.variables['p0'].units = 'Pa'
-        dataset.variables['ps'][:] = np.arange(1 * 3 * 4).reshape(1, 3, 4)
-        dataset.variables['ps'].standard_name = 'surface_air_pressure'
-        dataset.variables['ps'].units = 'Pa'
-
-        # Cl variable
-        dataset.createVariable('cl', np.float32,
-                               dimensions=('time', 'lev', 'lat', 'lon'))
-        dataset.variables['cl'][:] = np.full((1, 2, 3, 4),
-                                             0.0, dtype=np.float32)
-        dataset.variables['cl'].standard_name = (
-            'cloud_area_fraction_in_atmosphere_layer')
-        dataset.variables['cl'].units = '%'
-
-    return nc_path
 
 
 def test_get_cl_fix():
@@ -128,9 +56,10 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
 @unittest.mock.patch(
     'esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath',
     autospec=True)
-def test_cl_fix_file(mock_get_filepath, cl_file, tmp_path):
+def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     """Test ``fix_file`` for ``cl``."""
-    cubes = iris.load(cl_file)
+    nc_path = test_data_path / 'cesm2_cl.nc'
+    cubes = iris.load(str(nc_path))
 
     # Raw cubes
     assert len(cubes) == 5
@@ -142,21 +71,21 @@ def test_cl_fix_file(mock_get_filepath, cl_file, tmp_path):
     assert 'ps' in var_names
 
     # Raw cl cube
-    raw_cube = cubes.extract_strict('cloud_area_fraction_in_atmosphere_layer')
+    raw_cube = cubes.extract_cube('cloud_area_fraction_in_atmosphere_layer')
     assert not raw_cube.coords('air_pressure')
 
     # Apply fix
     mock_get_filepath.return_value = os.path.join(tmp_path,
                                                   'fixed_cesm2_cl.nc')
     fix = Cl(None)
-    fixed_file = fix.fix_file(cl_file, tmp_path)
-    mock_get_filepath.assert_called_once_with(tmp_path, cl_file)
+    fixed_file = fix.fix_file(nc_path, tmp_path)
+    mock_get_filepath.assert_called_once_with(tmp_path, nc_path)
     fixed_cubes = iris.load(fixed_file)
     assert len(fixed_cubes) == 2
     var_names = [cube.var_name for cube in fixed_cubes]
     assert 'cl' in var_names
     assert 'ps' in var_names
-    fixed_cl_cube = fixed_cubes.extract_strict(
+    fixed_cl_cube = fixed_cubes.extract_cube(
         'cloud_area_fraction_in_atmosphere_layer')
     fixed_air_pressure_coord = fixed_cl_cube.coord('air_pressure')
     assert fixed_air_pressure_coord.points is not None
@@ -341,4 +270,4 @@ def test_tos_fix_metadata(tos_cubes):
     out_cubes = fix.fix_metadata(tos_cubes)
     assert out_cubes is tos_cubes
     for cube in out_cubes:
-        np.testing.assert_equal(cube.coord("time").points, [0.,  1.1])
+        np.testing.assert_equal(cube.coord("time").points, [0., 1.1])

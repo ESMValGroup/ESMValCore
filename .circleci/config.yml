@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@11.1.1
+  coverage-reporter: codacy/coverage-reporter@11.4.1
 
 commands:
   check_changes:
@@ -26,14 +26,26 @@ jobs:
       - image: esmvalgroup/esmvalcore:development
     steps:
       - checkout
+      - restore_cache:
+          key: test-{{ .Branch }}
       - run:
           command: |
+            . /opt/conda/etc/profile.d/conda.sh
+            conda activate esmvaltool
             pip install .[test]
             pytest -n 2 -m "not installation"
+      - save_cache:
+          key: test-{{ .Branch }}
+          paths:
+            - ".eggs"
+            - ".pytest_cache"
       - store_test_results:
           path: test-reports/
       - store_artifacts:
           path: test-reports/
+      - coverage-reporter/send_report:
+          coverage-reports: 'test-reports/coverage.xml'
+          project-token: $CODACY_PROJECT_TOKEN
 
   install:
     # Test installation
@@ -44,7 +56,7 @@ jobs:
       - checkout
       - check_changes
       - restore_cache:
-          key: python3-install-{{ .Branch }}
+          key: install-{{ .Branch }}
       - run:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
@@ -64,19 +76,17 @@ jobs:
             pytest -n 2
             esmvaltool version
       - save_cache:
-          key: python3-install-{{ .Branch }}
+          key: install-{{ .Branch }}
           paths:
             - "/opt/conda/pkgs"
             - ".eggs"
+            - ".pytest_cache"
       - store_artifacts:
           path: /logs
       - store_artifacts:
           path: test-reports/
       - store_test_results:
           path: test-reports/
-      - coverage-reporter/send_report:
-          coverage-reports: 'test-reports/coverage.xml'
-          project-token: $CODACY_PROJECT_TOKEN
 
   documentation:
     # Test building documentation
