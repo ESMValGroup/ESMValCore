@@ -9,6 +9,7 @@ import iris.exceptions
 import iris.util
 import numpy as np
 
+from esmvalcore.preprocessor._time import _get_time_bounds
 from .table import CMOR_TABLES
 
 CheckLevels = IntEnum('CheckLevels', 'DEBUG STRICT DEFAULT RELAXED IGNORE')
@@ -507,6 +508,21 @@ class CMORCheck():
                     'Coordinate {0} from var {1} does not have bounds',
                     coord.var_name, var_name)
 
+    def _check_time_bounds(self, freq, time):
+        times = {'time', 'time1', 'time2', 'time3'}
+        key = times.intersection(self._cmor_var.coordinates)
+        cmor = self._cmor_var.coordinates[" ".join(key)]
+        if cmor.must_have_bounds == 'yes' and not time.has_bounds():
+            if self.automatic_fixes:
+                time.bounds = _get_time_bounds(time, freq)
+                self.report_warning(
+                    'Added guessed bounds to coordinate {0} from var {1}',
+                    time.var_name, self._cmor_var.short_name)
+            else:
+                self.report_warning(
+                    'Coordinate {0} from var {1} does not have bounds',
+                    time.var_name, self._cmor_var.short_name)
+
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
         if coord.ndim > 1:
@@ -658,9 +674,7 @@ class CMORCheck():
                               calendar=coord.units.calendar))
             simplified_cal = self._simplify_calendar(coord.units.calendar)
             coord.units = cf_units.Unit(coord.units.origin, simplified_cal)
-
             attrs = self._cube.attributes
-
             parent_time = 'parent_time_units'
             if parent_time in attrs:
                 if attrs[parent_time] in 'no parent':
@@ -720,6 +734,8 @@ class CMORCheck():
                 interval = intervals[freq]
                 target_interval = (interval[0] - tol, interval[1] + tol)
             elif freq.endswith('hr'):
+                if freq == 'hr':
+                    freq = '1hr'
                 frequency = freq[:-2]
                 if frequency == 'sub':
                     frequency = 1.0 / 24
@@ -738,7 +754,7 @@ class CMORCheck():
                     msg = '{}: Frequency {} does not match input data'
                     self.report_error(msg, var_name, freq)
                     break
-
+        self._check_time_bounds(freq, coord)
         # remove time_origin from attributes
         coord.attributes.pop('time_origin', None)
 
@@ -782,7 +798,7 @@ class CMORCheck():
         return len(self._debug_messages) > 0
 
     def report(self, level, message, *args):
-        """Generic method to report a message from the checker.
+        """Report a message from the checker.
 
         Parameters
         ----------

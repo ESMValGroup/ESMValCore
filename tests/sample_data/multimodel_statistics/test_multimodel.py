@@ -14,6 +14,9 @@ from esmvalcore.preprocessor._multimodel import multi_model_statistics
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
+# Increase this number anytime you change the cached input data to the tests.
+TEST_REVISION = 1
+
 CALENDAR_PARAMS = (
     pytest.param(
         '360_day',
@@ -68,6 +71,7 @@ def fix_metadata(cubes):
 
 def preprocess_data(cubes, time_slice: dict = None):
     """Regrid the data to the first cube and optional time-slicing."""
+    # Increase TEST_REVISION anytime you make changes to this function.
     if time_slice:
         cubes = [extract_time(cube, **time_slice) for cube in cubes]
 
@@ -88,12 +92,12 @@ def get_cache_key(value):
     """Get a cache key that is hopefully unique enough for unpickling.
 
     If this doesn't avoid problems with unpickling the cached data,
-    manually clean the pytest cache with the command `pytest --cache-
-    clear`.
+    manually clean the pytest cache with the command `pytest --cache-clear`.
     """
     py_version = platform.python_version()
     return (f'{value}_iris-{iris.__version__}_'
-            f'numpy-{np.__version__}_python-{py_version}')
+            f'numpy-{np.__version__}_python-{py_version}'
+            f'rev-{TEST_REVISION}')
 
 
 @pytest.fixture(scope="module")
@@ -106,6 +110,7 @@ def timeseries_cubes_month(request):
     if data:
         cubes = pickle.loads(data.encode('latin1'))
     else:
+        # Increase TEST_REVISION anytime you make changes here.
         time_slice = {
             'start_year': 1985,
             'end_year': 1987,
@@ -137,6 +142,7 @@ def timeseries_cubes_day(request):
         cubes = pickle.loads(data.encode('latin1'))
 
     else:
+        # Increase TEST_REVISION anytime you make changes here.
         time_slice = {
             'start_year': 2001,
             'end_year': 2002,
