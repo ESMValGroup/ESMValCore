@@ -22,6 +22,7 @@ on:
   push:
     branches:
     - master
+    - ga_osx
     - github-actions2
   # run the test only if the PR is to master
   # turn it on if required
@@ -73,7 +74,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: [3.6, 3.7]  # 3.8 not working as of 07-Sep-2020; 3.9 unchartered
+        python-version: [3.6, 3.7, 3.8, 3.9]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
