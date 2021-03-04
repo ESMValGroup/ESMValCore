@@ -32,7 +32,7 @@ import fire
 from pkg_resources import iter_entry_points
 
 # set up logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__ )
 
 HEADER = r"""
 ______________________________________________________________________
