@@ -339,30 +339,39 @@ def multi_model_statistics(products,
                            keep_input_datasets=True):
     """Compute multi-model statistics.
 
-    This function computes multi-model statistics on cubes or products.
-    Products (or: preprocessorfiles) are used internally by ESMValCore to store
+    This function computes multi-model statistics on a list of ``products``,
+    which can be instances of :py:class:`~iris.cube.Cube` or
+    :py:class:`~esmvalcore.preprocessor.PreprocessorFile`.
+    The latter is used internally by ESMValCore to store
     workflow and provenance information, and this option should typically be
     ignored.
 
     Apart from the time coordinate, cubes must have consistent shapes. There
     are two options to combine time coordinates of different lengths, see the
-    `span` argument.
+    ``span`` argument.
 
-    Uses the statistical operators in iris.analysis, including 'mean',
-    'median', 'min', 'max', and 'std'. Percentiles are also supported and can
-    be specified like pXX.YY (for percentile XX.YY; decimal part optional).
+    Uses the statistical operators in :py:mod:`iris.analysis`, including
+    ``mean``, ``median``, ``min``, ``max``, and ``std``. Percentiles are also
+    supported and can be specified like ``pXX.YY`` (for percentile ``XX.YY``;
+    decimal part optional).
 
-    Note: some of the operators in iris.analysis require additional arguments.
-    Except for percentiles, these operators are currently not supported.
+    Notes
+    -----
+    Some of the operators in :py:mod:`iris.analysis` require additional
+    arguments. Except for percentiles, these operators are currently not
+    supported.
+
+    Lazy operation is supported for all statistics, except
+    ``median``, ``percentile``, ``gmean`` and ``hmean``.
 
     Parameters
     ----------
     products: list
         Cubes (or products) over which the statistics will be computed.
     statistics: list
-        Statistical metrics to be computed, e.g. ['mean', 'max']. Choose from
-        the operators listed in the iris.analysis package. Percentiles can be
-        specified like 'pXX.YY'.
+        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
+        from the operators listed in the iris.analysis package. Percentiles can
+        be specified like ``pXX.YY``.
     span: str
         Overlap or full; if overlap, statitstics are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
