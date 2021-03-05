@@ -68,7 +68,7 @@ class Test(tests.Test):
             return self.tgt_grid
 
         self.mock_stock = self.patch(
-            'esmvalcore.preprocessor._regrid._stock_cube',
+            'esmvalcore.preprocessor._regrid._stock_global_cube',
             side_effect=_return_mock_stock_cube)
         self.mocks = [
             self.coord_system, self.coords, self.regrid, self.src_cube,
