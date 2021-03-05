@@ -214,22 +214,27 @@ def _spec_to_latlonvals(*, xsize: int, ysize: int, xfirst: int, xinc: int,
     Returns
     -------
     xvals : np.array
-        List of latitudes
-    yvals : np.array
         List of longitudes
+    yvals : np.array
+        List of latitudes
     """
+    if xinc <= 0:
+        raise ValueError('xinc (longitude increment) must be larger than 0.')
+    if yinc <= 0:
+        raise ValueError('yinc (latitude increment) must be larger than 0.')
+
     xlast = xfirst + xsize
     ylast = yfirst + ysize
     nx = int(xsize / xinc) + 1
     ny = int(ysize / yinc) + 1
 
-    if (xfirst <= _LAT_MIN) or (xlast >= _LAT_MAX):
+    if (xfirst < _LON_MIN) or (xlast > _LON_MAX):
         raise ValueError(
-            f'x values (latitude) must lie between {_LAT_MIN}:{_LAT_MAX}, '
+            f'x values (longitude) must lie between {_LON_MIN}:{_LON_MAX}, '
             f'got {xfirst}:{xlast}.')
-    if (yfirst <= _LON_MIN) or (ylast >= _LON_MAX):
+    if (yfirst < _LAT_MIN) or (ylast > _LAT_MAX):
         raise ValueError(
-            f'y values (longitude) must lie between {_LON_MIN}:{_LON_MAX}, '
+            f'y values (latitude) must lie between {_LAT_MIN}:{_LAT_MAX}, '
             f'got {yfirst}:{ylast}.')
 
     xvals = np.linspace(xfirst, xlast, nx)
