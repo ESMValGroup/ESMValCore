@@ -342,46 +342,55 @@ def extract_point(cube, latitude, longitude, scheme):
 def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     """Perform horizontal regridding.
 
+    Note that the target grid can be a cube (:py:class:`~iris.cube.Cube`),
+    path to a cube (``str``), a grid spec (``str``) in the form
+    of `MxN`, or a ``dict`` specifying the target grid.
+
+    For the latter, the ``target_grid`` should be a ``dict`` with the
+    following keys:
+
+    - ``xsize`` is the size in x direction (number of longitudes).
+    - ``ysize`` is the size in y direction (number of latitudes).
+    - ``xfirst`` is the value of the first grid cell center along x.
+    - ``xinc`` is the constant increment along x.
+    - ``yfirst`` is the value of the first grid cell center along y.
+    - ``yinc`` is the constant increment along y.
+
     Parameters
     ----------
-    cube : cube
+    cube : :py:class:`~iris.cube.Cube`
         The source cube to be regridded.
-    target_grid : cube or str or dict
+    target_grid : Cube or str or dict
         The (location of a) cube that specifies the target or reference grid
         for the regridding operation.
 
         Alternatively, a string cell specification may be provided,
-        of the form 'MxN', which specifies the extent of the cell, longitude by
-        latitude (degrees) for a global, regular target grid.
+        of the form ``MxN``, which specifies the extent of the cell, longitude
+        by latitude (degrees) for a global, regular target grid.
 
         Alternatively, a dictionary with a CDO-like regional target grid may
-        be specified:
-            ``xsize`` is the size in x direction (number of longitudes).
-            ``ysize`` is the size in y direction (number of latitudes).
-            ``xfirst`` is the value of the first grid cell center along x.
-            ``xinc`` is the constant increment along x.
-            ``yfirst`` is the value of the first grid cell center along y.
-            ``yinc`` is the constant increment along y.
+        be specified (see above).
 
     scheme : str
         The regridding scheme to perform, choose from
-        'linear',
-        'linear_extrapolate',
-        'nearest',
-        'area_weighted',
-        'unstructured_nearest'.
+        ``linear``,
+        ``linear_extrapolate``,
+        ``nearest``,
+        ``area_weighted``,
+        ``unstructured_nearest``.
     lat_offset : bool
         Offset the grid centers of the latitude coordinate w.r.t. the
-        pole by half a grid step. This argument is ignored if `target_grid`
+        pole by half a grid step. This argument is ignored if ``target_grid``
         is a cube or file.
     lon_offset : bool
         Offset the grid centers of the longitude coordinate w.r.t. Greenwich
         meridian by half a grid step.
-        This argument is ignored if `target_grid` is a cube or file.
+        This argument is ignored if ``target_grid`` is a cube or file.
 
     Returns
     -------
-    cube
+    :py:class:`~iris.cube.Cube`
+        Regridded cube.
 
     See Also
     --------
