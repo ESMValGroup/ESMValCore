@@ -199,12 +199,6 @@ def _combine(cubes, dim='new_dim'):
     equalise_attributes(cubes)  # in-place
 
     for i, cube in enumerate(cubes):
-        try:
-            # since cubes are updated in-place, new coord may already exist
-            cube.remove_coord(dim)
-        except iris.exceptions.CoordinateNotFoundError:
-            pass
-
         concat_dim = iris.coords.AuxCoord(i, var_name=dim)
         cube.add_aux_coord(concat_dim)
 
@@ -280,7 +274,10 @@ def _multicube_statistics(cubes, statistics, span):
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
     """
-    aligned_cubes = _align(cubes, span=span)
+    # work with copy of cubes to avoid modifying input cubes
+    copied_cubes = [cube.copy() for cube in cubes]
+
+    aligned_cubes = _align(copied_cubes, span=span)
     big_cube = _combine(aligned_cubes)
     statistics_cubes = {}
     for statistic in statistics:

@@ -371,10 +371,6 @@ def test_edge_case_different_time_offsets(span):
     desired = np.array((14., 45., 73.))
     np.testing.assert_array_equal(time_coord.points, desired)
 
-    # input cubes are updated in-place
-    for cube in cubes:
-        np.testing.assert_array_equal(cube.coord('time').points, desired)
-
 
 def generate_cubes_with_non_overlapping_timecoords():
     """Generate sample data where time coords do not overlap."""
@@ -447,10 +443,6 @@ def test_edge_case_time_not_in_middle_of_months(span):
 
     desired = np.array((14., 45., 73.))
     np.testing.assert_array_equal(time_coord.points, desired)
-
-    # input cubes are updated in-place
-    for cube in cubes:
-        np.testing.assert_array_equal(cube.coord('time').points, desired)
 
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
