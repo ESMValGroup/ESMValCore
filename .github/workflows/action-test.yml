@@ -21,7 +21,6 @@ on:
   push:
     branches:
     - master
-    - ga_osx
   # run the test only if the PR is to master
   # turn it on if required
   #pull_request:
