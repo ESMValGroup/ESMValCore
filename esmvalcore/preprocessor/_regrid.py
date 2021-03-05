@@ -239,10 +239,10 @@ def _spec_to_latlonvals(*, xsize: int, ysize: int, xfirst: int, xinc: int,
             f'y values (latitude) must lie between {_LAT_MIN}:{_LAT_MAX}, '
             f'got {yfirst}:{ylast}.')
 
-    xvals = np.linspace(xfirst, xlast, numx)
-    yvals = np.linspace(yfirst, ylast, numy)
+    longitudes = np.linspace(xfirst, xlast, numx)
+    latitudes = np.linspace(yfirst, ylast, numy)
 
-    return xvals, yvals
+    return latitudes, longitudes
 
 
 def _stock_regional_cube(spec):
