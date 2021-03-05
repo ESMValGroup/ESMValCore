@@ -104,9 +104,42 @@ def parse_cell_spec(spec):
     return dlon, dlat
 
 
-def _stock_cube(spec, lat_offset=True, lon_offset=True):
+def _stock_cube(latdata, londata):
     """
-    Create a stock cube.
+    Parameters
+    ----------
+    latdata : np.ndarray
+        List of latitudes
+    londata : np.ndarray
+        List of longitudes.
+
+    Returns
+    -------
+    :class:`~iris.cube.Cube`
+    """
+    lats = iris.coords.DimCoord(latdata,
+                                standard_name='latitude',
+                                units='degrees_north',
+                                var_name='lat')
+    lats.guess_bounds()
+
+    lons = iris.coords.DimCoord(londata,
+                                standard_name='longitude',
+                                units='degrees_east',
+                                var_name='lon')
+    lons.guess_bounds()
+
+    # Construct the resultant stock cube, with dummy data.
+    shape = (latdata.size, londata.size)
+    dummy = np.empty(shape, dtype=np.dtype('int8'))
+    coords_spec = [(lats, 0), (lons, 1)]
+    cube = iris.cube.Cube(dummy, dim_coords_and_dims=coords_spec)
+
+    return cube
+
+
+def _stock_global_cube(spec, lat_offset=True, lon_offset=True):
+    """Create a stock cube.
 
     Create a global cube with M degree-east by N degree-north regular grid
     cells.
@@ -130,8 +163,7 @@ def _stock_cube(spec, lat_offset=True, lon_offset=True):
 
     Returns
     -------
-        A :class:`~iris.cube.Cube`.
-
+    :class:`~iris.cube.Cube`
     """
     dlon, dlat = parse_cell_spec(spec)
     mid_dlon, mid_dlat = dlon / 2, dlat / 2
@@ -151,25 +183,58 @@ def _stock_cube(spec, lat_offset=True, lon_offset=True):
         londata = np.linspace(_LON_MIN, _LON_MAX - dlon,
                               int(_LON_RANGE / dlon))
 
-    lats = iris.coords.DimCoord(
-        latdata,
-        standard_name='latitude',
-        units='degrees_north',
-        var_name='lat')
-    lats.guess_bounds()
+    cube = _stock_cube(latdata=latdata, londata=londata)
 
-    lons = iris.coords.DimCoord(
-        londata,
-        standard_name='longitude',
-        units='degrees_east',
-        var_name='lon')
-    lons.guess_bounds()
+    return cube
 
-    # Construct the resultant stock cube, with dummy data.
-    shape = (latdata.size, londata.size)
-    dummy = np.empty(shape, dtype=np.dtype('int8'))
-    coords_spec = [(lats, 0), (lons, 1)]
-    cube = iris.cube.Cube(dummy, dim_coords_and_dims=coords_spec)
+
+def _spec_to_latlonvals(*, xsize: int, ysize: int, xfirst: int, xinc: int,
+                        yfirst: int, yinc: int) -> tuple:
+    """Take a CDO-like spec and returns the corresponding lat/lon values.
+
+    Create a regional cube starting defined by the target specification.
+
+    The spec is defined here:
+    https://code.mpimet.mpg.de/projects/cdo/embedded/index.html
+
+    Parameters
+    ----------
+    xsize: int
+        Size in x direction (number of longitudes).
+    ysize: int
+        Size in y direction (number of latitudes).
+    xfirst: int
+        Value of the first grid cell center along x.
+    xinc: int
+        Constant increment along x.
+    yfirst: int
+        Value of the first grid cell center along y.
+    yinc: int
+        Constant increment along y.
+
+    Returns
+    -------
+    xvals : np.array
+        List of latitudes
+    yvals : np.array
+        List of longitudes
+    """
+    xvals = np.linspace(xfirst, xfirst + xsize, int(xsize / xinc) + 1)
+    yvals = np.linspace(yfirst, yfirst + ysize, int(ysize / yinc) + 1)
+
+    return xvals, yvals
+
+
+def _stock_regional_cube(spec):
+    """Create a regional stock cube.
+
+    Returns
+    -------
+    :class:`~iris.cube.Cube`.
+    """
+    latdata, londata = _spec_to_latlonvals(**spec)
+
+    cube = _stock_cube(latdata=latdata, londata=londata)
 
     return cube
 
@@ -200,7 +265,6 @@ def extract_point(cube, latitude, longitude, scheme):
     scalar, the dimension will be missing in the output cube (that is,
     it will be a scalar).
 
-
     Parameters
     ----------
     cube : cube
@@ -211,7 +275,6 @@ def extract_point(cube, latitude, longitude, scheme):
 
     scheme : str
         The interpolation scheme. 'linear' or 'nearest'. No default.
-
 
     Returns
     -------
@@ -260,18 +323,29 @@ def extract_point(cube, latitude, longitude, scheme):
 
 
 def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
-    """
-    Perform horizontal regridding.
+    """Perform horizontal regridding.
 
     Parameters
     ----------
     cube : cube
         The source cube to be regridded.
-    target_grid : cube or str
-        The cube that specifies the target or reference grid for the regridding
-        operation. Alternatively, a string cell specification may be provided,
+    target_grid : cube or str or dict
+        The (location of a) cube that specifies the target or reference grid
+        for the regridding operation.
+
+        Alternatively, a string cell specification may be provided,
         of the form 'MxN', which specifies the extent of the cell, longitude by
         latitude (degrees) for a global, regular target grid.
+
+        Alternatively, a dictionary with a CDO-like regional target grid may
+        be specified:
+            ``xsize`` is the size in x direction (number of longitudes).
+            ``ysize`` is the size in y direction (number of latitudes).
+            ``xfirst`` is the value of the first grid cell center along x.
+            ``xinc`` is the constant increment along x.
+            ``yfirst`` is the value of the first grid cell center along y.
+            ``yinc`` is the constant increment along y.
+
     scheme : str
         The regridding scheme to perform, choose from
         'linear',
@@ -295,7 +369,6 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     See Also
     --------
     extract_levels : Perform vertical regridding.
-
     """
     if HORIZONTAL_SCHEMES.get(scheme.lower()) is None:
         emsg = 'Unknown regridding scheme, got {!r}.'
@@ -309,7 +382,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             # and cache the resulting stock cube for later use.
             target_grid = _CACHE.setdefault(
                 target_grid,
-                _stock_cube(target_grid, lat_offset, lon_offset),
+                _stock_global_cube(target_grid, lat_offset, lon_offset),
             )
             # Align the target grid coordinate system to the source
             # coordinate system.
@@ -318,6 +391,11 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             ycoord = target_grid.coord(axis='y', dim_coords=True)
             xcoord.coord_system = src_cs
             ycoord.coord_system = src_cs
+
+    elif isinstance(target_grid, dict):
+        # Generate a target grid from the provided cdo-specification,
+        # https://code.mpimet.mpg.de/projects/cdo/embedded/index.html
+        target_grid = _stock_regional_cube(target_grid)
 
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError('Expecting a cube, got {}.'.format(target_grid))
