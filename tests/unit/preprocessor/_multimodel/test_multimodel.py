@@ -257,49 +257,6 @@ def test_get_consistent_time_unit(calendar1, calendar2, expected):
     assert result.calendar == expected
 
 
-def generate_resolve_span_cases(valid):
-    """Generate test cases for _resolve_span."""
-    points_1 = (1, 2, 3)
-    points_2 = (2, 3, 4)
-    points_3 = (3, 4, 5)
-    points_4 = (4, 5, 6)
-    empty_tuple = ()
-
-    if valid:
-        yield from (
-            ((points_1, ), 'overlap', points_1),
-            ((points_1, ), 'full', points_1),
-            ((points_1, points_2), 'overlap', (2, 3)),
-            ((points_1, points_2), 'full', (1, 2, 3, 4)),
-            ((points_1, points_2, points_3), 'overlap', (3, )),
-            ((points_1, points_2, points_3), 'full', (1, 2, 3, 4, 5)),
-            ((points_1, points_4), 'full', (1, 2, 3, 4, 5, 6)),
-        )
-    else:
-        yield from (
-            (empty_tuple, 'overlap', TypeError),
-            (empty_tuple, 'full', TypeError),
-            ((points_1, points_4), 'overlap', ValueError),
-        )
-
-
-@pytest.mark.parametrize('points, span, expected',
-                         generate_resolve_span_cases(True))
-def test_resolve_span(points, span, expected):
-    """Check that resolve_span returns the correct union/intersection."""
-    result = mm._resolve_span(points, span=span)
-    assert isinstance(result, np.ndarray)
-    np.testing.assert_equal(result, expected)
-
-
-@pytest.mark.parametrize('points, span, error',
-                         generate_resolve_span_cases(False))
-def test_resolve_span_fail(points, span, error):
-    """Test failing case for _resolve_span."""
-    with pytest.raises(error):
-        mm._resolve_span(points, span=span)
-
-
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_align(span):
     """Test _align function."""
