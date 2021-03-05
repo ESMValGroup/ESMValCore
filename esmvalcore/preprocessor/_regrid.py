@@ -63,8 +63,7 @@ VERTICAL_SCHEMES = ('linear', 'nearest',
 
 
 def parse_cell_spec(spec):
-    """
-    Parse an MxN cell specification string.
+    """Parse an MxN cell specification string.
 
     Parameters
     ----------
@@ -253,7 +252,7 @@ def _attempt_irregular_regridding(cube, scheme):
 
 
 def extract_point(cube, latitude, longitude, scheme):
-    """Extract a point, with interpolation
+    """Extract a point, with interpolation.
 
     Extracts a single latitude/longitude point from a cube, according
     to the interpolation scheme `scheme`.
@@ -309,7 +308,6 @@ def extract_point(cube, latitude, longitude, scheme):
     array([1, 1, 1, 1, 1, 1, 1, 1]))
     >>> point.data[~point.data.mask].data  # doctest: +SKIP
     array([ 1,  5, 17, 21, 33, 37, 49, 53])
-
     """
 
     msg = f"Unknown interpolation scheme, got {scheme!r}."
@@ -419,9 +417,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _create_cube(src_cube, data, src_levels, levels, ):
-    """
-    Generate a new cube with the interpolated data.
+def _create_cube(
+    src_cube,
+    data,
+    src_levels,
+    levels,
+):
+    """Generate a new cube with the interpolated data.
 
     The resultant cube is seeded with `src_cube` metadata and coordinates,
     excluding any source coordinates that span the associated vertical
@@ -448,7 +450,6 @@ def _create_cube(src_cube, data, src_levels, levels, ):
         If there is only one level of interpolation, the resultant cube
         will be collapsed over the associated vertical dimension, and a
         scalar vertical coordinate will be added.
-
     """
     # Get the source cube vertical coordinate and associated dimension.
     z_coord = src_cube.coord(axis='z', dim_coords=True)
@@ -519,20 +520,19 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
     # Broadcast the 1d source cube vertical coordinate to fully
     # describe the spatial extent that will be interpolated.
-    src_levels_broadcast = broadcast_to_shape(
-        src_levels.points, cube.shape, cube.coord_dims(src_levels))
+    src_levels_broadcast = broadcast_to_shape(src_levels.points, cube.shape,
+                                              cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
     cube.data = da.ma.filled(cube.core_data(), np.nan)
 
     # Now perform the actual vertical interpolation.
-    new_data = stratify.interpolate(
-        levels,
-        src_levels_broadcast,
-        cube.core_data(),
-        axis=z_axis,
-        interpolation=interpolation,
-        extrapolation=extrapolation)
+    new_data = stratify.interpolate(levels,
+                                    src_levels_broadcast,
+                                    cube.core_data(),
+                                    axis=z_axis,
+                                    interpolation=interpolation,
+                                    extrapolation=extrapolation)
 
     # Calculate the mask based on the any NaN values in the interpolated data.
     mask = np.isnan(new_data)
@@ -546,8 +546,7 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
 
 def extract_levels(cube, levels, scheme, coordinate=None):
-    """
-    Perform vertical interpolation.
+    """Perform vertical interpolation.
 
     Parameters
     ----------
@@ -578,7 +577,6 @@ def extract_levels(cube, levels, scheme, coordinate=None):
     See Also
     --------
     regrid : Perform horizontal regridding.
-
     """
     if scheme not in VERTICAL_SCHEMES:
         emsg = 'Unknown vertical interpolation scheme, got {!r}. '
@@ -616,7 +614,7 @@ def extract_levels(cube, levels, scheme, coordinate=None):
 
     if (src_levels.shape == levels.shape
             and np.allclose(src_levels.points, levels)):
-        # Only perform vertical extraction/interploation if the source
+        # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
         result = cube
     elif len(src_levels.shape) == 1 and \
@@ -632,8 +630,8 @@ def extract_levels(cube, levels, scheme, coordinate=None):
             raise ValueError(emsg.format(list(levels), name))
     else:
         # As a last resort, perform vertical interpolation.
-        result = _vertical_interpolate(
-            cube, src_levels, levels, scheme, extrap_scheme)
+        result = _vertical_interpolate(cube, src_levels, levels, scheme,
+                                       extrap_scheme)
 
     return result
 
@@ -657,7 +655,6 @@ def get_cmor_levels(cmor_table, coordinate):
     ValueError:
         If the CMOR table is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
-
     """
     if cmor_table not in CMOR_TABLES:
         raise ValueError(
@@ -680,13 +677,8 @@ def get_cmor_levels(cmor_table, coordinate):
             coordinate, cmor_table))
 
 
-def get_reference_levels(filename,
-                         project,
-                         dataset,
-                         short_name,
-                         mip,
-                         frequency,
-                         fix_dir):
+def get_reference_levels(filename, project, dataset, short_name, mip,
+                         frequency, fix_dir):
     """Get level definition from a reference dataset.
 
     Parameters
@@ -703,7 +695,6 @@ def get_reference_levels(filename,
     ValueError:
         If the dataset is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
-
     """
     filename = fix_file(
         file=filename,
