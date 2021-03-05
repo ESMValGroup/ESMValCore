@@ -68,6 +68,7 @@ def parse_cell_spec(spec):
     Parameters
     ----------
     spec: str
+        ``MxN`` degree cell-specification for the global grid.
 
     Returns
     -------
@@ -104,7 +105,8 @@ def parse_cell_spec(spec):
 
 
 def _stock_cube(latdata, londata):
-    """
+    """Generate stock cube from lat/lon points.
+
     Parameters
     ----------
     latdata : np.ndarray
@@ -225,8 +227,8 @@ def _spec_to_latlonvals(*, xsize: int, ysize: int, xfirst: int, xinc: int,
 
     xlast = xfirst + xsize
     ylast = yfirst + ysize
-    nx = int(xsize / xinc) + 1
-    ny = int(ysize / yinc) + 1
+    numx = int(xsize / xinc) + 1
+    numy = int(ysize / yinc) + 1
 
     if (xfirst < _LON_MIN) or (xlast > _LON_MAX):
         raise ValueError(
@@ -237,8 +239,8 @@ def _spec_to_latlonvals(*, xsize: int, ysize: int, xfirst: int, xinc: int,
             f'y values (latitude) must lie between {_LAT_MIN}:{_LAT_MAX}, '
             f'got {yfirst}:{ylast}.')
 
-    xvals = np.linspace(xfirst, xlast, nx)
-    yvals = np.linspace(yfirst, ylast, ny)
+    xvals = np.linspace(xfirst, xlast, numx)
+    yvals = np.linspace(yfirst, ylast, numy)
 
     return xvals, yvals
 
@@ -328,7 +330,6 @@ def extract_point(cube, latitude, longitude, scheme):
     >>> point.data[~point.data.mask].data  # doctest: +SKIP
     array([ 1,  5, 17, 21, 33, 37, 49, 53])
     """
-
     msg = f"Unknown interpolation scheme, got {scheme!r}."
     scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
     if not scheme:
@@ -445,12 +446,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _create_cube(
-    src_cube,
-    data,
-    src_levels,
-    levels,
-):
+def _create_cube(src_cube, data, src_levels, levels):
     """Generate a new cube with the interpolated data.
 
     The resultant cube is seeded with `src_cube` metadata and coordinates,
@@ -466,6 +462,8 @@ def _create_cube(
     data : array
         The payload resulting from interpolating the source cube
         over the specified levels.
+    src_levels : array
+        Vertical levels of the source data
     levels : array
         The vertical levels of interpolation.
 
@@ -713,6 +711,18 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
     ----------
     filename: str
         Path to the reference file
+    project : str
+        Name of the project
+    dataset : str
+        Name of the dataset
+    short_name : str
+        Name of the variable
+    mip : str
+        Name of the mip table
+    frequency : str
+        Time frequency
+    fix_dir : str
+        Output directory for fixed data
 
     Returns
     -------
