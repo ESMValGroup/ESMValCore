@@ -24,7 +24,8 @@ STATISTIC_MAPPING = {
     'mean': iris.analysis.MEAN,
     'std_dev': iris.analysis.STD_DEV,
     'variance': iris.analysis.VARIANCE,
-    # The following require extra kwargs. ATM this is only supported for percentiles
+    # The following require extra kwargs,
+    # atm this is only supported for percentiles via e.g. `pXX`
     'count': iris.analysis.COUNT,
     'peak': iris.analysis.PEAK,
     'percentile': iris.analysis.PERCENTILE,  # not lazy in iris
@@ -118,7 +119,13 @@ def _subset(cube, time_points):
 
 
 def _extend(cube, time_points):
-    """Extend cube to a specified time range."""
+    """Extend cube to a specified time range.
+
+    If time points are missing before the start/after the end of the
+    time range, cubes for each missing time pointwith masked data will
+    be added to pad the time range to match `time_points`. This method
+    supports lazy operation.
+    """
     cube.coord('time').bounds = None
     cube_points = cube.coord('time').points
 
@@ -185,7 +192,10 @@ def _align(cubes, span):
 
 
 def _combine(cubes, dim='new_dim'):
-    """Merge iris cubes into a single big cube with new dimension."""
+    """Merge iris cubes into a single big cube with new dimension.
+
+    This assumes that all input cubes have the same shape.
+    """
     equalise_attributes(cubes)  # in-place
 
     for i, cube in enumerate(cubes):
