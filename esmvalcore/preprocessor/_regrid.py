@@ -50,7 +50,7 @@ POINT_INTERPOLATION_SCHEMES = {
 # Supported horizontal regridding schemes.
 HORIZONTAL_SCHEMES = {
     'linear': Linear(extrapolation_mode='mask'),
-    'linear_extrapolate': Linear(extrapolation_mode='extrapolate'),
+    'linear_extrapolate': Linear(),
     'nearest': Nearest(extrapolation_mode='mask'),
     'area_weighted': AreaWeighted(),
     'unstructured_nearest': UnstructuredNearest(),
@@ -218,8 +218,22 @@ def _spec_to_latlonvals(*, xsize: int, ysize: int, xfirst: int, xinc: int,
     yvals : np.array
         List of longitudes
     """
-    xvals = np.linspace(xfirst, xfirst + xsize, int(xsize / xinc) + 1)
-    yvals = np.linspace(yfirst, yfirst + ysize, int(ysize / yinc) + 1)
+    xlast = xfirst + xsize
+    ylast = yfirst + ysize
+    nx = int(xsize / xinc) + 1
+    ny = int(ysize / yinc) + 1
+
+    if (xfirst <= _LAT_MIN) or (xlast >= _LAT_MAX):
+        raise ValueError(
+            f'x values (latitude) must lie between {_LAT_MIN}:{_LAT_MAX}, '
+            f'got {xfirst}:{xlast}.')
+    if (yfirst <= _LON_MIN) or (ylast >= _LON_MAX):
+        raise ValueError(
+            f'y values (longitude) must lie between {_LON_MIN}:{_LON_MAX}, '
+            f'got {yfirst}:{ylast}.')
+
+    xvals = np.linspace(xfirst, xlast, nx)
+    yvals = np.linspace(yfirst, ylast, ny)
 
     return xvals, yvals
 
