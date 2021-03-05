@@ -24,7 +24,7 @@ STATISTIC_MAPPING = {
     'mean': iris.analysis.MEAN,
     'std_dev': iris.analysis.STD_DEV,
     'variance': iris.analysis.VARIANCE,
-    # not directly supported
+    # The following require extra kwargs. ATM this is only supported for percentiles
     'count': iris.analysis.COUNT,
     'peak': iris.analysis.PEAK,
     'percentile': iris.analysis.PERCENTILE,  # not lazy in iris
@@ -97,25 +97,6 @@ def _unify_time_coordinates(cubes):
         cube.coord('time').guess_bounds()
 
 
-def _resolve_span(all_times, span):
-    """Construct new time array based on the span parameter."""
-    if len(all_times) == 1:
-        new_times = np.array(all_times[0])
-
-    elif span == 'full':
-        new_times = reduce(np.union1d, all_times)
-
-    elif span == 'overlap':
-        new_times = reduce(np.intersect1d, all_times)
-        if new_times.size < 1:
-            raise ValueError("No time overlap found between input cubes.")
-    else:
-        raise ValueError("Unknown value for span. Expected 'full' or 'overlap'"
-                         "got {}".format(span))
-
-    return new_times
-
-
 def _time_coords_are_aligned(cubes):
     """Return `True` if time coords are aligned."""
     first_time_array = cubes[0].coord('time').points
@@ -140,9 +121,6 @@ def _extend(cube, time_points):
     """Extend cube to a specified time range."""
     cube.coord('time').bounds = None
     cube_points = cube.coord('time').points
-
-    if not np.all(np.diff(cube_points) > 0):
-        raise ValueError('Time points are not monotonic')
 
     begin = cube_points[0]
     end = cube_points[-1]
