@@ -104,15 +104,18 @@ def parse_cell_spec(spec):
     return dlon, dlat
 
 
-def _stock_cube(latdata, londata):
+def _stock_cube(latdata, londata, circular: bool = False):
     """Generate stock cube from lat/lon points.
 
     Parameters
     ----------
     latdata : np.ndarray
-        List of latitudes
+        List of latitudes.
     londata : np.ndarray
         List of longitudes.
+    circular : bool
+        Wrap longitudes around the full great circle. Bounds will not be
+        generated for circular coordinates.
 
     Returns
     -------
@@ -121,14 +124,19 @@ def _stock_cube(latdata, londata):
     lats = iris.coords.DimCoord(latdata,
                                 standard_name='latitude',
                                 units='degrees_north',
-                                var_name='lat')
-    lats.guess_bounds()
+                                var_name='lat',
+                                circular=circular)
 
     lons = iris.coords.DimCoord(londata,
                                 standard_name='longitude',
                                 units='degrees_east',
-                                var_name='lon')
-    lons.guess_bounds()
+                                var_name='lon',
+                                circular=circular)
+
+    if not circular:
+        # cannot guess bounds for wrapped coordinates
+        lats.guess_bounds()
+        lons.guess_bounds()
 
     # Construct the resultant stock cube, with dummy data.
     shape = (latdata.size, londata.size)
@@ -189,29 +197,38 @@ def _stock_global_cube(spec, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _spec_to_latlonvals(*, xsize: int, ysize: int, xfirst: int, xinc: int,
-                        yfirst: int, yinc: int) -> tuple:
-    """Take a CDO-like spec and returns the corresponding lat/lon values.
+def _spec_to_latlonvals(*, lat_start: float, lat_end: float, lat_step: float,
+                        lon_start: float, lon_end: float,
+                        lon_step: float) -> tuple:
+    """Define lat/lon values from spec.
 
     Create a regional cube starting defined by the target specification.
 
-    The spec is defined here:
-    https://code.mpimet.mpg.de/projects/cdo/embedded/index.html
+    The latitude must be between -90 and +90. The longitude is not bounded, but
+    wraps around the full great circle.
 
     Parameters
     ----------
-    xsize: int
-        Size in x direction (number of longitudes).
-    ysize: int
-        Size in y direction (number of latitudes).
-    xfirst: int
-        Value of the first grid cell center along x.
-    xinc: int
-        Constant increment along x.
-    yfirst: int
-        Value of the first grid cell center along y.
-    yinc: int
-        Constant increment along y.
+    lat_start : float
+        Latitude value of the first grid cell center. The grid includes this
+        value.
+    lat_end : float
+        Maximum latitude value of the last grid cell. The grid includes this
+        value only if it falls on a grid point. Otherwise, it cuts off at the
+        first previous value.
+    lat_step : float
+        Latitude spacing between grid points, i.e. the distance between two
+        adjecent values.
+    lon_start : float
+        Latitude value of the first grid cell center. The grid includes this
+        value.
+    lon_end : float
+        Maximum longitude value of the last grid cell. The grid includes this
+        value only if it falls on a grid point. Otherwise, it cuts off at the
+        first previous value.
+    lon_step : float
+        Longitude spacing between grid points, i.e. the distance between two
+        adjecent values.
 
     Returns
     -------
@@ -220,32 +237,32 @@ def _spec_to_latlonvals(*, xsize: int, ysize: int, xfirst: int, xinc: int,
     yvals : np.array
         List of latitudes
     """
-    if xinc <= 0:
-        raise ValueError('xinc (longitude increment) must be larger than 0.')
-    if yinc <= 0:
-        raise ValueError('yinc (latitude increment) must be larger than 0.')
+    if lat_step == 0:
+        raise ValueError('Latitude step must be larger than 0, '
+                         f'got lat_step={lat_step}.')
 
-    xlast = xfirst + xsize
-    ylast = yfirst + ysize
-    numx = int(xsize / xinc) + 1
-    numy = int(ysize / yinc) + 1
+    if lon_step == 0:
+        raise ValueError('Longitude step must be larger than 0, '
+                         f'got lon_step={lon_step}.')
 
-    if (xfirst < _LON_MIN) or (xlast > _LON_MAX):
+    if (lat_start < _LAT_MIN) or (lat_end > _LAT_MAX):
         raise ValueError(
-            f'x values (longitude) must lie between {_LON_MIN}:{_LON_MAX}, '
-            f'got {xfirst}:{xlast}.')
-    if (yfirst < _LAT_MIN) or (ylast > _LAT_MAX):
-        raise ValueError(
-            f'y values (latitude) must lie between {_LAT_MIN}:{_LAT_MAX}, '
-            f'got {yfirst}:{ylast}.')
+            f'Latitude values must lie between {_LAT_MIN}:{_LAT_MAX}, '
+            f'got lat_start={lat_start}:lat_end={lat_end}.')
 
-    longitudes = np.linspace(xfirst, xlast, numx)
-    latitudes = np.linspace(yfirst, ylast, numy)
+    def get_points(start, stop, step):
+        """Calculate grid points."""
+        num = int((stop - start) // step)
+        stop = start + num * step
+        return np.linspace(start, stop, num + 1)
+
+    latitudes = get_points(lat_start, lat_end, lat_step)
+    longitudes = get_points(lon_start, lon_end, lon_step)
 
     return latitudes, longitudes
 
 
-def _stock_regional_cube(spec):
+def _stock_regional_cube(spec: dict):
     """Create a regional stock cube.
 
     Returns
@@ -254,7 +271,16 @@ def _stock_regional_cube(spec):
     """
     latdata, londata = _spec_to_latlonvals(**spec)
 
-    cube = _stock_cube(latdata=latdata, londata=londata)
+    cube = _stock_cube(latdata=latdata, londata=londata, circular=True)
+
+    def add_bounds_from_step(coord, step):
+        """Calculate bounds from the given step."""
+        bound = step / 2
+        points = coord.points
+        coord.bounds = np.vstack((points - bound, points + bound)).T
+
+    add_bounds_from_step(cube.coord('latitude'), spec['lat_step'])
+    add_bounds_from_step(cube.coord('longitude'), spec['lon_step'])
 
     return cube
 
@@ -350,12 +376,12 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     For the latter, the ``target_grid`` should be a ``dict`` with the
     following keys:
 
-    - ``xsize`` is the size in x direction (number of longitudes).
-    - ``ysize`` is the size in y direction (number of latitudes).
-    - ``xfirst`` is the value of the first grid cell center along x.
-    - ``xinc`` is the constant increment along x.
-    - ``yfirst`` is the value of the first grid cell center along y.
-    - ``yinc`` is the constant increment along y.
+    - ``lon_start`` is the longitude of the first grid cell.
+    - ``lon_end`` is the longitude of the last grid cell.
+    - ``lon_step`` is the constant longitude increment.
+    - ``lat_start`` is the latitude of the first grid cell.
+    - ``lat_end`` is the longitude of the last grid cell.
+    - ``lat_step`` is the constant latitude increment.
 
     Parameters
     ----------
@@ -369,7 +395,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         of the form ``MxN``, which specifies the extent of the cell, longitude
         by latitude (degrees) for a global, regular target grid.
 
-        Alternatively, a dictionary with a CDO-like regional target grid may
+        Alternatively, a dictionary with a regional target grid may
         be specified (see above).
 
     scheme : str
@@ -420,8 +446,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             ycoord.coord_system = src_cs
 
     elif isinstance(target_grid, dict):
-        # Generate a target grid from the provided cdo-specification,
-        # https://code.mpimet.mpg.de/projects/cdo/embedded/index.html
+        # Generate a target grid from the provided specification,
         target_grid = _stock_regional_cube(target_grid)
 
     if not isinstance(target_grid, iris.cube.Cube):
