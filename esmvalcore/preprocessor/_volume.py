@@ -240,6 +240,7 @@ def volume_statistics(
         # ####
         # iterate over time and z-coordinate dimensions.
         for z_itr in range(cube.shape[1]):
+            print('volume statistics',operator, (time_itr, z_itr), 'of', cube.shape) 
             # ####
             # Calculate weighted mean for this time and layer
             if operator == 'mean':

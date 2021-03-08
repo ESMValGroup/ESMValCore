@@ -1,5 +1,6 @@
 """Fixes for MCM-UA-1-0 model."""
 import iris
+from dask.array import clip
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
@@ -58,3 +59,25 @@ class Tas(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 2.0)
         return [cube]
+
+class so(Fix):
+    """Fixes for so."""
+
+    def fix_data(self, cubes):
+        """
+        Fix salinity where it goes below zero.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        assert 0
+        for cube in cubes:
+            max_value = cube.data.max()
+            cube.data = clip(cube.data, 0., max_value)
+        return cubes
