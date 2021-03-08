@@ -22,6 +22,8 @@ PASSING_SPECS = (dict(zip(SPEC_KEYS, spec)) for spec in (
     (100, 50, -5, -90, 90, 5),
     (0, 360, 5, 40, 20, -5),
     (0, 359, 10, -90, 89, 10),
+    (0, 0, 5, -90, 90, 5),
+    (0, 360, 5, 0, 0, 5),
 ))
 
 FAILING_SPECS = (
@@ -32,8 +34,6 @@ FAILING_SPECS = (
         (0, 360, 5, -90, 90, -5),
         (0, 360, -5, -90, 90, 5),
         (0, -360, 5, -90, 90, 5),
-        (0, 0, 5, -90, 90, 5),
-        (0, 360, 5, 0, 0, 5),
         (0, 360, 0, -90, 90, 5),
         (0, 360, 5, -90, 90, 0),
     ))
@@ -49,11 +49,14 @@ def test_extract_regional_grid_passing(spec):
 
     expected_latvals, expected_lonvals = _spec_to_latlonvals(**spec)
 
-    latvals = result_cube.coord('latitude').points
-    lonvals = result_cube.coord('longitude').points
+    lat_coord = result_cube.coord('latitude')
+    lon_coord = result_cube.coord('longitude')
 
-    np.testing.assert_array_equal(latvals, expected_latvals)
-    np.testing.assert_array_equal(lonvals, expected_lonvals)
+    np.testing.assert_array_equal(lat_coord.points, expected_latvals)
+    np.testing.assert_array_equal(lon_coord.points, expected_lonvals)
+
+    assert lat_coord.has_bounds()
+    assert lon_coord.has_bounds()
 
 
 @pytest.mark.parametrize('spec', FAILING_SPECS)
