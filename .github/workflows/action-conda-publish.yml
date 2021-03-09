@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest']  # may extent to osx in the future
+        os: ['ubuntu-latest', 'macos-latest']
         python-version: ["3.6", "3.7", "3.8", "3.9"]
     runs-on: ${{ matrix.os }}
     needs: publish
