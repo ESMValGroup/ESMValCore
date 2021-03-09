@@ -210,25 +210,25 @@ def _spec_to_latlonvals(*, lat_start: float, lat_end: float, lat_step: float,
     Parameters
     ----------
     lat_start : float
-        Latitude value of the first grid cell center. The grid includes this
-        value.
+        Latitude value of the first grid cell center (start point). The grid
+        includes this value.
     lat_end : float
-        Maximum latitude value of the last grid cell. The grid includes this
-        value only if it falls on a grid point. Otherwise, it cuts off at the
-        first previous value.
+        Latitude value of the last grid cell (end point). The grid includes
+        this value only if it falls on a grid point. Otherwise, it cuts off at
+        the previous value.
     lat_step : float
         Latitude spacing between grid points, i.e. the distance between two
         adjecent values.
     lon_start : float
-        Latitude value of the first grid cell center. The grid includes this
-        value.
+        Latitude value of the first grid cell center (start point). The grid
+        includes this value.
     lon_end : float
-        Maximum longitude value of the last grid cell. The grid includes this
-        value only if it falls on a grid point. Otherwise, it cuts off at the
-        first previous value.
+        Longitude value of the last grid cell (end point). The grid includes
+        this value only if it falls on a grid point. Otherwise, it cuts off at
+        the previous value.
     lon_step : float
         Longitude spacing between grid points, i.e. the distance between two
-        adjecent values.
+        adjecent grid cells.
 
     Returns
     -------
@@ -378,12 +378,12 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     For the latter, the ``target_grid`` should be a ``dict`` with the
     following keys:
 
-    - ``lon_start`` is the longitude of the first grid cell.
-    - ``lon_end`` is the longitude of the last grid cell.
-    - ``lon_step`` is the constant longitude increment.
-    - ``lat_start`` is the latitude of the first grid cell.
-    - ``lat_end`` is the longitude of the last grid cell.
-    - ``lat_step`` is the constant latitude increment.
+    - ``lon_start``: longitude value at the center of the first grid cell.
+    - ``lon_end``: longitude value at the center of the last grid cell.
+    - ``lon_step``: constant longitude distance between grid cell centers
+    - ``lat_start``: latitude value at the center of the first grid cell.
+    - ``lat_end``: longitude value at the center of the last grid cell.
+    - ``lat_step``: constant latitude distance between grid cell centers.
 
     Parameters
     ----------
