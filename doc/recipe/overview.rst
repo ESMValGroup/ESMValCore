@@ -250,6 +250,8 @@ Note that the script should either have the extension for a supported language,
 i.e. ``.py``, ``.R``, ``.ncl``, or ``.jl`` for Python, R, NCL, and Julia diagnostics
 respectively, or be executable if it is written in any other language.
 
+.. _ancestor-tasks:
+
 Ancestor tasks
 --------------
 Some tasks require the result of other tasks to be ready before they can start,
