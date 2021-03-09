@@ -599,8 +599,8 @@ centrepoints using the `lat_offset` and ``lon_offset`` arguments:
           lat_offset: True
           scheme: nearest
 
-Regridding on regional target grid specification
-------------------------------------------------
+Regridding to a regional target grid specification
+--------------------------------------------------
 
 This example shows how to regrid to a regional target grid specification.
 This is useful if both a ``regrid`` and ``extract_region`` step are necessary.
@@ -641,7 +641,6 @@ The arguments are defined below:
   The grid includes this value only if it falls on a grid point.
   Otherwise, it cuts off at the previous value.
 * ``lon_step``: Longitude distance between the centers of two neighbouring cells.
-
 
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
