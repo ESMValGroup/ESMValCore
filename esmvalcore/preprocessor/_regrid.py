@@ -104,8 +104,8 @@ def parse_cell_spec(spec):
     return dlon, dlat
 
 
-def _stock_cube(latdata, londata, circular: bool = False):
-    """Generate stock cube from lat/lon points.
+def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
+    """Generate cube from lat/lon points.
 
     Parameters
     ----------
@@ -147,7 +147,7 @@ def _stock_cube(latdata, londata, circular: bool = False):
     return cube
 
 
-def _stock_global_cube(spec, lat_offset=True, lon_offset=True):
+def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
     """Create a stock cube.
 
     Create a global cube with M degree-east by N degree-north regular grid
@@ -192,7 +192,7 @@ def _stock_global_cube(spec, lat_offset=True, lon_offset=True):
         londata = np.linspace(_LON_MIN, _LON_MAX - dlon,
                               int(_LON_RANGE / dlon))
 
-    cube = _stock_cube(latdata=latdata, londata=londata)
+    cube = _generate_cube_from_dimcoords(latdata=latdata, londata=londata)
 
     return cube
 
@@ -262,7 +262,7 @@ def _spec_to_latlonvals(*, lat_start: float, lat_end: float, lat_step: float,
     return latitudes, longitudes
 
 
-def _stock_regional_cube(spec: dict):
+def _regional_stock_cube(spec: dict):
     """Create a regional stock cube.
 
     Returns
@@ -271,7 +271,9 @@ def _stock_regional_cube(spec: dict):
     """
     latdata, londata = _spec_to_latlonvals(**spec)
 
-    cube = _stock_cube(latdata=latdata, londata=londata, circular=True)
+    cube = _generate_cube_from_dimcoords(latdata=latdata,
+                                         londata=londata,
+                                         circular=True)
 
     def add_bounds_from_step(coord, step):
         """Calculate bounds from the given step."""
@@ -435,7 +437,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             # and cache the resulting stock cube for later use.
             target_grid = _CACHE.setdefault(
                 target_grid,
-                _stock_global_cube(target_grid, lat_offset, lon_offset),
+                _global_stock_cube(target_grid, lat_offset, lon_offset),
             )
             # Align the target grid coordinate system to the source
             # coordinate system.
@@ -447,7 +449,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     elif isinstance(target_grid, dict):
         # Generate a target grid from the provided specification,
-        target_grid = _stock_regional_cube(target_grid)
+        target_grid = _regional_stock_cube(target_grid)
 
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError('Expecting a cube, got {}.'.format(target_grid))

@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 
 from esmvalcore.preprocessor._regrid import (
+    _global_stock_cube,
     _spec_to_latlonvals,
-    _stock_global_cube,
     regrid,
 )
 
@@ -42,7 +42,7 @@ FAILING_SPECS = (
 @pytest.mark.parametrize('spec', PASSING_SPECS)
 def test_extract_regional_grid_passing(spec):
     """Test regridding with regional target spec."""
-    global_cube = _stock_global_cube('10x10')
+    global_cube = _global_stock_cube('10x10')
     scheme = 'linear'
 
     result_cube = regrid(global_cube, target_grid=spec, scheme=scheme)
@@ -62,7 +62,7 @@ def test_extract_regional_grid_passing(spec):
 @pytest.mark.parametrize('spec', FAILING_SPECS)
 def test_extract_regional_grid_failing(spec):
     """Test failing input for spec."""
-    global_cube = _stock_global_cube('10x10')
+    global_cube = _global_stock_cube('10x10')
     scheme = 'linear'
 
     with pytest.raises(ValueError):
