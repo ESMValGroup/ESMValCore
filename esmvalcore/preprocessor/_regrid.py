@@ -213,22 +213,20 @@ def _spec_to_latlonvals(*, lat_start: float, lat_end: float, lat_step: float,
         Latitude value of the first grid cell center (start point). The grid
         includes this value.
     lat_end : float
-        Latitude value of the last grid cell (end point). The grid includes
-        this value only if it falls on a grid point. Otherwise, it cuts off at
-        the previous value.
+        Latitude value of the last grid cell center (end point). The grid
+        includes this value only if it falls on a grid point. Otherwise, it
+        cuts off at the previous value.
     lat_step : float
-        Latitude spacing between grid points, i.e. the distance between two
-        adjecent values.
+        Latitude distance between the centers of two neighbouring cells.
     lon_start : float
         Latitude value of the first grid cell center (start point). The grid
         includes this value.
     lon_end : float
-        Longitude value of the last grid cell (end point). The grid includes
-        this value only if it falls on a grid point. Otherwise, it cuts off at
-        the previous value.
+        Longitude value of the last grid cell center (end point). The grid
+        includes this value only if it falls on a grid point. Otherwise, it
+        cuts off at the previous value.
     lon_step : float
-        Longitude spacing between grid points, i.e. the distance between two
-        adjecent grid cells.
+        Longitude distance between the centers of two neighbouring cells.
 
     Returns
     -------
