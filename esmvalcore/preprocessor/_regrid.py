@@ -236,11 +236,11 @@ def _spec_to_latlonvals(*, lat_start: float, lat_end: float, lat_step: float,
         List of latitudes
     """
     if lat_step == 0:
-        raise ValueError('Latitude step must be larger than 0, '
+        raise ValueError('Latitude step cannot be 0, '
                          f'got lat_step={lat_step}.')
 
     if lon_step == 0:
-        raise ValueError('Longitude step must be larger than 0, '
+        raise ValueError('Longitude step cannot be 0, '
                          f'got lon_step={lon_step}.')
 
     if (lat_start < _LAT_MIN) or (lat_end > _LAT_MAX):
