@@ -3,17 +3,22 @@
 http://www.esmvaltool.org
 
 CORE DEVELOPMENT TEAM AND CONTACTS:
-  Veronika Eyring (PI; DLR, Germany - veronika.eyring@dlr.de)
-  Bouwe Andela (NLESC, Netherlands - b.andela@esciencecenter.nl)
-  Bjoern Broetz (DLR, Germany - bjoern.broetz@dlr.de)
+  Birgit Hassler (Co-PI; DLR, Germany - birgit.hassler@dlr.de)
+  Alistair Sellar (Co-PI; Met Office, UK - alistair.sellar@metoffice.gov.uk)
+  Bouwe Andela (Netherlands eScience Center, The Netherlands
+    - b.andela@esciencecenter.nl)
+  Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
   Lee de Mora (PML, UK - ledm@pml.ac.uk)
-  Niels Drost (NLESC, Netherlands - n.drost@esciencecenter.nl)
+  Niels Drost (Netherlands eScience Center, The Netherlands
+    - n.drost@esciencecenter.nl)
+  Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
+  Remi Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
   Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
   Axel Lauer (DLR, Germany - axel.lauer@dlr.de)
   Benjamin Mueller (LMU, Germany - b.mueller@iggf.geo.uni-muenchen.de)
   Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-  Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
   Manuel Schlund (DLR, Germany - manuel.schlund@dlr.de)
+  Breixo Solino Fernandez (DLR, Germany - breixo.solinofernandez@dlr.de)
   Javier Vegas-Regidor (BSC, Spain - javier.vegas@bsc.es)
   Klaus Zimmermann (SMHI, Sweden - klaus.zimmermann@smhi.se)
 
@@ -97,6 +102,7 @@ def process_recipe(recipe_file, config_user):
 
     # run
     recipe.run()
+    recipe.write_html_summary()
 
     # End time timing
     timestamp2 = datetime.datetime.utcnow()
@@ -118,7 +124,7 @@ class Config():
         import os
         import shutil
 
-        from ._logging import configure_logging
+        from ._config import configure_logging
         configure_logging(console_log_level='info')
         if not path:
             path = os.path.join(os.path.expanduser('~/.esmvaltool'), filename)
@@ -134,8 +140,9 @@ class Config():
             logger.info('Creating folder %s', target_folder)
             os.makedirs(target_folder)
 
-        logger.info('Copying file to %s.', path)
-        shutil.copy2(os.path.join(os.path.dirname(__file__), filename), path)
+        conf_file = os.path.join(os.path.dirname(__file__), filename)
+        logger.info('Copying file %s to path %s.', conf_file, path)
+        shutil.copy2(conf_file, path)
         logger.info('Copy finished.')
 
     @classmethod
@@ -191,10 +198,9 @@ class Recipes():
         """
         import os
 
-        from ._config import DIAGNOSTICS_PATH
-        from ._logging import configure_logging
+        from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
-        recipes_folder = os.path.join(DIAGNOSTICS_PATH, 'recipes')
+        recipes_folder = DIAGNOSTICS.recipes
         logger.info("Showing recipes installed in %s", recipes_folder)
         print('# Installed recipes')
         for root, _, files in sorted(os.walk(recipes_folder)):
@@ -218,19 +224,18 @@ class Recipes():
         recipe: str
             Name of the recipe to get, including any subdirectories.
         """
-        import os
         import shutil
+        from pathlib import Path
 
-        from ._config import DIAGNOSTICS_PATH
-        from ._logging import configure_logging
+        from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
-        installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
-        if not os.path.exists(installed_recipe):
+        installed_recipe = DIAGNOSTICS.recipes / recipe
+        if not installed_recipe.exists():
             ValueError(
                 f'Recipe {recipe} not found. To list all available recipes, '
                 'execute "esmvaltool list"')
         logger.info('Copying installed recipe to the current folder...')
-        shutil.copy(installed_recipe, os.path.basename(recipe))
+        shutil.copy(installed_recipe, Path(recipe).name)
         logger.info('Recipe %s successfully copied', recipe)
 
     @staticmethod
@@ -244,13 +249,10 @@ class Recipes():
         recipe: str
             Name of the recipe to get, including any subdirectories.
         """
-        import os
-
-        from ._config import DIAGNOSTICS_PATH
-        from ._logging import configure_logging
+        from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
-        installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes', recipe)
-        if not os.path.exists(installed_recipe):
+        installed_recipe = DIAGNOSTICS.recipes / recipe
+        if not installed_recipe.exists():
             ValueError(
                 f'Recipe {recipe} not found. To list all available recipes, '
                 'execute "esmvaltool list"')
@@ -347,14 +349,16 @@ class ESMValTool():
         import os
         import shutil
 
-        from ._config import DIAGNOSTICS_PATH, read_config_user_file
-        from ._logging import configure_logging
+        from ._config import (
+            DIAGNOSTICS,
+            configure_logging,
+            read_config_user_file,
+        )
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
 
         if not os.path.exists(recipe):
-            installed_recipe = os.path.join(DIAGNOSTICS_PATH, 'recipes',
-                                            recipe)
+            installed_recipe = str(DIAGNOSTICS.recipes / recipe)
             if os.path.exists(installed_recipe):
                 recipe = installed_recipe
         recipe = os.path.abspath(os.path.expandvars(

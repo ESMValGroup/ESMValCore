@@ -5,7 +5,6 @@ import pytest
 
 import esmvalcore._recipe_checks as check
 
-
 ERR_ALL = 'Looked for files matching%s'
 ERR_D = ('Looked for files in %s, but did not find any file pattern to match '
          'against')
@@ -18,6 +17,7 @@ VAR = {
     'short_name': 'tas',
     'start_year': 2020,
     'end_year': 2025,
+    'alias': 'alias',
 }
 FX_VAR = {
     'filename': 'a/b.nc',
@@ -33,15 +33,13 @@ FILES = [
     'a/b/c_20250101-20251231',
 ]
 
-
 DATA_AVAILABILITY_DATA = [
     (FILES, dict(VAR), None),
     (FILES, dict(FX_VAR), None),
     (FILES[:-1], dict(VAR), ERR_RANGE.format('2025', FILES[:-1])),
     (FILES[:-2], dict(VAR), ERR_RANGE.format('2024, 2025', FILES[:-2])),
-    ([FILES[1]] + [FILES[3]], dict(VAR), ERR_RANGE.format(
-        '2024, 2025, 2020, 2022', [FILES[1]] + [FILES[3]])),
-
+    ([FILES[1]] + [FILES[3]], dict(VAR),
+     ERR_RANGE.format('2024, 2025, 2020, 2022', [FILES[1]] + [FILES[3]])),
 ]
 
 
@@ -90,12 +88,13 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
         'short_name': 'tas',
         'start_year': 2020,
         'end_year': 2025,
+        'alias': 'alias',
     }
     error_first = ('No input files found for variable %s', var_no_filename)
     error_last = ("Set 'log_level' to 'debug' to get more information", )
     with pytest.raises(check.RecipeError) as rec_err:
         check.data_availability([], var, dirnames, filenames)
-    assert str(rec_err.value) == 'Missing data'
+    assert str(rec_err.value) == 'Missing data for alias: tas'
     if error is None:
         assert mock_logger.error.call_count == 2
         errors = [error_first, error_last]

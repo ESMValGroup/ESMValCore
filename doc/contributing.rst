@@ -227,6 +227,11 @@ early, as this will cause CircleCI to run the unit tests and Codacy to
 analyse your code. It’s also easier to get help from other developers if
 your code is visible in a pull request.
 
+You also must assign at least one `label <https://docs.github.com/en/github/managing-your-work-on-github/managing-labels#applying-labels-to-issues-and-pull-requests>`__
+to it as they are used to organize the changelog. At least one of the following
+ones must be used: `bug`, `deprecated feature`, `fix for dataset`,
+`preprocessor`, `cmor`, `api`, `testing`, `documentation` or `enhancement`.
+
 You can view the results of the automatic checks below your pull
 request. If one of the tests shows a red cross instead of a green
 approval sign, please click the link and try to solve the issue. Note
@@ -278,16 +283,26 @@ and the
 `GitHub Actions run <https://github.com/ESMValGroup/ESMValCore/actions>`__.
 All tests should pass before making a release (branch).
 
-2. Increase the version number
+2. Create a release branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Create a branch off the ``master`` branch and push it to GitHub.
+Ask someone with administrative permissions to set up branch protection rules
+for it so only you and the person helping you with the release can push to it.
+Announce the name of the branch in an issue and ask the members of the
+`ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
+to run their favourite recipe using this branch.
+
+3. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The version number is stored in ``esmvalcore/_version.py``,
 ``package/meta.yaml``, ``CITATION.cff``. Make sure to update all files.
 Also update the release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
-Make a pull request and get it merged into ``master``.
+Make a pull request and get it merged into ``master`` and cherry pick it into
+the release branch.
 
-3. Add release notes
+4. Add release notes
 ~~~~~~~~~~~~~~~~~~~~
 Use the script
 `esmvaltool/utils/draft_release_notes.py <https://docs.esmvaltool.org/en/latest/utils.html#draft-release-notes-py>`__
@@ -297,16 +312,8 @@ previous release.
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
-Make a pull request and get it merged into ``master``.
-
-4. Create a release branch
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-Create a branch off the ``master`` branch and push it to GitHub.
-Ask someone with administrative permissions to set up branch protection rules
-for it so only you and the person helping you with the release can push to it.
-Announce the name of the branch in an issue and ask the members of the
-`ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
-to run their favourite recipe using this branch.
+Make a pull request and get it merged into ``master`` and cherry pick it into
+the release branch..
 
 5. Cherry pick bugfixes into the release branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -353,7 +360,7 @@ Follow these steps to create a new conda package:
    conda package
 -  If the build was successful, upload the package to the esmvalgroup
    conda channel, e.g.
-   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.1.0-py_0.tar.bz2``.
+   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.2.0-py_0.tar.bz2``.
 
 8. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -376,7 +383,7 @@ Follow these steps to create a new Python package:
 -  Build the package:
    ``python3 -m pep517.build --source --binary --out-dir dist/ .``
    This command should generate two files in the ``dist`` directory, e.g.
-   ``ESMValCore-2.1.0-py3-none-any.whl`` and ``ESMValCore-2.1.0.tar.gz``.
+   ``ESMValCore-2.2.0-py3-none-any.whl`` and ``ESMValCore-2.2.0.tar.gz``.
 -  Upload the package:
    ``python3 -m twine upload dist/*``
    You will be prompted for an API token if you have not set this up

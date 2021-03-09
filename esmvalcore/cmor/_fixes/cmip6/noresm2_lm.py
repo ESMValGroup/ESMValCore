@@ -1,14 +1,29 @@
 """Fixes for NorESM2-LM model."""
 import numpy as np
 
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 
 
 class AllVars(Fix):
     """Fixes for all variables."""
+
     def fix_metadata(self, cubes):
-        """Longitude boundary description may be wrong (lon=[0, 2.5, ..., 355,
-        357.5], lon_bnds=[[0, 1.25], ..., [356.25, 360]])."""
+        """Fix metadata.
+
+        Longitude boundary description may be wrong (lon=[0, 2.5, ..., 355,
+        357.5], lon_bnds=[[0, 1.25], ..., [356.25, 360]]).
+
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+            Input cubes to fix.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
         for cube in cubes:
             coord_names = [cor.standard_name for cor in cube.coords()]
             if 'longitude' in coord_names:
@@ -26,8 +41,18 @@ class AllVars(Fix):
         return cubes
 
 
+Cl = ClFixHybridPressureCoord
+
+
+Cli = ClFixHybridPressureCoord
+
+
+Clw = ClFixHybridPressureCoord
+
+
 class Siconc(Fix):
     """Fixes for siconc."""
+
     def fix_metadata(self, cubes):
         """Fix metadata.
 
@@ -43,6 +68,7 @@ class Siconc(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         for cube in cubes:
             latitude = cube.coord('latitude')

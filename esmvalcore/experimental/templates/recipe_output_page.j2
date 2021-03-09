@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  {% with title=info.name %}
+    {% include 'head.j2' %}
+  {% endwith %}
+
+  <body>
+
+    {% include 'RecipeInfo.j2' %}
+
+    {% include 'RecipeOutput.j2' %}
+
+  </body>
+
+  <h2>files</h2>
+
+  <p>
+    <a href='{{ session.relative_main_log }}'>{{ session.main_log.name }}</a> |
+    <a href='{{ session.relative_main_log_debug }}'>{{ session.main_log_debug.name }}</a> |
+    <a href='{{ session.relative_run_dir / info.filename }}'>{{ info.filename }}</a>
+  </p>
+
+</html>

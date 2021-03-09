@@ -156,19 +156,26 @@ def extract_season(cube, season):
     sstart = allmonths.index(season)
     res_season = allmonths[sstart + len(season):sstart + 12]
     seasons = [season, res_season]
+    coords_to_remove = []
 
     if not cube.coords('clim_season'):
         iris.coord_categorisation.add_season(cube,
                                              'time',
                                              name='clim_season',
                                              seasons=seasons)
+        coords_to_remove.append('clim_season')
+
     if not cube.coords('season_year'):
         iris.coord_categorisation.add_season_year(cube,
                                                   'time',
                                                   name='season_year',
                                                   seasons=seasons)
+        coords_to_remove.append('season_year')
 
-    return cube.extract(iris.Constraint(clim_season=season))
+    result = cube.extract(iris.Constraint(clim_season=season))
+    for coord in coords_to_remove:
+        cube.remove_coord(coord)
+    return result
 
 
 def extract_month(cube, month):
@@ -718,7 +725,7 @@ def regrid_time(cube, frequency):
 
     # uniformize bounds
     cube.coord('time').bounds = None
-    cube.coord('time').guess_bounds()
+    cube.coord('time').bounds = _get_time_bounds(cube.coord('time'), frequency)
 
     # remove aux coords that will differ
     reset_aux = ['day_of_month', 'day_of_year']
@@ -737,12 +744,51 @@ def regrid_time(cube, frequency):
     return cube
 
 
+def _get_time_bounds(time, freq):
+    bounds = []
+    for step, point in enumerate(time.points):
+        month = time.cell(step).point.month
+        year = time.cell(step).point.year
+        if freq in ['mon', 'mo']:
+            next_month, next_year = _get_next_month(month, year)
+            min_bound = time.units.date2num(
+                datetime.datetime(year, month, 1, 0, 0))
+            max_bound = time.units.date2num(
+                datetime.datetime(next_year, next_month, 1, 0, 0))
+        elif freq == 'yr':
+            min_bound = time.units.date2num(
+                datetime.datetime(year, 1, 1, 0, 0))
+            max_bound = time.units.date2num(
+                datetime.datetime(year + 1, 1, 1, 0, 0))
+        elif freq == 'dec':
+            min_bound = time.units.date2num(
+                datetime.datetime(year, 1, 1, 0, 0))
+            max_bound = time.units.date2num(
+                datetime.datetime(year + 10, 1, 1, 0, 0))
+        else:
+            delta = {
+                'day': 12 / 24,
+                '6hr': 3 / 24,
+                '3hr': 1.5 / 24,
+                '1hr': 0.5 / 24,
+            }
+            min_bound = point - delta[freq]
+            max_bound = point + delta[freq]
+        bounds.append([min_bound, max_bound])
+    return np.array(bounds)
+
+
+def _get_next_month(month, year):
+    if month != 12:
+        return month + 1, year
+    return 1, year + 1
+
+
 def low_pass_weights(window, cutoff):
     """Calculate weights for a low pass Lanczos filter.
 
     Method borrowed from `iris example
-    <https://scitools.org.uk/iris/docs/latest/examples/General/
-    SOI_filtering.html?highlight=running%20mean>`_
+    <https://scitools-iris.readthedocs.io/en/latest/generated/gallery/general/plot_SOI_filtering.html?highlight=running%20mean>`_
 
     Parameters
     ----------
@@ -778,16 +824,13 @@ def timeseries_filter(cube,
     """Apply a timeseries filter.
 
     Method borrowed from `iris example
-    <https://scitools.org.uk/iris/docs/latest/examples/General/
-    SOI_filtering.html?highlight=running%20mean>`_
+    <https://scitools-iris.readthedocs.io/en/latest/generated/gallery/general/plot_SOI_filtering.html?highlight=running%20mean>`_
 
     Apply each filter using the rolling_window method used with the weights
     keyword argument. A weighted sum is required because the magnitude of
     the weights are just as important as their relative sizes.
 
-    See also the `iris rolling window
-    <https://scitools.org.uk/iris/docs/v2.0/iris/iris/
-    cube.html#iris.cube.Cube.rolling_window>`_
+    See also the iris rolling window :obj:`iris.cube.Cube.rolling_window`.
 
     Parameters
     ----------
