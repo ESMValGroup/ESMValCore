@@ -611,36 +611,36 @@ This is useful if both a ``regrid`` and ``extract_region`` step are necessary.
       regrid_preprocessor:
         regrid:
           target_grid:
-            lon_start: 40
-            lon_end: 60
-            lon_step: 2
-            lat_start: -10
-            lat_end: 30
-            lat_step: 2
+            start_longitude: 40
+            end_longitude: 60
+            step_longitude: 2
+            start_latitude: -10
+            end_latitude: 30
+            step_latitude: 2
           scheme: nearest
 
 This defines a grid ranging from 40° to 60° longitude with 2° steps,
-and -10° to 30° latitude with 2° steps. If ``lon_end`` or ``lat_end`` do
-not fall on the grid (e.g., ``lon_end: 61``), it cuts off at the nearest
+and -10° to 30° latitude with 2° steps. If ``end_longitude`` or ``end_latitude`` do
+not fall on the grid (e.g., ``end_longitude: 61``), it cuts off at the nearest
 previous value (e.g. ``60``).
 
 The longitude coordinates will wrap around the globe if necessary, i.e.
-``lon_start: 350``, ``lon_end: 370`` is valid input.
+``start_longitude: 350``, ``end_longitude: 370`` is valid input.
 
 The arguments are defined below:
 
-* ``lat_start``: Latitude value of the first grid cell center (start point).
+* ``start_latitude``: Latitude value of the first grid cell center (start point).
   The grid includes this value.
-* ``lat_end``: Latitude value of the last grid cell center (end point).
+* ``end_latitude``: Latitude value of the last grid cell center (end point).
   The grid includes this value only if it falls on a grid point.
   Otherwise, it cuts off at the previous value.
-* ``lat_step``: Latitude distance between the centers of two neighbouring cells.
-* ``lon_start``: Latitude value of the first grid cell center (start point).
+* ``step_latitude``: Latitude distance between the centers of two neighbouring cells.
+* ``start_longitude``: Latitude value of the first grid cell center (start point).
   The grid includes this value.
-* ``lon_end``: Longitude value of the last grid cell center (end point).
+* ``end_longitude``: Longitude value of the last grid cell center (end point).
   The grid includes this value only if it falls on a grid point.
   Otherwise, it cuts off at the previous value.
-* ``lon_step``: Longitude distance between the centers of two neighbouring cells.
+* ``step_longitude``: Longitude distance between the centers of two neighbouring cells.
 
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------

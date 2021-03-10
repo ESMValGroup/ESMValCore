@@ -197,9 +197,9 @@ def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _spec_to_latlonvals(*, lat_start: float, lat_end: float, lat_step: float,
-                        lon_start: float, lon_end: float,
-                        lon_step: float) -> tuple:
+def _spec_to_latlonvals(*, start_latitude: float, end_latitude: float,
+                        step_latitude: float, start_longitude: float,
+                        end_longitude: float, step_longitude: float) -> tuple:
     """Define lat/lon values from spec.
 
     Create a regional cube starting defined by the target specification.
@@ -209,23 +209,23 @@ def _spec_to_latlonvals(*, lat_start: float, lat_end: float, lat_step: float,
 
     Parameters
     ----------
-    lat_start : float
+    start_latitude : float
         Latitude value of the first grid cell center (start point). The grid
         includes this value.
-    lat_end : float
+    end_latitude : float
         Latitude value of the last grid cell center (end point). The grid
         includes this value only if it falls on a grid point. Otherwise, it
         cuts off at the previous value.
-    lat_step : float
+    step_latitude : float
         Latitude distance between the centers of two neighbouring cells.
-    lon_start : float
+    start_longitude : float
         Latitude value of the first grid cell center (start point). The grid
         includes this value.
-    lon_end : float
+    end_longitude : float
         Longitude value of the last grid cell center (end point). The grid
         includes this value only if it falls on a grid point. Otherwise, it
         cuts off at the previous value.
-    lon_step : float
+    step_longitude : float
         Longitude distance between the centers of two neighbouring cells.
 
     Returns
@@ -235,18 +235,19 @@ def _spec_to_latlonvals(*, lat_start: float, lat_end: float, lat_step: float,
     yvals : np.array
         List of latitudes
     """
-    if lat_step == 0:
+    if step_latitude == 0:
         raise ValueError('Latitude step cannot be 0, '
-                         f'got lat_step={lat_step}.')
+                         f'got step_latitude={step_latitude}.')
 
-    if lon_step == 0:
+    if step_longitude == 0:
         raise ValueError('Longitude step cannot be 0, '
-                         f'got lon_step={lon_step}.')
+                         f'got step_longitude={step_longitude}.')
 
-    if (lat_start < _LAT_MIN) or (lat_end > _LAT_MAX):
+    if (start_latitude < _LAT_MIN) or (end_latitude > _LAT_MAX):
         raise ValueError(
             f'Latitude values must lie between {_LAT_MIN}:{_LAT_MAX}, '
-            f'got lat_start={lat_start}:lat_end={lat_end}.')
+            f'got start_latitude={start_latitude}:end_latitude={end_latitude}.'
+        )
 
     def get_points(start, stop, step):
         """Calculate grid points."""
@@ -254,8 +255,8 @@ def _spec_to_latlonvals(*, lat_start: float, lat_end: float, lat_step: float,
         stop = start + num * step
         return np.linspace(start, stop, num + 1)
 
-    latitudes = get_points(lat_start, lat_end, lat_step)
-    longitudes = get_points(lon_start, lon_end, lon_step)
+    latitudes = get_points(start_latitude, end_latitude, step_latitude)
+    longitudes = get_points(start_longitude, end_longitude, step_longitude)
 
     return latitudes, longitudes
 
@@ -279,8 +280,8 @@ def _regional_stock_cube(spec: dict):
         points = coord.points
         coord.bounds = np.vstack((points - bound, points + bound)).T
 
-    add_bounds_from_step(cube.coord('latitude'), spec['lat_step'])
-    add_bounds_from_step(cube.coord('longitude'), spec['lon_step'])
+    add_bounds_from_step(cube.coord('latitude'), spec['step_latitude'])
+    add_bounds_from_step(cube.coord('longitude'), spec['step_longitude'])
 
     return cube
 
@@ -376,12 +377,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     For the latter, the ``target_grid`` should be a ``dict`` with the
     following keys:
 
-    - ``lon_start``: longitude value at the center of the first grid cell.
-    - ``lon_end``: longitude value at the center of the last grid cell.
-    - ``lon_step``: constant longitude distance between grid cell centers
-    - ``lat_start``: latitude value at the center of the first grid cell.
-    - ``lat_end``: longitude value at the center of the last grid cell.
-    - ``lat_step``: constant latitude distance between grid cell centers.
+    - ``start_longitude``: longitude at the center of the first grid cell.
+    - ``end_longitude``: longitude at the center of the last grid cell.
+    - ``step_longitude``: constant longitude distance between grid cell
+    centers.
+    - ``start_latitude``: latitude at the center of the first grid cell.
+    - ``end_latitude``: longitude at the center of the last grid cell.
+    - ``step_latitude``: constant latitude distance between grid cell centers.
 
     Parameters
     ----------

@@ -9,8 +9,8 @@ from esmvalcore.preprocessor._regrid import (
     regrid,
 )
 
-SPEC_KEYS = ('lon_start', 'lon_end', 'lon_step', 'lat_start', 'lat_end',
-             'lat_step')
+SPEC_KEYS = ('start_longitude', 'end_longitude', 'step_longitude',
+             'start_latitude', 'end_latitude', 'step_latitude')
 PASSING_SPECS = (dict(zip(SPEC_KEYS, spec)) for spec in (
     (0, 360, 5, -90, 90, 5),
     (0, 360, 20, -90, 90, 20),
