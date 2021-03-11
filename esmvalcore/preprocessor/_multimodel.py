@@ -6,6 +6,7 @@ from datetime import datetime
 from functools import reduce
 
 import cf_units
+import dask
 import dask.array as da
 import iris
 import numpy as np
@@ -219,6 +220,24 @@ def _combine(cubes, dim='new_dim'):
     return merged_cube
 
 
+def rechunk(cube, blocksize='auto'):
+    """Rechunk the cube to speed up out-of-memory computation."""
+
+    if blocksize != 'auto':  # auto block size in dask is "128MiB"
+        dask.config.set({"array.chunk-size": blocksize})
+
+    new_chunks = {0: -1}  # don't chunk along the multimodel dimension
+    if cube.ndim > 1:
+        new_chunks[1] = 'auto'  # do chunk along the first subsequent dimension
+
+    cube.data = cube.lazy_data().rechunk(new_chunks)
+
+    logger.debug("Total data size: %s MB", cube.lazy_data().nbytes * 1e-6)
+    logger.debug("New chunk block size: %s MB",
+                 cube.lazy_data().nbytes / cube.lazy_data().npartitions * 1e-6)
+    logger.debug("New chunk configuration: %s", cube.lazy_data())
+
+
 def _compute(cube, statistic: str, dim: str = 'new_dim'):
     """Compute statistic.
 
@@ -239,6 +258,8 @@ def _compute(cube, statistic: str, dim: str = 'new_dim'):
     """
     statistic = statistic.lower()
     kwargs = {}
+
+    rechunk(cube, blocksize="auto")
 
     # special cases
     if statistic == 'std':
