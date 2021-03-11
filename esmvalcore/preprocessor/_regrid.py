@@ -3,6 +3,7 @@
 import os
 import re
 from copy import deepcopy
+from decimal import Decimal
 
 import iris
 import numpy as np
@@ -251,7 +252,8 @@ def _spec_to_latlonvals(*, start_latitude: float, end_latitude: float,
 
     def get_points(start, stop, step):
         """Calculate grid points."""
-        num = int((stop - start) // step)
+        # use Decimal to avoid floating point errors
+        num = int((stop - start) // Decimal(str(step)))
         stop = start + num * step
         return np.linspace(start, stop, num + 1)
 
