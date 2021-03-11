@@ -380,7 +380,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     - ``start_longitude``: longitude at the center of the first grid cell.
     - ``end_longitude``: longitude at the center of the last grid cell.
     - ``step_longitude``: constant longitude distance between grid cell
-    centers.
+        centers.
     - ``start_latitude``: latitude at the center of the first grid cell.
     - ``end_latitude``: longitude at the center of the last grid cell.
     - ``step_latitude``: constant latitude distance between grid cell centers.
