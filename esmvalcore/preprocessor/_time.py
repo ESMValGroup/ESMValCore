@@ -183,7 +183,7 @@ def extract_season(cube, season):
     for coord in coords_to_remove:
         cube.remove_coord(coord)
     if result is None:
-        raise ValueError(f'Season {season} not present in cube {cube}')
+        raise ValueError(f'Season {season!r} not present in cube {cube}')
     return result
 
 
@@ -215,7 +215,7 @@ def extract_month(cube, month):
                                                    name='month_number')
     result = cube.extract(iris.Constraint(month_number=month))
     if result is None:
-        raise ValueError(f'Month {month} not present in cube {cube}')
+        raise ValueError(f'Month {month!r} not present in cube {cube}')
     return result
 
 
