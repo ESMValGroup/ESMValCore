@@ -310,7 +310,7 @@ def _get_default_settings(variable, config_user, derive=False):
 
     settings['add_cell_measure'] = {
         'fx_variables': {},
-        'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
+        'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
     }
 
     return settings
@@ -437,12 +437,26 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
                 variable['short_name'], step_name)
 
 
+def _fx_list_to_dict(fx_vars):
+    """Convert fx list to dictionary. To be deprecated at some point."""
+    user_fx_vars = {}
+    for fx_var in fx_vars:
+        if isinstance(fx_var, dict):
+            short_name = fx_var['short_name']
+            user_fx_vars.update({short_name: fx_var})
+            continue
+        user_fx_vars.update({fx_var: None})
+    return user_fx_vars
+
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
 
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
+        if isinstance(user_fx_vars, list):
+            user_fx_vars = _fx_list_to_dict(user_fx_vars)
+            step_settings['fx_variables'] = user_fx_vars
         if not user_fx_vars:
             if step_name in ('mask_landsea', 'weighting_landsea_fraction'):
                 user_fx_vars = {'sftlf': None}
@@ -453,7 +467,7 @@ def _update_fx_settings(settings, variable, config_user):
             elif step_name in ('area_statistics', 'volume_statistics',
                                'zonal_statistics'):
                 user_fx_vars = {}
-        return user_fx_vars
+            step_settings['fx_variables'] = user_fx_vars
 
     fx_steps = [
         'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
@@ -461,10 +475,9 @@ def _update_fx_settings(settings, variable, config_user):
     ]
     for step_name in settings:
         if step_name in fx_steps:
-            fx_vars = _get_fx_vars_from_attribute(settings[step_name],
-                                                  step_name)
+            _get_fx_vars_from_attribute(settings[step_name], step_name)
             _update_fx_files(step_name, settings, variable, config_user,
-                             fx_vars)
+                             settings[step_name]['fx_variables'])
 
 
 def _read_attributes(filename):

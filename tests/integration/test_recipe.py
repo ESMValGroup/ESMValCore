@@ -1941,6 +1941,80 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
     assert '_piControl_' in fx_variables['areacello']
 
 
+def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}]
+            mask_landseaice:
+              mask_out: sea
+              fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+            volume_statistics:
+              operator: mean
+            area_statistics:
+              operator: mean
+              fx_variables: [{'short_name': 'areacello', 'mip': 'fx',
+                         'exp': 'piControl'}]
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check custom fx variables
+    task = recipe.tasks.pop()
+    product = task.products.pop()
+
+    # landsea
+    settings = product.settings['mask_landsea']
+    assert len(settings) == 2
+    assert settings['mask_out'] == 'sea'
+    fx_variables = settings['fx_variables']
+    assert isinstance(fx_variables, dict)
+    assert len(fx_variables) == 1
+    assert '_fx_' in fx_variables['sftlf']
+    assert '_piControl_' in fx_variables['sftlf']
+
+    # landseaice
+    settings = product.settings['mask_landseaice']
+    assert len(settings) == 2
+    assert settings['mask_out'] == 'sea'
+    fx_variables = settings['fx_variables']
+    assert isinstance(fx_variables, dict)
+    assert len(fx_variables) == 1
+    assert '_fx_' in fx_variables['sftgif']
+    assert '_piControl_' in fx_variables['sftgif']
+
+    # volume statistics
+    settings = product.settings['volume_statistics']
+    assert len(settings) == 2
+    assert settings['operator'] == 'mean'
+    assert settings['fx_variables'] == {}
+
+    # area statistics
+    settings = product.settings['area_statistics']
+    assert len(settings) == 2
+    assert settings['operator'] == 'mean'
+    fx_variables = settings['fx_variables']
+    assert isinstance(fx_variables, dict)
+    assert len(fx_variables) == 1
+    assert '_fx_' in fx_variables['areacello']
+    assert '_piControl_' in fx_variables['areacello']
+
+
 def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
     content = dedent("""
         preprocessors:
@@ -2044,6 +2118,81 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     assert '_Efx_' in fx_variables['clayfrac']
     assert '_fx_' in fx_variables['sftlf']
     assert '_fx_' in fx_variables['sftgif']
+    assert '_Ofx_' in fx_variables['sftof']
+
+    # Check mask_landsea
+    assert 'mask_landsea' in product.settings
+    settings = product.settings['mask_landsea']
+    assert len(settings) == 2
+    assert settings['mask_out'] == 'sea'
+    fx_variables = settings['fx_variables']
+    assert isinstance(fx_variables, dict)
+    fx_variables = fx_variables.values()
+    assert len(fx_variables) == 2
+    for fx_file in fx_variables:
+        if 'sftlf' in fx_file:
+            assert '_fx_' in fx_file
+        elif 'sftof' in fx_file:
+            assert '_Ofx_' in fx_file
+        else:
+            assert False
+  
+
+def test_fx_list_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           area_statistics:
+             operator: mean
+             fx_variables: [
+               'areacella',
+               'areacello',
+               'clayfrac',
+               'sftlf',
+               'sftgif',
+               'sftof',
+               ]
+           mask_landsea:
+             mask_out: sea
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    # Check area_statistics
+    assert 'area_statistics' in product.settings
+    settings = product.settings['area_statistics']
+    assert len(settings) == 2
+    assert settings['operator'] == 'mean'
+    fx_variables = settings['fx_variables']
+    assert isinstance(fx_variables, dict)
+    assert len(fx_variables) == 6
+    assert '_fx_' in fx_variables['areacella']
+    assert '_Ofx_' in fx_variables['areacello']
+    assert '_Efx_' in fx_variables['clayfrac']
+    assert '_fx_' in fx_variables['sftlf']
+    assert '_IyrAnt_' in fx_variables['sftgif'][0]
     assert '_Ofx_' in fx_variables['sftof']
 
     # Check mask_landsea
