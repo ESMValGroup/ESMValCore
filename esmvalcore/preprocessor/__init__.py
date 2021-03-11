@@ -10,6 +10,7 @@ from .._provenance import TrackedFile
 from .._task import BaseTask
 from ..cmor.check import cmor_check_data, cmor_check_metadata
 from ..cmor.fix import fix_data, fix_file, fix_metadata
+from ._ancillary_vars import add_fx_variables
 from ._area import (
     area_statistics,
     extract_named_regions,
@@ -41,7 +42,7 @@ from ._mask import (
     mask_outside_range,
 )
 from ._multimodel import multi_model_statistics
-from ._other import clip, add_cell_measure
+from ._other import clip
 from ._regrid import extract_levels, extract_point, regrid
 from ._time import (
     annual_statistics,
@@ -92,7 +93,7 @@ __all__ = [
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
-    'add_cell_measure',
+    'add_fx_variables',
     # Time extraction (as defined in the preprocessor section)
     'extract_time',
     'extract_season',
@@ -178,7 +179,7 @@ TIME_PREPROCESSORS = [
 DEFAULT_ORDER = tuple(__all__)
 
 # The order of initial and final steps cannot be configured
-INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_cell_measure') + 1]
+INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_fx_variables') + 1]
 FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('save'):]
 
 MULTI_MODEL_FUNCTIONS = {

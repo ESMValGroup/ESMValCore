@@ -48,7 +48,7 @@ MANDATORY_SCRIPT_SETTINGS_KEYS = (
 )
 
 DEFAULT_PREPROCESSOR_STEPS = (
-    'add_cell_measure',
+    'add_fx_variables',
     'cleanup',
     'cmor_check_data',
     'cmor_check_metadata',
@@ -134,7 +134,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename):
             'short_name': 'chl',
             'frequency': 'yr',
         },
-        'add_cell_measure': {
+        'add_fx_variables': {
             'fx_variables': {},
             'check_level': CheckLevels.DEFAULT,
         },
@@ -559,7 +559,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'short_name': 'sftlf',
             'frequency': 'fx',
         },
-        'add_cell_measure': {
+        'add_fx_variables': {
             'fx_variables': {},
             'check_level': CheckLevels.DEFAULT,
         },

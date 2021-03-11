@@ -308,7 +308,7 @@ def _get_default_settings(variable, config_user, derive=False):
     if variable['short_name'] != variable['original_short_name']:
         settings['save']['alias'] = variable['short_name']
 
-    settings['add_cell_measure'] = {
+    settings['add_fx_variables'] = {
         'fx_variables': {},
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
     }
@@ -428,7 +428,7 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
         settings[step_name]['fx_variables'].update({fx_var: fx_files})
         if step_name in ['area_statistics', 'volume_statistics'] and fx_files:
             fx_info['filename'] = fx_files
-            settings['add_cell_measure']['fx_variables'].update({
+            settings['add_fx_variables']['fx_variables'].update({
                 fx_var: fx_info
             })
 

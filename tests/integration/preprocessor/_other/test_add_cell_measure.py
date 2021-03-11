@@ -2,8 +2,7 @@
 Test add_cell_measure.
 
 Integration tests for the
-:func:`esmvalcore.preprocessor._other.add_cell_measure`
-function.
+:func:`esmvalcore.preprocessor._ancillary_vars` module.
 
 """
 import logging
@@ -12,7 +11,7 @@ import numpy as np
 import pytest
 
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.preprocessor._other import add_cell_measure
+from esmvalcore.preprocessor._ancillary_vars import add_fx_variables
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +93,7 @@ class Test:
             iris.save(self.fx_area, fx_file)
             cube = iris.cube.Cube(self.new_cube_data,
                                   dim_coords_and_dims=self.coords_spec)
-            cube = add_cell_measure(
+            cube = add_fx_variables(
                 cube, {fx_var: fx_vars[fx_var]}, CheckLevels.IGNORE)
             assert cube.cell_measure(self.fx_area.standard_name) is not None
 
@@ -119,7 +118,7 @@ class Test:
                                   (self.depth, 0),
                                   (self.lats, 1),
                                   (self.lons, 2)])
-        cube = add_cell_measure(cube, fx_vars, CheckLevels.IGNORE)
+        cube = add_fx_variables(cube, fx_vars, CheckLevels.IGNORE)
         assert cube.cell_measure(self.fx_volume.standard_name) is not None
 
     def test_no_cell_measure(self):
@@ -129,10 +128,10 @@ class Test:
                                   (self.depth, 0),
                                   (self.lats, 1),
                                   (self.lons, 2)])
-        cube = add_cell_measure(cube, {'areacello': None}, CheckLevels.IGNORE)
+        cube = add_fx_variables(cube, {'areacello': None}, CheckLevels.IGNORE)
         assert cube.cell_measures() == []
 
-    def test_invalid_cell_measure(self, tmp_path, caplog):
+    def test_add_ancillary_vars(self, tmp_path, caplog):
         """Test invalid variable is not added as cell measure."""
         self.fx_area.var_name = 'sftlf'
         self.fx_area.standard_name = "land_area_fraction"
@@ -152,7 +151,7 @@ class Test:
                               dim_coords_and_dims=self.coords_spec)
         cube.var_name = 'tas'
         with caplog.at_level(logging.INFO):
-            cube = add_cell_measure(
+            cube = add_fx_variables(
                 cube, fx_vars, CheckLevels.IGNORE)
         msg = (f'Fx variable {self.fx_area.var_name} '
                'cannot be added as a cell measure '
@@ -195,7 +194,7 @@ class Test:
                                  (self.lons, 3)])
         cube.var_name = 'thetao'
         with pytest.raises(ValueError) as excinfo:
-            cube = add_cell_measure(
+            cube = add_fx_variables(
                 cube, fx_vars, CheckLevels.IGNORE)
         msg = (f"Frequencies of {cube.var_name} and "
                f"{volume_cube.var_name} cubes do not match.")
