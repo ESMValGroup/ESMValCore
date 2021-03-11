@@ -148,6 +148,11 @@ def extract_season(cube, season):
     -------
     iris.cube.Cube
         data cube for specified season.
+
+    Raises
+    ------
+    ValueError
+        if requested season is not present in the cube
     """
     season = season.upper()
 
@@ -177,6 +182,8 @@ def extract_season(cube, season):
     result = cube.extract(iris.Constraint(clim_season=season))
     for coord in coords_to_remove:
         cube.remove_coord(coord)
+    if result is None:
+        raise ValueError(f'Season {season} not present in cube {cube}')
     return result
 
 
@@ -194,6 +201,11 @@ def extract_month(cube, month):
     -------
     iris.cube.Cube
         data cube for specified month.
+
+    Raises
+    ------
+    ValueError
+        if requested month is not present in the cube
     """
     if month not in range(1, 13):
         raise ValueError('Please provide a month number between 1 and 12.')
@@ -201,7 +213,10 @@ def extract_month(cube, month):
         iris.coord_categorisation.add_month_number(cube,
                                                    'time',
                                                    name='month_number')
-    return cube.extract(iris.Constraint(month_number=month))
+    result = cube.extract(iris.Constraint(month_number=month))
+    if result is None:
+        raise ValueError(f'Month {month} not present in cube {cube}')
+    return result
 
 
 def get_time_weights(cube):
