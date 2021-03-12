@@ -160,6 +160,8 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
 
     for i, statistic in enumerate(statistics):
         result_cube = result[statistic]
+        # test that real data in => real data out
+        assert result_cube.has_lazy_data() is False
         expected_data = np.ma.array(expected[i], mask=False)
         assert_array_allclose(result_cube.data, expected_data)
 

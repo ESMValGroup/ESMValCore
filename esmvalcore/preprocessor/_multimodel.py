@@ -295,6 +295,13 @@ def _multicube_statistics(cubes, statistics, span):
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
     """
+    realize = False
+    for cube in cubes:
+        # make input cubes lazy for efficient operation on real data
+        if not cube.has_lazy_data():
+            cube.data = cube.lazy_data()
+            realize = True
+
     # work with copy of cubes to avoid modifying input cubes
     copied_cubes = [cube.copy() for cube in cubes]
 
@@ -302,7 +309,13 @@ def _multicube_statistics(cubes, statistics, span):
     big_cube = _combine(aligned_cubes)
     statistics_cubes = {}
     for statistic in statistics:
-        statistics_cubes[statistic] = _compute(big_cube, statistic)
+        result_cube = _compute(big_cube, statistic)
+
+        # realize data if input cubes are not lazy
+        if realize:
+            result_cube.data
+
+        statistics_cubes[statistic] = result_cube
 
     return statistics_cubes
 
