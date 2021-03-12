@@ -67,8 +67,13 @@ def _add_cell_measure(cube, fx_cube, measure):
 
 def _add_ancillary_variable(cube, fx_cube):
     """Add ancillary variable in cube."""
+    try:
+        fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
+    except ValueError as exc:
+        raise ValueError(f"Frequencies of {cube.var_name} and "
+                         f"{fx_cube.var_name} cubes do not match.") from exc
     ancillary_var = iris.coords.AncillaryVariable(
-        fx_cube.core_data(),
+        fx_data,
         standard_name=fx_cube.standard_name,
         units=fx_cube.units,
         var_name=fx_cube.var_name,
