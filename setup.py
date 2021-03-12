@@ -57,6 +57,7 @@ REQUIREMENTS = {
         'pytest-flake8>=1.0.6',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
+        'pytest-mypy',
         'pytest-mock',
         'pytest-xdist',
         'ESMValTool_sample_data==0.0.3',
