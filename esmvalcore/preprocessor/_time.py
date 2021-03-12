@@ -17,6 +17,8 @@ import iris.util
 import numpy as np
 from iris.time import PartialDateTime
 
+from esmvalcore.cmor.check import _get_time_bounds
+
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
 logger = logging.getLogger(__name__)
@@ -156,19 +158,26 @@ def extract_season(cube, season):
     sstart = allmonths.index(season)
     res_season = allmonths[sstart + len(season):sstart + 12]
     seasons = [season, res_season]
+    coords_to_remove = []
 
     if not cube.coords('clim_season'):
         iris.coord_categorisation.add_season(cube,
                                              'time',
                                              name='clim_season',
                                              seasons=seasons)
+        coords_to_remove.append('clim_season')
+
     if not cube.coords('season_year'):
         iris.coord_categorisation.add_season_year(cube,
                                                   'time',
                                                   name='season_year',
                                                   seasons=seasons)
+        coords_to_remove.append('season_year')
 
-    return cube.extract(iris.Constraint(clim_season=season))
+    result = cube.extract(iris.Constraint(clim_season=season))
+    for coord in coords_to_remove:
+        cube.remove_coord(coord)
+    return result
 
 
 def extract_month(cube, month):
@@ -718,7 +727,7 @@ def regrid_time(cube, frequency):
 
     # uniformize bounds
     cube.coord('time').bounds = None
-    cube.coord('time').guess_bounds()
+    cube.coord('time').bounds = _get_time_bounds(cube.coord('time'), frequency)
 
     # remove aux coords that will differ
     reset_aux = ['day_of_month', 'day_of_year']

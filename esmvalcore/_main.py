@@ -102,6 +102,7 @@ def process_recipe(recipe_file, config_user):
 
     # run
     recipe.run()
+    recipe.write_html_summary()
 
     # End time timing
     timestamp2 = datetime.datetime.utcnow()

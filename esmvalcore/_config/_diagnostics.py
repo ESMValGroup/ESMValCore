@@ -76,7 +76,6 @@ class TagsManager(dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.source_file = None
 
     @classmethod
@@ -92,6 +91,35 @@ class TagsManager(dict):
             # This happens if no diagnostics are installed
             logger.debug("No tags loaded, file %s not present", filename)
             return cls()
+
+    def set_tag_value(self, section: str, tag: str, value):
+        """Set the value of a tag in a section.
+
+        Parameters
+        ----------
+        section : str
+            Name of the subsection
+        tag : str
+            Name of the tag
+        value : str
+            The value to set
+        """
+        if section not in self:
+            self[section] = {}
+
+        self[section][tag] = value
+
+    def set_tag_values(self, tag_values: dict):
+        """Update tags from dict.
+
+        Parameters
+        ----------
+        tag_values : dict or TagsManager
+            Mapping following the structure of Tags.
+        """
+        for section, tags in tag_values.items():
+            for tag, value in tags.items():
+                self.set_tag_value(section, tag, value)
 
     def get_tag_value(self, section: str, tag: str):
         """Retrieve the value of a tag from a section.

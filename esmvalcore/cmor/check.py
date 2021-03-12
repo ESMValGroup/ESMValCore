@@ -1,4 +1,5 @@
 """Module for checking iris cubes against their CMOR definitions."""
+import datetime
 import logging
 from enum import IntEnum
 
@@ -22,6 +23,47 @@ CheckLevels = IntEnum('CheckLevels', 'DEBUG STRICT DEFAULT RELAXED IGNORE')
    - RELAXED: Fail if cubes present severe discrepancies with CMOR standards.
    - IGNORE: Do not fail for any discrepancy with CMOR standards.
 """
+
+
+def _get_next_month(month, year):
+    if month != 12:
+        return month + 1, year
+    return 1, year + 1
+
+
+def _get_time_bounds(time, freq):
+    bounds = []
+    for step, point in enumerate(time.points):
+        month = time.cell(step).point.month
+        year = time.cell(step).point.year
+        if freq in ['mon', 'mo']:
+            next_month, next_year = _get_next_month(month, year)
+            min_bound = time.units.date2num(
+                datetime.datetime(year, month, 1, 0, 0))
+            max_bound = time.units.date2num(
+                datetime.datetime(next_year, next_month, 1, 0, 0))
+        elif freq == 'yr':
+            min_bound = time.units.date2num(
+                datetime.datetime(year, 1, 1, 0, 0))
+            max_bound = time.units.date2num(
+                datetime.datetime(year + 1, 1, 1, 0, 0))
+        elif freq == 'dec':
+            min_bound = time.units.date2num(
+                datetime.datetime(year, 1, 1, 0, 0))
+            max_bound = time.units.date2num(
+                datetime.datetime(year + 10, 1, 1, 0, 0))
+        else:
+            delta = {
+                'day': 12 / 24,
+                '6hr': 3 / 24,
+                '3hr': 1.5 / 24,
+                '1hr': 0.5 / 24,
+            }
+            min_bound = point - delta[freq]
+            max_bound = point + delta[freq]
+        bounds.append([min_bound, max_bound])
+
+    return np.array(bounds)
 
 
 class CMORCheckError(Exception):
@@ -507,6 +549,21 @@ class CMORCheck():
                     'Coordinate {0} from var {1} does not have bounds',
                     coord.var_name, var_name)
 
+    def _check_time_bounds(self, freq, time):
+        times = {'time', 'time1', 'time2', 'time3'}
+        key = times.intersection(self._cmor_var.coordinates)
+        cmor = self._cmor_var.coordinates[" ".join(key)]
+        if cmor.must_have_bounds == 'yes' and not time.has_bounds():
+            if self.automatic_fixes:
+                time.bounds = _get_time_bounds(time, freq)
+                self.report_warning(
+                    'Added guessed bounds to coordinate {0} from var {1}',
+                    time.var_name, self._cmor_var.short_name)
+            else:
+                self.report_warning(
+                    'Coordinate {0} from var {1} does not have bounds',
+                    time.var_name, self._cmor_var.short_name)
+
     def _check_coord_monotonicity_and_direction(self, cmor, coord, var_name):
         """Check monotonicity and direction of coordinate."""
         if coord.ndim > 1:
@@ -658,9 +715,7 @@ class CMORCheck():
                               calendar=coord.units.calendar))
             simplified_cal = self._simplify_calendar(coord.units.calendar)
             coord.units = cf_units.Unit(coord.units.origin, simplified_cal)
-
             attrs = self._cube.attributes
-
             parent_time = 'parent_time_units'
             if parent_time in attrs:
                 if attrs[parent_time] in 'no parent':
@@ -720,6 +775,8 @@ class CMORCheck():
                 interval = intervals[freq]
                 target_interval = (interval[0] - tol, interval[1] + tol)
             elif freq.endswith('hr'):
+                if freq == 'hr':
+                    freq = '1hr'
                 frequency = freq[:-2]
                 if frequency == 'sub':
                     frequency = 1.0 / 24
@@ -738,7 +795,7 @@ class CMORCheck():
                     msg = '{}: Frequency {} does not match input data'
                     self.report_error(msg, var_name, freq)
                     break
-
+        self._check_time_bounds(freq, coord)
         # remove time_origin from attributes
         coord.attributes.pop('time_origin', None)
 
@@ -782,7 +839,7 @@ class CMORCheck():
         return len(self._debug_messages) > 0
 
     def report(self, level, message, *args):
-        """Generic method to report a message from the checker.
+        """Report a message from the checker.
 
         Parameters
         ----------

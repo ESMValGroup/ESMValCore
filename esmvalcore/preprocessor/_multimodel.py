@@ -144,7 +144,13 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
         cspec = [(times, 0), (lats, 1), (lons, 2)]
     # plevs
     elif len(template_cube.shape) == 4:
-        plev = template_cube.coord('air_pressure')
+        if 'air_pressure' in coord_names:
+            plev = template_cube.coord('air_pressure')
+        elif 'altitude' in coord_names:
+            plev = template_cube.coord('altitude')
+        else:
+            raise ValueError(f"4D cube with dimensions {coord_names} not "
+                             f"supported at the moment")
         cspec = [(times, 0), (plev, 1), (lats, 2), (lons, 3)]
     elif len(template_cube.shape) == 1:
         cspec = [
