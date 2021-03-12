@@ -117,7 +117,7 @@ def add_fx_variables(cube, fx_variables, check_level):
             'volcello': 'volume'
         }
 
-        if fx_cube.var_name in measure_name.keys():
+        if fx_cube.var_name in measure_name:
             _add_cell_measure(cube, fx_cube, measure_name[fx_cube.var_name])
         else:
             _add_ancillary_variable(cube, fx_cube)
