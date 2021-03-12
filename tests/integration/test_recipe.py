@@ -2140,7 +2140,7 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
             assert '_Ofx_' in fx_file
         else:
             assert False
-  
+
 
 def test_fx_list_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     content = dedent("""

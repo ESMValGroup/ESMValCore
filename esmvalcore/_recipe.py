@@ -449,6 +449,7 @@ def _fx_list_to_dict(fx_vars):
         user_fx_vars.update({fx_var: None})
     return user_fx_vars
 
+
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
 

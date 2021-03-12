@@ -1,6 +1,4 @@
-"""
-Preprocessor functions for ancillary variables and cell measures.
-"""
+"""Preprocessor functions for ancillary variables and cell measures."""
 
 import logging
 import iris
@@ -12,6 +10,7 @@ from esmvalcore.cmor.fix import fix_metadata, fix_data
 from esmvalcore.cmor.check import cmor_check_metadata, cmor_check_data
 
 logger = logging.getLogger(__name__)
+
 
 def _load_fx(fx_info, check_level):
     """Load and CMOR-check fx variables."""
@@ -46,15 +45,14 @@ def _load_fx(fx_info, check_level):
 
     return fx_cube
 
+
 def _add_cell_measure(cube, fx_cube, measure):
     """Add cell measure in cube."""
     try:
         fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
     except ValueError as exc:
-        raise ValueError(
-            f"Frequencies of {cube.var_name} and "
-            f"{fx_cube.var_name} cubes do not match."
-            ) from exc
+        raise ValueError(f"Frequencies of {cube.var_name} and "
+                         f"{fx_cube.var_name} cubes do not match.") from exc
     measure = iris.coords.CellMeasure(
         fx_data,
         standard_name=fx_cube.standard_name,
@@ -65,6 +63,7 @@ def _add_cell_measure(cube, fx_cube, measure):
     cube.add_cell_measure(measure, range(0, measure.ndim))
     logger.debug('Added %s as cell measure in cube of %s.',
                  fx_cube.var_name, cube.var_name)
+
 
 def _add_ancillary_variable(cube, fx_cube):
     """Add ancillary variable in cube."""
