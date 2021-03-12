@@ -10,7 +10,7 @@ from .recipe import Recipe
 
 class RecipeList(list):
     """Container for recipes."""
-    def find(self, query: str):
+    def find(self, query: re.Pattern):
         """Search for recipes matching the search query or pattern.
 
         Searches in the description, authors and project information fields.
