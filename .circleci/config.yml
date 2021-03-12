@@ -140,6 +140,9 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             esmvaltool version
+            # Run flake8 test
+            pytest -m flake8
+            # Run full tests
             pytest -n 2
       - store_artifacts:
           path: /logs
