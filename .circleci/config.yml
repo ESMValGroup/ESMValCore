@@ -33,6 +33,8 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             pip install .[test]
+            # Run flake8 test
+            pytest -n 2 flake8
             pytest -n 2 -m "not installation"
       - save_cache:
           key: test-{{ .Branch }}
