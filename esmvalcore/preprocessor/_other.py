@@ -3,7 +3,6 @@ Preprocessor functions that do not fit into any of the categories.
 """
 
 import logging
-import iris
 
 import dask.array as da
 

@@ -9,6 +9,7 @@ roughly following the default order in which preprocessor functions are applied:
 
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
+* :ref:`Fx variables as cell measures or ancillary variables`
 * :ref:`Vertical interpolation`
 * :ref:`Weighting`
 * :ref:`Land/Sea/Ice masking`
@@ -175,6 +176,16 @@ steps:
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
 
+.. _Fx variables as cell measures or ancillary variables:
+
+Fx variables as cell measures or ancillary variables
+====================================================
+Preprocessors steps related to spatial statistics or masking may require
+the use of ``fx_variables`` to be able to perform the computations.
+The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
+checks them against the CMOR standards and adds them as either a ``cell_measure``
+or an ``ancillary_variable`` inside the cube of data. This ensures that the
+defined preprocessor chain is applied to both the variables and the fx_variables.
 
 .. _Vertical interpolation:
 
@@ -331,6 +342,20 @@ experiment is preferred for fx data retrieval:
             sftof:
               exp: piControl
 
+or alternatively:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_weighting:
+        weighting_landsea_fraction:
+          area_type: land
+          exclude: ['CanESM2', 'reference_dataset']
+          fx_variables: [
+            {short_name: sftlf, exp: piControl}, 
+            {short_name: sftof, exp: piControl}
+            ]
+
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
 
@@ -397,6 +422,19 @@ experiment is preferred for fx data retrieval:
             sftof:
               exp: piControl
 
+or alternatively:
+
+.. code-block:: yaml
+
+    preprocessors:
+      landmask:
+        mask_landsea:
+          mask_out: sea
+          fx_variables: [
+            {short_name: sftlf, exp: piControl}, 
+            {short_name: sftof, exp: piControl}
+            ]
+
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
@@ -439,6 +477,15 @@ experiment is preferred for fx data retrieval:
             sftgif:
               exp: piControl
 
+or alternatively:
+
+.. code-block:: yaml
+
+    preprocessors:
+      landseaicemask:
+        mask_landseaice:
+          mask_out: sea
+          fx_variables: [{short_name: sftgif, exp: piControl}]
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -1295,6 +1342,18 @@ as a CMOR variable can permit):
       volcello:
         mip: fx
 
+Alternatively, the ``fx_variables`` argument can also be specified as a list:
+
+.. code-block:: yaml
+
+    fx_variables: ['areacello', 'volcello']
+
+or as a list of dictionaries:
+
+.. code-block:: yaml
+
+    fx_variables: [{short_name: areacello, mip: Omon}, {short_name: volcello, mip: fx}]
+
 The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
@@ -1360,6 +1419,18 @@ as a CMOR variable can permit):
         mip: Omon
       volcello:
         mip: fx
+
+Alternatively, the ``fx_variables`` argument can also be specified as a list:
+
+.. code-block:: yaml
+
+    fx_variables: ['areacello', 'volcello']
+
+or as a list of dictionaries:
+
+.. code-block:: yaml
+
+    fx_variables: [{short_name: areacello, mip: Omon}, {short_name: volcello, mip: fx}]
 
 The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
