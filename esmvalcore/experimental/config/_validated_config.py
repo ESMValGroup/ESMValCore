@@ -21,7 +21,7 @@ class MissingConfigParameter(UserWarning):
 # fit the needs of ESMValCore. Matplotlib is licenced under the terms of
 # the the 'Python Software Foundation License'
 # (https://www.python.org/psf/license)
-class ValidatedConfig(MutableMapping, dict):
+class ValidatedConfig(dict, MutableMapping):
     """Based on `matplotlib.rcParams`."""
 
     _validate: Dict[str, Callable] = {}
