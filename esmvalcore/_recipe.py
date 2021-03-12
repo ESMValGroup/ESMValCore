@@ -414,8 +414,6 @@ def _update_weighting_settings(settings, variable):
 
 def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
     """Update settings with mask fx file list or dict."""
-    if 'fx_variables' not in settings[step_name]:
-        settings[step_name].update({'fx_variables': {}})
     if not fx_vars:
         return
     for fx_var, fx_info in fx_vars.items():
@@ -426,15 +424,14 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
         if 'short_name' not in fx_info:
             fx_info.update({'short_name': fx_var})
         fx_files, fx_info = _get_fx_files(variable, fx_info, config_user)
-        settings[step_name]['fx_variables'].update({fx_var: fx_files})
-        if step_name in ['area_statistics', 'volume_statistics'] and fx_files:
+        if fx_files:
             fx_info['filename'] = fx_files
             settings['add_fx_variables']['fx_variables'].update({
                 fx_var: fx_info
             })
 
     logger.info('Using fx_files: %s for variable %s during step %s',
-                pformat(settings[step_name]['fx_variables']),
+                pformat(settings['add_fx_variables']['fx_variables']),
                 variable['short_name'], step_name)
 
 
@@ -480,6 +477,8 @@ def _update_fx_settings(settings, variable, config_user):
             _get_fx_vars_from_attribute(settings[step_name], step_name)
             _update_fx_files(step_name, settings, variable, config_user,
                              settings[step_name]['fx_variables'])
+            if 'fx_variables' in settings[step_name]:
+                settings[step_name].pop('fx_variables', None)
 
 
 def _read_attributes(filename):

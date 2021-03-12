@@ -174,10 +174,7 @@ def calculate_volume(cube):
     return grid_volume
 
 
-def volume_statistics(
-        cube,
-        operator,
-        fx_variables=None):
+def volume_statistics(cube, operator):
     """
     Apply a statistical operation over a volume.
 
@@ -191,8 +188,6 @@ def volume_statistics(
             Input cube.
         operator: str
             The operation to apply to the cube, options are: 'mean'.
-        fx_variables: dict
-            dictionary of field:filename for the fx_variables
 
     Returns
     -------
@@ -219,8 +214,6 @@ def volume_statistics(
             'Check fx_file availability.'
         )
         logger.info('Attempting to calculate grid cell volume...')
-
-    if not fx_variables:
         grid_volume = calculate_volume(cube)
 
     if cube.data.shape != grid_volume.shape:

@@ -157,7 +157,7 @@ def meridional_statistics(cube, operator):
         raise ValueError(msg)
 
 
-def area_statistics(cube, operator, fx_variables=None):
+def area_statistics(cube, operator):
     """Apply a statistical operator in the horizontal direction.
 
     The average in the horizontal direction. We assume that the
@@ -194,8 +194,6 @@ def area_statistics(cube, operator, fx_variables=None):
         operator: str
             The operation, options: mean, median, min, max, std_dev, sum,
             variance, rms.
-        fx_variables: dict
-            dictionary of field:filename for the fx_variables
 
     Returns
     -------
@@ -219,7 +217,7 @@ def area_statistics(cube, operator, fx_variables=None):
         )
         logger.info('Attempting to calculate grid cell area...')
 
-    if not fx_variables and cube.coord('latitude').points.ndim == 2:
+    if cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
         if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
             cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
