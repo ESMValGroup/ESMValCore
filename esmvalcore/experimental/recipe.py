@@ -1,13 +1,16 @@
 """Recipe metadata."""
 
 import logging
+import os
 import pprint
 import shutil
 from pathlib import Path
+from typing import Dict, Optional, Union
 
 import yaml
 
 from esmvalcore._recipe import Recipe as RecipeEngine
+from esmvalcore.experimental.config import Session
 
 from . import CFG
 from ._logging import log_to_dir
@@ -15,7 +18,6 @@ from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
 
 logger = logging.getLogger(__file__)
-import os
 
 
 class Recipe():
@@ -34,9 +36,9 @@ class Recipe():
         if not self.path.exists():
             raise FileNotFoundError(f'Cannot find recipe: `{path}`.')
 
-        self._engine = None
-        self._data = None
-        self.last_session = None
+        self._engine: Optional[RecipeEngine] = None
+        self._data: Optional[Dict] = None
+        self.last_session: Optional[Session] = None
         self.info = RecipeInfo(self.data, filename=self.path.name)
 
     def __repr__(self) -> str:
@@ -72,7 +74,7 @@ class Recipe():
             self._data = yaml.safe_load(open(self.path, 'r'))
         return self._data
 
-    def _load(self, session: dict):
+    def _load(self, session: Session):
         """Load the recipe.
 
         This method loads the recipe into the internal ESMValCore Recipe
@@ -98,7 +100,7 @@ class Recipe():
                                     config_user=config_user,
                                     recipe_file=self.path)
 
-    def run(self, task: str = None, session: dict = None):
+    def run(self, task: str = None, session: Session = None):
         """Run the recipe.
 
         This function loads the recipe into the ESMValCore recipe format
@@ -120,7 +122,7 @@ class Recipe():
             Returns output of the recipe as instances of :obj:`OutputItem`
             grouped by diagnostic task.
         """
-        if not session:
+        if session is None:
             session = CFG.start_session(self.path.stem)
 
         self.last_session = session
@@ -139,7 +141,7 @@ class Recipe():
 
         return output
 
-    def get_output(self) -> dict:
+    def get_output(self) -> RecipeOutput:
         """Get output from recipe.
 
         Returns
@@ -148,7 +150,7 @@ class Recipe():
             Returns output of the recipe as instances of :obj:`OutputFile`
             grouped by diagnostic task.
         """
-        if not self._engine:
+        if self._engine is None:
             raise AttributeError('Run the recipe first using `.run()`.')
 
         output = self._engine.get_output()
