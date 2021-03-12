@@ -15,6 +15,7 @@ from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
 
 logger = logging.getLogger(__file__)
+import os
 
 
 class Recipe():
@@ -28,7 +29,7 @@ class Recipe():
         Path to the recipe.
     """
 
-    def __init__(self, path: str):
+    def __init__(self, path: os.PathLike):
         self.path = Path(path)
         if not self.path.exists():
             raise FileNotFoundError(f'Cannot find recipe: `{path}`.')

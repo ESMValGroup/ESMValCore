@@ -3,6 +3,7 @@
 import pprint
 import warnings
 from collections.abc import MutableMapping
+from typing import Callable, Dict, Tuple
 
 from .._exceptions import SuppressedError
 from ._config_validators import ValidationError
@@ -23,8 +24,8 @@ class MissingConfigParameter(UserWarning):
 class ValidatedConfig(MutableMapping, dict):
     """Based on `matplotlib.rcParams`."""
 
-    _validate = {}
-    _warn_if_missing = ()
+    _validate: Dict[str, Callable] = {}
+    _warn_if_missing: Tuple[Tuple[str, str], ...] = ()
 
     # validate values on the way in
     def __init__(self, *args, **kwargs):
