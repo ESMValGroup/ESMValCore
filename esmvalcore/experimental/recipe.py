@@ -74,7 +74,7 @@ class Recipe():
             self._data = yaml.safe_load(open(self.path, 'r'))
         return self._data
 
-    def _load(self, session: Session):
+    def _load(self, session: Session) -> RecipeEngine:
         """Load the recipe.
 
         This method loads the recipe into the internal ESMValCore Recipe
@@ -96,9 +96,9 @@ class Recipe():
 
         logger.info(pprint.pformat(config_user))
 
-        self._engine = RecipeEngine(raw_recipe=self.data,
-                                    config_user=config_user,
-                                    recipe_file=self.path)
+        return RecipeEngine(raw_recipe=self.data,
+                            config_user=config_user,
+                            recipe_file=self.path)
 
     def run(self, task: str = None, session: Session = None):
         """Run the recipe.
@@ -131,7 +131,7 @@ class Recipe():
             session['diagnostics'] = task
 
         with log_to_dir(session.run_dir):
-            self._load(session=session)
+            self._engine = self._load(session=session)
             self._engine.run()
 
         shutil.copy2(self.path, session.run_dir)
