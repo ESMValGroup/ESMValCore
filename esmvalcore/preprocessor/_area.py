@@ -118,9 +118,8 @@ def zonal_statistics(cube, operator):
         cube = cube.collapsed('longitude', operation)
         cube.data = cube.core_data().astype(np.float32, casting='same_kind')
         return cube
-    else:
-        msg = ("Zonal statistics on irregular grids not yet implemnted")
-        raise ValueError(msg)
+    msg = ("Zonal statistics on irregular grids not yet implemnted")
+    raise ValueError(msg)
 
 
 def meridional_statistics(cube, operator):
@@ -152,9 +151,8 @@ def meridional_statistics(cube, operator):
         cube = cube.collapsed('latitude', operation)
         cube.data = cube.core_data().astype(np.float32, casting='same_kind')
         return cube
-    else:
-        msg = ("Meridional statistics on irregular grids not yet implemented")
-        raise ValueError(msg)
+    msg = ("Meridional statistics on irregular grids not yet implemented")
+    raise ValueError(msg)
 
 
 def tile_grid_areas(cube, fx_files):
@@ -409,14 +407,8 @@ def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
     return lon, lat
 
 
-def _get_masks_from_geometries(
-    geometries,
-    lon,
-    lat,
-    method='contains',
-    decomposed=False,
-    ids=None,
-):
+def _get_masks_from_geometries(geometries, lon, lat, method='contains',
+                               decomposed=False, ids=None):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
@@ -424,43 +416,45 @@ def _get_masks_from_geometries(
             "'representative'.")
 
     selections = dict()
-    id_properties = ('name', 'NAME', 'id', 'ID')
     if ids:
         ids = [str(id_) for id_ in ids]
     for i, item in enumerate(geometries):
-        id_ = i
-        for id_prop in id_properties:
+        for id_prop in ('name', 'NAME', 'id', 'ID'):
             if id_prop in item['properties']:
-                id_ = item['properties'][id_prop]
+                id_ = str(item['properties'][id_prop])
                 break
-        id_ = str(id_)
-        logger.debug(
-            'Shape %s found',
-            id_,
-        )
+        else:
+            id_ = str(i)
+        logger.debug('Shape "%s" found', id_)
         if ids and id_ not in ids:
             continue
-
-        shape = shapely.geometry.shape(item['geometry'])
-        if method == 'contains':
-            select = shapely.vectorized.contains(shape, lon, lat)
-        if method == 'representative' or not select.any():
-            select = _select_representative_point(shape, lon, lat)
-        selections[id_] = select
+        selections[id_] = _get_shape(lon, lat, method, item)
 
     if ids:
         missing = set(ids) - set(selections.keys())
         if missing:
-            raise ValueError('Shapes %s not found', ' '.join(missing))
+            raise ValueError(f'Shapes {" ".join(missing)!r} not found')
 
     if not decomposed and len(selections) > 1:
-        selection = np.zeros(lat.shape, dtype=bool)
-        for select in selections.values():
-            selection |= select
-
-        selections = {0: selection}
+        return _merge_shapes(selections, lat.shape)
 
     return selections
+
+
+def _get_shape(lon, lat, method, item):
+    shape = shapely.geometry.shape(item['geometry'])
+    if method == 'contains':
+        select = shapely.vectorized.contains(shape, lon, lat)
+    if method == 'representative' or not select.any():
+        select = _select_representative_point(shape, lon, lat)
+    return select
+
+
+def _merge_shapes(selections, shape):
+    selection = np.zeros(shape, dtype=bool)
+    for select in selections.values():
+        selection |= select
+    return {0: selection}
 
 
 def fix_coordinate_ordering(cube):
@@ -504,14 +498,8 @@ def fix_coordinate_ordering(cube):
     return cube
 
 
-def extract_shape(
-    cube,
-    shapefile,
-    method='contains',
-    crop=True,
-    decomposed=False,
-    ids=None,
-):
+def extract_shape(cube, shapefile, method='contains', crop=True,
+                  decomposed=False, ids=None):
     """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
@@ -579,17 +567,16 @@ def extract_shape(
                                                 decomposed=decomposed,
                                                 ids=ids)
 
-    cubelist = iris.cube.CubeList()
+    return _mask_cube(cube, selections)
 
+
+def _mask_cube(cube, selections):
+    cubelist = iris.cube.CubeList()
     for id_, select in selections.items():
         _cube = cube.copy()
         _cube.add_aux_coord(
             iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
-
         select = da.broadcast_to(select, _cube.shape)
         _cube.data = da.ma.masked_where(~select, _cube.core_data())
         cubelist.append(_cube)
-
-    cube = cubelist.merge_cube()
-
-    return fix_coordinate_ordering(cube)
+    return fix_coordinate_ordering(cubelist.merge_cube())
