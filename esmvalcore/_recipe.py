@@ -463,22 +463,23 @@ def _update_fx_settings(settings, variable, config_user):
                     user_fx_vars.update({'sftof': None})
             elif step_name == 'mask_landseaice':
                 user_fx_vars = {'sftgif': None}
-            elif step_name in ('area_statistics', 'volume_statistics',
-                               'zonal_statistics'):
+            elif step_name in ('area_statistics', 'volume_statistics'):
                 user_fx_vars = {}
             step_settings['fx_variables'] = user_fx_vars
 
     fx_steps = [
         'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
-        'zonal_statistics', 'area_statistics', 'volume_statistics'
+        'area_statistics', 'volume_statistics'
     ]
     for step_name in settings:
         if step_name in fx_steps:
             _get_fx_vars_from_attribute(settings[step_name], step_name)
             _update_fx_files(step_name, settings, variable, config_user,
                              settings[step_name]['fx_variables'])
-            if 'fx_variables' in settings[step_name]:
-                settings[step_name].pop('fx_variables', None)
+            # Remove unused attribute in 'fx_steps' preprocessors.
+            # The fx_variables information is saved in
+            # the 'add_fx_variables' step.
+            settings[step_name].pop('fx_variables', None)
 
 
 def _read_attributes(filename):
