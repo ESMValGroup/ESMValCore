@@ -46,8 +46,28 @@ def _load_fx(fx_info, check_level):
     return fx_cube
 
 
-def _add_cell_measure(cube, fx_cube, measure):
-    """Add cell measure in cube."""
+def add_cell_measure(cube, fx_cube, measure):
+    """
+    Add cell_measure in the cube containing the data.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        Iris cube with input data.
+    fx_cube: iris.cube.Cube
+        Iris cube with fx data.
+    measure: str
+        Name of the measure, can be 'area' or 'volume'.
+
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with added ancillary variables
+    """
+    if 'measure' not in ['area', 'volume']:
+        raise ValueError(f"measure name must be 'area or volume, "
+                         f"got {measure} instead")
     try:
         fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
     except ValueError as exc:
@@ -65,8 +85,23 @@ def _add_cell_measure(cube, fx_cube, measure):
                  fx_cube.var_name, cube.var_name)
 
 
-def _add_ancillary_variable(cube, fx_cube):
-    """Add ancillary variable in cube."""
+def add_ancillary_variable(cube, fx_cube):
+    """
+    Add ancillary variables in the cube containing the data.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        Iris cube with input data.
+    fx_cube: iris.cube.Cube
+        Iris cube with fx data.
+
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with added ancillary variables
+    """
     try:
         fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
     except ValueError as exc:
@@ -122,7 +157,7 @@ def add_fx_variables(cube, fx_variables, check_level):
         }
 
         if fx_cube.var_name in measure_name:
-            _add_cell_measure(cube, fx_cube, measure_name[fx_cube.var_name])
+            add_cell_measure(cube, fx_cube, measure_name[fx_cube.var_name])
         else:
-            _add_ancillary_variable(cube, fx_cube)
+            add_ancillary_variable(cube, fx_cube)
     return cube
