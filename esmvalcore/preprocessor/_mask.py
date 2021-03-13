@@ -2,7 +2,7 @@
 Mask module.
 
 Module that performs a number of masking
-operations that include: masking with fx files, masking with
+operations that include: masking with ancillary variables, masking with
 Natural Earth shapefiles (land or ocean), masking on thresholds,
 missing values masking.
 """
@@ -50,16 +50,12 @@ def _get_fx_mask(fx_data, fx_option, mask_type):
 
 def _apply_fx_mask(fx_mask, var_data):
     """Apply the fx data extracted mask on the actual processed data."""
-    # Broadcast mask
-    var_mask = np.zeros_like(var_data, bool)
-    var_mask = np.broadcast_to(fx_mask, var_mask.shape).copy()
-
     # Apply mask across
     if np.ma.is_masked(var_data):
-        var_mask |= var_data.mask
+        fx_mask |= var_data.mask
 
     # Build the new masked data
-    var_data = np.ma.array(var_data, mask=var_mask, fill_value=1e+20)
+    var_data = np.ma.array(var_data, mask=fx_mask, fill_value=1e+20)
 
     return var_data
 
@@ -68,10 +64,12 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
     """
     Mask out either land mass or sea (oceans, seas and lakes).
 
-    It uses dedicated fx files (sftlf or sftof) or, in their absence, it
-    applies a Natural Earth mask (land or ocean contours). Note that the
-    Natural Earth masks have different resolutions: 10m for land, and 50m
-    for seas; these are more than enough for ESMValTool puprpose.
+    It uses dedicated ancillary variables (sftlf or sftof) or,
+    in their absence, it applies a
+    Natural Earth mask (land or ocean contours).
+    Note that the Natural Earth masks have different resolutions:
+    10m for land, and 50m for seas.
+    These are more than enough for ESMValTool purposes.
 
     Parameters
     ----------
@@ -157,7 +155,9 @@ def mask_landseaice(cube, mask_out):
     Mask out either landsea (combined) or ice.
 
     Function that masks out either landsea (land and seas) or ice (Antarctica
-    and Greenland and some wee glaciers). It uses dedicated fx files (sftgif).
+    and Greenland and some wee glaciers).
+
+    It uses dedicated ancillary variables (sftgif).
 
     Parameters
     ----------
@@ -175,9 +175,7 @@ def mask_landseaice(cube, mask_out):
     Raises
     ------
     ValueError
-        Error raised if fx mask and data have different dimensions.
-    ValueError
-        Error raised if fx files list is empty.
+        Error raised if landsea-ice mask not found as an ancillary variable.
 
     """
     # sftgif is the only one so far but users can set others
@@ -185,7 +183,7 @@ def mask_landseaice(cube, mask_out):
     try:
         fx_cube = cube.ancillary_variable('land_ice_area_fraction')
     except iris.exceptions.AncillaryVariableNotFoundError:
-        logger.debug('Ancillary variables land ice area fraction '
+        logger.debug('Ancillary variable land ice area fraction '
                      'not found in cube. Check fx_file availability.')
     if fx_cube:
         landice_mask = _get_fx_mask(fx_cube.data, mask_out, fx_cube.var_name)
