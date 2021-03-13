@@ -187,6 +187,33 @@ checks them against the CMOR standards and adds them as either a ``cell_measure`
 or an ``ancillary_variable`` inside the cube of data. This ensures that the
 defined preprocessor chain is applied to both the variables and the fx_variables.
 
+Note that when calling steps that require ``fx_variables`` inside of diagnostics 
+scripts, the variables are expected to contain the required ``cell_measures`` or 
+``ancillary_variables``. If missing, they can be added using the following functions:
+
+.. code-block::
+
+    from esmvalcore.preprocessor import (add_cell_measure, 
+                                         add_ancillary_variable,
+                                         area_statistics,
+                                         volume_statistics,
+                                         mask_landsea,
+                                         mask_landseaice,
+                                         weighting_landsea_fraction)
+
+    cube_with_area_measure = add_cell_measure(cube, area_cube, 'area')
+    result_area = area_statistics(cube_with_area_measure, 'mean')
+
+    cube_with_volume_measure = add_cell_measure(cube, volume_cube, 'volume)
+    result_volume = volume_statistics(cube_with_volume_measure, 'mean')
+
+    cube_with_ancillary_sftlf = add_ancillary_variable(cube, sftlf_cube)
+    result_landsea_mask = mask_landsea(cube_with_ancillary_sftlf, 'land')
+    result_landsea_weighting = weighting_landsea_fraction(cube_with_ancillary_sftlf, 'land')
+
+    cube_with_ancillary_sftgif = add_ancillary_variable(cube, sftgif_cube)
+    result_landsea_mask = mask_landsea(cube_with_ancillary_sftgif, 'land')
+
 .. _Vertical interpolation:
 
 Vertical interpolation
@@ -352,8 +379,8 @@ or alternatively:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
           fx_variables: [
-            {short_name: sftlf, exp: piControl}, 
-            {short_name: sftof, exp: piControl}
+            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftof', 'exp': 'piControl'}
             ]
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
@@ -431,8 +458,8 @@ or alternatively:
         mask_landsea:
           mask_out: sea
           fx_variables: [
-            {short_name: sftlf, exp: piControl}, 
-            {short_name: sftof, exp: piControl}
+            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftof', 'exp': 'piControl'}
             ]
 
 If the corresponding fx file is not found (which is
@@ -485,7 +512,7 @@ or alternatively:
       landseaicemask:
         mask_landseaice:
           mask_out: sea
-          fx_variables: [{short_name: sftgif, exp: piControl}]
+          fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -1352,7 +1379,7 @@ or as a list of dictionaries:
 
 .. code-block:: yaml
 
-    fx_variables: [{short_name: areacello, mip: Omon}, {short_name: volcello, mip: fx}]
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
 
 The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
@@ -1430,7 +1457,7 @@ or as a list of dictionaries:
 
 .. code-block:: yaml
 
-    fx_variables: [{short_name: areacello, mip: Omon}, {short_name: volcello, mip: fx}]
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
 
 The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
