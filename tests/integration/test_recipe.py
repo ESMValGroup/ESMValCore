@@ -2087,7 +2087,7 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     assert len(task.products) == 1
     product = task.products.pop()
 
-        # Check area_statistics
+    # Check area_statistics
     assert 'area_statistics' in product.settings
     settings = product.settings['area_statistics']
     assert len(settings) == 1

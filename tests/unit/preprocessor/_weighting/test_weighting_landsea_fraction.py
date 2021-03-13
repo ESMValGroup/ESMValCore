@@ -1,5 +1,4 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._weighting`."""
-from unittest import mock
 
 import iris
 import numpy as np
@@ -26,24 +25,24 @@ CUBE_SFTLF = iris.cube.Cube(
     var_name='sftlf',
     standard_name='land_area_fraction',
     units=Unit('%'),
-    dim_coords_and_dims=[(LON_3, 0),]
+    dim_coords_and_dims=[(LON_3, 0), ]
 )
 CUBE_SFTOF = iris.cube.Cube(
     [100.0, 0.0, 50.0, 70.0],
     var_name='sftof',
     standard_name='sea_area_fraction',
     units=Unit('%'),
-    dim_coords_and_dims=[(LON_4, 0),]
+    dim_coords_and_dims=[(LON_4, 0), ]
 )
 CUBE_3 = iris.cube.Cube(
     [10.0, 20.0, 0.0],
     var_name='dim3',
-    dim_coords_and_dims=[(LON_3, 0),]
+    dim_coords_and_dims=[(LON_3, 0), ]
 )
 CUBE_4 = iris.cube.Cube(
     [1.0, 2.0, -1.0, 2.0],
     var_name='dim4',
-    dim_coords_and_dims=[(LON_4, 0),]
+    dim_coords_and_dims=[(LON_4, 0), ]
 )
 
 CUBE_ANCILLARY_3 = CUBE_3.copy()
@@ -114,4 +113,3 @@ def test_weighting_landsea_fraction(cube,
     weighted_cube = weighting.weighting_landsea_fraction(cube, area_type)
     assert np.array_equal(weighted_cube.data, cube.data)
     assert weighted_cube is cube
-    

@@ -63,7 +63,6 @@ class Test(tests.Test):
                                  mask=dummy_fx_mask)
         self.assert_array_equal(fixed_mask, app_mask)
 
-
     def test_count_spells(self):
         """Test count_spells func."""
         ref_spells = count_spells(self.time_cube.data, -1000., 0, 1)
