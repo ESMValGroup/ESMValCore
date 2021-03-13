@@ -187,7 +187,7 @@ checks them against the CMOR standards and adds them as either a ``cell_measure`
 or an ``ancillary_variable`` inside the cube of data. This ensures that the
 defined preprocessor chain is applied to both the variables and the fx_variables.
 
-Note that when calling steps that require ``fx_variables`` inside of diagnostics 
+Note that when calling steps that require ``fx_variables`` inside of diagnostic
 scripts, the variables are expected to contain the required ``cell_measures`` or 
 ``ancillary_variables``. If missing, they can be added using the following functions:
 
@@ -213,6 +213,8 @@ scripts, the variables are expected to contain the required ``cell_measures`` or
 
     cube_with_ancillary_sftgif = add_ancillary_variable(cube, sftgif_cube)
     result_landsea_mask = mask_landsea(cube_with_ancillary_sftgif, 'land')
+  
+  Details on the arguments needed for each step can be found in the following sections.
 
 .. _Vertical interpolation:
 

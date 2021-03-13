@@ -48,7 +48,8 @@ def _load_fx(fx_info, check_level):
 
 def add_cell_measure(cube, fx_cube, measure):
     """
-    Add cell_measure in the cube containing the data.
+    Broadcast fx_cube and add it as a cell_measure in
+    the cube containing the data.
 
     Parameters
     ----------
@@ -87,7 +88,8 @@ def add_cell_measure(cube, fx_cube, measure):
 
 def add_ancillary_variable(cube, fx_cube):
     """
-    Add ancillary variables in the cube containing the data.
+    Broadcast fx_cube and add it as an ancillary_variable in
+    the cube containing the data.
 
     Parameters
     ----------
