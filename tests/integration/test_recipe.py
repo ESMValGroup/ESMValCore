@@ -1664,9 +1664,9 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
     for product in task.products:
         assert 'weighting_landsea_fraction' in product.settings
         settings = product.settings['weighting_landsea_fraction']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert settings['area_type'] == 'land'
-        fx_variables = settings['fx_variables']
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         if product.attributes['project'] == 'obs4mips':
             assert len(fx_variables) == 1
@@ -1715,18 +1715,12 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
     for product in task.products:
         assert 'weighting_landsea_fraction' in product.settings
         settings = product.settings['weighting_landsea_fraction']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert 'exclude' not in settings
         assert settings['area_type'] == 'land'
-        fx_variables = settings['fx_variables']
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4mips':
-            assert len(fx_variables) == 1
-            assert fx_variables['sftlf'] == []
-        else:
-            assert len(fx_variables) == 2
-            assert fx_variables['sftlf'] == []
-            assert fx_variables['sftof'] == []
+        assert len(fx_variables) == 0
 
 
 def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
@@ -1772,13 +1766,9 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
             continue
         assert 'weighting_landsea_fraction' in product.settings
         settings = product.settings['weighting_landsea_fraction']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert 'exclude' not in settings
         assert settings['area_type'] == 'land'
-        fx_variables = settings['fx_variables']
-        assert isinstance(fx_variables, dict)
-        assert len(fx_variables) == 1
-        assert fx_variables.get('sftlf')
 
 
 def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
@@ -1852,9 +1842,9 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
     for product in task.products:
         assert 'mask_landsea' in product.settings
         settings = product.settings['mask_landsea']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert settings['mask_out'] == 'sea'
-        fx_variables = settings['fx_variables']
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
         if product.attributes['project'] == 'obs4mips':
@@ -1908,39 +1898,33 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
 
     # landsea
     settings = product.settings['mask_landsea']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['sftlf']
-    assert '_piControl_' in fx_variables['sftlf']
+    assert len(fx_variables) == 3
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_piControl_' in fx_variables['sftlf']['filename']
 
     # landseaice
     settings = product.settings['mask_landseaice']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = settings['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['sftgif']
-    assert '_piControl_' in fx_variables['sftgif']
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_piControl_' in fx_variables['sftlf']['filename']
 
     # volume statistics
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert settings['fx_variables'] == {}
+    assert 'volcello' not in fx_variables
 
     # area statistics
     settings = product.settings['area_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['areacello']
-    assert '_piControl_' in fx_variables['areacello']
+    assert '_fx_' in fx_variables['areacello']['filename']
+    assert '_piControl_' in fx_variables['areacello']['filename']
 
 
 def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
@@ -1982,39 +1966,33 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
 
     # landsea
     settings = product.settings['mask_landsea']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['sftlf']
-    assert '_piControl_' in fx_variables['sftlf']
+    assert len(fx_variables) == 3
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_piControl_' in fx_variables['sftlf']['filename']
 
     # landseaice
     settings = product.settings['mask_landseaice']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = settings['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['sftgif']
-    assert '_piControl_' in fx_variables['sftgif']
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_piControl_' in fx_variables['sftlf']['filename']
 
     # volume statistics
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert settings['fx_variables'] == {}
+    assert 'volcello' not in fx_variables
 
     # area statistics
     settings = product.settings['area_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['areacello']
-    assert '_piControl_' in fx_variables['areacello']
+    assert '_fx_' in fx_variables['areacello']['filename']
+    assert '_piControl_' in fx_variables['areacello']['filename']
 
 
 def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
@@ -2056,10 +2034,10 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
     for product in task.products:
         assert 'mask_landsea' in product.settings
         settings = product.settings['mask_landsea']
-        assert len(settings) == 3
+        assert len(settings) == 2
         assert settings['mask_out'] == 'sea'
         assert settings['always_use_ne_mask'] is False
-        fx_variables = settings['fx_variables']
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
         assert not any(fx_variables)
@@ -2109,37 +2087,26 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     assert len(task.products) == 1
     product = task.products.pop()
 
-    # Check area_statistics
+        # Check area_statistics
     assert 'area_statistics' in product.settings
     settings = product.settings['area_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 6
-    assert '_fx_' in fx_variables['areacella']
-    assert '_Ofx_' in fx_variables['areacello']
-    assert '_Efx_' in fx_variables['clayfrac']
-    assert '_fx_' in fx_variables['sftlf']
-    assert '_fx_' in fx_variables['sftgif']
-    assert '_Ofx_' in fx_variables['sftof']
+    assert '_fx_' in fx_variables['areacella']['filename']
+    assert '_Ofx_' in fx_variables['areacello']['filename']
+    assert '_Efx_' in fx_variables['clayfrac']['filename']
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_fx_' in fx_variables['sftgif']['filename']
+    assert '_Ofx_' in fx_variables['sftof']['filename']
 
     # Check mask_landsea
     assert 'mask_landsea' in product.settings
     settings = product.settings['mask_landsea']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = settings['fx_variables']
-    assert isinstance(fx_variables, dict)
-    fx_variables = fx_variables.values()
-    assert len(fx_variables) == 2
-    for fx_file in fx_variables:
-        if 'sftlf' in fx_file:
-            assert '_fx_' in fx_file
-        elif 'sftof' in fx_file:
-            assert '_Ofx_' in fx_file
-        else:
-            assert False
 
 
 def test_fx_list_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
@@ -2187,34 +2154,23 @@ def test_fx_list_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     # Check area_statistics
     assert 'area_statistics' in product.settings
     settings = product.settings['area_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 6
-    assert '_fx_' in fx_variables['areacella']
-    assert '_Ofx_' in fx_variables['areacello']
-    assert '_Efx_' in fx_variables['clayfrac']
-    assert '_fx_' in fx_variables['sftlf']
-    assert '_IyrAnt_' in fx_variables['sftgif'][0]
-    assert '_Ofx_' in fx_variables['sftof']
+    assert '_fx_' in fx_variables['areacella']['filename']
+    assert '_Ofx_' in fx_variables['areacello']['filename']
+    assert '_Efx_' in fx_variables['clayfrac']['filename']
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_IyrAnt_' in fx_variables['sftgif']['filename'][0]
+    assert '_Ofx_' in fx_variables['sftof']['filename']
 
     # Check mask_landsea
     assert 'mask_landsea' in product.settings
     settings = product.settings['mask_landsea']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = settings['fx_variables']
-    assert isinstance(fx_variables, dict)
-    fx_variables = fx_variables.values()
-    assert len(fx_variables) == 2
-    for fx_file in fx_variables:
-        if 'sftlf' in fx_file:
-            assert '_fx_' in fx_file
-        elif 'sftof' in fx_file:
-            assert '_Ofx_' in fx_file
-        else:
-            assert False
 
 
 def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
@@ -2258,13 +2214,13 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Omon_' not in fx_variables['volcello']
-    assert '_Ofx_' in fx_variables['volcello']
+    assert '_Omon_' not in fx_variables['volcello']['filename']
+    assert '_Ofx_' in fx_variables['volcello']['filename']
 
 
 def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
@@ -2307,14 +2263,14 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Oyr_' in fx_variables['volcello'][0]
-    assert '_piControl_' in fx_variables['volcello'][0]
-    assert '_Omon_' not in fx_variables['volcello'][0]
+    assert '_Oyr_' in fx_variables['volcello']['filename'][0]
+    assert '_piControl_' in fx_variables['volcello']['filename'][0]
+    assert '_Omon_' not in fx_variables['volcello']['filename'][0]
 
 
 def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
@@ -2364,9 +2320,10 @@ def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
     assert product.files
     assert 'area_statistics' in product.settings
     settings = product.settings['area_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert settings['fx_variables'] == {}
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
+    assert fx_variables == {}
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
@@ -2408,13 +2365,13 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello'][0]
-    assert '_Omon_' in fx_variables['volcello'][0]
+    assert '_Ofx_' not in fx_variables['volcello']['filename'][0]
+    assert '_Omon_' in fx_variables['volcello']['filename'][0]
 
 
 def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
@@ -2456,13 +2413,13 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello'][0]
-    assert '_Oyr_' in fx_variables['volcello'][0]
+    assert '_Ofx_' not in fx_variables['volcello']['filename'][0]
+    assert '_Oyr_' in fx_variables['volcello']['filename'][0]
 
 
 def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
@@ -2502,13 +2459,13 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['volcello']
-    assert '_Omon_' not in fx_variables['volcello']
+    assert '_fx_' in fx_variables['volcello']['filename']
+    assert '_Omon_' not in fx_variables['volcello']['filename']
 
 
 def test_wrong_project(tmp_path, patched_datafinder, config_user):

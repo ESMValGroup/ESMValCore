@@ -186,7 +186,7 @@ def mask_landseaice(cube, mask_out):
         fx_cube = cube.ancillary_variable('land_ice_area_fraction')
     except iris.exceptions.AncillaryVariableNotFoundError:
         logger.debug('Ancillary variables land ice area fraction '
-                    'not found in cube. Check fx_file availability.')
+                     'not found in cube. Check fx_file availability.')
     if fx_cube:
         landice_mask = _get_fx_mask(fx_cube.data, mask_out, fx_cube.var_name)
         cube.data = _apply_fx_mask(landice_mask, cube.data)
