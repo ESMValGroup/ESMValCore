@@ -66,7 +66,7 @@ def add_cell_measure(cube, fx_cube, measure):
     iris.cube.Cube
         Cube with added ancillary variables
     """
-    if 'measure' not in ['area', 'volume']:
+    if measure not in ['area', 'volume']:
         raise ValueError(f"measure name must be 'area or volume, "
                          f"got {measure} instead")
     try:
