@@ -238,6 +238,15 @@ def rechunk(cube, blocksize='auto'):
     logger.debug("New chunk configuration: %s", cube.lazy_data())
 
 
+def apply_slicewise(cube, dim, operator, **kwargs):
+    """Loop over slices of a cube if iris has no lazy aggregator."""
+    slices = []
+    for timeslice in cube.slices(['time']):
+        timeslice.collapsed(dim, operator, **kwargs)
+    result = iris.cube.CubeList(slices).merge_cube(dim='time')
+    return result
+
+
 def _compute(cube, statistic: str, dim: str = 'new_dim'):
     """Compute statistic.
 
@@ -284,7 +293,9 @@ def _compute(cube, statistic: str, dim: str = 'new_dim'):
     logger.debug('Multicube statistics: computing: %s', statistic)
 
     # This will always return a masked array
-    return cube.collapsed(dim, operator, **kwargs)
+    if iris_has_lazy_func:  # TODO: determine whether iris has a lazy func or not
+        return cube.collapsed(dim, operator, **kwargs)
+    return apply_slicewise(cube, dim, operator, **kwargs)
 
 
 def _multicube_statistics(cubes, statistics, span):
@@ -295,6 +306,7 @@ def _multicube_statistics(cubes, statistics, span):
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
     """
+    dask.config.set(scheduler='synchronous')
     realize = False
     for cube in cubes:
         # make input cubes lazy for efficient operation on real data
