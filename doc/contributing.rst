@@ -171,6 +171,11 @@ no formatting mistakes and Codacy for monitoring (Python) code quality.
 Running prospector locally will give you quicker and sometimes more
 accurate results.
 
+If you are adding type annotations, make sure that they pass the
+`mypy <https://mypy.readthedocs.io/en/stable/index.html>`__ static type checker.
+Type checks are run as part of `pytest` via a plugin, but it is also possible to use
+the ``mypy`` command directly.
+
 YAML
 ~~~~
 
