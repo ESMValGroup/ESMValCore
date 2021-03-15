@@ -50,7 +50,7 @@ def assert_coords_equal(this: list, other: list):
     """Assert coords list `this` equals coords list `other`."""
     for this_coord, other_coord in zip(this, other):
         np.testing.assert_equal(this_coord.points, other_coord.points)
-        # assert this_coord.var_name == other_coord.var_name
+        assert this_coord.var_name == other_coord.var_name
         assert this_coord.standard_name == other_coord.standard_name
         assert this_coord.units == other_coord.units
 
@@ -193,7 +193,7 @@ def multimodel_regression_test(cubes, span, name):
     fail the first time with a RuntimeError, because the reference data
     are being written.
     """
-    statistic = 'p50'
+    statistic = 'mean'
     result = multimodel_test(cubes, statistic=statistic, span=span)
     result_cube = result[statistic]
 
