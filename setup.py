@@ -111,7 +111,7 @@ class CustomCommand(Command):
 class RunLinter(CustomCommand):
     """Class to run a linter and generate reports."""
 
-    user_options = []
+    user_options: list = []
 
     def initialize_options(self):
         """Do nothing."""
