@@ -1,7 +1,9 @@
 """ESMValCore utilities."""
 
+import os
 import re
 from pathlib import Path
+from typing import Tuple, Union
 
 from esmvalcore._config import DIAGNOSTICS
 
@@ -53,14 +55,14 @@ def get_all_recipes(subdir: str = None) -> list:
     RecipeList
         List of available recipes
     """
-    if not subdir:
+    if subdir is None:
         subdir = '**'
     rootdir = DIAGNOSTICS.recipes
     files = rootdir.glob(f'{subdir}/*.yml')
     return RecipeList(Recipe(file) for file in files)
 
 
-def get_recipe(name: str) -> 'Recipe':
+def get_recipe(name: Union[os.PathLike, str]) -> Recipe:
     """Get a recipe by its name.
 
     The function looks first in the local directory, and second in the
@@ -83,12 +85,14 @@ def get_recipe(name: str) -> 'Recipe':
     FileNotFoundError
         If the name cannot be resolved to a recipe file.
     """
+    filenames: Tuple[Union[str, os.PathLike], ...]
+
     locations = Path(), DIAGNOSTICS.recipes
 
-    if isinstance(name, Path):
-        filenames = (name, )
-    else:
+    if isinstance(name, str):
         filenames = (name, name + '.yml')
+    else:
+        filenames = (name, )
 
     for location in locations:
         for filename in filenames:
