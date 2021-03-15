@@ -22,6 +22,7 @@ from esmvalcore.preprocessor._area import (
 )
 from esmvalcore.preprocessor._shared import guess_bounds
 
+
 class Test(tests.Test):
     """Test class for the :func:`esmvalcore.preprocessor._area_pp` module."""
     def setUp(self):
