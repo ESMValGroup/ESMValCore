@@ -12,13 +12,13 @@ import os
 from collections import Counter
 from functools import total_ordering
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Type
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
-CMOR_TABLES: Dict[str, object] = {}
+CMOR_TABLES: Dict[str, Type[InfoBase]] = {}
 """dict of str, obj: CMOR info objects."""
 
 
