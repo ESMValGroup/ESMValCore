@@ -291,7 +291,7 @@ There are four settings related to CMOR tables available:
 References configuration file
 =============================
 
-The ``config-references.yml`` file contains the list of ESMValTool diagnostic and recipe authors,
+The `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/master/esmvaltool/config-references.yml>`__ file contains the list of ESMValTool diagnostic and recipe authors,
 references and projects. Each author, project and reference referred to in the
 documentation section of a recipe needs to be in this file in the relevant
 section.

@@ -264,6 +264,8 @@ regenerate the file .zenodo.json by running the command
    pip install cffconvert
    cffconvert --ignore-suspect-keys --outputformat zenodo --outfile .zenodo.json
 
+.. _how-to-make-a-release:
+
 How to make a release
 ---------------------
 

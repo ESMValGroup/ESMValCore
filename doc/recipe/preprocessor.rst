@@ -1235,6 +1235,19 @@ Parameters:
     regions in the shape file is masked out. If ``true``, the regions in the
     shapefiles are masked out separately, generating an auxiliary dimension
     for the cube for this.
+  * ``ids``: by default, ``[]``, in this case all the shapes in the file will
+    be used. If a list of IDs is provided, only the shapes matching them will
+    be used. The IDs are assigned from the ``name`` or ``id`` attributes (in
+    that order of priority) if present in the file or from the reading order
+    if otherwise not present. So, for example, if a file has both ```name``
+    and ``id`` attributes, the ids will be assigned from ``name``. If the file
+    only has the ``id`` attribute, it will be taken from it and if no ``name``
+    nor ``id`` attributes are present, an integer id starting from 1 will be
+    assigned automatically when reading the shapes. We discourage to rely on
+    this last behaviour as we can not assure that the reading order will be the
+    same in different platforms, so we encourage you to modify the file to add
+    a proper id attribute. If the file has an id attribute with a name that is
+    not supported, please open an issue so we can add support for it.
 
 Examples:
     * Extract the shape of the river Elbe from a shapefile:
@@ -1244,6 +1257,21 @@ Examples:
             extract_shape:
               shapefile: Elbe.shp
               method: contains
+
+    * Extract the shape of several countries:
+
+        .. code-block:: yaml
+
+            extract_shape:
+            shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
+            decomposed: True
+            method: contains
+            ids:
+              - Spain
+              - France
+              - Italy
+              - United Kingdom
+              - Taiwan
 
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
