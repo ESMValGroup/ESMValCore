@@ -238,16 +238,37 @@ def rechunk(cube, blocksize='auto'):
     logger.debug("New chunk configuration: %s", cube.lazy_data())
 
 
-def apply_slicewise(cube, dim, operator, **kwargs):
-    """Loop over slices of a cube if iris has no lazy aggregator."""
+def apply_along_dim(cube: iris.cube.Cube, *, dim: str,
+                    operator: iris.analysis.Aggregator, **kwargs):
+    """Loop over slices of a cube if iris has no lazy aggregator.
+
+    Parameters:
+    cube : `:obj:`iris.cube.Cube`
+        Cube to operate on.
+    dim : str
+        Dimension to apply operator along.
+    operator : :obj:`iris.analysis.Aggregator`
+        Operator from the `iris.analysis` module to apply.
+
+    Returns:
+    ret_cube : iris.cube.Cube
+        Cube collapsed along `dim`.
+    """
+
     slices = []
-    for timeslice in cube.slices(['time']):
-        timeslice.collapsed(dim, operator, **kwargs)
-    result = iris.cube.CubeList(slices).merge_cube(dim='time')
-    return result
+    for timeslice in cube.slices(dim):
+        new_slice = timeslice.collapsed(dim, operator, **kwargs)
+        slices.append(new_slice)
+
+    ret_cube = iris.cube.CubeList(slices).merge_cube()
+
+    # for consistency with normal procedure
+    ret_cube.data = np.ma.array(ret_cube.data)
+
+    return ret_cube
 
 
-def _compute(cube, statistic: str, dim: str = 'new_dim'):
+def _compute(cube: iris.cube.Cube, *, statistic: str, dim: str = 'new_dim'):
     """Compute statistic.
 
     Parameters
@@ -292,10 +313,13 @@ def _compute(cube, statistic: str, dim: str = 'new_dim'):
 
     logger.debug('Multicube statistics: computing: %s', statistic)
 
-    # This will always return a masked array
-    if iris_has_lazy_func:  # TODO: determine whether iris has a lazy func or not
-        return cube.collapsed(dim, operator, **kwargs)
-    return apply_slicewise(cube, dim, operator, **kwargs)
+    if operator.lazy_func is None:
+        ret_cube = apply_along_dim(cube, dim=dim, operator=operator, **kwargs)
+    else:
+        # This will always return a masked array
+        ret_cube = cube.collapsed(dim, operator, **kwargs)
+
+    return ret_cube
 
 
 def _multicube_statistics(cubes, statistics, span):
@@ -321,7 +345,7 @@ def _multicube_statistics(cubes, statistics, span):
     big_cube = _combine(aligned_cubes)
     statistics_cubes = {}
     for statistic in statistics:
-        result_cube = _compute(big_cube, statistic)
+        result_cube = _compute(big_cube, statistic=statistic)
 
         # realize data if input cubes are not lazy
         if realize:
