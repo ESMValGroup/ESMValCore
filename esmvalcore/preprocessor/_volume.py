@@ -298,22 +298,41 @@ def volume_statistics(
 def extract_surface(cube):
     """
     Extact the surface layer from a 3D cube.
+
+    Requires a cube with a z axis.
+    Find the place where the value is closest 
+
+    This assumes that the surface is the closest layer to zero. 
+
+    The preprocessor extract_layer can also do this, but it may try
+    to regrid, which is much slower and more memory intensive. 
+
+    Arguments
+    ---------
+    cube: iris.cube.Cube
+        input cube.
+
+    Returns
+    -------
+    iris.cube.Cube
+        collapsed cube.
+
     """
     zcoord = cube.coord(axis='Z')
     positive = zcoord.attributes['positive']
 
     if zcoord.points.ndim == 1:
-        # ie downwards is positive
         surf = np.abs(zcoord.points).argmin()
 
-    else:
-        assert 0
-        if positive == 'up':
-            # ie downwards is positive
-            surf = 0
-        if positive == 'down': # Not sure about this part!
-            # ie downwards is negative
-            surf = -1
+    # This is just a quick hack to get the ballpark surface layer index.
+    # this won't work if the dimensions are non-monotonic.
+    # or if it's some weird axis that exists both below and above the surface.
+    elif zcoord.points.ndim == 3:
+        points = zcoord.points.mean(axis=[1,2])
+        surf = np.abs(points).argmin()
+    elif zcoord.points.ndim == 4:
+        points = zcoord.points.mean(axis=[0, 2, 3])
+        surf = np.abs(points).argmin()
 
     zcoord_dim  = cube.coord_dims(zcoord)
     if zcoord_dim in [0, (0,)]:
@@ -322,7 +341,8 @@ def extract_surface(cube):
     if zcoord_dim in [1, (1,)]:
        return  cube[:, surf] 
 
-    logger.error('Condition not recognised: postive: %s , zcoord_dim: %s, surface level: %s', positive, zcoord_dim, surf)
+    logger.error('Condition not recognised: postive: %s , zcoord_dim: %s, '
+                 'surface level: %s', positive, zcoord_dim, surf)
     assert 0
     
 
