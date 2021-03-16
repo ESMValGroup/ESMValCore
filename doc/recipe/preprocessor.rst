@@ -1326,6 +1326,7 @@ The ``_volume.py`` module contains the following preprocessor functions:
 * ``extract_transect``: Extract data along a line of constant latitude or
   longitude.
 * ``extract_trajectory``: Extract data along a specified trajectory.
+* ``extract_surface``: Extract the surface layer from a cube.
 
 
 ``extract_volume``
@@ -1419,6 +1420,22 @@ Note that this function uses the expensive ``interpolate`` method from
 ``Iris.analysis.trajectory``, but it may be necessary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
+
+
+``extract_surface``
+------------------
+
+This function extracts the surface layer from a dataset. 
+
+The surface layer is defined as the closest to the zero value 
+of the absolute value of the Z-dimension. 
+
+The same functionality exists in the extract_levels preprocessor,
+and this function should be used for more complex datasets
+if extract_surface fails. However, extract_levels also 
+has a higher computational cost, and may be slower. 
+
+See also :func:`esmvalcore.preprocessor.extract_levels`.
 
 
 .. _cycles:
