@@ -6,7 +6,6 @@ from datetime import datetime
 from functools import reduce
 
 import cf_units
-import dask
 import dask.array as da
 import iris
 import numpy as np
@@ -220,12 +219,8 @@ def _combine(cubes, dim='new_dim'):
     return merged_cube
 
 
-def rechunk(cube, blocksize='auto'):
+def rechunk(cube):
     """Rechunk the cube to speed up out-of-memory computation."""
-
-    if blocksize != 'auto':  # auto block size in dask is "128MiB"
-        dask.config.set({"array.chunk-size": blocksize})
-
     new_chunks = {0: -1}  # don't chunk along the multimodel dimension
     if cube.ndim > 1:
         new_chunks[1] = 'auto'  # do chunk along the first subsequent dimension
@@ -288,7 +283,7 @@ def _compute(cube: iris.cube.Cube, *, statistic: str, dim: str = 'new_dim'):
     statistic = statistic.lower()
     kwargs = {}
 
-    rechunk(cube, blocksize="auto")
+    rechunk(cube)
 
     # special cases
     if statistic == 'std':
@@ -329,7 +324,6 @@ def _multicube_statistics(cubes, statistics, span):
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
     """
-    dask.config.set(scheduler='synchronous')
     realize = False
     for cube in cubes:
         # make input cubes lazy for efficient operation on real data
