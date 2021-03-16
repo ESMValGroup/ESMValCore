@@ -68,6 +68,7 @@ from ._volume import (
     extract_trajectory,
     extract_transect,
     extract_volume,
+    extract_surface,
     volume_statistics,
 )
 from ._weighting import weighting_landsea_fraction
@@ -99,6 +100,7 @@ __all__ = [
     'resample_hours',
     'resample_time',
     # Level extraction
+    'extract_surface',
     'extract_levels',
     # Weighting
     'weighting_landsea_fraction',

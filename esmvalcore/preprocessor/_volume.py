@@ -295,6 +295,37 @@ def volume_statistics(
     return _create_cube_time(src_cube, result, times)
 
 
+def extract_surface(cube):
+    """
+    Extact the surface layer from a 3D cube.
+    """
+    zcoord = cube.coord(axis='Z')
+    positive = zcoord.attributes['positive']
+
+    if zcoord.points.ndim == 1:
+        # ie downwards is positive
+        surf = np.abs(zcoord.points).argmin()
+
+    else:
+        assert 0
+        if positive == 'up':
+            # ie downwards is positive
+            surf = 0
+        if positive == 'down': # Not sure about this part!
+            # ie downwards is negative
+            surf = -1
+
+    zcoord_dim  = cube.coord_dims(zcoord)
+    if zcoord_dim in [0, (0,)]:
+       return  cube[surf]
+
+    if zcoord_dim in [1, (1,)]:
+       return  cube[:, surf] 
+
+    logger.error('Condition not recognised: postive: %s , zcoord_dim: %s, surface level: %s', positive, zcoord_dim, surf)
+    assert 0
+    
+
 def depth_integration(cube):
     """
     Determine the total sum over the vertical component.
