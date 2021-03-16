@@ -623,9 +623,11 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
 def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
     """Test for extracting a shape from NE file."""
     expected = np.ones((5, 5))
+    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
+    shp_file = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
     result = extract_shape(
         make_testcube,
-        "esmvalcore/preprocessor/ne_masks/ne_50m_ocean.shp",
+        shp_file,
         crop=False,
     )
     np.testing.assert_array_equal(result.data.data, expected)
