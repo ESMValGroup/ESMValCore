@@ -18,7 +18,7 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-CMOR_TABLES: Dict[str, Type[InfoBase]] = {}
+CMOR_TABLES: Dict[str, Type['InfoBase']] = {}
 """dict of str, obj: CMOR info objects."""
 
 
