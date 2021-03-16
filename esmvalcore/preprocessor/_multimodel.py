@@ -191,7 +191,7 @@ def _align(cubes, span):
     return new_cubes
 
 
-def _combine(cubes, dim='new_dim'):
+def _combine(cubes, dim='multi-model'):
     """Merge iris cubes into a single big cube with new dimension.
 
     This assumes that all input cubes have the same shape.
@@ -233,19 +233,21 @@ def rechunk(cube):
     logger.debug("New chunk configuration: %s", cube.lazy_data())
 
 
-def apply_along_dim(cube: iris.cube.Cube, *, dim: str,
-                    operator: iris.analysis.Aggregator, **kwargs):
+def apply_along_time_points(cube: iris.cube.Cube, *, dim: str,
+                            operator: iris.analysis.Aggregator, **kwargs):
     """Loop over slices of a cube if iris has no lazy aggregator.
 
     Parameters:
+    -----------
     cube : `:obj:`iris.cube.Cube`
         Cube to operate on.
     dim : str
-        Dimension to apply operator along.
+        Dimension to apply the operator along.
     operator : :obj:`iris.analysis.Aggregator`
         Operator from the `iris.analysis` module to apply.
 
     Returns:
+    --------
     ret_cube : iris.cube.Cube
         Cube collapsed along `dim`.
     """
@@ -262,7 +264,10 @@ def apply_along_dim(cube: iris.cube.Cube, *, dim: str,
     return ret_cube
 
 
-def _compute(cube: iris.cube.Cube, *, statistic: str, dim: str = 'new_dim'):
+def _compute(cube: iris.cube.Cube,
+             *,
+             statistic: str,
+             dim: str = 'multi-model'):
     """Compute statistic.
 
     Parameters
@@ -308,7 +313,10 @@ def _compute(cube: iris.cube.Cube, *, statistic: str, dim: str = 'new_dim'):
     logger.debug('Multicube statistics: computing: %s', statistic)
 
     if operator.lazy_func is None:
-        ret_cube = apply_along_dim(cube, dim=dim, operator=operator, **kwargs)
+        ret_cube = apply_along_time_points(cube,
+                                           dim=dim,
+                                           operator=operator,
+                                           **kwargs)
     else:
         # This will always return a masked array
         ret_cube = cube.collapsed(dim, operator, **kwargs)
