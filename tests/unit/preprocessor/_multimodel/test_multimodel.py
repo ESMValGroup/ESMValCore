@@ -463,6 +463,19 @@ def test_edge_case_sub_daily_data_fail(span):
         _ = multi_model_statistics(cubes, span, statistics)
 
 
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_edge_case_single_cube_fail(span):
+    """Test that an error is raised when a single cube is passed."""
+    cube = generate_cube_from_dates('monthly')
+    cubes = (cube, )
+
+    statistic = 'min'
+    statistics = (statistic, )
+
+    with pytest.raises(ValueError):
+        _ = multi_model_statistics(cubes, span, statistics)
+
+
 def test_unify_time_coordinates():
     """Test set common calendar."""
     cube1 = generate_cube_from_dates('monthly',

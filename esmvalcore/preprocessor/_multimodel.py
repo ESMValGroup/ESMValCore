@@ -334,6 +334,10 @@ def _multicube_statistics(cubes, statistics, span):
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
     """
+    if len(cubes) == 1:
+        raise ValueError('Cannot perform multicube statistics '
+                         'for a single cube.')
+
     realize = False
     for cube in cubes:
         # make input cubes lazy for efficient operation on real data
