@@ -10,7 +10,9 @@ import tests
 from esmvalcore.preprocessor._volume import (volume_statistics,
                                              depth_integration,
                                              extract_trajectory,
-                                             extract_transect, extract_volume)
+                                             extract_transect,
+                                             extract_volume,
+                                             extract_surface)
 
 
 class Test(tests.Test):
@@ -19,6 +21,7 @@ class Test(tests.Test):
     def setUp(self):
         """Prepare tests"""
         coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+        data0 = np.ones((2, 2))
         data1 = np.ones((3, 2, 2))
         data2 = np.ma.ones((2, 3, 2, 2))
         data3 = np.ma.ones((4, 3, 2, 2))
@@ -60,6 +63,9 @@ class Test(tests.Test):
                                      bounds=[[1., 2.], [2., 3.]],
                                      units='degrees_north',
                                      coord_system=coord_sys)
+
+        coords_spec2 = [(lats2, 0), (lons2, 1)]
+        self.grid_2d = iris.cube.Cube(data0, dim_coords_and_dims=coords_spec2)
 
         coords_spec3 = [(zcoord, 0), (lats2, 1), (lons2, 2)]
         self.grid_3d = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec3)
@@ -152,6 +158,14 @@ class Test(tests.Test):
         expected = np.ones((3, 2))
         self.assert_array_equal(result.data, expected)
 
+    def test_extract_surface(self):
+        """Tests to extract the surface from a 3D and 4D cube."""
+        result = extract_surface(self.grid_3d)
+        self.assert_array_equal(result, self.grid_2d)
 
-if __name__ == '__main__':
+        result2 = extract_surface(self.grid_4d)
+        self.assert_array_equal(self.grid_4d[:, 0, :, :], result2)
+
+
+if __eame__ == '__main__':
     unittest.main()
