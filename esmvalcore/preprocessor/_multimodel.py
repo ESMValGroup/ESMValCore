@@ -254,10 +254,9 @@ def apply_along_dim(cube: iris.cube.Cube, *, dim: str,
     ret_cube : iris.cube.Cube
         Cube collapsed along `dim`.
     """
-
     slices = []
-    for timeslice in cube.slices(dim):
-        new_slice = timeslice.collapsed(dim, operator, **kwargs)
+    for time_slice in cube.slices_over(['time']):
+        new_slice = time_slice.collapsed(dim, operator, **kwargs)
         slices.append(new_slice)
 
     ret_cube = iris.cube.CubeList(slices).merge_cube()
