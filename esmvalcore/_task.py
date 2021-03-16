@@ -11,9 +11,9 @@ import sys
 import textwrap
 import threading
 import time
-from asyncio import Future
 from copy import deepcopy
 from multiprocessing import Pool
+from multiprocessing.pool import ApplyResult
 from pathlib import Path, PosixPath
 from shutil import which
 from typing import Dict, Type
@@ -687,7 +687,7 @@ class TaskSet(set):
     def _run_parallel(self, max_parallel_tasks=None):
         """Run tasks in parallel."""
         scheduled = self.flatten()
-        running: Dict[Type[BaseTask], Future] = {}
+        running: Dict[Type[BaseTask], Type[ApplyResult]] = {}
 
         n_tasks = n_scheduled = len(scheduled)
         n_running = 0
