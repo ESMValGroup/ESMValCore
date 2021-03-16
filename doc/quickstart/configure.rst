@@ -13,7 +13,6 @@ There are several configuration files in ESMValCore:
   graphical output format, root paths to data, etc.;
 * ``config-developer.yml``: sets a number of standardized file-naming and paths
   to data formatting;
-* ``config-logging.yml``: stores information on logging.
 
 and one configuration file which is distributed with ESMValTool:
 
@@ -317,10 +316,3 @@ following documentation section:
 
 These four items here are named people, references and projects listed in the
 ``config-references.yml`` file.
-
-
-Logging configuration file
-==========================
-
-.. warning::
-    Section to be added
