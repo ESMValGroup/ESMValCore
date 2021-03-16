@@ -313,6 +313,8 @@ def _compute(cube: iris.cube.Cube, *, statistic: str, dim: str = 'new_dim'):
         # This will always return a masked array
         ret_cube = cube.collapsed(dim, operator, **kwargs)
 
+    ret_cube.remove_coord(dim)
+
     return ret_cube
 
 
