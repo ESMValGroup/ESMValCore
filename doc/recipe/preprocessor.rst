@@ -517,7 +517,7 @@ interval thresholding and masking can also be performed. These functions are
 ``mask_outside_range``.
 
 These functions always take a cube as first argument and either ``threshold``
-for threshold masking or the pair ``minimum`, ``maximum`` for interval masking.
+for threshold masking or the pair ``minimum``, ``maximum`` for interval masking.
 
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related
 functions.
@@ -598,6 +598,49 @@ centrepoints using the `lat_offset` and ``lon_offset`` arguments:
           lon_offset: True
           lat_offset: True
           scheme: nearest
+
+Regridding to a regional target grid specification
+--------------------------------------------------
+
+This example shows how to regrid to a regional target grid specification.
+This is useful if both a ``regrid`` and ``extract_region`` step are necessary.
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid:
+            start_longitude: 40
+            end_longitude: 60
+            step_longitude: 2
+            start_latitude: -10
+            end_latitude: 30
+            step_latitude: 2
+          scheme: nearest
+
+This defines a grid ranging from 40° to 60° longitude with 2° steps,
+and -10° to 30° latitude with 2° steps. If ``end_longitude`` or ``end_latitude`` do
+not fall on the grid (e.g., ``end_longitude: 61``), it cuts off at the nearest
+previous value (e.g. ``60``).
+
+The longitude coordinates will wrap around the globe if necessary, i.e.
+``start_longitude: 350``, ``end_longitude: 370`` is valid input.
+
+The arguments are defined below:
+
+* ``start_latitude``: Latitude value of the first grid cell center (start point).
+  The grid includes this value.
+* ``end_latitude``: Latitude value of the last grid cell center (end point).
+  The grid includes this value only if it falls on a grid point.
+  Otherwise, it cuts off at the previous value.
+* ``step_latitude``: Latitude distance between the centers of two neighbouring cells.
+* ``start_longitude``: Latitude value of the first grid cell center (start point).
+  The grid includes this value.
+* ``end_longitude``: Longitude value of the last grid cell center (end point).
+  The grid includes this value only if it falls on a grid point.
+  Otherwise, it cuts off at the previous value.
+* ``step_longitude``: Longitude distance between the centers of two neighbouring cells.
 
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
