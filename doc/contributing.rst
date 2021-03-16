@@ -193,9 +193,6 @@ A generic tool to check for common spelling mistakes is
 Documentation
 -------------
 
-What should be documented
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
 The documentation lives on `docs.esmvaltool.org <https://docs.esmvaltool.org>`_
 and is built using `Sphinx <https://www.sphinx-doc.org>`_.
 There are two main ways of adding documentation:
@@ -220,6 +217,9 @@ There are two main ways of adding documentation:
    `PEP257 <https://www.python.org/dev/peps/pep-0257/>`__.
    We make use of
    `numpy style docstrings <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html>`__.
+
+What should be documented
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Any code documentation that is visible on readthedocs_ should be well
 written and adhere to the standards for documentation.
