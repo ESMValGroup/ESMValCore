@@ -194,7 +194,7 @@ class Rlns(Fix):
 
 
 class Rlus(Fix):
-    """Fixes for Rlds."""
+    """Fixes for Rlus."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
