@@ -17,6 +17,7 @@ from ._area import (
     extract_shape,
     meridional_statistics,
     zonal_statistics,
+    area_statistics_mask
 )
 from ._cycles import amplitude
 from ._derive import derive
@@ -134,6 +135,7 @@ __all__ = [
     'extract_named_regions',
     'depth_integration',
     'area_statistics',
+    'area_statistics_mask',
     'volume_statistics',
     # Time operations
     # 'annual_cycle': annual_cycle,
