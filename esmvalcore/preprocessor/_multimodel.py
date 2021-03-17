@@ -251,8 +251,9 @@ def apply_along_time_points(cube: iris.cube.Cube, *, dim: str,
     ret_cube : iris.cube.Cube
         Cube collapsed along `dim`.
     """
+    _ = cube.data  # realize for more performance like in old implementation
     slices = []
-    for time_slice in cube.slices_over(['time']):
+    for time_slice in cube.slices_over('time'):
         new_slice = time_slice.collapsed(dim, operator, **kwargs)
         slices.append(new_slice)
 
