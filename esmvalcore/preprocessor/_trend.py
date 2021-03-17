@@ -68,7 +68,10 @@ def _set_trend_units(cube, coord):
     invalid_units = any([cube.units is None, cube.units.is_unknown(),
                          cube.units.is_no_unit(), coord_units.is_no_unit()])
     if not invalid_units:
-        cube.units /= coord_units
+        if coord_units == Unit('1'):
+            pass
+        else:
+            cube.units /= coord_units
 
 
 def linear_trend(cube, coordinate='time'):
