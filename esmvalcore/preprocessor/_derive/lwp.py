@@ -88,9 +88,6 @@ class DerivedVariable(DerivedVariableBase):
             'SAM0-UNICON'
         ]
         affected_projects = ["CMIP5", "CMIP5_ETHZ", "CMIP6"]
-        print("===============")
-        print(dataset)
-        print(project)
         if (project in affected_projects and dataset in bad_datasets):
             logger.info(
                 "Assuming that variable clwvi from %s dataset %s "
