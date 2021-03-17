@@ -64,12 +64,14 @@ class Test(tests.Test):
             'unstructured_nearest'
         ]
 
-        def _return_mock_stock_cube(spec, lat_offset=True, lon_offset=True):
+        def _return_mock_global_stock_cube(spec,
+                                           lat_offset=True,
+                                           lon_offset=True):
             return self.tgt_grid
 
         self.mock_stock = self.patch(
-            'esmvalcore.preprocessor._regrid._stock_cube',
-            side_effect=_return_mock_stock_cube)
+            'esmvalcore.preprocessor._regrid._global_stock_cube',
+            side_effect=_return_mock_global_stock_cube)
         self.mocks = [
             self.coord_system, self.coords, self.regrid, self.src_cube,
             self.tgt_grid_coord, self.tgt_grid, self.mock_stock
