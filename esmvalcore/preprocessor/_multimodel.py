@@ -34,6 +34,34 @@ STATISTIC_MAPPING = {
 }
 
 
+def _resolve_operator(statistic: str):
+    """Find the operator corresponding to the statistic."""
+    statistic = statistic.lower()
+    kwargs = {}
+
+    # special cases
+    if statistic == 'std':
+        logger.warning(
+            "Multicube statistics is aligning its behaviour with iris.analysis"
+            ". Please consider replacing 'std' with 'std_dev' in your code.")
+        statistic = 'std_dev'
+
+    elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic):
+        # percentiles between p0 and p99.99999...
+        percentile = float(statistic[1:])
+        kwargs['percent'] = percentile
+        statistic = 'percentile'
+
+    try:
+        operator = STATISTIC_MAPPING[statistic]
+    except KeyError as err:
+        raise ValueError(
+            f'Statistic `{statistic}` not supported by multicube statistics. '
+            f'Must be one of {tuple(STATISTIC_MAPPING.keys())}.') from err
+
+    return operator, kwargs
+
+
 def _get_consistent_time_unit(cubes):
     """Return cubes' time unit if consistent, standard calendar otherwise."""
     t_units = [cube.coord('time').units for cube in cubes]
@@ -233,98 +261,42 @@ def rechunk(cube):
     logger.debug("New chunk configuration: %s", cube.lazy_data())
 
 
-def apply_along_time_points(cube: iris.cube.Cube, *, dim: str,
-                            operator: iris.analysis.Aggregator, **kwargs):
-    """Loop over slices of a cube if iris has no lazy aggregator.
+def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
+                   **kwargs):
+    """Loop over slices of a cube if iris has no lazy aggregator."""
+    _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
-    Parameters:
-    -----------
-    cube : `:obj:`iris.cube.Cube`
-        Cube to operate on.
-    dim : str
-        Dimension to apply the operator along.
-    operator : :obj:`iris.analysis.Aggregator`
-        Operator from the `iris.analysis` module to apply.
+    result_slices = []
+    for i in range(cubes[0].shape[0]):
+        single_model_slices = [cube[i] for cube in cubes
+                               ]  # maybe filter the iris warning here?
+        combined_slice = _combine(single_model_slices, dim='multi-model')
+        collapsed_slice = combined_slice.collapsed('multi-model', operator,
+                                                   **kwargs)
+        result_slices.append(collapsed_slice)
 
-    Returns:
-    --------
-    ret_cube : iris.cube.Cube
-        Cube collapsed along `dim`.
-    """
-    _ = cube.data  # realize for more performance like in old implementation
-    slices = []
-    for time_slice in cube.slices_over('time'):
-        new_slice = time_slice.collapsed(dim, operator, **kwargs)
-        slices.append(new_slice)
+    result_cube = iris.cube.CubeList(result_slices).merge_cube()
 
-    ret_cube = iris.cube.CubeList(slices).merge_cube()
+    # For consistency with lazy procedure
+    result_cube.data = np.ma.array(result_cube.data)
 
-    # for consistency with normal procedure
-    ret_cube.data = np.ma.array(ret_cube.data)
+    result_cube.remove_coord('multi-model')
 
-    return ret_cube
+    return result_cube
 
 
-def _compute(cube: iris.cube.Cube,
-             *,
-             statistic: str,
-             dim: str = 'multi-model'):
-    """Compute statistic.
-
-    Parameters
-    ----------
-    cube : :obj:`iris.cube.Cube`
-        Input cube.
-    statistic : str
-        Name of the statistic to calculate. Must be available via
-        :mod:`iris.analysis`.
-    dim : str
-        Collapse cube along this coordinate.
-
-    Returns
-    -------
-    :obj:`iris.cube.Cube`
-        Collapsed cube.
-    """
-    statistic = statistic.lower()
-    kwargs = {}
-
+def _compute_lazy(cubes: list, *, operator: iris.analysis.Aggregator,
+                  **kwargs):
+    """Compute statistics using lazy iris function."""
+    cube = _combine(
+        cubes, dim='multi-model'
+    )  # this is now done for each statistic, can we avoid that?
     rechunk(cube)
 
-    # special cases
-    if statistic == 'std':
-        logger.warning(
-            "Multicube statistics is aligning its behaviour with iris.analysis"
-            ". Please consider replacing 'std' with 'std_dev' in your code.")
-        statistic = 'std_dev'
-
-    elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic):
-        # percentiles between p0 and p99.99999...
-        percentile = float(statistic[1:])
-        kwargs['percent'] = percentile
-        statistic = 'percentile'
-
-    try:
-        operator = STATISTIC_MAPPING[statistic]
-    except KeyError as err:
-        raise ValueError(
-            f'Statistic `{statistic}` not supported by multicube statistics. '
-            f'Must be one of {tuple(STATISTIC_MAPPING.keys())}.') from err
-
-    logger.debug('Multicube statistics: computing: %s', statistic)
-
-    if operator.lazy_func is None:
-        ret_cube = apply_along_time_points(cube,
-                                           dim=dim,
-                                           operator=operator,
-                                           **kwargs)
-    else:
-        # This will always return a masked array
-        ret_cube = cube.collapsed(dim, operator, **kwargs)
-
-    ret_cube.remove_coord(dim)
-
-    return ret_cube
+    # This will always return a masked array
+    result_cube = cube.collapsed('multi-model', operator, **kwargs)
+    result_cube.remove_coord('multi-model')
+    return result_cube
 
 
 def _multicube_statistics(cubes, statistics, span):
@@ -339,25 +311,28 @@ def _multicube_statistics(cubes, statistics, span):
         raise ValueError('Cannot perform multicube statistics '
                          'for a single cube.')
 
-    realize = False
-    for cube in cubes:
-        # make input cubes lazy for efficient operation on real data
-        if not cube.has_lazy_data():
-            cube.data = cube.lazy_data()
-            realize = True
+    lazy_input = True if all(cube.has_lazy_data() for cube in cubes) else False
 
-    # work with copy of cubes to avoid modifying input cubes
-    copied_cubes = [cube.copy() for cube in cubes]
-
+    copied_cubes = [cube.copy() for cube in cubes]  # avoid modifying inputs
     aligned_cubes = _align(copied_cubes, span=span)
-    big_cube = _combine(aligned_cubes)
+
     statistics_cubes = {}
     for statistic in statistics:
-        result_cube = _compute(big_cube, statistic=statistic)
+        logger.debug('Multicube statistics: computing: %s', statistic)
+        operator, kwargs = _resolve_operator(statistic)
 
-        # realize data if input cubes are not lazy
-        if realize:
-            result_cube.data
+        if operator.lazy_func is None:
+            result_cube = _compute_eager(aligned_cubes,
+                                         operator=operator,
+                                         **kwargs)
+        else:
+            result_cube = _compute_lazy(aligned_cubes,
+                                        operator=operator,
+                                        **kwargs)
+
+        # lazy input --> lazy output
+        result_cube.data = result_cube.lazy_data(
+        ) if lazy_input else result_cube.data
 
         statistics_cubes[statistic] = result_cube
 
