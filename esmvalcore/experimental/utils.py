@@ -3,7 +3,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Pattern, Tuple, Union
 
 from esmvalcore._config import DIAGNOSTICS
 
@@ -12,7 +12,7 @@ from .recipe import Recipe
 
 class RecipeList(list):
     """Container for recipes."""
-    def find(self, query: re.Pattern):
+    def find(self, query: Pattern[str]):
         """Search for recipes matching the search query or pattern.
 
         Searches in the description, authors and project information fields.
@@ -20,7 +20,7 @@ class RecipeList(list):
 
         Parameters
         ----------
-        query : str
+        query : str, Pattern
             String to search for, e.g. ``find_recipes('righi')`` will return
             all matching that author. Can be a `regex` pattern.
 
