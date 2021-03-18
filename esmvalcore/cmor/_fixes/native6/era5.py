@@ -183,6 +183,7 @@ class Rlds(Fix):
 
 class Rlns(Fix):
     """Fixes for Rlns."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -195,6 +196,7 @@ class Rlns(Fix):
 
 class Rlus(Fix):
     """Fixes for Rlus."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -230,6 +232,7 @@ class Rsds(Fix):
 
 class Rsns(Fix):
     """Fixes for Rsns."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -242,6 +245,7 @@ class Rsns(Fix):
 
 class Rsus(Fix):
     """Fixes for Rsus."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
