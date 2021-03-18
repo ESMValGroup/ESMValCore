@@ -2405,3 +2405,41 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
         get_recipe(tmp_path, content, config_user)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
     assert msg in rec_err_exp.value.failed_tasks[0].message
+
+
+def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
+    """Test ``mask_multimodel``."""
+    content = dedent("""
+        preprocessors:
+          preproc:
+            mask_multimodel:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: preproc
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2005
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: BNU-ESM}
+                  - {dataset: CanESM2}
+                  - {dataset: HadGEM2-ES}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == f'diagnostic_name{TASKSEP}tas'
+
+    # Check mask_multimodel
+    assert len(task.products) == 3
+    for product in task.products:
+        assert 'mask_multimodel' in product.settings
+        assert product.settings['mask_multimodel'] == {}

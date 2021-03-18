@@ -613,10 +613,11 @@ def mask_multimodel(products):
             return products
         shape = _get_shape(cubes)
         return _multimodel_mask_products(products, shape)
+    product_types = {type(p) for p in products}
     raise TypeError(
         f"Input type for mask_multimodel not understood. Expected "
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
-        f"got {products}")
+        f"got {product_types}")
 
 
 def mask_fillvalues(products,
