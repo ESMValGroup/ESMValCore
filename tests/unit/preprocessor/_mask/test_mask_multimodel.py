@@ -264,6 +264,22 @@ def test_mask_multimodel_fail(cube_1d, cube_2d):
         mask_multimodel([1, 2, 3])
 
 
+def test_mask_multimodel_empty():
+    """Test ``mask_multimodel`` with empty input."""
+    out_products = mask_multimodel([])
+    assert out_products == []
+
+    out_cubes = mask_multimodel(iris.cube.CubeList([]))
+    assert out_cubes == iris.cube.CubeList([])
+
+    products = [
+        PreprocessorFile(iris.cube.CubeList([]), 'A'),
+        PreprocessorFile(iris.cube.CubeList([]), 'B'),
+    ]
+    out_products = mask_multimodel(products)
+    assert out_products is products
+
+
 def test_mask_multimodel(cube_2d, cube_4d):
     """Test ``mask_multimodel``."""
     m_array = np.ma.masked_equal([[42, 33]], 33)
