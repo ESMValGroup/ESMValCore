@@ -1423,12 +1423,14 @@ See also :func:`esmvalcore.preprocessor.extract_trajectory`.
 
 
 ``extract_surface``
-------------------
+-------------------
 
 This function extracts the surface layer from a dataset. 
 
-The surface layer is defined as the closest to the zero value 
+The surface layer is defined as the minimum
 of the absolute value of the Z-dimension. 
+This is typically the case for ocean models, but might not be the
+case for atmospheric models. 
 
 The same functionality exists in the extract_levels preprocessor,
 and this function should be used for more complex datasets
