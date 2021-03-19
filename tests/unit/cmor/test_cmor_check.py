@@ -639,13 +639,13 @@ class TestCMORCheck(unittest.TestCase):
         for index in range(20):
             self.assertTrue(
                 iris.util.approx_equal(cube_points[index], reference[index]))
-   
+
     def test_not_bounds(self):
         """Warning if bounds are not available."""
         self.cube.coord('longitude').bounds = None
         self._check_warnings_on_metadata(automatic_fixes=False)
         self.assertFalse(self.cube.coord('longitude').has_bounds())
-    
+
     def test_guess_bounds_with_fixes(self):
         """Warning if bounds added with automatic fixes."""
         self.cube.coord('longitude').bounds = None
