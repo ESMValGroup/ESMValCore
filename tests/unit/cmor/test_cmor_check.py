@@ -639,13 +639,13 @@ class TestCMORCheck(unittest.TestCase):
         for index in range(20):
             self.assertTrue(
                 iris.util.approx_equal(cube_points[index], reference[index]))
-
+   
     def test_not_bounds(self):
         """Warning if bounds are not available."""
         self.cube.coord('longitude').bounds = None
         self._check_warnings_on_metadata(automatic_fixes=False)
         self.assertFalse(self.cube.coord('longitude').has_bounds())
-
+    
     def test_guess_bounds_with_fixes(self):
         """Warning if bounds added with automatic fixes."""
         self.cube.coord('longitude').bounds = None
@@ -668,6 +668,15 @@ class TestCMORCheck(unittest.TestCase):
         """Test automatic fixes for bad longitudes."""
         self.cube = self.cube.intersection(longitude=(-180., 180.))
         self._check_cube(automatic_fixes=True)
+
+    def test_lons_automatic_fix_with_bounds(self):
+        """Test automatic fixes for bad longitudes with added bounds."""
+        self.cube.coord('longitude').bounds = None
+        self.cube = self.cube.intersection(longitude=(-180., 180.))
+        self._check_cube(automatic_fixes=True)
+        self.assertTrue(self.cube.coord('longitude').points.min() >= 0.)
+        self.assertTrue(self.cube.coord('longitude').points.max() <= 360.)
+        self.assertTrue(self.cube.coord('longitude').has_bounds())
 
     def test_high_lons_automatic_fix(self):
         """Test automatic fixes for high longitudes."""
