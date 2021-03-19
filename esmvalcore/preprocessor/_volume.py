@@ -300,12 +300,12 @@ def extract_surface(cube):
     Extact the surface layer from a 3D cube.
 
     Requires a cube with a z axis.
-    Find the place where the value is closest 
+    Find the place where the value is closest
 
-    This assumes that the surface is the closest layer to zero. 
+    This assumes that the surface is the closest layer to zero.
 
     The preprocessor extract_layer can also do this, but it may try
-    to regrid, which is much slower and more memory intensive. 
+    to regrid, which is much slower and more memory intensive.
 
     Arguments
     ---------
@@ -328,23 +328,23 @@ def extract_surface(cube):
     # this won't work if the dimensions are non-monotonic.
     # or if it's some weird axis that exists both below and above the surface.
     elif zcoord.points.ndim == 3:
-        points = zcoord.points.mean(axis=[1,2])
+        points = zcoord.points.mean(axis=[1, 2])
         surf = np.abs(points).argmin()
     elif zcoord.points.ndim == 4:
         points = zcoord.points.mean(axis=[0, 2, 3])
         surf = np.abs(points).argmin()
 
-    zcoord_dim  = cube.coord_dims(zcoord)
+    zcoord_dim = cube.coord_dims(zcoord)
     if zcoord_dim in [0, (0,)]:
-       return  cube[surf]
+        return  cube[surf]
 
     if zcoord_dim in [1, (1,)]:
-       return  cube[:, surf] 
+        return cube[:, surf]
 
     logger.error('Condition not recognised: postive: %s , zcoord_dim: %s, '
                  'surface level: %s', positive, zcoord_dim, surf)
-    assert 0
-    
+    return cube
+
 
 def depth_integration(cube):
     """
