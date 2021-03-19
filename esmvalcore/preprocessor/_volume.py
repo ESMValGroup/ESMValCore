@@ -336,7 +336,7 @@ def extract_surface(cube):
 
     zcoord_dim = cube.coord_dims(zcoord)
     if zcoord_dim in [0, (0,)]:
-        return  cube[surf]
+        return cube[surf]
 
     if zcoord_dim in [1, (1,)]:
         return cube[:, surf]
