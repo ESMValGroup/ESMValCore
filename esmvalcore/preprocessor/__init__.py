@@ -38,6 +38,7 @@ from ._mask import (
     mask_inside_range,
     mask_landsea,
     mask_landseaice,
+    mask_multimodel,
     mask_outside_range,
 )
 from ._multimodel import multi_model_statistics
@@ -113,6 +114,7 @@ __all__ = [
     # Point interpolation
     'extract_point',
     # Masking missing values
+    'mask_multimodel',
     'mask_fillvalues',
     'mask_above_threshold',
     'mask_below_threshold',
@@ -182,6 +184,7 @@ FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('save'):]
 
 MULTI_MODEL_FUNCTIONS = {
     'multi_model_statistics',
+    'mask_multimodel',
     'mask_fillvalues',
 }
 
