@@ -35,6 +35,7 @@ from .preprocessor._derive import get_required
 from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
 from .preprocessor._regrid import (
+    _spec_to_latlonvals,
     get_cmor_levels,
     get_reference_levels,
     parse_cell_spec,
@@ -163,7 +164,12 @@ def _update_target_grid(variable, variables, settings, config_user):
             _get_dataset_info(grid, variables), config_user)
     else:
         # Check that MxN grid spec is correct
-        parse_cell_spec(settings['regrid']['target_grid'])
+        target_grid = settings['regrid']['target_grid']
+        if isinstance(target_grid, str):
+            parse_cell_spec(target_grid)
+        # Check that cdo spec is correct
+        elif isinstance(target_grid, dict):
+            _spec_to_latlonvals(**target_grid)
 
 
 def _update_regrid_time(variable, settings):
