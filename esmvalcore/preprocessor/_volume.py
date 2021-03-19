@@ -299,24 +299,24 @@ def extract_surface(cube):
     """
     Extact the surface layer from a 3D cube.
 
-    Extracts the entire layer along the z axis where the z coordinate is 
+    Extracts the entire layer along the z axis where the z coordinate is
     the minimum of the absolute value of the z-axis dimensions points.
 
     Requires a cube with a z axis.
 
     This assumes that the surface is the closest layer to zero.
-    This assumption is usually true in the ocean, but may not be the 
+    This assumption is usually true in the ocean, but may not be the
     case in all models for all z-axes.
 
     In the case of temporally or spatially varying depth grid,
     (ie the depth array is 3D or 4D), the surface layer is determined
-    using the mean of the depth points along the time, latitude and 
+    using the mean of the depth points along the time, latitude and
     longitude axes. This preprocessor may also behave strangely
     if the z axis data are not monotonic, or unusual in some other way.
 
     The preprocessor extract_layer can also do this, but it may be
     much slower and more memory intensie as it regrids.
-    It is more robust to variability in the grid definitions. 
+    It is more robust to variability in the grid definitions.
 
     Arguments
     ---------
