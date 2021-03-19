@@ -1,7 +1,7 @@
 .. _api:
 
-ESMValTool Core API Reference
-=============================
+ESMValCore API Reference
+========================
 
 ESMValCore is mostly used as a commandline tool. However, it is also possibly to use (parts of) ESMValTool as a
 library. This section documents the public API of ESMValCore.

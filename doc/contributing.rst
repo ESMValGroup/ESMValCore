@@ -16,9 +16,6 @@ getting started, to avoid double work and/or disappointment later.
 A good way to do this is to open an
 `issue on GitHub <https://github.com/ESMValGroup/ESMValCore/issues>`__.
 
-To get started developing, follow the instructions below.
-For help with common new features, please have a look at :doc:`develop/index`.
-
 Getting started
 ---------------
 
@@ -45,6 +42,16 @@ early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
 It’s also easier to get help from other developers if your code is visible in a
 pull request.
 
+Design
+------
+
+TODO: add text
+
+- it should be possible to create tasks from recipe before processing data/writing files (esmvalcore/_recipe.py)
+- keep it simple
+- preprocessor functions are functions to make them easy to implement for scientific contributors
+
+
 .. _pull_request_checklist:
 
 Checklist for pull requests
@@ -58,22 +65,29 @@ If you are unsure about something on the list, please ask the
 by commenting on your (draft) pull request or by starting a new
 `discussion <https://github.com/ESMValGroup/ESMValTool/discussions>`__.
 
+In the ESMValTool community we use
+:ref:`pull request reviews <esmvaltool:reviewing>` to ensure all code and
+documentation contributions are of good quality.
 The icons indicate whether the item will be checked during the
 :ref:`🛠 Technical review <technical_review>` or
 :ref:`🧪 Scientific review <scientific_review>`.
 
+- 🧪 The new functionality is :ref:`scientifically sound and relevant <scientific_relevance>`
 - 🛠 :ref:`The pull request has a descriptive title and labels <descriptive_pr_title>`
 - 🛠 Code is written according to the :ref:`code quality guidelines <code_quality>`
 - 🧪 and 🛠 Documentation_ is available
-- 🧪 The new functionality is scientifically sound and relevant
 - 🛠 Unit tests_ have been added
-- 🛠 The :ref:`list of authors <authors>` is up to date
+- 🛠 Changes are :ref:`backward compatible <backward_compatibility>`
 - 🛠 Changed dependencies are :ref:`added or removed correctly <dependencies>`
+- 🛠 The :ref:`list of authors <authors>` is up to date
 - 🛠 The :ref:`checks shown below the pull request <pull_request_checks>` are successful
 
-If you make backwards incompatible changes to the recipe format:
+.. _scientific_relevance:
 
-- Update ESMValTool and link the pull request(s) in the description
+Changes should be scientifically sound and relevant
+---------------------------------------------------
+
+TODO
 
 .. _descriptive_pr_title:
 
@@ -110,7 +124,7 @@ This includes checks for invalid syntax and formatting errors.
 :ref:`esmvaltool:pre-commit` is a handy tool that can run all of these checks
 automatically just before you commit your code.
 It knows knows which tool to run for each filetype, and therefore provides
-a convenient way to check your code!
+a convenient way to check your code.
 
 Python
 ~~~~~~
@@ -122,28 +136,6 @@ We make use of
 `numpy style docstrings <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html>`__
 to document Python functions that are visible on
 `readthedocs <https://docs.esmvaltool.org>`_.
-
-Most formatting issues in Python code can be fixed automatically by
-running the commands
-
-::
-
-   isort some_file.py
-
-to sort the imports in `the standard way <https://www.python.org/dev/peps/pep-0008/#imports>`__
-using `isort <https://pycqa.github.io/isort/>`__ and
-
-::
-
-   yapf -i some_file.py
-
-to add/remove whitespace as required by the standard using `yapf <https://github.com/google/yapf>`__,
-
-::
-
-   docformatter -i some_file.py
-
-to run `docformatter <https://github.com/myint/docformatter>`__ which helps formatting the doc strings (such as line length, spaces).
 
 To check if your code adheres to the standard, go to the directory where
 the repository is cloned, e.g. ``cd ESMValCore``, and run `prospector <http://prospector.landscape.io/>`_
@@ -177,10 +169,36 @@ If you suspect prospector or Codacy may be wrong, please ask the
 Note that running prospector locally will give you quicker and sometimes more
 accurate results than waiting for Codacy.
 
+Most formatting issues in Python code can be fixed automatically by
+running the commands
+
+::
+
+   isort some_file.py
+
+to sort the imports in `the standard way <https://www.python.org/dev/peps/pep-0008/#imports>`__
+using `isort <https://pycqa.github.io/isort/>`__ and
+
+::
+
+   yapf -i some_file.py
+
+to add/remove whitespace as required by the standard using `yapf <https://github.com/google/yapf>`__,
+
+::
+
+   docformatter -i some_file.py
+
+to run `docformatter <https://github.com/myint/docformatter>`__ which helps
+formatting the docstrings (such as line length, spaces).
+
 YAML
 ~~~~
 
-Please use ``yamllint`` to check that your YAML files do not contain mistakes.
+Please use `yamllint <https://yamllint.readthedocs.io>`_ to check that your
+YAML files do not contain mistakes.
+``yamllint`` checks for valid syntax, common mistakes like key repetition and
+cosmetic problems such as line length, trailing spaces, wrong indentation, etc.
 
 Any text file
 ~~~~~~~~~~~~~
@@ -193,8 +211,12 @@ A generic tool to check for common spelling mistakes is
 Documentation
 -------------
 
-The documentation lives on `docs.esmvaltool.org <https://docs.esmvaltool.org>`_
-and is built using `Sphinx <https://www.sphinx-doc.org>`_.
+The documentation lives on `docs.esmvaltool.org <https://docs.esmvaltool.org>`_.
+
+Adding documentation
+~~~~~~~~~~~~~~~~~~~~
+
+The documentation is built by readthedocs_ using `Sphinx <https://www.sphinx-doc.org>`_.
 There are two main ways of adding documentation:
 
 #. As written text in the directory
@@ -206,42 +228,49 @@ There are two main ways of adding documentation:
    This makes it easier to review changes to documentation on GitHub.
 
 #. As docstrings or comments in code.
-   For Python code, the
+   For Python code, only the
    `docstrings <https://www.python.org/dev/peps/pep-0257/>`__
    of Python modules, classes, and functions
    that are mentioned in
    `doc/api <https://github.com/ESMValGroup/ESMValCore/tree/master/doc/api>`__
-   are used to generate documentation.
+   are used to generate the online documentation.
    This results in the :ref:`api`.
    The standard document with best practices on writing docstrings is
    `PEP257 <https://www.python.org/dev/peps/pep-0257/>`__.
-   We make use of
+   For the API documentation, we make use of
    `numpy style docstrings <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html>`__.
 
 What should be documented
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Any code documentation that is visible on readthedocs_ should be well
+Functionality that is visible to users should be documented.
+This includes:
+
+- The :ref:`recipe <recipe_overview>`
+- Preprocessor :ref:`functions <preprocessor_functions>` and their
+  :ref:`use from the recipe <preprocessor>`
+- :ref:`Configuration options <config>`
+- :ref:`Installation <install>`
+- :ref:`The experimental Python interface <experimental_api>`
+
+Any documentation that is visible on readthedocs_ should be well
 written and adhere to the standards for documentation.
-There is no need to write complete numpy style documentation for functions that
-are not visible in the :ref`api` chapter on readthedocs.
-However, adding a docstring describing what a function does is always a good
-idea.
-For short functions, a one-line docstring is usually sufficient, but more
-complex functions might require slightly more extensive documentation.
 
-For functions that compute scientific results, comments with references to
-papers and/or other resources as well as formula numbers should be included.
+Note that:
 
-When making changes to/introducing a new preprocessor function, also update the
-:ref:`preprocessor documentation <preprocessor>`.
+- For functions that compute scientific results, comments with references to
+  papers and/or other resources as well as formula numbers should be included.
+- When making changes to/introducing a new preprocessor function, also update the
+  :ref:`preprocessor documentation <preprocessor>`.
+- There is no need to write complete numpy style documentation for functions that
+  are not visible in the :ref:`api` chapter on readthedocs.
+  However, adding a docstring describing what a function does is always a good
+  idea.
+  For short functions, a one-line docstring is usually sufficient, but more
+  complex functions might require slightly more extensive documentation.
 
 When reviewing a pull request, always check that documentation is easy to
 understand and available in all expected places.
-
-See :ref:`esmvaltool:esmvalcore-documentation-integration` for information on
-how the ESMValCore documentation is integrated into the complete ESMValTool
-project documentation on readthedocs.
 
 How to build and view the documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -249,8 +278,9 @@ How to build and view the documentation
 Whenever you make a pull request or push new commits to an existing pull
 request, readthedocs will automatically build the documentation.
 The link to the documentation will be shown in the list of checks below your
-pull request, click 'Details' behind the check
-``docs/readthedocs.org:esmvaltool`` to preview the documentation.
+pull request.
+Click 'Details' behind the check ``docs/readthedocs.org:esmvaltool`` to preview
+the documentation.
 If all checks were successful, you may need to click 'Show all checks' to see
 the individual checks.
 
@@ -268,22 +298,26 @@ or
    python setup.py build_sphinx -Ea
 
 to build it from scratch.
+
 Make sure that your newly added documentation builds without warnings or
 errors and looks correctly formatted.
-CircleCI_ will build the documentation with the command
+CircleCI_ will build the documentation with the command:
 
 .. code-block:: bash
 
    python setup.py build_sphinx --warning-is-error
 
-to catch mistakes that can be detected automatically.
+This will catch mistakes that can be detected automatically.
 
 The configuration file for Sphinx_ is
 `doc/shinx/source/conf.py <https://github.com/ESMValGroup/ESMValTool/blob/master/doc/sphinx/source/conf.py>`_.
 
+See :ref:`esmvaltool:esmvalcore-documentation-integration` for information on
+how the ESMValCore documentation is integrated into the complete ESMValTool
+project documentation on readthedocs.
+
 When reviewing a pull request, always check that the documentation checks
 shown below the pull request were successful.
-Successful checks have a green ✓ in front, a ❌ means the test job failed.
 
 .. _tests:
 
@@ -291,18 +325,22 @@ Tests
 -----
 
 To check that the code works correctly, there tests available in the
-`tests <https://github.com/ESMValGroup/ESMValCore/tree/master/tests>`__
-directory.
+`tests directory <https://github.com/ESMValGroup/ESMValCore/tree/master/tests>`_.
 
 Contributions to ESMValCore should be covered by unit tests.
-New or modified preprocessor functions should preferably also be tested using
-the `sample data`_.
+Have a look at the existing tests in the ``tests`` directory for inspiration on
+how to write your own tests.
 If you do not know how to start with writing unit tests, ask the
 `@ESMValGroup/tech-reviewers`_ for help by commenting on the pull request and
-they will help you get started.
+they will try to help you.
+To check which parts of your code are covered by tests, open the file
+``test-reports/coverage_html/index.html`` and browse to the relevant file.
+It is also possible to view code coverage on Codacy_ (click the Files tab)
+and CircleCI_ (open the ``tests`` job and click the ARTIFACTS tab).
 
 Whenever you make a pull request or push new commits to an existing pull
-request, these tests will be run automatically on CircleCI_.
+request, the tests in the `tests directory`_ of the branch associated with the
+pull request will be run automatically on CircleCI_.
 The results appear at the bottom of the pull request.
 Click on 'Details' for more information on a specific test job.
 To see some of the results on CircleCI, you may need to log in.
@@ -319,33 +357,16 @@ Optionally you can skip tests which require additional dependencies for
 supported diagnostic script languages by adding ``-m 'not installation'`` to the
 previous command.
 
-Every night, more extensive tests are run to make sure that problems with the
-installation of the tool are discovered by the development team before users
-encounter them.
-These nightly tests have been designed to mimic the installation procedures
-described in the documentation, e.g. in the :ref:`install` chapter.
-The nightly tests are run using both CircleCI and GitHub Actions, the
-result of the tests ran by CircleCI can be seen on the
-`CircleCI project page <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore?branch=master>`__
-and the result of the tests ran by GitHub Actions can be viewed on the
-`Actions tab <https://github.com/ESMValGroup/ESMValCore/actions>`__
-of the repository.
-
-The configuration of the tests run by CircleCI can be found in the directory
-`.circleci <https://github.com/ESMValGroup/ESMValCore/blob/master/.circleci>`__,
-while the configuration of the tests run by GitHub Actions can be found in the
-directory
-`.github/workflows <https://github.com/ESMValGroup/ESMValCore/blob/master/.github/workflows>`__.
-
 When reviewing a pull request, always check that all test jobs on CircleCI_ were
 successful.
-Successful test jobs have a green ✓ in front, a ❌ means the test job failed.
 
 Sample data
 ~~~~~~~~~~~
 
-If you need example data to work with, the
-`ESMValTool_sample_data <https://github.com/ESMValGroup/ESMValTool_sample_data>`_
+New or modified preprocessor functions should preferably also be tested using
+the sample data.
+
+The `ESMValTool_sample_data <https://github.com/ESMValGroup/ESMValTool_sample_data>`_
 repository and package contains samples of CMIP6 data for use with ESMValTool
 development, demonstration purposes, and automated testing.
 The goal is to keep the repository size small (~ 100 MB), so it can be easily
@@ -359,28 +380,48 @@ test preprocessor functions, see
 The preprocessing of the sample data can be time-consuming, so some
 intermediate results are cached by ``pytest`` to make the tests run faster.
 Clear the cache by using running pytest with the ``--cache-clear`` flag.
-To avoid running the time consuming tests that use sample data, run
-``pytest -m "not use_sample_data"``.
+To avoid running the time consuming tests that use sample data, run:
+
+.. code-block:: bash
+
+   pytest -m "not use_sample_data"
+
 If you are adding new tests using sample data, please mark these as using
 sample data by using the
 `decorator <https://docs.python.org/3/glossary.html#term-decorator>`__
 ``@pytest.mark.use_sample_data``.
 
-.. _authors:
+Automated testing
+~~~~~~~~~~~~~~~~~
 
-List of authors
----------------
+Every night, more extensive tests are run to make sure that problems with the
+installation of the tool are discovered by the development team before users
+encounter them.
+These nightly tests have been designed to follow the installation procedures
+described in the documentation, e.g. in the :ref:`install` chapter.
+The nightly tests are run using both CircleCI and GitHub Actions.
+The result of the tests ran by CircleCI can be seen on the
+`CircleCI project page <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore?branch=master>`__
+and the result of the tests ran by GitHub Actions can be viewed on the
+`Actions tab <https://github.com/ESMValGroup/ESMValCore/actions>`__
+of the repository.
 
-If you make a contribution to ESMValCore and you would like to be listed as an
-author (e.g. on `Zenodo <https://zenodo.org/record/4525749>`__), please add your
-name to the list of authors in ``CITATION.cff`` and generate the entry for the
-``.zenodo.json`` file by running the command
+The configuration of the tests run by CircleCI can be found in the directory
+`.circleci <https://github.com/ESMValGroup/ESMValCore/blob/master/.circleci>`__,
+while the configuration of the tests run by GitHub Actions can be found in the
+directory
+`.github/workflows <https://github.com/ESMValGroup/ESMValCore/blob/master/.github/workflows>`__.
 
-::
+.. _backward_compatibility:
 
-   pip install cffconvert
-   cffconvert --ignore-suspect-keys --outputformat zenodo --outfile .zenodo.json
+Making changes that are not backward compatible
+------------------------------------------------
 
+TODO: add text
+
+If you do make backward incompatible changes to the recipe format, you need to
+update ESMValTool and link the ESMValTool pull request(s) in the ESMValCore
+pull request description.
 
 .. _dependencies:
 
@@ -428,6 +469,22 @@ requests.
 When reviewing a pull request where dependencies are added or removed, always
 check that the changes have been applied in all relevant files.
 
+.. _authors:
+
+List of authors
+---------------
+
+If you make a contribution to ESMValCore and you would like to be listed as an
+author (e.g. on `Zenodo <https://zenodo.org/record/4525749>`__), please add your
+name to the list of authors in ``CITATION.cff`` and generate the entry for the
+``.zenodo.json`` file by running the command
+
+::
+
+   pip install cffconvert
+   cffconvert --ignore-suspect-keys --outputformat zenodo --outfile .zenodo.json
+
+
 .. _pull_request_checks:
 
 Pull request checks
@@ -458,6 +515,7 @@ If the Codacy check keeps failing, please run ``prospector`` locally and if
 necessary, ask the pull request author to do the same and to address the
 reported issues, see the section on code_quality_ for more information.
 Never merge a pull request with failing CircleCI or readthedocs checks.
+
 
 .. _how-to-make-a-release:
 
