@@ -129,6 +129,7 @@ VALIDATION_DATA_SUCCESS = (
     ('full', 'median', (5, 5, 3)),
     ('full', 'p50', (5, 5, 3)),
     ('full', 'p99.5', (8.96, 8.96, 4.98)),
+    ('full', 'peak', ([9], [9], [5])),
     ('overlap', 'mean', (5, 5)),
     ('overlap', 'std_dev', (5.656854249492381, 4)),
     ('overlap', 'std', (5.656854249492381, 4)),
@@ -137,6 +138,7 @@ VALIDATION_DATA_SUCCESS = (
     ('overlap', 'median', (5, 5)),
     ('overlap', 'p50', (5, 5)),
     ('overlap', 'p99.5', (8.96, 8.96)),
+    ('overlap', 'peak', ([9], [9])),
     # test multiple statistics
     ('overlap', ('min', 'max'), ((1, 1), (9, 9))),
     ('full', ('min', 'max'), ((1, 1, 1), (9, 9, 5))),
@@ -223,7 +225,6 @@ VALIDATION_DATA_FAIL = (
     ('percentile', ValueError),
     ('wpercentile', ValueError),
     ('count', TypeError),
-    ('peak', TypeError),
     ('proportion', TypeError),
 )
 
@@ -297,7 +298,6 @@ def test_combine_same_shape(span):
     """Test _combine with same shape of cubes."""
     len_data = 3
     num_cubes = 5
-    test_dim = 'test_dim'
     cubes = []
 
     for i in range(num_cubes):
@@ -307,10 +307,10 @@ def test_combine_same_shape(span):
                                         len_data=len_data)
         cubes.append(cube)
 
-    result_cube = mm._combine(cubes, dim=test_dim)
+    result_cube = mm._combine(cubes)
 
-    dim_coord = result_cube.coord(test_dim)
-    assert dim_coord.var_name == test_dim
+    dim_coord = result_cube.coord(mm.CONCAT_DIM)
+    assert dim_coord.var_name == mm.CONCAT_DIM
     assert result_cube.shape == (num_cubes, len_data)
 
     desired = np.linspace((0, ) * len_data,
@@ -323,7 +323,6 @@ def test_combine_same_shape(span):
 def test_combine_different_shape_fail():
     """Test _combine with inconsistent data."""
     num_cubes = 5
-    test_dim = 'test_dim'
     cubes = []
 
     for num in range(1, num_cubes + 1):
@@ -331,13 +330,12 @@ def test_combine_different_shape_fail():
         cubes.append(cube)
 
     with pytest.raises(iris.exceptions.MergeError):
-        _ = mm._combine(cubes, dim=test_dim)
+        _ = mm._combine(cubes)
 
 
 def test_combine_inconsistent_var_names_fail():
     """Test _combine with inconsistent var names."""
     num_cubes = 5
-    test_dim = 'test_dim'
     cubes = []
 
     for num in range(num_cubes):
@@ -347,7 +345,7 @@ def test_combine_inconsistent_var_names_fail():
         cubes.append(cube)
 
     with pytest.raises(iris.exceptions.MergeError):
-        _ = mm._combine(cubes, dim=test_dim)
+        _ = mm._combine(cubes)
 
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)

@@ -33,6 +33,8 @@ STATISTIC_MAPPING = {
     'wpercentile': iris.analysis.WPERCENTILE,  # not lazy in iris
 }
 
+CONCAT_DIM = 'multi-model'
+
 
 def _resolve_operator(statistic: str):
     """Find the operator corresponding to the statistic."""
@@ -219,7 +221,7 @@ def _align(cubes, span):
     return new_cubes
 
 
-def _combine(cubes, dim='multi-model'):
+def _combine(cubes):
     """Merge iris cubes into a single big cube with new dimension.
 
     This assumes that all input cubes have the same shape.
@@ -227,7 +229,8 @@ def _combine(cubes, dim='multi-model'):
     equalise_attributes(cubes)  # in-place
 
     for i, cube in enumerate(cubes):
-        concat_dim = iris.coords.AuxCoord(i, var_name=dim)
+        concat_dim = iris.coords.AuxCoord(i, var_name=CONCAT_DIM)
+
         cube.add_aux_coord(concat_dim)
 
         # Clear some metadata that can cause merge to fail
@@ -270,8 +273,8 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
     for i in range(cubes[0].shape[0]):
         single_model_slices = [cube[i] for cube in cubes
                                ]  # maybe filter the iris warning here?
-        combined_slice = _combine(single_model_slices, dim='multi-model')
-        collapsed_slice = combined_slice.collapsed('multi-model', operator,
+        combined_slice = _combine(single_model_slices)
+        collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
                                                    **kwargs)
         result_slices.append(collapsed_slice)
 
@@ -280,7 +283,7 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
     # For consistency with lazy procedure
     result_cube.data = np.ma.array(result_cube.data)
 
-    result_cube.remove_coord('multi-model')
+    result_cube.remove_coord(CONCAT_DIM)
 
     return result_cube
 
@@ -289,13 +292,16 @@ def _compute_lazy(cubes: list, *, operator: iris.analysis.Aggregator,
                   **kwargs):
     """Compute statistics using lazy iris function."""
     cube = _combine(
-        cubes, dim='multi-model'
-    )  # this is now done for each statistic, can we avoid that?
+        cubes)  # this is now done for each statistic, can we avoid that?
     rechunk(cube)
 
     # This will always return a masked array
-    result_cube = cube.collapsed('multi-model', operator, **kwargs)
-    result_cube.remove_coord('multi-model')
+    result_cube = cube.collapsed(CONCAT_DIM, operator, **kwargs)
+    result_cube.remove_coord(CONCAT_DIM)
+
+    for cube in cubes:
+        cube.remove_coord(CONCAT_DIM)
+
     return result_cube
 
 
