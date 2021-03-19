@@ -161,11 +161,10 @@ class Test(tests.Test):
     def test_extract_surface(self):
         """Tests to extract the surface from a 3D and 4D cube."""
         result = extract_surface(self.grid_3d)
-        self.assert_array_equal(result, self.grid_2d)
-
+        self.assert_array_equal(result.data, self.grid_2d.data)
         result2 = extract_surface(self.grid_4d)
-        self.assert_array_equal(self.grid_4d[:, 0, :, :], result2)
+        self.assert_array_equal(self.grid_4d[:, 0, :, :].data, result2.data)
 
 
-if __eame__ == '__main__':
+if __name__ == '__main__':
     unittest.main()
