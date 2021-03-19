@@ -299,13 +299,24 @@ def extract_surface(cube):
     """
     Extact the surface layer from a 3D cube.
 
+    Extracts the entire layer along the z axis where the z coordinate is 
+    the minimum of the absolute value of the z-axis dimensions points.
+
     Requires a cube with a z axis.
-    Find the place where the value is closest
 
     This assumes that the surface is the closest layer to zero.
+    This assumption is usually true in the ocean, but may not be the 
+    case in all models for all z-axes.
 
-    The preprocessor extract_layer can also do this, but it may try
-    to regrid, which is much slower and more memory intensive.
+    In the case of temporally or spatially varying depth grid,
+    (ie the depth array is 3D or 4D), the surface layer is determined
+    using the mean of the depth points along the time, latitude and 
+    longitude axes. This preprocessor may also behave strangely
+    if the z axis data are not monotonic, or unusual in some other way.
+
+    The preprocessor extract_layer can also do this, but it may be
+    much slower and more memory intensie as it regrids.
+    It is more robust to variability in the grid definitions. 
 
     Arguments
     ---------
@@ -318,22 +329,22 @@ def extract_surface(cube):
         collapsed cube.
 
     """
+    # Get the z axis.
     zcoord = cube.coord(axis='Z')
     positive = zcoord.attributes['positive']
 
+    # Get the Z points:
     if zcoord.points.ndim == 1:
-        surf = np.abs(zcoord.points).argmin()
-
-    # This is just a quick hack to get the ballpark surface layer index.
-    # this won't work if the dimensions are non-monotonic.
-    # or if it's some weird axis that exists both below and above the surface.
+        points = zcoord.points
     elif zcoord.points.ndim == 3:
         points = zcoord.points.mean(axis=[1, 2])
-        surf = np.abs(points).argmin()
     elif zcoord.points.ndim == 4:
         points = zcoord.points.mean(axis=[0, 2, 3])
-        surf = np.abs(points).argmin()
 
+    # Calculate the surface layer index:
+    surf = np.abs(points).argmin()
+
+    # Get the z axis dimension in the cude:
     zcoord_dim = cube.coord_dims(zcoord)
     if zcoord_dim in [0, (0,)]:
         return cube[surf]
