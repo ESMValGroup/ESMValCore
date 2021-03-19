@@ -41,8 +41,8 @@ It is the responsibility of the author to make sure the pull request is ready to
 - [ ] [🛠][1] This pull request has a [descriptive title and labels](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#descriptive-pull-request-title-and-label)
 - [ ] [🛠][1] Code is written according to the [code quality guidelines](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#code-quality)
 - [ ] [🧪][2] and [🛠][1] [Documentation](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#documentation) is available
-- [ ] [🛠][1] [Unit tests](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#tests) have been added
 - [ ] [🧪][2] The new functionality is scientifically sound and relevant
+- [ ] [🛠][1] [Unit tests](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#tests) have been added
 - [ ] [🛠][1] The [list of authors](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#list-of-authors) is up to date
 - [ ] [🛠][1] Any changed dependencies have been [added or removed correctly](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#adding-or-removing-dependencies)
 - [ ] [🛠][1] All [checks below this pull request](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#pull-request-checks) were successful
