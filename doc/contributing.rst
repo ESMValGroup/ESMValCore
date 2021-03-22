@@ -365,34 +365,41 @@ Sample data
 
 New or modified preprocessor functions should preferably also be tested using
 the sample data.
+These tests are located in
+`tests/sample_data <https://github.com/ESMValGroup/ESMValCore/tree/master/tests/sample_data>`__.
+Please mark new tests that use the sample data with the
+`decorator <https://docs.python.org/3/glossary.html#term-decorator>`__
+``@pytest.mark.use_sample_data``.
 
 The `ESMValTool_sample_data <https://github.com/ESMValGroup/ESMValTool_sample_data>`_
-repository and package contains samples of CMIP6 data for use with ESMValTool
-development, demonstration purposes, and automated testing.
-The goal is to keep the repository size small (~ 100 MB), so it can be easily
+repository contains samples of CMIP6 data for testing ESMValCore.
+The `ESMValTool-sample-data <https://pypi.org/project/ESMValTool-sample-data/>`_
+package is installed as part of the developer dependencies.
+The size of the package is relatively small (~ 100 MB), so it can be easily
 downloaded and distributed.
 
-The `ESMValTool-sample-data <https://pypi.org/project/ESMValTool-sample-data/>`_
-package is installed as part of the developer dependencies and can be used to
-test preprocessor functions, see
-`tests/sample_data <https://github.com/ESMValGroup/ESMValCore/tree/master/tests/sample_data>`__.
+Preprocessing the sample data can be time-consuming, so some
+intermediate results are cached by pytest to make the tests run faster.
+If you suspect the tests are failing because the cache is invalid, clear it by
+running
 
-The preprocessing of the sample data can be time-consuming, so some
-intermediate results are cached by ``pytest`` to make the tests run faster.
-Clear the cache by using running pytest with the ``--cache-clear`` flag.
-To avoid running the time consuming tests that use sample data, run:
+.. code-block:: bash
+
+   pytest --cache-clear
+
+To avoid running the time consuming tests that use sample data altogether, run
 
 .. code-block:: bash
 
    pytest -m "not use_sample_data"
 
-If you are adding new tests using sample data, please mark these as using
-sample data by using the
-`decorator <https://docs.python.org/3/glossary.html#term-decorator>`__
-``@pytest.mark.use_sample_data``.
 
 Automated testing
 ~~~~~~~~~~~~~~~~~
+
+Whenever you make a pull request or push new commits to an existing pull
+request, the tests in the `tests directory`_ of the branch associated with the
+pull request will be run automatically on CircleCI_.
 
 Every night, more extensive tests are run to make sure that problems with the
 installation of the tool are discovered by the development team before users
@@ -428,9 +435,11 @@ pull request description.
 Adding or removing dependencies
 -------------------------------
 
-Before considering adding a new dependency, carefully check that the license of
-the dependency you want to add and any of its dependencies are compatible with
-the
+Before considering adding a new dependency, carefully check that the
+`license <https://the-turing-way.netlify.app/reproducible-research/licensing/licensing-software.html>`__
+of the dependency you want to add and any of its dependencies are
+`compatible <https://the-turing-way.netlify.app/reproducible-research/licensing/licensing-compatibility.html>`__
+with the
 `Apache 2.0 <https://github.com/ESMValGroup/ESMValCore/blob/master/LICENSE/>`_
 license that applies to the ESMValCore.
 Note that GPL version 2 license is considered incompatible with the Apache 2.0
@@ -439,7 +448,8 @@ license is questionable.
 See this `statement <https://www.apache.org/licenses/GPL-compatibility.html>`__
 by the authors of the Apache 2.0 license for more information.
 
-The following files contain lists of dependencies
+When adding or removing dependencies, please consider applying the changes in
+the following files:
 
 - ``environment.yml``
   contains development dependencies that cannot be installed from
@@ -451,20 +461,20 @@ The following files contain lists of dependencies
   contains a list of Python dependencies needed to build the documentation that
   cannot be installed from PyPI and need to be mocked when building the
   documentation.
-  We do not use conda to build the documentation because this is too time
-  consuming.
+  (We do not use conda to build the documentation because this is too time
+  consuming.)
 - ``setup.py``
   contains all Python dependencies, regardless of their installation source
 - ``package/meta.yaml``
-  contains dependencies for the conda package, all Python and compiled
-  dependencies that can be installed from conda should be listed here.
+  contains dependencies for the conda package; all Python and compiled
+  dependencies that can be installed from conda should be listed here
 
 Note that packages may have a different name on
-`conda-forge <https://conda-forge.org/>`__ than on PyPI or CRAN.
+`conda-forge <https://conda-forge.org/>`__ than on PyPI_.
 
 Several test jobs on CircleCI_ related to the installation of the tool will only
-run if you change the dependencies, these will be skipped for most pull
-requests.
+run if you change the dependencies.
+These will be skipped for most pull requests.
 
 When reviewing a pull request where dependencies are added or removed, always
 check that the changes have been applied in all relevant files.
@@ -477,7 +487,7 @@ List of authors
 If you make a contribution to ESMValCore and you would like to be listed as an
 author (e.g. on `Zenodo <https://zenodo.org/record/4525749>`__), please add your
 name to the list of authors in ``CITATION.cff`` and generate the entry for the
-``.zenodo.json`` file by running the command
+``.zenodo.json`` file by running the commands
 
 ::
 
@@ -500,20 +510,20 @@ request for help.
 Ask `@ESMValGroup/tech-reviewers`_ if you do not have a technical reviewer yet.
 
 If the checks are broken because of something unrelated to the current
-pull request, please check if there is an open issue that reports the problem
-and create one if there is no issue yet.
+pull request, please check if there is an open issue that reports the problem.
+Create one if there is no issue yet.
 You can attract the attention of the `@ESMValGroup/esmvaltool-coreteam`_ by
 mentioning them in the issue if it looks like no-one is working on solving the
 problem yet.
 The issue needs to be fixed in a separate pull request first.
-After that has been merged into the ``master`` branch and all checks are green
-again on the ``master`` branch, merge it into your own branch to get the tests
-to pass.
+After that has been merged into the ``master`` branch and all checks on this
+branch are green again, merge it into your own branch to get the tests to pass.
 
 When reviewing a pull request, always make sure that all checks were successful.
-If the Codacy check keeps failing, please run ``prospector`` locally and if
-necessary, ask the pull request author to do the same and to address the
-reported issues, see the section on code_quality_ for more information.
+If the Codacy check keeps failing, please run ``prospector`` locally.
+If necessary, ask the pull request author to do the same and to address the
+reported issues.
+See the section on code_quality_ for more information.
 Never merge a pull request with failing CircleCI or readthedocs checks.
 
 
