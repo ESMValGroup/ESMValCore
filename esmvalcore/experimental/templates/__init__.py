@@ -3,8 +3,8 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
-template_dir = str(Path(__file__).parent)
-file_loader = FileSystemLoader(template_dir)
+TEMPLATE_DIR = str(Path(__file__).parent)
+file_loader = FileSystemLoader(TEMPLATE_DIR)
 environment = Environment(loader=file_loader, autoescape=True)
 get_template = environment.get_template
 
