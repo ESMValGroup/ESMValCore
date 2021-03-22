@@ -42,15 +42,23 @@ early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
 It’s also easier to get help from other developers if your code is visible in a
 pull request.
 
-Design
-------
+Design considerations
+~~~~~~~~~~~~~~~~~~~~~
 
-TODO: add text
+When making changes, try to respect the current structure of the program.
+This will make it easier for other contributors to find their way around and
+reduces the risk of breaking existing functionality.
 
-- it should be possible to create tasks from recipe before processing data/writing files (esmvalcore/_recipe.py)
-- keep it simple
-- preprocessor functions are functions to make them easy to implement for scientific contributors
-
+- keep it simple, we would like to make contributing as low threshold as possible
+- :ref:`preprocessor_functions` are Python functions (and not classes) so they
+  are easy to implement for scientific contributors
+- it should be possible to :ref:`create tasks from the recipe <Diagnostics>`
+  before starting to process data/write files.
+  Any settings in the recipe that can already be checked before actually
+  loading the data should be checked at this stage, to avoid that users
+  run a recipe for several hours before finding out they made a mistake in the
+  recipe.
+- changes should preferably be :ref:`backward compatible <backward_compatibility>`
 
 .. _pull_request_checklist:
 
@@ -72,7 +80,7 @@ The icons indicate whether the item will be checked during the
 :ref:`🛠 Technical review <technical_review>` or
 :ref:`🧪 Scientific review <scientific_review>`.
 
-- 🧪 The new functionality is :ref:`scientifically sound and relevant <scientific_relevance>`
+- 🧪 The new functionality is :ref:`relevant and scientifically sound<scientific_relevance>`
 - 🛠 :ref:`The pull request has a descriptive title and labels <descriptive_pr_title>`
 - 🛠 Code is written according to the :ref:`code quality guidelines <code_quality>`
 - 🧪 and 🛠 Documentation_ is available
@@ -84,10 +92,16 @@ The icons indicate whether the item will be checked during the
 
 .. _scientific_relevance:
 
-Changes should be scientifically sound and relevant
+Changes should be relevant and scientifically sound
 ---------------------------------------------------
 
-TODO
+The proposed changes should be relevant for the larger scientific community.
+The implementation of new features should be scientifically sound, e.g.
+the formulas used in new preprocesssor functions should be accompanied by the
+relevant references and checked for correctness by the scientific reviewer.
+The `CF Conventions <https://cfconventions.org/>` as well as additional
+standards imposed by `CMIP <https://www.wcrp-climate.org/wgcm-cmip>`_ should be
+followed whenever possible.
 
 .. _descriptive_pr_title:
 
@@ -421,14 +435,50 @@ directory
 
 .. _backward_compatibility:
 
-Making changes that are not backward compatible
-------------------------------------------------
+Changes are backward compatible
+-------------------------------
 
-TODO: add text
+The ESMValCore package is used by many people to run their recipes.
+Many of these recipes are maintained in the public
+`ESMValTool <https://github.com/ESMValGroup/ESMValTool>`_ repository, but
+there are also users who choose not to share their work there.
+While our commitment is first and foremost to users who do share their recipes
+in the ESMValTool repository, we still try to be nice to all of the ESMValCore
+users.
+When making changes, e.g. to the :ref:`recipe format <recipe_overview>`, the
+:ref:`diagnostic script interface <interfaces>`, the public
+:ref:`Python API <api>`, or the :ref:`configuration file format <config>`,
+keep in mind that this may affect many users.
+To keep the tool user friendly, try to avoid making changes that are not
+backward compatible, i.e. changes that require users to change their existing
+recipes, diagnostics, configuration files, or scripts.
 
-If you do make backward incompatible changes to the recipe format, you need to
-update ESMValTool and link the ESMValTool pull request(s) in the ESMValCore
+If you really must change the public interfaces of the tool, always discuss this
+with the `@ESMValGroup/esmvaltool-coreteam`_.
+Try to deprecate the feature first by issuing a :py:class:`DeprecationWarning`
+using the :py:mod:`warnings` module and schedule it for removal three
+`minor versions <https://semver.org/>`__ from the latest released version.
+For example, when you deprecate a feature in a pull request that will be
+included in version 2.3, that feature could be removed in version 2.5.
+Mention the version in which the feature will be removed in the deprecation
+message.
+Label the pull request with the
+`deprecated feature <https://github.com/ESMValGroup/ESMValCore/labels/deprecated%20feature>`__
+label.
+When deprecating a feature, please follow up by actually removing the feature
+in due course.
+
+If you must make backward incompatible changes, you need to update the available
+recipes in ESMValTool and link the ESMValTool pull request(s) in the ESMValCore
 pull request description.
+You can ask the `@ESMValGroup/esmvaltool-recipe-maintainers`_ for help with
+updating existing recipes, but please be considerate of their time.
+
+When reviewing a pull request, always check for backward incompatible changes
+and make sure they are needed and have been discussed with the
+`@ESMValGroup/esmvaltool-coreteam`_.
+Also, make sure the author of the pull request has created the accompanying pull
+request(s) to update the ESMValTool, before merging the ESMValCore pull request.
 
 .. _dependencies:
 
@@ -453,7 +503,7 @@ the following files:
 
 - ``environment.yml``
   contains development dependencies that cannot be installed from
-  `PyPI <https://pypi.org/>`__
+  `PyPI <https://pypi.org/>`_
 - ``docs/requirements.txt``
   contains Python dependencies needed to build the documentation that can be
   installed from PyPI
@@ -663,3 +713,4 @@ You can read more about this in
 .. _`@ESMValGroup/esmvaltool-developmentteam`: https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam
 .. _`@ESMValGroup/tech-reviewers`: https://github.com/orgs/ESMValGroup/teams/tech-reviewers
 .. _`@ESMValGroup/science-reviewers`: https://github.com/orgs/ESMValGroup/teams/science-reviewers
+.. _`@ESMValGroup/esmvaltool-recipe-maintainers`: https://github.com/orgs/ESMValGroup/teams/esmvaltool-recipe-maintainers
