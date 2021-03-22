@@ -33,9 +33,13 @@ class DerivedVariable(DerivedVariableBase):
         rsns_cube = cubes.extract_cube(
             Constraint(name='surface_net_downward_shortwave_flux'))
         # fix latitude and longitude var_name
+        rsns_cube.coord(axis='X').long_name = rsds_cube.coord(axis='X').long_name
+        rsns_cube.coord(axis='Y').long_name = rsds_cube.coord(axis='Y').long_name
         rsns_cube.coord(axis='X').var_name = rsds_cube.coord(axis='X').var_name
-        rsns_cube.coord("latitude").var_name = "Latitude"
+        rsns_cube.coord(axis='Y').var_name = rsds_cube.coord(axis='Y').var_name
 
         rsus_cube = rsds_cube - rsns_cube
+
+        rsus_cube.attributes['positive'] = 'up'
 
         return rsus_cube
