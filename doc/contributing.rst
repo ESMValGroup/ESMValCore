@@ -138,7 +138,7 @@ The icons indicate whether the item will be checked during the
 - 🧪 and 🛠 Documentation_ is available
 - 🛠 Unit tests_ have been added
 - 🛠 Changes are :ref:`backward compatible <backward_compatibility>`
-- 🛠 Changed dependencies are :ref:`added or removed correctly <dependencies>`
+- 🛠 Changed dependencies have been :ref:`added or removed correctly <dependencies>`
 - 🛠 The :ref:`list of authors <authors>` is up to date
 - 🛠 The :ref:`checks shown below the pull request <pull_request_checks>` are successful
 
