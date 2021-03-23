@@ -104,10 +104,11 @@ returns ``True`` so ``cube.core_data()`` is a
 cube should also have lazy data.
 Note that NumPy functions will often call their Dask equivalent if it exists
 and if their input array is a Dask array, and vice versa.
-Preprocessor functions should preferably be small and just call the relevant
-:ref:`iris <iris_docs>` code.
-Code that is more involved and applicable more broadly than just in the
-ESMValCore, should preferably be implemented in iris instead.
+
+Note that preprocessor functions should preferably be small and just call the
+relevant :ref:`iris <iris_docs>` code.
+Code that is more involved, e.g. lots of work with Numpy and Dask arrays,
+and applicable more broadly should preferably be implemented in iris instead.
 
 Using multiple datasets as input
 ================================
