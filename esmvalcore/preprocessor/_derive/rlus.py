@@ -29,7 +29,7 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute upwelling longwave flux from downwelling and net."""
         rsds_cube = cubes.extract_cube(
-            Constraint(name='surface_longwave_shortwave_flux_in_air'))
+            Constraint(name='surface_downwelling_longwave_flux_in_air'))
         rsns_cube = cubes.extract_cube(
             Constraint(name='surface_net_downward_longwave_flux'))
         # fix latitude and longitude var_name
