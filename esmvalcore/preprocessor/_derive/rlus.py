@@ -28,22 +28,22 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute upwelling longwave flux from downwelling and net."""
-        rsds_cube = cubes.extract_cube(
+        rlds_cube = cubes.extract_cube(
             Constraint(name='surface_downwelling_longwave_flux_in_air'))
-        rsns_cube = cubes.extract_cube(
+        rlns_cube = cubes.extract_cube(
             Constraint(name='surface_net_downward_longwave_flux'))
         # fix latitude and longitude var_name
-        rsns_cube.coord(axis='X').long_name = rsds_cube.coord(
+        rlns_cube.coord(axis='X').long_name = rlds_cube.coord(
             axis='X').long_name
-        rsns_cube.coord(axis='Y').long_name = rsds_cube.coord(
+        rlns_cube.coord(axis='Y').long_name = rlds_cube.coord(
             axis='Y').long_name
-        rsns_cube.coord(axis='X').var_name = rsds_cube.coord(
+        rlns_cube.coord(axis='X').var_name = rlds_cube.coord(
             axis='X').var_name
-        rsns_cube.coord(axis='Y').var_name = rsds_cube.coord(
+        rlns_cube.coord(axis='Y').var_name = rlds_cube.coord(
             axis='Y').var_name
 
-        rsus_cube = rsds_cube - rsns_cube
+        rlus_cube = rlds_cube - rlns_cube
 
-        rsus_cube.attributes['positive'] = 'up'
+        rlus_cube.attributes['positive'] = 'up'
 
-        return rsus_cube
+        return rlus_cube
