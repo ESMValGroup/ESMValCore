@@ -1,7 +1,9 @@
 """Importable config object."""
 
+import os
 from datetime import datetime
 from pathlib import Path
+from typing import Union
 
 import yaml
 
@@ -28,7 +30,9 @@ class Config(ValidatedConfig):
     )
 
     @classmethod
-    def _load_user_config(cls, filename: str, raise_exception: bool = True):
+    def _load_user_config(cls,
+                          filename: Union[os.PathLike, str],
+                          raise_exception: bool = True):
         """Load user configuration from the given file.
 
         The config is cleared and updated in-place.
@@ -61,7 +65,7 @@ class Config(ValidatedConfig):
         return new
 
     @classmethod
-    def _load_default_config(cls, filename: str):
+    def _load_default_config(cls, filename: Union[os.PathLike, str]):
         """Load the default configuration."""
         new = cls()
 
@@ -70,7 +74,7 @@ class Config(ValidatedConfig):
 
         return new
 
-    def load_from_file(self, filename):
+    def load_from_file(self, filename: Union[os.PathLike, str]):
         """Load user configuration from the given file."""
         path = Path(filename).expanduser()
         if not path.exists():
@@ -130,7 +134,7 @@ class Session(ValidatedConfig):
 
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
-        self.session_name = None
+        self.session_name: Union[str, None] = None
         self.set_session_name(name)
 
     def set_session_name(self, name: str = 'session'):

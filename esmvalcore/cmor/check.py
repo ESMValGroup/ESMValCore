@@ -527,9 +527,7 @@ class CMORCheck():
                 if not fixed:
                     self.report_critical(self._attr_msg, var_name, 'units',
                                          cmor.units, coord.units)
-        self._check_coord_values(cmor, coord, var_name)
-        self._check_coord_bounds(cmor, coord, var_name)
-        self._check_coord_monotonicity_and_direction(cmor, coord, var_name)
+        self._check_coord_points(cmor, coord, var_name)
 
     def _check_coord_bounds(self, cmor, coord, var_name):
         if cmor.must_have_bounds == 'yes' and not coord.has_bounds():
@@ -606,8 +604,8 @@ class CMORCheck():
             self._cube = iris.util.reverse(self._cube,
                                            self._cube.coord_dims(coord))
 
-    def _check_coord_values(self, coord_info, coord, var_name):
-        """Check coordinate values."""
+    def _check_coord_points(self, coord_info, coord, var_name):
+        """Check coordinate points: values, bounds and monotonicity."""
         # Check requested coordinate values exist in coord.points
         self._check_requested_values(coord, coord_info, var_name)
 
@@ -655,6 +653,10 @@ class CMORCheck():
                 dims = self._cube.coord_dims(coord)
                 self._cube.remove_coord(coord)
                 self._cube.add_aux_coord(new_coord, dims)
+            coord = self._cube.coord(var_name=var_name)
+        self._check_coord_bounds(coord_info, coord, var_name)
+        self._check_coord_monotonicity_and_direction(coord_info, coord,
+                                                     var_name)
 
     def _check_longitude_max(self, coord, var_name):
         if np.any(coord.points > 720):

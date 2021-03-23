@@ -11,6 +11,7 @@ import logging
 import os
 
 import cartopy.io.shapereader as shpreader
+import dask.array as da
 import iris
 import numpy as np
 import shapely.vectorized as shp_vect
@@ -525,6 +526,98 @@ def mask_outside_range(cube, minimum, maximum):
     """
     cube.data = np.ma.masked_outside(cube.data, minimum, maximum)
     return cube
+
+
+def _get_shape(cubes):
+    """Check and get shape of cubes."""
+    shapes = {cube.shape for cube in cubes}
+    if len(shapes) > 1:
+        raise ValueError(
+            f"Expected cubes with identical shapes, got shapes {shapes}")
+    return list(shapes)[0]
+
+
+def _multimodel_mask_cubes(cubes, shape):
+    """Apply common mask to all cubes in-place."""
+    # Create mask
+    mask = da.full(shape, False, dtype=bool)
+    for cube in cubes:
+        new_mask = da.ma.getmaskarray(cube.core_data())
+        mask |= new_mask
+
+    # Apply common mask
+    for cube in cubes:
+        cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
+
+    return cubes
+
+
+def _multimodel_mask_products(products, shape):
+    """Apply common mask to all cubes of products in-place."""
+    # Create mask and get products used for mask
+    mask = da.full(shape, False, dtype=bool)
+    used_products = set()
+    for product in products:
+        for cube in product.cubes:
+            new_mask = da.ma.getmaskarray(cube.core_data())
+            mask |= new_mask
+            if da.any(new_mask):
+                used_products.add(product)
+
+    # Apply common mask and update provenance information
+    for product in products:
+        for cube in product.cubes:
+            cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
+        for other_product in used_products:
+            if other_product.filename != product.filename:
+                product.wasderivedfrom(other_product)
+
+    return products
+
+
+def mask_multimodel(products):
+    """Apply common mask to all datasets (using logical OR).
+
+    Parameters
+    ----------
+    products : iris.cube.CubeList or list of PreprocessorFile
+        Data products/cubes to be masked.
+
+    Returns
+    -------
+    iris.cube.CubeList or list of PreprocessorFile
+        Masked data products/cubes.
+
+    Raises
+    ------
+    ValueError
+        Datasets have different shapes.
+    TypeError
+        Invalid input data.
+
+    """
+    if not products:
+        return products
+
+    # Check input types
+    if all(isinstance(p, iris.cube.Cube) for p in products):
+        cubes = products
+        shape = _get_shape(cubes)
+        return _multimodel_mask_cubes(cubes, shape)
+    if all(type(p).__name__ == 'PreprocessorFile' for p in products):
+        # Avoid circular input: https://stackoverflow.com/q/16964467
+        cubes = iris.cube.CubeList()
+        for product in products:
+            cubes.extend(product.cubes)
+        if not cubes:
+            return products
+        shape = _get_shape(cubes)
+        return _multimodel_mask_products(products, shape)
+    product_types = {type(p) for p in products}
+    raise TypeError(
+        f"Input type for mask_multimodel not understood. Expected "
+        f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
+        f"got {product_types}")
 
 
 def mask_fillvalues(products,

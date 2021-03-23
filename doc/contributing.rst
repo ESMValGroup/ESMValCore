@@ -210,10 +210,15 @@ the repository is cloned, e.g. ``cd ESMValCore``, and run `prospector <http://pr
 
    prospector esmvalcore/preprocessor/_regrid.py
 
-In addition to prospector, we also use `flake8 <https://flake8.pycqa.org/en/latest/>`_
-to automatically check for bugs and formatting mistakes.
+In addition to prospector, we use `flake8 <https://flake8.pycqa.org/en/latest/>`_
+to automatically check for bugs and formatting mistakes and
+`mypy <https://mypy.readthedocs.io>`_ for checking that
+`type hints <https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html>`_ are
+correct.
+Note that `type hints`_ are completely optional, but if you do choose to add
+them, they should be correct.
 
-When you make a pull request, adherence of the Python development best practices
+When you make a pull request, adherence to the Python development best practices
 is checked in two ways:
 
 #. As part of the unit tests, flake8_ is run by
