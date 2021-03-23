@@ -4,6 +4,7 @@ import os
 import re
 from copy import deepcopy
 from decimal import Decimal
+from typing import Dict
 
 import iris
 import numpy as np
@@ -40,7 +41,7 @@ _LON_MAX = 360.0
 _LON_RANGE = _LON_MAX - _LON_MIN
 
 # A cached stock of standard horizontal target grids.
-_CACHE = dict()
+_CACHE: Dict[str, iris.cube.Cube] = dict()
 
 # Supported point interpolation schemes.
 POINT_INTERPOLATION_SCHEMES = {

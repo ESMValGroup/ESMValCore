@@ -1,4 +1,5 @@
 """Integration tests for :mod:`esmvalcore._recipe_checks`."""
+from typing import Any, List
 from unittest import mock
 
 import pytest
@@ -58,7 +59,7 @@ def test_data_availability_data(mock_logger, input_files, var, error):
     assert var == saved_var
 
 
-DATA_AVAILABILITY_NO_DATA = [
+DATA_AVAILABILITY_NO_DATA: List[Any] = [
     ([], [], None),
     ([], None, None),
     (None, [], None),

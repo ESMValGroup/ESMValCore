@@ -3,12 +3,7 @@
 import warnings
 
 
-def _warning_formatter(message,
-                       category,
-                       filename,
-                       lineno,
-                       file=None,
-                       line=None):
+def _warning_formatter(message, category, filename, lineno, line=None):
     """Patch warning formatting to not mention itself."""
     return f'{filename}:{lineno}: {category.__name__}: {message}\n'
 

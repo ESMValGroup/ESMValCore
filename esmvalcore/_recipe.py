@@ -1327,9 +1327,9 @@ class Recipe:
                 tasks.add(task)
                 priority += 1
         if failed_tasks:
-            ex = RecipeError('Could not create all tasks')
-            ex.failed_tasks.extend(failed_tasks)
-            raise ex
+            recipe_error = RecipeError('Could not create all tasks')
+            recipe_error.failed_tasks.extend(failed_tasks)
+            raise recipe_error
         check.tasks_valid(tasks)
 
         # Resolve diagnostic ancestors

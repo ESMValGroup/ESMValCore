@@ -1,4 +1,5 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._weighting`."""
+from typing import Dict, List
 from unittest import mock
 
 import iris
@@ -30,7 +31,7 @@ CUBE_4 = iris.cube.Cube(
 )
 FRAC_SFTLF = np.array([0.1, 0.0, 1.0])
 FRAC_SFTOF = np.array([0.0, 1.0, 0.5, 0.3])
-EMPTY_FX_FILES = {
+EMPTY_FX_FILES: Dict[str, List] = {
     'sftlf': [],
     'sftof': [],
 }
