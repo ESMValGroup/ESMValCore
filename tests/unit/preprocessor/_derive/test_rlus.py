@@ -3,7 +3,7 @@ import iris
 import numpy as np
 import pytest
 
-import esmvalcore.preprocessor._derive.rsus as rsus
+import esmvalcore.preprocessor._derive.rlus as rlus
 
 from .test_shared import get_cube
 
