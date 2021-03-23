@@ -151,7 +151,7 @@ The proposed changes should be relevant for the larger scientific community.
 The implementation of new features should be scientifically sound, e.g.
 the formulas used in new preprocesssor functions should be accompanied by the
 relevant references and checked for correctness by the scientific reviewer.
-The `CF Conventions <https://cfconventions.org/>` as well as additional
+The `CF Conventions <https://cfconventions.org/>`_ as well as additional
 standards imposed by `CMIP <https://www.wcrp-climate.org/wgcm-cmip>`_ should be
 followed whenever possible.
 
