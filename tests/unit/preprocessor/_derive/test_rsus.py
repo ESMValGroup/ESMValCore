@@ -1,4 +1,4 @@
-"""Test derivation of `rsntcs`."""
+"""Test derivation of `rsus`."""
 import iris
 import numpy as np
 import pytest
