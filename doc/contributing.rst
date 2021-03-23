@@ -221,7 +221,7 @@ them, they should be correct.
 When you make a pull request, adherence to the Python development best practices
 is checked in two ways:
 
-#. As part of the unit tests, flake8_ is run by
+#. As part of the unit tests, flake8_ and mypy_ are run by
    `CircleCI <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore>`_,
    see the section on Tests_ for more information.
 #. `Codacy <https://app.codacy.com/gh/ESMValGroup/ESMValCore/pullRequests>`_
