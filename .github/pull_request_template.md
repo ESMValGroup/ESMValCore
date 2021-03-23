@@ -45,7 +45,7 @@ It is the responsibility of the author to make sure the pull request is ready to
 - [ ] [🛠][1] [Unit tests](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#tests) have been added
 - [ ] [🛠][1] Changes are [backward compatible](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#changes-are-backward-compatible)
 - [ ] [🛠][1] Any changed dependencies have been [added or removed correctly](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#adding-or-removing-dependencies)
-- [ ] [🛠][1] The [list of authors](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/earen/1047/contributing.html#list-of-authors) is up to date
+- [ ] [🛠][1] The [list of authors](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#list-of-authors) is up to date
 - [ ] [🛠][1] All [checks below this pull request](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#pull-request-checks) were successful
 
 ***
