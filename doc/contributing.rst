@@ -9,12 +9,13 @@ If you have suggestions for improving the process of contributing, please do not
 If you have a bug or other issue to report or just need help, please open an issue on the
 `issues tab on the ESMValCore github repository <https://github.com/ESMValGroup/ESMValCore/issues>`__.
 
-If you would like to contribute a new preprocessor function,
+If you would like to contribute a new
+:ref:`preprocessor function <preprocessor_function>`,
 :ref:`derived variable <derivation>`, :ref:`fix for a dataset <fixing_data>`, or
 another new feature, please discuss your idea with the development team before
 getting started, to avoid double work and/or disappointment later.
 A good way to do this is to open an
-`issue on GitHub <https://github.com/ESMValGroup/ESMValCore/issues>`__.
+`issue <https://github.com/ESMValGroup/ESMValCore/issues>`_ on GitHub.
 
 Getting started
 ---------------
@@ -42,23 +43,74 @@ early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
 It’s also easier to get help from other developers if your code is visible in a
 pull request.
 
+:ref:`Make small pull requests <easy_review>`, the ideal pull requests changes
+just a few files and adds/changes no more than 100 lines of production code.
+The amount of test code added can be more extensive, but changes to existing
+test code should be made sparingly.
+
 Design considerations
 ~~~~~~~~~~~~~~~~~~~~~
 
 When making changes, try to respect the current structure of the program.
-This will make it easier for other contributors to find their way around and
-reduces the risk of breaking existing functionality.
+If you need to make major changes to the structure of program to add the feature
+you would like to add, chances are that you have either not come up with the
+most optimal design or the feature is not a very good fit for the tool.
+Discuss your feature with the `@ESMValGroup/esmvaltool-coreteam`_ in an issue_
+to find a solution.
 
-- keep it simple, we would like to make contributing as low threshold as possible
+Please keep the following considerations in mind when programming:
+
+- Keep your code short and simple, we would like to make contributing as low
+  threshold as possible.
+  Avoid implementing complicated class inheritance structures and
+  `boilerplate <https://stackoverflow.com/questions/3992199/what-is-boilerplate-code>`__
+  code.
+  If you find yourself copy/pasting a piece of code and making minor changes
+  to every copy, try to put the repeated bit of code in a function that you
+  can re-use instead, provide the changed bits as function arguments.
+- Changes should preferably be :ref:`backward compatible <backward_compatibility>`.
 - :ref:`preprocessor_functions` are Python functions (and not classes) so they
-  are easy to implement for scientific contributors
-- it should be possible to :ref:`create tasks from the recipe <Diagnostics>`
+  are easy to understand and implement for scientific contributors.
+- Data is checked (and if needed, fixed before that) so it follows the
+  specification in
+  `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/cmor/tables>`__
+  before applying any other preprocessor functions.
+  See :ref:`cmor_table_configuration` for the mapping from ``project`` in the
+  recipe to the relevant CMOR table.
+  Therefore it is safe to assume that the input cube(s) in the preprocessor
+  functions follow this specification (up to any changes applied by preceding
+  preprocessor functions of course) and no additional checks should be
+  implemented inside preprocessor functions.
+  This design helps to keep the preprocessor functions and diagnostics scripts
+  that use the preprocessed data from the tool simple and reliable.
+- The ESMValCore package is based on :ref:`iris <iris_docs>`.
+  Preprocessor functions should preferably be small and just call the relevant
+  iris code.
+  Code that is more involved and applicable more broadly than just in the
+  ESMValCore, should preferably be implemented in iris instead.
+- It should be possible to :ref:`create tasks from the recipe <Diagnostics>`
   before starting to process data/write files.
   Any settings in the recipe that can already be checked before actually
-  loading the data should be checked at this stage, to avoid that users
-  run a recipe for several hours before finding out they made a mistake in the
-  recipe.
-- changes should preferably be :ref:`backward compatible <backward_compatibility>`
+  loading the data should be checked at the task creation stage, to avoid that
+  users run a recipe for several hours before finding out they made a mistake
+  in the recipe.
+- CMOR checks should provide a good balance between reliability of the tool
+  and ease of use.
+  Several :ref:`levels of strictness of the checks <cmor_check_strictness>`
+  are available to facilitate this.
+- Be careful when changing existing unit tests to make your new feature work,
+  you might be breaking existing features if you have to change existing tests.
+
+Finally, if you would like to improve the design of the tool, discuss your plans
+with the `@ESMValGroup/esmvaltool-coreteam`_ to make sure you understand the
+current functionality and agree on the new design.
+Apply changes gradually, change no more than a few files in a single pull
+request, but do make sure every pull request in itself brings a meaningful
+improvement.
+This reduces the risk of breaking existing functionality and making major
+:ref:`backward incompatible <backward_compatibility>` changes because it helps
+you as well as the reviewers of your pull request to better understand what
+exactly is being changed.
 
 .. _pull_request_checklist:
 
@@ -258,17 +310,19 @@ What should be documented
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Functionality that is visible to users should be documented.
-This includes:
+Any documentation that is visible on readthedocs_ should be well
+written and adhere to the standards for documentation.
+Examples of this include:
 
 - The :ref:`recipe <recipe_overview>`
 - Preprocessor :ref:`functions <preprocessor_functions>` and their
   :ref:`use from the recipe <preprocessor>`
 - :ref:`Configuration options <config>`
 - :ref:`Installation <install>`
+- :ref:`Output files <outputdata>`
+- :ref:`Command line interface <running>`
+- :ref:`Diagnostic script interfaces <interfaces>`
 - :ref:`The experimental Python interface <experimental_api>`
-
-Any documentation that is visible on readthedocs_ should be well
-written and adhere to the standards for documentation.
 
 Note that:
 

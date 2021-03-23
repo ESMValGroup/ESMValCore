@@ -139,6 +139,13 @@ so we will implement the ``fix_metadata`` method:
 
 This will fix the error. The next time you run ESMValTool you will find that the error
 is fixed on the fly and, hopefully, your recipe will run free of errors.
+The ``cubes`` argument to the ``fix_metadata`` method will contain all cubes
+loaded from a single input file.
+Some care may need to be taken that the right cube is selected and fixed in case
+multiple cubes are created.
+Usually this happens when a coordinate is mistakenly loaded as a cube, because
+the input data does not follow the
+`CF Conventions <https://cfconventions.org/>`__.
 
 Sometimes other errors can appear after you fix the first one because they were
 hidden by it. In our case, the latitude coordinate could have bad units or
@@ -267,6 +274,8 @@ missing coordinate you can create a fix for this model:
         data_cube.add_aux_coord(coord, DIMENSIONS_INDEX_TUPLE)
         return [data_cube]
 
+
+.. _cmor_check_strictness:
 
 Customizing checker strictness
 ==============================
