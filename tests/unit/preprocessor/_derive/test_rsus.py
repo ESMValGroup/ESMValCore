@@ -32,4 +32,4 @@ def test_rsntcs_calculation(cubes):
     out_cube = derived_var.calculate(cubes)
     np.testing.assert_allclose(out_cube.data,
                                np.array([[[50.0]]]))
-    assert out_cube.attributes['positive'] == 'down'
+    assert out_cube.attributes['positive'] == 'up'
