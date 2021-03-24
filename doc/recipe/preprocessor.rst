@@ -1434,7 +1434,7 @@ case for atmospheric models.
 
 The same functionality exists in the ``extract_levels`` preprocessor,
 and this function should be used for more complex datasets
-if extract_surface fails. However, extract_levels also 
+if extract_surface fails. However, ``extract_levels`` also 
 has a higher computational cost, and may be slower. 
 
 See also :func:`esmvalcore.preprocessor.extract_levels`.
