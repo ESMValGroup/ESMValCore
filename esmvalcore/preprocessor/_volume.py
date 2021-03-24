@@ -319,7 +319,7 @@ def extract_surface(cube):
     It is more robust to variability in the grid definitions.
 
     Parameters
-    ---------
+    ----------
     cube: iris.cube.Cube
         input cube.
 
