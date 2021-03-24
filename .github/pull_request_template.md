@@ -28,7 +28,7 @@ Link to documentation:
 
 ## [Before you get started](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#getting-started)
 
--   [ ] [☝ Create an issue](https://github.com/ESMValGroup/ESMValCore/issues) to discuss what you are going to do
+- [ ] [☝ Create an issue](https://github.com/ESMValGroup/ESMValCore/issues) to discuss what you are going to do
 
 ## [Checklist](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#checklist-for-pull-requests)
 
@@ -38,18 +38,18 @@ It is the responsibility of the author to make sure the pull request is ready to
 [1]: https://docs.esmvaltool.org/en/latest/community/review.html#technical-review
 [2]: https://docs.esmvaltool.org/en/latest/community/review.html#scientific-review
 
-  - [ ] [🧪][2] The new functionality is [relevant and scientifically sound](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#scientific-relevance)
-  - [ ] [🛠][1] This pull request has a [descriptive title and labels](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#pull-request-title-and-label)
-  - [ ] [🛠][1] Code is written according to the [code quality guidelines](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#code-quality)
-  - [ ] [🧪][2] and [🛠][1] [Documentation](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#documentation) is available
-  - [ ] [🛠][1] [Unit tests](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#tests) have been added
-  - [ ] [🛠][1] Changes are [backward compatible](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#backward-compatibility)
-  - [ ] [🛠][1] Any changed dependencies have been [added or removed correctly](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#dependencies)
-  - [ ] [🛠][1] The [list of authors](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#list-of-authors) is up to date
-  - [ ] [🛠][1] All [checks below this pull request](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#pull-request-checks) were successful
+- [ ] [🧪][2] The new functionality is [relevant and scientifically sound](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#scientific-relevance)
+- [ ] [🛠][1] This pull request has a [descriptive title and labels](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#pull-request-title-and-label)
+- [ ] [🛠][1] Code is written according to the [code quality guidelines](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#code-quality)
+- [ ] [🧪][2] and [🛠][1] [Documentation](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#documentation) is available
+- [ ] [🛠][1] [Unit tests](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#tests) have been added
+- [ ] [🛠][1] Changes are [backward compatible](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#backward-compatibility)
+- [ ] [🛠][1] Any changed [dependencies have been added or removed](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#dependencies) correctly
+- [ ] [🛠][1] The [list of authors](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#list-of-authors) is up to date
+- [ ] [🛠][1] All [checks below this pull request](https://esmvaltool--1047.org.readthedocs.build/projects/ESMValCore/en/1047/contributing.html#pull-request-checks) were successful
 
 ***
 
 To help with the number pull requests:
 
--   🙏 We kindly ask you to [review](https://docs.esmvaltool.org/en/latest/community/review.html#review-of-pull-requests) two other [open pull requests](https://github.com/ESMValGroup/ESMValCore/pulls) in this repository
+- 🙏 We kindly ask you to [review](https://docs.esmvaltool.org/en/latest/community/review.html#review-of-pull-requests) two other [open pull requests](https://github.com/ESMValGroup/ESMValCore/pulls) in this repository
