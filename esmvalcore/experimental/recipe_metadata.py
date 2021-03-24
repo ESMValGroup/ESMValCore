@@ -180,10 +180,11 @@ class Reference:
         """
         style = 'plain'  # alpha, plain, unsrt, unsrtalpha
         backend = pybtex.plugin.find_plugin('pybtex.backends', renderer)()
-        style = pybtex.plugin.find_plugin('pybtex.style.formatting', style)()
+        formatter = pybtex.plugin.find_plugin('pybtex.style.formatting',
+                                              style)()
 
         try:
-            formatter = style.format_entry(self._key, self._entry)
+            formatter = formatter.format_entry(self._key, self._entry)
             rendered = formatter.text.render(backend)
         except Exception as err:
             raise RenderError(

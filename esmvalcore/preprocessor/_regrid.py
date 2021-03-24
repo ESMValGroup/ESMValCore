@@ -3,6 +3,8 @@
 import os
 import re
 from copy import deepcopy
+from decimal import Decimal
+from typing import Dict
 
 import iris
 import numpy as np
@@ -39,7 +41,7 @@ _LON_MAX = 360.0
 _LON_RANGE = _LON_MAX - _LON_MIN
 
 # A cached stock of standard horizontal target grids.
-_CACHE = dict()
+_CACHE: Dict[str, iris.cube.Cube] = dict()
 
 # Supported point interpolation schemes.
 POINT_INTERPOLATION_SCHEMES = {
@@ -63,12 +65,12 @@ VERTICAL_SCHEMES = ('linear', 'nearest',
 
 
 def parse_cell_spec(spec):
-    """
-    Parse an MxN cell specification string.
+    """Parse an MxN cell specification string.
 
     Parameters
     ----------
     spec: str
+        ``MxN`` degree cell-specification for the global grid.
 
     Returns
     -------
@@ -104,9 +106,51 @@ def parse_cell_spec(spec):
     return dlon, dlat
 
 
-def _stock_cube(spec, lat_offset=True, lon_offset=True):
+def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
+    """Generate cube from lat/lon points.
+
+    Parameters
+    ----------
+    latdata : np.ndarray
+        List of latitudes.
+    londata : np.ndarray
+        List of longitudes.
+    circular : bool
+        Wrap longitudes around the full great circle. Bounds will not be
+        generated for circular coordinates.
+
+    Returns
+    -------
+    :class:`~iris.cube.Cube`
     """
-    Create a stock cube.
+    lats = iris.coords.DimCoord(latdata,
+                                standard_name='latitude',
+                                units='degrees_north',
+                                var_name='lat',
+                                circular=circular)
+
+    lons = iris.coords.DimCoord(londata,
+                                standard_name='longitude',
+                                units='degrees_east',
+                                var_name='lon',
+                                circular=circular)
+
+    if not circular:
+        # cannot guess bounds for wrapped coordinates
+        lats.guess_bounds()
+        lons.guess_bounds()
+
+    # Construct the resultant stock cube, with dummy data.
+    shape = (latdata.size, londata.size)
+    dummy = np.empty(shape, dtype=np.dtype('int8'))
+    coords_spec = [(lats, 0), (lons, 1)]
+    cube = iris.cube.Cube(dummy, dim_coords_and_dims=coords_spec)
+
+    return cube
+
+
+def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
+    """Create a stock cube.
 
     Create a global cube with M degree-east by N degree-north regular grid
     cells.
@@ -130,8 +174,7 @@ def _stock_cube(spec, lat_offset=True, lon_offset=True):
 
     Returns
     -------
-        A :class:`~iris.cube.Cube`.
-
+    :class:`~iris.cube.Cube`
     """
     dlon, dlat = parse_cell_spec(spec)
     mid_dlon, mid_dlat = dlon / 2, dlat / 2
@@ -151,25 +194,97 @@ def _stock_cube(spec, lat_offset=True, lon_offset=True):
         londata = np.linspace(_LON_MIN, _LON_MAX - dlon,
                               int(_LON_RANGE / dlon))
 
-    lats = iris.coords.DimCoord(
-        latdata,
-        standard_name='latitude',
-        units='degrees_north',
-        var_name='lat')
-    lats.guess_bounds()
+    cube = _generate_cube_from_dimcoords(latdata=latdata, londata=londata)
 
-    lons = iris.coords.DimCoord(
-        londata,
-        standard_name='longitude',
-        units='degrees_east',
-        var_name='lon')
-    lons.guess_bounds()
+    return cube
 
-    # Construct the resultant stock cube, with dummy data.
-    shape = (latdata.size, londata.size)
-    dummy = np.empty(shape, dtype=np.dtype('int8'))
-    coords_spec = [(lats, 0), (lons, 1)]
-    cube = iris.cube.Cube(dummy, dim_coords_and_dims=coords_spec)
+
+def _spec_to_latlonvals(*, start_latitude: float, end_latitude: float,
+                        step_latitude: float, start_longitude: float,
+                        end_longitude: float, step_longitude: float) -> tuple:
+    """Define lat/lon values from spec.
+
+    Create a regional cube starting defined by the target specification.
+
+    The latitude must be between -90 and +90. The longitude is not bounded, but
+    wraps around the full great circle.
+
+    Parameters
+    ----------
+    start_latitude : float
+        Latitude value of the first grid cell center (start point). The grid
+        includes this value.
+    end_latitude : float
+        Latitude value of the last grid cell center (end point). The grid
+        includes this value only if it falls on a grid point. Otherwise, it
+        cuts off at the previous value.
+    step_latitude : float
+        Latitude distance between the centers of two neighbouring cells.
+    start_longitude : float
+        Latitude value of the first grid cell center (start point). The grid
+        includes this value.
+    end_longitude : float
+        Longitude value of the last grid cell center (end point). The grid
+        includes this value only if it falls on a grid point. Otherwise, it
+        cuts off at the previous value.
+    step_longitude : float
+        Longitude distance between the centers of two neighbouring cells.
+
+    Returns
+    -------
+    xvals : np.array
+        List of longitudes
+    yvals : np.array
+        List of latitudes
+    """
+    if step_latitude == 0:
+        raise ValueError('Latitude step cannot be 0, '
+                         f'got step_latitude={step_latitude}.')
+
+    if step_longitude == 0:
+        raise ValueError('Longitude step cannot be 0, '
+                         f'got step_longitude={step_longitude}.')
+
+    if (start_latitude < _LAT_MIN) or (end_latitude > _LAT_MAX):
+        raise ValueError(
+            f'Latitude values must lie between {_LAT_MIN}:{_LAT_MAX}, '
+            f'got start_latitude={start_latitude}:end_latitude={end_latitude}.'
+        )
+
+    def get_points(start, stop, step):
+        """Calculate grid points."""
+        # use Decimal to avoid floating point errors
+        num = int((stop - start) // Decimal(str(step)))
+        stop = start + num * step
+        return np.linspace(start, stop, num + 1)
+
+    latitudes = get_points(start_latitude, end_latitude, step_latitude)
+    longitudes = get_points(start_longitude, end_longitude, step_longitude)
+
+    return latitudes, longitudes
+
+
+def _regional_stock_cube(spec: dict):
+    """Create a regional stock cube.
+
+    Returns
+    -------
+    :class:`~iris.cube.Cube`.
+    """
+    latdata, londata = _spec_to_latlonvals(**spec)
+
+    cube = _generate_cube_from_dimcoords(latdata=latdata,
+                                         londata=londata,
+                                         circular=True)
+
+    def add_bounds_from_step(coord, step):
+        """Calculate bounds from the given step."""
+        bound = step / 2
+        points = coord.points
+        coord.bounds = np.vstack((points - bound, points + bound)).T
+
+    add_bounds_from_step(cube.coord('latitude'), spec['step_latitude'])
+    add_bounds_from_step(cube.coord('longitude'), spec['step_longitude'])
 
     return cube
 
@@ -188,7 +303,7 @@ def _attempt_irregular_regridding(cube, scheme):
 
 
 def extract_point(cube, latitude, longitude, scheme):
-    """Extract a point, with interpolation
+    """Extract a point, with interpolation.
 
     Extracts a single latitude/longitude point from a cube, according
     to the interpolation scheme `scheme`.
@@ -200,7 +315,6 @@ def extract_point(cube, latitude, longitude, scheme):
     scalar, the dimension will be missing in the output cube (that is,
     it will be a scalar).
 
-
     Parameters
     ----------
     cube : cube
@@ -211,7 +325,6 @@ def extract_point(cube, latitude, longitude, scheme):
 
     scheme : str
         The interpolation scheme. 'linear' or 'nearest'. No default.
-
 
     Returns
     -------
@@ -246,9 +359,7 @@ def extract_point(cube, latitude, longitude, scheme):
     array([1, 1, 1, 1, 1, 1, 1, 1]))
     >>> point.data[~point.data.mask].data  # doctest: +SKIP
     array([ 1,  5, 17, 21, 33, 37, 49, 53])
-
     """
-
     msg = f"Unknown interpolation scheme, got {scheme!r}."
     scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
     if not scheme:
@@ -260,42 +371,62 @@ def extract_point(cube, latitude, longitude, scheme):
 
 
 def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
-    """
-    Perform horizontal regridding.
+    """Perform horizontal regridding.
+
+    Note that the target grid can be a cube (:py:class:`~iris.cube.Cube`),
+    path to a cube (``str``), a grid spec (``str``) in the form
+    of `MxN`, or a ``dict`` specifying the target grid.
+
+    For the latter, the ``target_grid`` should be a ``dict`` with the
+    following keys:
+
+    - ``start_longitude``: longitude at the center of the first grid cell.
+    - ``end_longitude``: longitude at the center of the last grid cell.
+    - ``step_longitude``: constant longitude distance between grid cell
+        centers.
+    - ``start_latitude``: latitude at the center of the first grid cell.
+    - ``end_latitude``: longitude at the center of the last grid cell.
+    - ``step_latitude``: constant latitude distance between grid cell centers.
 
     Parameters
     ----------
-    cube : cube
+    cube : :py:class:`~iris.cube.Cube`
         The source cube to be regridded.
-    target_grid : cube or str
-        The cube that specifies the target or reference grid for the regridding
-        operation. Alternatively, a string cell specification may be provided,
-        of the form 'MxN', which specifies the extent of the cell, longitude by
-        latitude (degrees) for a global, regular target grid.
+    target_grid : Cube or str or dict
+        The (location of a) cube that specifies the target or reference grid
+        for the regridding operation.
+
+        Alternatively, a string cell specification may be provided,
+        of the form ``MxN``, which specifies the extent of the cell, longitude
+        by latitude (degrees) for a global, regular target grid.
+
+        Alternatively, a dictionary with a regional target grid may
+        be specified (see above).
+
     scheme : str
         The regridding scheme to perform, choose from
-        'linear',
-        'linear_extrapolate',
-        'nearest',
-        'area_weighted',
-        'unstructured_nearest'.
+        ``linear``,
+        ``linear_extrapolate``,
+        ``nearest``,
+        ``area_weighted``,
+        ``unstructured_nearest``.
     lat_offset : bool
         Offset the grid centers of the latitude coordinate w.r.t. the
-        pole by half a grid step. This argument is ignored if `target_grid`
+        pole by half a grid step. This argument is ignored if ``target_grid``
         is a cube or file.
     lon_offset : bool
         Offset the grid centers of the longitude coordinate w.r.t. Greenwich
         meridian by half a grid step.
-        This argument is ignored if `target_grid` is a cube or file.
+        This argument is ignored if ``target_grid`` is a cube or file.
 
     Returns
     -------
-    cube
+    :py:class:`~iris.cube.Cube`
+        Regridded cube.
 
     See Also
     --------
     extract_levels : Perform vertical regridding.
-
     """
     if HORIZONTAL_SCHEMES.get(scheme.lower()) is None:
         emsg = 'Unknown regridding scheme, got {!r}.'
@@ -309,7 +440,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             # and cache the resulting stock cube for later use.
             target_grid = _CACHE.setdefault(
                 target_grid,
-                _stock_cube(target_grid, lat_offset, lon_offset),
+                _global_stock_cube(target_grid, lat_offset, lon_offset),
             )
             # Align the target grid coordinate system to the source
             # coordinate system.
@@ -318,6 +449,10 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             ycoord = target_grid.coord(axis='y', dim_coords=True)
             xcoord.coord_system = src_cs
             ycoord.coord_system = src_cs
+
+    elif isinstance(target_grid, dict):
+        # Generate a target grid from the provided specification,
+        target_grid = _regional_stock_cube(target_grid)
 
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError('Expecting a cube, got {}.'.format(target_grid))
@@ -341,9 +476,8 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _create_cube(src_cube, data, src_levels, levels, ):
-    """
-    Generate a new cube with the interpolated data.
+def _create_cube(src_cube, data, src_levels, levels):
+    """Generate a new cube with the interpolated data.
 
     The resultant cube is seeded with `src_cube` metadata and coordinates,
     excluding any source coordinates that span the associated vertical
@@ -358,6 +492,8 @@ def _create_cube(src_cube, data, src_levels, levels, ):
     data : array
         The payload resulting from interpolating the source cube
         over the specified levels.
+    src_levels : array
+        Vertical levels of the source data
     levels : array
         The vertical levels of interpolation.
 
@@ -370,7 +506,6 @@ def _create_cube(src_cube, data, src_levels, levels, ):
         If there is only one level of interpolation, the resultant cube
         will be collapsed over the associated vertical dimension, and a
         scalar vertical coordinate will be added.
-
     """
     # Get the source cube vertical coordinate and associated dimension.
     z_coord = src_cube.coord(axis='z', dim_coords=True)
@@ -441,20 +576,19 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
     # Broadcast the 1d source cube vertical coordinate to fully
     # describe the spatial extent that will be interpolated.
-    src_levels_broadcast = broadcast_to_shape(
-        src_levels.points, cube.shape, cube.coord_dims(src_levels))
+    src_levels_broadcast = broadcast_to_shape(src_levels.points, cube.shape,
+                                              cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
     cube.data = da.ma.filled(cube.core_data(), np.nan)
 
     # Now perform the actual vertical interpolation.
-    new_data = stratify.interpolate(
-        levels,
-        src_levels_broadcast,
-        cube.core_data(),
-        axis=z_axis,
-        interpolation=interpolation,
-        extrapolation=extrapolation)
+    new_data = stratify.interpolate(levels,
+                                    src_levels_broadcast,
+                                    cube.core_data(),
+                                    axis=z_axis,
+                                    interpolation=interpolation,
+                                    extrapolation=extrapolation)
 
     # Calculate the mask based on the any NaN values in the interpolated data.
     mask = np.isnan(new_data)
@@ -468,8 +602,7 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
 
 def extract_levels(cube, levels, scheme, coordinate=None):
-    """
-    Perform vertical interpolation.
+    """Perform vertical interpolation.
 
     Parameters
     ----------
@@ -500,7 +633,6 @@ def extract_levels(cube, levels, scheme, coordinate=None):
     See Also
     --------
     regrid : Perform horizontal regridding.
-
     """
     if scheme not in VERTICAL_SCHEMES:
         emsg = 'Unknown vertical interpolation scheme, got {!r}. '
@@ -538,7 +670,7 @@ def extract_levels(cube, levels, scheme, coordinate=None):
 
     if (src_levels.shape == levels.shape
             and np.allclose(src_levels.points, levels)):
-        # Only perform vertical extraction/interploation if the source
+        # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
         result = cube
     elif len(src_levels.shape) == 1 and \
@@ -554,8 +686,8 @@ def extract_levels(cube, levels, scheme, coordinate=None):
             raise ValueError(emsg.format(list(levels), name))
     else:
         # As a last resort, perform vertical interpolation.
-        result = _vertical_interpolate(
-            cube, src_levels, levels, scheme, extrap_scheme)
+        result = _vertical_interpolate(cube, src_levels, levels, scheme,
+                                       extrap_scheme)
 
     return result
 
@@ -579,7 +711,6 @@ def get_cmor_levels(cmor_table, coordinate):
     ValueError:
         If the CMOR table is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
-
     """
     if cmor_table not in CMOR_TABLES:
         raise ValueError(
@@ -602,19 +733,26 @@ def get_cmor_levels(cmor_table, coordinate):
             coordinate, cmor_table))
 
 
-def get_reference_levels(filename,
-                         project,
-                         dataset,
-                         short_name,
-                         mip,
-                         frequency,
-                         fix_dir):
+def get_reference_levels(filename, project, dataset, short_name, mip,
+                         frequency, fix_dir):
     """Get level definition from a reference dataset.
 
     Parameters
     ----------
     filename: str
         Path to the reference file
+    project : str
+        Name of the project
+    dataset : str
+        Name of the dataset
+    short_name : str
+        Name of the variable
+    mip : str
+        Name of the mip table
+    frequency : str
+        Time frequency
+    fix_dir : str
+        Output directory for fixed data
 
     Returns
     -------
@@ -625,7 +763,6 @@ def get_reference_levels(filename,
     ValueError:
         If the dataset is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
-
     """
     filename = fix_file(
         file=filename,

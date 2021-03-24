@@ -72,6 +72,7 @@ test:
     - pytest-html!=2.1.0
     - pytest-metadata>=1.5.1
     - pytest-mock
+    - pytest-mypy
     - pytest-xdist
     - r-yaml
     - ncl
