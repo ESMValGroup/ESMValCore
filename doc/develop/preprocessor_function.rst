@@ -75,14 +75,16 @@ like this:
          example_argument: median
          example_optional_argument: 6
 
-The optional argument can be omitted in the recipe.
+The optional argument (in this example: ``example_optional_argument``) can be
+omitted in the recipe.
 
 Documentation
 =============
 
-In addition to the documentation in the function docstring that will be shown in
-the :ref:`preprocessor_functions` chapter, add documentation on how to use the
-new preprocessor function from the recipe in
+The documentation in the function docstring will be shown in
+the :ref:`preprocessor_functions` chapter.
+In addition, you should add documentation on how to use the new preprocessor
+function from the recipe in
 `doc/recipe/preprocessor.rst <https://github.com/ESMValGroup/ESMValCore/tree/master/doc/recipe/preprocessor.rst>`__
 so it is shown in the :ref:`preprocessor` chapter.
 See the introduction to :ref:`documentation` for more information on how to
@@ -95,7 +97,7 @@ Preprocessor functions should support both
 :ref:`real and lazy data <iris:real_and_lazy_data>`.
 This is vital for supporting the large datasets that are typically used with
 the ESMValCore.
-If the data of the incoming cube has been realised (i.e. ``cube.has_lazy_data()``
+If the data of the incoming cube has been realized (i.e. ``cube.has_lazy_data()``
 returns ``False`` so ``cube.core_data()`` is a `NumPy <https://numpy.org/>`__
 array), the returned cube should also have realized data.
 Conversely, if the incoming cube has lazy data (i.e. ``cube.has_lazy_data()``
@@ -108,7 +110,7 @@ and if their input array is a Dask array, and vice versa.
 Note that preprocessor functions should preferably be small and just call the
 relevant :ref:`iris <iris_docs>` code.
 Code that is more involved, e.g. lots of work with Numpy and Dask arrays,
-and applicable more broadly should preferably be implemented in iris instead.
+and more broadly applicable, should be implemented in iris instead.
 
 Using multiple datasets as input
 ================================

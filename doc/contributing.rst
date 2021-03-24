@@ -52,65 +52,60 @@ Design considerations
 ~~~~~~~~~~~~~~~~~~~~~
 
 When making changes, try to respect the current structure of the program.
-If you need to make major changes to the structure of program to add the feature
-you would like to add, chances are that you have either not come up with the
+If you need to make major changes to the structure of program to add a feature,
+chances are that you have either not come up with the
 most optimal design or the feature is not a very good fit for the tool.
 Discuss your feature with the `@ESMValGroup/esmvaltool-coreteam`_ in an issue_
 to find a solution.
 
 Please keep the following considerations in mind when programming:
 
-- Keep your code short and simple, we would like to make contributing as low
-  threshold as possible.
-  Avoid implementing complicated class inheritance structures and
-  `boilerplate <https://stackoverflow.com/questions/3992199/what-is-boilerplate-code>`__
-  code.
-  If you find yourself copy/pasting a piece of code and making minor changes
-  to every copy, try to put the repeated bit of code in a function that you
-  can re-use instead, provide the changed bits as function arguments.
 - Changes should preferably be :ref:`backward compatible <backward_compatibility>`.
+- Apply changes gradually and change no more than a few files in a single pull
+  request, but do make sure every pull request in itself brings a meaningful
+  improvement.
+  This reduces the risk of breaking existing functionality and making
+  :ref:`backward incompatible <backward_compatibility>` changes, because it
+  helps you as well as the reviewers of your pull request to better understand
+  what exactly is being changed.
 - :ref:`preprocessor_functions` are Python functions (and not classes) so they
   are easy to understand and implement for scientific contributors.
-- Data is checked (and if needed, fixed before that) so it follows the
-  specification in
+- No additional CMOR checks should be implemented inside preprocessor functions.
+  The input cube is fixed and confirmed to follow the specification in
   `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/cmor/tables>`__
   before applying any other preprocessor functions.
-  See :ref:`cmor_table_configuration` for the mapping from ``project`` in the
-  recipe to the relevant CMOR table.
-  Therefore it is safe to assume that the input cube(s) in the preprocessor
-  functions follow this specification (up to any changes applied by preceding
-  preprocessor functions of course) and no additional checks should be
-  implemented inside preprocessor functions.
   This design helps to keep the preprocessor functions and diagnostics scripts
   that use the preprocessed data from the tool simple and reliable.
+  See :ref:`cmor_table_configuration` for the mapping from ``project`` in the
+  recipe to the relevant CMOR table.
 - The ESMValCore package is based on :ref:`iris <iris_docs>`.
   Preprocessor functions should preferably be small and just call the relevant
   iris code.
-  Code that is more involved and applicable more broadly than just in the
-  ESMValCore, should preferably be implemented in iris instead.
-- It should be possible to :ref:`create tasks from the recipe <Diagnostics>`
-  before starting to process data/write files.
-  Any settings in the recipe that can already be checked before actually
-  loading the data should be checked at the task creation stage, to avoid that
-  users run a recipe for several hours before finding out they made a mistake
-  in the recipe.
+  Code that is more involved and more broadly applicable than just in the
+  ESMValCore, should be implemented in iris instead.
+- Any settings in the recipe that can be checked before loading the data should
+  be checked at the :ref:`task creation stage <Diagnostics>`.
+  This avoids that users run a recipe for several hours before finding out they
+  made a mistake in the recipe.
+  No data should be processed or files written while creating the tasks.
 - CMOR checks should provide a good balance between reliability of the tool
   and ease of use.
   Several :ref:`levels of strictness of the checks <cmor_check_strictness>`
   are available to facilitate this.
-- Be careful when changing existing unit tests to make your new feature work,
-  you might be breaking existing features if you have to change existing tests.
+- Keep your code short and simple: we would like to make contributing as easy as
+  possible.
+  For example, avoid implementing complicated class inheritance structures and
+  `boilerplate <https://stackoverflow.com/questions/3992199/what-is-boilerplate-code>`__
+  code.
+- If you find yourself copy-pasting a piece of code and making minor changes
+  to every copy, instead put the repeated bit of code in a function that you can
+  re-use, and provide the changed bits as function arguments.
+- Be careful when changing existing unit tests to make your new feature work.
+  You might be breaking existing features if you have to change existing tests.
 
 Finally, if you would like to improve the design of the tool, discuss your plans
 with the `@ESMValGroup/esmvaltool-coreteam`_ to make sure you understand the
-current functionality and agree on the new design.
-Apply changes gradually, change no more than a few files in a single pull
-request, but do make sure every pull request in itself brings a meaningful
-improvement.
-This reduces the risk of breaking existing functionality and making major
-:ref:`backward incompatible <backward_compatibility>` changes because it helps
-you as well as the reviewers of your pull request to better understand what
-exactly is being changed.
+current functionality and you all agree on the new design.
 
 .. _pull_request_checklist:
 
@@ -138,17 +133,17 @@ The icons indicate whether the item will be checked during the
 - 🧪 and 🛠 Documentation_ is available
 - 🛠 Unit tests_ have been added
 - 🛠 Changes are :ref:`backward compatible <backward_compatibility>`
-- 🛠 Changed dependencies have been :ref:`added or removed correctly <dependencies>`
+- 🛠 Changed :ref:`dependencies have been added or removed correctly <dependencies>`
 - 🛠 The :ref:`list of authors <authors>` is up to date
 - 🛠 The :ref:`checks shown below the pull request <pull_request_checks>` are successful
 
 .. _scientific_relevance:
 
-Changes should be relevant and scientifically sound
----------------------------------------------------
+Scientific relevance
+--------------------
 
 The proposed changes should be relevant for the larger scientific community.
-The implementation of new features should be scientifically sound, e.g.
+The implementation of new features should be scientifically sound; e.g.
 the formulas used in new preprocesssor functions should be accompanied by the
 relevant references and checked for correctness by the scientific reviewer.
 The `CF Conventions <https://cfconventions.org/>`_ as well as additional
@@ -157,8 +152,8 @@ followed whenever possible.
 
 .. _descriptive_pr_title:
 
-Descriptive pull request title and label
-----------------------------------------
+Pull request title and label
+----------------------------
 
 The title of a pull request should clearly describe what the pull request changes.
 If you need more text to describe what the pull request does, please add it in
@@ -494,8 +489,8 @@ directory
 
 .. _backward_compatibility:
 
-Changes are backward compatible
--------------------------------
+Backward compatibility
+----------------------
 
 The ESMValCore package is used by many people to run their recipes.
 Many of these recipes are maintained in the public
@@ -541,8 +536,8 @@ request(s) to update the ESMValTool, before merging the ESMValCore pull request.
 
 .. _dependencies:
 
-Adding or removing dependencies
--------------------------------
+Dependencies
+------------
 
 Before considering adding a new dependency, carefully check that the
 `license <https://the-turing-way.netlify.app/reproducible-research/licensing/licensing-software.html>`__
@@ -638,8 +633,8 @@ Never merge a pull request with failing CircleCI or readthedocs checks.
 
 .. _how-to-make-a-release:
 
-How to make a release
----------------------
+Making a release
+----------------
 
 The release manager makes the release, assisted by the release manager of the
 previous release, or if that person is not available, another previous release
