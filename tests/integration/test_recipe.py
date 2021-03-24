@@ -2163,7 +2163,7 @@ def test_fx_list_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     assert '_Ofx_' in fx_variables['areacello']['filename']
     assert '_Efx_' in fx_variables['clayfrac']['filename']
     assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_IyrAnt_' in fx_variables['sftgif']['filename'][0]
+    assert '_fx_' in fx_variables['sftgif']['filename']
     assert '_Ofx_' in fx_variables['sftof']['filename']
 
     # Check mask_landsea

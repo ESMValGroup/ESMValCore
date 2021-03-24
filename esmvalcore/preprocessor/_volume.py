@@ -184,10 +184,10 @@ def volume_statistics(cube, operator):
 
     Parameters
     ----------
-        cube: iris.cube.Cube
-            Input cube.
-        operator: str
-            The operation to apply to the cube, options are: 'mean'.
+    cube: iris.cube.Cube
+        Input cube.
+    operator: str
+        The operation to apply to the cube, options are: 'mean'.
 
     Returns
     -------

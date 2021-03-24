@@ -333,6 +333,25 @@ def _add_fxvar_keys(fx_info, variable):
     return fx_variable
 
 
+def _search_fx_mip(tables, found_mip, variable, fx_info, config_user):
+    fx_files = None
+    for mip in tables:
+        fx_cmor = tables[mip].get(fx_info['short_name'])
+        if fx_cmor:
+            found_mip = True
+            fx_info['mip'] = mip
+            fx_info = _add_fxvar_keys(fx_info, variable)
+            logger.debug(
+                "For fx variable '%s', found table '%s'",
+                fx_info['short_name'], mip)
+            fx_files = _get_input_files(fx_info, config_user)[0]
+            if fx_files:
+                logger.debug(
+                    "Found fx variables '%s':\n%s",
+                    fx_info['short_name'], pformat(fx_files))
+    return found_mip, fx_info, fx_files
+
+
 def _get_fx_files(variable, fx_info, config_user):
     """Get fx files (searching all possible mips)."""
 
@@ -351,22 +370,8 @@ def _get_fx_files(variable, fx_info, config_user):
     # force only the mip declared by user
     found_mip = False
     if not fx_info['mip']:
-        for mip in project_tables:
-            fx_cmor = project_tables[mip].get(fx_info['short_name'])
-            if fx_cmor:
-                found_mip = True
-                fx_info['mip'] = mip
-                fx_info = _add_fxvar_keys(fx_info, variable)
-                logger.debug(
-                    "For fx variable '%s', found table '%s'",
-                    fx_info['short_name'], mip)
-                fx_files = _get_input_files(fx_info, config_user)[0]
-                if fx_files:
-                    logger.debug(
-                        "Found fx variables '%s':\n%s",
-                        fx_info['short_name'],
-                        pformat(fx_files))
-                    break
+        found_mip, fx_info, fx_files = _search_fx_mip(
+            project_tables, found_mip, variable, fx_info, config_user)
     else:
         fx_cmor = project_tables[fx_info['mip']].get(fx_info['short_name'])
         if fx_cmor:
@@ -449,7 +454,6 @@ def _fx_list_to_dict(fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
-
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
