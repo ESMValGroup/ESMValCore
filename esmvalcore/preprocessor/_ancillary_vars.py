@@ -67,7 +67,7 @@ def add_cell_measure(cube, fx_cube, measure):
         Cube with added ancillary variables
     """
     if measure not in ['area', 'volume']:
-        raise ValueError(f"measure name must be 'area or volume, "
+        raise ValueError(f"measure name must be 'area' or 'volume', "
                          f"got {measure} instead")
     try:
         fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
