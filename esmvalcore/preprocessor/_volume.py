@@ -318,7 +318,7 @@ def extract_surface(cube):
     much slower and more memory intensie as it regrids.
     It is more robust to variability in the grid definitions.
 
-    Arguments
+    Parameters
     ---------
     cube: iris.cube.Cube
         input cube.
