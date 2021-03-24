@@ -180,14 +180,14 @@ To get an overview on data fixes and how to implement new ones, please go to
 
 Fx variables as cell measures or ancillary variables
 ====================================================
-Preprocessors steps related to spatial statistics or masking may require
+Preprocessor steps related to spatial statistics or masking may require
 the use of ``fx_variables`` to be able to perform the computations.
 The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
-checks them against the CMOR standards and adds them as either a ``cell_measure``
-or an ``ancillary_variable`` inside the cube of data. This ensures that the
-defined preprocessor chain is applied to both the variables and the fx_variables.
+checks them against CMOR standards and adds them either as ``cell_measure``
+or ``ancillary_variable`` inside the cube data. This ensures that the
+defined preprocessor chain is applied to both ``variables`` and ``fx_variables``.
 
-Note that when calling steps that require ``fx_variables`` inside of diagnostic
+Note that when calling steps that require ``fx_variables`` inside diagnostic
 scripts, the variables are expected to contain the required ``cell_measures`` or 
 ``ancillary_variables``. If missing, they can be added using the following functions:
 
@@ -1425,7 +1425,7 @@ the user may specify it calling the variables e.g.
       areacello:
       volcello:
 
-or calling the variables and adding specific variable parameters (they key-value pair may be as specific
+or calling the variables and adding specific variable parameters (the key-value pair may be as specific
 as a CMOR variable can permit):
 
 .. code-block:: yaml
@@ -1503,7 +1503,7 @@ the user may specify it calling the variables e.g.
       areacello:
       volcello:
 
-or calling the variables and adding specific variable parameters (they key-value pair may be as specific
+or calling the variables and adding specific variable parameters (the key-value pair may be as specific
 as a CMOR variable can permit):
 
 .. code-block:: yaml
