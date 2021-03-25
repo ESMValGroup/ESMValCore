@@ -58,7 +58,7 @@ requirements:
     - pyyaml
     - requests
     - shapely
-    - yamale==2.*  # in esmvalgroup channel
+    - yamale
 
 test:
   source_files:
