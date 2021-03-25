@@ -164,7 +164,7 @@ jobs:
             dpkg -l > /logs/versions.txt
             conda env export -n base > /logs/build_environment.yml
             # Build conda package
-            conda build package -c conda-forge -c esmvalgroup > /logs/build_log.txt
+            conda build package -c conda-forge > /logs/build_log.txt
       - store_artifacts:
           path: /logs
 
