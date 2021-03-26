@@ -2,7 +2,7 @@
 ---
 
 # Build command (run this from the root of the repository):
-# conda build package -c conda-forge -c esmvalgroup
+# conda build package -c conda-forge
 
 # Package version number
 {% set version = "2.2.0" %}
@@ -58,7 +58,7 @@ requirements:
     - pyyaml
     - requests
     - shapely
-    - yamale==2.*  # in esmvalgroup channel
+    - yamale
 
 test:
   source_files:
