@@ -394,6 +394,7 @@ Tests
 
 To check that the code works correctly, there tests available in the
 `tests directory <https://github.com/ESMValGroup/ESMValCore/tree/master/tests>`_.
+We use `pytest <https://docs.pytest.org>`_ to write and run our tests.
 
 Contributions to ESMValCore should be covered by unit tests.
 Have a look at the existing tests in the ``tests`` directory for inspiration on
@@ -427,6 +428,8 @@ previous command.
 
 When reviewing a pull request, always check that all test jobs on CircleCI_ were
 successful.
+
+.. _sample_data_tests:
 
 Sample data
 ~~~~~~~~~~~

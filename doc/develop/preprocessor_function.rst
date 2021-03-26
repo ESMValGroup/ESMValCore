@@ -14,37 +14,42 @@ The function should look like this:
 
 .. code-block:: python
 
-   def example_preprocessor_function(
-           cube,
-           example_argument,
-           example_optional_argument=5,
-       ):
-       """Compute an example quantity.
+    import iris
 
-       A more extensive explanation of the computation can be added here. Add
-       references to scientific literature if available.
+    def example_preprocessor_function(
+        cube,
+        example_argument,
+        example_optional_argument=5,
+    ):
+        """Compute an example quantity.
 
-       Parameters
-       ----------
-       cube: iris.cube.Cube
+        A more extensive explanation of the computation can be added here. Add
+        references to scientific literature if available.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
            Input cube.
 
-       example_argument: str
+        example_argument: str
            Example argument, the value of this argument can be provided in the
-           recipe. Describe what valid values are here.
+           recipe. Describe what valid values are here. In this case, a valid
+           argument is the name of a dimension of the input cube.
 
-       example_optional_argument: int, optional
+        example_optional_argument: int, optional
            Another example argument, the value of this argument can optionally
            be provided in the recipe. Describe what valid values are here.
 
-      Returns
-      -------
-      iris.cube.Cube
+        Returns
+        -------
+        iris.cube.Cube
           The result of the example computation.
-      """
+        """
 
-      # Implement your computation here
-      return cube
+        # Replace this with your own computation
+        cube = cube.collapsed(example_argument, iris.analysis.MEAN)
+
+        return cube
 
 
 The above function needs to be imported in the file
@@ -78,18 +83,6 @@ like this:
 The optional argument (in this example: ``example_optional_argument``) can be
 omitted in the recipe.
 
-Documentation
-=============
-
-The documentation in the function docstring will be shown in
-the :ref:`preprocessor_functions` chapter.
-In addition, you should add documentation on how to use the new preprocessor
-function from the recipe in
-`doc/recipe/preprocessor.rst <https://github.com/ESMValGroup/ESMValCore/tree/master/doc/recipe/preprocessor.rst>`__
-so it is shown in the :ref:`preprocessor` chapter.
-See the introduction to :ref:`documentation` for more information on how to
-best write documentation.
-
 Lazy and real data
 ==================
 
@@ -111,6 +104,161 @@ Note that preprocessor functions should preferably be small and just call the
 relevant :ref:`iris <iris_docs>` code.
 Code that is more involved, e.g. lots of work with Numpy and Dask arrays,
 and more broadly applicable, should be implemented in iris instead.
+
+Documentation
+=============
+
+The documentation in the function docstring will be shown in
+the :ref:`preprocessor_functions` chapter.
+In addition, you should add documentation on how to use the new preprocessor
+function from the recipe in
+`doc/recipe/preprocessor.rst <https://github.com/ESMValGroup/ESMValCore/tree/master/doc/recipe/preprocessor.rst>`__
+so it is shown in the :ref:`preprocessor` chapter.
+See the introduction to :ref:`documentation` for more information on how to
+best write documentation.
+
+Tests
+=====
+
+Tests are should be implemented for new or modified preprocessor functions.
+For an introduction to the topic, see :ref:`tests`.
+
+Unit tests
+----------
+
+To add a unit test for the preprocessor function from the example above, create
+a file called
+``tests/unit/preprocessor/_example_module/test_example_preprocessor_function.py``
+and add the following content:
+
+.. code-block:: python
+
+    """Test function `esmvalcore.preprocessor.example_preprocessor_function`."""
+    import cf_units
+    import dask.array as da
+    import iris
+    import numpy as np
+    import pytest
+
+    from esmvalcore.preprocessor import example_preprocessor_function
+
+
+    @pytest.mark.parametrize('lazy', [True, False])
+    def test_example_preprocessor_function(lazy):
+        """Test that the computed result is as expected."""
+
+        # Construct the input cube
+        # Replace this with a meaningful input cube for your computation
+        data = np.array([1, 2], dtype=np.float32)
+        if lazy:
+            data = da.asarray(data, chunks=(1, ))
+        cube = iris.cube.Cube(
+            data,
+            var_name='tas',
+            units='K',
+        )
+        cube.add_dim_coord(
+            iris.coords.DimCoord(
+                np.array([0.5, 1.5], dtype=np.float64),
+                bounds=np.array([[0, 1], [1, 2]], dtype=np.float64),
+                standard_name='time',
+                units=cf_units.Unit('days since 1950-01-01 00:00:00',
+                                    calendar='gregorian'),
+            ),
+            0,
+        )
+
+        # Compute the result
+        result = example_preprocessor_function(cube, example_argument='time')
+
+        # Construct the expected result cube
+        # Replace this with a expected result cube for your computation
+        expected_data = np.array(1.5, dtype=np.float32)
+        if lazy:
+            expected_data = da.asarray(expected_data)
+        expected = iris.cube.Cube(
+            expected_data,
+            var_name='tas',
+            units='K',
+        )
+        expected.add_aux_coord(
+            iris.coords.AuxCoord(
+                np.array([1], dtype=np.float64),
+                bounds=np.array([[0, 2]], dtype=np.float64),
+                standard_name='time',
+                units=cf_units.Unit('days since 1950-01-01 00:00:00',
+                                    calendar='gregorian'),
+            ))
+        expected.add_cell_method(
+            iris.coords.CellMethod(method='mean', coords=('time', )))
+
+        # Compare the result of the computation with the expected result
+        print('result:', result)
+        print('expected result:', expected)
+        assert result == expected
+        assert result.has_lazy_data() == expected.has_lazy_data()
+
+In this test we used the decorator
+`pytest.mark.parametrize <https://docs.pytest.org/en/stable/parametrize.html>`_
+to test two scenarios, with both lazy and realized data, with a single test.
+
+
+Sample data tests
+-----------------
+
+The idea of adding :ref:`sample data tests <sample_data_tests>` is to check that
+preprocessor functions work with realistic data.
+This also provides an easy way to add regression tests, though these should
+preferably be implemented as unit tests instead, because using the sample data
+for this purpose is slow.
+To add a test using the sample data, create a file
+``tests/sample_data/preprocessor/example_preprocessor_function/test_example_preprocessor_function.py``
+and add the following content:
+
+.. code-block:: python
+
+    """Test function `esmvalcore.preprocessor.example_preprocessor_function`."""
+    from pathlib import Path
+
+    import esmvaltool_sample_data
+    import iris
+
+    from esmvalcore.preprocessor import example_preprocessor_function
+
+
+    def test_example_preprocessor_function():
+        """Regression test to check that the computed result is as expected."""
+        # Load an example input cube
+        # Select data based on the needs of your own preprocessor function
+        cube = esmvaltool_sample_data.load_timeseries_cubes(mip_table='Amon')[0]
+
+        # Compute the result
+        result = example_preprocessor_function(cube, example_argument='time')
+
+        filename = Path(__file__).with_name('example_preprocessor_function.nc')
+        if not filename.exists():
+            # Create the file the expected result if it doesn't exist
+            iris.save(result, target=str(filename))
+            raise FileNotFoundError(
+                f'Reference data was missing, wrote new copy to {filename}'
+            )
+
+        # Load the expected result cube
+        expected = iris.load_cube(str(filename))
+
+        # Compare the result of the computation with the expected result
+        print('result:', result)
+        print('expected result:', expected)
+        assert result == expected
+
+
+This will use a file from the sample data repository as input.
+The first time you run the test, the computed result will be stored in the file
+``tests/sample_data/preprocessor/example_preprocessor_function/example_preprocessor_function.nc``
+Any subsequent runs will re-load the data from file and check that it did not
+change.
+Make sure the stored results are small, i.e. smaller than 100 kilobytes, to
+keep the size of the ESMValCore repository small.
 
 Using multiple datasets as input
 ================================
