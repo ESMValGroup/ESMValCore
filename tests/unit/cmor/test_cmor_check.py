@@ -639,6 +639,12 @@ class TestCMORCheck(unittest.TestCase):
         for index in range(20):
             self.assertTrue(
                 iris.util.approx_equal(cube_points[index], reference[index]))
+        # test bounds are contiguous
+        bounds = self.cube.coord('latitude').bounds
+        len_bounds = bounds.shape[0]
+        left_bounds = bounds[0:len_bounds-1, 0]
+        right_bounds = bounds[1:len_bounds, 1]
+        self.assertTrue(left_bounds.all() == right_bounds.all())
 
     def test_not_bounds(self):
         """Warning if bounds are not available."""

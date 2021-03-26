@@ -603,6 +603,12 @@ class CMORCheck():
         if coord.ndim == 1:
             self._cube = iris.util.reverse(self._cube,
                                            self._cube.coord_dims(coord))
+            if coord.has_bounds():
+                if coord.bounds[..., 0].all() > coord.bounds[..., 1].all():
+                    coord.bounds = np.fliplr(coord.bounds)
+                    self._cube.coord(coord.var_name).bounds = coord.bounds
+            self.report_debug_message(f'Coordinate {coord.var_name} values'
+                                      'have been reversed.')
 
     def _check_coord_points(self, coord_info, coord, var_name):
         """Check coordinate points: values, bounds and monotonicity."""
