@@ -190,5 +190,5 @@ class Test:
             cube = add_fx_variables(
                 cube, fx_vars, CheckLevels.IGNORE)
         msg = (f"Dimensions of {cube.var_name} and {volume_cube.var_name} "
-               "do not match. Cannot broadcast cubes.")
+               "cubes do not match. Cannot broadcast cubes.")
         assert msg in str(excinfo.value)
