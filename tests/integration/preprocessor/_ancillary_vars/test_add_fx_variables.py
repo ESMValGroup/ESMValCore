@@ -189,6 +189,6 @@ class Test:
         with pytest.raises(ValueError) as excinfo:
             cube = add_fx_variables(
                 cube, fx_vars, CheckLevels.IGNORE)
-        msg = (f"Frequencies of {cube.var_name} and "
-               f"{volume_cube.var_name} cubes do not match.")
+        msg = (f"Dimensions of {cube.var_name} and {volume_cube.var_name} "
+               "do not match. Cannot broadcast cubes.")
         assert msg in str(excinfo.value)
