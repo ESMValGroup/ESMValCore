@@ -363,7 +363,7 @@ Follow these steps to create a new conda package:
 -  Activate the base environment ``conda activate base``
 -  Install the required packages:
    ``conda install -y conda-build conda-verify ripgrep anaconda-client``
--  Run ``conda build package -c conda-forge -c esmvalgroup`` to build the
+-  Run ``conda build package -c conda-forge`` to build the
    conda package
 -  If the build was successful, upload the package to the esmvalgroup
    conda channel, e.g.
