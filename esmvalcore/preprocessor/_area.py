@@ -210,8 +210,8 @@ def area_statistics(cube, operator):
         grid_areas = cube.cell_measure('cell_area').core_data()
     except iris.exceptions.CellMeasureNotFoundError:
         logger.info(
-            'Cell measure "cell_area" not found in cube. '
-            'Check fx_file availability.'
+            'Cell measure "cell_area" not found in cube %s. '
+            'Check fx_file availability.', cube
         )
         logger.info('Attempting to calculate grid cell area...')
 
