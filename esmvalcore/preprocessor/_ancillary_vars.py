@@ -73,7 +73,7 @@ def add_cell_measure(cube, fx_cube, measure):
         If fx_cube cannot be broadcast to cube.
     """
     if measure not in ['area', 'volume']:
-        raise ValueError(f"measure name must be 'area or volume, "
+        raise ValueError(f"measure name must be 'area' or 'volume', "
                          f"got {measure} instead")
     try:
         fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
