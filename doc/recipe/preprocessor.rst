@@ -193,26 +193,15 @@ scripts, the variables are expected to contain the required ``cell_measures`` or
 
 .. code-block::
 
-    from esmvalcore.preprocessor import (add_cell_measure, 
-                                         add_ancillary_variable,
-                                         area_statistics,
-                                         volume_statistics,
-                                         mask_landsea,
-                                         mask_landseaice,
-                                         weighting_landsea_fraction)
+    from esmvalcore.preprocessor import (add_cell_measure, add_ancillary_variable)
 
     cube_with_area_measure = add_cell_measure(cube, area_cube, 'area')
-    result_area = area_statistics(cube_with_area_measure, 'mean')
 
     cube_with_volume_measure = add_cell_measure(cube, volume_cube, 'volume)
-    result_volume = volume_statistics(cube_with_volume_measure, 'mean')
 
     cube_with_ancillary_sftlf = add_ancillary_variable(cube, sftlf_cube)
-    result_landsea_mask = mask_landsea(cube_with_ancillary_sftlf, 'land')
-    result_landsea_weighting = weighting_landsea_fraction(cube_with_ancillary_sftlf, 'land')
 
     cube_with_ancillary_sftgif = add_ancillary_variable(cube, sftgif_cube)
-    result_landsea_mask = mask_landsea(cube_with_ancillary_sftgif, 'land')
   
   Details on the arguments needed for each step can be found in the following sections.
 
@@ -436,7 +425,8 @@ missing. Conversely, it retrieves the ``fx: sftlf`` mask when land needs to be
 masked out, respectively.
 
 Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
-experiment is preferred for fx data retrieval:
+experiment is preferred for fx data retrieval. Note that it is possible to specify as many tags
+for the fx variable as required:
 
 
 .. code-block:: yaml
@@ -450,6 +440,7 @@ experiment is preferred for fx data retrieval:
               exp: piControl
             sftof:
               exp: piControl
+              ensemble: r2i1p1f1
 
 or alternatively:
 
@@ -461,7 +452,7 @@ or alternatively:
           mask_out: sea
           fx_variables: [
             {'short_name': 'sftlf', 'exp': 'piControl'}, 
-            {'short_name': 'sftof', 'exp': 'piControl'}
+            {'short_name': 'sftof', 'exp': 'piControl', 'ensemble': 'r2i1p1f1'}
             ]
 
 If the corresponding fx file is not found (which is

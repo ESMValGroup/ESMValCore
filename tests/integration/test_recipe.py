@@ -2053,6 +2053,7 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
              operator: mean
              fx_variables:
                areacella:
+                 ensemble: r2i1p1f1
                areacello:
                clayfrac:
                sftlf:
@@ -2096,6 +2097,7 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 6
     assert '_fx_' in fx_variables['areacella']['filename']
+    assert '_r2i1p1f1_' in fx_variables['areacella']['filename']
     assert '_Ofx_' in fx_variables['areacello']['filename']
     assert '_Efx_' in fx_variables['clayfrac']['filename']
     assert '_fx_' in fx_variables['sftlf']['filename']

@@ -60,11 +60,17 @@ def add_cell_measure(cube, fx_cube, measure):
     measure: str
         Name of the measure, can be 'area' or 'volume'.
 
-
     Returns
     -------
     iris.cube.Cube
         Cube with added ancillary variables
+
+    Raises
+    ------
+    ValueError
+        If measure name is not 'area' or 'volume'.
+    ValueError
+        If fx_cube cannot be broadcast to cube.
     """
     if measure not in ['area', 'volume']:
         raise ValueError(f"measure name must be 'area or volume, "
@@ -72,8 +78,9 @@ def add_cell_measure(cube, fx_cube, measure):
     try:
         fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
     except ValueError as exc:
-        raise ValueError(f"Frequencies of {cube.var_name} and "
-                         f"{fx_cube.var_name} cubes do not match.") from exc
+        raise ValueError(f"Dimensions of {cube.var_name} and "
+                         f"{fx_cube.var_name} cubes do not match. "
+                         "Cannot broadcast cubes.") from exc
     measure = iris.coords.CellMeasure(
         fx_data,
         standard_name=fx_cube.standard_name,
@@ -98,17 +105,22 @@ def add_ancillary_variable(cube, fx_cube):
     fx_cube: iris.cube.Cube
         Iris cube with fx data.
 
-
     Returns
     -------
     iris.cube.Cube
         Cube with added ancillary variables
+
+    Raises
+    ------
+    ValueError
+        If fx_cube cannot be broadcast to cube.
     """
     try:
         fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
     except ValueError as exc:
-        raise ValueError(f"Frequencies of {cube.var_name} and "
-                         f"{fx_cube.var_name} cubes do not match.") from exc
+        raise ValueError(f"Dimensions of {cube.var_name} and "
+                         f"{fx_cube.var_name} cubes do not match. "
+                         "Cannot broadcast cubes.") from exc
     ancillary_var = iris.coords.AncillaryVariable(
         fx_data,
         standard_name=fx_cube.standard_name,
