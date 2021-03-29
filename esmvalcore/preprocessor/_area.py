@@ -215,7 +215,7 @@ def area_statistics(cube, operator):
         )
         logger.info('Attempting to calculate grid cell area...')
 
-    if cube.coord('latitude').points.ndim == 2:
+    if not grid_areas and cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
         if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
             cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
@@ -234,7 +234,7 @@ def area_statistics(cube, operator):
                 cube.coord('latitude'))
 
     coord_names = ['longitude', 'latitude']
-    if grid_areas is None:
+    if not grid_areas:
         cube = guess_bounds(cube, coord_names)
         grid_areas = iris.analysis.cartography.area_weights(cube)
         logger.info('Calculated grid area shape: %s', grid_areas.shape)
