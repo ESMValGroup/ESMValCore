@@ -171,6 +171,11 @@ no formatting mistakes and Codacy for monitoring (Python) code quality.
 Running prospector locally will give you quicker and sometimes more
 accurate results.
 
+If you are adding type annotations, make sure that they pass the
+`mypy <https://mypy.readthedocs.io/en/stable/index.html>`__ static type checker.
+Type checks are run as part of `pytest` via a plugin, but it is also possible to use
+the ``mypy`` command directly.
+
 YAML
 ~~~~
 
@@ -358,7 +363,7 @@ Follow these steps to create a new conda package:
 -  Activate the base environment ``conda activate base``
 -  Install the required packages:
    ``conda install -y conda-build conda-verify ripgrep anaconda-client``
--  Run ``conda build package -c conda-forge -c esmvalgroup`` to build the
+-  Run ``conda build package -c conda-forge`` to build the
    conda package
 -  If the build was successful, upload the package to the esmvalgroup
    conda channel, e.g.
