@@ -14,8 +14,6 @@ The function should look like this:
 
 .. code-block:: python
 
-    import iris
-
     def example_preprocessor_function(
         cube,
         example_argument,
@@ -148,7 +146,6 @@ and add the following content:
         """Test that the computed result is as expected."""
 
         # Construct the input cube
-        # Replace this with a meaningful input cube for your computation
         data = np.array([1, 2], dtype=np.float32)
         if lazy:
             data = da.asarray(data, chunks=(1, ))
@@ -171,13 +168,12 @@ and add the following content:
         # Compute the result
         result = example_preprocessor_function(cube, example_argument='time')
 
+        # Check that lazy data is returned if and only if the input is lazy
+        assert result.has_lazy_data() is lazy
+
         # Construct the expected result cube
-        # Replace this with a expected result cube for your computation
-        expected_data = np.array(1.5, dtype=np.float32)
-        if lazy:
-            expected_data = da.asarray(expected_data)
         expected = iris.cube.Cube(
-            expected_data,
+            np.array(1.5, dtype=np.float32),
             var_name='tas',
             units='K',
         )
@@ -196,7 +192,7 @@ and add the following content:
         print('result:', result)
         print('expected result:', expected)
         assert result == expected
-        assert result.has_lazy_data() == expected.has_lazy_data()
+
 
 In this test we used the decorator
 `pytest.mark.parametrize <https://docs.pytest.org/en/stable/parametrize.html>`_
@@ -222,14 +218,15 @@ and add the following content:
 
     import esmvaltool_sample_data
     import iris
+    import pytest
 
     from esmvalcore.preprocessor import example_preprocessor_function
 
 
+    @pytest.mark.use_sample_data
     def test_example_preprocessor_function():
         """Regression test to check that the computed result is as expected."""
         # Load an example input cube
-        # Select data based on the needs of your own preprocessor function
         cube = esmvaltool_sample_data.load_timeseries_cubes(mip_table='Amon')[0]
 
         # Compute the result
@@ -240,8 +237,7 @@ and add the following content:
             # Create the file the expected result if it doesn't exist
             iris.save(result, target=str(filename))
             raise FileNotFoundError(
-                f'Reference data was missing, wrote new copy to {filename}'
-            )
+                f'Reference data was missing, wrote new copy to {filename}')
 
         # Load the expected result cube
         expected = iris.load_cube(str(filename))
