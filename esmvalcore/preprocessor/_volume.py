@@ -333,26 +333,36 @@ def extract_surface(cube):
     zcoord = cube.coord(axis='Z')
     positive = zcoord.attributes['positive']
 
-    # Get the Z points:
-    if zcoord.points.ndim == 1:
-        points = zcoord.points
-    elif zcoord.points.ndim == 3:
-        points = zcoord.points.mean(axis=[1, 2])
-    elif zcoord.points.ndim == 4:
-        points = zcoord.points.mean(axis=[0, 2, 3])
+    # Get the Z points dimension, usually 0 or 1.
+    zcoord_dim = cube.coord_dims(zcoord)[0] 
+    
+    # make a list of axes for the non-z axes
+    # something like [0, 2, 3]. or [1, 2]
+    axes = list(range(cube.data.ndim))
+    axes = axes.remove(zcoord_dim)
+
+    # Get a list of points.
+    points = zcoord.points
+    if points.ndim == cube.data.ndim:
+        points = zcoord.points.mean(axis=axes)
 
     # Calculate the surface layer index:
     surf = np.abs(points).argmin()
 
     # Get the z axis dimension in the cude:
-    zcoord_dim = cube.coord_dims(zcoord)
     if zcoord_dim in [0, (0,)]:
         return cube[surf]
 
     if zcoord_dim in [1, (1,)]:
         return cube[:, surf]
 
-    logger.error('Condition not recognised: postive: %s , zcoord_dim: %s, '
+    if zcoord_dim in [2, (2,)]:
+        return cube[:, :, surf]
+
+    if zcoord_dim in [3, (3,)]:
+        return cube[:, :, :, surf]
+
+    logger.error('Z coordinate is strange: positive is %s , Z dim is along axis: %s, '
                  'surface level: %s', positive, zcoord_dim, surf)
     return cube
 
