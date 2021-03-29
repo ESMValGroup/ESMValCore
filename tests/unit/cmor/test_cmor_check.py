@@ -619,6 +619,23 @@ class TestCMORCheck(unittest.TestCase):
         self._update_coordinate_values(self.cube, coord, values)
         self._check_fails_in_metadata()
 
+    def test_non_increasing_fix(self):
+        """Check automatic fix for direction."""
+        coord = self.cube.coord('latitude')
+        values = np.linspace(
+            coord.points[-1],
+            coord.points[0],
+            len(coord.points)
+        )
+        self._update_coordinate_values(self.cube, coord, values)
+        self._check_cube(automatic_fixes=True)
+        self._check_cube()
+        # test bounds are contiguous
+        bounds = self.cube.coord('latitude').bounds
+        right_bounds = bounds[:-2, 1]
+        left_bounds = bounds[1:-1, 0]
+        self.assertTrue(np.all(left_bounds == right_bounds))
+
     def test_non_decreasing(self):
         """Fail in metadata if decreasing coordinate is increasing."""
         self.var_info.coordinates['lat'].stored_direction = 'decreasing'
@@ -641,10 +658,9 @@ class TestCMORCheck(unittest.TestCase):
                 iris.util.approx_equal(cube_points[index], reference[index]))
         # test bounds are contiguous
         bounds = self.cube.coord('latitude').bounds
-        len_bounds = bounds.shape[0]
-        left_bounds = bounds[0:len_bounds-1, 0]
-        right_bounds = bounds[1:len_bounds, 1]
-        self.assertTrue(left_bounds.all() == right_bounds.all())
+        right_bounds = bounds[:-2, 1]
+        left_bounds = bounds[1:-1, 0]
+        self.assertTrue(np.all(left_bounds == right_bounds))
 
     def test_not_bounds(self):
         """Warning if bounds are not available."""
