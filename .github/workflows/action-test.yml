@@ -21,6 +21,7 @@ on:
   push:
     branches:
     - master
+    - dev_load_cell_measures_in_cube
   # run the test only if the PR is to master
   # turn it on if required
   #pull_request:
