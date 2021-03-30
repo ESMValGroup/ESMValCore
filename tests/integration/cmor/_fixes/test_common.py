@@ -81,6 +81,7 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     return var_names
 
 
+@pytest.mark.sequential
 def test_cl_hybrid_pressure_coord_fix_metadata_with_a(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
@@ -90,6 +91,7 @@ def test_cl_hybrid_pressure_coord_fix_metadata_with_a(test_data_path):
     assert 'a_bnds' in var_names
 
 
+@pytest.mark.sequential
 def test_cl_hybrid_pressure_coord_fix_metadata_with_ap(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
@@ -157,6 +159,7 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     assert air_pressure_coord.units == 'Pa'
 
 
+@pytest.mark.sequential
 def test_cl_hybrid_height_coord_fix_metadata(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
