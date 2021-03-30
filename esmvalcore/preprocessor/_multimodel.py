@@ -317,7 +317,7 @@ def _multicube_statistics(cubes, statistics, span):
         raise ValueError('Cannot perform multicube statistics '
                          'for a single cube.')
 
-    lazy_input = True if all(cube.has_lazy_data() for cube in cubes) else False
+    lazy_input = bool(all(cube.has_lazy_data() for cube in cubes))
 
     copied_cubes = [cube.copy() for cube in cubes]  # avoid modifying inputs
     aligned_cubes = _align(copied_cubes, span=span)
