@@ -33,7 +33,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             pip install .[test]
-            pytest -n 2 -m "not installation or not sequential"
+            pytest -n 2 -m "not installation and not sequential"
             pytest -n 0 -m "sequential"
       - save_cache:
           key: test-{{ .Branch }}
