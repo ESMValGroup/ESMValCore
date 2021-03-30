@@ -1,6 +1,7 @@
 """Test for common fixes used for multiple datasets."""
 import iris
 import numpy as np
+import pytest
 
 from esmvalcore.cmor._fixes.common import (
     ClFixHybridHeightCoord,
@@ -8,7 +9,6 @@ from esmvalcore.cmor._fixes.common import (
 )
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import var_name_constraint
-
 
 AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0, 1.0, 1.0],
                                   [1.0, 1.0, 1.0, 1.0],
