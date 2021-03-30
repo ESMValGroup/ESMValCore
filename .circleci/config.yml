@@ -33,6 +33,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             pip install -e .[test]
+            conda list esmvalcore
             pytest -n 2 -m "not installation"
       - save_cache:
           key: test-{{ .Branch }}
