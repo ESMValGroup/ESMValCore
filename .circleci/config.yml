@@ -34,6 +34,7 @@ jobs:
             conda activate esmvaltool
             pip install .[test]
             pytest -n 2 -m "not installation"
+            pytest -n 0 -m "sequential"
       - save_cache:
           key: test-{{ .Branch }}
           paths:
@@ -74,6 +75,7 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             pytest -n 2
+            pytest -n 0 -m "sequential"
             esmvaltool version
       - save_cache:
           key: install-{{ .Branch }}
@@ -141,6 +143,7 @@ jobs:
             # Test installation
             esmvaltool version
             pytest -n 2
+            pytest -n 0 -m "sequential"
       - store_artifacts:
           path: /logs
 
