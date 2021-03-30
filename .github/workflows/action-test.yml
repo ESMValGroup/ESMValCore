@@ -28,8 +28,7 @@ on:
   #  branches:
   #  - master
   schedule:
-  #  - cron: '0 0 * * *'  # nightly
-    - cron: '*/30 * * * *'  # every 30min to gather some statistic; just removin the changey
+    - cron: '0 0 * * *'  # nightly
 
 jobs:
   linux:
