@@ -29,7 +29,7 @@ on:
   #  - master
   schedule:
   #  - cron: '0 0 * * *'  # nightly
-    - cron: '*/30 * * * *'  # every 30min to gather some statistic; just makin a changey
+    - cron: '*/30 * * * *'  # every 30min to gather some statistic; just removin the changey
 
 jobs:
   linux:
