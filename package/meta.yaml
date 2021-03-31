@@ -77,7 +77,7 @@ test:
     - r-yaml
     - ncl
   commands:
-    - pytest -n 4 -m "not sequential"
+    - pytest -n 2 -m "not sequential"
     - pytest -n 0 -m "sequential"
     - esmvaltool -- --help
     - esmvaltool version
