@@ -1,3 +1,5 @@
+.. _contributing:
+
 Contributions are very welcome
 ==============================
 
