@@ -33,6 +33,7 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
                                    [9.0, 21.0]]]]])
 
 
+@pytest.mark.sequential
 def test_cl_fix_metadata(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     nc_path = test_data_path / 'gfdl_cm4_cl.nc'
