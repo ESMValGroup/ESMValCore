@@ -1,6 +1,7 @@
 """Tests for the fixes of GFDL-CM4."""
 import iris
 import numpy as np
+import pytest
 
 from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import Cl, Cli, Clw
 from esmvalcore.cmor.fix import Fix
