@@ -334,7 +334,7 @@ concentration changed from ``sic`` to ``siconc``). ESMValCore is aware of some
 of them and can do the automatic translation when needed. It will even do the
 translation in the preprocessed file so the diagnostic does not have to deal
 with this complexity, setting the short name in all files to match the one used
-by the recipe. For example, if ``sic`` is requested, ESMValTool will
+by the recipe. For example, if ``sic`` is requested, ESMValCore will
 find ``sic`` or ``siconc`` depending on the project, but all preprocessed files
 while use ``sic`` as their short_name. If the recipe requested ``siconc``, the
 preprocessed files will be identical except that they will use the short_name

@@ -1,3 +1,5 @@
+.. _install:
+
 Installation
 ============
 
@@ -158,9 +160,15 @@ To run the container using the image file ``esmvalcore.sif`` use:
 
    singularity run esmvalcore.sif -c ~/config-user.yml ~/recipes/recipe_example.yml
 
+.. _installation-from-source:
 
-Development installation
+Installation from source
 ------------------------
+
+.. note::
+    If you would like to install the development version of ESMValCore alongside
+    ESMValTool, please have a look at
+    :ref:`these instructions <esmvaltool:esmvalcore-development-installation>`.
 
 To install from source for development, follow these instructions.
 
@@ -184,7 +192,7 @@ To install from source for development, follow these instructions.
 -  Install in development mode: ``pip install -e '.[develop]'``. If you
    are installing behind a proxy that does not trust the usual pip-urls
    you can declare them with the option ``--trusted-host``,
-   e.g. \ ``pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
+   e.g. ``pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
 
