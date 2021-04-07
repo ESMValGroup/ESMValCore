@@ -171,12 +171,22 @@ def _get_concatenation_error(cubes):
     raise ValueError(f'Can not concatenate cubes: {msg}')
 
 
+def _fix_cube_endianess(cubes):
+    """Transform cubes in big endian to little"""
+    for cube in cubes:
+        if cube.dtype.byteorder == ">":
+            logger.warning("Changing cube endianess to little. This may be "
+                           "memory intensive.")
+            cube.data = cube.data.byteswap().newbyteorder()
+
+
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
     if len(cubes) == 1:
         return cubes[0]
 
     _fix_cube_attributes(cubes)
+    _fix_cube_endianess(cubes)
 
     if len(cubes) > 1:
         # order cubes by first time point
