@@ -1,0 +1,23 @@
+SOURCE: CMIP5 (adapted from mrso)
+!============
+variable_entry:    LSTuncertTest
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     
+units:             K
+cell_methods:      time: mean 
+cell_measures:     
+long_name:         uncertainty from locally correlated errors on surface scales
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          LSTuncertTest
+type:              real
+valid_min:         
+valid_max:         
+!----------------------------------
+!
