@@ -419,7 +419,7 @@ def _get_masks_from_geometries(geometries, lon, lat, method='contains',
     if ids:
         ids = [str(id_) for id_ in ids]
     for i, item in enumerate(geometries):
-        for id_prop in ('name', 'NAME', 'id', 'ID'):
+        for id_prop in ('name', 'NAME', 'Name', 'id', 'ID'):
             if id_prop in item['properties']:
                 id_ = str(item['properties'][id_prop])
                 break
