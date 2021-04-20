@@ -517,3 +517,13 @@ def round_coordinates(cubes, decimals=5, coord_names=None):
                 coord.bounds = da.round(da.asarray(coord.core_bounds()),
                                         decimals)
     return cubes
+
+
+def set_ocean_depth_coord(cube):
+    """Fix attributes of ocean vertical level coordinate. """
+    cube.coord(axis='Z').standard_name = 'depth'
+    cube.coord('depth').var_name = 'lev'
+    cube.coord('depth').units = Unit('m')
+    cube.coord('depth').long_name = 'ocean depth coordinate'
+    cube.coord('depth').attributes = {'positive': 'down'}
+    return cube
