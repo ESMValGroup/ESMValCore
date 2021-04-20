@@ -55,7 +55,7 @@ def recipe_with_schema(filename):
     logger.debug("Checking recipe against schema %s", schema_file)
     recipe = yamale.make_data(filename)
     schema = yamale.make_schema(schema_file)
-    yamale.validate(schema, recipe)
+    yamale.validate(schema, recipe, strict=False)
 
 
 def diagnostics(diags):

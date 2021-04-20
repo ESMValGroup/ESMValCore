@@ -33,7 +33,8 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             pip install .[test]
-            pytest -n 2 -m "not installation"
+            pytest -n 2 -m "not installation and not sequential"
+            pytest -n 0 -m "sequential"
       - save_cache:
           key: test-{{ .Branch }}
           paths:
@@ -73,7 +74,8 @@ jobs:
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            pytest -n 2
+            pytest -n 2 -m "not sequential"
+            pytest -n 0 -m "sequential"
             esmvaltool version
       - save_cache:
           key: install-{{ .Branch }}
@@ -140,7 +142,8 @@ jobs:
             pip freeze > /logs/requirements.txt
             # Test installation
             esmvaltool version
-            pytest -n 2
+            pytest -n 2 -m "not sequential"
+            pytest -n 0 -m "sequential"
       - store_artifacts:
           path: /logs
 
@@ -164,7 +167,7 @@ jobs:
             dpkg -l > /logs/versions.txt
             conda env export -n base > /logs/build_environment.yml
             # Build conda package
-            conda build package -c conda-forge -c esmvalgroup > /logs/build_log.txt
+            conda build package -c conda-forge > /logs/build_log.txt
       - store_artifacts:
           path: /logs
 

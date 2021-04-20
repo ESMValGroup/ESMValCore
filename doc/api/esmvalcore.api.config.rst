@@ -34,7 +34,7 @@ The global configuration can be imported from the :py:mod:`esmvalcore.experiment
             'write_netcdf': True,
             'write_plots': True})
 
-The parameters for the user configuration file are listed `here <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#user-configuration-file>`__.
+The parameters for the user configuration file are listed :ref:`here <user configuration file>`.
 
 :py:data:`~esmvalcore.experimental.CFG` is essentially a python dictionary with a few extra functions, similar to :py:mod:`matplotlib.rcParams`.
 This means that values can be updated like this:
