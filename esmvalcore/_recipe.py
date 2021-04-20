@@ -315,10 +315,12 @@ def _get_default_settings(variable, config_user, derive=False):
     if variable['short_name'] != variable['original_short_name']:
         settings['save']['alias'] = variable['short_name']
 
+    # Configure fx settings
     settings['add_fx_variables'] = {
         'fx_variables': {},
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
     }
+    settings['remove_fx_variables'] = {}
 
     return settings
 

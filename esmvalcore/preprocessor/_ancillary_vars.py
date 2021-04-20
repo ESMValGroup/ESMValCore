@@ -175,3 +175,29 @@ def add_fx_variables(cube, fx_variables, check_level):
         else:
             add_ancillary_variable(cube, fx_cube)
     return cube
+
+
+def remove_fx_variables(cube):
+    """
+    Remove fx variables present as cell measures or ancillary variables in
+    the cube containing the data.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        Iris cube with  data and cell measures or ancillary variables.
+
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube without cell measures or ancillary variables.
+    """
+
+    if cube.cell_measures():
+        for measure in cube.cell_measures():
+            cube.remove_cell_measure(measure.standard_name)
+    if cube.ancillary_variables():
+        for variable in cube.ancillary_variables():
+            cube.remove_ancillary_variable(variable.standard_name)
+    return cube

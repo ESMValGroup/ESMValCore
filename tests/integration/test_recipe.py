@@ -86,6 +86,7 @@ DEFAULT_PREPROCESSOR_STEPS = (
     'fix_file',
     'fix_metadata',
     'load',
+    'remove_fx_variables',
     'save',
 )
 
@@ -166,6 +167,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename):
             'fx_variables': {},
             'check_level': CheckLevels.DEFAULT,
         },
+        'remove_fx_variables': {},
         'cleanup': {
             'remove': [fix_dir]
         },
@@ -591,6 +593,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'fx_variables': {},
             'check_level': CheckLevels.DEFAULT,
         },
+        'remove_fx_variables': {},
         'cleanup': {
             'remove': [fix_dir]
         },

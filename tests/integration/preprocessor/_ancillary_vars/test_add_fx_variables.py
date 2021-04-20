@@ -11,7 +11,10 @@ import numpy as np
 import pytest
 
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.preprocessor._ancillary_vars import add_fx_variables
+from esmvalcore.preprocessor._ancillary_vars import (add_fx_variables,
+                                                     add_ancillary_variable,
+                                                     add_cell_measure,
+                                                     remove_fx_variables)
 
 logger = logging.getLogger(__name__)
 
@@ -192,3 +195,23 @@ class Test:
         msg = (f"Dimensions of {cube.var_name} and {volume_cube.var_name} "
                "cubes do not match. Cannot broadcast cubes.")
         assert msg in str(excinfo.value)
+
+    def test_remove_fx_vars(self):
+        """Test fx_variables are removed from cube."""
+        cube = iris.cube.Cube(self.new_cube_3D_data,
+                              dim_coords_and_dims=[(self.depth, 0),
+                                                   (self.lats, 1),
+                                                   (self.lons, 2)])
+        self.fx_area.var_name = 'areacella'
+        self.fx_area.standard_name = 'cell_area'
+        self.fx_area.units = 'm2'
+        add_cell_measure(cube, self.fx_area, measure='area')
+        assert cube.cell_measure(self.fx_area.standard_name) is not None
+        self.fx_area.var_name = 'sftlf'
+        self.fx_area.standard_name = "land_area_fraction"
+        self.fx_area.units = '%'
+        add_ancillary_variable(cube, self.fx_area)
+        assert cube.ancillary_variable(self.fx_area.standard_name) is not None
+        cube = remove_fx_variables(cube)
+        assert cube.cell_measures() == []
+        assert cube.ancillary_variables() == []
