@@ -70,7 +70,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
-          channels: esmvalgroup,conda-forge
+          channels: conda-forge
       - shell: bash -l {0}
         run: conda --version
       - shell: bash -l {0}
