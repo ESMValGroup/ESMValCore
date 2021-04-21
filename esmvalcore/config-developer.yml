@@ -192,8 +192,12 @@ native6:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+    # TODO This is a temporary fix, a proper solution should be implemented
+    ICON: '{model_version}_{model_component}_{experiment}_{grid}_{id}'
   input_file:
     default: '*.nc'
+    # TODO Review file naming
+    ICON: '{model_version}_{model_component}_{experiment}_{grid}_{id}_{var_type}*.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
