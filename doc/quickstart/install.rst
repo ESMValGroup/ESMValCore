@@ -14,7 +14,7 @@ Once you have installed conda, you can install ESMValCore by running:
 
 .. code-block:: bash
 
-    conda install -c esmvalgroup -c conda-forge esmvalcore
+    conda install -c conda-forge esmvalcore
 
 It is also possible to create a new
 `Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html#managing-environments>`_
@@ -22,7 +22,7 @@ and install ESMValCore into it with a single command:
 
 .. code-block:: bash
 
-    conda create --name esmvalcore -c esmvalgroup -c conda-forge esmvalcore
+    conda create --name esmvalcore -c conda-forge esmvalcore
 
 Don't forget to activate the newly created environment after the installation:
 
