@@ -1,0 +1,154 @@
+name: PyPi and conda-forge Build and Deploy 🐍📦
+
+on:
+  release:
+    types: [published]
+  # use this for testing
+  push:
+    branches:
+      - master
+
+jobs:
+  pypi-build-n-publish:
+    name: Build and publish ESMValCore on PyPi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - name: Install pep517
+        run: >-
+          python -m
+          pip install
+          pep517
+          --user
+      - name: Build a binary wheel and a source tarball
+        run: >-
+          python -m
+          pep517.build
+          --source
+          --binary
+          --out-dir dist/
+          .
+      #- name: Publish distribution 📦 to Test PyPI
+      #  uses: pypa/gh-action-pypi-publish@master
+      #  with:
+      #    password: ${{ secrets.test_pypi_password }}
+      #    repository_url: https://test.pypi.org/legacy/
+      - name: Publish distribution 📦 to PyPI
+        if: startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.pypi_password }}
+
+  pypi-package-verify:
+    name: verify / python-${{ matrix.python-version }} / ${{ matrix.os }}
+    if: startsWith(github.ref, 'refs/tags')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
+    runs-on: ${{ matrix.os }}
+    needs: pypi-build-n-publish
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: esmvaltool
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}
+          miniconda-version: "latest"
+          channels: conda-forge
+      - shell: bash -l {0}
+        run: conda --version
+      - shell: bash -l {0}
+        run: which conda
+      - shell: bash -l {0}
+        run: python -V
+      - shell: bash -l {0}
+        run: pip install esmvalcore
+      - shell: bash -l {0}
+        run: esmvaltool --help
+      - shell: bash -l {0}
+        run: esmvaltool version
+
+  conda-forge-build-n-publish:
+    name: publish / python-3.9 / ubuntu-latest
+    runs-on: 'ubuntu-latest'
+    needs: pypi-package-verify
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: "3.9"
+          miniconda-version: "latest"
+          channels: conda-forge
+      - name: Show conda config
+        shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+      - name: Python info
+        shell: bash -l {0}
+        run: |
+          which python
+          python --version
+      - name: Install build dependencies
+        shell: bash -l {0}
+        run: conda install -y conda-build conda-verify ripgrep anaconda-client
+      - name: Build the conda package
+        shell: bash -l {0}
+        run: |
+          conda config --set anaconda_upload no
+          export BUILD_FOLDER=/tmp/esmvalcore/_build
+          mkdir -p $BUILD_FOLDER
+          conda build package \
+            --channel conda-forge \
+            --croot $BUILD_FOLDER \
+      - name: Push the package to anaconda cloud
+        if: startsWith(github.ref, 'refs/tags')
+        shell: bash -l {0}
+        run: |
+          export BUILD_FOLDER=/tmp/esmvalcore/_build
+          # use --label test before actual release and check all works well
+          anaconda --token ${{ secrets.ANACONDA_TOKEN }} upload --user esmvalgroup $BUILD_FOLDER/noarch/*.tar.bz2
+
+  conda-package-verify:
+    name: verify / python-${{ matrix.python-version }} / ${{ matrix.os }}
+    if: startsWith(github.ref, 'refs/tags')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
+    runs-on: ${{ matrix.os }}
+    needs: conda-forge-build-n-publish
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          miniconda-version: "latest"
+          channels: conda-forge
+      - shell: bash -l {0}
+        run: conda --version
+      - shell: bash -l {0}
+        run: which conda
+      - shell: bash -l {0}
+        run: python -V
+      - shell: bash -l {0}
+        run: conda install esmvalcore
+      - shell: bash -l {0}
+        run: esmvaltool --help
+      - shell: bash -l {0}
+        run: esmvaltool version
