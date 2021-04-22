@@ -53,6 +53,10 @@ def get_start_end_year(filename):
             outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stem)
             if len(outerdates) == 1:
                 start_year = end_year = outerdates[0][:4]
+            # Check for ICON format
+            elif len(re.findall(r'([0-9]{4})[0-9]{4}T[0-9]{6}Z$', stem)) == 1:
+                start_year = end_year = re.findall(
+                    r'([0-9]{4})[0-9]{4}T[0-9]{6}Z$', stem)[0]
 
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
