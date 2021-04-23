@@ -1,4 +1,4 @@
-"""Fix HadREM3-GA7.05"""
+"""Fix HadREM3-GA7.05."""
 from ..fix import Fix
 
 
@@ -6,7 +6,7 @@ class AllVars(Fix):
     """Fix errors common to all vars."""
 
     def fix_metadata(self, cubes):
-        """Fix latitude and longitude
+        """Fix latitude and longitude.
 
         Parameters
         ----------
