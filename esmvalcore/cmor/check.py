@@ -637,7 +637,7 @@ class CMORCheck():
                                          valid_max)
 
         if l_fix_coord_value:
-            if coord.ndim == 1:
+            if coord.ndim == 1 and not self._is_unstructured_grid():
                 lon_extent = iris.coords.CoordExtent(coord, 0.0, 360., True,
                                                      False)
                 self._cube = self._cube.intersection(lon_extent)
