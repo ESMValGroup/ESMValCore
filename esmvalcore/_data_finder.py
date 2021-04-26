@@ -253,7 +253,9 @@ def get_input_filelist(variable, rootpath, drs):
             variable['ensemble']
         )
         variable['ensemble'] = 'r0i0p0'
-        (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
+        (files, dirnames, filenames) = _find_input_files(
+            variable, rootpath, drs
+            )
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
         files = select_files(files, variable['start_year'],
