@@ -68,12 +68,11 @@ class Test(tests.Test):
             'unstructured_nearest'
         ]
 
-        def _mock_check_horiz_grid_closeness(src, tgt):
+        def _mock_horizontal_grid_is_close(src, tgt):
             return False
 
-        self.patch(
-            'esmvalcore.preprocessor._regrid._check_horiz_grid_closeness',
-            side_effect=_mock_check_horiz_grid_closeness)
+        self.patch('esmvalcore.preprocessor._regrid._horizontal_grid_is_close',
+                   side_effect=_mock_horizontal_grid_is_close)
 
         def _return_mock_global_stock_cube(
             spec,
