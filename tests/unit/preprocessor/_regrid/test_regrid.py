@@ -152,9 +152,12 @@ def _make_cube(*, lat: tuple, lon: tuple):
     )
 
 
+# 10x10
 LAT_SPEC1 = (-85, 85, 18)
-LAT_SPEC2 = (-85, 85, 17)
 LON_SPEC1 = (5, 355, 36)
+
+# almost 10x10
+LAT_SPEC2 = (-85, 85, 17)
 LON_SPEC2 = (5, 355, 35)
 
 
@@ -218,6 +221,20 @@ def test_horizontal_grid_is_close(hor_spec1: dict, hor_spec2: dict,
     cube2 = _make_cube(**hor_spec2)
 
     assert _horizontal_grid_is_close(cube1, cube2) == expected
+
+
+def test_regrid_is_skipped_if_grids_are_the_same():
+    """Test that regridding is skipped if the grids are the same."""
+    cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    scheme = 'linear'
+
+    # regridding to the same spec returns the same cube
+    expected_same_cube = regrid(cube, target_grid='10x10', scheme=scheme)
+    assert expected_same_cube is cube
+
+    # regridding to a different spec returns a different cube
+    expected_different_cube = regrid(cube, target_grid='5x5', scheme=scheme)
+    assert expected_different_cube is not cube
 
 
 if __name__ == '__main__':
