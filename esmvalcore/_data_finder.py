@@ -241,9 +241,17 @@ def _find_input_files(variable, rootpath, drs):
 
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
-    # change ensemble to fixed r0i0p0 for fx variables
-    # this is needed and is not a duplicate effort
-    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
+    (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
+    if (
+        variable['frequency'] == 'fx'
+        and variable['ensemble'] != 'r0i0p0'
+        and dirnames == []
+    ):
+        # fx files not found. Try to find fx files again with ensemble r0i0p0
+        logger.debug(
+            'fx data not found under %s, searching under r0i0p0',
+            variable['ensemble']
+        )
         variable['ensemble'] = 'r0i0p0'
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
