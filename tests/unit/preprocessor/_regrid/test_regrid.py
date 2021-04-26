@@ -1,18 +1,20 @@
-"""
-Unit tests for the :func:`esmvalcore.preprocessor.regrid.regrid` function.
-
-"""
+"""Unit tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
+function."""
 
 import unittest
 from unittest import mock
 
 import iris
 import numpy as np
+import pytest
 
 import tests
 from esmvalcore.preprocessor import regrid
-from esmvalcore.preprocessor._regrid import _CACHE, HORIZONTAL_SCHEMES
-from esmvalcore.preprocessor._regrid import _check_horiz_grid_closeness
+from esmvalcore.preprocessor._regrid import (
+    _CACHE,
+    HORIZONTAL_SCHEMES,
+    _horizontal_grid_is_close,
+)
 
 
 class Test(tests.Test):
@@ -74,8 +76,8 @@ class Test(tests.Test):
             side_effect=_mock_check_horiz_grid_closeness)
 
         def _return_mock_global_stock_cube(
-            spec, 
-            lat_offset=True, 
+            spec,
+            lat_offset=True,
             lon_offset=True,
         ):
             return self.tgt_grid
@@ -128,45 +130,95 @@ class Test(tests.Test):
         _CACHE.clear()
 
 
-class TestCloseness(tests.Test):
-    def test_regrid__closeness_cell_specification(self):
-        latitude = iris.coords.DimCoord(np.linspace(-85, 85, 18),
-                                        standard_name='latitude',
-                                        units='degrees')
-        longitude = iris.coords.DimCoord(np.linspace(5, 355, 36),
-                                         standard_name='longitude',
-                                         units='degrees')
-        latitude2 = iris.coords.DimCoord(np.linspace(-85, 85, 17),
-                                         standard_name='latitude',
-                                         units='degrees')
-        longitude2 = iris.coords.DimCoord(np.linspace(5, 355, 35),
-                                          standard_name='longitude',
-                                          units='degrees')
-        latitude.guess_bounds()
-        longitude.guess_bounds()
-        loc_cube = iris.cube.Cube(np.empty([18, 36]),
-                                  dim_coords_and_dims=[(latitude, 0),
-                                                       (longitude, 1)],
-                                  )
-        tgt_cubes = [loc_cube,
-                     iris.cube.Cube(np.empty([18, 36]),
-                                    dim_coords_and_dims=[(latitude, 0),
-                                                         (longitude, 1)],
-                                    ),
-                     iris.cube.Cube(np.empty([17, 36]),
-                                    dim_coords_and_dims=[(latitude2, 0),
-                                                         (longitude, 1)],
-                                    ),
-                     iris.cube.Cube(np.empty([18, 35]),
-                                    dim_coords_and_dims=[(latitude, 0),
-                                                         (longitude2, 1)],
-                                    )
-                     ]
+def _make_coord(start: float, stop: float, step: int, *, name: str):
+    """Helper function for creating a coord."""
+    coord = iris.coords.DimCoord(
+        np.linspace(start, stop, step),
+        standard_name=name,
+        units='degrees',
+    )
+    coord.guess_bounds()
+    return coord
 
-        tgt_closeness = [True, True, False, False]
-        for tgt in zip(tgt_cubes, tgt_closeness):
-            self.assertEqual(_check_horiz_grid_closeness(loc_cube, tgt[0]),
-                             tgt[1])
+
+def _make_cube(*, lat: tuple, lon: tuple):
+    """Helper function for creating a cube."""
+    lat_coord = _make_coord(*lat, name='latitude')
+    lon_coord = _make_coord(*lon, name='longitude')
+
+    return iris.cube.Cube(
+        np.empty([len(lat_coord.points),
+                  len(lon_coord.points)]),
+        dim_coords_and_dims=[(lat_coord, 0), (lon_coord, 1)],
+    )
+
+
+LAT_SPEC1 = (-85, 85, 18)
+LAT_SPEC2 = (-85, 85, 17)
+LON_SPEC1 = (5, 355, 36)
+LON_SPEC2 = (5, 355, 35)
+
+
+@pytest.mark.parametrize(
+    'hor_spec1, hor_spec2, expected',
+    (
+        # equal lat/equal lon
+        (
+            {
+                'lat': LAT_SPEC1,
+                'lon': LON_SPEC1
+            },
+            {
+                'lat': LAT_SPEC1,
+                'lon': LON_SPEC1
+            },
+            True,
+        ),
+        # equal lat/different lon
+        (
+            {
+                'lat': LAT_SPEC1,
+                'lon': LON_SPEC1
+            },
+            {
+                'lat': LAT_SPEC1,
+                'lon': LON_SPEC2
+            },
+            False,
+        ),
+        # different lat/equal lon
+        (
+            {
+                'lat': LAT_SPEC1,
+                'lon': LON_SPEC1
+            },
+            {
+                'lat': LAT_SPEC2,
+                'lon': LON_SPEC1
+            },
+            False,
+        ),
+        # different lat/different lon
+        (
+            {
+                'lat': LAT_SPEC1,
+                'lon': LON_SPEC1
+            },
+            {
+                'lat': LAT_SPEC2,
+                'lon': LON_SPEC2
+            },
+            False,
+        ),
+    ),
+)
+def test_horizontal_grid_is_close(hor_spec1: dict, hor_spec2: dict,
+                                  expected: bool):
+    """Test for `_horizontal_grid_is_close`."""
+    cube1 = _make_cube(**hor_spec1)
+    cube2 = _make_cube(**hor_spec2)
+
+    assert _horizontal_grid_is_close(cube1, cube2) == expected
 
 
 if __name__ == '__main__':
