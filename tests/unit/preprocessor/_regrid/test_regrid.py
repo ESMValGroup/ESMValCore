@@ -73,7 +73,11 @@ class Test(tests.Test):
             'esmvalcore.preprocessor._regrid._check_horiz_grid_closeness',
             side_effect=_mock_check_horiz_grid_closeness)
 
-        def _return_mock_stock_cube(spec, lat_offset=True, lon_offset=True):
+        def _return_mock_global_stock_cube(
+            spec, 
+            lat_offset=True, 
+            lon_offset=True,
+        ):
             return self.tgt_grid
 
         self.mock_stock = self.patch(
