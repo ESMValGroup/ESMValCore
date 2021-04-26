@@ -34,9 +34,9 @@ class TestFix(unittest.TestCase):
                              [Ch4(None)])
 
     def test_get_fixes_with_generic(self):
-        from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Co2
+        from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Gpp
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'co2'), [Co2(None)])
+            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'gpp'), [Gpp(None)])
 
     def test_get_fix_no_project(self):
         with pytest.raises(KeyError):

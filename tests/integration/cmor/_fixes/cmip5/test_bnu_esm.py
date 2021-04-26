@@ -5,22 +5,48 @@ import numpy.ma as ma
 from cf_units import Unit
 from iris.cube import Cube
 
+from esmvalcore.cmor._fixes.cmip5.bnu_esm import (Ch4, Cl, Co2, FgCo2,
+                                                  Od550Aer, SpCo2)
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.bnu_esm import (Ch4, Co2, FgCo2, SpCo2,
-                                                  Od550Aer)
+from esmvalcore.cmor.table import get_var_info
+
+
+class TestCl(unittest.TestCase):
+    """Test cl fix."""
+    def setUp(self):
+        """Prepare tests."""
+        self.cube = Cube([1.0], var_name='cl', units='%')
+        self.fix = Cl(None)
+
+    def test_get(self):
+        """Test fix get"""
+        fix = Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'cl')
+        assert fix == [Cl(None)]
+
+    def test_cl_fix(self):
+        """Test fix for ``cl``."""
+        assert issubclass(Cl, ClFixHybridPressureCoord)
+
+    def test_fix_data(self):
+        """Test data fix."""
+        cube = self.fix.fix_data(self.cube)
+        self.assertEqual(cube.data[0], 100)
 
 
 class TestCo2(unittest.TestCase):
     """Test fixes for CO2."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='co2', units='J')
-        self.fix = Co2(None)
+        self.vardef = get_var_info('CMIP5', 'Amon', self.cube.var_name)
+        self.fix = Co2(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'co2'),
-                             [Co2(None)])
+                             [Co2(self.vardef)])
 
     def test_fix_metadata(self):
         """Test unit change."""
@@ -37,15 +63,18 @@ class TestCo2(unittest.TestCase):
 
 class Testfgco2(unittest.TestCase):
     """Test fixes for FgCO2."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='fgco2', units='J')
-        self.fix = FgCo2(None)
+        self.vardef = get_var_info('CMIP5', 'Omon', self.cube.var_name)
+        self.fix = FgCo2(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'fgco2'), [FgCo2(None)])
+            Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'fgco2'),
+            [FgCo2(self.vardef)])
 
     def test_fix_metadata(self):
         """Test unit fix."""
@@ -62,15 +91,17 @@ class Testfgco2(unittest.TestCase):
 
 class TestCh4(unittest.TestCase):
     """Test fixes for ch4."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='ch4', units='J')
-        self.fix = Ch4(None)
+        self.vardef = get_var_info('CMIP5', 'Amon', self.cube.var_name)
+        self.fix = Ch4(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4'),
-                             [Ch4(None)])
+                             [Ch4(self.vardef)])
 
     def test_fix_metadata(self):
         """Test unit fix."""
@@ -87,13 +118,14 @@ class TestCh4(unittest.TestCase):
 
 class Testspco2(unittest.TestCase):
     """Test fixes for SpCO2."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='spco2', units='J')
         self.fix = SpCo2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'spco2'), [SpCo2(None)])
 
@@ -112,6 +144,7 @@ class Testspco2(unittest.TestCase):
 
 class TestOd550Aer(unittest.TestCase):
     """Test fixes for SpCO2."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube(
@@ -121,7 +154,7 @@ class TestOd550Aer(unittest.TestCase):
         self.fix = Od550Aer(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'od550aer'),
             [Od550Aer(None)])

@@ -2,19 +2,28 @@
 import itertools
 import logging
 import os
+import re
 import subprocess
+from shutil import which
 
 import yamale
 
 from ._data_finder import get_start_end_year
-from ._task import get_flattened_tasks, which
-from .preprocessor import PreprocessingTask
+from .preprocessor import PreprocessingTask, TIME_PREPROCESSORS
 
 logger = logging.getLogger(__name__)
 
 
 class RecipeError(Exception):
     """Recipe contains an error."""
+    def __init__(self, msg):
+        super().__init__(self)
+        self.message = msg
+        self.failed_tasks = []
+
+    def __str__(self):
+        """Return message string."""
+        return self.message
 
 
 def ncl_version():
@@ -46,7 +55,7 @@ def recipe_with_schema(filename):
     logger.debug("Checking recipe against schema %s", schema_file)
     recipe = yamale.make_data(filename)
     schema = yamale.make_schema(schema_file)
-    yamale.validate(schema, recipe)
+    yamale.validate(schema, recipe, strict=False)
 
 
 def diagnostics(diags):
@@ -114,7 +123,8 @@ def data_availability(input_files, var, dirnames, filenames):
                 "Looked for files matching %s, but did not find any existing "
                 "input directory", filenames)
         logger.error("Set 'log_level' to 'debug' to get more information")
-        raise RecipeError("Missing data")
+        raise RecipeError(
+            f"Missing data for {var['alias']}: {var['short_name']}")
 
     # check time avail only for non-fx variables
     if var['frequency'] == 'fx':
@@ -131,15 +141,14 @@ def data_availability(input_files, var, dirnames, filenames):
     if missing_years:
         raise RecipeError(
             "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years),
-                input_files))
+                ", ".join(str(year) for year in missing_years), input_files))
 
 
 def tasks_valid(tasks):
     """Check that tasks are consistent."""
     filenames = set()
     msg = "Duplicate preprocessor filename {}, please file a bug report."
-    for task in get_flattened_tasks(tasks):
+    for task in tasks.flatten():
         if isinstance(task, PreprocessingTask):
             for product in task.products:
                 if product.filename in filenames:
@@ -149,16 +158,10 @@ def tasks_valid(tasks):
 
 def check_for_temporal_preprocs(profile):
     """Check for temporal operations on fx variables."""
-    temporal_preprocs = [
-        'extract_season',
-        'extract_month',
-        'annual_mean',
-        'seasonal_mean',
-        'time_average',
-        'regrid_time',
-    ]
     temp_preprocs = [
-        preproc for preproc in profile if preproc in temporal_preprocs]
+        preproc for preproc in profile
+        if profile[preproc] and preproc in TIME_PREPROCESSORS
+    ]
     if temp_preprocs:
         raise RecipeError(
             "Time coordinate preprocessor step(s) {} not permitted on fx "
@@ -184,3 +187,15 @@ def extract_shape(settings):
                 f"In preprocessor function `extract_shape`: Invalid value "
                 f"'{value}' for argument '{key}', choose from "
                 "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))
+
+
+def valid_multimodel_statistic(statistic):
+    """Check that `statistic` is a valid argument for multimodel stats."""
+    valid_names = ["mean", "median", "std", "min", "max"]
+    valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
+    if not (statistic in valid_names
+            or re.match(r'|'.join(valid_patterns), statistic)):
+        raise RecipeError(
+            "Invalid value encountered for `statistic` in preprocessor "
+            f"`multi_model_statistics`. Valid values are {valid_names} "
+            f"or patterns matching {valid_patterns}. Got '{statistic}.'")

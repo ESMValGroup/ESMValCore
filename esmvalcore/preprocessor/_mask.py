@@ -11,11 +11,12 @@ import logging
 import os
 
 import cartopy.io.shapereader as shpreader
+import dask.array as da
 import iris
-from iris.analysis import Aggregator
-from iris.util import rolling_window
 import numpy as np
 import shapely.vectorized as shp_vect
+from iris.analysis import Aggregator
+from iris.util import rolling_window
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ def _apply_fx_mask(fx_mask, var_data):
     var_mask = np.zeros_like(var_data, bool)
     var_mask = np.broadcast_to(fx_mask, var_mask.shape).copy()
 
-    # Aplly mask accross
+    # Apply mask across
     if np.ma.is_masked(var_data):
         var_mask |= var_data.mask
 
@@ -86,7 +87,7 @@ def _apply_fx_mask(fx_mask, var_data):
     return var_data
 
 
-def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
+def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
     """
     Mask out either land mass or sea (oceans, seas and lakes).
 
@@ -100,8 +101,8 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
     cube: iris.cube.Cube
         data cube to be masked.
 
-    fx_files: list
-        list holding the full paths to fx files.
+    fx_variables: dict
+        dict: keys: fx variables, values: full paths to fx files.
 
     mask_out: str
         either "land" to mask out land mass or "sea" to mask out seas.
@@ -131,9 +132,12 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
-    if fx_files and not always_use_ne_mask:
+    fx_files = fx_variables.values()
+    if any(fx_files) and not always_use_ne_mask:
         fx_cubes = {}
         for fx_file in fx_files:
+            if not fx_file:
+                continue
             fxfile_members = os.path.basename(fx_file).split('_')
             for fx_root in ['sftlf', 'sftof']:
                 if fx_root in fxfile_members:
@@ -161,8 +165,8 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
                     "Applying land-sea mask from Natural Earth"
                     " shapefile: \n%s", shapefiles[mask_out])
             else:
-                msg = (f"Use of shapefiles with irregular grids not "
-                       f"yet implemented, land-sea mask not applied.")
+                msg = ("Use of shapefiles with irregular grids not "
+                       "yet implemented, land-sea mask not applied.")
                 raise ValueError(msg)
     else:
         if cube.coord('longitude').points.ndim < 2:
@@ -173,14 +177,14 @@ def mask_landsea(cube, fx_files, mask_out, always_use_ne_mask=False):
                 "Applying land-sea mask from Natural Earth"
                 " shapefile: \n%s", shapefiles[mask_out])
         else:
-            msg = (f"Use of shapefiles with irregular grids not "
-                   f"yet implemented, land-sea mask not applied.")
+            msg = ("Use of shapefiles with irregular grids not "
+                   "yet implemented, land-sea mask not applied.")
             raise ValueError(msg)
 
     return cube
 
 
-def mask_landseaice(cube, fx_files, mask_out):
+def mask_landseaice(cube, fx_variables, mask_out):
     """
     Mask out either landsea (combined) or ice.
 
@@ -192,8 +196,8 @@ def mask_landseaice(cube, fx_files, mask_out):
     cube: iris.cube.Cube
         data cube to be masked.
 
-    fx_files: list
-        list holding the full paths to fx files.
+    fx_variables: dict
+        dict: keys: fx variables, values: full paths to fx files.
 
     mask_out: str
         either "landsea" to mask out landsea or "ice" to mask out ice.
@@ -208,12 +212,15 @@ def mask_landseaice(cube, fx_files, mask_out):
     ValueError
         Error raised if fx mask and data have different dimensions.
     ValueError
-        Error raised if fx_files list is empty.
+        Error raised if fx files list is empty.
 
     """
-    # sftgif is the only one so far
-    if fx_files:
+    # sftgif is the only one so far but users can set others
+    fx_files = fx_variables.values()
+    if any(fx_files):
         for fx_file in fx_files:
+            if not fx_file:
+                continue
             fx_cube = iris.load_cube(fx_file)
 
             if _check_dims(cube, fx_cube):
@@ -329,9 +336,9 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
             cube.coord(axis='Y').points)
     # 2D irregular grids; spit an error for now
     else:
-        msg = (f"No fx-files found (sftlf or sftof)!"
-               f"2D grids are suboptimally masked with "
-               f"Natural Earth masks. Exiting.")
+        msg = ("No fx-files found (sftlf or sftof)!"
+               "2D grids are suboptimally masked with "
+               "Natural Earth masks. Exiting.")
         raise ValueError(msg)
 
     # Wrap around longitude coordinate to match data
@@ -362,7 +369,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
 
 def count_spells(data, threshold, axis, spell_length):
     """
-    Count data occurences.
+    Count data occurrences.
 
     Define a function to perform the custom statistical operation.
     Note: in order to meet the requirements of iris.analysis.Aggregator,
@@ -399,7 +406,10 @@ def count_spells(data, threshold, axis, spell_length):
         # just cope with negative axis numbers
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
-    data_hits = data > float(threshold)
+    if not threshold:
+        data_hits = data
+    else:
+        data_hits = data > float(threshold)
     # Make an array with data values "windowed" along the time axis.
     ###############################################################
     # WARNING: default step is = window size i.e. no overlapping
@@ -518,9 +528,101 @@ def mask_outside_range(cube, minimum, maximum):
     return cube
 
 
+def _get_shape(cubes):
+    """Check and get shape of cubes."""
+    shapes = {cube.shape for cube in cubes}
+    if len(shapes) > 1:
+        raise ValueError(
+            f"Expected cubes with identical shapes, got shapes {shapes}")
+    return list(shapes)[0]
+
+
+def _multimodel_mask_cubes(cubes, shape):
+    """Apply common mask to all cubes in-place."""
+    # Create mask
+    mask = da.full(shape, False, dtype=bool)
+    for cube in cubes:
+        new_mask = da.ma.getmaskarray(cube.core_data())
+        mask |= new_mask
+
+    # Apply common mask
+    for cube in cubes:
+        cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
+
+    return cubes
+
+
+def _multimodel_mask_products(products, shape):
+    """Apply common mask to all cubes of products in-place."""
+    # Create mask and get products used for mask
+    mask = da.full(shape, False, dtype=bool)
+    used_products = set()
+    for product in products:
+        for cube in product.cubes:
+            new_mask = da.ma.getmaskarray(cube.core_data())
+            mask |= new_mask
+            if da.any(new_mask):
+                used_products.add(product)
+
+    # Apply common mask and update provenance information
+    for product in products:
+        for cube in product.cubes:
+            cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
+        for other_product in used_products:
+            if other_product.filename != product.filename:
+                product.wasderivedfrom(other_product)
+
+    return products
+
+
+def mask_multimodel(products):
+    """Apply common mask to all datasets (using logical OR).
+
+    Parameters
+    ----------
+    products : iris.cube.CubeList or list of PreprocessorFile
+        Data products/cubes to be masked.
+
+    Returns
+    -------
+    iris.cube.CubeList or list of PreprocessorFile
+        Masked data products/cubes.
+
+    Raises
+    ------
+    ValueError
+        Datasets have different shapes.
+    TypeError
+        Invalid input data.
+
+    """
+    if not products:
+        return products
+
+    # Check input types
+    if all(isinstance(p, iris.cube.Cube) for p in products):
+        cubes = products
+        shape = _get_shape(cubes)
+        return _multimodel_mask_cubes(cubes, shape)
+    if all(type(p).__name__ == 'PreprocessorFile' for p in products):
+        # Avoid circular input: https://stackoverflow.com/q/16964467
+        cubes = iris.cube.CubeList()
+        for product in products:
+            cubes.extend(product.cubes)
+        if not cubes:
+            return products
+        shape = _get_shape(cubes)
+        return _multimodel_mask_products(products, shape)
+    product_types = {type(p) for p in products}
+    raise TypeError(
+        f"Input type for mask_multimodel not understood. Expected "
+        f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
+        f"got {product_types}")
+
+
 def mask_fillvalues(products,
                     threshold_fraction,
-                    min_value=-1.e10,
+                    min_value=None,
                     time_window=1):
     """
     Compute and apply a multi-dataset fillvalues mask.
@@ -542,7 +644,8 @@ def mask_fillvalues(products,
         Must be between 0 and 1.
 
     min_value: float
-        minumum value threshold; default set to -1e10.
+        minimum value threshold; default None
+        If default, no thresholding applied so the full mask will be selected.
 
     time_window: float
         time window to compute missing data counts; default set to 1.

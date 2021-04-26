@@ -8,7 +8,7 @@ from ..fix import Fix
 
 def _get_and_remove(cubes, long_name):
     try:
-        cube = cubes.extract_strict(long_name)
+        cube = cubes.extract_cube(long_name)
         cubes.remove(cube)
     except iris.exceptions.ConstraintMismatchError:
         pass

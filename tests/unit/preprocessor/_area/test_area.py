@@ -1,18 +1,25 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._area` module."""
-
 import unittest
+from pathlib import Path
 
 import fiona
 import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.cube import Cube
+from numpy.testing._private.utils import assert_raises
 from shapely.geometry import Polygon, mapping
 
+import esmvalcore.preprocessor
 import tests
-from esmvalcore.preprocessor._area import (_crop_cube, area_statistics,
-                                           extract_named_regions,
-                                           extract_region, extract_shape)
+from esmvalcore.preprocessor._area import (
+    _crop_cube,
+    area_statistics,
+    extract_named_regions,
+    extract_region,
+    extract_shape,
+)
 
 
 class Test(tests.Test):
@@ -102,6 +109,12 @@ class Test(tests.Test):
     def test_area_statistics_neg_lon(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.negative_grid, 'mean')
+        expected = np.array([1.])
+        self.assert_array_equal(result.data, expected)
+
+    def test_area_statistics_rms(self):
+        """Test for area rms of a 2D field."""
+        result = area_statistics(self.grid, 'rms')
         expected = np.array([1.])
         self.assert_array_equal(result.data, expected)
 
@@ -291,6 +304,127 @@ def test_extract_region_irregular(irregular_extract_region_cube, case):
             assert exc.value == case['raises']
 
 
+def create_rotated_grid_cube(data):
+    """Create test cube on rotated grid."""
+    # CORDEX EUR-44 example
+    grid_north_pole_latitude = 39.25
+    grid_north_pole_longitude = -162.0
+    grid_lons = np.array(
+        [-10, 0, 10],
+        dtype=np.float64,
+    )
+    grid_lats = np.array(
+        [-10, 0, 10],
+        dtype=np.float64,
+    )
+
+    coord_sys_rotated = iris.coord_systems.RotatedGeogCS(
+        grid_north_pole_latitude, grid_north_pole_longitude)
+    grid_lat = iris.coords.DimCoord(grid_lats,
+                                    var_name='rlon',
+                                    standard_name='grid_latitude',
+                                    units='degrees',
+                                    coord_system=coord_sys_rotated)
+    grid_lon = iris.coords.DimCoord(grid_lons,
+                                    var_name='rlon',
+                                    standard_name='grid_longitude',
+                                    units='degrees',
+                                    coord_system=coord_sys_rotated)
+
+    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    glon, glat = np.meshgrid(grid_lons, grid_lats)
+    lons, lats = iris.analysis.cartography.unrotate_pole(
+        np.deg2rad(glon), np.deg2rad(glat), grid_north_pole_longitude,
+        grid_north_pole_latitude)
+
+    lat = iris.coords.AuxCoord(lats,
+                               var_name='lat',
+                               standard_name='latitude',
+                               units='degrees',
+                               coord_system=coord_sys)
+    lon = iris.coords.AuxCoord(lons,
+                               var_name='lon',
+                               standard_name='longitude',
+                               units='degrees',
+                               coord_system=coord_sys)
+    dim_coord_spec = [
+        (grid_lat, 0),
+        (grid_lon, 1),
+    ]
+    aux_coord_spec = [
+        (lat, [0, 1]),
+        (lon, [0, 1]),
+    ]
+    cube = iris.cube.Cube(
+        data,
+        var_name='tos',
+        units='K',
+        dim_coords_and_dims=dim_coord_spec,
+        aux_coords_and_dims=aux_coord_spec,
+    )
+    return cube
+
+
+ROTATED_AREA_STATISTICS_TEST = [
+    {
+        'operator': 'mean',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([1.]),
+    },
+    {
+        'operator': 'median',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([1.]),
+    },
+    {
+        'operator': 'std_dev',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([0.]),
+    },
+    {
+        'operator': 'sum',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+    },
+    {
+        'operator': 'variance',
+        'data': np.ones(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([0.]),
+    },
+    {
+        'operator': 'min',
+        'data': np.arange(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([0.]),
+    },
+    {
+        'operator': 'max',
+        'data': np.arange(9, dtype=np.float32).reshape((3, 3)),
+        'expected': np.array([8.]),
+    },
+]
+
+
+@pytest.mark.parametrize('case', ROTATED_AREA_STATISTICS_TEST)
+def test_area_statistics_rotated(case):
+    """Test `area_statistics` with data on an rotated grid."""
+    rotated_cube = create_rotated_grid_cube(case['data'])
+    operator = case['operator']
+    cube = area_statistics(
+        rotated_cube,
+        operator,
+    )
+    if operator != 'sum':
+        np.testing.assert_array_equal(cube.data, case['expected'])
+    else:
+        cube_tmp = rotated_cube.copy()
+        cube_tmp.remove_coord('latitude')
+        cube_tmp.coord('grid_latitude').rename('latitude')
+        cube_tmp.remove_coord('longitude')
+        cube_tmp.coord('grid_longitude').rename('longitude')
+        grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
+        expected = np.sum(grid_areas)
+        np.testing.assert_array_equal(cube.data, expected)
+
+
 @pytest.fixture
 def make_testcube():
     """Create a test cube on a Cartesian grid."""
@@ -311,7 +445,7 @@ def make_testcube():
     return iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
 
 
-def write_shapefile(shape, path):
+def write_shapefile(shape, path, negative_bounds=False):
     """Write (a) shape(s) to a shapefile."""
     # Define a polygon feature geometry with one attribute
     schema = {
@@ -326,12 +460,21 @@ def write_shapefile(shape, path):
     # Write a new Shapefile
     with fiona.open(path, 'w', 'ESRI Shapefile', schema) as file:
         for id_, s in enumerate(shape):
-            file.write({
-                'geometry': mapping(s),
-                'properties': {
-                    'id': id_
-                },
-            })
+            if not negative_bounds:
+                file.write({
+                    'geometry': mapping(s),
+                    'properties': {
+                        'id': id_
+                    },
+                })
+            else:
+                file.write({
+                    'geometry': mapping(s),
+                    'properties': {
+                        'id': id_
+                    },
+                    'bounds': [-180, 180, -90, 90],
+                })
 
 
 @pytest.fixture(params=[(2, 2), (1, 3), (9, 2)])
@@ -345,7 +488,11 @@ def square_shape(request, tmp_path):
         (1.0 + slon, 1.0),
         (1.0 + slon, 1.0 + slat),
     ])
+
     write_shapefile(polyg, tmp_path / 'test_shape.shp')
+    write_shapefile(polyg,
+                    tmp_path / 'test_shape_negative_bounds.shp',
+                    negative_bounds=True)
 
     # Make corresponding expected masked array
     (slat, slon) = np.ceil([slat, slon]).astype(int)
@@ -367,6 +514,9 @@ def square_composite_shape(request, tmp_path):
             Polygon([(1.0 + n, 1.0 + slat), (1.0 + n, 1.0),
                      (1.0 + n + slon, 1.0), (1.0 + n + slon, 1.0 + slat)]))
     write_shapefile(polyg, tmp_path / 'test_shape.shp')
+    write_shapefile(polyg,
+                    tmp_path / 'test_shape_negative_bounds.shp',
+                    negative_bounds=True)
 
     # Make corresponding expected masked array
     (slat, slon) = np.ceil([slat, slon]).astype(int)
@@ -377,6 +527,40 @@ def square_composite_shape(request, tmp_path):
     return np.ma.masked_array(vals, mask)
 
 
+def _create_sample_full_cube():
+    cube = Cube(np.zeros((4, 180, 360)), var_name='co2', units='J')
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.array([10., 40., 70., 110.]),
+            standard_name='time',
+            units=Unit('days since 1950-01-01 00:00:00', calendar='gregorian'),
+        ),
+        0,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.arange(-90., 90., 1.),
+            standard_name='latitude',
+            units='degrees',
+        ),
+        1,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.arange(0., 360., 1.),
+            standard_name='longitude',
+            units='degrees',
+        ),
+        2,
+    )
+
+    cube.coord("time").guess_bounds()
+    cube.coord("longitude").guess_bounds()
+    cube.coord("latitude").guess_bounds()
+
+    return cube
+
+
 def test_crop_cube(make_testcube, square_shape, tmp_path):
     """Test for cropping a cube by shape bounds."""
     with fiona.open(tmp_path / 'test_shape.shp') as geometries:
@@ -385,9 +569,42 @@ def test_crop_cube(make_testcube, square_shape, tmp_path):
         np.testing.assert_array_equal(result.data, expected)
 
 
+def test_crop_cube_with_ne_file_imitation():
+    """Test for cropping a cube by shape bounds."""
+    cube = _create_sample_full_cube()
+    bounds = [-10., -99., 370., 100.]
+    result = _crop_cube(cube, *tuple(bounds))
+    result = (result.coord("latitude").points[-1],
+              result.coord("longitude").points[-1])
+    expected = (89., 359.)
+    np.testing.assert_allclose(result, expected)
+
+
+@pytest.fixture
+def ne_ocean_shapefile():
+    """Path to natural earth 50m ocean shapefile."""
+    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
+    shapefile = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
+    return str(shapefile)
+
+
+def test_crop_cube_with_ne_file(ne_ocean_shapefile):
+    """Test for cropping a cube by shape bounds."""
+    with fiona.open(ne_ocean_shapefile) as geometries:
+        cube = _create_sample_full_cube()
+        result = _crop_cube(cube, *geometries.bounds, cmor_coords=False)
+        result = (result.coord("latitude").points[-1],
+                  result.coord("longitude").points[-1])
+        expected = (89., 359.)
+        np.testing.assert_allclose(result, expected)
+
+
 @pytest.mark.parametrize('crop', [True, False])
-def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
-    """Test for extracting a region with shapefile"""
+@pytest.mark.parametrize('ids', [None, [
+    0,
+]])
+def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
+    """Test for extracting a region with shapefile."""
     expected = square_shape
     if not crop:
         # If cropping is not used, embed expected in the original test array
@@ -397,7 +614,69 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
         expected = original
     result = extract_shape(make_testcube,
                            tmp_path / 'test_shape.shp',
-                           crop=crop)
+                           crop=crop,
+                           ids=ids)
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+
+def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
+    """Test for extracting a shape from NE file."""
+    expected = np.ones((5, 5))
+    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
+    shp_file = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
+    result = extract_shape(
+        make_testcube,
+        shp_file,
+        crop=False,
+    )
+    np.testing.assert_array_equal(result.data.data, expected)
+
+
+def test_extract_shape_ne_check_nans(ne_ocean_shapefile):
+    """Test shape from NE file with check for boundary NaN's."""
+    cube = _create_sample_full_cube()
+    result = extract_shape(cube, ne_ocean_shapefile, crop=False)
+    assert not result[:, 90, 180].data.mask.all()
+
+
+@pytest.mark.parametrize('crop', [True, False])
+def test_extract_shape_negative_bounds(make_testcube, square_shape, tmp_path,
+                                       crop):
+    """Test for extr a reg with shapefile w/neg ie bound ie (-180, 180)."""
+    expected = square_shape
+    if not crop:
+        # If cropping is not used, embed expected in the original test array
+        original = np.ma.ones((5, 5))
+        original.mask = np.ones_like(original, dtype=bool)
+        original[:expected.shape[0], :expected.shape[1]] = expected
+        expected = original
+    negative_bounds_shapefile = tmp_path / 'test_shape_negative_bounds.shp'
+    result = extract_shape(make_testcube, negative_bounds_shapefile, crop=crop)
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+
+def test_extract_shape_neg_lon(make_testcube, tmp_path, crop=False):
+    """Test for extr a reg with shapefile w/negative lon."""
+    (slat, slon) = (2, -2)
+    polyg = Polygon([
+        (1.0, 1.0 + slat),
+        (1.0, 1.0),
+        (1.0 + slon, 1.0),
+        (1.0 + slon, 1.0 + slat),
+    ])
+    write_shapefile(polyg,
+                    tmp_path / 'test_shape_negative_lon.shp',
+                    negative_bounds=True)
+
+    expected_data = np.ones((5, 5))
+    expected_mask = np.ones((5, 5))
+    expected_mask[1, 0] = False
+    expected_mask[2, 0] = False
+    expected = np.ma.array(expected_data, mask=expected_mask)
+    negative_bounds_shapefile = tmp_path / 'test_shape_negative_lon.shp'
+    result = extract_shape(make_testcube, negative_bounds_shapefile, crop=crop)
     np.testing.assert_array_equal(result.data.data, expected.data)
     np.testing.assert_array_equal(result.data.mask, expected.mask)
 
@@ -406,7 +685,7 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop):
 @pytest.mark.parametrize('decomposed', [True, False])
 def test_extract_composite_shape(make_testcube, square_composite_shape,
                                  tmp_path, crop, decomposed):
-    """Test for extracting a region with shapefile"""
+    """Test for extracting a region with shapefile."""
     expected = square_composite_shape
     if not crop:
         # If cropping is not used, embed expected in the original test array
@@ -423,6 +702,90 @@ def test_extract_composite_shape(make_testcube, square_composite_shape,
 
     result = extract_shape(make_testcube,
                            tmp_path / 'test_shape.shp',
+                           crop=crop,
+                           decomposed=decomposed)
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+
+@pytest.mark.parametrize('ids', [[0], [1], [2], [1, 2]])
+def test_extract_specific_shape(make_testcube, tmp_path, ids):
+    """Test for extracting a region with shapefile."""
+    slat = 2.
+    slon = 2.
+    nshape = 3
+    polyg = []
+    for n in range(nshape):
+        polyg.append(
+            Polygon([(1.0 + n, 1.0 + slat), (1.0 + n, 1.0),
+                     (1.0 + n + slon, 1.0), (1.0 + n + slon, 1.0 + slat)]))
+    write_shapefile(polyg, tmp_path / 'test_shape.shp')
+
+    # Make corresponding expected masked array
+    (slat, slon) = np.ceil([slat, slon]).astype(int)
+    vals = np.ones((nshape, min(slat + 2, 5), min(slon + 1 + nshape, 5)))
+    mask = vals.copy()
+    for n in ids:
+        mask[n, 1:1 + slat, 1 + n:1 + n + slon] = 0
+    expected = np.ma.masked_array(vals, mask)
+
+    # this detour is necessary, otherwise the data will not agree
+    data = expected.data.max(axis=0)
+    mask = expected.max(axis=0).mask
+    expected = np.ma.masked_array(data=data, mask=mask)
+
+    result = extract_shape(make_testcube,
+                           tmp_path / 'test_shape.shp',
+                           crop=True,
+                           decomposed=False,
+                           ids=ids)
+    np.testing.assert_array_equal(result.data.data, expected.data)
+    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+
+def test_extract_specific_shape_raises_if_not_present(make_testcube, tmp_path):
+    """Test for extracting a region with shapefile."""
+    slat = 2.
+    slon = 2.
+    nshape = 3
+    polyg = []
+    for n in range(nshape):
+        polyg.append(
+            Polygon([(1.0 + n, 1.0 + slat), (1.0 + n, 1.0),
+                     (1.0 + n + slon, 1.0), (1.0 + n + slon, 1.0 + slat)]))
+    write_shapefile(polyg, tmp_path / 'test_shape.shp')
+
+    with assert_raises(ValueError):
+        extract_shape(make_testcube,
+                      tmp_path / 'test_shape.shp',
+                      crop=True,
+                      decomposed=False,
+                      ids=[1, 2, 3])
+
+
+@pytest.mark.parametrize('crop', [True, False])
+@pytest.mark.parametrize('decomposed', [True, False])
+def test_extract_composite_shape_negative_bounds(make_testcube,
+                                                 square_composite_shape,
+                                                 tmp_path, crop, decomposed):
+    """Test for extr a reg with shapefile w/neg bounds ie (-180, 180)."""
+    expected = square_composite_shape
+    if not crop:
+        # If cropping is not used, embed expected in the original test array
+        original = np.ma.ones((expected.shape[0], 5, 5))
+        original.mask = np.ones_like(original, dtype=bool)
+        original[:, :expected.shape[1], :expected.shape[2]] = expected
+        expected = original
+
+    if not decomposed or expected.shape[0] == 1:
+        # this detour is necessary, otherwise the data will not agree
+        data = expected.data.max(axis=0)
+        mask = expected.max(axis=0).mask
+        expected = np.ma.masked_array(data=data, mask=mask)
+
+    negative_bounds_shapefile = tmp_path / 'test_shape_negative_bounds.shp'
+    result = extract_shape(make_testcube,
+                           negative_bounds_shapefile,
                            crop=crop,
                            decomposed=decomposed)
     np.testing.assert_array_equal(result.data.data, expected.data)

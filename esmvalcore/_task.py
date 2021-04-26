@@ -1,37 +1,44 @@
 """ESMValtool task definition."""
+import abc
 import contextlib
 import datetime
-import errno
 import logging
 import numbers
 import os
 import pprint
 import subprocess
+import sys
+import textwrap
 import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
+from multiprocessing.pool import ApplyResult
+from pathlib import Path, PosixPath
+from shutil import which
+from typing import Dict, Type
 
 import psutil
 import yaml
 
-from ._config import DIAGNOSTICS_PATH, TAGS, replace_tags
+from ._citation import _write_citation_files
+from ._config import DIAGNOSTICS, TAGS
 from ._provenance import TrackedFile, get_task_provenance
+
+
+def path_representer(dumper, data):
+    """For printing pathlib.Path objects in yaml files."""
+    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+
+
+yaml.representer.SafeRepresenter.add_representer(Path, path_representer)
+yaml.representer.SafeRepresenter.add_representer(PosixPath, path_representer)
 
 logger = logging.getLogger(__name__)
 
 DATASET_KEYS = {
     'mip',
 }
-
-
-def which(executable):
-    """Find executable in PATH."""
-    for path in os.environ["PATH"].split(os.pathsep):
-        if os.access(os.path.join(path, executable), os.X_OK):
-            return os.path.join(path, executable)
-
-    return None
 
 
 def _get_resource_usage(process, start_time, children=True):
@@ -84,10 +91,10 @@ def _get_resource_usage(process, start_time, children=True):
                     proc.cpu_percent(),
                     proc.memory_info().rss / gigabyte,
                     proc.memory_percent(),
-                    (proc.io_counters().read_bytes / gigabyte
-                     if counters_available else float('nan')),
-                    (proc.io_counters().write_bytes / gigabyte
-                     if counters_available else float('nan')),
+                    (proc.io_counters().read_bytes /
+                     gigabyte if counters_available else float('nan')),
+                    (proc.io_counters().write_bytes /
+                     gigabyte if counters_available else float('nan')),
                 ]
         except (OSError, psutil.AccessDenied, psutil.NoSuchProcess):
             # Try again if an error occurs because some process died
@@ -117,8 +124,8 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
                 file.write(msg)
                 time.sleep(interval)
                 if halt.is_set():
-                    logger.info(
-                        'Maximum memory used (estimate): %.1f GB', max_mem)
+                    logger.info('Maximum memory used (estimate): %.1f GB',
+                                max_mem)
                     logger.info(
                         'Sampled every second. It may be inaccurate if short '
                         'but high spikes in memory consumption occur.')
@@ -208,7 +215,6 @@ def write_ncl_settings(settings, filename, mode='wt'):
 
 class BaseTask:
     """Base class for defining task classes."""
-
     def __init__(self, ancestors=None, name='', products=None):
         """Initialize task."""
         self.ancestors = [] if ancestors is None else ancestors
@@ -227,7 +233,7 @@ class BaseTask:
 
     def flatten(self):
         """Return a flattened set of all ancestor tasks and task itself."""
-        tasks = set()
+        tasks = TaskSet()
         for task in self.ancestors:
             tasks.update(task.flatten())
         tasks.add(self)
@@ -250,20 +256,27 @@ class BaseTask:
 
         return self.output_files
 
+    @abc.abstractmethod
     def _run(self, input_files):
-        raise NotImplementedError(
-            "Method should be implemented by child class")
+        """Run task."""
 
-    def str(self):
+    def get_product_attributes(self) -> dict:
+        """Return a mapping of product attributes."""
+        return {
+            product.filename: product.attributes
+            for product in self.products
+        }
+
+    def print_ancestors(self):
         """Return a nicely formatted description."""
-
-        def _indent(txt):
-            return '\n'.join('\t' + line for line in txt.split('\n'))
-
         txt = 'ancestors:\n{}'.format('\n\n'.join(
-            _indent(str(task))
+            textwrap.indent(str(task), prefix='  ')
             for task in self.ancestors) if self.ancestors else 'None')
         return txt
+
+    def __repr__(self):
+        """Return canonical string representation."""
+        return f"{self.__class__.__name__}({repr(self.name)})"
 
 
 class DiagnosticError(Exception):
@@ -272,84 +285,98 @@ class DiagnosticError(Exception):
 
 class DiagnosticTask(BaseTask):
     """Task for running a diagnostic."""
-
     def __init__(self, script, settings, output_dir, ancestors=None, name=''):
         """Create a diagnostic task."""
         super().__init__(ancestors=ancestors, name=name)
         self.script = script
         self.settings = settings
         self.output_dir = output_dir
-        self.cmd = self._initialize_cmd(script)
-        self.log = os.path.join(settings['run_dir'], 'log.txt')
-        self.resource_log = os.path.join(settings['run_dir'],
-                                         'resource_usage.txt')
+        self.cmd = self._initialize_cmd()
+        self.env = self._initialize_env()
+        self.log = Path(settings['run_dir']) / 'log.txt'
+        self.resource_log = Path(settings['run_dir']) / 'resource_usage.txt'
 
-    def _initialize_cmd(self, script):
-        """Create a an executable command from script."""
-        diagnostics_root = os.path.join(DIAGNOSTICS_PATH, 'diag_scripts')
-        script = os.path.expanduser(script)
-        script_file = os.path.abspath(os.path.join(diagnostics_root, script))
+    def _initialize_cmd(self):
+        """Create an executable command from script."""
+        diagnostics_root = DIAGNOSTICS.scripts
+        script = self.script
+        script_file = (diagnostics_root / Path(script).expanduser()).absolute()
 
-        if not os.path.isfile(script_file):
-            raise DiagnosticError(
-                "Cannot execute script {} ({}): file does not exist.".format(
-                    script, script_file))
+        err_msg = f"Cannot execute script '{script}' ({script_file})"
+        if not script_file.is_file():
+            raise DiagnosticError(f"{err_msg}: file does not exist.")
 
         cmd = []
-        if not os.access(script_file, os.X_OK):  # if not executable
-            extension = os.path.splitext(script)[1].lower()[1:]
-            if not self.settings['profile_diagnostic']:
-                executables = {
-                    'py': [which('python')],
-                    'ncl': [which('ncl'), '-n', '-p'],
-                    'r': [which('Rscript')],
-                    'jl': [which('julia')],
-                }
+
+        interpreters = {
+            'jl': 'julia',
+            'ncl': 'ncl',
+            'py': 'python',
+            'r': 'Rscript',
+        }
+        args = {
+            'ncl': ['-n', '-p'],
+        }
+        if self.settings['profile_diagnostic']:
+            profile_file = Path(self.settings['run_dir'], 'profile.json')
+            args['py'] = ['-m', 'vprof', '-o', str(profile_file), '-c', 'c']
+
+        ext = script_file.suffix.lower()[1:]
+        if ext in interpreters:
+            if ext == 'py' and sys.executable:
+                interpreter = sys.executable
             else:
-                profile_file = os.path.join(self.settings['run_dir'],
-                                            'profile.bin')
-                executables = {
-                    'py': [
-                        which('python'), '-m', 'vmprof', '--lines', '-o',
-                        profile_file
-                    ],
-                    'ncl': [which('ncl'), '-n', '-p'],
-                    'r': [which('Rscript')],
-                    'jl': [which('julia')],
-                }
-
-            if extension not in executables:
+                interpreter = which(interpreters[ext])
+            if interpreter is None:
                 raise DiagnosticError(
-                    "Cannot execute script {} ({}): non-executable file "
-                    "with unknown extension.".format(script, script_file))
+                    f"{err_msg}: program '{interpreters[ext]}' not installed.")
+            cmd.append(interpreter)
+        elif not os.access(script_file, os.X_OK):
+            raise DiagnosticError(
+                f"{err_msg}: non-executable file with unknown extension "
+                f"'{script_file.suffix}'.")
 
-            cmd = executables[extension]
-
-        cmd.append(script_file)
+        cmd.extend(args.get(ext, []))
+        cmd.append(str(script_file))
 
         return cmd
 
+    def _initialize_env(self):
+        """Create an environment for executing script."""
+        ext = Path(self.script).suffix.lower()
+        env = {}
+        if ext in ('.py', '.jl'):
+            # Set non-interactive matplotlib backend
+            env['MPLBACKEND'] = 'Agg'
+        if ext in ('.r', '.ncl'):
+            # Make diag_scripts path available to diagostic script
+            env['diag_scripts'] = str(DIAGNOSTICS.scripts)
+        if ext == '.jl':
+            # Set the julia virtual environment
+            env['JULIA_LOAD_PATH'] = "{}:{}".format(
+                DIAGNOSTICS.path / 'install' / 'Julia',
+                os.environ.get('JULIA_LOAD_PATH', ''),
+            )
+        return env
+
     def write_settings(self):
         """Write settings to file."""
-        run_dir = self.settings['run_dir']
-        if not os.path.exists(run_dir):
-            os.makedirs(run_dir)
+        run_dir = Path(self.settings['run_dir'])
+        run_dir.mkdir(parents=True, exist_ok=True)
 
-        filename = os.path.join(run_dir, 'settings.yml')
-
-        with open(filename, 'w') as file:
-            yaml.safe_dump(self.settings, file)
+        filename = run_dir / 'settings.yml'
+        filename.write_text(yaml.safe_dump(self.settings))
 
         # If running an NCL script:
-        if self.script.lower().endswith('.ncl'):
+        if Path(self.script).suffix.lower() == '.ncl':
             # Also write an NCL file and return the name of that instead.
             return self._write_ncl_settings()
 
-        return filename
+        return str(filename)
 
     def _write_ncl_settings(self):
         """Write settings to NCL file."""
-        filename = os.path.join(self.settings['run_dir'], 'settings.ncl')
+        filename = Path(self.settings['run_dir']) / 'settings.ncl'
 
         config_user_keys = {
             'run_dir',
@@ -357,8 +384,6 @@ class DiagnosticTask(BaseTask):
             'work_dir',
             'output_file_type',
             'log_level',
-            'write_plots',
-            'write_netcdf',
         }
         settings = {'diag_script_info': {}, 'config_user_info': {}}
         for key, value in self.settings.items():
@@ -369,6 +394,13 @@ class DiagnosticTask(BaseTask):
             else:
                 settings[key] = value
 
+        # Still add deprecated keys to config_user_info to avoid
+        # crashing the diagnostic script that need this.
+        # DEPRECATED: remove in v2.4
+        for key in ('write_plots', 'write_netcdf'):
+            if key in self.settings:
+                settings['config_user_info'][key] = self.settings[key]
+
         write_ncl_settings(settings, filename)
 
         return filename
@@ -376,8 +408,8 @@ class DiagnosticTask(BaseTask):
     def _control_ncl_execution(self, process, lines):
         """Check if an error has occurred in an NCL script.
 
-        Apparently NCL does not automatically exit with a non-zero exit code
-        if an error occurs, so we take care of that here.
+        Apparently NCL does not automatically exit with a non-zero exit
+        code if an error occurs, so we take care of that here.
         """
         ignore_warnings = [
             warning.strip()
@@ -428,27 +460,24 @@ class DiagnosticTask(BaseTask):
         rerun_msg = 'cd {}; '.format(cwd)
         if env:
             rerun_msg += ' '.join('{}="{}"'.format(k, env[k]) for k in env)
-        rerun_msg += ' ' + ' '.join(cmd)
+        if "vprof" in cmd:
+            script_args = ' "' + cmd[-1] + '"'
+            rerun_msg += ' ' + ' '.join(cmd[:-1]) + script_args
+        else:
+            rerun_msg += ' ' + ' '.join(cmd)
         logger.info("To re-run this diagnostic script, run:\n%s", rerun_msg)
 
         complete_env = dict(os.environ)
         complete_env.update(env)
-        try:
-            process = subprocess.Popen(
-                cmd,
-                bufsize=2**20,  # Use a large buffer to prevent NCL crash
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                cwd=cwd,
-                env=complete_env)
-        except OSError as exc:
-            if exc.errno == errno.ENOEXEC:
-                logger.error(
-                    "Diagnostic script has its executable bit set, but is "
-                    "not executable. To fix this run:\nchmod -x %s", cmd[0])
-                logger.error(
-                    "You may also need to fix this in the git repository.")
-            raise
+
+        process = subprocess.Popen(
+            cmd,
+            bufsize=2**20,  # Use a large buffer to prevent NCL crash
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=cwd,
+            env=complete_env,
+        )
 
         return process
 
@@ -458,8 +487,8 @@ class DiagnosticTask(BaseTask):
             output_files = []
             return output_files
 
-        is_ncl_script = self.script.lower().endswith('.ncl')
-        if is_ncl_script:
+        ext = Path(self.script).suffix.lower()
+        if ext == '.ncl':
             self.settings['input_files'] = [
                 f for f in input_files
                 if f.endswith('.ncl') or os.path.isdir(f)
@@ -470,42 +499,39 @@ class DiagnosticTask(BaseTask):
                 if f.endswith('.yml') or os.path.isdir(f)
             ]
 
-        env = {}
-        if self.script.lower().endswith('.py'):
-            # Set non-interactive matplotlib backend
-            env['MPLBACKEND'] = 'Agg'
-        else:
-            # Make diag_scripts path available to diagostics scripts
-            env['diag_scripts'] = os.path.join(DIAGNOSTICS_PATH,
-                                               'diag_scripts')
-
+        env = dict(self.env)
         cmd = list(self.cmd)
         settings_file = self.write_settings()
-        if is_ncl_script:
+        if ext == '.ncl':
             env['settings'] = settings_file
         else:
-            cmd.append(settings_file)
+            if self.settings['profile_diagnostic']:
+                script_file = cmd.pop()
+                combo_with_settings = script_file + ' ' + str(settings_file)
+                cmd.append(combo_with_settings)
+            else:
+                cmd.append(settings_file)
 
         process = self._start_diagnostic_script(cmd, env)
 
         returncode = None
-        last_line = ['']
 
         with resource_usage_logger(process.pid, self.resource_log),\
-                open(self.log, 'at') as log:
+                open(self.log, 'ab') as log:
+            last_line = ['']
             while returncode is None:
                 returncode = process.poll()
                 txt = process.stdout.read()
-                txt = txt.decode(encoding='utf-8', errors='ignore')
                 log.write(txt)
 
                 # Check if an error occurred in an NCL script
                 # Last line is treated separately to avoid missing
                 # error messages spread out over multiple lines.
-                lines = txt.split('\n')
-                if is_ncl_script:
+                if ext == '.ncl':
+                    txt = txt.decode(encoding='utf-8', errors='ignore')
+                    lines = txt.split('\n')
                     self._control_ncl_execution(process, last_line + lines)
-                last_line = lines[-1:]
+                    last_line = lines[-1:]
 
                 # wait, but not long because the stdout buffer may fill up:
                 # https://docs.python.org/3.6/library/subprocess.html#subprocess.Popen.stdout
@@ -522,17 +548,18 @@ class DiagnosticTask(BaseTask):
 
     def _collect_provenance(self):
         """Process provenance information provided by the diagnostic script."""
-        provenance_file = os.path.join(self.settings['run_dir'],
-                                       'diagnostic_provenance.yml')
-        if not os.path.exists(provenance_file):
-            logger.warning("No provenance information was written to %s",
-                           provenance_file)
+        provenance_file = Path(
+            self.settings['run_dir']) / 'diagnostic_provenance.yml'
+        if not provenance_file.is_file():
+            logger.warning(
+                "No provenance information was written to %s. Unable to "
+                "record provenance for files created by diagnostic script %s "
+                "in task %s", provenance_file, self.script, self.name)
             return
 
         logger.debug("Collecting provenance from %s", provenance_file)
         start = time.time()
-        with open(provenance_file, 'r') as file:
-            table = yaml.safe_load(file)
+        table = yaml.safe_load(provenance_file.read_text())
 
         ignore = (
             'auxiliary_data_dir',
@@ -545,9 +572,7 @@ class DiagnosticTask(BaseTask):
             'recipe',
             'run_dir',
             'version',
-            'write_netcdf',
             'write_ncl_interface',
-            'write_plots',
             'work_dir',
         )
         attrs = {
@@ -557,124 +582,159 @@ class DiagnosticTask(BaseTask):
             if key not in ignore:
                 attrs[key] = self.settings[key]
 
-        ancestor_products = {p for a in self.ancestors for p in a.products}
+        ancestor_products = {
+            p.filename: p
+            for a in self.ancestors for p in a.products
+        }
 
+        valid = True
         for filename, attributes in table.items():
             # copy to avoid updating other entries if file contains anchors
             attributes = deepcopy(attributes)
             ancestor_files = attributes.pop('ancestors', [])
-            ancestors = {
-                p
-                for p in ancestor_products if p.filename in ancestor_files
-            }
+            if not ancestor_files:
+                logger.warning(
+                    "No ancestor files specified for recording provenance of "
+                    "%s, created by diagnostic script %s in task %s", filename,
+                    self.script, self.name)
+                valid = False
+            ancestors = set()
+            if isinstance(ancestor_files, str):
+                logger.warning(
+                    "Ancestor file(s) %s specified for recording provenance "
+                    "of %s, created by diagnostic script %s in task %s is "
+                    "a string but should be a list of strings", ancestor_files,
+                    filename, self.script, self.name)
+                ancestor_files = [ancestor_files]
+            for ancestor_file in ancestor_files:
+                if ancestor_file in ancestor_products:
+                    ancestors.add(ancestor_products[ancestor_file])
+                else:
+                    valid = False
+                    logger.warning(
+                        "Invalid ancestor file %s specified for recording "
+                        "provenance of %s, created by diagnostic script %s "
+                        "in task %s", ancestor_file, filename, self.script,
+                        self.name)
 
             attributes.update(deepcopy(attrs))
-            for key in attributes:
-                if key in TAGS:
-                    attributes[key] = replace_tags(key, attributes[key])
+
+            TAGS.replace_tags_in_dict(attributes)
 
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)
             product.save_provenance()
+            _write_citation_files(product.filename, product.provenance)
             self.products.add(product)
+
+        if not valid:
+            logger.warning(
+                "Valid ancestor files for diagnostic script %s in task %s "
+                "are:\n%s", self.script, self.name,
+                '\n'.join(ancestor_products))
         logger.debug("Collecting provenance of task %s took %.1f seconds",
                      self.name,
                      time.time() - start)
 
-    def __str__(self):
+    def __repr__(self):
         """Get human readable description."""
-        txt = "{}:\nscript: {}\n{}\nsettings:\n{}\n".format(
-            self.__class__.__name__,
-            self.script,
-            pprint.pformat(self.settings, indent=2),
-            super(DiagnosticTask, self).str(),
-        )
-        return txt
+        settings_string = pprint.pformat(self.settings)
+        string = (f"{self.__class__.__name__}: {self.name}\n"
+                  f"script: {self.script}\n"
+                  f"settings:\n{settings_string}\n"
+                  f"{self.print_ancestors()}\n")
+        return string
 
 
-def get_flattened_tasks(tasks):
-    """Return a set of all tasks and their ancestors in `tasks`."""
-    return set(t for task in tasks for t in task.flatten())
+class TaskSet(set):
+    """Container for tasks."""
 
+    def flatten(self) -> 'TaskSet':
+        """Flatten the list of tasks."""
+        return TaskSet(t for task in self for t in task.flatten())
 
-def get_independent_tasks(tasks):
-    """Return a set of independent tasks."""
-    independent_tasks = set()
-    all_tasks = get_flattened_tasks(tasks)
-    for task in all_tasks:
-        if not any(task in t.ancestors for t in all_tasks):
-            independent_tasks.add(task)
-    return independent_tasks
+    def get_independent(self) -> 'TaskSet':
+        """Return a set of independent tasks."""
+        independent_tasks = TaskSet()
+        all_tasks = self.flatten()
+        for task in all_tasks:
+            if not any(task in t.ancestors for t in all_tasks):
+                independent_tasks.add(task)
+        return independent_tasks
 
+    def run(self, max_parallel_tasks: int = None) -> None:
+        """Run tasks.
 
-def run_tasks(tasks, max_parallel_tasks=None):
-    """Run tasks."""
-    if max_parallel_tasks == 1:
-        _run_tasks_sequential(tasks)
-    else:
-        _run_tasks_parallel(tasks, max_parallel_tasks)
+        Parameters
+        ----------
+        max_parallel_tasks : int
+            Number of processes to run. If `1`, run the tasks sequentially.
+        """
+        if max_parallel_tasks == 1:
+            self._run_sequential()
+        else:
+            self._run_parallel(max_parallel_tasks)
 
+    def _run_sequential(self) -> None:
+        """Run tasks sequentially."""
+        n_tasks = len(self.flatten())
+        logger.info("Running %s tasks sequentially", n_tasks)
 
-def _run_tasks_sequential(tasks):
-    """Run tasks sequentially."""
-    n_tasks = len(get_flattened_tasks(tasks))
-    logger.info("Running %s tasks sequentially", n_tasks)
+        tasks = self.get_independent()
+        for task in sorted(tasks, key=lambda t: t.priority):
+            task.run()
 
-    tasks = get_independent_tasks(tasks)
-    for task in sorted(tasks, key=lambda t: t.priority):
-        task.run()
+    def _run_parallel(self, max_parallel_tasks=None):
+        """Run tasks in parallel."""
+        scheduled = self.flatten()
+        running: Dict[Type[BaseTask], Type[ApplyResult]] = {}
 
+        n_tasks = n_scheduled = len(scheduled)
+        n_running = 0
 
-def _run_tasks_parallel(tasks, max_parallel_tasks=None):
-    """Run tasks in parallel."""
-    scheduled = get_flattened_tasks(tasks)
-    running = {}
+        if max_parallel_tasks is None:
+            max_parallel_tasks = os.cpu_count()
+        max_parallel_tasks = min(max_parallel_tasks, n_tasks)
+        logger.info("Running %s tasks using %s processes", n_tasks,
+                    max_parallel_tasks)
 
-    n_scheduled, n_running = len(scheduled), len(running)
-    n_tasks = n_scheduled
+        def done(task):
+            """Assume a task is done if it not scheduled or running."""
+            return not (task in scheduled or task in running)
 
-    if max_parallel_tasks is None:
-        max_parallel_tasks = os.cpu_count()
-    if max_parallel_tasks > n_tasks:
-        max_parallel_tasks = n_tasks
-    logger.info("Running %s tasks using %s processes", n_tasks,
-                max_parallel_tasks)
+        with Pool(processes=max_parallel_tasks) as pool:
+            while scheduled or running:
+                # Submit new tasks to pool
+                for task in sorted(scheduled, key=lambda t: t.priority):
+                    if len(running) >= max_parallel_tasks:
+                        break
+                    if all(done(t) for t in task.ancestors):
+                        future = pool.apply_async(_run_task, [task])
+                        running[task] = future
+                        scheduled.remove(task)
 
-    def done(task):
-        """Assume a task is done if it not scheduled or running."""
-        return not (task in scheduled or task in running)
+                # Handle completed tasks
+                ready = {t for t in running if running[t].ready()}
+                for task in ready:
+                    _copy_results(task, running[task])
+                    running.pop(task)
 
-    pool = Pool(processes=max_parallel_tasks)
-    while scheduled or running:
-        # Submit new tasks to pool
-        for task in sorted(scheduled, key=lambda t: t.priority):
-            if len(running) >= max_parallel_tasks:
-                break
-            if all(done(t) for t in task.ancestors):
-                future = pool.apply_async(_run_task, [task])
-                running[task] = future
-                scheduled.remove(task)
+                # Wait if there are still tasks running
+                if running:
+                    time.sleep(0.1)
 
-        # Handle completed tasks
-        ready = {t for t in running if running[t].ready()}
-        for task in ready:
-            _copy_results(task, running[task])
-            running.pop(task)
+                # Log progress message
+                if len(scheduled) != n_scheduled or len(running) != n_running:
+                    n_scheduled, n_running = len(scheduled), len(running)
+                    n_done = n_tasks - n_scheduled - n_running
+                    logger.info(
+                        "Progress: %s tasks running, %s tasks waiting for "
+                        "ancestors, %s/%s done", n_running, n_scheduled,
+                        n_done, n_tasks)
 
-        # Wait if there are still tasks running
-        if running:
-            time.sleep(0.1)
-
-        # Log progress message
-        if len(scheduled) != n_scheduled or len(running) != n_running:
-            n_scheduled, n_running = len(scheduled), len(running)
-            n_done = n_tasks - n_scheduled - n_running
-            logger.info(
-                "Progress: %s tasks running, %s tasks waiting for ancestors, "
-                "%s/%s done", n_running, n_scheduled, n_done, n_tasks)
-
-    pool.close()
-    pool.join()
+            logger.info("Successfully completed all tasks.")
+            pool.close()
+            pool.join()
 
 
 def _copy_results(task, future):

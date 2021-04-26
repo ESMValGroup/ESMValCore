@@ -21,6 +21,7 @@ def get_cube(name, lat=((0.5, 1.5), (2.5, 3.5)), lon=((0.5, 1.5), (2.5, 3.5))):
     cube.add_aux_coord(AuxCoord(lon, 'longitude', bounds=lon_bounds), (1, 2))
     return cube
 
+
 @mock.patch(
     'esmvalcore.preprocessor._regrid.esmpy_regrid', autospec=True)
 def test_sispeed_calculation(mock_regrid):
@@ -33,6 +34,7 @@ def test_sispeed_calculation(mock_regrid):
         sispeed.data == np.full_like(sispeed.data, 1 * math.sqrt(2))
     )
     assert mock_regrid.call_count == 0
+
 
 @mock.patch(
     'esmvalcore.preprocessor._regrid.esmpy_regrid', autospec=True)
