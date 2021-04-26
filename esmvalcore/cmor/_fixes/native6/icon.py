@@ -19,12 +19,13 @@ GRID_FILE = "/mnt/lustre02/work/bd1179/experiments/icon-2.6.1_atm_amip_R2B5_r1v1
 class AllVars(Fix):
 
     def fix_metadata(self, cubes):
-        logger.info(f"\nFix metadata\n==================\n{cubes}\n")
-        logger.info(f"self.vardef = {self.vardef}")
+#         logger.info(f"\nFix metadata\n==================\n{cubes}\n")
+#         logger.info(f"self.vardef = {self.vardef}")
         for cube in cubes:
-            logger.info(f"Fixing {cube.var_name}")
-            self._fix_time(cube)
-            self._fix_coordinates(cube)
+            if cube.var_name == self.vardef.short_name:
+                logger.info(f"Fixing {cube.var_name}")
+                self._fix_time(cube)
+                self._fix_coordinates(cube)
         return cubes
 
     
@@ -35,7 +36,6 @@ class AllVars(Fix):
         # TODO
         lon.var_name = "lon"
         lat.var_name = "lat"
-        logger.info(f"Before Manuel: {cube.var_name} : {cube}")
         
         index_coord = iris.coords.DimCoord(
             np.arange(cube.shape[1]),
@@ -44,7 +44,6 @@ class AllVars(Fix):
             units="1",
         )
         cube.add_dim_coord(index_coord, 1)
-        logger.info(f"After Manuel: {cube.var_name} : {cube}")
         
         if 'height2m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 2.)
