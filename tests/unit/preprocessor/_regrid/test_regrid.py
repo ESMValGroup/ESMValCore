@@ -156,69 +156,64 @@ def _make_cube(*, lat: tuple, lon: tuple):
 LAT_SPEC1 = (-85, 85, 18)
 LON_SPEC1 = (5, 355, 36)
 
-# almost 10x10
+# almost 10x10, but different shape
 LAT_SPEC2 = (-85, 85, 17)
 LON_SPEC2 = (5, 355, 35)
 
+# 10x10, but different coords
+LAT_SPEC3 = (-90, 90, 18)
+LON_SPEC3 = (0, 360, 36)
+
 
 @pytest.mark.parametrize(
-    'hor_spec1, hor_spec2, expected',
+    'cube2_spec, expected',
     (
-        # equal lat/equal lon
+        # equal lat/lon
         (
             {
                 'lat': LAT_SPEC1,
-                'lon': LON_SPEC1
-            },
-            {
-                'lat': LAT_SPEC1,
-                'lon': LON_SPEC1
+                'lon': LON_SPEC1,
             },
             True,
         ),
-        # equal lat/different lon
+        # different lon shape
         (
             {
                 'lat': LAT_SPEC1,
-                'lon': LON_SPEC1
-            },
-            {
-                'lat': LAT_SPEC1,
-                'lon': LON_SPEC2
+                'lon': LON_SPEC2,
             },
             False,
         ),
-        # different lat/equal lon
+        # different lat shape
         (
             {
-                'lat': LAT_SPEC1,
-                'lon': LON_SPEC1
-            },
-            {
                 'lat': LAT_SPEC2,
-                'lon': LON_SPEC1
+                'lon': LON_SPEC1,
             },
             False,
         ),
-        # different lat/different lon
+        # different lon values
         (
             {
                 'lat': LAT_SPEC1,
-                'lon': LON_SPEC1
+                'lon': LON_SPEC3,
             },
+            False,
+        ),
+        # different lat values
+        (
             {
-                'lat': LAT_SPEC2,
-                'lon': LON_SPEC2
+                'lat': LAT_SPEC3,
+                'lon': LON_SPEC1,
             },
             False,
         ),
     ),
 )
-def test_horizontal_grid_is_close(hor_spec1: dict, hor_spec2: dict,
-                                  expected: bool):
+def test_horizontal_grid_is_close(cube2_spec: dict, expected: bool):
     """Test for `_horizontal_grid_is_close`."""
-    cube1 = _make_cube(**hor_spec1)
-    cube2 = _make_cube(**hor_spec2)
+    cube1 = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    cube2 = _make_cube(**cube2_spec)
 
     assert _horizontal_grid_is_close(cube1, cube2) == expected
 
