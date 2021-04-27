@@ -89,18 +89,26 @@ def select_files(filenames, start_year, end_year):
     return selection
 
 
-def _replace_tags(path, variable):
+def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
-    path = path.strip('/')
-    tlist = re.findall(r'{([^}]*)}', path)
-    if 'startdate' in variable:
-        paths = list(set([
-            re.sub(r'(\b{ensemble}\b)', r'{startdate}-\1', path),
-            re.sub(r'({ensemble})', r'{startdate}-\1', path)
-            ]))
-        tlist.append('startdate')
+    if isinstance(paths, str):
+        paths = set((paths.strip('/'),))
     else:
-        paths = [path]
+        paths = set(path.strip('/') for path in paths)
+    tlist = set()
+    for path in paths:
+        tlist = tlist.union(re.findall(r'{([^}]*)}', path))
+    if 'startdate' in variable:
+        new_paths = []
+        for path in paths:
+            new_paths.extend((
+                re.sub(r'(\b{ensemble}\b)', r'{startdate}-\1', path),
+                re.sub(r'({ensemble})', r'{startdate}-\1', path)
+            ))
+            tlist.add('startdate')
+        paths = new_paths
+    logger.debug(tlist)
+
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
@@ -126,7 +134,7 @@ def _replace_tag(paths, tag, replacewith):
     else:
         text = _apply_caps(str(replacewith), lower, upper)
         result.extend(p.replace('{' + tag + '}', text) for p in paths)
-    return result
+    return list(set(result))
 
 
 def _get_caps_options(tag):
@@ -150,7 +158,11 @@ def _apply_caps(original, lower, upper):
 
 
 def _resolve_latestversion(dirname_template):
-    """Resolve the 'latestversion' tag."""
+    """Resolve the 'latestversion' tag.
+
+    This implementation avoid globbing on centralized clusters with very
+    large data root dirs (i.e. ESGF nodes like Jasmin/DKRZ).
+    """
     if '{latestversion}' not in dirname_template:
         return dirname_template
 

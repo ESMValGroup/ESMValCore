@@ -11,14 +11,14 @@ on:
 jobs:
 
   publish:
-    name: publish / python-3.8 / ubuntu-latest
+    name: publish / python-3.9 / ubuntu-latest
     runs-on: 'ubuntu-latest'
     steps:
       - uses: actions/checkout@v2
-      - uses: goanpeca/setup-miniconda@v1
+      - uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
-          python-version: "3.8"
+          python-version: "3.9"
           miniconda-version: "latest"
           channels: conda-forge
       - name: Show conda config
@@ -43,7 +43,7 @@ jobs:
           export BUILD_FOLDER=/tmp/esmvalcore/_build
           mkdir -p $BUILD_FOLDER
           conda build package \
-            --channel esmvalgroup --channel conda-forge \
+            --channel conda-forge \
             --croot $BUILD_FOLDER \
       - name: Push the package to anaconda cloud
         if: startsWith(github.ref, 'refs/tags')
@@ -58,19 +58,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest']  # may extent to osx in the future
-        python-version: ["3.6", "3.7", "3.8"]
+        os: ['ubuntu-latest', 'macos-latest']
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
     runs-on: ${{ matrix.os }}
     needs: publish
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: "0"
-      - uses: goanpeca/setup-miniconda@v1
+      - uses: conda-incubator/setup-miniconda@v2
         with:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
-          channels: esmvalgroup,conda-forge
+          channels: conda-forge
       - shell: bash -l {0}
         run: conda --version
       - shell: bash -l {0}

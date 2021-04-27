@@ -112,7 +112,7 @@ def test_tos_fix_metadata():
     vardef = get_var_info('CMIP6', 'Omon', 'tos')
     fix = Tos(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
-    tos_cube = fixed_cubes.extract_strict('sea_surface_temperature')
+    tos_cube = fixed_cubes.extract_cube('sea_surface_temperature')
 
     # No duplicates anymore
     assert len(tos_cube.coords('latitude')) == 1
@@ -172,7 +172,7 @@ def test_siconc_fix_metadata():
     vardef = get_var_info('CMIP6', 'SImon', 'siconc')
     fix = Siconc(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
-    siconc_cube = fixed_cubes.extract_strict('sea_ice_area_fraction')
+    siconc_cube = fixed_cubes.extract_cube('sea_ice_area_fraction')
 
     # No duplicates anymore
     assert len(siconc_cube.coords('latitude')) == 1

@@ -1,4 +1,4 @@
-"""Unit tests for :func:`esmvalcore._data_finder.regrid._stock_cube`"""
+"""Tests for _replace_tags in _data_finder.py."""
 from esmvalcore._data_finder import _replace_tags
 
 VARIABLE = {
@@ -31,6 +31,16 @@ def test_replace_tags():
     assert output_file == ['CMIP6_ACCURATE-MODEL_Amon_experiment_r1i1p1f1_tas']
 
 
+def test_replace_tags_list_of_str():
+    assert sorted(
+        _replace_tags(('folder/subfolder/{short_name}', 'folder2/{short_name}',
+                       'subfolder/{short_name}'), VARIABLE)) == sorted([
+                           'folder2/tas',
+                           'folder/subfolder/tas',
+                           'subfolder/tas',
+                       ])
+
+
 def test_replace_tags_with_startdate():
     """Tests for get_start_end_year function."""
     variable = {'startdate': '199411', **VARIABLE}
@@ -41,12 +51,12 @@ def test_replace_tags_with_startdate():
         '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc', variable)
     output_file = _replace_tags(
         '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}', variable)
-    assert path == [
+    assert sorted(path) == sorted([
         'act/HMA/ACCURATE-MODEL/experiment/r1i1p1f1/Amon/tas/gr/'
         '{latestversion}',
         'act/HMA/ACCURATE-MODEL/experiment/199411-r1i1p1f1/Amon/tas/gr/'
         '{latestversion}'
-    ]
+    ])
     assert input_file == [
         'tas_Amon_ACCURATE-MODEL_experiment_199411-r1i1p1f1_gr*.nc'
     ]

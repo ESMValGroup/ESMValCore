@@ -5,6 +5,10 @@ import cftime
 
 from ..fix import Fix
 from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
+from .cesm1_cam5 import Cl as BaseCl
+
+
+Cl = BaseCl
 
 
 class AllVars(BaseAllVars):
