@@ -4,10 +4,11 @@ from iris.coords import AuxCoord
 from iris.exceptions import ConstraintMismatchError
 
 from ..fix import Fix
+from ..shared import (set_ocean_depth_coord)
 
 
 class AllVars(Fix):
-    """Fixes for thetao."""
+    """Common fixes."""
 
     def fix_metadata(self, cubes):
         """
@@ -42,6 +43,32 @@ class AllVars(Fix):
             cube.add_aux_coord(cell_area, cube.coord_dims('latitude'))
             cube.coord('latitude').var_name = 'lat'
             cube.coord('longitude').var_name = 'lon'
+            new_list.append(cube)
+        return CubeList(new_list)
+
+
+class Omon(Fix):
+    """Fixes for ocean variables."""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        new_list = CubeList()
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                if cube.coord(axis='Z').var_name == 'olevel':
+                    cube = set_ocean_depth_coord(cube)
             new_list.append(cube)
         return CubeList(new_list)
 
