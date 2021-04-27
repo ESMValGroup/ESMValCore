@@ -548,6 +548,33 @@ get_input_filelist:
   - drs: DKRZ
     variable:
       variable_group: test
+      short_name: volcello
+      original_short_name: volcello
+      dataset: HadGEM3-GC31-LL
+      activity: CMIP
+      project: CMIP6
+      cmor_table: CMIP6
+      institute: [MOHC, NERC]
+      frequency: fx
+      modeling_realm: [ocean]
+      mip: Ofx
+      exp: historical
+      grid: gn
+      ensemble: r1i1p1f1
+      start_year: 2000
+      end_year: 2000
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r0i0p0/Ofx/volcello/gn/v20200101/volcello_Ofx_HadGEM3-GC31-LL_historical_r0i0p0_gn.nc
+    dirs: []
+    file_patterns:
+      - volcello_Ofx_HadGEM3-GC31-LL_historical_r1i1p1f1_gn*.nc
+    found_files: []
+
+  - drs: DKRZ
+    variable:
+      variable_group: test
       short_name: areacella
       original_short_name: areacella
       dataset: HADGEM1
