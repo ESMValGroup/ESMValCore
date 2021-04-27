@@ -43,13 +43,13 @@ def _get_time_bounds(time, freq):
             max_bound = time.units.date2num(
                 datetime.datetime(next_year, next_month, 1, 0, 0))
         elif freq == 'yr':
-            min_bound = time.units.date2num(
-                datetime.datetime(year, 1, 1, 0, 0))
+            min_bound = time.units.date2num(datetime.datetime(
+                year, 1, 1, 0, 0))
             max_bound = time.units.date2num(
                 datetime.datetime(year + 1, 1, 1, 0, 0))
         elif freq == 'dec':
-            min_bound = time.units.date2num(
-                datetime.datetime(year, 1, 1, 0, 0))
+            min_bound = time.units.date2num(datetime.datetime(
+                year, 1, 1, 0, 0))
             max_bound = time.units.date2num(
                 datetime.datetime(year + 10, 1, 1, 0, 0))
         else:
@@ -137,8 +137,8 @@ class CMORCheck():
             except iris.exceptions.CoordinateNotFoundError:
                 pass
             else:
-                if lat.ndim == 1 and (self._cube.coord_dims(lat) ==
-                                      self._cube.coord_dims(lon)):
+                if lat.ndim == 1 and (self._cube.coord_dims(lat)
+                                      == self._cube.coord_dims(lon)):
                     self._unstructured = True
         return self._unstructured
 
@@ -340,13 +340,6 @@ class CMORCheck():
 
     def _check_rank(self):
         """Check rank, excluding scalar dimensions."""
-        if self._cmor_var.extra_dim is True:
-            self.report_debug_message(
-                'Presence of extra dimensions allowed '
-                'as set in config-developer.yml. '
-                'Skipping check on rank.')
-            return
-
         rank = 0
         dimensions = []
         for coordinate in self._cmor_var.coordinates.values():
@@ -359,6 +352,15 @@ class CMORCheck():
                 except iris.exceptions.CoordinateNotFoundError:
                     # Error reported at other stages
                     pass
+        for dim_name in self._cmor_var.extra_dims:
+            try:
+                for dim in self._cube.coord_dims(dim_name):
+                    self.report_debug_message(
+                        f'Extra dimension "{dim_name}" found')
+                    dimensions.append(dim)
+            except iris.exceptions.CoordinateNotFoundError:
+                # Error reported at other stages
+                pass
         rank += len(set(dimensions))
 
         # Check number of dimension coords matches rank
@@ -581,8 +583,7 @@ class CMORCheck():
             self.report_debug_message(
                 f'Coordinate {coord.standard_name} appears to belong to '
                 'an unstructured grid. Skipping monotonicity and '
-                'direction tests.'
-            )
+                'direction tests.')
             return
 
         if not coord.is_monotonic():

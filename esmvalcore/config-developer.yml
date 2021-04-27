@@ -187,7 +187,7 @@ OBS6:
     BSC: '{short_name}_*.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
-  
+
 seasonal:
   cmor_strict: false
   input_dir:
@@ -198,7 +198,7 @@ seasonal:
     BSC: '{short_name}_*.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
-  extra_dimensions: true
+  extra_dimensions: ensemble
 
 native6:
   cmor_strict: false

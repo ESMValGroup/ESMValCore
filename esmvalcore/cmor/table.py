@@ -72,7 +72,7 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
     table_path = os.path.expandvars(os.path.expanduser(table_path))
     cmor_strict = project.get('cmor_strict', True)
     default_table_prefix = project.get('cmor_default_table_prefix', '')
-    extra_dim = project.get('extra_dimensions', False)
+    extra_dims = project.get('extra_dimensions', '').split(' ')
 
     if cmor_type == 'CMIP3':
         return CMIP3Info(
@@ -89,14 +89,12 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
                          alt_names=alt_names)
 
     if cmor_type == 'CMIP6':
-        return CMIP6Info(
-            table_path,
-            default=custom,
-            strict=cmor_strict,
-            default_table_prefix=default_table_prefix,
-            alt_names=alt_names,
-            extra_dim=extra_dim
-        )
+        return CMIP6Info(table_path,
+                         default=custom,
+                         strict=cmor_strict,
+                         default_table_prefix=default_table_prefix,
+                         alt_names=alt_names,
+                         extra_dims=extra_dims)
     raise ValueError(f'Unsupported CMOR type {cmor_type}')
 
 
@@ -245,7 +243,7 @@ class CMIP6Info(InfoBase):
                  alt_names=None,
                  strict=True,
                  default_table_prefix='',
-                 extra_dim=False):
+                 extra_dims=[]):
 
         super().__init__(default, alt_names, strict)
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
@@ -256,7 +254,7 @@ class CMIP6Info(InfoBase):
 
         self.default_table_prefix = default_table_prefix
 
-        self.extra_dim = extra_dim
+        self.extra_dims = extra_dims
 
         self.var_to_freq = {}
 
@@ -306,8 +304,7 @@ class CMIP6Info(InfoBase):
                 self._assign_dimensions(var, generic_levels)
                 table[var_name] = var
                 self.var_to_freq[table.name][var_name] = var.frequency
-                if self.extra_dim is True:
-                    var.extra_dim = True
+                var.extra_dims = self.extra_dims
 
             if not table.frequency:
                 var_freqs = (var.frequency for var in table.values())
@@ -475,7 +472,7 @@ class VariableInfo(JsonInfo):
         """
         super(VariableInfo, self).__init__()
         self.table_type = table_type
-        self.extra_dim = False
+        self.extra_dims = []
         self.modeling_realm = []
         """Modeling realm"""
         self.short_name = short_name
@@ -558,7 +555,7 @@ class CoordinateInfo(JsonInfo):
         super(CoordinateInfo, self).__init__()
         self.name = name
         self.generic_level = False
-        self.extra_dim = False
+        self.extra_dims = []
         self.generic_lev_coords = {}
 
         self.axis = ""
