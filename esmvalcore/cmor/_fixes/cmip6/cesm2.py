@@ -269,7 +269,8 @@ class Omon(Fix):
         for cube in cubes:
             if cube.coords(axis='Z'):
                 if cube.coord(axis='Z').units == Unit('centimeters'):
-                    cube.coord(axis='Z').points = cube.coord(axis='Z').points / 100.
+                    cube.coord(
+                        axis='Z').points = cube.coord(axis='Z').points / 100.
                     cube.coord(axis='Z').units = Unit('m')
                 if not cube.coord(axis='Z').standard_name:
                     cube = set_ocean_depth_coord(cube)

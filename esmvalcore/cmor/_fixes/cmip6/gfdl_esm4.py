@@ -4,6 +4,7 @@ from iris.cube import CubeList
 from ..fix import Fix
 from ..shared import (add_scalar_depth_coord, set_ocean_depth_coord)
 
+
 class Omon(Fix):
     """Fixes for ocean variables."""
 
@@ -28,6 +29,7 @@ class Omon(Fix):
                     cube = set_ocean_depth_coord(cube)
             new_list.append(cube)
         return CubeList(new_list)
+
 
 class Siconc(Fix):
     """Fixes for siconc."""
