@@ -89,11 +89,18 @@ def select_files(filenames, start_year, end_year):
     return selection
 
 
-def _replace_tags(path, variable):
+def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
-    path = path.strip('/')
-    tlist = re.findall(r'{([^}]*)}', path)
-    paths = [path]
+    if isinstance(paths, str):
+        paths = (paths.strip('/'), )
+    else:
+        paths = [path.strip('/') for path in paths]
+    tlist = set()
+
+    for path in paths:
+        tlist = tlist.union(re.findall(r'{([^}]*)}', path))
+    logger.debug(tlist)
+
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
@@ -144,7 +151,11 @@ def _apply_caps(original, lower, upper):
 
 
 def _resolve_latestversion(dirname_template):
-    """Resolve the 'latestversion' tag."""
+    """Resolve the 'latestversion' tag.
+
+    This implementation avoid globbing on centralized clusters with very
+    large data root dirs (i.e. ESGF nodes like Jasmin/DKRZ).
+    """
     if '{latestversion}' not in dirname_template:
         return dirname_template
 

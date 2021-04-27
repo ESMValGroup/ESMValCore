@@ -42,17 +42,17 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute total ecosystem carbon storage."""
         try:
-            c_soil_cube = cubes.extract_strict(
+            c_soil_cube = cubes.extract_cube(
                 Constraint(name='soil_carbon_content'))
         except iris.exceptions.ConstraintMismatchError:
             try:
-                c_soil_cube = cubes.extract_strict(
+                c_soil_cube = cubes.extract_cube(
                     Constraint(name='soil_mass_content_of_carbon'))
             except iris.exceptions.ConstraintMismatchError:
                 raise ValueError(f"No cube from {cubes} can be loaded with "
                                  f"standard name CMIP5: soil_carbon_content "
                                  f"or CMIP6: soil_mass_content_of_carbon")
-        c_veg_cube = cubes.extract_strict(
+        c_veg_cube = cubes.extract_cube(
             Constraint(name='vegetation_carbon_content'))
         c_total_cube = c_soil_cube + c_veg_cube
         c_total_cube.standard_name = None

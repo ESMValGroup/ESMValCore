@@ -91,10 +91,10 @@ def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
     fixed_cubes = fix.fix_metadata(cl_cubes)
     mock_base_fix_metadata.assert_called_once_with(fix, cl_cubes)
     assert len(fixed_cubes) == 2
-    cl_cube = fixed_cubes.extract_strict(
+    cl_cube = fixed_cubes.extract_cube(
         'cloud_area_fraction_in_atmosphere_layer')
     b_coord_cl = cl_cube.coord('vertical coordinate formula term: b(k)')
     assert not b_coord_cl.attributes
-    x_cube = fixed_cubes.extract_strict('x')
+    x_cube = fixed_cubes.extract_cube('x')
     b_coord_x = x_cube.coord('vertical coordinate formula term: b(k)')
     assert b_coord_x.attributes == {'a': 1, 'b': '2'}
