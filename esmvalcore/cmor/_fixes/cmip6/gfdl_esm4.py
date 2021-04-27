@@ -1,7 +1,33 @@
 """Fixes for GFDL-ESM4 model."""
 import iris
+from iris.cube import CubeList
 from ..fix import Fix
+from ..shared import (add_scalar_depth_coord, set_ocean_depth_coord)
 
+class Omon(Fix):
+    """Fixes for ocean variables."""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        new_list = CubeList()
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                if not cube.coord(axis='Z').standard_name:
+                    cube = set_ocean_depth_coord(cube)
+            new_list.append(cube)
+        return CubeList(new_list)
 
 class Siconc(Fix):
     """Fixes for siconc."""
@@ -29,4 +55,25 @@ class Siconc(Fix):
             bounds=None)
         for cube in cubes:
             cube.add_aux_coord(typesi)
+        return cubes
+
+
+class Fgco2(Fix):
+    """Fixes for fgco2."""
+
+    def fix_metadata(self, cubes):
+        """Add depth (0m) coordinate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_depth_coord(cube)
         return cubes
