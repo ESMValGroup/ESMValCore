@@ -2,7 +2,8 @@
 from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import Siconc as BaseSiconc
 from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import Sos as BaseSos
 from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import Tos as BaseTos
-from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import Cl, Cli, Clw, Siconc, Sos, Tos
+from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import Cl, Cli, Clw, \
+    Siconc, Sos, Tos
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
