@@ -73,9 +73,9 @@ def test_tos_fix_data(mock_base_fix_data):
 
 
 @unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr.BaseSos.fix_data',
+    'esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr.BaseTos.fix_data',
     autospec=True)
-def test_tos_fix_data(mock_base_fix_data):
+def test_sos_fix_data(mock_base_fix_data):
     """Test ``fix_data`` for ``sos``."""
     fix = Sos(None)
     fix.fix_data('cubes')
