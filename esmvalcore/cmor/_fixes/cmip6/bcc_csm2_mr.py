@@ -66,3 +66,7 @@ class Siconc(BaseTos):
         lon_coord.units = '1'
         lon_coord.circular = False
         return cubes
+
+
+class Sos(Tos):
+    """Fixes for sos."""
