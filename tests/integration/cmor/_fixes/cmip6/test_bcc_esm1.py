@@ -1,6 +1,8 @@
 """Test fixes for BCC-ESM1."""
+from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import Siconc as BaseSiconc
+from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import Sos as BaseSos
 from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import Tos as BaseTos
-from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import Cl, Cli, Clw, Tos
+from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import Cl, Cli, Clw, Siconc, Sos, Tos
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
@@ -36,6 +38,28 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is ClFixHybridPressureCoord
+
+
+def test_get_siconc_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'SImon', 'siconc')
+    assert fix == [Siconc(None)]
+
+
+def test_siconc_fix():
+    """Test fix for ``siconc``."""
+    assert Siconc is BaseSiconc
+
+
+def test_get_sos_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Omon', 'sos')
+    assert fix == [Sos(None)]
+
+
+def test_sos_fix():
+    """Test fix for ``sos``."""
+    assert Sos is BaseSos
 
 
 def test_get_tos_fix():
