@@ -41,9 +41,9 @@ def test_replace_tags_list_of_str():
                        ])
 
 
-def test_replace_tags_with_startdate():
+def test_replace_tags_with_subexperiment():
     """Tests for get_start_end_year function."""
-    variable = {'startdate': '199411', **VARIABLE}
+    variable = {'sub_experiment': '199411', **VARIABLE}
     path = _replace_tags(
         '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/'
         '{grid}/{latestversion}', variable)

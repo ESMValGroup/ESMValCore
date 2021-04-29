@@ -29,18 +29,18 @@ class TestRecipe:
         for i, ensemble in enumerate(ensembles):
             assert expanded[i] == {'dataset': 'XYZ', 'ensemble': ensemble}
 
-    def test_expand_startdate(self):
+    def test_expand_subexperiment(self):
 
         datasets = [
             {
                 'dataset': 'XYZ',
-                'startdate': 's(1998:2005)',
+                'sub_experiment': 's(1998:2005)',
             },
         ]
 
-        expanded = Recipe._expand_tag(datasets, 'startdate')
+        expanded = Recipe._expand_tag(datasets, 'sub_experiment')
 
-        startdates = [
+        subexperiments = [
             's1998',
             's1999',
             's2000',
@@ -50,8 +50,9 @@ class TestRecipe:
             's2004',
             's2005',
         ]
-        for i, startdate in enumerate(startdates):
-            assert expanded[i] == {'dataset': 'XYZ', 'startdate': startdate}
+        for i, subexperiment in enumerate(subexperiments):
+            assert expanded[i] == {'dataset': 'XYZ',
+                                   'sub_experiment': subexperiment}
 
     def test_expand_ensemble_nolist(self):
 

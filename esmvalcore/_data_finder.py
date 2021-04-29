@@ -98,14 +98,14 @@ def _replace_tags(paths, variable):
     tlist = set()
     for path in paths:
         tlist = tlist.union(re.findall(r'{([^}]*)}', path))
-    if 'startdate' in variable:
+    if 'sub_experiment' in variable:
         new_paths = []
         for path in paths:
             new_paths.extend((
-                re.sub(r'(\b{ensemble}\b)', r'{startdate}-\1', path),
-                re.sub(r'({ensemble})', r'{startdate}-\1', path)
+                re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
+                re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)
             ))
-            tlist.add('startdate')
+            tlist.add('sub_experiment')
         paths = new_paths
     logger.debug(tlist)
 
@@ -266,7 +266,7 @@ def get_input_filelist(variable, rootpath, drs):
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
-        if 'startdate' in variable:
+        if 'sub_experiment' in variable:
             variable = _update_output_file(variable, files)
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
@@ -288,7 +288,7 @@ def get_output_file(variable, preproc_dir):
         variable['variable_group'],
         _replace_tags(cfg['output_file'], variable)[0],
     )
-    if variable['frequency'] != 'fx' and 'startdate' not in variable:
+    if variable['frequency'] != 'fx' and 'sub_experiment' not in variable:
         outfile += '_{start_year}-{end_year}'.format(**variable)
     outfile += '.nc'
     return outfile

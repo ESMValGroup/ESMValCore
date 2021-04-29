@@ -1075,19 +1075,19 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
-            if 'startdate' in variable:
-                startdate_keys = deepcopy(required_keys)
-                startdate_keys.update({'startdate'})
+            if 'sub_experiment' in variable:
+                subexperiment_keys = deepcopy(required_keys)
+                subexperiment_keys.update({'sub_experiment'})
                 try:
-                    startdate_keys.remove('start_year')
-                    startdate_keys.remove('end_year')
+                    subexperiment_keys.remove('start_year')
+                    subexperiment_keys.remove('end_year')
                 except KeyError:
                     continue
-                check.variable(variable, startdate_keys)
+                check.variable(variable, subexperiment_keys)
             else:
                 check.variable(variable, required_keys)
         variables = self._expand_tag(variables, 'ensemble')
-        variables = self._expand_tag(variables, 'startdate')
+        variables = self._expand_tag(variables, 'sub_experiment')
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
