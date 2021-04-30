@@ -532,9 +532,7 @@ def _get_ancestors(variable, config_user):
     logger.info("Using input files for variable %s of dataset %s:\n%s",
                 variable['short_name'], variable['dataset'],
                 '\n'.join(input_files))
-    if (not config_user.get('skip-nonexistent')
-            or variable['dataset'] == variable.get('reference_dataset')):
-        check.data_availability(input_files, variable, dirnames, filenames)
+    check.data_availability(input_files, variable, dirnames, filenames)
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
@@ -673,6 +671,16 @@ def _match_products(products, variables):
     return grouped_products
 
 
+def _allow_skipping(ancestors, variable, config_user):
+    """Allow skipping of datasets."""
+    allow_skipping = all([
+        config_user.get('skip-nonexistent'),
+        not ancestors,
+        variable['dataset'] != variable.get('reference_dataset'),
+    ])
+    return allow_skipping
+
+
 def _get_preprocessor_products(variables, profile, order, ancestor_products,
                                config_user, name):
     """Get preprocessor product definitions for a set of datasets.
@@ -714,7 +722,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             try:
                 ancestors = _get_ancestors(variable, config_user)
             except RecipeError as ex:
-                if config_user.get('skip-nonexistent') and not ancestors:
+                if _allow_skipping(ancestors, variable, config_user):
                     logger.info("Skipping: %s", ex.message)
                 else:
                     missing_vars.add(ex.message)
