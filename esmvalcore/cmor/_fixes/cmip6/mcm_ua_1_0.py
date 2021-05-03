@@ -124,3 +124,24 @@ class Tos(Fix):
                         cube.coord('longitude').bounds = np.roll(lon_bnds, -1, axis=0)
 
         return cubes
+
+
+class Uas(Fix):
+    """Fixes for uas."""
+
+    def fix_metadata(self, cubes):
+        """Add height (10m) coordinate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Cubes to fix.
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_height_coord(cube, 10.0)
+        return [cube]
