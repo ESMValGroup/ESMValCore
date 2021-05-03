@@ -272,6 +272,13 @@ def test_ocean_fix_grid_wrong_ij_names(tos_cubes_wrong_ij_names):
     assert j_coord.long_name == 'cell index along second dimension'
     assert j_coord.units == '1'
 
+    # Check ij points and bounds
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2])
+    np.testing.assert_allclose(i_coord.bounds,
+                               [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]])
+    np.testing.assert_allclose(j_coord.points, [0, 1])
+    np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
+
     # Check bounds of latitude and longitude
     assert len(fixed_cube.coords('latitude')) == 1
     assert len(fixed_cube.coords('longitude')) == 1
@@ -334,11 +341,12 @@ def test_ocean_fix_grid_no_ij_bounds(tos_cubes_no_ij_bounds):
     assert j_coord.long_name == 'cell index along second dimension'
     assert j_coord.units == '1'
 
-    # Check bounds of i and j
+    # Check ij points and bounds
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2])
     np.testing.assert_allclose(i_coord.bounds,
-                               [[5.0, 15.0], [15.0, 25.0], [25.0, 35.0]])
-    np.testing.assert_allclose(j_coord.bounds,
-                               [[10.0, 30.0], [30.0, 50.0]])
+                               [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]])
+    np.testing.assert_allclose(j_coord.points, [0, 1])
+    np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
 
     # Check bounds of latitude and longitude
     assert len(fixed_cube.coords('latitude')) == 1

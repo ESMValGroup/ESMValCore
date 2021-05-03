@@ -92,6 +92,7 @@ def test_tos_fix_metadata():
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes.extract_cube('sea_surface_temperature')
+    assert fixed_cube is cube
     i_coord = fixed_cube.coord('cell index along first dimension')
     j_coord = fixed_cube.coord('cell index along second dimension')
     assert i_coord.var_name == 'i'
@@ -103,7 +104,11 @@ def test_tos_fix_metadata():
     assert j_coord.standard_name is None
     assert j_coord.long_name == 'cell index along second dimension'
     assert j_coord.units == '1'
-    assert fixed_cube is cube
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2])
+    np.testing.assert_allclose(i_coord.bounds,
+                               [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]])
+    np.testing.assert_allclose(j_coord.points, [0, 1])
+    np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
     assert fixed_cube.coord('latitude').bounds is not None
     assert fixed_cube.coord('longitude').bounds is not None
     latitude_bounds = np.array([[[-40, -33.75, -23.75, -30.0],

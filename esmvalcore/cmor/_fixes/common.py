@@ -1,7 +1,6 @@
 """Common fixes used for multiple datasets."""
 import iris
 import numpy as np
-from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.ndimage import map_coordinates
 
 from .fix import Fix
@@ -143,28 +142,18 @@ class OceanFixGrid(Fix):
         j_coord.long_name = 'cell index along second dimension'
         j_coord.units = '1'
 
-        # Guess bounds of coordinates i and j if necessary
-        if not i_coord.has_bounds():
-            i_coord.guess_bounds()
-        if not j_coord.has_bounds():
-            j_coord.guess_bounds()
-
-        # Transform i and j bounds into array indices [0, 1, 2, ...]
-        i_to_idx = InterpolatedUnivariateSpline(i_coord.points,
-                                                np.arange(len(i_coord.points)),
-                                                k=1)
-        j_to_idx = InterpolatedUnivariateSpline(j_coord.points,
-                                                np.arange(len(j_coord.points)),
-                                                k=1)
-        i_idx_bnds = i_to_idx(i_coord.bounds)
-        j_idx_bnds = j_to_idx(j_coord.bounds)
+        # Fix points and bounds of index coordinates i and j
+        for idx_coord in (i_coord, j_coord):
+            idx_coord.points = np.arange(len(idx_coord.points))
+            idx_coord.bounds = None
+            idx_coord.guess_bounds()
 
         # Calculate latitude/longitude vertices by interpolation
         lat_vertices = []
         lon_vertices = []
         for (j, i) in [(0, 0), (0, 1), (1, 1), (1, 0)]:
-            (j_v, i_v) = np.meshgrid(j_idx_bnds[:, j],
-                                     i_idx_bnds[:, i],
+            (j_v, i_v) = np.meshgrid(j_coord.bounds[:, j],
+                                     i_coord.bounds[:, i],
                                      indexing='ij')
             lat_vertices.append(
                 map_coordinates(cube.coord('latitude').points,
