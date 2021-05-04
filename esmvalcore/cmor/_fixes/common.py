@@ -1,10 +1,14 @@
 """Common fixes used for multiple datasets."""
+import logging
+
 import iris
 import numpy as np
 from scipy.ndimage import map_coordinates
 
 from .fix import Fix
 from .shared import add_plev_from_altitude, fix_bounds
+
+logger = logging.getLogger(__name__)
 
 
 class ClFixHybridHeightCoord(Fix):
@@ -122,6 +126,11 @@ class OceanFixGrid(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
+        if cube.ndim != 3:
+            logger.warning(
+                "OceanFixGrid is designed to work on any data with an "
+                "irregular ocean grid, but it was only tested on 3D (time, "
+                "latitude, longitude) data so far; got %dD data", cube.ndim)
 
         # Get dimensional coordinates. Note:
         # - First dimension i -> X-direction (= longitude)
@@ -152,7 +161,10 @@ class OceanFixGrid(Fix):
             idx_coord.bounds = None
             idx_coord.guess_bounds()
 
-        # Calculate latitude/longitude vertices by interpolation
+        # Calculate latitude/longitude vertices by interpolation. More details
+        # on boundaries for 2D coordinates and corresponding conventions are
+        # given here:
+        # cfconventions.org/cf-conventions/cf-conventions.html#cell-boundaries
         lat_vertices = []
         lon_vertices = []
         for (j, i) in [(0, 0), (0, 1), (1, 1), (1, 0)]:
