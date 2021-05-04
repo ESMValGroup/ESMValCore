@@ -124,10 +124,14 @@ class OceanFixGrid(Fix):
         cube = self.get_cube_from_list(cubes)
 
         # Get dimensional coordinates. Note:
-        # - First dimension i -> X-direction (longitude; = dimension 2 in data)
-        # - Second dimension j -> Y-direction (latitude; = dimension 1 in data)
-        i_coord = cube.coord(dim_coords=True, dimensions=2)
-        j_coord = cube.coord(dim_coords=True, dimensions=1)
+        # - First dimension i -> X-direction (= longitude)
+        # - Second dimension j -> Y-direction (= latitude)
+        (j_dim, i_dim) = sorted(set(
+            cube.coord_dims(cube.coord('latitude', dim_coords=False)) +
+            cube.coord_dims(cube.coord('longitude', dim_coords=False))
+        ))
+        i_coord = cube.coord(dim_coords=True, dimensions=i_dim)
+        j_coord = cube.coord(dim_coords=True, dimensions=j_dim)
 
         # Fix metadata of coordinate i
         i_coord.var_name = 'i'
