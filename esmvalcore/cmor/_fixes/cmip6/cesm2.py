@@ -266,7 +266,7 @@ class Omon(Fix):
             if cube.coords(axis='Z'):
                 z_coord = cube.coord(axis='Z')
 
-                # Only points need be fixed, not bounds
+                # Only points need to be fixed, not bounds
                 if z_coord.units == 'cm':
                     z_coord.points = z_coord.core_points() / 100.0
                     z_coord.units = 'm'
