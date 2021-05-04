@@ -36,11 +36,11 @@ class DerivedVariable(DerivedVariableBase):
         Compute Net Atmospheric Longwave Cooling
         to surface and outer space.
         """
-        rlds_cube = cubes.extract_strict(
+        rlds_cube = cubes.extract_cube(
             Constraint(name='surface_downwelling_longwave_flux_in_air'))
-        rlus_cube = cubes.extract_strict(
+        rlus_cube = cubes.extract_cube(
             Constraint(name='surface_upwelling_longwave_flux_in_air'))
-        rlut_cube = cubes.extract_strict(
+        rlut_cube = cubes.extract_cube(
             Constraint(name='toa_outgoing_longwave_flux'))
 
         rlnst_cube = rlut_cube + (rlds_cube - rlus_cube)

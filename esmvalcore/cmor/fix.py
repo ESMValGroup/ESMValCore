@@ -1,11 +1,8 @@
-"""
-Apply automatic fixes for known errors in cmorized data
+"""Apply automatic fixes for known errors in cmorized data.
 
 All functions in this module will work even if no fixes are available
 for the given dataset. Therefore is recommended to apply them to all
-variables to be sure that all known errors are
-fixed.
-
+variables to be sure that all known errors are fixed.
 """
 import logging
 from collections import defaultdict
@@ -43,7 +40,6 @@ def fix_file(file, cmor_name, project, dataset, mip, output_dir):
     -------
     str:
         Path to the fixed file
-
     """
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
@@ -60,8 +56,7 @@ def fix_metadata(cubes,
                  mip,
                  frequency=None,
                  check_level=CheckLevels.DEFAULT):
-    """
-    Fix cube metadata if fixes are required and check it anyway.
+    """Fix cube metadata if fixes are required and check it anyway.
 
     This method collects all the relevant fixes for a given variable, applies
     them and checks the resulting cube (or the original if no fixes were
@@ -95,7 +90,6 @@ def fix_metadata(cubes,
     ------
     CMORCheckError
         If the checker detects errors in the metadata that it can not fix.
-
     """
     fixes = Fix.get_fixes(project=project,
                           dataset=dataset,
@@ -157,8 +151,7 @@ def fix_data(cube,
              mip,
              frequency=None,
              check_level=CheckLevels.DEFAULT):
-    """
-    Fix cube data if fixes add present and check it anyway.
+    """Fix cube data if fixes add present and check it anyway.
 
     This method assumes that metadata is already fixed and checked.
 
@@ -191,7 +184,6 @@ def fix_data(cube,
     ------
     CMORCheckError
         If the checker detects errors in the data that it can not fix.
-
     """
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,

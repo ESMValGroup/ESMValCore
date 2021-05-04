@@ -124,12 +124,14 @@ class TestFixMetadata(TestCase):
     def test_nofix(self):
         """Check that the same cube is returned if no fix is available."""
         self.check_metadata.side_effect = lambda: self.cube
+        var_info = Mock()
+        var_info.short_name = 'short_name'
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
                 with patch('esmvalcore.cmor.fix.get_var_info',
-                           return_value=Mock()):
+                           return_value=var_info):
                     cube_returned = fix_metadata(
                         cubes=[self.cube],
                         cmor_name='cmor_name',
@@ -191,12 +193,13 @@ class TestFixMetadata(TestCase):
         checker = Mock()
         checker.return_value = Mock()
         var_info = Mock()
+        var_info.cmor_name = 'cmor_name'
         var_info.short_name = 'short_name'
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=checker) as get_mock:
-                with patch('esmvalcore.cmor.table.get_var_info',
+                with patch('esmvalcore.cmor.fix.get_var_info',
                            return_value=var_info):
                     fix_metadata(
                         cubes=[self.cube],

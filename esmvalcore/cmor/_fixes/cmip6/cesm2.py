@@ -1,12 +1,16 @@
 """Fixes for CESM2 model."""
 from shutil import copyfile
 
-from netCDF4 import Dataset
 import numpy as np
+from netCDF4 import Dataset
 
 from ..fix import Fix
-from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
-                      add_scalar_typeland_coord, add_scalar_typesea_coord)
+from ..shared import (
+    add_scalar_depth_coord,
+    add_scalar_height_coord,
+    add_scalar_typeland_coord,
+    add_scalar_typesea_coord,
+)
 from .gfdl_esm4 import Siconc as Addtypesi
 
 
@@ -23,27 +27,6 @@ class Cl(Fix):
             'atmosphere_hybrid_sigma_pressure_coordinate')
         dataset.close()
         return new_path
-
-    def fix_data(self, cube):
-        """Fix data.
-
-        Fixed ordering of vertical coordinate.
-
-        Parameters
-        ----------
-        cube: iris.cube.Cube
-            Input cube to fix.
-
-        Returns
-        -------
-        iris.cube.Cube
-
-        """
-        (z_axis,) = cube.coord_dims(cube.coord(axis='Z', dim_coords=True))
-        indices = [slice(None)] * cube.ndim
-        indices[z_axis] = slice(None, None, -1)
-        cube = cube[tuple(indices)]
-        return cube
 
     def fix_file(self, filepath, output_dir):
         """Fix hybrid pressure coordinate.
@@ -77,6 +60,30 @@ class Cl(Fix):
         dataset.close()
         return new_path
 
+    def fix_metadata(self, cubes):
+        """Fix ``atmosphere_hybrid_sigma_pressure_coordinate``.
+
+        See discussion in #882 for more details on that.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        lev_coord = cube.coord(var_name='lev')
+        a_coord = cube.coord(var_name='a')
+        b_coord = cube.coord(var_name='b')
+        lev_coord.points = a_coord.core_points() + b_coord.core_points()
+        lev_coord.bounds = a_coord.core_bounds() + b_coord.core_bounds()
+        lev_coord.units = '1'
+        return cubes
+
 
 Cli = Cl
 
@@ -105,13 +112,11 @@ class Fgco2(Fix):
         return cubes
 
 
-class Tas(Fix):
+class Prw(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
         """
-        Add height (2m) coordinate.
-
         Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
 
         Parameters
@@ -124,9 +129,6 @@ class Tas(Fix):
         iris.cube.CubeList
 
         """
-        cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord(cube)
-
         for cube in cubes:
             latitude = cube.coord('latitude')
             if latitude.bounds is None:
@@ -138,6 +140,34 @@ class Tas(Fix):
                 longitude.guess_bounds()
             longitude.bounds = longitude.bounds.astype(np.float64)
             longitude.bounds = np.round(longitude.bounds, 4)
+
+        return cubes
+
+
+class Tas(Prw):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """
+        Add height (2m) coordinate.
+
+        Fix also done for prw.
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        super().fix_metadata(cubes)
+        # Specific code for tas
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_height_coord(cube)
 
         return cubes
 

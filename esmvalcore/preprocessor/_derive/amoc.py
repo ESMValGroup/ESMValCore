@@ -29,7 +29,7 @@ class DerivedVariable(DerivedVariableBase):
               Output AMOC cube.
         """
         # 0. Load the msftmyz cube.
-        cube = cubes.extract_strict(
+        cube = cubes.extract_cube(
             iris.Constraint(
                 name='ocean_meridional_overturning_mass_streamfunction'))
 

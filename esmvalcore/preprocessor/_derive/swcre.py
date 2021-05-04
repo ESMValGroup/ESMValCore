@@ -24,9 +24,9 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute shortwave cloud radiative effect."""
-        rsut_cube = cubes.extract_strict(
+        rsut_cube = cubes.extract_cube(
             Constraint(name='toa_outgoing_shortwave_flux'))
-        rsutcs_cube = cubes.extract_strict(
+        rsutcs_cube = cubes.extract_cube(
             Constraint(name='toa_outgoing_shortwave_flux_assuming_clear_sky'))
 
         swcre_cube = rsutcs_cube - rsut_cube

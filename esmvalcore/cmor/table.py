@@ -12,12 +12,13 @@ import os
 from collections import Counter
 from functools import total_ordering
 from pathlib import Path
+from typing import Dict, Type
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
-CMOR_TABLES = {}
+CMOR_TABLES: Dict[str, Type['InfoBase']] = {}
 """dict of str, obj: CMOR info objects."""
 
 
@@ -45,7 +46,7 @@ def read_cmor_tables(cfg_developer=None):
         Parsed config-developer file
     """
     if cfg_developer is None:
-        cfg_file = Path(__file__).parent.parent / 'config-developer.yml'
+        cfg_file = Path(__file__).parents[1] / 'config-developer.yml'
         with cfg_file.open() as file:
             cfg_developer = yaml.safe_load(file)
 
@@ -312,7 +313,10 @@ class CMIP6Info(InfoBase):
             if dimension in generic_levels:
                 coord = CoordinateInfo(dimension)
                 coord.generic_level = True
-                coord.axis = 'Z'
+                for name in self.coords:
+                    generic_level = self.coords[name].generic_lev_name
+                    if dimension in [generic_level]:
+                        coord.generic_lev_coords[name] = self.coords[name]
             else:
                 try:
                     coord = self.coords[dimension]
@@ -549,6 +553,7 @@ class CoordinateInfo(JsonInfo):
         super(CoordinateInfo, self).__init__()
         self.name = name
         self.generic_level = False
+        self.generic_lev_coords = {}
 
         self.axis = ""
         """Axis"""
@@ -578,6 +583,8 @@ class CoordinateInfo(JsonInfo):
         """Maximum allowed value"""
         self.must_have_bounds = ""
         """Whether bounds are required on this dimension"""
+        self.generic_lev_name = ""
+        """Generic level name"""
 
     def read_json(self, json_data):
         """Read coordinate information from json.
@@ -604,6 +611,7 @@ class CoordinateInfo(JsonInfo):
         self.valid_max = self._read_json_variable('valid_max')
         self.requested = self._read_json_list_variable('requested')
         self.must_have_bounds = self._read_json_variable('must_have_bounds')
+        self.generic_lev_name = self._read_json_variable('generic_level_name')
 
 
 class CMIP5Info(InfoBase):

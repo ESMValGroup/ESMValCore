@@ -174,14 +174,14 @@ class Test(tests.Test):
                 kwargs, dict(
                     axis=0, interpolation=scheme, extrapolation='nan'))
         args, kwargs = self.mock_create_cube.call_args
+        input_cube = args[0]
         # in-place for new extract_levels with nan's
         new_data[np.isnan(new_data)] = _MDI
         # Check the _create_cube args ...
         self.assertEqual(len(args), 4)
-        self.assertEqual(args[0].metadata, cube.metadata)
-        coord_comparison = iris.analysis.coord_comparison(args[0], cube)
-        self.assertFalse(coord_comparison['not_equal']
-                         or coord_comparison['non_equal_data_dimension'])
+        self.assertEqual(input_cube.metadata, cube.metadata)
+        self.assertEqual(input_cube.coords, cube.coords)
+        self.assertEqual(input_cube.coord_dims, cube.coord_dims)
         self.assert_array_equal(args[0].data, cube.data)
         new_data_mask = np.zeros(new_data.shape, bool)
         new_data_mask[new_data == _MDI] = True

@@ -24,7 +24,7 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute latitude of maximum meridional wind speed."""
         # Load cube, extract correct region and perform zonal mean
-        ua_cube = cubes.extract_strict(iris.Constraint(name='eastward_wind'))
+        ua_cube = cubes.extract_cube(iris.Constraint(name='eastward_wind'))
         ua_cube = ua_cube.interpolate([('air_pressure', PLEV)],
                                       scheme=iris.analysis.Linear())
         ua_cube = ua_cube.extract(

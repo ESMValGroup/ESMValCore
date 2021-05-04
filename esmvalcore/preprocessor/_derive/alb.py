@@ -29,8 +29,8 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute surface albedo."""
-        rsdscs_cube = cubes.extract_strict(var_name_constraint('rsdscs'))
-        rsuscs_cube = cubes.extract_strict(var_name_constraint('rsuscs'))
+        rsdscs_cube = cubes.extract_cube(var_name_constraint('rsdscs'))
+        rsuscs_cube = cubes.extract_cube(var_name_constraint('rsuscs'))
 
         rsnscs_cube = rsuscs_cube / rsdscs_cube
 

@@ -6,7 +6,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.ccsm4 import Cl, Csoil, Rlut, Rlutcs, So
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.cmip5.bnu_esm import Cl as BaseCl
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -19,7 +19,7 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl is ClFixHybridPressureCoord
+    assert Cl is BaseCl
 
 
 class TestCsoil(unittest.TestCase):

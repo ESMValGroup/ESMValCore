@@ -17,9 +17,9 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute absorbed shortwave radiation."""
-        rsdt_cube = cubes.extract_strict(
+        rsdt_cube = cubes.extract_cube(
             Constraint(name='toa_incoming_shortwave_flux'))
-        rsut_cube = cubes.extract_strict(
+        rsut_cube = cubes.extract_cube(
             Constraint(name='toa_outgoing_shortwave_flux'))
 
         asr_cube = rsdt_cube - rsut_cube

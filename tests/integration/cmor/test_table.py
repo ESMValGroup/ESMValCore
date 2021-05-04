@@ -360,7 +360,7 @@ class TestCustomInfo(unittest.TestCase):
         cmor_tables_path = os.path.abspath(cmor_tables_path)
         CustomInfo(cmor_tables_path)
 
-    def test_get_variable_tas(self):
+    def test_get_variable_netcre(self):
         """Get tas variable."""
         CustomInfo()
         var = self.variables_info.get_variable('Amon', 'netcre')
@@ -369,3 +369,21 @@ class TestCustomInfo(unittest.TestCase):
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
         self.assertIsNone(self.variables_info.get_variable('Omon', 'badvar'))
+
+    def test_get_variable_tasconf5(self):
+        """Get tas variable."""
+        CustomInfo()
+        var = self.variables_info.get_variable('Amon', 'tasConf5')
+        self.assertEqual(var.short_name, 'tasConf5')
+        self.assertEqual(var.long_name,
+                         'Near-Surface Air Temperature Uncertainty Range')
+        self.assertEqual(var.units, 'K')
+
+    def test_get_variable_tasconf95(self):
+        """Get tas variable."""
+        CustomInfo()
+        var = self.variables_info.get_variable('Amon', 'tasConf95')
+        self.assertEqual(var.short_name, 'tasConf95')
+        self.assertEqual(var.long_name,
+                         'Near-Surface Air Temperature Uncertainty Range')
+        self.assertEqual(var.units, 'K')
