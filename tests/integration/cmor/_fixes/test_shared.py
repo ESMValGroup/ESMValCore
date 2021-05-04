@@ -15,6 +15,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_sigma_factory,
     cube_to_aux_coord,
     fix_bounds,
+    fix_ocean_depth_coord,
     get_altitude_to_pressure_func,
     get_bounds_cube,
     get_pressure_to_altitude_func,
@@ -500,3 +501,18 @@ def test_round_coordinates_single_coord():
     assert cubes[0].coord('longitude') is out[0].coord('longitude')
     np.testing.assert_allclose(out[0].coord('latitude').points, [10])
     np.testing.assert_allclose(out[0].coord('latitude').bounds, [[9, 11]])
+
+
+def test_fix_ocean_depth_coord():
+    """Test `fix_ocean_depth_coord`."""
+    z_coord = iris.coords.DimCoord(0.0, var_name='alt',
+                                   attributes={'positive': 'up'})
+    cube = iris.cube.Cube([0.0], var_name='x',
+                          dim_coords_and_dims=[(z_coord, 0)])
+    fix_ocean_depth_coord(cube)
+    depth_coord = cube.coord('depth')
+    assert depth_coord.standard_name == 'depth'
+    assert depth_coord.var_name == 'lev'
+    assert depth_coord.units == 'm'
+    assert depth_coord.long_name == 'ocean depth coordinate'
+    assert depth_coord.attributes == {'positive': 'down'}
