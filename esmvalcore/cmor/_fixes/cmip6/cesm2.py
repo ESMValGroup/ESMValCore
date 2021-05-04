@@ -3,8 +3,6 @@ from shutil import copyfile
 
 import numpy as np
 from netCDF4 import Dataset
-from iris.cube import CubeList
-from cf_units import Unit
 
 from ..fix import Fix
 from ..shared import (
@@ -12,7 +10,7 @@ from ..shared import (
     add_scalar_height_coord,
     add_scalar_typeland_coord,
     add_scalar_typesea_coord,
-    set_ocean_depth_coord,
+    fix_ocean_depth_coord,
 )
 from .gfdl_esm4 import Siconc as Addtypesi
 
@@ -252,8 +250,7 @@ class Omon(Fix):
     """Fixes for ocean variables."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix ocean depth coordinate.
+        """Fix ocean depth coordinate.
 
         Parameters
         ----------
@@ -265,13 +262,16 @@ class Omon(Fix):
         iris.cube.CubeList
 
         """
-        new_list = CubeList()
         for cube in cubes:
             if cube.coords(axis='Z'):
-                if cube.coord(axis='Z').units == Unit('centimeters'):
-                    cube.coord(axis='Z').points = cube.coord(axis='Z').points / 100.
-                    cube.coord(axis='Z').units = Unit('m')
-                if not cube.coord(axis='Z').standard_name:
-                    cube = set_ocean_depth_coord(cube)
-            new_list.append(cube)
-        return CubeList(new_list)
+                z_coord = cube.coord(axis='Z')
+
+                # Only points need be fixed, not bounds
+                if z_coord.units == 'cm':
+                    z_coord.points = z_coord.core_points() / 100.0
+                    z_coord.units = 'm'
+
+                # Fix depth metadata
+                if z_coord.standard_name is None:
+                    fix_ocean_depth_coord(cube)
+        return cubes
