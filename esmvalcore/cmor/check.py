@@ -939,7 +939,7 @@ class CMORCheck():
 
 def _get_cmor_checker(table,
                       mip,
-                      short_name,
+                      cmor_name,
                       frequency,
                       fail_on_error=False,
                       check_level=CheckLevels.DEFAULT,
@@ -952,9 +952,9 @@ def _get_cmor_checker(table,
                 table, ', '.join(CMOR_TABLES)))
 
     cmor_table = CMOR_TABLES[table]
-    var_info = cmor_table.get_variable(mip, short_name)
+    var_info = cmor_table.get_variable(mip, cmor_name)
     if var_info is None:
-        var_info = CMOR_TABLES['custom'].get_variable(mip, short_name)
+        var_info = CMOR_TABLES['custom'].get_variable(mip, cmor_name)
 
     def _checker(cube):
         return CMORCheck(cube,
@@ -970,7 +970,7 @@ def _get_cmor_checker(table,
 def cmor_check_metadata(cube,
                         cmor_table,
                         mip,
-                        short_name,
+                        cmor_name,
                         frequency,
                         check_level=CheckLevels.DEFAULT):
     """Check if metadata conforms to variable's CMOR definition.
@@ -985,8 +985,8 @@ def cmor_check_metadata(cube,
         CMOR definitions to use.
     mip:
         Variable's mip.
-    short_name: basestring
-        Variable's short name.
+    cmor_name: basestring
+        Variable's cmor name.
     frequency: basestring
         Data frequency.
     check_level: CheckLevels
@@ -994,7 +994,7 @@ def cmor_check_metadata(cube,
     """
     checker = _get_cmor_checker(cmor_table,
                                 mip,
-                                short_name,
+                                cmor_name,
                                 frequency,
                                 check_level=check_level)
     checker(cube).check_metadata()
@@ -1004,7 +1004,7 @@ def cmor_check_metadata(cube,
 def cmor_check_data(cube,
                     cmor_table,
                     mip,
-                    short_name,
+                    cmor_name,
                     frequency,
                     check_level=CheckLevels.DEFAULT):
     """Check if data conforms to variable's CMOR definition.
@@ -1019,8 +1019,8 @@ def cmor_check_data(cube,
         CMOR definitions to use.
     mip:
         Variable's mip.
-    short_name: basestring
-        Variable's short name
+    cmor_name: basestring
+        Variable's cmor name
     frequency: basestring
         Data frequency
     check_level: CheckLevels
@@ -1028,14 +1028,14 @@ def cmor_check_data(cube,
     """
     checker = _get_cmor_checker(cmor_table,
                                 mip,
-                                short_name,
+                                cmor_name,
                                 frequency,
                                 check_level=check_level)
     checker(cube).check_data()
     return cube
 
 
-def cmor_check(cube, cmor_table, mip, short_name, frequency, check_level):
+def cmor_check(cube, cmor_table, mip, cmor_name, frequency, check_level):
     """Check if cube conforms to variable's CMOR definition.
 
     Equivalent to calling cmor_check_metadata and cmor_check_data
@@ -1049,8 +1049,8 @@ def cmor_check(cube, cmor_table, mip, short_name, frequency, check_level):
         CMOR definitions to use.
     mip:
         Variable's mip.
-    short_name: basestring
-        Variable's short name.
+    cmor_name: basestring
+        Variable's cmor name.
     frequency: basestring
         Data frequency.
     check_level: enum.IntEnum
@@ -1059,13 +1059,13 @@ def cmor_check(cube, cmor_table, mip, short_name, frequency, check_level):
     cmor_check_metadata(cube,
                         cmor_table,
                         mip,
-                        short_name,
+                        cmor_name,
                         frequency,
                         check_level=check_level)
     cmor_check_data(cube,
                     cmor_table,
                     mip,
-                    short_name,
+                    cmor_name,
                     frequency,
                     check_level=check_level)
     return cube

@@ -75,12 +75,14 @@ class Test:
         fx_vars = {
             'areacella': {
                 'short_name': 'areacella',
+                'cmor_name': 'areacella',
                 'project': 'CMIP6',
                 'dataset': 'EC-Earth3',
                 'mip': 'fx',
                 'frequency': 'fx'},
             'areacello': {
                 'short_name': 'areacello',
+                'cmor_name': 'areacello',
                 'project': 'CMIP6',
                 'dataset': 'EC-Earth3',
                 'mip': 'Ofx',
@@ -105,6 +107,7 @@ class Test:
         fx_vars = {
             'volcello': {
                 'short_name': 'volcello',
+                'cmor_name': 'volcello',
                 'project': 'CMIP6',
                 'dataset': 'EC-Earth3',
                 'mip': 'Ofx',
@@ -144,6 +147,7 @@ class Test:
         fx_vars = {
             'sftlf': {
                 'short_name': 'sftlf',
+                'cmor_name': 'sftlf',
                 'project': 'CMIP6',
                 'dataset': 'EC-Earth3',
                 'mip': 'fx',
@@ -175,6 +179,7 @@ class Test:
         fx_vars = {
             'volcello': {
                 'short_name': 'volcello',
+                'cmor_name': 'volcello',
                 'project': 'CMIP6',
                 'dataset': 'EC-Earth3',
                 'mip': 'Oyr',

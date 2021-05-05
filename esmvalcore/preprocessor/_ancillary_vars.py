@@ -14,16 +14,18 @@ logger = logging.getLogger(__name__)
 
 def _load_fx(fx_info, check_level):
     """Load and CMOR-check fx variables."""
+    cmor_name = fx_info['cmor_name']
+    # short_name = fx_info['short_name']
+    project = fx_info['project']
+    dataset = fx_info['dataset']
+    mip = fx_info['mip']
+    freq = fx_info['frequency']
+
     fx_cubes = iris.cube.CubeList()
 
     for fx_file in fx_info['filename']:
         loaded_cube = load(fx_file, callback=concatenate_callback)
-        short_name = fx_info['short_name']
-        project = fx_info['project']
-        dataset = fx_info['dataset']
-        mip = fx_info['mip']
-        freq = fx_info['frequency']
-        loaded_cube = fix_metadata(loaded_cube, short_name=short_name,
+        loaded_cube = fix_metadata(loaded_cube, cmor_name=cmor_name,
                                    project=project, dataset=dataset,
                                    mip=mip, frequency=freq,
                                    check_level=check_level)
@@ -32,15 +34,15 @@ def _load_fx(fx_info, check_level):
     fx_cube = concatenate(fx_cubes)
 
     fx_cube = cmor_check_metadata(fx_cube, cmor_table=project, mip=mip,
-                                  short_name=short_name, frequency=freq,
+                                  cmor_name=cmor_name, frequency=freq,
                                   check_level=check_level)
 
-    fx_cube = fix_data(fx_cube, short_name=short_name, project=project,
+    fx_cube = fix_data(fx_cube, cmor_name=cmor_name, project=project,
                        dataset=dataset, mip=mip, frequency=freq,
                        check_level=check_level)
 
     fx_cube = cmor_check_data(fx_cube, cmor_table=project, mip=mip,
-                              short_name=fx_cube.var_name, frequency=freq,
+                              cmor_name=cmor_name, frequency=freq,
                               check_level=check_level)
 
     return fx_cube

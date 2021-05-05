@@ -21,7 +21,7 @@ class TestFixFile(TestCase):
                    return_value=[self.mock_fix]):
             file_returned = fix_file(
                 file='filename',
-                short_name='short_name',
+                cmor_name='cmor_name',
                 project='project',
                 dataset='model',
                 mip='mip',
@@ -36,7 +36,7 @@ class TestFixFile(TestCase):
                    return_value=[]):
             file_returned = fix_file(
                 file='filename',
-                short_name='short_name',
+                cmor_name='cmor_name',
                 project='project',
                 dataset='model',
                 mip='mip',
@@ -54,9 +54,10 @@ class TestGetCube(TestCase):
         self.cube_2 = Mock()
         self.cube_2.var_name = 'cube2'
         self.cubes = [self.cube_1, self.cube_2]
-        vardef = Mock()
-        vardef.short_name = 'fix'
-        self.fix = Fix(vardef)
+        self.vardef = Mock()
+        self.vardef.cmor_name = 'fix'
+        self.vardef.short_name = 'fix'
+        self.fix = Fix(self.vardef)
 
     def test_get_first_cube(self):
         """Test selecting first cube."""
@@ -91,9 +92,12 @@ class TestFixMetadata(TestCase):
         self.mock_fix.fix_metadata.return_value = [self.intermediate_cube]
         self.checker = Mock()
         self.check_metadata = self.checker.return_value.check_metadata
+        self.vardef = Mock()
+        self.vardef.cmor_name = 'cmor_name'
+        self.vardef.short_name = 'cmor_name'
 
     @staticmethod
-    def _create_mock_cube(var_name='short_name'):
+    def _create_mock_cube(var_name='cmor_name'):
         cube = Mock()
         cube.var_name = var_name
         cube.attributes = {'source_file': 'source_file'}
@@ -106,18 +110,21 @@ class TestFixMetadata(TestCase):
                    return_value=[self.mock_fix]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                cube_returned = fix_metadata(
-                    cubes=[self.cube],
-                    short_name='short_name',
-                    project='project',
-                    dataset='model',
-                    mip='mip',
-                )[0]
-                self.checker.assert_called_once_with(self.intermediate_cube)
-                self.check_metadata.assert_called_once_with()
-                assert cube_returned is not self.cube
-                assert cube_returned is not self.intermediate_cube
-                assert cube_returned is self.fixed_cube
+                with patch('esmvalcore.cmor.fix.get_var_info',
+                           return_value=self.vardef):
+                    cube_returned = fix_metadata(
+                        cubes=[self.cube],
+                        cmor_name='cmor_name',
+                        project='project',
+                        dataset='model',
+                        mip='mip',
+                    )[0]
+                    self.checker.assert_called_once_with(
+                        self.intermediate_cube)
+                    self.check_metadata.assert_called_once_with()
+                    assert cube_returned is not self.cube
+                    assert cube_returned is not self.intermediate_cube
+                    assert cube_returned is self.fixed_cube
 
     def test_nofix(self):
         """Check that the same cube is returned if no fix is available."""
@@ -126,18 +133,20 @@ class TestFixMetadata(TestCase):
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                cube_returned = fix_metadata(
-                    cubes=[self.cube],
-                    short_name='short_name',
-                    project='project',
-                    dataset='model',
-                    mip='mip',
-                )[0]
-                self.checker.assert_called_once_with(self.cube)
-                self.check_metadata.assert_called_once_with()
-                assert cube_returned is self.cube
-                assert cube_returned is not self.intermediate_cube
-                assert cube_returned is not self.fixed_cube
+                with patch('esmvalcore.cmor.fix.get_var_info',
+                           return_value=self.vardef):
+                    cube_returned = fix_metadata(
+                        cubes=[self.cube],
+                        cmor_name='cmor_name',
+                        project='project',
+                        dataset='model',
+                        mip='mip',
+                    )[0]
+                    self.checker.assert_called_once_with(self.cube)
+                    self.check_metadata.assert_called_once_with()
+                    assert cube_returned is self.cube
+                    assert cube_returned is not self.intermediate_cube
+                    assert cube_returned is not self.fixed_cube
 
     def test_select_var(self):
         """Check that the same cube is returned if no fix is available."""
@@ -146,60 +155,65 @@ class TestFixMetadata(TestCase):
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                cube_returned = fix_metadata(
-                    cubes=[self.cube,
-                           self._create_mock_cube('extra')],
-                    short_name='short_name',
-                    project='CMIP6',
-                    dataset='model',
-                    mip='mip',
-                )[0]
-                self.checker.assert_called_once_with(self.cube)
-                self.check_metadata.assert_called_once_with()
-                assert cube_returned is self.cube
+                with patch('esmvalcore.cmor.fix.get_var_info',
+                           return_value=self.vardef):
+                    cube_returned = fix_metadata(
+                        cubes=[self.cube, self._create_mock_cube('extra')],
+                        cmor_name='cmor_name',
+                        project='CMIP6',
+                        dataset='model',
+                        mip='mip',
+                    )[0]
+                    self.checker.assert_called_once_with(self.cube)
+                    self.check_metadata.assert_called_once_with()
+                    assert cube_returned is self.cube
 
     def test_select_var_failed_if_bad_var_name(self):
         """Check that the same cube is returned if no fix is available."""
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[]):
-            with self.assertRaises(ValueError):
-                fix_metadata(
-                    cubes=[
-                        self._create_mock_cube('not_me'),
-                        self._create_mock_cube('me_neither')
-                    ],
-                    short_name='short_name',
-                    project='CMIP6',
-                    dataset='model',
-                    mip='mip',
-                )
+            with patch('esmvalcore.cmor.fix.get_var_info',
+                       return_value=self.vardef):
+                with self.assertRaises(ValueError):
+                    fix_metadata(
+                        cubes=[
+                            self._create_mock_cube('not_me'),
+                            self._create_mock_cube('me_neither')
+                        ],
+                        cmor_name='cmor_name',
+                        project='CMIP6',
+                        dataset='model',
+                        mip='mip',
+                    )
 
     def test_cmor_checker_called(self):
         """Check that the cmor check is done."""
-        checker = Mock()
-        checker.return_value = Mock()
+        check = Mock()
+        check.return_value = Mock()
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
-                       return_value=checker) as get_mock:
-                fix_metadata(
-                    cubes=[self.cube],
-                    short_name='short_name',
-                    project='CMIP6',
-                    dataset='dataset',
-                    mip='mip',
-                    frequency='frequency',
-                )
-                get_mock.assert_called_once_with(
-                    automatic_fixes=True,
-                    fail_on_error=False,
-                    frequency='frequency',
-                    mip='mip',
-                    short_name='short_name',
-                    table='CMIP6',
-                    check_level=CheckLevels.DEFAULT,)
-                checker.assert_called_once_with(self.cube)
-                checker.return_value.check_metadata.assert_called_once_with()
+                       return_value=check) as get_mock:
+                with patch('esmvalcore.cmor.fix.get_var_info',
+                           return_value=self.vardef):
+                    fix_metadata(
+                        cubes=[self.cube],
+                        cmor_name='cmor_name',
+                        project='CMIP6',
+                        dataset='dataset',
+                        mip='mip',
+                        frequency='frequency',
+                    )
+                    get_mock.assert_called_once_with(
+                        automatic_fixes=True,
+                        fail_on_error=False,
+                        frequency='frequency',
+                        mip='mip',
+                        cmor_name='cmor_name',
+                        table='CMIP6',
+                        check_level=CheckLevels.DEFAULT,)
+                    check.assert_called_once_with(self.cube)
+                    check.return_value.check_metadata.assert_called_once_with()
 
 
 class TestFixData(TestCase):
@@ -223,7 +237,7 @@ class TestFixData(TestCase):
                        return_value=self.checker):
                 cube_returned = fix_data(
                     self.cube,
-                    short_name='short_name',
+                    cmor_name='cmor_name',
                     project='project',
                     dataset='model',
                     mip='mip',
@@ -243,7 +257,7 @@ class TestFixData(TestCase):
                        return_value=self.checker):
                 cube_returned = fix_data(
                     self.cube,
-                    short_name='short_name',
+                    cmor_name='cmor_name',
                     project='CMIP6',
                     dataset='model',
                     mip='mip',
@@ -262,7 +276,7 @@ class TestFixData(TestCase):
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=checker) as get_mock:
-                fix_data(self.cube, 'short_name', 'CMIP6', 'model', 'mip',
+                fix_data(self.cube, 'cmor_name', 'CMIP6', 'model', 'mip',
                          'frequency')
                 get_mock.assert_called_once_with(
                     table='CMIP6',
@@ -271,7 +285,7 @@ class TestFixData(TestCase):
                     fail_on_error=False,
                     frequency='frequency',
                     mip='mip',
-                    short_name='short_name',
+                    cmor_name='cmor_name',
                 )
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_data.assert_called_once_with()

@@ -71,7 +71,7 @@ def _add_cmor_info(variable, override=False):
     derive = variable.get('derive', False)
     table = CMOR_TABLES.get(project)
     if table:
-        table_entry = table.get_variable(mip, short_name, derive)
+        table_entry = table.get_variable(mip, variable['cmor_name'], derive)
     else:
         table_entry = None
     if table_entry is None:
@@ -141,7 +141,7 @@ def _update_target_levels(variable, variables, settings, config_user):
                 filename=filename,
                 project=variable_data['project'],
                 dataset=dataset,
-                short_name=variable_data['short_name'],
+                cmor_name=variable_data['cmor_name'],
                 mip=variable_data['mip'],
                 frequency=variable_data['frequency'],
                 fix_dir=os.path.splitext(variable_data['filename'])[0] +
@@ -201,7 +201,7 @@ def _dataset_to_file(variable, config_user):
     """Find the first file belonging to dataset from variable info."""
     (files, dirnames, filenames) = _get_input_files(variable, config_user)
     if not files and variable.get('derive'):
-        required_vars = get_required(variable['short_name'],
+        required_vars = get_required(variable['cmor_name'],
                                      variable['project'])
         for required_var in required_vars:
             _augment(required_var, variable)
@@ -264,7 +264,7 @@ def _get_default_settings(variable, config_user, derive=False):
     fix = {
         'project': variable['project'],
         'dataset': variable['dataset'],
-        'short_name': variable['short_name'],
+        'cmor_name': variable['cmor_name'],
         'mip': variable['mip'],
     }
     # File fixes
@@ -287,6 +287,7 @@ def _get_default_settings(variable, config_user, derive=False):
 
     if derive:
         settings['derive'] = {
+            'cmor_name': variable['cmor_name'],
             'short_name': variable['short_name'],
             'standard_name': variable['standard_name'],
             'long_name': variable['long_name'],
@@ -297,7 +298,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['cmor_check_metadata'] = {
         'cmor_table': variable['project'],
         'mip': variable['mip'],
-        'short_name': variable['short_name'],
+        'cmor_name': variable['cmor_name'],
         'frequency': variable['frequency'],
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
     }
@@ -330,6 +331,8 @@ def _add_fxvar_keys(fx_info, variable):
     fx_variable = deepcopy(variable)
     fx_variable.update(fx_info)
     fx_variable['variable_group'] = fx_info['short_name']
+    if 'cmor_name' not in fx_variable:
+        fx_variable['cmor_name'] = fx_info['short_name']
 
     # add special ensemble for CMIP5 only
     if fx_variable['project'] == 'CMIP5':
@@ -344,7 +347,7 @@ def _add_fxvar_keys(fx_info, variable):
 def _search_fx_mip(tables, found_mip, variable, fx_info, config_user):
     fx_files = None
     for mip in tables:
-        fx_cmor = tables[mip].get(fx_info['short_name'])
+        fx_cmor = tables[mip].get(fx_info['cmor_name'])
         if fx_cmor:
             found_mip = True
             fx_info['mip'] = mip
@@ -381,7 +384,7 @@ def _get_fx_files(variable, fx_info, config_user):
         found_mip, fx_info, fx_files = _search_fx_mip(
             project_tables, found_mip, variable, fx_info, config_user)
     else:
-        fx_cmor = project_tables[fx_info['mip']].get(fx_info['short_name'])
+        fx_cmor = project_tables[fx_info['mip']].get(fx_info['cmor_name'])
         if fx_cmor:
             found_mip = True
             fx_info = _add_fxvar_keys(fx_info, variable)
@@ -436,6 +439,8 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
             fx_info.update({'mip': None})
         if 'short_name' not in fx_info:
             fx_info.update({'short_name': fx_var})
+        if 'cmor_name' not in fx_info:
+            fx_info.update({'cmor_name': fx_info['short_name']})
         fx_files, fx_info = _get_fx_files(variable, fx_info, config_user)
         if fx_files:
             fx_info['filename'] = fx_files
@@ -1097,6 +1102,8 @@ class Recipe:
                 if activity:
                     variable['activity'] = activity
             check.variable(variable, required_keys)
+            if 'cmor_name' not in variable:
+                variable['cmor_name'] = variable['short_name']
         variables = self._expand_ensemble(variables)
         return variables
 

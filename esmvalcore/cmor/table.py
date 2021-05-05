@@ -22,7 +22,7 @@ CMOR_TABLES: Dict[str, Type['InfoBase']] = {}
 """dict of str, obj: CMOR info objects."""
 
 
-def get_var_info(project, mip, short_name):
+def get_var_info(project, mip, cmor_name):
     """Get variable information.
 
     Parameters
@@ -31,10 +31,10 @@ def get_var_info(project, mip, short_name):
         Dataset's project.
     mip : str
         Variable's cmor table.
-    short_name : str
-        Variable's short name.
+    cmor_name : str
+        Variable's CMOR name.
     """
-    return CMOR_TABLES[project].get_variable(mip, short_name)
+    return CMOR_TABLES[project].get_variable(mip, cmor_name)
 
 
 def read_cmor_tables(cfg_developer=None):
@@ -139,15 +139,15 @@ class InfoBase():
         """
         return self.tables.get(table)
 
-    def get_variable(self, table_name, short_name, derived=False):
+    def get_variable(self, table_name, cmor_name, derived=False):
         """Search and return the variable info.
 
         Parameters
         ----------
         table_name: basestring
             Table name
-        short_name: basestring
-            Variable's short name
+        cmor_name: basestring
+            Variable's CMOR name
         derived: bool, optional
             Variable is derived. Info retrieval for derived variables always
             look on the default tables if variable is not find in the
@@ -159,7 +159,7 @@ class InfoBase():
             Return the VariableInfo object for the requested variable if
             found, returns None if not
         """
-        alt_names_list = self._get_alt_names_list(short_name)
+        alt_names_list = self._get_alt_names_list(cmor_name)
 
         table = self.get_table(table_name)
         if table:
@@ -197,10 +197,10 @@ class InfoBase():
                     break
         return var_info
 
-    def _get_alt_names_list(self, short_name):
-        alt_names_list = [short_name]
+    def _get_alt_names_list(self, cmor_name):
+        alt_names_list = [cmor_name]
         for alt_names in self.alt_names:
-            if short_name in alt_names:
+            if cmor_name in alt_names:
                 alt_names_list.extend([
                     alt_name for alt_name in alt_names
                     if alt_name not in alt_names_list
@@ -458,19 +458,21 @@ class JsonInfo(object):
 
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
-    def __init__(self, table_type, short_name):
+    def __init__(self, table_type, cmor_name):
         """Class to read and store variable information.
 
         Parameters
         ----------
-        short_name: str
-            variable's short name
+        cmor_name: str
+            variable's cmor name
         """
         super(VariableInfo, self).__init__()
         self.table_type = table_type
         self.modeling_realm = []
         """Modeling realm"""
-        self.short_name = short_name
+        self.cmor_name = cmor_name
+        """CMOR name"""
+        self.short_name = cmor_name
         """Short name"""
         self.standard_name = ''
         """Standard name"""
@@ -523,7 +525,7 @@ class VariableInfo(JsonInfo):
             Default frequency to use if it is not defined at variable level
         """
         self._json_data = json_data
-
+        self.short_name = self._read_json_variable('out_name', self.cmor_name)
         self.standard_name = self._read_json_variable('standard_name')
         self.long_name = self._read_json_variable('long_name')
         self.units = self._read_json_variable('units')
@@ -737,8 +739,8 @@ class CMIP5Info(InfoBase):
                 setattr(coord, key, value)
         return coord
 
-    def _read_variable(self, short_name, frequency):
-        var = VariableInfo('CMIP5', short_name)
+    def _read_variable(self, cmor_name, frequency):
+        var = VariableInfo('CMIP5', cmor_name)
         var.frequency = frequency
         while self._read_line():
             key, value = self._last_line_read
@@ -748,6 +750,8 @@ class CMIP5Info(InfoBase):
                 setattr(var, key, value.split())
             elif hasattr(var, key):
                 setattr(var, key, value)
+            elif key == 'out_name':
+                var.short_name = value
         for dim in var.dimensions:
             var.coordinates[dim] = self.coords[dim]
         return var

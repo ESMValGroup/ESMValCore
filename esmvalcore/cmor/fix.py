@@ -4,6 +4,7 @@ All functions in this module will work even if no fixes are available
 for the given dataset. Therefore is recommended to apply them to all
 variables to be sure that all known errors are fixed.
 """
+from esmvalcore.cmor.table import get_var_info
 import logging
 from collections import defaultdict
 
@@ -15,7 +16,7 @@ from .check import CheckLevels, _get_cmor_checker
 logger = logging.getLogger(__name__)
 
 
-def fix_file(file, short_name, project, dataset, mip, output_dir):
+def fix_file(file, cmor_name, project, dataset, mip, output_dir):
     """Fix files before ESMValTool can load them.
 
     This fixes are only for issues that prevent iris from loading the cube or
@@ -27,7 +28,7 @@ def fix_file(file, short_name, project, dataset, mip, output_dir):
     ----------
     file: str
         Path to the original file
-    short_name: str
+    cmor_name: str
         Variable's short name
     project: str
     dataset:str
@@ -42,13 +43,13 @@ def fix_file(file, short_name, project, dataset, mip, output_dir):
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
                              mip=mip,
-                             short_name=short_name):
+                             cmor_name=cmor_name):
         file = fix.fix_file(file, output_dir)
     return file
 
 
 def fix_metadata(cubes,
-                 short_name,
+                 cmor_name,
                  project,
                  dataset,
                  mip,
@@ -65,8 +66,8 @@ def fix_metadata(cubes,
     ----------
     cubes: iris.cube.CubeList
         Cubes to fix
-    short_name: str
-        Variable's short name
+    cmor_name: str
+        Variable's cmor name
     project: str
 
     dataset: str
@@ -92,22 +93,24 @@ def fix_metadata(cubes,
     fixes = Fix.get_fixes(project=project,
                           dataset=dataset,
                           mip=mip,
-                          short_name=short_name)
+                          cmor_name=cmor_name)
     fixed_cubes = []
     by_file = defaultdict(list)
     for cube in cubes:
         by_file[cube.attributes.get('source_file', '')].append(cube)
+
+    vardef = get_var_info(project, mip, cmor_name)
 
     for cube_list in by_file.values():
         cube_list = CubeList(cube_list)
         for fix in fixes:
             cube_list = fix.fix_metadata(cube_list)
 
-        cube = _get_single_cube(cube_list, short_name, project, dataset)
+        cube = _get_single_cube(cube_list, vardef.short_name, project, dataset)
         checker = _get_cmor_checker(frequency=frequency,
                                     table=project,
                                     mip=mip,
-                                    short_name=short_name,
+                                    cmor_name=cmor_name,
                                     check_level=check_level,
                                     fail_on_error=False,
                                     automatic_fixes=True)
@@ -142,7 +145,7 @@ def _get_single_cube(cube_list, short_name, project, dataset):
 
 
 def fix_data(cube,
-             short_name,
+             cmor_name,
              project,
              dataset,
              mip,
@@ -161,8 +164,8 @@ def fix_data(cube,
     ----------
     cube: iris.cube.Cube
         Cube to fix
-    short_name: str
-        Variable's short name
+    cmor_name: str
+        Variable's cmor name
     project: str
     dataset: str
     mip: str
@@ -185,12 +188,12 @@ def fix_data(cube,
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
                              mip=mip,
-                             short_name=short_name):
+                             cmor_name=cmor_name):
         cube = fix.fix_data(cube)
     checker = _get_cmor_checker(frequency=frequency,
                                 table=project,
                                 mip=mip,
-                                short_name=short_name,
+                                cmor_name=cmor_name,
                                 fail_on_error=False,
                                 automatic_fixes=True,
                                 check_level=check_level)

@@ -733,7 +733,7 @@ def get_cmor_levels(cmor_table, coordinate):
             coordinate, cmor_table))
 
 
-def get_reference_levels(filename, project, dataset, short_name, mip,
+def get_reference_levels(filename, project, dataset, cmor_name, mip,
                          frequency, fix_dir):
     """Get level definition from a reference dataset.
 
@@ -745,7 +745,7 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
         Name of the project
     dataset : str
         Name of the dataset
-    short_name : str
+    cmor_name : str
         Name of the variable
     mip : str
         Name of the mip table
@@ -766,7 +766,7 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
     """
     filename = fix_file(
         file=filename,
-        short_name=short_name,
+        cmor_name=cmor_name,
         project=project,
         dataset=dataset,
         mip=mip,
@@ -775,7 +775,7 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
     cubes = load(filename, callback=concatenate_callback)
     cubes = fix_metadata(
         cubes=cubes,
-        short_name=short_name,
+        cmor_name=cmor_name,
         project=project,
         dataset=dataset,
         mip=mip,

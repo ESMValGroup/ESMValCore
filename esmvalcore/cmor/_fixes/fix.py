@@ -121,7 +121,7 @@ class Fix:
         return not self.__eq__(other)
 
     @staticmethod
-    def get_fixes(project, dataset, mip, short_name):
+    def get_fixes(project, dataset, mip, cmor_name):
         """
         Get the fixes that must be applied for a given dataset.
 
@@ -141,7 +141,7 @@ class Fix:
         project: str
         dataset: str
         mip: str
-        short_name: str
+        cmor_name: str
 
         Returns
         -------
@@ -149,11 +149,11 @@ class Fix:
             Fixes to apply for the given data
         """
         cmor_table = CMOR_TABLES[project]
-        vardef = cmor_table.get_variable(mip, short_name)
+        vardef = cmor_table.get_variable(mip, cmor_name)
 
         project = project.replace('-', '_').lower()
         dataset = dataset.replace('-', '_').lower()
-        short_name = short_name.replace('-', '_').lower()
+        cmor_name = cmor_name.replace('-', '_').lower()
 
         fixes = []
         try:
@@ -162,7 +162,7 @@ class Fix:
 
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
-            for fix_name in (short_name, mip.lower(), 'allvars'):
+            for fix_name in (cmor_name, mip.lower(), 'allvars'):
                 try:
                     fixes.append(classes[fix_name](vardef))
                 except KeyError:

@@ -62,6 +62,7 @@ class Test:
         iris.save(self.fx_mask, sftlf_file)
         fx_vars = {
             'sftlf': {
+                'cmor_name': 'sftlf',
                 'short_name': 'sftlf',
                 'project': 'CMIP6',
                 'dataset': 'EC-Earth3',
@@ -85,12 +86,13 @@ class Test:
         iris.save(self.fx_mask, sftgif_file)
         fx_vars = {
             'sftgif': {
+                'cmor_name': 'sftgif',
                 'short_name': 'sftgif',
                 'project': 'CMIP6',
                 'dataset': 'EC-Earth3',
                 'mip': 'fx',
                 'frequency': 'fx',
-                'filename': sftlf_file}
+                'filename': sftgif_file}
         }
         new_cube_ice = iris.cube.Cube(self.new_cube_data,
                                       dim_coords_and_dims=self.coords_spec)
@@ -110,6 +112,7 @@ class Test:
         iris.save(self.fx_mask, sftlf_file)
         fx_vars = {
             'sftlf': {
+                'cmor_name': 'sftlf',
                 'short_name': 'sftlf',
                 'project': 'CMIP6',
                 'dataset': 'EC-Earth3',
@@ -200,6 +203,7 @@ class Test:
         iris.save(self.fx_mask, sftgif_file)
         fx_vars = {
             'sftgif': {
+                'cmor_name': 'sftgif',
                 'short_name': 'sftgif',
                 'project': 'CMIP6',
                 'dataset': 'EC-Earth3',

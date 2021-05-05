@@ -47,7 +47,7 @@ def assert_derived_var_calc_called_once_with(*args):
 def test_check_units_none(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
     mock_all_derived_variables(None)
-    cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name,
+    cube = derive(mock_cubes, SHORT_NAME, SHORT_NAME, mock.sentinel.long_name,
                   mock.sentinel.units,
                   standard_name=mock.sentinel.standard_name)
     assert_derived_var_calc_called_once_with(mock_cubes)
@@ -63,8 +63,8 @@ def test_check_units_none(mock_cubes):
 def test_check_units_equal(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
     mock_all_derived_variables(Unit('kg m2 s-2'))
-    cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'J',
-                  standard_name=mock.sentinel.standard_name)
+    cube = derive(mock_cubes, SHORT_NAME, SHORT_NAME, mock.sentinel.long_name,
+                  'J', standard_name=mock.sentinel.standard_name)
     assert_derived_var_calc_called_once_with(mock_cubes)
     assert cube.units == Unit('J')
     assert cube.var_name == SHORT_NAME
@@ -78,8 +78,8 @@ def test_check_units_equal(mock_cubes):
 def test_check_units_nounit(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
     mock_all_derived_variables(Unit('no unit'))
-    cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'J',
-                  standard_name=mock.sentinel.standard_name)
+    cube = derive(mock_cubes, SHORT_NAME, SHORT_NAME, mock.sentinel.long_name,
+                  'J', standard_name=mock.sentinel.standard_name)
     assert_derived_var_calc_called_once_with(mock_cubes)
     assert cube.units == Unit('J')
     assert cube.var_name == SHORT_NAME
@@ -96,8 +96,8 @@ def test_check_units_nounit(mock_cubes):
 def test_check_units_unknown(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
     mock_all_derived_variables(Unit('unknown'))
-    cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'J',
-                  standard_name=mock.sentinel.standard_name)
+    cube = derive(mock_cubes, SHORT_NAME, SHORT_NAME, mock.sentinel.long_name,
+                  'J', standard_name=mock.sentinel.standard_name)
     assert_derived_var_calc_called_once_with(mock_cubes)
     assert cube.units == Unit('J')
     assert cube.var_name == SHORT_NAME
@@ -114,8 +114,8 @@ def test_check_units_unknown(mock_cubes):
 def test_check_units_convertible(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
     mock_all_derived_variables(Unit('kg s-1'))
-    cube = derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'g yr-1',
-                  standard_name=mock.sentinel.standard_name)
+    cube = derive(mock_cubes, SHORT_NAME, SHORT_NAME, mock.sentinel.long_name,
+                  'g yr-1', standard_name=mock.sentinel.standard_name)
     assert_derived_var_calc_called_once_with(mock_cubes)
     cube.convert_units.assert_called_once_with('g yr-1')
     assert cube.var_name == SHORT_NAME
@@ -129,8 +129,8 @@ def test_check_units_fail(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
     mock_all_derived_variables(Unit('kg'))
     with pytest.raises(ValueError) as err:
-        derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'm',
-               standard_name=mock.sentinel.standard_name)
+        derive(mock_cubes, SHORT_NAME, SHORT_NAME, mock.sentinel.long_name,
+               'm', standard_name=mock.sentinel.standard_name)
     assert str(err.value) == (
         "Units 'kg' after executing derivation script of 'short_name' cannot "
         "be converted to target units 'm'"
@@ -183,7 +183,8 @@ def test_derive_nonstandard_nofx():
 
     cubes = CubeList([rsdscs, rsuscs])
 
-    alb = derive(cubes, short_name, long_name, units, standard_name)
+    alb = derive(cubes, short_name, short_name, long_name, units,
+                 standard_name)
 
     assert alb.var_name == short_name
     assert alb.long_name == long_name
@@ -198,7 +199,7 @@ def test_derive_noop():
     alb.long_name = 'albedo at the surface'
     alb.units = 1
 
-    cube = derive([alb], alb.var_name, alb.long_name, alb.units)
+    cube = derive([alb], alb.var_name, alb.var_name, alb.long_name, alb.units)
 
     assert cube is alb
 
@@ -220,6 +221,7 @@ def test_derive_mixed_case_with_fx(monkeypatch):
 
     derive(
         [ohc_cube],
+        short_name,
         short_name,
         long_name,
         units,

@@ -49,7 +49,7 @@ class TestGetFileLevels(unittest.TestCase):
                     filename=self.path,
                     project='CMIP6',
                     dataset='dataset',
-                    short_name='short_name',
+                    cmor_name='short_name',
                     mip='mip',
                     frequency='mon',
                     fix_dir='output_dir',
