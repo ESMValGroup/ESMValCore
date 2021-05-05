@@ -3,7 +3,8 @@ from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clcalipso as BaseClcalipso
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cli as BaseCli
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clw as BaseClw
-from esmvalcore.cmor._fixes.cmip6.cnrm_esm2_1 import Cl, Clcalipso, Cli, Clw
+from esmvalcore.cmor._fixes.cmip6.cnrm_esm2_1 import (Cl, Clcalipso,
+                                                      Cli, Clw, Omon)
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -49,3 +50,9 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is BaseClw
+
+
+def test_get_thetao_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Omon', 'thetao')
+    assert fix == [Omon(None)]
