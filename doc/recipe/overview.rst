@@ -340,6 +340,14 @@ while use ``sic`` as their short_name. If the recipe requested ``siconc``, the
 preprocessed files will be identical except that they will use the short_name
 ``siconc`` instead.
 
+Another uncommon case that may be a problem sometimes is that, for some
+variables, the ``out_name`` and the name of the entry in the CMOR tables do not
+match, like in ``zg7h`` and ``zg27`` in CMIP6 ``6hrPlevPt``, two versions of
+``zg`` that are mutually exclusive and have different requirements for the
+levels. To allow ESMValCore to retrieve the correct information in those cases,
+the ``cmor_name`` must be defined and ``short_name`` will be reserved for the
+``out_name`` of the variable.
+
 Diagnostic and variable specific datasets
 -----------------------------------------
 The ``additional_datasets`` option can be used to add datasets beyond those
