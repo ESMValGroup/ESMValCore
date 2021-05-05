@@ -162,7 +162,7 @@ class Fix:
 
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
-            for fix_name in (short_name, 'allvars'):
+            for fix_name in (short_name, mip.lower(), 'allvars'):
                 try:
                     fixes.append(classes[fix_name](vardef))
                 except KeyError:
