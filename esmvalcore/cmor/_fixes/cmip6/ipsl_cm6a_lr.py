@@ -4,6 +4,7 @@ from iris.coords import AuxCoord
 from iris.exceptions import ConstraintMismatchError
 
 from ..fix import Fix
+from ..shared import (fix_ocean_depth_coord)
 
 
 class AllVars(Fix):
@@ -68,3 +69,27 @@ class Clcalipso(Fix):
         alt_40_coord.standard_name = 'altitude'
         alt_40_coord.var_name = 'alt40'
         return CubeList([cube])
+
+
+class Omon(Fix):
+    """Fixes for ocean variables."""
+
+    def fix_metadata(self, cubes):
+        """Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                z_coord = cube.coord(axis='Z')
+                if z_coord.var_name == 'olevel':
+                    fix_ocean_depth_coord(cube)
+        return cubes
