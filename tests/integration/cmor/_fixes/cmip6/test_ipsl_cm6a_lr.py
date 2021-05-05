@@ -113,7 +113,7 @@ def thetao_cubes():
 def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'IPSL-CM6A-LR', 'Omon', 'thetao')
-    assert fix == [Omon(None)]
+    assert fix == [Omon(None), AllVars(None)]
 
 
 def test_thetao_fix_metadata(thetao_cubes):
