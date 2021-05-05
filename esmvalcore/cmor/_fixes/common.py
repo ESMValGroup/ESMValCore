@@ -161,10 +161,12 @@ class OceanFixGrid(Fix):
             idx_coord.bounds = None
             idx_coord.guess_bounds()
 
-        # Calculate latitude/longitude vertices by interpolation. More details
-        # on boundaries for 2D coordinates and corresponding conventions are
-        # given here:
-        # cfconventions.org/cf-conventions/cf-conventions.html#cell-boundaries
+        # Calculate latitude/longitude vertices by interpolation.
+        # Following the CF conventions (see
+        # cfconventions.org/cf-conventions/cf-conventions.html#cell-boundaries)
+        # we go counter-clockwise around the cells and construct a grid of
+        # index values which are in turn used to interpolate longitudes and
+        # latitudes in the midpoints between the cell centers.
         lat_vertices = []
         lon_vertices = []
         for (j, i) in [(0, 0), (0, 1), (1, 1), (1, 0)]:
