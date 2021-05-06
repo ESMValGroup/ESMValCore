@@ -72,15 +72,15 @@ class AllVars(Fix):
                         lon_coord.bounds = lon_bnds
                     # ocean & seaice
                     if lon_coord.points[0] == -0.9375:
-                        cube.data = da.roll(cube.core_data(), -1, axis=-1)
-                        delta = np.abs(lon_coord.points[0] * 2)
-                        lon_coord.points = lon_coord.points + delta
-                        lon_coord.bounds = lon_coord.bounds + delta
-
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-                if z_coord.standard_name is None and z_coord.var_name == 'lev':
-                    fix_ocean_depth_coord(cube)
+                        lon_dim = cube.coord_dims('longitude')[0]
+                        cube.data = da.roll(cube.core_data(), -1, axis=lon_dim)
+                        lon_points = np.roll(lon_coord.core_points(), -1)
+                        lon_bounds = np.roll(lon_coord.core_bounds(), -1,
+                                             axis=0)
+                        lon_points[-1] += 360.0
+                        lon_bounds[-1] += 360.0
+                        lon_coord.points = lon_points
+                        lon_coord.bounds = lon_bounds
 
         return cubes
 
@@ -104,3 +104,27 @@ class Tas(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 2.0)
         return [cube]
+
+
+class Omon(Fix):
+    """Fixes for ocean variables."""
+
+    def fix_metadata(self, cubes):
+        """Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                z_coord = cube.coord(axis='Z')
+                if z_coord.standard_name is None:
+                    fix_ocean_depth_coord(cube)
+        return cubes

@@ -182,7 +182,7 @@ def thetao_cubes():
         (lon_coord, 3),
     ]
     thetao_cube = iris.cube.Cube(
-        np.ones((2, 2, 2, 2)),
+        np.arange(16).reshape(2, 2, 2, 2),
         var_name='thetao',
         dim_coords_and_dims=coord_specs,
     )
@@ -204,10 +204,22 @@ def test_thetao_fix_metadata(thetao_cubes):
     assert len(out_cubes) == 1
     out_cube = out_cubes[0]
 
+    # Check data of cube
+    np.testing.assert_allclose(out_cube.data,
+                               [[[[1, 0],
+                                  [3, 2]],
+                                 [[5, 4],
+                                  [7, 6]]],
+                                [[[9, 8],
+                                  [11, 10]],
+                                 [[13, 12],
+                                  [15, 14]]]])
+
     # Check data of longitude
     lon_coord = out_cube.coord('longitude')
-    assert lon_coord.points[0] == 0.9375
-    assert np.all(lon_coord.bounds[0] == [0., 1.875])
+    np.testing.assert_allclose(lon_coord.points, [357.1875, 359.0625])
+    np.testing.assert_allclose(lon_coord.bounds,
+                               [[356.25, 358.125], [358.125, 360.0]])
 
     # Check metadata of depth coordinate
     depth_coord = out_cube.coord('depth')
