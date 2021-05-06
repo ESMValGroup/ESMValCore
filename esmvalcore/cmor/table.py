@@ -146,7 +146,7 @@ class InfoBase():
         ----------
         table_name: str
             Table name
-        short_name:strg
+        short_name: str
             Variable's short name
         derived: bool, optional
             Variable is derived. Info retrieval for derived variables always
@@ -616,9 +616,9 @@ class CMIP5Info(InfoBase):
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
        Path to the folder containing the Tables folder with the json files
-str
+
     default: object
         Default table to look variables on if not found
 
@@ -757,11 +757,11 @@ str
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
-        -------str
+        -------
         TableInfo
             Return the TableInfo object for the requested table if
             found, returns None if not
@@ -774,11 +774,11 @@ class CMIP3Info(CMIP5Info):
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
        Path to the folder containing the Tables folder with the json files
 
     default: object
-        Default table strriables on if not found
+        Default table to look variables on if not found
 
     strict: bool
         If False, will look for a variable in other tables if it can not be
@@ -811,11 +811,11 @@ class CustomInfo(CMIP5Info):
 
     Parameters
     ----------
-    cmor_tables_path: basestring or None
+    cmor_tables_path: str or None
         Full path to the table or name for the table if it is present in
         ESMValTool repository
     """
-    def __init__(self,stres_path=None):
+    def __init__(self, cmor_tables_path=None):
         cwd = os.path.dirname(os.path.realpath(__file__))
         self._cmor_folder = os.path.join(cwd, 'tables', 'custom')
         self.tables = {}
@@ -848,13 +848,13 @@ class CustomInfo(CMIP5Info):
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
-        short_name: basestring
+        short_name: str
             Variable's short name
-        derivedstrtional
+        derived: bool, optional
             Variable is derived. Info retrieval for derived variables always
-            look on strt tables if variable is not find in the
+            look on the default tables if variable is not find in the
             requested table
 
         Returns

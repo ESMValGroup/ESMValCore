@@ -985,7 +985,7 @@ def cmor_check_metadata(cube,
         CMOR definitions to use.
     mip:
         Variable's mip.
-    short_name: basestring
+    short_name: str
         Variable's short name.
     frequency: str
         Data frequency.
@@ -1019,7 +1019,7 @@ def cmor_check_data(cube,
         CMOR definitions to use.
     mip:
         Variable's mip.
-    short_name:strg
+    short_name: str
         Variable's short name
     frequency: str
         Data frequency
@@ -1049,7 +1049,7 @@ def cmor_check(cube, cmor_table, mip, short_name, frequency, check_level):
         CMOR definitions to use.
     mip:
         Variable's mip.
-    short_name:strg
+    short_name: str
         Variable's short name.
     frequency: str
         Data frequency.
