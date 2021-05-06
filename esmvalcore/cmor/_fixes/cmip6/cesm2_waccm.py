@@ -3,6 +3,7 @@ from netCDF4 import Dataset
 
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Tas as BaseTas
+from .gfdl_esm4 import Siconc as Addtypesi
 
 
 class Cl(BaseCl):
@@ -48,3 +49,6 @@ Clw = Cl
 
 
 Tas = BaseTas
+
+
+Siconc = Addtypesi

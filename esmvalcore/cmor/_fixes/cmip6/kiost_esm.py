@@ -1,5 +1,6 @@
 """Fixes for KIOST-ESM model."""
 from ..fix import Fix
+from .gfdl_esm4 import Siconc as Addtypesi
 from ..shared import add_scalar_height_coord
 
 
@@ -57,3 +58,6 @@ class Uas(SfcWind):
 
 class Vas(SfcWind):
     """Fixes for vas."""
+
+
+Siconc = Addtypesi
