@@ -207,7 +207,7 @@ def test_thetao_fix_metadata(thetao_cubes):
     # Check data of longitude
     lon_coord = out_cube.coord('longitude')
     assert lon_coord.points[0] == 0.9375
-    assert lon_coord.bounds[0] == [0., 1.875]
+    assert np.all(lon_coord.bounds[0] == [0., 1.875])
 
     # Check metadata of depth coordinate
     depth_coord = out_cube.coord('depth')
