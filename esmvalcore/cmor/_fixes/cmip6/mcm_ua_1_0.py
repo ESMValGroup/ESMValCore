@@ -1,5 +1,6 @@
 """Fixes for MCM-UA-1-0 model."""
 import iris
+import numpy as np
 from dask import array as da
 
 from ..fix import Fix
@@ -72,7 +73,7 @@ class AllVars(Fix):
                     # ocean & seaice
                     if lon_coord.points[0] == -0.9375:
                         cube.data = da.roll(cube.core_data(), -1, axis=-1)
-                        delta = lon_coord.points[1] - lon_coord.points[0]
+                        delta = np.abs(lon_coord.points[0] * 2)
                         lon_coord.points = lon_coord.points + delta
                         lon_coord.bounds = lon_coord.bounds + delta
 
