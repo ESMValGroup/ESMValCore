@@ -13,7 +13,6 @@ There are several configuration files in ESMValCore:
   graphical output format, root paths to data, etc.;
 * ``config-developer.yml``: sets a number of standardized file-naming and paths
   to data formatting;
-* ``config-logging.yml``: stores information on logging.
 
 and one configuration file which is distributed with ESMValTool:
 
@@ -265,15 +264,17 @@ The filename to use for preprocessed data is configured in a similar manner
 using ``output_file``. Note that the extension ``.nc`` (and if applicable,
 a start and end time) will automatically be appended to the filename.
 
-CMOR table configuration
--------------------------
+.. _cmor_table_configuration:
+
+Project CMOR table configuration
+--------------------------------
 
 ESMValCore comes bundled with several CMOR tables, which are stored in the directory
-`esmvalcore/cmor/tables
-<https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/cmor/tables>`_.
+`esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/cmor/tables>`_.
 These are copies of the tables available from `PCMDI <https://github.com/PCMDI>`_.
 
-There are four settings related to CMOR tables available:
+For every ``project`` that can be used in the recipe, there are four settings
+related to CMOR table settings available:
 
 * ``cmor_type``: can be ``CMIP5`` if the CMOR table is in the same format as the
   CMIP5 table or ``CMIP6`` if the table is in the same format as the CMIP6 table.
@@ -281,17 +282,19 @@ There are four settings related to CMOR tables available:
   extended with variables from the ``esmvalcore/cmor/tables/custom`` directory
   and it is possible to use variables with a ``mip`` which is different from
   the MIP table in which they are defined.
-* ``cmor_path``: path to the CMOR table. Defaults to the value provided in
-  ``cmor_type`` written in lower case.
-* ``cmor_default_table_prefix``: defaults to the value provided in ``cmor_type``.
-
+* ``cmor_path``: path to the CMOR table.
+  Relative paths are with respect to `esmvalcore/cmor/tables`_.
+  Defaults to the value provided in ``cmor_type`` written in lower case.
+* ``cmor_default_table_prefix``: Prefix that needs to be added to the ``mip``
+  to get the name of the file containing the ``mip`` table.
+  Defaults to the value provided in ``cmor_type``.
 
 .. _config-ref:
 
 References configuration file
 =============================
 
-The ``config-references.yml`` file contains the list of ESMValTool diagnostic and recipe authors,
+The `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/master/esmvaltool/config-references.yml>`__ file contains the list of ESMValTool diagnostic and recipe authors,
 references and projects. Each author, project and reference referred to in the
 documentation section of a recipe needs to be in this file in the relevant
 section.
@@ -317,10 +320,3 @@ following documentation section:
 
 These four items here are named people, references and projects listed in the
 ``config-references.yml`` file.
-
-
-Logging configuration file
-==========================
-
-.. warning::
-    Section to be added

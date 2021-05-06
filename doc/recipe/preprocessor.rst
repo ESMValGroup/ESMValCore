@@ -9,6 +9,7 @@ roughly following the default order in which preprocessor functions are applied:
 
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
+* :ref:`Fx variables as cell measures or ancillary variables`
 * :ref:`Vertical interpolation`
 * :ref:`Weighting`
 * :ref:`Land/Sea/Ice masking`
@@ -175,6 +176,34 @@ steps:
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
 
+.. _Fx variables as cell measures or ancillary variables:
+
+Fx variables as cell measures or ancillary variables
+====================================================
+Preprocessor steps related to spatial statistics or masking may require
+the use of ``fx_variables`` to be able to perform the computations.
+The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
+checks them against CMOR standards and adds them either as ``cell_measure``
+or ``ancillary_variable`` inside the cube data. This ensures that the
+defined preprocessor chain is applied to both ``variables`` and ``fx_variables``.
+
+Note that when calling steps that require ``fx_variables`` inside diagnostic
+scripts, the variables are expected to contain the required ``cell_measures`` or 
+``ancillary_variables``. If missing, they can be added using the following functions:
+
+.. code-block::
+
+    from esmvalcore.preprocessor import (add_cell_measure, add_ancillary_variable)
+
+    cube_with_area_measure = add_cell_measure(cube, area_cube, 'area')
+
+    cube_with_volume_measure = add_cell_measure(cube, volume_cube, 'volume)
+
+    cube_with_ancillary_sftlf = add_ancillary_variable(cube, sftlf_cube)
+
+    cube_with_ancillary_sftgif = add_ancillary_variable(cube, sftgif_cube)
+  
+  Details on the arguments needed for each step can be found in the following sections.
 
 .. _Vertical interpolation:
 
@@ -325,8 +354,25 @@ experiment is preferred for fx data retrieval:
         weighting_landsea_fraction:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
-          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+          fx_variables: 
+            sftlf:
+              exp: piControl
+            sftof:
+              exp: piControl
 
+or alternatively:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_weighting:
+        weighting_landsea_fraction:
+          area_type: land
+          exclude: ['CanESM2', 'reference_dataset']
+          fx_variables: [
+            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftof', 'exp': 'piControl'}
+            ]
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
@@ -379,7 +425,8 @@ missing. Conversely, it retrieves the ``fx: sftlf`` mask when land needs to be
 masked out, respectively.
 
 Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
-experiment is preferred for fx data retrieval:
+experiment is preferred for fx data retrieval. Note that it is possible to specify as many tags
+for the fx variable as required:
 
 
 .. code-block:: yaml
@@ -388,7 +435,25 @@ experiment is preferred for fx data retrieval:
       landmask:
         mask_landsea:
           mask_out: sea
-          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+          fx_variables: 
+            sftlf: 
+              exp: piControl
+            sftof:
+              exp: piControl
+              ensemble: r2i1p1f1
+
+or alternatively:
+
+.. code-block:: yaml
+
+    preprocessors:
+      landmask:
+        mask_landsea:
+          mask_out: sea
+          fx_variables: [
+            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftof', 'exp': 'piControl', 'ensemble': 'r2i1p1f1'}
+            ]
 
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
@@ -428,8 +493,19 @@ experiment is preferred for fx data retrieval:
       landseaicemask:
         mask_landseaice:
           mask_out: sea
-          fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+          fx_variables: 
+            sftgif:
+              exp: piControl
 
+or alternatively:
+
+.. code-block:: yaml
+
+    preprocessors:
+      landseaicemask:
+        mask_landseaice:
+          mask_out: sea
+          fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -492,20 +568,14 @@ See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
 Common mask for multiple models
 -------------------------------
 
-It is possible to use ``mask_fillvalues`` to create a combined multi-model mask
-(all the masks from all the analyzed models combined into a single mask); for
-that purpose setting the ``threshold_fraction`` to 0 will not discard any time
-windows, essentially keeping the original model masks and combining them into a
-single mask; here is an example:
+To create a combined multi-model mask (all the masks from all the analyzed
+datasets combined into a single mask using a logical OR), the preprocessor
+``mask_multimodel`` can be used. In contrast to ``mask_fillvalues``,
+``mask_multimodel`` does not expect that the datasets have a ``time``
+coordinate, but works on datasets with arbitrary (but identical) coordinates.
+After ``mask_multimodel``, all involved datasets have an identical mask.
 
-.. code-block:: yaml
-
-    preprocessors:
-      missing_values_preprocessor:
-        mask_fillvalues:
-          threshold_fraction: 0.0     # keep all missing values
-          min_value: -1e20            # small enough not to alter the data
-          #  time_window: 10.0        # this will not matter anymore
+See also :func:`esmvalcore.preprocessor.mask_multimodel`.
 
 Minimum, maximum and interval masking
 -------------------------------------
@@ -517,7 +587,7 @@ interval thresholding and masking can also be performed. These functions are
 ``mask_outside_range``.
 
 These functions always take a cube as first argument and either ``threshold``
-for threshold masking or the pair ``minimum`, ``maximum`` for interval masking.
+for threshold masking or the pair ``minimum``, ``maximum`` for interval masking.
 
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related
 functions.
@@ -598,6 +668,49 @@ centrepoints using the `lat_offset` and ``lon_offset`` arguments:
           lon_offset: True
           lat_offset: True
           scheme: nearest
+
+Regridding to a regional target grid specification
+--------------------------------------------------
+
+This example shows how to regrid to a regional target grid specification.
+This is useful if both a ``regrid`` and ``extract_region`` step are necessary.
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid:
+            start_longitude: 40
+            end_longitude: 60
+            step_longitude: 2
+            start_latitude: -10
+            end_latitude: 30
+            step_latitude: 2
+          scheme: nearest
+
+This defines a grid ranging from 40° to 60° longitude with 2° steps,
+and -10° to 30° latitude with 2° steps. If ``end_longitude`` or ``end_latitude`` do
+not fall on the grid (e.g., ``end_longitude: 61``), it cuts off at the nearest
+previous value (e.g. ``60``).
+
+The longitude coordinates will wrap around the globe if necessary, i.e.
+``start_longitude: 350``, ``end_longitude: 370`` is valid input.
+
+The arguments are defined below:
+
+* ``start_latitude``: Latitude value of the first grid cell center (start point).
+  The grid includes this value.
+* ``end_latitude``: Latitude value of the last grid cell center (end point).
+  The grid includes this value only if it falls on a grid point.
+  Otherwise, it cuts off at the previous value.
+* ``step_latitude``: Latitude distance between the centers of two neighbouring cells.
+* ``start_longitude``: Latitude value of the first grid cell center (start point).
+  The grid includes this value.
+* ``end_longitude``: Longitude value of the last grid cell center (end point).
+  The grid includes this value only if it falls on a grid point.
+  Otherwise, it cuts off at the previous value.
+* ``step_longitude``: Longitude distance between the centers of two neighbouring cells.
 
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
@@ -1192,6 +1305,19 @@ Parameters:
     regions in the shape file is masked out. If ``true``, the regions in the
     shapefiles are masked out separately, generating an auxiliary dimension
     for the cube for this.
+  * ``ids``: by default, ``[]``, in this case all the shapes in the file will
+    be used. If a list of IDs is provided, only the shapes matching them will
+    be used. The IDs are assigned from the ``name`` or ``id`` attributes (in
+    that order of priority) if present in the file or from the reading order
+    if otherwise not present. So, for example, if a file has both ```name``
+    and ``id`` attributes, the ids will be assigned from ``name``. If the file
+    only has the ``id`` attribute, it will be taken from it and if no ``name``
+    nor ``id`` attributes are present, an integer id starting from 1 will be
+    assigned automatically when reading the shapes. We discourage to rely on
+    this last behaviour as we can not assure that the reading order will be the
+    same in different platforms, so we encourage you to modify the file to add
+    a proper id attribute. If the file has an id attribute with a name that is
+    not supported, please open an issue so we can add support for it.
 
 Examples:
     * Extract the shape of the river Elbe from a shapefile:
@@ -1201,6 +1327,21 @@ Examples:
             extract_shape:
               shapefile: Elbe.shp
               method: contains
+
+    * Extract the shape of several countries:
+
+        .. code-block:: yaml
+
+            extract_shape:
+            shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
+            decomposed: True
+            method: contains
+            ids:
+              - Spain
+              - France
+              - Italy
+              - United Kingdom
+              - Taiwan
 
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
@@ -1267,18 +1408,36 @@ region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
 The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it as a list of variables e.g.
+the user may specify it calling the variables e.g.
+
+.. code-block:: yaml
+
+    fx_variables: 
+      areacello:
+      volcello:
+
+or calling the variables and adding specific variable parameters (the key-value pair may be as specific
+as a CMOR variable can permit):
+
+.. code-block:: yaml
+
+    fx_variables: 
+      areacello:
+        mip: Omon
+      volcello:
+        mip: fx
+
+Alternatively, the ``fx_variables`` argument can also be specified as a list:
 
 .. code-block:: yaml
 
     fx_variables: ['areacello', 'volcello']
 
-or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
-as a CMOR variable can permit):
+or as a list of dictionaries:
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
 
 The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
@@ -1327,18 +1486,36 @@ No depth coordinate is required as this is determined by Iris. This function
 works best when the ``fx_variables`` provide the cell volume.
 
 The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it as a list of variables e.g.
+the user may specify it calling the variables e.g.
+
+.. code-block:: yaml
+
+    fx_variables: 
+      areacello:
+      volcello:
+
+or calling the variables and adding specific variable parameters (the key-value pair may be as specific
+as a CMOR variable can permit):
+
+.. code-block:: yaml
+
+    fx_variables: 
+      areacello:
+        mip: Omon
+      volcello:
+        mip: fx
+
+Alternatively, the ``fx_variables`` argument can also be specified as a list:
 
 .. code-block:: yaml
 
     fx_variables: ['areacello', 'volcello']
 
-or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
-as a CMOR variable can permit):
+or as a list of dictionaries:
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
 
 The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.

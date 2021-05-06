@@ -118,9 +118,8 @@ def zonal_statistics(cube, operator):
         cube = cube.collapsed('longitude', operation)
         cube.data = cube.core_data().astype(np.float32, casting='same_kind')
         return cube
-    else:
-        msg = ("Zonal statistics on irregular grids not yet implemnted")
-        raise ValueError(msg)
+    msg = ("Zonal statistics on irregular grids not yet implemnted")
+    raise ValueError(msg)
 
 
 def meridional_statistics(cube, operator):
@@ -152,51 +151,11 @@ def meridional_statistics(cube, operator):
         cube = cube.collapsed('latitude', operation)
         cube.data = cube.core_data().astype(np.float32, casting='same_kind')
         return cube
-    else:
-        msg = ("Meridional statistics on irregular grids not yet implemented")
-        raise ValueError(msg)
+    msg = ("Meridional statistics on irregular grids not yet implemented")
+    raise ValueError(msg)
 
 
-def tile_grid_areas(cube, fx_files):
-    """Tile the grid area data to match the dataset cube.
-
-    Parameters
-    ----------
-    cube: iris.cube.Cube
-        input cube.
-    fx_files: dict
-        dictionary of field:filename for the fx_files
-
-    Returns
-    -------
-    iris.cube.Cube
-        Freshly tiled grid areas cube.
-    """
-    grid_areas = None
-    if fx_files:
-        for key, fx_file in fx_files.items():
-            if not fx_file:
-                continue
-            logger.info('Attempting to load %s from file: %s', key, fx_file)
-            fx_cube = iris.load_cube(fx_file)
-
-            grid_areas = fx_cube.core_data()
-            if cube.ndim == 4 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas,
-                                     [cube.shape[0], cube.shape[1], 1, 1])
-            elif cube.ndim == 4 and grid_areas.ndim == 3:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
-            elif cube.ndim == 3 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
-            else:
-                raise ValueError('Grid and dataset number of dimensions not '
-                                 'recognised: {} and {}.'
-                                 ''.format(cube.ndim, grid_areas.ndim))
-    return grid_areas
-
-
-# get the area average
-def area_statistics(cube, operator, fx_variables=None):
+def area_statistics(cube, operator):
     """Apply a statistical operator in the horizontal direction.
 
     The average in the horizontal direction. We assume that the
@@ -233,8 +192,6 @@ def area_statistics(cube, operator, fx_variables=None):
         operator: str
             The operation, options: mean, median, min, max, std_dev, sum,
             variance, rms.
-        fx_variables: dict
-            dictionary of field:filename for the fx_variables
 
     Returns
     -------
@@ -248,9 +205,17 @@ def area_statistics(cube, operator, fx_variables=None):
     ValueError
         if input data cube has different shape than grid area weights
     """
-    grid_areas = tile_grid_areas(cube, fx_variables)
+    grid_areas = None
+    try:
+        grid_areas = cube.cell_measure('cell_area').core_data()
+    except iris.exceptions.CellMeasureNotFoundError:
+        logger.info(
+            'Cell measure "cell_area" not found in cube %s. '
+            'Check fx_file availability.', cube
+        )
+        logger.info('Attempting to calculate grid cell area...')
 
-    if not fx_variables and cube.coord('latitude').points.ndim == 2:
+    if grid_areas is None and cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
         if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
             cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
@@ -269,7 +234,7 @@ def area_statistics(cube, operator, fx_variables=None):
                 cube.coord('latitude'))
 
     coord_names = ['longitude', 'latitude']
-    if grid_areas is None or not grid_areas.any():
+    if grid_areas is None:
         cube = guess_bounds(cube, coord_names)
         grid_areas = iris.analysis.cartography.area_weights(cube)
         logger.info('Calculated grid area shape: %s', grid_areas.shape)
@@ -377,8 +342,8 @@ def _crop_cube(cube,
 def _select_representative_point(shape, lon, lat):
     """Select a representative point for `shape` from `lon` and `lat`."""
     representative_point = shape.representative_point()
-    points = shapely.geometry.MultiPoint(np.stack((lon.flat, lat.flat),
-                                                  axis=1))
+    points = shapely.geometry.MultiPoint(
+        np.stack((np.ravel(lon), np.ravel(lat)), axis=1))
     nearest_point = shapely.ops.nearest_points(points, representative_point)[0]
     nearest_lon, nearest_lat = nearest_point.coords[0]
     select = (lon == nearest_lon) & (lat == nearest_lat)
@@ -409,11 +374,8 @@ def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
     return lon, lat
 
 
-def _get_masks_from_geometries(geometries,
-                               lon,
-                               lat,
-                               method='contains',
-                               decomposed=False):
+def _get_masks_from_geometries(geometries, lon, lat, method='contains',
+                               decomposed=False, ids=None):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
@@ -421,30 +383,45 @@ def _get_masks_from_geometries(geometries,
             "'representative'.")
 
     selections = dict()
-
+    if ids:
+        ids = [str(id_) for id_ in ids]
     for i, item in enumerate(geometries):
-        shape = shapely.geometry.shape(item['geometry'])
-        if method == 'contains':
-            select = shapely.vectorized.contains(shape, lon, lat)
-        if method == 'representative' or not select.any():
-            select = _select_representative_point(shape, lon, lat)
-        if 'ID' in item['properties']:
-            id_ = int(item['properties']['ID'])
-        elif 'id' in item['properties']:
-            id_ = int(item['properties']['id'])
+        for id_prop in ('name', 'NAME', 'Name', 'id', 'ID'):
+            if id_prop in item['properties']:
+                id_ = str(item['properties'][id_prop])
+                break
         else:
-            id_ = i
+            id_ = str(i)
+        logger.debug('Shape "%s" found', id_)
+        if ids and id_ not in ids:
+            continue
+        selections[id_] = _get_shape(lon, lat, method, item)
 
-        selections[id_] = select
+    if ids:
+        missing = set(ids) - set(selections.keys())
+        if missing:
+            raise ValueError(f'Shapes {" ".join(missing)!r} not found')
 
     if not decomposed and len(selections) > 1:
-        selection = np.zeros(lat.shape, dtype=bool)
-        for select in selections.values():
-            selection |= select
-
-        selections = {0: selection}
+        return _merge_shapes(selections, lat.shape)
 
     return selections
+
+
+def _get_shape(lon, lat, method, item):
+    shape = shapely.geometry.shape(item['geometry'])
+    if method == 'contains':
+        select = shapely.vectorized.contains(shape, lon, lat)
+    if method == 'representative' or not select.any():
+        select = _select_representative_point(shape, lon, lat)
+    return select
+
+
+def _merge_shapes(selections, shape):
+    selection = np.zeros(shape, dtype=bool)
+    for select in selections.values():
+        selection |= select
+    return {0: selection}
 
 
 def fix_coordinate_ordering(cube):
@@ -488,11 +465,8 @@ def fix_coordinate_ordering(cube):
     return cube
 
 
-def extract_shape(cube,
-                  shapefile,
-                  method='contains',
-                  crop=True,
-                  decomposed=False):
+def extract_shape(cube, shapefile, method='contains', crop=True,
+                  decomposed=False, ids=None):
     """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
@@ -516,6 +490,10 @@ def extract_shape(cube,
         Whether or not to retain the sub shapes of the shapefile in the output.
         If this is set to True, the output cube has a dimension for the sub
         shapes.
+    ids: list(str), optional
+        List of shapes to be read from the file. The ids are assigned from
+        the attributes 'name' or 'id' (in that priority order) if present in
+        the file or correspond to the reading order if not.
 
     Returns
     -------
@@ -553,19 +531,19 @@ def extract_shape(cube,
                                                 lon,
                                                 lat,
                                                 method=method,
-                                                decomposed=decomposed)
+                                                decomposed=decomposed,
+                                                ids=ids)
 
+    return _mask_cube(cube, selections)
+
+
+def _mask_cube(cube, selections):
     cubelist = iris.cube.CubeList()
-
     for id_, select in selections.items():
         _cube = cube.copy()
         _cube.add_aux_coord(
             iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
-
         select = da.broadcast_to(select, _cube.shape)
         _cube.data = da.ma.masked_where(~select, _cube.core_data())
         cubelist.append(_cube)
-
-    cube = cubelist.merge_cube()
-
-    return fix_coordinate_ordering(cube)
+    return fix_coordinate_ordering(cubelist.merge_cube())

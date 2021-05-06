@@ -10,6 +10,7 @@ from .._provenance import TrackedFile
 from .._task import BaseTask
 from ..cmor.check import cmor_check_data, cmor_check_metadata
 from ..cmor.fix import fix_data, fix_file, fix_metadata
+from ._ancillary_vars import add_fx_variables, remove_fx_variables
 from ._area import (
     area_statistics,
     extract_named_regions,
@@ -38,6 +39,7 @@ from ._mask import (
     mask_inside_range,
     mask_landsea,
     mask_landseaice,
+    mask_multimodel,
     mask_outside_range,
 )
 from ._multimodel import multi_model_statistics
@@ -92,6 +94,8 @@ __all__ = [
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
+    # Load fx_variables in cube
+    'add_fx_variables',
     # Time extraction (as defined in the preprocessor section)
     'extract_time',
     'extract_season',
@@ -113,6 +117,7 @@ __all__ = [
     # Point interpolation
     'extract_point',
     # Masking missing values
+    'mask_multimodel',
     'mask_fillvalues',
     'mask_above_threshold',
     'mask_below_threshold',
@@ -154,6 +159,8 @@ __all__ = [
     'linear_trend',
     'linear_trend_stderr',
     'convert_units',
+    # Remove fx_variables from cube
+    'remove_fx_variables',
     # Save to file
     'save',
     'cleanup',
@@ -177,11 +184,12 @@ TIME_PREPROCESSORS = [
 DEFAULT_ORDER = tuple(__all__)
 
 # The order of initial and final steps cannot be configured
-INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('cmor_check_data') + 1]
-FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('save'):]
+INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_fx_variables') + 1]
+FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('remove_fx_variables'):]
 
 MULTI_MODEL_FUNCTIONS = {
     'multi_model_statistics',
+    'mask_multimodel',
     'mask_fillvalues',
 }
 

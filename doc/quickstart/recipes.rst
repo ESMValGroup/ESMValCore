@@ -3,15 +3,14 @@
 Working with the installed recipes
 **********************************
 
-Although ESMValTool can be used just to simplify the managment of data
-and the creation of your own analysis code, one of its main strenghts is the
-continuosly growing set of diagnostics and metrics that it directly provides to
+Although ESMValTool can be used just to simplify the management of data
+and the creation of your own analysis code, one of its main strengths is the
+continuously growing set of diagnostics and metrics that it directly provides to
 the user. These metrics and diagnostics are provided as a set of preconfigured
 recipes that users can run or customize for their own analysis.
-The latest list of available recipes can be found
-`here <https://docs.esmvaltool.org/en/latest/recipes/index.html>`_.
+The latest list of available recipes can be found :ref:`here <esmvaltool:recipes>`.
 
-In order to make the managmenent of these installed recipes easier, ESMValTool
+In order to make the management of these installed recipes easier, ESMValTool
 provides the ``recipes`` command group with utilities that help the users in
 discovering and customizing the provided recipes.
 
@@ -29,7 +28,7 @@ using the following command
 
 	esmvaltool recipes show recipe_name.yml
 
-And finally, to get a local copy that can then be cusotmized and run, users can
+And finally, to get a local copy that can then be customized and run, users can
 use the following command
 
 .. code:: bash

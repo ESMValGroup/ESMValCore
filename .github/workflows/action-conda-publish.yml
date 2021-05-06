@@ -43,7 +43,7 @@ jobs:
           export BUILD_FOLDER=/tmp/esmvalcore/_build
           mkdir -p $BUILD_FOLDER
           conda build package \
-            --channel esmvalgroup --channel conda-forge \
+            --channel conda-forge \
             --croot $BUILD_FOLDER \
       - name: Push the package to anaconda cloud
         if: startsWith(github.ref, 'refs/tags')
@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest']  # may extent to osx in the future
+        os: ['ubuntu-latest', 'macos-latest']
         python-version: ["3.6", "3.7", "3.8", "3.9"]
     runs-on: ${{ matrix.os }}
     needs: publish
@@ -70,7 +70,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
-          channels: esmvalgroup,conda-forge
+          channels: conda-forge
       - shell: bash -l {0}
         run: conda --version
       - shell: bash -l {0}

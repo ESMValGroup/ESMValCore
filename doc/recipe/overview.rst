@@ -12,10 +12,10 @@ Broadly, recipes contain a general section summarizing the provenance and
 functionality of the diagnostics, the datasets which need to be run, the
 preprocessors that need to be applied, and the diagnostics which need to be run
 over the preprocessed data. This information is provided to ESMValTool in four
-main recipe sections: Documentation_, Datasets_, Preprocessors_ and
-Diagnostics_, respectively.
+main recipe sections: :ref:`Documentation <recipe_documentation>`, Datasets_,
+Preprocessors_, and Diagnostics_, respectively.
 
-.. _Documentation:
+.. _recipe_documentation:
 
 Recipe section: ``documentation``
 =================================
@@ -23,6 +23,8 @@ Recipe section: ``documentation``
 The documentation section includes:
 
 - The recipe's author's user name (``authors``, matching the definitions in the
+  :ref:`config-ref`)
+- The recipe's maintainer's user name (``maintainer``, matching the definitions in the
   :ref:`config-ref`)
 - A description of the recipe (``description``, written in MarkDown format)
 - A list of scientific references (``references``, matching the definitions in
@@ -57,8 +59,10 @@ the following:
 .. note::
 
    Note that all authors, projects, and references mentioned in the description
-   section of the recipe need to be included in the ``config-references.yml``
-   file. The author name uses the format: ``surname_name``. For instance, John
+   section of the recipe need to be included in the (locally installed copy of the) file
+   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/master/esmvaltool/config-references.yml>`_,
+   see :ref:`config-ref`.
+   The author name uses the format: ``surname_name``. For instance, John
    Doe would be: ``doe_john``. This information can be omitted by new users
    whose name is not yet included in ``config-references.yml``.
 
@@ -250,6 +254,8 @@ Note that the script should either have the extension for a supported language,
 i.e. ``.py``, ``.R``, ``.ncl``, or ``.jl`` for Python, R, NCL, and Julia diagnostics
 respectively, or be executable if it is written in any other language.
 
+.. _ancestor-tasks:
+
 Ancestor tasks
 --------------
 Some tasks require the result of other tasks to be ready before they can start,
@@ -328,7 +334,7 @@ concentration changed from ``sic`` to ``siconc``). ESMValCore is aware of some
 of them and can do the automatic translation when needed. It will even do the
 translation in the preprocessed file so the diagnostic does not have to deal
 with this complexity, setting the short name in all files to match the one used
-by the recipe. For example, if ``sic`` is requested, ESMValTool will
+by the recipe. For example, if ``sic`` is requested, ESMValCore will
 find ``sic`` or ``siconc`` depending on the project, but all preprocessed files
 while use ``sic`` as their short_name. If the recipe requested ``siconc``, the
 preprocessed files will be identical except that they will use the short_name

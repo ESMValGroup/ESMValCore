@@ -4,6 +4,7 @@ import base64
 import logging
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Optional, Tuple, Type
 
 import iris
 
@@ -47,9 +48,9 @@ class TaskOutput:
         """Return number of files."""
         return len(self.files)
 
-    def __getitem__(self, key: str):
-        """Get item indexed by `key`."""
-        return self.files[key]
+    def __getitem__(self, index: int):
+        """Get item indexed by `index`."""
+        return self.files[index]
 
     @property
     def image_files(self) -> tuple:
@@ -68,7 +69,7 @@ class TaskOutput:
         Where task is an instance of `esmvalcore._task.BaseTask`.
         """
         product_attributes = task.get_product_attributes()
-        return cls(name=task.name, output=product_attributes)
+        return cls(name=task.name, files=product_attributes)
 
 
 class RecipeOutput(Mapping):
@@ -188,7 +189,7 @@ class OutputFile():
         Attributes corresponding to the recipe output
     """
 
-    kind = None
+    kind: Optional[str] = None
 
     def __init__(self, path: str, attributes: dict = None):
         if not attributes:
@@ -197,8 +198,8 @@ class OutputFile():
         self.attributes = attributes
         self.path = Path(path)
 
-        self._authors = None
-        self._references = None
+        self._authors: Optional[Tuple[Contributor, ...]] = None
+        self._references: Optional[Tuple[Reference, ...]] = None
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -265,11 +266,13 @@ class OutputFile():
         return self._get_derived_path('_provenance', '.xml')
 
     @classmethod
-    def create(cls, path: str, attributes: dict = None):
+    def create(cls, path: str, attributes: dict = None) -> 'OutputFile':
         """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.
         """
+        item_class: Type[OutputFile]
+
         ext = Path(path).suffix
         if ext in ('.png', ):
             item_class = ImageFile

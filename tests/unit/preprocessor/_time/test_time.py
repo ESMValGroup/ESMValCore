@@ -1,7 +1,9 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
 import copy
+import datetime
 import unittest
+from typing import List, Tuple
 
 import iris
 import iris.coord_categorisation
@@ -9,7 +11,6 @@ import iris.coords
 import iris.exceptions
 import numpy as np
 import pytest
-import datetime
 from cf_units import Unit
 from iris.cube import Cube
 from numpy.testing import (
@@ -72,6 +73,12 @@ class TestExtractMonth(tests.Test):
         assert_array_equal(np.array([1, 1]),
                            sliced.coord('month_number').points)
 
+    def test_raises_if_extracted_cube_is_none(self):
+        """Test function for winter."""
+        sliced = extract_month(self.cube, 1)
+        with assert_raises(ValueError):
+            extract_month(sliced, 2)
+
     def test_get_january_with_existing_coord(self):
         """Test january extraction."""
         iris.coord_categorisation.add_month_number(self.cube, 'time')
@@ -92,6 +99,11 @@ class TestTimeSlice(tests.Test):
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
+
+    def test_raises_if_extracted_cube_is_none(self):
+        """Test extract_time."""
+        with assert_raises(ValueError):
+            extract_time(self.cube, 2000, 1, 1, 2000, 12, 31)
 
     def test_extract_time(self):
         """Test extract_time."""
@@ -212,6 +224,12 @@ class TestExtractSeason(tests.Test):
             self.cube.coord('clim_season')
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
             self.cube.coord('season_year')
+
+    def test_raises_if_extracted_cube_is_none(self):
+        """Test function for winter."""
+        sliced = extract_season(self.cube, 'DJF')
+        with assert_raises(ValueError):
+            extract_season(sliced, 'MAM')
 
     def test_get_djf_caps(self):
         """Test function works when season specified in caps."""
@@ -806,7 +824,7 @@ class TestRegridTimeYearly(tests.Test):
             expected_minbound = timeunit_1.date2num(
                 datetime.datetime(year_1, 1, 1))
             expected_maxbound = timeunit_1.date2num(
-                datetime.datetime(year_1+1, 1, 1))
+                datetime.datetime(year_1 + 1, 1, 1))
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
@@ -925,8 +943,8 @@ class TestRegridTimeDaily(tests.Test):
         self.assert_array_equal(diff_cube.data, expected)
         # test bounds are set with a dt = 12/24 days
         for i, time in enumerate(newcube_1.coord('time').points):
-            expected_minbound = time - 12/24
-            expected_maxbound = time + 12/24
+            expected_minbound = time - 12 / 24
+            expected_maxbound = time + 12 / 24
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
@@ -978,8 +996,8 @@ class TestRegridTime6Hourly(tests.Test):
         self.assert_array_equal(diff_cube.data, expected)
         # test bounds are set with a dt = 3/24 days
         for i, time in enumerate(newcube_1.coord('time').points):
-            expected_minbound = time - 3/24
-            expected_maxbound = time + 3/24
+            expected_minbound = time - 3 / 24
+            expected_maxbound = time + 3 / 24
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
@@ -1031,8 +1049,8 @@ class TestRegridTime3Hourly(tests.Test):
         self.assert_array_equal(diff_cube.data, expected)
         # test bounds are set with a dt = 1.5/24 days
         for i, time in enumerate(newcube_1.coord('time').points):
-            expected_minbound = time - 1.5/24
-            expected_maxbound = time + 1.5/24
+            expected_minbound = time - 1.5 / 24
+            expected_maxbound = time + 1.5 / 24
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
@@ -1084,8 +1102,8 @@ class TestRegridTime1Hourly(tests.Test):
         self.assert_array_equal(diff_cube.data, expected)
         # test bounds are set with a dt = 0.5/24 days
         for i, time in enumerate(newcube_1.coord('time').points):
-            expected_minbound = time - 0.5/24
-            expected_maxbound = time + 0.5/24
+            expected_minbound = time - 0.5 / 24
+            expected_maxbound = time + 0.5 / 24
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
@@ -1246,7 +1264,7 @@ def make_map_data(number_years=2):
     return cube
 
 
-PARAMETERS = []
+PARAMETERS: List[Tuple] = []
 for period in ('full', 'day', 'month', 'season'):
     PARAMETERS.append((period, None))
     if period == 'season':
