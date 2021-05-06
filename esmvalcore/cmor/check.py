@@ -461,6 +461,7 @@ class CMORCheck():
         self.report_debug_message(
             f"Found alternative coordinate '{alternative_coord.out_name}' "
             f"for generic level coordinate '{key}'")
+        self._check_coord(alternative_coord, cube_coord, self._cube.var_name)
 
     def _check_coords(self):
         """Check coordinates."""
