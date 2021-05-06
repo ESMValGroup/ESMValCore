@@ -199,8 +199,10 @@ def test_get_thetao_fix():
 def test_thetao_fix_metadata(thetao_cubes):
     """Test ``fix_metadata`` for ``thetao``."""
     vardef = get_var_info('CMIP6', 'Omon', 'thetao')
-    fix = Omon(vardef)
-    out_cubes = fix.fix_metadata(thetao_cubes)
+    fix_omon = Omon(vardef)
+    fix_allvars = AllVars(vardef)
+    out_cubes = fix_omon.fix_metadata(thetao_cubes)
+    out_cubes = fix_allvars.fix_metadata(out_cubes)
     assert out_cubes is thetao_cubes
     assert len(out_cubes) == 1
     out_cube = out_cubes[0]
