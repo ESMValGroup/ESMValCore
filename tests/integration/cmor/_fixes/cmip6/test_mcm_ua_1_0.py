@@ -1,5 +1,6 @@
 """Tests for the fixes of MCM-UA-1-0."""
 import iris
+import numpy as np
 import pytest
 from cf_units import Unit
 
@@ -157,3 +158,61 @@ def test_tas_fix_metadata(cubes):
     assert out_cubes_2[0].var_name == 'tas'
     coord = out_cubes_2[0].coord('height')
     assert coord == height_coord
+
+
+@pytest.fixture
+def thetao_cubes():
+    time_coord = iris.coords.DimCoord(
+        [0.0004, 1.09776], var_name='time', standard_name='time',
+        units='days since 1850-01-01 00:00:00')
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
+    lon_coord = iris.coords.DimCoord([-0.9375, 357.1875],
+                                     bounds=[[-1.875, 0.], [356.25, 358.125]],
+                                     var_name='lon',
+                                     standard_name='longitude')
+    lev_coord = iris.coords.DimCoord(
+        [5.0, 10.0], bounds=[[2.5, 7.5], [7.5, 12.5]],
+        var_name='lev', standard_name=None, units='m',
+        attributes={'positive': 'up'})
+    coord_specs = [
+        (time_coord, 0),
+        (lev_coord, 1),
+        (lat_coord, 2),
+        (lon_coord, 3),
+    ]
+    thetao_cube = iris.cube.Cube(
+        np.ones((2, 2, 2, 2)),
+        var_name='thetao',
+        dim_coords_and_dims=coord_specs,
+    )
+
+    return iris.cube.CubeList([thetao_cube])
+
+
+def test_get_thetao_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Omon', 'thetao')
+    assert fix == [AllVars(None)]
+
+
+def test_thetao_fix_metadata(thetao_cubes):
+    """Test ``fix_metadata`` for ``thetao``."""
+    fix = AllVars(None)
+    out_cubes = fix.fix_metadata(thetao_cubes)
+    assert out_cubes is thetao_cubes
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    # Check data of longitude
+    lon_coord = out_cube.coord('longitude')
+    assert lon_coord.points[0] == 0.9375
+    assert lon_coord.bounds[0] == [0., 1.875]
+
+    # Check metadata of depth coordinate
+    depth_coord = out_cube.coord('depth')
+    assert depth_coord.standard_name == 'depth'
+    assert depth_coord.var_name == 'lev'
+    assert depth_coord.long_name == 'ocean depth coordinate'
+    assert depth_coord.units == 'm'
+    assert depth_coord.attributes == {'positive': 'down'}

@@ -1,8 +1,9 @@
 """Fixes for MCM-UA-1-0 model."""
 import iris
+from dask import array as da
 
 from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from ..shared import add_scalar_height_coord, fix_ocean_depth_coord
 
 
 def strip_cube_metadata(cube):
@@ -59,14 +60,26 @@ class AllVars(Fix):
         for cube in cubes:
             coord_names = [cor.standard_name for cor in cube.coords()]
             if 'longitude' in coord_names:
-                if cube.coord('longitude').ndim == 1 and \
-                        cube.coord('longitude').has_bounds():
-                    lon_bnds = cube.coord('longitude').bounds.copy()
-                    if cube.coord('longitude').points[0] == 0. and \
-                            cube.coord('longitude').points[-1] == 356.25 and \
+                lon_coord = cube.coord('longitude')
+                if lon_coord.ndim == 1 and lon_coord.has_bounds():
+                    lon_bnds = lon_coord.bounds.copy()
+                    # atmos & land
+                    if lon_coord.points[0] == 0. and \
+                            lon_coord.points[-1] == 356.25 and \
                             lon_bnds[-1][-1] == 360.:
                         lon_bnds[-1][-1] = 358.125
-                    cube.coord('longitude').bounds = lon_bnds
+                        lon_coord.bounds = lon_bnds
+                    # ocean & seaice
+                    if lon_coord.points[0] == -0.9375:
+                        cube.data = da.roll(cube.core_data(), -1, axis=-1)
+                        delta = lon_coord.points[1] - lon_coord.points[0]
+                        lon_coord.points = lon_coord.points + delta
+                        lon_coord.bounds = lon_coord.bounds + delta
+
+            if cube.coords(axis='Z'):
+                z_coord = cube.coord(axis='Z')
+                if z_coord.standard_name is None and z_coord.var_name == 'lev':
+                    fix_ocean_depth_coord(cube)
 
         return cubes
 
