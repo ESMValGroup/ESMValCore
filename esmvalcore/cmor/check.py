@@ -985,7 +985,7 @@ def cmor_check_metadata(cube,
         CMOR definitions to use.
     mip:
         Variable's mip.
-    cmor_name: basestring
+    cmor_name: str
         Variable's cmor name.
     frequency: basestring
         Data frequency.
