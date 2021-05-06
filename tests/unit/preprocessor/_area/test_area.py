@@ -20,6 +20,7 @@ from esmvalcore.preprocessor._area import (
     extract_region,
     extract_shape,
 )
+from esmvalcore.preprocessor._shared import guess_bounds
 
 
 class Test(tests.Test):
@@ -65,6 +66,22 @@ class Test(tests.Test):
 
     def test_area_statistics_mean(self):
         """Test for area average of a 2D field."""
+        result = area_statistics(self.grid, 'mean')
+        expected = np.array([1.])
+        self.assert_array_equal(result.data, expected)
+
+    def test_area_statistics_cell_measure_mean(self):
+        """
+        Test for area average of a 2D field.
+        The area measure is pre-loaded in the cube"""
+        cube = guess_bounds(self.grid, ['longitude', 'latitude'])
+        grid_areas = iris.analysis.cartography.area_weights(cube)
+        measure = iris.coords.CellMeasure(
+            grid_areas,
+            standard_name='cell_area',
+            units='m2',
+            measure='area')
+        self.grid.add_cell_measure(measure, range(0, measure.ndim))
         result = area_statistics(self.grid, 'mean')
         expected = np.array([1.])
         self.assert_array_equal(result.data, expected)
@@ -124,6 +141,27 @@ class Test(tests.Test):
         # expected outcome
         expected = np.ones((2, 2))
         self.assert_array_equal(result.data, expected)
+
+    def test_extract_region_mean(self):
+        """
+        Test for extracting a region and performing
+        the area mean of a 2D field.
+        """
+        cube = guess_bounds(self.grid, ['longitude', 'latitude'])
+        grid_areas = iris.analysis.cartography.area_weights(cube)
+        measure = iris.coords.CellMeasure(
+            grid_areas,
+            standard_name='cell_area',
+            units='m2',
+            measure='area')
+        self.grid.add_cell_measure(measure, range(0, measure.ndim))
+        region = extract_region(self.grid, 1.5, 2.5, 1.5, 2.5)
+        # expected outcome
+        expected = np.ones((2, 2))
+        self.assert_array_equal(region.data, expected)
+        result = area_statistics(region, 'mean')
+        expected_mean = np.array([1.])
+        self.assert_array_equal(result.data, expected_mean)
 
     def test_extract_region_neg_lon(self):
         """Test for extracting a region with a negative longitude field."""
