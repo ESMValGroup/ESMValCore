@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.mcm_ua_1_0 import AllVars, Tas
+from esmvalcore.cmor._fixes.cmip6.mcm_ua_1_0 import AllVars, Omon, Tas
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -193,12 +193,13 @@ def thetao_cubes():
 def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Omon', 'thetao')
-    assert fix == [AllVars(None)]
+    assert fix == [Omon(None), AllVars(None)]
 
 
 def test_thetao_fix_metadata(thetao_cubes):
     """Test ``fix_metadata`` for ``thetao``."""
-    fix = AllVars(None)
+    vardef = get_var_info('CMIP6', 'Omon', 'thetao')
+    fix = Omon(vardef)
     out_cubes = fix.fix_metadata(thetao_cubes)
     assert out_cubes is thetao_cubes
     assert len(out_cubes) == 1
