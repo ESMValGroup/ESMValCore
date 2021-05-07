@@ -1,10 +1,8 @@
 """Fixes for IPSL-CM6A-LR model."""
 from iris.cube import CubeList
-from iris.coords import AuxCoord
-from iris.exceptions import ConstraintMismatchError
 
 from ..fix import Fix
-from ..shared import (fix_ocean_depth_coord)
+from ..shared import fix_ocean_depth_coord
 
 
 class AllVars(Fix):
@@ -24,27 +22,12 @@ class AllVars(Fix):
         iris.cube.CubeList
 
         """
-        try:
-            cell_area = cubes.extract_cube('cell_area')
-        except ConstraintMismatchError:
-            return cubes
-
-        cell_area = AuxCoord(
-            cell_area.data,
-            standard_name=cell_area.standard_name,
-            long_name=cell_area.long_name,
-            var_name=cell_area.var_name,
-            units=cell_area.units,
-        )
-        new_list = CubeList()
-        for cube in cubes:
-            if cube.name() == 'cell_area':
-                continue
-            cube.add_aux_coord(cell_area, cube.coord_dims('latitude'))
+        cube = self.get_cube_from_list(cubes)
+        if cube.coords('latitude'):
             cube.coord('latitude').var_name = 'lat'
+        if cube.coords('longitude'):
             cube.coord('longitude').var_name = 'lon'
-            new_list.append(cube)
-        return CubeList(new_list)
+        return CubeList([cube])
 
 
 class Clcalipso(Fix):

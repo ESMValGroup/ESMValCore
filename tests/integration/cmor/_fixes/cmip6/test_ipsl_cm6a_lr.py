@@ -18,8 +18,9 @@ class TestAllVars(unittest.TestCase):
 
     def setUp(self):
         """Set up tests."""
-        self.fix = AllVars(None)
-        self.cube = Cube(np.random.rand(2, 2, 2), var_name='ch4')
+        vardef = get_var_info('CMIP6', 'Omon', 'tos')
+        self.fix = AllVars(vardef)
+        self.cube = Cube(np.random.rand(2, 2, 2), var_name='tos')
         self.cube.add_aux_coord(
             AuxCoord(np.random.rand(2, 2),
                      var_name='nav_lat',
@@ -36,20 +37,43 @@ class TestAllVars(unittest.TestCase):
 
         self.assertEqual(len(cubes), 1)
         cube = cubes[0]
+        self.assertEqual(cube.var_name, 'tos')
         self.assertEqual(cube.coord('latitude').var_name, 'lat')
         self.assertEqual(cube.coord('longitude').var_name, 'lon')
-        self.cube.coord('cell_area')
 
-    def test_fix_data_other_var(self):
-        """Test ``fix_metadata`` for other variables."""
+    def test_fix_data_no_lat(self):
+        """Test ``fix_metadata`` when no latitude is present."""
+        self.cube.remove_coord('latitude')
         cubes = self.fix.fix_metadata(CubeList([self.cube]))
 
         self.assertEqual(len(cubes), 1)
         cube = cubes[0]
-        self.assertEqual(cube.coord('latitude').var_name, 'nav_lat')
-        self.assertEqual(cube.coord('longitude').var_name, 'nav_lon')
+        self.assertEqual(cube.coord('longitude').var_name, 'lon')
         with self.assertRaises(CoordinateNotFoundError):
-            self.cube.coord('cell_area')
+            self.cube.coord('latitude')
+
+    def test_fix_data_no_lon(self):
+        """Test ``fix_metadata`` when no longitude is present."""
+        self.cube.remove_coord('longitude')
+        cubes = self.fix.fix_metadata(CubeList([self.cube]))
+
+        self.assertEqual(len(cubes), 1)
+        cube = cubes[0]
+        self.assertEqual(cube.coord('latitude').var_name, 'lat')
+        with self.assertRaises(CoordinateNotFoundError):
+            self.cube.coord('longitude')
+
+    def test_fix_data_no_lat_lon(self):
+        """Test ``fix_metadata`` for cubes with no latitude and longitude."""
+        self.cube.remove_coord('latitude')
+        self.cube.remove_coord('longitude')
+        cubes = self.fix.fix_metadata(CubeList([self.cube]))
+
+        self.assertEqual(len(cubes), 1)
+        with self.assertRaises(CoordinateNotFoundError):
+            self.cube.coord('latitude')
+        with self.assertRaises(CoordinateNotFoundError):
+            self.cube.coord('longitude')
 
 
 def test_get_clcalipso_fix():
