@@ -1,5 +1,6 @@
 """Fixes for SAM0-UNICON model."""
 from ..common import ClFixHybridPressureCoord
+from ..fix import Fix
 
 
 Cl = ClFixHybridPressureCoord
