@@ -1,7 +1,9 @@
 """Test fixes for BCC-ESM1."""
-from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import Tos as BaseTos
 from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import Cl, Cli, Clw, Tos
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.common import (
+    ClFixHybridPressureCoord,
+    OceanFixGrid,
+)
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -46,4 +48,4 @@ def test_get_tos_fix():
 
 def test_tos_fix():
     """Test fix for ``tos``."""
-    assert Tos is BaseTos
+    assert Tos is OceanFixGrid
