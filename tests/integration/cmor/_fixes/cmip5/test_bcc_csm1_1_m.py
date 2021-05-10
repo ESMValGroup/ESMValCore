@@ -1,9 +1,11 @@
 """Test fixes for bcc-csm1-1-m."""
 import unittest
 
-from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1 import Tos as BaseTos
 from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1_m import Cl, Tos
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.common import (
+    ClFixHybridPressureCoord,
+    OceanFixGrid,
+)
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -29,4 +31,4 @@ class TestTos(unittest.TestCase):
 
 def test_tos_fix():
     """Test fix for ``tos``."""
-    assert Tos is BaseTos
+    assert Tos is OceanFixGrid
