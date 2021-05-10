@@ -85,6 +85,30 @@ class AllVars(Fix):
         return cubes
 
 
+class Omon(Fix):
+    """Fixes for ocean variables."""
+
+    def fix_metadata(self, cubes):
+        """Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                z_coord = cube.coord(axis='Z')
+                if z_coord.standard_name is None:
+                    fix_ocean_depth_coord(cube)
+        return cubes
+
+
 class Tas(Fix):
     """Fixes for tas."""
 
@@ -125,27 +149,3 @@ class Uas(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
         return [cube]
-
-
-class Omon(Fix):
-    """Fixes for ocean variables."""
-
-    def fix_metadata(self, cubes):
-        """Fix ocean depth coordinate.
-
-        Parameters
-        ----------
-        cubes: iris CubeList
-            List of cubes to fix
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-                if z_coord.standard_name is None:
-                    fix_ocean_depth_coord(cube)
-        return cubes
