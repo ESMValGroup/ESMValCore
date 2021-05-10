@@ -18,10 +18,13 @@ class Nbp(Fix):
     def fix_data(self, cube):
         """
         Fix data.
+
         Fixes wrong sign for land surface flux.
+
         Parameters
         ----------
         cube: iris.cube.Cube
+
         Returns
         -------
         iris.cube.Cube
