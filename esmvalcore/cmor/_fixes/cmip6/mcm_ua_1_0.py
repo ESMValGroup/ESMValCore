@@ -1,6 +1,5 @@
 """Fixes for MCM-UA-1-0 model."""
 import iris
-import numpy as np
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
@@ -27,8 +26,7 @@ class AllVars(Fix):
         Remove unnecessary spaces in metadat and rename ``var_name`` of
         latitude and longitude and fix longitude boundary description may be
         wrong (lons=[0, ..., 356.25]; on_bnds=[[-1.875, 1.875], ..., [354.375,
-        360]]) and fix negative longitude coordinate [ -0.9375, 0.9375, ...,
-        357.1875] to [0.9375, ..., 357.1875, 359.0625] and bounds accordingly.
+        360]]).
 
         Parameters
         ----------
@@ -64,17 +62,11 @@ class AllVars(Fix):
                 if cube.coord('longitude').ndim == 1 and \
                         cube.coord('longitude').has_bounds():
                     lon_bnds = cube.coord('longitude').bounds.copy()
-                    if cube.coord('longitude').points[0] < 0.:
-                        lon_coord = cube.coord('longitude').points.copy()
-                        lon_coord[0] += 360.
-                        cube.coord('longitude').points = np.roll(lon_coord, -1)
-                        lon_bnds[0] += 360.
-                        cube.coord('longitude').bounds = np.roll(lon_bnds, -1, axis=0)
                     if cube.coord('longitude').points[0] == 0. and \
                             cube.coord('longitude').points[-1] == 356.25 and \
                             lon_bnds[-1][-1] == 360.:
                         lon_bnds[-1][-1] = 358.125
-                        cube.coord('longitude').bounds = lon_bnds
+                    cube.coord('longitude').bounds = lon_bnds
 
         return cubes
 
