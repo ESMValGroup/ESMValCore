@@ -1,6 +1,7 @@
 """Fixes for NorCPM1."""
 from ..fix import Fix
 
+
 class Nbp(Fix):
     """Fixes for nbp."""
 
