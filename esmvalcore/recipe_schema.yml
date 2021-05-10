@@ -41,6 +41,7 @@ variable:
   alternative_dataset: str(required=False)
   fx_files: list(required=False)
   additional_datasets: list(include('dataset'), required=False)
+  all_years: bool(required=False)
 
 # TODO: add preprocessor item
 

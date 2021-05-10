@@ -87,7 +87,7 @@ data specifications:
 - time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``. Please
   note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
   so we recommend to avoid them. For example, use ``128`` to specify the year
-  128 instead of ``0128``. The time range is not needed for DCPP data.)
+  128 instead of ``0128``.)
 - model grid (native grid ``grid: gn`` or regridded grid ``grid: gr``, for
   CMIP6 data only).
 
@@ -99,7 +99,7 @@ For example, a datasets section could be:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
-      - {dataset: HadGEM3-GC31-MM, alias: custom_alias, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn}
+      - {dataset: HadGEM3-GC31-MM, alias: custom_alias, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, start_year: 2000, end_year, 2002}
 
 It is possible to define the experiment as a list to concatenate two experiments.
 Here it is an example concatenating the `historical` experiment with `rcp85`
@@ -117,9 +117,9 @@ In this case, the specified datasets are concatenated into a single cube:
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: [historical, rcp85], ensemble: [r1i1p1, r1i2p1], start_year: 2001, end_year: 2004}
 
-ESMValTool also supports a simplified syntax to add multiple ensemble members and sub experiment ids from the same dataset.
+ESMValTool also supports a simplified syntax to add multiple ensemble members.
 In the ensemble key, any element in the form `(x:y)` will be replaced with all numbers from x to y (both inclusive),
-adding a dataset entry for each replacement. For example, to add ensemble members r1i1p1 to r10i1p1
+adding a dataset entry for each replacement. For example, to add ensemble members r1i1p1 to r10i1p1 
 you can use the following abbreviated syntax:
 
 .. code-block:: yaml
@@ -139,6 +139,16 @@ for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:
 Please, bear in mind that this syntax can only be used in the ensemble tag.
 Also, note that the combination of multiple experiments and ensembles, like
 exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
+
+The same simplified syntax can be used to add multiple sub-experiment ids in combination with the tag `all_years: True`.
+This configuration will load all the available years for the sub-experiment, without having to specify 
+the `start_year` and `end_year` for each one of the ids:
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2010), grid: gn, all_years: True}
+
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.

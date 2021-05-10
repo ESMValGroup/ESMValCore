@@ -1078,11 +1078,10 @@ class Recipe:
             if 'sub_experiment' in variable:
                 subexperiment_keys = deepcopy(required_keys)
                 subexperiment_keys.update({'sub_experiment'})
-                try:
-                    subexperiment_keys.remove('start_year')
-                    subexperiment_keys.remove('end_year')
-                except KeyError:
-                    continue
+                if 'all_years' in variable:
+                    if variable['all_years']:
+                        subexperiment_keys.discard('start_year')
+                        subexperiment_keys.discard('end_year')
                 check.variable(variable, subexperiment_keys)
             else:
                 check.variable(variable, required_keys)
