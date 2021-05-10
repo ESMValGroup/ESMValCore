@@ -28,6 +28,7 @@ class Nbp(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         metadata = cube.metadata
         cube *= -1
