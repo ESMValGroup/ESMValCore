@@ -383,11 +383,6 @@ experiment is preferred for fx data retrieval:
           mask_out: sea
           fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
 
-Additionally, it is possible to use Unix style wildcards when specifying the fx variable.
-This makes it possible to search for fx files under multiple ensemble members or experiments.
-For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML.
-
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
