@@ -276,7 +276,7 @@ def get_output_file(variable, preproc_dir):
         variable['variable_group'],
         _replace_tags(cfg['output_file'], variable)[0],
     )
-    if variable['frequency'] != 'fx' not in variable:
+    if variable['frequency'] != 'fx':
         outfile += '_{start_year}-{end_year}'.format(**variable)
     outfile += '.nc'
     return outfile
