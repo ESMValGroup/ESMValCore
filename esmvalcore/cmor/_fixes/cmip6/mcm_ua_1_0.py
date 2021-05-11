@@ -122,12 +122,12 @@ class Tas(Fix):
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 2.0)
-        return [cube]
+        return cubes
 
 
 class Uas(Fix):
@@ -143,9 +143,9 @@ class Uas(Fix):
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
 
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
-        return [cube]
+        return cubes
