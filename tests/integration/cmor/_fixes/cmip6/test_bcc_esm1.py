@@ -1,5 +1,12 @@
 """Test fixes for BCC-ESM1."""
-from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import Cl, Cli, Clw, Siconc, Sos, Tos
+from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import (
+    Cl,
+    Cli,
+    Clw,
+    Siconc,
+    Sos,
+    Tos,
+)
 from esmvalcore.cmor._fixes.common import (
     ClFixHybridPressureCoord,
     OceanFixGrid,
