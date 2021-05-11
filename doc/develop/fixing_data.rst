@@ -31,10 +31,13 @@ known errors that can be fixed automatically.
 Fix structure
 =============
 
-Fixes are Python classes stored in ``esmvalcore/cmor/_fixes/[PROJECT]/[DATASET].py``
-that derive from :class:`esmvalcore.cmor._fixes.fix.Fix` and
-are named after the short name of the variable they fix. You can use the name
-``AllVars`` if you want the fix to be applied to the whole dataset
+Fixes are Python classes stored in
+``esmvalcore/cmor/_fixes/[PROJECT]/[DATASET].py`` that derive from
+:class:`esmvalcore.cmor._fixes.fix.Fix` and are named after the short name of
+the variable they fix. You can also use the names of ``mip`` tables (e.g.,
+``Amon``, ``Lmon``, ``Omon``, etc.) if you want the fix to be applied to all
+variables of that table in the dataset or ``AllVars`` if you want the fix to be
+applied to the whole dataset.
 
 .. warning::
     Be careful to replace any ``-`` with ``_`` in your dataset name.
@@ -170,10 +173,12 @@ submit it.
 
 It will also be very helpful if you just scan a couple of other variables from
 the same dataset and check if they share this error. In case that you find that
-it is a general one, you can change the fix name to ``AllVars`` so it gets
-executed for all variables in the dataset. If you find that this is shared only by
-a handful of similar vars you can just make the fix for those new vars derive
-from the one you just created:
+it is a general one, you can change the fix name to the corresponding ``mip``
+table name (e.g., ``Amon``, ``Lmon``, ``Omon``, etc.) so it gets executed for
+all variables in that table in the dataset or to ``AllVars`` so it gets
+executed for all variables in the dataset. If you find that this is shared only
+by a handful of similar vars you can just make the fix for those new vars
+derive from the one you just created:
 
 .. code-block:: python
 

@@ -1,9 +1,5 @@
 """Fixes for BCC-ESM1 model."""
-from ..common import ClFixHybridPressureCoord
-from .bcc_csm2_mr import Siconc as BaseSiconc
-from .bcc_csm2_mr import Sos as BaseSos
-from .bcc_csm2_mr import Tos as BaseTos
-
+from ..common import ClFixHybridPressureCoord, OceanFixGrid
 
 Cl = ClFixHybridPressureCoord
 
@@ -14,10 +10,11 @@ Cli = ClFixHybridPressureCoord
 Clw = ClFixHybridPressureCoord
 
 
-Siconc = BaseSiconc
+Tos = OceanFixGrid
 
 
-Sos = BaseSos
+Sos = OceanFixGrid
 
 
-Tos = BaseTos
+Siconc = OceanFixGrid
+
