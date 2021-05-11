@@ -236,7 +236,6 @@ def _get_filenames_glob(variable, drs):
     return filenames_glob
 
 
-
 def _find_input_files(variable, rootpath, drs):
     short_name = variable['short_name']
     variable['short_name'] = variable['original_short_name']
