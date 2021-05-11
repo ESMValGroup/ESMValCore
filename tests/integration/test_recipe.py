@@ -632,6 +632,60 @@ def test_empty_variable(tmp_path, patched_datafinder, config_user):
     assert product.attributes['dataset'] == 'CanESM2'
 
 
+def test_all_years_tag(tmp_path, patched_datafinder, config_user):
+    """Test all_years tag for time-dependent variables."""
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            additional_datasets:
+              - dataset: CanESM2
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                all_years: True
+                ensemble: r1i1p1
+            variables:
+              pr:
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert product.attributes['short_name'] == 'pr'
+    assert product.attributes['dataset'] == 'CanESM2'
+    assert '1990-2019' in product.filename
+
+
+def test_fx_all_years_tag(tmp_path, patched_datafinder, config_user):
+    """Test all_years tag does not break time-independent variables."""
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            additional_datasets:
+              - dataset: CanESM2
+                project: CMIP5
+                mip: fx
+                exp: historical
+                all_years: True
+                ensemble: r1i1p1
+            variables:
+              areacella:
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert product.attributes['short_name'] == 'pr'
+    assert product.attributes['dataset'] == 'CanESM2'
+    assert '1990-2019' not in product.filename
+
+
 def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder,
                                      config_user):
     """Test that required information is automatically added for CMIP5."""
