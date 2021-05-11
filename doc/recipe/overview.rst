@@ -82,7 +82,7 @@ data specifications:
   ``RCP8.5``)
 - mip (for CMIP data, key ``mip``, value e.g. ``Amon``, ``Omon``, ``LImon``)
 - ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
-- sub experiment (key `sub_experiment`, value e.g. `s2000`, `s(2000:2010)`, 
+- sub-experiment id (key `sub_experiment`, value e.g. `s2000`, `s(2000:2002)`, 
   for DCPP data only)
 - time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``. Please
   note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
@@ -126,7 +126,6 @@ you can use the following abbreviated syntax:
 
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: "r(1:10)i1p1", start_year: 2001, end_year: 2004}
-      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2010), grid: gn}
 
 It can be included multiple times in one definition. For example, to generate the datasets definitions
 for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:
@@ -140,14 +139,12 @@ Please, bear in mind that this syntax can only be used in the ensemble tag.
 Also, note that the combination of multiple experiments and ensembles, like
 exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
 
-The same simplified syntax can be used to add multiple sub-experiment ids in combination with the tag `all_years: True`.
-This configuration will load all the available years for the sub-experiment, without having to specify 
-the `start_year` and `end_year` for each one of the ids:
+The same simplified syntax can be used to add multiple sub-experiment ids:
 
 .. code-block:: yaml
 
     datasets:
-      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2010), grid: gn, all_years: True}
+      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2002), grid: gn, start_year: 2003, end_year: 2004}
 
 
 Note that this section is not required, as datasets can also be provided in the
