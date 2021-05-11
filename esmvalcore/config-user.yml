@@ -3,11 +3,6 @@
 ###############################################################################
 ---
 
-# Diagnostics create plots? [true]/false
-write_plots: true
-# Diagnostics write NetCDF files? [true]/false
-write_netcdf: true
-# Set the console log level debug, [info], warning, error
 log_level: info
 # Exit on warning (only for NCL diagnostic scripts)? true/[false]
 exit_on_warning: false
@@ -22,7 +17,7 @@ compress_netcdf: false
 # Save intermediary cubes in the preprocessor true/[false]
 save_intermediary_cubes: false
 # Remove the preproc dir if all fine
-remove_preproc_dir: true
+remove_preproc_dir: false
 # Run at most this many tasks in parallel [null]/1/2/3/4/..
 # Set to null to use the number of available CPUs.
 # If you run out of memory, try setting max_parallel_tasks to 1 and check the
@@ -41,19 +36,19 @@ profile_diagnostic: false
 # Rootpaths to the data from different projects (lists are also possible)
 # these are generic entries to better allow you to enter your own
 # For site-specific entries, see below
-#rootpath:
-#  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
-#  OBS: ~/obs_inputpath
-#  RAWOBS: ~/rawobs_inputpath
-#  default: ~/default_inputpath
-#  CORDEX: ~/default_inputpath
+# rootpath:
+#   CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
+#   OBS: ~/obs_inputpath
+#   RAWOBS: ~/rawobs_inputpath
+#   default: ~/default_inputpath
+#   CORDEX: ~/default_inputpath
 
 # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
-#drs:
-#  CMIP5: default
-#  CORDEX: default
-#  OBS: default
+# drs:
+#   CMIP5: default
+#   CORDEX: default
+#   OBS: default
 
 # Site-specific entries: Jasmin
 # Uncomment the lines below to locate data on JASMIN
@@ -61,10 +56,10 @@ profile_diagnostic: false
 #  CMIP6: /badc/cmip6/data/CMIP6
 #  CMIP5: /badc/cmip5/data/cmip5/output1
 #  CMIP3: /badc/cmip3_drs/data/cmip3/output
-#  OBS: /group_workspaces/jasmin4/esmeval/obsdata-v2
-#  OBS6: /group_workspaces/jasmin4/esmeval/obsdata-v2
-#  obs4mips: /group_workspaces/jasmin4/esmeval/obsdata-v2
-#  ana4mips: /group_workspaces/jasmin4/esmeval/obsdata-v2
+#  OBS: /gws/nopw/j04/esmeval/obsdata-v2
+#  OBS6: /gws/nopw/j04/esmeval/obsdata-v2
+#  obs4mips: /gws/nopw/j04/esmeval/obsdata-v2
+#  ana4mips: /gws/nopw/j04/esmeval/obsdata-v2
 #  CORDEX: /badc/cordex/data/CORDEX/output
 #drs:
 #  CMIP6: BADC

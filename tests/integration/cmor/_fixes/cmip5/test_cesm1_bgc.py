@@ -4,8 +4,20 @@ import unittest
 import numpy as np
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Gpp, Nbp
+from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Cl, Gpp, Nbp
+from esmvalcore.cmor._fixes.cmip5.cesm1_cam5 import Cl as BaseCl
 from esmvalcore.cmor.fix import Fix
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'cl')
+    assert fix == [Cl(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is BaseCl
 
 
 class TestGpp(unittest.TestCase):
