@@ -374,6 +374,11 @@ or alternatively:
             {'short_name': 'sftof', 'exp': 'piControl'}
             ]
 
+Additionally, it is possible to use Unix style wildcards when specifying the fx variable.
+This makes it possible to search for fx files under multiple ensemble members or experiments.
+For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
+special charcter in YAML.
+
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
 
@@ -455,6 +460,11 @@ or alternatively:
             {'short_name': 'sftof', 'exp': 'piControl', 'ensemble': 'r2i1p1f1'}
             ]
 
+Additionally, it is possible to use Unix style wildcards when specifying the fx variable.
+This makes it possible to search for fx files under multiple ensemble members or experiments.
+For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
+special charcter in YAML.
+
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
@@ -506,6 +516,11 @@ or alternatively:
         mask_landseaice:
           mask_out: sea
           fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+
+Additionally, it is possible to use Unix style wildcards when specifying the fx variable.
+This makes it possible to search for fx files under multiple ensemble members or experiments.
+For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
+special charcter in YAML.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
