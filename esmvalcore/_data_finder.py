@@ -246,6 +246,7 @@ def _update_output_file(variable, files):
     variable['filename'] = filename
     return variable
 
+
 def _find_input_files(variable, rootpath, drs):
     short_name = variable['short_name']
     variable['short_name'] = variable['original_short_name']

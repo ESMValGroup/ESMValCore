@@ -681,7 +681,7 @@ def test_fx_all_years_tag(tmp_path, patched_datafinder, config_user):
     task = recipe.tasks.pop()
     assert len(task.products) == 1
     product = task.products.pop()
-    assert product.attributes['short_name'] == 'pr'
+    assert product.attributes['short_name'] == 'areacella'
     assert product.attributes['dataset'] == 'CanESM2'
     assert '1990-2019' not in product.filename
 
