@@ -127,7 +127,7 @@ def data_availability(input_files, var, dirnames, filenames):
             f"Missing data for {var['alias']}: {var['short_name']}")
 
     # check time avail only for non-fx variables
-    if var['frequency'] == 'fx':
+    if var['frequency'] == 'fx' or 'all_years' in var:
         return
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))

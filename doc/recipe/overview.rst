@@ -90,6 +90,8 @@ data specifications:
   128 instead of ``0128``.)
 - model grid (native grid ``grid: gn`` or regridded grid ``grid: gr``, for
   CMIP6 data only).
+- load all years (key-value ``all_years: True`` to load all the years available in 
+  a particular dataset)
 
 For example, a datasets section could be:
 
@@ -97,6 +99,7 @@ For example, a datasets section could be:
 
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
+      - {dataset: ACCESS1-0, project: CMIP5, exp: historical, ensemble: r1i1p1, all_years: True}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: HadGEM3-GC31-MM, alias: custom_alias, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, start_year: 2000, end_year, 2002}
@@ -139,12 +142,13 @@ Please, bear in mind that this syntax can only be used in the ensemble tag.
 Also, note that the combination of multiple experiments and ensembles, like
 exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
 
-The same simplified syntax can be used to add multiple sub-experiment ids:
+The same simplified syntax can be used to add multiple sub-experiment ids, as well as in combination with the ``all_years: True`` tag:
 
 .. code-block:: yaml
 
     datasets:
-      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2002), grid: gn, start_year: 2003, end_year: 2004}
+      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: "s(2000:2002)", grid: gn, start_year: 2003, end_year: 2004}
+      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: "s(1980:1990)", grid: gn, all_years: True}
 
 
 Note that this section is not required, as datasets can also be provided in the

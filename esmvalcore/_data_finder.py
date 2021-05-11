@@ -236,6 +236,16 @@ def _get_filenames_glob(variable, drs):
     return filenames_glob
 
 
+def _update_output_file(variable, files):
+    intervals = [get_start_end_year(name) for name in files]
+    variable.update({'start_year': min(intervals)[0]})
+    variable.update({'end_year': max(intervals)[1]})
+    filename = variable['filename'].replace(
+        '.nc', '_{start_year}-{end_year}.nc'.format(**variable)
+    )
+    variable['filename'] = filename
+    return variable
+
 def _find_input_files(variable, rootpath, drs):
     short_name = variable['short_name']
     variable['short_name'] = variable['original_short_name']
@@ -255,6 +265,8 @@ def get_input_filelist(variable, rootpath, drs):
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
+        if 'all_years' in variable:
+            variable = _update_output_file(variable, files)
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
     return (files, dirnames, filenames)
@@ -275,7 +287,7 @@ def get_output_file(variable, preproc_dir):
         variable['variable_group'],
         _replace_tags(cfg['output_file'], variable)[0],
     )
-    if variable['frequency'] != 'fx':
+    if variable['frequency'] != 'fx' and 'all_years' not in variable:
         outfile += '_{start_year}-{end_year}'.format(**variable)
     outfile += '.nc'
     return outfile
