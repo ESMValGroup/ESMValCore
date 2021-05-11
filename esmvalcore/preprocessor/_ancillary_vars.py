@@ -69,18 +69,17 @@ def add_cell_measure(cube, fx_cube, measure):
     ------
     ValueError
         If measure name is not 'area' or 'volume'.
-    ValueError
-        If fx_cube cannot be broadcast to cube.
     """
     if measure not in ['area', 'volume']:
         raise ValueError(f"measure name must be 'area' or 'volume', "
                          f"got {measure} instead")
     try:
         fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
-    except ValueError as exc:
-        raise ValueError(f"Dimensions of {cube.var_name} and "
-                         f"{fx_cube.var_name} cubes do not match. "
-                         "Cannot broadcast cubes.") from exc
+    except ValueError:
+        logger.debug("Dimensions of %s and %s cubes do not match. "
+                     "Cannot broadcast cubes.",
+                     cube.var_name, fx_cube.var_name)
+        return
     measure = iris.coords.CellMeasure(
         fx_data,
         standard_name=fx_cube.standard_name,
@@ -109,18 +108,14 @@ def add_ancillary_variable(cube, fx_cube):
     -------
     iris.cube.Cube
         Cube with added ancillary variables
-
-    Raises
-    ------
-    ValueError
-        If fx_cube cannot be broadcast to cube.
     """
     try:
         fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
-    except ValueError as exc:
-        raise ValueError(f"Dimensions of {cube.var_name} and "
-                         f"{fx_cube.var_name} cubes do not match. "
-                         "Cannot broadcast cubes.") from exc
+    except ValueError:
+        logger.debug("Dimensions of %s and %s cubes do not match. "
+                     "Cannot broadcast cubes.",
+                     cube.var_name, fx_cube.var_name)
+        return
     ancillary_var = iris.coords.AncillaryVariable(
         fx_data,
         standard_name=fx_cube.standard_name,
@@ -156,7 +151,6 @@ def add_fx_variables(cube, fx_variables, check_level):
 
     if not fx_variables:
         return cube
-
     for fx_info in fx_variables.values():
         if not fx_info:
             continue

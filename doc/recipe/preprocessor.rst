@@ -180,8 +180,15 @@ To get an overview on data fixes and how to implement new ones, please go to
 
 Fx variables as cell measures or ancillary variables
 ====================================================
-Preprocessor steps related to spatial statistics or masking may require
-the use of ``fx_variables`` to be able to perform the computations.
+The following preprocessor may require the use of ``fx_variables`` 
+to be able to perform the computations:
+
+    - ``area_statistics``
+    - ``mask_landsea``
+    - ``mask_landseaice``
+    - ``volume_statistics``
+    - ``weighting_landsea_fraction``
+
 The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
 checks them against CMOR standards and adds them either as ``cell_measure``
 or ``ancillary_variable`` inside the cube data. This ensures that the

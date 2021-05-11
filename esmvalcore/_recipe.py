@@ -469,15 +469,29 @@ def _update_fx_settings(settings, variable, config_user):
             user_fx_vars = _fx_list_to_dict(user_fx_vars)
             step_settings['fx_variables'] = user_fx_vars
         if not user_fx_vars:
-            if step_name in ('mask_landsea', 'weighting_landsea_fraction'):
-                user_fx_vars = {'sftlf': None}
-                if variable['project'] != 'obs4mips':
-                    user_fx_vars.update({'sftof': None})
-            elif step_name == 'mask_landseaice':
-                user_fx_vars = {'sftgif': None}
-            elif step_name in ('area_statistics', 'volume_statistics'):
-                user_fx_vars = {}
-            step_settings['fx_variables'] = user_fx_vars
+            default_fx = {
+                'area_statistics': {
+                    'areacella': None,
+                    'areacello': None,
+                },
+                'mask_landsea': {
+                    'sftlf': None,
+                },
+                'mask_landseaice': {
+                    'sftgif': None,
+                },
+                'volume_statistics': {
+                    'volcello': None,
+                },
+                'weighting_landsea_fraction': {
+                    'sftlf': None,
+                },
+            }
+            if variable['project'] != 'obs4mips':
+                default_fx['mask_landsea'].update({'sftof': None})
+                default_fx['weighting_landsea_fraction'].update(
+                    {'sftof': None})
+            step_settings['fx_variables'] = default_fx[step_name]
 
     fx_steps = [
         'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
