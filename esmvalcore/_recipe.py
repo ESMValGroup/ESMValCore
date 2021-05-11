@@ -1097,13 +1097,13 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
+            if 'all_years' in variable:
+                if variable['all_years']:
+                    required_keys.discard('start_year')
+                    required_keys.discard('end_year')
             if 'sub_experiment' in variable:
                 subexperiment_keys = deepcopy(required_keys)
                 subexperiment_keys.update({'sub_experiment'})
-                if 'all_years' in variable:
-                    if variable['all_years']:
-                        subexperiment_keys.discard('start_year')
-                        subexperiment_keys.discard('end_year')
                 check.variable(variable, subexperiment_keys)
             else:
                 check.variable(variable, required_keys)

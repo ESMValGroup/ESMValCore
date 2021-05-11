@@ -140,15 +140,6 @@ Please, bear in mind that this syntax can only be used in the ensemble tag.
 Also, note that the combination of multiple experiments and ensembles, like
 exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
 
-The same simplified syntax can be used to add multiple sub-experiment ids in combination with the tag `all_years: True`.
-This configuration will load all the available years for the sub-experiment, without having to specify 
-the `start_year` and `end_year` for each one of the ids:
-
-.. code-block:: yaml
-
-    datasets:
-      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2010), grid: gn, all_years: True}
-
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
