@@ -1,0 +1,2 @@
+Amon:
+  tas: {file_var_name: "t2m", name_in_filename: "2m_temperature"}
