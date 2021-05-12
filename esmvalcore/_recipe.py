@@ -21,6 +21,7 @@ from ._data_finder import (
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
+from .cmor._fixes.fix import get_variable_mappings
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (
@@ -1061,6 +1062,12 @@ class Recipe:
 
         return expanded
 
+    def _add_project_variable_mappings(self, variable):
+        mappings = get_variable_mappings(variable["project"],
+                                         variable["dataset"])
+        mapping = mappings[variable["mip"]][variable["short_name"]]
+        _augment(variable, mapping)
+
     def _initialize_variables(self, raw_variable, raw_datasets):
         """Define variables for all datasets."""
         variables = []
@@ -1096,6 +1103,7 @@ class Recipe:
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
+            self._add_project_variable_mappings(variable)
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:
