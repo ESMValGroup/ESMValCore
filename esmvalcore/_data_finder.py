@@ -278,7 +278,7 @@ def get_input_filelist(variable, rootpath, drs):
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
-        if variable['selection'] != 'standard':
+        if 'selection' in variable:
             variable = _update_output_file(variable, files, variable['selection'])
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
@@ -300,7 +300,7 @@ def get_output_file(variable, preproc_dir):
         variable['variable_group'],
         _replace_tags(cfg['output_file'], variable)[0],
     )
-    if variable['frequency'] != 'fx' and variable['selection'] == 'standard':
+    if variable['frequency'] != 'fx' and 'selection' not in variable:
         outfile += '_{start_year}-{end_year}'.format(**variable)
     outfile += '.nc'
     return outfile

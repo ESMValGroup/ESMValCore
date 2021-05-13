@@ -117,16 +117,15 @@ In this case, the specified datasets are concatenated into a single cube:
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: [historical, rcp85], ensemble: [r1i1p1, r1i2p1], start_year: 2001, end_year: 2004}
 
-ESMValTool also supports a simplified syntax to add multiple ensemble members.
+ESMValTool also supports a simplified syntax to add multiple ensemble members from the same dataset.
 In the ensemble key, any element in the form `(x:y)` will be replaced with all numbers from x to y (both inclusive),
-adding a dataset entry for each replacement. For example, to add ensemble members r1i1p1 to r10i1p1 
+adding a dataset entry for each replacement. For example, to add ensemble members r1i1p1 to r10i1p1
 you can use the following abbreviated syntax:
 
 .. code-block:: yaml
 
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: "r(1:10)i1p1", start_year: 2001, end_year: 2004}
-      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2010), grid: gn}
 
 It can be included multiple times in one definition. For example, to generate the datasets definitions
 for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:

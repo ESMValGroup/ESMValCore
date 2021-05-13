@@ -128,8 +128,12 @@ def data_availability(input_files, var, dirnames, filenames):
 
     # check time avail only for non-fx variables
     # with a time selection mode not set to full
-    if var['frequency'] == 'fx' or var['selection'] == 'full':
+    if var['frequency'] == 'fx':
         return
+    
+    if 'selection' in var:
+        if var['selection'] == 'full':
+            return
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))
     available_years = set()
@@ -202,7 +206,7 @@ def valid_multimodel_statistic(statistic):
             f"or patterns matching {valid_patterns}. Got '{statistic}.'")
 
 def valid_time_selection(variable, selection):
-    if selection not in ['standard', 'full']:
+    if selection != 'full':
         selection_options = selection.split(" ")
         if len(selection_options) != 3:
             raise RecipeError(
