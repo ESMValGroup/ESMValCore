@@ -14,7 +14,7 @@ class TestRecipe:
             },
         ]
 
-        expanded = Recipe._expand_ensemble(datasets)
+        expanded = Recipe._expand_tag(datasets, 'ensemble')
 
         ensembles = [
             'r1i2p3',
@@ -29,6 +29,31 @@ class TestRecipe:
         for i, ensemble in enumerate(ensembles):
             assert expanded[i] == {'dataset': 'XYZ', 'ensemble': ensemble}
 
+    def test_expand_subexperiment(self):
+
+        datasets = [
+            {
+                'dataset': 'XYZ',
+                'sub_experiment': 's(1998:2005)',
+            },
+        ]
+
+        expanded = Recipe._expand_tag(datasets, 'sub_experiment')
+
+        subexperiments = [
+            's1998',
+            's1999',
+            's2000',
+            's2001',
+            's2002',
+            's2003',
+            's2004',
+            's2005',
+        ]
+        for i, subexperiment in enumerate(subexperiments):
+            assert expanded[i] == {'dataset': 'XYZ',
+                                   'sub_experiment': subexperiment}
+
     def test_expand_ensemble_nolist(self):
 
         datasets = [
@@ -39,7 +64,7 @@ class TestRecipe:
         ]
 
         with pytest.raises(RecipeError):
-            Recipe._expand_ensemble(datasets)
+            Recipe._expand_tag(datasets, 'ensemble')
 
 
 VAR_A = {'dataset': 'A'}
