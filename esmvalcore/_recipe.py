@@ -1068,6 +1068,8 @@ class Recipe:
         check.duplicate_datasets(datasets)
 
         for index, dataset in enumerate(datasets):
+            if 'selection' not in dataset:
+                dataset.update({'selection': 'standard'})
             variable = deepcopy(raw_variable)
             variable.update(dataset)
 
@@ -1097,10 +1099,10 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
-            if 'all_years' in variable:
-                if variable['all_years']:
-                    required_keys.discard('start_year')
-                    required_keys.discard('end_year')
+            if variable['selection'] != 'standard':
+                required_keys.discard('start_year')
+                required_keys.discard('end_year')
+                check.valid_time_selection(variable, variable['selection'])
             if 'sub_experiment' in variable:
                 subexperiment_keys = deepcopy(required_keys)
                 subexperiment_keys.update({'sub_experiment'})

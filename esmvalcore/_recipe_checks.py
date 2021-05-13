@@ -127,7 +127,8 @@ def data_availability(input_files, var, dirnames, filenames):
             f"Missing data for {var['alias']}: {var['short_name']}")
 
     # check time avail only for non-fx variables
-    if var['frequency'] == 'fx' or 'all_years' in var:
+    # with a time selection mode not set to full
+    if var['frequency'] == 'fx' or var['selection'] == 'full':
         return
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))
@@ -199,3 +200,33 @@ def valid_multimodel_statistic(statistic):
             "Invalid value encountered for `statistic` in preprocessor "
             f"`multi_model_statistics`. Valid values are {valid_names} "
             f"or patterns matching {valid_patterns}. Got '{statistic}.'")
+
+def valid_time_selection(variable, selection):
+    if selection not in ['standard', 'full']:
+        selection_options = selection.split(" ")
+        if len(selection_options) != 3:
+            raise RecipeError(
+                f"Invalid value for `selection` " 
+                f"in dataset {variable['dataset']}. "
+                f"Valid values are `standard`, `full`, `first YYY years`, "
+                f"`last YYY years`. Got {selection} instead.")
+        if selection_options[0] not in ['first', 'last']:
+            raise RecipeError(
+                f"Invalid value for custom `selection` " 
+                f"in dataset {variable['dataset']}. "
+                f"Valid values are `first YYY years`, "
+                f"`last YYY years`. Got {selection} instead.")
+        try:
+            time_value = int(selection_options[1])
+        except ValueError:
+            raise RecipeError(
+                f"Invalid value for custom `selection` " 
+                f"in dataset {variable['dataset']}. "
+                f"Valid values are `first YYY years`, "
+                f"`last YYY years`. Got {selection} instead.")
+        if selection_options[2] != 'years':
+            raise RecipeError(
+                f"Invalid value for custom `selection` " 
+                f"in dataset {variable['dataset']}. "
+                f"Valid values are `first YYY years`, "
+                f"`last YYY years`. Got {selection} instead.")
