@@ -1028,37 +1028,38 @@ class Recipe:
         return datasets
 
     @staticmethod
-    def _expand_ensemble(variables):
-        """Expand ensemble members to multiple datasets.
+    def _expand_tag(variables, input_tag):
+        """
+        Expand tags such as ensemble members or stardates to multiple datasets.
 
         Expansion only supports ensembles defined as strings, not lists.
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
 
-        def expand_ensemble(variable):
-            ens = variable.get('ensemble', "")
-            match = regex.search(ens)
+        def expand_tag(variable, input_tag):
+            tag = variable.get(input_tag, "")
+            match = regex.search(tag)
             if match:
                 start, end = match.group(0)[1:-1].split(':')
                 for i in range(int(start), int(end) + 1):
                     expand = deepcopy(variable)
-                    expand['ensemble'] = regex.sub(str(i), ens, 1)
-                    expand_ensemble(expand)
+                    expand[input_tag] = regex.sub(str(i), tag, 1)
+                    expand_tag(expand, input_tag)
             else:
                 expanded.append(variable)
 
         for variable in variables:
-            ensemble = variable.get('ensemble', "")
-            if isinstance(ensemble, (list, tuple)):
-                for elem in ensemble:
+            tag = variable.get(input_tag, "")
+            if isinstance(tag, (list, tuple)):
+                for elem in tag:
                     if regex.search(elem):
                         raise RecipeError(
-                            f"In variable {variable}: ensemble expansion "
-                            "cannot be combined with ensemble lists")
+                            f"In variable {variable}: {input_tag} expansion "
+                            f"cannot be combined with {input_tag} lists")
                 expanded.append(variable)
             else:
-                expand_ensemble(variable)
+                expand_tag(variable, input_tag)
 
         return expanded
 
@@ -1112,8 +1113,14 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
-            check.variable(variable, required_keys)
-        variables = self._expand_ensemble(variables)
+            if 'sub_experiment' in variable:
+                subexperiment_keys = deepcopy(required_keys)
+                subexperiment_keys.update({'sub_experiment'})
+                check.variable(variable, subexperiment_keys)
+            else:
+                check.variable(variable, required_keys)
+        variables = self._expand_tag(variables, 'ensemble')
+        variables = self._expand_tag(variables, 'sub_experiment')
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
