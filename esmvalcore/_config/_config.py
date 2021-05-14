@@ -3,6 +3,7 @@ import datetime
 import logging
 import os
 import warnings
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
@@ -12,6 +13,15 @@ from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 logger = logging.getLogger(__name__)
 
 CFG = {}
+
+
+@lru_cache
+def get_variable_mappings(project, dataset):
+    DEFAULT_PATH = (Path(__file__).parents[0] / project
+                    / f"{dataset}-mappings.yml")
+    mapping_path = CFG.get(project, {}).get("mapping_path", DEFAULT_PATH)
+    with open(mapping_path, "r") as mapping_file:
+        return yaml.safe_load(mapping_file)
 
 
 def read_config_user_file(config_file, folder_name, options=None):

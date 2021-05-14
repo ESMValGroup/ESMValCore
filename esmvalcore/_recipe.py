@@ -12,7 +12,13 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import TAGS, get_activity, get_institutes, get_project_config
+from ._config import (
+    TAGS,
+    get_activity,
+    get_institutes,
+    get_project_config,
+    get_variable_mappings,
+)
 from ._data_finder import (
     get_input_filelist,
     get_output_file,
@@ -21,7 +27,6 @@ from ._data_finder import (
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
-from .cmor._fixes.fix import get_variable_mappings
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (
