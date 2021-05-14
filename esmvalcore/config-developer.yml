@@ -26,6 +26,20 @@ CMIP6:
     DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
+  catalogs:
+    DKRZ:
+      file: '/pool/data/Catalogs/mistral-cmip6.json'
+      facets:
+        # mapping from recipe facets to intake-esm catalog facets
+        activity: activity_id
+        dataset: source_id
+        ensemble: member_id
+        exp: experiment_id
+        grid: grid_label
+        institute: institution_id
+        mip: table_id
+        short_name: variable_id
+        version: version
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP6'
 

@@ -18,6 +18,7 @@ from ._data_finder import (
     get_output_file,
     get_statistic_output_file,
 )
+from ._intake import clear_catalog_cache, find_files
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
@@ -509,6 +510,9 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
+    input_files = find_files(variable, config_user['drs'])
+    if input_files:
+        return (input_files, [], [])
     (input_files, dirnames,
      filenames) = get_input_filelist(variable=variable,
                                      rootpath=config_user['rootpath'],
@@ -1393,6 +1397,7 @@ class Recipe:
             task.initialize_provenance(self.entity)
 
         # TODO: check that no loops are created (will throw RecursionError)
+        clear_catalog_cache()
 
         # Return smallest possible set of tasks
         return tasks.get_independent()
