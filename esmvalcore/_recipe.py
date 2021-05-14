@@ -284,6 +284,11 @@ def _get_default_settings(variable, config_user, derive=False):
             'start_year': variable['start_year'],
             'end_year': variable['end_year'],
         }
+    
+    if 'selection' in variable:
+        settings['clip_start_end_year'] = {
+            'selection': variable['selection']
+        }
 
     if derive:
         settings['derive'] = {

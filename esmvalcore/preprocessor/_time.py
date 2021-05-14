@@ -7,6 +7,7 @@ import copy
 import datetime
 import logging
 from warnings import filterwarnings
+import cf_units
 
 import dask.array as da
 import iris
@@ -108,7 +109,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     return cube_slice
 
 
-def clip_start_end_year(cube, start_year, end_year):
+def clip_start_end_year(cube, start_year=None, end_year=None, selection=None):
     """Extract time range given by the dataset keys.
 
     Parameters
@@ -130,6 +131,28 @@ def clip_start_end_year(cube, start_year, end_year):
     ValueError
         Time ranges are outside the cube's time limits.
     """
+    if selection:
+        timerange = int(selection.split(" ")[1])
+        frequency = selection.split(" ")[2]
+        time_coord = cube.coord('time')
+        time_unit = time_coord.units
+        if selection.startswith("first"):
+            start_date = time_coord.cell(0).point
+            date_format = start_date.strftime(start_date.format)
+            date_unit = cf_units.Unit(f'{frequency} since {date_format}', calendar=time_unit.calendar)
+            end_value = date_unit.convert(timerange, time_unit) + 1
+            end_date = time_unit.num2date(end_value)
+        if selection.startswith("last"):
+            end_date = time_coord.cell(-1).point
+            date_format = end_date.strftime(end_date.format)
+            date_unit = cf_units.Unit(f'{frequency} since {date_format}', calendar=time_unit.calendar)
+            start_value = date_unit.convert(-timerange, time_unit)
+            start_date = time_unit.num2date(start_value)
+            end_date =+ 1
+        return extract_time(
+            cube, start_date.year, start_date.month, start_date.day,
+            end_date.year, end_date.month, end_date.day)
+
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
 
 
