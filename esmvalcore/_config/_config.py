@@ -16,12 +16,18 @@ CFG = {}
 
 
 @lru_cache
-def get_variable_mappings(project, dataset):
+def _get_project_mappings(project, dataset):
     DEFAULT_PATH = (Path(__file__).parents[0] / project
                     / f"{dataset}-mappings.yml")
     mapping_path = CFG.get(project, {}).get("mapping_path", DEFAULT_PATH)
     with open(mapping_path, "r") as mapping_file:
         return yaml.safe_load(mapping_file)
+
+
+@lru_cache
+def get_variable_mappings(project, dataset, mip, short_name):
+    project_mappings = _get_project_mappings(project, dataset)
+    return project_mappings.get(mip, {}).get(short_name, None)
 
 
 def read_config_user_file(config_file, folder_name, options=None):

@@ -152,8 +152,7 @@ class Fix:
         """
         cmor_table = CMOR_TABLES[project]
         vardef = cmor_table.get_variable(mip, short_name)
-        mapping = get_variable_mappings(project, dataset)
-        var_mapping = mapping.get(mip, {}).get(short_name, None)
+        var_mapping = get_variable_mappings(project, dataset, mip, short_name)
 
         project = project.replace('-', '_').lower()
         dataset = dataset.replace('-', '_').lower()
