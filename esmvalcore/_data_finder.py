@@ -94,13 +94,21 @@ def select_files(filenames, start_year, end_year):
 def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        paths = (paths.strip("/"),)
+        paths = set((paths.strip('/'),))
     else:
-        paths = [path.strip("/") for path in paths]
+        paths = set(path.strip('/') for path in paths)
     tlist = set()
-
     for path in paths:
-        tlist = tlist.union(re.findall(r"{([^}]*)}", path))
+        tlist = tlist.union(re.findall(r'{([^}]*)}', path))
+    if 'sub_experiment' in variable:
+        new_paths = []
+        for path in paths:
+            new_paths.extend((
+                re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
+                re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)
+            ))
+            tlist.add('sub_experiment')
+        paths = new_paths
     logger.debug(tlist)
 
     for tag in tlist:
@@ -112,11 +120,8 @@ def _replace_tags(paths, variable):
         if tag in variable:
             replacewith = variable[tag]
         else:
-            raise KeyError(
-                "Dataset key {} must be specified for {}, check "
-                "your recipe entry".format(tag, variable)
-            )
-
+            raise KeyError("Dataset key {} must be specified for {}, check "
+                           "your recipe entry".format(tag, variable))
         paths = _replace_tag(paths, original_tag, replacewith)
     return paths
 
@@ -130,8 +135,8 @@ def _replace_tag(paths, tag, replacewith):
             result.extend(_replace_tag(paths, tag, item))
     else:
         text = _apply_caps(str(replacewith), lower, upper)
-        result.extend(p.replace("{" + tag + "}", text) for p in paths)
-    return result
+        result.extend(p.replace('{' + tag + '}', text) for p in paths)
+    return list(set(result))
 
 
 def _get_caps_options(tag):
