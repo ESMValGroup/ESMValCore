@@ -31,7 +31,7 @@ def deep_update(dictionary, update):
 
 
 @lru_cache
-def _get_project_mappings(project, dataset):
+def _get_project_mappings(project):
     config = {}
     SEARCH_PATHS = [importlib_files(__package__) / "mappings"]
     for search_path in SEARCH_PATHS:
@@ -46,8 +46,8 @@ def _get_project_mappings(project, dataset):
 
 @lru_cache
 def get_variable_mappings(project, dataset, mip, short_name):
-    project_mappings = _get_project_mappings(project, dataset)
-    return project_mappings.get(mip, {}).get(short_name, None)
+    project_mappings = _get_project_mappings(project)
+    return project_mappings.get(dataset, {}).get(mip, {}).get(short_name, None)
 
 
 def read_config_user_file(config_file, folder_name, options=None):
