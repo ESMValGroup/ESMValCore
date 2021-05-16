@@ -11,7 +11,7 @@ class Fix:
     """
     Base class for dataset fixes.
     """
-    def __init__(self, vardef, var_mapping):
+    def __init__(self, vardef, var_mapping=None):
         """Initialize fix object.
 
         Parameters
@@ -21,6 +21,8 @@ class Fix:
 
         """
         self.vardef = vardef
+        if var_mapping is None:
+            var_mapping = {}
         self.var_mapping = var_mapping
 
     def fix_file(self, filepath, output_dir):
