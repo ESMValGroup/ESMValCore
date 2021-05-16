@@ -14,14 +14,24 @@ logger = logging.getLogger(__name__)
 
 CFG = {}
 
+try:
+    from importlib.resources import files as importlib_files
+except ImportError:
+    from importlib_resources import files as importlib_files
+
 
 @lru_cache
 def _get_project_mappings(project, dataset):
-    DEFAULT_PATH = (Path(__file__).parents[0] / project
-                    / f"{dataset}-mappings.yml")
-    mapping_path = CFG.get(project, {}).get("mapping_path", DEFAULT_PATH)
-    with open(mapping_path, "r") as mapping_file:
-        return yaml.safe_load(mapping_file)
+    config = {}
+    SEARCH_PATHS = [importlib_files(__package__) / "mappings"]
+    for search_path in SEARCH_PATHS:
+        config_files = search_path.glob(f"{project}-*.yml")
+        for config_file in sorted(config_files):
+            with config_file.open() as f:
+                config_piece = yaml.safe_load(f)
+            if config_piece:
+                config.update(config_piece)
+    return config
 
 
 @lru_cache
