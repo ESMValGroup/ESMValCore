@@ -35,7 +35,7 @@ def _get_project_mappings(project):
     config = {}
     SEARCH_PATHS = [importlib_files(__package__) / "mappings"]
     for search_path in SEARCH_PATHS:
-        config_files = search_path.glob(f"{project}-*.yml")
+        config_files = search_path.glob(f"{project.lower()}-*.yml")
         for config_file in sorted(config_files):
             with config_file.open() as f:
                 config_piece = yaml.safe_load(f)
