@@ -1,4 +1,5 @@
 """Functions dealing with config-user.yml / config-developer.yml."""
+import collections.abc
 import datetime
 import logging
 import os
@@ -20,6 +21,15 @@ except ImportError:
     from importlib_resources import files as importlib_files
 
 
+def deep_update(dictionary, update):
+    for k, v in update.items():
+        if isinstance(v, collections.abc.Mapping):
+            dictionary[k] = deep_update(dictionary.get(k, {}), v)
+        else:
+            dictionary[k] = v
+    return dictionary
+
+
 @lru_cache
 def _get_project_mappings(project, dataset):
     config = {}
@@ -30,7 +40,7 @@ def _get_project_mappings(project, dataset):
             with config_file.open() as f:
                 config_piece = yaml.safe_load(f)
             if config_piece:
-                config.update(config_piece)
+                deep_update(config, config_piece)
     return config
 
 
