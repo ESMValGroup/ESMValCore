@@ -336,10 +336,10 @@ def test_add_scalar_typesi_coord(cube_in, typesi):
     if typesi is None:
         typesi = 'default'
     typesi_coord = iris.coords.AuxCoord(typesi,
-                                         var_name='type',
-                                         standard_name='area_type',
-                                         long_name='Sea Ice area type',
-                                         units=Unit('no unit'))
+                                        var_name='type',
+                                        standard_name='area_type',
+                                        long_name='Sea Ice area type',
+                                        units=Unit('no unit'))
     with pytest.raises(iris.exceptions.CoordinateNotFoundError):
         cube_in.coord('area_type')
     if typesi == 'default':
