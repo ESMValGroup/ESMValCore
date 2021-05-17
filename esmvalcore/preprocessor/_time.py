@@ -136,7 +136,8 @@ def clip_start_end_year(cube, start_year, end_year, select=None):
         Time ranges are outside the cube's time limits.
     """
     if select:
-        if select[0] not in ['first', 'last'] or not isinstance(select[1], int):
+        if select[0] not in ['first', 'last'] or \
+            not isinstance(select[1], int):
             raise ValueError(
                 'Wrong `select` format. '
                 f'Got {select} instead of [first, int] or [last, int]')
@@ -145,14 +146,15 @@ def clip_start_end_year(cube, start_year, end_year, select=None):
         delta = select[1]
         if select[0] == 'first':
             index = 0
-            start_date, end_date = _select_dates(index, time_coord, delta, time_unit)
+            start_date, end_date = _select_dates(
+                index, time_coord, delta, time_unit)
         else:
             index = -1
-            end_date, start_date = _select_dates(index, time_coord, -delta, time_unit)
+            end_date, start_date = _select_dates(
+                index, time_coord, -delta, time_unit)
         return extract_time(
             cube, start_date.year, start_date.month, start_date.day,
             end_date.year, end_date.month, end_date.day)
-
 
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
 
@@ -160,7 +162,8 @@ def clip_start_end_year(cube, start_year, end_year, select=None):
 def _select_dates(index, time_coord, delta, time_unit):
     reference_date = time_coord.cell(index).point
     date_format = reference_date.strftime(reference_date.format)
-    date_unit = cf_units.Unit(f'years since {date_format}', calendar=time_unit.calendar)
+    date_unit = cf_units.Unit(
+        f'years since {date_format}', calendar=time_unit.calendar)
     target_value = date_unit.convert(delta, time_unit)
     target_date = time_unit.num2date(target_value)
     return reference_date, target_date

@@ -286,7 +286,7 @@ def _get_default_settings(variable, config_user, derive=False):
             'start_year': variable['start_year'],
             'end_year': variable['end_year'],
         }
-    
+
     if 'select_years' in variable and variable['frequency'] != 'fx':
         settings['clip_start_end_year'] = {
             'start_year': None,
@@ -655,7 +655,7 @@ def _update_select_years(variable, settings, config_user):
     selection = variable['select_years']
     check.valid_time_selection(variable, selection)
 
-    (files, _, _) = _find_input_files(variable, config_user['rootpath'], 
+    (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                       config_user['drs'])
     intervals = [get_start_end_year(name) for name in files]
 
@@ -663,7 +663,7 @@ def _update_select_years(variable, settings, config_user):
     time_range = (selection).split(" ")[-1]
     if not time_range.isdigit():
         time_range = '1'
-    delta = int(time_range) 
+    delta = int(time_range)
     options = {
         'all': {
             'start_year': min(intervals)[0],
@@ -684,7 +684,7 @@ def _update_select_years(variable, settings, config_user):
         settings.pop(step, None)
     else:
         settings[step]['select'] = (mode, int(time_range))
-    
+
     variable.update({'start_year': options[mode]['start_year']})
     variable.update({'end_year': options[mode]['end_year']})
     filename = variable['filename'].replace(

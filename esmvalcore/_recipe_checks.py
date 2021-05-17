@@ -130,7 +130,7 @@ def data_availability(input_files, var, dirnames, filenames):
     # with a time selection mode not set to full
     if var['frequency'] == 'fx':
         return
-    
+
     if 'selection' in var:
         if var['selection'] == 'full':
             return
@@ -205,8 +205,9 @@ def valid_multimodel_statistic(statistic):
             f"`multi_model_statistics`. Valid values are {valid_names} "
             f"or patterns matching {valid_patterns}. Got '{statistic}.'")
 
+
 def valid_time_selection(variable, selection):
-    """Check that `select_years` tag is well defined"""
+    """Check that `select_years` tag is well defined."""
     valid_names = ["all", "first", "last"]
     valid_patterns = [r"^first [2-9][0-9]*", r"^last [2-9][0-9]*"]
     if not (selection in valid_names
@@ -216,4 +217,3 @@ def valid_time_selection(variable, selection):
             f"{variable['short_name']} of dataset {variable['dataset']}. "
             f"Valid values are {valid_names} or patterns matching "
             f"{valid_patterns}. Got '{selection}.'")
-
