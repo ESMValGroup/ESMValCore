@@ -17,31 +17,35 @@ logger = logging.getLogger(__name__)
 CFG = {}
 
 if sys.version_info[:2] >= (3, 9):
+    # pylint: disable=no-name-in-module
     from importlib.resources import files as importlib_files
 else:
     from importlib_resources import files as importlib_files
 
 
-def deep_update(dictionary, update):
-    for k, v in update.items():
-        if isinstance(v, collections.abc.Mapping):
-            dictionary[k] = deep_update(dictionary.get(k, {}), v)
+def _deep_update(dictionary, update):
+    for key, value in update.items():
+        if isinstance(value, collections.abc.Mapping):
+            dictionary[key] = _deep_update(dictionary.get(key, {}), value)
         else:
-            dictionary[k] = v
+            dictionary[key] = value
     return dictionary
 
 
 @lru_cache
 def _get_project_mappings(project):
     config = {}
-    SEARCH_PATHS = [importlib_files(__package__) / "mappings"]
-    for search_path in SEARCH_PATHS:
-        config_files = search_path.glob(f"{project.lower()}-*.yml")
-        for config_file in sorted(config_files):
-            with config_file.open() as f:
-                config_piece = yaml.safe_load(f)
+    config_paths = [
+        importlib_files("esmvalcore._config"),
+    ]
+    for config_path in config_paths:
+        search_path = config_path / "mappings"
+        config_file_paths = search_path.glob(f"{project.lower()}-*.yml")
+        for config_file_path in sorted(config_file_paths):
+            with config_file_path.open() as config_file:
+                config_piece = yaml.safe_load(config_file)
             if config_piece:
-                deep_update(config, config_piece)
+                _deep_update(config, config_piece)
     return config
 
 
