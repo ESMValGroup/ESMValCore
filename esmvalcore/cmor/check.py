@@ -603,6 +603,16 @@ class CMORCheck():
         if coord.ndim == 1:
             self._cube = iris.util.reverse(self._cube,
                                            self._cube.coord_dims(coord))
+            reversed_coord = self._cube.coord(var_name=coord.var_name)
+            if reversed_coord.has_bounds():
+                bounds = reversed_coord.bounds
+                right_bounds = bounds[:-2, 1]
+                left_bounds = bounds[1:-1, 0]
+                if np.all(right_bounds != left_bounds):
+                    reversed_coord.bounds = np.fliplr(bounds)
+                    coord = reversed_coord
+            self.report_debug_message(f'Coordinate {coord.var_name} values'
+                                      'have been reversed.')
 
     def _check_coord_points(self, coord_info, coord, var_name):
         """Check coordinate points: values, bounds and monotonicity."""
@@ -971,13 +981,13 @@ def cmor_check_metadata(cube,
     ----------
     cube: iris.cube.Cube
         Data cube to check.
-    cmor_table: basestring
+    cmor_table: str
         CMOR definitions to use.
     mip:
         Variable's mip.
-    short_name: basestring
+    short_name: str
         Variable's short name.
-    frequency: basestring
+    frequency: str
         Data frequency.
     check_level: CheckLevels
         Level of strictness of the checks.
@@ -1005,13 +1015,13 @@ def cmor_check_data(cube,
     ----------
     cube: iris.cube.Cube
         Data cube to check.
-    cmor_table: basestring
+    cmor_table: str
         CMOR definitions to use.
     mip:
         Variable's mip.
-    short_name: basestring
+    short_name: str
         Variable's short name
-    frequency: basestring
+    frequency: str
         Data frequency
     check_level: CheckLevels
         Level of strictness of the checks.
@@ -1035,13 +1045,13 @@ def cmor_check(cube, cmor_table, mip, short_name, frequency, check_level):
     ----------
     cube: iris.cube.Cube
         Data cube to check.
-    cmor_table: basestring
+    cmor_table: str
         CMOR definitions to use.
     mip:
         Variable's mip.
-    short_name: basestring
+    short_name: str
         Variable's short name.
-    frequency: basestring
+    frequency: str
         Data frequency.
     check_level: enum.IntEnum
         Level of strictness of the checks.

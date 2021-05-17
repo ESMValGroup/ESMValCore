@@ -7,7 +7,7 @@ import numpy as np
 import iris
 import tests
 from cf_units import Unit
-from esmvalcore.preprocessor._mask import (_apply_fx_mask, _check_dims,
+from esmvalcore.preprocessor._mask import (_apply_fx_mask,
                                            count_spells, _get_fx_mask,
                                            mask_above_threshold,
                                            mask_below_threshold,
@@ -62,12 +62,6 @@ class Test(tests.Test):
         fixed_mask = np.ma.array(self.time_cube.data[0:3].astype('float64'),
                                  mask=dummy_fx_mask)
         self.assert_array_equal(fixed_mask, app_mask)
-
-    def test_check_dims(self):
-        """Test _check_dims func."""
-        malformed_cube = self.arr[0]
-        np.testing.assert_equal(True, _check_dims(self.arr, self.arr))
-        np.testing.assert_equal(False, _check_dims(self.arr, malformed_cube))
 
     def test_count_spells(self):
         """Test count_spells func."""

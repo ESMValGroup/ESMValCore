@@ -173,6 +173,8 @@ def _get_concatenation_error(cubes):
 
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
+    if not cubes:
+        return cubes
     if len(cubes) == 1:
         return cubes[0]
 
@@ -227,7 +229,15 @@ def save(cubes, filename, optimize_access='', compress=False, alias='',
     str
         filename
 
+    Raises
+    ------
+    ValueError
+        cubes is empty.
+
     """
+    if not cubes:
+        raise ValueError(f"Cannot save empty cubes '{cubes}'")
+
     # Rename some arguments
     kwargs['target'] = filename
     kwargs['zlib'] = compress

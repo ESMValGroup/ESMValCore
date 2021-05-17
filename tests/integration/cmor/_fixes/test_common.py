@@ -1,14 +1,15 @@
 """Test for common fixes used for multiple datasets."""
 import iris
 import numpy as np
+import pytest
 
 from esmvalcore.cmor._fixes.common import (
     ClFixHybridHeightCoord,
     ClFixHybridPressureCoord,
+    OceanFixGrid,
 )
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import var_name_constraint
-
 
 AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0, 1.0, 1.0],
                                   [1.0, 1.0, 1.0, 1.0],
@@ -81,6 +82,7 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     return var_names
 
 
+@pytest.mark.sequential
 def test_cl_hybrid_pressure_coord_fix_metadata_with_a(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
@@ -90,6 +92,7 @@ def test_cl_hybrid_pressure_coord_fix_metadata_with_a(test_data_path):
     assert 'a_bnds' in var_names
 
 
+@pytest.mark.sequential
 def test_cl_hybrid_pressure_coord_fix_metadata_with_ap(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
@@ -157,9 +160,212 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     assert air_pressure_coord.units == 'Pa'
 
 
+@pytest.mark.sequential
 def test_cl_hybrid_height_coord_fix_metadata(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
     nc_path = test_data_path / 'common_cl_hybrid_height.nc'
     hybrid_height_coord_fix_metadata(nc_path, 'cl',
                                      ClFixHybridHeightCoord(vardef))
+
+
+def get_tos_cubes(wrong_ij_names=False, ij_bounds=False):
+    """Cubes containing tos variable."""
+    if wrong_ij_names:
+        j_var_name = 'lat'
+        j_long_name = 'latitude'
+        i_var_name = 'lon'
+        i_long_name = 'longitude'
+    else:
+        j_var_name = 'j'
+        j_long_name = 'cell index along second dimension'
+        i_var_name = 'i'
+        i_long_name = 'cell index along first dimension'
+    if ij_bounds:
+        j_bounds = [[10.0, 30.0], [30.0, 50.0]]
+        i_bounds = [[5.0, 15.0], [15.0, 25.0], [25.0, 35.0]]
+    else:
+        j_bounds = None
+        i_bounds = None
+    j_coord = iris.coords.DimCoord(
+        [20.0, 40.0],
+        bounds=j_bounds,
+        var_name=j_var_name,
+        long_name=j_long_name,
+    )
+    i_coord = iris.coords.DimCoord(
+        [10.0, 20.0, 30.0],
+        bounds=i_bounds,
+        var_name=i_var_name,
+        long_name=i_long_name,
+    )
+    lat_coord = iris.coords.AuxCoord(
+        [[-40.0, -20.0, 0.0], [-20.0, 0.0, 20.0]],
+        var_name='lat',
+        standard_name='latitude',
+        units='degrees_north',
+    )
+    lon_coord = iris.coords.AuxCoord(
+        [[100.0, 140.0, 180.0], [80.0, 100.0, 120.0]],
+        var_name='lon',
+        standard_name='longitude',
+        units='degrees_east',
+    )
+    time_coord = iris.coords.DimCoord(
+        1.0,
+        bounds=[0.0, 2.0],
+        var_name='time',
+        standard_name='time',
+        long_name='time',
+        units='days since 1950-01-01',
+    )
+
+    # Create tos variable cube
+    cube = iris.cube.Cube(
+        np.full((1, 2, 3), 300.0),
+        var_name='tos',
+        long_name='sea_surface_temperature',
+        units='K',
+        dim_coords_and_dims=[(time_coord, 0), (j_coord, 1), (i_coord, 2)],
+        aux_coords_and_dims=[(lat_coord, (1, 2)), (lon_coord, (1, 2))],
+    )
+
+    # Create empty (dummy) cube
+    empty_cube = iris.cube.Cube(0.0)
+    return iris.cube.CubeList([cube, empty_cube])
+
+
+@pytest.fixture
+def tos_cubes_wrong_ij_names():
+    """Cubes with wrong ij names."""
+    return get_tos_cubes(wrong_ij_names=True, ij_bounds=True)
+
+
+def test_ocean_fix_grid_wrong_ij_names(tos_cubes_wrong_ij_names):
+    """Test ``fix_metadata`` with cubes with wrong ij names."""
+    cube_in = tos_cubes_wrong_ij_names.extract_cube('sea_surface_temperature')
+    assert len(cube_in.coords('latitude')) == 2
+    assert len(cube_in.coords('longitude')) == 2
+    assert cube_in.coord('latitude', dimensions=1).bounds is not None
+    assert cube_in.coord('longitude', dimensions=2).bounds is not None
+    assert cube_in.coord('latitude', dimensions=(1, 2)).bounds is None
+    assert cube_in.coord('longitude', dimensions=(1, 2)).bounds is None
+
+    # Apply fix
+    vardef = get_var_info('CMIP6', 'Omon', 'tos')
+    fix = OceanFixGrid(vardef)
+    fixed_cubes = fix.fix_metadata(tos_cubes_wrong_ij_names)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes.extract_cube('sea_surface_temperature')
+    assert fixed_cube is cube_in
+
+    # Check ij names
+    i_coord = fixed_cube.coord('cell index along first dimension')
+    j_coord = fixed_cube.coord('cell index along second dimension')
+    assert i_coord.var_name == 'i'
+    assert i_coord.standard_name is None
+    assert i_coord.long_name == 'cell index along first dimension'
+    assert i_coord.units == '1'
+    assert i_coord.circular is False
+    assert j_coord.var_name == 'j'
+    assert j_coord.standard_name is None
+    assert j_coord.long_name == 'cell index along second dimension'
+    assert j_coord.units == '1'
+
+    # Check ij points and bounds
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2])
+    np.testing.assert_allclose(i_coord.bounds,
+                               [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]])
+    np.testing.assert_allclose(j_coord.points, [0, 1])
+    np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
+
+    # Check bounds of latitude and longitude
+    assert len(fixed_cube.coords('latitude')) == 1
+    assert len(fixed_cube.coords('longitude')) == 1
+    assert fixed_cube.coord('latitude').bounds is not None
+    assert fixed_cube.coord('longitude').bounds is not None
+    latitude_bounds = np.array([[[-40, -33.75, -23.75, -30.0],
+                                 [-33.75, -6.25, 3.75, -23.75],
+                                 [-6.25, -1.02418074021670e-14, 10.0, 3.75]],
+                                [[-30.0, -23.75, -13.75, -20.0],
+                                 [-23.75, 3.75, 13.75, -13.75],
+                                 [3.75, 10.0, 20.0, 13.75]]])
+    np.testing.assert_allclose(fixed_cube.coord('latitude').bounds,
+                               latitude_bounds)
+    longitude_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],
+                                  [99.375, 140.625, 140.625, 99.375],
+                                  [140.625, 99.375, 99.375, 140.625]],
+                                 [[140.625, 99.375, 99.375, 140.625],
+                                  [99.375, 140.625, 140.625, 99.375],
+                                  [140.625, 99.375, 99.375, 140.625]]])
+    np.testing.assert_allclose(fixed_cube.coord('longitude').bounds,
+                               longitude_bounds)
+
+
+@pytest.fixture
+def tos_cubes_no_ij_bounds():
+    """Cubes with no ij bounds."""
+    return get_tos_cubes(wrong_ij_names=False, ij_bounds=False)
+
+
+def test_ocean_fix_grid_no_ij_bounds(tos_cubes_no_ij_bounds):
+    """Test ``fix_metadata`` with cubes with no ij bounds."""
+    cube_in = tos_cubes_no_ij_bounds.extract_cube('sea_surface_temperature')
+    assert len(cube_in.coords('latitude')) == 1
+    assert len(cube_in.coords('longitude')) == 1
+    assert cube_in.coord('latitude').bounds is None
+    assert cube_in.coord('longitude').bounds is None
+    assert cube_in.coord('cell index along first dimension').var_name == 'i'
+    assert cube_in.coord('cell index along second dimension').var_name == 'j'
+    assert cube_in.coord('cell index along first dimension').bounds is None
+    assert cube_in.coord('cell index along second dimension').bounds is None
+
+    # Apply fix
+    vardef = get_var_info('CMIP6', 'Omon', 'tos')
+    fix = OceanFixGrid(vardef)
+    fixed_cubes = fix.fix_metadata(tos_cubes_no_ij_bounds)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes.extract_cube('sea_surface_temperature')
+    assert fixed_cube is cube_in
+
+    # Check ij names
+    i_coord = fixed_cube.coord('cell index along first dimension')
+    j_coord = fixed_cube.coord('cell index along second dimension')
+    assert i_coord.var_name == 'i'
+    assert i_coord.standard_name is None
+    assert i_coord.long_name == 'cell index along first dimension'
+    assert i_coord.units == '1'
+    assert i_coord.circular is False
+    assert j_coord.var_name == 'j'
+    assert j_coord.standard_name is None
+    assert j_coord.long_name == 'cell index along second dimension'
+    assert j_coord.units == '1'
+
+    # Check ij points and bounds
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2])
+    np.testing.assert_allclose(i_coord.bounds,
+                               [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]])
+    np.testing.assert_allclose(j_coord.points, [0, 1])
+    np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
+
+    # Check bounds of latitude and longitude
+    assert len(fixed_cube.coords('latitude')) == 1
+    assert len(fixed_cube.coords('longitude')) == 1
+    assert fixed_cube.coord('latitude').bounds is not None
+    assert fixed_cube.coord('longitude').bounds is not None
+    latitude_bounds = np.array([[[-40, -33.75, -23.75, -30.0],
+                                 [-33.75, -6.25, 3.75, -23.75],
+                                 [-6.25, -1.02418074021670e-14, 10.0, 3.75]],
+                                [[-30.0, -23.75, -13.75, -20.0],
+                                 [-23.75, 3.75, 13.75, -13.75],
+                                 [3.75, 10.0, 20.0, 13.75]]])
+    np.testing.assert_allclose(fixed_cube.coord('latitude').bounds,
+                               latitude_bounds)
+    longitude_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],
+                                  [99.375, 140.625, 140.625, 99.375],
+                                  [140.625, 99.375, 99.375, 140.625]],
+                                 [[140.625, 99.375, 99.375, 140.625],
+                                  [99.375, 140.625, 140.625, 99.375],
+                                  [140.625, 99.375, 99.375, 140.625]]])
+    np.testing.assert_allclose(fixed_cube.coord('longitude').bounds,
+                               longitude_bounds)
