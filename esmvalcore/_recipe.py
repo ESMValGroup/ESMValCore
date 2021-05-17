@@ -17,7 +17,7 @@ from ._config import (
     get_activity,
     get_institutes,
     get_project_config,
-    get_variable_mappings,
+    get_variable_details,
 )
 from ._data_finder import (
     get_input_filelist,
@@ -99,12 +99,12 @@ def _add_cmor_info(variable, override=False):
     check.variable(variable, required_keys=cmor_keys)
 
 
-def _add_project_variable_mappings(variable):
-    mappings = get_variable_mappings(variable["project"],
-                                     variable["dataset"],
-                                     variable["mip"],
-                                     variable["short_name"])
-    _augment(variable, mappings)
+def _add_project_variable_details(variable):
+    details = get_variable_details(variable["project"],
+                                   variable["dataset"],
+                                   variable["mip"],
+                                   variable["short_name"])
+    _augment(variable, details)
 
 
 def _special_name_to_dataset(variable, special_name):
@@ -1124,7 +1124,7 @@ class Recipe:
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
-            _add_project_variable_mappings(variable)
+            _add_project_variable_details(variable)
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:

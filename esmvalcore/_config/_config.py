@@ -33,14 +33,14 @@ def _deep_update(dictionary, update):
 
 
 @lru_cache
-def _get_project_mappings(project):
+def _get_variable_details_for_project(project):
     config = {}
     config_paths = [
         importlib_files("esmvalcore._config"),
         Path.home() / ".esmvaltool",
     ]
     for config_path in config_paths:
-        search_path = config_path / "mappings"
+        search_path = config_path / "variable_details"
         config_file_paths = search_path.glob(f"{project.lower()}-*.yml")
         for config_file_path in sorted(config_file_paths):
             with config_file_path.open() as config_file:
@@ -51,10 +51,10 @@ def _get_project_mappings(project):
 
 
 @lru_cache
-def get_variable_mappings(project, dataset, mip, short_name):
+def get_variable_details(project, dataset, mip, short_name):
     """Read configuration files with additional variable information."""
-    project_mappings = _get_project_mappings(project)
-    return project_mappings.get(dataset, {}).get(mip, {}).get(short_name, {})
+    project_details = _get_variable_details_for_project(project)
+    return project_details.get(dataset, {}).get(mip, {}).get(short_name, {})
 
 
 def read_config_user_file(config_file, folder_name, options=None):
