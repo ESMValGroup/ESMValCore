@@ -3,6 +3,7 @@ import collections.abc
 import datetime
 import logging
 import os
+import sys
 import warnings
 from functools import lru_cache
 from pathlib import Path
@@ -15,9 +16,9 @@ logger = logging.getLogger(__name__)
 
 CFG = {}
 
-try:
+if sys.version_info[:2] >= (3, 9):
     from importlib.resources import files as importlib_files
-except ImportError:
+else:
     from importlib_resources import files as importlib_files
 
 
