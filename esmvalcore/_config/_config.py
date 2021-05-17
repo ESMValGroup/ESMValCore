@@ -52,6 +52,7 @@ def _get_project_mappings(project):
 
 @lru_cache
 def get_variable_mappings(project, dataset, mip, short_name):
+    """Read configuration files with additional variable information."""
     project_mappings = _get_project_mappings(project)
     return project_mappings.get(dataset, {}).get(mip, {}).get(short_name, {})
 
