@@ -12,6 +12,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_height_coord,
     add_scalar_typeland_coord,
     add_scalar_typesea_coord,
+    add_scalar_typesi_coord,
     add_sigma_factory,
     cube_to_aux_coord,
     fix_bounds,
@@ -325,6 +326,33 @@ def test_add_scalar_typesea_coord(cube_in, typesea):
     assert cube_out_2 is cube_out
     coord = cube_in.coord('area_type')
     assert coord == typesea_coord
+
+
+@pytest.mark.sequential
+@pytest.mark.parametrize('cube_in,typesi', TEST_ADD_SCALAR_COORD)
+def test_add_scalar_typesi_coord(cube_in, typesi):
+    """Test adding of scalar typesi coordinate."""
+    cube_in = cube_in.copy()
+    if typesi is None:
+        typesi = 'default'
+    typesi_coord = iris.coords.AuxCoord(typesi,
+                                         var_name='type',
+                                         standard_name='area_type',
+                                         long_name='Sea Ice area type',
+                                         units=Unit('no unit'))
+    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+        cube_in.coord('area_type')
+    if typesi == 'default':
+        cube_out = add_scalar_typesi_coord(cube_in)
+    else:
+        cube_out = add_scalar_typesi_coord(cube_in, typesi)
+    assert cube_out is cube_in
+    coord = cube_in.coord('area_type')
+    assert coord == typesi_coord
+    cube_out_2 = add_scalar_typesi_coord(cube_out)
+    assert cube_out_2 is cube_out
+    coord = cube_in.coord('area_type')
+    assert coord == typesi_coord
 
 
 PS_COORD = iris.coords.AuxCoord([[[101000.0]]], var_name='ps', units='Pa')
