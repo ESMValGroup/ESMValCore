@@ -3,8 +3,11 @@ import iris
 
 from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
-from .gfdl_esm4 import Siconc as Addtypesi
-from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
+from ..shared import (
+    add_aux_coords_from_cubes,
+    add_scalar_height_coord,
+    add_scalar_typesi_coord,
+)
 
 
 class Cl(ClFixHybridPressureCoord):
@@ -37,6 +40,27 @@ Cli = Cl
 
 
 Clw = Cl
+
+
+class Siconc(Fix):
+    """Fixes for siconc."""
+
+    def fix_metadata(self, cubes):
+        """Add typesi coordinate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        add_scalar_typesi_coord(cube)
+        return cubes
 
 
 class Tas(Fix):
@@ -106,6 +130,3 @@ class Vas(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
         return cubes
-
-
-Siconc = Addtypesi
