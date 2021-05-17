@@ -120,6 +120,8 @@ def clip_start_end_year(cube, start_year, end_year, select=None):
         Start year.
     end_year : int
         End year.
+    select : list
+        List with selection mode (first/last) and number of years.
 
     Returns
     -------
@@ -129,11 +131,15 @@ def clip_start_end_year(cube, start_year, end_year, select=None):
     Raises
     ------
     ValueError
+        Incorrect `select` argument
+    ValueError
         Time ranges are outside the cube's time limits.
     """
     if select:
         if select[0] not in ['first', 'last'] or not isinstance(select[1], int):
-            raise ValueError('ups')
+            raise ValueError(
+                'Wrong `select` format. '
+                f'Got {select} instead of [first, int] or [last, int]')
         time_coord = cube.coord('time')
         time_unit = time_coord.units  
         delta = select[1]
