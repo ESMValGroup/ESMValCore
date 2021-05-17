@@ -109,7 +109,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     return cube_slice
 
 
-def clip_start_end_year(cube, start_year=None, end_year=None, selection=None):
+def clip_start_end_year(cube, start_year, end_year, select=None):
     """Extract time range given by the dataset keys.
 
     Parameters
@@ -131,29 +131,33 @@ def clip_start_end_year(cube, start_year=None, end_year=None, selection=None):
     ValueError
         Time ranges are outside the cube's time limits.
     """
-    if selection:
-        timerange = int(selection.split(" ")[1])
-        frequency = selection.split(" ")[2]
+    if select:
+        if select[0] not in ['first', 'last'] or not isinstance(select[1], int):
+            raise ValueError('ups')
         time_coord = cube.coord('time')
-        time_unit = time_coord.units
-        if selection.startswith("first"):
-            start_date = time_coord.cell(0).point
-            date_format = start_date.strftime(start_date.format)
-            date_unit = cf_units.Unit(f'{frequency} since {date_format}', calendar=time_unit.calendar)
-            end_value = date_unit.convert(timerange, time_unit) + 1
-            end_date = time_unit.num2date(end_value)
-        if selection.startswith("last"):
-            end_date = time_coord.cell(-1).point
-            date_format = end_date.strftime(end_date.format)
-            date_unit = cf_units.Unit(f'{frequency} since {date_format}', calendar=time_unit.calendar)
-            start_value = date_unit.convert(-timerange, time_unit)
-            start_date = time_unit.num2date(start_value)
-            end_date =+ 1
+        time_unit = time_coord.units  
+        delta = select[1]
+        if select[0] == 'first':
+            index = 0
+            start_date, end_date = _select_dates(index, time_coord, delta, time_unit)
+        else:
+            index = -1
+            end_date, start_date = _select_dates(index, time_coord, -delta, time_unit)
         return extract_time(
             cube, start_date.year, start_date.month, start_date.day,
             end_date.year, end_date.month, end_date.day)
 
+
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
+
+
+def _select_dates(index, time_coord, delta, time_unit):
+    reference_date = time_coord.cell(index).point
+    date_format = reference_date.strftime(reference_date.format)
+    date_unit = cf_units.Unit(f'years since {date_format}', calendar=time_unit.calendar)
+    target_value = date_unit.convert(delta, time_unit)
+    target_date = time_unit.num2date(target_value)
+    return reference_date, target_date
 
 
 def extract_season(cube, season):

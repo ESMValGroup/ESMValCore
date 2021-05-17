@@ -206,31 +206,13 @@ def valid_multimodel_statistic(statistic):
             f"or patterns matching {valid_patterns}. Got '{statistic}.'")
 
 def valid_time_selection(variable, selection):
-    if selection != 'full':
-        selection_options = selection.split(" ")
-        if len(selection_options) != 3:
-            raise RecipeError(
-                f"Invalid value for `selection` " 
-                f"in dataset {variable['dataset']}. "
-                f"Valid values are `standard`, `full`, `first YYY years`, "
-                f"`last YYY years`. Got {selection} instead.")
-        if selection_options[0] not in ['first', 'last']:
-            raise RecipeError(
-                f"Invalid value for custom `selection` " 
-                f"in dataset {variable['dataset']}. "
-                f"Valid values are `first YYY years`, "
-                f"`last YYY years`. Got {selection} instead.")
-        try:
-            time_value = int(selection_options[1])
-        except ValueError:
-            raise RecipeError(
-                f"Invalid value for custom `selection` " 
-                f"in dataset {variable['dataset']}. "
-                f"Valid values are `first YYY years`, "
-                f"`last YYY years`. Got {selection} instead.")
-        if selection_options[2] != 'years':
-            raise RecipeError(
-                f"Invalid value for custom `selection` " 
-                f"in dataset {variable['dataset']}. "
-                f"Valid values are `first YYY years`, "
-                f"`last YYY years`. Got {selection} instead.")
+    valid_names = ["all", "first", "last"]
+    valid_patterns = [r"^first [2-9][0-9]*", r"^last [2-9][0-9]*"]
+    if not (selection in valid_names
+            or re.match(r'|'.join(valid_patterns), selection)):
+        raise RecipeError(
+            "Invalid value encountered for `select_years` in variable "
+            f"{variable['short_name']} of dataset {variable['dataset']}. "
+            f"Valid values are {valid_names} or patterns matching "
+            f"{valid_patterns}. Got '{selection}.'")
+

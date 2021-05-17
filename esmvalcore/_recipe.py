@@ -14,8 +14,10 @@ from . import __version__
 from . import _recipe_checks as check
 from ._config import TAGS, get_activity, get_institutes, get_project_config
 from ._data_finder import (
+    _find_input_files,
     get_input_filelist,
     get_output_file,
+    get_start_end_year,
     get_statistic_output_file,
 )
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -285,9 +287,11 @@ def _get_default_settings(variable, config_user, derive=False):
             'end_year': variable['end_year'],
         }
     
-    if 'selection' in variable:
+    if 'select_years' in variable and variable['frequency'] != 'fx':
         settings['clip_start_end_year'] = {
-            'selection': variable['selection']
+            'start_year': None,
+            'end_year': None,
+            'select': None,
         }
 
     if derive:
@@ -644,6 +648,51 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
+def _update_select_years(variable, settings, config_user):
+    if 'select_years' not in variable:
+        return
+
+    selection = variable['select_years']
+    check.valid_time_selection(variable, selection)
+
+    (files, _, _) = _find_input_files(variable, config_user['rootpath'], 
+                                      config_user['drs'])
+    intervals = [get_start_end_year(name) for name in files]
+
+    mode = (selection).split(" ")[0]
+    time_range = (selection).split(" ")[-1]
+    if not time_range.isdigit():
+        time_range = '1'
+    delta = int(time_range) 
+    options = {
+        'all': {
+            'start_year': min(intervals)[0],
+            'end_year': max(intervals)[1],
+            },
+        'first': {
+            'start_year': min(intervals)[0],
+            'end_year': min(intervals)[0] + delta
+            },
+        'last': {
+            'start_year': max(intervals)[1] - delta,
+            'end_year': max(intervals)[1],
+        }
+    }
+
+    step = 'clip_start_end_year'
+    if mode == 'all':
+        settings.pop(step, None)
+    else:
+        settings[step]['select'] = (mode, int(time_range))
+    
+    variable.update({'start_year': options[mode]['start_year']})
+    variable.update({'end_year': options[mode]['end_year']})
+    filename = variable['filename'].replace(
+        '.nc', '_{start_year}-{end_year}.nc'.format(**variable)
+    )
+    variable['filename'] = filename
+
+
 def _match_products(products, variables):
     """Match a list of input products to output product attributes."""
     grouped_products = {}
@@ -759,6 +808,7 @@ def _update_preproc_functions(settings, config_user, variable, variables,
     _update_fx_settings(settings=settings,
                         variable=variable,
                         config_user=config_user)
+    _update_select_years(variable, settings, config_user)
     try:
         _update_target_grid(
             variable=variable,
@@ -1110,10 +1160,9 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
-            if 'selection' in variable:
+            if 'select_years' in variable:
                 required_keys.discard('start_year')
                 required_keys.discard('end_year')
-                check.valid_time_selection(variable, variable['selection'])
             if 'sub_experiment' in variable:
                 subexperiment_keys = deepcopy(required_keys)
                 subexperiment_keys.update({'sub_experiment'})
