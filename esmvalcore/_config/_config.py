@@ -37,6 +37,7 @@ def _get_project_mappings(project):
     config = {}
     config_paths = [
         importlib_files("esmvalcore._config"),
+        Path.home() / ".esmvaltool",
     ]
     for config_path in config_paths:
         search_path = config_path / "mappings"
