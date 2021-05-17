@@ -137,12 +137,12 @@ def clip_start_end_year(cube, start_year, end_year, select=None):
     """
     if select:
         if select[0] not in ['first', 'last'] or \
-            not isinstance(select[1], int):
+           not isinstance(select[1], int):
             raise ValueError(
                 'Wrong `select` format. '
                 f'Got {select} instead of [first, int] or [last, int]')
         time_coord = cube.coord('time')
-        time_unit = time_coord.units  
+        time_unit = time_coord.units 
         delta = select[1]
         if select[0] == 'first':
             index = 0
