@@ -401,9 +401,9 @@ get_input_filelist:
     dirs:
       - ''
     file_patterns:
-      - areacella_fx_HadGEM2-ES_historical_r1i1p1*.nc
+      - areacella_fx_HadGEM2-ES_historical_r0i0p0*.nc
     found_files:
-      - areacella_fx_HadGEM2-ES_historical_r1i1p1.nc
+      - areacella_fx_HadGEM2-ES_historical_r0i0p0.nc
 
   - drs: DKRZ
     variable:
@@ -425,11 +425,11 @@ get_input_filelist:
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
     dirs:
-      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf
     file_patterns:
-      - sftlf_fx_HadGEM2-ES_historical_r1i1p1*.nc
+      - sftlf_fx_HadGEM2-ES_historical_r0i0p0*.nc
     found_files:
-      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
 
   - drs: DKRZ
     variable:
@@ -448,11 +448,11 @@ get_input_filelist:
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
-      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
-      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/areacella/areacella_fx_HadGEM2-ES_historical_r1i1p1.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/areacella/areacella_fx_HadGEM2-ES_historical_r0i0p0.nc
     dirs: []
     file_patterns:
-      - orog_fx_HadGEM2-ES_historical_r1i1p1*.nc
+      - orog_fx_HadGEM2-ES_historical_r0i0p0*.nc
     found_files: []
 
   - drs: DKRZ
