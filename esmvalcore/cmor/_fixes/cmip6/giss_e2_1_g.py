@@ -16,8 +16,7 @@ class Nbp(Fix):
     """Fixes for nbp."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes wrong sign for land surface flux.
 
