@@ -171,11 +171,13 @@ def _resolve_latestversion(dirname_template):
     # Find latest version
     part1, part2 = dirname_template.split("{latestversion}")
     # resolve any wildcards entered for fx variables
-    if "/fx/" in part1:
+    if "/fx/" in part1 or "/Ofx/" in part1:
         dirs = glob.glob(part1)
         # if multiple folders are found, use the first one
         if len(dirs) > 0:
             part1 = dirs[0]
+            if len(dirs) > 1:
+                logger.warning("Multiple fx folders were found: %s", dirs)
         else:
             # nothing found, so return
             logger.debug("Unable to resolve %s", dirname_template)
@@ -273,6 +275,12 @@ def get_input_filelist(variable, rootpath, drs):
 
 def get_output_file(variable, preproc_dir):
     """Return the full path to the output (preprocessed) file."""
+    # change ensemble to fixed r0i0p0 for fx variables
+    # this is needed and is not a duplicate effort
+    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx' \
+        and variable['ensemble'] != '*':
+        variable['ensemble'] = 'r0i0p0'
+
     cfg = get_project_config(variable["project"])
 
     # Join different experiment names

@@ -374,10 +374,14 @@ or alternatively:
             {'short_name': 'sftof', 'exp': 'piControl'}
             ]
 
-Additionally, it is possible to use Unix style wildcards when specifying the fx variable.
+Additionally, it is possible to search across all ensembles and experiments when specifying
+the fx variable, by using the ``*`` character, which is useful for some projects where the location
+of the fx files is not consistent.
 This makes it possible to search for fx files under multiple ensemble members or experiments.
 For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML.
+special charcter in YAML. This functionality is only supported for fx variables under the
+``fx`` or ``Ofx`` mip tables. Note also that if multiple folders of matching fx files are found
+ESMValTool will default to using the first folder found only.
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
@@ -460,10 +464,14 @@ or alternatively:
             {'short_name': 'sftof', 'exp': 'piControl', 'ensemble': 'r2i1p1f1'}
             ]
 
-Additionally, it is possible to use Unix style wildcards when specifying the fx variable.
+Additionally, it is possible to search across all ensembles and experiments when specifying
+the fx variable, by using the ``*`` character, which is useful for some projects where the location
+of the fx files is not consistent.
 This makes it possible to search for fx files under multiple ensemble members or experiments.
 For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML.
+special charcter in YAML. This functionality is only supported for fx variables under the
+``fx`` or ``Ofx`` mip tables. Note also that if multiple folders of matching fx files are found
+ESMValTool will default to using the first folder found only.
 
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
@@ -517,10 +525,14 @@ or alternatively:
           mask_out: sea
           fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
 
-Additionally, it is possible to use Unix style wildcards when specifying the fx variable.
+Additionally, it is possible to search across all ensembles and experiments when specifying
+the fx variable, by using the ``*`` character, which is useful for some projects where the location
+of the fx files is not consistent.
 This makes it possible to search for fx files under multiple ensemble members or experiments.
 For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML.
+special charcter in YAML. This functionality is only supported for fx variables under the
+``fx`` or ``Ofx`` mip tables. Note also that if multiple folders of matching fx files are found
+ESMValTool will default to using the first folder found only.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
