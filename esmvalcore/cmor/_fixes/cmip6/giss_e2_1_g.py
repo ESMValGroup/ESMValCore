@@ -22,7 +22,8 @@ class Nbp(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube : iris.cube.Cube
+            Input cube.
 
         Returns
         -------
