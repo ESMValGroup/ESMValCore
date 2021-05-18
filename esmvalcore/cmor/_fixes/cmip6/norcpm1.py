@@ -6,16 +6,17 @@ class Nbp(Fix):
     """Fixes for nbp."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube : iris.cube.Cube
+            Input cube.
 
         Returns
         -------
         iris.cube.Cube
+
         """
         metadata = cube.metadata
         cube *= 29. / 44.
