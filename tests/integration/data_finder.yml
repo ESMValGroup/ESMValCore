@@ -431,6 +431,34 @@ get_input_filelist:
     found_files:
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
 
+  # CMIP6 wildcard specification for fx variable
+  - drs: BADC
+    variable:
+      variable_group: test
+      short_name: sftlf
+      original_short_name: sftlf
+      dataset: HadGEM3-GC31-LL
+      activity: CMIP
+      project: CMIP6
+      cmor_table: CMIP6
+      institute: [MOHC]
+      frequency: fx
+      modeling_realm: [atmos]
+      mip: fx
+      exp: '*'
+      grid: gn
+      ensemble: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - CMIP/MOHC/HadGEM3-GC31-LL/piControl/r1i1p1f1/fx/sftlf/gn/latest/sftlf_fx_HadGEM3-GC31-LL_piControl_r1i1p1f1_gn.nc
+    dirs:
+      - CMIP/MOHC/HadGEM3-GC31-LL/piControl/r1i1p1f1/fx/sftlf/gn/latest/
+    file_patterns:
+      - sftlf_fx_HadGEM3-GC31-LL_*_*_gn*.nc
+    found_files:
+      - CMIP/MOHC/HadGEM3-GC31-LL/piControl/r1i1p1f1/fx/sftlf/gn/latest/sftlf_fx_HadGEM3-GC31-LL_piControl_r1i1p1f1_gn.nc
+
   - drs: DKRZ
     variable:
       variable_group: test
