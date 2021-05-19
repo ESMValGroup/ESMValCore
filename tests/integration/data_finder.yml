@@ -432,6 +432,7 @@ get_input_filelist:
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
 
   # CMIP6 wildcard specification for fx variable
+
   - drs: BADC
     variable:
       variable_group: test
@@ -458,6 +459,37 @@ get_input_filelist:
       - sftlf_fx_HadGEM3-GC31-LL_*_*_gn*.nc
     found_files:
       - CMIP/MOHC/HadGEM3-GC31-LL/piControl/r1i1p1f1/fx/sftlf/gn/latest/sftlf_fx_HadGEM3-GC31-LL_piControl_r1i1p1f1_gn.nc
+
+  # CORDEX wildcard fx specification
+
+  - drs: BADC
+    variable:
+      variable_group: test
+      short_name: sftlf
+      original_short_name: sftlf
+      dataset: RCA4
+      driver: NCC-NorESM1-M
+      rcm_version: v1
+      project: CORDEX
+      cmor_table: cordex
+      institute: [SMHI]
+      frequency: fx
+      modeling_realm: [atmos]
+      mip: fx
+      exp: '*'
+      domain: EUR-11
+      ensemble: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - EUR-11/SMHI/NCC-NorESM1-M/historical/r0i0p0/RCA4/v1/fx/sftlf/v20180820/sftlf_EUR-11_NCC-NorESM1-M_historical_r0i0p0_RCA4_v1_fx.nc
+      - EUR-11/SMHI/NCC-NorESM1-M/rcp85/r0i0p0/RCA4/v1/fx/sftlf/v20180820/sftlf_EUR-11_NCC-NorESM1-M_rcp85_r0i0p0_RCA4_v1_fx.nc
+    dirs:
+      - EUR-11/SMHI/NCC-NorESM1-M/historical/r0i0p0/RCA4/v1/fx/sftlf/v20180820/
+    file_patterns:
+      - sftlf_EUR-11_NCC-NorESM1-M_*_*_RCA4_v1_fx*.nc
+    found_files:
+      - EUR-11/SMHI/NCC-NorESM1-M/historical/r0i0p0/RCA4/v1/fx/sftlf/v20180820/sftlf_EUR-11_NCC-NorESM1-M_historical_r0i0p0_RCA4_v1_fx.nc
 
   - drs: DKRZ
     variable:
