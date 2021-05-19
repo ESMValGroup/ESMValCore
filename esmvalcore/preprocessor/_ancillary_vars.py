@@ -12,7 +12,7 @@ from esmvalcore.cmor.check import cmor_check_metadata, cmor_check_data
 logger = logging.getLogger(__name__)
 
 
-def _load_fx(fx_info, check_level):
+def _load_fx(cube, var_cube, fx_info, check_level):
     """Load and CMOR-check fx variables."""
     fx_cubes = iris.cube.CubeList()
 
@@ -31,6 +31,9 @@ def _load_fx(fx_info, check_level):
 
     fx_cube = concatenate(fx_cubes)
 
+    if not _is_fx_broadcastable(fx_cube, var_cube):
+        return None
+
     fx_cube = cmor_check_metadata(fx_cube, cmor_table=project, mip=mip,
                                   short_name=short_name, frequency=freq,
                                   check_level=check_level)
@@ -44,6 +47,16 @@ def _load_fx(fx_info, check_level):
                               check_level=check_level)
 
     return fx_cube
+
+def _is_fx_broadcastable(fx_cube, cube):
+    try:
+        da.broadcast_to(fx_cube.core_data(), cube.shape)
+    except ValueError:
+        logger.debug("Dimensions of %s and %s cubes do not match. "
+                     "Discarding use of %s as an fx_variable",
+                     cube.var_name, fx_cube.var_name)
+        return False
+    return True
 
 
 def add_cell_measure(cube, fx_cube, measure):
@@ -157,6 +170,9 @@ def add_fx_variables(cube, fx_variables, check_level):
         if isinstance(fx_info['filename'], str):
             fx_info['filename'] = [fx_info['filename']]
         fx_cube = _load_fx(fx_info, check_level)
+
+        if not fx_cube:
+            continue
 
         measure_name = {
             'areacella': 'area',
