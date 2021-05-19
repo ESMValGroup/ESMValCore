@@ -379,8 +379,8 @@ the fx variable, by using the ``*`` character, which is useful for some projects
 of the fx files is not consistent.
 This makes it possible to search for fx files under multiple ensemble members or experiments.
 For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML. This functionality is only supported for fx variables under the
-``fx`` or ``Ofx`` mip tables. Note also that if multiple folders of matching fx files are found
+special charcter in YAML. This functionality is only supported for time invariant fx variables under the
+(i.e. frequency ``fx``). Note also that if multiple folders of matching fx files are found
 ESMValTool will default to using the first folder found only.
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
@@ -469,8 +469,8 @@ the fx variable, by using the ``*`` character, which is useful for some projects
 of the fx files is not consistent.
 This makes it possible to search for fx files under multiple ensemble members or experiments.
 For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML. This functionality is only supported for fx variables under the
-``fx`` or ``Ofx`` mip tables. Note also that if multiple folders of matching fx files are found
+special charcter in YAML. This functionality is only supported for time invariant fx variables under the
+(i.e. frequency ``fx``). Note also that if multiple folders of matching fx files are found
 ESMValTool will default to using the first folder found only.
 
 If the corresponding fx file is not found (which is
@@ -530,8 +530,8 @@ the fx variable, by using the ``*`` character, which is useful for some projects
 of the fx files is not consistent.
 This makes it possible to search for fx files under multiple ensemble members or experiments.
 For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML. This functionality is only supported for fx variables under the
-``fx`` or ``Ofx`` mip tables. Note also that if multiple folders of matching fx files are found
+special charcter in YAML. This functionality is only supported for time invariant fx variables under the
+(i.e. frequency ``fx``). Note also that if multiple folders of matching fx files are found
 ESMValTool will default to using the first folder found only.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
