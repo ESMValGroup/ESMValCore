@@ -160,8 +160,7 @@ def _apply_caps(original, lower, upper):
 
 
 def _resolve_fx_wildcards(dirname):
-    """Resolve any wildcards entered for fx variables
-    """
+    """Resolve any wildcards entered for fx variables"""
     latestversion_tag = False
     if "{latestversion}" in dirname:
         latestversion_tag = True
