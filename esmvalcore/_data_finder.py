@@ -159,6 +159,38 @@ def _apply_caps(original, lower, upper):
     return original
 
 
+def _resolve_fx_wildcards(dirname):
+    """Resolve any wildcards entered for fx variables
+    """
+    latestversion_tag = False
+    if "{latestversion}" in dirname:
+        latestversion_tag = True
+        dirname, latestversion_tail = dirname.split("{latestversion}")
+
+    # resolve globs
+    dirs = glob.glob(dirname)
+
+    if len(dirs) > 0:
+        # warn if multiple folders are found
+        if len(dirs) > 1:
+            logger.warning("Multiple matches for fx variables found: %s", dirs)
+
+        # if an r0i0p0 folder is found, choose this preferentially
+        r0i0p0_match = [d for d in dirs if "r0i0p0" in d]
+        if len(r0i0p0_match) > 0:
+            dirname = r0i0p0_match[0]
+        else:
+            dirname = dirs[0]
+    else:
+        # nothing found
+        logger.debug("Unable to resolve %s", dirname)
+
+    if latestversion_tag:
+        dirname = dirname + "{latestversion}" + latestversion_tail
+
+    return dirname
+
+
 def _resolve_latestversion(dirname_template):
     """Resolve the 'latestversion' tag.
 
@@ -170,18 +202,6 @@ def _resolve_latestversion(dirname_template):
 
     # Find latest version
     part1, part2 = dirname_template.split("{latestversion}")
-    # resolve any wildcards entered for fx variables
-    if "/fx/" in part1 or "/Ofx/" in part1:
-        dirs = glob.glob(part1)
-        # if multiple folders are found, use the first one
-        if len(dirs) > 0:
-            part1 = dirs[0]
-            if len(dirs) > 1:
-                logger.warning("Multiple fx folders were found: %s", dirs)
-        else:
-            # nothing found, so return
-            logger.debug("Unable to resolve %s", dirname_template)
-            return dirname_template
     part2 = part2.lstrip(os.sep)
     if os.path.exists(part1):
         versions = os.listdir(part1)
@@ -232,6 +252,8 @@ def _find_input_dirs(variable, rootpath, drs):
     for dirname_template in _replace_tags(path_template, variable):
         for base_path in root:
             dirname = os.path.join(base_path, dirname_template)
+            if variable["frequency"] == "fx":
+                dirname = _resolve_fx_wildcards(dirname)
             dirname = _resolve_latestversion(dirname)
             matches = glob.glob(dirname)
             matches = [match for match in matches if os.path.isdir(match)]
@@ -264,6 +286,10 @@ def _find_input_files(variable, rootpath, drs):
 
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
+    # change ensemble to fixed r0i0p0 for fx variables
+    # this is needed and is not a duplicate effort
+    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
+        variable['ensemble'] = 'r0i0p0'
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
 
     # do time gating only for non-fx variables
@@ -275,12 +301,6 @@ def get_input_filelist(variable, rootpath, drs):
 
 def get_output_file(variable, preproc_dir):
     """Return the full path to the output (preprocessed) file."""
-    # change ensemble to fixed r0i0p0 for fx variables
-    # this is needed and is not a duplicate effort
-    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx' \
-        and variable['ensemble'] != '*':
-        variable['ensemble'] = 'r0i0p0'
-
     cfg = get_project_config(variable["project"])
 
     # Join different experiment names
