@@ -61,7 +61,7 @@ def create_tree(path, filenames=None, symlinks=None):
         os.symlink(symlink['target'], link_name)
 
 
-@pytest.mark.parametrize('cfg', CONFIG['get_output_file'])
+@pytest.mark.parametrize('cfg', CONFIG['get_output_file']) 
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
     output_file = get_output_file(cfg['variable'], cfg['preproc_dir'])

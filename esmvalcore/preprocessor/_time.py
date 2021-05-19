@@ -142,7 +142,7 @@ def clip_start_end_year(cube, start_year, end_year, select=None):
                 'Wrong `select` format. '
                 f'Got {select} instead of [first, int] or [last, int]')
         time_coord = cube.coord('time')
-        time_unit = time_coord.units 
+        time_unit = time_coord.units
         delta = select[1]
         if select[0] == 'first':
             index = 0

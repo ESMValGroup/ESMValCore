@@ -827,6 +827,61 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
     assert set(variable) == set(reference)
     for key in reference:
         assert variable[key] == reference[key]
+  
+
+  
+def test_recipe_full_selection(tmp_path, patched_datafinder, config_user):
+    """Test recipe with full selection mode."""
+    content = dedent("""
+        diagnostics:
+          test:
+            additional_datasets:
+              - dataset: HadGEM3-GC31-LL
+                project: CMIP6
+                exp: historical
+                `select_years`: all
+                ensemble: r2i1p1f1
+                grid: gn
+            variables:
+              pr:
+                mip: 3hr
+              areacella:
+                mip: fx
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
+    filename = variable.pop('filename').split('/')[-1]
+    assert (filename ==
+            'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_1990-2019.nc')
+    fx_variable = recipe.diagnostics['test']['preprocessor_output']['areacella'][0]
+    fx_filename = fx_variable.pop('filename').split('/')[-1]
+    assert (fx_filename ==
+            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella.nc')
+    reference = {
+        'activity': 'CMIP',
+        'dataset': 'HadGEM3-GC31-LL',
+        'diagnostic': 'test',
+        'end_year': 2019,
+        'ensemble': 'r2i1p1f1',
+        'exp': 'historical',
+        'frequency': '3hr',
+        'grid': 'gn',
+        'institute': ['MOHC', 'NERC'],
+        'long_name': 'Precipitation',
+        'mip': '3hr',
+        'modeling_realm': ['atmos'],
+        'preprocessor': 'default',
+        'project': 'CMIP6',
+        'selection': 'full',
+        'short_name': 'pr',
+        'standard_name': 'precipitation_flux',
+        'start_year': 1990,
+        'units': 'kg m-2 s-1',
+    }
+    for key in reference:
+        assert variable[key] == reference[key]
 
 
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,
