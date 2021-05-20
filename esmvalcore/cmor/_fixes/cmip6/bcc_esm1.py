@@ -11,3 +11,9 @@ Clw = ClFixHybridPressureCoord
 
 
 Tos = OceanFixGrid
+
+
+Sos = OceanFixGrid
+
+
+Siconc = OceanFixGrid
