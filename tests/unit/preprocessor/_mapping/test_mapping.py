@@ -1,7 +1,8 @@
 """Unit tests for the esmvalcore.preprocessor._mapping module."""
+from unittest import mock
+
 import cf_units
 import iris
-import mock
 import numpy as np
 
 import tests

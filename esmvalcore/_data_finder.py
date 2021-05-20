@@ -5,10 +5,11 @@
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
 import fnmatch
+import glob
 import logging
 import os
 import re
-import glob
+from pathlib import Path
 
 import iris
 
@@ -32,56 +33,30 @@ def find_files(dirnames, filenames):
 
 
 def get_start_end_year(filename):
-    """Get the start and end year from a file name.
+    """Get the start and end year from a file name."""
+    stem = Path(filename).stem
+    start_year = end_year = None
 
-    This works for filenames matching
-
-    *[-,_]YYYY*[-,_]YYYY*.*
-      or
-    *[-,_]YYYY*.*
-      or
-    YYYY*[-,_]*.*
-      or
-    YYYY*[-,_]YYYY*[-,_]*.*
-      or
-    YYYY*[-,_]*[-,_]YYYY*.* (Does this make sense? Is this worth catching?)
-    """
-    name = os.path.splitext(filename)[0]
-
-    name = name.split(os.sep)[-1]
-    filename_list = [elem.split('-') for elem in name.split('_')]
-    filename_list = [elem for sublist in filename_list for elem in sublist]
-
-    pos_ydates = [elem.isdigit() and len(elem) >= 4 for elem in filename_list]
-    pos_ydates_l = list(pos_ydates)
-    pos_ydates_r = list(pos_ydates)
-
-    for ind, _ in enumerate(pos_ydates_l):
-        if ind != 0:
-            pos_ydates_l[ind] = (pos_ydates_l[ind - 1] and pos_ydates_l[ind])
-
-    for ind, _ in enumerate(pos_ydates_r):
-        if ind != 0:
-            pos_ydates_r[-ind - 1] = (pos_ydates_r[-ind]
-                                      and pos_ydates_r[-ind - 1])
-
-    dates = [
-        filename_list[ind] for ind, _ in enumerate(pos_ydates)
-        if pos_ydates_r[ind] or pos_ydates_l[ind]
-    ]
-    start_year = None
-    end_year = None
-    if len(dates) == 1:
-        start_year = int(dates[0][:4])
-        end_year = start_year
-    elif len(dates) == 2:
-        start_year, end_year = int(dates[0][:4]), int(dates[1][:4])
+    # First check for a block of two potential dates separated by _ or -
+    daterange = re.findall(r'([0-9]{4,12}[-_][0-9]{4,12})', stem)
+    if daterange:
+        start_date, end_date = re.findall(r'([0-9]{4,12})', daterange[0])
+        start_year = start_date[:4]
+        end_year = end_date[:4]
     else:
-        # Slower than just parsing the name
-        try:
-            cubes = iris.load(filename)
-        except OSError:
-            raise ValueError('File {0} can not be read'.format(filename))
+        # Check for single dates in the filename
+        dates = re.findall(r'([0-9]{4,12})', stem)
+        if len(dates) == 1:
+            start_year = end_year = dates[0][:4]
+        elif len(dates) > 1:
+            # Check for dates at start or end of filename
+            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stem)
+            if len(outerdates) == 1:
+                start_year = end_year = outerdates[0][:4]
+
+    # As final resort, try to get the dates from the file contents
+    if start_year is None or end_year is None:
+        cubes = iris.load(filename)
 
         for cube in cubes:
             logger.debug(cube)
@@ -94,11 +69,11 @@ def get_start_end_year(filename):
             break
 
     if start_year is None or end_year is None:
-        raise ValueError(
-            'File {0} dates do not match a recognized pattern and time can '
-            'not be read from the file'.format(filename)
-        )
-    return start_year, end_year
+        raise ValueError(f'File {filename} dates do not match a recognized'
+                         'pattern and time can not be read from the file')
+
+    logger.debug("Found start_year %s and end_year %s", start_year, end_year)
+    return int(start_year), int(end_year)
 
 
 def select_files(filenames, start_year, end_year):
@@ -114,23 +89,37 @@ def select_files(filenames, start_year, end_year):
     return selection
 
 
-def _replace_tags(path, variable):
+def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
-    path = path.strip('/')
-    tlist = re.findall(r'{([^}]*)}', path)
-    paths = [path]
+    if isinstance(paths, str):
+        paths = set((paths.strip('/'),))
+    else:
+        paths = set(path.strip('/') for path in paths)
+    tlist = set()
+    for path in paths:
+        tlist = tlist.union(re.findall(r'{([^}]*)}', path))
+    if 'sub_experiment' in variable:
+        new_paths = []
+        for path in paths:
+            new_paths.extend((
+                re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
+                re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)
+            ))
+            tlist.add('sub_experiment')
+        paths = new_paths
+    logger.debug(tlist)
+
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
 
         if tag == 'latestversion':  # handled separately later
             continue
-        elif tag in variable:
+        if tag in variable:
             replacewith = variable[tag]
         else:
             raise KeyError("Dataset key {} must be specified for {}, check "
                            "your recipe entry".format(tag, variable))
-
         paths = _replace_tag(paths, original_tag, replacewith)
     return paths
 
@@ -145,7 +134,7 @@ def _replace_tag(paths, tag, replacewith):
     else:
         text = _apply_caps(str(replacewith), lower, upper)
         result.extend(p.replace('{' + tag + '}', text) for p in paths)
-    return result
+    return list(set(result))
 
 
 def _get_caps_options(tag):
@@ -169,7 +158,11 @@ def _apply_caps(original, lower, upper):
 
 
 def _resolve_latestversion(dirname_template):
-    """Resolve the 'latestversion' tag."""
+    """Resolve the 'latestversion' tag.
+
+    This implementation avoid globbing on centralized clusters with very
+    large data root dirs (i.e. ESGF nodes like Jasmin/DKRZ).
+    """
     if '{latestversion}' not in dirname_template:
         return dirname_template
 
@@ -244,11 +237,13 @@ def _get_filenames_glob(variable, drs):
 
 
 def _find_input_files(variable, rootpath, drs):
+    short_name = variable['short_name']
+    variable['short_name'] = variable['original_short_name']
     input_dirs = _find_input_dirs(variable, rootpath, drs)
     filenames_glob = _get_filenames_glob(variable, drs)
     files = find_files(input_dirs, filenames_glob)
-
-    return files
+    variable['short_name'] = short_name
+    return (files, input_dirs, filenames_glob)
 
 
 def get_input_filelist(variable, rootpath, drs):
@@ -257,12 +252,12 @@ def get_input_filelist(variable, rootpath, drs):
     # this is needed and is not a duplicate effort
     if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
         variable['ensemble'] = 'r0i0p0'
-    files = _find_input_files(variable, rootpath, drs)
+    (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
         files = select_files(files, variable['start_year'],
                              variable['end_year'])
-    return files
+    return (files, dirnames, filenames)
 
 
 def get_output_file(variable, preproc_dir):

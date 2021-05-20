@@ -3,44 +3,33 @@
 http://www.esmvaltool.org
 
 CORE DEVELOPMENT TEAM AND CONTACTS:
-  Veronika Eyring (PI; DLR, Germany - veronika.eyring@dlr.de)
-  Bouwe Andela (NLESC, Netherlands - b.andela@esciencecenter.nl)
-  Bjoern Broetz (DLR, Germany - bjoern.broetz@dlr.de)
+  Birgit Hassler (Co-PI; DLR, Germany - birgit.hassler@dlr.de)
+  Alistair Sellar (Co-PI; Met Office, UK - alistair.sellar@metoffice.gov.uk)
+  Bouwe Andela (Netherlands eScience Center, The Netherlands
+    - b.andela@esciencecenter.nl)
+  Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
   Lee de Mora (PML, UK - ledm@pml.ac.uk)
-  Niels Drost (NLESC, Netherlands - n.drost@esciencecenter.nl)
+  Niels Drost (Netherlands eScience Center, The Netherlands
+    - n.drost@esciencecenter.nl)
+  Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
+  Remi Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
   Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
   Axel Lauer (DLR, Germany - axel.lauer@dlr.de)
   Benjamin Mueller (LMU, Germany - b.mueller@iggf.geo.uni-muenchen.de)
   Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-  Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
   Manuel Schlund (DLR, Germany - manuel.schlund@dlr.de)
+  Breixo Solino Fernandez (DLR, Germany - breixo.solinofernandez@dlr.de)
   Javier Vegas-Regidor (BSC, Spain - javier.vegas@bsc.es)
   Klaus Zimmermann (SMHI, Sweden - klaus.zimmermann@smhi.se)
 
 For further help, please read the documentation at
-http://esmvaltool.readthedocs.io. Have fun!
+http://docs.esmvaltool.org. Have fun!
 """
-
-# ESMValTool main script
-#
-# Authors:
-# Bouwe Andela (NLESC, Netherlands - b.andela@esciencecenter.nl)
-# Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-# Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
-
-import argparse
-import datetime
-import errno
+# pylint: disable=import-outside-toplevel
 import logging
-import os
-import shutil
-import sys
-from multiprocessing import cpu_count
 
-from . import __version__
-from ._config import configure_logging, read_config_user_file, DIAGNOSTICS_PATH
-from ._recipe import TASKSEP, read_recipe_file
-from ._task import resource_usage_logger
+import fire
+from pkg_resources import iter_entry_points
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -57,120 +46,16 @@ ______________________________________________________________________
 """ + __doc__
 
 
-def get_args():
-    """Define the `esmvaltool` command line."""
-    # parse command line args
-    parser = argparse.ArgumentParser(
-        description=HEADER,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('recipe', help='Path or name of the yaml recipe file')
-    parser.add_argument(
-        '-v',
-        '--version',
-        action='version',
-        version=__version__,
-        help="return ESMValTool's version number and exit")
-    parser.add_argument(
-        '-c',
-        '--config-file',
-        default=os.path.join(os.path.dirname(__file__), 'config-user.yml'),
-        help='Config file')
-    parser.add_argument(
-        '-s',
-        '--synda-download',
-        action='store_true',
-        help='Download input data using synda. This requires a working '
-        'synda installation.')
-    parser.add_argument(
-        '--max-datasets',
-        type=int,
-        help='Try to limit the number of datasets used to MAX_DATASETS.')
-    parser.add_argument(
-        '--max-years',
-        type=int,
-        help='Limit the number of years to MAX_YEARS.')
-    parser.add_argument(
-        '--skip-nonexistent',
-        action='store_true',
-        help="Skip datasets that cannot be found.")
-    parser.add_argument(
-        '--diagnostics',
-        nargs='*',
-        help="Only run the named diagnostics from the recipe.")
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help="Check data and CMOR compliance and return a report. \
-             This feature works fully only with max_parallel_tasks: 1 \
-             in config-user.yml; however, it is very fast so even on \
-             a single thread it should take much less time.")
-    args = parser.parse_args()
-    return args
-
-
-def main(args):
-    """Define the `esmvaltool` program."""
-    recipe = args.recipe
-    if not os.path.exists(recipe):
-        installed_recipe = os.path.join(
-            DIAGNOSTICS_PATH, 'recipes', recipe)
-        if os.path.exists(installed_recipe):
-            recipe = installed_recipe
-    recipe = os.path.abspath(os.path.expandvars(os.path.expanduser(recipe)))
-
-    config_file = os.path.abspath(
-        os.path.expandvars(os.path.expanduser(args.config_file)))
-
-    # Read user config file
-    if not os.path.exists(config_file):
-        print("ERROR: config file {} does not exist".format(config_file))
-
-    recipe_name = os.path.splitext(os.path.basename(recipe))[0]
-    cfg = read_config_user_file(config_file, recipe_name)
-
-    # Create run dir
-    if os.path.exists(cfg['run_dir']):
-        print("ERROR: run_dir {} already exists, aborting to "
-              "prevent data loss".format(cfg['output_dir']))
-    os.makedirs(cfg['run_dir'])
-
-    # configure logging
-    log_files = configure_logging(
-        output=cfg['run_dir'], console_log_level=cfg['log_level'])
-
-    # log header
-    logger.info(HEADER)
-
-    logger.info("Using config file %s", config_file)
-    logger.info("Writing program log files to:\n%s", "\n".join(log_files))
-
-    cfg['skip-nonexistent'] = args.skip_nonexistent
-    cfg['dry-run'] = args.dry_run
-    cfg['diagnostics'] = {
-        pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
-        for pattern in args.diagnostics or ()
-    }
-    cfg['synda_download'] = args.synda_download
-    for limit in ('max_datasets', 'max_years'):
-        value = getattr(args, limit)
-        if value is not None:
-            if value < 1:
-                raise ValueError("--{} should be larger than 0.".format(
-                    limit.replace('_', '-')))
-            cfg[limit] = value
-
-    resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
-    dry_run = args.dry_run
-    with resource_usage_logger(pid=os.getpid(), filename=resource_log):
-        process_recipe(recipe_file=recipe,
-                       config_user=cfg,
-                       dry_run=dry_run)
-    return cfg
-
-
 def process_recipe(recipe_file, config_user, dry_run):
     """Process recipe."""
+    import datetime
+    import os
+    import shutil
+
+    from . import __version__
+    from ._recipe import read_recipe_file
     if not os.path.isfile(recipe_file):
+        import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
                       recipe_file)
 
@@ -189,17 +74,19 @@ def process_recipe(recipe_file, config_user, dry_run):
     logger.info("PLOTDIR    = %s", config_user["plot_dir"])
     logger.info(70 * "-")
 
-    logger.info("Running tasks using at most %s processes",
-                config_user['max_parallel_tasks'] or cpu_count())
+    from multiprocessing import cpu_count
+    n_processes = config_user['max_parallel_tasks'] or cpu_count()
+    logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
         "If your system hangs during execution, it may not have enough "
-        "memory for keeping this number of tasks in memory. In that case, "
-        "try reducing 'max_parallel_tasks' in your user configuration file.")
+        "memory for keeping this number of tasks in memory.")
+    logger.info("If you experience memory problems, try reducing "
+                "'max_parallel_tasks' in your user configuration file.")
 
     if config_user['compress_netcdf']:
         logger.warning(
-            "You have enabled NetCDF compression. Accesing .nc files can be "
+            "You have enabled NetCDF compression. Accessing .nc files can be "
             "much slower than expected if your access pattern does not match "
             "their internal pattern. Make sure to specify the expected "
             "access pattern in the recipe as a parameter to the 'save' "
@@ -215,6 +102,7 @@ def process_recipe(recipe_file, config_user, dry_run):
 
     # run
     recipe.run()
+    recipe.write_html_summary()
 
     # End time timing
     timestamp2 = datetime.datetime.utcnow()
@@ -224,29 +112,351 @@ def process_recipe(recipe_file, config_user, dry_run):
     logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
 
 
+class Config():
+    """Manage ESMValTool's configuration.
+
+    This group contains utilities to manage ESMValTool configuration
+    files.
+    """
+
+    @staticmethod
+    def _copy_config_file(filename, overwrite, path):
+        import os
+        import shutil
+
+        from ._config import configure_logging
+        configure_logging(console_log_level='info')
+        if not path:
+            path = os.path.join(os.path.expanduser('~/.esmvaltool'), filename)
+        if os.path.isfile(path):
+            if overwrite:
+                logger.info('Overwriting file %s.', path)
+            else:
+                logger.info('Copy aborted. File %s already exists.', path)
+                return
+
+        target_folder = os.path.dirname(path)
+        if not os.path.isdir(target_folder):
+            logger.info('Creating folder %s', target_folder)
+            os.makedirs(target_folder)
+
+        conf_file = os.path.join(os.path.dirname(__file__), filename)
+        logger.info('Copying file %s to path %s.', conf_file, path)
+        shutil.copy2(conf_file, path)
+        logger.info('Copy finished.')
+
+    @classmethod
+    def get_config_user(cls, overwrite=False, path=None):
+        """Copy default config-user.yml file to a given path.
+
+        Copy default config-user.yml file to a given path or, if a path is
+        not provided, install it in the default `${HOME}/.esmvaltool` folder.
+
+        Parameters
+        ----------
+        overwrite: boolean
+            Overwrite an existing file.
+        path: str
+            If not provided, the file will be copied to
+            .esmvaltool in the user's home.
+        """
+        cls._copy_config_file('config-user.yml', overwrite, path)
+
+    @classmethod
+    def get_config_developer(cls, overwrite=False, path=None):
+        """Copy default config-developer.yml file to a given path.
+
+        Copy default config-developer.yml file to a given path or, if a path is
+        not provided, install it in the default `${HOME}/.esmvaltool` folder.
+
+        Parameters
+        ----------
+        overwrite: boolean
+            Overwrite an existing file.
+        path: str
+            If not provided, the file will be copied to
+            .esmvaltool in the user's home.
+        """
+        cls._copy_config_file('config-developer.yml', overwrite, path)
+
+
+class Recipes():
+    """List, show and retrieve installed recipes.
+
+    This group contains utilities to explore and manage the recipes available
+    in your installation of ESMValTool.
+
+    Documentation for recipes included with ESMValTool is available at
+    https://docs.esmvaltool.org/en/latest/recipes/index.html.
+    """
+
+    @staticmethod
+    def list():
+        """List all installed recipes.
+
+        Show all installed recipes, grouped by folder.
+        """
+        import os
+
+        from ._config import DIAGNOSTICS, configure_logging
+        configure_logging(console_log_level='info')
+        recipes_folder = DIAGNOSTICS.recipes
+        logger.info("Showing recipes installed in %s", recipes_folder)
+        print('# Installed recipes')
+        for root, _, files in sorted(os.walk(recipes_folder)):
+            root = os.path.relpath(root, recipes_folder)
+            if root == '.':
+                root = ''
+            if root:
+                print(f"\n# {root.replace(os.sep, ' - ').title()}")
+            for filename in sorted(files):
+                if filename.endswith('.yml'):
+                    print(os.path.join(root, filename))
+
+    @staticmethod
+    def get(recipe):
+        """Get a copy of any installed recipe in the current working directory.
+
+        Use this command to get a local copy of any installed recipe.
+
+        Parameters
+        ----------
+        recipe: str
+            Name of the recipe to get, including any subdirectories.
+        """
+        import shutil
+        from pathlib import Path
+
+        from ._config import DIAGNOSTICS, configure_logging
+        configure_logging(console_log_level='info')
+        installed_recipe = DIAGNOSTICS.recipes / recipe
+        if not installed_recipe.exists():
+            ValueError(
+                f'Recipe {recipe} not found. To list all available recipes, '
+                'execute "esmvaltool list"')
+        logger.info('Copying installed recipe to the current folder...')
+        shutil.copy(installed_recipe, Path(recipe).name)
+        logger.info('Recipe %s successfully copied', recipe)
+
+    @staticmethod
+    def show(recipe):
+        """Show the given recipe in console.
+
+        Use this command to see the contents of any installed recipe.
+
+        Parameters
+        ----------
+        recipe: str
+            Name of the recipe to get, including any subdirectories.
+        """
+        from ._config import DIAGNOSTICS, configure_logging
+        configure_logging(console_log_level='info')
+        installed_recipe = DIAGNOSTICS.recipes / recipe
+        if not installed_recipe.exists():
+            ValueError(
+                f'Recipe {recipe} not found. To list all available recipes, '
+                'execute "esmvaltool list"')
+        msg = f'Recipe {recipe}'
+        logger.info(msg)
+        logger.info('=' * len(msg))
+        with open(installed_recipe) as recipe_file:
+            print(recipe_file.read())
+
+
+class ESMValTool():
+    """A community tool for routine evaluation of Earth system models.
+
+    The Earth System Model Evaluation Tool (ESMValTool) is a community
+    diagnostics and performance metrics tool for the evaluation of Earth
+    System Models (ESMs) that allows for routine comparison of single or
+    multiple models, either against predecessor versions or against
+    observations.
+
+    Documentation is available at https://docs.esmvaltool.org.
+
+    To report issues or ask for improvements, please visit
+    https://github.com/ESMValGroup/ESMValTool.
+    """
+
+    def __init__(self):
+        self.recipes = Recipes()
+        self.config = Config()
+        self._extra_packages = {}
+        for entry_point in iter_entry_points('esmvaltool_commands'):
+            self._extra_packages[entry_point.dist.project_name] = \
+                entry_point.dist.version
+            if hasattr(self, entry_point.name):
+                logger.error('Registered command %s already exists',
+                             entry_point.name)
+                continue
+            self.__setattr__(entry_point.name, entry_point.load()())
+
+    def version(self):
+        """Show versions of all packages that conform ESMValTool.
+
+        In particular, this command will show the version ESMValCore and
+        any other package that adds a subcommand to 'esmvaltool'
+        command.
+        """
+        from . import __version__
+        print(f'ESMValCore: {__version__}')
+        for project, version in self._extra_packages.items():
+            print(f'{project}: {version}')
+
+    @staticmethod
+    def run(recipe,
+            config_file=None,
+            max_datasets=None,
+            max_years=None,
+            skip_nonexistent=False,
+            synda_download=False,
+            diagnostics=None,
+            dry_run=False,
+            check_level='default',
+            **kwargs):
+        """Execute an ESMValTool recipe.
+
+        `esmvaltool run` executes the given recipe. To see a list of available
+        recipes or create a local copy of any of them, use the
+        `esmvaltool recipes` command group.
+
+        Parameters
+        ----------
+        recipe : str
+            Recipe to run, as either the name of an installed recipe or the
+            path to a non-installed one.
+        config_file: str, optional
+            Configuration file to use. If not provided the file
+            ${HOME}/.esmvaltool/config-user.yml will be used.
+        max_datasets: int, optional
+            Maximum number of datasets to use.
+        max_years: int, optional
+            Maximum number of years to use.
+        skip_nonexistent: bool, optional
+            If True, the run will not fail if some datasets are not available.
+        synda_download: bool, optional
+            If True, the tool will try to download missing data using Synda.
+        diagnostics: list(str), optional
+            Only run the selected diagnostics from the recipe. To provide more
+            than one diagnostic to filter use the syntax 'diag1 diag2/script1'
+            or '("diag1", "diag2/script1")' and pay attention to the quotes.
+        dry_run: bool, optional
+            Check data and CMOR compliance and return a report.
+            This feature works fully only with max_parallel_tasks: 1
+            in config-user.yml; however, it is very fast so even on
+            a single thread it should take much less time.
+        check_level: str, optional
+            Configure the sensitivity of the CMOR check. Possible values are:
+            `ignore` (all errors will be reported as warnings),
+            `relaxed` (only fail if there are critical errors),
+            default (fail if there are any errors),
+            strict (fail if there are any warnings).
+        """
+        import os
+        import shutil
+
+        from ._config import (
+            DIAGNOSTICS,
+            configure_logging,
+            read_config_user_file,
+        )
+        from ._recipe import TASKSEP
+        from .cmor.check import CheckLevels
+
+        if not os.path.exists(recipe):
+            installed_recipe = str(DIAGNOSTICS.recipes / recipe)
+            if os.path.exists(installed_recipe):
+                recipe = installed_recipe
+        recipe = os.path.abspath(os.path.expandvars(
+            os.path.expanduser(recipe)))
+
+        recipe_name = os.path.splitext(os.path.basename(recipe))[0]
+
+        cfg = read_config_user_file(config_file, recipe_name, kwargs)
+
+        # Create run dir
+        if os.path.exists(cfg['run_dir']):
+            print("ERROR: run_dir {} already exists, aborting to "
+                  "prevent data loss".format(cfg['output_dir']))
+        os.makedirs(cfg['run_dir'])
+
+        # configure logging
+        log_files = configure_logging(output_dir=cfg['run_dir'],
+                                      console_log_level=cfg['log_level'])
+
+        # log header
+        logger.info(HEADER)
+
+        logger.info("Using config file %s", config_file)
+        logger.info("Writing program log files to:\n%s", "\n".join(log_files))
+
+        cfg['skip-nonexistent'] = skip_nonexistent
+        if isinstance(diagnostics, str):
+            diagnostics = diagnostics.split(' ')
+        cfg['diagnostics'] = {
+            pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
+            for pattern in diagnostics or ()
+        }
+        cfg['check_level'] = CheckLevels[check_level.upper()]
+        cfg['synda_download'] = synda_download
+
+        def _check_limit(limit, value):
+            if value is not None and value < 1:
+                raise ValueError("--{} should be larger than 0.".format(
+                    limit.replace('_', '-')))
+            if value:
+                cfg[limit] = value
+
+        _check_limit('max_datasets', max_datasets)
+        _check_limit('max_years', max_years)
+
+        resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
+        from ._task import resource_usage_logger
+        with resource_usage_logger(pid=os.getpid(), filename=resource_log):
+            process_recipe(recipe_file=recipe, config_user=cfg, dry_run=dry_run)
+
+        if os.path.exists(cfg["preproc_dir"]) and cfg["remove_preproc_dir"]:
+            logger.info("Removing preproc containing preprocessed data")
+            logger.info("If this data is further needed, then")
+            logger.info("set remove_preproc_dir to false in config-user.yml")
+            shutil.rmtree(cfg["preproc_dir"])
+        logger.info("Run was successful")
+
+
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
-    args = get_args()
+    import sys
+
+    # Workaroud to avoid using more for the output
+
+    def display(lines, out):
+        text = "\n".join(lines) + "\n"
+        out.write(text)
+
+    fire.core.Display = display
+
     try:
-        conf = main(args)
-    except:  # noqa
+        fire.Fire(ESMValTool())
+    except fire.core.FireExit:
+        raise
+    except Exception:  # noqa
         if not logger.handlers:
             # Add a logging handler if main failed to do so.
             logging.basicConfig()
         logger.exception(
             "Program terminated abnormally, see stack trace "
-            "below for more information",
+            "below for more information:",
             exc_info=True)
         logger.info(
-            "If you suspect this is a bug or need help, please open an issue "
-            "on https://github.com/ESMValGroup/ESMValTool/issues and attach "
-            "the run/recipe_*.yml and run/main_log_debug.txt files from the "
-            "output directory.")
+            "\n"
+            "If you have a question or need help, please start a new "
+            "discussion on "
+            "https://github.com/ESMValGroup/ESMValTool/discussions"
+            "\n"
+            "If you suspect this is a bug, please open an issue on "
+            "https://github.com/ESMValGroup/ESMValTool/issues"
+            "\n"
+            "To make it easier to find out what the problem is, please "
+            "consider attaching the files run/recipe_*.yml and "
+            "run/main_log_debug.txt from the output directory.")
         sys.exit(1)
-    else:
-        if conf["remove_preproc_dir"]:
-            logger.info("Removing preproc containing preprocessed data")
-            logger.info("If this data is further needed, then")
-            logger.info("set remove_preproc_dir to false in config")
-            shutil.rmtree(conf["preproc_dir"])
-        logger.info("Run was successful")

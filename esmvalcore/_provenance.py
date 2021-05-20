@@ -79,7 +79,7 @@ def get_recipe_provenance(documentation, filename):
     entity = provenance.entity(
         'recipe:{}'.format(filename), {
             'attribute:description': documentation.get('description', ''),
-            'attribute:references': ', '.join(
+            'attribute:references': str(
                 documentation.get('references', [])),
         })
 
