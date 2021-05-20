@@ -494,6 +494,59 @@ get_input_filelist:
   - drs: DKRZ
     variable:
       variable_group: test
+      short_name: sftlf
+      original_short_name: sftlf
+      dataset: HadGEM2-ES
+      project: CMIP5
+      cmor_table: CMIP5
+      institute: [INPE, MOHC]
+      frequency: fx
+      modeling_realm: [atmos]
+      mip: fx
+      exp: historical
+      ensemble: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r2i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r2i1p1.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
+    dirs:
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf
+    file_patterns:
+      - sftlf_fx_HadGEM2-ES_historical_**.nc
+    found_files:
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
+      
+  - drs: DKRZ
+    variable:
+      variable_group: test
+      short_name: sftlf
+      original_short_name: sftlf
+      dataset: HadGEM2-ES
+      project: CMIP5
+      cmor_table: CMIP5
+      institute: [INPE, MOHC]
+      frequency: fx
+      modeling_realm: [atmos]
+      mip: fx
+      exp: historical
+      ensemble: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r2i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r2i1p1.nc
+    dirs:
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf
+    file_patterns:
+      - sftlf_fx_HadGEM2-ES_historical_**.nc
+    found_files:
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
+
+  - drs: DKRZ
+    variable:
+      variable_group: test
       short_name: orog
       original_short_name: orog
       dataset: HadGEM2-ES
