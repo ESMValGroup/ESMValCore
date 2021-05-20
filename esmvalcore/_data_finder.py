@@ -288,7 +288,10 @@ def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
     # change ensemble to fixed r0i0p0 for fx variables
     # this is needed and is not a duplicate effort
-    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
+    if all([
+            variable['project'] == 'CMIP5', variable['frequency'] == 'fx',
+            variable.get('ensemble') != '*'
+    ]):
         variable['ensemble'] = 'r0i0p0'
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
 

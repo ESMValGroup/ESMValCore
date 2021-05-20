@@ -446,6 +446,9 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
     logger.debug('Using fx_files: %s for variable %s during step %s',
                  pformat(settings['add_fx_variables']['fx_variables']),
                  variable['short_name'], step_name)
+    logger.info('Using fx_files: %s for variable %s during step %s',
+                [n for n in settings['add_fx_variables']['fx_variables']],
+                variable['short_name'], step_name)
 
 
 def _fx_list_to_dict(fx_vars):
