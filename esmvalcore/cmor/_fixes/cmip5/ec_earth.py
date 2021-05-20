@@ -1,8 +1,9 @@
 """Fixes for EC-Earth model."""
 from dask import array as da
+import iris
 
 from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from ..shared import add_scalar_height_coord, cube_to_aux_coord
 
 
 class Sic(Fix):
@@ -101,3 +102,30 @@ class Tas(Fix):
                 cube.coord('time').long_name = 'time'
 
         return cubes
+
+
+class Areacello(Fix):
+    """Fixes for areacello."""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix potentially missing scalar dimension.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        areacello = cubes.extract('Areas of grid cell')[0]
+        lat = cubes.extract('latitude')[0]
+        lon = cubes.extract('longitude')[0]
+
+        areacello.add_aux_coord(cube_to_aux_coord(lat), (0, 1))
+        areacello.add_aux_coord(cube_to_aux_coord(lon), (0, 1))
+
+        return iris.cube.CubeList([areacello, ])

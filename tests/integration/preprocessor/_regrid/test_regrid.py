@@ -4,8 +4,6 @@ function.
 
 """
 
-import unittest
-
 import iris
 import numpy as np
 from numpy import ma
@@ -39,7 +37,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, 'linear')
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__linear_extrapolate(self):
         data = np.empty((3, 3))
@@ -59,7 +57,7 @@ class Test(tests.Test):
         expected = [[[-3., -1.5, 0.], [0., 1.5, 3.], [3., 4.5, 6.]],
                     [[1., 2.5, 4.], [4., 5.5, 7.], [7., 8.5, 10.]],
                     [[5., 6.5, 8.], [8., 9.5, 11.], [11., 12.5, 14.]]]
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__linear_extrapolate_with_mask(self):
         data = np.empty((3, 3))
@@ -80,7 +78,7 @@ class Test(tests.Test):
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([1.5, 5.5, 9.5])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__nearest(self):
         data = np.empty((1, 1))
@@ -98,7 +96,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, 'nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__nearest_extrapolate_with_mask(self):
         data = np.empty((3, 3))
@@ -118,7 +116,7 @@ class Test(tests.Test):
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([3, 7, 11])
-        self.assertArrayEqual(result.data, expected)
+        self.assert_array_equal(result.data, expected)
 
     def test_regrid__area_weighted(self):
         data = np.empty((1, 1))
@@ -136,7 +134,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, 'area_weighted')
         expected = np.array([1.499886, 5.499886, 9.499886])
-        self.assertArrayAlmostEqual(result.data, expected)
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
     def test_regrid__unstructured_nearest(self):
         data = np.empty((1, 1))
@@ -156,8 +154,27 @@ class Test(tests.Test):
         lons = self.cube.coord('longitude')
         lats = self.cube.coord('latitude')
         x, y = np.meshgrid(lons.points, lats.points)
-        lats = iris.coords.AuxCoord(x, **lats._as_defn()._asdict())
-        lons = iris.coords.AuxCoord(y, **lons._as_defn()._asdict())
+
+        lats = iris.coords.AuxCoord(
+            x,
+            standard_name=lats.metadata.standard_name,
+            long_name=lats.metadata.long_name,
+            var_name=lats.metadata.var_name,
+            units=lats.metadata.units,
+            attributes=lats.metadata.attributes,
+            coord_system=lats.metadata.coord_system,
+            climatological=lats.metadata.climatological)
+
+        lons = iris.coords.AuxCoord(
+            y,
+            standard_name=lons.metadata.standard_name,
+            long_name=lons.metadata.long_name,
+            var_name=lons.metadata.var_name,
+            units=lons.metadata.units,
+            attributes=lons.metadata.attributes,
+            coord_system=lons.metadata.coord_system,
+            climatological=lons.metadata.climatological)
+
         self.cube.remove_coord('longitude')
         self.cube.remove_coord('latitude')
         self.cube.remove_coord('Pressure Slice')
@@ -165,8 +182,4 @@ class Test(tests.Test):
         self.cube.add_aux_coord(lats, (1, 2))
         result = regrid(self.cube, grid, 'unstructured_nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
-        self.assertArrayAlmostEqual(result.data, expected)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)

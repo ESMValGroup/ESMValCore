@@ -8,7 +8,7 @@ from ..fix import Fix
 
 def _get_and_remove(cubes, long_name):
     try:
-        cube = cubes.extract_strict(long_name)
+        cube = cubes.extract_cube(long_name)
         cubes.remove(cube)
     except iris.exceptions.ConstraintMismatchError:
         pass
@@ -121,7 +121,8 @@ class Usi(Fix):
         -------
         iris.cube.CubeList
         """
-        cubes[0].standard_name = 'sea_ice_x_velocity'
+        cube = self.get_cube_from_list(cubes)
+        cube.standard_name = 'sea_ice_x_velocity'
         return cubes
 
 
@@ -141,5 +142,6 @@ class Vsi(Fix):
         -------
         iris.cube.CubeList
         """
-        cubes[0].standard_name = 'sea_ice_y_velocity'
+        cube = self.get_cube_from_list(cubes)
+        cube.standard_name = 'sea_ice_y_velocity'
         return cubes

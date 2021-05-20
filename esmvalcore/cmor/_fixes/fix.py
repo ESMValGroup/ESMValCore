@@ -1,13 +1,25 @@
 """Contains the base class for dataset fixes"""
 import importlib
-import os
 import inspect
+import os
+
+from ..table import CMOR_TABLES
 
 
-class Fix(object):
+class Fix:
     """
     Base class for dataset fixes.
     """
+    def __init__(self, vardef):
+        """Initialize fix object.
+
+        Parameters
+        ----------
+        vardef: str
+            CMOR table entry
+
+        """
+        self.vardef = vardef
 
     def fix_file(self, filepath, output_dir):
         """
@@ -19,14 +31,14 @@ class Fix(object):
 
         Parameters
         ----------
-        filepath: basestring
+        filepath: str
             file to fix
-        output_dir: basestring
+        output_dir: str
             path to the folder to store the fixe files, if required
 
         Returns
         -------
-        basestring
+        str
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
             original filepath
@@ -77,7 +89,7 @@ class Fix(object):
             Variable's cube
         """
         if short_name is None:
-            short_name = self.__class__.__name__.lower()
+            short_name = self.vardef.short_name
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
@@ -109,7 +121,7 @@ class Fix(object):
         return not self.__eq__(other)
 
     @staticmethod
-    def get_fixes(project, dataset, variable):
+    def get_fixes(project, dataset, mip, short_name):
         """
         Get the fixes that must be applied for a given dataset.
 
@@ -128,16 +140,20 @@ class Fix(object):
         ----------
         project: str
         dataset: str
-        variable: str
+        mip: str
+        short_name: str
 
         Returns
         -------
         list(Fix)
             Fixes to apply for the given data
         """
+        cmor_table = CMOR_TABLES[project]
+        vardef = cmor_table.get_variable(mip, short_name)
+
         project = project.replace('-', '_').lower()
         dataset = dataset.replace('-', '_').lower()
-        variable = variable.replace('-', '_').lower()
+        short_name = short_name.replace('-', '_').lower()
 
         fixes = []
         try:
@@ -146,9 +162,9 @@ class Fix(object):
 
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
-            for fix_name in ('allvars', variable):
+            for fix_name in (short_name, mip.lower(), 'allvars'):
                 try:
-                    fixes.append(classes[fix_name]())
+                    fixes.append(classes[fix_name](vardef))
                 except KeyError:
                     pass
         except ImportError:

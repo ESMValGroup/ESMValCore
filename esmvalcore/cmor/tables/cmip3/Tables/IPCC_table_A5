@@ -1,0 +1,4293 @@
+cmor_version: 1.0         ! version of CMOR that can read this table
+cf_version:   1.0         ! version of CF that output conforms to
+project_id:   IPCC Fourth Assessment  ! project id
+table_id:     Table A5    ! table id
+table_date:   2 February 2005 ! date this table was constructed
+
+expt_id_ok:   'pre-industrial control experiment'
+expt_id_ok:   'present-day control experiment'
+expt_id_ok:   'climate of the 20th Century experiment (20C3M)'
+expt_id_ok:   'committed climate change experiment'  ! official name(s) of
+expt_id_ok:   'SRES A2 experiment'                   !  project's experiments
+expt_id_ok:   '720 ppm stabilization experiment (SRES A1B)'
+expt_id_ok:   '550 ppm stabilization experiment (SRES B1)'
+expt_id_ok:   '1%/year CO2 increase experiment (to doubling)'
+expt_id_ok:   '1%/year CO2 increase experiment (to quadrupling)'
+expt_id_ok:   'slab ocean control experiment'
+expt_id_ok:   '2xCO2 equilibrium experiment'
+expt_id_ok:   'AMIP experiment'
+
+magic_number: -1          ! used to check whether this file has been
+                          !   altered from the official version.
+                          !   should be set to number of non-blank
+                          !   characters in file.
+approx_interval:  30.     ! approximate spacing between successive time
+                          !   samples (in units of the output time
+                          !   coordinate), but this is ignored if set to 0.
+missing_value: 1.e20      ! value used to indicate a missing value
+                          !   in arrays output by netCDF as 32-bit IEEE
+                          !   floating-point numbers (float or real)
+
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+! SUBROUTINE ARGUMENT DEFAULT INFORMATION
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+!  set default specifications for subroutine arguments to:
+!     required/indeterminate/optional/ignored/forbidden
+!    (indeterminate may or may not be required information, but is not always
+!     required as an argument of the function call)
+!
+!
+!============
+subroutine_entry: cmor_axis
+!============
+!
+required: table axis_name units length coord_vals cell_bounds
+ignored: interval
+!
+!============
+subroutine_entry: cmor_variable
+!============
+!
+required: table table_entry units axis_ids
+indeterminate: missing_value
+optional: tolerance original_name history comment
+ignored: positive
+!
+!============
+subroutine_entry: cmor_write
+!============
+!
+required:  var_id data
+indeterminate: ntimes_passed time_vals time_bnds store_with
+optional: file_suffix
+!
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+! AXIS INFORMATION
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+! ??? what about climatology???
+! ??? what about model level data???
+!
+!
+!  TEMPLATE FOR AXES
+!
+!============
+!axis_entry:               ! (required)
+!============
+!
+!    Override default argument specifications for cmor_axis
+!------------
+!    acceptable arguments include units length coord_vals cell_bounds interval
+!required:                  ! (default: table axis_name units length
+!                                        coord_vals cell_bounds)
+!indeterminate:
+!optional:
+!ignored:                   ! (default: interval)
+!forbidden:
+!------------
+!
+! Axis attributes:
+!----------------------------------
+!standard_name:             ! (required)
+!units:                     ! (required)
+!axis:                      ! X, Y, Z, T (default: undeclared)
+!positive:                  ! up or down (default: undeclared)
+!long_name:                 ! (default: undeclared)
+!----------------------------------
+!
+! Additional axis information:
+!----------------------------------
+!out_name:                ! (default: same as axis_entry)
+!type:                    ! double (default), real, character, integer
+!stored_direction:        ! increasing (default) or decreasing
+!valid_min:               ! type: double precision (default: no check performed
+!valid_max:               ! type: double precision (default: no check performed
+!requested:               ! space-separated list of requested coordinates
+                          !       (default: undeclared)
+!bounds_requested:        ! space-separated list of requested coordinate bounds
+                          !       (default: undeclared)
+!tol_on_requests:         ! fractional tolerance for meeting request
+                          !  (default=1.e-3, which is used in the formula:
+                          !     eps =  MIN(( tol*interval between grid-points)
+                          !          and (1.e-3*tol*coordinate value)))
+!value:                   ! of scalar (singleton) dimension
+!bounds_values:           ! of scalar (singleton) dimension bounds
+!----------------------------------
+!
+!
+!  TEMPLATE FOR VARIABLES
+!
+!
+!============
+!variable_entry:                ! (required)
+!============
+!
+!    Override default argument specifications for cmor_variable
+!------------
+!        acceptable arguments include  file_suffix missing_value tolerance
+!                               original_name history comment positive
+!required:                   ! (default: table table_entry units axis_ids)
+!indeterminate:              ! (default: file_suffix missing_value)
+!optional:                   ! (default: original_name history comment)
+!ignored:                    ! (default: positive)
+!forbidden:
+!------------
+!
+! Variable attributes:
+!----------------------------------
+!standard_name:              ! (required)
+!units:                      ! (required)
+!cell_methods:               ! (default: undeclared)
+!long_name:                  ! (default: undeclared)
+!comment:                    ! (default: undeclared)
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+!dimensions:                 ! (required)  (scalar dimension(s) should appear
+                             !      last in list)
+!out_name:                   ! (default: variable_entry)
+!type:                       ! real (default), double, integer
+!positive:                   ! up or down (default: undeclared)
+!valid_min:                  ! type: real (default: no check performed)
+!valid_max:                  ! type: real (default: no check performed)
+!ok_min_mean_abs:            ! type: real (default: no check performed)
+!ok_max_mean_abs:            ! type: real (default: no check performed)
+!----------------------------------
+!
+
+!
+!============
+axis_entry: longitude
+!============
+!
+!------------
+!
+! Axis attributes:
+!----------------------------------
+standard_name:    longitude
+units:            degrees_east
+axis:             X
+long_name:        longitude
+!----------------------------------
+!
+! Additional axis information:
+!----------------------------------
+out_name:         lon
+valid_min:        0.           ! CMOR will add n*360 to input values
+                               ! (where n is an integer) to ensure
+                               !  longitudes are in proper range.  The
+                               !  data will also be rearranged
+                               !  appropriately.
+valid_max:        360.         !  see above comment.
+!----------------------------------
+!
+!
+!=============
+axis_entry: latitude
+!=============
+!
+! Axis attributes:
+!----------------------------------
+standard_name:    latitude
+units:            degrees_north
+axis:             Y
+long_name:        latitude
+!----------------------------------
+!
+! Additional axis information:
+!----------------------------------
+out_name:         lat
+valid_min:        -90.
+valid_max:        90.
+!----------------------------------
+!
+!
+
+! ??? What about climatological data???
+!
+
+!============
+axis_entry: time
+!============
+!
+!    Override default argument specifications for cmor_axis
+!------------
+optional: interval length
+indeterminate: coord_vals cell_bounds
+!------------
+!
+! Axis attributes:
+!----------------------------------
+standard_name:    time
+units:            days since ?
+axis:             T
+long_name:        time
+!----------------------------------
+!
+!
+!============
+axis_entry: pressure1
+!============
+!
+!    Override default argument specifications for cmor_axis
+!------------
+ignored: cell_bounds
+!------------
+!
+! Axis attributes:
+!----------------------------------
+standard_name:    air_pressure
+units:            Pa
+axis:             Z
+positive:         down
+long_name:        pressure
+!----------------------------------
+!
+! Additional axis information:
+!----------------------------------
+out_name:         plev
+valid_min:        10000.
+valid_max:        30000.
+value:            20000.
+!----------------------------------
+!
+!
+!
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+! VARIABLE INFORMATION
+!
+!*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
+!
+!
+!
+! ***************************************************************
+!
+! IPCC Table A5: Monthly-mean 2-d radiative forcing data
+!
+! ***************************************************************
+!
+!
+!
+!============
+variable_entry: rsfttoaa_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaa_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropa_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsfttoai_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoai_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropi_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlfttoaa_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaa_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropa_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlfttoai_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoai_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropi_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaacs_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Shortwave Clear-Sky Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropacs_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Shortwave Clear-Sky Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsfttoaics_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftoaics_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Shortwave Clear-Sky Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rsftropics_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_shortwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Shortwave Clear-Sky Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlfttoaacs_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaacs_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Top of the Atmosphere Longwave Clear-Sky Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropacs_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_adjusted_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Adjusted Tropopause Longwave Clear-Sky Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlfttoaics_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftoaics_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: toa_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Top of the Atmosphere Longwave Clear-Sky Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_g
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Anthropogenic Greenhouse Gases
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_co2
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Anthropogenic Carbon Dioxide
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_s
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Total Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_sd
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Direct Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_si
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Indirect Effect of Sulfate Aerosol
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_bc
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Black Carbon
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_o
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_to
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Tropospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_so
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Stratoospheric Ozone
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_lo
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Vegetation and Other Land-Surface Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_a
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to All Anthropogenic Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_v
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Volcanic Aerosols
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_sun
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to Solar Constant Changes
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!
+!============
+variable_entry: rlftropics_n
+!============
+!
+! Variable attributes:
+!----------------------------------
+standard_name: tropopause_instantaneous_longwave_forcing_assuming_clear_sky
+units:         W m-2
+cell_methods:  time: mean
+long_name:     Instantaneous Tropopause Longwave Clear-Sky Forcing Due to All Natural Factors
+!----------------------------------
+!
+! Additional variable information:
+!----------------------------------
+dimensions:       longitude latitude time pressure1
+!----------------------------------
+!
+!

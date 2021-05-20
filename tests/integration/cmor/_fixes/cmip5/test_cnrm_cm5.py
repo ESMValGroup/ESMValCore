@@ -10,16 +10,16 @@ from esmvalcore.cmor._fixes.cmip5.cnrm_cm5 import Msftmyz, Msftmyzba
 
 class TestMsftmyz(unittest.TestCase):
     """Test msftmyz fixes."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='msftmyz', units='J')
-        self.fix = Msftmyz()
+        self.fix = Msftmyz(None)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CNRM-CM5', 'msftmyz'), [Msftmyz()])
+            Fix.get_fixes('CMIP5', 'CNRM-CM5', 'Amon', 'msftmyz'),
+            [Msftmyz(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -30,16 +30,16 @@ class TestMsftmyz(unittest.TestCase):
 
 class TestMsftmyzba(unittest.TestCase):
     """Test msftmyzba fixes."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='msftmyzba', units='J')
-        self.fix = Msftmyzba()
+        self.fix = Msftmyzba(None)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CNRM-CM5', 'msftmyzba'), [Msftmyzba()])
+            Fix.get_fixes('CMIP5', 'CNRM-CM5', 'Amon', 'msftmyzba'),
+            [Msftmyzba(None)])
 
     def test_fix_data(self):
         """Test data fix."""

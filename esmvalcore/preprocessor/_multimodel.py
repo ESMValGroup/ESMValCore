@@ -1,43 +1,23 @@
-"""multimodel statistics.
-
-Functions for multi-model operations
-supports a multitude of multimodel statistics
-computations; the only requisite is the ingested
-cubes have (TIME-LAT-LON) or (TIME-PLEV-LAT-LON)
-dimensions; and obviously consistent units.
-
-It operates on different (time) spans:
-- full: computes stats on full dataset time;
-- overlap: computes common time overlap between datasets;
-
-"""
+"""Functions to compute multi-cube statistics."""
 
 import logging
+import re
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
 
 import cf_units
 import iris
 import numpy as np
+import scipy
 
 logger = logging.getLogger(__name__)
-
-
-def _get_time_offset(time_unit):
-    """Return a datetime object equivalent to tunit."""
-    # tunit e.g. 'day since 1950-01-01 00:00:00.0000000 UTC'
-    cfunit = cf_units.Unit(time_unit, calendar=cf_units.CALENDAR_STANDARD)
-    time_offset = cfunit.num2date(0)
-    return time_offset
 
 
 def _plev_fix(dataset, pl_idx):
     """Extract valid plev data.
 
-    this function takes care of situations
-    in which certain plevs are completely
-    masked due to unavailable interpolation
-    boundaries.
+    This function takes care of situations in which certain plevs are
+    completely masked due to unavailable interpolation boundaries.
     """
     if np.ma.is_masked(dataset):
         # keep only the valid plevs
@@ -53,29 +33,68 @@ def _plev_fix(dataset, pl_idx):
     return statj
 
 
-def _compute_statistic(datas, statistic_name):
+def _quantile(data, axis, quantile):
+    """Calculate quantile.
+
+    Workaround for calling scipy's mquantiles with arrays of >2
+    dimensions Similar to iris' _percentiles function, see their
+    discussion: https://github.com/SciTools/iris/pull/625
+    """
+    # Ensure that the target axis is the last dimension.
+    data = np.rollaxis(data, axis, start=data.ndim)
+    shape = data.shape[:-1]
+    # Flatten any leading dimensions.
+    if shape:
+        data = data.reshape([np.prod(shape), data.shape[-1]])
+    # Perform the quantile calculation.
+    result = scipy.stats.mstats.mquantiles(data,
+                                           quantile,
+                                           axis=-1,
+                                           alphap=1,
+                                           betap=1)
+    # Ensure to unflatten any leading dimensions.
+    if shape:
+        result = result.reshape(shape)
+    # Check whether to reduce to a scalar result
+    if result.shape == (1, ):
+        result = result[0]
+
+    return result
+
+
+def _compute_statistic(data, statistic_name):
     """Compute multimodel statistic."""
-    datas = np.ma.array(datas)
-    statistic = datas[0]
+    data = np.ma.array(data)
+    statistic = data[0]
 
     if statistic_name == 'median':
         statistic_function = np.ma.median
     elif statistic_name == 'mean':
         statistic_function = np.ma.mean
+    elif statistic_name == 'std':
+        statistic_function = np.ma.std
+    elif statistic_name == 'max':
+        statistic_function = np.ma.max
+    elif statistic_name == 'min':
+        statistic_function = np.ma.min
+    elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic_name):
+        # percentiles between p0 and p99.99999...
+        quantile = float(statistic_name[1:]) / 100
+        statistic_function = partial(_quantile, quantile=quantile)
     else:
-        raise NotImplementedError
+        raise ValueError(f'No such statistic: `{statistic_name}`')
 
     # no plevs
-    if len(datas[0].shape) < 3:
+    if len(data[0].shape) < 3:
         # get all NOT fully masked data - u_data
-        # datas is per time point
+        # data is per time point
         # so we can safely NOT compute stats for single points
-        if datas.ndim == 1:
-            u_datas = [data for data in datas]
+        if data.ndim == 1:
+            u_datas = data
         else:
-            u_datas = [data for data in datas if not np.all(data.mask)]
+            u_datas = [d for d in data if not np.all(d.mask)]
         if len(u_datas) > 1:
-            statistic = statistic_function(datas, axis=0)
+            statistic = statistic_function(data, axis=0)
         else:
             statistic.mask = True
         return statistic
@@ -83,7 +102,7 @@ def _compute_statistic(datas, statistic_name):
     # plevs
     for j in range(statistic.shape[0]):
         plev_check = []
-        for cdata in datas:
+        for cdata in data:
             fixed_data = _plev_fix(cdata, j)
             if fixed_data is not None:
                 plev_check.append(fixed_data)
@@ -100,13 +119,14 @@ def _compute_statistic(datas, statistic_name):
 
 def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     """Quick cube building and saving."""
-    if t_axis is None:
-        times = template_cube.coord('time')
-    else:
-        times = iris.coords.DimCoord(
-            t_axis,
-            standard_name='time',
-            units=template_cube.coord('time').units)
+    tunits = template_cube.coord('time').units
+    times = iris.coords.DimCoord(t_axis,
+                                 standard_name='time',
+                                 units=tunits,
+                                 var_name='time',
+                                 long_name='time')
+    times.bounds = None
+    times.guess_bounds()
 
     coord_names = [c.long_name for c in template_cube.coords()]
     coord_names.extend([c.standard_name for c in template_cube.coords()])
@@ -124,7 +144,13 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
         cspec = [(times, 0), (lats, 1), (lons, 2)]
     # plevs
     elif len(template_cube.shape) == 4:
-        plev = template_cube.coord('air_pressure')
+        if 'air_pressure' in coord_names:
+            plev = template_cube.coord('air_pressure')
+        elif 'altitude' in coord_names:
+            plev = template_cube.coord('altitude')
+        else:
+            raise ValueError(f"4D cube with dimensions {coord_names} not "
+                             f"supported at the moment")
         cspec = [(times, 0), (plev, 1), (lats, 2), (lons, 3)]
     elif len(template_cube.shape) == 1:
         cspec = [
@@ -142,8 +168,9 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     # correct dspec if necessary
     fixed_dspec = np.ma.fix_invalid(cube_data, copy=False, fill_value=1e+20)
     # put in cube
-    stats_cube = iris.cube.Cube(
-        fixed_dspec, dim_coords_and_dims=cspec, long_name=statistic)
+    stats_cube = iris.cube.Cube(fixed_dspec,
+                                dim_coords_and_dims=cspec,
+                                long_name=statistic)
     coord_names = [coord.name() for coord in template_cube.coords()]
     if 'air_pressure' in coord_names:
         if len(template_cube.shape) == 3:
@@ -156,228 +183,279 @@ def _put_in_cube(template_cube, cube_data, statistic, t_axis):
     return stats_cube
 
 
-def _datetime_to_int_days(cube):
-    """Return list of int(days) converted from cube datetime cells."""
-    time_cells = [cell.point for cell in cube.coord('time').cells()]
-    time_unit = cube.coord('time').units.name
-    time_offset = _get_time_offset(time_unit)
-
-    # extract date info
-    real_dates = []
-    for date_obj in time_cells:
-        # real_date resets the actual data point day
-        # to the 1st of the month so that there are no
-        # wrong overlap indeces
-        # NOTE: this workaround is good only
-        # for monthly data
-        real_date = datetime(date_obj.year, date_obj.month, 1, 0, 0, 0)
-        real_dates.append(real_date)
-
-    days = [(date_obj - time_offset).days for date_obj in real_dates]
-    return days
+def _get_consistent_time_unit(cubes):
+    """Return cubes' time unit if consistent, standard calendar otherwise."""
+    t_units = [cube.coord('time').units for cube in cubes]
+    if len(set(t_units)) == 1:
+        return t_units[0]
+    return cf_units.Unit("days since 1850-01-01", calendar="standard")
 
 
-def _get_overlap(cubes):
+def _unify_time_coordinates(cubes):
+    """Make sure all cubes' share the same time coordinate.
+
+    This function extracts the date information from the cube and
+    reconstructs the time coordinate, resetting the actual dates to the
+    15th of the month or 1st of july for yearly data (consistent with
+    `regrid_time`), so that there are no mismatches in the time arrays.
+
+    If cubes have different time units, it will use reset the calendar to
+    a default gregorian calendar with unit "days since 1850-01-01".
+
+    Might not work for (sub)daily data, because different calendars may have
+    different number of days in the year.
     """
-    Get discrete time overlaps.
+    t_unit = _get_consistent_time_unit(cubes)
 
-    This method gets the bounds of coord time
-    from the cube and assembles a continuous time
-    axis with smallest unit 1; then it finds the
-    overlaps by doing a 1-dim intersect;
-    takes the floor of first date and
-    ceil of last date.
-    """
-    all_times = []
     for cube in cubes:
-        span = _datetime_to_int_days(cube)
-        start, stop = span[0], span[-1]
-        all_times.append([start, stop])
-    bounds = [range(b[0], b[-1] + 1) for b in all_times]
-    time_pts = reduce(np.intersect1d, bounds)
-    if len(time_pts) > 1:
-        time_bounds_list = [time_pts[0], time_pts[-1]]
-        return time_bounds_list
+        # Extract date info from cube
+        coord = cube.coord('time')
+        years = [p.year for p in coord.units.num2date(coord.points)]
+        months = [p.month for p in coord.units.num2date(coord.points)]
+        days = [p.day for p in coord.units.num2date(coord.points)]
 
+        # Reconstruct default calendar
+        if 0 not in np.diff(years):
+            # yearly data
+            dates = [datetime(year, 7, 1, 0, 0, 0) for year in years]
 
-def _slice_cube(cube, t_1, t_2):
-    """
-    Efficient slicer.
-
-    Simple cube data slicer on indices
-    of common time-data elements.
-    """
-    time_pts = [t for t in cube.coord('time').points]
-    converted_t = _datetime_to_int_days(cube)
-    idxs = sorted([
-        time_pts.index(ii) for ii, jj in zip(time_pts, converted_t)
-        if t_1 <= jj <= t_2
-    ])
-    return [idxs[0], idxs[-1]]
-
-
-def _monthly_t(cubes):
-    """Rearrange time points for monthly data."""
-    # get original cubes tpoints
-    days = {day for cube in cubes for day in _datetime_to_int_days(cube)}
-    return sorted(days)
-
-
-def _full_time_slice(cubes, ndat, indices, ndatarr, t_idx):
-    """Construct a contiguous collection over time."""
-    for idx_cube, cube in enumerate(cubes):
-        # reset mask
-        ndat.mask = True
-        ndat[indices[idx_cube]] = cube.data
-        if np.ma.is_masked(cube.data):
-            ndat.mask[indices[idx_cube]] = cube.data.mask
+        elif 0 not in np.diff(months):
+            # monthly data
+            dates = [
+                datetime(year, month, 15, 0, 0, 0)
+                for year, month in zip(years, months)
+            ]
+        elif 0 not in np.diff(days):
+            # daily data
+            dates = [
+                datetime(year, month, day, 0, 0, 0)
+                for year, month, day in zip(years, months, days)
+            ]
+            if coord.units != t_unit:
+                logger.warning(
+                    "Multimodel encountered (sub)daily data and inconsistent "
+                    "time units or calendars. Attempting to continue, but "
+                    "might produce unexpected results.")
         else:
-            ndat.mask[indices[idx_cube]] = False
-        ndatarr[idx_cube] = ndat[t_idx]
+            raise ValueError(
+                "Multimodel statistics preprocessor currently does not "
+                "support sub-daily data.")
 
-    # return time slice
-    return ndatarr
-
-
-def _assemble_overlap_data(cubes, interval, statistic):
-    """Get statistical data in iris cubes for OVERLAP."""
-    start, stop = interval
-    sl_1, sl_2 = _slice_cube(cubes[0], start, stop)
-    stats_dats = np.ma.zeros(cubes[0].data[sl_1:sl_2 + 1].shape)
-
-    # keep this outside the following loop
-    # this speeds up the code by a factor of 15
-    indices = [_slice_cube(cube, start, stop) for cube in cubes]
-
-    for i in range(stats_dats.shape[0]):
-        time_data = [
-            cube.data[indx[0]:indx[1] + 1][i]
-            for cube, indx in zip(cubes, indices)
-        ]
-        stats_dats[i] = _compute_statistic(time_data, statistic)
-    stats_cube = _put_in_cube(
-        cubes[0][sl_1:sl_2 + 1], stats_dats, statistic, t_axis=None)
-    return stats_cube
+        # Update the cubes' time coordinate (both point values and the units!)
+        cube.coord('time').points = t_unit.date2num(dates)
+        cube.coord('time').units = t_unit
+        cube.coord('time').bounds = None
+        cube.coord('time').guess_bounds()
 
 
-def _assemble_full_data(cubes, statistic):
-    """Get statistical data in iris cubes for FULL."""
-    # all times, new MONTHLY data time axis
-    time_axis = [float(fl) for fl in _monthly_t(cubes)]
-
-    # new big time-slice array shape
-    new_shape = [len(time_axis)] + list(cubes[0].shape[1:])
-
-    # assemble an array to hold all time data
-    # for all cubes; shape is (ncubes,(plev), lat, lon)
-    new_arr = np.ma.empty([len(cubes)] + list(new_shape[1:]))
-
-    # data array for stats computation
-    stats_dats = np.ma.zeros(new_shape)
-
-    # assemble indices list to chop new_arr on
-    indices_list = []
-
-    # empty data array to hold time slices
-    empty_arr = np.ma.empty(new_shape)
-
-    # loop through cubes and populate empty_arr with points
+def _get_time_slice(cubes, time):
+    """Fill time slice array with cubes' data if time in cube, else mask."""
+    time_slice = []
     for cube in cubes:
-        time_redone = _datetime_to_int_days(cube)
-        oidx = [time_axis.index(s) for s in time_redone]
-        indices_list.append(oidx)
-    for i in range(new_shape[0]):
-        # hold time slices only
-        new_datas_array = _full_time_slice(cubes, empty_arr, indices_list,
-                                           new_arr, i)
-        # list to hold time slices
-        time_data = []
-        for j in range(len(cubes)):
-            time_data.append(new_datas_array[j])
-        stats_dats[i] = _compute_statistic(time_data, statistic)
-    stats_cube = _put_in_cube(cubes[0], stats_dats, statistic, time_axis)
+        cube_time = cube.coord('time').points
+        if time in cube_time:
+            idx = int(np.argwhere(cube_time == time))
+            subset = cube.data[idx]
+        else:
+            subset = np.ma.empty(list(cube.shape[1:]))
+            subset.mask = True
+        time_slice.append(subset)
+    return time_slice
+
+
+def _assemble_data(cubes, statistic, span='overlap'):
+    """Get statistical data in iris cubes."""
+    # New time array representing the union or intersection of all cubes
+    time_spans = [cube.coord('time').points for cube in cubes]
+    if span == 'overlap':
+        new_times = reduce(np.intersect1d, time_spans)
+    elif span == 'full':
+        new_times = reduce(np.union1d, time_spans)
+    n_times = len(new_times)
+
+    # Target array to populate with computed statistics
+    new_shape = [n_times] + list(cubes[0].shape[1:])
+    stats_data = np.ma.zeros(new_shape, dtype=np.dtype('float32'))
+
+    # Realize all cubes at once instead of separately for each time slice
+    _ = [cube.data for cube in cubes]
+
+    # Make time slices and compute stats
+    for i, time in enumerate(new_times):
+        time_data = _get_time_slice(cubes, time)
+        stats_data[i] = _compute_statistic(time_data, statistic)
+
+    template = cubes[0]
+    stats_cube = _put_in_cube(template, stats_data, statistic, new_times)
     return stats_cube
 
 
-def multi_model_statistics(products, span, output_products, statistics):
-    """
-    Compute multi-model statistics.
+def _multicube_statistics(cubes, statistics, span):
+    """Compute statistics over multiple cubes.
 
-    Multimodel statistics computed along the time axis. Can be
-    computed across a common overlap in time (set span: overlap)
-    or across the full length in time of each model (set span: full).
-    Restrictive compuation is also available by excluding any set of
-    models that the user will not want to include in the statistics
-    (set exclude: [excluded models list]).
+    Can be used e.g. for ensemble or multi-model statistics.
 
-    Restrictions needed by the input data:
-    - model datasets must have consistent shapes,
-    - higher dimesnional data is not supported (ie dims higher than four:
-    time, vertical axis, two horizontal axes).
+    This function was designed to work on (max) four-dimensional data:
+    time, vertical axis, two horizontal axes.
+
+    Apart from the time coordinate, cubes must have consistent shapes. There
+    are two options to combine time coordinates of different lengths, see
+    the `span` argument.
 
     Parameters
     ----------
-    products: list
-        list of data products to be used in multimodel stat computation;
-        cube attribute of product is the data cube for computing the stats.
+    cubes: list
+        list of cubes over which the statistics will be computed;
+    statistics: list
+        statistical metrics to be computed. Available options: mean, median,
+        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
     span: str
-        overlap or full; if overlap stas are computed on common time-span;
-        if full stats are computed on full time spans.
-    output_products: dict
-        dictionary of output products.
-    statistics: str
-        statistical measure to be computed (mean or median).
+        overlap or full; if overlap, statitsticss are computed on common time-
+        span; if full, statistics are computed on full time spans, ignoring
+        missing data.
+
     Returns
     -------
-    list
-        list of data products containing the multimodel stats computed.
+    dict
+        dictionary of statistics cubes with statistics' names as keys.
+
     Raises
     ------
     ValueError
         If span is neither overlap nor full.
-
     """
-    logger.debug('Multimodel statistics: computing: %s', statistics)
-    if len(products) < 2:
-        logger.info("Single dataset in list: will not compute statistics.")
-        return products
+    if len(cubes) < 2:
+        logger.info('Found only 1 cube; no statistics computed for %r',
+                    list(cubes)[0])
+        return {statistic: cubes[0] for statistic in statistics}
 
-    cubes = [cube for product in products for cube in product.cubes]
-    # check if we have any time overlap
-    interval = _get_overlap(cubes)
-    if interval is None:
-        logger.info("Time overlap between cubes is none or a single point."
-                    "check datasets: will not compute statistics.")
-        return products
+    logger.debug('Multicube statistics: computing: %s', statistics)
 
+    # Reset time coordinates and make cubes share the same calendar
+    _unify_time_coordinates(cubes)
+
+    # Check whether input is valid
     if span == 'overlap':
+        # check if we have any time overlap
+        times = [cube.coord('time').points for cube in cubes]
+        overlap = reduce(np.intersect1d, times)
+        if len(overlap) <= 1:
+            logger.info("Time overlap between cubes is none or a single point."
+                        "check datasets: will not compute statistics.")
+            return cubes
         logger.debug("Using common time overlap between "
                      "datasets to compute statistics.")
     elif span == 'full':
         logger.debug("Using full time spans to compute statistics.")
     else:
         raise ValueError(
-            "Unexpected value for span {}, choose from 'overlap', 'full'"
-            .format(span))
+            "Unexpected value for span {}, choose from 'overlap', 'full'".
+            format(span))
 
-    statistic_products = set()
+    # Compute statistics
+    statistics_cubes = {}
     for statistic in statistics:
-        # Compute statistic
-        if span == 'overlap':
-            statistic_cube = _assemble_overlap_data(cubes, interval, statistic)
-        elif span == 'full':
-            statistic_cube = _assemble_full_data(cubes, statistic)
-        statistic_cube.data = np.ma.array(
-            statistic_cube.data, dtype=np.dtype('float32'))
+        statistic_cube = _assemble_data(cubes, statistic, span)
+        statistics_cubes[statistic] = statistic_cube
 
-        # Add to output product and log provenance
-        statistic_product = output_products[statistic]
-        statistic_product.cubes = [statistic_cube]
+    return statistics_cubes
+
+
+def _multiproduct_statistics(products,
+                             statistics,
+                             output_products,
+                             span=None,
+                             keep_input_datasets=None):
+    """Compute multi-cube statistics on ESMValCore products.
+
+    Extract cubes from products, calculate multicube statistics and
+    assign the resulting output cubes to the output_products.
+    """
+    cubes = [cube for product in products for cube in product.cubes]
+    statistics_cubes = _multicube_statistics(cubes=cubes,
+                                             statistics=statistics,
+                                             span=span)
+    statistics_products = set()
+    for statistic, cube in statistics_cubes.items():
+        statistics_product = output_products[statistic]
+        statistics_product.cubes = [cube]
+
         for product in products:
-            statistic_product.wasderivedfrom(product)
-        logger.info("Generated %s", statistic_product)
-        statistic_products.add(statistic_product)
+            statistics_product.wasderivedfrom(product)
 
-    products |= statistic_products
+        logger.info("Generated %s", statistics_product)
+        statistics_products.add(statistics_product)
 
-    return products
+    if not keep_input_datasets:
+        return statistics_products
+
+    return products | statistics_products
+
+
+def multi_model_statistics(products,
+                           span,
+                           statistics,
+                           output_products=None,
+                           keep_input_datasets=True):
+    """Compute multi-model statistics.
+
+    This function computes multi-model statistics on cubes or products.
+    Products (or: preprocessorfiles) are used internally by ESMValCore to store
+    workflow and provenance information, and this option should typically be
+    ignored.
+
+    This function was designed to work on (max) four-dimensional data: time,
+    vertical axis, two horizontal axes. Apart from the time coordinate, cubes
+    must have consistent shapes. There are two options to combine time
+    coordinates of different lengths, see the `span` argument.
+
+    Parameters
+    ----------
+    products: list
+        Cubes (or products) over which the statistics will be computed.
+    statistics: list
+        Statistical metrics to be computed. Available options: mean, median,
+        max, min, std, or pXX.YY (for percentile XX.YY; decimal part optional).
+    span: str
+        Overlap or full; if overlap, statitstics are computed on common time-
+        span; if full, statistics are computed on full time spans, ignoring
+        missing data.
+    output_products: dict
+        For internal use only. A dict with statistics names as keys and
+        preprocessorfiles as values. If products are passed as input, the
+        statistics cubes will be assigned to these output products.
+    keep_input_datasets: bool
+        If True, the output will include the input datasets.
+        If False, only the computed statistics will be returned.
+
+    Returns
+    -------
+    dict
+        A dictionary of statistics cubes with statistics' names as keys. (If
+        input type is products, then it will return a set of output_products.)
+
+    Raises
+    ------
+    ValueError
+        If span is neither overlap nor full, or if input type is neither cubes
+        nor products.
+    """
+    if all(isinstance(p, iris.cube.Cube) for p in products):
+        return _multicube_statistics(
+            cubes=products,
+            statistics=statistics,
+            span=span,
+        )
+    if all(type(p).__name__ == 'PreprocessorFile' for p in products):
+        # Avoid circular input: https://stackoverflow.com/q/16964467
+        return _multiproduct_statistics(
+            products=products,
+            statistics=statistics,
+            output_products=output_products,
+            span=span,
+            keep_input_datasets=keep_input_datasets,
+        )
+    raise ValueError(
+        "Input type for multi_model_statistics not understood. Expected "
+        "iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
+        "got {}".format(products))

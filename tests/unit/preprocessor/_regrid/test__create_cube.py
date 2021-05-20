@@ -23,13 +23,19 @@ class Test(tests.Test):
         levels = np.array([0, 1])
         emsg = 'Mismatch between data and levels'
         with self.assertRaisesRegex(ValueError, emsg):
-            create_cube(self.cube, self.cube.data, levels)
+            create_cube(
+                self.cube, self.cube.data,
+                self.cube.coord(axis='z', dim_coords=True), levels
+            )
 
     def test(self):
         shape = (2, 2, 1)
         data = np.empty(shape)
         levels = np.array([10, 20])
-        result = create_cube(self.cube, data, levels)
+        result = create_cube(
+            self.cube, data,
+            self.cube.coord(axis='z', dim_coords=True), levels
+        )
         expected = _make_cube(data, aux_coord=False, dim_coord=False)
         vcoord = _make_vcoord(levels)
         expected.add_dim_coord(vcoord, 0)
@@ -39,7 +45,10 @@ class Test(tests.Test):
         shape = (2, 2, 1)
         data = np.empty(shape)
         levels = np.array([10, 10])
-        result = create_cube(self.cube, data, levels)
+        result = create_cube(
+            self.cube, data,
+            self.cube.coord(axis='z', dim_coords=True), levels
+        )
         expected = _make_cube(data, aux_coord=False, dim_coord=False)
         vcoord = _make_vcoord(levels)
         expected.add_aux_coord(vcoord, 0)
@@ -49,7 +58,9 @@ class Test(tests.Test):
         shape = (1, 2, 1)
         data = np.empty(shape)
         levels = np.array([123])
-        result = create_cube(self.cube, data, levels)
+        result = create_cube(
+            self.cube, data, self.cube.coord(axis='z', dim_coords=True),
+            levels)
         expected = _make_cube(data, aux_coord=False, dim_coord=False)[0]
         vcoord = _make_vcoord(levels)
         expected.add_aux_coord(vcoord)

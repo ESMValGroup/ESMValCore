@@ -1,8 +1,11 @@
-
 """Fixes for MRI-CGCM3 model."""
 from dask import array as da
 
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
+
+
+Cl = ClFixHybridPressureCoord
 
 
 class Msftmyz(Fix):
@@ -17,6 +20,7 @@ class Msftmyz(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -39,6 +43,7 @@ class ThetaO(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Input cube.
 
         Returns
         -------
