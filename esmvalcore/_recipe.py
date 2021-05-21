@@ -215,7 +215,6 @@ def _dataset_to_file(variable, config_user):
                 variable = required_var
                 break
     dryrun = config_user.get('dry-run')
-    check.data_availability(files, variable, dryrun=dryrun)
     check.data_availability(files,
                             variable,
                             dirnames,
@@ -302,19 +301,19 @@ def _get_default_settings(variable, config_user, derive=False):
             'units': variable['units'],
         }
 
-    # Configure CMOR metadata check
     raise_exception = True
     if 'dry-run' in config_user:
         raise_exception = False
-    if variable.get('cmor_table'):
-        settings['cmor_check_metadata'] = {
-            'cmor_table': variable['cmor_table'],
-            'mip': variable['mip'],
-            'short_name': variable['short_name'],
-            'frequency': variable['frequency'],
-            'raise_exception': raise_exception,
-            'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
-        }
+
+    # Configure CMOR metadata check
+    settings['cmor_check_metadata'] = {
+        'cmor_table': variable['project'],
+        'mip': variable['mip'],
+        'short_name': variable['short_name'],
+        'frequency': variable['frequency'],
+        'raise_exception': raise_exception,
+        'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
+    }
 
     # Configure final CMOR data check
     settings['cmor_check_data'] = dict(settings['cmor_check_metadata'])
