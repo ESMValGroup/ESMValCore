@@ -595,7 +595,7 @@ get_input_filelist:
     dirs: []
     file_patterns:
       - areacella_fx_CanESM2_historical_**.nc
-    found_files: [aaaaaaa]
+    found_files: []
 
   - drs: DKRZ
     variable:
