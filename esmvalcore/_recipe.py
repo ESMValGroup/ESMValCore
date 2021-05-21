@@ -731,6 +731,11 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
                 else:
                     missing_vars.add(ex.message)
                 continue
+
+        # Update output filename in case wildcards have been resolved
+        if '*' in variable['filename']:
+            variable['filename'] = get_output_file(variable,
+                                                   config_user['preproc_dir'])
         product = PreprocessorFile(
             attributes=variable,
             settings=settings,
