@@ -547,6 +547,31 @@ get_input_filelist:
   - drs: DKRZ
     variable:
       variable_group: test
+      short_name: areacella
+      original_short_name: areacella
+      dataset: CanESM2
+      project: CMIP5
+      cmor_table: CMIP5
+      institute: [CCCma]
+      frequency: fx
+      modeling_realm: [atmos]
+      mip: fx
+      exp: historical
+      ensemble: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - CCCma/CanESM2/historical/fx/atmos/fx/r1i1p1/v20120410/areacella/areacella_fx_CanESM2_historical_r1i1p1.nc
+    dirs:
+      - CCCma/CanESM2/historical/fx/atmos/fx/r1i1p1/v20120410/areacella
+    file_patterns:
+      - areacella_fx_CanESM2_historical_**.nc
+    found_files:
+      - CCCma/CanESM2/historical/fx/atmos/fx/r1i1p1/v20120410/areacella/areacella_fx_CanESM2_historical_r1i1p1.nc
+
+  - drs: DKRZ
+    variable:
+      variable_group: test
       short_name: orog
       original_short_name: orog
       dataset: HadGEM2-ES
