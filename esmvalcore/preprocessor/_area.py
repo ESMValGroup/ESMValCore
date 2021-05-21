@@ -360,7 +360,6 @@ def _crop_cube(cube,
             end_latitude = 90.
         cube = extract_region(cube, start_longitude, end_longitude,
                               start_latitude, end_latitude)
-    # TODO: implement cropping with bounds for irregular grids?
     return cube
 
 
