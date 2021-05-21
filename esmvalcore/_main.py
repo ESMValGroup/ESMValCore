@@ -341,10 +341,10 @@ class ESMValTool():
             than one diagnostic to filter use the syntax 'diag1 diag2/script1'
             or '("diag1", "diag2/script1")' and pay attention to the quotes.
         dry_run: bool, optional
-            Check data and CMOR compliance and return a report.
-            This feature works fully only with max_parallel_tasks: 1
-            in config-user.yml; however, it is very fast so even on
-            a single thread it should take much less time.
+            Check data and CMOR compliance and return a report. This feature
+            works fully only with "max_parallel_tasks: 1" in config-user.yml,
+            however, it is very fast so even on a single thread it should
+            take much less time.
         check_level: str, optional
             Configure the sensitivity of the CMOR check. Possible values are:
             `ignore` (all errors will be reported as warnings),
