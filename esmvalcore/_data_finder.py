@@ -202,10 +202,8 @@ def _resolve_latestversion(dirname_template):
     return dirname_template
 
 
-def _resolve_fx_wildcards_and_version(dirname):
-    """Resolve any wildcards entered for fx variables.
-    Also resolve the latest verision tag if found.
-    """
+def _resolve_wildcards_and_version(dirname):
+    """Resolve wildcards and version tag."""
     if "{latestversion}" in dirname:
         # Determine if any wildcards occur before
         # {latestversion} and deal with them first
@@ -263,7 +261,7 @@ def _find_input_dirs(variable, rootpath, drs):
         for base_path in root:
             dirname = os.path.join(base_path, dirname_template)
             if variable["frequency"] == "fx" and "*" in dirname:
-                dirname = _resolve_fx_wildcards_and_version(dirname)
+                dirname = _resolve_wildcards_and_version(dirname)
             else:
                 dirname = _resolve_latestversion(dirname)
             matches = glob.glob(dirname)
