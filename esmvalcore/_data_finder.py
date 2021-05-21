@@ -265,6 +265,10 @@ def _find_input_dirs(variable, rootpath, drs):
             if variable["frequency"] == "fx" and "*" in dirname:
                 dirname = _resolve_wildcards_and_version(dirname, base_path,
                                                          project, drs)
+                var_from_dir = dir_to_var(dirname, base_path, project, drs)
+                for (key, val) in variable.items():
+                    if val == '*':
+                        variable[key] = var_from_dir[key]
             else:
                 dirname = _resolve_latestversion(dirname)
             matches = glob.glob(dirname)
