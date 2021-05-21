@@ -236,7 +236,7 @@ class CMORCheck():
                              self._cube)
             if self._raise_exception:
                 raise CMORCheckError(msg)
-            logger.error(msg)
+            self._logger.error(msg)
 
     def report_warnings(self):
         """Report detected warnings to the given logger.

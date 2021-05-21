@@ -199,10 +199,14 @@ def concatenate(cubes):
     return result
 
 
-def save(cubes, filename, optimize_access='',
-         compress=False, dryrun=False, alias='', **kwargs):
-    """
-    Save iris cubes to file.
+def save(cubes,
+         filename,
+         optimize_access='',
+         compress=False,
+         dryrun=False,
+         alias='',
+         **kwargs):
+    """Save iris cubes to file.
 
     Parameters
     ----------

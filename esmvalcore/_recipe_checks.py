@@ -117,12 +117,12 @@ def data_availability(input_files, var, dirnames, filenames, dryrun=False):
                 logger.error("Looked for files matching%s", msg)
             elif dirnames and not filenames:
                 logger.error(
-                    "Looked for files in %s, but did not find any file pattern "
-                    "to match against", dirnames)
+                    "Looked for files in %s, but did not find any file "
+                    "pattern to match against", dirnames)
             elif filenames and not dirnames:
                 logger.error(
-                    "Looked for files matching %s, but did not find any existing "
-                    "input directory", filenames)
+                    "Looked for files matching %s, but did not find any "
+                    "existing input directory", filenames)
             logger.error("Set 'log_level' to 'debug' to get more information")
             raise RecipeError(
                 f"Missing data for {var['alias']}: {var['short_name']}")
@@ -150,10 +150,8 @@ def data_availability(input_files, var, dirnames, filenames, dryrun=False):
                     ", ".join(str(year) for year in missing_years),
                     input_files))
         else:
-            logger.info(
-                "DRYRUN: MISSING DATA for years {} in files {}".format(
-                    ", ".join(str(year) for year in missing_years),
-                    input_files))
+            logger.info("DRYRUN: MISSING DATA for years {} in files {}".format(
+                ", ".join(str(year) for year in missing_years), input_files))
 
 
 def tasks_valid(tasks):

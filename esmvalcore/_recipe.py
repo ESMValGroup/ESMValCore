@@ -46,7 +46,10 @@ logger = logging.getLogger(__name__)
 TASKSEP = os.sep
 
 
-def read_recipe_file(filename, config_user, dry_run=False, initialize_tasks=True):
+def read_recipe_file(filename,
+                     config_user,
+                     dry_run=False,
+                     initialize_tasks=True):
     """Read a recipe from file."""
     check.recipe_with_schema(filename)
     with open(filename, 'r') as file:
@@ -213,7 +216,11 @@ def _dataset_to_file(variable, config_user):
                 break
     dryrun = config_user.get('dry-run')
     check.data_availability(files, variable, dryrun=dryrun)
-    check.data_availability(files, variable, dirnames, filenames, dryrun=dryrun)
+    check.data_availability(files,
+                            variable,
+                            dirnames,
+                            filenames,
+                            dryrun=dryrun)
     return files[0]
 
 
@@ -551,7 +558,11 @@ def _get_ancestors(variable, config_user):
     if (not config_user.get('skip-nonexistent')
             or variable['dataset'] == variable.get('reference_dataset')):
         dryrun = config_user.get('dry-run')
-        check.data_availability(input_files, variable, dirnames, filenames, dryrun=dryrun)
+        check.data_availability(input_files,
+                                variable,
+                                dirnames,
+                                filenames,
+                                dryrun=dryrun)
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
@@ -741,7 +752,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             try:
                 ancestors = _get_ancestors(variable, config_user)
             except RecipeError as ex:
-                if _allow_skipping(ancestors, variable, config_user) or config_user.get('dry-run') and not ancestors:
+                if _allow_skipping(
+                        ancestors, variable, config_user
+                ) or config_user.get('dry-run') and not ancestors:
                     logger.info("Skipping: %s", ex.message)
                 else:
                     missing_vars.add(ex.message)
@@ -910,8 +923,8 @@ def _get_derive_input_variables(variables, config_user):
     return derive_input
 
 
-def _get_preprocessor_task(variables, profiles,
-                           config_user, task_name, dry_check):
+def _get_preprocessor_task(variables, profiles, config_user, task_name,
+                           dry_check):
     """Create preprocessor task(s) for a set of datasets."""
     # First set up the preprocessor profile
     variable = variables[0]
