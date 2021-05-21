@@ -200,7 +200,6 @@ def _resolve_wildcards_and_version(dirname, basepath, project, drs):
             dirnames = []
         elif 'latest' in all_dirs_dict:
             dirnames = all_dirs_dict['latest']
-            print("dirnames", dirnames)
         else:
             all_versions = sorted(list(all_dirs_dict))
             dirnames = all_dirs_dict[all_versions[-1]]
