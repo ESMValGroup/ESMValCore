@@ -69,10 +69,8 @@ def get_start_end_year(filename):
             break
 
     if start_year is None or end_year is None:
-        raise ValueError(
-            f"File {filename} dates do not match a recognized"
-            "pattern and time can not be read from the file"
-        )
+        raise ValueError(f"File {filename} dates do not match a recognized"
+                         "pattern and time can not be read from the file")
 
     logger.debug("Found start_year %s and end_year %s", start_year, end_year)
     return int(start_year), int(end_year)
@@ -94,7 +92,7 @@ def select_files(filenames, start_year, end_year):
 def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        paths = set((paths.strip('/'),))
+        paths = set((paths.strip('/'), ))
     else:
         paths = set(path.strip('/') for path in paths)
     tlist = set()
@@ -103,10 +101,9 @@ def _replace_tags(paths, variable):
     if 'sub_experiment' in variable:
         new_paths = []
         for path in paths:
-            new_paths.extend((
-                re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
-                re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)
-            ))
+            new_paths.extend(
+                (re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
+                 re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)))
             tlist.add('sub_experiment')
         paths = new_paths
     logger.debug(tlist)
@@ -159,13 +156,8 @@ def _apply_caps(original, lower, upper):
     return original
 
 
-def _resolve_fx_wildcards(dirname):
-    """Resolve any wildcards entered for fx variables."""
-    latestversion_tag = False
-    if "{latestversion}" in dirname:
-        latestversion_tag = True
-        dirname, latestversion_tail = dirname.split("{latestversion}")
-
+def _resolve_globs(dirname):
+    """Resolve wildcards in dirname."""
     # resolve globs
     dirs = glob.glob(dirname)
 
@@ -174,7 +166,7 @@ def _resolve_fx_wildcards(dirname):
         if len(dirs) > 1:
             logger.warning("Multiple matches for fx variables found: %s", dirs)
 
-        # if an r0i0p0 folder is found, choose this preferentially
+        # if an r0i0p0 folder has been found, choose this preferentially
         r0i0p0_match = [d for d in dirs if "r0i0p0" in d]
         if len(r0i0p0_match) > 0:
             dirname = r0i0p0_match[0]
@@ -183,9 +175,6 @@ def _resolve_fx_wildcards(dirname):
     else:
         # nothing found
         logger.debug("Unable to resolve %s", dirname)
-
-    if latestversion_tag:
-        dirname = dirname + "{latestversion}" + latestversion_tail
 
     return dirname
 
@@ -213,6 +202,30 @@ def _resolve_latestversion(dirname_template):
     return dirname_template
 
 
+def _resolve_fx_wildcards_and_version(dirname):
+    """Resolve any wildcards entered for fx variables.
+    Also resolve the latest verision tag if found.
+    """
+    if "{latestversion}" in dirname:
+        # Determine if any wildcards occur before
+        # {latestversion} and deal with them first
+        if dirname.find('*') < dirname.find('{latestversion}'):
+            # resolve globs before version tag first
+            dirname, latestversion_tail = dirname.split("{latestversion}")
+            dirname = _resolve_globs(dirname)
+            dirname = dirname + "{latestversion}" + latestversion_tail
+
+        # resolve version, then any remaining globs after that.
+        dirname = _resolve_latestversion(dirname)
+        # resolve remaining globs that may still exist after the version tag
+        if "*" in dirname:
+            dirname = _resolve_globs(dirname)
+    else:
+        dirname = _resolve_globs(dirname)
+
+    return dirname
+
+
 def _select_drs(input_type, drs, project):
     """Select the directory structure of input path."""
     cfg = get_project_config(project)
@@ -226,9 +239,7 @@ def _select_drs(input_type, drs, project):
 
     raise KeyError(
         "drs {} for {} project not specified in config-developer file".format(
-            structure, project
-        )
-    )
+            structure, project))
 
 
 def get_rootpath(rootpath, project):
@@ -251,9 +262,10 @@ def _find_input_dirs(variable, rootpath, drs):
     for dirname_template in _replace_tags(path_template, variable):
         for base_path in root:
             dirname = os.path.join(base_path, dirname_template)
-            if variable["frequency"] == "fx":
-                dirname = _resolve_fx_wildcards(dirname)
-            dirname = _resolve_latestversion(dirname)
+            if variable["frequency"] == "fx" and "*" in dirname:
+                dirname = _resolve_fx_wildcards_and_version(dirname)
+            else:
+                dirname = _resolve_latestversion(dirname)
             matches = glob.glob(dirname)
             matches = [match for match in matches if os.path.isdir(match)]
             if matches:
