@@ -45,6 +45,8 @@ out_name:         lon
 stored_direction: increasing
 type:             double
 must_have_bounds: yes
+valid_max:        360.0
+valid_min:        0.0
 !----------------------------------
 !
 

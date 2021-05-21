@@ -223,6 +223,8 @@ dimensions:	  longitude latitude
 ! Additional axis information:
 !----------------------------------	
 out_name:         lon
+valid_max:        360.0
+valid_min:        0.0
 !----------------------------------	
 !
 !
