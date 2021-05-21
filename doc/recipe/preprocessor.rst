@@ -1258,9 +1258,9 @@ The area manipulation module contains the following preprocessor functions:
 ``extract_region``
 ------------------
 
-This function masks data outside a rectangular region requested. The boundaries
-of the region are provided as latitude and longitude coordinates in the
-arguments:
+This function returns a subset of the data on the rectangular region requested.
+The boundaries of the region are provided as latitude and longitude coordinates
+in the arguments:
 
 * ``start_longitude``
 * ``end_longitude``
