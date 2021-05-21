@@ -185,7 +185,7 @@ def _resolve_wildcards_and_version(dirname, basepath, project, drs):
         dirname_version_wildcard = dirname.replace("{latestversion}", "*")
 
         # Find all directories that match the template
-        all_dirs = glob.glob(dirname_version_wildcard)
+        all_dirs = sorted(glob.glob(dirname_version_wildcard))
 
         # Sort directories by version
         all_dirs_dict = {}
