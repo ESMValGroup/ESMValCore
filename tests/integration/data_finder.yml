@@ -454,7 +454,7 @@ get_input_filelist:
     available_files:
       - CMIP/MOHC/HadGEM3-GC31-LL/piControl/r1i1p1f1/fx/sftlf/gn/latest/sftlf_fx_HadGEM3-GC31-LL_piControl_r1i1p1f1_gn.nc
     dirs:
-      - CMIP/MOHC/HadGEM3-GC31-LL/piControl/r1i1p1f1/fx/sftlf/gn/latest/
+      - CMIP/MOHC/HadGEM3-GC31-LL/piControl/r1i1p1f1/fx/sftlf/gn/latest
     file_patterns:
       - sftlf_fx_HadGEM3-GC31-LL_*_*_gn*.nc
     found_files:
@@ -485,7 +485,7 @@ get_input_filelist:
       - EUR-11/SMHI/NCC-NorESM1-M/historical/r0i0p0/RCA4/v1/fx/sftlf/v20180820/sftlf_EUR-11_NCC-NorESM1-M_historical_r0i0p0_RCA4_v1_fx.nc
       - EUR-11/SMHI/NCC-NorESM1-M/rcp85/r0i0p0/RCA4/v1/fx/sftlf/v20180820/sftlf_EUR-11_NCC-NorESM1-M_rcp85_r0i0p0_RCA4_v1_fx.nc
     dirs:
-      - EUR-11/SMHI/NCC-NorESM1-M/historical/r0i0p0/RCA4/v1/fx/sftlf/v20180820/
+      - EUR-11/SMHI/NCC-NorESM1-M/historical/r0i0p0/RCA4/v1/fx/sftlf/v20180820
     file_patterns:
       - sftlf_EUR-11_NCC-NorESM1-M_*_*_RCA4_v1_fx*.nc
     found_files:
@@ -517,7 +517,7 @@ get_input_filelist:
       - sftlf_fx_HadGEM2-ES_historical_**.nc
     found_files:
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
-      
+
   - drs: DKRZ
     variable:
       variable_group: test
@@ -535,8 +535,9 @@ get_input_filelist:
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
-      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r2i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r2i1p1.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r3i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r3i1p1.nc
     dirs:
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf
     file_patterns:
@@ -561,6 +562,8 @@ get_input_filelist:
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
+      - CCCma/CanESM2/historical/fx/atmos/fx/r0i0p0/v20120410/sftlf/sftlf_fx_CanESM2_historical_r0i0p0.nc
+      - CCCma/CanESM2/historical/fx/atmos/fx/r1i1p1/v20000101/areacella/areacella_fx_CanESM2_historical_r1i1p1.nc
       - CCCma/CanESM2/historical/fx/atmos/fx/r1i1p1/v20120410/areacella/areacella_fx_CanESM2_historical_r1i1p1.nc
     dirs:
       - CCCma/CanESM2/historical/fx/atmos/fx/r1i1p1/v20120410/areacella
@@ -568,6 +571,86 @@ get_input_filelist:
       - areacella_fx_CanESM2_historical_**.nc
     found_files:
       - CCCma/CanESM2/historical/fx/atmos/fx/r1i1p1/v20120410/areacella/areacella_fx_CanESM2_historical_r1i1p1.nc
+
+  - drs: DKRZ
+    variable:
+      variable_group: test
+      short_name: areacella
+      original_short_name: areacella
+      dataset: CanESM2
+      project: CMIP5
+      cmor_table: CMIP5
+      institute: [CCCma]
+      frequency: fx
+      modeling_realm: [atmos]
+      mip: fx
+      exp: historical
+      ensemble: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files: []
+    dirs: []
+    file_patterns:
+      - areacella_fx_CanESM2_historical_**.nc
+    found_files: []
+
+  - drs: DKRZ
+    variable:
+      variable_group: test
+      short_name: areacella
+      original_short_name: areacella
+      dataset: CanESM2
+      project: CMIP5
+      cmor_table: CMIP5
+      institute: [CCCma]
+      frequency: fx
+      modeling_realm: [atmos]
+      mip: fx
+      exp: historical
+      ensemble: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - CCCma/CanESM2/historical/fx/atmos/fx/r0i0p0/v20120410/sftlf/sftlf_fx_CanESM2_historical_r0i0p0.nc
+      - CCCma/CanESM2/historical/fx/atmos/fx/r0i0p0/v20200101/sftlf/sftlf_fx_CanESM2_historical_r0i0p0.nc
+      - CCCma/CanESM2/historical/fx/atmos/fx/r1i1p1/v20120410/areacella/areacella_fx_CanESM2_historical_r1i1p1.nc
+      - CCCma/CanESM2/historical/fx/atmos/fx/r2i1p1/v20200101/areacella/areacella_fx_CanESM2_historical_r2i1p1.nc
+      - CCCma/CanESM2/historical/fx/atmos/fx/r2i1p1/latest/areacella/areacella_fx_CanESM2_historical_r2i1p1.nc
+      - CCCma/CanESM2/historical/fx/atmos/fx/r2i1p2/v20300101/areacella/areacella_fx_CanESM2_historical_r2i1p2.nc
+    dirs:
+      - CCCma/CanESM2/historical/fx/atmos/fx/r2i1p1/latest/areacella
+    file_patterns:
+      - areacella_fx_CanESM2_historical_**.nc
+    found_files:
+      - CCCma/CanESM2/historical/fx/atmos/fx/r2i1p1/latest/areacella/areacella_fx_CanESM2_historical_r2i1p1.nc
+
+  - drs: ETHZ
+    variable:
+      variable_group: test
+      short_name: areacella
+      original_short_name: areacella
+      dataset: CanESM2
+      project: CMIP5
+      cmor_table: CMIP5
+      institute: [CCCma]
+      frequency: fx
+      modeling_realm: [atmos]
+      mip: fx
+      exp: historical
+      ensemble: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - historical/fx/sftlf/CanESM2/r0i0p0/sftlf_fx_CanESM2_historical_r0i0p0.nc
+      - historical/fx/sftlf/CanESM2/r1i1p1/sftlf_fx_CanESM2_historical_r1i1p1.nc
+      - historical/fx/areacella/CanESM2/r2i2p2/areacella_fx_CanESM2_historical_r2i2p2.nc
+      - historical/fx/areacella/CanESM2/r1i1p1/areacella_fx_CanESM2_historical_r1i1p1.nc
+    dirs:
+      - historical/fx/areacella/CanESM2/r1i1p1
+    file_patterns:
+      - areacella_fx_CanESM2_historical_**.nc
+    found_files:
+      - historical/fx/areacella/CanESM2/r1i1p1/areacella_fx_CanESM2_historical_r1i1p1.nc
 
   - drs: DKRZ
     variable:
@@ -822,3 +905,79 @@ get_input_filelist:
     file_patterns:
       - OBS6_ERA-Interim_reanaly_42_Omon_deptho[_.]*nc
     found_files: []
+
+
+dir_to_var:
+  - dirname: /this/is/root/
+    basepath: /this/is/root/
+    project: CMIP5
+    drs: default
+    variable: {}
+  - dirname: /
+    basepath: /
+    project: CMIP5
+    drs: default
+    variable: {}
+  - dirname: /this/is/root/TYPE/PROJECT/EXP/data
+    basepath: /this/is/root/
+    project: CMIP5
+    drs: BSC
+    variable:
+      type: TYPE
+      project: PROJECT
+      exp: EXP
+      dataset.lower: data
+  - dirname: /this/is/root/TEST/NAME
+    basepath: /this/is/root/
+    project: CMIP5
+    drs: default
+    variable: null
+  - dirname: /this/is/root/INST/DATA/EXP/FREQ/REALM/MIP/ENS/VERSION/NAME
+    basepath: /this/is/root
+    project: CMIP5
+    drs: DKRZ
+    variable:
+      institute: INST
+      dataset: DATA
+      exp: EXP
+      frequency: FREQ
+      modeling_realm: REALM
+      mip: MIP
+      ensemble: ENS
+      latestversion: VERSION
+      short_name: NAME
+  - dirname: /this/is/root/EXP/MIP/NAME/DATA/ENS/GRID/
+    basepath: /this/is/root/
+    project: CMIP6
+    drs: ETHZ
+    variable:
+      dataset: DATA
+      exp: EXP
+      mip: MIP
+      ensemble: ENS
+      short_name: NAME
+      grid: GRID
+  - dirname: /this/is/root/THIS/FAILS
+    basepath: /this/is/root/
+    project: CMIP6
+    drs: ETHZ
+    variable: null
+  - dirname: /this/is/root/Tier2/DATA
+    basepath: /this/is/root/
+    project: OBS
+    drs: default
+    variable:
+      tier: '2'
+      dataset: DATA
+  - dirname: /Tier1/DATA
+    basepath: /
+    project: OBS
+    drs: default
+    variable:
+      tier: '1'
+      dataset: DATA
+  - dirname: /this/is/root/ThisFails/DATA
+    basepath: /this/is/root/
+    project: OBS
+    drs: default
+    variable: null

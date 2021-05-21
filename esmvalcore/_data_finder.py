@@ -156,29 +156,6 @@ def _apply_caps(original, lower, upper):
     return original
 
 
-def _resolve_globs(dirname):
-    """Resolve wildcards in dirname."""
-    # resolve globs
-    dirs = glob.glob(dirname)
-
-    if len(dirs) > 0:
-        # warn if multiple folders are found
-        if len(dirs) > 1:
-            logger.warning("Multiple matches for fx variables found: %s", dirs)
-
-        # if an r0i0p0 folder has been found, choose this preferentially
-        r0i0p0_match = [d for d in dirs if "r0i0p0" in d]
-        if len(r0i0p0_match) > 0:
-            dirname = r0i0p0_match[0]
-        else:
-            dirname = dirs[0]
-    else:
-        # nothing found
-        logger.debug("Unable to resolve %s", dirname)
-
-    return dirname
-
-
 def _resolve_latestversion(dirname_template):
     """Resolve the 'latestversion' tag.
 
@@ -202,26 +179,51 @@ def _resolve_latestversion(dirname_template):
     return dirname_template
 
 
-def _resolve_wildcards_and_version(dirname):
-    """Resolve wildcards and version tag."""
+def _resolve_wildcards_and_version(dirname, basepath, project, drs):
+    """Resolve wildcards and latestversion tag."""
     if "{latestversion}" in dirname:
-        # Determine if any wildcards occur before
-        # {latestversion} and deal with them first
-        if dirname.find('*') < dirname.find('{latestversion}'):
-            # resolve globs before version tag first
-            dirname, latestversion_tail = dirname.split("{latestversion}")
-            dirname = _resolve_globs(dirname)
-            dirname = dirname + "{latestversion}" + latestversion_tail
+        dirname_version_wildcard = dirname.replace("{latestversion}", "*")
 
-        # resolve version, then any remaining globs after that.
-        dirname = _resolve_latestversion(dirname)
-        # resolve remaining globs that may still exist after the version tag
-        if "*" in dirname:
-            dirname = _resolve_globs(dirname)
+        # Find all directories that match the template
+        all_dirs = glob.glob(dirname_version_wildcard)
+
+        # Sort directories by version
+        all_dirs_dict = {}
+        for directory in all_dirs:
+            version = dir_to_var(
+                directory, basepath, project, drs)['latestversion']
+            all_dirs_dict.setdefault(version, [])
+            all_dirs_dict[version].append(directory)
+
+        # Select latest version
+        if not all_dirs_dict:
+            dirnames = []
+        elif 'latest' in all_dirs_dict:
+            dirnames = all_dirs_dict['latest']
+            print("dirnames", dirnames)
+        else:
+            all_versions = sorted(list(all_dirs_dict))
+            dirnames = all_dirs_dict[all_versions[-1]]
+
+    # No {latestversion} tag
     else:
-        dirname = _resolve_globs(dirname)
+        dirnames = sorted(glob.glob(dirname))
 
-    return dirname
+    # No directories found
+    if not dirnames:
+        logger.debug("Unable to resolve %s", dirname)
+        return dirname
+
+    # Exactly one directory found
+    if len(dirnames) == 1:
+        return dirnames[0]
+
+    # Warn if multiple directories have been found and prioritize r0i0p0
+    logger.warning("Multiple directories for fx variables found: %s", dirnames)
+    r0i0p0_matches = [d for d in dirnames if "r0i0p0" in d]
+    if r0i0p0_matches:
+        return r0i0p0_matches[0]
+    return dirnames[0]
 
 
 def _select_drs(input_type, drs, project):
@@ -261,7 +263,8 @@ def _find_input_dirs(variable, rootpath, drs):
         for base_path in root:
             dirname = os.path.join(base_path, dirname_template)
             if variable["frequency"] == "fx" and "*" in dirname:
-                dirname = _resolve_wildcards_and_version(dirname)
+                dirname = _resolve_wildcards_and_version(dirname, base_path,
+                                                         project, drs)
             else:
                 dirname = _resolve_latestversion(dirname)
             matches = glob.glob(dirname)
@@ -344,3 +347,38 @@ def get_statistic_output_file(variable, preproc_dir):
     outfile = template.format(**variable)
 
     return outfile
+
+
+def dir_to_var(dirname, basepath, project, drs):
+    """Convert directory path to variable :obj:`dict`."""
+    if dirname != os.sep:
+        dirname = dirname.rstrip(os.sep)
+    if basepath != os.sep:
+        basepath = basepath.rstrip(os.sep)
+    path_template = _select_drs("input_dir", drs, project).rstrip(os.sep)
+    rel_dir = os.path.relpath(dirname, basepath)
+    keys = path_template.split(os.sep)
+    vals = rel_dir.split(os.sep)
+    if len(keys) != len(vals):
+        raise ValueError(
+            f"Cannot extract tags '{path_template}' from directory "
+            f"'{rel_dir}' (root: '{basepath}') with different numbers of "
+            f"elements")
+    variable = {}
+    for (idx, full_key) in enumerate(keys):
+        matches = re.findall(r'.*\{(.*)\}.*', full_key)
+        if len(matches) != 1:
+            continue
+        key = matches[0]
+        regex = rf"{full_key.replace(key, '(.*)')}"
+        regex = regex.replace('{', '').replace('}', '')
+        matches = re.findall(regex, vals[idx])
+        while '' in matches:
+            matches.remove('')
+        if len(matches) != 1:
+            raise ValueError(
+                f"Regex pattern '{regex}' for '{full_key}' cannot be "
+                f"(uniquely) matched to element '{vals[idx]}' in directory "
+                f"'{dirname}'")
+        variable[key] = matches[0]
+    return variable
