@@ -42,7 +42,7 @@ def get_start_end_year(filename):
     date_pattern = r"((?:[0-9]{2}){2,6})"
     # We use (?:) in order not to captue the range, but directly both
     # dates separately
-    date_range_pattern = r"(?:"+date_pattern+r"[-_]"+date_pattern+r")"
+    date_range_pattern = r"(?:" + date_pattern + r"[-_]" + date_pattern + r")"
     # Next string allows to test that there is an allowed delimiter (or
     # string start or end) close to date range (or to single date)
     context = r"(?:^|-|_|$)"
@@ -70,7 +70,7 @@ def get_start_end_year(filename):
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
         message = f"Must load file {filename} for daterange " + \
-                 f"(because filename produced {daterange})"
+                  f"(because filename produced {daterange})"
         logger.debug(message)
         cubes = iris.load(filename)
 
