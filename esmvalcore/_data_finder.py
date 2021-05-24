@@ -59,6 +59,11 @@ def get_start_end_year(filename):
         dates = re.findall(single_date_pattern, stem)
         if len(dates) == 1:
             start_year = end_year = dates[0][:4]
+        elif len(dates) > 1:
+            # Check for dates at start or end of filename
+            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stem)
+            if len(outerdates) == 1:
+                start_year = end_year = outerdates[0][:4]
 
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
