@@ -37,25 +37,34 @@ def get_start_end_year(filename):
     stem = Path(filename).stem
     start_year = end_year = None
 
+    # We use (?:) in order not to capture pairs of digits, but directly whole date 
+    date_pattern = r"((?:[0-9]{2}){2,6})"
+    # We use (?:) in order not to captue the range, but directly both dates separately
+    date_range_pattern = r"(?:"+date_pattern+r"[-_]"+date_pattern+r")"
+    # Next string allows to test that there is an allowed delimiter (or
+    # string start or end) close to date range (or to single date)
+    context = r"(?:^|-|_|$)"
+    #
+    single_date_pattern = context + date_pattern + context
+    date_range_pattern = context + date_range_pattern + context
+    #
     # First check for a block of two potential dates separated by _ or -
-    daterange = re.findall(r'([0-9]{4,12}[-_][0-9]{4,12})', stem)
+    daterange = re.findall(date_range_pattern, stem)
     if daterange:
-        start_date, end_date = re.findall(r'([0-9]{4,12})', daterange[0])
+        start_date, end_date = daterange[0]
         start_year = start_date[:4]
         end_year = end_date[:4]
     else:
         # Check for single dates in the filename
-        dates = re.findall(r'([0-9]{4,12})', stem)
+        dates = re.findall(single_date_pattern, stem)
         if len(dates) == 1:
             start_year = end_year = dates[0][:4]
-        elif len(dates) > 1:
-            # Check for dates at start or end of filename
-            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stem)
-            if len(outerdates) == 1:
-                start_year = end_year = outerdates[0][:4]
 
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
+        message=f"Must load file {filename} for daterange "+\
+                 f"(because filename produced {daterange})"
+        logger.debug(message)
         cubes = iris.load(filename)
 
         for cube in cubes:
