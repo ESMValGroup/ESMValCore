@@ -58,7 +58,7 @@ def get_start_end_year(filename):
     # string start or end) close to date range (or to single date)
     context = r"(?:^|[-_]|$)"
     #
-    # First check for a block of two potential dates 
+    # First check for a block of two potential dates
     date_range_pattern = context + date_range_pattern + context
     daterange = re.search(date_range_pattern, stem)
     if daterange:
