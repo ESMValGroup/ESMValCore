@@ -84,8 +84,8 @@ def get_start_end_year(filename):
 
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
-        logger.debug(f"Must load file {filename} for daterange "
-                     f"(because filename produced {daterange})")
+        logger.debug("Must load file %s for daterange "%filename
+                     "(because filename produced %s)"%daterange)
         cubes = iris.load(filename)
 
         for cube in cubes:
