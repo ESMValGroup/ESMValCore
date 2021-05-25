@@ -12,7 +12,7 @@ from esmvalcore.cmor.check import cmor_check_metadata, cmor_check_data
 logger = logging.getLogger(__name__)
 
 
-def _load_fx(cube, var_cube, fx_info, check_level):
+def _load_fx(var_cube, fx_info, check_level):
     """Load and CMOR-check fx variables."""
     fx_cubes = iris.cube.CubeList()
 
@@ -169,7 +169,7 @@ def add_fx_variables(cube, fx_variables, check_level):
             continue
         if isinstance(fx_info['filename'], str):
             fx_info['filename'] = [fx_info['filename']]
-        fx_cube = _load_fx(fx_info, check_level)
+        fx_cube = _load_fx(cube, fx_info, check_level)
 
         if not fx_cube:
             continue

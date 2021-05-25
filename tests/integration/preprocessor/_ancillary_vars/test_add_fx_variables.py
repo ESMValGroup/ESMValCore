@@ -25,29 +25,44 @@ SHAPES_TO_BROADCAST = [
     ((1, ), (10, ), True),
     ((1, ), (10, 10), True),
     ((2, ), (10, ), False),
-    ((10, ), (), True),
-    ((10, ), (1, ), True),
+    ((10, ), (), False),
+    ((10, ), (1, ), False),
     ((10, ), (10, ), True),
     ((10, ), (10, 10), True),
-    ((10, ), (7, 1), True),
+    ((10, ), (7, 1), False),
     ((10, ), (10, 7), False),
     ((10, ), (7, 1, 10), True),
-    ((10, ), (7, 1, 1), True),
+    ((10, ), (7, 1, 1), False),
     ((10, ), (7, 1, 7), False),
     ((10, ), (7, 10, 7), False),
-    ((10, 1), (1, 1), True),
-    ((10, 1), (1, 100), True),
+    ((10, 1), (1, 1), False),
+    ((10, 1), (1, 100), False),
     ((10, 1), (10, 7), True),
-    ((10, 12), (10, 1), True),
-    ((10, 12), (), True),
-    ((10, 12), (1, ), True),
-    ((10, 12), (12, ), True),
-    ((10, 12), (1, 1), True),
-    ((10, 12), (1, 12), True),
-    ((10, 12), (10, 10, 1), True),
+    ((10, 12), (10, 1), False),
+    ((10, 1), (10, 12), True),
+    ((10, 12), (), False),
+    ((), (10, 12), True),
+    ((10, 12), (1, ), False),
+    ((1, ), (10, 12), True),
+    ((10, 12), (12, ), False),
+    ((10, 12), (1, 1), False),
+    ((1, 1), (10, 12), True),
+    ((10, 12), (1, 12), False),
+    ((1, 12), (10, 12), True),
+    ((10, 12), (10, 10, 1), False),
     ((10, 12), (10, 12, 1), False),
     ((10, 12), (10, 12, 12), False),
     ((10, 12), (10, 10, 12), True)]
+
+
+@pytest.mark.parametrize('shape_1,shape_2,out', SHAPES_TO_BROADCAST)
+def test_shape_is_broadcastable(shape_1, shape_2, out):
+    """Test check if two shapes are broadcastable."""
+    fx_cube = iris.cube.Cube(np.ones(shape_1))
+    cube = iris.cube.Cube(np.ones(shape_2))
+    is_broadcastable = _is_fx_broadcastable(fx_cube, cube)
+    assert is_broadcastable == out
+
 
 class Test:
     """Test class."""
@@ -99,15 +114,6 @@ class Test:
                                             (self.lats, 1),
                                             (self.lons, 2)
                                             ])
-
-
-    @pytest.mark.parametrize('shape_1,shape_2,out', SHAPES_TO_BROADCAST)
-    def test_shape_is_broadcastable(shape_1, shape_2, out):
-        """Test check if two shapes are broadcastable."""
-        fx_cube = iris.cube.Cube(np.ones(shape_1))
-        cube = iris.cube.Cube(np.ones(shape_2))
-        is_broadcastable = _is_fx_broadcastable(fx_cube, cube)
-        assert is_broadcastable == out
 
     def test_add_cell_measure_area(self, tmp_path):
         """Test add area fx variables as cell measures."""
@@ -229,10 +235,7 @@ class Test:
         cube.var_name = 'thetao'
         cube = add_fx_variables(cube, fx_vars, CheckLevels.IGNORE)
         assert cube.cell_measures() == []
-    
-    def test_broadcasting(self):
 
-        fx_data = np.ones((2, 3, 3, 3))
     def test_remove_fx_vars(self):
         """Test fx_variables are removed from cube."""
         cube = iris.cube.Cube(self.new_cube_3D_data,
