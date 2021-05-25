@@ -33,45 +33,59 @@ def find_files(dirnames, filenames):
 
 
 def get_start_end_year(filename):
-    """Get the start and end year from a file name."""
+    """Get the start and end year from a file name.
+
+    Examples of allowed dates : 1980, 198001, 19801231,
+    1980123123, 19801231T23, 19801231T2359, 19801231T235959,
+    19801231T235959Z
+
+    Dates must be surrounded by - or _ or string start or string end
+    (after removing filename suffix)
+
+    Look first for two dates separated by - or _, then for one single
+    date, and if they are multiple, for one date at start or end
+    """
     stem = Path(filename).stem
     start_year = end_year = None
 
-    # We use (?:) in order not to capture pairs of digits, but
-    # directly whole date
-    date_pattern = r"((?:[0-9]{2}){2,6})"
-    # We use (?:) in order not to captue the range, but directly both
-    # dates separately
-    date_range_pattern = r"(?:" + date_pattern + r"[-_]" + date_pattern + r")"
+    date_pattern = r"(?P<year>[0-9]{4})(?P<month>[01][0-9]" + \
+                   "(?P<day>[0-3][0-9](T?(?P<hour>[0-2][0-9]" + \
+                   "(?P<minute>[0-5][0-9](?P<second>[0-5][0-9]Z?)?)?)?)?)?)?"
+    end_date_pattern = date_pattern.replace(">", "_end>")
+    date_range_pattern = date_pattern + r"[-_]" + end_date_pattern
+    #
     # Next string allows to test that there is an allowed delimiter (or
     # string start or end) close to date range (or to single date)
-    context = r"(?:^|-|_|$)"
+    context = r"(?:^|[-_]|$)"
     #
-    single_date_pattern = context + date_pattern + context
+    # First check for a block of two potential dates 
     date_range_pattern = context + date_range_pattern + context
-    #
-    # First check for a block of two potential dates separated by _ or -
-    daterange = re.findall(date_range_pattern, stem)
+    daterange = re.search(date_range_pattern, stem)
     if daterange:
-        start_date, end_date = daterange[0]
-        start_year = start_date[:4]
-        end_year = end_date[:4]
+        start_year = daterange.group("year")
+        end_year = daterange.group("year_end")
     else:
         # Check for single dates in the filename
+        single_date_pattern = context + date_pattern + context
         dates = re.findall(single_date_pattern, stem)
         if len(dates) == 1:
-            start_year = end_year = dates[0][:4]
+            start_year = end_year = dates[0][0]
         elif len(dates) > 1:
             # Check for dates at start or end of filename
-            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stem)
-            if len(outerdates) == 1:
-                start_year = end_year = outerdates[0][:4]
+            start = re.search(r'^' + date_pattern, stem)
+            end = re.search(date_pattern + r'$', stem)
+            if start:
+                if end is None:
+                    start_year = end_year = start.group('year')
+                else:
+                    pass  # NOk if two dates
+            elif end:
+                start_year = end_year = end.group('year')
 
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
-        message = f"Must load file {filename} for daterange " + \
-                  f"(because filename produced {daterange})"
-        logger.debug(message)
+        logger.debug(f"Must load file {filename} for daterange "
+                     f"(because filename produced {daterange})")
         cubes = iris.load(filename)
 
         for cube in cubes:

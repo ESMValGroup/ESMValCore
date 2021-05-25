@@ -20,12 +20,16 @@ FILENAME_CASES = [
     ['19800101_var_control-1950_whatever.nc', 1980, 1980],
     ['var_control-1950_whatever_19800101.nc', 1980, 1980],
     ['CM61-LR-hist-03.1950_18500101_19491231_1M_concbc.nc', 1850, 1949],
+    [
+        'icon-2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_phy_3d_ml_20150101T000000Z.nc',
+        2015, 2015
+    ],
 ]
 
 
 @pytest.mark.parametrize('case', FILENAME_CASES)
 def test_get_start_end_year(case):
-    """Tests for get_start_end_year function"""
+    """Tests for get_start_end_year function."""
     filename, case_start, case_end = case
     start, end = get_start_end_year(filename)
     assert case_start == start
@@ -33,7 +37,7 @@ def test_get_start_end_year(case):
 
 
 def test_read_time_from_cube(monkeypatch, tmp_path):
-    """Try to get time from cube if no date in filename"""
+    """Try to get time from cube if no date in filename."""
     monkeypatch.chdir(tmp_path)
     temp_file = 'test.nc'
     cube = iris.cube.Cube([0, 0], var_name='var')
@@ -48,6 +52,6 @@ def test_read_time_from_cube(monkeypatch, tmp_path):
 
 
 def test_fails_if_no_date_present():
-    """Test raises if no date is present"""
+    """Test raises if no date is present."""
     with pytest.raises((ValueError, OSError)):
         get_start_end_year('var_whatever')
