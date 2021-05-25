@@ -52,10 +52,10 @@ def _load_fx(var_cube, fx_info, check_level):
 def _is_fx_broadcastable(fx_cube, cube):
     try:
         da.broadcast_to(fx_cube.core_data(), cube.shape)
-    except ValueError:
+    except ValueError as exc:
         logger.debug("Dimensions of %s and %s cubes do not match. "
-                     "Discarding use of %s as an fx_variable",
-                     cube.var_name, fx_cube.var_name)
+                     "Discarding use of fx_variable: %s",
+                     cube.var_name, fx_cube.var_name, exc)
         return False
     return True
 
