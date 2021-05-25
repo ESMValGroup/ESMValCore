@@ -3,6 +3,8 @@ from netCDF4 import Dataset
 
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Tas as BaseTas
+from ..fix import Fix
+from ..shared import fix_ocean_depth_coord
 
 
 class Cl(BaseCl):
@@ -48,3 +50,34 @@ Clw = Cl
 
 
 Tas = BaseTas
+
+
+class Omon(Fix):
+    """Fixes for ocean variables."""
+
+    def fix_metadata(self, cubes):
+        """Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            if cube.coords('latitude'):
+                cube.coord('latitude').var_name = 'lat'
+            if cube.coords('longitude'):
+                cube.coord('longitude').var_name = 'lon'
+
+            if cube.coords(axis='Z'):
+                if str(z.coords.units) == 'cm' and np.max(z.points)>10000.:
+                    z_coord.units = cf_units.Unit('m')
+                fix_ocean_depth_coord(cube)
+        return cubes
+
+
