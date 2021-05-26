@@ -13,7 +13,7 @@
 
 name: Conda Base Install
 
-# runs on a push on maain and at the end of every day
+# runs on a push on main and at the end of every day
 on:
   # triggering on push without branch name will run tests everytime
   # there is a push on any branch
