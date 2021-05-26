@@ -146,7 +146,7 @@ def _get_response(url):
     json_data = None
     if url.lower().startswith('https'):
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=5)
             if response.status_code == 200:
                 json_data = response.json()
             else:

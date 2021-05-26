@@ -1,6 +1,6 @@
 import pytest
 
-from esmvalcore._recipe import Recipe
+from esmvalcore._recipe import Recipe, _allow_skipping
 from esmvalcore._recipe_checks import RecipeError
 
 
@@ -14,7 +14,7 @@ class TestRecipe:
             },
         ]
 
-        expanded = Recipe._expand_ensemble(datasets)
+        expanded = Recipe._expand_tag(datasets, 'ensemble')
 
         ensembles = [
             'r1i2p3',
@@ -29,6 +29,31 @@ class TestRecipe:
         for i, ensemble in enumerate(ensembles):
             assert expanded[i] == {'dataset': 'XYZ', 'ensemble': ensemble}
 
+    def test_expand_subexperiment(self):
+
+        datasets = [
+            {
+                'dataset': 'XYZ',
+                'sub_experiment': 's(1998:2005)',
+            },
+        ]
+
+        expanded = Recipe._expand_tag(datasets, 'sub_experiment')
+
+        subexperiments = [
+            's1998',
+            's1999',
+            's2000',
+            's2001',
+            's2002',
+            's2003',
+            's2004',
+            's2005',
+        ]
+        for i, subexperiment in enumerate(subexperiments):
+            assert expanded[i] == {'dataset': 'XYZ',
+                                   'sub_experiment': subexperiment}
+
     def test_expand_ensemble_nolist(self):
 
         datasets = [
@@ -39,4 +64,38 @@ class TestRecipe:
         ]
 
         with pytest.raises(RecipeError):
-            Recipe._expand_ensemble(datasets)
+            Recipe._expand_tag(datasets, 'ensemble')
+
+
+VAR_A = {'dataset': 'A'}
+VAR_A_REF_A = {'dataset': 'A', 'reference_dataset': 'A'}
+VAR_A_REF_B = {'dataset': 'A', 'reference_dataset': 'B'}
+
+
+TEST_ALLOW_SKIPPING = [
+    ([], VAR_A, {}, False),
+    ([], VAR_A, {'skip-nonexistent': False}, False),
+    ([], VAR_A, {'skip-nonexistent': True}, True),
+    ([], VAR_A_REF_A, {}, False),
+    ([], VAR_A_REF_A, {'skip-nonexistent': False}, False),
+    ([], VAR_A_REF_A, {'skip-nonexistent': True}, False),
+    ([], VAR_A_REF_B, {}, False),
+    ([], VAR_A_REF_B, {'skip-nonexistent': False}, False),
+    ([], VAR_A_REF_B, {'skip-nonexistent': True}, True),
+    (['A'], VAR_A, {}, False),
+    (['A'], VAR_A, {'skip-nonexistent': False}, False),
+    (['A'], VAR_A, {'skip-nonexistent': True}, False),
+    (['A'], VAR_A_REF_A, {}, False),
+    (['A'], VAR_A_REF_A, {'skip-nonexistent': False}, False),
+    (['A'], VAR_A_REF_A, {'skip-nonexistent': True}, False),
+    (['A'], VAR_A_REF_B, {}, False),
+    (['A'], VAR_A_REF_B, {'skip-nonexistent': False}, False),
+    (['A'], VAR_A_REF_B, {'skip-nonexistent': True}, False),
+]
+
+
+@pytest.mark.parametrize('ancestors,var,cfg,out', TEST_ALLOW_SKIPPING)
+def test_allow_skipping(ancestors, var, cfg, out):
+    """Test ``_allow_skipping``."""
+    result = _allow_skipping(ancestors, var, cfg)
+    assert result is out

@@ -2,7 +2,7 @@
 Mask module.
 
 Module that performs a number of masking
-operations that include: masking with fx files, masking with
+operations that include: masking with ancillary variables, masking with
 Natural Earth shapefiles (land or ocean), masking on thresholds,
 missing values masking.
 """
@@ -19,28 +19,6 @@ from iris.analysis import Aggregator
 from iris.util import rolling_window
 
 logger = logging.getLogger(__name__)
-
-
-def _check_dims(cube, mask_cube):
-    """Check for same ndim and x-y dimensions for data and mask cubes."""
-    x_dim = cube.coord('longitude').points.ndim
-    y_dim = cube.coord('latitude').points.ndim
-    mx_dim = mask_cube.coord('longitude').points.ndim
-    my_dim = mask_cube.coord('latitude').points.ndim
-    len_x = len(cube.coord('longitude').points)
-    len_y = len(cube.coord('latitude').points)
-    len_mx = len(mask_cube.coord('longitude').points)
-    len_my = len(mask_cube.coord('latitude').points)
-    if (x_dim == mx_dim and y_dim == my_dim and len_x == len_mx
-            and len_y == len_my):
-        logger.debug('Data cube and fx mask have same dims')
-        return True
-
-    logger.debug(
-        'Data cube and fx mask differ in dims: '
-        'cube: ((%i, %i), grid=(%i, %i)), mask: ((%i, %i), grid=(%i, %i))',
-        x_dim, y_dim, len_x, len_y, mx_dim, my_dim, len_mx, len_my)
-    return False
 
 
 def _get_fx_mask(fx_data, fx_option, mask_type):
@@ -73,36 +51,31 @@ def _get_fx_mask(fx_data, fx_option, mask_type):
 
 def _apply_fx_mask(fx_mask, var_data):
     """Apply the fx data extracted mask on the actual processed data."""
-    # Broadcast mask
-    var_mask = np.zeros_like(var_data, bool)
-    var_mask = np.broadcast_to(fx_mask, var_mask.shape).copy()
-
     # Apply mask across
     if np.ma.is_masked(var_data):
-        var_mask |= var_data.mask
+        fx_mask |= var_data.mask
 
     # Build the new masked data
-    var_data = np.ma.array(var_data, mask=var_mask, fill_value=1e+20)
+    var_data = np.ma.array(var_data, mask=fx_mask, fill_value=1e+20)
 
     return var_data
 
 
-def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
+def mask_landsea(cube, mask_out, always_use_ne_mask=False):
     """
     Mask out either land mass or sea (oceans, seas and lakes).
 
-    It uses dedicated fx files (sftlf or sftof) or, in their absence, it
-    applies a Natural Earth mask (land or ocean contours). Note that the
-    Natural Earth masks have different resolutions: 10m for land, and 50m
-    for seas; these are more than enough for ESMValTool puprpose.
+    It uses dedicated ancillary variables (sftlf or sftof) or,
+    in their absence, it applies a
+    Natural Earth mask (land or ocean contours).
+    Note that the Natural Earth masks have different resolutions:
+    10m for land, and 50m for seas.
+    These are more than enough for ESMValTool purposes.
 
     Parameters
     ----------
     cube: iris.cube.Cube
         data cube to be masked.
-
-    fx_variables: dict
-        dict: keys: fx variables, values: full paths to fx files.
 
     mask_out: str
         either "land" to mask out land mass or "sea" to mask out seas.
@@ -132,30 +105,24 @@ def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
-    fx_files = fx_variables.values()
-    if any(fx_files) and not always_use_ne_mask:
-        fx_cubes = {}
-        for fx_file in fx_files:
-            if not fx_file:
-                continue
-            fxfile_members = os.path.basename(fx_file).split('_')
-            for fx_root in ['sftlf', 'sftof']:
-                if fx_root in fxfile_members:
-                    fx_cubes[fx_root] = iris.load_cube(fx_file)
-
+    if not always_use_ne_mask:
         # preserve importance order: try stflf first then sftof
-        if ('sftlf' in fx_cubes.keys()
-                and _check_dims(cube, fx_cubes['sftlf'])):
-            landsea_mask = _get_fx_mask(fx_cubes['sftlf'].data, mask_out,
-                                        'sftlf')
+        fx_cube = None
+        try:
+            fx_cube = cube.ancillary_variable('land_area_fraction')
+        except iris.exceptions.AncillaryVariableNotFoundError:
+            try:
+                fx_cube = cube.ancillary_variable('sea_area_fraction')
+            except iris.exceptions.AncillaryVariableNotFoundError:
+                logger.debug(
+                    'Ancillary variables land/sea area fraction '
+                    'not found in cube. Check fx_file availability.')
+
+        if fx_cube:
+            landsea_mask = _get_fx_mask(
+                fx_cube.data, mask_out, fx_cube.var_name)
             cube.data = _apply_fx_mask(landsea_mask, cube.data)
-            logger.debug("Applying land-sea mask: sftlf")
-        elif ('sftof' in fx_cubes.keys()
-              and _check_dims(cube, fx_cubes['sftof'])):
-            landsea_mask = _get_fx_mask(fx_cubes['sftof'].data, mask_out,
-                                        'sftof')
-            cube.data = _apply_fx_mask(landsea_mask, cube.data)
-            logger.debug("Applying land-sea mask: sftof")
+            logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
         else:
             if cube.coord('longitude').points.ndim < 2:
                 cube = _mask_with_shp(cube, shapefiles[mask_out], [
@@ -184,20 +151,19 @@ def mask_landsea(cube, fx_variables, mask_out, always_use_ne_mask=False):
     return cube
 
 
-def mask_landseaice(cube, fx_variables, mask_out):
+def mask_landseaice(cube, mask_out):
     """
     Mask out either landsea (combined) or ice.
 
     Function that masks out either landsea (land and seas) or ice (Antarctica
-    and Greenland and some wee glaciers). It uses dedicated fx files (sftgif).
+    and Greenland and some wee glaciers).
+
+    It uses dedicated ancillary variables (sftgif).
 
     Parameters
     ----------
     cube: iris.cube.Cube
         data cube to be masked.
-
-    fx_variables: dict
-        dict: keys: fx variables, values: full paths to fx files.
 
     mask_out: str
         either "landsea" to mask out landsea or "ice" to mask out ice.
@@ -210,26 +176,20 @@ def mask_landseaice(cube, fx_variables, mask_out):
     Raises
     ------
     ValueError
-        Error raised if fx mask and data have different dimensions.
-    ValueError
-        Error raised if fx files list is empty.
+        Error raised if landsea-ice mask not found as an ancillary variable.
 
     """
     # sftgif is the only one so far but users can set others
-    fx_files = fx_variables.values()
-    if any(fx_files):
-        for fx_file in fx_files:
-            if not fx_file:
-                continue
-            fx_cube = iris.load_cube(fx_file)
-
-            if _check_dims(cube, fx_cube):
-                landice_mask = _get_fx_mask(fx_cube.data, mask_out, 'sftgif')
-                cube.data = _apply_fx_mask(landice_mask, cube.data)
-                logger.debug("Applying landsea-ice mask: sftgif")
-            else:
-                msg = "Landsea-ice mask and data have different dimensions."
-                raise ValueError(msg)
+    fx_cube = None
+    try:
+        fx_cube = cube.ancillary_variable('land_ice_area_fraction')
+    except iris.exceptions.AncillaryVariableNotFoundError:
+        logger.debug('Ancillary variable land ice area fraction '
+                     'not found in cube. Check fx_file availability.')
+    if fx_cube:
+        landice_mask = _get_fx_mask(fx_cube.data, mask_out, fx_cube.var_name)
+        cube.data = _apply_fx_mask(landice_mask, cube.data)
+        logger.debug("Applying landsea-ice mask: sftgif")
     else:
         msg = "Landsea-ice mask could not be found. Stopping. "
         raise ValueError(msg)
