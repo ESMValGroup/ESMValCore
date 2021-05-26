@@ -172,7 +172,7 @@ def _get_concatenation_error(cubes):
 
 
 def _fix_cube_endianess(cubes):
-    """Transform cubes in big endian to little"""
+    """Transform cubes in big endian to little."""
     for cube in cubes:
         if cube.dtype.byteorder == ">":
             logger.warning("Changing cube endianess to little. This may be "
