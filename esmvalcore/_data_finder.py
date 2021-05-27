@@ -47,10 +47,15 @@ def get_start_end_year(filename):
     """
     stem = Path(filename).stem
     start_year = end_year = None
-
-    date_pattern = r"(?P<year>[0-9]{4})(?P<month>[01][0-9]" + \
-                   "(?P<day>[0-3][0-9](T?(?P<hour>[0-2][0-9]" + \
-                   "(?P<minute>[0-5][0-9](?P<second>[0-5][0-9]Z?)?)?)?)?)?)?"
+    #
+    time_pattern = (r"(?P<hour>[0-2][0-9]"
+                    r"(?P<minute>[0-5][0-9]" 
+                    r"(?P<second>[0-5][0-9])?)?Z?)")
+    date_pattern = (r"(?P<year>[0-9]{4})"
+                    r"(?P<month>[01][0-9]"
+                    r"(?P<day>[0-3][0-9]"
+                    rf"(T?{time_pattern})?)?)?")
+    #
     end_date_pattern = date_pattern.replace(">", "_end>")
     date_range_pattern = date_pattern + r"[-_]" + end_date_pattern
     #
@@ -71,14 +76,11 @@ def get_start_end_year(filename):
         if len(dates) == 1:
             start_year = end_year = dates[0][0]
         elif len(dates) > 1:
-            # Check for dates at start or end of filename
+            # Check for dates at start or (exclusive or) end of filename
             start = re.search(r'^' + date_pattern, stem)
             end = re.search(date_pattern + r'$', stem)
-            if start:
-                if end is None:
-                    start_year = end_year = start.group('year')
-                else:
-                    pass  # NOk if two dates
+            if start and not end:
+                start_year = end_year = start.group('year')
             elif end:
                 start_year = end_year = end.group('year')
 
