@@ -49,7 +49,7 @@ def get_start_end_year(filename):
     start_year = end_year = None
     #
     time_pattern = (r"(?P<hour>[0-2][0-9]"
-                    r"(?P<minute>[0-5][0-9]" 
+                    r"(?P<minute>[0-5][0-9]"
                     r"(?P<second>[0-5][0-9])?)?Z?)")
     date_pattern = (r"(?P<year>[0-9]{4})"
                     r"(?P<month>[01][0-9]"
