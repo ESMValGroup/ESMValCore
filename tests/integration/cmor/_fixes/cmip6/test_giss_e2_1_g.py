@@ -35,4 +35,3 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is ClFixHybridPressureCoord
-
