@@ -11,7 +11,7 @@ import iris.exceptions
 import numpy as np
 import yaml
 
-from ._other import fix_cube_endianess
+from ._other import fix_cubes_endianness
 from .._task import write_ncl_settings
 from ..cmor._fixes.shared import AtmosphereSigmaFactory
 from ._time import extract_time
@@ -180,7 +180,7 @@ def concatenate(cubes):
         return cubes[0]
 
     _fix_cube_attributes(cubes)
-    fix_cube_endianess(cubes)
+    fix_cubes_endianness(cubes)
 
     if len(cubes) > 1:
         # order cubes by first time point

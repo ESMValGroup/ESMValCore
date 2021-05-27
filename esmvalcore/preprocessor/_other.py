@@ -41,22 +41,49 @@ def clip(cube, minimum=None, maximum=None):
     return cube
 
 
-def fix_cube_endianess(cubes):
+def fix_cubes_endianness(cubes):
     """Transform cubes in big endian to little."""
     for cube in cubes:
         if cube.dtype.byteorder == ">":
-            if cube.has_lazy_data():
-                # byteswap and newbyteorder are not ufuncs and are not supported
-                # neither by dask or iris. The workaround is to use map_blocks
-                # to call the appropiate numpy functions over the dask array
-                # returned by core_data() See
-                # https://github.com/dask/dask/issues/5689
-                cube.data = cube.core_data().map_blocks(
-                    np.ndarray.byteswap, True).map_blocks(
-                    np.ndarray.newbyteorder
-                )
-                cube.coords =
-            else:
-                # Directly swap the data
-                cube.data = cube.data.byteswap().newbyteorder()
+            cube.data = _byteswap_array(cube.core_data())
+            # Swap the coords also if neccesary
+            for coord in cube.coords():
+                if coord.dtype.byteorder == ">":
+                    coord.points = _byteswap_array(coord.core_points())
+                    if (coord.bounds is not None) and (coord.bounds.dtype.byteorder == ">"):
+                        coord.bounds = _byteswap_array(coord.core_bounds())
     return cubes
+
+
+def _byteswap_array(arr):
+    """
+    Swaps the bytes of a numpy or dask array
+    """
+    if isinstance(arr, da.Array):
+        return _byteswap_dask_array(arr)
+    elif isinstance(arr, np.ndarray):
+        return _byteswap_numpy_array(arr)
+    else:
+        raise NotImplementedError("Data type not supported")
+
+
+def _byteswap_dask_array(arr):
+    """
+    Swaps the bytes of a dask array
+
+    byteswap and newbyteorder are not ufuncs and are not supported
+    neither by dask or iris. The workaround is to use map_blocks
+    to call the appropiate numpy functions over the dask array chunks
+    returned by core_data() See
+    https://github.com/dask/dask/issues/5689
+    """
+    swapped_da = arr.map_blocks(np.ndarray.byteswap).map_blocks(
+                    np.ndarray.newbyteorder)
+    return swapped_da
+
+
+def _byteswap_numpy_array(arr):
+    """
+    Swaps the bytes of a numpy array
+    """
+    return arr.byteswap().newbyteorder()

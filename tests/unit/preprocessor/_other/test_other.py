@@ -12,7 +12,7 @@ from cf_units import Unit
 from iris.cube import Cube
 from numpy.testing import assert_array_equal
 
-from esmvalcore.preprocessor._other import clip, fix_cube_endianess
+from esmvalcore.preprocessor._other import clip, fix_cubes_endianness
 
 
 class TestOther(unittest.TestCase):
@@ -46,9 +46,9 @@ class TestOther(unittest.TestCase):
             clip(cube, 10, 8)
 
     @pytest.mark.parametrize("lazy", (True, False))
-    def test_fix_cube_endianess_dask(self, lazy=True):
+    def test_fix_cubes_endianness(self, lazy=True):
 
-        def make_cube(data, coords, big_endian=False):
+        def make_cube(data, big_endian=False):
             dtype = ">f8" if big_endian else "<f8"
             data = np.array(data, dtype=dtype)
             if lazy:
@@ -72,15 +72,12 @@ class TestOther(unittest.TestCase):
             )
             return ocube
 
-        test_cubes = [
-            make_cube(vals, vals)
-            for vals in [(1, 2), (3, 4), (5, 6)]
-        ]
-        big_endian_cube = make_cube([7., 8.], [7., 8.], big_endian=True)
-        little_endian_cube = make_cube([7., 8.], [7., 8.], big_endian=False)
-        expected_cubes = [c.copy() for c in test_cubes] + [little_endian_cube]
-        test_cubes.append(big_endian_cube)
-        actual_cubes = fix_cube_endianess(test_cubes)
+        big_endian_cube = make_cube([7., 8.], big_endian=True)
+        little_endian_cube = make_cube([7., 8.], big_endian=False)
+        test_cubes = [make_cube(vals) for vals in [(1, 2), (3, 4), (5, 6)]]
+        test_cubes += [big_endian_cube]
+        expected_cubes = [c.copy() for c in test_cubes[:-1]] + [little_endian_cube]
+        actual_cubes = fix_cubes_endianness(test_cubes)
         self.assertEqual(actual_cubes, expected_cubes)
 
 
