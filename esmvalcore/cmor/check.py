@@ -696,6 +696,11 @@ class CMORCheck():
                 cmor_points = [float(val) for val in coord_info.requested]
             except ValueError:
                 cmor_points = coord_info.requested
+            if coord.points.ndim != 1:
+                self.report_warning(
+                    "Cannot check requested values of {}D coordinate {} since "
+                    "it is not 1D", coord.points.ndim, var_name)
+                return
             coord_points = list(coord.points)
             for point in cmor_points:
                 if point not in coord_points:

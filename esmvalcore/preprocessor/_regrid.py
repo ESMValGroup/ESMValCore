@@ -467,11 +467,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                 [coord] = coords
                 cube.remove_coord(coord)
 
-    # Perform the horizontal regridding.
+    # Perform the horizontal regridding and preserve data type
+    original_dtype = cube.core_data().dtype
     if _attempt_irregular_regridding(cube, scheme):
         cube = esmpy_regrid(cube, target_grid, scheme)
     else:
         cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+    cube.data = cube.core_data().astype(original_dtype)
 
     return cube
 
