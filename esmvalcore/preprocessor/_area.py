@@ -22,14 +22,12 @@ from ._shared import (
 logger = logging.getLogger(__name__)
 
 
-# slice cube over a restricted area (box)
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
                    end_latitude):
     """Extract a region from a cube.
 
     Function that subsets a cube on a box (start_longitude, end_longitude,
     start_latitude, end_latitude)
-    This function is a restriction of masked_cube_lonlat().
 
     Parameters
     ----------
