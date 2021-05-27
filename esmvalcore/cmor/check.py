@@ -429,6 +429,7 @@ class CMORCheck():
                                               'exist')
 
     def _check_generic_level_dim_names(self, key, coordinate):
+        """Check name of generic level coordinate."""
         standard_name = None
         out_name = None
         name = None
@@ -451,8 +452,7 @@ class CMORCheck():
             if standard_name:
                 if not out_name:
                     self.report_error(
-                        f'Generic level coordinate {key} '
-                        'has wrong var_name.', )
+                        f'Generic level coordinate {key} has wrong var_name.')
                 level = coordinate.generic_lev_coords[name]
                 level.generic_level = True
                 level.generic_lev_coords = self._cmor_var.coordinates[
@@ -464,17 +464,49 @@ class CMORCheck():
             else:
                 if out_name:
                     self.report_critical(
-                        f'Generic level coordinate {key} '
-                        'has wrong standard_name '
-                        'or is not set.', )
+                        f'Generic level coordinate {key} with out_name '
+                        f'{out_name} has wrong standard_name or is not set.')
                 else:
-                    self.report_critical(self._does_msg, key, 'exist')
+                    self._check_alternative_dim_names(key)
+
+    def _check_alternative_dim_names(self, key):
+        """Check for viable alternatives to generic level coordinates."""
+        alternative_coord = None
+        allowed_alternatives = {
+            'alevel': ['alt40', 'plev19', 'plevs'],
+        }
+        all_coords = CMOR_TABLES[self._cmor_var.table_type].coords
+        for allowed_alternative in allowed_alternatives.get(key, []):
+            if allowed_alternative in all_coords:
+                coord_info = all_coords[allowed_alternative]
+                try:
+                    cube_coord = self._cube.coord(var_name=coord_info.out_name)
+                    if (cube_coord.standard_name is None
+                            and coord_info.standard_name == ''):
+                        alternative_coord = coord_info
+                        break
+                    if cube_coord.standard_name == coord_info.standard_name:
+                        alternative_coord = coord_info
+                        break
+                    self.report_warning(
+                        f"Found alternative coordinate '{coord_info.out_name}'"
+                        f" for generic level coordinate '{key}' with wrong "
+                        f"standard_name '{cube_coord.standard_name}' "
+                        f"(expected '{coord_info.standard_name}')")
+                    break
+                except iris.exceptions.CoordinateNotFoundError:
+                    pass
+        if alternative_coord is None:
+            self.report_critical(self._does_msg, key, 'exist')
+            return
+        self.report_debug_message(
+            f"Found alternative coordinate '{alternative_coord.out_name}' "
+            f"for generic level coordinate '{key}'")
 
     def _check_coords(self):
         """Check coordinates."""
-
         for coordinate in self._cmor_var.coordinates.values():
-            # Cannot check generic_level coords as no CMOR information
+            # Cannot check generic_level coords with no CMOR information
             if coordinate.generic_level and not coordinate.out_name:
                 continue
             var_name = coordinate.out_name
