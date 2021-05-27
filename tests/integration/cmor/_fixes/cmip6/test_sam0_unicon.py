@@ -1,5 +1,8 @@
 """Test fixes for SAM0-UNICON."""
-from esmvalcore.cmor._fixes.cmip6.giss_e2_1_g import Nbp as BaseNbp
+import iris
+import numpy as np
+import pytest
+
 from esmvalcore.cmor._fixes.cmip6.sam0_unicon import Cl, Cli, Clw, Nbp
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
@@ -44,6 +47,21 @@ def test_get_nbp_fix():
     assert fix == [Nbp(None)]
 
 
-def test_nbp_fix():
-    """Test fix for ``nbp``."""
-    assert Nbp is BaseNbp
+@pytest.fixture
+def nbp_cube():
+    """``nbp`` cube."""
+    cube = iris.cube.Cube(
+        [1.0],
+        var_name='nbp',
+        standard_name='surface_net_downward_mass_flux_of_carbon_dioxide'
+        '_expressed_as_carbon_due_to_all_land_processes',
+        units='kg m-2 s-1',
+    )
+    return cube
+
+
+def test_nbp_fix_data(nbp_cube):
+    """Test ``fix_data`` for ``nbp``."""
+    fix = Nbp(None)
+    out_cube = fix.fix_data(nbp_cube)
+    np.testing.assert_allclose(out_cube.data, [-1.0])
