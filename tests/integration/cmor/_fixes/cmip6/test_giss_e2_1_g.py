@@ -1,5 +1,5 @@
 """Test fixes for GISS-E2-1-G."""
-from esmvalcore.cmor._fixes.cmip6.giss_e2_1_g import Cl, Cli, Clw, Nbp
+from esmvalcore.cmor._fixes.cmip6.giss_e2_1_g import Cl, Cli, Clw
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 
