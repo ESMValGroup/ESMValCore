@@ -261,6 +261,10 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
         combined_slice = _combine(single_model_slices)
         collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
                                                    **kwargs)
+
+        # iris collapse seems to change dtype on some cubes, fix this
+        collapsed_slice.data = collapsed_slice.data.astype(np.float32)
+
         result_slices.append(collapsed_slice)
 
     result_cube = iris.cube.CubeList(result_slices).merge_cube()
