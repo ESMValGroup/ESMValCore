@@ -1,31 +1,10 @@
 """Fixes for GFDL-ESM4 model."""
+from ..common import SiconcFixScalarCoord
 from ..fix import Fix
 from ..shared import (
     add_scalar_depth_coord,
-    add_scalar_typesi_coord,
     fix_ocean_depth_coord,
 )
-
-
-class Siconc(Fix):
-    """Fixes for siconc."""
-
-    def fix_metadata(self, cubes):
-        """Add typesi coordinate.
-
-        Parameters
-        ----------
-        cubes : iris.cube.CubeList
-            Input cubes.
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        cube = self.get_cube_from_list(cubes)
-        add_scalar_typesi_coord(cube)
-        return cubes
 
 
 class Fgco2(Fix):
@@ -71,3 +50,6 @@ class Omon(Fix):
                 if z_coord.standard_name is None:
                     fix_ocean_depth_coord(cube)
         return cubes
+
+
+Siconc = SiconcFixScalarCoord
