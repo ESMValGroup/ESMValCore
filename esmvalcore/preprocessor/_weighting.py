@@ -7,43 +7,31 @@ import iris
 logger = logging.getLogger(__name__)
 
 
-def _get_land_fraction(cube, fx_variables):
+def _get_land_fraction(cube):
     """Extract land fraction as :mod:`dask.array`."""
+    fx_cube = None
     land_fraction = None
     errors = []
-    if not fx_variables:
-        errors.append("No fx files given.")
-        return (land_fraction, errors)
-    for (fx_var, fx_path) in fx_variables.items():
-        if not fx_path:
-            errors.append(f"File for '{fx_var}' not found.")
-            continue
-        fx_cube = iris.load_cube(fx_path)
-        if not _shape_is_broadcastable(fx_cube.shape, cube.shape):
+    try:
+        fx_cube = cube.ancillary_variable('land_area_fraction')
+    except iris.exceptions.AncillaryVariableNotFoundError:
+        try:
+            fx_cube = cube.ancillary_variable('sea_area_fraction')
+        except iris.exceptions.AncillaryVariableNotFoundError:
             errors.append(
-                f"Cube '{fx_var}' with shape {fx_cube.shape} not "
-                f"broadcastable to cube '{cube.var_name}' with shape "
-                f"{cube.shape}.")
-            continue
-        if fx_var == 'sftlf':
-            land_fraction = fx_cube.core_data() / 100.0
-            break
-        if fx_var == 'sftof':
-            land_fraction = 1.0 - fx_cube.core_data() / 100.0
-            break
-        errors.append(
-            f"Cannot calculate land fraction from '{fx_var}', expected "
-            f"'sftlf' or 'sftof'.")
+                'Ancillary variables land/sea area fraction '
+                'not found in cube. Check fx_file availability.')
+            return (land_fraction, errors)
+
+    if fx_cube.var_name == 'sftlf':
+        land_fraction = fx_cube.core_data() / 100.0
+    if fx_cube.var_name == 'sftof':
+        land_fraction = 1.0 - fx_cube.core_data() / 100.0
+
     return (land_fraction, errors)
 
 
-def _shape_is_broadcastable(shape_1, shape_2):
-    """Check if two :mod:`numpy.array' shapes are broadcastable."""
-    return all((m == n) or (m == 1) or (n == 1)
-               for (m, n) in zip(shape_1[::-1], shape_2[::-1]))
-
-
-def weighting_landsea_fraction(cube, fx_variables, area_type):
+def weighting_landsea_fraction(cube, area_type):
     """Weight fields using land or sea fraction.
 
     This preprocessor function weights a field with its corresponding land or
@@ -58,9 +46,6 @@ def weighting_landsea_fraction(cube, fx_variables, area_type):
     ----------
     cube : iris.cube.Cube
         Data cube to be weighted.
-    fx_variables : dict
-        Dictionary holding ``var_name`` (keys) and full paths (values) to the
-        fx files as ``str`` or empty ``list`` (if not available).
     area_type : str
         Use land (``'land'``) or sea (``'sea'``) fraction for weighting.
 
@@ -74,14 +59,13 @@ def weighting_landsea_fraction(cube, fx_variables, area_type):
     TypeError
         ``area_type`` is not ``'land'`` or ``'sea'``.
     ValueError
-        Land/sea fraction variables ``sftlf`` or ``sftof`` not found or shape
-        of them is not broadcastable to ``cube``.
+        Land/sea fraction variables ``sftlf`` or ``sftof`` not found.
 
     """
     if area_type not in ('land', 'sea'):
         raise TypeError(
             f"Expected 'land' or 'sea' for area_type, got '{area_type}'")
-    (land_fraction, errors) = _get_land_fraction(cube, fx_variables)
+    (land_fraction, errors) = _get_land_fraction(cube)
     if land_fraction is None:
         raise ValueError(
             f"Weighting of '{cube.var_name}' with '{area_type}' fraction "
