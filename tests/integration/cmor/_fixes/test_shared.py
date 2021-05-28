@@ -334,7 +334,7 @@ def test_add_scalar_typesi_coord(cube_in, typesi):
     """Test adding of scalar typesi coordinate."""
     cube_in = cube_in.copy()
     if typesi is None:
-        typesi = 'default'
+        typesi = 'sea_ice'
     typesi_coord = iris.coords.AuxCoord(typesi,
                                         var_name='type',
                                         standard_name='area_type',
@@ -342,7 +342,7 @@ def test_add_scalar_typesi_coord(cube_in, typesi):
                                         units=Unit('no unit'))
     with pytest.raises(iris.exceptions.CoordinateNotFoundError):
         cube_in.coord('area_type')
-    if typesi == 'default':
+    if typesi == 'sea_ice':
         cube_out = add_scalar_typesi_coord(cube_in)
     else:
         cube_out = add_scalar_typesi_coord(cube_in, typesi)
