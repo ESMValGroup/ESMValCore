@@ -78,7 +78,7 @@ structures.
 Synda
 -----
 
-If `synda <http://prodiguer.github.io/synda/>`_ is used to download data,
+If the `synda install <https://prodiguer.github.io/synda/sdt/user_guide.html#synda-install>`_ command is used to download data,
 it maintains the directory structure as on ESGF. To find data downloaded by
 synda, use the ``SYNDA`` ``drs`` parameter.
 
