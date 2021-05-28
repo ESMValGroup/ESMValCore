@@ -30,7 +30,7 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
-        'cf-units',
+        'cf-units>=2.1.5',
         'dask[array]',
         'fiona',
         'fire',
