@@ -1,7 +1,14 @@
 """Tests for the fixes of CESM2-WACCM-FV2."""
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl as BaseCl
-from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import Cl, Cli, Clw, Tas
+from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
+    Cl,
+    Cli,
+    Clw,
+    Siconc,
+    Tas,
+)
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor.fix import Fix
 
 
@@ -36,6 +43,17 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is BaseCl
+
+
+def test_get_siconc_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM-FV2', 'SImon', 'siconc')
+    assert fix == [Siconc(None)]
+
+
+def test_siconc_fix():
+    """Test fix for ``siconc``."""
+    assert Siconc is SiconcFixScalarCoord
 
 
 def test_get_tas_fix():

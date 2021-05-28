@@ -14,9 +14,11 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Clw,
     Fgco2,
     Omon,
+    Siconc,
     Tas,
     Tos,
 )
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -285,6 +287,12 @@ def test_get_fgco2_fix():
     assert fix == [Fgco2(None), Omon(None)]
 
 
+def test_get_siconc_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2', 'SImon', 'siconc')
+    assert fix == [Siconc(None)]
+
+
 def test_tas_fix_metadata(tas_cubes):
     """Test ``fix_metadata`` for ``tas``."""
     for cube in tas_cubes:
@@ -366,3 +374,8 @@ def test_fgco2_fix_metadata():
     # Check values of depth coordinate
     np.testing.assert_allclose(depth_coord.points, 0.0)
     assert depth_coord.bounds is None
+
+
+def test_siconc_fix():
+    """Test fix for ``siconc``."""
+    assert Siconc is SiconcFixScalarCoord
