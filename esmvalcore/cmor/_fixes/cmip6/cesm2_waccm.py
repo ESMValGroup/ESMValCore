@@ -2,6 +2,7 @@
 from netCDF4 import Dataset
 
 from .cesm2 import Cl as BaseCl
+from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Tas as BaseTas
 from ..common import SiconcFixScalarCoord
 from ..fix import Fix
@@ -47,6 +48,9 @@ Cli = Cl
 
 
 Clw = Cl
+
+
+Fgco2 = BaseFgco2
 
 
 Siconc = SiconcFixScalarCoord

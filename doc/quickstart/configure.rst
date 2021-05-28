@@ -174,7 +174,7 @@ Most users and diagnostic developers will not need to change this file,
 but it may be useful to understand its content.
 It will be installed along with ESMValCore and can also be viewed on GitHub:
 `esmvalcore/config-developer.yml
-<https://github.com/ESMValGroup/ESMValCore/blob/master/esmvalcore/config-developer.yml>`_.
+<https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
 This configuration file describes the file system structure and CMOR tables for several
 key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
 ETHZ, SMHI, BSC). CMIP data is stored as part of the Earth System Grid
@@ -270,7 +270,7 @@ Project CMOR table configuration
 --------------------------------
 
 ESMValCore comes bundled with several CMOR tables, which are stored in the directory
-`esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/cmor/tables>`_.
+`esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_.
 These are copies of the tables available from `PCMDI <https://github.com/PCMDI>`_.
 
 For every ``project`` that can be used in the recipe, there are four settings
@@ -294,7 +294,7 @@ related to CMOR table settings available:
 References configuration file
 =============================
 
-The `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/master/esmvaltool/config-references.yml>`__ file contains the list of ESMValTool diagnostic and recipe authors,
+The `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`__ file contains the list of ESMValTool diagnostic and recipe authors,
 references and projects. Each author, project and reference referred to in the
 documentation section of a recipe needs to be in this file in the relevant
 section.
