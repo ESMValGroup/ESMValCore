@@ -83,7 +83,7 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
 
     # Select coordinates inside the region
     lats = cube.coord('latitude').points
-    lons = cube.coord('longitude').points
+    lons = (cube.coord('longitude').points + 360.) % 360. 
     if start_longitude <= end_longitude:
         select_lons = (lons >= start_longitude) & (lons <= end_longitude)
     else:
