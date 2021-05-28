@@ -88,7 +88,7 @@ def generate_cube_from_dates(
                                     standard_name='time',
                                     units=unit)
 
-    data = np.array((fill_val, ) * len_data)
+    data = np.array((fill_val, ) * len_data, dtype=np.float32)
 
     if lazy:
         data = da.from_array(data)
@@ -104,7 +104,7 @@ def get_cubes_for_validation_test(frequency, lazy=False):
 
     # Cube with masked data
     cube2 = cube1.copy()
-    data2 = np.ma.array([5, 5, 5], mask=[True, False, False])
+    data2 = np.ma.array([5, 5, 5], mask=[True, False, False], dtype=np.float32)
     if lazy:
         data2 = da.from_array(data2)
     cube2.data = data2
