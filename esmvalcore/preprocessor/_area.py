@@ -21,6 +21,8 @@ from ._shared import (
 
 logger = logging.getLogger(__name__)
 
+SHAPE_ID_KEYS = ('name', 'NAME', 'Name', 'id', 'ID')
+
 
 # slice cube over a restricted area (box)
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
@@ -386,7 +388,7 @@ def _get_masks_from_geometries(geometries, lon, lat, method='contains',
     if ids:
         ids = [str(id_) for id_ in ids]
     for i, item in enumerate(geometries):
-        for id_prop in ('name', 'NAME', 'Name', 'id', 'ID'):
+        for id_prop in SHAPE_ID_KEYS:
             if id_prop in item['properties']:
                 id_ = str(item['properties'][id_prop])
                 break
@@ -406,6 +408,54 @@ def _get_masks_from_geometries(geometries, lon, lat, method='contains',
         return _merge_shapes(selections, lat.shape)
 
     return selections
+
+
+def _geometry_matches_ids(geometry: dict, ids: list):
+    """Returns True if `geometry` matches one of the `ids`."""
+    props = geometry['properties']
+
+    geom_id = [props.get(key, None) for key in SHAPE_ID_KEYS]
+    geom_id = [key for key in geom_id if key is not None]
+    geom_id = list(geom_id)
+
+    if not geom_id:
+        raise KeyError(f'{props} dict has no `name` or `id` key')
+
+    geom_id = geom_id[0]
+
+    return geom_id in ids
+
+
+def _get_bounds(geometries, ids=None):
+    """Get bounds from the subset of geometries defined by `ids`.
+
+    Parameters
+    ----------
+    geometries : fiona.Collection
+        Fiona collection of shapes (geometries).
+    ids : tuple of str, optional
+        List of ids to select from geometry collection. If None,
+        return global bounds (``geometries.bounds``)
+
+    Returns
+    -------
+    lat_min, lon_min, lat_max, lon_max
+        Returns coordinates deliminating bounding box for shape ids.
+    """
+    if not ids:
+        return geometries.bounds
+
+    subset = [geom for geom in geometries if _geometry_matches_ids(geom, ids)]
+
+    all_points = [
+        np.hstack(geom['geometry']['coordinates']) for geom in subset
+    ]
+    all_points = np.vstack(all_points)
+
+    lat_max, lon_max = all_points.max(axis=0)
+    lat_min, lon_min = all_points.min(axis=0)
+
+    return lat_min, lon_min, lat_max, lon_max
 
 
 def _get_shape(lon, lat, method, item):
@@ -465,8 +515,12 @@ def fix_coordinate_ordering(cube):
     return cube
 
 
-def extract_shape(cube, shapefile, method='contains', crop=True,
-                  decomposed=False, ids=None):
+def extract_shape(cube,
+                  shapefile,
+                  method='contains',
+                  crop=True,
+                  decomposed=False,
+                  ids=None):
     """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
@@ -520,8 +574,15 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
             pad_hawaii = True
 
         if crop:
+            lon_min, lat_min, lon_max, lat_max = _get_bounds(
+                geometries=geometries,
+                ids=ids,
+            )
             cube = _crop_cube(cube,
-                              *geometries.bounds,
+                              start_longitude=lon_min,
+                              start_latitude=lat_min,
+                              end_longitude=lon_max,
+                              end_latitude=lat_max,
                               cmor_coords=cmor_coords)
 
         lon, lat = _correct_coords_from_shapefile(cube, cmor_coords,
