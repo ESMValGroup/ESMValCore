@@ -361,7 +361,7 @@ def add_scalar_typesea_coord(cube, value='default'):
     return cube
 
 
-def add_scalar_typesi_coord(cube, value='default'):
+def add_scalar_typesi_coord(cube, value='sea_ice'):
     """Add scalar coordinate 'typesi' with value of `value`."""
     logger.debug("Adding typesi coordinate (%s)", value)
     typesi_coord = iris.coords.AuxCoord(value,
