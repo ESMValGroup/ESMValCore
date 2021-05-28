@@ -250,57 +250,23 @@ def _combine(cubes):
     return merged_cube
 
 
-def rechunk(cube):
-    """Rechunk the cube to speed up out-of-memory computation."""
-    new_chunks = {0: -1}  # don't chunk along the multimodel dimension
-    if cube.ndim > 1:
-        new_chunks[1] = 'auto'  # do chunk along the first subsequent dimension
-
-    cube.data = cube.lazy_data().rechunk(new_chunks)
-
-    logger.debug("Total data size: %s MB", cube.lazy_data().nbytes * 1e-6)
-    logger.debug("New chunk block size: %s MB",
-                 cube.lazy_data().nbytes / cube.lazy_data().npartitions * 1e-6)
-    logger.debug("New chunk configuration: %s", cube.lazy_data())
-
-
 def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
                    **kwargs):
-    """Loop over slices of a cube if iris has no lazy aggregator."""
+    """Compute statistics one slice at a time."""
     _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
     result_slices = []
     for i in range(cubes[0].shape[0]):
-        single_model_slices = [cube[i] for cube in cubes
-                               ]  # maybe filter the iris warning here?
+        single_model_slices = [cube[i] for cube in cubes]
         combined_slice = _combine(single_model_slices)
         collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
                                                    **kwargs)
         result_slices.append(collapsed_slice)
 
     result_cube = iris.cube.CubeList(result_slices).merge_cube()
+    result_cube.remove_coord(CONCAT_DIM)
 
-    # For consistency with lazy procedure
     result_cube.data = np.ma.array(result_cube.data)
-
-    result_cube.remove_coord(CONCAT_DIM)
-
-    return result_cube
-
-
-def _compute_lazy(cubes: list, *, operator: iris.analysis.Aggregator,
-                  **kwargs):
-    """Compute statistics using lazy iris function."""
-    cube = _combine(
-        cubes)  # this is now done for each statistic, can we avoid that?
-    rechunk(cube)
-
-    # This will always return a masked array
-    result_cube = cube.collapsed(CONCAT_DIM, operator, **kwargs)
-    result_cube.remove_coord(CONCAT_DIM)
-
-    for cube in cubes:
-        cube.remove_coord(CONCAT_DIM)
 
     return result_cube
 
@@ -317,8 +283,6 @@ def _multicube_statistics(cubes, statistics, span):
         raise ValueError('Cannot perform multicube statistics '
                          'for a single cube.')
 
-    lazy_input = bool(all(cube.has_lazy_data() for cube in cubes))
-
     copied_cubes = [cube.copy() for cube in cubes]  # avoid modifying inputs
     aligned_cubes = _align(copied_cubes, span=span)
 
@@ -327,18 +291,9 @@ def _multicube_statistics(cubes, statistics, span):
         logger.debug('Multicube statistics: computing: %s', statistic)
         operator, kwargs = _resolve_operator(statistic)
 
-        if operator.lazy_func is None:
-            result_cube = _compute_eager(aligned_cubes,
-                                         operator=operator,
-                                         **kwargs)
-        else:
-            result_cube = _compute_lazy(aligned_cubes,
-                                        operator=operator,
-                                        **kwargs)
-
-        # lazy input --> lazy output
-        result_cube.data = result_cube.lazy_data(
-        ) if lazy_input else result_cube.data
+        result_cube = _compute_eager(aligned_cubes,
+                                     operator=operator,
+                                     **kwargs)
 
         statistics_cubes[statistic] = result_cube
 
