@@ -171,6 +171,7 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
         assert_array_allclose(result_cube.data, expected_data)
 
 
+@pytest.mark.xfail(reason='Lazy data not (yet) supported.')
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_lazy_data_consistent_times(span):
     """Test laziness of multimodel statistics with consistent time axis."""
@@ -192,6 +193,7 @@ def test_lazy_data_consistent_times(span):
     assert result_cube.has_lazy_data()
 
 
+@pytest.mark.xfail(reason='Lazy data not (yet) supported.')
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_lazy_data_inconsistent_times(span):
     """Test laziness of multimodel statistics with inconsistent time axis.
