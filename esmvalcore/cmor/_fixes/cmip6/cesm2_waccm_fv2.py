@@ -5,7 +5,6 @@ from .cesm2_waccm import Cl as BaseCl
 from .cesm2_waccm import Cli as BaseCli
 from .cesm2_waccm import Clw as BaseClw
 from ..common import SiconcFixScalarCoord
-from ..fix import Fix
 
 
 Cl = BaseCl

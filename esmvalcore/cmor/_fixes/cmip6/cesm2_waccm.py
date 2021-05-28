@@ -5,7 +5,6 @@ from .cesm2 import Cl as BaseCl
 from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Tas as BaseTas
 from ..common import SiconcFixScalarCoord
-from ..fix import Fix
 
 
 class Cl(BaseCl):
