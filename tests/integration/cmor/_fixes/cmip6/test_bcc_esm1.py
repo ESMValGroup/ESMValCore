@@ -1,8 +1,16 @@
 """Test fixes for BCC-ESM1."""
-import unittest
-
-from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import Cl, Cli, Clw, Tos
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import (
+    Cl,
+    Cli,
+    Clw,
+    Siconc,
+    Sos,
+    Tos,
+)
+from esmvalcore.cmor._fixes.common import (
+    ClFixHybridPressureCoord,
+    OceanFixGrid,
+)
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -14,7 +22,7 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl(None) == ClFixHybridPressureCoord(None)
+    assert Cl is ClFixHybridPressureCoord
 
 
 def test_get_cli_fix():
@@ -25,7 +33,7 @@ def test_get_cli_fix():
 
 def test_cli_fix():
     """Test fix for ``cli``."""
-    assert Cli(None) == ClFixHybridPressureCoord(None)
+    assert Cli is ClFixHybridPressureCoord
 
 
 def test_get_clw_fix():
@@ -36,7 +44,29 @@ def test_get_clw_fix():
 
 def test_clw_fix():
     """Test fix for ``clw``."""
-    assert Clw(None) == ClFixHybridPressureCoord(None)
+    assert Clw is ClFixHybridPressureCoord
+
+
+def test_get_siconc_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'SImon', 'siconc')
+    assert fix == [Siconc(None)]
+
+
+def test_siconc_fix():
+    """Test fix for ``siconc``."""
+    assert Siconc is OceanFixGrid
+
+
+def test_get_sos_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Omon', 'sos')
+    assert fix == [Sos(None)]
+
+
+def test_sos_fix():
+    """Test fix for ``sos``."""
+    assert Sos is OceanFixGrid
 
 
 def test_get_tos_fix():
@@ -45,11 +75,6 @@ def test_get_tos_fix():
     assert fix == [Tos(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.bcc_esm1.BaseTos.fix_metadata',
-    autospec=True)
-def test_tos_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``tos``."""
-    fix = Tos(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_tos_fix():
+    """Test fix for ``tos``."""
+    assert Tos is OceanFixGrid

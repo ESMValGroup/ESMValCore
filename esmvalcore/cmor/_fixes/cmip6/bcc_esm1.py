@@ -1,7 +1,5 @@
 """Fixes for BCC-ESM1 model."""
-from .bcc_csm2_mr import Tos as BaseTos
-from ..common import ClFixHybridPressureCoord
-
+from ..common import ClFixHybridPressureCoord, OceanFixGrid
 
 Cl = ClFixHybridPressureCoord
 
@@ -12,5 +10,10 @@ Cli = ClFixHybridPressureCoord
 Clw = ClFixHybridPressureCoord
 
 
-class Tos(BaseTos):
-    """Fixes for tos."""
+Tos = OceanFixGrid
+
+
+Sos = OceanFixGrid
+
+
+Siconc = OceanFixGrid

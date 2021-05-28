@@ -1,83 +1,24 @@
 """Tests for the fixes of CESM2."""
 import os
-import unittest
+import sys
+import unittest.mock
 
 import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from netCDF4 import Dataset
 
-from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl, Cli, Clw, Tas
+from esmvalcore.cmor._fixes.cmip6.cesm2 import (
+    Cl,
+    Cli,
+    Clw,
+    Fgco2,
+    Omon,
+    Tas,
+    Tos,
+)
 from esmvalcore.cmor.fix import Fix
-
-
-@pytest.fixture
-def cl_file(tmp_path):
-    """Create netcdf file with similar issues as ``cl``."""
-    nc_path = os.path.join(tmp_path, 'cesm2_cl.nc')
-    dataset = Dataset(nc_path, mode='w')
-    dataset.createDimension('time', size=1)
-    dataset.createDimension('lev', size=2)
-    dataset.createDimension('lat', size=3)
-    dataset.createDimension('lon', size=4)
-    dataset.createDimension('bnds', size=2)
-
-    # Dimensional variables
-    dataset.createVariable('time', np.float64, dimensions=('time',))
-    dataset.createVariable('lev', np.float64, dimensions=('lev',))
-    dataset.createVariable('lev_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.createVariable('lat', np.float64, dimensions=('lat',))
-    dataset.createVariable('lon', np.float64, dimensions=('lon',))
-    dataset.variables['time'][:] = [0.0]
-    dataset.variables['time'].standard_name = 'time'
-    dataset.variables['time'].units = 'days since 6543-2-1'
-    dataset.variables['lev'][:] = [1.0, 2.0]
-    dataset.variables['lev'].bounds = 'lev_bnds'
-    dataset.variables['lev'].units = '1'
-    dataset.variables['lev_bnds'][:] = [[0.5, 1.5], [1.5, 3.0]]
-    dataset.variables['lev_bnds'].standard_name = (
-        'atmosphere_hybrid_sigma_pressure_coordinate')
-    dataset.variables['lev_bnds'].units = '1'
-    dataset.variables['lev_bnds'].formula_terms = (
-        'p0: p0 a: a_bnds b: b_bnds ps: ps')
-    dataset.variables['lat'][:] = [-30.0, 0.0, 30.0]
-    dataset.variables['lat'].standard_name = 'latitude'
-    dataset.variables['lat'].units = 'degrees_north'
-    dataset.variables['lon'][:] = [30.0, 60.0, 90.0, 120.0]
-    dataset.variables['lon'].standard_name = 'longitude'
-    dataset.variables['lon'].units = 'degrees_east'
-
-    # Coordinates for derivation of pressure coordinate
-    dataset.createVariable('a', np.float64, dimensions=('lev',))
-    dataset.createVariable('a_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.createVariable('b', np.float64, dimensions=('lev',))
-    dataset.createVariable('b_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.createVariable('p0', np.float64, dimensions=())
-    dataset.createVariable('ps', np.float64,
-                           dimensions=('time', 'lat', 'lon'))
-    dataset.variables['a'][:] = [2.0, 1.0]  # Wrong order intended
-    dataset.variables['a'].bounds = 'a_bnds'
-    dataset.variables['a_bnds'][:] = [[0.0, 1.5], [1.5, 3.0]]
-    dataset.variables['b'][:] = [1.0, 0.0]  # Wrong order intended
-    dataset.variables['b'].bounds = 'b_bnds'
-    dataset.variables['b_bnds'][:] = [[-1.0, 0.5], [0.5, 2.0]]
-    dataset.variables['p0'][:] = 1.0
-    dataset.variables['p0'].units = 'Pa'
-    dataset.variables['ps'][:] = np.arange(1 * 3 * 4).reshape(1, 3, 4)
-    dataset.variables['ps'].standard_name = 'surface_air_pressure'
-    dataset.variables['ps'].units = 'Pa'
-
-    # Cl variable
-    dataset.createVariable('cl', np.float32,
-                           dimensions=('time', 'lev', 'lat', 'lon'))
-    dataset.variables['cl'][:] = np.full((1, 2, 3, 4), 0.0, dtype=np.float32)
-    dataset.variables['cl'].standard_name = (
-        'cloud_area_fraction_in_atmosphere_layer')
-    dataset.variables['cl'].units = '%'
-
-    dataset.close()
-    return nc_path
+from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
@@ -118,12 +59,16 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
                                    [7.0, 25.0]]]]])
 
 
+@pytest.mark.sequential
+@pytest.mark.skipif(sys.version_info < (3, 7, 6),
+                    reason="requires python3.7.6 or newer")
 @unittest.mock.patch(
     'esmvalcore.cmor._fixes.cmip6.cesm2.Fix.get_fixed_filepath',
     autospec=True)
-def test_cl_fix_file(mock_get_filepath, cl_file, tmp_path):
+def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     """Test ``fix_file`` for ``cl``."""
-    cubes = iris.load(cl_file)
+    nc_path = test_data_path / 'cesm2_cl.nc'
+    cubes = iris.load(str(nc_path))
 
     # Raw cubes
     assert len(cubes) == 5
@@ -135,21 +80,21 @@ def test_cl_fix_file(mock_get_filepath, cl_file, tmp_path):
     assert 'ps' in var_names
 
     # Raw cl cube
-    cl_cube = cubes.extract_strict('cloud_area_fraction_in_atmosphere_layer')
-    assert not cl_cube.coords('air_pressure')
+    raw_cube = cubes.extract_cube('cloud_area_fraction_in_atmosphere_layer')
+    assert not raw_cube.coords('air_pressure')
 
     # Apply fix
     mock_get_filepath.return_value = os.path.join(tmp_path,
                                                   'fixed_cesm2_cl.nc')
     fix = Cl(None)
-    fixed_file = fix.fix_file(cl_file, tmp_path)
-    mock_get_filepath.assert_called_once_with(tmp_path, cl_file)
+    fixed_file = fix.fix_file(nc_path, tmp_path)
+    mock_get_filepath.assert_called_once_with(tmp_path, nc_path)
     fixed_cubes = iris.load(fixed_file)
     assert len(fixed_cubes) == 2
     var_names = [cube.var_name for cube in fixed_cubes]
     assert 'cl' in var_names
     assert 'ps' in var_names
-    fixed_cl_cube = fixed_cubes.extract_strict(
+    fixed_cl_cube = fixed_cubes.extract_cube(
         'cloud_area_fraction_in_atmosphere_layer')
     fixed_air_pressure_coord = fixed_cl_cube.coord('air_pressure')
     assert fixed_air_pressure_coord.points is not None
@@ -160,20 +105,66 @@ def test_cl_fix_file(mock_get_filepath, cl_file, tmp_path):
                                AIR_PRESSURE_BOUNDS)
 
 
+@pytest.fixture
+def cl_cubes():
+    """``cl`` cube."""
+    time_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='time', standard_name='time',
+        units='days since 1850-01-01 00:00:00')
+    a_coord = iris.coords.AuxCoord(
+        [0.1, 0.2, 0.1], bounds=[[0.0, 0.15], [0.15, 0.25], [0.25, 0.0]],
+        var_name='a', units='1')
+    b_coord = iris.coords.AuxCoord(
+        [0.9, 0.3, 0.1], bounds=[[1.0, 0.8], [0.8, 0.25], [0.25, 0.0]],
+        var_name='b', units='1')
+    lev_coord = iris.coords.DimCoord(
+        [999.0, 99.0, 9.0], var_name='lev',
+        standard_name='atmosphere_hybrid_sigma_pressure_coordinate',
+        units='hPa', attributes={'positive': 'up'})
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
+    lon_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lon', standard_name='longitude', units='degrees')
+    coord_specs = [
+        (time_coord, 0),
+        (lev_coord, 1),
+        (lat_coord, 2),
+        (lon_coord, 3),
+    ]
+    cube = iris.cube.Cube(
+        np.arange(2 * 3 * 2 * 2).reshape(2, 3, 2, 2),
+        var_name='cl',
+        standard_name='cloud_area_fraction_in_atmosphere_layer',
+        units='%',
+        dim_coords_and_dims=coord_specs,
+        aux_coords_and_dims=[(a_coord, 1), (b_coord, 1)],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def test_cl_fix_metadata(cl_cubes):
+    """Test ``fix_metadata`` for ``cl``."""
+    vardef = get_var_info('CMIP6', 'Amon', 'cl')
+    fix = Cl(vardef)
+    out_cubes = fix.fix_metadata(cl_cubes)
+    out_cube = out_cubes.extract_cube(
+        'cloud_area_fraction_in_atmosphere_layer')
+    lev_coord = out_cube.coord(var_name='lev')
+    assert lev_coord.units == '1'
+    np.testing.assert_allclose(lev_coord.points, [1.0, 0.5, 0.2])
+    np.testing.assert_allclose(lev_coord.bounds,
+                               [[1.0, 0.95], [0.95, 0.5], [0.5, 0.0]])
+
+
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'cli')
     assert fix == [Cli(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.cesm2.Cl.fix_metadata',
-    autospec=True)
-def test_cli_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``cli``."""
-    fix = Cli(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_cli_fix():
+    """Test fix for ``cli``."""
+    assert Cli is Cl
 
 
 def test_get_clw_fix():
@@ -182,28 +173,116 @@ def test_get_clw_fix():
     assert fix == [Clw(None)]
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip6.cesm2.Cl.fix_metadata',
-    autospec=True)
-def test_clw_fix_metadata(mock_base_fix_metadata):
-    """Test ``fix_metadata`` for ``clw``."""
-    fix = Clw(None)
-    fix.fix_metadata('cubes')
-    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+def test_clw_fix():
+    """Test fix for ``clw``."""
+    assert Clw is Cl
 
 
 @pytest.fixture
 def tas_cubes():
     """Cubes to test fixes for ``tas``."""
-    ta_cube = iris.cube.Cube([1.0], var_name='ta')
-    tas_cube = iris.cube.Cube([3.0], var_name='tas')
+    time_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='time', standard_name='time',
+        units='days since 1850-01-01 00:00:00')
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
+    lon_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lon', standard_name='longitude', units='degrees')
+    coord_specs = [
+        (time_coord, 0),
+        (lat_coord, 1),
+        (lon_coord, 2),
+    ]
+    ta_cube = iris.cube.Cube(
+        np.ones((2, 2, 2)),
+        var_name='ta',
+        dim_coords_and_dims=coord_specs,
+    )
+    tas_cube = iris.cube.Cube(
+        np.ones((2, 2, 2)),
+        var_name='tas',
+        dim_coords_and_dims=coord_specs,
+    )
+
     return iris.cube.CubeList([ta_cube, tas_cube])
+
+
+@pytest.fixture
+def tos_cubes():
+    """Cubes to test fixes for ``tos``."""
+    time_coord = iris.coords.DimCoord(
+        [0.0004, 1.09776], var_name='time', standard_name='time',
+        units='days since 1850-01-01 00:00:00')
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
+    lon_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lon', standard_name='longitude', units='degrees')
+    coord_specs = [
+        (time_coord, 0),
+        (lat_coord, 1),
+        (lon_coord, 2),
+    ]
+    tos_cube = iris.cube.Cube(
+        np.ones((2, 2, 2)),
+        var_name='tos',
+        dim_coords_and_dims=coord_specs,
+    )
+    tos_cube.attributes = {}
+    tos_cube.attributes['mipTable'] = 'Omon'
+
+    return iris.cube.CubeList([tos_cube])
+
+
+@pytest.fixture
+def thetao_cubes():
+    """Cubes to test fixes for ``thetao``."""
+    time_coord = iris.coords.DimCoord(
+        [0.0004, 1.09776], var_name='time', standard_name='time',
+        units='days since 1850-01-01 00:00:00')
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
+    lon_coord = iris.coords.DimCoord(
+        [0.0, 1.0], var_name='lon', standard_name='longitude', units='degrees')
+    lev_coord = iris.coords.DimCoord(
+        [500.0, 1000.0], bounds=[[2.5, 7.5], [7.5, 12.5]],
+        var_name='lev', standard_name=None, units='cm',
+        attributes={'positive': 'up'})
+    coord_specs = [
+        (time_coord, 0),
+        (lev_coord, 1),
+        (lat_coord, 2),
+        (lon_coord, 3),
+    ]
+    thetao_cube = iris.cube.Cube(
+        np.ones((2, 2, 2, 2)),
+        var_name='thetao',
+        dim_coords_and_dims=coord_specs,
+    )
+    return iris.cube.CubeList([thetao_cube])
 
 
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'tas')
     assert fix == [Tas(None)]
+
+
+def test_get_tos_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'tos')
+    assert fix == [Tos(None), Omon(None)]
+
+
+def test_get_thetao_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'thetao')
+    assert fix == [Omon(None)]
+
+
+def test_get_fgco2_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'fgco2')
+    assert fix == [Fgco2(None), Omon(None)]
 
 
 def test_tas_fix_metadata(tas_cubes):
@@ -217,13 +296,73 @@ def test_tas_fix_metadata(tas_cubes):
                                         long_name='height',
                                         units=Unit('m'),
                                         attributes={'positive': 'up'})
-    fix = Tas(None)
+    vardef = get_var_info('CMIP6', 'Amon', 'tas')
+    fix = Tas(vardef)
     out_cubes = fix.fix_metadata(tas_cubes)
     assert out_cubes is tas_cubes
     for cube in out_cubes:
+        assert cube.coord("longitude").has_bounds()
+        assert cube.coord("latitude").has_bounds()
         if cube.var_name == 'tas':
             coord = cube.coord('height')
             assert coord == height_coord
         else:
             with pytest.raises(iris.exceptions.CoordinateNotFoundError):
                 cube.coord('height')
+
+
+def test_tos_fix_metadata(tos_cubes):
+    """Test ``fix_metadata`` for ``tos``."""
+    vardef = get_var_info('CMIP6', 'Omon', 'tos')
+    fix = Tos(vardef)
+    out_cubes = fix.fix_metadata(tos_cubes)
+    assert out_cubes is tos_cubes
+    for cube in out_cubes:
+        np.testing.assert_equal(cube.coord("time").points, [0., 1.1])
+
+
+def test_thetao_fix_metadata(thetao_cubes):
+    """Test ``fix_metadata`` for ``thetao``."""
+    vardef = get_var_info('CMIP6', 'Omon', 'thetao')
+    fix = Omon(vardef)
+    out_cubes = fix.fix_metadata(thetao_cubes)
+    assert out_cubes is thetao_cubes
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    # Check metadata of depth coordinate
+    depth_coord = out_cube.coord('depth')
+    assert depth_coord.standard_name == 'depth'
+    assert depth_coord.var_name == 'lev'
+    assert depth_coord.long_name == 'ocean depth coordinate'
+    assert depth_coord.units == 'm'
+    assert depth_coord.attributes == {'positive': 'down'}
+
+    # Check values of depth coordinate
+    np.testing.assert_allclose(depth_coord.points, [5.0, 10.0])
+    np.testing.assert_allclose(depth_coord.bounds, [[2.5, 7.5], [7.5, 12.5]])
+
+
+def test_fgco2_fix_metadata():
+    """Test ``fix_metadata`` for ``fgco2``."""
+    vardef = get_var_info('CMIP6', 'Omon', 'fgco2')
+    cubes = iris.cube.CubeList([
+        iris.cube.Cube(0.0, var_name='fgco2'),
+    ])
+    fix = Fgco2(vardef)
+    out_cubes = fix.fix_metadata(cubes)
+    assert out_cubes is cubes
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    # Check depth coordinate
+    depth_coord = out_cube.coord('depth')
+    assert depth_coord.standard_name == 'depth'
+    assert depth_coord.var_name == 'depth'
+    assert depth_coord.long_name == 'depth'
+    assert depth_coord.units == 'm'
+    assert depth_coord.attributes == {'positive': 'down'}
+
+    # Check values of depth coordinate
+    np.testing.assert_allclose(depth_coord.points, 0.0)
+    assert depth_coord.bounds is None

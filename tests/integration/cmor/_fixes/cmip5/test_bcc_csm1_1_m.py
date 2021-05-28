@@ -2,7 +2,10 @@
 import unittest
 
 from esmvalcore.cmor._fixes.cmip5.bcc_csm1_1_m import Cl, Tos
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.common import (
+    ClFixHybridPressureCoord,
+    OceanFixGrid,
+)
 from esmvalcore.cmor._fixes.fix import Fix
 
 
@@ -14,7 +17,7 @@ def test_get_cl_fix():
 
 def test_cl_fix():
     """Test fix for ``cl``."""
-    assert Cl(None) == ClFixHybridPressureCoord(None)
+    assert Cl is ClFixHybridPressureCoord
 
 
 class TestTos(unittest.TestCase):
@@ -26,11 +29,6 @@ class TestTos(unittest.TestCase):
             Fix.get_fixes('CMIP5', 'bcc-csm1-1-m', 'Amon', 'tos'), [Tos(None)])
 
 
-@unittest.mock.patch(
-    'esmvalcore.cmor._fixes.cmip5.bcc_csm1_1_m.BaseTos.fix_data',
-    autospec=True)
-def test_tos_fix_data(mock_base_fix_data):
-    """Test ``fix_data`` for ``tos``."""
-    fix = Tos(None)
-    fix.fix_data('cubes')
-    mock_base_fix_data.assert_called_once_with(fix, 'cubes')
+def test_tos_fix():
+    """Test fix for ``tos``."""
+    assert Tos is OceanFixGrid

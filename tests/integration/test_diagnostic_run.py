@@ -1,11 +1,14 @@
 """Test diagnostic script runs."""
 import contextlib
+import shutil
 import sys
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
 import yaml
 
+from esmvalcore._config import TAGS
 from esmvalcore._main import run
 
 
@@ -108,8 +111,31 @@ SCRIPTS = {
 }
 
 
-@pytest.mark.installation
-@pytest.mark.parametrize('script_file, script', SCRIPTS.items())
+def interpreter_not_installed(script):
+    """Check if an interpreter is installed for script."""
+    interpreters = {
+        '.jl': 'julia',
+        '.ncl': 'ncl',
+        '.py': 'python',
+        '.R': 'Rscript',
+    }
+    ext = Path(script).suffix
+    interpreter = interpreters[ext]
+    return shutil.which(interpreter) is None
+
+
+@pytest.mark.parametrize('script_file, script', [
+    pytest.param(
+        script_file,
+        script,
+        marks=[
+            pytest.mark.installation,
+            pytest.mark.xfail(interpreter_not_installed(script_file),
+                              run=False,
+                              reason="Interpreter not available"),
+        ],
+    ) for script_file, script in SCRIPTS.items()
+])
 def test_diagnostic_run(tmp_path, script_file, script):
 
     recipe_file = tmp_path / 'recipe_test.yml'
@@ -134,10 +160,14 @@ def test_diagnostic_run(tmp_path, script_file, script):
         """.format(script_file, result_file))
     recipe_file.write_text(str(recipe))
 
+    # ensure that tags are cleared
+    TAGS.clear()
+
     config_user_file = write_config_user_file(tmp_path)
     with arguments(
             'esmvaltool',
-            '-c',
+            'run',
+            '--config_file',
             config_user_file,
             str(recipe_file),
     ):

@@ -2,13 +2,28 @@
 import unittest
 from unittest import mock
 
-from cf_units import Unit
 import iris
+from cf_units import Unit
 from iris.cube import Cube
 
+from esmvalcore.cmor._fixes.cmip5.gfdl_cm2p1 import (AllVars, Areacello, Cl,
+                                                     Sftof, Sit)
+from esmvalcore.cmor._fixes.cmip5.cesm1_cam5 import Cl as BaseCl
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.gfdl_cm2p1 import (Sftof, AllVars,
-                                                     Areacello, Sit)
+from esmvalcore.cmor.table import get_var_info
+
+
+class TestCl(unittest.TestCase):
+    """Test cl fix."""
+    def test_get(self):
+        """Test getting of fix."""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'cl'),
+            [Cl(None), AllVars(None)])
+
+    def test_fix(self):
+        """Test fix for ``cl``."""
+        assert Cl is BaseCl
 
 
 class TestSftof(unittest.TestCase):
@@ -21,7 +36,7 @@ class TestSftof(unittest.TestCase):
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'sftof'),
+            Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'fx', 'sftof'),
             [Sftof(None), AllVars(None)])
 
     def test_fix_data(self):
@@ -37,13 +52,14 @@ class TestAreacello(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='areacello', units='m-2')
-        self.fix = Areacello(None)
+        self.vardef = get_var_info('CMIP5', 'fx', self.cube.var_name)
+        self.fix = Areacello(self.vardef)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'areacello'),
-            [Areacello(None), AllVars(None)])
+            [Areacello(self.vardef), AllVars(self.vardef)])
 
     def test_fix_metadata(self):
         """Test data fix."""
@@ -78,6 +94,7 @@ class TestSit(unittest.TestCase):
         )
         self.var_info_mock = mock.Mock()
         self.var_info_mock.frequency = 'mon'
+        self.var_info_mock.short_name = 'sit'
         self.fix = Sit(self.var_info_mock)
 
     def test_get(self):

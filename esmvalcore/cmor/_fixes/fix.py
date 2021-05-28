@@ -1,7 +1,7 @@
 """Contains the base class for dataset fixes"""
 import importlib
-import os
 import inspect
+import os
 
 from ..table import CMOR_TABLES
 
@@ -15,7 +15,7 @@ class Fix:
 
         Parameters
         ----------
-        vardef: basestring
+        vardef: str
             CMOR table entry
 
         """
@@ -31,14 +31,14 @@ class Fix:
 
         Parameters
         ----------
-        filepath: basestring
+        filepath: str
             file to fix
-        output_dir: basestring
+        output_dir: str
             path to the folder to store the fixe files, if required
 
         Returns
         -------
-        basestring
+        str
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
             original filepath
@@ -89,7 +89,7 @@ class Fix:
             Variable's cube
         """
         if short_name is None:
-            short_name = self.__class__.__name__.lower()
+            short_name = self.vardef.short_name
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
@@ -162,7 +162,7 @@ class Fix:
 
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
-            for fix_name in (short_name, 'allvars'):
+            for fix_name in (short_name, mip.lower(), 'allvars'):
                 try:
                     fixes.append(classes[fix_name](vardef))
                 except KeyError:

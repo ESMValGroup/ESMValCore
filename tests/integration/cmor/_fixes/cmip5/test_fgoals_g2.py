@@ -7,6 +7,7 @@ from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import AllVars, Cl
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 class TestAll(unittest.TestCase):
@@ -44,6 +45,11 @@ class TestAll(unittest.TestCase):
                          'day since 1-01-01 00:00:00.000000')
         self.assertEqual(time.units.calendar, 'gregorian')
 
+    def test_fix_metadata_dont_fail_if_not_longitude(self):
+        """Test calendar fix."""
+        self.cube.remove_coord('longitude')
+        self.fix.fix_metadata([self.cube])
+
     def test_fix_metadata_dont_fail_if_not_time(self):
         """Test calendar fix."""
         self.cube.remove_coord('time')
@@ -62,7 +68,8 @@ def test_get_cl_fix():
 def test_cl_fix_metadata(mock_add_sigma_factory):
     """Test ``fix_metadata`` for ``cl``."""
     cubes = CubeList([Cube(0.0, var_name='cl'), Cube(1.0, var_name='x')])
-    fix = Cl(None)
+    vardef = get_var_info('CMIP6', 'Amon', 'cl')
+    fix = Cl(vardef)
     fixed_cubes = fix.fix_metadata(cubes)
     mock_add_sigma_factory.assert_called_once_with(cubes[0])
     assert fixed_cubes == CubeList([cubes[0]])

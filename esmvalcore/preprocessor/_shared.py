@@ -40,9 +40,11 @@ def get_iris_analysis_operation(operator):
     ------
     ValueError
         operator not in allowed operators list.
-        allowed operators: mean, median, std_dev, sum, variance, min, max
+        allowed operators: mean, median, std_dev, sum, variance, min, max, rms
     """
-    operators = ['mean', 'median', 'std_dev', 'sum', 'variance', 'min', 'max']
+    operators = [
+        'mean', 'median', 'std_dev', 'sum', 'variance', 'min', 'max', 'rms'
+    ]
     operator = operator.lower()
     if operator not in operators:
         raise ValueError("operator {} not recognised. "
@@ -66,4 +68,4 @@ def operator_accept_weights(operator):
         bool: True if operator support weights, False otherwise
 
     """
-    return operator.lower() in ('mean', 'sum')
+    return operator.lower() in ('mean', 'sum', 'rms')

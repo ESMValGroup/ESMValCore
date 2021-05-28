@@ -78,13 +78,10 @@ def _create_cube_time(src_cube, data, times):
     Returns
     -------
     cube
-
     .. note::
-
         If there is only one level of interpolation, the resultant cube
         will be collapsed over the associated vertical dimension, and a
         scalar vertical coordinate will be added.
-
     """
     # Get the source cube vertical coordinate and associated dimension.
     src_times = src_cube.coord('time')
@@ -119,7 +116,17 @@ def _create_cube_time(src_cube, data, times):
 
     # Construct the new vertical coordinate for the interpolated
     # z-dimension, using the associated source coordinate metadata.
-    kwargs = deepcopy(src_times._as_defn())._asdict()
+    metadata = src_times.metadata
+
+    kwargs = {
+        'standard_name': metadata.standard_name,
+        'long_name': metadata.long_name,
+        'var_name': metadata.var_name,
+        'units': metadata.units,
+        'attributes': metadata.attributes,
+        'coord_system': metadata.coord_system,
+        'climatological': metadata.climatological,
+    }
 
     try:
         coord = iris.coords.DimCoord(times, **kwargs)
@@ -135,7 +142,7 @@ def calculate_volume(cube):
     """
     Calculate volume from a cube.
 
-    This function is used when the volume netcdf fx_files can't be found.
+    This function is used when the volume netcdf fx_variables can't be found.
 
     Parameters
     ----------
@@ -167,10 +174,7 @@ def calculate_volume(cube):
     return grid_volume
 
 
-def volume_statistics(
-        cube,
-        operator,
-        fx_files=None):
+def volume_statistics(cube, operator):
     """
     Apply a statistical operation over a volume.
 
@@ -180,12 +184,10 @@ def volume_statistics(
 
     Parameters
     ----------
-        cube: iris.cube.Cube
-            Input cube.
-        operator: str
-            The operation to apply to the cube, options are: 'mean'.
-        fx_files: dict
-            dictionary of field:filename for the fx_files
+    cube: iris.cube.Cube
+        Input cube.
+    operator: str
+        The operation to apply to the cube, options are: 'mean'.
 
     Returns
     -------
@@ -204,26 +206,15 @@ def volume_statistics(
     # Load z coordinate field and figure out which dim is which.
     t_dim = cube.coord_dims('time')[0]
 
-    grid_volume_found = False
-    grid_volume = None
-    if fx_files:
-        for key, fx_file in fx_files.items():
-            if fx_file is None:
-                continue
-            logger.info('Attempting to load %s from file: %s', key, fx_file)
-            fx_cube = iris.load_cube(fx_file)
-
-            grid_volume = fx_cube.data
-            grid_volume_found = True
-            cube_shape = cube.data.shape
-
-    if not grid_volume_found:
+    try:
+        grid_volume = cube.cell_measure('ocean_volume').core_data()
+    except iris.exceptions.CellMeasureNotFoundError:
+        logger.info(
+            'Cell measure "ocean_volume" not found in cube. '
+            'Check fx_file availability.'
+        )
+        logger.info('Attempting to calculate grid cell volume...')
         grid_volume = calculate_volume(cube)
-
-    # Check whether the dimensions are right.
-    if cube.data.ndim == 4 and grid_volume.ndim == 3:
-        grid_volume = np.tile(grid_volume,
-                              [cube_shape[0], 1, 1, 1])
 
     if cube.data.shape != grid_volume.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
@@ -268,12 +259,14 @@ def volume_statistics(
             depth_volume.append(layer_vol)
         # ####
         # Calculate weighted mean over the water volumn
-        result.append(np.average(column, weights=depth_volume))
+        column = np.ma.array(column)
+        depth_volume = np.ma.array(depth_volume)
+        result.append(np.ma.average(column, weights=depth_volume))
 
     # ####
     # Send time series and dummy cube to cube creating tool.
     times = np.array(cube.coord('time').points.astype(float))
-    result = np.array(result)
+    result = np.ma.array(result)
 
     # #####
     # Create a small dummy output array for the output cube

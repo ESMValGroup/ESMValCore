@@ -11,6 +11,7 @@ from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import (AllVars, Areacello, Co2,
                                                      FgCo2, Usi, Vsi,
                                                      _get_and_remove)
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 CUBE_1 = iris.cube.Cube([1.0], long_name='to_be_rm')
 CUBE_2 = iris.cube.Cube([1.0], long_name='not_to_be_rm')
@@ -84,13 +85,14 @@ class TestUsi(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = iris.cube.Cube([1.0], var_name='usi', units='J')
-        self.fix = Usi(None)
+        self.vardef = get_var_info('CMIP5', 'day', self.cube.var_name)
+        self.fix = Usi(self.vardef)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'Amon', 'usi'),
-            [Usi(None), AllVars(None)])
+            Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'day', 'usi'),
+            [Usi(self.vardef), AllVars(self.vardef)])
 
     def test_fix_data(self):
         """Test metadata fix."""
@@ -103,13 +105,14 @@ class TestVsi(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = iris.cube.Cube([1.0], var_name='vsi', units='J')
-        self.fix = Vsi(None)
+        self.vardef = get_var_info('CMIP5', 'day', self.cube.var_name)
+        self.fix = Vsi(self.vardef)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'Amon', 'vsi'),
-            [Vsi(None), AllVars(None)])
+            Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'day', 'vsi'),
+            [Vsi(self.vardef), AllVars(self.vardef)])
 
     def test_fix_data(self):
         """Test metadata fix."""
@@ -122,13 +125,14 @@ class TestAreacello(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='areacello', units='m-2')
-        self.fix = Areacello(None)
+        self.vardef = get_var_info('CMIP5', 'fx', self.cube.var_name)
+        self.fix = Areacello(self.vardef)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'Amon', 'areacello'),
-            [Areacello(None), AllVars(None)])
+            Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'fx', 'areacello'),
+            [Areacello(self.vardef), AllVars(self.vardef)])
 
     def test_fix_metadata(self):
         """Test data fix."""
