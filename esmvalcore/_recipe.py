@@ -691,7 +691,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     products = set()
     for variable in variables:
         variable['filename'] = get_output_file(variable,
-                                               config_user['preproc_dir'])
+                                               config_user['preproc_dir'],
+                                               config_user['drs'])
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
