@@ -270,12 +270,12 @@ def get_output_file(variable, preproc_dir, drs):
         variable['exp'] = '-'.join(variable['exp'])
 
     output_file = cfg['output_file']
-    if type(output_file) is dict:
+    if isinstance(output_file,dict):
         project = variable['project']
         output_file = output_file.get(drs.get(project, 'default'))
         if output_file is None:
-            logger.error("No valid output_file pattern for {} in project {}"
-                         .format(drs.get(project, 'default'), project))
+            logger.error("No valid output_file pattern for %s in project %s"
+                         drs.get(project, 'default'), project)
     outfile = os.path.join(
         preproc_dir,
         variable['diagnostic'],
