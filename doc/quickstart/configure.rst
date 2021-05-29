@@ -269,19 +269,18 @@ with varied set of dataset attributes, such as the native6 project :
 
 .. code-block:: yaml
 
-native6:
-  cmor_strict: false
-  input_dir:
-    default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-    IPSL: '{account}/{model}/{status}/{exp}/{simulation}/{igcm_dir}/Analyse/{freq}'
-  input_file:
-    default: '*.nc'
-    IPSL:'{simulation}_*_{ipsl_varname}.nc'
-  output_file:
-    default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
-    IPSL: '{account}_{model}_{status}_{exp}_{simulation}_{short_name}'
-  cmor_type: 'CMIP6'
-  cmor_default_table_prefix: 'CMIP6_'
+  native6:
+    ...
+    input_dir:
+      default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+      IPSL: '{account}/{model}/{status}/{exp}/{simulation}/{igcm_dir}/Analyse/{freq}'
+    input_file:
+      default: '*.nc'
+      IPSL:'{simulation}_*_{ipsl_varname}.nc'
+    output_file:
+      default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+      IPSL: '{account}_{model}_{status}_{exp}_{simulation}_{short_name}'
+    ...
 
 		
 Note that the extension ``.nc`` (and if applicable, a start and end
