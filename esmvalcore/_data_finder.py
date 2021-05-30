@@ -262,20 +262,12 @@ def get_input_filelist(variable, rootpath, drs):
 
 def get_output_file(variable, preproc_dir, drs):
     """Return the full path to the output (preprocessed) file."""
-    cfg = get_project_config(variable['project'])
-
     # Join different experiment names
     if isinstance(variable.get('exp'), (list, tuple)):
         variable = dict(variable)
         variable['exp'] = '-'.join(variable['exp'])
 
-    output_file = cfg['output_file']
-    if isinstance(output_file, dict):
-        project = variable['project']
-        output_file = output_file.get(drs.get(project, 'default'))
-        if output_file is None:
-            logger.error("No valid output_file pattern for %s in project %s",
-                         drs.get(project, 'default'), project)
+    output_file = _select_drs('output_file', drs, variable['project'])
     outfile = os.path.join(
         preproc_dir,
         variable['diagnostic'],
