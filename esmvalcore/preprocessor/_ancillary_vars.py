@@ -172,7 +172,7 @@ def add_fx_variables(cube, fx_variables, check_level):
             fx_info['filename'] = [fx_info['filename']]
         fx_cube = _load_fx(cube, fx_info, check_level)
 
-        if not fx_cube:
+        if fx_cube is None:
             continue
 
         measure_name = {
