@@ -1,6 +1,6 @@
 """Fixes for IPSLCM6 TS output format."""
 import logging
-import os
+import subprocess
 import time
 
 from ..fix import Fix
@@ -47,10 +47,10 @@ class AllVars(Fix):
         varname = self.var_mapping.get(KEY_FOR_VARNAME, self.vardef.short_name)
         alt_filepath = filepath.replace(".nc", "_cdo_selected.nc")
         outfile = self.get_fixed_filepath(output_dir, alt_filepath)
-        command = "cdo -selvar,%s  %s %s" % (varname, filepath, outfile)
         tim1 = time.time()
         logger.debug("Using CDO for selecting %s in %s", varname, filepath)
-        os.system(command)
+        command = [ "cdo", "-selvar,%s"%varname, filepath, outfile ]
+        subprocess.run(command, check = True)
         logger.debug("CDO selection done in %.2f seconds", time.time() - tim1)
         return outfile
 
