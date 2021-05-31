@@ -103,7 +103,7 @@ with explanations in a commented line above each option:
     OBS: ~/obs_inputpath
     default: ~/default_inputpath
 
-  # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
+  # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/IPSL/etc
   # See config-developer.yml for definitions.
   drs:
     CMIP5: default
@@ -176,8 +176,10 @@ It will be installed along with ESMValCore and can also be viewed on GitHub:
 `esmvalcore/config-developer.yml
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
 This configuration file describes the file system structure and CMOR tables for several
-key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
-ETHZ, SMHI, BSC). CMIP data is stored as part of the Earth System Grid
+key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g.
+BADC, CP4CDS, DKRZ, ETHZ, SMHI, BSC, IPSL), and for native output data for some
+models (IPSL, ... see :ref:`configure_native_models`) .
+CMIP data is stored as part of the Earth System Grid
 Federation (ESGF) and the standards for file naming and paths to files are set
 out by CMOR and DRS. For a detailed description of these standards and their
 adoption in ESMValCore, we refer the user to :ref:`CMOR-DRS` section where we
@@ -260,9 +262,33 @@ your data please see :ref:`CMOR-DRS`.
 Preprocessor output files
 -------------------------
 
-The filename to use for preprocessed data is configured in a similar manner
-using ``output_file``. Note that the extension ``.nc`` (and if applicable,
-a start and end time) will automatically be appended to the filename.
+The filename to use for preprocessed data is configured in a similar
+manner using ``output_file``, which can be either a single value or a
+dictionnary of values.
+
+This latter case is useful for projects which gather much varied cases
+with varied set of dataset attributes, such as the native6 project :
+
+.. _example_IPSL_config: 
+
+.. code-block:: yaml
+
+  native6:
+    ...
+    input_dir:
+      default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+      IPSL: '{account}/{model}/{status}/{exp}/{simulation}/{igcm_dir}/Analyse/{freq}'
+    input_file:
+      default: '*.nc'
+      IPSL:'{simulation}_*_{ipsl_varname}.nc'
+    output_file:
+      default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+      IPSL: '{account}_{model}_{status}_{exp}_{simulation}_{short_name}'
+    ...
+
+		
+Note that the extension ``.nc`` (and if applicable, a start and end
+time) will automatically be appended to the filename.
 
 .. _cmor_table_configuration:
 
@@ -288,6 +314,62 @@ related to CMOR table settings available:
 * ``cmor_default_table_prefix``: Prefix that needs to be added to the ``mip``
   to get the name of the file containing the ``mip`` table.
   Defaults to the value provided in ``cmor_type``.
+
+.. _configure_native_models:
+  
+Configuring native models and observation data sets
+----------------------------------------------------
+
+ESMValTool can take full advantage of the ability to configure
+ESMValCore for handling native model output formats and specific
+observation data sets without preliminary reformating. Such a
+configuration involves the following steps :
+
+  - allowing for ESMValTool to locate the data files :
+
+    - entry ``native6`` of ``config-developer.yml`` should be
+      complemented with sub-entries for ``input_dir``, ``input_file``
+      and ``output_file`` that goes under a new key representing the
+      data organization (such as ``IPSL``), and these sub-entries can
+      use an arbitrary list of ``{placeholders}``. Example :
+
+      .. code-block:: yaml
+
+	native6:
+  	  cmor_strict: false
+	  input_dir:
+             default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+             IPSL: '{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
+          input_file:
+            default: '*.nc'
+            IPSL: 
+              - '{simulation}_*_{ipsl_varname}.nc'
+              - '{simulation}_*_{group}.nc'
+          output_file:
+            default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+            IPSL: '{account}_{model}_{status}_{exp}_{simulation}_{freq}_{short_name}'
+          cmor_type: 'CMIP6'
+          cmor_default_table_prefix: 'CMIP6_'
+      
+
+    - if necessary, provide a so-called ``mapping file`` which allows
+      to associate a given variable short_name used in a recipe, such
+      as ``tas``, with a dictionnary of placeholder values; these
+      values will be used at run time, with ``input_dir`` and
+      ``input_file`` patterns, to compute the actual filename to load
+      for that variable; such a file is looked for under pattern
+      ``native6-*.yml`` at two places : in the source code, at
+      ``ESMValCore/esmvalcore/_config/variable_details/`` and in user
+      space, at ``~/.esmvaltool/variable_details``. See here
+      :download:`an example of such a file for IPSL-CM6
+      <../../esmvalcore/_config/variable_details/native6-ipsl-cm6-mappings.yml>`.
+      All such files in these two places are sorted and loaded in
+      sequence, first for the code location, second for the
+      user-space location
+
+  - ensuring that ESMValTool get the right metadata and data out of
+    your data files : this is described at :ref:`fixing_data`
+
 
 .. _config-ref:
 

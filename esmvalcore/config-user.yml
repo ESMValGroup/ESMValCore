@@ -106,3 +106,27 @@ profile_diagnostic: false
 #  CMIP6: ETHZ
 #  CMIP5: ETHZ
 #  CMIP3: ETHZ
+
+# Site-specific entries: IPSL
+# Uncomment the lines below to locate data on Ciclad at IPSL
+#rootpath:
+#  native6: /thredds/tgcc/store
+#  CMIP5: /bdd/CMIP5/output
+#  CMIP6: /bdd/CMIP6
+#  CMIP3: /bdd/CMIP3
+#  CORDEX: /bdd/CORDEX/output
+#  obs4mips: /bdd/obs4MIPS/obs-CFMIP/observations
+#  ana4mips: /not_yet
+#  OBS: /not_yet
+#  OBS6: /not_yet
+#  RAWOBS: /not_yet
+#drs:
+#  native6: IPSL
+#  CMIP6: DKRZ
+#  CMIP5: DKRZ
+#  CMIP3: IPSL
+#  CORDEX: BADC
+#  obs4mips: IPSL
+#  ana4mips: default
+#  OBS: not_yet
+#  OBS6: not_yet

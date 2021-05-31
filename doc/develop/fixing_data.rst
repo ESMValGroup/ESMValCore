@@ -1,33 +1,40 @@
 .. _fixing_data:
 
-***********
-Dataset fix
-***********
+******************************************
+Adapting to data sources
+******************************************
 
-Some (model) datasets contain (known) errors that would normally prevent them
-from being processed correctly by the ESMValCore. The errors can be in
-the metadata describing the dataset and/or in the actual data.
-Typical examples of such errors are missing or wrong attributes (e.g.
-attribute ''units'' says 1e-9 but data are actually in 1e-6), missing or
-mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
+The baseline case for ESMValTool input data is CMOR fully compliant
+data that is read using Iris load fuction. ESMValTool also allows for
+some departures with compliance (see
+:ref:`cmor_check_strictness`). Beyond that situation, some datasets
+(either model or observations) contain (known) errors that would
+normally prevent them from being processed. The issues can be in the
+metadata describing the dataset and/or in the actual data.  Typical
+examples of such errors are missing or wrong attributes (e.g.
+attribute ''units'' says 1e-9 but data are actually in 1e-6), missing
+or mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
 coordinate bounds like ''lat_bnds'') or problems with the actual data
-(e.g. cloud liquid water only instead of sum of liquid + ice as specified by the CMIP data request).
+(e.g. cloud liquid water only instead of sum of liquid + ice as
+specified by the CMIP data request).
 
-The ESMValCore can apply on the fly fixes to datasets that have
-known errors that can be fixed automatically.
+As an extreme case, some others data sources simply are not NetCDF
+files and must go through other data load function.
+
+The ESMValCore can apply on the fly fixes to such datasets when
+issues can be fixed automatically.  This is implemented for a set
+of `Natively supported non-CMIP datasets`_.  The following provide
+details on how to design such fixes.
 
 .. note::
-  **CMORization as a fix**.
-  Support for many observational and reanalysis datasets is implemented through
-  :ref:`CMORizer scripts in the ESMValTool <esmvaltool:new-dataset>`.
-  However, it is also possible to add support for a dataset that is not part of
-  a CMIP data request by implementing fixes for it.
-  This is particularly useful for large datasets, where keeping a copy of both
-  the original and CMORized dataset is not feasible.
-  See `Natively supported non-CMIP datasets`_ for a list of currently supported
-  datasets.
+   
+  **CMORizer scripts**.  Support for many observational and reanalysis
+  datasets is also possible through a priori reformating by
+  :ref:`CMORizer scripts in the ESMValTool <esmvaltool:new-dataset>`,
+  which are rather relevant for datasets of small volume
 
-
+.. _fix_structure:
+   
 Fix structure
 =============
 
@@ -326,30 +333,68 @@ strictness to the highest:
 Natively supported non-CMIP datasets
 ====================================
 
-Fixed datasets are supported through the ``native6`` project.
-Put the files containing the data in the directory that you have configured
-for the ``native6`` project in your :ref:`user configuration file`, in a
-subdirectory called ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
-Replace the items in curly braces by the values used in the variable/dataset
-definition in the :ref:`recipe <recipe_overview>`.
-Below is a list of datasets currently supported.
+Some fixed datasets and native models formats are supported through
+the ``native6`` project.
 
-ERA5
-----
+.. _fixing_native_models:
 
-- Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
-- Tier: 3
+Native models : IPSL-CM6,... 
+-----------------------------
 
-MSWEP
------
+The following models are natively supported through the procedure
+described above (:ref:`fix_structure`) and at
+:ref:`configure_native_models`:
 
-- Supported variables: ``pr``
-- Supported frequencies: ``mon``, ``day``, ``3hr``.
-- Tier: 3
+  - **IPSL-CM6** : both output formats (i.e. the ``Output`` and the
+    ``Analyse / Time series`` formats) are supported, and should be
+    configured in recipes as e.g.:
 
-For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
+    .. code-block:: yaml
 
-.. note::
-  For monthly data (V220), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
+      datasets:
+        - {simulation: CM61-LR-hist-03.1950, exp: piControl, freq: Analyse/TS_MO,
+           account: p86caub,  status: PROD, dataset: IPSL-CM6, project:  native6 } 
+        - {simulation: CM61-LR-hist-03.1950, exp: historical, freq: Output/MO,
+           account: p86caub,  status: PROD, dataset: IPSL-CM6, project:  native6 } 
 
-For more info: http://www.gloh2o.org/
+    The ``Output`` format is an example of a case where variables are
+    grouped in multi-variable files, which name cannot be computed
+    directly from datasets attributes alone but requires a mapping
+    file. These multi-variable files must also undergo some data
+    selection, which may involve an external process for performance
+    purpose.
+
+    The ``config-developer.yaml`` section for configuring IPSL-CM6 is
+    :ref:`illustrated here <example_IPSL_config>`
+
+    
+
+
+ERA5 and MSWEP datasets
+-----------------------
+Put the files containing the data in the
+directory that you have configured for the ``native6`` project in your
+:ref:`user configuration file`, in a subdirectory called
+``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.  Replace
+the items in curly braces by the values used in the variable/dataset
+definition in the :ref:`recipe <recipe_overview>`.  Below is a list of
+datasets currently supported :
+
+  - **ERA5**
+
+      - Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
+      - Tier: 3
+
+  - **MSWEP**
+
+      - Supported variables: ``pr``
+      - Supported frequencies: ``mon``, ``day``, ``3hr``.
+      - Tier: 3
+
+    For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
+
+    .. note::
+
+      For monthly data (V220), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
+
+    For more info: http://www.gloh2o.org/

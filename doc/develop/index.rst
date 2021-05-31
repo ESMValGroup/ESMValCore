@@ -10,5 +10,5 @@ features.
    :maxdepth: 1
 
     Preprocessor function <preprocessor_function>
-    Dataset fix <fixing_data>
+    Adapting to data sources <fixing_data>
     Deriving a variable <derivation>

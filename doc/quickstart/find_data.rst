@@ -1,7 +1,7 @@
 .. _findingdata:
 
 ************
-Finding data
+Input data
 ************
 
 Overview
@@ -15,10 +15,13 @@ the right data. We will detail below the data finding and retrieval process and
 the input the user needs to specify, giving examples on how to use the data
 finding routine under different scenarios.
 
+Data types
+==========
+
 .. _CMOR-DRS:
 
-CMIP data - CMOR Data Reference Syntax (DRS) and the ESGF
-=========================================================
+CMIP data
+---------------------------------------------------------
 CMIP data is widely available via the Earth System Grid Federation
 (`ESGF <https://esgf.llnl.gov/>`_) and is accessible to users either
 via download from the ESGF portal or through the ESGF data nodes hosted
@@ -44,6 +47,39 @@ ESGF data nodes, these paths differ slightly, for example:
 From the ESMValTool user perspective the number of data input parameters is
 optimized to allow for ease of use. We detail this procedure in the next
 section.
+
+Native model data
+---------------------------------------------------------
+Support for native model data is quite easy using basic
+:ref:`ESMValCore fix procedure <fixing_data>` and is yet implemented
+for some models :ref:`as described here <fixing_native_models>`
+
+Observational data
+---------------------------------------------------------
+Part of observational data is retrieved in the same manner as CMIP data, for example
+using the ``OBS`` root path set to:
+
+  .. code-block:: yaml
+
+    OBS: /gws/nopw/j04/esmeval/obsdata-v2
+
+and the dataset:
+
+  .. code-block:: yaml
+
+    - {dataset: ERA-Interim,  project: OBS,  type: reanaly,  version: 1,  start_year: 2014,  end_year: 2015,  tier: 3}
+
+in ``recipe.yml`` in ``datasets`` or ``additional_datasets``, the rules set in
+CMOR-DRS_ are used again and the file will be automatically found:
+
+.. code-block::
+
+  /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
+
+Since observational data are organized in Tiers depending on their level of
+public availability, the ``default`` directory must be structured accordingly
+with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
+``drs: default``.
 
 .. _data-retrieval:
 
@@ -231,32 +267,6 @@ and finally, using the file naming definition from CMOR-DRS_ find the file:
 
 .. _observations:
 
-Observational data
-==================
-Observational data is retrieved in the same manner as CMIP data, for example
-using the ``OBS`` root path set to:
-
-  .. code-block:: yaml
-
-    OBS: /gws/nopw/j04/esmeval/obsdata-v2
-
-and the dataset:
-
-  .. code-block:: yaml
-
-    - {dataset: ERA-Interim,  project: OBS,  type: reanaly,  version: 1,  start_year: 2014,  end_year: 2015,  tier: 3}
-
-in ``recipe.yml`` in ``datasets`` or ``additional_datasets``, the rules set in
-CMOR-DRS_ are used again and the file will be automatically found:
-
-.. code-block::
-
-  /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
-
-Since observational data are organized in Tiers depending on their level of
-public availability, the ``default`` directory must be structured accordingly
-with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
-``drs: default``.
 
 Data loading
 ============

@@ -117,8 +117,8 @@ def load(file, callback=None):
             category=UserWarning,
             module='iris',
         )
-
         raw_cubes = iris.load_raw(file, callback=callback)
+    logger.debug("Done with loading")
     if not raw_cubes:
         raise Exception('Can not load cubes from {0}'.format(file))
     for cube in raw_cubes:
