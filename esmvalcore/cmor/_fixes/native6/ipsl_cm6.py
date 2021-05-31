@@ -15,6 +15,7 @@ KEY_FOR_VARNAME = "ipsl_varname"
 
 class AllVars(Fix):
     """Fixes for all IPSLCM variables."""
+
     def fix_file(self, filepath, output_dir):
         """Select IPSLCM variable in filepath, by calling CDO, if relevant.
 
@@ -101,6 +102,7 @@ class AllVars(Fix):
 
 class Tas(Fix):
     """Fixes for ISPLCM 2m temperature."""
+
     def fix_metadata(self, cubes):
         """Add height2m."""
         varname = self.var_mapping.get(KEY_FOR_VARNAME, self.vardef.short_name)
@@ -109,11 +111,7 @@ class Tas(Fix):
         return cubes
 
 
-class Huss(Fix):
+class Huss(Tas):
     """Fixes for ISPLCM 2m specific humidity."""
-    def fix_metadata(self, cubes):
-        """Add height2m."""
-        varname = self.var_mapping.get(KEY_FOR_VARNAME, self.vardef.short_name)
-        cube = self.get_cube_from_list(cubes, varname)
-        add_scalar_height_coord(cube)
-        return cubes
+
+    pass
