@@ -1,1 +1,3 @@
 commit f6df61362c7fb6745679043f47e10cd932b5b279
+
+Modified to add valid_min and valid_max values to the longitude coordinate
