@@ -15,7 +15,8 @@ from .check import CheckLevels, _get_cmor_checker
 logger = logging.getLogger(__name__)
 
 
-def fix_file(file, short_name, project, dataset, mip, output_dir):
+def fix_file(file, short_name, project, dataset, mip, output_dir,
+             **extra_facets):
     """Fix files before ESMValTool can load them.
 
     This fixes are only for issues that prevent iris from loading the cube or
@@ -42,7 +43,8 @@ def fix_file(file, short_name, project, dataset, mip, output_dir):
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
                              mip=mip,
-                             short_name=short_name):
+                             short_name=short_name,
+                             **extra_facets):
         file = fix.fix_file(file, output_dir)
     return file
 
@@ -53,7 +55,8 @@ def fix_metadata(cubes,
                  dataset,
                  mip,
                  frequency=None,
-                 check_level=CheckLevels.DEFAULT):
+                 check_level=CheckLevels.DEFAULT,
+                 **extra_facets):
     """Fix cube metadata if fixes are required and check it anyway.
 
     This method collects all the relevant fixes for a given variable, applies
@@ -92,7 +95,8 @@ def fix_metadata(cubes,
     fixes = Fix.get_fixes(project=project,
                           dataset=dataset,
                           mip=mip,
-                          short_name=short_name)
+                          short_name=short_name,
+                          **extra_facets)
     fixed_cubes = []
     by_file = defaultdict(list)
     for cube in cubes:
@@ -147,7 +151,8 @@ def fix_data(cube,
              dataset,
              mip,
              frequency=None,
-             check_level=CheckLevels.DEFAULT):
+             check_level=CheckLevels.DEFAULT,
+             **extra_facets):
     """Fix cube data if fixes add present and check it anyway.
 
     This method assumes that metadata is already fixed and checked.
@@ -185,7 +190,8 @@ def fix_data(cube,
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
                              mip=mip,
-                             short_name=short_name):
+                             short_name=short_name,
+                             **extra_facets):
         cube = fix.fix_data(cube)
     checker = _get_cmor_checker(frequency=frequency,
                                 table=project,

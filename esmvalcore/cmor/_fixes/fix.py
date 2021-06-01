@@ -3,7 +3,6 @@ import importlib
 import inspect
 import os
 
-from esmvalcore._config import get_extra_facets
 from ..table import CMOR_TABLES
 
 
@@ -11,7 +10,7 @@ class Fix:
     """
     Base class for dataset fixes.
     """
-    def __init__(self, vardef, var_mapping=None):
+    def __init__(self, vardef, **extra_facets):
         """Initialize fix object.
 
         Parameters
@@ -21,9 +20,7 @@ class Fix:
 
         """
         self.vardef = vardef
-        if var_mapping is None:
-            var_mapping = {}
-        self.var_mapping = var_mapping
+        self.extra_facets = extra_facets
 
     def fix_file(self, filepath, output_dir):
         """
@@ -125,7 +122,7 @@ class Fix:
         return not self.__eq__(other)
 
     @staticmethod
-    def get_fixes(project, dataset, mip, short_name):
+    def get_fixes(project, dataset, mip, short_name, **extra_facets):
         """
         Get the fixes that must be applied for a given dataset.
 
@@ -154,7 +151,6 @@ class Fix:
         """
         cmor_table = CMOR_TABLES[project]
         vardef = cmor_table.get_variable(mip, short_name)
-        var_mapping = get_extra_facets(project, dataset, mip, short_name)
 
         project = project.replace('-', '_').lower()
         dataset = dataset.replace('-', '_').lower()
@@ -169,7 +165,7 @@ class Fix:
             classes = dict((name.lower(), value) for name, value in classes)
             for fix_name in (short_name, mip.lower(), 'allvars'):
                 try:
-                    fixes.append(classes[fix_name](vardef, var_mapping))
+                    fixes.append(classes[fix_name](vardef, **extra_facets))
                 except KeyError:
                     pass
         except ImportError:

@@ -15,9 +15,9 @@ from . import _recipe_checks as check
 from ._config import (
     TAGS,
     get_activity,
+    get_extra_facets,
     get_institutes,
     get_project_config,
-    get_extra_facets,
 )
 from ._data_finder import (
     get_input_filelist,
@@ -100,11 +100,9 @@ def _add_cmor_info(variable, override=False):
 
 
 def _add_project_variable_details(variable):
-    details = get_extra_facets(variable["project"],
-                               variable["dataset"],
-                               variable["mip"],
-                               variable["short_name"])
-    _augment(variable, details)
+    extra_facets = get_extra_facets(variable["project"], variable["dataset"],
+                                    variable["mip"], variable["short_name"])
+    _augment(variable, extra_facets)
 
 
 def _special_name_to_dataset(variable, special_name):
@@ -281,6 +279,9 @@ def _get_default_settings(variable, config_user, derive=False):
         'short_name': variable['short_name'],
         'mip': variable['mip'],
     }
+    extra_facets = get_extra_facets(variable['project'], variable['dataset'],
+                                    variable['mip'], variable['short_name'])
+    fix.update(extra_facets)
     # File fixes
     fix_dir = os.path.splitext(variable['filename'])[0] + '_fixed'
     settings['fix_file'] = dict(fix)
