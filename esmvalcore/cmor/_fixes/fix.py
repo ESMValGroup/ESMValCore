@@ -1,4 +1,4 @@
-"""Contains the base class for dataset fixes"""
+"""Contains the base class for dataset fixes."""
 import importlib
 import inspect
 import os
@@ -7,9 +7,7 @@ from ..table import CMOR_TABLES
 
 
 class Fix:
-    """
-    Base class for dataset fixes.
-    """
+    """Base class for dataset fixes."""
     def __init__(self, vardef, **extra_facets):
         """Initialize fix object.
 
@@ -17,14 +15,12 @@ class Fix:
         ----------
         vardef: str
             CMOR table entry
-
         """
         self.vardef = vardef
         self.extra_facets = extra_facets
 
     def fix_file(self, filepath, output_dir):
-        """
-        Apply fixes to the files prior to creating the cube.
+        """Apply fixes to the files prior to creating the cube.
 
         Should be used only to fix errors that prevent loading or can
         not be fixed in the cube (i.e. those related with missing_value
@@ -35,7 +31,7 @@ class Fix:
         filepath: str
             file to fix
         output_dir: str
-            path to the folder to store the fixe files, if required
+            path to the folder to store the fixed files, if required
 
         Returns
         -------
@@ -43,13 +39,11 @@ class Fix:
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
             original filepath
-
         """
         return filepath
 
     def fix_metadata(self, cubes):
-        """
-        Apply fixes to the metadata of the cube.
+        """Apply fixes to the metadata of the cube.
 
         Changes applied here must not require data loading.
 
@@ -64,13 +58,11 @@ class Fix:
         -------
         iris.cube.CubeList
             Fixed cubes. They can be different instances.
-
         """
         return cubes
 
     def get_cube_from_list(self, cubes, short_name=None):
-        """
-        Get a cube from the list with a given short name.
+        """Get a cube from the list with a given short name.
 
         Parameters
         ----------
@@ -97,8 +89,7 @@ class Fix:
         raise Exception('Cube for variable "{}" not found'.format(short_name))
 
     def fix_data(self, cube):
-        """
-        Apply fixes to the data of the cube.
+        """Apply fixes to the data of the cube.
 
         These fixes should be applied before checking the data.
 
@@ -111,7 +102,6 @@ class Fix:
         -------
         iris.cube.Cube
             Fixed cube. It can be a difference instance.
-
         """
         return cube
 
@@ -123,8 +113,7 @@ class Fix:
 
     @staticmethod
     def get_fixes(project, dataset, mip, short_name, **extra_facets):
-        """
-        Get the fixes that must be applied for a given dataset.
+        """Get the fixes that must be applied for a given dataset.
 
         It will look for them at the module
         esmvalcore.cmor._fixes.PROJECT in the file DATASET, and get
@@ -174,8 +163,7 @@ class Fix:
 
     @staticmethod
     def get_fixed_filepath(output_dir, filepath):
-        """
-        Get the filepath for the fixed file
+        """Get the filepath for the fixed file.
 
         Parameters
         ----------
