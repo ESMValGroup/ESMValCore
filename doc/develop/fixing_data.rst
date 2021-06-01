@@ -359,10 +359,10 @@ described above (:ref:`fix_structure`) and at
 
     The ``Output`` format is an example of a case where variables are
     grouped in multi-variable files, which name cannot be computed
-    directly from datasets attributes alone but requires a mapping
-    file. These multi-variable files must also undergo some data
-    selection, which may involve an external process for performance
-    purpose.
+    directly from datasets attributes alone but requires an
+    ref:`Extra_facets file <extra_facets>`. These multi-variable
+    files must also undergo some data selection, which may involve an
+    external process for performance purpose.
 
     The ``config-developer.yaml`` section for configuring IPSL-CM6 is
     :ref:`illustrated here <example_IPSL_config>`

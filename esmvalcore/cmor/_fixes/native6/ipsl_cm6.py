@@ -8,7 +8,7 @@ from ..shared import add_scalar_height_coord
 
 logger = logging.getLogger(__name__)
 
-# The key used in mappings.yml file for providing the
+# The key used in extra_facets file for providing the
 # variable name (in NetCDF file) that match the CMOR variable name
 KEY_FOR_VARNAME = "ipsl_varname"
 
@@ -19,23 +19,24 @@ class AllVars(Fix):
     def fix_file(self, filepath, output_dir):
         """Select IPSLCM variable in filepath, by calling CDO, if relevant.
 
-        This is done only if input file is a multi-variable one. This is
-        diagnosed by searching in the input filepathame for the mapping
-        value for key 'group'.
+        This is done only if input file is a multi-variable one. This
+        is diagnosed by searching in the input filepathame for the
+        extra_facet value for key 'group'.
 
         In such cases, it is worth to use an external tool for
         filtering, at least until Iris loads fast (which is not the case
         up to, and including, V3.0.2)
 
         However, we take care of ESMValTool policy re. dependencies licence
+
         """
-        if "_" + self.var_mapping.get("group",
+        if "_" + self.extra_facets.get("group",
                                       "non-sense") + ".nc" not in filepath:
             # No need to filter the file
             logger.debug("In ipsl-cm6.py : not filtering for %s", filepath)
             return filepath
 
-        if not self.var_mapping.get("use_cdo", False):
+        if not self.extra_facets.get("use_cdo", False):
             # The configuration developer doesn't provide CDO, while ESMValTool
             # licence policy doesn't allow to include it in dependencies
             # Or he considers that plain Iris load is quick enough for
@@ -44,7 +45,7 @@ class AllVars(Fix):
             return filepath
 
         # Proceed with CDO selvar
-        varname = self.var_mapping.get(KEY_FOR_VARNAME, self.vardef.short_name)
+        varname = self.extra_facets.get(KEY_FOR_VARNAME, self.vardef.short_name)
         alt_filepath = filepath.replace(".nc", "_cdo_selected.nc")
         outfile = self.get_fixed_filepath(output_dir, alt_filepath)
         tim1 = time.time()
@@ -64,8 +65,7 @@ class AllVars(Fix):
         """
         logger.debug("Fixing metadata for ipslcm_cm6")
 
-        varname = self.var_mapping.get(KEY_FOR_VARNAME, self.vardef.short_name)
-        cube = self.get_cube_from_list(cubes, varname)
+        cube = self.get_cube_from_list(cubes, mapping_key=KEY_FOR_VARNAME)
         cube.var_name = self.vardef.short_name
 
         # Need to degrade auxiliary time coordinates, because some
@@ -85,17 +85,17 @@ class AllVars(Fix):
     def fix_data(self, cube):
         """Apply fixes to the data of the cube.
 
-        Here : scaling and offset according to mapping.
+        Here : scaling and offset according to extra_facets.
 
         But needs to be checked vs ESMValTool automatic unit change
         when units metadat is present and correct
         """
-        mapping = self.var_mapping
+        facets = self.extra_facets
         metadata = cube.metadata
-        if "scale" in mapping:
-            cube *= mapping["scale"]
-        if "offset" in mapping:
-            cube += mapping["offset"]
+        if "scale" in facets:
+            cube *= facets["scale"]
+        if "offset" in facets:
+            cube += facets["offset"]
         cube.metadata = metadata
         return cube
 
@@ -105,8 +105,7 @@ class Tas(Fix):
 
     def fix_metadata(self, cubes):
         """Add height2m."""
-        varname = self.var_mapping.get(KEY_FOR_VARNAME, self.vardef.short_name)
-        cube = self.get_cube_from_list(cubes, varname)
+        cube = self.get_cube_from_list(cubes, mapping_key=KEY_FOR_VARNAME)
         add_scalar_height_coord(cube)
         return cubes
 

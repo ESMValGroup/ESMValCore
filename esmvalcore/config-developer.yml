@@ -193,7 +193,7 @@ native6:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-    IPSL: '{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
+    IPSL: '{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
   input_file:
     default: '*.nc'
     IPSL:

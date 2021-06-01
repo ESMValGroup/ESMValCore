@@ -280,10 +280,10 @@ with varied set of dataset attributes, such as the native6 project :
       IPSL: '{account}/{model}/{status}/{exp}/{simulation}/{igcm_dir}/Analyse/{freq}'
     input_file:
       default: '*.nc'
-      IPSL:'{simulation}_*_{ipsl_varname}.nc'
-    output_file:
-      default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
-      IPSL: '{account}_{model}_{status}_{exp}_{simulation}_{short_name}'
+      IPSL:
+        - '{simulation}_*_{ipsl_varname}.nc'
+        - '{simulation}_*_{group}.nc'
+    output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
     ...
 
 		
@@ -322,21 +322,22 @@ Configuring native models and observation data sets
 
 ESMValTool can take full advantage of the ability to configure
 ESMValCore for handling native model output formats and specific
-observation data sets without preliminary reformating. Such a
+observation data sets without preliminary reformating. When choosing
+to host this new data source under project ``native6``, such a
 configuration involves the following steps :
 
   - allowing for ESMValTool to locate the data files :
 
     - entry ``native6`` of ``config-developer.yml`` should be
-      complemented with sub-entries for ``input_dir``, ``input_file``
-      and ``output_file`` that goes under a new key representing the
+      complemented with sub-entries for ``input_dir`` and ``input_file``
+      that goes under a new key representing the
       data organization (such as ``IPSL``), and these sub-entries can
       use an arbitrary list of ``{placeholders}``. Example :
 
       .. code-block:: yaml
 
 	native6:
-  	  cmor_strict: false
+  	  ...
 	  input_dir:
              default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
              IPSL: '{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
@@ -345,27 +346,14 @@ configuration involves the following steps :
             IPSL: 
               - '{simulation}_*_{ipsl_varname}.nc'
               - '{simulation}_*_{group}.nc'
-          output_file:
-            default: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
-            IPSL: '{account}_{model}_{status}_{exp}_{simulation}_{freq}_{short_name}'
-          cmor_type: 'CMIP6'
-          cmor_default_table_prefix: 'CMIP6_'
+          ...
       
 
-    - if necessary, provide a so-called ``mapping file`` which allows
-      to associate a given variable short_name used in a recipe, such
-      as ``tas``, with a dictionnary of placeholder values; these
-      values will be used at run time, with ``input_dir`` and
-      ``input_file`` patterns, to compute the actual filename to load
-      for that variable; such a file is looked for under pattern
-      ``native6-*.yml`` at two places : in the source code, at
-      ``ESMValCore/esmvalcore/_config/variable_details/`` and in user
-      space, at ``~/.esmvaltool/variable_details``. See here
-      :download:`an example of such a file for IPSL-CM6
+    - if necessary, provide a so-called ``extra facets file`` which
+      allows to cope e.g. with variable naming issues for fonding
+      files. See `Extra_Facets`_ ) and here :download:`an example of
+      such a file for IPSL-CM6
       <../../esmvalcore/_config/variable_details/native6-ipsl-cm6-mappings.yml>`.
-      All such files in these two places are sorted and loaded in
-      sequence, first for the code location, second for the
-      user-space location
 
   - ensuring that ESMValTool get the right metadata and data out of
     your data files : this is described at :ref:`fixing_data`
