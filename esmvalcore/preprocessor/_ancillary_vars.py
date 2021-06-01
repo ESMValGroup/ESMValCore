@@ -26,7 +26,7 @@ def _load_fx(var_cube, fx_info, check_level):
         loaded_cube = fix_metadata(loaded_cube, short_name=short_name,
                                    project=project, dataset=dataset,
                                    mip=mip, frequency=freq,
-                                   check_level=check_level)
+                                   check_level=check_level, **extra_facets)
         fx_cubes.append(loaded_cube[0])
 
     fx_cube = concatenate(fx_cubes)
@@ -40,7 +40,7 @@ def _load_fx(var_cube, fx_info, check_level):
 
     fx_cube = fix_data(fx_cube, short_name=short_name, project=project,
                        dataset=dataset, mip=mip, frequency=freq,
-                       check_level=check_level)
+                       check_level=check_level, **extra_facets)
 
     fx_cube = cmor_check_data(fx_cube, cmor_table=project, mip=mip,
                               short_name=fx_cube.var_name, frequency=freq,
@@ -141,7 +141,7 @@ def add_ancillary_variable(cube, fx_cube):
                  fx_cube.var_name, cube.var_name)
 
 
-def add_fx_variables(cube, fx_variables, check_level):
+def add_fx_variables(cube, fx_variables, check_level, **extra_facets):
     """
     Load requested fx files, check with CMOR standards and add the
     fx variables as cell measures or ancillary variables in

@@ -335,6 +335,7 @@ def _get_default_settings(variable, config_user, derive=False):
         'fx_variables': {},
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
     }
+    settings['add_fx_variables'].update(extra_facets)
     settings['remove_fx_variables'] = {}
 
     return settings
