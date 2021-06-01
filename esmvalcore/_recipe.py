@@ -17,7 +17,7 @@ from ._config import (
     get_activity,
     get_institutes,
     get_project_config,
-    get_variable_details,
+    get_extra_facets,
 )
 from ._data_finder import (
     get_input_filelist,
@@ -100,10 +100,10 @@ def _add_cmor_info(variable, override=False):
 
 
 def _add_project_variable_details(variable):
-    details = get_variable_details(variable["project"],
-                                   variable["dataset"],
-                                   variable["mip"],
-                                   variable["short_name"])
+    details = get_extra_facets(variable["project"],
+                               variable["dataset"],
+                               variable["mip"],
+                               variable["short_name"])
     _augment(variable, details)
 
 

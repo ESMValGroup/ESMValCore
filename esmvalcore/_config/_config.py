@@ -33,7 +33,7 @@ def _deep_update(dictionary, update):
 
 
 @lru_cache
-def _get_variable_details_for_project(project):
+def _load_extra_facets(project):
     config = {}
     config_paths = [
         importlib_files("esmvalcore._config"),
@@ -43,6 +43,7 @@ def _get_variable_details_for_project(project):
         search_path = config_path / "variable_details"
         config_file_paths = search_path.glob(f"{project.lower()}-*.yml")
         for config_file_path in sorted(config_file_paths):
+            logger.info("Loading extra facets from %s", config_file_path)
             with config_file_path.open() as config_file:
                 config_piece = yaml.safe_load(config_file)
             if config_piece:
@@ -51,9 +52,9 @@ def _get_variable_details_for_project(project):
 
 
 @lru_cache
-def get_variable_details(project, dataset, mip, short_name):
+def get_extra_facets(project, dataset, mip, short_name):
     """Read configuration files with additional variable information."""
-    project_details = _get_variable_details_for_project(project)
+    project_details = _load_extra_facets(project)
     return project_details.get(dataset, {}).get(mip, {}).get(short_name, {})
 
 

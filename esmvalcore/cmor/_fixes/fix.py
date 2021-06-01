@@ -3,7 +3,7 @@ import importlib
 import inspect
 import os
 
-from esmvalcore._config import get_variable_details
+from esmvalcore._config import get_extra_facets
 from ..table import CMOR_TABLES
 
 
@@ -154,7 +154,7 @@ class Fix:
         """
         cmor_table = CMOR_TABLES[project]
         vardef = cmor_table.get_variable(mip, short_name)
-        var_mapping = get_variable_details(project, dataset, mip, short_name)
+        var_mapping = get_extra_facets(project, dataset, mip, short_name)
 
         project = project.replace('-', '_').lower()
         dataset = dataset.replace('-', '_').lower()
