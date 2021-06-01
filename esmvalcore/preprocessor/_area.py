@@ -211,7 +211,7 @@ def area_statistics(cube, operator):
     except iris.exceptions.CellMeasureNotFoundError:
         logger.info(
             'Cell measure "cell_area" not found in cube %s. '
-            'Check fx_file availability.', cube
+            'Check fx_file availability.', cube.summary(shorten=True)
         )
         logger.info('Attempting to calculate grid cell area...')
 
