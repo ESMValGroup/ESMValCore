@@ -416,7 +416,6 @@ def _geometry_matches_ids(geometry: dict, ids: list):
 
     geom_id = [props.get(key, None) for key in SHAPE_ID_KEYS]
     geom_id = [key for key in geom_id if key is not None]
-    geom_id = list(geom_id)
 
     if not geom_id:
         raise KeyError(f'{props} dict has no `name` or `id` key')
