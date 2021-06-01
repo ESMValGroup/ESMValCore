@@ -1,13 +1,13 @@
 """Preprocessor functions for ancillary variables and cell measures."""
 
 import logging
-import iris
 
 import dask.array as da
+import iris
 
-from esmvalcore.preprocessor._io import load, concatenate_callback, concatenate
-from esmvalcore.cmor.fix import fix_metadata, fix_data
-from esmvalcore.cmor.check import cmor_check_metadata, cmor_check_data
+from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
+from esmvalcore.cmor.fix import fix_data, fix_metadata
+from esmvalcore.preprocessor._io import concatenate, concatenate_callback, load
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +23,14 @@ def _load_fx(var_cube, fx_info, check_level):
         dataset = fx_info['dataset']
         mip = fx_info['mip']
         freq = fx_info['frequency']
-        loaded_cube = fix_metadata(loaded_cube, short_name=short_name,
-                                   project=project, dataset=dataset,
-                                   mip=mip, frequency=freq,
-                                   check_level=check_level, **extra_facets)
+        loaded_cube = fix_metadata(loaded_cube,
+                                   short_name=short_name,
+                                   project=project,
+                                   dataset=dataset,
+                                   mip=mip,
+                                   frequency=freq,
+                                   check_level=check_level,
+                                   **extra_facets)
         fx_cubes.append(loaded_cube[0])
 
     fx_cube = concatenate(fx_cubes)
@@ -38,12 +42,20 @@ def _load_fx(var_cube, fx_info, check_level):
                                   short_name=short_name, frequency=freq,
                                   check_level=check_level)
 
-    fx_cube = fix_data(fx_cube, short_name=short_name, project=project,
-                       dataset=dataset, mip=mip, frequency=freq,
-                       check_level=check_level, **extra_facets)
+    fx_cube = fix_data(fx_cube,
+                       short_name=short_name,
+                       project=project,
+                       dataset=dataset,
+                       mip=mip,
+                       frequency=freq,
+                       check_level=check_level,
+                       **extra_facets)
 
-    fx_cube = cmor_check_data(fx_cube, cmor_table=project, mip=mip,
-                              short_name=fx_cube.var_name, frequency=freq,
+    fx_cube = cmor_check_data(fx_cube,
+                              cmor_table=project,
+                              mip=mip,
+                              short_name=fx_cube.var_name,
+                              frequency=freq,
                               check_level=check_level)
 
     return fx_cube
@@ -61,9 +73,8 @@ def _is_fx_broadcastable(fx_cube, cube):
 
 
 def add_cell_measure(cube, fx_cube, measure):
-    """
-    Broadcast fx_cube and add it as a cell_measure in
-    the cube containing the data.
+    """Broadcast fx_cube and add it as a cell_measure in the cube containing
+    the data.
 
     Parameters
     ----------
@@ -102,14 +113,13 @@ def add_cell_measure(cube, fx_cube, measure):
         var_name=fx_cube.var_name,
         attributes=fx_cube.attributes)
     cube.add_cell_measure(measure, range(0, measure.ndim))
-    logger.debug('Added %s as cell measure in cube of %s.',
-                 fx_cube.var_name, cube.var_name)
+    logger.debug('Added %s as cell measure in cube of %s.', fx_cube.var_name,
+                 cube.var_name)
 
 
 def add_ancillary_variable(cube, fx_cube):
-    """
-    Broadcast fx_cube and add it as an ancillary_variable in
-    the cube containing the data.
+    """Broadcast fx_cube and add it as an ancillary_variable in the cube
+    containing the data.
 
     Parameters
     ----------
@@ -142,10 +152,9 @@ def add_ancillary_variable(cube, fx_cube):
 
 
 def add_fx_variables(cube, fx_variables, check_level, **extra_facets):
-    """
-    Load requested fx files, check with CMOR standards and add the
-    fx variables as cell measures or ancillary variables in
-    the cube containing the data.
+    """Load requested fx files, check with CMOR standards and add the fx
+    variables as cell measures or ancillary variables in the cube containing
+    the data.
 
     Parameters
     ----------
@@ -189,8 +198,7 @@ def add_fx_variables(cube, fx_variables, check_level, **extra_facets):
 
 
 def remove_fx_variables(cube):
-    """
-    Remove fx variables present as cell measures or ancillary variables in
+    """Remove fx variables present as cell measures or ancillary variables in
     the cube containing the data.
 
     Parameters
