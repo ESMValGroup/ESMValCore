@@ -357,7 +357,7 @@ def _search_fx_mip(tables, found_mip, variable, fx_info, config_user):
                 logger.debug(
                     "Found fx variables '%s':\n%s",
                     fx_info['short_name'], pformat(fx_files))
-                return found_mip, fx_info, fx_files
+    return found_mip, fx_info, fx_files
 
 
 def _get_fx_files(variable, fx_info, config_user):
@@ -441,11 +441,10 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
             fx_info['filename'] = fx_files
             settings['add_fx_variables']['fx_variables'].update({
                 fx_var: fx_info
-            })
-        
+            })        
             logger.debug('Using fx_files: %s for variable %s during step %s',
-                          pformat(fx_files),
-                          variable['short_name'], step_name)
+                pformat(fx_files),
+                variable['short_name'], step_name)
 
 
 def _fx_list_to_dict(fx_vars):
