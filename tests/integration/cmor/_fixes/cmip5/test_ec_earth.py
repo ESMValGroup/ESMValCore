@@ -2,11 +2,18 @@
 import unittest
 
 import numpy as np
+
 from cf_units import Unit
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
-
-from esmvalcore.cmor._fixes.cmip5.ec_earth import Areacello, Sftlf, Sic, Tas
+from iris.exceptions import CoordinateNotFoundError
+from esmvalcore.cmor._fixes.cmip5.ec_earth import (
+    Areacello,
+    Pr,
+    Sftlf,
+    Sic,
+    Tas,
+    )
 from esmvalcore.cmor.fix import Fix
 
 
@@ -152,3 +159,63 @@ class TestAreacello(unittest.TestCase):
 
         out_cube[0].coord('latitude')
         out_cube[0].coord('longitude')
+
+
+class TestPr(unittest.TestCase):
+    """Test pr fixes."""
+    def setUp(self):
+        """Prepare tests."""
+
+        wrong_time_coord = DimCoord(
+            points=[1.0, 2.0, 1.0, 2.0, 3.0],
+            var_name='time',
+            standard_name='time',
+            long_name='time',
+            units='days since 1850-01-01',
+        )
+
+        correct_time_coord = DimCoord(
+            points=[1.0, 2.0, 3.0],
+            var_name='time',
+            standard_name='time',
+            long_name='time',
+            units='days since 1850-01-01',
+        )
+
+        self.time_coord = correct_time_coord
+        self.wrong_cube = CubeList([Cube(np.ones(5),
+                                         var_name='pr',
+                                         units='kg m-2 s-1')])
+        self.wrong_cube[0].add_dim_coord(wrong_time_coord, 0)
+        self.correct_cube = CubeList([Cube(np.ones(3),
+                                           var_name='pr',
+                                           units='kg m-2 s-1')])
+        self.correct_cube[0].add_dim_coord(correct_time_coord, 0)
+
+        self.fix = Pr(None)
+
+    def test_get(self):
+        """Test fix get"""
+        self.assertListEqual(
+            Fix.get_fixes('CMIP5', 'EC-EARTH', 'Amon', 'pr'),
+            [Pr(None)],
+        )
+
+    def test_pr_fix_metadata(self):
+        """Test metadata fix."""
+
+        out_wrong_cube = self.fix.fix_metadata(self.wrong_cube)
+        out_correct_cube = self.fix.fix_metadata(self.correct_cube)
+
+        time = out_wrong_cube[0].coord('time')
+        assert time == self.time_coord
+
+        time = out_correct_cube[0].coord('time')
+        assert time == self.time_coord
+
+    def test_pr_fix_metadata_no_time(self):
+        """Test metadata fix with no time coord."""
+        self.correct_cube[0].remove_coord('time')
+        correct_cube = self.fix.fix_metadata([self.correct_cube])
+        with self.assertRaises(CoordinateNotFoundError):
+            correct_cube[0].coord('time')
