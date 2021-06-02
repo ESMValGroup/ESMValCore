@@ -605,7 +605,9 @@ inter-comparison or comparison with observational datasets). Regridding is
 conceptually a very similar process to interpolation (in fact, the regridder
 engine uses interpolation and extrapolation, with various schemes). The primary
 difference is that interpolation is based on sample data points, while
-regridding is based on the horizontal grid of another cube (the reference grid).
+regridding is based on the horizontal grid of another cube (the reference
+grid). If the horizontal grids of a cube and its reference grid are sufficiently
+the same, regridding is automatically and silently skipped for performance reasons.
 
 The underlying regridding mechanism in ESMValTool uses
 :obj:`iris.cube.Cube.regrid`

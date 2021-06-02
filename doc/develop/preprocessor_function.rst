@@ -6,7 +6,7 @@ Preprocessor function
 Preprocessor functions are located in :py:mod:`esmvalcore.preprocessor`.
 To add a new preprocessor function, start by finding a likely looking file to
 add your function to in
-`esmvalcore/preprocessor <https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/preprocessor>`_.
+`esmvalcore/preprocessor <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/preprocessor>`_.
 Create a new file in that directory if you cannot find a suitable place.
 
 The function should look like this:
@@ -51,7 +51,7 @@ The function should look like this:
 
 
 The above function needs to be imported in the file
-`esmvalcore/preprocessor/__init__.py <https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/preprocessor/__init__.py>`__:
+`esmvalcore/preprocessor/__init__.py <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/preprocessor/__init__.py>`__:
 
 .. code-block:: python
 
@@ -110,7 +110,7 @@ The documentation in the function docstring will be shown in
 the :ref:`preprocessor_functions` chapter.
 In addition, you should add documentation on how to use the new preprocessor
 function from the recipe in
-`doc/recipe/preprocessor.rst <https://github.com/ESMValGroup/ESMValCore/tree/master/doc/recipe/preprocessor.rst>`__
+`doc/recipe/preprocessor.rst <https://github.com/ESMValGroup/ESMValCore/tree/main/doc/recipe/preprocessor.rst>`__
 so it is shown in the :ref:`preprocessor` chapter.
 See the introduction to :ref:`documentation` for more information on how to
 best write documentation.

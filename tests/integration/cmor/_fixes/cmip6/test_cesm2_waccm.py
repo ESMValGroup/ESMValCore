@@ -8,8 +8,9 @@ import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl as BaseCl
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
-from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl, Cli, Clw, Tas
+from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl, Cli, Clw, Fgco2, Tas
 from esmvalcore.cmor.fix import Fix
 
 
@@ -70,6 +71,17 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is Cl
+
+
+def test_get_fgco2_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM', 'Omon', 'fgco2')
+    assert fix == [Fgco2(None)]
+
+
+def test_fgco2_fix():
+    """Test fix for ``fgco2``."""
+    assert Fgco2 is BaseFgco2
 
 
 @pytest.fixture
