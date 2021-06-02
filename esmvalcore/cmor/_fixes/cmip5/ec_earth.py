@@ -180,11 +180,11 @@ class Pr(Fix):
                                                     units=time_units)
 
                     # create a new cube with the right shape
-                    lat = cube.coord('latitude')
-                    lon = cube.coord('longitude')
-                    dims = (time_data.shape[0], lat.shape[0], lon.shape[0])
+                    dims = (time_data.shape[0],
+                            cube.coord('latitude').shape[0],
+                            cube.coord('longitude').shape[0])
                     data = cube.data
-                    new_data = np.ma.append(data[:dims[0]-1, :, :],
+                    new_data = np.ma.append(data[:dims[0] - 1, :, :],
                                             data[-1, :, :])
                     new_data = new_data.reshape(dims)
 
@@ -197,8 +197,8 @@ class Pr(Fix):
                         attributes=cube.attributes,
                         cell_methods=cube.cell_methods,
                         dim_coords_and_dims=[(new_time, 0),
-                                             (lat, 1),
-                                             (lon, 2)])
+                                             (cube.coord('latitude'), 1),
+                                             (cube.coord('longitude'), 2)])
 
                     new_list.append(tmp_cube)
 
