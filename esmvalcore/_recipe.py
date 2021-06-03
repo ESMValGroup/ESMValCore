@@ -99,9 +99,10 @@ def _add_cmor_info(variable, override=False):
     check.variable(variable, required_keys=cmor_keys)
 
 
-def _add_extra_facets(variable):
+def _add_extra_facets(variable, extra_facets_dir):
     extra_facets = get_extra_facets(variable["project"], variable["dataset"],
-                                    variable["mip"], variable["short_name"])
+                                    variable["mip"], variable["short_name"],
+                                    extra_facets_dir)
     _augment(variable, extra_facets)
 
 
@@ -280,7 +281,8 @@ def _get_default_settings(variable, config_user, derive=False):
         'mip': variable['mip'],
     }
     extra_facets = get_extra_facets(variable['project'], variable['dataset'],
-                                    variable['mip'], variable['short_name'])
+                                    variable['mip'], variable['short_name'],
+                                    config_user['extra_facets_dir'])
     fix.update(extra_facets)
     # File fixes
     fix_dir = os.path.splitext(variable['filename'])[0] + '_fixed'
@@ -1129,7 +1131,7 @@ class Recipe:
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
-            _add_extra_facets(variable)
+            _add_extra_facets(variable, self._cfg['extra_facets_dir'])
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:

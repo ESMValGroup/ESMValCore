@@ -12,6 +12,8 @@ output_file_type: png
 output_dir: ./esmvaltool_output
 # Auxiliary data directory (used for some additional datasets)
 auxiliary_data_dir: ./auxiliary_data
+# Extra facets directory
+extra_facets_dir: []
 # Use netCDF compression true/[false]
 compress_netcdf: false
 # Save intermediary cubes in the preprocessor true/[false]

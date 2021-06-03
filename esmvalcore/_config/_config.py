@@ -33,15 +33,15 @@ def _deep_update(dictionary, update):
 
 
 @lru_cache
-def _load_extra_facets(project):
+def _load_extra_facets(project, extra_facets_dir):
     config = {}
     config_paths = [
-        importlib_files("esmvalcore._config"),
-        Path.home() / ".esmvaltool",
+        importlib_files("esmvalcore._config") / "extra_facets",
+        Path.home() / ".esmvaltool" / "extra_facets",
     ]
+    config_paths.extend([Path(p) for p in extra_facets_dir])
     for config_path in config_paths:
-        search_path = config_path / "variable_details"
-        config_file_paths = search_path.glob(f"{project.lower()}-*.yml")
+        config_file_paths = config_path.glob(f"{project.lower()}-*.yml")
         for config_file_path in sorted(config_file_paths):
             logger.info("Loading extra facets from %s", config_file_path)
             with config_file_path.open() as config_file:
@@ -52,9 +52,9 @@ def _load_extra_facets(project):
 
 
 @lru_cache
-def get_extra_facets(project, dataset, mip, short_name):
+def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
     """Read configuration files with additional variable information."""
-    project_details = _load_extra_facets(project)
+    project_details = _load_extra_facets(project, extra_facets_dir)
     return project_details.get(dataset, {}).get(mip, {}).get(short_name, {})
 
 
@@ -105,6 +105,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         'output_file_type': 'png',
         'output_dir': 'esmvaltool_output',
         'auxiliary_data_dir': 'auxiliary_data',
+        'extra_facets_dir': tuple(),
         'save_intermediary_cubes': False,
         'remove_preproc_dir': True,
         'max_parallel_tasks': None,
@@ -126,6 +127,12 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
+
+    if isinstance(cfg['extra_facets_dir'], str):
+        cfg['extra_facets_dir'] = (_normalize_path(cfg['extra_facets_dir']), )
+    else:
+        cfg['extra_facets_dir'] = tuple(
+            _normalize_path(p) for p in cfg['extra_facets_dir'])
 
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
