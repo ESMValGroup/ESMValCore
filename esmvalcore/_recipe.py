@@ -1060,8 +1060,8 @@ class Recipe:
 
     @staticmethod
     def _expand_tag(variables, input_tag):
-        """
-        Expand tags such as ensemble members or stardates to multiple datasets.
+        """Expand tags such as ensemble members or stardates to multiple
+        datasets.
 
         Expansion only supports ensembles defined as strings, not lists.
         """
