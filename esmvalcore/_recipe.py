@@ -99,7 +99,7 @@ def _add_cmor_info(variable, override=False):
     check.variable(variable, required_keys=cmor_keys)
 
 
-def _add_project_variable_details(variable):
+def _add_extra_facets(variable):
     extra_facets = get_extra_facets(variable["project"], variable["dataset"],
                                     variable["mip"], variable["short_name"])
     _augment(variable, extra_facets)
@@ -1129,7 +1129,7 @@ class Recipe:
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
-            _add_project_variable_details(variable)
+            _add_extra_facets(variable)
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:
