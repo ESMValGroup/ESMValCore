@@ -214,8 +214,14 @@ class Test(tests.Test):
 
 def create_irregular_grid_cube(data, lons, lats):
     """Create test cube on irregular grid."""
-    nlat = iris.coords.DimCoord(range(data.shape[0]), var_name='nlat')
-    nlon = iris.coords.DimCoord(range(data.shape[1]), var_name='nlon')
+    times = iris.coords.DimCoord(np.array([10, 20], dtype=np.float64),
+                                 standard_name='time',
+                                 units=Unit('days since 1950-01-01',
+                                            calendar='gregorian'))
+
+    # Construct cube
+    nlat = iris.coords.DimCoord(range(data.shape[1]), var_name='nlat')
+    nlon = iris.coords.DimCoord(range(data.shape[2]), var_name='nlon')
     lat = iris.coords.AuxCoord(lats,
                                var_name='lat',
                                standard_name='latitude',
@@ -225,12 +231,13 @@ def create_irregular_grid_cube(data, lons, lats):
                                standard_name='longitude',
                                units='degrees')
     dim_coord_spec = [
-        (nlat, 0),
-        (nlon, 1),
+        (times, 0),
+        (nlat, 1),
+        (nlon, 2),
     ]
     aux_coord_spec = [
-        (lat, [0, 1]),
-        (lon, [0, 1]),
+        (lat, [1, 2]),
+        (lon, [1, 2]),
     ]
     cube = iris.cube.Cube(
         data,
@@ -244,28 +251,57 @@ def create_irregular_grid_cube(data, lons, lats):
 
 IRREGULAR_EXTRACT_REGION_TESTS = [
     {
-        'region': (10, 360, 0, 90),
-        'mask':
-        np.array(
+        'region': (100, 140, -10, 90),
+        'mask': np.array(
             [
-                [True, True, True],
-                [True, True, False],
-                [True, False, False],
+                [False],
+                [False],
             ],
             dtype=bool,
         ),
+        'data': np.arange(18, dtype=np.float32).reshape((2, 3, 3))[:, 1:3, 1:2]
+    },
+    {
+        'region': (100, 360, -60, 0),
+        'mask': np.array(
+            [
+                [True, False],
+                [False, False],
+            ],
+            dtype=bool,
+        ),
+        'data': np.arange(18, dtype=np.float32).reshape((2, 3, 3))[:, 0:2, 1:3]
+    },
+    {
+        'region': (10, 360, 0, 90),
+        'mask': np.array(
+            [
+                [True, False],
+                [False, False],
+            ],
+            dtype=bool,
+        ),
+        'data': np.arange(18, dtype=np.float32).reshape((2, 3, 3))[:, 1:, 1:]
+    },
+    {
+        'region': (0, 360, -90, -30),
+        'mask': np.array(
+            [
+                [False, False, False],
+            ],
+            dtype=bool,
+        ),
+        'data': np.arange(18, dtype=np.float32).reshape((2, 3, 3))[:, :1, :]
     },
     {
         'region': (200, 10, -90, -60),
-        'mask':
-        np.array(
+        'mask': np.array(
             [
                 [False, True, False],
-                [True, True, True],
-                [True, True, True],
             ],
             dtype=bool,
         ),
+        'data': np.arange(18, dtype=np.float32).reshape((2, 3, 3))[:, :1, :]
     },
     {
         'region': (-150, 50, 50, -50),
@@ -278,6 +314,8 @@ IRREGULAR_EXTRACT_REGION_TESTS = [
             ],
             dtype=bool,
         ),
+        'data':
+        np.arange(18, dtype=np.float32).reshape((2, 3, 3))
     },
     {
         'region': (0, 0, -100, 0),
@@ -293,7 +331,7 @@ IRREGULAR_EXTRACT_REGION_TESTS = [
 @pytest.fixture
 def irregular_extract_region_cube():
     """Create a test cube on an irregular grid to test `extract_region`."""
-    data = np.arange(9, dtype=np.float32).reshape((3, 3))
+    data = np.arange(18, dtype=np.float32).reshape((2, 3, 3))
     lons = np.array(
         [
             [0, 120, 240],
@@ -327,9 +365,9 @@ def test_extract_region_irregular(irregular_extract_region_cube, case):
             end_latitude=end_lat,
         )
 
-        data = np.arange(9, dtype=np.float32).reshape((3, 3))
-        np.testing.assert_array_equal(cube.data.mask, case['mask'])
-        np.testing.assert_array_equal(cube.data.data, data)
+        for i in range(2):
+            np.testing.assert_array_equal(cube.data[i].mask, case['mask'])
+        np.testing.assert_array_equal(cube.data.data, case['data'])
     else:
         with pytest.raises(ValueError) as exc:
             extract_region(
@@ -833,7 +871,7 @@ def test_extract_composite_shape_negative_bounds(make_testcube,
 @pytest.fixture
 def irreg_extract_shape_cube():
     """Create a test cube on an irregular grid to test `extract_shape`."""
-    data = np.arange(9, dtype=np.float32).reshape((3, 3))
+    data = np.arange(18, dtype=np.float32).reshape((2, 3, 3))
     lats = np.array(
         [
             [0.0, 0.0, 0.1],
@@ -870,7 +908,7 @@ def test_extract_shape_irregular(irreg_extract_shape_cube, tmp_path, method):
 
     cube = extract_shape(irreg_extract_shape_cube, shapefile, method)
 
-    data = np.arange(9, dtype=np.float32).reshape((3, 3))
+    data = np.arange(18, dtype=np.float32).reshape((2, 3, 3))
     mask = np.array(
         [
             [True, True, True],
@@ -882,7 +920,8 @@ def test_extract_shape_irregular(irreg_extract_shape_cube, tmp_path, method):
     if method == 'representative':
         mask[1, 1] = True
     np.testing.assert_array_equal(cube.data, data)
-    np.testing.assert_array_equal(cube.data.mask, mask)
+    for i in range(2):
+        np.testing.assert_array_equal(cube.data[i].mask, mask)
 
 
 def test_extract_shape_wrong_method_raises():

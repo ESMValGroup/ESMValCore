@@ -1258,9 +1258,9 @@ The area manipulation module contains the following preprocessor functions:
 ``extract_region``
 ------------------
 
-This function masks data outside a rectangular region requested. The boundaries
-of the region are provided as latitude and longitude coordinates in the
-arguments:
+This function returns a subset of the data on the rectangular region requested.
+The boundaries of the region are provided as latitude and longitude coordinates
+in the arguments:
 
 * ``start_longitude``
 * ``end_longitude``
@@ -1269,6 +1269,10 @@ arguments:
 
 Note that this function can only be used to extract a rectangular region. Use
 ``extract_shape`` to extract any other shaped region from a shapefile.
+
+If the grid is irregular, the returned region retains the original coordinates,
+but is cropped to a rectangular bounding box defined by the start/end
+coordinates. The deselected area inside the region is masked.
 
 See also :func:`esmvalcore.preprocessor.extract_region`.
 

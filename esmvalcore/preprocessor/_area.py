@@ -22,14 +22,12 @@ from ._shared import (
 logger = logging.getLogger(__name__)
 
 
-# slice cube over a restricted area (box)
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
                    end_latitude):
     """Extract a region from a cube.
 
     Function that subsets a cube on a box (start_longitude, end_longitude,
     start_latitude, end_latitude)
-    This function is a restriction of masked_cube_lonlat().
 
     Parameters
     ----------
@@ -63,16 +61,29 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             ignore_bounds=True,
         )
         region_subset = region_subset.intersection(longitude=(0., 360.))
-        return region_subset
-    # Irregular grids
-    lats = cube.coord('latitude').points
-    lons = cube.coord('longitude').points
+    else:
+        region_subset = _extract_irregular_region(
+            cube,
+            start_longitude,
+            end_longitude,
+            start_latitude,
+            end_latitude,
+        )
+    return region_subset
+
+
+def _extract_irregular_region(cube, start_longitude, end_longitude,
+                              start_latitude, end_latitude):
+    """Extract a region from a cube on an irregular grid."""
     # Convert longitudes to valid range
     if start_longitude != 360.:
         start_longitude %= 360.
     if end_longitude != 360.:
         end_longitude %= 360.
 
+    # Select coordinates inside the region
+    lats = cube.coord('latitude').points
+    lons = (cube.coord('longitude').points + 360.) % 360.
     if start_longitude <= end_longitude:
         select_lons = (lons >= start_longitude) & (lons <= end_longitude)
     else:
@@ -84,8 +95,19 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
         select_lats = (lats >= start_latitude) | (lats <= end_latitude)
 
     selection = select_lats & select_lons
-    selection = da.broadcast_to(selection, cube.shape)
-    cube.data = da.ma.masked_where(~selection, cube.core_data())
+
+    # Crop the selection, but keep rectangular shape
+    i_range, j_range = selection.nonzero()
+    if i_range.size == 0:
+        raise ValueError("No data points available in selected region")
+    i_min, i_max = i_range.min(), i_range.max()
+    j_min, j_max = j_range.min(), j_range.max()
+    i_slice, j_slice = slice(i_min, i_max + 1), slice(j_min, j_max + 1)
+    cube = cube[..., i_slice, j_slice]
+    selection = selection[i_slice, j_slice]
+    # Mask remaining coordinates outside region
+    mask = da.broadcast_to(~selection, cube.shape)
+    cube.data = da.ma.masked_where(mask, cube.core_data())
     return cube
 
 
