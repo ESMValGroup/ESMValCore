@@ -60,23 +60,22 @@ def _listify_validator(scalar_validator,
                        allow_stringlist=False,
                        *,
                        n_items=None,
-                       docstring=None):
+                       docstring=None,
+                       return_type=list):
     """Apply the validator to a list."""
     def func(inp):
         if isinstance(inp, str):
             try:
-                inp = [
+                inp = return_type(
                     scalar_validator(val.strip()) for val in inp.split(',')
-                    if val.strip()
-                ]
+                    if val.strip())
             except Exception:
                 if allow_stringlist:
                     # Sometimes, a list of colors might be a single string
                     # of single-letter colornames. So give that a shot.
-                    inp = [
+                    inp = return_type(
                         scalar_validator(val.strip()) for val in inp
-                        if val.strip()
-                    ]
+                        if val.strip())
                 else:
                     raise
         # Allow any ordered sequence type -- generators, np.ndarray, pd.Series
@@ -87,10 +86,9 @@ def _listify_validator(scalar_validator,
             # behavior of filtering out any empty strings (behavior was
             # from the original validate_stringlist()), while allowing
             # any non-string/text scalar values such as numbers and arrays.
-            inp = [
+            inp = return_type(
                 scalar_validator(val) for val in inp
-                if not isinstance(val, str) or val
-            ]
+                if not isinstance(val, str) or val)
         else:
             raise ValidationError(
                 f"Expected str or other non-set iterable, but got {inp}")
@@ -103,59 +101,6 @@ def _listify_validator(scalar_validator,
         func.__name__ = "{}list".format(scalar_validator.__name__)
     except AttributeError:  # class instance.
         func.__name__ = "{}List".format(type(scalar_validator).__name__)
-    func.__qualname__ = func.__qualname__.rsplit(".",
-                                                 1)[0] + "." + func.__name__
-    if docstring is not None:
-        docstring = scalar_validator.__doc__
-    func.__doc__ = docstring
-    return func
-
-
-@lru_cache()
-def _tuplify_validator(scalar_validator,
-                       allow_stringlist=False,
-                       *,
-                       n_items=None,
-                       docstring=None):
-    """Apply the validator to a list."""
-    def func(inp):
-        if isinstance(inp, str):
-            try:
-                inp = tuple(
-                    scalar_validator(val.strip()) for val in inp.split(',')
-                    if val.strip())
-            except Exception:
-                if allow_stringlist:
-                    # Sometimes, a list of colors might be a single string
-                    # of single-letter colornames. So give that a shot.
-                    inp = tuple(
-                        scalar_validator(val.strip()) for val in inp
-                        if val.strip())
-                else:
-                    raise
-        # Allow any ordered sequence type -- generators, np.ndarray, pd.Series
-        # -- but not sets, whose iteration order is non-deterministic.
-        elif isinstance(inp,
-                        Iterable) and not isinstance(inp, (set, frozenset)):
-            # The condition on this tuple comprehension will preserve the
-            # behavior of filtering out any empty strings (behavior was
-            # from the original validate_stringlist()), while allowing
-            # any non-string/text scalar values such as numbers and arrays.
-            inp = tuple(
-                scalar_validator(val) for val in inp
-                if not isinstance(val, str) or val)
-        else:
-            raise ValidationError(
-                f"Expected str or other non-set iterable, but got {inp}")
-        if n_items is not None and len(inp) != n_items:
-            raise ValidationError(f"Expected {n_items} values, "
-                                  f"but there are {len(inp)} values in {inp}")
-        return inp
-
-    try:
-        func.__name__ = "{}tuple".format(scalar_validator.__name__)
-    except AttributeError:  # class instance.
-        func.__name__ = "{}Tuple".format(type(scalar_validator).__name__)
     func.__qualname__ = func.__qualname__.rsplit(".",
                                                  1)[0] + "." + func.__name__
     if docstring is not None:
@@ -219,8 +164,9 @@ validate_path_or_none = _make_type_validator(validate_path, allow_none=True)
 validate_pathlist = _listify_validator(validate_path,
                                        docstring='Return a list of paths.')
 
-validate_pathtuple = _tuplify_validator(validate_path,
-                                        docstring='Return a tuple of paths.')
+validate_pathtuple = _listify_validator(validate_path,
+                                        docstring='Return a tuple of paths.',
+                                        return_type=tuple)
 
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(validate_int_positive,
