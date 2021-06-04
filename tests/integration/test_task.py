@@ -120,24 +120,18 @@ def _get_single_base_task():
         name='task0',
         ancestors=[BaseTask(name=f'task0-ancestor{j}') for j in range(2)],
     )
-    for task0 in task.flatten():
-        task0.priority = 0
-    tasks = {task}
-
-    return tasks
+    return task
 
 
 def test_base_task_names():
-    tasks = _get_single_base_task()
-    task_names = [task.name for task in tasks]
-    assert task_names == ['task0']
-    ancestor_names = [anc.name for anc in list(tasks)[0].ancestors]
+    task = _get_single_base_task()
+    assert task.name == 'task0'
+    ancestor_names = [anc.name for anc in task.ancestors]
     assert ancestor_names == ['task0-ancestor0', 'task0-ancestor1']
 
 
 def test_individual_base_task_attrs():
-    tasks = _get_single_base_task()
-    task = list(tasks)[0]
+    task = _get_single_base_task()
     assert task.products == set()
     assert task.output_files is None
     assert task.activity is None
