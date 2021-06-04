@@ -8,6 +8,7 @@ from textwrap import dedent
 import pytest
 import yaml
 
+from esmvalcore._config import TAGS
 from esmvalcore._main import run
 
 
@@ -159,10 +160,14 @@ def test_diagnostic_run(tmp_path, script_file, script):
         """.format(script_file, result_file))
     recipe_file.write_text(str(recipe))
 
+    # ensure that tags are cleared
+    TAGS.clear()
+
     config_user_file = write_config_user_file(tmp_path)
     with arguments(
             'esmvaltool',
-            '-c',
+            'run',
+            '--config_file',
             config_user_file,
             str(recipe_file),
     ):

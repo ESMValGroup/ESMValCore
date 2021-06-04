@@ -9,6 +9,7 @@ roughly following the default order in which preprocessor functions are applied:
 
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
+* :ref:`Fx variables as cell measures or ancillary variables`
 * :ref:`Vertical interpolation`
 * :ref:`Weighting`
 * :ref:`Land/Sea/Ice masking`
@@ -19,6 +20,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Area operations`
 * :ref:`Volume operations`
 * :ref:`Cycles`
+* :ref:`Trend`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
 * :ref:`Other`
@@ -59,11 +61,12 @@ Overview
 The ESMValTool preprocessor can be used to perform a broad range of operations
 on the input data before diagnostics or metrics are applied. The preprocessor
 performs these operations in a centralized, documented and efficient way, thus
-reducing the data processing load on the diagnostics side.
+reducing the data processing load on the diagnostics side.  For an overview of
+the preprocessor structure see the :ref:`Preprocessors`.
 
 Each of the preprocessor operations is written in a dedicated python module and
-all of them receive and return an Iris `cube
-<https://scitools.org.uk/iris/docs/v2.0/iris/iris/cube.html>`_ , working
+all of them receive and return an instance of
+:obj:`iris.cube.Cube`, working
 sequentially on the data with no interactions between them. The order in which
 the preprocessor operations is applied is set by default to minimize
 the loss of information due to, for example, temporal and spatial subsetting or
@@ -173,6 +176,34 @@ steps:
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
 
+.. _Fx variables as cell measures or ancillary variables:
+
+Fx variables as cell measures or ancillary variables
+====================================================
+Preprocessor steps related to spatial statistics or masking may require
+the use of ``fx_variables`` to be able to perform the computations.
+The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
+checks them against CMOR standards and adds them either as ``cell_measure``
+or ``ancillary_variable`` inside the cube data. This ensures that the
+defined preprocessor chain is applied to both ``variables`` and ``fx_variables``.
+
+Note that when calling steps that require ``fx_variables`` inside diagnostic
+scripts, the variables are expected to contain the required ``cell_measures`` or 
+``ancillary_variables``. If missing, they can be added using the following functions:
+
+.. code-block::
+
+    from esmvalcore.preprocessor import (add_cell_measure, add_ancillary_variable)
+
+    cube_with_area_measure = add_cell_measure(cube, area_cube, 'area')
+
+    cube_with_volume_measure = add_cell_measure(cube, volume_cube, 'volume)
+
+    cube_with_ancillary_sftlf = add_ancillary_variable(cube, sftlf_cube)
+
+    cube_with_ancillary_sftgif = add_ancillary_variable(cube, sftgif_cube)
+  
+  Details on the arguments needed for each step can be found in the following sections.
 
 .. _Vertical interpolation:
 
@@ -240,6 +271,13 @@ the name of the desired coordinate:
           levels: ERA-Interim
           scheme: linear_horizontal_extrapolate_vertical
           coordinate: air_pressure
+
+If ``coordinate`` is specified, pressure levels (if present) can be converted
+to height levels and vice versa using the US standard atmosphere. E.g.
+``coordinate = altitude`` will convert existing pressure levels
+(air_pressure) to height levels (altitude);
+``coordinate = air_pressure`` will convert existing height levels
+(altitude) to pressure levels (air_pressure).
 
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
@@ -316,8 +354,25 @@ experiment is preferred for fx data retrieval:
         weighting_landsea_fraction:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
-          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+          fx_variables: 
+            sftlf:
+              exp: piControl
+            sftof:
+              exp: piControl
 
+or alternatively:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_weighting:
+        weighting_landsea_fraction:
+          area_type: land
+          exclude: ['CanESM2', 'reference_dataset']
+          fx_variables: [
+            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftof', 'exp': 'piControl'}
+            ]
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
@@ -370,7 +425,8 @@ missing. Conversely, it retrieves the ``fx: sftlf`` mask when land needs to be
 masked out, respectively.
 
 Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
-experiment is preferred for fx data retrieval:
+experiment is preferred for fx data retrieval. Note that it is possible to specify as many tags
+for the fx variable as required:
 
 
 .. code-block:: yaml
@@ -379,7 +435,25 @@ experiment is preferred for fx data retrieval:
       landmask:
         mask_landsea:
           mask_out: sea
-          fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}, {'short_name': 'sftof', 'exp': 'piControl'}]
+          fx_variables: 
+            sftlf: 
+              exp: piControl
+            sftof:
+              exp: piControl
+              ensemble: r2i1p1f1
+
+or alternatively:
+
+.. code-block:: yaml
+
+    preprocessors:
+      landmask:
+        mask_landsea:
+          mask_out: sea
+          fx_variables: [
+            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftof', 'exp': 'piControl', 'ensemble': 'r2i1p1f1'}
+            ]
 
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
@@ -419,8 +493,19 @@ experiment is preferred for fx data retrieval:
       landseaicemask:
         mask_landseaice:
           mask_out: sea
-          fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+          fx_variables: 
+            sftgif:
+              exp: piControl
 
+or alternatively:
+
+.. code-block:: yaml
+
+    preprocessors:
+      landseaicemask:
+        mask_landseaice:
+          mask_out: sea
+          fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -447,17 +532,17 @@ Missing values masks
 --------------------
 
 Missing (masked) values can be a nuisance especially when dealing with
-multimodel ensembles and having to compute multimodel statistics; different
+multi-model ensembles and having to compute multi-model statistics; different
 numbers of missing data from dataset to dataset may introduce biases and
-artificially assign more weight to the datasets that have less missing
-data. This is handled in ESMValTool via the missing values masks: two types of
-such masks are available, one for the multimodel case and another for the
-single model case.
+artificially assign more weight to the datasets that have less missing data.
+This is handled in ESMValTool via the missing values masks: two types of such
+masks are available, one for the multi-model case and another for the single
+model case.
 
-The multimodel missing values mask (``mask_fillvalues``) is a preprocessor step
+The multi-model missing values mask (``mask_fillvalues``) is a preprocessor step
 that usually comes after all the single-model steps (regridding, area selection
 etc) have been performed; in a nutshell, it combines missing values masks from
-individual models into a multimodel missing values mask; the individual model
+individual models into a multi-model missing values mask; the individual model
 masks are built according to common criteria: the user chooses a time window in
 which missing data points are counted, and if the number of missing data points
 relative to the number of total data points in a window is less than a chosen
@@ -483,20 +568,14 @@ See also :func:`esmvalcore.preprocessor.mask_fillvalues`.
 Common mask for multiple models
 -------------------------------
 
-It is possible to use ``mask_fillvalues`` to create a combined multimodel
-mask (all the masks from all the analyzed models combined into a single
-mask); for that purpose setting the ``threshold_fraction`` to 0 will not
-discard any time windows, essentially keeping the original model masks and
-combining them into a single mask; here is an example:
+To create a combined multi-model mask (all the masks from all the analyzed
+datasets combined into a single mask using a logical OR), the preprocessor
+``mask_multimodel`` can be used. In contrast to ``mask_fillvalues``,
+``mask_multimodel`` does not expect that the datasets have a ``time``
+coordinate, but works on datasets with arbitrary (but identical) coordinates.
+After ``mask_multimodel``, all involved datasets have an identical mask.
 
-.. code-block:: yaml
-
-    preprocessors:
-      missing_values_preprocessor:
-        mask_fillvalues:
-          threshold_fraction: 0.0     # keep all missing values
-          min_value: -1e20            # small enough not to alter the data
-          #  time_window: 10.0        # this will not matter anymore
+See also :func:`esmvalcore.preprocessor.mask_multimodel`.
 
 Minimum, maximum and interval masking
 -------------------------------------
@@ -508,7 +587,7 @@ interval thresholding and masking can also be performed. These functions are
 ``mask_outside_range``.
 
 These functions always take a cube as first argument and either ``threshold``
-for threshold masking or the pair ``minimum`, ``maximum`` for interval masking.
+for threshold masking or the pair ``minimum``, ``maximum`` for interval masking.
 
 See also :func:`esmvalcore.preprocessor.mask_above_threshold` and related
 functions.
@@ -521,16 +600,17 @@ Horizontal regridding
 
 Regridding is necessary when various datasets are available on a variety of
 `lat-lon` grids and they need to be brought together on a common grid (for
-various statistical operations e.g. multimodel statistics or for e.g. direct
+various statistical operations e.g. multi-model statistics or for e.g. direct
 inter-comparison or comparison with observational datasets). Regridding is
 conceptually a very similar process to interpolation (in fact, the regridder
 engine uses interpolation and extrapolation, with various schemes). The primary
 difference is that interpolation is based on sample data points, while
 regridding is based on the horizontal grid of another cube (the reference
-grid).
+grid). If the horizontal grids of a cube and its reference grid are sufficiently
+the same, regridding is automatically and silently skipped for performance reasons.
 
-The underlying regridding mechanism in ESMValTool uses the `cube.regrid()
-<https://scitools.org.uk/iris/docs/latest/iris/iris/cube.html#iris.cube.Cube.regrid>`_
+The underlying regridding mechanism in ESMValTool uses
+:obj:`iris.cube.Cube.regrid`
 from Iris.
 
 The use of the horizontal regridding functionality is flexible depending on
@@ -591,6 +671,49 @@ centrepoints using the `lat_offset` and ``lon_offset`` arguments:
           lat_offset: True
           scheme: nearest
 
+Regridding to a regional target grid specification
+--------------------------------------------------
+
+This example shows how to regrid to a regional target grid specification.
+This is useful if both a ``regrid`` and ``extract_region`` step are necessary.
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid:
+            start_longitude: 40
+            end_longitude: 60
+            step_longitude: 2
+            start_latitude: -10
+            end_latitude: 30
+            step_latitude: 2
+          scheme: nearest
+
+This defines a grid ranging from 40° to 60° longitude with 2° steps,
+and -10° to 30° latitude with 2° steps. If ``end_longitude`` or ``end_latitude`` do
+not fall on the grid (e.g., ``end_longitude: 61``), it cuts off at the nearest
+previous value (e.g. ``60``).
+
+The longitude coordinates will wrap around the globe if necessary, i.e.
+``start_longitude: 350``, ``end_longitude: 370`` is valid input.
+
+The arguments are defined below:
+
+* ``start_latitude``: Latitude value of the first grid cell center (start point).
+  The grid includes this value.
+* ``end_latitude``: Latitude value of the last grid cell center (end point).
+  The grid includes this value only if it falls on a grid point.
+  Otherwise, it cuts off at the previous value.
+* ``step_latitude``: Latitude distance between the centers of two neighbouring cells.
+* ``start_longitude``: Latitude value of the first grid cell center (start point).
+  The grid includes this value.
+* ``end_longitude``: Longitude value of the last grid cell center (end point).
+  The grid includes this value only if it falls on a grid point.
+  Otherwise, it cuts off at the previous value.
+* ``step_longitude``: Longitude distance between the centers of two neighbouring cells.
+
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
 
@@ -598,11 +721,11 @@ The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
 implementations in Iris:
 
-* ``linear``: `Linear(extrapolation_mode='mask') <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.Linear>`_.
-* ``linear_extrapolate``: `Linear(extrapolation_mode='extrapolate') <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.Linear>`_.
-* ``nearest``: `Nearest(extrapolation_mode='mask') <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.Nearest>`_.
-* ``area_weighted``: `AreaWeighted() <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.AreaWeighted>`_.
-* ``unstructured_nearest``: `UnstructuredNearest() <https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris.analysis.UnstructuredNearest>`_.
+* ``linear``: ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`.
+* ``linear_extrapolate``: ``Linear(extrapolation_mode='extrapolate')``, see :obj:`iris.analysis.Linear`.
+* ``nearest``: ``Nearest(extrapolation_mode='mask')``, see :obj:`iris.analysis.Nearest`.
+* ``area_weighted``: ``AreaWeighted()``, see :obj:`iris.analysis.AreaWeighted`.
+* ``unstructured_nearest``: ``UnstructuredNearest()``, see :obj:`iris.analysis.UnstructuredNearest`.
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
@@ -642,31 +765,37 @@ Multi-model statistics
 ======================
 Computing multi-model statistics is an integral part of model analysis and
 evaluation: individual models display a variety of biases depending on model
-set-up, initial conditions, forcings and implementation; comparing model data
-to observational data, these biases have a significantly lower statistical
-impact when using a multi-model ensemble. ESMValTool has the capability of
-computing a number of multi-model statistical measures: using the preprocessor
-module ``multi_model_statistics`` will enable the user to ask for either a
-multi-model ``mean``, ``median``, ``max``, ``min`` and / or ``std`` with a set
-of argument parameters passed to ``multi_model_statistics``.
-
-Note that current multimodel statistics in ESMValTool are local (not global),
-and are computed along the time axis. As such, can be computed across a common
-overlap in time (by specifying ``span: overlap`` argument) or across the full
-length in time of each model (by specifying ``span: full`` argument).
+set-up, initial conditions, forcings and implementation; comparing model data to
+observational data, these biases have a significantly lower statistical impact
+when using a multi-model ensemble. ESMValTool has the capability of computing a
+number of multi-model statistical measures: using the preprocessor module
+``multi_model_statistics`` will enable the user to ask for either a multi-model
+``mean``, ``median``, ``max``, ``min``, ``std``, and / or ``pXX.YY`` with a set
+of argument parameters passed to ``multi_model_statistics``. Percentiles can be
+specified like ``p1.5`` or ``p95``. The decimal point will be replaced by a dash
+in the output file.
 
 Restrictive computation is also available by excluding  any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
 [excluded models list]`` argument). The implementation has a few restrictions
-that apply to the input data: model datasets must have consistent shapes, and
-from a statistical point of view, this is needed since weights are not yet
-implemented; also higher dimensional data is not supported (i.e. anything with
-dimensionality higher than four: time, vertical axis, two horizontal axes).
+that apply to the input data: model datasets must have consistent shapes, apart
+from the time dimension; and cubes with more than four dimensions (time,
+vertical axis, two horizontal axes) are not supported.
+
+Input datasets may have different time coordinates. Statistics can be computed
+across overlapping times only (``span: overlap``) or across the full time span
+of the combined models (``span: full``). The preprocessor sets a common time
+coordinate on all datasets. As the number of days in a year may vary between
+calendars, (sub-)daily data with different calendars are not supported.
+
+Input datasets may have different time coordinates. The multi-model statistics
+preprocessor sets a common time coordinate on all datasets. As the number of
+days in a year may vary between calendars, (sub-)daily data are not supported.
 
 .. code-block:: yaml
 
     preprocessors:
-      multimodel_preprocessor:
+      multi_model_preprocessor:
         multi_model_statistics:
           span: overlap
           statistics: [mean, median]
@@ -674,7 +803,7 @@ dimensionality higher than four: time, vertical axis, two horizontal axes).
 
 see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
-When calling the module inside diagnostic scripts, the input must be given 
+When calling the module inside diagnostic scripts, the input must be given
 as a list of cubes. The output will be saved in a dictionary where each
 entry contains the resulting cube with the requested statistic operations.
 
@@ -687,14 +816,12 @@ entry contains the resulting cube with the requested statistic operations.
 
 .. note::
 
-   Note that the multimodel array operations, albeit performed in
-   per-time/per-horizontal level loops to save memory, could, however, be
-   rather memory-intensive (since they are not performed lazily as
-   yet). The Section on :ref:`Memory use` details the memory intake
-   for different run scenarios, but as a thumb rule, for the multimodel
-   preprocessor, the expected maximum memory intake could be approximated as
-   the number of datasets multiplied by the average size in memory for one
-   dataset.
+   The multi-model array operations can be rather memory-intensive (since they
+   are not performed lazily as yet). The Section on :ref:`Memory use` details
+   the memory intake for different run scenarios, but as a thumb rule, for the
+   multi-model preprocessor, the expected maximum memory intake could be
+   approximated as the number of datasets multiplied by the average size in
+   memory for one dataset.
 
 .. _time operations:
 
@@ -705,12 +832,15 @@ The ``_time.py`` module contains the following preprocessor functions:
 * extract_time_: Extract a time range from a cube.
 * extract_season_: Extract only the times that occur within a specific season.
 * extract_month_: Extract only the times that occur within a specific month.
+* hourly_statistics_: Compute intra-day statistics
 * daily_statistics_: Compute statistics for each day
 * monthly_statistics_: Compute statistics for each month
 * seasonal_statistics_: Compute statistics for each season
 * annual_statistics_: Compute statistics for each year
 * decadal_statistics_: Compute statistics for each decade
 * climate_statistics_: Compute statistics for the full period
+* resample_time_: Resample data
+* resample_hours_: Convert between N-hourly frequencies by resampling
 * anomalies_: Compute (standardized) anomalies
 * regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
@@ -764,7 +894,8 @@ See also :func:`esmvalcore.preprocessor.extract_time`.
 Extract only the times that occur within a specific season.
 
 This function only has one argument: ``season``. This is the named season to
-extract. ie: DJF, MAM, JJA, SON.
+extract, i.e. DJF, MAM, JJA, SON, but also all other sequentially correct
+combinations, e.g. JJAS.
 
 Note that this function does not change the time resolution. If your original
 data is in monthly time resolution, then this function will return three
@@ -786,6 +917,22 @@ between 1 and 12 as the named month string will not be accepted.
 
 See also :func:`esmvalcore.preprocessor.extract_month`.
 
+.. _hourly_statistics:
+
+``hourly_statistics``
+---------------------
+
+This function produces statistics at a x-hourly frequency.
+
+Parameters:
+    * every_n_hours: frequency to use to compute the statistics. Must be a divisor of
+      24.
+
+    * operator: operation to apply. Accepted values are 'mean',
+      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+
+See also :func:`esmvalcore.preprocessor.daily_statistics`.
+
 .. _daily_statistics:
 
 ``daily_statistics``
@@ -795,7 +942,7 @@ This function produces statistics for each day in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
@@ -808,7 +955,7 @@ This function produces statistics for each month in the dataset.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 
@@ -817,18 +964,21 @@ See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 ``seasonal_statistics``
 -----------------------
 
-This function produces statistics for each season (DJF, MAM, JJA, SON) in the
-dataset. Note that this function will not check for missing time points.
-For instance, if you are looking at the DJF field, but your datasets
-starts on January 1st, the first DJF field will only contain data
-from January and February.
+This function produces statistics for each season (default: "(DJF, MAM, JJA,
+SON)" or custom seasons e.g. "(JJAS, ONDJFMAM)" ) in the dataset. Note that
+this function will not check for missing time points. For instance, if you are
+looking at the DJF field, but your datasets starts on January 1st, the first
+DJF field will only contain data from January and February.
 
 We recommend using the extract_time to start the dataset from the following
 December and remove such biased initial datapoints.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+
+    * seasons: seasons to build statistics.
+      Default is '(DJF, MAM, JJA, SON)'
 
 See also :func:`esmvalcore.preprocessor.seasonal_mean`.
 
@@ -841,7 +991,7 @@ This function produces statistics for each year.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.annual_statistics`.
 
@@ -854,7 +1004,7 @@ This function produces statistics for each decade.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
 See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 
@@ -868,12 +1018,15 @@ This function produces statistics for the whole dataset. It can produce scalars
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',
-      'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+      'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
     * period: define the granularity of the statistics: get values for the
       full period, for each month or day of year.
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
       'mon', 'daily', 'day'. Default is 'full'
+
+    * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
+      Default is '(DJF, MAM, JJA, SON)'
 
 Examples:
     * Monthly climatology:
@@ -902,6 +1055,80 @@ Examples:
 
 See also :func:`esmvalcore.preprocessor.climate_statistics`.
 
+.. _resample_time:
+
+``resample_time``
+-----------------
+
+This function changes the frequency of the data in the cube by extracting the
+timesteps that meet the criteria. It is important to note that it is mainly
+meant to be used with instantaneous data.
+
+Parameters:
+    * month: Extract only timesteps from the given month or do nothing if None.
+      Default is `None`
+    * day: Extract only timesteps from the given day of month or do nothing if
+      None. Default is `None`
+    * hour: Extract only timesteps from the given hour or do nothing if None.
+      Default is `None`
+
+Examples:
+    * Hourly data to daily:
+
+        .. code-block:: yaml
+
+            resample_time:
+              hour: 12
+
+    * Hourly data to monthly:
+
+        .. code-block:: yaml
+
+            resample_time:
+              hour: 12
+              day: 15
+
+    * Daily data to monthly:
+
+        .. code-block:: yaml
+
+            resample_time:
+              day: 15
+
+See also :func:`esmvalcore.preprocessor.resample_time`.
+
+
+resample_hours:
+
+``resample_hours``
+------------------
+
+This function changes the frequency of the data in the cube by extracting the
+timesteps that belongs to the desired frequency. It is important to note that
+it is mainly mean to be used with instantaneous data
+
+Parameters:
+    * interval: New frequency of the data. Must be a divisor of 24
+    * offset: First desired hour. Default 0. Must be lower than the interval
+
+Examples:
+    * Convert to 12-hourly, by getting timesteps at 0:00 and 12:00:
+
+        .. code-block:: yaml
+
+            resample_hours:
+              hours: 12
+
+    * Convert to 12-hourly, by getting timesteps at 6:00 and 18:00:
+
+        .. code-block:: yaml
+
+            resample_hours:
+              hours: 12
+	      offset: 6
+
+See also :func:`esmvalcore.preprocessor.resample_hours`.
+
 .. _anomalies:
 
 ``anomalies``
@@ -920,7 +1147,8 @@ Parameters:
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
-
+    * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
+      Default is '(DJF, MAM, JJA, SON)'
 Examples:
     * Anomalies from the full period climatology:
 
@@ -985,9 +1213,7 @@ See also :func:`esmvalcore.preprocessor.regrid_time`.
 This function allows the user to apply a filter to the timeseries data. This filter may be
 of the user's choice (currently only the ``low-pass`` Lanczos filter is implemented); the
 implementation is inspired by this `iris example
-<https://scitools.org.uk/iris/docs/latest/examples/General/
-SOI_filtering.html?highlight=running%20mean>`_ and uses aggregation via a
-`rolling window <https://scitools.org.uk/iris/docs/v2.0/iris/iris/cube.html#iris.cube.Cube.rolling_window>`_.
+<https://scitools-iris.readthedocs.io/en/latest/generated/gallery/general/plot_SOI_filtering.html>`_ and uses aggregation via :obj:`iris.cube.Cube.rolling_window`.
 
 Parameters:
     * window: the length of the filter window (in units of cube time coordinate).
@@ -997,7 +1223,7 @@ Parameters:
     * filter_type: the type of filter to be applied; default 'lowpass'.
       Available types: 'lowpass'.
     * filter_stats: the type of statistic to aggregate on the rolling window;
-      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'.
+      default 'sum'. Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max', 'rms'.
 
 Examples:
     * Lowpass filter with a monthly mean as operator:
@@ -1081,6 +1307,19 @@ Parameters:
     regions in the shape file is masked out. If ``true``, the regions in the
     shapefiles are masked out separately, generating an auxiliary dimension
     for the cube for this.
+  * ``ids``: by default, ``[]``, in this case all the shapes in the file will
+    be used. If a list of IDs is provided, only the shapes matching them will
+    be used. The IDs are assigned from the ``name`` or ``id`` attributes (in
+    that order of priority) if present in the file or from the reading order
+    if otherwise not present. So, for example, if a file has both ```name``
+    and ``id`` attributes, the ids will be assigned from ``name``. If the file
+    only has the ``id`` attribute, it will be taken from it and if no ``name``
+    nor ``id`` attributes are present, an integer id starting from 1 will be
+    assigned automatically when reading the shapes. We discourage to rely on
+    this last behaviour as we can not assure that the reading order will be the
+    same in different platforms, so we encourage you to modify the file to add
+    a proper id attribute. If the file has an id attribute with a name that is
+    not supported, please open an issue so we can add support for it.
 
 Examples:
     * Extract the shape of the river Elbe from a shapefile:
@@ -1090,6 +1329,21 @@ Examples:
             extract_shape:
               shapefile: Elbe.shp
               method: contains
+
+    * Extract the shape of several countries:
+
+        .. code-block:: yaml
+
+            extract_shape:
+            shapefile: NaturalEarth/Countries/ne_110m_admin_0_countries.shp
+            decomposed: True
+            method: contains
+            ids:
+              - Spain
+              - France
+              - Italy
+              - United Kingdom
+              - Taiwan
 
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
@@ -1124,7 +1378,7 @@ Parameters:
 The function calculates the zonal statistics by applying an operator
 along the longitude coordinate. This function takes one argument:
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
 
 See also :func:`esmvalcore.preprocessor.zonal_means`.
 
@@ -1136,7 +1390,7 @@ The function calculates the meridional statistics by applying an
 operator along the latitude coordinate. This function takes one
 argument:
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max or sum
+* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
 
 See also :func:`esmvalcore.preprocessor.meridional_means`.
 
@@ -1149,27 +1403,45 @@ areas of the region. This function takes the argument, ``operator``: the name
 of the operation to apply.
 
 This function can be used to apply several different operations in the
-horizontal plane: mean, standard deviation, median variance, minimum and maximum.
+horizontal plane: mean, standard deviation, median, variance, minimum, maximum and root mean square.
 
 Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
 The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it as a list of variables e.g.
+the user may specify it calling the variables e.g.
+
+.. code-block:: yaml
+
+    fx_variables: 
+      areacello:
+      volcello:
+
+or calling the variables and adding specific variable parameters (the key-value pair may be as specific
+as a CMOR variable can permit):
+
+.. code-block:: yaml
+
+    fx_variables: 
+      areacello:
+        mip: Omon
+      volcello:
+        mip: fx
+
+Alternatively, the ``fx_variables`` argument can also be specified as a list:
 
 .. code-block:: yaml
 
     fx_variables: ['areacello', 'volcello']
 
-or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
-as a CMOR variable can permit):
+or as a list of dictionaries:
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
@@ -1216,20 +1488,38 @@ No depth coordinate is required as this is determined by Iris. This function
 works best when the ``fx_variables`` provide the cell volume.
 
 The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it as a list of variables e.g.
+the user may specify it calling the variables e.g.
+
+.. code-block:: yaml
+
+    fx_variables: 
+      areacello:
+      volcello:
+
+or calling the variables and adding specific variable parameters (the key-value pair may be as specific
+as a CMOR variable can permit):
+
+.. code-block:: yaml
+
+    fx_variables: 
+      areacello:
+        mip: Omon
+      volcello:
+        mip: fx
+
+Alternatively, the ``fx_variables`` argument can also be specified as a list:
 
 .. code-block:: yaml
 
     fx_variables: ['areacello', 'volcello']
 
-or as list of dictionaries, with specific variable parameters (they key-value pair may be as specific
-as a CMOR variable can permit):
+or as a list of dictionaries:
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello, mip': 'fx'}]
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
 
-The recipe parser wil automatically find the data files that are associated with these
+The recipe parser will automatically find the data files that are associated with these
 variables and pass them to the function for loading and processing.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
@@ -1299,14 +1589,47 @@ This function extracts the peak-to-peak amplitude (maximum value minus minimum
 value) of a field aggregated over specified coordinates. Its only argument is
 ``coords``, which can either be a single coordinate (given as :obj:`str`) or
 multiple coordinates (given as :obj:`list` of :obj:`str`). Usually, these
-coordinates refer to temporal `categorised coordinates
-<https://scitools.org.uk/iris/docs/latest/iris/iris/coord_categorisation.html>`_
+coordinates refer to temporal categorised coordinates
+:obj:`iris.coord_categorisation`
 like `year`, `month`, `day of year`, etc. For example, to extract the amplitude
 of the annual cycle for every single year in the data, use ``coords: year``; to
 extract the amplitude of the diurnal cycle for every single day in the data,
 use ``coords: [year, day_of_year]``.
 
 See also :func:`esmvalcore.preprocessor.amplitude`.
+
+
+.. _trend:
+
+Trend
+=====
+
+The trend module contains the following preprocessor functions:
+
+* ``linear_trend``: Calculate linear trend along a specified coordinate.
+* ``linear_trend_stderr``: Calculate standard error of linear trend along a
+  specified coordinate.
+
+``linear_trend``
+----------------
+
+This function calculates the linear trend of a dataset (defined as slope of an
+ordinary linear regression) along a specified coordinate. The only argument of
+this preprocessor is ``coordinate`` (given as :obj:`str`; default value is
+``'time'``).
+
+See also :func:`esmvalcore.preprocessor.linear_trend`.
+
+``linear_trend_stderr``
+-----------------------
+
+This function calculates the standard error of the linear trend of a dataset
+(defined as the standard error of the slope in an ordinary linear regression)
+along a specified coordinate. The only argument of this preprocessor is
+``coordinate`` (given as :obj:`str`; default value is ``'time'``). Note that
+the standard error is **not** identical to a confidence interval.
+
+See also :func:`esmvalcore.preprocessor.linear_trend_stderr`.
 
 
 .. _detrend:
@@ -1330,6 +1653,7 @@ If method is ``constant``, detrend will compute the mean along that dimension
 and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
+
 
 .. _unit conversion:
 
@@ -1362,14 +1686,14 @@ In the most general case, we can set upper limits on the maximum memory the
 analysis will require:
 
 
-``Ms = (R + N) x F_eff - F_eff`` - when no multimodel analysis is performed;
+``Ms = (R + N) x F_eff - F_eff`` - when no multi-model analysis is performed;
 
-``Mm = (2R + N) x F_eff - 2F_eff`` - when multimodel analysis is performed;
+``Mm = (2R + N) x F_eff - 2F_eff`` - when multi-model analysis is performed;
 
 where
 
 * ``Ms``: maximum memory for non-multimodel module
-* ``Mm``: maximum memory for multimodel module
+* ``Mm``: maximum memory for multi-model module
 * ``R``: computational efficiency of module; `R` is typically 2-3
 * ``N``: number of datasets
 * ``F_eff``: average size of data per dataset where ``F_eff = e x f x F``
@@ -1388,7 +1712,7 @@ where
 ``Mm = 1.5 x (N - 2)`` GB
 
 As a rule of thumb, the maximum required memory at a certain time for
-multimodel analysis could be estimated by multiplying the number of datasets by
+multi-model analysis could be estimated by multiplying the number of datasets by
 the average file size of all the datasets; this memory intake is high but also
 assumes that all data is fully realized in memory; this aspect will gradually
 change and the amount of realized data will decrease with the increase of

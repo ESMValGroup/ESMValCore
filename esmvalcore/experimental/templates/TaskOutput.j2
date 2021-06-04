@@ -1,0 +1,23 @@
+<h2>{{ task.name }}</h2>
+
+{% for file in task.image_files %}
+
+    <p>
+        {{ file.caption }}
+    </p>
+    <p>
+        <img width='80%' src='{{ file.path.relative_to(session.session_dir) }}' alt='{{ file.caption }}'/>
+    </p>
+
+{% endfor %}
+
+{% for file in task.data_files %}
+
+    <p>
+        {{ file.caption }}
+    </p>
+    <p>
+        <a href='{{ file.path.relative_to(session.session_dir) }}'>{{ file.path.name }}</a>
+    </p>
+
+{% endfor %}

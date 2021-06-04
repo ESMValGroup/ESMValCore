@@ -8,7 +8,7 @@ import iris
 import netCDF4
 import numpy as np
 from iris.coords import DimCoord
-from iris.cube import Cube
+from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor import save
 
@@ -57,6 +57,14 @@ class TestSave(unittest.TestCase):
         loaded_cube = iris.load_cube(path)
         self._compare_cubes(cube, loaded_cube)
 
+    def test_save_alias(self):
+        """Test save"""
+        cube, filename = self._create_sample_cube()
+        path = save([cube], filename, alias='alias')
+        loaded_cube = iris.load_cube(path)
+        self._compare_cubes(cube, loaded_cube)
+        self.assertEqual(loaded_cube.var_name, 'alias')
+
     def test_save_zlib(self):
         """Test save"""
         cube, filename = self._create_sample_cube()
@@ -69,6 +77,13 @@ class TestSave(unittest.TestCase):
         self.assertTrue(sample_filters['shuffle'])
         self.assertEqual(sample_filters['complevel'], 4)
         handler.close()
+
+    def test_fail_empty_cubes(self):
+        """Test save fails if empty cubes is provided."""
+        (_, filename) = self._create_sample_cube()
+        empty_cubes = CubeList([])
+        with self.assertRaises(ValueError):
+            save(empty_cubes, filename)
 
     def test_fail_without_filename(self):
         """Test save fails if filename is not provided."""

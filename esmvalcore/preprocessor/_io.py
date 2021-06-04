@@ -3,7 +3,6 @@ import copy
 import logging
 import os
 import shutil
-from collections import OrderedDict
 from itertools import groupby
 from warnings import catch_warnings, filterwarnings
 
@@ -174,6 +173,8 @@ def _get_concatenation_error(cubes):
 
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
+    if not cubes:
+        return cubes
     if len(cubes) == 1:
         return cubes[0]
 
@@ -198,7 +199,8 @@ def concatenate(cubes):
     return result
 
 
-def save(cubes, filename, optimize_access='', compress=False, **kwargs):
+def save(cubes, filename, optimize_access='', compress=False, alias='',
+         **kwargs):
     """
     Save iris cubes to file.
 
@@ -227,7 +229,15 @@ def save(cubes, filename, optimize_access='', compress=False, **kwargs):
     str
         filename
 
+    Raises
+    ------
+    ValueError
+        cubes is empty.
+
     """
+    if not cubes:
+        raise ValueError(f"Cannot save empty cubes '{cubes}'")
+
     # Rename some arguments
     kwargs['target'] = filename
     kwargs['zlib'] = compress
@@ -263,6 +273,12 @@ def save(cubes, filename, optimize_access='', compress=False, **kwargs):
             for index, length in enumerate(cube.shape))
 
     kwargs['fill_value'] = GLOBAL_FILL_VALUE
+    if alias:
+
+        for cube in cubes:
+            logger.debug(
+                'Changing var_name from %s to %s', cube.var_name, alias)
+            cube.var_name = alias
     iris.save(cubes, **kwargs)
 
     return filename
@@ -293,19 +309,6 @@ def cleanup(files, remove=None):
     return files
 
 
-def _ordered_safe_dump(data, stream):
-    """Write data containing OrderedDicts to yaml file."""
-    class _OrderedDumper(yaml.SafeDumper):
-        pass
-
-    def _dict_representer(dumper, data):
-        return dumper.represent_mapping(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, data.items())
-
-    _OrderedDumper.add_representer(OrderedDict, _dict_representer)
-    return yaml.dump(data, stream, _OrderedDumper)
-
-
 def write_metadata(products, write_ncl=False):
     """Write product metadata to file."""
     output_files = []
@@ -318,17 +321,19 @@ def write_metadata(products, write_ncl=False):
                 p.attributes.get('dataset', ''),
             ),
         )
-        metadata = OrderedDict()
+        metadata = {}
         for product in sorted_products:
             if isinstance(product.attributes.get('exp'), (list, tuple)):
                 product.attributes = dict(product.attributes)
                 product.attributes['exp'] = '-'.join(product.attributes['exp'])
+            if 'original_short_name' in product.attributes:
+                del product.attributes['original_short_name']
             metadata[product.filename] = product.attributes
 
         output_filename = os.path.join(output_dir, 'metadata.yml')
         output_files.append(output_filename)
         with open(output_filename, 'w') as file:
-            _ordered_safe_dump(metadata, file)
+            yaml.safe_dump(metadata, file)
         if write_ncl:
             output_files.append(_write_ncl_metadata(output_dir, metadata))
 

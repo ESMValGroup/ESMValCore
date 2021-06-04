@@ -116,7 +116,17 @@ def _create_cube_time(src_cube, data, times):
 
     # Construct the new vertical coordinate for the interpolated
     # z-dimension, using the associated source coordinate metadata.
-    kwargs = deepcopy(src_times._as_defn())._asdict()
+    metadata = src_times.metadata
+
+    kwargs = {
+        'standard_name': metadata.standard_name,
+        'long_name': metadata.long_name,
+        'var_name': metadata.var_name,
+        'units': metadata.units,
+        'attributes': metadata.attributes,
+        'coord_system': metadata.coord_system,
+        'climatological': metadata.climatological,
+    }
 
     try:
         coord = iris.coords.DimCoord(times, **kwargs)
@@ -164,10 +174,7 @@ def calculate_volume(cube):
     return grid_volume
 
 
-def volume_statistics(
-        cube,
-        operator,
-        fx_variables=None):
+def volume_statistics(cube, operator):
     """
     Apply a statistical operation over a volume.
 
@@ -177,12 +184,10 @@ def volume_statistics(
 
     Parameters
     ----------
-        cube: iris.cube.Cube
-            Input cube.
-        operator: str
-            The operation to apply to the cube, options are: 'mean'.
-        fx_variables: dict
-            dictionary of field:filename for the fx_variables
+    cube: iris.cube.Cube
+        Input cube.
+    operator: str
+        The operation to apply to the cube, options are: 'mean'.
 
     Returns
     -------
@@ -201,26 +206,15 @@ def volume_statistics(
     # Load z coordinate field and figure out which dim is which.
     t_dim = cube.coord_dims('time')[0]
 
-    grid_volume_found = False
-    grid_volume = None
-    if fx_variables:
-        for key, fx_file in fx_variables.items():
-            if fx_file is None:
-                continue
-            logger.info('Attempting to load %s from file: %s', key, fx_file)
-            fx_cube = iris.load_cube(fx_file)
-
-            grid_volume = fx_cube.data
-            grid_volume_found = True
-            cube_shape = cube.data.shape
-
-    if not grid_volume_found:
+    try:
+        grid_volume = cube.cell_measure('ocean_volume').core_data()
+    except iris.exceptions.CellMeasureNotFoundError:
+        logger.info(
+            'Cell measure "ocean_volume" not found in cube. '
+            'Check fx_file availability.'
+        )
+        logger.info('Attempting to calculate grid cell volume...')
         grid_volume = calculate_volume(cube)
-
-    # Check whether the dimensions are right.
-    if cube.data.ndim == 4 and grid_volume.ndim == 3:
-        grid_volume = np.tile(grid_volume,
-                              [cube_shape[0], 1, 1, 1])
 
     if cube.data.shape != grid_volume.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '

@@ -1,11 +1,18 @@
 """Fixes for CESM2 model."""
 from shutil import copyfile
 
+import numpy as np
 from netCDF4 import Dataset
 
 from ..fix import Fix
-from ..shared import (add_scalar_depth_coord, add_scalar_height_coord,
-                      add_scalar_typeland_coord, add_scalar_typesea_coord)
+from ..shared import (
+    add_scalar_depth_coord,
+    add_scalar_height_coord,
+    add_scalar_typeland_coord,
+    add_scalar_typesea_coord,
+    fix_ocean_depth_coord,
+)
+from .gfdl_esm4 import Siconc as Addtypesi
 
 
 class Cl(Fix):
@@ -21,27 +28,6 @@ class Cl(Fix):
             'atmosphere_hybrid_sigma_pressure_coordinate')
         dataset.close()
         return new_path
-
-    def fix_data(self, cube):
-        """Fix data.
-
-        Fixed ordering of vertical coordinate.
-
-        Parameters
-        ----------
-        cube: iris.cube.Cube
-            Input cube to fix.
-
-        Returns
-        -------
-        iris.cube.Cube
-
-        """
-        (z_axis,) = cube.coord_dims(cube.coord(axis='Z', dim_coords=True))
-        indices = [slice(None)] * cube.ndim
-        indices[z_axis] = slice(None, None, -1)
-        cube = cube[tuple(indices)]
-        return cube
 
     def fix_file(self, filepath, output_dir):
         """Fix hybrid pressure coordinate.
@@ -75,6 +61,30 @@ class Cl(Fix):
         dataset.close()
         return new_path
 
+    def fix_metadata(self, cubes):
+        """Fix ``atmosphere_hybrid_sigma_pressure_coordinate``.
+
+        See discussion in #882 for more details on that.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        lev_coord = cube.coord(var_name='lev')
+        a_coord = cube.coord(var_name='a')
+        b_coord = cube.coord(var_name='b')
+        lev_coord.points = a_coord.core_points() + b_coord.core_points()
+        lev_coord.bounds = a_coord.core_bounds() + b_coord.core_bounds()
+        lev_coord.units = '1'
+        return cubes
+
 
 Cli = Cl
 
@@ -103,11 +113,12 @@ class Fgco2(Fix):
         return cubes
 
 
-class Tas(Fix):
+class Prw(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """Add height (2m) coordinate.
+        """
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
 
         Parameters
         ----------
@@ -119,8 +130,46 @@ class Tas(Fix):
         iris.cube.CubeList
 
         """
+        for cube in cubes:
+            latitude = cube.coord('latitude')
+            if latitude.bounds is None:
+                latitude.guess_bounds()
+            latitude.bounds = latitude.bounds.astype(np.float64)
+            latitude.bounds = np.round(latitude.bounds, 4)
+            longitude = cube.coord('longitude')
+            if longitude.bounds is None:
+                longitude.guess_bounds()
+            longitude.bounds = longitude.bounds.astype(np.float64)
+            longitude.bounds = np.round(longitude.bounds, 4)
+
+        return cubes
+
+
+class Tas(Prw):
+    """Fixes for tas."""
+
+    def fix_metadata(self, cubes):
+        """
+        Add height (2m) coordinate.
+
+        Fix also done for prw.
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        super().fix_metadata(cubes)
+        # Specific code for tas
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube)
+
         return cubes
 
 
@@ -163,4 +212,66 @@ class Sftof(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_typesea_coord(cube)
+        return cubes
+
+
+class Tos(Fix):
+    """Fixes for tos."""
+
+    def fix_metadata(self, cubes):
+        """
+        Round times to 1 d.p. for monthly means.
+
+        Required to get hist-GHG and ssp245-GHG Omon tos to concatenate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+
+        for cube in cubes:
+            if cube.attributes['mipTable'] == 'Omon':
+                cube.coord('time').points = \
+                    np.round(cube.coord('time').points, 1)
+        return cubes
+
+
+Siconc = Addtypesi
+
+
+class Omon(Fix):
+    """Fixes for ocean variables."""
+
+    def fix_metadata(self, cubes):
+        """Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                z_coord = cube.coord(axis='Z')
+
+                # Only points need to be fixed, not bounds
+                if z_coord.units == 'cm':
+                    z_coord.points = z_coord.core_points() / 100.0
+                    z_coord.units = 'm'
+
+                # Fix depth metadata
+                if z_coord.standard_name is None:
+                    fix_ocean_depth_coord(cube)
         return cubes

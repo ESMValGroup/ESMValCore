@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import shutil
 from functools import partial
@@ -6,34 +7,19 @@ from multiprocessing.pool import ThreadPool
 import pytest
 
 import esmvalcore
-from esmvalcore._config import DIAGNOSTICS_PATH
-from esmvalcore._task import (BaseTask, DiagnosticError, DiagnosticTask,
-                              _py2ncl, _run_tasks_parallel,
-                              _run_tasks_sequential, run_tasks)
+from esmvalcore._config import DIAGNOSTICS
+from esmvalcore._task import (
+    BaseTask,
+    DiagnosticError,
+    DiagnosticTask,
+    TaskSet,
+    _py2ncl,
+)
 
 
-@pytest.fixture
-def example_tasks():
-    """Example tasks for testing the task runners."""
-    tasks = set()
-    for i in range(3):
-        task = BaseTask(
-            name=f'task{i}',
-            ancestors=[
-                BaseTask(name=f'task{i}-ancestor{j}') for j in range(3)
-            ],
-        )
-        for task0 in task.flatten():
-            task0.priority = i
-        tasks.add(task)
-
-    return tasks
-
-
-@pytest.mark.parametrize('max_parallel_tasks', [1, 2, 3, 4, 16, None])
-def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks):
-    """Check that tasks are run correctly."""
+class MockBaseTask(BaseTask):
     def _run(self, input_files):
+        tmp_path = self._tmp_path
         output_file = tmp_path / self.name
 
         msg = ('running {} in thread {}, using input {}, generating {}'.format(
@@ -54,9 +40,34 @@ def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks):
 
         return [output_file]
 
-    monkeypatch.setattr(BaseTask, '_run', _run)
 
-    run_tasks(example_tasks, max_parallel_tasks)
+@pytest.fixture
+def example_tasks(tmp_path):
+    """Example tasks for testing the task runners."""
+    tasks = TaskSet()
+    for i in range(3):
+        task = MockBaseTask(
+            name=f'task{i}',
+            ancestors=[
+                MockBaseTask(name=f'task{i}-ancestor{j}') for j in range(3)
+            ],
+        )
+        for task0 in task.flatten():
+            task0.priority = i
+            task0._tmp_path = tmp_path
+        tasks.add(task)
+
+    return tasks
+
+
+@pytest.mark.parametrize('mpmethod', ["spawn", "fork"])
+@pytest.mark.parametrize('max_parallel_tasks', [1, 2, 3, 4, 16, None])
+def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks,
+                   mpmethod):
+    """Check that tasks are run correctly."""
+    monkeypatch.setattr(esmvalcore._task, 'Pool',
+                        multiprocessing.get_context(mpmethod).Pool)
+    example_tasks.run(max_parallel_tasks=max_parallel_tasks)
 
     for task in example_tasks:
         print(task.name, task.output_files)
@@ -64,8 +75,8 @@ def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks):
 
 
 @pytest.mark.parametrize('runner', [
-    _run_tasks_sequential,
-    partial(_run_tasks_parallel, max_parallel_tasks=1),
+    TaskSet._run_sequential,
+    partial(TaskSet._run_parallel, max_parallel_tasks=1),
 ])
 def test_runner_uses_priority(monkeypatch, runner, example_tasks):
     """Check that the runner tries to respect task priority."""
@@ -76,7 +87,7 @@ def test_runner_uses_priority(monkeypatch, runner, example_tasks):
         order.append(self.priority)
         return [f'{self.name}_test.nc']
 
-    monkeypatch.setattr(BaseTask, '_run', _run)
+    monkeypatch.setattr(MockBaseTask, '_run', _run)
     monkeypatch.setattr(esmvalcore._task, 'Pool', ThreadPool)
 
     runner(example_tasks)
@@ -173,7 +184,7 @@ def test_diagnostic_diag_script_none(tmp_path):
     diag_script = tmp_path / 'diag_cow.py'
     with pytest.raises(DiagnosticError) as err_msg:
         _get_single_diagnostic_task(tmp_path, diag_script, write_diag=False)
-    diagnostics_root = os.path.join(DIAGNOSTICS_PATH, 'diag_scripts')
+    diagnostics_root = DIAGNOSTICS.scripts
     script_file = os.path.abspath(os.path.join(diagnostics_root, diag_script))
     ept = ("Cannot execute script '{}' "
            "({}): file does not exist.".format(script_file, script_file))

@@ -16,11 +16,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        required = [{
-            'short_name': 'usi',
-        }, {
-            'short_name': 'vsi',
-        }]
+        if project == 'CMIP6':
+            required = [{'short_name': 'siu'}, {'short_name': 'siv'}]
+        else:
+            required = [{'short_name': 'usi'}, {'short_name': 'vsi'}]
         return required
 
     @staticmethod
@@ -37,8 +36,8 @@ class DerivedVariable(DerivedVariableBase):
             Cube containing sea ice speed.
 
         """
-        siu = cubes.extract_strict(Constraint(name='sea_ice_x_velocity'))
-        siv = cubes.extract_strict(Constraint(name='sea_ice_y_velocity'))
+        siu = cubes.extract_cube(Constraint(name='sea_ice_x_velocity'))
+        siv = cubes.extract_cube(Constraint(name='sea_ice_y_velocity'))
         try:
             return DerivedVariable._get_speed(siu, siv)
         except ValueError:

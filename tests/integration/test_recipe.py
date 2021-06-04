@@ -10,16 +10,44 @@ import yaml
 from PIL import Image
 
 import esmvalcore
+from esmvalcore._config import TAGS
 from esmvalcore._recipe import TASKSEP, read_recipe_file
 from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
+from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
-from esmvalcore.cmor.check import CheckLevels
-
 
 from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
+
+TAGS_FOR_TESTING = {
+    'authors': {
+        'andela_bouwe': {
+            'name': 'Bouwe, Andela',
+        },
+    },
+    'projects': {
+        'c3s-magic': 'C3S MAGIC project',
+    },
+    'themes': {
+        'phys': 'physics',
+    },
+    'realms': {
+        'atmos': 'atmosphere',
+    },
+    'statistics': {
+        'mean': 'mean',
+        'var': 'variability',
+    },
+    'domains': {
+        'et': 'extra tropics',
+        'trop': 'tropics',
+    },
+    'plot_types': {
+        'zonal': 'zonal',
+    },
+}
 
 MANDATORY_DATASET_KEYS = (
     'dataset',
@@ -48,25 +76,28 @@ MANDATORY_SCRIPT_SETTINGS_KEYS = (
 )
 
 DEFAULT_PREPROCESSOR_STEPS = (
+    'add_fx_variables',
     'cleanup',
     'cmor_check_data',
     'cmor_check_metadata',
     'concatenate',
-    'extract_time',
+    'clip_start_end_year',
     'fix_data',
     'fix_file',
     'fix_metadata',
     'load',
+    'remove_fx_variables',
     'save',
 )
+
+INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 
 
 @pytest.fixture
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
-    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test')
+    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
     cfg['synda_download'] = False
-    cfg['output_file_type'] = 'png'
     cfg['check_level'] = CheckLevels.DEFAULT
     return cfg
 
@@ -82,6 +113,70 @@ def create_test_file(filename, tracking_id=None):
     cube = iris.cube.Cube([], attributes=attributes)
 
     iris.save(cube, filename)
+
+
+def _get_default_settings_for_chl(fix_dir, save_filename):
+    """Get default preprocessor settings for chl."""
+    defaults = {
+        'load': {
+            'callback': concatenate_callback,
+        },
+        'concatenate': {},
+        'fix_file': {
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'chl',
+            'mip': 'Oyr',
+            'output_dir': fix_dir,
+        },
+        'fix_data': {
+            'check_level': CheckLevels.DEFAULT,
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'chl',
+            'mip': 'Oyr',
+            'frequency': 'yr',
+        },
+        'fix_metadata': {
+            'check_level': CheckLevels.DEFAULT,
+            'project': 'CMIP5',
+            'dataset': 'CanESM2',
+            'short_name': 'chl',
+            'mip': 'Oyr',
+            'frequency': 'yr',
+        },
+        'clip_start_end_year': {
+            'start_year': 2000,
+            'end_year': 2005,
+        },
+        'cmor_check_metadata': {
+            'check_level': CheckLevels.DEFAULT,
+            'cmor_table': 'CMIP5',
+            'mip': 'Oyr',
+            'short_name': 'chl',
+            'frequency': 'yr',
+        },
+        'cmor_check_data': {
+            'check_level': CheckLevels.DEFAULT,
+            'cmor_table': 'CMIP5',
+            'mip': 'Oyr',
+            'short_name': 'chl',
+            'frequency': 'yr',
+        },
+        'add_fx_variables': {
+            'fx_variables': {},
+            'check_level': CheckLevels.DEFAULT,
+        },
+        'remove_fx_variables': {},
+        'cleanup': {
+            'remove': [fix_dir]
+        },
+        'save': {
+            'compress': False,
+            'filename': save_filename,
+        }
+    }
+    return defaults
 
 
 def _get_filenames(root_path, filenames, tracking_id):
@@ -156,18 +251,22 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
-
     def get_required(short_name, _):
         if short_name != 'tas':
             assert False
         required = [
-            {'short_name': 'pr'},
-            {'short_name': 'areacella', 'mip': 'fx', 'optional': True},
+            {
+                'short_name': 'pr'
+            },
+            {
+                'short_name': 'areacella',
+                'mip': 'fx',
+                'optional': True
+            },
         ]
         return required
 
-    monkeypatch.setattr(
-        esmvalcore._recipe, 'get_required', get_required)
+    monkeypatch.setattr(esmvalcore._recipe, 'get_required', get_required)
 
 
 DEFAULT_DOCUMENTATION = dedent("""
@@ -193,6 +292,39 @@ def get_recipe(tempdir, content, cfg):
     recipe = read_recipe_file(str(recipe_file), cfg)
 
     return recipe
+
+
+def test_recipe_no_datasets(tmp_path, config_user):
+    content = dedent("""
+        preprocessors:
+          preprocessor_name:
+            extract_levels:
+              levels: 85000
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: preprocessor_name
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                start_year: 1999
+                end_year: 2002
+            scripts: null
+        """)
+    exc_message = ("You have not specified any dataset "
+                   "or additional_dataset groups for variable "
+                   "{'preprocessor': 'preprocessor_name', 'project': 'CMIP5',"
+                   " 'mip': 'Amon', 'exp': 'historical', 'ensemble': 'r1i1p1'"
+                   ", 'start_year': 1999, 'end_year': 2002, 'variable_group':"
+                   " 'ta', 'short_name': 'ta', 'diagnostic': "
+                   "'diagnostic_name'} Exiting.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, config_user)
+    assert str(exc.value) == exc_message
 
 
 def test_simple_recipe(tmp_path, patched_datafinder, config_user):
@@ -310,7 +442,8 @@ def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):
            "permitted on fx vars, please remove them from recipe")
     with pytest.raises(Exception) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-    assert str(rec_err_exp.value) == msg
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert str(rec_err_exp.value.failed_tasks[0].message) == msg
 
 
 def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
@@ -342,64 +475,47 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
 
     fix_dir = os.path.join(
         preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
-    defaults = {
-        'load': {
-            'callback': concatenate_callback,
-        },
-        'concatenate': {},
-        'fix_file': {
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
-            'output_dir': fix_dir,
-        },
-        'fix_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
-            'frequency': 'yr',
-        },
-        'fix_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
-            'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
-            'frequency': 'yr',
-        },
-        'extract_time': {
-            'start_year': 2000,
-            'end_year': 2006,
-            'start_month': 1,
-            'end_month': 1,
-            'start_day': 1,
-            'end_day': 1,
-        },
-        'cmor_check_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'Oyr',
-            'short_name': 'chl',
-            'frequency': 'yr',
-        },
-        'cmor_check_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'Oyr',
-            'short_name': 'chl',
-            'frequency': 'yr',
-        },
-        'cleanup': {
-            'remove': [fix_dir]
-        },
-        'save': {
-            'compress': False,
-            'filename': product.filename,
-        }
-    }
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
+    assert product.settings == defaults
+
+
+def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
+                                           config_user):
+    """Test if default settings are used when ``custom_order`` is ``True``."""
+
+    content = dedent("""
+        preprocessors:
+          default_custom_order:
+            custom_order: true
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl:
+                preprocessor: default_custom_order
+                project: CMIP5
+                mip: Oyr
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    preproc_dir = os.path.dirname(product.filename)
+    assert preproc_dir.startswith(str(tmp_path))
+
+    fix_dir = os.path.join(
+        preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
     assert product.settings == defaults
 
 
@@ -428,9 +544,8 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
     preproc_dir = os.path.dirname(product.filename)
     assert preproc_dir.startswith(str(tmp_path))
 
-    fix_dir = os.path.join(
-        preproc_dir,
-        'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
+    fix_dir = os.path.join(preproc_dir,
+                           'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
 
     defaults = {
         'load': {
@@ -474,6 +589,11 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'short_name': 'sftlf',
             'frequency': 'fx',
         },
+        'add_fx_variables': {
+            'fx_variables': {},
+            'check_level': CheckLevels.DEFAULT,
+        },
+        'remove_fx_variables': {},
         'cleanup': {
             'remove': [fix_dir]
         },
@@ -634,7 +754,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         'exp': 'historical',
         'frequency': '3hr',
         'grid': 'gn',
-        'institute': ['MOHC'],
+        'institute': ['MOHC', 'NERC'],
         'long_name': 'Precipitation',
         'mip': '3hr',
         'modeling_realm': ['atmos'],
@@ -649,8 +769,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         assert variable[key] == reference[key]
 
 
-def test_simple_cordex_recipe(tmp_path, patched_datafinder,
-                              config_user):
+def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
     """Test simple CORDEX recipe."""
     content = dedent("""
         diagnostics:
@@ -698,6 +817,7 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder,
         'recipe_dataset_index': 0,
         'rcm_version': 'v1',
         'short_name': 'tas',
+        'original_short_name': 'tas',
         'standard_name': 'air_temperature',
         'start_year': 1991,
         'units': 'K',
@@ -826,6 +946,17 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
           custom:
             custom_order: true
             <<: *default
+          empty_custom:
+            custom_order: true
+          with_extract_time:
+            custom_order: true
+            extract_time:
+              start_year: 2001
+              start_month: 3
+              start_day: 14
+              end_year: 2002
+              end_month: 6
+              end_day: 28
 
         diagnostics:
           diagnostic_name:
@@ -844,20 +975,50 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
               chl_custom:
                 <<: *chl
                 preprocessor: custom
+              chl_empty_custom:
+                <<: *chl
+                preprocessor: empty_custom
+              chl_with_extract_time:
+                <<: *chl
+                preprocessor: with_extract_time
             scripts: null
         """)
 
     recipe = get_recipe(tmp_path, content, config_user)
 
-    assert len(recipe.tasks) == 2
+    assert len(recipe.tasks) == 4
 
-    default = next(t for t in recipe.tasks if tuple(t.order) == DEFAULT_ORDER)
-    custom = next(t for t in recipe.tasks if tuple(t.order) != DEFAULT_ORDER)
-
-    assert custom.order.index('area_statistics') < custom.order.index(
-        'multi_model_statistics')
-    assert default.order.index('area_statistics') > default.order.index(
-        'multi_model_statistics')
+    for task in recipe.tasks:
+        if task.name == 'diagnostic_name/chl_default':
+            assert task.order.index('area_statistics') > task.order.index(
+                'multi_model_statistics')
+        elif task.name == 'diagnostic_name/chl_custom':
+            assert task.order.index('area_statistics') < task.order.index(
+                'multi_model_statistics')
+        elif task.name == 'diagnostic_name/chl_empty_custom':
+            assert len(task.products) == 1
+            product = list(task.products)[0]
+            assert set(
+                product.settings.keys()) == set(DEFAULT_PREPROCESSOR_STEPS)
+        elif task.name == 'diagnostic_name/chl_with_extract_time':
+            assert len(task.products) == 1
+            product = list(task.products)[0]
+            steps = set(DEFAULT_PREPROCESSOR_STEPS + tuple(['extract_time']))
+            assert set(product.settings.keys()) == steps
+            assert product.settings['extract_time'] == {
+                'start_year': 2001,
+                'start_month': 3,
+                'start_day': 14,
+                'end_year': 2002,
+                'end_month': 6,
+                'end_day': 28,
+            }
+            assert product.settings['clip_start_end_year'] == {
+                'start_year': 2000,
+                'end_year': 2005,
+            }
+        else:
+            assert False, f"invalid task {task.name}"
 
 
 def test_derive(tmp_path, patched_datafinder, config_user):
@@ -1012,8 +1173,7 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, config_user):
         assert ancestor_product.filename in all_product_files
 
 
-def test_derive_with_fx_ohc_fail(tmp_path,
-                                 patched_failing_datafinder,
+def test_derive_with_fx_ohc_fail(tmp_path, patched_failing_datafinder,
                                  config_user):
     content = dedent("""
         diagnostics:
@@ -1039,10 +1199,8 @@ def test_derive_with_fx_ohc_fail(tmp_path,
         get_recipe(tmp_path, content, config_user)
 
 
-def test_derive_with_optional_var(tmp_path,
-                                  patched_datafinder,
-                                  patched_tas_derivation,
-                                  config_user):
+def test_derive_with_optional_var(tmp_path, patched_datafinder,
+                                  patched_tas_derivation, config_user):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1080,8 +1238,7 @@ def test_derive_with_optional_var(tmp_path,
 
     # Check ancestors
     assert len(task.ancestors) == 2
-    assert task.ancestors[0].name == (
-        'diagnostic_name/tas_derive_input_pr')
+    assert task.ancestors[0].name == ('diagnostic_name/tas_derive_input_pr')
     assert task.ancestors[1].name == (
         'diagnostic_name/tas_derive_input_areacella')
     for ancestor_product in task.ancestors[0].products:
@@ -1092,10 +1249,8 @@ def test_derive_with_optional_var(tmp_path,
         assert ancestor_product.filename in all_product_files
 
 
-def test_derive_with_optional_var_nodata(tmp_path,
-                                         patched_failing_datafinder,
-                                         patched_tas_derivation,
-                                         config_user):
+def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
+                                         patched_tas_derivation, config_user):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1133,8 +1288,7 @@ def test_derive_with_optional_var_nodata(tmp_path,
 
     # Check ancestors
     assert len(task.ancestors) == 1
-    assert task.ancestors[0].name == (
-        'diagnostic_name/tas_derive_input_pr')
+    assert task.ancestors[0].name == ('diagnostic_name/tas_derive_input_pr')
     for ancestor_product in task.ancestors[0].products:
         assert ancestor_product.attributes['short_name'] == 'pr'
         assert ancestor_product.filename in all_product_files
@@ -1184,47 +1338,15 @@ def simulate_diagnostic_run(diagnostic_task):
     return record
 
 
-TAGS = {
-    'authors': {
-        'andela_bouwe': {
-            'name': 'Bouwe Andela',
-        },
-    },
-    'projects': {
-        'c3s-magic': 'C3S MAGIC project',
-    },
-    'themes': {
-        'phys': 'physics',
-    },
-    'realms': {
-        'atmos': 'atmosphere',
-    },
-    'statistics': {
-        'mean': 'mean',
-        'var': 'variability',
-    },
-    'domains': {
-        'et': 'extra tropics',
-        'trop': 'tropics',
-    },
-    'plot_types': {
-        'zonal': 'zonal',
-    },
-}
-
-
 def test_diagnostic_task_provenance(
-        tmp_path,
-        patched_datafinder,
-        monkeypatch,
-        config_user,
+    tmp_path,
+    patched_datafinder,
+    config_user,
 ):
-    monkeypatch.setattr(esmvalcore._config, 'TAGS', TAGS)
-    monkeypatch.setattr(esmvalcore._recipe, 'TAGS', TAGS)
-    monkeypatch.setattr(esmvalcore._task, 'TAGS', TAGS)
-
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
+
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent("""
         diagnostics:
@@ -1421,6 +1543,8 @@ def test_ensemble_expansion(tmp_path, patched_datafinder, config_user):
 
 
 def test_extract_shape(tmp_path, patched_datafinder, config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           test:
@@ -1460,6 +1584,8 @@ def test_extract_shape(tmp_path, patched_datafinder, config_user):
                          ['shapefile', 'method', 'crop', 'decomposed'])
 def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
                               invalid_arg):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     # Create shapefile
     shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
     shapefile.parent.mkdir(parents=True, exist_ok=True)
@@ -1497,11 +1623,15 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
 
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, config_user)
-    assert 'extract_shape' in str(exc.value)
-    assert invalid_arg in str(exc.value)
+
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert 'extract_shape' in exc.value.failed_tasks[0].message
+    assert invalid_arg in exc.value.failed_tasks[0].message
 
 
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           landfrac_weighting:
@@ -1537,9 +1667,9 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
     for product in task.products:
         assert 'weighting_landsea_fraction' in product.settings
         settings = product.settings['weighting_landsea_fraction']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert settings['area_type'] == 'land'
-        fx_variables = settings['fx_variables']
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         if product.attributes['project'] == 'obs4mips':
             assert len(fx_variables) == 1
@@ -1588,18 +1718,12 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
     for product in task.products:
         assert 'weighting_landsea_fraction' in product.settings
         settings = product.settings['weighting_landsea_fraction']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert 'exclude' not in settings
         assert settings['area_type'] == 'land'
-        fx_variables = settings['fx_variables']
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4mips':
-            assert len(fx_variables) == 1
-            assert fx_variables['sftlf'] == []
-        else:
-            assert len(fx_variables) == 2
-            assert fx_variables['sftlf'] == []
-            assert fx_variables['sftof'] == []
+        assert len(fx_variables) == 0
 
 
 def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
@@ -1645,13 +1769,9 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
             continue
         assert 'weighting_landsea_fraction' in product.settings
         settings = product.settings['weighting_landsea_fraction']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert 'exclude' not in settings
         assert settings['area_type'] == 'land'
-        fx_variables = settings['fx_variables']
-        assert isinstance(fx_variables, dict)
-        assert len(fx_variables) == 1
-        assert fx_variables.get('sftlf')
 
 
 def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
@@ -1682,7 +1802,8 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
         """)
     with pytest.raises(RecipeError) as exc_info:
         get_recipe(tmp_path, content, config_user)
-    assert str(exc_info.value) == (
+    assert str(exc_info.value) == INITIALIZATION_ERROR_MSG
+    assert str(exc_info.value.failed_tasks[0].message) == (
         'Preprocessor landfrac_weighting uses alternative_dataset, but '
         'alternative_dataset is not defined for variable gpp of diagnostic '
         'diagnostic_name')
@@ -1724,9 +1845,9 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
     for product in task.products:
         assert 'mask_landsea' in product.settings
         settings = product.settings['mask_landsea']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert settings['mask_out'] == 'sea'
-        fx_variables = settings['fx_variables']
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
         if product.attributes['project'] == 'obs4mips':
@@ -1741,17 +1862,22 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
           landmask:
             mask_landsea:
               mask_out: sea
-              fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}]
+              fx_variables:
+                sftlf:
+                  exp: piControl
             mask_landseaice:
               mask_out: sea
-              fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+              fx_variables:
+                sftgif:
+                  exp: piControl
             volume_statistics:
               operator: mean
             area_statistics:
               operator: mean
-              fx_variables: [{'short_name': 'areacello', 'mip': 'fx',
-                         'exp': 'piControl'}]
-
+              fx_variables:
+                areacello:
+                  mip: fx
+                  exp: piControl
         diagnostics:
           diagnostic_name:
             variables:
@@ -1775,39 +1901,101 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
 
     # landsea
     settings = product.settings['mask_landsea']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['sftlf']
-    assert '_piControl_' in fx_variables['sftlf']
+    assert len(fx_variables) == 3
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_piControl_' in fx_variables['sftlf']['filename']
 
     # landseaice
     settings = product.settings['mask_landseaice']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = settings['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['sftgif']
-    assert '_piControl_' in fx_variables['sftgif']
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_piControl_' in fx_variables['sftlf']['filename']
 
     # volume statistics
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert 'fx_variables' not in settings
+    assert 'volcello' not in fx_variables
 
     # area statistics
     settings = product.settings['area_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    assert '_fx_' in fx_variables['areacello']['filename']
+    assert '_piControl_' in fx_variables['areacello']['filename']
+
+
+def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}]
+            mask_landseaice:
+              mask_out: sea
+              fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+            volume_statistics:
+              operator: mean
+            area_statistics:
+              operator: mean
+              fx_variables: [{'short_name': 'areacello', 'mip': 'fx',
+                         'exp': 'piControl'}]
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check custom fx variables
+    task = recipe.tasks.pop()
+    product = task.products.pop()
+
+    # landsea
+    settings = product.settings['mask_landsea']
+    assert len(settings) == 1
+    assert settings['mask_out'] == 'sea'
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['areacello']
-    assert '_piControl_' in fx_variables['areacello']
+    assert len(fx_variables) == 3
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_piControl_' in fx_variables['sftlf']['filename']
+
+    # landseaice
+    settings = product.settings['mask_landseaice']
+    assert len(settings) == 1
+    assert settings['mask_out'] == 'sea'
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_piControl_' in fx_variables['sftlf']['filename']
+
+    # volume statistics
+    settings = product.settings['volume_statistics']
+    assert len(settings) == 1
+    assert settings['operator'] == 'mean'
+    assert 'volcello' not in fx_variables
+
+    # area statistics
+    settings = product.settings['area_statistics']
+    assert len(settings) == 1
+    assert settings['operator'] == 'mean'
+    assert '_fx_' in fx_variables['areacello']['filename']
+    assert '_piControl_' in fx_variables['areacello']['filename']
 
 
 def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
@@ -1849,29 +2037,32 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
     for product in task.products:
         assert 'mask_landsea' in product.settings
         settings = product.settings['mask_landsea']
-        assert len(settings) == 3
+        assert len(settings) == 2
         assert settings['mask_out'] == 'sea'
         assert settings['always_use_ne_mask'] is False
-        fx_variables = settings['fx_variables']
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
         assert not any(fx_variables)
 
 
 def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           preproc:
            area_statistics:
              operator: mean
-             fx_variables: [
-               'areacella',
-               'areacello',
-               'clayfrac',
-               'sftlf',
-               'sftgif',
-               'sftof',
-             ]
+             fx_variables:
+               areacella:
+                 ensemble: r2i1p1f1
+               areacello:
+               clayfrac:
+               sftlf:
+               sftgif:
+                 mip: fx
+               sftof:
            mask_landsea:
              mask_out: sea
 
@@ -1903,44 +2094,102 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     # Check area_statistics
     assert 'area_statistics' in product.settings
     settings = product.settings['area_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 6
-    assert '_fx_' in fx_variables['areacella']
-    assert '_Ofx_' in fx_variables['areacello']
-    assert '_Efx_' in fx_variables['clayfrac']
-    assert '_fx_' in fx_variables['sftlf']
-    assert '_fx_' in fx_variables['sftgif']
-    assert '_Ofx_' in fx_variables['sftof']
+    assert '_fx_' in fx_variables['areacella']['filename']
+    assert '_r2i1p1f1_' in fx_variables['areacella']['filename']
+    assert '_Ofx_' in fx_variables['areacello']['filename']
+    assert '_Efx_' in fx_variables['clayfrac']['filename']
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_fx_' in fx_variables['sftgif']['filename']
+    assert '_Ofx_' in fx_variables['sftof']['filename']
 
     # Check mask_landsea
     assert 'mask_landsea' in product.settings
     settings = product.settings['mask_landsea']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = settings['fx_variables']
+
+
+def test_fx_list_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           area_statistics:
+             operator: mean
+             fx_variables: [
+               'areacella',
+               'areacello',
+               'clayfrac',
+               'sftlf',
+               'sftgif',
+               'sftof',
+               ]
+           mask_landsea:
+             mask_out: sea
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    # Check area_statistics
+    assert 'area_statistics' in product.settings
+    settings = product.settings['area_statistics']
+    assert len(settings) == 1
+    assert settings['operator'] == 'mean'
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    fx_variables = fx_variables.values()
-    assert len(fx_variables) == 2
-    for fx_file in fx_variables:
-        if 'sftlf' in fx_file:
-            assert '_fx_' in fx_file
-        elif 'sftof' in fx_file:
-            assert '_Ofx_' in fx_file
-        else:
-            assert False
+    assert len(fx_variables) == 6
+    assert '_fx_' in fx_variables['areacella']['filename']
+    assert '_Ofx_' in fx_variables['areacello']['filename']
+    assert '_Efx_' in fx_variables['clayfrac']['filename']
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_fx_' in fx_variables['sftgif']['filename']
+    assert '_Ofx_' in fx_variables['sftof']['filename']
+
+    # Check mask_landsea
+    assert 'mask_landsea' in product.settings
+    settings = product.settings['mask_landsea']
+    assert len(settings) == 1
+    assert settings['mask_out'] == 'sea'
 
 
 def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
                                        config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables:
+               volcello:
+                 mip: Ofx
 
         diagnostics:
           diagnostic_name:
@@ -1970,13 +2219,13 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Omon_' in fx_variables['volcello']
-    assert '_Ofx_' not in fx_variables['volcello']
+    assert '_Omon_' not in fx_variables['volcello']['filename']
+    assert '_Ofx_' in fx_variables['volcello']['filename']
 
 
 def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
@@ -1986,8 +2235,10 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: [{'short_name': 'volcello', 'mip': 'Oyr',
-                         'exp': 'piControl'}]
+             fx_variables:
+               volcello:
+                 mip: Oyr
+                 exp: piControl
 
         diagnostics:
           diagnostic_name:
@@ -2017,14 +2268,14 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Oyr_' in fx_variables['volcello']
-    assert '_piControl_' in fx_variables['volcello']
-    assert '_Omon_' not in fx_variables['volcello']
+    assert '_Oyr_' in fx_variables['volcello']['filename'][0]
+    assert '_piControl_' in fx_variables['volcello']['filename'][0]
+    assert '_Omon_' not in fx_variables['volcello']['filename'][0]
 
 
 def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
@@ -2076,7 +2327,8 @@ def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
     settings = product.settings['area_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert 'fx_variables' not in settings
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
+    assert fx_variables == {}
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
@@ -2086,7 +2338,9 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables:
+               volcello:
+                 mip: Omon
 
         diagnostics:
           diagnostic_name:
@@ -2116,13 +2370,13 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello']
-    assert '_Omon_' in fx_variables['volcello']
+    assert '_Ofx_' not in fx_variables['volcello']['filename'][0]
+    assert '_Omon_' in fx_variables['volcello']['filename'][0]
 
 
 def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
@@ -2132,7 +2386,9 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables:
+               volcello:
+                 mip: Oyr
 
         diagnostics:
           diagnostic_name:
@@ -2162,13 +2418,13 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello']
-    assert '_Oyr_' in fx_variables['volcello']
+    assert '_Ofx_' not in fx_variables['volcello']['filename'][0]
+    assert '_Oyr_' in fx_variables['volcello']['filename'][0]
 
 
 def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
@@ -2178,7 +2434,8 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables:
+               volcello:
 
         diagnostics:
           diagnostic_name:
@@ -2207,13 +2464,13 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
     # Check volume_statistics
     assert 'volume_statistics' in product.settings
     settings = product.settings['volume_statistics']
-    assert len(settings) == 2
+    assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = settings['fx_variables']
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['volcello']
-    assert '_Omon_' not in fx_variables['volcello']
+    assert '_fx_' in fx_variables['volcello']['filename']
+    assert '_Omon_' not in fx_variables['volcello']['filename']
 
 
 def test_wrong_project(tmp_path, patched_datafinder, config_user):
@@ -2222,7 +2479,8 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
           preproc:
            volume_statistics:
              operator: mean
-             fx_variables: ['volcello']
+             fx_variables:
+               volcello:
 
         diagnostics:
           diagnostic_name:
@@ -2239,24 +2497,25 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    msg = (
-        "Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
-        "with mip 'Omon'")
+    msg = ("Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
+           "with mip 'Omon'")
     with pytest.raises(RecipeError) as wrong_proj:
         get_recipe(tmp_path, content, config_user)
-    assert str(wrong_proj.value) == msg
+    assert str(wrong_proj.value) == INITIALIZATION_ERROR_MSG
+    assert str(wrong_proj.value.failed_tasks[0].message) == msg
 
 
 def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
     content = dedent("""
         preprocessors:
           preproc:
            area_statistics:
              operator: mean
-             fx_variables: [
-               'areacella',
-               'wrong_fx_variable',
-             ]
+             fx_variables:
+               areacella:
+               wrong_fx_variable:
 
         diagnostics:
           diagnostic_name:
@@ -2275,7 +2534,46 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
     msg = ("Requested fx variable 'wrong_fx_variable' not available in any "
-           "'fx'-related CMOR table")
+           "CMOR table")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
-    assert msg in str(rec_err_exp.value)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in rec_err_exp.value.failed_tasks[0].message
+
+
+def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
+    """Test ``mask_multimodel``."""
+    content = dedent("""
+        preprocessors:
+          preproc:
+            mask_multimodel:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: preproc
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2005
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: BNU-ESM}
+                  - {dataset: CanESM2}
+                  - {dataset: HadGEM2-ES}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == f'diagnostic_name{TASKSEP}tas'
+
+    # Check mask_multimodel
+    assert len(task.products) == 3
+    for product in task.products:
+        assert 'mask_multimodel' in product.settings
+        assert product.settings['mask_multimodel'] == {}

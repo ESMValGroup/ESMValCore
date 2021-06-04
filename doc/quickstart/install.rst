@@ -1,19 +1,73 @@
+.. _install:
+
 Installation
 ============
 
 Conda installation
 ------------------
 
-In order to install the Conda package, you will need to install conda first.
-For a minimal conda installation go to https://conda.io/miniconda.html.
+In order to install the Conda package, you will need to install `Conda <https://docs.conda.io>`_ first.
+For a minimal conda installation (recommended) go to https://conda.io/miniconda.html.
 It is recommended that you always use the latest version of conda, as problems have been reported when trying to use older versions.
 
 Once you have installed conda, you can install ESMValCore by running:
 
 .. code-block:: bash
 
-
     conda install -c esmvalgroup -c conda-forge esmvalcore
+
+It is also possible to create a new
+`Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html#managing-environments>`_
+and install ESMValCore into it with a single command:
+
+.. code-block:: bash
+
+    conda create --name esmvalcore -c esmvalgroup -c conda-forge esmvalcore
+
+Don't forget to activate the newly created environment after the installation:
+
+.. code-block:: bash
+
+    conda activate esmvalcore
+
+Of course it is also possible to choose a different name than ``esmvalcore`` for the environment.
+
+.. note::
+
+	  Creating a new Conda environment is often much faster and more reliable than trying to update an existing Conda environment.
+
+Pip installation
+-----------------
+
+It is also possible to install ESMValCore from `PyPI <https://pypi.org/project/ESMValCore/>`_.
+However, this requires first installing dependencies that are not available on PyPI in some other way.
+By far the easiest way to install these dependencies is to use conda_.
+For a minimal conda installation (recommended) go to https://conda.io/miniconda.html.
+
+After installing Conda, download
+`the file with the list of dependencies <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/environment.yml>`_:
+
+.. code-block:: bash
+
+    wget https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/environment.yml
+
+and install these dependencies into a new conda environment with the command
+
+.. code-block:: bash
+
+    conda env create --name esmvalcore --file environment.yml
+
+Finally, activate the newly created environment
+
+.. code-block:: bash
+
+    conda activate esmvalcore
+
+and install ESMValCore as well as any remaining dependencies with the command:
+
+.. code-block:: bash
+
+    pip install esmvalcore
 
 
 Docker installation
@@ -30,7 +84,7 @@ You can get the latest release with
 
    docker pull esmvalgroup/esmvalcore:stable
 
-If you want to use the current master branch, use
+If you want to use the current main branch, use
 
 .. code-block:: bash
 
@@ -106,11 +160,15 @@ To run the container using the image file ``esmvalcore.sif`` use:
 
    singularity run esmvalcore.sif -c ~/config-user.yml ~/recipes/recipe_example.yml
 
+.. _installation-from-source:
 
-
-
-Development installation
+Installation from source
 ------------------------
+
+.. note::
+    If you would like to install the development version of ESMValCore alongside
+    ESMValTool, please have a look at
+    :ref:`these instructions <esmvaltool:esmvalcore-development-installation>`.
 
 To install from source for development, follow these instructions.
 
@@ -126,7 +184,7 @@ To install from source for development, follow these instructions.
    ``.cshrc``/``.tcshrc`` file instead.
 -  Update conda: ``conda update -y conda``
 -  Clone the ESMValCore Git repository:
-   ``git clone git@github.com:ESMValGroup/ESMValCore``
+   ``git clone https://github.com/ESMValGroup/ESMValCore.git``
 -  Go to the source code directory: ``cd ESMValCore``
 -  Create the esmvalcore conda environment
    ``conda env create --name esmvalcore --file environment.yml``
@@ -134,6 +192,16 @@ To install from source for development, follow these instructions.
 -  Install in development mode: ``pip install -e '.[develop]'``. If you
    are installing behind a proxy that does not trust the usual pip-urls
    you can declare them with the option ``--trusted-host``,
-   e.g. \ ``pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
+   e.g. ``pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
+
+Pre-installed versions on HPC clusters
+--------------------------------------
+
+You will find the tool available on HPC clusters and there will be no need to install it
+yourself if you are just running diagnostics:
+
+ - CEDA-JASMIN: `esmvaltool` is available on the scientific compute nodes (`sciX.jasmin.ac.uk` where
+   `X = 1, 2,`3, 4, 5`) after login and module loading via `module load esmvaltool`; see the helper page at
+   `CEDA <https://help.jasmin.ac.uk/article/4955-community-software-esmvaltool>`__ ;
