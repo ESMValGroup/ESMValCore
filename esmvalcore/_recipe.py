@@ -274,16 +274,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['concatenate'] = {}
 
     # Configure fixes
-    fix = {
-        'project': variable['project'],
-        'dataset': variable['dataset'],
-        'short_name': variable['short_name'],
-        'mip': variable['mip'],
-    }
-    extra_facets = get_extra_facets(variable['project'], variable['dataset'],
-                                    variable['mip'], variable['short_name'],
-                                    config_user['extra_facets_dir'])
-    fix.update(extra_facets)
+    fix = deepcopy(variable)
     # File fixes
     fix_dir = os.path.splitext(variable['filename'])[0] + '_fixed'
     settings['fix_file'] = dict(fix)
@@ -337,7 +328,7 @@ def _get_default_settings(variable, config_user, derive=False):
         'fx_variables': {},
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
     }
-    settings['add_fx_variables'].update(extra_facets)
+    settings['add_fx_variables'].update(variable)
     settings['remove_fx_variables'] = {}
 
     return settings
