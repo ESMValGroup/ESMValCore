@@ -1,4 +1,5 @@
 """Unit tests for :func:`esmvalcore.preprocessor.regrid.extract_levels`."""
+import os
 
 import unittest
 from unittest import mock
@@ -6,6 +7,7 @@ from unittest import mock
 import iris
 import numpy as np
 from numpy import ma
+import tempfile
 
 import tests
 from esmvalcore.preprocessor._regrid import (_MDI, VERTICAL_SCHEMES,
@@ -29,6 +31,8 @@ class Test(tests.Test):
             'linear', 'nearest', 'linear_horizontal_extrapolate_vertical',
             'nearest_horizontal_extrapolate_vertical'
         ]
+        descriptor, self.filename = tempfile.mkstemp('.nc')
+        os.close(descriptor)
 
     def test_invalid_scheme__unknown(self):
         levels = mock.sentinel.levels
@@ -145,8 +149,15 @@ class Test(tests.Test):
         masked = ma.empty(self.shape)
         masked.mask = mask
         cube = _make_cube(masked, dtype=self.dtype)
+        # save cube to test the lazy data interpolation too
+        iris.save(cube, self.filename)
         with mock.patch(
                 'stratify.interpolate', return_value=new_data) as mocker:
+            # first test lazy
+            loaded_cube = iris.load_cube(self.filename)
+            result_from_lazy = extract_levels(loaded_cube, levels, scheme)
+            self.assertEqual(result_from_lazy, self.created_cube)
+            # then test realized
             result = extract_levels(cube, levels, scheme)
             self.assertEqual(result, self.created_cube)
             args, kwargs = mocker.call_args
@@ -163,14 +174,14 @@ class Test(tests.Test):
                 kwargs, dict(
                     axis=0, interpolation=scheme, extrapolation='nan'))
         args, kwargs = self.mock_create_cube.call_args
+        input_cube = args[0]
         # in-place for new extract_levels with nan's
         new_data[np.isnan(new_data)] = _MDI
         # Check the _create_cube args ...
         self.assertEqual(len(args), 4)
-        self.assertEqual(args[0].metadata, cube.metadata)
-        coord_comparison = iris.analysis.coord_comparison(args[0], cube)
-        self.assertFalse(coord_comparison['not_equal']
-                         or coord_comparison['non_equal_data_dimension'])
+        self.assertEqual(input_cube.metadata, cube.metadata)
+        self.assertEqual(input_cube.coords, cube.coords)
+        self.assertEqual(input_cube.coord_dims, cube.coord_dims)
         self.assert_array_equal(args[0].data, cube.data)
         new_data_mask = np.zeros(new_data.shape, bool)
         new_data_mask[new_data == _MDI] = True

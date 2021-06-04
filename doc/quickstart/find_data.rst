@@ -151,7 +151,7 @@ Explaining ``config-user/rootpath:``
 
   .. code-block:: yaml
 
-    OBS: /group_workspaces/jasmin4/esmeval/obsdata-v2
+    OBS: /gws/nopw/j04/esmeval/obsdata-v2
 
 * ``default``: this is the `root` path(s) to where files are stored without any
   DRS-like directory structure; in a nutshell, this is a single directory that
@@ -238,7 +238,7 @@ using the ``OBS`` root path set to:
 
   .. code-block:: yaml
 
-    OBS: /group_workspaces/jasmin4/esmeval/obsdata-v2
+    OBS: /gws/nopw/j04/esmeval/obsdata-v2
 
 and the dataset:
 
@@ -251,7 +251,7 @@ CMOR-DRS_ are used again and the file will be automatically found:
 
 .. code-block::
 
-  /group_workspaces/jasmin4/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
+  /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
 
 Since observational data are organized in Tiers depending on their level of
 public availability, the ``default`` directory must be structured accordingly
@@ -263,7 +263,7 @@ Data loading
 
 Data loading is done using the data load functionality of `iris`; we will not go into too much detail
 about this since we can point the user to the specific functionality
-`here <https://scitools.org.uk/iris/docs/latest/userguide/loading_iris_cubes.html>`_ but we will underline
+`here <https://scitools-iris.readthedocs.io/en/latest/userguide/loading_iris_cubes.html>`_ but we will underline
 that the initial loading is done by adhering to the CF Conventions that `iris` operates by as well (see
 `CF Conventions Document <http://cfconventions.org/cf-conventions/cf-conventions.html>`_ and the search
 page for CF `standard names <http://cfconventions.org/standard-names.html>`_).
@@ -274,7 +274,7 @@ Data concatenation from multiple sources
 Oftentimes data retrieving results in assembling a continuous data stream from
 multiple files or even, multiple experiments. The internal mechanism through which
 the assembly is done is via cube concatenation. One peculiarity of iris concatenation
-(see `iris cube concatenation <https://scitools.org.uk/iris/docs/latest/userguide/merge_and_concat.html>`_)
+(see `iris cube concatenation <https://scitools-iris.readthedocs.io/en/latest/userguide/merge_and_concat.html>`_)
 is that it doesn't allow for concatenating time-overlapping cubes; this case is rather
 frequent with data from models overlapping in time, and is accounted for by a function that performs a
 flexible concatenation between two cubes, depending on the particular setup:

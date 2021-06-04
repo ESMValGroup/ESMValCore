@@ -12,10 +12,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -111,7 +111,7 @@ release = __version__
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns: list = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -170,7 +170,7 @@ html_logo = 'figures/ESMValTool-logo.png'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path: list = []
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -414,19 +414,20 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'iris': ('https://scitools.org.uk/iris/docs/latest/', None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'esmvaltool':
-    ('https://docs.esmvaltool.org/en/%s/' % rtd_version, None),
     'esmvalcore':
-    ('https://docs.esmvaltool.org/projects/ESMValCore/en/%s/' %
-     rtd_version, None),
+    (f'https://docs.esmvaltool.org/projects/esmvalcore/en/{rtd_version}/',
+     None),
+    'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
+    'matplotlib': ('https://matplotlib.org/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'python': ('https://docs.python.org/3/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------
 
 sys.path.append(os.path.dirname(__file__))
 from gensidebar import generate_sidebar
+
 generate_sidebar(globals(), "esmvalcore")

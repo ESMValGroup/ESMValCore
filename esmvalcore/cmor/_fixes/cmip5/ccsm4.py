@@ -2,12 +2,12 @@
 
 import dask.array as da
 
-from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import round_coordinates
+from .bnu_esm import Cl as BaseCl
 
 
-Cl = ClFixHybridPressureCoord
+Cl = BaseCl
 
 
 class Csoil(Fix):

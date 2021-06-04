@@ -16,6 +16,5 @@ long_name:         Evapotranspiration
 !----------------------------------
 dimensions:        longitude latitude time
 type:              real
-positive:          down
 !----------------------------------
 !

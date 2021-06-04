@@ -1,3 +1,5 @@
+.. _interfaces:
+
 Diagnostic script interfaces
 ============================
 
@@ -14,6 +16,8 @@ and finally it will store provenance information. Provenance information is stor
 `W3C PROV XML format <https://www.w3.org/TR/prov-xml/>`_
 and also plotted in an SVG file for human inspection. In addition to provenance information, a caption is also added
 to the plots.
+
+.. _interface_esmvalcore_diagnostic:
 
 Information provided by ESMValCore to the diagnostic script
 -----------------------------------------------------------
@@ -94,7 +98,9 @@ An example preprocessor metadata.yml file could look like this:
     variable_group: pr
 
 
-Information provided by the diagnostic script to ESMValCore 
+.. _interface_diagnostic_esmvalcore:
+
+Information provided by the diagnostic script to ESMValCore
 -----------------------------------------------------------
 
 After the diagnostic script has finished running, ESMValCore will try to store provenance information. In order to

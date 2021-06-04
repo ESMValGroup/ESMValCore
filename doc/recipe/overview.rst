@@ -12,10 +12,10 @@ Broadly, recipes contain a general section summarizing the provenance and
 functionality of the diagnostics, the datasets which need to be run, the
 preprocessors that need to be applied, and the diagnostics which need to be run
 over the preprocessed data. This information is provided to ESMValTool in four
-main recipe sections: Documentation_, Datasets_, Preprocessors_ and
-Diagnostics_, respectively.
+main recipe sections: :ref:`Documentation <recipe_documentation>`, Datasets_,
+Preprocessors_, and Diagnostics_, respectively.
 
-.. _Documentation:
+.. _recipe_documentation:
 
 Recipe section: ``documentation``
 =================================
@@ -23,6 +23,8 @@ Recipe section: ``documentation``
 The documentation section includes:
 
 - The recipe's author's user name (``authors``, matching the definitions in the
+  :ref:`config-ref`)
+- The recipe's maintainer's user name (``maintainer``, matching the definitions in the
   :ref:`config-ref`)
 - A description of the recipe (``description``, written in MarkDown format)
 - A list of scientific references (``references``, matching the definitions in
@@ -57,8 +59,10 @@ the following:
 .. note::
 
    Note that all authors, projects, and references mentioned in the description
-   section of the recipe need to be included in the ``config-references.yml``
-   file. The author name uses the format: ``surname_name``. For instance, John
+   section of the recipe need to be included in the (locally installed copy of the) file
+   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_,
+   see :ref:`config-ref`.
+   The author name uses the format: ``surname_name``. For instance, John
    Doe would be: ``doe_john``. This information can be omitted by new users
    whose name is not yet included in ``config-references.yml``.
 
@@ -78,6 +82,8 @@ data specifications:
   ``RCP8.5``)
 - mip (for CMIP data, key ``mip``, value e.g. ``Amon``, ``Omon``, ``LImon``)
 - ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
+- sub-experiment id (key `sub_experiment`, value e.g. `s2000`, `s(2000:2002)`, 
+  for DCPP data only)
 - time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``. Please
   note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
   so we recommend to avoid them. For example, use ``128`` to specify the year
@@ -93,6 +99,7 @@ For example, a datasets section could be:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
+      - {dataset: HadGEM3-GC31-MM, alias: custom_alias, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, start_year: 2000, end_year, 2002}
 
 It is possible to define the experiment as a list to concatenate two experiments.
 Here it is an example concatenating the `historical` experiment with `rcp85`
@@ -131,6 +138,14 @@ for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:
 Please, bear in mind that this syntax can only be used in the ensemble tag.
 Also, note that the combination of multiple experiments and ensembles, like
 exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
+
+The same simplified syntax can be used to add multiple sub-experiment ids:
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2002), grid: gn, start_year: 2003, end_year: 2004}
+
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
@@ -246,6 +261,12 @@ Depending on the installation configuration, you may get an error of
 "file does not exist" when the system tries to run the diagnostic script
 using relative paths. If this happens, use an absolute path instead.
 
+Note that the script should either have the extension for a supported language,
+i.e. ``.py``, ``.R``, ``.ncl``, or ``.jl`` for Python, R, NCL, and Julia diagnostics
+respectively, or be executable if it is written in any other language.
+
+.. _ancestor-tasks:
+
 Ancestor tasks
 --------------
 Some tasks require the result of other tasks to be ready before they can start,
@@ -316,6 +337,19 @@ over the keys in variables section. For many recipes it makes more sense to
 define the ``start_year`` and ``end_year`` items in the variable section,
 because the diagnostic script assumes that all the data has the same time
 range.
+
+Variable short names usually do not change between datasets supported by
+ESMValCore, as they are usually changed to match CMIP. Nevertheless, there are
+small changes in variable names in CMIP6 with respect to CMIP5 (i.e. sea ice
+concentration changed from ``sic`` to ``siconc``). ESMValCore is aware of some
+of them and can do the automatic translation when needed. It will even do the
+translation in the preprocessed file so the diagnostic does not have to deal
+with this complexity, setting the short name in all files to match the one used
+by the recipe. For example, if ``sic`` is requested, ESMValCore will
+find ``sic`` or ``siconc`` depending on the project, but all preprocessed files
+while use ``sic`` as their short_name. If the recipe requested ``siconc``, the
+preprocessed files will be identical except that they will use the short_name
+``siconc`` instead.
 
 Diagnostic and variable specific datasets
 -----------------------------------------

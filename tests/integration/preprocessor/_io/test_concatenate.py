@@ -1,7 +1,7 @@
 """Integration tests for :func:`esmvalcore.preprocessor._io.concatenate`."""
 
-import warnings
 import unittest
+import warnings
 from unittest.mock import call
 
 import numpy as np
@@ -18,7 +18,8 @@ from esmvalcore.preprocessor import _io
 def get_hybrid_pressure_cube():
     """Return cube with hybrid pressure coordinate."""
     ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='ap', units='Pa')
-    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='b')
+    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]],
+                       var_name='b', units=Unit('1'))
     ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
     x_coord = AuxCoord(
         0.0,
@@ -93,7 +94,8 @@ def mock_hybrid_pressure_cube():
     """Return mocked cube with hybrid pressure coordinate."""
     cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
     ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='ap', units='Pa')
-    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='b')
+    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]],
+                       var_name='b', units=Unit('1'))
     ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
     cube.coord.side_effect = [ap_coord, b_coord, ps_coord,
                               ap_coord, b_coord, ps_coord]
@@ -240,6 +242,12 @@ class TestConcatenate(unittest.TestCase):
         concatenated = _io.concatenate(self.raw_cubes)
         np.testing.assert_array_equal(
             concatenated.coord('time').points, np.array([1, 2, 3, 4, 5, 6]))
+
+    def test_concatenate_empty_cubes(self):
+        """Test concatenation with empty :class:`iris.cube.CubeList`."""
+        empty_cubes = CubeList([])
+        result = _io.concatenate(empty_cubes)
+        assert result is empty_cubes
 
     def test_concatenate_noop(self):
         """Test concatenation of a single cube."""

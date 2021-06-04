@@ -13,7 +13,6 @@ There are several configuration files in ESMValCore:
   graphical output format, root paths to data, etc.;
 * ``config-developer.yml``: sets a number of standardized file-naming and paths
   to data formatting;
-* ``config-logging.yml``: stores information on logging.
 
 and one configuration file which is distributed with ESMValTool:
 
@@ -46,14 +45,6 @@ The following shows the default settings from the ``config-user.yml`` file
 with explanations in a commented line above each option:
 
 .. code-block:: yaml
-
-  # Diagnostics create plots? [true]/false
-  # turning it off will turn off graphical output from diagnostic
-  write_plots: true
-
-  # Diagnostics write NetCDF files? [true]/false
-  # turning it off will turn off netCDF output from diagnostic
-  write_netcdf: true
 
   # Set the console log level debug, [info], warning, error
   # for much more information printed to screen set log_level: debug
@@ -117,19 +108,14 @@ with explanations in a commented line above each option:
   drs:
     CMIP5: default
 
-Most of these settings are fairly self-explanatory, e.g.:
+..
+   DEPRECATED: remove in v2.4
 
-.. code-block:: yaml
-
-  # Diagnostics create plots? [true]/false
-  write_plots: true
-  # Diagnostics write NetCDF files? [true]/false
-  write_netcdf: true
-
-The ``write_plots`` setting is used to inform ESMValTool diagnostics about your
-preference for creating figures. Similarly, the ``write_netcdf`` setting is a
-boolean which turns on or off the writing of netCDF files by the diagnostic
-scripts.
+There used to be a setting ``write_plots`` and ``write_netcdf``
+in the config user file, but these have been deprecated since ESMValCore v2.2 and
+will be removed in v2.4, because only some diagnostic scripts supported these settings.
+For those diagnostic scripts that do support these settings, they can now be configured
+in the diagnostic script section of the recipe.
 
 .. code-block:: yaml
 
@@ -188,7 +174,7 @@ Most users and diagnostic developers will not need to change this file,
 but it may be useful to understand its content.
 It will be installed along with ESMValCore and can also be viewed on GitHub:
 `esmvalcore/config-developer.yml
-<https://github.com/ESMValGroup/ESMValCore/blob/master/esmvalcore/config-developer.yml>`_.
+<https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
 This configuration file describes the file system structure and CMOR tables for several
 key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
 ETHZ, SMHI, BSC). CMIP data is stored as part of the Earth System Grid
@@ -233,7 +219,7 @@ Input file paths
 ----------------
 
 When looking for input files, the ``esmvaltool`` command provided by
-ESMValCore replaces the placeholders ``[item]`` in
+ESMValCore replaces the placeholders ``{item}`` in
 ``input_dir`` and ``input_file`` with the values supplied in the recipe.
 ESMValCore will try to automatically fill in the values for institute, frequency,
 and modeling_realm based on the information provided in the CMOR tables
@@ -253,6 +239,21 @@ The resulting directory path would look something like this:
 
     CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Omon/tos/gn/latest
 
+Please, bear in mind that ``input_dirs`` can also be a list for those  cases in
+which may be needed:
+
+.. code-block:: yaml
+
+  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{latestversion}'
+  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{latestversion}'
+
+In that case, the resultant directories will be:
+
+.. code-block:: bash
+
+  historical/r1i1p1f3/original/Omon/tos/gn/latest
+  historical/r1i1p1f3/computed/Omon/tos/gn/latest
+
 For a more in-depth description of how to configure ESMValCore so it can find
 your data please see :ref:`CMOR-DRS`.
 
@@ -263,15 +264,17 @@ The filename to use for preprocessed data is configured in a similar manner
 using ``output_file``. Note that the extension ``.nc`` (and if applicable,
 a start and end time) will automatically be appended to the filename.
 
-CMOR table configuration
--------------------------
+.. _cmor_table_configuration:
+
+Project CMOR table configuration
+--------------------------------
 
 ESMValCore comes bundled with several CMOR tables, which are stored in the directory
-`esmvalcore/cmor/tables
-<https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/cmor/tables>`_.
+`esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`_.
 These are copies of the tables available from `PCMDI <https://github.com/PCMDI>`_.
 
-There are four settings related to CMOR tables available:
+For every ``project`` that can be used in the recipe, there are four settings
+related to CMOR table settings available:
 
 * ``cmor_type``: can be ``CMIP5`` if the CMOR table is in the same format as the
   CMIP5 table or ``CMIP6`` if the table is in the same format as the CMIP6 table.
@@ -279,17 +282,19 @@ There are four settings related to CMOR tables available:
   extended with variables from the ``esmvalcore/cmor/tables/custom`` directory
   and it is possible to use variables with a ``mip`` which is different from
   the MIP table in which they are defined.
-* ``cmor_path``: path to the CMOR table. Defaults to the value provided in
-  ``cmor_type`` written in lower case.
-* ``cmor_default_table_prefix``: defaults to the value provided in ``cmor_type``.
-
+* ``cmor_path``: path to the CMOR table.
+  Relative paths are with respect to `esmvalcore/cmor/tables`_.
+  Defaults to the value provided in ``cmor_type`` written in lower case.
+* ``cmor_default_table_prefix``: Prefix that needs to be added to the ``mip``
+  to get the name of the file containing the ``mip`` table.
+  Defaults to the value provided in ``cmor_type``.
 
 .. _config-ref:
 
 References configuration file
 =============================
 
-The ``config-references.yml`` file contains the list of ESMValTool diagnostic and recipe authors,
+The `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`__ file contains the list of ESMValTool diagnostic and recipe authors,
 references and projects. Each author, project and reference referred to in the
 documentation section of a recipe needs to be in this file in the relevant
 section.
@@ -315,10 +320,3 @@ following documentation section:
 
 These four items here are named people, references and projects listed in the
 ``config-references.yml`` file.
-
-
-Logging configuration file
-==========================
-
-.. warning::
-    Section to be added
