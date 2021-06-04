@@ -12,3 +12,4 @@ features.
     Preprocessor function <preprocessor_function>
     Dataset fix <fixing_data>
     Deriving a variable <derivation>
+    Extra facets <extra_facets>
