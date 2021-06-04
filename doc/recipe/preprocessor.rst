@@ -1270,6 +1270,10 @@ in the arguments:
 Note that this function can only be used to extract a rectangular region. Use
 ``extract_shape`` to extract any other shaped region from a shapefile.
 
+If the grid is irregular, the returned region retains the original coordinates,
+but is cropped to a rectangular bounding box defined by the start/end
+coordinates. The deselected area inside the region is masked.
+
 See also :func:`esmvalcore.preprocessor.extract_region`.
 
 
