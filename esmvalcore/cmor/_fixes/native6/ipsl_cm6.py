@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 # The key used in extra_facets file for providing the
 # variable name (in NetCDF file) that match the CMOR variable name
-KEY_FOR_VARNAME = "ipsl_varname"
+VARNAME_KEY = "ipsl_varname"
 
 
 class AllVars(Fix):
@@ -31,7 +31,7 @@ class AllVars(Fix):
 
         """
         if "_" + self.extra_facets.get("group",
-                                      "non-sense") + ".nc" not in filepath:
+                                       "non-sense") + ".nc" not in filepath:
             # No need to filter the file
             logger.debug("In ipsl-cm6.py : not filtering for %s", filepath)
             return filepath
@@ -45,7 +45,7 @@ class AllVars(Fix):
             return filepath
 
         # Proceed with CDO selvar
-        varname = self.extra_facets.get(KEY_FOR_VARNAME, self.vardef.short_name)
+        varname = self.extra_facets.get(VARNAME_KEY, self.vardef.short_name)
         alt_filepath = filepath.replace(".nc", "_cdo_selected.nc")
         outfile = self.get_fixed_filepath(output_dir, alt_filepath)
         tim1 = time.time()
@@ -65,7 +65,7 @@ class AllVars(Fix):
         """
         logger.debug("Fixing metadata for ipslcm_cm6")
 
-        cube = self.get_cube_from_list(cubes, mapping_key=KEY_FOR_VARNAME)
+        cube = self.get_cube_from_list(cubes, mapping_key=VARNAME_KEY)
         cube.var_name = self.vardef.short_name
 
         # Need to degrade auxiliary time coordinates, because some
@@ -105,12 +105,10 @@ class Tas(Fix):
 
     def fix_metadata(self, cubes):
         """Add height2m."""
-        cube = self.get_cube_from_list(cubes, mapping_key=KEY_FOR_VARNAME)
+        cube = self.get_cube_from_list(cubes, mapping_key=VARNAME_KEY)
         add_scalar_height_coord(cube)
         return cubes
 
 
 class Huss(Tas):
     """Fixes for ISPLCM 2m specific humidity."""
-
-    pass
