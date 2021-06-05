@@ -103,7 +103,7 @@ with explanations in a commented line above each option:
     OBS: ~/obs_inputpath
     default: ~/default_inputpath
 
-  # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/IPSL/etc
+  # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
   # See config-developer.yml for definitions.
   drs:
     CMIP5: default
@@ -177,7 +177,7 @@ It will be installed along with ESMValCore and can also be viewed on GitHub:
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
 This configuration file describes the file system structure and CMOR tables for several
 key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g.
-BADC, CP4CDS, DKRZ, ETHZ, SMHI, BSC, IPSL), and for native output data for some
+BADC, CP4CDS, DKRZ, ETHZ, SMHI, BSC), and for native output data for some
 models (IPSL, ... see :ref:`configure_native_models`) .
 CMIP data is stored as part of the Earth System Grid
 Federation (ESGF) and the standards for file naming and paths to files are set
@@ -263,32 +263,9 @@ Preprocessor output files
 -------------------------
 
 The filename to use for preprocessed data is configured in a similar
-manner using ``output_file``, which can be either a single value or a
-dictionnary of values.
-
-This latter case is useful for projects which gather much varied cases
-with varied set of dataset attributes, such as the native6 project :
-
-.. _example_IPSL_config: 
-
-.. code-block:: yaml
-
-  native6:
-    ...
-    input_dir:
-      default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-      IPSL: '{account}/{model}/{status}/{exp}/{simulation}/{igcm_dir}/Analyse/{freq}'
-    input_file:
-      default: '*.nc'
-      IPSL:
-        - '{simulation}_*_{ipsl_varname}.nc'
-        - '{simulation}_*_{group}.nc'
-    output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
-    ...
-
-		
-Note that the extension ``.nc`` (and if applicable, a start and end
-time) will automatically be appended to the filename.
+manner using ``output_file``. Note that the extension ``.nc`` (and if
+applicable, a start and end time) will automatically be appended to
+the filename.
 
 .. _cmor_table_configuration:
 
@@ -322,16 +299,17 @@ Configuring native models and observation data sets
 
 ESMValTool can take full advantage of the ability to configure
 ESMValCore for handling native model output formats and specific
-observation data sets without preliminary reformating. When choosing
-to host this new data source under project ``native6``, such a
-configuration involves the following steps :
+observation data sets without preliminary reformating. You can choose
+to host this new data source either under a dedicated project or under
+project ``native6``; when choosing the latter, such a configuration
+involves the following steps :
 
   - allowing for ESMValTool to locate the data files :
 
     - entry ``native6`` of ``config-developer.yml`` should be
       complemented with sub-entries for ``input_dir`` and ``input_file``
       that goes under a new key representing the
-      data organization (such as ``IPSL``), and these sub-entries can
+      data organization (such as ``NEW_MODEL``), and these sub-entries can
       use an arbitrary list of ``{placeholders}``. Example :
 
       .. code-block:: yaml
@@ -340,20 +318,17 @@ configuration involves the following steps :
   	  ...
 	  input_dir:
              default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-             IPSL: '{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
+             NEW_MODEL: '{model}/{exp}/{simulation}/{version}/{type}'
           input_file:
             default: '*.nc'
-            IPSL: 
-              - '{simulation}_*_{ipsl_varname}.nc'
-              - '{simulation}_*_{group}.nc'
+            NEW_MODEL: '{simulation}_*.nc'
           ...
-      
 
     - if necessary, provide a so-called ``extra facets file`` which
-      allows to cope e.g. with variable naming issues for fonding
-      files. See `Extra_Facets`_ ) and here :download:`an example of
+      allows to cope e.g. with variable naming issues for finding
+      files. See `Extra_Facets`_  and here :download:`an example of
       such a file for IPSL-CM6
-      <../../esmvalcore/_config/variable_details/native6-ipsl-cm6-mappings.yml>`.
+      <../../esmvalcore/_config/extra_facets/native6-ipsl-cm6-mappings.yml>`.
 
   - ensuring that ESMValTool get the right metadata and data out of
     your data files : this is described at :ref:`fixing_data`

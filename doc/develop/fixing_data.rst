@@ -334,7 +334,7 @@ Natively supported non-CMIP datasets
 ====================================
 
 Some fixed datasets and native models formats are supported through
-the ``native6`` project.
+the ``native6`` project or through a dedicated project.
 
 .. _fixing_native_models:
 
@@ -353,9 +353,11 @@ described above (:ref:`fix_structure`) and at
 
       datasets:
         - {simulation: CM61-LR-hist-03.1950, exp: piControl, freq: Analyse/TS_MO,
-           account: p86caub,  status: PROD, dataset: IPSL-CM6, project:  native6 } 
+           account: p86caub,  status: PROD, dataset: IPSL-CM6, project: native6,
+	   root: /thredds/tgcc/store} 
         - {simulation: CM61-LR-hist-03.1950, exp: historical, freq: Output/MO,
-           account: p86caub,  status: PROD, dataset: IPSL-CM6, project:  native6 } 
+           account: p86caub,  status: PROD, dataset: IPSL-CM6, project: native6,
+	   root: /thredds/tgcc/store} 
 
     The ``Output`` format is an example of a case where variables are
     grouped in multi-variable files, which name cannot be computed
@@ -364,10 +366,6 @@ described above (:ref:`fix_structure`) and at
     files must also undergo some data selection, which may involve an
     external process for performance purpose.
 
-    The ``config-developer.yaml`` section for configuring IPSL-CM6 is
-    :ref:`illustrated here <example_IPSL_config>`
-
-    
 
 
 ERA5 and MSWEP datasets
