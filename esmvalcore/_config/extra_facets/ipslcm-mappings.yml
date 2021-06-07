@@ -17,11 +17,9 @@
 # by installing a modified version of this file as
 # ~/.esmvatlool/variable_details/native6-ipsl-cm6-*.yml
 #
-# Keys scale and offset can be used for handling any unit issue that
-# is not dealt wih automatically by the udunits layer in ESMValTool
-# (and which makes use of the units metadaat in input files). In that
-# case, scaling and offseting are applied automatically by method
-# fix_data of class AllVars in cmor/_fixes/*/ipsl.py
+# Key 'positive' allows to tell ESMValTool when the sign convention
+# for a variable is reversed between IPSL-CM6 and CMIP6. In that case,
+# just e.g. put 'positive: down' if the CMIP6 convention is 'positive: up'
 #
 # The main key below, 'IPSL-CM6', is the one to use as a value for
 # attribute 'dataset' in the 'datasets' entry of recipes; it matches
@@ -79,13 +77,8 @@ IPSL-CM6:
     wind10m: {ipsl_varname: wind10m, <<: *atmvars}
 
     #  -> Turbulent fluxes
-    flat: {ipsl_varname: flat, <<: *atmvars, scale: -1.}
-    sens: {ipsl_varname: sens, <<: *atmvars, scale: -1.}
     taux: {ipsl_varname: taux, <<: *atmvars}
     tauy: {ipsl_varname: tauy, <<: *atmvars}
-
-    #  -> Clouds
-    cldt: {ipsl_varname: cldt, <<: *atmvars, scale: 100.}
 
     #  -> Radiative down at TOA
     SWdnTOA: {ipsl_varname: SWdnTOA, <<: *atmvars}
@@ -108,20 +101,14 @@ IPSL-CM6:
     LWdnSFcclr: {ipsl_varname: LWdnSFcclr, <<: *atmvars}
     SWdnSFcclr: {ipsl_varname: SWdnSFcclr, <<: *atmvars}
 
-    #  -- P - E
-    hflsevap: {ipsl_varname: hfls, <<: *atmvars, scale: -4.0000e-07}
-
     #  -> Turbulent fluxes
-    hfls: {ipsl_varname: flat, <<: *atmvars, scale: -1.}
-    hfss: {ipsl_varname: sens, <<: *atmvars, scale: -1.}
+    hfls: {ipsl_varname: flat, <<: *atmvars, positive: down}
+    hfss: {ipsl_varname: sens, <<: *atmvars, positive: down}
     tauu: {ipsl_varname: taux, <<: *atmvars}
     tauv: {ipsl_varname: tauy, <<: *atmvars}
 
     #  -> Clouds
-    clt: {ipsl_varname: cldt, <<: *atmvars, scale: 100.}
-    cldl: {ipsl_varname: cldl, <<: *atmvars, scale: 100.}
-    cldm: {ipsl_varname: cldm, <<: *atmvars, scale: 100.}
-    cldh: {ipsl_varname: cldh, <<: *atmvars, scale: 100.}
+    clt: {ipsl_varname: cldt, <<: *atmvars}
 
     #  -> Radiative up at TOA
     rlut: {ipsl_varname: topl, <<: *atmvars}
@@ -189,7 +176,6 @@ IPSL-CM6:
 
     #  -> alias for the obs
     gpptot: {ipsl_varname: gpp, <<: *stivars}
-    GPP: {ipsl_varname: gpp, <<: *sechvars, scale: 1.e-03}
     Contfrac: {ipsl_varname: Contfrac, <<: *sechvars}
 
   # ==============================================================================
@@ -203,7 +189,6 @@ IPSL-CM6:
     zos: {ipsl_varname: zos, <<: *ocetvars}
     mlotst: {ipsl_varname: mldr10_1, <<: *ocetvars}
     mlddt02: {ipsl_varname: mld_dt02, <<: *ocetvars}
-    hc300: {ipsl_varname: hc300, <<: *ocetvars, scale: 1.e-09}
     wfo: {ipsl_varname: wfo, <<: *ocetvars}
 
     #  ------------------------------------------------------------ #
@@ -225,14 +210,12 @@ IPSL-CM6:
     #  --------------------------------------------------------------- #
 
     #  Aliases to the old IGCM_OUT names
-    # (to take advantage of offset, scale and filenameVar)  -- #
     sosstsst: {ipsl_varname: sosstsst, <<: *ocetvars}
     sosaline: {ipsl_varname: sosaline, <<: *ocetvars}
     votemper: {ipsl_varname: votemper, <<: *ocetvars}
     vosaline: {ipsl_varname: vosaline, <<: *ocetvars}
     mldr10_3: {ipsl_varname: mldr10_3, <<: *ocetvars}
     somx3010: {ipsl_varname: somx3010, <<: *ocetvars}
-    sohtc300: {ipsl_varname: sohtc300, <<: *ocetvars, scale: 1.e-09}
     mld_dt02: {ipsl_varname: mld_dt02, <<: *ocetvars}
 
     #  -- Wind stress curl
@@ -249,8 +232,8 @@ IPSL-CM6:
   SImon:
     # ====================================================================================
     # ICE
-    sic: {ipsl_varname: siconc, <<: *icevars, scale: 100.}
+    sic: {ipsl_varname: siconc, <<: *icevars}
     sit: {ipsl_varname: sithic, <<: *icevars}
     sivolu: {ipsl_varname: sivolu, <<: *icevars}
-    siconc: {ipsl_varname: siconc, <<: *icevars, scale: 100.}
+    siconc: {ipsl_varname: siconc, <<: *icevars}
     sithic: {ipsl_varname: sithic, <<: *icevars}

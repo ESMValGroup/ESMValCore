@@ -17,8 +17,8 @@ finding routine under different scenarios.
 
 .. _CMOR-DRS:
 
-CMIP data - CMOR Data Reference Syntax (DRS) and the ESGF
-=========================================================
+CMIP data
+---------
 CMIP data is widely available via the Earth System Grid Federation
 (`ESGF <https://esgf.llnl.gov/>`_) and is accessible to users either
 via download from the ESGF portal or through the ESGF data nodes hosted
@@ -44,6 +44,40 @@ ESGF data nodes, these paths differ slightly, for example:
 From the ESMValTool user perspective the number of data input parameters is
 optimized to allow for ease of use. We detail this procedure in the next
 section.
+
+Native model data
+---------------------------------------------------------
+Support for native model data that is not formatted according to a CMIP 
+data request is quite easy using basic
+:ref:`ESMValCore fix procedure <fixing_data>` and has been implemented
+for some models :ref:`as described here <fixing_native_models>`
+
+Observational data
+---------------------------------------------------------
+Part of observational data is retrieved in the same manner as CMIP data, for example
+using the ``OBS`` root path set to:
+
+  .. code-block:: yaml
+
+    OBS: /gws/nopw/j04/esmeval/obsdata-v2
+
+and the dataset:
+
+  .. code-block:: yaml
+
+    - {dataset: ERA-Interim, project: OBS, type: reanaly, version: 1, start_year: 2014, end_year: 2015, tier: 3}
+
+in ``recipe.yml`` in ``datasets`` or ``additional_datasets``, the rules set in
+CMOR-DRS_ are used again and the file will be automatically found:
+
+.. code-block::
+
+  /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
+
+Since observational data are organized in Tiers depending on their level of
+public availability, the ``default`` directory must be structured accordingly
+with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
+``drs: default``.
 
 .. _data-retrieval:
 
@@ -173,8 +207,8 @@ datasets are listed in any recipe, under either the ``datasets`` and/or
 .. code-block:: yaml
 
   datasets:
-    - {dataset: HadGEM2-CC,  project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
-    - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, grid: gn, start_year: 2004,  end_year: 2014}
+    - {dataset: HadGEM2-CC, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
+    - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, grid: gn, start_year: 2004, end_year: 2014}
 
 ``_data_finder`` will use this information to find data for **all** the variables specified in ``diagnostics/variables``.
 
@@ -195,7 +229,7 @@ and the dataset you need is specified in your ``recipe.yml`` as:
 
 .. code-block:: yaml
 
-  - {dataset: UKESM1-0-LL, project: CMIP6, mip: Amon, exp: historical, grid: gn, ensemble: r1i1p1f2, start_year: 2004,  end_year: 2014}
+  - {dataset: UKESM1-0-LL, project: CMIP6, mip: Amon, exp: historical, grid: gn, ensemble: r1i1p1f2, start_year: 2004, end_year: 2014}
 
 for a variable, e.g.:
 

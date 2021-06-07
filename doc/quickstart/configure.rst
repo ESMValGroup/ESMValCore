@@ -176,8 +176,10 @@ It will be installed along with ESMValCore and can also be viewed on GitHub:
 `esmvalcore/config-developer.yml
 <https://github.com/ESMValGroup/ESMValCore/blob/master/esmvalcore/config-developer.yml>`_.
 This configuration file describes the file system structure and CMOR tables for several
-key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
-ETHZ, SMHI, BSC). CMIP data is stored as part of the Earth System Grid
+key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g.
+BADC, CP4CDS, DKRZ, ETHZ, SMHI, BSC), and for native output data for some
+models (IPSL, ... see :ref:`configure_native_models`).
+CMIP data is stored as part of the Earth System Grid
 Federation (ESGF) and the standards for file naming and paths to files are set
 out by CMOR and DRS. For a detailed description of these standards and their
 adoption in ESMValCore, we refer the user to :ref:`CMOR-DRS` section where we
@@ -294,8 +296,8 @@ related to CMOR table settings available:
 Configuring native models and observation data sets
 ----------------------------------------------------
 
-ESMValTool can take full advantage of the ability to configure
-ESMValCore for handling native model output formats and specific
+ESMValCore can be configured for handling native model output formats
+and specific
 observation data sets without preliminary reformating. You can choose
 to host this new data source either under a dedicated project or under
 project ``native6``; when choosing the latter, such a configuration
@@ -306,7 +308,7 @@ involves the following steps :
     - entry ``native6`` of ``config-developer.yml`` should be
       complemented with sub-entries for ``input_dir`` and ``input_file``
       that goes under a new key representing the
-      data organization (such as ``NEW_MODEL``), and these sub-entries can
+      data organization (such as ``MY_DATA_ORG``), and these sub-entries can
       use an arbitrary list of ``{placeholders}``. Example :
 
       .. code-block:: yaml
@@ -315,20 +317,20 @@ involves the following steps :
   	  ...
 	  input_dir:
              default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-             NEW_MODEL: '{model}/{exp}/{simulation}/{version}/{type}'
+             MY_DATA_ORG: '{model}/{exp}/{simulation}/{version}/{type}'
           input_file:
             default: '*.nc'
-            NEW_MODEL: '{simulation}_*.nc'
+            MY_DATA_ORG: '{simulation}_*.nc'
           ...
 
     - if necessary, provide a so-called ``extra facets file`` which
       allows to cope e.g. with variable naming issues for finding
-      files. See `Extra_Facets`_  and here :download:`an example of
-      such a file for IPSL-CM6
+      files. See section Extra Facets in `Development` and
+      :download:`this example of such a file for IPSL-CM6
       <../../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`.
 
-  - ensuring that ESMValTool get the right metadata and data out of
-    your data files : this is described at :ref:`fixing_data`
+  - ensuring that ESMValCore get the right metadata and data out of
+    your data files: this is described in :ref:`fixing_data`
 
 
 .. _config-ref:

@@ -1,15 +1,19 @@
 .. _fixing_data:
 
 ***********
-Dataset fix
+Fixing data
 ***********
 
-Some (model) datasets contain (known) errors that would normally prevent them
-from being processed correctly by the ESMValCore. The errors can be in
-the metadata describing the dataset and/or in the actual data.
-Typical examples of such errors are missing or wrong attributes (e.g.
-attribute ''units'' says 1e-9 but data are actually in 1e-6), missing or
-mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
+The baseline case for ESMValCore input data is CMOR fully compliant
+data that is read using :py:`Iris load_raw function <iris:load_raw>`.
+ESMValCore also allows for some departures with compliance (see
+:ref:`cmor_check_strictness`). Beyond that situation, some datasets
+(either model or observations) contain (known) errors that would
+normally prevent them from being processed. The issues can be in the
+metadata describing the dataset and/or in the actual data.  Typical
+examples of such errors are missing or wrong attributes (e.g.
+attribute ''units'' says 1e-9 but data are actually in 1e-6), missing
+or mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
 coordinate bounds like ''lat_bnds'') or problems with the actual data
 (e.g. cloud liquid water only instead of sum of liquid + ice as specified by the CMIP data request).
 
@@ -327,6 +331,29 @@ Natively supported non-CMIP datasets
 ====================================
 
 Fixed datasets are supported through the ``native6`` project.
+Put the files containing the data in the directory that you have configured
+for the ``native6`` project in your :ref:`user configuration file`, in a
+subdirectory called ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
+Replace the items in curly braces by the values used in the variable/dataset
+definition in the :ref:`recipe <recipe_overview>`.
+Below is a list of datasets currently supported.
+
+ERA5
+----
+
+- Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
+- Tier: 3
+
+MSWEP
+-----
+
+- Supported variables: ``pr``
+- Supported frequencies: ``mon``, ``day``, ``3hr``.
+- Tier: 3
+
+ERA5 and MSWEP datasets
+-----------------------
+
 Put the files containing the data in the directory that you have configured
 for the ``native6`` project in your :ref:`user configuration file`, in a
 subdirectory called ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.

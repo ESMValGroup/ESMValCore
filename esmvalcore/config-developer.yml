@@ -203,7 +203,9 @@ obs4mips:
   input_dir:
     default: 'Tier{tier}/{dataset}'
     RCAST: '/'
-  input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
+    IPSL: '{realm}/{short_name}/{freq}/{grid}/{institute}/{dataset}/{latest_version}'
+  input_file:
+    default: '{short_name}_{dataset}_{level}_{version}_*.nc'
   output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_path: 'obs4mips'

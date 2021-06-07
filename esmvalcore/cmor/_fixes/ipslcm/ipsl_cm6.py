@@ -33,7 +33,7 @@ class AllVars(Fix):
         if "_" + self.extra_facets.get("group",
                                        "non-sense") + ".nc" not in filepath:
             # No need to filter the file
-            logger.debug("In ipsl-cm6.py : not filtering for %s", filepath)
+            logger.debug("Not filtering for %s", filepath)
             return filepath
 
         if not self.extra_facets.get("use_cdo", False):
@@ -80,25 +80,11 @@ class AllVars(Fix):
             if coordinate.var_name == 'time_counter':
                 coordinate.var_name = 'time'
 
+        positive = self.extra_facets.get("positive")
+        if positive :
+            cube.attributes["positive"] = positive
+        
         return [cube]
-
-    def fix_data(self, cube):
-        """Apply fixes to the data of the cube.
-
-        Here : scaling and offset according to extra_facets.
-
-        But needs to be checked vs ESMValTool automatic unit change
-        when units metadat is present and correct
-        """
-        facets = self.extra_facets
-        metadata = cube.metadata
-        if "scale" in facets:
-            cube *= facets["scale"]
-        if "offset" in facets:
-            cube += facets["offset"]
-        cube.metadata = metadata
-        return cube
-
 
 class Tas(Fix):
     """Fixes for ISPLCM 2m temperature."""
