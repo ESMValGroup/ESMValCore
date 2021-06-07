@@ -47,6 +47,7 @@ jobs:
       - coverage-reporter/send_report:
           coverage-reports: 'test-reports/coverage.xml'
           project-token: $CODACY_PROJECT_TOKEN
+          skip: true  # skip if project-token is not defined (i.e. on a fork)
 
   install:
     # Test installation
