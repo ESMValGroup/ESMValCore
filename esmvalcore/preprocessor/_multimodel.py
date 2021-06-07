@@ -147,7 +147,13 @@ def _subset(cube, time_points):
     begin = cube.coord('time').units.num2date(time_points[0])
     end = cube.coord('time').units.num2date(time_points[-1])
     constraint = iris.Constraint(time=lambda cell: begin <= cell.point <= end)
-    return cube.extract(constraint)
+    try:
+        return cube.extract(constraint)
+    except Exception as excinfo:
+        raise ValueError(
+            "Tried to align cubes in multi-model statistics, but failed for"
+            f" cube {cube} and time points {time_points}. Encountered the "
+            f"following exception: {excinfo}")
 
 
 def _extend(cube, time_points):
@@ -191,7 +197,13 @@ def _extend(cube, time_points):
 
     cube_list = iris.cube.CubeList(cube_list)
 
-    new_cube = cube_list.concatenate_cube()
+    try:
+        new_cube = cube_list.concatenate_cube()
+    except Exception as excinfo:
+        raise ValueError(
+            "Tried to align cubes in multi-model statistics, but failed for"
+            f" cube {cube} and time points {time_points}. Encountered the "
+            f"following exception: {excinfo}")
 
     return new_cube
 
