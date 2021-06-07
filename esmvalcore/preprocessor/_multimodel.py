@@ -44,8 +44,10 @@ def _resolve_operator(statistic: str):
     # special cases
     if statistic == 'std':
         logger.warning(
-            "Multicube statistics is aligning its behaviour with iris.analysis"
-            ". Please consider replacing 'std' with 'std_dev' in your code.")
+            "Changing statistics from specified `std` to `std_dev`, "
+            "since multimodel statistics is now using the iris.analysis module"
+            ", which also uses `std_dev`. Please consider replacing 'std' "
+            " with 'std_dev' in your recipe or code.")
         statistic = 'std_dev'
 
     elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic):
