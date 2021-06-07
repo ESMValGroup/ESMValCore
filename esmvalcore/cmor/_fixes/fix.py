@@ -2,30 +2,15 @@
 import importlib
 import inspect
 import os
-from functools import lru_cache
-from pathlib import Path
-
-import yaml
-
-from esmvalcore._config._config import CFG
 
 from ..table import CMOR_TABLES
-
-
-@lru_cache
-def get_variable_mappings(project, dataset):
-    DEFAULT_PATH = (Path(__file__).parents[0] / project /
-                    f"{dataset}-mappings.yml")
-    mapping_path = CFG.get(project, {}).get("mapping_path", DEFAULT_PATH)
-    with open(mapping_path, "r") as mapping_file:
-        return yaml.safe_load(mapping_file)
 
 
 class Fix:
     """
     Base class for dataset fixes.
     """
-    def __init__(self, vardef, var_mapping):
+    def __init__(self, vardef):
         """Initialize fix object.
 
         Parameters
@@ -35,7 +20,6 @@ class Fix:
 
         """
         self.vardef = vardef
-        self.var_mapping = var_mapping
 
     def fix_file(self, filepath, output_dir):
         """
@@ -166,8 +150,6 @@ class Fix:
         """
         cmor_table = CMOR_TABLES[project]
         vardef = cmor_table.get_variable(mip, short_name)
-        mapping = get_variable_mappings(project, dataset)
-        var_mapping = mapping.get(mip, {}).get(short_name, None)
 
         project = project.replace('-', '_').lower()
         dataset = dataset.replace('-', '_').lower()
@@ -182,7 +164,7 @@ class Fix:
             classes = dict((name.lower(), value) for name, value in classes)
             for fix_name in (short_name, mip.lower(), 'allvars'):
                 try:
-                    fixes.append(classes[fix_name](vardef, var_mapping))
+                    fixes.append(classes[fix_name](vardef))
                 except KeyError:
                     pass
         except ImportError:

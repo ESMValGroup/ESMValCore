@@ -21,7 +21,6 @@ from ._data_finder import (
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
-from .cmor._fixes.fix import get_variable_mappings
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (
@@ -1028,46 +1027,39 @@ class Recipe:
         return datasets
 
     @staticmethod
-    def _expand_tag(variables, input_tag):
-        """
-        Expand tags such as ensemble members or stardates to multiple datasets.
+    def _expand_ensemble(variables):
+        """Expand ensemble members to multiple datasets.
 
         Expansion only supports ensembles defined as strings, not lists.
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
 
-        def expand_tag(variable, input_tag):
-            tag = variable.get(input_tag, "")
-            match = regex.search(tag)
+        def expand_ensemble(variable):
+            ens = variable.get('ensemble', "")
+            match = regex.search(ens)
             if match:
                 start, end = match.group(0)[1:-1].split(':')
                 for i in range(int(start), int(end) + 1):
                     expand = deepcopy(variable)
-                    expand[input_tag] = regex.sub(str(i), tag, 1)
-                    expand_tag(expand, input_tag)
+                    expand['ensemble'] = regex.sub(str(i), ens, 1)
+                    expand_ensemble(expand)
             else:
                 expanded.append(variable)
 
         for variable in variables:
-            tag = variable.get(input_tag, "")
-            if isinstance(tag, (list, tuple)):
-                for elem in tag:
+            ensemble = variable.get('ensemble', "")
+            if isinstance(ensemble, (list, tuple)):
+                for elem in ensemble:
                     if regex.search(elem):
                         raise RecipeError(
-                            f"In variable {variable}: {input_tag} expansion "
-                            f"cannot be combined with {input_tag} lists")
+                            f"In variable {variable}: ensemble expansion "
+                            "cannot be combined with ensemble lists")
                 expanded.append(variable)
             else:
-                expand_tag(variable, input_tag)
+                expand_ensemble(variable)
 
         return expanded
-
-    def _add_project_variable_mappings(self, variable):
-        mappings = get_variable_mappings(variable["project"],
-                                         variable["dataset"])
-        mapping = mappings[variable["mip"]][variable["short_name"]]
-        _augment(variable, mapping)
 
     def _initialize_variables(self, raw_variable, raw_datasets):
         """Define variables for all datasets."""
@@ -1104,7 +1096,6 @@ class Recipe:
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
-            self._add_project_variable_mappings(variable)
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:
@@ -1113,14 +1104,8 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
-            if 'sub_experiment' in variable:
-                subexperiment_keys = deepcopy(required_keys)
-                subexperiment_keys.update({'sub_experiment'})
-                check.variable(variable, subexperiment_keys)
-            else:
-                check.variable(variable, required_keys)
-        variables = self._expand_tag(variables, 'ensemble')
-        variables = self._expand_tag(variables, 'sub_experiment')
+            check.variable(variable, required_keys)
+        variables = self._expand_ensemble(variables)
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
