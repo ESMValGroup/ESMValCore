@@ -5,7 +5,8 @@ Fixing data
 ***********
 
 The baseline case for ESMValCore input data is CMOR fully compliant
-data that is read using :py:`Iris load_raw function <iris:load_raw>`.
+data that is read using
+`Iris load_raw function <https://scitools-iris.readthedocs.io/en/latest/generated/api/iris.html#iris.load_raw>`_.
 ESMValCore also allows for some departures with compliance (see
 :ref:`cmor_check_strictness`). Beyond that situation, some datasets
 (either model or observations) contain (known) errors that would
@@ -353,18 +354,18 @@ described above (:ref:`fix_structure`) and at
 
       datasets:
         - {simulation: CM61-LR-hist-03.1950, exp: piControl, freq: Analyse/TS_MO,
-           account: p86caub,  status: PROD, dataset: IPSL-CM6, project: native6,
+           account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
 	   root: /thredds/tgcc/store} 
         - {simulation: CM61-LR-hist-03.1950, exp: historical, freq: Output/MO,
-           account: p86caub,  status: PROD, dataset: IPSL-CM6, project: native6,
+           account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
 	   root: /thredds/tgcc/store} 
 
     The ``Output`` format is an example of a case where variables are
     grouped in multi-variable files, which name cannot be computed
     directly from datasets attributes alone but requires an
-    ref:`Extra_facets file <extra_facets>`. These multi-variable
-    files must also undergo some data selection, which may involve an
-    external process for performance purpose.
+    Extra_facets file. These multi-variable files must also undergo some
+    data selection, which may involve an external process for
+    performance purpose.
 
 
 
