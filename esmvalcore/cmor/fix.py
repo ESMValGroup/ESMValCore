@@ -103,6 +103,9 @@ def fix_metadata(cubes,
         for fix in fixes:
             cube_list = fix.fix_metadata(cube_list)
 
+        if not cube_list:
+            continue
+
         cube = _get_single_cube(cube_list, short_name, project, dataset)
         checker = _get_cmor_checker(frequency=frequency,
                                     table=project,
@@ -118,6 +121,8 @@ def fix_metadata(cubes,
 
 
 def _get_single_cube(cube_list, short_name, project, dataset):
+    if not cube_list:
+        return None
     if len(cube_list) == 1:
         return cube_list[0]
     cube = None
