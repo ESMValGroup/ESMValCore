@@ -1,7 +1,7 @@
 .. _findingdata:
 
 ************
-Finding data
+Input data
 ************
 
 Overview
@@ -14,6 +14,9 @@ and once these parameters have been provided, the tool will automatically find
 the right data. We will detail below the data finding and retrieval process and
 the input the user needs to specify, giving examples on how to use the data
 finding routine under different scenarios.
+
+Data types
+==========
 
 .. _CMOR-DRS:
 
@@ -265,32 +268,6 @@ and finally, using the file naming definition from CMOR-DRS_ find the file:
 
 .. _observations:
 
-Observational data
-==================
-Observational data is retrieved in the same manner as CMIP data, for example
-using the ``OBS`` root path set to:
-
-  .. code-block:: yaml
-
-    OBS: /gws/nopw/j04/esmeval/obsdata-v2
-
-and the dataset:
-
-  .. code-block:: yaml
-
-    - {dataset: ERA-Interim,  project: OBS,  type: reanaly,  version: 1,  start_year: 2014,  end_year: 2015,  tier: 3}
-
-in ``recipe.yml`` in ``datasets`` or ``additional_datasets``, the rules set in
-CMOR-DRS_ are used again and the file will be automatically found:
-
-.. code-block::
-
-  /gws/nopw/j04/esmeval/obsdata-v2/Tier3/ERA-Interim/OBS_ERA-Interim_reanaly_1_Amon_ta_201401-201412.nc
-
-Since observational data are organized in Tiers depending on their level of
-public availability, the ``default`` directory must be structured accordingly
-with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
-``drs: default``.
 
 Data loading
 ============

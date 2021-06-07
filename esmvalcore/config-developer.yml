@@ -112,6 +112,7 @@ CMIP3:
     default: '/'
     BADC: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{latestversion}'
     DKRZ: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
+    IPSL: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}/{short_name}'
   input_file: '{short_name}_*.nc'
   output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
   cmor_type: 'CMIP3'
@@ -192,8 +193,12 @@ native6:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+    IPSL: '{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
   input_file:
     default: '*.nc'
+    IPSL:
+      - '{simulation}_*_{ipsl_varname}.nc'
+      - '{simulation}_*_{group}.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
