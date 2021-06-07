@@ -282,11 +282,18 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
 
         result_slices.append(collapsed_slice)
 
-    result_cube = iris.cube.CubeList(result_slices).merge_cube()
-    result_cube.remove_coord(CONCAT_DIM)
+    try:
+        result_cube = iris.cube.CubeList(result_slices).merge_cube()
+    except Exception as excinfo:
+        raise ValueError(
+            "Multi-model statistics failed to concatenate results into a"
+            f" single array. This happened for operator {operator}"
+            f" with computed statistics {result_slices}."
+            "This can happen e.g. if the calculation results in inconsistent"
+            f" dtypes. Encountered the following exception: {excinfo}")
 
     result_cube.data = np.ma.array(result_cube.data)
-
+    result_cube.remove_coord(CONCAT_DIM)
     return result_cube
 
 
