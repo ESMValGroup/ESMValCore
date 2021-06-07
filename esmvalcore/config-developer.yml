@@ -235,3 +235,16 @@ CORDEX:
   output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
   cmor_type: 'CMIP5'
   cmor_path: 'cordex'
+
+IPSLCM:
+  cmor_strict: false
+  input_dir:
+    default: '{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
+  input_file:
+    default:
+      - '{simulation}_*_{ipsl_varname}.nc'
+      - '{simulation}_*_{group}.nc'
+  output_file: '{dataset}_{account}_{model}_{status}_{exp}_{simulation}_{freq}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
+
