@@ -157,7 +157,7 @@ class Pr(Fix):
             try:
                 old_time = cube.coord('time')
             except iris.exceptions.CoordinateNotFoundError:
-                pass
+                new_list.append(cube)
             else:
                 if old_time.is_monotonic():
                     new_list.append(cube)

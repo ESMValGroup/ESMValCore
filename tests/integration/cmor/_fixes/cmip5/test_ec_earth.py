@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 
 from cf_units import Unit
-from iris.coords import DimCoord
+from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 from esmvalcore.cmor._fixes.cmip5.ec_earth import (
@@ -166,31 +166,43 @@ class TestPr(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
 
-        wrong_time_coord = DimCoord(
+        wrong_time_coord = AuxCoord(
             points=[1.0, 2.0, 1.0, 2.0, 3.0],
             var_name='time',
             standard_name='time',
-            long_name='time',
             units='days since 1850-01-01',
-        )
+            )
 
-        correct_time_coord = DimCoord(
+        correct_time_coord = AuxCoord(
             points=[1.0, 2.0, 3.0],
             var_name='time',
             standard_name='time',
-            long_name='time',
             units='days since 1850-01-01',
-        )
+            )
+
+        lat_coord = DimCoord(
+            [0.0],
+            standard_name='latitude',
+            var_name='lat',
+            )
+
+        lon_coord = DimCoord(
+            [0.0],
+            standard_name='longitude',
+            var_name='lon',
+            )
 
         self.time_coord = correct_time_coord
-        self.wrong_cube = CubeList([Cube(np.ones(5),
+        self.wrong_cube = CubeList([Cube(np.ones((5, 1, 1)),
                                          var_name='pr',
                                          units='kg m-2 s-1')])
-        self.wrong_cube[0].add_dim_coord(wrong_time_coord, 0)
+        self.wrong_cube[0].add_aux_coord(wrong_time_coord, 0)
+        self.wrong_cube[0].add_dim_coord(lat_coord, 1)
+        self.wrong_cube[0].add_dim_coord(lon_coord, 2)
         self.correct_cube = CubeList([Cube(np.ones(3),
                                            var_name='pr',
                                            units='kg m-2 s-1')])
-        self.correct_cube[0].add_dim_coord(correct_time_coord, 0)
+        self.correct_cube[0].add_aux_coord(correct_time_coord, 0)
 
         self.fix = Pr(None)
 
@@ -216,6 +228,6 @@ class TestPr(unittest.TestCase):
     def test_pr_fix_metadata_no_time(self):
         """Test metadata fix with no time coord."""
         self.correct_cube[0].remove_coord('time')
-        correct_cube = self.fix.fix_metadata([self.correct_cube])
+        out_correct_cube = self.fix.fix_metadata(self.correct_cube)
         with self.assertRaises(CoordinateNotFoundError):
-            correct_cube[0].coord('time')
+            out_correct_cube[0].coord('time')
