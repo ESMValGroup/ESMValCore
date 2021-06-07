@@ -1905,7 +1905,7 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
     assert settings['mask_out'] == 'sea'
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 3
+    assert len(fx_variables) == 4
     assert '_fx_' in fx_variables['sftlf']['filename']
     assert '_piControl_' in fx_variables['sftlf']['filename']
 
@@ -1920,7 +1920,7 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert 'volcello' not in fx_variables
+    assert 'volcello' in fx_variables
 
     # area statistics
     settings = product.settings['area_statistics']
@@ -1973,7 +1973,7 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
     assert settings['mask_out'] == 'sea'
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 3
+    assert len(fx_variables) == 4
     assert '_fx_' in fx_variables['sftlf']['filename']
     assert '_piControl_' in fx_variables['sftlf']['filename']
 
@@ -1988,7 +1988,7 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert 'volcello' not in fx_variables
+    assert 'volcello' in fx_variables
 
     # area statistics
     settings = product.settings['area_statistics']
@@ -2328,7 +2328,7 @@ def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
     fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert fx_variables == {}
+    assert len(fx_variables) == 2
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
