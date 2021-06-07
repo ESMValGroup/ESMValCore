@@ -386,9 +386,6 @@ def multi_model_statistics(products,
     arguments. Except for percentiles, these operators are currently not
     supported.
 
-    Lazy operation is supported for all statistics, except
-    ``median``, ``percentile``, ``gmean`` and ``hmean``.
-
     Parameters
     ----------
     products: list
