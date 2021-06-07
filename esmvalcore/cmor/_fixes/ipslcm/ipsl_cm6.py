@@ -81,10 +81,11 @@ class AllVars(Fix):
                 coordinate.var_name = 'time'
 
         positive = self.extra_facets.get("positive")
-        if positive :
+        if positive:
             cube.attributes["positive"] = positive
-        
+
         return [cube]
+
 
 class Tas(Fix):
     """Fixes for ISPLCM 2m temperature."""
