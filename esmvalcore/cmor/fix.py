@@ -34,6 +34,9 @@ def fix_file(file, short_name, project, dataset, mip, output_dir,
     dataset:str
     output_dir: str
         Output directory for fixed files
+    **extra_facets: dict, optional
+        Extra facets are mainly used for data outside of the big projects like
+        CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
@@ -81,6 +84,9 @@ def fix_metadata(cubes,
         Variable's data frequency, if available
     check_level: CheckLevels
         Level of strictness of the checks. Set to default.
+    **extra_facets: dict, optional
+        Extra facets are mainly used for data outside of the big projects like
+        CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
@@ -176,6 +182,9 @@ def fix_data(cube,
         Variable's data frequency, if available
     check_level: CheckLevels
         Level of strictness of the checks. Set to default.
+    **extra_facets: dict, optional
+        Extra facets are mainly used for data outside of the big projects like
+        CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------

@@ -15,6 +15,9 @@ class Fix:
         ----------
         vardef: str
             CMOR table entry
+        **extra_facets: dict, optional
+            Extra facets are mainly used for data outside of the big projects
+            like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
         """
         self.vardef = vardef
         self.extra_facets = extra_facets
@@ -133,6 +136,9 @@ class Fix:
         dataset: str
         mip: str
         short_name: str
+        **extra_facets: dict, optional
+            Extra facets are mainly used for data outside of the big projects
+            like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
         Returns
         -------
