@@ -16,21 +16,16 @@ def _load_fx(var_cube, fx_info, check_level):
     """Load and CMOR-check fx variables."""
     fx_cubes = iris.cube.CubeList()
 
+    project = fx_info['project']
+    mip = fx_info['mip']
+    short_name = fx_info['short_name']
+    freq = fx_info['frequency']
+
     for fx_file in fx_info['filename']:
         loaded_cube = load(fx_file, callback=concatenate_callback)
-        short_name = fx_info['short_name']
-        project = fx_info['project']
-        dataset = fx_info['dataset']
-        mip = fx_info['mip']
-        freq = fx_info['frequency']
         loaded_cube = fix_metadata(loaded_cube,
-                                   short_name=short_name,
-                                   project=project,
-                                   dataset=dataset,
-                                   mip=mip,
-                                   frequency=freq,
                                    check_level=check_level,
-                                   **extra_facets)
+                                   **fx_info)
         fx_cubes.append(loaded_cube[0])
 
     fx_cube = concatenate(fx_cubes)
@@ -42,14 +37,7 @@ def _load_fx(var_cube, fx_info, check_level):
                                   short_name=short_name, frequency=freq,
                                   check_level=check_level)
 
-    fx_cube = fix_data(fx_cube,
-                       short_name=short_name,
-                       project=project,
-                       dataset=dataset,
-                       mip=mip,
-                       frequency=freq,
-                       check_level=check_level,
-                       **extra_facets)
+    fx_cube = fix_data(fx_cube, check_level=check_level, **fx_info)
 
     fx_cube = cmor_check_data(fx_cube,
                               cmor_table=project,
@@ -151,7 +139,7 @@ def add_ancillary_variable(cube, fx_cube):
                  fx_cube.var_name, cube.var_name)
 
 
-def add_fx_variables(cube, fx_variables, check_level, **extra_facets):
+def add_fx_variables(cube, fx_variables, check_level):
     """Load requested fx files, check with CMOR standards and add the fx
     variables as cell measures or ancillary variables in the cube containing
     the data.
