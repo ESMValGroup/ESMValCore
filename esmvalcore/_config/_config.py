@@ -43,7 +43,7 @@ def _load_extra_facets(project, extra_facets_dir):
     for config_path in config_paths:
         config_file_paths = config_path.glob(f"{project.lower()}-*.yml")
         for config_file_path in sorted(config_file_paths):
-            logger.info("Loading extra facets from %s", config_file_path)
+            logger.debug("Loading extra facets from %s", config_file_path)
             with config_file_path.open() as config_file:
                 config_piece = yaml.safe_load(config_file)
             if config_piece:

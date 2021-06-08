@@ -31,9 +31,9 @@ infrastructure. The following example illustrates the concept.
 .. code-block:: yaml
    :caption: Extra facet example file `native6-era5.yml`
 
-   era5:
+   ERA5:
      Amon:
-       tas: {file_var_name: "t2m", name_in_filename: "2m_temperature"}
+       tas: {source_var_name: "t2m", cds_var_name: "2m_temperature"}
 
 
 Location of the extra facets files
