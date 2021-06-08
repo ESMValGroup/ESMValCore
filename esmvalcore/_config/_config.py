@@ -51,7 +51,6 @@ def _load_extra_facets(project, extra_facets_dir):
     return config
 
 
-@lru_cache
 def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
     """Read configuration files with additional variable information."""
     project_details = _load_extra_facets(project, extra_facets_dir)
