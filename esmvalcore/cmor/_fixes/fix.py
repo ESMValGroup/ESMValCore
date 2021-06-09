@@ -64,7 +64,7 @@ class Fix:
         """
         return cubes
 
-    def get_cube_from_list(self, cubes, short_name=None, mapping_key=None):
+    def get_cube_from_list(self, cubes, short_name=None):
         """Get a cube from the list with a given short name.
 
         Parameters
@@ -86,7 +86,6 @@ class Fix:
         """
         if short_name is None:
             short_name = self.vardef.short_name
-        short_name = self.extra_facets.get(mapping_key, short_name)
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
