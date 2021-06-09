@@ -3,6 +3,7 @@
 import pprint
 import warnings
 from collections.abc import MutableMapping
+from typing import Callable, Dict, Tuple
 
 from .._exceptions import SuppressedError
 from ._config_validators import ValidationError
@@ -20,15 +21,16 @@ class MissingConfigParameter(UserWarning):
 # fit the needs of ESMValCore. Matplotlib is licenced under the terms of
 # the the 'Python Software Foundation License'
 # (https://www.python.org/psf/license)
-class ValidatedConfig(MutableMapping, dict):
+class ValidatedConfig(MutableMapping):
     """Based on `matplotlib.rcParams`."""
 
-    _validate = {}
-    _warn_if_missing = ()
+    _validate: Dict[str, Callable] = {}
+    _warn_if_missing: Tuple[Tuple[str, str], ...] = ()
 
     # validate values on the way in
     def __init__(self, *args, **kwargs):
         super().__init__()
+        self._mapping = {}
         self.update(*args, **kwargs)
 
     def __setitem__(self, key, val):
@@ -41,36 +43,37 @@ class ValidatedConfig(MutableMapping, dict):
             raise InvalidConfigParameter(
                 f"`{key}` is not a valid config parameter.") from None
 
-        dict.__setitem__(self, key, cval)
+        self._mapping[key] = cval
 
     def __getitem__(self, key):
         """Return value mapped by key."""
-        return dict.__getitem__(self, key)
+        return self._mapping[key]
 
     def __repr__(self):
         """Return canonical string representation."""
         class_name = self.__class__.__name__
         indent = len(class_name) + 1
-        repr_split = pprint.pformat(dict(self), indent=1,
+        repr_split = pprint.pformat(self._mapping, indent=1,
                                     width=80 - indent).split('\n')
         repr_indented = ('\n' + ' ' * indent).join(repr_split)
         return '{}({})'.format(class_name, repr_indented)
 
     def __str__(self):
         """Return string representation."""
-        return '\n'.join(map('{0[0]}: {0[1]}'.format, sorted(self.items())))
+        return '\n'.join(
+            map('{0[0]}: {0[1]}'.format, sorted(self._mapping.items())))
 
     def __iter__(self):
         """Yield sorted list of keys."""
-        yield from sorted(dict.__iter__(self))
+        yield from sorted(self._mapping)
 
     def __len__(self):
         """Return number of config keys."""
-        return dict.__len__(self)
+        return len(self._mapping)
 
     def __delitem__(self, key):
         """Delete key/value from config."""
-        dict.__delitem__(self, key)
+        del self._mapping[key]
 
     def check_missing(self):
         """Check and warn for missing variables."""
@@ -82,8 +85,8 @@ class ValidatedConfig(MutableMapping, dict):
 
     def copy(self):
         """Copy the keys/values of this object to a dict."""
-        return {k: dict.__getitem__(self, k) for k in self}
+        return {k: self._mapping[k] for k in self}
 
     def clear(self):
         """Clear Config."""
-        dict.clear(self)
+        self._mapping.clear(self)

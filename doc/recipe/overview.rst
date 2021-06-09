@@ -60,7 +60,7 @@ the following:
 
    Note that all authors, projects, and references mentioned in the description
    section of the recipe need to be included in the (locally installed copy of the) file
-   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/master/esmvaltool/config-references.yml>`_,
+   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_,
    see :ref:`config-ref`.
    The author name uses the format: ``surname_name``. For instance, John
    Doe would be: ``doe_john``. This information can be omitted by new users
@@ -82,6 +82,8 @@ data specifications:
   ``RCP8.5``)
 - mip (for CMIP data, key ``mip``, value e.g. ``Amon``, ``Omon``, ``LImon``)
 - ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
+- sub-experiment id (key `sub_experiment`, value e.g. `s2000`, `s(2000:2002)`, 
+  for DCPP data only)
 - time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``. Please
   note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
   so we recommend to avoid them. For example, use ``128`` to specify the year
@@ -97,6 +99,7 @@ For example, a datasets section could be:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
+      - {dataset: HadGEM3-GC31-MM, alias: custom_alias, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, start_year: 2000, end_year, 2002}
 
 It is possible to define the experiment as a list to concatenate two experiments.
 Here it is an example concatenating the `historical` experiment with `rcp85`
@@ -135,6 +138,14 @@ for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:
 Please, bear in mind that this syntax can only be used in the ensemble tag.
 Also, note that the combination of multiple experiments and ensembles, like
 exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
+
+The same simplified syntax can be used to add multiple sub-experiment ids:
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2002), grid: gn, start_year: 2003, end_year: 2004}
+
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
@@ -334,7 +345,7 @@ concentration changed from ``sic`` to ``siconc``). ESMValCore is aware of some
 of them and can do the automatic translation when needed. It will even do the
 translation in the preprocessed file so the diagnostic does not have to deal
 with this complexity, setting the short name in all files to match the one used
-by the recipe. For example, if ``sic`` is requested, ESMValTool will
+by the recipe. For example, if ``sic`` is requested, ESMValCore will
 find ``sic`` or ``siconc`` depending on the project, but all preprocessed files
 while use ``sic`` as their short_name. If the recipe requested ``siconc``, the
 preprocessed files will be identical except that they will use the short_name

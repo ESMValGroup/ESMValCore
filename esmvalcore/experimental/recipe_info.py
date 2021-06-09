@@ -1,6 +1,8 @@
 """Handles recipe metadata (under 'documentation' section)."""
+import os
 import textwrap
 from pathlib import Path
+from typing import Optional, Tuple, Union
 
 import yaml
 
@@ -19,14 +21,14 @@ class RecipeInfo():
         Name of recipe file
     """
 
-    def __init__(self, data, filename: str = None):
+    def __init__(self, data, filename: Union[os.PathLike, str]):
         self.filename = Path(filename).name
         self.data = data
-        self._authors = None
-        self._maintainers = None
-        self._projects = None
-        self._references = None
-        self._description = None
+        self._authors: Optional[Tuple[Contributor, ...]] = None
+        self._maintainers: Optional[Tuple[Contributor, ...]] = None
+        self._projects: Optional[Tuple[Project, ...]] = None
+        self._references: Optional[Tuple[Reference, ...]] = None
+        self._description: Optional[str] = None
 
     def __repr__(self) -> str:
         """Return canonical string representation."""

@@ -3,6 +3,7 @@
 import copy
 import datetime
 import unittest
+from typing import List, Tuple
 
 import iris
 import iris.coord_categorisation
@@ -1263,7 +1264,7 @@ def make_map_data(number_years=2):
     return cube
 
 
-PARAMETERS = []
+PARAMETERS: List[Tuple] = []
 for period in ('full', 'day', 'month', 'season'):
     PARAMETERS.append((period, None))
     if period == 'season':
