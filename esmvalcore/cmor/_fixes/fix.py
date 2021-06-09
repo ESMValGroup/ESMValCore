@@ -8,7 +8,7 @@ from ..table import CMOR_TABLES
 
 class Fix:
     """Base class for dataset fixes."""
-    def __init__(self, vardef, extra_facets={}):
+    def __init__(self, vardef, extra_facets=None):
         """Initialize fix object.
 
         Parameters
@@ -20,6 +20,8 @@ class Fix:
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
         """
         self.vardef = vardef
+        if extra_facets is None:
+            extra_facets = {}
         self.extra_facets = extra_facets
 
     def fix_file(self, filepath, output_dir):
@@ -115,7 +117,7 @@ class Fix:
         return not self.__eq__(other)
 
     @staticmethod
-    def get_fixes(project, dataset, mip, short_name, extra_facets={}):
+    def get_fixes(project, dataset, mip, short_name, extra_facets=None):
         """Get the fixes that must be applied for a given dataset.
 
         It will look for them at the module
@@ -150,6 +152,9 @@ class Fix:
         project = project.replace('-', '_').lower()
         dataset = dataset.replace('-', '_').lower()
         short_name = short_name.replace('-', '_').lower()
+
+        if extra_facets is None:
+            extra_facets = {}
 
         fixes = []
         try:
