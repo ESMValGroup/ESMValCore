@@ -361,6 +361,21 @@ def add_scalar_typesea_coord(cube, value='default'):
     return cube
 
 
+def add_scalar_typesi_coord(cube, value='sea_ice'):
+    """Add scalar coordinate 'typesi' with value of `value`."""
+    logger.debug("Adding typesi coordinate (%s)", value)
+    typesi_coord = iris.coords.AuxCoord(value,
+                                        var_name='type',
+                                        standard_name='area_type',
+                                        long_name='Sea Ice area type',
+                                        units=Unit('no unit'))
+    try:
+        cube.coord('area_type')
+    except iris.exceptions.CoordinateNotFoundError:
+        cube.add_aux_coord(typesi_coord, ())
+    return cube
+
+
 def cube_to_aux_coord(cube):
     """Convert cube to iris AuxCoord."""
     return iris.coords.AuxCoord(

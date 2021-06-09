@@ -212,13 +212,14 @@ def check_preprocessor_settings(settings):
         function = function = globals()[step]
         argspec = inspect.getfullargspec(function)
         args = argspec.args[1:]
-        # Check for invalid arguments
-        invalid_args = set(settings[step]) - set(args)
-        if invalid_args:
-            raise ValueError(
-                "Invalid argument(s): {} encountered for preprocessor "
-                "function {}. \nValid arguments are: [{}]".format(
-                    ', '.join(invalid_args), step, ', '.join(args)))
+        if not (argspec.varargs or argspec.varkw):
+            # Check for invalid arguments
+            invalid_args = set(settings[step]) - set(args)
+            if invalid_args:
+                raise ValueError(
+                    "Invalid argument(s): {} encountered for preprocessor "
+                    "function {}. \nValid arguments are: [{}]".format(
+                        ', '.join(invalid_args), step, ', '.join(args)))
 
         # Check for missing arguments
         defaults = argspec.defaults

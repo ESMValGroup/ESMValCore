@@ -603,6 +603,9 @@ name to the list of authors in ``CITATION.cff`` and generate the entry for the
    pip install cffconvert
    cffconvert --ignore-suspect-keys --outputformat zenodo --outfile .zenodo.json
 
+Presently, this method unfortunately discards entries `communities`
+and `grants` from that file; please restore them manually, or
+alternately proceed with the addition manually
 
 .. _pull_request_checks:
 

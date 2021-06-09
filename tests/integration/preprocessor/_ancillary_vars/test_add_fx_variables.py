@@ -11,12 +11,57 @@ import numpy as np
 import pytest
 
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.preprocessor._ancillary_vars import (add_fx_variables,
+from esmvalcore.preprocessor._ancillary_vars import (_is_fx_broadcastable,
+                                                     add_fx_variables,
                                                      add_ancillary_variable,
                                                      add_cell_measure,
                                                      remove_fx_variables)
 
 logger = logging.getLogger(__name__)
+
+SHAPES_TO_BROADCAST = [
+    ((), (1, ), True),
+    ((), (10, 10), True),
+    ((1, ), (10, ), True),
+    ((1, ), (10, 10), True),
+    ((2, ), (10, ), False),
+    ((10, ), (), False),
+    ((10, ), (1, ), False),
+    ((10, ), (10, ), True),
+    ((10, ), (10, 10), True),
+    ((10, ), (7, 1), False),
+    ((10, ), (10, 7), False),
+    ((10, ), (7, 1, 10), True),
+    ((10, ), (7, 1, 1), False),
+    ((10, ), (7, 1, 7), False),
+    ((10, ), (7, 10, 7), False),
+    ((10, 1), (1, 1), False),
+    ((10, 1), (1, 100), False),
+    ((10, 1), (10, 7), True),
+    ((10, 12), (10, 1), False),
+    ((10, 1), (10, 12), True),
+    ((10, 12), (), False),
+    ((), (10, 12), True),
+    ((10, 12), (1, ), False),
+    ((1, ), (10, 12), True),
+    ((10, 12), (12, ), False),
+    ((10, 12), (1, 1), False),
+    ((1, 1), (10, 12), True),
+    ((10, 12), (1, 12), False),
+    ((1, 12), (10, 12), True),
+    ((10, 12), (10, 10, 1), False),
+    ((10, 12), (10, 12, 1), False),
+    ((10, 12), (10, 12, 12), False),
+    ((10, 12), (10, 10, 12), True)]
+
+
+@pytest.mark.parametrize('shape_1,shape_2,out', SHAPES_TO_BROADCAST)
+def test_shape_is_broadcastable(shape_1, shape_2, out):
+    """Test check if two shapes are broadcastable."""
+    fx_cube = iris.cube.Cube(np.ones(shape_1))
+    cube = iris.cube.Cube(np.ones(shape_2))
+    is_broadcastable = _is_fx_broadcastable(fx_cube, cube)
+    assert is_broadcastable == out
 
 
 class Test:
@@ -155,10 +200,9 @@ class Test:
         cube = add_fx_variables(cube, fx_vars, CheckLevels.IGNORE)
         assert cube.ancillary_variable(self.fx_area.standard_name) is not None
 
-    def test_wrong_time_frequency(self, tmp_path):
+    def test_wrong_shape(self, tmp_path):
         """
-        Test error is raised when cube and fx cube
-        frequencies do not match.
+        Test fx_variable is not added if it's not broadcastable to cube.
         """
         volume_data = np.ones((2, 3, 3, 3))
         volume_cube = iris.cube.Cube(
@@ -189,12 +233,8 @@ class Test:
                                  (self.lats, 2),
                                  (self.lons, 3)])
         cube.var_name = 'thetao'
-        with pytest.raises(ValueError) as excinfo:
-            cube = add_fx_variables(
-                cube, fx_vars, CheckLevels.IGNORE)
-        msg = (f"Dimensions of {cube.var_name} and {volume_cube.var_name} "
-               "cubes do not match. Cannot broadcast cubes.")
-        assert msg in str(excinfo.value)
+        cube = add_fx_variables(cube, fx_vars, CheckLevels.IGNORE)
+        assert cube.cell_measures() == []
 
     def test_remove_fx_vars(self):
         """Test fx_variables are removed from cube."""
