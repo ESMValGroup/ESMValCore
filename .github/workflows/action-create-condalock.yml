@@ -3,9 +3,10 @@ name: Conda lock file creation
 on:
   push:
     branches:
+    - main
     - condalock
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 4 /10 * *'
 
 jobs:
   create-lock-file:
