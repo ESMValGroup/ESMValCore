@@ -47,7 +47,7 @@ def fix_file(file, short_name, project, dataset, mip, output_dir,
                              dataset=dataset,
                              mip=mip,
                              short_name=short_name,
-                             **extra_facets):
+                             extra_facets=extra_facets):
         file = fix.fix_file(file, output_dir)
     return file
 
@@ -102,7 +102,7 @@ def fix_metadata(cubes,
                           dataset=dataset,
                           mip=mip,
                           short_name=short_name,
-                          **extra_facets)
+                          extra_facets=extra_facets)
     fixed_cubes = []
     by_file = defaultdict(list)
     for cube in cubes:
@@ -200,7 +200,7 @@ def fix_data(cube,
                              dataset=dataset,
                              mip=mip,
                              short_name=short_name,
-                             **extra_facets):
+                             extra_facets=extra_facets):
         cube = fix.fix_data(cube)
     checker = _get_cmor_checker(frequency=frequency,
                                 table=project,

@@ -8,14 +8,14 @@ from ..table import CMOR_TABLES
 
 class Fix:
     """Base class for dataset fixes."""
-    def __init__(self, vardef, **extra_facets):
+    def __init__(self, vardef, extra_facets):
         """Initialize fix object.
 
         Parameters
         ----------
         vardef: str
             CMOR table entry
-        **extra_facets: dict, optional
+        extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
         """
@@ -115,7 +115,7 @@ class Fix:
         return not self.__eq__(other)
 
     @staticmethod
-    def get_fixes(project, dataset, mip, short_name, **extra_facets):
+    def get_fixes(project, dataset, mip, short_name, extra_facets):
         """Get the fixes that must be applied for a given dataset.
 
         It will look for them at the module
@@ -135,7 +135,7 @@ class Fix:
         dataset: str
         mip: str
         short_name: str
-        **extra_facets: dict, optional
+        extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
@@ -160,7 +160,7 @@ class Fix:
             classes = dict((name.lower(), value) for name, value in classes)
             for fix_name in (short_name, mip.lower(), 'allvars'):
                 try:
-                    fixes.append(classes[fix_name](vardef, **extra_facets))
+                    fixes.append(classes[fix_name](vardef, extra_facets))
                 except KeyError:
                     pass
         except ImportError:
