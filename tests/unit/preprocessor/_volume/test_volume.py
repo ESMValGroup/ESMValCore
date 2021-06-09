@@ -10,7 +10,9 @@ import tests
 from esmvalcore.preprocessor._volume import (volume_statistics,
                                              depth_integration,
                                              extract_trajectory,
-                                             extract_transect, extract_volume)
+                                             extract_transect,
+                                             extract_volume,
+                                             calculate_volume)
 
 
 class Test(tests.Test):
@@ -83,8 +85,42 @@ class Test(tests.Test):
         print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
+    def test_extract_volume_mean(self):
+        """
+        Test to extract the top two layers and compute the
+        weighted average of a cube."""
+        grid_volume = calculate_volume(self.grid_4d)
+        measure = iris.coords.CellMeasure(
+            grid_volume,
+            standard_name='ocean_volume',
+            units='m3',
+            measure='volume')
+        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
+        result = extract_volume(self.grid_4d, 0., 10.)
+        expected = np.ma.ones((2, 2, 2, 2))
+        self.assert_array_equal(result.data, expected)
+        result_mean = volume_statistics(result, 'mean')
+        expected_mean = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result_mean.data, expected_mean)
+
     def test_volume_statistics(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube."""
+        result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
+
+    def test_volume_statistics_cell_measure(self):
+        """
+        Test to take the volume weighted average of a (2,3,2,2) cube.
+        The volume measure is pre-loaded in the cube.
+        """
+        grid_volume = calculate_volume(self.grid_4d)
+        measure = iris.coords.CellMeasure(
+            grid_volume,
+            standard_name='ocean_volume',
+            units='m3',
+            measure='volume')
+        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
         result = volume_statistics(self.grid_4d, 'mean')
         expected = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result.data, expected)

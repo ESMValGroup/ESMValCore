@@ -12,12 +12,13 @@ import os
 from collections import Counter
 from functools import total_ordering
 from pathlib import Path
+from typing import Dict, Type
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
-CMOR_TABLES = {}
+CMOR_TABLES: Dict[str, Type['InfoBase']] = {}
 """dict of str, obj: CMOR info objects."""
 
 
@@ -127,7 +128,7 @@ class InfoBase():
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
@@ -143,9 +144,9 @@ class InfoBase():
 
         Parameters
         ----------
-        table_name: basestring
+        table_name: str
             Table name
-        short_name: basestring
+        short_name: str
             Variable's short name
         derived: bool, optional
             Variable is derived. Info retrieval for derived variables always
@@ -226,7 +227,7 @@ class CMIP6Info(InfoBase):
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
         Path to the folder containing the Tables folder with the json files
 
     default: object
@@ -366,7 +367,7 @@ class CMIP6Info(InfoBase):
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
@@ -615,7 +616,7 @@ class CMIP5Info(InfoBase):
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
        Path to the folder containing the Tables folder with the json files
 
     default: object
@@ -756,7 +757,7 @@ class CMIP5Info(InfoBase):
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
@@ -773,7 +774,7 @@ class CMIP3Info(CMIP5Info):
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
        Path to the folder containing the Tables folder with the json files
 
     default: object
@@ -810,7 +811,7 @@ class CustomInfo(CMIP5Info):
 
     Parameters
     ----------
-    cmor_tables_path: basestring or None
+    cmor_tables_path: str or None
         Full path to the table or name for the table if it is present in
         ESMValTool repository
     """
@@ -847,9 +848,9 @@ class CustomInfo(CMIP5Info):
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
-        short_name: basestring
+        short_name: str
             Variable's short name
         derived: bool, optional
             Variable is derived. Info retrieval for derived variables always

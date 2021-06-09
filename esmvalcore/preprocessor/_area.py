@@ -22,14 +22,12 @@ from ._shared import (
 logger = logging.getLogger(__name__)
 
 
-# slice cube over a restricted area (box)
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
                    end_latitude):
     """Extract a region from a cube.
 
     Function that subsets a cube on a box (start_longitude, end_longitude,
     start_latitude, end_latitude)
-    This function is a restriction of masked_cube_lonlat().
 
     Parameters
     ----------
@@ -63,16 +61,29 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             ignore_bounds=True,
         )
         region_subset = region_subset.intersection(longitude=(0., 360.))
-        return region_subset
-    # Irregular grids
-    lats = cube.coord('latitude').points
-    lons = cube.coord('longitude').points
+    else:
+        region_subset = _extract_irregular_region(
+            cube,
+            start_longitude,
+            end_longitude,
+            start_latitude,
+            end_latitude,
+        )
+    return region_subset
+
+
+def _extract_irregular_region(cube, start_longitude, end_longitude,
+                              start_latitude, end_latitude):
+    """Extract a region from a cube on an irregular grid."""
     # Convert longitudes to valid range
     if start_longitude != 360.:
         start_longitude %= 360.
     if end_longitude != 360.:
         end_longitude %= 360.
 
+    # Select coordinates inside the region
+    lats = cube.coord('latitude').points
+    lons = (cube.coord('longitude').points + 360.) % 360.
     if start_longitude <= end_longitude:
         select_lons = (lons >= start_longitude) & (lons <= end_longitude)
     else:
@@ -84,8 +95,19 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
         select_lats = (lats >= start_latitude) | (lats <= end_latitude)
 
     selection = select_lats & select_lons
-    selection = da.broadcast_to(selection, cube.shape)
-    cube.data = da.ma.masked_where(~selection, cube.core_data())
+
+    # Crop the selection, but keep rectangular shape
+    i_range, j_range = selection.nonzero()
+    if i_range.size == 0:
+        raise ValueError("No data points available in selected region")
+    i_min, i_max = i_range.min(), i_range.max()
+    j_min, j_max = j_range.min(), j_range.max()
+    i_slice, j_slice = slice(i_min, i_max + 1), slice(j_min, j_max + 1)
+    cube = cube[..., i_slice, j_slice]
+    selection = selection[i_slice, j_slice]
+    # Mask remaining coordinates outside region
+    mask = da.broadcast_to(~selection, cube.shape)
+    cube.data = da.ma.masked_where(mask, cube.core_data())
     return cube
 
 
@@ -155,46 +177,7 @@ def meridional_statistics(cube, operator):
     raise ValueError(msg)
 
 
-def tile_grid_areas(cube, fx_files):
-    """Tile the grid area data to match the dataset cube.
-
-    Parameters
-    ----------
-    cube: iris.cube.Cube
-        input cube.
-    fx_files: dict
-        dictionary of field:filename for the fx_files
-
-    Returns
-    -------
-    iris.cube.Cube
-        Freshly tiled grid areas cube.
-    """
-    grid_areas = None
-    if fx_files:
-        for key, fx_file in fx_files.items():
-            if not fx_file:
-                continue
-            logger.info('Attempting to load %s from file: %s', key, fx_file)
-            fx_cube = iris.load_cube(fx_file)
-
-            grid_areas = fx_cube.core_data()
-            if cube.ndim == 4 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas,
-                                     [cube.shape[0], cube.shape[1], 1, 1])
-            elif cube.ndim == 4 and grid_areas.ndim == 3:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1, 1])
-            elif cube.ndim == 3 and grid_areas.ndim == 2:
-                grid_areas = da.tile(grid_areas, [cube.shape[0], 1, 1])
-            else:
-                raise ValueError('Grid and dataset number of dimensions not '
-                                 'recognised: {} and {}.'
-                                 ''.format(cube.ndim, grid_areas.ndim))
-    return grid_areas
-
-
-# get the area average
-def area_statistics(cube, operator, fx_variables=None):
+def area_statistics(cube, operator):
     """Apply a statistical operator in the horizontal direction.
 
     The average in the horizontal direction. We assume that the
@@ -231,8 +214,6 @@ def area_statistics(cube, operator, fx_variables=None):
         operator: str
             The operation, options: mean, median, min, max, std_dev, sum,
             variance, rms.
-        fx_variables: dict
-            dictionary of field:filename for the fx_variables
 
     Returns
     -------
@@ -246,9 +227,17 @@ def area_statistics(cube, operator, fx_variables=None):
     ValueError
         if input data cube has different shape than grid area weights
     """
-    grid_areas = tile_grid_areas(cube, fx_variables)
+    grid_areas = None
+    try:
+        grid_areas = cube.cell_measure('cell_area').core_data()
+    except iris.exceptions.CellMeasureNotFoundError:
+        logger.info(
+            'Cell measure "cell_area" not found in cube %s. '
+            'Check fx_file availability.', cube.summary(shorten=True)
+        )
+        logger.info('Attempting to calculate grid cell area...')
 
-    if not fx_variables and cube.coord('latitude').points.ndim == 2:
+    if grid_areas is None and cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
         if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
             cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
@@ -267,7 +256,7 @@ def area_statistics(cube, operator, fx_variables=None):
                 cube.coord('latitude'))
 
     coord_names = ['longitude', 'latitude']
-    if grid_areas is None or not grid_areas.any():
+    if grid_areas is None:
         cube = guess_bounds(cube, coord_names)
         grid_areas = iris.analysis.cartography.area_weights(cube)
         logger.info('Calculated grid area shape: %s', grid_areas.shape)
@@ -419,7 +408,7 @@ def _get_masks_from_geometries(geometries, lon, lat, method='contains',
     if ids:
         ids = [str(id_) for id_ in ids]
     for i, item in enumerate(geometries):
-        for id_prop in ('name', 'NAME', 'id', 'ID'):
+        for id_prop in ('name', 'NAME', 'Name', 'id', 'ID'):
             if id_prop in item['properties']:
                 id_ = str(item['properties'][id_prop])
                 break

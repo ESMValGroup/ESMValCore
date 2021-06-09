@@ -33,29 +33,60 @@ def find_files(dirnames, filenames):
 
 
 def get_start_end_year(filename):
-    """Get the start and end year from a file name."""
+    """Get the start and end year from a file name.
+
+    Examples of allowed dates : 1980, 198001, 19801231,
+    1980123123, 19801231T23, 19801231T2359, 19801231T235959,
+    19801231T235959Z
+
+    Dates must be surrounded by - or _ or string start or string end
+    (after removing filename suffix)
+
+    Look first for two dates separated by - or _, then for one single
+    date, and if they are multiple, for one date at start or end
+    """
     stem = Path(filename).stem
     start_year = end_year = None
-
-    # First check for a block of two potential dates separated by _ or -
-    daterange = re.findall(r'([0-9]{4,12}[-_][0-9]{4,12})', stem)
+    #
+    time_pattern = (r"(?P<hour>[0-2][0-9]"
+                    r"(?P<minute>[0-5][0-9]"
+                    r"(?P<second>[0-5][0-9])?)?Z?)")
+    date_pattern = (r"(?P<year>[0-9]{4})"
+                    r"(?P<month>[01][0-9]"
+                    r"(?P<day>[0-3][0-9]"
+                    rf"(T?{time_pattern})?)?)?")
+    #
+    end_date_pattern = date_pattern.replace(">", "_end>")
+    date_range_pattern = date_pattern + r"[-_]" + end_date_pattern
+    #
+    # Next string allows to test that there is an allowed delimiter (or
+    # string start or end) close to date range (or to single date)
+    context = r"(?:^|[-_]|$)"
+    #
+    # First check for a block of two potential dates
+    date_range_pattern = context + date_range_pattern + context
+    daterange = re.search(date_range_pattern, stem)
     if daterange:
-        start_date, end_date = re.findall(r'([0-9]{4,12})', daterange[0])
-        start_year = start_date[:4]
-        end_year = end_date[:4]
+        start_year = daterange.group("year")
+        end_year = daterange.group("year_end")
     else:
         # Check for single dates in the filename
-        dates = re.findall(r'([0-9]{4,12})', stem)
+        single_date_pattern = context + date_pattern + context
+        dates = re.findall(single_date_pattern, stem)
         if len(dates) == 1:
-            start_year = end_year = dates[0][:4]
+            start_year = end_year = dates[0][0]
         elif len(dates) > 1:
-            # Check for dates at start or end of filename
-            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stem)
-            if len(outerdates) == 1:
-                start_year = end_year = outerdates[0][:4]
+            # Check for dates at start or (exclusive or) end of filename
+            start = re.search(r'^' + date_pattern, stem)
+            end = re.search(date_pattern + r'$', stem)
+            if start and not end:
+                start_year = end_year = start.group('year')
+            elif end:
+                start_year = end_year = end.group('year')
 
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
+        logger.debug("Must load file %s for daterange ", filename)
         cubes = iris.load(filename)
 
         for cube in cubes:
@@ -92,13 +123,21 @@ def select_files(filenames, start_year, end_year):
 def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        paths = (paths.strip('/'), )
+        paths = set((paths.strip('/'),))
     else:
-        paths = [path.strip('/') for path in paths]
+        paths = set(path.strip('/') for path in paths)
     tlist = set()
-
     for path in paths:
         tlist = tlist.union(re.findall(r'{([^}]*)}', path))
+    if 'sub_experiment' in variable:
+        new_paths = []
+        for path in paths:
+            new_paths.extend((
+                re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
+                re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)
+            ))
+            tlist.add('sub_experiment')
+        paths = new_paths
     logger.debug(tlist)
 
     for tag in tlist:
@@ -112,7 +151,6 @@ def _replace_tags(paths, variable):
         else:
             raise KeyError("Dataset key {} must be specified for {}, check "
                            "your recipe entry".format(tag, variable))
-
         paths = _replace_tag(paths, original_tag, replacewith)
     return paths
 
@@ -127,7 +165,7 @@ def _replace_tag(paths, tag, replacewith):
     else:
         text = _apply_caps(str(replacewith), lower, upper)
         result.extend(p.replace('{' + tag + '}', text) for p in paths)
-    return result
+    return list(set(result))
 
 
 def _get_caps_options(tag):
