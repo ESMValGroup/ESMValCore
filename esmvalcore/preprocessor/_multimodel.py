@@ -44,10 +44,8 @@ def _resolve_operator(statistic: str):
     # special cases
     if statistic == 'std':
         logger.warning(
-            "Changing statistics from specified `std` to `std_dev`, "
-            "since multimodel statistics is now using the iris.analysis module"
-            ", which also uses `std_dev`. Please consider replacing 'std' "
-            " with 'std_dev' in your recipe or code.")
+            "Multicube statistics is aligning its behaviour with iris.analysis"
+            ". Please consider replacing 'std' with 'std_dev' in your code.")
         statistic = 'std_dev'
 
     elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic):
@@ -147,13 +145,7 @@ def _subset(cube, time_points):
     begin = cube.coord('time').units.num2date(time_points[0])
     end = cube.coord('time').units.num2date(time_points[-1])
     constraint = iris.Constraint(time=lambda cell: begin <= cell.point <= end)
-    try:
-        return cube.extract(constraint)
-    except Exception as excinfo:
-        raise ValueError(
-            "Tried to align cubes in multi-model statistics, but failed for"
-            f" cube {cube} and time points {time_points}. Encountered the "
-            f"following exception: {excinfo}")
+    return cube.extract(constraint)
 
 
 def _extend(cube, time_points):
@@ -197,13 +189,7 @@ def _extend(cube, time_points):
 
     cube_list = iris.cube.CubeList(cube_list)
 
-    try:
-        new_cube = cube_list.concatenate_cube()
-    except Exception as excinfo:
-        raise ValueError(
-            "Tried to align cubes in multi-model statistics, but failed for"
-            f" cube {cube} and time points {time_points}. Encountered the "
-            f"following exception: {excinfo}")
+    new_cube = cube_list.concatenate_cube()
 
     return new_cube
 
@@ -280,33 +266,23 @@ def rechunk(cube):
 
 def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
                    **kwargs):
-    """Compute statistics one slice at a time."""
+    """Loop over slices of a cube if iris has no lazy aggregator."""
     _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
     result_slices = []
     for i in range(cubes[0].shape[0]):
-        single_model_slices = [cube[i] for cube in cubes]
+        single_model_slices = [cube[i] for cube in cubes
+                               ]  # maybe filter the iris warning here?
         combined_slice = _combine(single_model_slices)
         collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
                                                    **kwargs)
-
-        # some iris aggregators modify dtype, see e.g.
-        # https://numpy.org/doc/stable/reference/generated/numpy.ma.average.html
-        collapsed_slice.data = collapsed_slice.data.astype(np.float32)
-
         result_slices.append(collapsed_slice)
 
-    try:
-        result_cube = iris.cube.CubeList(result_slices).merge_cube()
-    except Exception as excinfo:
-        raise ValueError(
-            "Multi-model statistics failed to concatenate results into a"
-            f" single array. This happened for operator {operator}"
-            f" with computed statistics {result_slices}."
-            "This can happen e.g. if the calculation results in inconsistent"
-            f" dtypes. Encountered the following exception: {excinfo}")
+    result_cube = iris.cube.CubeList(result_slices).merge_cube()
 
+    # For consistency with lazy procedure
     result_cube.data = np.ma.array(result_cube.data)
+
     result_cube.remove_coord(CONCAT_DIM)
 
     return result_cube

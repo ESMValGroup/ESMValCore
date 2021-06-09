@@ -3,12 +3,7 @@ import iris
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.kiost_esm import (
-    SfcWind,
-    Siconc,
-    Tas,
-)
-from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.cmip6.kiost_esm import SfcWind, Tas
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -100,17 +95,6 @@ def test_sfcwind_fix_metadata(sfcwind_cubes):
     assert out_cubes_2[0].var_name == 'sfcWind'
     coord = out_cubes_2[0].coord('height')
     assert coord == height_coord
-
-
-def test_get_siconc_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'KIOST-ESM', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
-
-
-def test_siconc_fix():
-    """Test fix for ``siconc``."""
-    assert Siconc is SiconcFixScalarCoord
 
 
 def test_get_tas_fix():

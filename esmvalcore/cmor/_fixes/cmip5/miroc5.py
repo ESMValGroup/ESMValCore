@@ -163,7 +163,3 @@ class Tos(Fix):
         """
         cube.data = da.ma.masked_equal(cube.core_data(), 0.)
         return cube
-
-
-class Pr(Tas):
-    """Fixes for pr."""

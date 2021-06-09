@@ -2,7 +2,7 @@
 ---
 
 # Build command (run this from the root of the repository):
-# conda build package -c conda-forge
+# conda build package -c conda-forge -c esmvalgroup
 
 # Package version number
 {% set version = "2.2.0" %}
@@ -42,7 +42,7 @@ requirements:
     - scipy<1.6  # until ESMValGroup/ESMValCore/issues/927 gets resolved
     # Normally installed via pip:
     - cftime # iris=3.0.1 needs <=1.2.1; >=1.3.0 years<999 get a 0 instead of empty space
-    - cf-units>=2.1.5
+    - cf-units
     - cython  # required by cf-units but not automatically installed
     - esmpy
     - fiona
@@ -58,7 +58,7 @@ requirements:
     - pyyaml
     - requests
     - shapely
-    - yamale
+    - yamale==2.*  # in esmvalgroup channel
 
 test:
   source_files:
@@ -72,13 +72,11 @@ test:
     - pytest-html!=2.1.0
     - pytest-metadata>=1.5.1
     - pytest-mock
-    - pytest-mypy
     - pytest-xdist
     - r-yaml
     - ncl
   commands:
-    - pytest -n 2 -m "not sequential" --ignore=run_test.py
-    - pytest -n 0 -m "sequential" --ignore=run_test.py
+    - pytest -n 2 --ignore=run_test.py
     - esmvaltool -- --help
     - esmvaltool version
   imports:

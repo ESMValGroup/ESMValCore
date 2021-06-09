@@ -6,7 +6,7 @@ on:
   # use this for testing
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-n-publish:

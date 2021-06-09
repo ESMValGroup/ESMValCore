@@ -75,19 +75,6 @@ first discuss the ``drs`` parameter: as we've seen in the previous section, the
 DRS as a standard is used for both file naming conventions and for directory
 structures.
 
-Synda
------
-
-If the `synda install <https://prodiguer.github.io/synda/sdt/user_guide.html#synda-install>`_ command is used to download data,
-it maintains the directory structure as on ESGF. To find data downloaded by
-synda, use the ``SYNDA`` ``drs`` parameter.
-
-.. code-block:: yaml
-
- drs:
-   CMIP6: SYNDA
-   CMIP5: SYNDA
-
 .. _config-user-drs:
 
 Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``

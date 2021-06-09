@@ -4,7 +4,6 @@ import os
 import re
 from copy import deepcopy
 from decimal import Decimal
-from typing import Dict
 
 import iris
 import numpy as np
@@ -41,7 +40,7 @@ _LON_MAX = 360.0
 _LON_RANGE = _LON_MAX - _LON_MIN
 
 # A cached stock of standard horizontal target grids.
-_CACHE: Dict[str, iris.cube.Cube] = dict()
+_CACHE = dict()
 
 # Supported point interpolation schemes.
 POINT_INTERPOLATION_SCHEMES = {
@@ -467,54 +466,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                 [coord] = coords
                 cube.remove_coord(coord)
 
-    # Return non-regridded cube if horizontal grid is the same.
-    if not _horizontal_grid_is_close(cube, target_grid):
-
-        # Perform the horizontal regridding.
-        if _attempt_irregular_regridding(cube, scheme):
-            cube = esmpy_regrid(cube, target_grid, scheme)
-        else:
-            cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+    # Perform the horizontal regridding.
+    if _attempt_irregular_regridding(cube, scheme):
+        cube = esmpy_regrid(cube, target_grid, scheme)
+    else:
+        cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
 
     return cube
-
-
-def _horizontal_grid_is_close(cube1, cube2):
-    """Check if two cubes have the same horizontal grid definition.
-
-    The result of the function is a boolean answer, if both cubes have the
-    same horizontal grid definition. The function checks both longitude and
-    latitude, based on extent and resolution.
-
-    Parameters
-    ----------
-    cube1 : cube
-        The first of the cubes to be checked.
-    cube2 : cube
-        The second of the cubes to be checked.
-
-    Returns
-    -------
-    bool
-
-    .. note::
-
-        The current implementation checks if the bounds and the
-        grid shapes are the same.
-        Exits on first difference.
-    """
-    # Go through the 2 expected horizontal coordinates longitude and latitude.
-    for coord in ['latitude', 'longitude']:
-        coord1 = cube1.coord(coord)
-        coord2 = cube2.coord(coord)
-
-        if not coord1.shape == coord2.shape:
-            return False
-
-        if not np.allclose(coord1.bounds, coord2.bounds):
-            return False
-
-    return True
 
 
 def _create_cube(src_cube, data, src_levels, levels):

@@ -15,7 +15,7 @@ class Fix:
 
         Parameters
         ----------
-        vardef: str
+        vardef: basestring
             CMOR table entry
 
         """
@@ -31,14 +31,14 @@ class Fix:
 
         Parameters
         ----------
-        filepath: str
+        filepath: basestring
             file to fix
-        output_dir: str
+        output_dir: basestring
             path to the folder to store the fixe files, if required
 
         Returns
         -------
-        str
+        basestring
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
             original filepath
@@ -162,7 +162,7 @@ class Fix:
 
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
-            for fix_name in (short_name, mip.lower(), 'allvars'):
+            for fix_name in (short_name, 'allvars'):
                 try:
                     fixes.append(classes[fix_name](vardef))
                 except KeyError:

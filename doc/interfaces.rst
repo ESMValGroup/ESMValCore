@@ -1,5 +1,3 @@
-.. _interfaces:
-
 Diagnostic script interfaces
 ============================
 

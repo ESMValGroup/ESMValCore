@@ -19,11 +19,6 @@ FILENAME_CASES = [
     ['var_control-19800101_whatever.nc', 1980, 1980],
     ['19800101_var_control-1950_whatever.nc', 1980, 1980],
     ['var_control-1950_whatever_19800101.nc', 1980, 1980],
-    ['CM61-LR-hist-03.1950_18500101_19491231_1M_concbc.nc', 1850, 1949],
-    [
-        'icon-2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_phy_3d_ml_20150101T000000Z.nc',
-        2015, 2015
-    ],
 ]
 
 

@@ -4,15 +4,14 @@ from shutil import copyfile
 import numpy as np
 from netCDF4 import Dataset
 
-from ..common import SiconcFixScalarCoord
 from ..fix import Fix
 from ..shared import (
     add_scalar_depth_coord,
     add_scalar_height_coord,
     add_scalar_typeland_coord,
     add_scalar_typesea_coord,
-    fix_ocean_depth_coord,
 )
+from .gfdl_esm4 import Siconc as Addtypesi
 
 
 class Cl(Fix):
@@ -215,9 +214,6 @@ class Sftof(Fix):
         return cubes
 
 
-Siconc = SiconcFixScalarCoord
-
-
 class Tos(Fix):
     """Fixes for tos."""
 
@@ -246,32 +242,4 @@ class Tos(Fix):
         return cubes
 
 
-class Omon(Fix):
-    """Fixes for ocean variables."""
-
-    def fix_metadata(self, cubes):
-        """Fix ocean depth coordinate.
-
-        Parameters
-        ----------
-        cubes: iris CubeList
-            List of cubes to fix
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-
-                # Only points need to be fixed, not bounds
-                if z_coord.units == 'cm':
-                    z_coord.points = z_coord.core_points() / 100.0
-                    z_coord.units = 'm'
-
-                # Fix depth metadata
-                if z_coord.standard_name is None:
-                    fix_ocean_depth_coord(cube)
-        return cubes
+Siconc = Addtypesi

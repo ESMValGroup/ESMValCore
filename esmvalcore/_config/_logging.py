@@ -5,7 +5,6 @@ import logging.config
 import os
 import time
 from pathlib import Path
-from typing import Union
 
 import yaml
 
@@ -27,8 +26,7 @@ def _purge_file_handlers(cfg: dict) -> None:
     ]
 
 
-def _get_log_files(cfg: dict,
-                   output_dir: Union[os.PathLike, str] = None) -> list:
+def _get_log_files(cfg: dict, output_dir: str = None) -> list:
     """Initialize log files for the file handlers."""
     log_files = []
 
@@ -38,12 +36,8 @@ def _get_log_files(cfg: dict,
         filename = handler.get('filename', None)
 
         if filename:
-            if output_dir is None:
-                raise ValueError('`output_dir` must be defined')
-
             if not os.path.isabs(filename):
                 handler['filename'] = os.path.join(output_dir, filename)
-
             log_files.append(handler['filename'])
 
     return log_files
@@ -59,8 +53,8 @@ def _update_stream_level(cfg: dict, level=None):
                 handler['level'] = level.upper()
 
 
-def configure_logging(cfg_file: Union[os.PathLike, str] = None,
-                      output_dir: Union[os.PathLike, str] = None,
+def configure_logging(cfg_file: str = None,
+                      output_dir: str = None,
                       console_log_level: str = None) -> list:
     """Configure logging.
 

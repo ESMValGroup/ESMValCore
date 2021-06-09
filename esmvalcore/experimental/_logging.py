@@ -2,11 +2,10 @@
 
 import logging
 from contextlib import contextmanager
-from pathlib import Path
 
 
 @contextmanager
-def log_to_dir(drc: Path):
+def log_to_dir(drc: str) -> None:
     """Log messages to the specified directory.
 
     This is a context manager to temporarily redirect the logging when

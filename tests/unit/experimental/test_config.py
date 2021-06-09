@@ -1,4 +1,3 @@
-from collections.abc import MutableMapping
 from pathlib import Path
 
 import numpy as np
@@ -225,7 +224,7 @@ def test_config_class():
     assert isinstance(cfg['output_dir'], Path)
     assert isinstance(cfg['auxiliary_data_dir'], Path)
 
-    from esmvalcore._config._config import CFG as CFG_DEV
+    from esmvalcore._config import CFG as CFG_DEV
     assert CFG_DEV
 
 
@@ -239,7 +238,7 @@ def test_config_update():
 
 def test_config_init():
     config = Config()
-    assert isinstance(config, MutableMapping)
+    assert isinstance(config, dict)
 
 
 def test_session():

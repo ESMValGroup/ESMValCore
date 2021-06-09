@@ -1,7 +1,7 @@
 """Fixes for GFDL-CM4 model."""
 import iris
 
-from ..common import ClFixHybridPressureCoord, SiconcFixScalarCoord
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
 
@@ -36,9 +36,6 @@ Cli = Cl
 
 
 Clw = Cl
-
-
-Siconc = SiconcFixScalarCoord
 
 
 class Tas(Fix):

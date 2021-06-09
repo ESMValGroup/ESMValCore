@@ -2,6 +2,7 @@
 
 import unittest
 
+import iris
 import iris.coord_categorisation
 import iris.coords
 import numpy as np
