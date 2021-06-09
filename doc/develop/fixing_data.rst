@@ -358,13 +358,15 @@ For more info: http://www.gloh2o.org/
 
 Use of extra facets in fixes
 ============================
-In fixes, extra facets can be used to mold data into the form required by the
-applicable standard. For example, if the input data is part of an observational
-product that delivers surface temperature with a variable name of `t2m` inside a
-file named `2m_temperature_1950_monthly.nc`, but the same variable is called
-`tas` in the applicable standard, a fix can be created that reads the original
-variable from the correct file, and provides a renamed variable to the rest of
-the processing chain.
+Extra facets are a mechanism to provide additional information for certain kinds
+of data. The general approach is described in :ref:`extra_facets`. Here, we
+describe how they can be used in fixes to mold data into the form required by
+the applicable standard. For example, if the input data is part of an
+observational product that delivers surface temperature with a variable name of
+`t2m` inside a file named `2m_temperature_1950_monthly.nc`, but the same
+variable is called `tas` in the applicable standard, a fix can be created that
+reads the original variable from the correct file, and provides a renamed
+variable to the rest of the processing chain.
 
 Normally, the applicable standard for variables is CMIP6.
 
