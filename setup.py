@@ -62,6 +62,10 @@ REQUIREMENTS = {
         'pytest-mock',
         'pytest-xdist',
         'ESMValTool_sample_data==0.0.3',
+        # MyPy library stubs
+        'types-requests',
+        'types-pkg_resources',
+        'types-PyYAML',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
