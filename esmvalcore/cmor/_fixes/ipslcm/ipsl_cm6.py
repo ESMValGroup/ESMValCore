@@ -65,7 +65,8 @@ class AllVars(Fix):
         """
         logger.debug("Fixing metadata for ipslcm_cm6")
 
-        cube = self.get_cube_from_list(cubes, mapping_key=VARNAME_KEY)
+        varname = self.extra_facets.get(VARNAME_KEY, self.vardef.short_name)
+        cube = self.get_cube_from_list(cubes, varname)
         cube.var_name = self.vardef.short_name
 
         # Need to degrade auxiliary time coordinates, because some
@@ -92,7 +93,8 @@ class Tas(Fix):
 
     def fix_metadata(self, cubes):
         """Add height2m."""
-        cube = self.get_cube_from_list(cubes, mapping_key=VARNAME_KEY)
+        varname = self.extra_facets.get(VARNAME_KEY)
+        cube = self.get_cube_from_list(cubes, varname)
         add_scalar_height_coord(cube)
         return cubes
 
