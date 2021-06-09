@@ -287,11 +287,12 @@ def _get_default_settings(variable, config_user, derive=False):
             'end_year': variable['end_year'],
         }
 
-    if 'select_years' in variable and variable['frequency'] != 'fx':
-        settings['clip_start_end_year'] = {
+    if 'timespan' in variable and variable['frequency'] != 'fx':
+        settings['clip_start_end_period'] = {
             'start_year': None,
             'end_year': None,
-            'select': None,
+            'start_month': None,
+            'end_month': None,
         }
 
     if derive:
@@ -649,44 +650,54 @@ def _update_extract_shape(settings, config_user):
 
 
 def _update_select_years(variable, settings, config_user):
-    if 'select_years' not in variable:
+    if 'timespan' not in variable:
         return
 
-    selection = variable['select_years']
+    selection = variable['timespan']
     check.valid_time_selection(variable, selection)
 
     (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                       config_user['drs'])
     intervals = [get_start_end_year(name) for name in files]
 
-    mode = (selection).split(" ")[0]
-    time_range = (selection).split(" ")[-1]
-    if not time_range.isdigit():
-        time_range = '1'
-    delta = int(time_range)
-    options = {
-        'all': {
-            'start_year': min(intervals)[0],
-            'end_year': max(intervals)[1],
-            },
-        'first': {
-            'start_year': min(intervals)[0],
-            'end_year': min(intervals)[0] + delta
-            },
-        'last': {
-            'start_year': max(intervals)[1] - delta,
-            'end_year': max(intervals)[1],
-        }
-    }
-
+    step = 'clip_start_end_year'
+    if selection == '*':
+        start_year = min(intervals)[0]
+        end_year = max(intervals)[1]
+    if re.match(r'^[0-9]{4}{12}/[0-9]{4}{12}$', selection):
+        start_period = selection.split('/')[0][:4]
+        end_period = selection.split('/')[1][:4]
+    if re.match(r'^[0-9]{6}/[0-9]{6}$', selection):
+        start_year = selection.split('/')[0][:4]
+        start_month = selection.split('/')[0][4:6]
+        end_year = selection.split('/')[1][:4]
+        end_month = selection.split('/')[1][4:6]       
+    if re.match(r'^[0-9]{4,12}/P\d+Y$', selection):
+        start_year = selection.split('/')[0][:4]
+        delta = re.findall(r'\d+', selection.split('/')[1])
+        end_year = int(start_year) + delta
+    if re.match(r'^[0-9]{4,12}/P\d+M$', selection):
+        start_year = selection.split('/')[0][:4]
+        months = re.findall(r'\d+', selection.split('/')[1])
+        end_year = months % 12
+        # to do: count the non int residue in months
+    if re.match(r'^P\d+Y$', selection):
+        delta = re.findall(r'-?\d+', selection)
+        if delta > 0:
+            start_year = min(intervals)[0]
+            end_year = start_year + delta
+        else:
+            end_year = max(intervals)[1]
+            start_year = end_year + delta
+    # To do month option
     step = 'clip_start_end_year'
     if mode == 'all':
         settings.pop(step, None)
     else:
         settings[step]['select'] = (mode, int(time_range))
 
-    variable.update({'start_year': options[mode]['start_year']})
-    variable.update({'end_year': options[mode]['end_year']})
+    variable.update({'start_year': start_year})
+    variable.update({'end_year': end_year})
     filename = variable['filename'].replace(
         '.nc', '_{start_year}-{end_year}.nc'.format(**variable)
     )
@@ -1160,7 +1171,7 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
-            if 'select_years' in variable:
+            if 'timespan' in variable:
                 required_keys.discard('start_year')
                 required_keys.discard('end_year')
             if 'sub_experiment' in variable:

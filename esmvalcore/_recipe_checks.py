@@ -208,8 +208,17 @@ def valid_multimodel_statistic(statistic):
 
 def valid_time_selection(variable, selection):
     """Check that `select_years` tag is well defined."""
-    valid_names = ["all", "first", "last"]
-    valid_patterns = [r"^first [2-9][0-9]*$", r"^last [2-9][0-9]*$"]
+    valid_names = ["*"]
+    valid_patterns = [
+        r'^[0-9]{4,6}/[0-9]{4,6}$',
+        r'^[0-9]{4,6}/P\d+[YM]$',
+        r'^P\d+[YM]']
+       # r"^[0-9]{4}\[0-9]{4}$",
+        #r"^(\d+\/?P\d?+Y)$",
+        #r"^(\d+\/?P\d?+M)$",
+        #r"P[0-9]{4}Y",
+        #r"P[0-9]{4}M"]
+    #valid_patterns = [r"^first [2-9][0-9]*$", r"^last [2-9][0-9]*$"]
     if not (selection in valid_names
             or re.match(r'|'.join(valid_patterns), selection)):
         raise RecipeError(
