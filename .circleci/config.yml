@@ -177,7 +177,7 @@ jobs:
             conda env export -n base > /logs/build_environment.yml
             # Build conda package
             conda build package -c conda-forge > /logs/build_log.txt
-          no_output_timeout: 30m
+          no_output_timeout: 60m
       - store_artifacts:
           path: /logs
 
