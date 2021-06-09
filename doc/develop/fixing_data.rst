@@ -360,10 +360,15 @@ described above (:ref:`fix_structure`) and at
            account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
 	   root: /thredds/tgcc/store} 
 
+    .. _ipslcm_extra_facets_example:
+    
     The ``Output`` format is an example of a case where variables are
     grouped in multi-variable files, which name cannot be computed
     directly from datasets attributes alone but requires an
-    Extra_facets file. These multi-variable files must also undergo some
+    :download:`extra_facets file ipslcm-mappings.yml
+    </../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`, which
+    principles are explained in ref:`that section
+    <extra_facets>`. These multi-variable files must also undergo some
     data selection, which may involve an external process for
     performance purpose.
 
@@ -414,4 +419,5 @@ variable to the rest of the processing chain.
 
 Normally, the applicable standard for variables is CMIP6.
 
-For more details, refer to existing uses of this feature as examples.
+For more details, refer to existing uses of this feature as examples,
+as e.g. :ref:`for IPSL-CM6<ipslcm_extra_facets_example>`.
