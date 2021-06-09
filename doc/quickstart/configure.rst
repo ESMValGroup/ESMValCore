@@ -302,9 +302,9 @@ and specific
 observation data sets without preliminary reformating. You can choose
 to host this new data source either under a dedicated project or under
 project ``native6``; when choosing the latter, such a configuration
-involves the following steps :
+involves the following steps:
 
-  - allowing for ESMValTool to locate the data files :
+  - allowing for ESMValTool to locate the data files:
 
     - entry ``native6`` of ``config-developer.yml`` should be
       complemented with sub-entries for ``input_dir`` and ``input_file``
@@ -326,8 +326,8 @@ involves the following steps :
 
     - if necessary, provide a so-called ``extra facets file`` which
       allows to cope e.g. with variable naming issues for finding
-      files. See section Extra Facets in `Development` and
-      :download:`this example of such a file for IPSL-CM6
+      files. See :ref:`extra_facets` and :download:`this example of
+      such a file for IPSL-CM6
       <../../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`.
 
   - ensuring that ESMValCore get the right metadata and data out of
