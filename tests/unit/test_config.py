@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from esmvalcore._config._config import (
@@ -21,26 +23,31 @@ def test_deep_update(dictionaries, expected_merged):
     assert expected_merged == merged
 
 
-BASE_PATH = importlib_files('tests') / 'sample_data' / 'extra_facets'
+BASE_PATH = importlib_files('tests')
+BASE_PATH /= Path('sample_data') / Path('extra_facets')  # type: ignore
 
 TEST_LOAD_EXTRA_FACETS = [
     ('test-nonexistent', tuple(), {}),
-    ('test-nonexistent', (BASE_PATH / 'simple', ), {}),
-    ('test6', (BASE_PATH / 'simple', ),
-     dict(PROJECT1=dict(Amon=dict(
-         tas=dict(cds_var_name='2m_temperature', source_var_name='2t'),
-         psl=dict(cds_var_name='mean_sea_level_pressure',
-                  source_var_name='msl'))))),
-    ('test6', (BASE_PATH / 'simple', BASE_PATH / 'override'),
-     dict(PROJECT1=dict(Amon=dict(
-         tas=dict(cds_var_name='temperature_2m', source_var_name='t2m'),
-         psl=dict(cds_var_name='mean_sea_level_pressure',
-                  source_var_name='msl'),
-         uas=dict(cds_var_name='10m_u-component_of_neutral_wind',
-                  source_var_name='u10n'),
-         vas=dict(cds_var_name='v-component_of_neutral_wind_at_10m',
-                  source_var_name='10v'),
-     )))),
+    ('test-nonexistent', (BASE_PATH / 'simple', ), {}),  # type: ignore
+    (
+        'test6',
+        (BASE_PATH / 'simple', ),  # type: ignore
+        dict(PROJECT1=dict(Amon=dict(
+            tas=dict(cds_var_name='2m_temperature', source_var_name='2t'),
+            psl=dict(cds_var_name='mean_sea_level_pressure',
+                     source_var_name='msl'))))),
+    (
+        'test6',
+        (BASE_PATH / 'simple', BASE_PATH / 'override'),  # type: ignore
+        dict(PROJECT1=dict(Amon=dict(
+            tas=dict(cds_var_name='temperature_2m', source_var_name='t2m'),
+            psl=dict(cds_var_name='mean_sea_level_pressure',
+                     source_var_name='msl'),
+            uas=dict(cds_var_name='10m_u-component_of_neutral_wind',
+                     source_var_name='u10n'),
+            vas=dict(cds_var_name='v-component_of_neutral_wind_at_10m',
+                     source_var_name='10v'),
+        )))),
 ]
 
 
