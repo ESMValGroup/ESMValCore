@@ -6,7 +6,7 @@ on:
     - main
     - condalock
   schedule:
-    - cron: '0 4 /10 * *'
+    - cron: '0 4 */10 * *'
 
 jobs:
   create-lock-file:
