@@ -364,13 +364,12 @@ described above (:ref:`fix_structure`) and at
     
     The ``Output`` format is an example of a case where variables are
     grouped in multi-variable files, which name cannot be computed
-    directly from datasets attributes alone but requires an
-    :download:`extra_facets file ipslcm-mappings.yml
-    </../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`, which
-    principles are explained in ref:`that section
-    <extra_facets>`. These multi-variable files must also undergo some
-    data selection, which may involve an external process for
-    performance purpose.
+    directly from datasets attributes alone but requires to use an
+    extra_facets file, which principles are explained in
+    ref:`extra_facets`, and which content is :download:`available here
+    </../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These
+    multi-variable files must also undergo some data selection, which
+    may involve an external process for performance purpose.
 
 
 
