@@ -5,8 +5,7 @@ Fixing data
 ***********
 
 The baseline case for ESMValCore input data is CMOR fully compliant
-data that is read using
-`Iris load_raw function <https://scitools-iris.readthedocs.io/en/latest/generated/api/iris.html#iris.load_raw>`_.
+data that is read using Iris' :func:`iris:iris.load_raw`.
 ESMValCore also allows for some departures with compliance (see
 :ref:`cmor_check_strictness`). Beyond that situation, some datasets
 (either model or observations) contain (known) errors that would
