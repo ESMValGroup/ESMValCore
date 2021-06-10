@@ -335,8 +335,8 @@ Natively supported non-CMIP datasets
 Some fixed datasets and native models formats are supported through
 the ``native6`` project or through a dedicated project.
 
-ERA5 and MSWEP datasets
------------------------
+Observational Datasets
+----------------------
 Put the files containing the data in the directory that you have configured
 for the ``native6`` project in your :ref:`user configuration file`, in a
 subdirectory called ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
@@ -366,38 +366,36 @@ For more info: http://www.gloh2o.org/
 
 .. _fixing_native_models:
 
-Native models : IPSL-CM6,...
------------------------------
+Native models
+-------------
 
-The following models are natively supported through the procedure
-described above (:ref:`fix_structure`) and at
-:ref:`configure_native_models`:
+The following models are natively supported through the procedure described
+above (:ref:`fix_structure`) and at :ref:`configure_native_models`:
 
 IPSL-CM6
 ~~~~~~~~
-Both output formats (i.e. the ``Output`` and the
-    ``Analyse / Time series`` formats) are supported, and should be
-    configured in recipes as e.g.:
 
-    .. code-block:: yaml
+Both output formats (i.e. the ``Output`` and the ``Analyse / Time series``
+formats) are supported, and should be configured in recipes as e.g.:
 
-      datasets:
-        - {simulation: CM61-LR-hist-03.1950, exp: piControl, freq: Analyse/TS_MO,
-           account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
-           root: /thredds/tgcc/store}
-        - {simulation: CM61-LR-hist-03.1950, exp: historical, freq: Output/MO,
-           account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
-           root: /thredds/tgcc/store}
+.. code-block:: yaml
 
-    .. _ipslcm_extra_facets_example:
+  datasets:
+    - {simulation: CM61-LR-hist-03.1950, exp: piControl, freq: Analyse/TS_MO,
+       account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
+       root: /thredds/tgcc/store}
+    - {simulation: CM61-LR-hist-03.1950, exp: historical, freq: Output/MO,
+       account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
+       root: /thredds/tgcc/store}
 
-    The ``Output`` format is an example of a case where variables are
-    grouped in multi-variable files, which name cannot be computed
-    directly from datasets attributes alone but requires to use an
-    extra_facets file, which principles are explained in
-    :ref:`extra_facets`, and which content is :download:`available here
-    </../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These
-    multi-variable files must also undergo some data selection.
+.. _ipslcm_extra_facets_example:
+
+The ``Output`` format is an example of a case where variables are grouped in
+multi-variable files, which name cannot be computed directly from datasets
+attributes alone but requires to use an extra_facets file, which principles are
+explained in :ref:`extra_facets`, and which content is :download:`available here
+</../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
+files must also undergo some data selection.
 
 .. _extra-facets-fixes:
 
