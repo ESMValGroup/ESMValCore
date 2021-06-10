@@ -49,7 +49,7 @@ optimized to allow for ease of use. We detail this procedure in the next
 section.
 
 Native model data
----------------------------------------------------------
+-----------------
 Support for native model data that is not formatted according to a CMIP
 data request is quite easy using basic
 :ref:`ESMValCore fix procedure <fixing_data>` and has been implemented
