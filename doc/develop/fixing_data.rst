@@ -397,8 +397,7 @@ Both output formats (i.e. the ``Output`` and the
     extra_facets file, which principles are explained in
     :ref:`extra_facets`, and which content is :download:`available here
     </../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These
-    multi-variable files must also undergo some data selection, which
-    may involve an external process for performance purpose.
+    multi-variable files must also undergo some data selection.
 
 .. _extra-facets-fixes:
 
