@@ -373,7 +373,9 @@ The following models are natively supported through the procedure
 described above (:ref:`fix_structure`) and at
 :ref:`configure_native_models`:
 
-  - **IPSL-CM6** : both output formats (i.e. the ``Output`` and the
+IPSL-CM6
+~~~~~~~~
+Both output formats (i.e. the ``Output`` and the
     ``Analyse / Time series`` formats) are supported, and should be
     configured in recipes as e.g.:
 
