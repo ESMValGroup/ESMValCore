@@ -10,32 +10,31 @@ data that is read using
 ESMValCore also allows for some departures with compliance (see
 :ref:`cmor_check_strictness`). Beyond that situation, some datasets
 (either model or observations) contain (known) errors that would
-normally prevent them from being processed. The issues can be in the
-metadata describing the dataset and/or in the actual data.  Typical
-examples of such errors are missing or wrong attributes (e.g.
-attribute ''units'' says 1e-9 but data are actually in 1e-6), missing
-or mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
+normally prevent them from being processed. The issues can be in
+the metadata describing the dataset and/or in the actual data.
+Typical examples of such errors are missing or wrong attributes (e.g.
+attribute ''units'' says 1e-9 but data are actually in 1e-6), missing or
+mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
 coordinate bounds like ''lat_bnds'') or problems with the actual data
-(e.g. cloud liquid water only instead of sum of liquid + ice as
-specified by the CMIP data request).
+(e.g. cloud liquid water only instead of sum of liquid + ice as specified by the CMIP data request).
 
 As an extreme case, some others data sources simply are not NetCDF
 files and must go through other data load function.
 
 The ESMValCore can apply on the fly fixes to such datasets when
-issues can be fixed automatically.  This is implemented for a set
-of `Natively supported non-CMIP datasets`_.  The following provide
+issues can be fixed automatically. This is implemented for a set
+of `Natively supported non-CMIP datasets`_. The following provide
 details on how to design such fixes.
 
 .. note::
-   
-  **CMORizer scripts**.  Support for many observational and reanalysis
-  datasets is also possible through a priori reformating by
+
+  **CMORizer scripts**. Support for many observational and reanalysis
+  datasets is also possible through a priori reformatting by
   :ref:`CMORizer scripts in the ESMValTool <esmvaltool:new-dataset>`,
   which are rather relevant for datasets of small volume
 
 .. _fix_structure:
-   
+
 Fix structure
 =============
 
@@ -337,9 +336,38 @@ Natively supported non-CMIP datasets
 Some fixed datasets and native models formats are supported through
 the ``native6`` project or through a dedicated project.
 
+ERA5 and MSWEP datasets
+-----------------------
+Put the files containing the data in the directory that you have configured
+for the ``native6`` project in your :ref:`user configuration file`, in a
+subdirectory called ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
+Replace the items in curly braces by the values used in the variable/dataset
+definition in the :ref:`recipe <recipe_overview>`.
+Below is a list of datasets currently supported.
+
+ERA5
+~~~~
+
+- Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
+- Tier: 3
+
+MSWEP
+~~~~~
+
+- Supported variables: ``pr``
+- Supported frequencies: ``mon``, ``day``, ``3hr``.
+- Tier: 3
+
+For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
+
+.. note::
+  For monthly data (V220), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
+
+For more info: http://www.gloh2o.org/
+
 .. _fixing_native_models:
 
-Native models : IPSL-CM6,... 
+Native models : IPSL-CM6,...
 -----------------------------
 
 The following models are natively supported through the procedure
@@ -355,13 +383,13 @@ described above (:ref:`fix_structure`) and at
       datasets:
         - {simulation: CM61-LR-hist-03.1950, exp: piControl, freq: Analyse/TS_MO,
            account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
-	   root: /thredds/tgcc/store} 
+           root: /thredds/tgcc/store}
         - {simulation: CM61-LR-hist-03.1950, exp: historical, freq: Output/MO,
            account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
-	   root: /thredds/tgcc/store} 
+           root: /thredds/tgcc/store}
 
     .. _ipslcm_extra_facets_example:
-    
+
     The ``Output`` format is an example of a case where variables are
     grouped in multi-variable files, which name cannot be computed
     directly from datasets attributes alone but requires to use an
@@ -370,37 +398,6 @@ described above (:ref:`fix_structure`) and at
     </../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These
     multi-variable files must also undergo some data selection, which
     may involve an external process for performance purpose.
-
-
-
-ERA5 and MSWEP datasets
------------------------
-Put the files containing the data in the
-directory that you have configured for the ``native6`` project in your
-:ref:`user configuration file`, in a subdirectory called
-``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.  Replace
-the items in curly braces by the values used in the variable/dataset
-definition in the :ref:`recipe <recipe_overview>`.  Below is a list of
-datasets currently supported :
-
-  - **ERA5**
-
-      - Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
-      - Tier: 3
-
-  - **MSWEP**
-
-      - Supported variables: ``pr``
-      - Supported frequencies: ``mon``, ``day``, ``3hr``.
-      - Tier: 3
-
-    For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
-
-    .. note::
-
-      For monthly data (V220), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
-
-    For more info: http://www.gloh2o.org/
 
 .. _extra-facets-fixes:
 

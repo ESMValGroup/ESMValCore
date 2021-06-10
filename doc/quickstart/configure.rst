@@ -176,8 +176,8 @@ It will be installed along with ESMValCore and can also be viewed on GitHub:
 `esmvalcore/config-developer.yml
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
 This configuration file describes the file system structure and CMOR tables for several
-key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g.
-BADC, CP4CDS, DKRZ, ETHZ, SMHI, BSC), and for native output data for some
+key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
+ETHZ, SMHI, BSC), and for native output data for some
 models (IPSL, ... see :ref:`configure_native_models`).
 CMIP data is stored as part of the Earth System Grid
 Federation (ESGF) and the standards for file naming and paths to files are set
@@ -262,10 +262,9 @@ your data please see :ref:`CMOR-DRS`.
 Preprocessor output files
 -------------------------
 
-The filename to use for preprocessed data is configured in a similar
-manner using ``output_file``. Note that the extension ``.nc`` (and if
-applicable, a start and end time) will automatically be appended to
-the filename.
+The filename to use for preprocessed data is configured in a similar manner
+using ``output_file``. Note that the extension ``.nc`` (and if applicable,
+a start and end time) will automatically be appended to the filename.
 
 .. _cmor_table_configuration:
 
@@ -293,13 +292,13 @@ related to CMOR table settings available:
   Defaults to the value provided in ``cmor_type``.
 
 .. _configure_native_models:
-  
+
 Configuring native models and observation data sets
 ----------------------------------------------------
 
 ESMValCore can be configured for handling native model output formats
 and specific
-observation data sets without preliminary reformating. You can choose
+observation data sets without preliminary reformatting. You can choose
 to host this new data source either under a dedicated project or under
 project ``native6``; when choosing the latter, such a configuration
 involves the following steps:
@@ -314,9 +313,9 @@ involves the following steps:
 
       .. code-block:: yaml
 
-	native6:
-  	  ...
-	  input_dir:
+        native6:
+          ...
+          input_dir:
              default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
              MY_DATA_ORG: '{model}/{exp}/{simulation}/{version}/{type}'
           input_file:

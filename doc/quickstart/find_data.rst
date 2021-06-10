@@ -50,7 +50,7 @@ section.
 
 Native model data
 ---------------------------------------------------------
-Support for native model data that is not formatted according to a CMIP 
+Support for native model data that is not formatted according to a CMIP
 data request is quite easy using basic
 :ref:`ESMValCore fix procedure <fixing_data>` and has been implemented
 for some models :ref:`as described here <fixing_native_models>`
