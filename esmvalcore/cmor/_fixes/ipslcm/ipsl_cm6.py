@@ -17,7 +17,7 @@ class AllVars(Fix):
     """Fixes for all IPSLCM variables."""
 
     def fix_file(self, filepath, output_dir):
-        """Select IPSLCM variable in filepath, by calling CDO, if relevant.
+        """Select IPSLCM variable in filepath.
 
         This is done only if input file is a multi-variable one. This
         is diagnosed by searching in the input filepathame for the
@@ -25,7 +25,8 @@ class AllVars(Fix):
 
         In such cases, it is worth to use an external tool for
         filtering, at least until Iris loads fast (which is not the case
-        up to, and including, V3.0.2)
+        up to, and including, V3.0.2), and CDO can be used, depending on
+        extra_facets key `use_cdo`
 
         However, we take care of ESMValTool policy re. dependencies licence
 

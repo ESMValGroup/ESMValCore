@@ -195,12 +195,8 @@ native6:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-    IPSL: '{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
   input_file:
     default: '*.nc'
-    IPSL:
-      - '{simulation}_*_{ipsl_varname}.nc'
-      - '{simulation}_*_{group}.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
@@ -211,8 +207,7 @@ obs4mips:
     default: 'Tier{tier}/{dataset}'
     RCAST: '/'
     IPSL: '{realm}/{short_name}/{freq}/{grid}/{institute}/{dataset}/{latest_version}'
-  input_file:
-    default: '{short_name}_{dataset}_{level}_{version}_*.nc'
+  input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
   output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_path: 'obs4mips'

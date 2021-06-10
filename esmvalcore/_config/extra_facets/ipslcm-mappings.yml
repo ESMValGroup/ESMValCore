@@ -6,7 +6,7 @@
 # ESMValTool to use key 'ipsl_varname' for building the filename,
 # while for format 'Output' it specifies to use key 'group'
 #
-# Specifying 'igcm_dir' here allows to avoid having to secifiy it in
+# Specifying 'igcm_dir' here allows to avoid having to specifiy it in
 # datasets definitions
 #
 # Key 'use_cdo' allows to choose whether CDO will be invoked for
@@ -15,7 +15,8 @@
 # not compliant with ESMValtool licence policy, the default
 # configuration is to avoid using it. You may use customized settings
 # by installing a modified version of this file as
-# ~/.esmvatlool/variable_details/native6-ipsl-cm6-*.yml
+# ~/.esmvatlool/variable_details/ipslcm-*.yml
+# see : https://docs.esmvaltool.org/projects/esmvalcore/en/latest/quickstart/configure.html#location-of-the-extra-facets-files)
 #
 # Key 'positive' allows to tell ESMValTool when the sign convention
 # for a variable is reversed between IPSL-CM6 and CMIP6. In that case,
@@ -23,7 +24,7 @@
 #
 # The main key below, 'IPSL-CM6', is the one to use as a value for
 # attribute 'dataset' in the 'datasets' entry of recipes; it matches
-# the module name 'ipsl.py' in 'cmor_fixes/ipsl*/ipsl.py'
+# the module name 'ipsl_cm6.py' in 'cmor_fixes/ipsl*/ipsl_cm6.py'
 #
 ---
 #  A series of shortcuts for repetitive settings
@@ -46,7 +47,9 @@ ShortCuts:
 IPSL-CM6:
   # ========================================================================================
   Amon:
-    # ========================================================================================
+    # ========================================================
+    # ATM variables processed using their CMIP6 short_name
+    # ========================================================
     # ATM 3D Variables
     ta: {ipsl_varname: ta, <<: *atm3dvars}
     ua: {ipsl_varname: ua, <<: *atm3dvars}
@@ -62,44 +65,15 @@ IPSL-CM6:
     ts: {ipsl_varname: tsol, <<: *atmvars}
     huss: {ipsl_varname: q2m, <<: *atmvars}
     uas: {ipsl_varname: u10m, <<: *atmvars}
-    "vas": {ipsl_varname: v10m, <<: *atmvars}
+    vas: {ipsl_varname: v10m, <<: *atmvars}
     sfcWind: {ipsl_varname: wind10m, <<: *atmvars}
     hurs: {ipsl_varname: rh2m, <<: *atmvars}
-
-    # ATM general variables
-    precip: {ipsl_varname: precip, <<: *atmvars}
     prw: {ipsl_varname: prw, <<: *atmvars}
-    slp: {ipsl_varname: slp, <<: *atmvars}
     t2m: {ipsl_varname: t2m, <<: *atmvars}
     q2m: {ipsl_varname: q2m, <<: *atmvars}
     u10m: {ipsl_varname: u10m, <<: *atmvars}
     v10m: {ipsl_varname: v10m, <<: *atmvars}
     wind10m: {ipsl_varname: wind10m, <<: *atmvars}
-
-    #  -> Turbulent fluxes
-    taux: {ipsl_varname: taux, <<: *atmvars}
-    tauy: {ipsl_varname: tauy, <<: *atmvars}
-
-    #  -> Radiative down at TOA
-    SWdnTOA: {ipsl_varname: SWdnTOA, <<: *atmvars}
-
-    #  -> Radiative down at TOA
-    topl: {ipsl_varname: topl, <<: *atmvars}
-    SWupTOA: {ipsl_varname: SWupTOA, <<: *atmvars}
-    topl0: {ipsl_varname: topl0, <<: *atmvars}
-    SWupTOAclr: {ipsl_varname: SWupTOAclr, <<: *atmvars}
-
-    #  -> Radiative up at Surface
-    LWupSFC: {ipsl_varname: LWupSFC, <<: *atmvars}
-    SWupSFC: {ipsl_varname: SWupSFC, <<: *atmvars}
-    SWupSFcclr: {ipsl_varname: SWupSFcclr, <<: *atmvars}
-    LWupSFcclr: {ipsl_varname: LWupSFcclr, <<: *atmvars}
-
-    #  -> Radiative down at Surface
-    LWdnSFC: {ipsl_varname: LWdnSFC, <<: *atmvars}
-    SWdnSFC: {ipsl_varname: SWdnSFC, <<: *atmvars}
-    LWdnSFcclr: {ipsl_varname: LWdnSFcclr, <<: *atmvars}
-    SWdnSFcclr: {ipsl_varname: SWdnSFcclr, <<: *atmvars}
 
     #  -> Turbulent fluxes
     hfls: {ipsl_varname: flat, <<: *atmvars, positive: down}
@@ -131,12 +105,44 @@ IPSL-CM6:
     rldscs: {ipsl_varname: LWdnSFcclr, <<: *atmvars}
     rsdscs: {ipsl_varname: SWdnSFcclr, <<: *atmvars}
 
+    # ========================================================
+    # ATM variables processed using their own IPSL short_name
+    # ========================================================
+    #  ->  general variables
+    precip: {ipsl_varname: precip, <<: *atmvars}
+    slp: {ipsl_varname: slp, <<: *atmvars}
+    
+    #  -> Turbulent fluxes
+    taux: {ipsl_varname: taux, <<: *atmvars}
+    tauy: {ipsl_varname: tauy, <<: *atmvars}
+
+    #  -> Radiative down at TOA
+    SWdnTOA: {ipsl_varname: SWdnTOA, <<: *atmvars}
+
+    #  -> Radiative up at TOA
+    topl: {ipsl_varname: topl, <<: *atmvars}
+    SWupTOA: {ipsl_varname: SWupTOA, <<: *atmvars}
+    topl0: {ipsl_varname: topl0, <<: *atmvars}
+    SWupTOAclr: {ipsl_varname: SWupTOAclr, <<: *atmvars}
+
+    #  -> Radiative up at Surface
+    LWupSFC: {ipsl_varname: LWupSFC, <<: *atmvars}
+    SWupSFC: {ipsl_varname: SWupSFC, <<: *atmvars}
+    SWupSFcclr: {ipsl_varname: SWupSFcclr, <<: *atmvars}
+    LWupSFcclr: {ipsl_varname: LWupSFcclr, <<: *atmvars}
+
+    #  -> Radiative down at Surface
+    LWdnSFC: {ipsl_varname: LWdnSFC, <<: *atmvars}
+    SWdnSFC: {ipsl_varname: SWdnSFC, <<: *atmvars}
+    LWdnSFcclr: {ipsl_varname: LWdnSFcclr, <<: *atmvars}
+    SWdnSFcclr: {ipsl_varname: SWdnSFcclr, <<: *atmvars}
+    
+    
   # ========================================================================================
   Lmon:
     # ========================================================================================
     # SRF -- Land surface - ORCHIDEE
 
-    #  --> !!! This will not stay in the param file !!! --------------------
     fluxlat: {ipsl_varname: fluxlat, <<: *srfvars}
     fluxsens: {ipsl_varname: fluxsens, <<: *srfvars}
     albnir: {ipsl_varname: alb_nir, <<: *srfvars}
