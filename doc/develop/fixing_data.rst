@@ -18,7 +18,7 @@ coordinate bounds like ''lat_bnds'') or problems with the actual data
 (e.g. cloud liquid water only instead of sum of liquid + ice as specified by the CMIP data request).
 
 As an extreme case, some data sources simply are not NetCDF
-files and must go through other data load function.
+files and must go through some other data load function.
 
 The ESMValCore can apply on the fly fixes to such datasets when
 issues can be fixed automatically. This is implemented for a set
