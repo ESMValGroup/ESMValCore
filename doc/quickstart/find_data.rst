@@ -56,7 +56,7 @@ data request is quite easy using basic
 for some models :ref:`as described here <fixing_native_models>`
 
 Observational data
----------------------------------------------------------
+------------------
 Part of observational data is retrieved in the same manner as CMIP data, for example
 using the ``OBS`` root path set to:
 
