@@ -17,7 +17,7 @@ mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
 coordinate bounds like ''lat_bnds'') or problems with the actual data
 (e.g. cloud liquid water only instead of sum of liquid + ice as specified by the CMIP data request).
 
-As an extreme case, some others data sources simply are not NetCDF
+As an extreme case, some data sources simply are not NetCDF
 files and must go through other data load function.
 
 The ESMValCore can apply on the fly fixes to such datasets when
