@@ -70,7 +70,7 @@ class AllVars(Fix):
         cube.var_name = self.vardef.short_name
 
         # Need to degrade auxiliary time coordinates, because some
-        # iris function does not support to have more than one
+        # Iris function does not support to have more than one
         # coordinate with standard_name='time'
         for coordinate in cube.coords(dim_coords=False):
             if coordinate.standard_name == 'time':
