@@ -45,11 +45,11 @@ ShortCuts:
 
 
 IPSL-CM6:
-  # ========================================================================================
+  # =================================================
   Amon:
-    # ========================================================
+    # ====================================================
     # ATM variables processed using their CMIP6 short_name
-    # ========================================================
+    # ====================================================
     # ATM 3D Variables
     ta: {ipsl_varname: ta, <<: *atm3dvars}
     ua: {ipsl_varname: ua, <<: *atm3dvars}
@@ -105,9 +105,9 @@ IPSL-CM6:
     rldscs: {ipsl_varname: LWdnSFcclr, <<: *atmvars}
     rsdscs: {ipsl_varname: SWdnSFcclr, <<: *atmvars}
 
-    # ========================================================
+    # =======================================================
     # ATM variables processed using their own IPSL short_name
-    # ========================================================
+    # =======================================================
     #  ->  general variables
     precip: {ipsl_varname: precip, <<: *atmvars}
     slp: {ipsl_varname: slp, <<: *atmvars}
@@ -138,11 +138,25 @@ IPSL-CM6:
     SWdnSFcclr: {ipsl_varname: SWdnSFcclr, <<: *atmvars}
     
     
-  # ========================================================================================
+  # =================================================
   Lmon:
-    # ========================================================================================
+    # ===============================================
     # SRF -- Land surface - ORCHIDEE
+    # ====================================================
+    # variables processed using their CMIP6 short_name
+    # ====================================================
 
+    mrrob: {ipsl_varname: drainage, <<: *srfvars}
+    runoff: {ipsl_varname: runoff, <<: *srfvars}
+    mrros: {ipsl_varname: runoff, <<: *srfvars}
+    lai: {ipsl_varname: lai, <<: *stivars}
+
+    # =======================================================
+    # variables processed using their own IPSL short_name
+    # =======================================================
+    drainage: {ipsl_varname: drainage, <<: *srfvars}
+    snow: {ipsl_varname: snow, <<: *srfvars}
+    snw_land: {ipsl_varname: snow, <<: *srfvars}
     fluxlat: {ipsl_varname: fluxlat, <<: *srfvars}
     fluxsens: {ipsl_varname: fluxsens, <<: *srfvars}
     albnir: {ipsl_varname: alb_nir, <<: *srfvars}
@@ -157,13 +171,7 @@ IPSL-CM6:
     subli: {ipsl_varname: subli, <<: *srfvars}
     evap: {ipsl_varname: evap, <<: *srfvars}
     Qs: {ipsl_varname: Qs, <<: *srfvars}
-    runoff: {ipsl_varname: runoff, <<: *srfvars}
-    mrros: {ipsl_varname: runoff, <<: *srfvars}
-    drainage: {ipsl_varname: drainage, <<: *srfvars}
-    mrrob: {ipsl_varname: drainage, <<: *srfvars}
     frac_snow: {ipsl_varname: frac_snow, <<: *srfvars}
-    snow: {ipsl_varname: snow, <<: *srfvars}
-    snw_land: {ipsl_varname: snow, <<: *srfvars}
     maint_resp: {ipsl_varname: maint_resp, <<: *srfvars}
     growth_resp: {ipsl_varname: growth_resp, <<: *srfvars}
     hetero_resp: {ipsl_varname: hetero_resp, <<: *srfvars}
@@ -177,29 +185,38 @@ IPSL-CM6:
     totalsoilcarb: {ipsl_varname: TOTAL_SOIL_CARB, <<: *stovars}
     maxvegetfrac: {ipsl_varname: maxvegetfrac, <<: *sechvars}
     vegetfrac: {ipsl_varname: vegetfrac, <<: *sechvars}
-    lai: {ipsl_varname: lai, <<: *stivars}
     cfracgpp: {ipsl_varname: gpp, <<: *stivars}
 
     #  -> alias for the obs
     gpptot: {ipsl_varname: gpp, <<: *stivars}
     Contfrac: {ipsl_varname: Contfrac, <<: *sechvars}
 
-  # ==============================================================================
+  # =================================================
   Omon:
-    # ============================================================================
+    # ===============================================
     # OCE
+    # ====================================================
+    # variables processed using their CMIP6 short_name
+    # ====================================================
     tos: {ipsl_varname: tos, <<: *ocetvars}
     sos: {ipsl_varname: sos, <<: *ocetvars}
     thetao: {ipsl_varname: thetao, <<: *ocetvars}
     so: {ipsl_varname: so, <<: *ocetvars}
     zos: {ipsl_varname: zos, <<: *ocetvars}
     mlotst: {ipsl_varname: mldr10_1, <<: *ocetvars}
-    mlddt02: {ipsl_varname: mld_dt02, <<: *ocetvars}
     wfo: {ipsl_varname: wfo, <<: *ocetvars}
 
-    #  ------------------------------------------------------------ #
+    #  -- Wind stress curl
+    tauuo: {ipsl_varname: tauuo, <<: *oceuvars}
+    tauvo: {ipsl_varname: tauvo, <<: *oceuvars}
 
-    #  Aliases to the zonal average (computed on the x axis of the ORCA grid) #
+    # =======================================================
+    # variables processed using their own IPSL short_name
+    # =======================================================
+    mlddt02: {ipsl_varname: mld_dt02, <<: *ocetvars}
+
+    #  ---------------------------------------------- #
+    #  Aliases to the zonal average (computed on the x axis of the ORCA grid)
     zotemglo: {ipsl_varname: zotemglo, <<: *ocedvars}
     zotempac: {ipsl_varname: zotempac, <<: *ocedvars}
     zotematl: {ipsl_varname: zotematl, <<: *ocedvars}
@@ -213,8 +230,7 @@ IPSL-CM6:
     zomsfatl: {ipsl_varname: zomsfatl, <<: *ocedvars}
     zomsfind: {ipsl_varname: zomsfind, <<: *ocedvars}
 
-    #  --------------------------------------------------------------- #
-
+    #  --------------------------------------------------- #
     #  Aliases to the old IGCM_OUT names
     sosstsst: {ipsl_varname: sosstsst, <<: *ocetvars}
     sosaline: {ipsl_varname: sosaline, <<: *ocetvars}
@@ -224,22 +240,25 @@ IPSL-CM6:
     somx3010: {ipsl_varname: somx3010, <<: *ocetvars}
     mld_dt02: {ipsl_varname: mld_dt02, <<: *ocetvars}
 
-    #  -- Wind stress curl
-    tauuo: {ipsl_varname: tauuo, <<: *oceuvars}
-    tauvo: {ipsl_varname: tauvo, <<: *oceuvars}
-
     # BGC -> Biogeochemistry
     NO3: {ipsl_varname: NO3, <<: *oceptr}
     PO4: {ipsl_varname: PO4, <<: *oceptr}
     Si: {ipsl_varname: Si, <<: *oceptr}
     O2: {ipsl_varname: O2, <<: *oceptr}
 
-  # ====================================================================================
+  # =================================================
   SImon:
-    # ====================================================================================
+    # ===============================================
     # ICE
-    sic: {ipsl_varname: siconc, <<: *icevars}
-    sit: {ipsl_varname: sithic, <<: *icevars}
+    # ====================================================
+    # variables processed using their CMIP6 short_name
+    # ====================================================
     sivolu: {ipsl_varname: sivolu, <<: *icevars}
     siconc: {ipsl_varname: siconc, <<: *icevars}
-    sithic: {ipsl_varname: sithic, <<: *icevars}
+    sithick: {ipsl_varname: sithic, <<: *icevars}
+
+    # =======================================================
+    # variables processed using their own IPSL short_name
+    # =======================================================
+    sic: {ipsl_varname: siconc, <<: *icevars}
+    sit: {ipsl_varname: sithic, <<: *icevars}
