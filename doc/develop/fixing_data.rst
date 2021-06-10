@@ -22,7 +22,7 @@ files and must go through some other data load function.
 
 The ESMValCore can apply on the fly fixes to such datasets when
 issues can be fixed automatically. This is implemented for a set
-of `Natively supported non-CMIP datasets`_. The following provide
+of `Natively supported non-CMIP datasets`_. The following provides
 details on how to design such fixes.
 
 .. note::
