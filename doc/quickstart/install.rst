@@ -208,3 +208,20 @@ yourself if you are just running diagnostics:
  - DKRZ-Mistral: `esmvaltool` is available on login nodes (`mistral.dkrz.de`) and pre- and post-processing
    nodes (`mistralpp.dkrz.de`) after login and module loading via `module load esmvaltool`; the command
    `module help esmvaltool` provides some information about the module.
+
+Installation from the conda lock file
+-------------------------------------
+
+A fast conda environment creation is possible using the provided conda lock files.
+To build a conda lock file install the `conda-lock` package first, then
+run `conda-lock lock --platform linux-64 -f environment.yml --mamba`
+(mamba activated for speed) to create a conda lock file for Linux platforms,
+or run `conda-lock lock --platform osx-64 -f environment.yml --mamba` to create a lock file
+for OSX platforms. A conda lock file is an explicit environment file that contains pointers to
+dependency packages as they are hosted on the Anaconda cloud; these have frozen version numbers
+and build hashes, established at the time of the conda lock file creation, so may be obsolete after a while,
+but they allow for a robust environment creation while they're still up-to-date. We regenerate these lock files every 10 days, so to minimize the risk of dependencies becoming obsolete. After the lock file has been created,
+conda environment creation then happens as per normal use with e.g.
+`conda create --name esmvaltool --file conda-linux-64.lock` (NOTE that `pip` and `conda` are NOT installed
+in this environment so manual installation is needed, `conda install -c conda-forge pip` at the very
+minimum so we can install `esmvalcore`).
