@@ -32,7 +32,7 @@ def _deep_update(dictionary, update):
     return dictionary
 
 
-@lru_cache
+@lru_cache()
 def _load_extra_facets(project, extra_facets_dir):
     config = {}
     config_paths = [
