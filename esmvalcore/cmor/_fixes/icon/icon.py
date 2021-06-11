@@ -9,7 +9,6 @@ import iris
 import numpy as np
 
 from esmvalcore.iris_helpers import var_name_constraint
-from esmvalcore.preprocessor import regrid
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
@@ -33,17 +32,6 @@ class AllVars(Fix):
                                               self.vardef.short_name)
         cube = cubes.extract_cube(var_name_constraint(raw_name))
 
-        # Horizontal regridding (this is necessary here since the
-        # preprocessor function 'regrid' does not work for ICON's 3D
-        # variables: the necessary scheme 'unstructured' does not support
-        # the hybrid pressure levels)
-        # TODO: make this configurable in the recipe, e.g. by supporting
-        # a variable key 'target_grid' (that could also be 'native') and
-        # 'scheme'.
-        target_grid = 'native'
-        scheme = 'unstructured_nearest'
-        cube = self._regrid(cube, target_grid, scheme)
-
         # Fix dimensional coordinates
         if cube.coords("time"):
             self._fix_time(cube)
@@ -52,10 +40,6 @@ class AllVars(Fix):
                 'pfull'))
             plev_bounds_cube = cubes.extract_cube(var_name_constraint(
                 'phalf'))
-            plev_points_cube = self._regrid(plev_points_cube, target_grid,
-                                            scheme)
-            plev_bounds_cube = self._regrid(plev_bounds_cube, target_grid,
-                                            scheme)
             cube = self._fix_height(cube, plev_points_cube,
                                     plev_bounds_cube)
         if cube.coords("latitude") and cube.coords("longitude"):
@@ -136,14 +120,34 @@ class AllVars(Fix):
         """Fix latitude and longitude coordinates of cube."""
         lat = cube.coord(lat_name)
         lon = cube.coord(lon_name)
+
+        # Fix metadata
         lat.var_name = "lat"
         lon.var_name = "lon"
-
-        # Only necessary for areacella so far
         lat.standard_name = "latitude"
         lon.standard_name = "longitude"
         lat.long_name = "latitude"
         lon.long_name = "longitude"
+
+        # Add dimension name for cell index used to store the unstructured grid
+        if cube.coord_dims(lat) != cube.coord_dims(lon):
+            raise ValueError(
+                f"Unexpected grid: 'latitude' and 'longitude' do not share "
+                f"dimensions in cube\n{cube}")
+        horizontal_coord_dims = cube.coord_dims(lat)
+        if len(horizontal_coord_dims) != 1:
+            raise ValueError(
+                f"Expected unstructured horizontal grid with single dimension "
+                f"for 'latitude' and 'longitude', got "
+                f"{len(horizontal_coord_dims):d}D 'latitude and 'longitude'")
+        index_coord = iris.coords.DimCoord(
+            np.arange(cube.shape[horizontal_coord_dims[0]]),
+            var_name="i",
+            long_name=("first spatial index for variables stored on an "
+                       "unstructured grid"),
+            units="1",
+        )
+        cube.add_dim_coord(index_coord, horizontal_coord_dims)
 
     @staticmethod
     def _fix_time(cube):
@@ -163,38 +167,6 @@ class AllVars(Fix):
 
         t_coord.points = new_dt_points
         t_coord.units = new_t_unit
-
-    @staticmethod
-    def _regrid(cube, target_grid, scheme):
-        """Regrid cube."""
-        # Check if file is already regridded (i.e., 1D lat and lon dimensions
-        # are present)
-        if all([cube.coords('latitude', dim_coords=True),
-                cube.coords('longitude', dim_coords=True)]):
-            for coord_name in ('latitude', 'longitude'):
-                if cube.coord(coord_name).bounds is None:
-                    cube.coord(coord_name).guess_bounds()
-            return cube
-
-        # If native grid is requested add coordinate that specifies cell index
-        if target_grid == 'native':
-            spatial_index = 0
-            if cube.coords("time"):
-                spatial_index += 1
-            if cube.coords("height"):
-                spatial_index += 1
-            index_coord = iris.coords.DimCoord(
-                np.arange(cube.shape[spatial_index]),
-                var_name="i",
-                long_name=("first spatial index for variables stored on an "
-                           "unstructured grid"),
-                units="1",
-            )
-            cube.add_dim_coord(index_coord, spatial_index)
-            return cube
-
-        # Regrid to desired grid using desired scheme
-        return regrid(cube, target_grid, scheme, lon_offset=False)
 
 
 class Siconca(Fix):
