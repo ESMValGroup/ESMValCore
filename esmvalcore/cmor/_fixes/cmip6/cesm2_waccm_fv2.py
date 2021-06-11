@@ -50,10 +50,13 @@ class Omon(Fix):
         """
         for cube in cubes:
             if cube.coords(axis='Z'):
-                 z_coord = cube.coord(axis='Z')
-                 if str(z.coords.units) == 'cm' and np.max(z.points)>10000.:
-                     z_coord.units = cf_units.Unit('m')
+                z_coord = cube.coord(axis='Z')
+                if str(z_coord.units).lower() in ['cm', 'centimeters'] and np.max(z_coord.points)>10000.:
+                    z_coord.units = cf_units.Unit('m')
+                    z_coord.points = z_coord.points /100.
+                if str(z_coord.units).lower() in ['cm', 'centimeters'] and np.max(z_coord.points)<10000.:
+                    z_coord.units = cf_units.Unit('m')
+#                    z_coord.points = z_coord.points /100.
 
-#                if z_coord.var_name == 'olevel':
                 fix_ocean_depth_coord(cube)
         return cubes

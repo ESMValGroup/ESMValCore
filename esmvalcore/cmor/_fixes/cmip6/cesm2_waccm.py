@@ -5,7 +5,8 @@ from .cesm2 import Cl as BaseCl
 from .cesm2 import Tas as BaseTas
 from ..fix import Fix
 from ..shared import fix_ocean_depth_coord
-
+import numpy as np
+import cf_units
 
 class Cl(BaseCl):
     """Fixes for cl."""
@@ -75,8 +76,13 @@ class Omon(Fix):
                 cube.coord('longitude').var_name = 'lon'
 
             if cube.coords(axis='Z'):
-                if str(z.coords.units) == 'cm' and np.max(z.points)>10000.:
+                z_coord = cube.coord(axis='Z')
+                if str(z_coord.units).lower() in ['cm', 'centimeters'] and np.max(z_coord.points)>10000.:
                     z_coord.units = cf_units.Unit('m')
+                    z_coord.points = z_coord.points /100.
+                if str(z_coord.units).lower() in ['cm', 'centimeters'] and np.max(z_coord.points)<10000.:
+                    z_coord.units = cf_units.Unit('m')
+
                 fix_ocean_depth_coord(cube)
         return cubes
 
