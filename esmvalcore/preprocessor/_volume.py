@@ -463,8 +463,8 @@ def extract_trajectory(cube, latitudes, longitudes, number_points=2):
         minlat, maxlat = np.min(latitudes), np.max(latitudes)
         minlon, maxlon = np.min(longitudes), np.max(longitudes)
 
-        longitudes = np.linspace(minlat, maxlat, num=number_points)
-        latitudes = np.linspace(minlon, maxlon, num=number_points)
+        longitudes = np.linspace(minlon, maxlon, num=number_points)
+        latitudes = np.linspace(minlat, maxlat, num=number_points)
 
     points = [('latitude', latitudes), ('longitude', longitudes)]
     interpolated_cube = interpolate(cube, points)  # Very slow!
