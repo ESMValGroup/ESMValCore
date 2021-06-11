@@ -4,6 +4,7 @@ import logging
 import re
 from datetime import datetime
 from functools import reduce
+from warnings import catch_warnings, filterwarnings
 
 import cf_units
 import dask.array as da
@@ -210,6 +211,13 @@ def _extend(cube, time_points):
 
 def _align(cubes, span):
     """Expand or subset cubes so they share a common time span."""
+    if not cubes[0].coords('time'):
+        return cubes
+
+    if cubes.coord('time').points.size == 1:
+        # TODO: improve support for this case
+        return cubes
+
     _unify_time_coordinates(cubes)
 
     if _time_coords_are_aligned(cubes):
@@ -264,67 +272,61 @@ def _combine(cubes):
     return merged_cube
 
 
-def rechunk(cube):
-    """Rechunk the cube to speed up out-of-memory computation."""
-    new_chunks = {0: -1}  # don't chunk along the multimodel dimension
-    if cube.ndim > 1:
-        new_chunks[1] = 'auto'  # do chunk along the first subsequent dimension
-
-    cube.data = cube.lazy_data().rechunk(new_chunks)
-
-    logger.debug("Total data size: %s MB", cube.lazy_data().nbytes * 1e-6)
-    logger.debug("New chunk block size: %s MB",
-                 cube.lazy_data().nbytes / cube.lazy_data().npartitions * 1e-6)
-    logger.debug("New chunk configuration: %s", cube.lazy_data())
-
-
 def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
                    **kwargs):
-    """Compute statistics one slice at a time."""
+    """Compute statistics one time slice at a time."""
     _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
-    result_slices = []
-    for i in range(cubes[0].shape[0]):
-        single_model_slices = [cube[i] for cube in cubes]
-        combined_slice = _combine(single_model_slices)
-        collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
-                                                   **kwargs)
+    if cubes[0].coords('time', dim_coords=True):
+        # If there is a time coordinate, compute result one time step at a time
+        # to reduce memory use.
+        result_slices = iris.cube.CubeList()
+        for i in range(cubes[0].shape[0]):
+            cubes_slice = [cube[i] for cube in cubes]
+            result_slice = _compute(cubes_slice, operator=operator, **kwargs)
+            result_slices.append(result_slice)
 
-        # some iris aggregators modify dtype, see e.g.
-        # https://numpy.org/doc/stable/reference/generated/numpy.ma.average.html
-        collapsed_slice.data = collapsed_slice.data.astype(np.float32)
-
-        result_slices.append(collapsed_slice)
-
-    try:
-        result_cube = iris.cube.CubeList(result_slices).merge_cube()
-    except Exception as excinfo:
-        raise ValueError(
-            "Multi-model statistics failed to concatenate results into a"
-            f" single array. This happened for operator {operator}"
-            f" with computed statistics {result_slices}."
-            "This can happen e.g. if the calculation results in inconsistent"
-            f" dtypes. Encountered the following exception: {excinfo}")
+        try:
+            result_cube = result_slices.merge_cube()
+        except Exception as exc:
+            raise ValueError(
+                "Multi-model statistics failed to concatenate results into a"
+                f" single array. This happened for operator {operator}"
+                f" with computed statistics {result_slices}."
+                "This can happen e.g. if the calculation results in"
+                f" inconsistent data types.") from exc
+    else:
+        result_cube = _compute(cubes, operator=operator, **kwargs)
 
     result_cube.data = np.ma.array(result_cube.data)
-    result_cube.remove_coord(CONCAT_DIM)
 
     return result_cube
 
 
-def _compute_lazy(cubes: list, *, operator: iris.analysis.Aggregator,
-                  **kwargs):
-    """Compute statistics using lazy iris function."""
-    cube = _combine(
-        cubes)  # this is now done for each statistic, can we avoid that?
-    rechunk(cube)
+def _compute(cubes: list, *, operator: iris.analysis.Aggregator, **kwargs):
+    """Compute statistic."""
+    cube = _combine(cubes)
 
-    # This will always return a masked array
-    result_cube = cube.collapsed(CONCAT_DIM, operator, **kwargs)
+    with catch_warnings():
+        filterwarnings(
+            'ignore',
+            message=(
+                "Collapsing a non-contiguous coordinate. "
+                f"Metadata may not be fully descriptive for '{CONCAT_DIM}."),
+            category=UserWarning,
+            module='iris',
+        )
+        # This will always return a masked array
+        result_cube = cube.collapsed(CONCAT_DIM, operator, **kwargs)
+
+    # Remove concatenation dimension added by _combine
     result_cube.remove_coord(CONCAT_DIM)
-
     for cube in cubes:
         cube.remove_coord(CONCAT_DIM)
+
+    # some iris aggregators modify dtype, see e.g.
+    # https://numpy.org/doc/stable/reference/generated/numpy.ma.average.html
+    result_cube.data = result_cube.core_data().astype(np.float32)
 
     return result_cube
 
@@ -341,10 +343,10 @@ def _multicube_statistics(cubes, statistics, span):
         raise ValueError('Cannot perform multicube statistics '
                          'for a single cube.')
 
-    lazy_input = bool(all(cube.has_lazy_data() for cube in cubes))
+    lazy_input = all(cube.has_lazy_data() for cube in cubes)
 
-    copied_cubes = [cube.copy() for cube in cubes]  # avoid modifying inputs
-    aligned_cubes = _align(copied_cubes, span=span)
+    cubes = [cube.copy() for cube in cubes]  # avoid modifying inputs
+    cubes = _align(cubes, span=span)
 
     statistics_cubes = {}
     for statistic in statistics:
@@ -352,13 +354,9 @@ def _multicube_statistics(cubes, statistics, span):
         operator, kwargs = _resolve_operator(statistic)
 
         if operator.lazy_func is None:
-            result_cube = _compute_eager(aligned_cubes,
-                                         operator=operator,
-                                         **kwargs)
+            result_cube = _compute_eager(cubes, operator=operator, **kwargs)
         else:
-            result_cube = _compute_lazy(aligned_cubes,
-                                        operator=operator,
-                                        **kwargs)
+            result_cube = _compute(cubes, operator=operator, **kwargs)
 
         # lazy input --> lazy output
         result_cube.data = result_cube.lazy_data(

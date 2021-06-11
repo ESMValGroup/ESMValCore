@@ -60,6 +60,7 @@ class Test(tests.Test):
             coords=self.coords,
             remove_coord=self.remove_coord,
             regrid=self.regrid)
+        self.src_cube.ndim = 1
         self.tgt_grid_coord = mock.Mock()
         self.tgt_grid = mock.Mock(
             spec=iris.cube.Cube, coord=self.tgt_grid_coord)

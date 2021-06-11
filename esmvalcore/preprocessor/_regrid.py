@@ -1,5 +1,4 @@
 """Horizontal and vertical regridding module."""
-
 import os
 import re
 from copy import deepcopy
@@ -474,7 +473,34 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
+            cube = _rechunk(cube, target_grid)
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+
+    return cube
+
+
+def _rechunk(cube, target_grid):
+    """Re-chunk cube with optimal chunk sizes for target grid."""
+    if not cube.has_lazy_data() or cube.ndim < 3:
+        # Only rechunk lazy multidimensional data
+        return cube
+
+    if 2 * np.prod(cube.shape[-2:]) > np.prod(target_grid.shape):
+        # Only rechunk if target grid is more than a factor of 2 larger,
+        # because rechunking will keep the original chunk in memory.
+        return cube
+
+    data = cube.lazy_data()
+
+    # Compute a good chunk size for the target array
+    tgt_shape = data.shape[:-2] + target_grid.shape
+    tgt_chunks = data.chunks[:-2] + target_grid.shape
+    tgt_data = da.empty(tgt_shape, dtype=data.dtype, chunks=tgt_chunks)
+    tgt_data = tgt_data.rechunk({i: "auto" for i in range(cube.ndim - 2)})
+
+    # Adjust chunks to source array and rechunk
+    chunks = tgt_data.chunks[:-2] + data.shape[-2:]
+    cube.data = data.rechunk(chunks)
 
     return cube
 
