@@ -1,7 +1,7 @@
 """Contains the base class for dataset fixes."""
 import importlib
-import inspect
 import os
+import inspect
 
 from ..table import CMOR_TABLES
 
