@@ -75,6 +75,19 @@ first discuss the ``drs`` parameter: as we've seen in the previous section, the
 DRS as a standard is used for both file naming conventions and for directory
 structures.
 
+Synda
+-----
+
+If the `synda install <https://prodiguer.github.io/synda/sdt/user_guide.html#synda-install>`_ command is used to download data,
+it maintains the directory structure as on ESGF. To find data downloaded by
+synda, use the ``SYNDA`` ``drs`` parameter.
+
+.. code-block:: yaml
+
+ drs:
+   CMIP6: SYNDA
+   CMIP5: SYNDA
+
 .. _config-user-drs:
 
 Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``
@@ -290,3 +303,35 @@ flexible concatenation between two cubes, depending on the particular setup:
 Note that two cube concatenation is the base operation of an iterative process of reducing multiple cubes
 from multiple data segments via cube concatenation ie if there is no time-overlapping data, the
 cubes concatenation is performed in one step.
+
+.. _extra-facets-data-finder:
+
+Use of extra facets in the datafinder
+=====================================
+Extra facets are a mechanism to provide additional information for certain kinds
+of data. The general approach is described in :ref:`extra_facets`. Here, we
+describe how they can be used to locate data files within the datafinder
+framework. This is useful to build paths for directory structures and file names
+that follow a different system than the established DRS for, e.g. CMIP.
+A common application is the location of variables in multi-variable files as
+often found in climate models' native output formats.
+
+Another use case is files that use different names for variables in their
+file name than for the netCDF4 variable name.
+
+To apply the extra facets for this purpose, simply use the corresponding tag in
+the applicable DRS inside the `config-developer.yml` file. For example, given
+the extra facets in :ref:`extra-facets-example-1`, one might write the
+following.
+
+.. _extra-facets-example-2:
+
+.. code-block:: yaml
+   :caption: Example drs use in `config-developer.yml`
+
+   native6:
+     input_file:
+       default: '{name_in_filename}*.nc'
+
+The same replacement mechanism can be employed everywhere where tags can be
+used, particularly in `input_dir` and `input_file`.

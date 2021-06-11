@@ -7,8 +7,10 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
     Cli,
     Clw,
     Fgco2,
+    Siconc,
     Tas,
 )
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor.fix import Fix
 
 
@@ -54,6 +56,17 @@ def test_get_fgco2_fix():
 def test_fgco2_fix():
     """Test fix for ``fgco2``."""
     assert Fgco2 is BaseFgco2
+
+
+def test_get_siconc_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM-FV2', 'SImon', 'siconc')
+    assert fix == [Siconc(None)]
+
+
+def test_siconc_fix():
+    """Test fix for ``siconc``."""
+    assert Siconc is SiconcFixScalarCoord
 
 
 def test_get_tas_fix():

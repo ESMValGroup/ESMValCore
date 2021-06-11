@@ -53,7 +53,10 @@ def test_run_recipe(task, recipe, tmp_path):
     assert isinstance(recipe, Recipe)
     assert isinstance(recipe._repr_html_(), str)
 
-    output = recipe.run(task=task)
+    session = CFG.start_session(recipe.path.stem)
+    session['extra_facets_dir'] = []
+
+    output = recipe.run(task=task, session=session)
 
     assert len(output) > 0
     assert isinstance(output, RecipeOutput)
@@ -85,6 +88,9 @@ def test_run_recipe_diagnostic_failing(recipe, tmp_path):
 
     CFG['output_dir'] = tmp_path
 
+    session = CFG.start_session(recipe.path.stem)
+    session['extra_facets_dir'] = []
+
     with pytest.raises(RecipeError):
         task = 'example/non-existant'
-        _ = recipe.run(task)
+        _ = recipe.run(task, session)

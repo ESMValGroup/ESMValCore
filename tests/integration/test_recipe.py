@@ -115,35 +115,86 @@ def create_test_file(filename, tracking_id=None):
     iris.save(cube, filename)
 
 
-def _get_default_settings_for_chl(fix_dir, save_filename):
+def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
     """Get default preprocessor settings for chl."""
+    standard_name = ('mass_concentration_of_phytoplankton_'
+                     'expressed_as_chlorophyll_in_sea_water')
     defaults = {
         'load': {
             'callback': concatenate_callback,
         },
         'concatenate': {},
         'fix_file': {
-            'project': 'CMIP5',
+            'alias': 'CanESM2',
             'dataset': 'CanESM2',
-            'short_name': 'chl',
+            'diagnostic': 'diagnostic_name',
+            'end_year': 2005,
+            'ensemble': 'r1i1p1',
+            'exp': 'historical',
+            'filename': fix_dir.replace('_fixed', '.nc'),
+            'frequency': 'yr',
+            'institute': ['CCCma'],
+            'long_name': 'Total Chlorophyll Mass Concentration',
             'mip': 'Oyr',
+            'modeling_realm': ['ocnBgchem'],
+            'original_short_name': 'chl',
             'output_dir': fix_dir,
+            'preprocessor': preprocessor,
+            'project': 'CMIP5',
+            'recipe_dataset_index': 0,
+            'short_name': 'chl',
+            'standard_name': standard_name,
+            'start_year': 2000,
+            'units': 'kg m-3',
+            'variable_group': 'chl',
         },
         'fix_data': {
             'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
+            'alias': 'CanESM2',
             'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
+            'diagnostic': 'diagnostic_name',
+            'end_year': 2005,
+            'ensemble': 'r1i1p1',
+            'exp': 'historical',
+            'filename': fix_dir.replace('_fixed', '.nc'),
             'frequency': 'yr',
+            'institute': ['CCCma'],
+            'long_name': 'Total Chlorophyll Mass Concentration',
+            'mip': 'Oyr',
+            'modeling_realm': ['ocnBgchem'],
+            'original_short_name': 'chl',
+            'preprocessor': preprocessor,
+            'project': 'CMIP5',
+            'recipe_dataset_index': 0,
+            'short_name': 'chl',
+            'standard_name': standard_name,
+            'start_year': 2000,
+            'units': 'kg m-3',
+            'variable_group': 'chl',
         },
         'fix_metadata': {
             'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
+            'alias': 'CanESM2',
             'dataset': 'CanESM2',
-            'short_name': 'chl',
-            'mip': 'Oyr',
+            'diagnostic': 'diagnostic_name',
+            'end_year': 2005,
+            'ensemble': 'r1i1p1',
+            'exp': 'historical',
+            'filename': fix_dir.replace('_fixed', '.nc'),
             'frequency': 'yr',
+            'institute': ['CCCma'],
+            'long_name': 'Total Chlorophyll Mass Concentration',
+            'mip': 'Oyr',
+            'modeling_realm': ['ocnBgchem'],
+            'original_short_name': 'chl',
+            'preprocessor': preprocessor,
+            'project': 'CMIP5',
+            'recipe_dataset_index': 0,
+            'short_name': 'chl',
+            'standard_name': standard_name,
+            'start_year': 2000,
+            'units': 'kg m-3',
+            'variable_group': 'chl',
         },
         'clip_start_end_year': {
             'start_year': 2000,
@@ -475,7 +526,8 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
 
     fix_dir = os.path.join(
         preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
-    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename,
+                                             'default')
     assert product.settings == defaults
 
 
@@ -515,7 +567,8 @@ def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
 
     fix_dir = os.path.join(
         preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
-    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename,
+                                             'default_custom_order')
     assert product.settings == defaults
 
 
@@ -553,27 +606,70 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
         },
         'concatenate': {},
         'fix_file': {
-            'project': 'CMIP5',
+            'alias': 'CanESM2',
             'dataset': 'CanESM2',
-            'short_name': 'sftlf',
+            'diagnostic': 'diagnostic_name',
+            'ensemble': 'r0i0p0',
+            'exp': 'historical',
+            'filename': fix_dir.replace('_fixed', '.nc'),
+            'frequency': 'fx',
+            'institute': ['CCCma'],
+            'long_name': 'Land Area Fraction',
             'mip': 'fx',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'sftlf',
             'output_dir': fix_dir,
+            'preprocessor': 'default',
+            'project': 'CMIP5',
+            'recipe_dataset_index': 0,
+            'short_name': 'sftlf',
+            'standard_name': 'land_area_fraction',
+            'units': '%',
+            'variable_group': 'sftlf'
         },
         'fix_data': {
             'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
+            'alias': 'CanESM2',
             'dataset': 'CanESM2',
-            'short_name': 'sftlf',
-            'mip': 'fx',
+            'diagnostic': 'diagnostic_name',
+            'ensemble': 'r0i0p0',
+            'exp': 'historical',
+            'filename': fix_dir.replace('_fixed', '.nc'),
             'frequency': 'fx',
+            'institute': ['CCCma'],
+            'long_name': 'Land Area Fraction',
+            'mip': 'fx',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'sftlf',
+            'preprocessor': 'default',
+            'project': 'CMIP5',
+            'recipe_dataset_index': 0,
+            'short_name': 'sftlf',
+            'standard_name': 'land_area_fraction',
+            'units': '%',
+            'variable_group': 'sftlf'
         },
         'fix_metadata': {
             'check_level': CheckLevels.DEFAULT,
-            'project': 'CMIP5',
+            'alias': 'CanESM2',
             'dataset': 'CanESM2',
-            'short_name': 'sftlf',
-            'mip': 'fx',
+            'diagnostic': 'diagnostic_name',
+            'ensemble': 'r0i0p0',
+            'exp': 'historical',
+            'filename': fix_dir.replace('_fixed', '.nc'),
             'frequency': 'fx',
+            'institute': ['CCCma'],
+            'long_name': 'Land Area Fraction',
+            'mip': 'fx',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'sftlf',
+            'preprocessor': 'default',
+            'project': 'CMIP5',
+            'recipe_dataset_index': 0,
+            'short_name': 'sftlf',
+            'standard_name': 'land_area_fraction',
+            'units': '%',
+            'variable_group': 'sftlf'
         },
         'cmor_check_metadata': {
             'check_level': CheckLevels.DEFAULT,
@@ -1905,7 +2001,7 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
     assert settings['mask_out'] == 'sea'
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 3
+    assert len(fx_variables) == 4
     assert '_fx_' in fx_variables['sftlf']['filename']
     assert '_piControl_' in fx_variables['sftlf']['filename']
 
@@ -1920,7 +2016,7 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert 'volcello' not in fx_variables
+    assert 'volcello' in fx_variables
 
     # area statistics
     settings = product.settings['area_statistics']
@@ -1973,7 +2069,7 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
     assert settings['mask_out'] == 'sea'
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 3
+    assert len(fx_variables) == 4
     assert '_fx_' in fx_variables['sftlf']['filename']
     assert '_piControl_' in fx_variables['sftlf']['filename']
 
@@ -1988,7 +2084,7 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert 'volcello' not in fx_variables
+    assert 'volcello' in fx_variables
 
     # area statistics
     settings = product.settings['area_statistics']
@@ -2328,7 +2424,7 @@ def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
     fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert fx_variables == {}
+    assert len(fx_variables) == 2
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
