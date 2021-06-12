@@ -214,7 +214,7 @@ def _align(cubes, span):
     if not cubes[0].coords('time'):
         return cubes
 
-    if cubes.coord('time').points.size == 1:
+    if cubes[0].coord('time').points.size == 1:
         # TODO: improve support for this case
         return cubes
 
