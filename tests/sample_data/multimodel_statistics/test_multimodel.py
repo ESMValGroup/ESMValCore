@@ -15,7 +15,7 @@ from esmvalcore.preprocessor._multimodel import multi_model_statistics
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 # Increase this number anytime you change the cached input data to the tests.
-TEST_REVISION = 1
+TEST_REVISION = 2
 
 CALENDAR_PARAMS = (
     pytest.param(
@@ -24,11 +24,7 @@ CALENDAR_PARAMS = (
             reason='Cannot calculate statistics with single cube in list')),
     '365_day',
     'gregorian',
-    pytest.param(
-        'proleptic_gregorian',
-        marks=pytest.mark.xfail(
-            raises=iris.exceptions.MergeError,
-            reason='https://github.com/ESMValGroup/ESMValCore/issues/956')),
+    'proleptic_gregorian',
     pytest.param(
         'julian',
         marks=pytest.mark.skip(
@@ -38,12 +34,12 @@ CALENDAR_PARAMS = (
 SPAN_PARAMS = ('overlap', 'full')
 
 
-def assert_array_almost_equal(this, other):
+def assert_array_almost_equal(this, other, rtol=1e-7):
     """Assert that array `this` almost equals array `other`."""
     if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
         np.testing.assert_array_equal(this.mask, other.mask)
 
-    np.testing.assert_allclose(this, other)
+    np.testing.assert_allclose(this, other, rtol=rtol)
 
 
 def assert_coords_equal(this: list, other: list):
@@ -84,6 +80,14 @@ def preprocess_data(cubes, time_slice: dict = None):
     }
 
     cubes = [cube.regrid(**regrid_kwargs) for cube in cubes]
+
+    # Fix minute differences in vertical coordinate
+    if first_cube.coords(axis='Z'):
+        levels = first_cube.coord(axis='Z').points
+        for cube in cubes:
+            z_coord = cube.coord(axis='Z')
+            if np.allclose(z_coord.points, levels):
+                z_coord.points = levels
 
     return cubes
 
@@ -201,7 +205,11 @@ def multimodel_regression_test(cubes, span, name):
     if filename.exists():
         reference_cube = iris.load_cube(str(filename))
 
-        assert_array_almost_equal(result_cube.data, reference_cube.data)
+        assert_array_almost_equal(
+            result_cube.data,
+            reference_cube.data,
+            rtol=5e-7,
+        )
         assert_metadata_equal(result_cube.metadata, reference_cube.metadata)
         assert_coords_equal(result_cube.coords(), reference_cube.coords())
 
@@ -211,9 +219,6 @@ def multimodel_regression_test(cubes, span, name):
         raise RuntimeError(f'Wrote reference data to {filename.absolute()}')
 
 
-@pytest.mark.xfail(
-    raises=iris.exceptions.MergeError,
-    reason='https://github.com/ESMValGroup/ESMValCore/issues/956')
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize('span', SPAN_PARAMS)
 def test_multimodel_regression_month(timeseries_cubes_month, span):
@@ -251,20 +256,14 @@ def test_multimodel_no_vertical_dimension(timeseries_cubes_month):
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.xfail(
-    raises=iris.exceptions.MergeError,
-    reason='https://github.com/ESMValGroup/ESMValCore/issues/956')
-# @pytest.mark.xfail(
-#     raises=iris.exceptions.CoordinateNotFoundError,
-#     reason='https://github.com/ESMValGroup/ESMValCore/issues/891')
 def test_multimodel_no_horizontal_dimension(timeseries_cubes_month):
     """Test statistic without horizontal dimension using monthly data."""
     span = 'full'
     cubes = timeseries_cubes_month
     cubes = [cube[:, :, 0, 0] for cube in cubes]
-    # Coordinate not found error
-    # iris.exceptions.CoordinateNotFoundError:
-    # 'Expected to find exactly 1 depth coordinate, but found none.'
+    for cube in cubes:
+        cube.remove_coord('latitude')
+        cube.remove_coord('longitude')
     multimodel_test(cubes, span=span, statistic='mean')
 
 
@@ -274,17 +273,31 @@ def test_multimodel_only_time_dimension(timeseries_cubes_month):
     cubes = timeseries_cubes_month
     span = 'full'
     cubes = [cube[:, 0, 0, 0] for cube in cubes]
+    for cube in cubes:
+        cube.remove_coord('air_pressure')
+        cube.remove_coord('latitude')
+        cube.remove_coord('longitude')
     multimodel_test(cubes, span=span, statistic='mean')
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.xfail(
-    raises=ValueError,
-    reason='https://github.com/ESMValGroup/ESMValCore/issues/890')
 def test_multimodel_no_time_dimension(timeseries_cubes_month):
     """Test statistic without time dimension using monthly data."""
     span = 'full'
     cubes = timeseries_cubes_month
     cubes = [cube[0] for cube in cubes]
-    # ValueError: Cannot guess bounds for a coordinate of length 1.
+    for cube in cubes:
+        cube.remove_coord('time')
+    multimodel_test(cubes, span=span, statistic='mean')
+
+
+@pytest.mark.use_sample_data
+@pytest.mark.xfail(
+    raises=iris.exceptions.MergeError,
+    reason='https://github.com/ESMValGroup/ESMValCore/issues/890')
+def test_multimodel_scalar_time_dimension(timeseries_cubes_month):
+    """Test statistic scalar time dimension using monthly data."""
+    span = 'full'
+    cubes = timeseries_cubes_month
+    cubes = [cube[0] for cube in cubes]
     multimodel_test(cubes, span=span, statistic='mean')
