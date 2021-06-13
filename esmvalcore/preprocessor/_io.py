@@ -253,7 +253,9 @@ def save(cubes, filename, optimize_access='', compress=False, alias='',
             "The cube is probably unchanged.", cubes, filename)
         return filename
 
-    logger.debug("Saving cubes %s to %s", cubes, filename)
+    for cube in cubes:
+        logger.debug("Saving cube:\n%s\nwith %s data to %s", cube,
+                     "lazy" if cube.has_lazy_data() else "realized", filename)
     if optimize_access:
         cube = cubes[0]
         if optimize_access == 'map':
