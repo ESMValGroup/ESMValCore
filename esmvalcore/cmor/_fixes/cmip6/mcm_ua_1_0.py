@@ -2,7 +2,6 @@
 import iris
 import numpy as np
 from dask import array as da
-from iris.util import _is_circular
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord, fix_ocean_depth_coord
@@ -71,9 +70,7 @@ class AllVars(Fix):
                             lon_bnds[-1][-1] == 360.:
                         lon_bnds[-1][-1] = 358.125
                         lon_coord.bounds = lon_bnds
-                        lon_coord.circular = _is_circular(lon_coord.points,
-                                                          360,
-                                                          lon_coord.bounds)
+                        lon_coord.circular = True
                     # ocean & seaice
                     if lon_coord.points[0] == -0.9375:
                         lon_dim = cube.coord_dims('longitude')[0]
