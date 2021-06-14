@@ -693,7 +693,12 @@ class CMORCheck():
         """Check requested values."""
         if coord_info.requested:
             try:
-                cmor_points = [float(val) for val in coord_info.requested]
+                cmor_points = np.array(
+                    [float(val) for val in coord_info.requested])
+                atol = 1e-7 * np.mean(coord.points)
+                if self.automatic_fixes and np.allclose(
+                        coord.points, cmor_points, rtol=1e-7, atol=atol):
+                    coord.points = cmor_points
             except ValueError:
                 cmor_points = coord_info.requested
             coord_points = list(coord.points)

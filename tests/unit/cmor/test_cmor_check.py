@@ -9,7 +9,7 @@ import iris.util
 import numpy as np
 from cf_units import Unit
 
-from esmvalcore.cmor.check import CMORCheck, CMORCheckError, CheckLevels
+from esmvalcore.cmor.check import CheckLevels, CMORCheck, CMORCheckError
 
 
 class VariableInfoMock:
@@ -588,6 +588,20 @@ class TestCMORCheck(unittest.TestCase):
         checker = CMORCheck(self.cube, self.var_info)
         checker.check_metadata()
         self.assertTrue(checker.has_warnings())
+
+    def test_almost_requested(self):
+        """Automatically fix tiny deviations from the requested values."""
+        coord = self.cube.coord('air_pressure')
+        values = np.array(coord.points)
+        values[0] += 1.e-7
+        values[-1] += 1.e-7
+        self._update_coordinate_values(self.cube, coord, values)
+        checker = CMORCheck(self.cube, self.var_info, automatic_fixes=True)
+        checker.check_metadata()
+        reference = np.array(
+            self.var_info.coordinates['air_pressure'].requested, dtype=float)
+        np.testing.assert_array_equal(
+            self.cube.coord('air_pressure').points, reference)
 
     def test_requested_str_values(self):
         """

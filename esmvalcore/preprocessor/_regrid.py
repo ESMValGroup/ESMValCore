@@ -652,7 +652,9 @@ def extract_levels(cube, levels, scheme, coordinate=None):
     levels : array
         One or more target levels for the vertical interpolation. Assumed
         to be in the same S.I. units of the source cube vertical dimension
-        coordinate.
+        coordinate. If the requested levels are sufficiently close to the
+        levels of the cube, cube slicing will take place instead of
+        interpolation.
     scheme : str
         The vertical interpolation scheme to use. Choose from
         'linear',
@@ -669,7 +671,9 @@ def extract_levels(cube, levels, scheme, coordinate=None):
 
     Returns
     -------
-    cube
+    iris.cube.Cube
+        A cube with the requested vertical levels.
+
 
     See Also
     --------
@@ -710,10 +714,15 @@ def extract_levels(cube, levels, scheme, coordinate=None):
         src_levels = cube.coord(axis='z', dim_coords=True)
 
     if (src_levels.shape == levels.shape
-            and np.allclose(src_levels.points, levels)):
+            and np.allclose(src_levels.points,
+                            levels,
+                            rtol=1e-7,
+                            atol=1e-7 * np.mean(src_levels.points))):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
         result = cube
+        # Set the levels to the requested values
+        src_levels.points = levels
     elif len(src_levels.shape) == 1 and \
             set(levels).issubset(set(src_levels.points)):
         # If all target levels exist in the source cube, simply extract them.
