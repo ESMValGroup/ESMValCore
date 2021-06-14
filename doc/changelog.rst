@@ -38,9 +38,6 @@ Deprecations
 Documentation
 ~~~~~~~~~~~~~
 
--  Change the order of the publication steps (`#984 <https://github.com/ESMValGroup/ESMValCore/pull/984>`__) `Javier Vegas-Regidor <https://github.com/jvegasbsc>`__
--  Add instructions how to use esmvaltool from HPC central installations (`#841 <https://github.com/ESMValGroup/ESMValCore/pull/841>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
--  Final changelog for 2.2.0 (`#996 <https://github.com/ESMValGroup/ESMValCore/pull/996>`__) `Javier Vegas-Regidor <https://github.com/jvegasbsc>`__
 -  Fix documentation build (`#1006 <https://github.com/ESMValGroup/ESMValCore/pull/1006>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add labels required for linking from ESMValTool docs (`#1038 <https://github.com/ESMValGroup/ESMValCore/pull/1038>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Update contribution guidelines (`#1047 <https://github.com/ESMValGroup/ESMValCore/pull/1047>`__) `Bouwe Andela <https://github.com/bouweandela>`__
@@ -51,7 +48,6 @@ Documentation
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
 
--  Fixes for AWI-ESM-1-1-LR (CMIP6, piControl) (`#911 <https://github.com/ESMValGroup/ESMValCore/pull/911>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 -  Added fixes for various CMIP5 datasets, variable cl (3-dim cloud fraction) (`#1017 <https://github.com/ESMValGroup/ESMValCore/pull/1017>`__) `Axel Lauer <https://github.com/axel-lauer>`__
 -  Added fixes for hybrid level coordinates of CESM2 models (`#882 <https://github.com/ESMValGroup/ESMValCore/pull/882>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Extending LWP fix for CMIP6 models (`#1049 <https://github.com/ESMValGroup/ESMValCore/pull/1049>`__) `Axel Lauer <https://github.com/axel-lauer>`__
