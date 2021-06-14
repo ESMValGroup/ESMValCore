@@ -77,8 +77,8 @@ test:
     - r-yaml
     - ncl
   commands:
-    - pytest -n 2 -m "not sequential" --ignore=run_test.py
-    - pytest -n 0 -m "sequential" --ignore=run_test.py
+    - pytest -n 2 -m "not mypy and not sequential" --ignore=run_test.py
+    - pytest -n 0 -m "not mypy and sequential" --ignore=run_test.py
     - esmvaltool -- --help
     - esmvaltool version
   imports:
