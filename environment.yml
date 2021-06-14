@@ -10,6 +10,6 @@ dependencies:
   - esmpy
   - iris>=3.0.1
   - graphviz
-  - python=3.9  # We also support Python 3.7 and 3.8
+  - python>=3.6
   - python-stratify
   - scipy<1.6  # until ESMValGroup/ESMValCore/issues/927 gets resolved
