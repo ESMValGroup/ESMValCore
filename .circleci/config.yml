@@ -47,6 +47,7 @@ jobs:
       - coverage-reporter/send_report:
           coverage-reports: 'test-reports/coverage.xml'
           project-token: $CODACY_PROJECT_TOKEN
+          skip: true  # skip if project-token is not defined (i.e. on a fork)
 
   install:
     # Test installation
@@ -63,6 +64,8 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             set -x
             mkdir /logs
+            # Pin Python version for faster environment solve
+            echo "  - python=3.9" >> environment.yml
             # Add additional requirements for running all tests
             echo "
               - r-base
@@ -134,6 +137,8 @@ jobs:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
+            # Pin Python version for faster environment solve
+            echo "  - python=3.9" >> environment.yml
             # Add additional requirements for running all tests
             echo "
               - r-base
