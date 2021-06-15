@@ -59,13 +59,13 @@ jobs:
           miniconda-version: "latest"
           channels: conda-forge
       - name: Set the correct osx lock file
+        shell: bash -l {0}
         if: ${{ matrix.os }} == 'macos-latest'
-        condalockfile: "conda-osx-64.lock"
-        # run: echo "::set-env name=condalockfile::conda-osx-64.lock"
+        run: echo "::set-env name=condalockfile::conda-osx-64.lock"
       - name: Set the correct linux lock file
+        shell: bash -l {0}
         if: ${{ matrix.os }} == 'ubuntu-latest'
-        condalockfile: conda-linux-64.lock
-        # run: echo "::set-env name=condalockfile::conda-linux-64.lock"
+        run: echo "::set-env name=condalockfile::conda-linux-64.lock"
       - shell: bash -l {0}
         run: mkdir -p source_install_linux_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
