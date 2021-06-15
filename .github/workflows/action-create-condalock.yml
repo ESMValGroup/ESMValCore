@@ -60,12 +60,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
           channels: conda-forge
-      - name: Check if osx
-        shell: bash -l {0}
-        if: ${{ matrix.os }} == 'macos-latest'
-        run: echo "Resetting the env variable condalockfile to conda-osx-64.lock"
-        env:
-          condalockfile: conda-osx-64.lock
       - shell: bash -l {0}
         run: mkdir -p source_install_linux_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
@@ -75,6 +69,9 @@ jobs:
       - shell: bash -l {0}
         run: python -V 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
+        if: ${{ matrix.os }} == 'macos-latest'
+        env:
+          condalockfile: conda-osx-64.lock
         run: conda create --name esmvaltool-fromlock --file $condalockfile
       - shell: bash -l {0}
         run: conda install pip
