@@ -49,8 +49,6 @@ jobs:
         os: ['ubuntu-latest', 'macos-latest']
         python-version: ["3.6", "3.7", "3.8", "3.9"]
     runs-on: ${{ matrix.os }}
-    # env:
-    #   condalockfile: conda-linux-64.lock
     needs: create-lock-file
     steps:
       - uses: actions/checkout@v2
@@ -73,7 +71,6 @@ jobs:
         run: |
           echo ${{ matrix.os }}
           conda create --name esmvaltool-fromlock --file conda-osx-64.lock
-      - shell: bash -l {0}
         if: ${{ matrix.os }} == 'ubuntu-latest'
         run: |
           echo ${{ matrix.os }}
