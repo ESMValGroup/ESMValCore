@@ -1,5 +1,12 @@
 """Fixes for cesm2-waccm-fv2."""
 from iris.cube import CubeList
+"""Fixes for CESM2-WACCM-FV2 model."""
+from .cesm2 import Tas as BaseTas
+from .cesm2 import Fgco2 as BaseFgco2
+from .cesm2_waccm import Cl as BaseCl
+from .cesm2_waccm import Cli as BaseCli
+from .cesm2_waccm import Clw as BaseClw
+from ..common import SiconcFixScalarCoord
 
 from ..fix import Fix
 from ..shared import fix_ocean_depth_coord
@@ -60,3 +67,11 @@ class Omon(Fix):
 
                 fix_ocean_depth_coord(cube)
         return cubes
+
+Fgco2 = BaseFgco2
+
+
+Siconc = SiconcFixScalarCoord
+
+
+Tas = BaseTas

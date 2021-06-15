@@ -1,10 +1,13 @@
 """Fixes for CESM2-FV2 model."""
 from .cesm2 import Cl as BaseCl
+from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Tas as BaseTas
 from ..fix import Fix
 from ..shared import fix_ocean_depth_coord
 import numpy as np
 import cf_units
+from ..common import SiconcFixScalarCoord
+
 
 Cl = BaseCl
 
@@ -13,6 +16,12 @@ Cli = Cl
 
 
 Clw = Cl
+
+
+Fgco2 = BaseFgco2
+
+
+Siconc = SiconcFixScalarCoord
 
 
 Tas = BaseTas

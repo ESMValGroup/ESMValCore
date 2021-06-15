@@ -45,11 +45,11 @@ By far the easiest way to install these dependencies is to use conda_.
 For a minimal conda installation (recommended) go to https://conda.io/miniconda.html.
 
 After installing Conda, download
-`the file with the list of dependencies <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/master/environment.yml>`_:
+`the file with the list of dependencies <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/environment.yml>`_:
 
 .. code-block:: bash
 
-    wget https://raw.githubusercontent.com/ESMValGroup/ESMValCore/master/environment.yml
+    wget https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/environment.yml
 
 and install these dependencies into a new conda environment with the command
 
@@ -84,7 +84,7 @@ You can get the latest release with
 
    docker pull esmvalgroup/esmvalcore:stable
 
-If you want to use the current master branch, use
+If you want to use the current main branch, use
 
 .. code-block:: bash
 
@@ -203,5 +203,8 @@ You will find the tool available on HPC clusters and there will be no need to in
 yourself if you are just running diagnostics:
 
  - CEDA-JASMIN: `esmvaltool` is available on the scientific compute nodes (`sciX.jasmin.ac.uk` where
-   `X = 1, 2,`3, 4, 5`) after login and module loading via `module load esmvaltool`; see the helper page at
+   `X = 1, 2, 3, 4, 5`) after login and module loading via `module load esmvaltool`; see the helper page at
    `CEDA <https://help.jasmin.ac.uk/article/4955-community-software-esmvaltool>`__ ;
+ - DKRZ-Mistral: `esmvaltool` is available on login nodes (`mistral.dkrz.de`) and pre- and post-processing
+   nodes (`mistralpp.dkrz.de`) after login and module loading via `module load esmvaltool`; the command
+   `module help esmvaltool` provides some information about the module.

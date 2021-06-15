@@ -48,3 +48,4 @@ uo = OceanFixGrid
 #                    fix_ocean_depth_coord(cube)
 #        return cubes
 
+Sos = OceanFixGrid
