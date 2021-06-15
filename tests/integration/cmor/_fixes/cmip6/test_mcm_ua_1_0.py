@@ -177,7 +177,7 @@ def test_allvars_fix_lon_bounds(cubes_bounds):
             pass
         else:
             assert lon_coord.bounds[-1][-1] == 358.125
-            assert lon_coord.circular is True
+            assert lon_coord.circular
 
 
 def test_tas_fix_metadata(cubes):
