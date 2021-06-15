@@ -64,6 +64,8 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             set -x
             mkdir /logs
+            # Pin Python version for faster environment solve
+            echo "  - python=3.9" >> environment.yml
             # Add additional requirements for running all tests
             echo "
               - r-base
@@ -135,6 +137,8 @@ jobs:
           command: |
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
+            # Pin Python version for faster environment solve
+            echo "  - python=3.9" >> environment.yml
             # Add additional requirements for running all tests
             echo "
               - r-base
