@@ -219,7 +219,7 @@ To build a conda lock file install the `conda-lock` package first:
 
    conda install -c conda-forge conda-lock
 
- then run
+then run
 
 .. code-block:: bash
 
