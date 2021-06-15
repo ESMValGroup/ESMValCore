@@ -48,7 +48,6 @@ jobs:
       matrix:
         os: ['ubuntu-latest', 'macos-latest']
         python-version: ["3.6", "3.7", "3.8", "3.9"]
-        os-short: {'ubuntu-latest': 'linux-64', 'macos-latest': 'osx-64'}
     runs-on: ${{ matrix.os }}
     needs: create-lock-file
     steps:
@@ -68,7 +67,10 @@ jobs:
       - shell: bash -l {0}
         run: python -V 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
-        run: conda create --name esmvaltool-fromlock --file conda-${{ matrix.os-short[${{ matrix.os }}] }}.lock
+        if: ${{ matrix.os }} == 'ubuntu-latest'
+          run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
+        if: ${{ matrix.os }} == 'macos-latest'
+          run: conda create --name esmvaltool-fromlock --file conda-osx-64.lock
       - shell: bash -l {0}
         run: conda install pip
       - shell: bash -l {0}
