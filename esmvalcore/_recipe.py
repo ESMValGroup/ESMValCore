@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import warnings
+import isodate
 from copy import deepcopy
 from pprint import pformat
 
@@ -287,7 +288,7 @@ def _get_default_settings(variable, config_user, derive=False):
             'end_year': variable['end_year'],
         }
 
-    if 'timespan' in variable and variable['frequency'] != 'fx':
+    if 'timerange' in variable and variable['frequency'] != 'fx':
         settings['clip_start_end_period'] = {
             'start_year': None,
             'end_year': None,
@@ -649,52 +650,46 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
+def _get_years_from_duration(reference_year, duration, sign, available_year):
+    delta = sign * int(isodate.parse_duration(duration).years)
+    try:
+        year1 = isodate.parse_date(reference_year).year
+    except ValueError:
+        year1 = available_year
+    year2 = year1 + delta
+
+    return year1, year2
+
+
 def _update_select_years(variable, settings, config_user):
-    if 'timespan' not in variable:
+    if 'timerange' not in variable:
         return
 
-    selection = variable['timespan']
-    check.valid_time_selection(variable, selection)
+    timerange = variable['timerange']
+    check.valid_time_selection(variable, timerange)
 
     (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                       config_user['drs'])
     intervals = [get_start_end_year(name) for name in files]
-
+    
     step = 'clip_start_end_year'
-    if selection == '*':
+    duration = re.findall(r'P\d+Y', timerange)
+    if timerange != '*':
+        timerange = timerange.split('/')
+        if timerange[1] in duration:
+            end_year, start_year = _get_years_from_duration(
+                timerange[0], timerange[1], 1, max(intervals)[1])
+        elif timerange[0] in duration:
+            start_year, end_year = _get_years_from_duration(
+                timerange[1], timerange[0], -1, min(intervals[0]))
+        else:
+            start_year = isodate.parse_date(timerange[0]).year
+            end_year = isodate.parse_date(timerange[1]).year
+        settings['clip_start_end_year']['timerange'] = timerange
+    else:
         start_year = min(intervals)[0]
         end_year = max(intervals)[1]
-    if re.match(r'^[0-9]{4}{12}/[0-9]{4}{12}$', selection):
-        start_period = selection.split('/')[0][:4]
-        end_period = selection.split('/')[1][:4]
-    if re.match(r'^[0-9]{6}/[0-9]{6}$', selection):
-        start_year = selection.split('/')[0][:4]
-        start_month = selection.split('/')[0][4:6]
-        end_year = selection.split('/')[1][:4]
-        end_month = selection.split('/')[1][4:6]       
-    if re.match(r'^[0-9]{4,12}/P\d+Y$', selection):
-        start_year = selection.split('/')[0][:4]
-        delta = re.findall(r'\d+', selection.split('/')[1])
-        end_year = int(start_year) + delta
-    if re.match(r'^[0-9]{4,12}/P\d+M$', selection):
-        start_year = selection.split('/')[0][:4]
-        months = re.findall(r'\d+', selection.split('/')[1])
-        end_year = months % 12
-        # to do: count the non int residue in months
-    if re.match(r'^P\d+Y$', selection):
-        delta = re.findall(r'-?\d+', selection)
-        if delta > 0:
-            start_year = min(intervals)[0]
-            end_year = start_year + delta
-        else:
-            end_year = max(intervals)[1]
-            start_year = end_year + delta
-    # To do month option
-    step = 'clip_start_end_year'
-    if mode == 'all':
         settings.pop(step, None)
-    else:
-        settings[step]['select'] = (mode, int(time_range))
 
     variable.update({'start_year': start_year})
     variable.update({'end_year': end_year})
@@ -1171,7 +1166,7 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
-            if 'timespan' in variable:
+            if 'timerange' in variable:
                 required_keys.discard('start_year')
                 required_keys.discard('end_year')
             if 'sub_experiment' in variable:
@@ -1411,6 +1406,7 @@ class Recipe:
                         config_user=self._cfg,
                         task_name=task_name,
                     )
+                    # a aqui fer l'update?
                 except RecipeError as ex:
                     failed_tasks.append(ex)
                 else:

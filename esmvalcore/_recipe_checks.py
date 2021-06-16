@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import subprocess
+import isodate
 from shutil import which
 
 import yamale
@@ -206,23 +207,27 @@ def valid_multimodel_statistic(statistic):
             f"or patterns matching {valid_patterns}. Got '{statistic}.'")
 
 
-def valid_time_selection(variable, selection):
-    """Check that `select_years` tag is well defined."""
-    valid_names = ["*"]
-    valid_patterns = [
-        r'^[0-9]{4,6}/[0-9]{4,6}$',
-        r'^[0-9]{4,6}/P\d+[YM]$',
-        r'^P\d+[YM]']
-       # r"^[0-9]{4}\[0-9]{4}$",
-        #r"^(\d+\/?P\d?+Y)$",
-        #r"^(\d+\/?P\d?+M)$",
-        #r"P[0-9]{4}Y",
-        #r"P[0-9]{4}M"]
-    #valid_patterns = [r"^first [2-9][0-9]*$", r"^last [2-9][0-9]*$"]
-    if not (selection in valid_names
-            or re.match(r'|'.join(valid_patterns), selection)):
-        raise RecipeError(
-            "Invalid value encountered for `select_years` in variable "
-            f"{variable['short_name']} of dataset {variable['dataset']}. "
-            f"Valid values are {valid_names} or patterns matching "
-            f"{valid_patterns}. Got '{selection}.'")
+def valid_time_selection(variable, timerange):
+    """Check that `timerange` tag is well defined."""
+    if timerange != '*':
+        timerange = timerange.split('/')
+        if len(timerange) != 2:
+            raise RecipeError(
+                "Invalid value encountered for `timerange`. "
+                "Valid values must be separated by `/`. "
+                f"Got {timerange} instead.")
+        for date in timerange:
+            try:
+                isodate.parse_date(date)
+            except ValueError:
+                try:
+                    isodate.parse_duration(date)
+                except ValueError:
+                    if not date in ['*', '']:
+                        raise RecipeError(
+                            "Invalid value encountered for `timerange`. "
+                            "Valid must follow ISO 8601 standard for dates "
+                            "and duration periods, or be set to '*' to load "
+                            f"available years. Got {timerange} instead.")
+                     
+                
