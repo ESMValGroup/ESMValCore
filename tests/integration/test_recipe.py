@@ -829,19 +829,47 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
         assert variable[key] == reference[key]
   
 
-  
-def test_recipe_full_selection(tmp_path, patched_datafinder, config_user):
-    """Test recipe with full selection mode."""
-    content = dedent("""
+TEST_ISO_TIMERANGE = [
+    ('*', '1990-2019'),
+    ('1990/1992', '1990-1992'),
+    ('19900101/19920101', '1990-1992'),
+    ('19900101T12H00M00S/19920101T12H00M00', '1990-1992'),
+    ('1990/', '1990-2019'),
+    ('19900101/', '1990-2019'),
+    ('19900101T12H00M00S/', '1990-2019'),
+    ('1990/*', '1990-2019'),
+    ('19900101/*', '1990-2019'),
+    ('19900101T12H00M00S/*', '1990-2019'),
+    ('*/1992', '1990-1992'),
+    ('*/19920101', '1990-1992'),
+    ('*/19920101T12H00M00S', '1990-1992'),
+    ('1990/P2Y', '1990-1992'),
+    ('19900101/P2Y2M1D', '1990-1992'),
+    ('19900101TH00M00S/P2Y2M1DT12H00M00S', '1990-1992'),
+    ('P2Y/1992', '1990-1992'),
+    ('P2Y2M1D/19920101', '1990-1992'),
+    ('P2Y2M1D/19920101T12H00M00S', '1990-1992'),
+    ('P2Y/*', '2017-2019'),
+    ('P2Y2M1D/*', '2017-2019'),
+    ('P2Y21DT12H00M00S/*', '2017-2019'),
+    ('*/P2Y', '1990-1992'),
+    ('*/P2Y2M1D', '1990-1992'),
+    ('*/P2Y21DT12H00M00S', '1990-1992'),
+]
+
+@pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
+def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user, input_time, output_time):
+    """Test recipe with timerange tag."""
+    content = dedent(f"""
         diagnostics:
           test:
             additional_datasets:
               - dataset: HadGEM3-GC31-LL
                 project: CMIP6
                 exp: historical
-                `select_years`: all
                 ensemble: r2i1p1f1
                 grid: gn
+                timerange: 
             variables:
               pr:
                 mip: 3hr
@@ -850,38 +878,20 @@ def test_recipe_full_selection(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
+    # Add invalid timerange
+    recipe = yaml.safe_load(content)
+    recipe['diagnostics']['test']['additional_datasets'][0]['timerange'] = input_time
+    content = yaml.safe_dump(recipe)
+    
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
     filename = variable.pop('filename').split('/')[-1]
     assert (filename ==
-            'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_1990-2019.nc')
+            f'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_{output_time}.nc')
     fx_variable = recipe.diagnostics['test']['preprocessor_output']['areacella'][0]
     fx_filename = fx_variable.pop('filename').split('/')[-1]
     assert (fx_filename ==
             'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella.nc')
-    reference = {
-        'activity': 'CMIP',
-        'dataset': 'HadGEM3-GC31-LL',
-        'diagnostic': 'test',
-        'end_year': 2019,
-        'ensemble': 'r2i1p1f1',
-        'exp': 'historical',
-        'frequency': '3hr',
-        'grid': 'gn',
-        'institute': ['MOHC', 'NERC'],
-        'long_name': 'Precipitation',
-        'mip': '3hr',
-        'modeling_realm': ['atmos'],
-        'preprocessor': 'default',
-        'project': 'CMIP6',
-        'selection': 'full',
-        'short_name': 'pr',
-        'standard_name': 'precipitation_flux',
-        'start_year': 1990,
-        'units': 'kg m-2 s-1',
-    }
-    for key in reference:
-        assert variable[key] == reference[key]
 
 
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,
