@@ -157,19 +157,20 @@ class Fix:
             extra_facets = {}
 
         fixes = []
-        try:
-            fixes_module = importlib.import_module(
-                'esmvalcore.cmor._fixes.{0}.{1}'.format(project, dataset))
+        for package in ('project', dataset):
+            try:
+                fixes_module = importlib.import_module(
+                    f'esmvalcore.cmor._fixes.{project}.{package}')
 
-            classes = inspect.getmembers(fixes_module, inspect.isclass)
-            classes = dict((name.lower(), value) for name, value in classes)
-            for fix_name in (short_name, mip.lower(), 'allvars'):
-                try:
-                    fixes.append(classes[fix_name](vardef, extra_facets))
-                except KeyError:
-                    pass
-        except ImportError:
-            pass
+                classes = inspect.getmembers(fixes_module, inspect.isclass)
+                classes = dict((name.lower(), val) for name, val in classes)
+                for fix_name in (short_name, 'allvars'):
+                    try:
+                        fixes.append(classes[fix_name](vardef))
+                    except KeyError:
+                        pass
+            except ImportError:
+                pass
         return fixes
 
     @staticmethod
