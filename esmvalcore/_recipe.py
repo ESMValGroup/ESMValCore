@@ -7,6 +7,8 @@ import warnings
 import isodate
 from copy import deepcopy
 from pprint import pformat
+from isodate.isodates import parse_date
+from isodate.isoduration import parse_duration
 
 import yaml
 from netCDF4 import Dataset
@@ -289,11 +291,10 @@ def _get_default_settings(variable, config_user, derive=False):
         }
 
     if 'timerange' in variable and variable['frequency'] != 'fx':
-        settings['clip_start_end_period'] = {
+        settings['clip_start_end_year'] = {
             'start_year': None,
             'end_year': None,
-            'start_month': None,
-            'end_month': None,
+            'timerange': None
         }
 
     if derive:
@@ -650,15 +651,24 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
-def _get_years_from_duration(reference_year, duration, sign, available_year):
-    delta = sign * int(isodate.parse_duration(duration).years)
+def _get_range_years(timerange, available):
+    years = {
+        'date': None,
+        'duration': None
+    }
     try:
-        year1 = isodate.parse_date(reference_year).year
+        isodate.parse_date(timerange)
     except ValueError:
-        year1 = available_year
-    year2 = year1 + delta
-
-    return year1, year2
+        try:
+            isodate.parse_duration(timerange)
+        except ValueError:
+            years['date'] = available
+        else:
+            years['duration'] = int(isodate.parse_duration(timerange).years)
+    else:
+        years['date'] = isodate.parse_date(timerange).year
+    
+    return years
 
 
 def _update_select_years(variable, settings, config_user):
@@ -673,19 +683,21 @@ def _update_select_years(variable, settings, config_user):
     intervals = [get_start_end_year(name) for name in files]
     
     step = 'clip_start_end_year'
-    duration = re.findall(r'P\d+Y', timerange)
     if timerange != '*':
-        timerange = timerange.split('/')
-        if timerange[1] in duration:
-            end_year, start_year = _get_years_from_duration(
-                timerange[0], timerange[1], 1, max(intervals)[1])
-        elif timerange[0] in duration:
-            start_year, end_year = _get_years_from_duration(
-                timerange[1], timerange[0], -1, min(intervals[0]))
+        start_range = timerange.split('/')[0]
+        start_years = _get_range_years(start_range, min(intervals)[0])
+        end_range = timerange.split('/')[1]
+        end_years = _get_range_years(end_range, max(intervals)[1])
+        if start_years.get('duration'):
+            end_year = end_years.get('date')
+            start_year = end_year - start_years.get('duration')
+        elif end_years.get('duration'):
+            start_year = start_years.get('date')
+            end_year = start_year + end_years.get('duration')
         else:
-            start_year = isodate.parse_date(timerange[0]).year
-            end_year = isodate.parse_date(timerange[1]).year
-        settings['clip_start_end_year']['timerange'] = timerange
+            start_year = start_years.get('date')
+            end_year = end_years.get('date')
+        settings[step]['timerange'] = timerange
     else:
         start_year = min(intervals)[0]
         end_year = max(intervals)[1]
@@ -1157,6 +1169,8 @@ class Recipe:
         }
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
+        else:
+            variable.pop('timerange', None)
         for variable in variables:
             if 'institute' not in variable:
                 institute = get_institutes(variable)
