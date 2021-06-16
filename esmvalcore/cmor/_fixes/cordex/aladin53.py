@@ -55,3 +55,23 @@ class AllVars(Fix):
                     logging.debug('Fixed non monotonic %s', c)
 
         return cubes
+
+
+class tas(Fix):
+    """Fixes for tas."""
+    def fix_metadata(self, cube):
+        """
+        Fixes incorrect units
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Input cube.
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        cube.units = "celsius"
+        return cube
