@@ -157,7 +157,7 @@ class Fix:
             extra_facets = {}
 
         fixes = []
-        for package in ('project', dataset):
+        for package in (dataset, 'project'):
             try:
                 fixes_module = importlib.import_module(
                     f'esmvalcore.cmor._fixes.{project}.{package}')
