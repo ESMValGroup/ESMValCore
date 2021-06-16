@@ -340,7 +340,8 @@ def _add_fxvar_keys(fx_info, variable):
     fx_variable['variable_group'] = fx_info['short_name']
 
     # add special ensemble for CMIP5 only
-    if fx_variable['project'] == 'CMIP5':
+    if (fx_variable['project'] == 'CMIP5' and
+            fx_variable.get('ensemble') != '*'):
         fx_variable['ensemble'] = 'r0i0p0'
 
     # add missing cmor info
@@ -750,6 +751,11 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
                 else:
                     missing_vars.add(ex.message)
                 continue
+
+        # Update output filename in case wildcards have been resolved
+        if '*' in variable['filename']:
+            variable['filename'] = get_output_file(variable,
+                                                   config_user['preproc_dir'])
         product = PreprocessorFile(
             attributes=variable,
             settings=settings,
