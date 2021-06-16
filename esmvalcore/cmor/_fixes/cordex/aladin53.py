@@ -54,8 +54,4 @@ class AllVars(Fix):
                     iris.util.promote_aux_coord_to_dim_coord(cube, c)
                     logging.debug('Fixed non monotonic %s', c)
 
-            # rename coords to 'grid_latitude' and 'grid_longitude'
-            cube.coord('projection_x_coordinate').rename('grid_longitude')
-            cube.coord('projection_y_coordinate').rename('grid_latitude')
-
         return cubes
