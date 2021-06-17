@@ -1024,6 +1024,7 @@ class Recipe:
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
         self._raw_recipe = raw_recipe
+        self._updated_recipe = None
         self._filename = os.path.basename(recipe_file)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
@@ -1394,7 +1395,28 @@ class Recipe:
                                      ancestor_ids)
                         ancestors.extend(tasks[a] for a in ancestor_ids)
                     tasks[task_id].ancestors = ancestors
-
+    
+    def _fill_wildcards(self, variable_group, preprocessor_output):
+        # To be generalised for other tags
+        var = preprocessor_output[variable_group][0]
+        index = var['recipe_dataset_index']
+        timerange = var['timerange']
+        if timerange == '*':
+            start_year = var['start_year']
+            end_year = var['end_year']
+            self._updated_recipe = deepcopy(self._raw_recipe)
+            self._updated_recipe['datasets'][index]['timerange'] = f'{start_year}/{end_year}'
+        else:
+            timerange = timerange.split('/')
+            if timerange[0] == '*':
+                start_year = var['start_year']
+                self._updated_recipe = deepcopy(self._raw_recipe)
+                self._updated_recipe['datasets'][index]['timerange'] = f'{start_year}/{timerange[1]}'
+            if timerange[1] == '*':
+                end_year = var['end_year']
+                self._updated_recipe = deepcopy(self._raw_recipe)
+                self._updated_recipe['datasets'][index]['timerange'] = f'{timerange[0]}/{end_year}'
+    
     def initialize_tasks(self):
         """Define tasks in recipe."""
         logger.info("Creating tasks from recipe")
@@ -1420,10 +1442,10 @@ class Recipe:
                         config_user=self._cfg,
                         task_name=task_name,
                     )
-                    # a aqui fer l'update?
                 except RecipeError as ex:
                     failed_tasks.append(ex)
                 else:
+                    self._fill_wildcards(variable_group, diagnostic['preprocessor_output'])
                     for task0 in task.flatten():
                         task0.priority = priority
                     tasks.add(task)
@@ -1506,6 +1528,16 @@ class Recipe:
             output['task_output'][task.name] = task.get_product_attributes()
 
         return output
+    
+    def write_filled_recipe(self):
+        if self._updated_recipe:
+            run_dir = self._cfg['run_dir']
+            filename = self._filename.split('.')
+            filename[0] = filename[0] + '_filled'
+            new_filename = '.'.join(filename)
+            file = open(os.path.join(run_dir, new_filename), 'w')
+            yaml.safe_dump(self._updated_recipe, file, sort_keys=False)
+            file.close()
 
     def write_html_summary(self):
         """Write summary html file to the output dir."""
