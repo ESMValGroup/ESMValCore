@@ -1,0 +1,44 @@
+ERA5:
+  E1hr:
+    pr:
+      source_var_name: tp
+      frequency: 1hr
+      cds_var_name: total_precipitation
+      era5cli_frequency: hourly
+    tas:
+      source_var_name: t2m
+      frequency: 1hrPt
+      cds_var_name: 2m_temperature
+      era5cli_frequency: hourly
+    tasmax:
+      frequency: 1hrPt
+      source_var_name: mx2t
+      cds_var_name: maximum_2m_temperature_since_previous_post_processing
+      era5cli_frequency: hourly
+    tasmin:
+      source_var_name: mn2t
+      frequency: 1hrPt
+      cds_var_name: minimum_2m_temperature_since_previous_post_processing
+      era5cli_frequency: hourly
+
+  Amon:
+    pr:
+      source_var_name: tp
+      frequency: mon
+      cds_var_name: total_precipitation
+      era5cli_frequency: hourly
+    tas:
+      source_var_name: t2m
+      frequency: mon
+      cds_var_name: 2m_temperature
+      era5cli_frequency: monthly
+    tasmax:
+      source_var_name: mx2t
+      frequency: mon
+      cds_var_name: maximum_2m_temperature_since_previous_post_processing
+      era5cli_frequency: monthly
+    tasmin:
+      source_var_name: mn2t
+      frequency: mon
+      cds_var_name: minimum_2m_temperature_since_previous_post_processing
+      era5cli_frequency: monthly

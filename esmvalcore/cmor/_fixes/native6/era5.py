@@ -76,7 +76,7 @@ class Clt(Fix):
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
             cube.units = '%'
-            cube.data = cube.core_data()*100.
+            cube.data = cube.core_data() * 100.
 
         return cubes
 
@@ -183,7 +183,6 @@ class Rlds(Fix):
 
 class Rlns(Fix):
     """Fixes for Rlns."""
-
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -196,7 +195,6 @@ class Rlns(Fix):
 
 class Rlus(Fix):
     """Fixes for Rlus."""
-
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -232,7 +230,6 @@ class Rsds(Fix):
 
 class Rsns(Fix):
     """Fixes for Rsns."""
-
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -245,7 +242,6 @@ class Rsns(Fix):
 
 class Rsus(Fix):
     """Fixes for Rsus."""
-
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -369,7 +365,18 @@ class AllVars(Fix):
         """Fix metadata."""
         fixed_cubes = iris.cube.CubeList()
         for cube in cubes:
-            cube.var_name = self.vardef.short_name
+            short_name = self.vardef.short_name
+            if not self.extra_facets.get('source_var_name'):
+                logger.warning("Unknown variable from ERA5 used, "
+                               "please carefully check results.")
+            else:
+                source_var_name = self.extra_facets['source_var_name']
+                if cube.var_name != source_var_name:
+                    raise ValueError(
+                        f"Expected variable name '{source_var_name}' in ERA5"
+                        f" input file for variable '{short_name}', but got"
+                        f" '{cube.var_name}'.")
+            cube.var_name = short_name
             if self.vardef.standard_name:
                 cube.standard_name = self.vardef.standard_name
             cube.long_name = self.vardef.long_name
