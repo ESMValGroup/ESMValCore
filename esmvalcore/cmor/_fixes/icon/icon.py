@@ -9,6 +9,7 @@ import iris
 import numpy as np
 
 from esmvalcore.iris_helpers import var_name_constraint
+
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
@@ -129,17 +130,14 @@ class AllVars(Fix):
         lat.long_name = "latitude"
         lon.long_name = "longitude"
 
-        # Add dimension name for cell index used to store the unstructured grid
+        # If grid is not unstructured, no further changes are necessary
         if cube.coord_dims(lat) != cube.coord_dims(lon):
-            raise ValueError(
-                f"Unexpected grid: 'latitude' and 'longitude' do not share "
-                f"dimensions in cube\n{cube}")
+            return
         horizontal_coord_dims = cube.coord_dims(lat)
         if len(horizontal_coord_dims) != 1:
-            raise ValueError(
-                f"Expected unstructured horizontal grid with single dimension "
-                f"for 'latitude' and 'longitude', got "
-                f"{len(horizontal_coord_dims):d}D 'latitude and 'longitude'")
+            return
+
+        # Add dimension name for cell index used to store the unstructured grid
         index_coord = iris.coords.DimCoord(
             np.arange(cube.shape[horizontal_coord_dims[0]]),
             var_name="i",
