@@ -381,3 +381,12 @@ class TestCustomInfo(unittest.TestCase):
         self.assertEqual(var.long_name,
                          'Near-Surface Air Temperature Uncertainty Range')
         self.assertEqual(var.units, 'K')
+
+    def test_get_variable_tasaga(self):
+        """Get tas variable."""
+        CustomInfo()
+        var = self.variables_info.get_variable('Amon', 'tasaga')
+        self.assertEqual(var.short_name, 'tasaga')
+        self.assertEqual(var.long_name,
+                         'Global-mean Near-Surface Air Temperature Anomaly')
+        self.assertEqual(var.units, 'K')

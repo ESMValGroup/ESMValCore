@@ -1,0 +1,5 @@
+---
+PROJECT1:
+  Amon:
+    tas: {source_var_name: "2t", cds_var_name: "2m_temperature"}
+    psl: {source_var_name: "msl", cds_var_name: "mean_sea_level_pressure"}

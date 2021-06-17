@@ -1,8 +1,11 @@
 """Functions dealing with config-user.yml / config-developer.yml."""
+import collections.abc
 import datetime
 import logging
 import os
+import sys
 import warnings
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
@@ -12,6 +15,46 @@ from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 logger = logging.getLogger(__name__)
 
 CFG = {}
+
+if sys.version_info[:2] >= (3, 9):
+    # pylint: disable=no-name-in-module
+    from importlib.resources import files as importlib_files
+else:
+    from importlib_resources import files as importlib_files
+
+
+def _deep_update(dictionary, update):
+    for key, value in update.items():
+        if isinstance(value, collections.abc.Mapping):
+            dictionary[key] = _deep_update(dictionary.get(key, {}), value)
+        else:
+            dictionary[key] = value
+    return dictionary
+
+
+@lru_cache()
+def _load_extra_facets(project, extra_facets_dir):
+    config = {}
+    config_paths = [
+        importlib_files("esmvalcore._config") / "extra_facets",
+        Path.home() / ".esmvaltool" / "extra_facets",
+    ]
+    config_paths.extend([Path(p) for p in extra_facets_dir])
+    for config_path in config_paths:
+        config_file_paths = config_path.glob(f"{project.lower()}-*.yml")
+        for config_file_path in sorted(config_file_paths):
+            logger.debug("Loading extra facets from %s", config_file_path)
+            with config_file_path.open() as config_file:
+                config_piece = yaml.safe_load(config_file)
+            if config_piece:
+                _deep_update(config, config_piece)
+    return config
+
+
+def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
+    """Read configuration files with additional variable information."""
+    project_details = _load_extra_facets(project, extra_facets_dir)
+    return project_details.get(dataset, {}).get(mip, {}).get(short_name, {})
 
 
 def read_config_user_file(config_file, folder_name, options=None):
@@ -61,6 +104,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         'output_file_type': 'png',
         'output_dir': 'esmvaltool_output',
         'auxiliary_data_dir': 'auxiliary_data',
+        'extra_facets_dir': tuple(),
         'save_intermediary_cubes': False,
         'remove_preproc_dir': True,
         'max_parallel_tasks': None,
@@ -82,6 +126,12 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
+
+    if isinstance(cfg['extra_facets_dir'], str):
+        cfg['extra_facets_dir'] = (_normalize_path(cfg['extra_facets_dir']), )
+    else:
+        cfg['extra_facets_dir'] = tuple(
+            _normalize_path(p) for p in cfg['extra_facets_dir'])
 
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])

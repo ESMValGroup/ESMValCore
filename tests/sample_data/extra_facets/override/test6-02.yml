@@ -1,0 +1,6 @@
+---
+PROJECT1:
+  Amon:
+    vas:
+      source_var_name: "10v"
+      cds_var_name: "v-component_of_neutral_wind_at_10m"

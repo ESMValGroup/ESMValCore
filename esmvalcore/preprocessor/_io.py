@@ -117,8 +117,8 @@ def load(file, callback=None):
             category=UserWarning,
             module='iris',
         )
-
         raw_cubes = iris.load_raw(file, callback=callback)
+    logger.debug("Done with loading %s", file)
     if not raw_cubes:
         raise Exception('Can not load cubes from {0}'.format(file))
     for cube in raw_cubes:
@@ -173,6 +173,8 @@ def _get_concatenation_error(cubes):
 
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
+    if not cubes:
+        return cubes
     if len(cubes) == 1:
         return cubes[0]
 
@@ -227,7 +229,15 @@ def save(cubes, filename, optimize_access='', compress=False, alias='',
     str
         filename
 
+    Raises
+    ------
+    ValueError
+        cubes is empty.
+
     """
+    if not cubes:
+        raise ValueError(f"Cannot save empty cubes '{cubes}'")
+
     # Rename some arguments
     kwargs['target'] = filename
     kwargs['zlib'] = compress

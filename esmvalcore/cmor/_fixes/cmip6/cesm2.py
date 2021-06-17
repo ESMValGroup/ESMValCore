@@ -4,6 +4,7 @@ from shutil import copyfile
 import numpy as np
 from netCDF4 import Dataset
 
+from ..common import SiconcFixScalarCoord
 from ..fix import Fix
 from ..shared import (
     add_scalar_depth_coord,
@@ -12,7 +13,6 @@ from ..shared import (
     add_scalar_typesea_coord,
     fix_ocean_depth_coord,
 )
-from .gfdl_esm4 import Siconc as Addtypesi
 
 
 class Cl(Fix):
@@ -215,6 +215,9 @@ class Sftof(Fix):
         return cubes
 
 
+Siconc = SiconcFixScalarCoord
+
+
 class Tos(Fix):
     """Fixes for tos."""
 
@@ -241,9 +244,6 @@ class Tos(Fix):
                 cube.coord('time').points = \
                     np.round(cube.coord('time').points, 1)
         return cubes
-
-
-Siconc = Addtypesi
 
 
 class Omon(Fix):

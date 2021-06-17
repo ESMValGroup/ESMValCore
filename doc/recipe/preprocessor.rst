@@ -180,8 +180,15 @@ To get an overview on data fixes and how to implement new ones, please go to
 
 Fx variables as cell measures or ancillary variables
 ====================================================
-Preprocessor steps related to spatial statistics or masking may require
-the use of ``fx_variables`` to be able to perform the computations.
+The following preprocessor may require the use of ``fx_variables`` 
+to be able to perform the computations:
+
+    - ``area_statistics``
+    - ``mask_landsea``
+    - ``mask_landseaice``
+    - ``volume_statistics``
+    - ``weighting_landsea_fraction``
+
 The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
 checks them against CMOR standards and adds them either as ``cell_measure``
 or ``ancillary_variable`` inside the cube data. This ensures that the
@@ -605,7 +612,9 @@ inter-comparison or comparison with observational datasets). Regridding is
 conceptually a very similar process to interpolation (in fact, the regridder
 engine uses interpolation and extrapolation, with various schemes). The primary
 difference is that interpolation is based on sample data points, while
-regridding is based on the horizontal grid of another cube (the reference grid).
+regridding is based on the horizontal grid of another cube (the reference
+grid). If the horizontal grids of a cube and its reference grid are sufficiently
+the same, regridding is automatically and silently skipped for performance reasons.
 
 The underlying regridding mechanism in ESMValTool uses
 :obj:`iris.cube.Cube.regrid`
@@ -1256,9 +1265,9 @@ The area manipulation module contains the following preprocessor functions:
 ``extract_region``
 ------------------
 
-This function masks data outside a rectangular region requested. The boundaries
-of the region are provided as latitude and longitude coordinates in the
-arguments:
+This function returns a subset of the data on the rectangular region requested.
+The boundaries of the region are provided as latitude and longitude coordinates
+in the arguments:
 
 * ``start_longitude``
 * ``end_longitude``
@@ -1267,6 +1276,10 @@ arguments:
 
 Note that this function can only be used to extract a rectangular region. Use
 ``extract_shape`` to extract any other shaped region from a shapefile.
+
+If the grid is irregular, the returned region retains the original coordinates,
+but is cropped to a rectangular bounding box defined by the start/end
+coordinates. The deselected area inside the region is masked.
 
 See also :func:`esmvalcore.preprocessor.extract_region`.
 

@@ -8,7 +8,17 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.cesm2 import Cl, Cli, Clw, Omon, Tas, Tos
+from esmvalcore.cmor._fixes.cmip6.cesm2 import (
+    Cl,
+    Cli,
+    Clw,
+    Fgco2,
+    Omon,
+    Siconc,
+    Tas,
+    Tos,
+)
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -271,6 +281,18 @@ def test_get_thetao_fix():
     assert fix == [Omon(None)]
 
 
+def test_get_fgco2_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'fgco2')
+    assert fix == [Fgco2(None), Omon(None)]
+
+
+def test_get_siconc_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CESM2', 'SImon', 'siconc')
+    assert fix == [Siconc(None)]
+
+
 def test_tas_fix_metadata(tas_cubes):
     """Test ``fix_metadata`` for ``tas``."""
     for cube in tas_cubes:
@@ -327,3 +349,33 @@ def test_thetao_fix_metadata(thetao_cubes):
     # Check values of depth coordinate
     np.testing.assert_allclose(depth_coord.points, [5.0, 10.0])
     np.testing.assert_allclose(depth_coord.bounds, [[2.5, 7.5], [7.5, 12.5]])
+
+
+def test_fgco2_fix_metadata():
+    """Test ``fix_metadata`` for ``fgco2``."""
+    vardef = get_var_info('CMIP6', 'Omon', 'fgco2')
+    cubes = iris.cube.CubeList([
+        iris.cube.Cube(0.0, var_name='fgco2'),
+    ])
+    fix = Fgco2(vardef)
+    out_cubes = fix.fix_metadata(cubes)
+    assert out_cubes is cubes
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    # Check depth coordinate
+    depth_coord = out_cube.coord('depth')
+    assert depth_coord.standard_name == 'depth'
+    assert depth_coord.var_name == 'depth'
+    assert depth_coord.long_name == 'depth'
+    assert depth_coord.units == 'm'
+    assert depth_coord.attributes == {'positive': 'down'}
+
+    # Check values of depth coordinate
+    np.testing.assert_allclose(depth_coord.points, 0.0)
+    assert depth_coord.bounds is None
+
+
+def test_siconc_fix():
+    """Test fix for ``siconc``."""
+    assert Siconc is SiconcFixScalarCoord
