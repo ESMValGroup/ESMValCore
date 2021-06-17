@@ -59,7 +59,7 @@ class AllVars(Fix):
 
 class tas(Fix):
     """Fixes for tas."""
-    def fix_metadata(self, cube):
+    def fix_data(self, cube):
         """
         Fixes incorrect units
 
@@ -73,5 +73,30 @@ class tas(Fix):
         iris.cube.Cube
 
         """
-        cube.units = "celsius"
+        if np.max(cube.data) < 100:
+            cube.units = "celsius"
+        return cube
+
+
+class Sftlf(Fix):
+    """Fixes for sftlf."""
+
+    def fix_data(self, cube):
+        """
+        Fix data.
+
+        Fixes discrepancy between declared units and real units
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+
+        Returns
+        -------
+        iris.cube.Cube
+
+        """
+        metadata = cube.metadata
+        cube *= 100
+        cube.metadata = metadata
         return cube
