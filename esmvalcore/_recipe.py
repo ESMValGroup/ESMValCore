@@ -1400,22 +1400,24 @@ class Recipe:
         # To be generalised for other tags
         var = preprocessor_output[variable_group][0]
         index = var['recipe_dataset_index']
-        timerange = var['timerange']
-        if timerange == '*':
-            start_year = var['start_year']
-            end_year = var['end_year']
-            self._updated_recipe = deepcopy(self._raw_recipe)
-            self._updated_recipe['datasets'][index]['timerange'] = f'{start_year}/{end_year}'
-        else:
-            timerange = timerange.split('/')
-            if timerange[0] == '*':
+
+        timerange = var.get('timerange')
+        if timerange:
+            if timerange == '*':
                 start_year = var['start_year']
-                self._updated_recipe = deepcopy(self._raw_recipe)
-                self._updated_recipe['datasets'][index]['timerange'] = f'{start_year}/{timerange[1]}'
-            if timerange[1] == '*':
                 end_year = var['end_year']
                 self._updated_recipe = deepcopy(self._raw_recipe)
-                self._updated_recipe['datasets'][index]['timerange'] = f'{timerange[0]}/{end_year}'
+                self._updated_recipe['datasets'][index]['timerange'] = f'{start_year}/{end_year}'
+            else:
+                timerange = timerange.split('/')
+                if timerange[0] == '*':
+                    start_year = var['start_year']
+                    self._updated_recipe = deepcopy(self._raw_recipe)
+                    self._updated_recipe['datasets'][index]['timerange'] = f'{start_year}/{timerange[1]}'
+                if timerange[1] == '*':
+                    end_year = var['end_year']
+                    self._updated_recipe = deepcopy(self._raw_recipe)
+                    self._updated_recipe['datasets'][index]['timerange'] = f'{timerange[0]}/{end_year}'
     
     def initialize_tasks(self):
         """Define tasks in recipe."""
