@@ -451,10 +451,10 @@ def _get_bounds(geometries, ids=None):
     ]
     all_points = np.vstack(all_points)
 
-    lat_max, lon_max = all_points.max(axis=0)
-    lat_min, lon_min = all_points.min(axis=0)
+    lon_max, lat_max = all_points.max(axis=0)
+    lon_min, lat_min = all_points.min(axis=0)
 
-    return lat_min, lon_min, lat_max, lon_max
+    return lon_min, lat_min, lon_max, lat_max
 
 
 def _get_shape(lon, lat, method, item):
