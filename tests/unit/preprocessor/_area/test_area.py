@@ -793,30 +793,34 @@ def test_extract_specific_shape(make_testcube, tmp_path, ids):
     polyg = []
     for n in range(nshape):
         polyg.append(
-            Polygon([(1.0 + n, 1.0 + slat), (1.0 + n, 1.0),
-                     (1.0 + n + slon, 1.0), (1.0 + n + slon, 1.0 + slat)]))
+            Polygon([
+                (1.0 + n, 1.0 + slat),
+                (1.0 + n, 1.0),
+                (1.0 + n + slon, 1.0),
+                (1.0 + n + slon, 1.0 + slat),
+            ])
+        )
     write_shapefile(polyg, tmp_path / 'test_shape.shp')
-
-    # Make corresponding expected masked array
-    (slat, slon) = np.ceil([slat, slon]).astype(int)
-    vals = np.ones((nshape, min(slat + 2, 5), min(slon + 1 + nshape, 5)))
-    mask = vals.copy()
-    for n in ids:
-        mask[n, 1:1 + slat, 1 + n:1 + n + slon] = 0
-    expected = np.ma.masked_array(vals, mask)
-
-    # this detour is necessary, otherwise the data will not agree
-    data = expected.data.max(axis=0)
-    mask = expected.max(axis=0).mask
-    expected = np.ma.masked_array(data=data, mask=mask)
 
     result = extract_shape(make_testcube,
                            tmp_path / 'test_shape.shp',
                            crop=True,
                            decomposed=False,
                            ids=ids)
-    np.testing.assert_array_equal(result.data.data, expected.data)
-    np.testing.assert_array_equal(result.data.mask, expected.mask)
+
+    expected_bounds = np.vstack([polyg[i].bounds for i in ids])
+
+    lon_min = expected_bounds[:, 0]
+    lat_min = expected_bounds[:, 1]
+    lon_max = expected_bounds[:, 2]
+    lat_max = expected_bounds[:, 3]
+
+    # results from `extract_shape` are padded with masked values
+    lats = result.coord('latitude')[1:-1]
+    lons = result.coord('longitude')[1:-1]
+
+    assert np.all((lats.points >= lat_min) & (lats.points <= lat_max))
+    assert np.all((lons.points >= lon_min) & (lons.points <= lon_max))
 
 
 def test_extract_specific_shape_raises_if_not_present(make_testcube, tmp_path):
