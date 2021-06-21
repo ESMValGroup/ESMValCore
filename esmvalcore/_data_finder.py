@@ -32,6 +32,22 @@ def find_files(dirnames, filenames):
     return result
 
 
+def get_start_end_points(filename):
+    start_point = end_point = None
+    cubes = iris.load(filename)
+    for cube in cubes:
+        try:
+            time = cube.coord('time')
+        except iris.exceptions.CoordinateNotFoundError:
+            continue
+        start_point = time.cell(0).point
+        end_point = time.cell(-1).point
+        break
+    if start_point is None or end_point is None:
+        raise ValueError(f'Time can not be read from file {filename}')
+    return start_point, end_point
+
+
 def get_start_end_year(filename):
     """Get the start and end year from a file name."""
     stem = Path(filename).stem

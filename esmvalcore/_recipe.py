@@ -5,10 +5,9 @@ import os
 import re
 import warnings
 import isodate
+import datetime
 from copy import deepcopy
 from pprint import pformat
-from isodate.isodates import parse_date
-from isodate.isoduration import parse_duration
 
 import yaml
 from netCDF4 import Dataset
@@ -20,6 +19,7 @@ from ._data_finder import (
     _find_input_files,
     get_input_filelist,
     get_output_file,
+    get_start_end_points,
     get_start_end_year,
     get_statistic_output_file,
 )
@@ -671,43 +671,50 @@ def _get_range_years(timerange, available):
     return years
 
 
-def _update_select_years(variable, settings, config_user):
+def _update_timerange(variable, settings, config_user):
     if 'timerange' not in variable:
         return
 
-    timerange = variable['timerange']
+    timerange = variable.get('timerange')
     check.valid_time_selection(variable, timerange)
 
-    (files, _, _) = _find_input_files(variable, config_user['rootpath'],
-                                      config_user['drs'])
-    intervals = [get_start_end_year(name) for name in files]
-    
     step = 'clip_start_end_year'
-    if timerange != '*':
-        start_range = timerange.split('/')[0]
-        start_years = _get_range_years(start_range, min(intervals)[0])
-        end_range = timerange.split('/')[1]
-        end_years = _get_range_years(end_range, max(intervals)[1])
-        if start_years.get('duration'):
-            end_year = end_years.get('date')
-            start_year = end_year - start_years.get('duration')
-        elif end_years.get('duration'):
-            start_year = start_years.get('date')
-            end_year = start_year + end_years.get('duration')
-        else:
-            start_year = start_years.get('date')
-            end_year = end_years.get('date')
-        settings[step]['timerange'] = timerange
-    else:
-        start_year = min(intervals)[0]
-        end_year = max(intervals)[1]
-        settings.pop(step, None)
+    if '*' in timerange:
+        (files, _, _) = _find_input_files(variable, config_user['rootpath'],
+                                      config_user['drs'])
+        intervals = [get_start_end_year(name) for name in files]
 
-    variable.update({'start_year': start_year})
-    variable.update({'end_year': end_year})
+        min_index = intervals.index(min(intervals))
+        min_point = get_start_end_points(files[min_index])[0]
+
+        max_index = intervals.index(max(intervals))
+        max_point = get_start_end_points(files[max_index])[1]
+
+        wildcard = timerange.split('*')
+        start_range = None
+        end_range = None
+        if wildcard[0] == '':
+            start_datetime = datetime.datetime(
+                min_point.year, min_point.month, min_point.day,
+                min_point.hour, min_point.minute, min_point.second)
+            start_range = isodate.date_isoformat(start_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
+        if wildcard[1] == '':
+            end_datetime = datetime.datetime(
+                max_point.year, min_point.month, min_point.day,
+                min_point.hour, min_point.minute, min_point.second)
+            end_range = isodate.date_isoformat(end_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
+
+        if start_range is None:
+            timerange = timerange.replace('*', end_range)
+        elif end_range is None:
+            timerange = timerange.replace('*', start_range)
+        else:
+            timerange = f'{start_range}/{end_range}'
+            variable.update({'timerange': None})
+    
+    settings[step]['timerange'] = variable.get('timerange')
     filename = variable['filename'].replace(
-        '.nc', '_{start_year}-{end_year}.nc'.format(**variable)
-    )
+        '.nc', f'_{timerange}.nc')
     variable['filename'] = filename
 
 
@@ -826,7 +833,7 @@ def _update_preproc_functions(settings, config_user, variable, variables,
     _update_fx_settings(settings=settings,
                         variable=variable,
                         config_user=config_user)
-    _update_select_years(variable, settings, config_user)
+    _update_timerange(variable, settings, config_user)
     try:
         _update_target_grid(
             variable=variable,
