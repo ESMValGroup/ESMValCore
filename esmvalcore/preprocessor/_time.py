@@ -120,8 +120,8 @@ def clip_start_end_year(cube, start_year, end_year, timerange=None):
         Start year.
     end_year : int
         End year.
-    select : list
-        List with selection mode (first/last) and number of years.
+    timerange : str
+        Time range in ISO 8601 format.
 
     Returns
     -------
@@ -137,16 +137,6 @@ def clip_start_end_year(cube, start_year, end_year, timerange=None):
     """
 
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
-
-
-#def _select_dates(index, time_coord, delta, time_unit):
-#    reference_date = time_coord.cell(index).point
-#    date_format = reference_date.strftime(reference_date.format)
-#    date_unit = cf_units.Unit(
-#        f'years since {date_format}', calendar=time_unit.calendar)
-#    target_value = date_unit.convert(delta, time_unit)
-#    target_date = time_unit.num2date(target_value)
-#    return reference_date, target_date
 
 
 def extract_season(cube, season):
