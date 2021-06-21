@@ -3,6 +3,7 @@ version: 2.1
 
 orbs:
   coverage-reporter: codacy/coverage-reporter@11.4.1
+  codecov: codecov/codecov@1.2.3
 
 commands:
   check_changes:
@@ -44,6 +45,8 @@ jobs:
           path: test-reports/
       - store_artifacts:
           path: test-reports/
+      - codecov/upload:
+          file: 'test-reports/coverage.xml'
       - coverage-reporter/send_report:
           coverage-reports: 'test-reports/coverage.xml'
           project-token: $CODACY_PROJECT_TOKEN
