@@ -12,6 +12,8 @@ import re
 from pathlib import Path
 
 import iris
+import datetime
+import isodate
 
 from ._config import get_project_config
 
@@ -48,7 +50,7 @@ def get_start_end_points(filename):
     return start_point, end_point
 
 
-def get_start_end_year(filename):
+def get_start_end_year(filename, return_date=False):
     """Get the start and end year from a file name."""
     stem = Path(filename).stem
     start_year = end_year = None
@@ -63,13 +65,14 @@ def get_start_end_year(filename):
         # Check for single dates in the filename
         dates = re.findall(r'([0-9]{4,12})', stem)
         if len(dates) == 1:
+            start_date = end_date = dates[0]
             start_year = end_year = dates[0][:4]
         elif len(dates) > 1:
             # Check for dates at start or end of filename
             outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stem)
             if len(outerdates) == 1:
+                start_date = end_date = outerdates[0]
                 start_year = end_year = outerdates[0][:4]
-
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
         cubes = iris.load(filename)
@@ -80,13 +83,29 @@ def get_start_end_year(filename):
                 time = cube.coord('time')
             except iris.exceptions.CoordinateNotFoundError:
                 continue
-            start_year = time.cell(0).point.year
-            end_year = time.cell(-1).point.year
+            start_point = time.cell(0).point
+            start_datetime = datetime.datetime(
+                start_point.year, start_point.month, start_point.day,
+                start_point.hour, start_point.minute, start_point.second)
+            start_date = isodate.date_isoformat(start_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
+            start_year = start_point.year
+
+            end_point = time.cell(-1).point
+            end_datetime = datetime.datetime(
+                end_point.year, end_point.month, end_point.day,
+                end_point.hour, end_point.minute, end_point.second)
+            end_date = isodate.date_isoformat(end_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
+            end_year = end_point.year
             break
 
     if start_year is None or end_year is None:
         raise ValueError(f'File {filename} dates do not match a recognized'
                          'pattern and time can not be read from the file')
+    
+    if return_date:
+        start_values = (int(start_year), start_date)
+        end_values = (int(end_year), end_date)
+        return start_values, end_values
 
     logger.debug("Found start_year %s and end_year %s", start_year, end_year)
     return int(start_year), int(end_year)

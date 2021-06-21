@@ -4,8 +4,6 @@ import logging
 import os
 import re
 import warnings
-import isodate
-import datetime
 from copy import deepcopy
 from pprint import pformat
 
@@ -651,26 +649,6 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
-def _get_range_years(timerange, available):
-    years = {
-        'date': None,
-        'duration': None
-    }
-    try:
-        isodate.parse_date(timerange)
-    except ValueError:
-        try:
-            isodate.parse_duration(timerange)
-        except ValueError:
-            years['date'] = available
-        else:
-            years['duration'] = int(isodate.parse_duration(timerange).years)
-    else:
-        years['date'] = isodate.parse_date(timerange).year
-    
-    return years
-
-
 def _update_timerange(variable, settings, config_user):
     if 'timerange' not in variable:
         return
@@ -682,36 +660,17 @@ def _update_timerange(variable, settings, config_user):
     if '*' in timerange:
         (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                       config_user['drs'])
-        intervals = [get_start_end_year(name) for name in files]
+        intervals = [get_start_end_year(name, return_date=True) for name in files]
 
-        min_index = intervals.index(min(intervals))
-        min_point = get_start_end_points(files[min_index])[0]
+        min_date = min(intervals)[0][1]
+        max_date = max(intervals)[1][1]
 
-        max_index = intervals.index(max(intervals))
-        max_point = get_start_end_points(files[max_index])[1]
-
-        wildcard = timerange.split('*')
-        start_range = None
-        end_range = None
-        if wildcard[0] == '':
-            start_datetime = datetime.datetime(
-                min_point.year, min_point.month, min_point.day,
-                min_point.hour, min_point.minute, min_point.second)
-            start_range = isodate.date_isoformat(start_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
-        if wildcard[1] == '':
-            end_datetime = datetime.datetime(
-                max_point.year, min_point.month, min_point.day,
-                min_point.hour, min_point.minute, min_point.second)
-            end_range = isodate.date_isoformat(end_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
-
-        if start_range is None:
-            timerange = timerange.replace('*', end_range)
-        elif end_range is None:
-            timerange = timerange.replace('*', start_range)
-        else:
-            timerange = f'{start_range}/{end_range}'
-            variable.update({'timerange': None})
-    
+        if timerange == '*':
+            timerange = f'{min_date}/{max_date}'
+        if '*' in timerange.split('/')[0]:
+            timerange = timerange.replace('*', min_date)
+        if '*' in timerange.split('/')[1]:
+            timerange = timerange.replace('*', max_date)
     settings[step]['timerange'] = variable.get('timerange')
     filename = variable['filename'].replace(
         '.nc', f'_{timerange}.nc')
