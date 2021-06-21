@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import warnings
+import isodate
 from copy import deepcopy
 from pprint import pformat
 
@@ -671,6 +672,30 @@ def _update_timerange(variable, settings, config_user):
             timerange = timerange.replace('*', min_date)
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
+    
+    start_year = None
+    end_year = None
+    if timerange.split('/')[0].startswith('P'):
+        try:
+            end_year = isodate.parse_date(timerange.split('/')[1]).year
+        except isodate.ISO8601Error:
+            end_year = isodate.parse_datetime(timerange.split('/')[1]).year
+        delta = int(isodate.parse_duration(timerange.split('/')[0]).years)
+        start_year = end_year - delta
+    elif timerange.split('/')[1].startswith('P'):
+        try:
+            start_year = isodate.parse_date(timerange.split('/')[0]).year
+        except isodate.ISO8601Error:
+            start_year = isodate.parse_datetime(timerange.split('/')[0]).year
+        delta = int(isodate.parse_duration(timerange.split('/')[1]).years)
+        end_year = start_year + delta
+    
+    if start_year is None and end_year is None:
+        start_year = int(timerange.split('/')[0][0:4])
+        end_year = int(timerange.split('/')[1][0:4])
+    
+    variable.update({'start_year': start_year, 'end_year': end_year})
+
     settings[step]['timerange'] = variable.get('timerange')
     filename = variable['filename'].replace(
         '.nc', f'_{timerange}.nc')
