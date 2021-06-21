@@ -694,9 +694,11 @@ def _update_timerange(variable, settings, config_user):
         start_year = int(timerange.split('/')[0][0:4])
         end_year = int(timerange.split('/')[1][0:4])
     
-    variable.update({'start_year': start_year, 'end_year': end_year})
+    variable.update({'timerange': timerange, 'start_year': start_year, 'end_year': end_year})
 
     settings[step]['timerange'] = variable.get('timerange')
+    settings[step]['start_year'] = variable.get('start_year')
+    settings[step]['end_year'] = variable.get('end_year')
     filename = variable['filename'].replace(
         '.nc', f'_{timerange}.nc')
     variable['filename'] = filename
@@ -1015,7 +1017,7 @@ class Recipe:
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
         self._raw_recipe = raw_recipe
-        self._updated_recipe = None
+        self._updated_recipe = {}
         self._filename = os.path.basename(recipe_file)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
@@ -1394,21 +1396,11 @@ class Recipe:
 
         timerange = var.get('timerange')
         if timerange:
-            if timerange == '*':
-                start_year = var['start_year']
-                end_year = var['end_year']
-                self._updated_recipe = deepcopy(self._raw_recipe)
-                self._updated_recipe['datasets'][index]['timerange'] = f'{start_year}/{end_year}'
-            else:
-                timerange = timerange.split('/')
-                if timerange[0] == '*':
-                    start_year = var['start_year']
+            raw_timerange = self._raw_recipe['datasets'][index]['timerange']
+            if timerange != raw_timerange:
+                if not self._updated_recipe:
                     self._updated_recipe = deepcopy(self._raw_recipe)
-                    self._updated_recipe['datasets'][index]['timerange'] = f'{start_year}/{timerange[1]}'
-                if timerange[1] == '*':
-                    end_year = var['end_year']
-                    self._updated_recipe = deepcopy(self._raw_recipe)
-                    self._updated_recipe['datasets'][index]['timerange'] = f'{timerange[0]}/{end_year}'
+                self._updated_recipe['datasets'][index]['timerange'] = timerange
     
     def initialize_tasks(self):
         """Define tasks in recipe."""
