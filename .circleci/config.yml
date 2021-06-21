@@ -45,6 +45,9 @@ jobs:
           path: test-reports/
       - store_artifacts:
           path: test-reports/
+      - run:
+          # Install curl for codecov upload
+          command: apt install curl
       - codecov/upload:
           file: 'test-reports/coverage.xml'
       - coverage-reporter/send_report:
