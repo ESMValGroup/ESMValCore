@@ -36,7 +36,6 @@ jobs:
             pip install .[test]
             pytest -n 2 -m "not installation and not sequential"
             pytest -n 0 -m "sequential" --cov-append
-            coverage combine
       - save_cache:
           key: test-{{ .Branch }}
           paths:
