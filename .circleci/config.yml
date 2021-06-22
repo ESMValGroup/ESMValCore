@@ -34,8 +34,8 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             pip install .[test]
-            pytest -n 2 -m "not installation and not sequential" --cov-combine=keep:true
-            pytest -n 0 -m "sequential" --cov-combine=keep:true
+            pytest -n 2 -m "not installation and not sequential"
+            pytest -n 0 -m "sequential" --cov-append
             coverage combine
       - save_cache:
           key: test-{{ .Branch }}
