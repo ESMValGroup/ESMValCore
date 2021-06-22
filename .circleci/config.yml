@@ -47,7 +47,7 @@ jobs:
           path: test-reports/
       - run:
           # Install curl for codecov upload
-          command: apt install curl
+          command: apt install -y curl
       - codecov/upload:
           file: 'test-reports/coverage.xml'
       - coverage-reporter/send_report:
