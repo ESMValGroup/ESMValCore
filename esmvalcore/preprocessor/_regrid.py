@@ -673,7 +673,7 @@ def extract_levels(cube, levels, scheme, coordinate=None):
 
     Parameters
     ----------
-    cube : cube
+    cube : iris.cube.Cube
         The source cube to be vertically interpolated.
     levels : array
         One or more target levels for the vertical interpolation. Assumed
@@ -695,7 +695,7 @@ def extract_levels(cube, levels, scheme, coordinate=None):
 
     Returns
     -------
-    cube
+    iris.cube.Cube
 
     See Also
     --------
