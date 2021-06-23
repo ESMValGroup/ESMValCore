@@ -694,11 +694,14 @@ def _update_timerange(variable, settings, config_user):
         start_year = int(timerange.split('/')[0][0:4])
         end_year = int(timerange.split('/')[1][0:4])
     
+    
     variable.update({'timerange': timerange, 'start_year': start_year, 'end_year': end_year})
 
-    settings[step]['timerange'] = variable.get('timerange')
-    settings[step]['start_year'] = variable.get('start_year')
-    settings[step]['end_year'] = variable.get('end_year')
+    settings[step]['timerange'] = timerange
+    settings[step]['start_year'] = start_year
+    settings[step]['end_year'] = end_year
+    
+    timerange = timerange.replace('/', '-')
     filename = variable['filename'].replace(
         '.nc', f'_{timerange}.nc')
     variable['filename'] = filename
@@ -1392,15 +1395,25 @@ class Recipe:
     def _fill_wildcards(self, variable_group, preprocessor_output):
         # To be generalised for other tags
         var = preprocessor_output[variable_group][0]
-        index = var['recipe_dataset_index']
+        index = var.get('recipe_dataset_index')
+        short_name = var.get('short_name')
+        diagnostic = var.get('diagnostic')
 
+        datasets = self._raw_recipe.get('datasets')
         timerange = var.get('timerange')
         if timerange:
-            raw_timerange = self._raw_recipe['datasets'][index]['timerange']
+            if datasets:
+                raw_timerange = self._raw_recipe['datasets'][index]['timerange']
+            else:
+                raw_timerange = self._raw_recipe['diagnostics'][diagnostic]['additional_datasets'][index]['timerange']
+
             if timerange != raw_timerange:
                 if not self._updated_recipe:
                     self._updated_recipe = deepcopy(self._raw_recipe)
-                self._updated_recipe['datasets'][index]['timerange'] = timerange
+                if datasets:
+                    self._updated_recipe['datasets'][index]['timerange'] = timerange
+                else: 
+                    self._updated_recipe['diagnostics'][diagnostic]['additional_datasets'][index]['timerange'] = timerange
     
     def initialize_tasks(self):
         """Define tasks in recipe."""

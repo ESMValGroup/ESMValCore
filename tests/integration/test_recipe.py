@@ -832,29 +832,25 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
 TEST_ISO_TIMERANGE = [
     ('*', '1990-2019'),
     ('1990/1992', '1990-1992'),
-    ('19900101/19920101', '1990-1992'),
-    ('19900101T12H00M00S/19920101T12H00M00', '1990-1992'),
-    ('1990/', '1990-2019'),
-    ('19900101/', '1990-2019'),
-    ('19900101T12H00M00S/', '1990-2019'),
+    ('19900101/19920101', '19900101-19920101'),
+    ('19900101T12H00M00S/19920101T12H00M00', 
+     '19900101T12H00M00S-19920101T12H00M00'),
     ('1990/*', '1990-2019'),
-    ('19900101/*', '1990-2019'),
-    ('19900101T12H00M00S/*', '1990-2019'),
     ('*/1992', '1990-1992'),
-    ('*/19920101', '1990-1992'),
-    ('*/19920101T12H00M00S', '1990-1992'),
-    ('1990/P2Y', '1990-1992'),
-    ('19900101/P2Y2M1D', '1990-1992'),
-    ('19900101TH00M00S/P2Y2M1DT12H00M00S', '1990-1992'),
-    ('P2Y/1992', '1990-1992'),
-    ('P2Y2M1D/19920101', '1990-1992'),
-    ('P2Y2M1D/19920101T12H00M00S', '1990-1992'),
-    ('P2Y/*', '2017-2019'),
-    ('P2Y2M1D/*', '2017-2019'),
-    ('P2Y21DT12H00M00S/*', '2017-2019'),
-    ('*/P2Y', '1990-1992'),
-    ('*/P2Y2M1D', '1990-1992'),
-    ('*/P2Y21DT12H00M00S', '1990-1992'),
+    ('1990/P2Y', '1990-P2Y'),
+    ('19900101/P2Y2M1D', '19900101-P2Y2M1D'),
+    ('19900101TH00M00S/P2Y2M1DT12H00M00S',
+     '19900101TH00M00S-P2Y2M1DT12H00M00S'),
+    ('P2Y/1992', 'P2Y-1992'),
+    ('P2Y2M1D/19920101', 'P2Y2M1D-19920101'),
+    ('P2Y2M1D/19920101T12H00M00S',
+     'P2Y2M1D-19920101T12H00M00S'),
+    ('P2Y/*', 'P2Y-2019'),
+    ('P2Y2M1D/*', 'P2Y2M1D-2019'),
+    ('P2Y21DT12H00M00S/*', 'P2Y21DT12H00M00S-2019'),
+    ('*/P2Y', '1990-P2Y'),
+    ('*/P2Y2M1D', '1990-P2Y2M1D'),
+    ('*/P2Y21DT12H00M00S', '1990-P2Y21DT12H00M00S'),
 ]
 
 @pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
@@ -886,6 +882,8 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user, input_t
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
     filename = variable.pop('filename').split('/')[-1]
+    length = len(filename)
+    #filename = '_'.join((filename[length-2], filename[length-1]))
     assert (filename ==
             f'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_{output_time}.nc')
     fx_variable = recipe.diagnostics['test']['preprocessor_output']['areacella'][0]
