@@ -18,7 +18,6 @@ from ._data_finder import (
     _find_input_files,
     get_input_filelist,
     get_output_file,
-    get_start_end_points,
     get_start_end_year,
     get_statistic_output_file,
 )
@@ -660,8 +659,9 @@ def _update_timerange(variable, settings, config_user):
     step = 'clip_start_end_year'
     if '*' in timerange:
         (files, _, _) = _find_input_files(variable, config_user['rootpath'],
-                                      config_user['drs'])
-        intervals = [get_start_end_year(name, return_date=True) for name in files]
+                                          config_user['drs'])
+        intervals = [
+            get_start_end_year(name, return_date=True) for name in files]
 
         min_date = min(intervals)[0][1]
         max_date = max(intervals)[1][1]
@@ -672,7 +672,7 @@ def _update_timerange(variable, settings, config_user):
             timerange = timerange.replace('*', min_date)
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
-    
+
     start_year = None
     end_year = None
     if timerange.split('/')[0].startswith('P'):
@@ -689,18 +689,20 @@ def _update_timerange(variable, settings, config_user):
             start_year = isodate.parse_datetime(timerange.split('/')[0]).year
         delta = int(isodate.parse_duration(timerange.split('/')[1]).years)
         end_year = start_year + delta
-    
+
     if start_year is None and end_year is None:
         start_year = int(timerange.split('/')[0][0:4])
         end_year = int(timerange.split('/')[1][0:4])
-    
-    
-    variable.update({'timerange': timerange, 'start_year': start_year, 'end_year': end_year})
+
+    variable.update(
+        {'timerange': timerange,
+        'start_year': start_year,
+        'end_year': end_year})
 
     settings[step]['timerange'] = timerange
     settings[step]['start_year'] = start_year
     settings[step]['end_year'] = end_year
-    
+
     timerange = timerange.replace('/', '-')
     filename = variable['filename'].replace(
         '.nc', f'_{timerange}.nc')
@@ -1396,24 +1398,35 @@ class Recipe:
         # To be generalised for other tags
         var = preprocessor_output[variable_group][0]
         index = var.get('recipe_dataset_index')
-        short_name = var.get('short_name')
         diagnostic = var.get('diagnostic')
 
         datasets = self._raw_recipe.get('datasets')
         timerange = var.get('timerange')
         if timerange:
             if datasets:
-                raw_timerange = self._raw_recipe['datasets'][index]['timerange']
+                raw_timerange = (self._raw_recipe['datasets']
+                                                 [index]
+                                                 ['timerange'])
             else:
-                raw_timerange = self._raw_recipe['diagnostics'][diagnostic]['additional_datasets'][index]['timerange']
+                raw_timerange = (self._raw_recipe['diagnostics']
+                                                 [diagnostic]
+                                                 ['additional_datasets']
+                                                 [index]
+                                                 ['timerange'])
 
             if timerange != raw_timerange:
                 if not self._updated_recipe:
                     self._updated_recipe = deepcopy(self._raw_recipe)
                 if datasets:
-                    self._updated_recipe['datasets'][index]['timerange'] = timerange
+                    (self._updated_recipe['datasets']
+                                         [index]
+                                         ['timerange']) = timerange
                 else: 
-                    self._updated_recipe['diagnostics'][diagnostic]['additional_datasets'][index]['timerange'] = timerange
+                    (self._updated_recipe['diagnostics']
+                                         [diagnostic]
+                                         ['additional_datasets']
+                                         [index]
+                                         ['timerange']) = timerange
     
     def initialize_tasks(self):
         """Define tasks in recipe."""

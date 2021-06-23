@@ -33,23 +33,6 @@ def find_files(dirnames, filenames):
 
     return result
 
-
-def get_start_end_points(filename):
-    start_point = end_point = None
-    cubes = iris.load(filename)
-    for cube in cubes:
-        try:
-            time = cube.coord('time')
-        except iris.exceptions.CoordinateNotFoundError:
-            continue
-        start_point = time.cell(0).point
-        end_point = time.cell(-1).point
-        break
-    if start_point is None or end_point is None:
-        raise ValueError(f'Time can not be read from file {filename}')
-    return start_point, end_point
-
-
 def get_start_end_year(filename, return_date=False):
     """Get the start and end year from a file name."""
     stem = Path(filename).stem
@@ -87,21 +70,23 @@ def get_start_end_year(filename, return_date=False):
             start_datetime = datetime.datetime(
                 start_point.year, start_point.month, start_point.day,
                 start_point.hour, start_point.minute, start_point.second)
-            start_date = isodate.date_isoformat(start_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
+            start_date = isodate.date_isoformat(
+                start_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
             start_year = start_point.year
 
             end_point = time.cell(-1).point
             end_datetime = datetime.datetime(
                 end_point.year, end_point.month, end_point.day,
                 end_point.hour, end_point.minute, end_point.second)
-            end_date = isodate.date_isoformat(end_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
+            end_date = isodate.date_isoformat(
+                end_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
             end_year = end_point.year
             break
 
     if start_year is None or end_year is None:
         raise ValueError(f'File {filename} dates do not match a recognized'
                          'pattern and time can not be read from the file')
-    
+
     if return_date:
         start_values = (int(start_year), start_date)
         end_values = (int(end_year), end_date)
