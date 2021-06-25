@@ -96,7 +96,8 @@ def cubes_bounds():
                                              bounds=[[-1.875, 1.875],
                                                      [354.375, 358.125]],
                                              var_name='lon',
-                                             standard_name='longitude')
+                                             standard_name='longitude',
+                                             circular=True)
     wrong_lon_coord = iris.coords.DimCoord([0, 356.25],
                                            bounds=[[-1.875, 1.875],
                                                    [354.375, 360]],
@@ -176,6 +177,7 @@ def test_allvars_fix_lon_bounds(cubes_bounds):
             pass
         else:
             assert lon_coord.bounds[-1][-1] == 358.125
+            assert lon_coord.circular
 
 
 def test_tas_fix_metadata(cubes):

@@ -66,10 +66,10 @@ profile_diagnostic: false
 #  CMIP5: BADC
 #  CMIP3: BADC
 #  CORDEX: BADC
-#  OBS: BADC
-#  OBS6: BADC
-#  obs4mips: BADC
-#  ana4mips: BADC
+#  OBS: default
+#  OBS6: default
+#  obs4mips: default
+#  ana4mips: default
 
 # Site-specific entries: DKRZ
 # Uncomment the lines below to locate data on Mistral at DKRZ
