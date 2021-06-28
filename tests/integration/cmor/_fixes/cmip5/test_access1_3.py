@@ -2,7 +2,6 @@
 import unittest
 from datetime import datetime
 
-import cf_units
 from cf_units import Unit, date2num, num2date
 from iris.coords import DimCoord
 from iris.cube import Cube
@@ -44,11 +43,9 @@ class TestAllVars(unittest.TestCase):
         time = cube.coord('time')
         dates = num2date(time.points, time.units.name, time.units.calendar)
         self.assertEqual(time.units.calendar, 'gregorian')
-        u = cf_units.Unit('days since 300-01-01 12:00:00',
-                          calendar='gregorian')
+        u = Unit('days since 300-01-01 12:00:00', calendar='gregorian')
         self.assertEqual(dates[0], u.num2date(15))
-        u = cf_units.Unit('days since 1850-01-01 12:00:00',
-                          calendar='gregorian')
+        u = Unit('days since 1850-01-01 12:00:00', calendar='gregorian')
         self.assertEqual(dates[1], u.num2date(15))
 
     def test_fix_metadata_if_not_time(self):
