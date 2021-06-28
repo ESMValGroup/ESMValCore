@@ -31,7 +31,7 @@ Overview
 ========
 
 ..
-   ESMValTool is a modular ``Python 3.6+`` software package possessing capabilities
+   ESMValTool is a modular ``Python 3.7+`` software package possessing capabilities
    of executing a large number of diagnostic routines that can be written in a
    number of programming languages (Python, NCL, R, Julia). The modular nature
    benefits the users and developers in different key areas: a new feature
