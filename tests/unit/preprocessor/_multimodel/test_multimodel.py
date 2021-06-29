@@ -1,493 +1,256 @@
-"""Unit test for :func:`esmvalcore.preprocessor._multimodel`"""
+"""Unit test for :func:`esmvalcore.preprocessor._multimodel`."""
 
-from datetime import datetime
+import unittest
 
-import dask.array as da
 import iris
 import numpy as np
-import pytest
 from cf_units import Unit
-from iris.cube import Cube
 
-import esmvalcore.preprocessor._multimodel as mm
+import tests
 from esmvalcore.preprocessor import multi_model_statistics
-
-SPAN_OPTIONS = ('overlap', 'full')
-
-FREQUENCY_OPTIONS = ('daily', 'monthly', 'yearly')  # hourly
-
-CALENDAR_OPTIONS = ('360_day', '365_day', 'gregorian', 'proleptic_gregorian',
-                    'julian')
-
-
-def assert_array_allclose(this, other):
-    """Assert that array `this` is close to array `other`."""
-    if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
-        np.testing.assert_array_equal(this.mask, other.mask)
-
-    np.testing.assert_allclose(this, other)
-
-
-def timecoord(frequency,
-              calendar='gregorian',
-              offset='days since 1850-01-01',
-              num=3):
-    """Return a time coordinate with the given time points and calendar."""
-
-    time_points = range(1, num + 1)
-
-    if frequency == 'hourly':
-        dates = [datetime(1850, 1, 1, i, 0, 0) for i in time_points]
-    if frequency == 'daily':
-        dates = [datetime(1850, 1, i, 0, 0, 0) for i in time_points]
-    elif frequency == 'monthly':
-        dates = [datetime(1850, i, 15, 0, 0, 0) for i in time_points]
-    elif frequency == 'yearly':
-        dates = [datetime(1850, 7, i, 0, 0, 0) for i in time_points]
-
-    unit = Unit(offset, calendar=calendar)
-    points = unit.date2num(dates)
-    return iris.coords.DimCoord(points, standard_name='time', units=unit)
-
-
-def generate_cube_from_dates(
-    dates,
-    calendar='gregorian',
-    offset='days since 1850-01-01',
-    fill_val=1,
-    len_data=3,
-    var_name=None,
-    lazy=False,
-):
-    """Generate test cube from list of dates / frequency specification.
-
-    Parameters
-    ----------
-    calendar : str or list
-        Date frequency: 'hourly' / 'daily' / 'monthly' / 'yearly' or
-        list of datetimes.
-    offset : str
-        Offset to use
-    fill_val : int
-        Value to fill the data with
-    len_data : int
-        Number of data / time points
-    var_name : str
-        Name of the data variable
-
-    Returns
-    -------
-    iris.cube.Cube
-    """
-    if isinstance(dates, str):
-        time = timecoord(dates, calendar, offset=offset, num=len_data)
-    else:
-        len_data = len(dates)
-        unit = Unit(offset, calendar=calendar)
-        time = iris.coords.DimCoord(unit.date2num(dates),
-                                    standard_name='time',
-                                    units=unit)
-
-    data = np.array((fill_val, ) * len_data, dtype=np.float32)
-
-    if lazy:
-        data = da.from_array(data)
-
-    return Cube(data, dim_coords_and_dims=[(time, 0)], var_name=var_name)
-
-
-def get_cubes_for_validation_test(frequency, lazy=False):
-    """Set up cubes used for testing multimodel statistics."""
-
-    # Simple 1d cube with standard time cord
-    cube1 = generate_cube_from_dates(frequency, lazy=lazy)
-
-    # Cube with masked data
-    cube2 = cube1.copy()
-    data2 = np.ma.array([5, 5, 5], mask=[True, False, False], dtype=np.float32)
-    if lazy:
-        data2 = da.from_array(data2)
-    cube2.data = data2
-
-    # Cube with deviating time coord
-    cube3 = generate_cube_from_dates(frequency,
-                                     calendar='360_day',
-                                     offset='days since 1950-01-01',
-                                     len_data=2,
-                                     fill_val=9,
-                                     lazy=lazy)
-
-    return [cube1, cube2, cube3]
-
-
-VALIDATION_DATA_SUCCESS = (
-    ('full', 'mean', (5, 5, 3)),
-    ('full', 'std_dev', (5.656854249492381, 4, 2.8284271247461903)),
-    ('full', 'std', (5.656854249492381, 4, 2.8284271247461903)),
-    ('full', 'min', (1, 1, 1)),
-    ('full', 'max', (9, 9, 5)),
-    ('full', 'median', (5, 5, 3)),
-    ('full', 'p50', (5, 5, 3)),
-    ('full', 'p99.5', (8.96, 8.96, 4.98)),
-    ('full', 'peak', ([9], [9], [5])),
-    ('overlap', 'mean', (5, 5)),
-    ('overlap', 'std_dev', (5.656854249492381, 4)),
-    ('overlap', 'std', (5.656854249492381, 4)),
-    ('overlap', 'min', (1, 1)),
-    ('overlap', 'max', (9, 9)),
-    ('overlap', 'median', (5, 5)),
-    ('overlap', 'p50', (5, 5)),
-    ('overlap', 'p99.5', (8.96, 8.96)),
-    ('overlap', 'peak', ([9], [9])),
-    # test multiple statistics
-    ('overlap', ('min', 'max'), ((1, 1), (9, 9))),
-    ('full', ('min', 'max'), ((1, 1, 1), (9, 9, 5))),
+from esmvalcore.preprocessor._multimodel import (
+    _assemble_data,
+    _compute_statistic,
+    _get_time_slice,
+    _multiproduct_statistics,
+    _plev_fix,
+    _put_in_cube,
+    _unify_time_coordinates,
 )
 
 
-@pytest.mark.parametrize('frequency', FREQUENCY_OPTIONS)
-@pytest.mark.parametrize('span, statistics, expected', VALIDATION_DATA_SUCCESS)
-def test_multimodel_statistics(frequency, span, statistics, expected):
-    """High level test for multicube statistics function."""
-    cubes = get_cubes_for_validation_test(frequency)
-
-    if isinstance(statistics, str):
-        statistics = (statistics, )
-        expected = (expected, )
-
-    result = multi_model_statistics(cubes, span, statistics)
-
-    assert isinstance(result, dict)
-    assert set(result.keys()) == set(statistics)
-
-    for i, statistic in enumerate(statistics):
-        result_cube = result[statistic]
-        # make sure that temporary coord has been removed
-        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
-            result_cube.coord('multi-model')
-        # test that real data in => real data out
-        assert result_cube.has_lazy_data() is False
-        expected_data = np.ma.array(expected[i], mask=False)
-        assert_array_allclose(result_cube.data, expected_data)
-
-
-@pytest.mark.xfail(reason='Lazy data not (yet) supported.')
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-def test_lazy_data_consistent_times(span):
-    """Test laziness of multimodel statistics with consistent time axis."""
-    cubes = (
-        generate_cube_from_dates('monthly', fill_val=1, lazy=True),
-        generate_cube_from_dates('monthly', fill_val=3, lazy=True),
-        generate_cube_from_dates('monthly', fill_val=6, lazy=True),
-    )
-
-    for cube in cubes:
-        assert cube.has_lazy_data()
-
-    statistic = 'sum'
-    statistics = (statistic, )
-
-    result = mm._multicube_statistics(cubes, span=span, statistics=statistics)
-
-    result_cube = result[statistic]
-    assert result_cube.has_lazy_data()
-
-
-@pytest.mark.xfail(reason='Lazy data not (yet) supported.')
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-def test_lazy_data_inconsistent_times(span):
-    """Test laziness of multimodel statistics with inconsistent time axis.
-
-    This hits `_align`, which adds additional computations which must be
-    lazy.
-    """
-
-    cubes = (
-        generate_cube_from_dates(
-            [datetime(1850, i, 15, 0, 0, 0) for i in range(1, 10)], lazy=True),
-        generate_cube_from_dates(
-            [datetime(1850, i, 15, 0, 0, 0) for i in range(3, 8)], lazy=True),
-        generate_cube_from_dates(
-            [datetime(1850, i, 15, 0, 0, 0) for i in range(2, 9)], lazy=True),
-    )
-
-    for cube in cubes:
-        assert cube.has_lazy_data()
-
-    statistic = 'sum'
-    statistics = (statistic, )
-
-    result = mm._multicube_statistics(cubes, span=span, statistics=statistics)
-
-    result_cube = result[statistic]
-    assert result_cube.has_lazy_data()
-
-
-VALIDATION_DATA_FAIL = (
-    ('percentile', ValueError),
-    ('wpercentile', ValueError),
-    ('count', TypeError),
-    ('proportion', TypeError),
-)
-
-
-@pytest.mark.parametrize('statistic, error', VALIDATION_DATA_FAIL)
-def test_unsupported_statistics_fail(statistic, error):
-    """Check that unsupported statistics raise an exception."""
-    cubes = get_cubes_for_validation_test('monthly')
-    span = 'overlap'
-    statistics = (statistic, )
-    with pytest.raises(error):
-        _ = multi_model_statistics(cubes, span, statistics)
-
-
-@pytest.mark.parametrize('calendar1, calendar2, expected', (
-    ('360_day', '360_day', '360_day'),
-    ('365_day', '365_day', '365_day'),
-    ('365_day', '360_day', 'gregorian'),
-    ('360_day', '365_day', 'gregorian'),
-    ('gregorian', '365_day', 'gregorian'),
-    ('proleptic_gregorian', 'julian', 'gregorian'),
-    ('julian', '365_day', 'gregorian'),
-))
-def test_get_consistent_time_unit(calendar1, calendar2, expected):
-    """Test same calendar returned or default if calendars differ.
-
-    Expected behaviour: If the calendars are the same, return that one.
-    If the calendars are not the same, return 'gregorian'.
-    """
-    cubes = (
-        generate_cube_from_dates('monthly', calendar=calendar1),
-        generate_cube_from_dates('monthly', calendar=calendar2),
-    )
-
-    result = mm._get_consistent_time_unit(cubes)
-    assert result.calendar == expected
-
-
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-def test_align(span):
-    """Test _align function."""
-
-    # TODO --> check that if a cube is extended,
-    #          the extended points are masked (not NaN!)
-
-    len_data = 3
-
-    cubes = []
-
-    for calendar in CALENDAR_OPTIONS:
-        cube = generate_cube_from_dates('monthly',
-                                        calendar=calendar,
-                                        len_data=3)
-        cubes.append(cube)
-
-    result_cubes = mm._align(cubes, span)
-
-    calendars = set(cube.coord('time').units.calendar for cube in result_cubes)
-
-    assert len(calendars) == 1
-    assert list(calendars)[0] == 'gregorian'
-
-    shapes = set(cube.shape for cube in result_cubes)
-
-    assert len(shapes) == 1
-    assert tuple(shapes)[0] == (len_data, )
-
-
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-def test_combine_same_shape(span):
-    """Test _combine with same shape of cubes."""
-    len_data = 3
-    num_cubes = 5
-    cubes = []
-
-    for i in range(num_cubes):
-        cube = generate_cube_from_dates('monthly',
-                                        '360_day',
-                                        fill_val=i,
-                                        len_data=len_data)
-        cubes.append(cube)
-
-    result_cube = mm._combine(cubes)
-
-    dim_coord = result_cube.coord(mm.CONCAT_DIM)
-    assert dim_coord.var_name == mm.CONCAT_DIM
-    assert result_cube.shape == (num_cubes, len_data)
-
-    desired = np.linspace((0, ) * len_data,
-                          num_cubes - 1,
-                          num=num_cubes,
-                          dtype=int)
-    np.testing.assert_equal(result_cube.data, desired)
-
-
-def test_combine_different_shape_fail():
-    """Test _combine with inconsistent data."""
-    num_cubes = 5
-    cubes = []
-
-    for num in range(1, num_cubes + 1):
-        cube = generate_cube_from_dates('monthly', '360_day', len_data=num)
-        cubes.append(cube)
-
-    with pytest.raises(iris.exceptions.MergeError):
-        _ = mm._combine(cubes)
-
-
-def test_combine_inconsistent_var_names_fail():
-    """Test _combine with inconsistent var names."""
-    num_cubes = 5
-    cubes = []
-
-    for num in range(num_cubes):
-        cube = generate_cube_from_dates('monthly',
-                                        '360_day',
-                                        var_name=f'test_var_{num}')
-        cubes.append(cube)
-
-    with pytest.raises(iris.exceptions.MergeError):
-        _ = mm._combine(cubes)
-
-
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-def test_edge_case_different_time_offsets(span):
-    cubes = (
-        generate_cube_from_dates('monthly',
-                                 '360_day',
-                                 offset='days since 1888-01-01'),
-        generate_cube_from_dates('monthly',
-                                 '360_day',
-                                 offset='days since 1899-01-01'),
-    )
-
-    statistic = 'min'
-    statistics = (statistic, )
-
-    result = multi_model_statistics(cubes, span, statistics)
-
-    result_cube = result[statistic]
-
-    time_coord = result_cube.coord('time')
-
-    assert time_coord.units.calendar == 'gregorian'
-    assert time_coord.units.origin == 'days since 1850-01-01'
-
-    desired = np.array((14., 45., 73.))
-    np.testing.assert_array_equal(time_coord.points, desired)
-
-
-def generate_cubes_with_non_overlapping_timecoords():
-    """Generate sample data where time coords do not overlap."""
-    time_points = range(1, 4)
-    dates1 = [datetime(1850, i, 15, 0, 0, 0) for i in time_points]
-    dates2 = [datetime(1950, i, 15, 0, 0, 0) for i in time_points]
-
-    return (
-        generate_cube_from_dates(dates1),
-        generate_cube_from_dates(dates2),
-    )
-
-
-@pytest.mark.xfail(reason='Multimodel statistics returns the original cubes.')
-def test_edge_case_time_no_overlap_fail():
-    """Test case when time coords do not overlap using span='overlap'.
-
-    Expected behaviour: `multi_model_statistics` should fail if time
-    points are not overlapping.
-    """
-    cubes = generate_cubes_with_non_overlapping_timecoords()
-
-    statistic = 'min'
-    statistics = (statistic, )
-
-    with pytest.raises(ValueError):
-        _ = multi_model_statistics(cubes, 'overlap', statistics)
-
-
-def test_edge_case_time_no_overlap_success():
-    """Test case when time coords do not overlap using span='full'.
-
-    Expected behaviour: `multi_model_statistics` should use all
-    available time points.
-    """
-    cubes = generate_cubes_with_non_overlapping_timecoords()
-
-    statistic = 'min'
-    statistics = (statistic, )
-
-    result = multi_model_statistics(cubes, 'full', statistics)
-    result_cube = result[statistic]
-
-    assert result_cube.coord('time').shape == (6, )
-
-
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-def test_edge_case_time_not_in_middle_of_months(span):
-    """Test case when time coords are not on 15th for monthly data.
-
-    Expected behaviour: `multi_model_statistics` will set all dates to
-    the 15th.
-    """
-    time_points = range(1, 4)
-    dates1 = [datetime(1850, i, 12, 0, 0, 0) for i in time_points]
-    dates2 = [datetime(1850, i, 25, 0, 0, 0) for i in time_points]
-
-    cubes = (
-        generate_cube_from_dates(dates1),
-        generate_cube_from_dates(dates2),
-    )
-
-    statistic = 'min'
-    statistics = (statistic, )
-
-    result = multi_model_statistics(cubes, span, statistics)
-    result_cube = result[statistic]
-
-    time_coord = result_cube.coord('time')
-
-    desired = np.array((14., 45., 73.))
-    np.testing.assert_array_equal(time_coord.points, desired)
-
-
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-def test_edge_case_sub_daily_data_fail(span):
-    """Test case when cubes with sub-daily time coords are passed."""
-    cube = generate_cube_from_dates('hourly')
-    cubes = (cube, cube)
-
-    statistic = 'min'
-    statistics = (statistic, )
-
-    with pytest.raises(ValueError):
-        _ = multi_model_statistics(cubes, span, statistics)
-
-
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-def test_edge_case_single_cube_fail(span):
-    """Test that an error is raised when a single cube is passed."""
-    cube = generate_cube_from_dates('monthly')
-    cubes = (cube, )
-
-    statistic = 'min'
-    statistics = (statistic, )
-
-    with pytest.raises(ValueError):
-        _ = multi_model_statistics(cubes, span, statistics)
-
-
-def test_unify_time_coordinates():
-    """Test set common calendar."""
-    cube1 = generate_cube_from_dates('monthly',
-                                     calendar='360_day',
-                                     offset='days since 1850-01-01')
-    cube2 = generate_cube_from_dates('monthly',
-                                     calendar='gregorian',
-                                     offset='days since 1943-05-16')
-
-    mm._unify_time_coordinates([cube1, cube2])
-
-    assert cube1.coord('time') == cube2.coord('time')
+class Test(tests.Test):
+    """Test class for preprocessor/_multimodel.py."""
+    def setUp(self):
+        """Prepare tests."""
+        # Make various time arrays
+        time_args = {
+            'standard_name': 'time',
+            'units': Unit('days since 1850-01-01', calendar='gregorian')
+        }
+        monthly1 = iris.coords.DimCoord([14, 45], **time_args)
+        monthly2 = iris.coords.DimCoord([45, 73, 104, 134], **time_args)
+        monthly3 = iris.coords.DimCoord([104, 134], **time_args)
+        yearly1 = iris.coords.DimCoord([14., 410.], **time_args)
+        yearly2 = iris.coords.DimCoord([1., 367., 733., 1099.], **time_args)
+        daily1 = iris.coords.DimCoord([1., 2.], **time_args)
+        for time in [monthly1, monthly2, monthly3, yearly1, yearly2, daily1]:
+            time.guess_bounds()
+
+        # Other dimensions are fixed
+        zcoord = iris.coords.DimCoord([0.5, 5., 50.],
+                                      standard_name='air_pressure',
+                                      long_name='air_pressure',
+                                      bounds=[[0., 2.5], [2.5, 25.],
+                                              [25., 250.]],
+                                      units='m',
+                                      attributes={'positive': 'down'})
+        coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+        lons = iris.coords.DimCoord([1.5, 2.5],
+                                    standard_name='longitude',
+                                    long_name='longitude',
+                                    bounds=[[1., 2.], [2., 3.]],
+                                    units='degrees_east',
+                                    coord_system=coord_sys)
+        lats = iris.coords.DimCoord([1.5, 2.5],
+                                    standard_name='latitude',
+                                    long_name='latitude',
+                                    bounds=[[1., 2.], [2., 3.]],
+                                    units='degrees_north',
+                                    coord_system=coord_sys)
+
+        data1 = np.ma.ones((2, 3, 2, 2))
+        data2 = np.ma.ones((4, 3, 2, 2))
+        mask2 = np.full((4, 3, 2, 2), False)
+        mask2[0, 0, 0, 0] = True
+        data2 = np.ma.array(data2, mask=mask2)
+
+        coords_spec1 = [(monthly1, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube1 = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec1)
+
+        coords_spec2 = [(monthly2, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube2 = iris.cube.Cube(data2, dim_coords_and_dims=coords_spec2)
+
+        coords_spec3 = [(monthly3, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube3 = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec3)
+
+        coords_spec4 = [(yearly1, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube4 = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec4)
+
+        coords_spec5 = [(yearly2, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube5 = iris.cube.Cube(data2, dim_coords_and_dims=coords_spec5)
+
+        coords_spec6 = [(daily1, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+        self.cube6 = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec6)
+
+    def test_compute_statistic(self):
+        """Test statistic."""
+        data = [self.cube1.data[0], self.cube2.data[0]]
+        stat_mean = _compute_statistic(data, "mean")
+        stat_median = _compute_statistic(data, "median")
+        expected_mean = np.ma.ones((3, 2, 2))
+        expected_median = np.ma.ones((3, 2, 2))
+        self.assert_array_equal(stat_mean, expected_mean)
+        self.assert_array_equal(stat_median, expected_median)
+
+    def test_compute_full_statistic_mon_cube(self):
+        data = [self.cube1, self.cube2]
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='full')
+        expected_full_mean = np.ma.ones((5, 3, 2, 2))
+        expected_full_mean.mask = np.ones((5, 3, 2, 2))
+        expected_full_mean.mask[1] = False
+        self.assert_array_equal(stats['mean'].data, expected_full_mean)
+
+    def test_compute_full_statistic_yr_cube(self):
+        data = [self.cube4, self.cube5]
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='full')
+        expected_full_mean = np.ma.ones((4, 3, 2, 2))
+        expected_full_mean.mask = np.zeros((4, 3, 2, 2))
+        expected_full_mean.mask[2:4] = True
+        self.assert_array_equal(stats['mean'].data, expected_full_mean)
+
+    def test_compute_overlap_statistic_mon_cube(self):
+        data = [self.cube1, self.cube1]
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='overlap')
+        expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
+        self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
+
+    def test_compute_overlap_statistic_yr_cube(self):
+        data = [self.cube4, self.cube4]
+        stats = multi_model_statistics(products=data,
+                                       statistics=['mean'],
+                                       span='overlap')
+        expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
+        self.assert_array_equal(stats['mean'].data, expected_ovlap_mean)
+
+    def test_compute_std(self):
+        """Test statistic."""
+        data = [self.cube1.data[0], self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "std")
+        expected = np.ma.ones((3, 2, 2)) * 0.5
+        expected[0, 0, 0] = 0
+        self.assert_array_equal(stat, expected)
+
+    def test_compute_max(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "max")
+        expected = np.ma.ones((3, 2, 2)) * 2
+        expected[0, 0, 0] = 0.5
+        self.assert_array_equal(stat, expected)
+
+    def test_compute_min(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "min")
+        expected = np.ma.ones((3, 2, 2)) * 0.5
+        self.assert_array_equal(stat, expected)
+
+    def test_compute_percentile(self):
+        """Test statistic."""
+        data = [self.cube1.data[0] * 0.5, self.cube2.data[0] * 2]
+        stat = _compute_statistic(data, "p75")
+        expected = np.ma.ones((3, 2, 2)) * 1.625
+        expected[0, 0, 0] = 0.5
+        self.assert_array_equal(stat, expected)
+
+    def test_put_in_cube(self):
+        """Test put in cube."""
+        cube_data = np.ma.ones((2, 3, 2, 2))
+        stat_cube = _put_in_cube(self.cube1, cube_data, "mean", t_axis=[1, 2])
+        self.assert_array_equal(stat_cube.data, self.cube1.data)
+
+    def test_assemble_overlap_data(self):
+        """Test overlap data."""
+        comp_ovlap_mean = _assemble_data([self.cube1, self.cube1],
+                                         "mean",
+                                         span='overlap')
+        expected_ovlap_mean = np.ma.ones((2, 3, 2, 2))
+        self.assert_array_equal(comp_ovlap_mean.data, expected_ovlap_mean)
+
+    def test_assemble_full_data(self):
+        """Test full data."""
+        comp_full_mean = _assemble_data([self.cube1, self.cube2],
+                                        "mean",
+                                        span='full')
+        expected_full_mean = np.ma.ones((5, 3, 2, 2))
+        expected_full_mean.mask = np.ones((5, 3, 2, 2))
+        expected_full_mean.mask[1] = False
+        self.assert_array_equal(comp_full_mean.data, expected_full_mean)
+
+    def test_plev_fix(self):
+        """Test plev fix."""
+        fixed_data = _plev_fix(self.cube2.data, 1)
+        expected_data = np.ma.ones((3, 2, 2))
+        self.assert_array_equal(expected_data, fixed_data)
+
+    def test_unify_time_coordinates(self):
+        """Test set common calenar."""
+        cube1 = self.cube1
+        time1 = cube1.coord('time')
+        t_unit1 = time1.units
+        dates = t_unit1.num2date(time1.points)
+
+        t_unit2 = Unit('days since 1850-01-01', calendar='gregorian')
+        time2 = t_unit2.date2num(dates)
+        cube2 = self.cube1.copy()
+        cube2.coord('time').points = time2
+        cube2.coord('time').units = t_unit2
+        _unify_time_coordinates([cube1, cube2])
+        self.assertEqual(cube1.coord('time'), cube2.coord('time'))
+
+    def test_get_time_slice_all(self):
+        """Test get time slice if all cubes have data."""
+        cubes = [self.cube1, self.cube2]
+        result = _get_time_slice(cubes, time=45)
+        expected = [self.cube1[1].data, self.cube2[0].data]
+        self.assert_array_equal(expected, result)
+
+    def test_get_time_slice_part(self):
+        """Test get time slice if all cubes have data."""
+        cubes = [self.cube1, self.cube2]
+        result = _get_time_slice(cubes, time=14)
+        masked = np.ma.empty(list(cubes[0].shape[1:]))
+        masked.mask = True
+        expected = [self.cube1[0].data, masked]
+        self.assert_array_equal(expected, result)
+
+    def test_return_products(self):
+        """Check that the right product set is returned."""
+        input1 = PreprocessorFile(self.cube1)
+        input2 = PreprocessorFile(self.cube2)
+        output = PreprocessorFile()
+        products = set([input1, input2])
+        output_products = {'mean': output}
+        result1 = _multiproduct_statistics(products,
+                                           statistics=['mean'],
+                                           output_products=output_products,
+                                           span='full',
+                                           keep_input_datasets=True)
+        result2 = _multiproduct_statistics(products,
+                                           statistics=['mean'],
+                                           output_products=output_products,
+                                           span='full',
+                                           keep_input_datasets=False)
+        result3 = multi_model_statistics(products,
+                                         statistics=['mean'],
+                                         output_products=output_products,
+                                         span='full')
+        result4 = multi_model_statistics(products,
+                                         statistics=['mean'],
+                                         output_products=output_products,
+                                         span='full',
+                                         keep_input_datasets=False)
+        assert result1 == set([input1, input2, output])
+        assert result2 == set([output])
+        assert result3 == result1
+        assert result4 == result2
 
 
 class PreprocessorFile:
@@ -500,40 +263,5 @@ class PreprocessorFile:
         pass
 
 
-def test_return_products():
-    """Check that the right product set is returned."""
-    cube1 = generate_cube_from_dates('monthly', fill_val=1)
-    cube2 = generate_cube_from_dates('monthly', fill_val=9)
-
-    input1 = PreprocessorFile(cube1)
-    input2 = PreprocessorFile(cube2)
-
-    products = set([input1, input2])
-
-    output = PreprocessorFile()
-    output_products = {'mean': output}
-
-    kwargs = {
-        'statistics': ['mean'],
-        'span': 'full',
-        'output_products': output_products
-    }
-
-    result1 = mm._multiproduct_statistics(products,
-                                          keep_input_datasets=True,
-                                          **kwargs)
-
-    result2 = mm._multiproduct_statistics(products,
-                                          keep_input_datasets=False,
-                                          **kwargs)
-
-    assert result1 == set([input1, input2, output])
-    assert result2 == set([output])
-
-    result3 = mm.multi_model_statistics(products, **kwargs)
-    result4 = mm.multi_model_statistics(products,
-                                        keep_input_datasets=False,
-                                        **kwargs)
-
-    assert result3 == result1
-    assert result4 == result2
+if __name__ == '__main__':
+    unittest.main()
