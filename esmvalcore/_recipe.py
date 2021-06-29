@@ -634,7 +634,8 @@ def _update_statistic_settings(products, order, preproc_dir):
 
     some_product = next(iter(products))
     for statistic in some_product.settings[step]['statistics']:
-        check.valid_multimodel_statistic(statistic)
+        # reverting multimodel to 2.2.0; uncomment when using new multimodel
+        # check.valid_multimodel_statistic(statistic)
         attributes = _get_statistic_attributes(products)
         attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
             statistic.title().replace('.', '-'))
