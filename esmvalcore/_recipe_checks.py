@@ -2,7 +2,7 @@
 import itertools
 import logging
 import os
-import re
+# import re
 import subprocess
 from shutil import which
 
@@ -10,7 +10,7 @@ import yamale
 
 from ._data_finder import get_start_end_year
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
-from .preprocessor._multimodel import STATISTIC_MAPPING
+# from .preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -190,13 +190,14 @@ def extract_shape(settings):
                 "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))
 
 
-def valid_multimodel_statistic(statistic):
-    """Check that `statistic` is a valid argument for multimodel stats."""
-    valid_names = ['std'] + list(STATISTIC_MAPPING.keys())
-    valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
-    if not (statistic in valid_names
-            or re.match(r'|'.join(valid_patterns), statistic)):
-        raise RecipeError(
-            "Invalid value encountered for `statistic` in preprocessor "
-            f"`multi_model_statistics`. Valid values are {valid_names} "
-            f"or patterns matching {valid_patterns}. Got '{statistic}.'")
+# reverting multimodel to 2.2.0; uncomment when using the new multimodel
+# def valid_multimodel_statistic(statistic):
+#     """Check that `statistic` is a valid argument for multimodel stats."""
+#     valid_names = ['std'] + list(STATISTIC_MAPPING.keys())
+#     valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
+#     if not (statistic in valid_names
+#             or re.match(r'|'.join(valid_patterns), statistic)):
+#         raise RecipeError(
+#             "Invalid value encountered for `statistic` in preprocessor "
+#             f"`multi_model_statistics`. Valid values are {valid_names} "
+#            f"or patterns matching {valid_patterns}. Got '{statistic}.'")
