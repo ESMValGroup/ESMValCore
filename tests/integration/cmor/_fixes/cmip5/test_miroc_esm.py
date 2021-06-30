@@ -1,6 +1,7 @@
 """Test MIROC-ESM fixes."""
 import unittest
 
+import numpy as np
 from cf_units import Unit
 from iris.coords import DimCoord
 from iris.cube import Cube
@@ -79,6 +80,22 @@ class TestAll(unittest.TestCase):
                                 calendar='gregorian')), 0)
         self.cube.add_dim_coord(DimCoord([0, 1], long_name='AR5PL35'), 1)
 
+        time_units = Unit('days since 1950-1-1 00:00:00', calendar='gregorian')
+
+        # Setup wrong time coordinate that is present in some files
+        # (-711860.5 days from 1950-01-01 is < year 1)
+        time_coord = DimCoord(
+            [-711845.0, -711814.0],
+            bounds=[[-711860.5, -711829.5], [-711829.5, -711800.0]],
+            var_name='time',
+            standard_name='time',
+            long_name='time',
+            units=time_units,
+        )
+        self.cube_with_wrong_time = Cube([0.0, 1.0], var_name='co2',
+                                         units='ppm',
+                                         dim_coords_and_dims=[(time_coord, 0)])
+
         self.fix = AllVars(None)
 
     def test_get(self):
@@ -100,3 +117,27 @@ class TestAll(unittest.TestCase):
         cube = self.fix.fix_metadata([self.cube])[0]
         with self.assertRaises(CoordinateNotFoundError):
             cube.coord('air_pressure')
+
+    def test_fix_metadata_correct_time(self):
+        """Test fix for time."""
+        fixed_cube = self.fix.fix_metadata([self.cube])[0]
+        time_coord = fixed_cube.coord('time')
+        np.testing.assert_allclose(time_coord.points, [0, 1])
+        assert time_coord.bounds is None
+
+    def test_fix_metadata_wrong_time(self):
+        """Test fix for time."""
+        fixed_cube = self.fix.fix_metadata([self.cube_with_wrong_time])[0]
+        time_coord = fixed_cube.coord('time')
+        np.testing.assert_allclose(time_coord.points, [-711841.5, -711810.5])
+        np.testing.assert_allclose(
+            time_coord.bounds,
+            [[-711857.0, -711826.0], [-711826.0, -711796.5]])
+
+    def test_fix_metadata_wrong_time_no_bounds(self):
+        """Test fix for time."""
+        self.cube_with_wrong_time.coord('time').bounds = None
+        fixed_cube = self.fix.fix_metadata([self.cube_with_wrong_time])[0]
+        time_coord = fixed_cube.coord('time')
+        np.testing.assert_allclose(time_coord.points, [-711845.0, -711814.0])
+        assert time_coord.bounds is None
