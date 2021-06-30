@@ -108,17 +108,20 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
             return cube
 
     return cube_slice
-    
+
+
 def _parse_start_date(date):
     if date.startswith('P'):
         start_date = isodate.parse_duration(date)
     else:
         try:
             start_date = isodate.parse_date(date)
-            start_date = datetime.datetime.combine(start_date, datetime.time.min)
+            start_date = datetime.datetime.combine(
+                start_date, datetime.time.min)
         except isodate.ISO8601Error:
             start_date = isodate.parse_datetime(date)
     return start_date
+
 
 def _parse_end_date(date):
     if date.startswith('P'):
@@ -127,11 +130,13 @@ def _parse_end_date(date):
         if len(date) == 4:
             end_date = datetime.datetime(int(date)+1, 1, 1, 0, 0, 0)
         elif len(date) == 6:
-            end_date = datetime.datetime(int(date[0:4]), int(date[4:])+1, 1, 0, 0, 0)
+            end_date = datetime.datetime(
+                int(date[0:4]), int(date[4:])+1, 1, 0, 0, 0)
         else:
             try:
                 end_date = isodate.parse_date(date)
-                end_date = datetime.datetime.combine(end_date, datetime.time.min)
+                end_date = datetime.datetime.combine(
+                    end_date, datetime.time.min)
             except isodate.ISO8601Error:
                 end_date = isodate.parse_datetime(date)
     return end_date 
@@ -152,15 +157,18 @@ def _duration_to_date(cube, duration, reference, sign):
     reference_unit = cf_units.Unit(
         f'seconds since {reference_format}', calendar=time_unit.calendar
     )
-    
+
     years = sign * int(duration.years)
     months = sign * int(duration.months)
     days = sign * int(duration.days)
     seconds = sign * int(duration.seconds)
     
-    delta_years = _convert_duration(years, 'years', reference_format, reference_unit)
-    delta_months = _convert_duration(months, 'months', reference_format, reference_unit)
-    delta_days = _convert_duration(days, 'days', reference_format, reference_unit)
+    delta_years = _convert_duration(
+        years, 'years', reference_format, reference_unit)
+    delta_months = _convert_duration(
+        months, 'months', reference_format, reference_unit)
+    delta_days = _convert_duration(
+        days, 'days', reference_format, reference_unit)
 
     delta = delta_years + delta_months + delta_days + seconds
     delta = reference_unit.convert(delta, time_unit)
@@ -202,10 +210,10 @@ def clip_start_end_year(cube, start_year, end_year, timerange=None):
 
         if isinstance(start_date, isodate.duration.Duration):
             start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
-        
+
         if isinstance(end_date, isodate.duration.Duration):
             end_date = _duration_to_date(cube, end_date, start_date, sign=1)
-        
+
         return extract_time(
             start_date.year, start_date.month, start_date.day, 
             end_date.year, end_date.month, end_date.day)
