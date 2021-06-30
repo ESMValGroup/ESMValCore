@@ -94,7 +94,7 @@ class AllVars(Fix):
             except CoordinateNotFoundError:
                 pass
 
-            # Fix time
+            # Fix time for files that contain year < 1 (which is not allowed)
             if cube.coords('time'):
                 expected_time_units = Unit('days since 1950-1-1 00:00:00',
                                            calendar='gregorian')
@@ -102,6 +102,10 @@ class AllVars(Fix):
                     continue
                 if cube.coord('time').bounds is None:
                     continue
+
+                # Only apply fix if there is a year < 1 in the first element
+                # of the time bounds (-711860.5 days from 1950-01-01 is <
+                # year 1)
                 if np.isclose(cube.coord('time').bounds[0][0], -711860.5):
                     new_points = cube.coord('time').points.copy() + 3.5
                     new_bounds = cube.coord('time').bounds.copy() + 3.5

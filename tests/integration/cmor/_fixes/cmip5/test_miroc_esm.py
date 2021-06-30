@@ -81,6 +81,9 @@ class TestAll(unittest.TestCase):
         self.cube.add_dim_coord(DimCoord([0, 1], long_name='AR5PL35'), 1)
 
         time_units = Unit('days since 1950-1-1 00:00:00', calendar='gregorian')
+
+        # Setup wrong time coordinate that is present in some files
+        # (-711860.5 days from 1950-01-01 is < year 1)
         time_coord = DimCoord(
             [-711845.0, -711814.0],
             bounds=[[-711860.5, -711829.5], [-711829.5, -711800.0]],
