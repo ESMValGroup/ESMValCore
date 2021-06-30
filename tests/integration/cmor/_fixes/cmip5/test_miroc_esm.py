@@ -133,3 +133,11 @@ class TestAll(unittest.TestCase):
         np.testing.assert_allclose(
             time_coord.bounds,
             [[-711857.0, -711826.0], [-711826.0, -711796.5]])
+
+    def test_fix_metadata_wrong_time_no_bounds(self):
+        """Test fix for time."""
+        self.cube_with_wrong_time.coord('time').bounds = None
+        fixed_cube = self.fix.fix_metadata([self.cube_with_wrong_time])[0]
+        time_coord = fixed_cube.coord('time')
+        np.testing.assert_allclose(time_coord.points, [-711845.0, -711814.0])
+        assert time_coord.bounds is None
