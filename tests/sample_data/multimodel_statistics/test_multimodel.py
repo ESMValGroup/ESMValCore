@@ -184,31 +184,31 @@ def multimodel_test(cubes, statistic, span):
     return result
 
 
+def run_mm_regression_test(reference_cube, result_cube):
+    """Run the regression test for multimodel data files."""
+    assert_array_almost_equal(result_cube.data, reference_cube.data)
+    assert_metadata_equal(result_cube.metadata, reference_cube.metadata)
+    assert_coords_equal(result_cube.coords(), reference_cube.coords())
+
+
 def multimodel_regression_test(cubes, span, name):
     """Run multimodel regression test.
 
-    This test will fail if the input data or multimodel code changed. To
-    update the data for the regression test, remove the corresponding
-    `.nc` files in this directory and re-run the tests. The tests will
-    fail the first time with a RuntimeError, because the reference data
-    are being written.
+    To update the data for the regression test, remove the corresponding
+    `.nc` files in this directory and re-run the tests. Some of the files
+    will not be re-created depending on the number of `xfail`-marked tests.
     """
     statistic = 'mean'
     result = multimodel_test(cubes, statistic=statistic, span=span)
     result_cube = result[statistic]
 
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
-    if filename.exists():
-        reference_cube = iris.load_cube(str(filename))
-
-        assert_array_almost_equal(result_cube.data, reference_cube.data)
-        assert_metadata_equal(result_cube.metadata, reference_cube.metadata)
-        assert_coords_equal(result_cube.coords(), reference_cube.coords())
-
-    else:
-        # The test will fail if no regression data are available.
+    if not filename.exists():
         iris.save(result_cube, filename)
-        raise RuntimeError(f'Wrote reference data to {filename.absolute()}')
+        print(f'Attempted to rewrite reference data to {filename.absolute()}')
+
+    reference_cube = iris.load_cube(str(filename))
+    run_mm_regression_test(reference_cube, result_cube)
 
 
 @pytest.mark.xfail(
