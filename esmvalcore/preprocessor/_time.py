@@ -178,7 +178,7 @@ def _duration_to_date(cube, duration, reference, sign):
     return duration_date
 
 
-def clip_start_end_year(cube, start_year, end_year, timerange=None):
+def clip_timerange(cube, start_year, end_year, timerange=None):
     """Extract time range given by the dataset keys.
 
     Parameters
@@ -216,8 +216,8 @@ def clip_start_end_year(cube, start_year, end_year, timerange=None):
         if isinstance(end_date, isodate.duration.Duration):
             end_date = _duration_to_date(cube, end_date, start_date, sign=1)
 
-        return extract_time(cube,
-            start_date.year, start_date.month, start_date.day,
+        return extract_time(
+            cube, start_date.year, start_date.month, start_date.day,
             end_date.year, end_date.month, end_date.day)
 
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)

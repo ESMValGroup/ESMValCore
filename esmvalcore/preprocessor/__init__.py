@@ -49,7 +49,7 @@ from ._time import (
     annual_statistics,
     anomalies,
     climate_statistics,
-    clip_start_end_year,
+    clip_timerange,
     daily_statistics,
     decadal_statistics,
     extract_month,
@@ -90,7 +90,7 @@ __all__ = [
     'concatenate',
     'cmor_check_metadata',
     # Extract years given by dataset keys (start_year and end_year)
-    'clip_start_end_year',
+    'clip_timerange',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
@@ -167,7 +167,7 @@ __all__ = [
 ]
 
 TIME_PREPROCESSORS = [
-    'clip_start_end_year',
+    'clip_timerange',
     'extract_time',
     'extract_season',
     'extract_month',
