@@ -19,7 +19,7 @@ import iris.util
 import numpy as np
 from iris.time import PartialDateTime
 
-from esmvalcore.cmor.check import _get_time_bounds
+from esmvalcore.cmor.check import _get_next_month, _get_time_bounds
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
@@ -130,8 +130,8 @@ def _parse_end_date(date):
         if len(date) == 4:
             end_date = datetime.datetime(int(date)+1, 1, 1, 0, 0, 0)
         elif len(date) == 6:
-            end_date = datetime.datetime(
-                int(date[0:4]), int(date[4:])+1, 1, 0, 0, 0)
+            month, year = _get_next_month(int(date[4:]), int(date[0:4]))
+            end_date = datetime.datetime(year, month, 1, 0, 0, 0)
         else:
             try:
                 end_date = isodate.parse_date(date)
@@ -139,7 +139,7 @@ def _parse_end_date(date):
                     end_date, datetime.time.min)
             except isodate.ISO8601Error:
                 end_date = isodate.parse_datetime(date)
-    return end_date 
+    return end_date
 
 
 def _convert_duration(duration, freq, format, reference):
@@ -148,6 +148,7 @@ def _convert_duration(duration, freq, format, reference):
         calendar=reference.calendar)
     delta = duration_unit.convert(duration, reference)
     return delta
+
 
 def _duration_to_date(cube, duration, reference, sign):
     time_coord = cube.coord('time')
@@ -162,7 +163,7 @@ def _duration_to_date(cube, duration, reference, sign):
     months = sign * int(duration.months)
     days = sign * int(duration.days)
     seconds = sign * int(duration.seconds)
-    
+
     delta_years = _convert_duration(
         years, 'years', reference_format, reference_unit)
     delta_months = _convert_duration(
@@ -210,12 +211,13 @@ def clip_start_end_year(cube, start_year, end_year, timerange=None):
 
         if isinstance(start_date, isodate.duration.Duration):
             start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
+            start_date += datetime.timedelta(days=1)
 
         if isinstance(end_date, isodate.duration.Duration):
             end_date = _duration_to_date(cube, end_date, start_date, sign=1)
 
-        return extract_time(
-            start_date.year, start_date.month, start_date.day, 
+        return extract_time(cube,
+            start_date.year, start_date.month, start_date.day,
             end_date.year, end_date.month, end_date.day)
 
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)

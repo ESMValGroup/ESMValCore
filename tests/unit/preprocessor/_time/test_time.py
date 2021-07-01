@@ -210,7 +210,23 @@ class TestClipStartEndYear(tests.Test):
         cube = _create_sample_cube()[0]
         sliced = clip_start_end_year(cube, 1950, 1950)
         assert cube == sliced
-
+    
+    def test_clip_timerange_date(self):
+        """"Test"""
+        cube = _create_sample_cube()
+        sliced_year = clip_start_end_year(cube, 1950, 1952, '1950/1952')
+        sliced_month = clip_start_end_year(cube, 1950, 1952, '195001/195212')
+        sliced_day = clip_start_end_year(cube, 1950, 1952, '19500101/19521231')
+        assert cube == sliced_year
+        assert cube == sliced_month
+        assert cube == sliced_day
+    
+    def test_clip_timerange_duration(self):
+        cube = _create_sample_cube()
+        sliced_end = clip_start_end_year(cube, 1950, 1952, '1950/P2Y')
+        sliced_start = clip_start_end_year(cube, 1950, 1951, 'P2Y/1951')
+        assert cube == sliced_end
+        assert cube == sliced_start
 
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""
