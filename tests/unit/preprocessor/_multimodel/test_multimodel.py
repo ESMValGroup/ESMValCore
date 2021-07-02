@@ -537,3 +537,23 @@ def test_return_products():
 
     assert result3 == result1
     assert result4 == result2
+
+
+def test_ignore_tas_scalar_height_coord():
+    """Ignore conflicting aux_coords for height in tas."""
+    tas_2m = generate_cube_from_dates("monthly")
+    tas_1p5m = generate_cube_from_dates("monthly")
+
+    for cube, height in zip([tas_2m, tas_1p5m], [2., 1.5]):
+        cube.rename("air_temperature")
+        cube.attributes["short_name"] = "tas"
+        cube.add_aux_coord(
+            iris.coords.AuxCoord([height], var_name="height", units="m"))
+
+    result = mm.multi_model_statistics([tas_2m, tas_1p5m],
+                                       statistics=['mean'],
+                                       span='full')
+
+    # iris automatically averages the value of the scalar coordinate.
+    assert len(result['mean'].coords("height")) == 1
+    assert result["mean"].coord("height").points == 1.75
