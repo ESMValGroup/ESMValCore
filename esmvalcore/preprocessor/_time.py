@@ -7,7 +7,6 @@ import copy
 import datetime
 import logging
 from warnings import filterwarnings
-import cf_units
 
 import dask.array as da
 import iris
@@ -131,11 +130,9 @@ def clip_start_end_year(cube, start_year, end_year, timerange=None):
     Raises
     ------
     ValueError
-        Incorrect `select` argument
-    ValueError
         Time ranges are outside the cube's time limits.
     """
-
+    
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
 
 

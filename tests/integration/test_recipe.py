@@ -882,8 +882,6 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user, input_t
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
     filename = variable.pop('filename').split('/')[-1]
-    length = len(filename)
-    #filename = '_'.join((filename[length-2], filename[length-1]))
     assert (filename ==
             f'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_{output_time}.nc')
     fx_variable = recipe.diagnostics['test']['preprocessor_output']['areacella'][0]
