@@ -60,7 +60,7 @@ the following:
 
    Note that all authors, projects, and references mentioned in the description
    section of the recipe need to be included in the (locally installed copy of the) file
-   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/master/esmvaltool/config-references.yml>`_,
+   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_,
    see :ref:`config-ref`.
    The author name uses the format: ``surname_name``. For instance, John
    Doe would be: ``doe_john``. This information can be omitted by new users

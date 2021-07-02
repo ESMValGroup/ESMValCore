@@ -28,7 +28,7 @@ installation.
 New development should preferably be done in the
 `ESMValCore <https://github.com/ESMValGroup/ESMValCore>`__
 GitHub repository.
-The default git branch is ``master``.
+The default git branch is ``main``.
 Use this branch to create a new feature branch from and make a pull request
 against.
 This
@@ -74,7 +74,7 @@ Please keep the following considerations in mind when programming:
   are easy to understand and implement for scientific contributors.
 - No additional CMOR checks should be implemented inside preprocessor functions.
   The input cube is fixed and confirmed to follow the specification in
-  `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/master/esmvalcore/cmor/tables>`__
+  `esmvalcore/cmor/tables <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables>`__
   before applying any other preprocessor functions.
   This design helps to keep the preprocessor functions and diagnostics scripts
   that use the preprocessed data from the tool simple and reliable.
@@ -288,9 +288,9 @@ The documentation is built by readthedocs_ using `Sphinx <https://www.sphinx-doc
 There are two main ways of adding documentation:
 
 #. As written text in the directory
-   `doc <https://github.com/ESMValGroup/ESMValCore/tree/master/doc/>`__.
+   `doc <https://github.com/ESMValGroup/ESMValCore/tree/main/doc/>`__.
    When writing
-   `reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_
+   `reStructuredText <https://www.sphinx-doc.org/en/main/usage/restructuredtext/basics.html>`_
    (``.rst``) files, please try to limit the line length to 80 characters and
    always start a sentence on a new line.
    This makes it easier to review changes to documentation on GitHub.
@@ -300,7 +300,7 @@ There are two main ways of adding documentation:
    `docstrings <https://www.python.org/dev/peps/pep-0257/>`__
    of Python modules, classes, and functions
    that are mentioned in
-   `doc/api <https://github.com/ESMValGroup/ESMValCore/tree/master/doc/api>`__
+   `doc/api <https://github.com/ESMValGroup/ESMValCore/tree/main/doc/api>`__
    are used to generate the online documentation.
    This results in the :ref:`api`.
    The standard document with best practices on writing docstrings is
@@ -380,7 +380,7 @@ CircleCI_ will build the documentation with the command:
 This will catch mistakes that can be detected automatically.
 
 The configuration file for Sphinx_ is
-`doc/shinx/source/conf.py <https://github.com/ESMValGroup/ESMValTool/blob/master/doc/sphinx/source/conf.py>`_.
+`doc/shinx/source/conf.py <https://github.com/ESMValGroup/ESMValTool/blob/main/doc/sphinx/source/conf.py>`_.
 
 See :ref:`esmvaltool:esmvalcore-documentation-integration` for information on
 how the ESMValCore documentation is integrated into the complete ESMValTool
@@ -395,27 +395,21 @@ Tests
 -----
 
 To check that the code works correctly, there tests available in the
-`tests directory <https://github.com/ESMValGroup/ESMValCore/tree/master/tests>`_.
+`tests <https://github.com/ESMValGroup/ESMValCore/tree/main/tests>`__ directory.
 We use `pytest <https://docs.pytest.org>`_ to write and run our tests.
 
-Contributions to ESMValCore should be covered by unit tests.
+Contributions to ESMValCore should be
+`covered by unit tests <https://the-turing-way.netlify.app/reproducible-research/testing/testing-guidance.html#aim-to-have-a-good-code-coverage>`_.
 Have a look at the existing tests in the ``tests`` directory for inspiration on
 how to write your own tests.
 If you do not know how to start with writing unit tests, ask the
 `@ESMValGroup/tech-reviewers`_ for help by commenting on the pull request and
 they will try to help you.
-To check which parts of your code are covered by tests, open the file
-``test-reports/coverage_html/index.html`` and browse to the relevant file.
-It is also possible to view code coverage on Codacy_ (click the Files tab)
-and CircleCI_ (open the ``tests`` job and click the ARTIFACTS tab).
+It is also recommended that you have a look at the pytest_ documentation at some
+point when you start writing your own tests.
 
-Whenever you make a pull request or push new commits to an existing pull
-request, the tests in the `tests directory`_ of the branch associated with the
-pull request will be run automatically on CircleCI_.
-The results appear at the bottom of the pull request.
-Click on 'Details' for more information on a specific test job.
-To see some of the results on CircleCI, you may need to log in.
-You can do so using your GitHub account.
+Running tests
+~~~~~~~~~~~~~
 
 To run the tests on your own computer, go to the directory where the repository
 is cloned and run the command
@@ -426,10 +420,57 @@ is cloned and run the command
 
 Optionally you can skip tests which require additional dependencies for
 supported diagnostic script languages by adding ``-m 'not installation'`` to the
-previous command.
+previous command. To only run tests from a single file, run the command
+
+.. code-block:: bash
+
+   pytest tests/unit/test_some_file.py
+
+If you would like to avoid loading the default pytest configuration from
+`setup.cfg <https://github.com/ESMValGroup/ESMValCore/blob/main/setup.cfg>`_
+because this can be a bit slow for running just a few tests, use
+
+.. code-block:: bash
+
+   pytest -c /dev/null tests/unit/test_some_file.py
+
+Use
+
+.. code-block:: bash
+
+    pytest --help
+
+for more information on the available commands.
+
+Whenever you make a pull request or push new commits to an existing pull
+request, the tests in the ``tests`` directory of the branch associated with the
+pull request will be run automatically on CircleCI_.
+The results appear at the bottom of the pull request.
+Click on 'Details' for more information on a specific test job.
 
 When reviewing a pull request, always check that all test jobs on CircleCI_ were
 successful.
+
+Test coverage
+~~~~~~~~~~~~~
+
+To check which parts of your code are `covered by unit tests`_, open the file
+``test-reports/coverage_html/index.html`` (available after running a ``pytest``
+command) and browse to the relevant file.
+
+CircleCI will upload the coverage results from running the tests to codecov and
+Codacy.
+`codecov <https://app.codecov.io/gh/ESMValGroup/ESMValCore/pulls>`_ is a service
+that will comment on pull requests with a summary of the test coverage.
+If codecov_ reports that the coverage has decreased, check the report and add
+additional tests.
+Alternatively, it is also possible to view code coverage on Codacy_ (click the
+Files tab) and CircleCI_ (open the ``tests`` job and click the ARTIFACTS tab).
+To see some of the results on CircleCI, Codacy, or codecov, you may need to log
+in; you can do so using your GitHub account.
+
+When reviewing a pull request, always check that new code is covered by unit
+tests and codecov_ reports an increased coverage.
 
 .. _sample_data_tests:
 
@@ -439,7 +480,7 @@ Sample data
 New or modified preprocessor functions should preferably also be tested using
 the sample data.
 These tests are located in
-`tests/sample_data <https://github.com/ESMValGroup/ESMValCore/tree/master/tests/sample_data>`__.
+`tests/sample_data <https://github.com/ESMValGroup/ESMValCore/tree/main/tests/sample_data>`__.
 Please mark new tests that use the sample data with the
 `decorator <https://docs.python.org/3/glossary.html#term-decorator>`__
 ``@pytest.mark.use_sample_data``.
@@ -471,7 +512,7 @@ Automated testing
 ~~~~~~~~~~~~~~~~~
 
 Whenever you make a pull request or push new commits to an existing pull
-request, the tests in the `tests directory`_ of the branch associated with the
+request, the tests in the ``tests`` of the branch associated with the
 pull request will be run automatically on CircleCI_.
 
 Every night, more extensive tests are run to make sure that problems with the
@@ -481,16 +522,16 @@ These nightly tests have been designed to follow the installation procedures
 described in the documentation, e.g. in the :ref:`install` chapter.
 The nightly tests are run using both CircleCI and GitHub Actions.
 The result of the tests ran by CircleCI can be seen on the
-`CircleCI project page <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore?branch=master>`__
+`CircleCI project page <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore?branch=main>`__
 and the result of the tests ran by GitHub Actions can be viewed on the
 `Actions tab <https://github.com/ESMValGroup/ESMValCore/actions>`__
 of the repository.
 
 The configuration of the tests run by CircleCI can be found in the directory
-`.circleci <https://github.com/ESMValGroup/ESMValCore/blob/master/.circleci>`__,
+`.circleci <https://github.com/ESMValGroup/ESMValCore/blob/main/.circleci>`__,
 while the configuration of the tests run by GitHub Actions can be found in the
 directory
-`.github/workflows <https://github.com/ESMValGroup/ESMValCore/blob/master/.github/workflows>`__.
+`.github/workflows <https://github.com/ESMValGroup/ESMValCore/blob/main/.github/workflows>`__.
 
 .. _backward_compatibility:
 
@@ -549,7 +590,7 @@ Before considering adding a new dependency, carefully check that the
 of the dependency you want to add and any of its dependencies are
 `compatible <https://the-turing-way.netlify.app/reproducible-research/licensing/licensing-compatibility.html>`__
 with the
-`Apache 2.0 <https://github.com/ESMValGroup/ESMValCore/blob/master/LICENSE/>`_
+`Apache 2.0 <https://github.com/ESMValGroup/ESMValCore/blob/main/LICENSE/>`_
 license that applies to the ESMValCore.
 Note that GPL version 2 license is considered incompatible with the Apache 2.0
 license, while the compatibility of GPL version 3 license with the Apache 2.0
@@ -603,6 +644,9 @@ name to the list of authors in ``CITATION.cff`` and generate the entry for the
    pip install cffconvert
    cffconvert --ignore-suspect-keys --outputformat zenodo --outfile .zenodo.json
 
+Presently, this method unfortunately discards entries `communities`
+and `grants` from that file; please restore them manually, or
+alternately proceed with the addition manually
 
 .. _pull_request_checks:
 
@@ -625,7 +669,7 @@ You can attract the attention of the `@ESMValGroup/esmvaltool-coreteam`_ by
 mentioning them in the issue if it looks like no-one is working on solving the
 problem yet.
 The issue needs to be fixed in a separate pull request first.
-After that has been merged into the ``master`` branch and all checks on this
+After that has been merged into the ``main`` branch and all checks on this
 branch are green again, merge it into your own branch to get the tests to pass.
 
 When reviewing a pull request, always make sure that all checks were successful.
@@ -652,14 +696,14 @@ To make a new release of the package, follow these steps:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Check the ``nightly``
-`build on CircleCI <https://circleci.com/gh/ESMValGroup/ESMValCore/tree/master>`__
+`build on CircleCI <https://circleci.com/gh/ESMValGroup/ESMValCore/tree/main>`__
 and the
 `GitHub Actions run <https://github.com/ESMValGroup/ESMValCore/actions>`__.
 All tests should pass before making a release (branch).
 
 2. Create a release branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Create a branch off the ``master`` branch and push it to GitHub.
+Create a branch off the ``main`` branch and push it to GitHub.
 Ask someone with administrative permissions to set up branch protection rules
 for it so only you and the person helping you with the release can push to it.
 Announce the name of the branch in an issue and ask the members of the
@@ -673,7 +717,7 @@ The version number is stored in ``esmvalcore/_version.py``,
 ``package/meta.yaml``, ``CITATION.cff``. Make sure to update all files.
 Also update the release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
-Make a pull request and get it merged into ``master`` and cherry pick it into
+Make a pull request and get it merged into ``main`` and cherry pick it into
 the release branch.
 
 4. Add release notes
@@ -686,18 +730,18 @@ previous release.
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
-Make a pull request and get it merged into ``master`` and cherry pick it into
+Make a pull request and get it merged into ``main`` and cherry pick it into
 the release branch..
 
 5. Cherry pick bugfixes into the release branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If a bug is found and fixed (i.e. pull request merged into the
-``master`` branch) during the period of testing, use the command
+``main`` branch) during the period of testing, use the command
 ``git cherry-pick`` to include the commit for this bugfix into
 the release branch.
 When the testing period is over, make a pull request to update
 the release notes with the latest changes, get it merged into
-``master`` and cherry-pick it into the release branch.
+``main`` and cherry-pick it into the release branch.
 
 6. Make the release on GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -706,7 +750,7 @@ Do a final check that all tests on CircleCI and GitHub Actions completed
 successfully.
 Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
-and create the new release from the release branch (i.e. not from ``master``).
+and create the new release from the release branch (i.e. not from ``main``).
 
 7. Create and upload the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -734,7 +778,7 @@ Follow these steps to create a new conda package:
    conda package
 -  If the build was successful, upload the package to the esmvalgroup
    conda channel, e.g.
-   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.2.0-py_0.tar.bz2``.
+   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.3.0-py_0.tar.bz2``.
 
 8. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -757,7 +801,7 @@ Follow these steps to create a new Python package:
 -  Build the package:
    ``python3 -m pep517.build --source --binary --out-dir dist/ .``
    This command should generate two files in the ``dist`` directory, e.g.
-   ``ESMValCore-2.2.0-py3-none-any.whl`` and ``ESMValCore-2.2.0.tar.gz``.
+   ``ESMValCore-2.3.0-py3-none-any.whl`` and ``ESMValCore-2.3.0.tar.gz``.
 -  Upload the package:
    ``python3 -m twine upload dist/*``
    You will be prompted for an API token if you have not set this up

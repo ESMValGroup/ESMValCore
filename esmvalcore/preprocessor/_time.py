@@ -236,13 +236,18 @@ def get_time_weights(cube):
         Array of time weights for averaging.
     """
     time = cube.coord('time')
-    time_weights = time.bounds[..., 1] - time.bounds[..., 0]
-    time_weights = time_weights.squeeze()
-    if time_weights.shape == ():
-        time_weights = da.broadcast_to(time_weights, cube.shape)
-    else:
-        time_weights = iris.util.broadcast_to_shape(time_weights, cube.shape,
-                                                    cube.coord_dims('time'))
+    coord_dims = cube.coord_dims('time')
+
+    # Multidimensional time coordinates are not supported: In this case,
+    # weights cannot be simply calculated as difference between the bounds
+    if len(coord_dims) > 1:
+        raise ValueError(
+            f"Weighted statistical operations are not supported for "
+            f"{len(coord_dims):d}D time coordinates, expected "
+            f"0D or 1D")
+
+    # Extract 1D time weights (= lengths of time intervals)
+    time_weights = time.core_bounds()[:, 1] - time.core_bounds()[:, 0]
     return time_weights
 
 

@@ -70,6 +70,7 @@ class AllVars(Fix):
                             lon_bnds[-1][-1] == 360.:
                         lon_bnds[-1][-1] = 358.125
                         lon_coord.bounds = lon_bnds
+                        lon_coord.circular = True
                     # ocean & seaice
                     if lon_coord.points[0] == -0.9375:
                         lon_dim = cube.coord_dims('longitude')[0]

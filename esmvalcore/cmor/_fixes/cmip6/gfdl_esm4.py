@@ -1,36 +1,10 @@
 """Fixes for GFDL-ESM4 model."""
-import iris
+from ..common import SiconcFixScalarCoord
 from ..fix import Fix
-from ..shared import (add_scalar_depth_coord, fix_ocean_depth_coord)
-
-
-class Siconc(Fix):
-    """Fixes for siconc."""
-
-    def fix_metadata(self, cubes):
-        """
-        Fix missing type.
-
-        Parameters
-        ----------
-        cubes: iris CubeList
-            List of cubes to fix
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        typesi = iris.coords.AuxCoord(
-            'siconc',
-            standard_name='area_type',
-            long_name='Sea Ice area type',
-            var_name='type',
-            units='1',
-            bounds=None)
-        for cube in cubes:
-            cube.add_aux_coord(typesi)
-        return cubes
+from ..shared import (
+    add_scalar_depth_coord,
+    fix_ocean_depth_coord,
+)
 
 
 class Fgco2(Fix):
@@ -76,3 +50,6 @@ class Omon(Fix):
                 if z_coord.standard_name is None:
                     fix_ocean_depth_coord(cube)
         return cubes
+
+
+Siconc = SiconcFixScalarCoord
