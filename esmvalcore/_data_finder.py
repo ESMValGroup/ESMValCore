@@ -34,7 +34,7 @@ def find_files(dirnames, filenames):
     return result
 
 
-def get_start_end_year(filename, return_date=False):
+def get_start_end_year(filename):
     """Get the start and end year from a file name.
 
     Examples of allowed dates : 1980, 198001, 19801231,
@@ -124,13 +124,11 @@ def get_start_end_year(filename, return_date=False):
         raise ValueError(f'File {filename} dates do not match a recognized'
                          'pattern and time can not be read from the file')
 
-    if return_date:
-        start_values = (int(start_year), start_date)
-        end_values = (int(end_year), end_date)
-        return start_values, end_values
+    #start_values = (int(start_year), start_date)
+    #end_values = (int(end_year), end_date)
 
     logger.debug("Found start_year %s and end_year %s", start_year, end_year)
-    return int(start_year), int(end_year)
+    return int(start_year), int(end_year), start_date, end_date
 
 
 def select_files(filenames, start_year, end_year):
@@ -140,7 +138,7 @@ def select_files(filenames, start_year, end_year):
     """
     selection = []
     for filename in filenames:
-        start, end = get_start_end_year(filename)
+        start, end, _, _ = get_start_end_year(filename)
         if start <= end_year and end >= start_year:
             selection.append(filename)
     return selection

@@ -136,7 +136,7 @@ def data_availability(input_files, var, dirnames, filenames):
     available_years = set()
 
     for filename in input_files:
-        start, end = get_start_end_year(filename)
+        start, end, _, _ = get_start_end_year(filename)
         available_years.update(range(start, end + 1))
 
     missing_years = required_years - available_years

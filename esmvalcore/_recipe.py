@@ -684,10 +684,10 @@ def _update_timerange(variable, settings, config_user):
         (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                           config_user['drs'])
         intervals = [
-            get_start_end_year(name, return_date=True) for name in files]
+            get_start_end_year(name) for name in files]
 
-        min_date = min(intervals)[0][1]
-        max_date = max(intervals)[1][1]
+        min_date = min(intervals)[2]
+        max_date = max(intervals)[3]
 
         if timerange == '*':
             timerange = f'{min_date}/{max_date}'
