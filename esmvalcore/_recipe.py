@@ -1440,15 +1440,12 @@ class Recipe:
                 if not self._updated_recipe:
                     self._updated_recipe = deepcopy(self._raw_recipe)
                 if datasets:
-                    (self._updated_recipe['datasets']
-                                         [index]
-                                         ['timerange']) = timerange
+                    (self._updated_recipe['datasets'][index]
+                     ['timerange']) = timerange
                 else:
                     (self._updated_recipe['diagnostics']
-                                         [diagnostic]
-                                         ['additional_datasets']
-                                         [index]
-                                         ['timerange']) = timerange
+                     [diagnostic]['additional_datasets']
+                     [index]['timerange']) = timerange
 
     def initialize_tasks(self):
         """Define tasks in recipe."""
