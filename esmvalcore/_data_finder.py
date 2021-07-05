@@ -4,6 +4,7 @@
 # Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
+import datetime
 import fnmatch
 import glob
 import logging
@@ -12,7 +13,6 @@ import re
 from pathlib import Path
 
 import iris
-import datetime
 import isodate
 
 from ._config import get_project_config

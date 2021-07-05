@@ -132,7 +132,9 @@ def clip_start_end_year(cube, start_year, end_year, timerange=None):
     ValueError
         Time ranges are outside the cube's time limits.
     """
-
+    if timerange:
+        # To be done in another PR.
+        pass
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
 
 

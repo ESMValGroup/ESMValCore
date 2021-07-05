@@ -677,7 +677,7 @@ def _update_timerange(variable, settings, config_user):
         return
 
     timerange = variable.get('timerange')
-    check.valid_time_selection(variable, timerange)
+    check.valid_time_selection(timerange)
 
     step = 'clip_start_end_year'
     if '*' in timerange:
@@ -1429,15 +1429,12 @@ class Recipe:
         timerange = var.get('timerange')
         if timerange:
             if datasets:
-                raw_timerange = (self._raw_recipe['datasets']
-                                                 [index]
-                                                 ['timerange'])
+                raw_timerange = (
+                    self._raw_recipe['datasets'][index]['timerange'])
             else:
-                raw_timerange = (self._raw_recipe['diagnostics']
-                                                 [diagnostic]
-                                                 ['additional_datasets']
-                                                 [index]
-                                                 ['timerange'])
+                raw_timerange = (
+                    self._raw_recipe['diagnostics'][diagnostic]
+                    ['additional_datasets'][index]['timerange'])
 
             if timerange != raw_timerange:
                 if not self._updated_recipe:
@@ -1567,6 +1564,7 @@ class Recipe:
         return output
 
     def write_filled_recipe(self):
+        """Write copy of recipe with filled wildcards."""
         if self._updated_recipe:
             run_dir = self._cfg['run_dir']
             filename = self._filename.split('.')

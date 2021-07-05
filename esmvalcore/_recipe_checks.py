@@ -4,9 +4,9 @@ import logging
 import os
 import re
 import subprocess
-import isodate
 from shutil import which
 
+import isodate
 import yamale
 
 from ._data_finder import get_start_end_year
@@ -203,7 +203,7 @@ def valid_multimodel_statistic(statistic):
             f"or patterns matching {valid_patterns}. Got '{statistic}.'")
 
 
-def valid_time_selection(variable, timerange):
+def valid_time_selection(timerange):
     """Check that `timerange` tag is well defined."""
     if timerange != '*':
         timerange = timerange.split('/')
