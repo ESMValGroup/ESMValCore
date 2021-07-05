@@ -924,13 +924,13 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
     assert set(variable) == set(reference)
     for key in reference:
         assert variable[key] == reference[key]
-  
+
 
 TEST_ISO_TIMERANGE = [
     ('*', '1990-2019'),
     ('1990/1992', '1990-1992'),
     ('19900101/19920101', '19900101-19920101'),
-    ('19900101T12H00M00S/19920101T12H00M00', 
+    ('19900101T12H00M00S/19920101T12H00M00',
      '19900101T12H00M00S-19920101T12H00M00'),
     ('1990/*', '1990-2019'),
     ('*/1992', '1990-1992'),
@@ -950,10 +950,12 @@ TEST_ISO_TIMERANGE = [
     ('*/P2Y21DT12H00M00S', '1990-P2Y21DT12H00M00S'),
 ]
 
+
 @pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
-def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user, input_time, output_time):
+def test_recipe_iso_timerange(
+  tmp_path, patched_datafinder, config_user, input_time, output_time):
     """Test recipe with timerange tag."""
-    content = dedent(f"""
+    content = dedent("""
         diagnostics:
           test:
             additional_datasets:
@@ -962,7 +964,7 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user, input_t
                 exp: historical
                 ensemble: r2i1p1f1
                 grid: gn
-                timerange: 
+                timerange:
             variables:
               pr:
                 mip: 3hr
@@ -973,15 +975,19 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user, input_t
 
     # Add invalid timerange
     recipe = yaml.safe_load(content)
-    recipe['diagnostics']['test']['additional_datasets'][0]['timerange'] = input_time
+    (recipe['diagnostics']
+           ['test']['additional_datasets'][0]['timerange']) = input_time
     content = yaml.safe_dump(recipe)
-    
+
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
     filename = variable.pop('filename').split('/')[-1]
     assert (filename ==
-            f'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_pr_{output_time}.nc')
-    fx_variable = recipe.diagnostics['test']['preprocessor_output']['areacella'][0]
+            'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
+            f'pr_{output_time}.nc')
+    fx_variable = (recipe.diagnostics['test']
+                                     ['preprocessor_output']
+                                     ['areacella'][0])
     fx_filename = fx_variable.pop('filename').split('/')[-1]
     assert (fx_filename ==
             'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella.nc')

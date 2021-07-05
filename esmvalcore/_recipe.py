@@ -719,8 +719,8 @@ def _update_timerange(variable, settings, config_user):
 
     variable.update(
         {'timerange': timerange,
-        'start_year': start_year,
-        'end_year': end_year})
+         'start_year': start_year,
+         'end_year': end_year})
 
     settings[step]['timerange'] = timerange
     settings[step]['start_year'] = start_year
@@ -1418,7 +1418,7 @@ class Recipe:
                                      ancestor_ids)
                         ancestors.extend(tasks[a] for a in ancestor_ids)
                     tasks[task_id].ancestors = ancestors
-    
+
     def _fill_wildcards(self, variable_group, preprocessor_output):
         # To be generalised for other tags
         var = preprocessor_output[variable_group][0]
@@ -1446,13 +1446,13 @@ class Recipe:
                     (self._updated_recipe['datasets']
                                          [index]
                                          ['timerange']) = timerange
-                else: 
+                else:
                     (self._updated_recipe['diagnostics']
                                          [diagnostic]
                                          ['additional_datasets']
                                          [index]
                                          ['timerange']) = timerange
-    
+
     def initialize_tasks(self):
         """Define tasks in recipe."""
         logger.info("Creating tasks from recipe")
@@ -1481,7 +1481,8 @@ class Recipe:
                 except RecipeError as ex:
                     failed_tasks.append(ex)
                 else:
-                    self._fill_wildcards(variable_group, diagnostic['preprocessor_output'])
+                    self._fill_wildcards(
+                        variable_group, diagnostic['preprocessor_output'])
                     for task0 in task.flatten():
                         task0.priority = priority
                     tasks.add(task)
@@ -1564,7 +1565,7 @@ class Recipe:
             output['task_output'][task.name] = task.get_product_attributes()
 
         return output
-    
+
     def write_filled_recipe(self):
         if self._updated_recipe:
             run_dir = self._cfg['run_dir']

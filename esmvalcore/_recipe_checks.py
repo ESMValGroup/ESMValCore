@@ -212,7 +212,6 @@ def valid_time_selection(variable, timerange):
                 "Invalid value encountered for `timerange`. "
                 "Valid values must be separated by `/`. "
                 f"Got {timerange} instead.")
-        
         try:
             isodate.parse_duration(timerange[0])
         except ValueError:
@@ -228,7 +227,6 @@ def valid_time_selection(variable, timerange):
                     "Cannot set both the beginning and the end "
                     "as duration periods."
                 )
-        
         for date in timerange:
             try:
                 isodate.parse_date(date)
@@ -239,8 +237,7 @@ def valid_time_selection(variable, timerange):
                     if date != '*':
                         raise RecipeError(
                             "Invalid value encountered for `timerange`. "
-                            "Valid value must follow ISO 8601 standard for dates "
-                            "and duration periods, or be set to '*' to load "
-                            f"available years. Got {timerange} instead.")
-                     
-                
+                            "Valid value must follow ISO 8601 standard "
+                            "for dates and duration periods, or be "
+                            "set to '*' to load available years. "
+                            "Got {timerange} instead.")
