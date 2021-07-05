@@ -6,7 +6,6 @@ from datetime import datetime
 from functools import reduce
 
 import cf_units
-import dask.array as da
 import iris
 import numpy as np
 from iris.util import equalise_attributes
