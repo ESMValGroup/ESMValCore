@@ -236,10 +236,10 @@ def valid_time_selection(variable, timerange):
                 try:
                     isodate.parse_duration(date)
                 except ValueError:
-                    if not date in ['*', '']:
+                    if date != '*':
                         raise RecipeError(
                             "Invalid value encountered for `timerange`. "
-                            "Valid must follow ISO 8601 standard for dates "
+                            "Valid value must follow ISO 8601 standard for dates "
                             "and duration periods, or be set to '*' to load "
                             f"available years. Got {timerange} instead.")
                      
