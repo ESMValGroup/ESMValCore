@@ -124,9 +124,6 @@ def get_start_end_year(filename):
         raise ValueError(f'File {filename} dates do not match a recognized'
                          'pattern and time can not be read from the file')
 
-    #start_values = (int(start_year), start_date)
-    #end_values = (int(end_year), end_date)
-
     logger.debug("Found start_year %s and end_year %s", start_year, end_year)
     return int(start_year), int(end_year), start_date, end_date
 

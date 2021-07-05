@@ -31,7 +31,7 @@ FILENAME_CASES = [
 def test_get_start_end_year(case):
     """Tests for get_start_end_year function"""
     filename, case_start, case_end = case
-    start, end = get_start_end_year(filename)
+    start, end, _, _ = get_start_end_year(filename)
     assert case_start == start
     assert case_end == end
 
@@ -46,7 +46,7 @@ def test_read_time_from_cube(monkeypatch, tmp_path):
                                 units='days since 1990-01-01')
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
-    start, end = get_start_end_year(temp_file)
+    start, end, _, _ = get_start_end_year(temp_file)
     assert start == 1990
     assert end == 1991
 
