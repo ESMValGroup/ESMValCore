@@ -57,9 +57,10 @@ def get_start_end_year(filename, return_date=False):
                     r"(?P<month>[01][0-9]"
                     r"(?P<day>[0-3][0-9]"
                     rf"(T?{time_pattern})?)?)?")
+    datetime_pattern = (rf"(?P<datetime>{date_pattern})")
     #
-    end_date_pattern = date_pattern.replace(">", "_end>")
-    date_range_pattern = date_pattern + r"[-_]" + end_date_pattern
+    end_datetime_pattern = datetime_pattern.replace(">", "_end>")
+    date_range_pattern = datetime_pattern + r"[-_]" + end_datetime_pattern
     #
     # Next string allows to test that there is an allowed delimiter (or
     # string start or end) close to date range (or to single date)
@@ -69,11 +70,13 @@ def get_start_end_year(filename, return_date=False):
     date_range_pattern = context + date_range_pattern + context
     daterange = re.search(date_range_pattern, stem)
     if daterange:
+        start_datetime = daterange.group("datetime")
         start_year = daterange.group("year")
+        end_datetime = daterange.group("datetime_end")
         end_year = daterange.group("year_end")
     else:
         # Check for single dates in the filename
-        single_date_pattern = context + date_pattern + context
+        single_date_pattern = context + datetime_pattern + context
         dates = re.findall(single_date_pattern, stem)
         if len(dates) == 1:
             start_year = end_year = dates[0][0]
@@ -83,8 +86,10 @@ def get_start_end_year(filename, return_date=False):
             end = re.search(date_pattern + r'$', stem)
             if start and not end:
                 start_year = end_year = start.group('year')
+                start_datetime = end_datetime = start.group('datetime')
             elif end:
                 start_year = end_year = end.group('year')
+                start_datetime = end_datetime = end.group('datetime')
 
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
