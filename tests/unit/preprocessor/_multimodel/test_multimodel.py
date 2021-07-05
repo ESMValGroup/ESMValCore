@@ -8,7 +8,8 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris.cube import Cube
-from xarray import cftime_range
+
+import cftime
 
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.preprocessor import multi_model_statistics
@@ -547,8 +548,19 @@ def test_daily_inconsistent_calendars():
     Missing data inside original bounds is filled with nearest neighbour
     Missing data outside original bounds is masked.
     """
-    # end date: 01-01-1853
-    leapdates = cftime_range("1852-01-01", periods=367)  # 1852 is a leap year
+    start = cftime.date2num(datetime(1852, 1, 1),
+                            "days since 1850-01-01",
+                            calendar="standard")
+
+    # 1852 is a leap year, and include 1 extra day at the end
+    leapdates = cftime.num2date(start + np.arange(367),
+                                "days since 1850-01-01",
+                                calendar="standard")
+
+    noleapdates = cftime.num2date(start + np.arange(365),
+                                  "days since 1850-01-01",
+                                  calendar="noleap")
+
     leapcube = generate_cube_from_dates(
         leapdates,
         calendar='gregorian',
@@ -556,8 +568,6 @@ def test_daily_inconsistent_calendars():
         fill_val=1,
     )
 
-    # end date: 31-12-1852
-    noleapdates = cftime_range("1852-01-01", periods=365, calendar="noleap")
     noleapcube = generate_cube_from_dates(
         noleapdates,
         calendar='noleap',
