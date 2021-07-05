@@ -70,9 +70,9 @@ def get_start_end_year(filename, return_date=False):
     date_range_pattern = context + date_range_pattern + context
     daterange = re.search(date_range_pattern, stem)
     if daterange:
-        start_datetime = daterange.group("datetime")
+        start_date = daterange.group("datetime")
         start_year = daterange.group("year")
-        end_datetime = daterange.group("datetime_end")
+        end_date = daterange.group("datetime_end")
         end_year = daterange.group("year_end")
     else:
         # Check for single dates in the filename
@@ -86,10 +86,10 @@ def get_start_end_year(filename, return_date=False):
             end = re.search(date_pattern + r'$', stem)
             if start and not end:
                 start_year = end_year = start.group('year')
-                start_datetime = end_datetime = start.group('datetime')
+                start_date = end_date = start.group('datetime')
             elif end:
                 start_year = end_year = end.group('year')
-                start_datetime = end_datetime = end.group('datetime')
+                start_date = end_date = end.group('datetime')
 
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
