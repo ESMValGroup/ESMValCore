@@ -79,7 +79,8 @@ def get_start_end_year(filename, return_date=False):
         single_date_pattern = context + datetime_pattern + context
         dates = re.findall(single_date_pattern, stem)
         if len(dates) == 1:
-            start_year = end_year = dates[0][0]
+            start_date = end_date = dates[0][0]
+            start_year = end_year = dates[0][1]
         elif len(dates) > 1:
             # Check for dates at start or (exclusive or) end of filename
             start = re.search(r'^' + date_pattern, stem)
