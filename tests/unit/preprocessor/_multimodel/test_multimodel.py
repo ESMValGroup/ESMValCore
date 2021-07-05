@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris.cube import Cube
+from xarray import cftime_range
 
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.preprocessor import multi_model_statistics
@@ -537,3 +538,55 @@ def test_return_products():
 
     assert result3 == result1
     assert result4 == result2
+
+
+def test_daily_inconsistent_calendars():
+    """Determine behaviour for inconsistent calendars.
+
+    Deviating calendars should be converted to gregorian.
+    Missing data inside original bounds is filled with nearest neighbour
+    Missing data outside original bounds is masked.
+    """
+    # end date: 01-01-1853
+    leapdates = cftime_range("1852-01-01", periods=367)  # 1852 is a leap year
+    leapcube = generate_cube_from_dates(
+        leapdates,
+        calendar='gregorian',
+        offset='days since 1850-01-01',
+        fill_val=1,
+    )
+
+    # end date: 31-12-1852
+    noleapdates = cftime_range("1852-01-01", periods=365, calendar="noleap")
+    noleapcube = generate_cube_from_dates(
+        noleapdates,
+        calendar='noleap',
+        offset='days since 1850-01-01',
+        fill_val=3,
+    )
+
+    cubes = [leapcube, noleapcube]
+
+    # span=full
+    aligned_cubes = mm._align(cubes, span='full')
+    for cube in aligned_cubes:
+        assert cube.coord('time').units.calendar == "gregorian"
+        assert cube.shape == (367, )
+        assert cube[59].coord('time').points == 789  # 29 Feb 1852
+    np.ma.is_masked(aligned_cubes[1][366].data)  # outside original range
+
+    result = multi_model_statistics(cubes, span="full", statistics=['mean'])
+    result_cube = result['mean']
+    assert result_cube[59].data == 2  # looked up nearest neighbour
+    assert result_cube[366].data == 1  # outside original range
+
+    # span=overlap
+    aligned_cubes = mm._align(cubes, span='overlap')
+    for cube in aligned_cubes:
+        assert cube.coord('time').units.calendar == "gregorian"
+        assert cube.shape == (365, )
+        assert cube[59].coord('time').points == 790  # 1 March 1852
+
+    result = multi_model_statistics(cubes, span="overlap", statistics=['mean'])
+    result_cube = result['mean']
+    assert result_cube[59].data == 2
