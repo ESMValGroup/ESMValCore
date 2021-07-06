@@ -241,7 +241,7 @@ def _check_timerange_values(date, timerange):
                     "Valid value must follow ISO 8601 standard "
                     "for dates and duration periods, or be "
                     "set to '*' to load available years. "
-                    "Got {timerange} instead.")
+                    f"Got {timerange} instead.")
 
 
 def valid_time_selection(timerange):
