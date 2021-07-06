@@ -203,41 +203,52 @@ def valid_multimodel_statistic(statistic):
             f"or patterns matching {valid_patterns}. Got '{statistic}.'")
 
 
+def _check_delimiter(timerange):
+    if len(timerange) != 2:
+        raise RecipeError(
+            "Invalid value encountered for `timerange`. "
+            "Valid values must be separated by `/`. "
+            f"Got {timerange} instead.")
+
+
+def _check_duration_periods(timerange):
+    try:
+        isodate.parse_duration(timerange[0])
+    except ValueError:
+        pass
+    else:
+        try:
+            isodate.parse_duration(timerange[1])
+        except ValueError:
+            pass
+        else:
+            raise RecipeError(
+                "Invalid value encountered for `timerange`. "
+                "Cannot set both the beginning and the end "
+                "as duration periods.")
+
+
+def _check_timerange_values(date):
+    try:
+        isodate.parse_date(date)
+    except ValueError:
+        try:
+            isodate.parse_duration(date)
+        except ValueError:
+            if date != '*':
+                raise RecipeError(
+                    "Invalid value encountered for `timerange`. "
+                    "Valid value must follow ISO 8601 standard "
+                    "for dates and duration periods, or be "
+                    "set to '*' to load available years. "
+                    "Got {timerange} instead.")
+
+
 def valid_time_selection(timerange):
     """Check that `timerange` tag is well defined."""
     if timerange != '*':
         timerange = timerange.split('/')
-        if len(timerange) != 2:
-            raise RecipeError(
-                "Invalid value encountered for `timerange`. "
-                "Valid values must be separated by `/`. "
-                f"Got {timerange} instead.")
-        try:
-            isodate.parse_duration(timerange[0])
-        except ValueError:
-            pass
-        else:
-            try:
-                isodate.parse_duration(timerange[1])
-            except ValueError:
-                pass
-            else:
-                raise RecipeError(
-                    "Invalid value encountered for `timerange`. "
-                    "Cannot set both the beginning and the end "
-                    "as duration periods."
-                )
+        _check_delimiter(timerange)
+        _check_duration_periods(timerange)
         for date in timerange:
-            try:
-                isodate.parse_date(date)
-            except ValueError:
-                try:
-                    isodate.parse_duration(date)
-                except ValueError:
-                    if date != '*':
-                        raise RecipeError(
-                            "Invalid value encountered for `timerange`. "
-                            "Valid value must follow ISO 8601 standard "
-                            "for dates and duration periods, or be "
-                            "set to '*' to load available years. "
-                            "Got {timerange} instead.")
+            _check_timerange_values(date)
