@@ -101,7 +101,7 @@ def variable(var, required_keys):
                 missing, var.get('short_name'), var.get('diagnostic')))
 
 
-def data_availability(input_files, var, dirnames, filenames):
+def _log_data_availability_errors(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
     var = dict(var)
     if not input_files:
@@ -124,11 +124,19 @@ def data_availability(input_files, var, dirnames, filenames):
                 "Looked for files matching %s, but did not find any existing "
                 "input directory", filenames)
         logger.error("Set 'log_level' to 'debug' to get more information")
+
+
+def data_availability(input_files, var, dirnames, filenames, log=True):
+    """Check if input_files cover the required years."""
+    if log:
+        _log_data_availability_errors(input_files, var, dirnames, filenames)
+
+    if not input_files:
         raise RecipeError(
             f"Missing data for {var['alias']}: {var['short_name']}")
 
-    # check time avail only for non-fx variables
     if var['frequency'] == 'fx':
+        # check time availability only for non-fx variables
         return
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))
@@ -138,11 +146,25 @@ def data_availability(input_files, var, dirnames, filenames):
         start, end = get_start_end_year(filename)
         available_years.update(range(start, end + 1))
 
-    missing_years = required_years - available_years
-    if missing_years:
-        raise RecipeError(
-            "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years), input_files))
+    missing_years = sorted(required_years - available_years)
+    if not missing_years:
+        return
+
+    start = missing_years[0]
+    ranges = []
+    for year in missing_years[1:]:
+        if year == end + 1:
+            end = year
+        else:
+            if start == end:
+                ranges.append(f"{start}")
+            else:
+                ranges.append(f"{start}-{end}")
+            start = year
+            end = year
+    raise RecipeError(
+        "No input data available for years {} in files {}".format(
+            ", ".join(ranges), input_files))
 
 
 def tasks_valid(tasks):

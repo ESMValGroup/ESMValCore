@@ -50,6 +50,20 @@ profile_diagnostic: false
 #   CORDEX: default
 #   OBS: default
 
+# Directory tree created by automatically downloading from ESGF
+#rootpath:
+#  CMIP6: ~/data/CMIP6
+#  CMIP5: ~/data/cmip5
+#  CMIP3: ~/data/cmip3
+#  obs4MIPs: ~/data/obs4MIPs
+#  CORDEX: ~/data/cordex
+#drs:
+#  CMIP6: ESGF
+#  CMIP5: ESGF
+#  CMIP3: ESGF
+#  CORDEX: ESGF
+#  obs4MIPs: ESGF
+
 # Site-specific entries: Jasmin
 # Uncomment the lines below to locate data on JASMIN
 #rootpath:

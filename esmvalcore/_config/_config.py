@@ -103,6 +103,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         'exit_on_warning': False,
         'output_file_type': 'png',
         'output_dir': 'esmvaltool_output',
+        'download_dir': 'esmvaltool_download',
         'auxiliary_data_dir': 'auxiliary_data',
         'extra_facets_dir': tuple(),
         'save_intermediary_cubes': False,
@@ -125,6 +126,7 @@ def read_config_user_file(config_file, folder_name, options=None):
             cfg[key] = defaults[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
+    cfg['download_dir'] = _normalize_path(cfg['download_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
 
     if isinstance(cfg['extra_facets_dir'], str):
@@ -195,6 +197,8 @@ def load_config_developer(cfg_file=None):
     """Load the config developer file and initialize CMOR tables."""
     cfg_developer = read_config_developer_file(cfg_file)
     for key, value in cfg_developer.items():
+        if key == 'obs4mips':
+            key = 'obs4MIPs'
         CFG[key] = value
     read_cmor_tables(CFG)
 

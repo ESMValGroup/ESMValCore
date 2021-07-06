@@ -5,6 +5,7 @@ import os
 import re
 import warnings
 from copy import deepcopy
+from pathlib import Path
 from pprint import pformat
 
 import yaml
@@ -38,7 +39,7 @@ from .preprocessor import (
     PreprocessorFile,
 )
 from .preprocessor._derive import get_required
-from .preprocessor._download import synda_search
+from .preprocessor._download import esgf_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
 from .preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -259,11 +260,9 @@ def _get_default_settings(variable, config_user, derive=False):
     settings = {}
 
     # Set up downloading using synda if requested.
-    if config_user.get('synda_download'):
-        # TODO: make this respect drs or download to preproc dir?
-        download_folder = os.path.join(config_user['preproc_dir'], 'downloads')
+    if config_user.get('esgf_download'):
         settings['download'] = {
-            'dest_folder': download_folder,
+            'dest_folder': config_user['download_dir'],
         }
 
     # Configure loading
@@ -326,7 +325,8 @@ def _get_default_settings(variable, config_user, derive=False):
     # Configure fx settings
     settings['add_fx_variables'] = {
         'fx_variables': {},
-        'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
+        'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
+        'dest_folder': config_user['download_dir'],
     }
     settings['remove_fx_variables'] = {}
 
@@ -401,8 +401,8 @@ def _get_fx_files(variable, fx_info, config_user):
 
     # flag a warning
     if not fx_files:
-        logger.warning("Missing data for fx variable '%s'",
-                       fx_info['short_name'])
+        logger.warning("Missing data for fx variable %s of dataset %s",
+                       fx_info['short_name'], fx_info['dataset'])
 
     # allow for empty lists corrected for by NE masks
     if fx_files:
@@ -537,12 +537,22 @@ def _get_input_files(variable, config_user):
                                      rootpath=config_user['rootpath'],
                                      drs=config_user['drs'])
 
-    # Set up downloading using synda if requested.
-    # Do not download if files are already available locally.
-    if config_user.get('synda_download') and not input_files:
-        input_files = synda_search(variable)
-        dirnames = None
-        filenames = None
+    # Set up downloading from ESGF if requested.
+    if config_user.get('esgf_download'):
+        try:
+            check.data_availability(
+                input_files, variable, dirnames, filenames, log=False)
+        except RecipeError:
+            # Only look on ESGF if files are not available locally.
+            local_files = set(Path(f).name for f in input_files)
+            for file in esgf_search(variable):
+                if Path(file.url).name not in local_files:
+                    local_copy = file.local_file(config_user['download_dir'])
+                    if local_copy.exists():
+                        input_files.append(str(local_copy))
+                    else:
+                        input_files.append(file)
+            dirnames.append('ESGF')
 
     return (input_files, dirnames, filenames)
 
@@ -1136,6 +1146,10 @@ class Recipe:
                 check.variable(variable, subexperiment_keys)
             else:
                 check.variable(variable, required_keys)
+            if variable['project'] == 'obs4mips':
+                logger.warning("Correcting capitalization, project 'obs4mips'"
+                               " should be written as 'obs4MIPs'")
+                variable['project'] = 'obs4MIPs'
         variables = self._expand_tag(variables, 'ensemble')
         variables = self._expand_tag(variables, 'sub_experiment')
         return variables
