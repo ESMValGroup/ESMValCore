@@ -252,3 +252,4 @@ def valid_time_selection(timerange):
         _check_duration_periods(timerange)
         for date in timerange:
             _check_timerange_values(date, timerange)
+            
