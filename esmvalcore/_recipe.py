@@ -363,12 +363,12 @@ def _search_fx_mip(tables, found_mip, variable, fx_info, config_user):
             if fx_files:
                 logger.debug("Found fx variables '%s':\n%s",
                              fx_info['short_name'], pformat(fx_files))
+                break
     return found_mip, fx_info, fx_files
 
 
 def _get_fx_files(variable, fx_info, config_user):
     """Get fx files (searching all possible mips)."""
-
     # assemble info from master variable
     var_project = variable['project']
     # check if project in config-developer
@@ -380,10 +380,13 @@ def _get_fx_files(variable, fx_info, config_user):
                           f"a '{var_project}' project in config-developer.")
     project_tables = CMOR_TABLES[var_project].tables
 
-    # force only the mip declared by user
+    # Force only the mip declared by user. If mip is not given, search all
+    # available tables in alphabetical order
     found_mip = False
     if not fx_info['mip']:
-        found_mip, fx_info, fx_files = _search_fx_mip(project_tables,
+        sorted_project_tables = dict(sorted(deepcopy(project_tables).items(),
+                                            key=lambda item: item[0]))
+        found_mip, fx_info, fx_files = _search_fx_mip(sorted_project_tables,
                                                       found_mip, variable,
                                                       fx_info, config_user)
     else:
@@ -395,9 +398,13 @@ def _get_fx_files(variable, fx_info, config_user):
 
     # If fx variable was not found in any table, raise exception
     if not found_mip:
+        if fx_info['mip'] is None:
+            raise RecipeError(
+                f"Requested fx variable '{fx_info['short_name']}' "
+                f"not available in any CMOR table for '{var_project}'")
         raise RecipeError(
-            f"Requested fx variable '{fx_info['short_name']}' "
-            f"not available in any CMOR table for '{var_project}'")
+            f"fx variable '{fx_info['short_name']}' not available in CMOR "
+            f"table '{fx_info['mip']}' for '{var_project}'")
 
     # flag a warning
     if not fx_files:
@@ -470,7 +477,6 @@ def _fx_list_to_dict(fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
-
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')

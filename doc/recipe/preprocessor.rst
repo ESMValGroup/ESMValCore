@@ -180,14 +180,62 @@ To get an overview on data fixes and how to implement new ones, please go to
 
 Fx variables as cell measures or ancillary variables
 ====================================================
-The following preprocessor may require the use of ``fx_variables`` 
-to be able to perform the computations:
+The following preprocessor may require the use of ``fx_variables`` to be able
+to perform the computations:
 
-    - ``area_statistics``
-    - ``mask_landsea``
-    - ``mask_landseaice``
-    - ``volume_statistics``
-    - ``weighting_landsea_fraction``
+    - area_statistics_ (``areacella``, ``areacello``)
+    - :ref:`mask_landsea<land/sea/ice masking>` (``sftlf``, ``sftof``)
+    - :ref:`mask_landseaice<ice masking>` (``sftgif``)
+    - volume_statistics_ (``volcello``)
+    - :ref:`weighting_landsea_fraction<land/sea fraction weighting>` (``sftlf``, ``sftof``)
+
+If no ``fx_variables`` are specified for these preprocessors, the fx variables
+given in brackets are used. If given, the ``fx_variables`` argument specifies
+the fx variables that the user wishes to input to the corresponding
+preprocessor function; the user may specify it calling the variables e.g.
+
+.. code-block:: yaml
+
+    fx_variables:
+      areacello:
+      volcello:
+
+or calling the variables and adding specific variable parameters (the key-value
+pair may be as specific as a CMOR variable can permit):
+
+.. code-block:: yaml
+
+    fx_variables:
+      areacello:
+        mip: Omon
+      volcello:
+        mip: fx
+
+Alternatively, the ``fx_variables`` argument can also be specified as a list:
+
+.. code-block:: yaml
+
+    fx_variables: ['areacello', 'volcello']
+
+or as a list of dictionaries:
+
+.. code-block:: yaml
+
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
+
+The recipe parser will automatically find the data files that are associated
+with these variables and pass them to the function for loading and processing.
+
+If ``mip`` is not given, ESMValTool will search for the fx variable in all
+available tables of the specified project (in alphabetical order) and return
+the first match.
+
+.. note::
+   Some fx variables exist in more than one table (e.g., ``volcello`` exists in
+   CMIP6's ``Ofx`` and ``Omon`` table or ``sftgif`` exists in CMIP6's ``fx``
+   and ``IyrAnt`` table). If a specific table is desired, this needs to be
+   specified by ``mip``, otherwise the table is selected based on the
+   alphabetical order and data availability.
 
 The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
 checks them against CMOR standards and adds them either as ``cell_measure``
@@ -195,7 +243,7 @@ or ``ancillary_variable`` inside the cube data. This ensures that the
 defined preprocessor chain is applied to both ``variables`` and ``fx_variables``.
 
 Note that when calling steps that require ``fx_variables`` inside diagnostic
-scripts, the variables are expected to contain the required ``cell_measures`` or 
+scripts, the variables are expected to contain the required ``cell_measures`` or
 ``ancillary_variables``. If missing, they can be added using the following functions:
 
 .. code-block::
@@ -209,7 +257,7 @@ scripts, the variables are expected to contain the required ``cell_measures`` or
     cube_with_ancillary_sftlf = add_ancillary_variable(cube, sftlf_cube)
 
     cube_with_ancillary_sftgif = add_ancillary_variable(cube, sftgif_cube)
-  
+
   Details on the arguments needed for each step can be found in the following sections.
 
 .. _Vertical interpolation:
@@ -351,8 +399,8 @@ is for example useful for climate models which do not offer land/sea fraction
 files. This arguments also accepts the special dataset specifiers
 ``reference_dataset`` and ``alternative_dataset``.
 
-Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
-experiment is preferred for fx data retrieval:
+Optionally you can specify your own custom fx variable to be used in cases when
+e.g. a certain experiment is preferred for fx data retrieval:
 
 .. code-block:: yaml
 
@@ -361,7 +409,7 @@ experiment is preferred for fx data retrieval:
         weighting_landsea_fraction:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
-          fx_variables: 
+          fx_variables:
             sftlf:
               exp: piControl
             sftof:
@@ -377,9 +425,12 @@ or alternatively:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
           fx_variables: [
-            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftlf', 'exp': 'piControl'},
             {'short_name': 'sftof', 'exp': 'piControl'}
             ]
+
+More details on the argument ``fx_variables`` and its default values are given
+:ref:`here<Fx variables as cell measures or ancillary variables>`.
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
@@ -426,11 +477,6 @@ To mask out a certain domain (e.g., sea) in the preprocessor,
 
 and requires only one argument: ``mask_out``: either ``land`` or ``sea``.
 
-The preprocessor automatically retrieves the corresponding mask (``fx: stfof``
-in this case) and applies it so that sea-covered grid cells are set to
-missing. Conversely, it retrieves the ``fx: sftlf`` mask when land needs to be
-masked out, respectively.
-
 Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
 experiment is preferred for fx data retrieval. Note that it is possible to specify as many tags
 for the fx variable as required:
@@ -442,8 +488,8 @@ for the fx variable as required:
       landmask:
         mask_landsea:
           mask_out: sea
-          fx_variables: 
-            sftlf: 
+          fx_variables:
+            sftlf:
               exp: piControl
             sftof:
               exp: piControl
@@ -458,9 +504,12 @@ or alternatively:
         mask_landsea:
           mask_out: sea
           fx_variables: [
-            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftlf', 'exp': 'piControl'},
             {'short_name': 'sftof', 'exp': 'piControl', 'ensemble': 'r2i1p1f1'}
             ]
+
+More details on the argument ``fx_variables`` and its default values are given
+:ref:`here<Fx variables as cell measures or ancillary variables>`.
 
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
@@ -470,6 +519,8 @@ Natural Earth masks are much higher than any typical global model (10m for
 land and glaciated areas and 50m for ocean masks).
 
 See also :func:`esmvalcore.preprocessor.mask_landsea`.
+
+.. _ice masking:
 
 Ice masking
 -----------
@@ -487,11 +538,8 @@ losing generality. To mask ice out, ``mask_landseaice`` can be used:
 
 and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
-As in the case of ``mask_landsea``, the preprocessor automatically retrieves
-the ``fx_variables: [sftgif]`` mask.
-
-Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
-experiment is preferred for fx data retrieval:
+Optionally you can specify your own custom fx variable to be used in cases when
+e.g. a certain experiment is preferred for fx data retrieval:
 
 
 .. code-block:: yaml
@@ -500,7 +548,7 @@ experiment is preferred for fx data retrieval:
       landseaicemask:
         mask_landseaice:
           mask_out: sea
-          fx_variables: 
+          fx_variables:
             sftgif:
               exp: piControl
 
@@ -513,6 +561,9 @@ or alternatively:
         mask_landseaice:
           mask_out: sea
           fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+
+More details on the argument ``fx_variables`` and its default values are given
+:ref:`here<Fx variables as cell measures or ancillary variables>`.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -1420,40 +1471,9 @@ Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
-The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it calling the variables e.g.
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-      volcello:
-
-or calling the variables and adding specific variable parameters (the key-value pair may be as specific
-as a CMOR variable can permit):
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-        mip: Omon
-      volcello:
-        mip: fx
-
-Alternatively, the ``fx_variables`` argument can also be specified as a list:
-
-.. code-block:: yaml
-
-    fx_variables: ['areacello', 'volcello']
-
-or as a list of dictionaries:
-
-.. code-block:: yaml
-
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
-
-The recipe parser will automatically find the data files that are associated with these
-variables and pass them to the function for loading and processing.
+The optional ``fx_variables`` argument specifies the fx variables that the user
+wishes to input to the function. More details on this are given
+:ref:`here<Fx variables as cell measures or ancillary variables>`.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -1496,42 +1516,10 @@ This function takes the argument: ``operator``, which defines the operation to
 apply over the volume.
 
 No depth coordinate is required as this is determined by Iris. This function
-works best when the ``fx_variables`` provide the cell volume.
-
-The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it calling the variables e.g.
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-      volcello:
-
-or calling the variables and adding specific variable parameters (the key-value pair may be as specific
-as a CMOR variable can permit):
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-        mip: Omon
-      volcello:
-        mip: fx
-
-Alternatively, the ``fx_variables`` argument can also be specified as a list:
-
-.. code-block:: yaml
-
-    fx_variables: ['areacello', 'volcello']
-
-or as a list of dictionaries:
-
-.. code-block:: yaml
-
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
-
-The recipe parser will automatically find the data files that are associated with these
-variables and pass them to the function for loading and processing.
+works best when the ``fx_variables`` provide the cell volume. The optional
+``fx_variables`` argument specifies the fx variables that the user wishes to
+input to the function. More details on this are given
+:ref:`here<Fx variables as cell measures or ancillary variables>`.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 

@@ -10,7 +10,6 @@ import yaml
 from PIL import Image
 
 import esmvalcore
-from esmvalcore import __version__ as current_version
 from esmvalcore._config import TAGS
 from esmvalcore._recipe import TASKSEP, read_recipe_file
 from esmvalcore._recipe_checks import RecipeError
@@ -295,6 +294,8 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
             if 'fx_' in filename:
                 return []
             if 'sftlf' in filename:
+                return []
+            if 'IyrAnt_' in filename:
                 return []
         return _get_filenames(tmp_path, filenames, tracking_id)
 
@@ -2143,10 +2144,58 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
         assert not any(fx_variables)
 
 
-# TODO remove after fixing test below
-def test_fx_vars_mip_change_cmip6_incomplete(tmp_path,
-                                             patched_datafinder,
-                                             config_user):
+def test_fx_vars_not_all_available(tmp_path, patched_failing_datafinder,
+                                   config_user):
+    """Check that IyrGre is used for sftgif if IyrAnt is not available."""
+    content = dedent("""
+        preprocessors:
+          preproc:
+           mask_landseaice:
+             mask_out: sea
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tos'
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    # Check mask_landseaice
+    assert 'mask_landseaice' in product.settings
+    settings = product.settings['mask_landseaice']
+    assert len(settings) == 1
+    assert settings['mask_out'] == 'sea'
+
+    # Check add_fx_variables
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
+    assert isinstance(fx_variables, dict)
+    assert len(fx_variables) == 1
+    filenames = fx_variables['sftgif']['filename']
+    assert isinstance(filenames, list)  # assert list since frequency != fx
+    assert len(filenames) == 1
+    assert '_IyrGre_' in filenames[0]
+
+
+def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, config_user):
+    """Test fx variables with given mips."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent("""
@@ -2155,16 +2204,11 @@ def test_fx_vars_mip_change_cmip6_incomplete(tmp_path,
            area_statistics:
              operator: mean
              fx_variables:
-               areacella:
-                 ensemble: r2i1p1f1
-               areacello:
-               clayfrac:
-               sftlf:
                sftgif:
                  mip: fx
-               sftof:
-           mask_landsea:
-             mask_out: sea
+               volcello:
+                 ensemble: r2i1p1f1
+                 mip: Ofx
 
         diagnostics:
           diagnostic_name:
@@ -2196,26 +2240,18 @@ def test_fx_vars_mip_change_cmip6_incomplete(tmp_path,
     settings = product.settings['area_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
+
+    # Check add_fx_variables
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 6
-    assert '_fx_' in fx_variables['areacella']['filename']
-    assert '_r2i1p1f1_' in fx_variables['areacella']['filename']
-    assert '_Ofx_' in fx_variables['areacello']['filename']
-    assert '_Efx_' in fx_variables['clayfrac']['filename']
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_Ofx_' in fx_variables['sftof']['filename']
-
-    # Check mask_landsea
-    assert 'mask_landsea' in product.settings
-    settings = product.settings['mask_landsea']
-    assert len(settings) == 1
-    assert settings['mask_out'] == 'sea'
+    assert len(fx_variables) == 2
+    assert '_fx_' in fx_variables['sftgif']['filename']
+    assert '_r2i1p1f1_' in fx_variables['volcello']['filename']
+    assert '_Ofx_' in fx_variables['volcello']['filename']
 
 
-@pytest.mark.skipif(current_version < "2.4.0",
-                    reason="github.com/ESMValGroup/ESMValCore/issues/1159")
-def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
+def test_fx_vars_invalid_mip_cmip6(tmp_path, patched_datafinder, config_user):
+    """Test fx variables with invalid mip."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent("""
@@ -2225,15 +2261,49 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
              operator: mean
              fx_variables:
                areacella:
-                 ensemble: r2i1p1f1
+                 mip: Lmon
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    msg = ("fx variable 'areacella' not available in CMOR table 'Lmon' for "
+           "'CMIP6'")
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, config_user)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in rec_err_exp.value.failed_tasks[0].message
+
+
+def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
+    """Test mip tables search for different fx variables."""
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
+    content = dedent("""
+        preprocessors:
+          preproc:
+           area_statistics:
+             operator: mean
+             fx_variables:
+               areacella:
                areacello:
                clayfrac:
-               sftlf:
-               sftgif:
-                 mip: fx
-               sftof:
            mask_landsea:
              mask_out: sea
+           volume_statistics:
+             operator: mean
 
         diagnostics:
           diagnostic_name:
@@ -2265,16 +2335,6 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     settings = product.settings['area_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 6
-    assert '_fx_' in fx_variables['areacella']['filename']
-    assert '_r2i1p1f1_' in fx_variables['areacella']['filename']
-    assert '_Ofx_' in fx_variables['areacello']['filename']
-    assert '_Efx_' in fx_variables['clayfrac']['filename']
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_fx_' in fx_variables['sftgif']['filename']  # fails, see skipif
-    assert '_Ofx_' in fx_variables['sftof']['filename']
 
     # Check mask_landsea
     assert 'mask_landsea' in product.settings
@@ -2282,11 +2342,29 @@ def test_fx_vars_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
     assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
 
+    # Check volume_statistics
+    assert 'volume_statistics' in product.settings
+    settings = product.settings['volume_statistics']
+    assert len(settings) == 1
+    assert settings['operator'] == 'mean'
 
-# TODO remove when you fix test below
-def test_fx_list_mip_change_cmip6_incomplete(tmp_path,
-                                             patched_datafinder,
-                                             config_user):
+    # Check add_fx_variables
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
+    assert isinstance(fx_variables, dict)
+    assert len(fx_variables) == 6
+    assert '_fx_' in fx_variables['areacella']['filename']
+    assert '_Ofx_' in fx_variables['areacello']['filename']
+    assert '_Efx_' in fx_variables['clayfrac']['filename']
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_Ofx_' in fx_variables['sftof']['filename']
+    volcello_files = fx_variables['volcello']['filename']
+    assert isinstance(volcello_files, list)
+    assert len(volcello_files) == 1
+    assert '_Odec_' in volcello_files[0]
+
+
+def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
+    """Test mip tables search for list of different fx variables."""
     content = dedent("""
         preprocessors:
           preproc:
@@ -2300,8 +2378,6 @@ def test_fx_list_mip_change_cmip6_incomplete(tmp_path,
                'sftgif',
                'sftof',
                ]
-           mask_landsea:
-             mask_out: sea
 
         diagnostics:
           diagnostic_name:
@@ -2333,6 +2409,8 @@ def test_fx_list_mip_change_cmip6_incomplete(tmp_path,
     settings = product.settings['area_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
+
+    # Check add_fx_variables
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 6
@@ -2341,78 +2419,10 @@ def test_fx_list_mip_change_cmip6_incomplete(tmp_path,
     assert '_Efx_' in fx_variables['clayfrac']['filename']
     assert '_fx_' in fx_variables['sftlf']['filename']
     assert '_Ofx_' in fx_variables['sftof']['filename']
-
-    # Check mask_landsea
-    assert 'mask_landsea' in product.settings
-    settings = product.settings['mask_landsea']
-    assert len(settings) == 1
-    assert settings['mask_out'] == 'sea'
-
-
-@pytest.mark.skipif(current_version < "2.4.0",
-                    reason="github.com/ESMValGroup/ESMValCore/issues/1159")
-def test_fx_list_mip_change_cmip6(tmp_path, patched_datafinder, config_user):
-    content = dedent("""
-        preprocessors:
-          preproc:
-           area_statistics:
-             operator: mean
-             fx_variables: [
-               'areacella',
-               'areacello',
-               'clayfrac',
-               'sftlf',
-               'sftgif',
-               'sftof',
-               ]
-           mask_landsea:
-             mask_out: sea
-
-        diagnostics:
-          diagnostic_name:
-            variables:
-              tas:
-                preprocessor: preproc
-                project: CMIP6
-                mip: Amon
-                exp: historical
-                start_year: 2000
-                end_year: 2005
-                ensemble: r1i1p1f1
-                grid: gn
-                additional_datasets:
-                  - {dataset: CanESM5}
-            scripts: null
-        """)
-    recipe = get_recipe(tmp_path, content, config_user)
-
-    # Check generated tasks
-    assert len(recipe.tasks) == 1
-    task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
-    assert len(task.products) == 1
-    product = task.products.pop()
-
-    # Check area_statistics
-    assert 'area_statistics' in product.settings
-    settings = product.settings['area_statistics']
-    assert len(settings) == 1
-    assert settings['operator'] == 'mean'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 6
-    assert '_fx_' in fx_variables['areacella']['filename']
-    assert '_Ofx_' in fx_variables['areacello']['filename']
-    assert '_Efx_' in fx_variables['clayfrac']['filename']
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_fx_' in fx_variables['sftgif']['filename']  # fails, see skipif
-    assert '_Ofx_' in fx_variables['sftof']['filename']
-
-    # Check mask_landsea
-    assert 'mask_landsea' in product.settings
-    settings = product.settings['mask_landsea']
-    assert len(settings) == 1
-    assert settings['mask_out'] == 'sea'
+    sftgif_files = fx_variables['sftgif']['filename']
+    assert isinstance(sftgif_files, list)
+    assert len(sftgif_files) == 1
+    assert '_IyrAnt_' in sftgif_files[0]
 
 
 def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
