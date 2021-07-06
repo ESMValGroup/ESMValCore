@@ -671,6 +671,7 @@ def _update_extract_shape(settings, config_user):
                 settings['extract_shape']['shapefile'] = shapefile
         check.extract_shape(settings['extract_shape'])
 
+
 def _parse_period(timerange):
     start_year = None
     end_year = None
@@ -689,6 +690,7 @@ def _parse_period(timerange):
         delta = int(isodate.parse_duration(timerange.split('/')[1]).years)
         end_year = start_year + delta
     return start_year, end_year
+
 
 def _update_timerange(variable, settings, config_user):
     if 'timerange' not in variable:
@@ -713,7 +715,7 @@ def _update_timerange(variable, settings, config_user):
             timerange = timerange.replace('*', min_date)
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
-    
+
     start_year, end_year = _parse_period(timerange)
 
     if start_year is None and end_year is None:
