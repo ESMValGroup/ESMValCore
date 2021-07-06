@@ -228,7 +228,7 @@ def _check_duration_periods(timerange):
                 "as duration periods.")
 
 
-def _check_timerange_values(date):
+def _check_timerange_values(date, timerange):
     try:
         isodate.parse_date(date)
     except ValueError:
@@ -251,4 +251,4 @@ def valid_time_selection(timerange):
         _check_delimiter(timerange)
         _check_duration_periods(timerange)
         for date in timerange:
-            _check_timerange_values(date)
+            _check_timerange_values(date, timerange)
