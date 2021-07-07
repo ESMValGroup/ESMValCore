@@ -229,7 +229,7 @@ with these variables and pass them to the function for loading and processing.
 If ``mip`` is not given, ESMValTool will search for the fx variable in all
 available tables of the specified project.
 
-.. note::
+.. warning::
    Some fx variables exist in more than one table (e.g., ``volcello`` exists in
    CMIP6's ``Ofx``, ``Oyr``, ``Odec`` and ``Omon`` tables or ``sftgif`` exists
    in CMIP6's ``fx``, ``LImon``, ``IyrGre`` and ``IyrAnt`` tables). In these
