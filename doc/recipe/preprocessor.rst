@@ -227,15 +227,13 @@ The recipe parser will automatically find the data files that are associated
 with these variables and pass them to the function for loading and processing.
 
 If ``mip`` is not given, ESMValTool will search for the fx variable in all
-available tables of the specified project (in alphabetical order) and return
-the first match.
+available tables of the specified project.
 
 .. note::
    Some fx variables exist in more than one table (e.g., ``volcello`` exists in
-   CMIP6's ``Ofx`` and ``Omon`` table or ``sftgif`` exists in CMIP6's ``fx``
-   and ``IyrAnt`` table). If a specific table is desired, this needs to be
-   specified by ``mip``, otherwise the table is selected based on the
-   alphabetical order and data availability.
+   CMIP6's ``Ofx``, ``Oyr``, ``Odec`` and ``Omon`` tables or ``sftgif`` exists
+   in CMIP6's ``fx``, ``LImon``, ``IyrGre`` and ``IyrAnt`` tables). In these
+   cases, ``mip`` needs to be specified, otherwise an error is raised.
 
 The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
 checks them against CMOR standards and adds them either as ``cell_measure``
@@ -1072,7 +1070,7 @@ See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 ----------------------
 
 This function produces statistics for the whole dataset. It can produce scalars
-(if the full period is chosen) or daily, monthly or seasonal statics.
+(if the full period is chosen) or daily, monthly or seasonal statistics.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',

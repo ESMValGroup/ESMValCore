@@ -295,8 +295,6 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
                 return []
             if 'sftlf' in filename:
                 return []
-            if 'IyrAnt_' in filename:
-                return []
         return _get_filenames(tmp_path, filenames, tracking_id)
 
     monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
@@ -2144,56 +2142,6 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
         assert not any(fx_variables)
 
 
-def test_fx_vars_not_all_available(tmp_path, patched_failing_datafinder,
-                                   config_user):
-    """Check that IyrGre is used for sftgif if IyrAnt is not available."""
-    content = dedent("""
-        preprocessors:
-          preproc:
-           mask_landseaice:
-             mask_out: sea
-
-        diagnostics:
-          diagnostic_name:
-            variables:
-              tos:
-                preprocessor: preproc
-                project: CMIP6
-                mip: Omon
-                exp: historical
-                start_year: 2000
-                end_year: 2005
-                ensemble: r1i1p1f1
-                grid: gn
-                additional_datasets:
-                  - {dataset: CanESM5}
-            scripts: null
-        """)
-    recipe = get_recipe(tmp_path, content, config_user)
-
-    # Check generated tasks
-    assert len(recipe.tasks) == 1
-    task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'tos'
-    assert len(task.products) == 1
-    product = task.products.pop()
-
-    # Check mask_landseaice
-    assert 'mask_landseaice' in product.settings
-    settings = product.settings['mask_landseaice']
-    assert len(settings) == 1
-    assert settings['mask_out'] == 'sea'
-
-    # Check add_fx_variables
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    filenames = fx_variables['sftgif']['filename']
-    assert isinstance(filenames, list)  # assert list since frequency != fx
-    assert len(filenames) == 1
-    assert '_IyrGre_' in filenames[0]
-
-
 def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, config_user):
     """Test fx variables with given mips."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
@@ -2261,6 +2209,44 @@ def test_fx_vars_invalid_mip_cmip6(tmp_path, patched_datafinder, config_user):
              operator: mean
              fx_variables:
                areacella:
+                 mip: INVALID
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    msg = ("Requested mip table 'INVALID' for fx variable 'areacella' not "
+           "available for project 'CMIP6'")
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, config_user)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in rec_err_exp.value.failed_tasks[0].message
+
+
+def test_fx_vars_invalid_mip_for_var_cmip6(tmp_path, patched_datafinder,
+                                           config_user):
+    """Test fx variables with invalid mip for variable."""
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
+    content = dedent("""
+        preprocessors:
+          preproc:
+           area_statistics:
+             operator: mean
+             fx_variables:
+               areacella:
                  mip: Lmon
 
         diagnostics:
@@ -2302,8 +2288,6 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
                clayfrac:
            mask_landsea:
              mask_out: sea
-           volume_statistics:
-             operator: mean
 
         diagnostics:
           diagnostic_name:
@@ -2342,25 +2326,15 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
 
-    # Check volume_statistics
-    assert 'volume_statistics' in product.settings
-    settings = product.settings['volume_statistics']
-    assert len(settings) == 1
-    assert settings['operator'] == 'mean'
-
     # Check add_fx_variables
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 6
+    assert len(fx_variables) == 5
     assert '_fx_' in fx_variables['areacella']['filename']
     assert '_Ofx_' in fx_variables['areacello']['filename']
     assert '_Efx_' in fx_variables['clayfrac']['filename']
     assert '_fx_' in fx_variables['sftlf']['filename']
     assert '_Ofx_' in fx_variables['sftof']['filename']
-    volcello_files = fx_variables['volcello']['filename']
-    assert isinstance(volcello_files, list)
-    assert len(volcello_files) == 1
-    assert '_Odec_' in volcello_files[0]
 
 
 def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
@@ -2375,7 +2349,6 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
                'areacello',
                'clayfrac',
                'sftlf',
-               'sftgif',
                'sftof',
                ]
 
@@ -2413,16 +2386,12 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     # Check add_fx_variables
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 6
+    assert len(fx_variables) == 5
     assert '_fx_' in fx_variables['areacella']['filename']
     assert '_Ofx_' in fx_variables['areacello']['filename']
     assert '_Efx_' in fx_variables['clayfrac']['filename']
     assert '_fx_' in fx_variables['sftlf']['filename']
     assert '_Ofx_' in fx_variables['sftof']['filename']
-    sftgif_files = fx_variables['sftgif']['filename']
-    assert isinstance(sftgif_files, list)
-    assert len(sftgif_files) == 1
-    assert '_IyrAnt_' in sftgif_files[0]
 
 
 def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
@@ -2753,6 +2722,7 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
 
 
 def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
+    """Test that error is raised for invalid fx variable."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent("""
@@ -2782,6 +2752,42 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
         """)
     msg = ("Requested fx variable 'wrong_fx_variable' not available in any "
            "CMOR table")
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, config_user)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in rec_err_exp.value.failed_tasks[0].message
+
+
+def test_ambiguous_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
+    """Test that error is raised for fx variable available in multiple mips."""
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
+    content = dedent("""
+        preprocessors:
+          preproc:
+           area_statistics:
+             operator: mean
+             fx_variables:
+               volcello:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    msg = ("Requested fx variable 'volcello' is available in more than one "
+           "CMOR table for 'CMIP6': ['Ofx', 'Oyr', 'Odec', 'Omon']")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
