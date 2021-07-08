@@ -2,14 +2,13 @@
 
 from datetime import datetime
 
+import cftime
 import dask.array as da
 import iris
 import numpy as np
 import pytest
 from cf_units import Unit
 from iris.cube import Cube
-
-import cftime
 
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.preprocessor import multi_model_statistics
@@ -544,9 +543,9 @@ def test_return_products():
 def test_daily_inconsistent_calendars():
     """Determine behaviour for inconsistent calendars.
 
-    Deviating calendars should be converted to gregorian.
-    Missing data inside original bounds is filled with nearest neighbour
-    Missing data outside original bounds is masked.
+    Deviating calendars should be converted to gregorian. Missing data
+    inside original bounds is filled with nearest neighbour Missing data
+    outside original bounds is masked.
     """
     start = cftime.date2num(datetime(1852, 1, 1),
                             "days since 1850-01-01",
@@ -600,3 +599,22 @@ def test_daily_inconsistent_calendars():
     result = multi_model_statistics(cubes, span="overlap", statistics=['mean'])
     result_cube = result['mean']
     assert result_cube[59].data == 2
+
+
+def test_no_warn_model_dim_non_contiguous(recwarn):
+    """Test that now warning is raised that model dim is non-contiguous."""
+    coord = iris.coords.DimCoord(
+        [0.5, 1.5],
+        bounds=[[0, 1.], [1., 2.]],
+        standard_name='time',
+        units='days since 1850-01-01',
+    )
+    cube1 = iris.cube.Cube([1, 1], dim_coords_and_dims=[(coord, 0)])
+    cube2 = iris.cube.Cube([2, 2], dim_coords_and_dims=[(coord, 0)])
+    cubes = [cube1, cube2]
+
+    multi_model_statistics(cubes, span="overlap", statistics=['mean'])
+    msg = ("Collapsing a non-contiguous coordinate. "
+           "Metadata may not be fully descriptive for 'multi-model'.")
+    for warning in recwarn:
+        assert str(warning.message) != msg
