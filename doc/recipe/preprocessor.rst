@@ -186,10 +186,10 @@ to perform the computations:
 ============================================================== =====================
 Preprocessor                                                   Default fx variables
 ============================================================== =====================
-area_statistics_                                               ``areacella``, ``areacello``
+:ref:`area_statistics<area_statistics>`                        ``areacella``, ``areacello``
 :ref:`mask_landsea<land/sea/ice masking>`                      ``sftlf``, ``sftof``
 :ref:`mask_landseaice<ice masking>`                            ``sftgif``
-volume_statistics_                                             ``volcello``
+:ref:`volume_statistics<volume_statistics>`                    ``volcello``
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``
 ============================================================== =====================
 
@@ -1467,6 +1467,8 @@ argument:
 See also :func:`esmvalcore.preprocessor.meridional_means`.
 
 
+.. _area_statistics:
+
 ``area_statistics``
 -------------------
 
@@ -1515,6 +1517,8 @@ as the Iris cube. That is, if the cube has `z`-coordinate as negative, then
 
 See also :func:`esmvalcore.preprocessor.extract_volume`.
 
+
+.. _volume_statistics:
 
 ``volume_statistics``
 ---------------------
