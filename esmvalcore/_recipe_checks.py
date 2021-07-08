@@ -234,14 +234,14 @@ def _check_timerange_values(date, timerange):
     except ValueError:
         try:
             isodate.parse_duration(date)
-        except ValueError:
+        except ValueError as exc:
             if date != '*':
                 raise RecipeError(
                     "Invalid value encountered for `timerange`. "
                     "Valid value must follow ISO 8601 standard "
                     "for dates and duration periods, or be "
                     "set to '*' to load available years. "
-                    f"Got {timerange} instead.")
+                    f"Got {timerange} instead.") from exc
 
 
 def valid_time_selection(timerange):
@@ -252,4 +252,3 @@ def valid_time_selection(timerange):
         _check_duration_periods(timerange)
         for date in timerange:
             _check_timerange_values(date, timerange)
-            
