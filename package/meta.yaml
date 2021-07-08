@@ -37,12 +37,12 @@ requirements:
     # esmvaltool
     - python>=3.6
     - graphviz
-    - iris>=3.0.1
+    - iris>=3.0.2
     - python-stratify
     - scipy<1.6  # until ESMValGroup/ESMValCore/issues/927 gets resolved
     # Normally installed via pip:
     - cftime # iris=3.0.1 needs <=1.2.1; >=1.3.0 years<999 get a 0 instead of empty space
-    - cf-units>=2.1.5
+    - cf-units>=3.0.0
     - cython  # required by cf-units but not automatically installed
     - esmpy
     - fiona
