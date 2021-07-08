@@ -180,19 +180,24 @@ To get an overview on data fixes and how to implement new ones, please go to
 
 Fx variables as cell measures or ancillary variables
 ====================================================
-The following preprocessor may require the use of ``fx_variables`` to be able
+The following preprocessors may require the use of ``fx_variables`` to be able
 to perform the computations:
 
-    - area_statistics_ (``areacella``, ``areacello``)
-    - :ref:`mask_landsea<land/sea/ice masking>` (``sftlf``, ``sftof``)
-    - :ref:`mask_landseaice<ice masking>` (``sftgif``)
-    - volume_statistics_ (``volcello``)
-    - :ref:`weighting_landsea_fraction<land/sea fraction weighting>` (``sftlf``, ``sftof``)
+============================================================== =====================
+Preprocessor                                                   Default fx variables
+============================================================== =====================
+area_statistics_                                               ``areacella``, ``areacello``
+:ref:`mask_landsea<land/sea/ice masking>`                      ``sftlf``, ``sftof``
+:ref:`mask_landseaice<ice masking>`                            ``sftgif``
+volume_statistics_                                             ``volcello``
+:ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``
+============================================================== =====================
 
 If no ``fx_variables`` are specified for these preprocessors, the fx variables
-given in brackets are used. If given, the ``fx_variables`` argument specifies
-the fx variables that the user wishes to input to the corresponding
-preprocessor function; the user may specify it calling the variables e.g.
+in the second column are used. If given, the ``fx_variables`` argument
+specifies the fx variables that the user wishes to input to the corresponding
+preprocessor function. The user may specify these by simply adding the names of
+the variables, e.g.,
 
 .. code-block:: yaml
 
@@ -200,16 +205,16 @@ preprocessor function; the user may specify it calling the variables e.g.
       areacello:
       volcello:
 
-or calling the variables and adding specific variable parameters (the key-value
-pair may be as specific as a CMOR variable can permit):
+or by explicitly adding variable parameters (the key-value pair may be as
+specific as a CMOR variable can permit):
 
 .. code-block:: yaml
 
     fx_variables:
       areacello:
+        mip: Ofx
+      volcello:
         mip: Omon
-      volcello:
-        mip: fx
 
 Alternatively, the ``fx_variables`` argument can also be specified as a list:
 
@@ -221,7 +226,7 @@ or as a list of dictionaries:
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Ofx'}, {'short_name': 'volcello', 'mip': 'Omon'}]
 
 The recipe parser will automatically find the data files that are associated
 with these variables and pass them to the function for loading and processing.
@@ -231,14 +236,21 @@ available tables of the specified project.
 
 .. warning::
    Some fx variables exist in more than one table (e.g., ``volcello`` exists in
-   CMIP6's ``Ofx``, ``Oyr``, ``Odec`` and ``Omon`` tables or ``sftgif`` exists
-   in CMIP6's ``fx``, ``LImon``, ``IyrGre`` and ``IyrAnt`` tables). In these
-   cases, ``mip`` needs to be specified, otherwise an error is raised.
+   CMIP6's ``Odec``, ``Ofx``, ``Omon``, and ``Oyr`` tables; ``sftgif`` exists
+   in CMIP6's ``fx``, ``IyrAnt`` and ``IyrGre``, and ``LImon`` tables).  In
+   these cases, ``mip`` needs to be specified, otherwise an error is raised.
 
-The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
-checks them against CMOR standards and adds them either as ``cell_measure``
-or ``ancillary_variable`` inside the cube data. This ensures that the
-defined preprocessor chain is applied to both ``variables`` and ``fx_variables``.
+Internally, the required ``fx_variables`` are automatically loaded by the
+preprocessor step ``add_fx_variables`` which also checks them against CMOR
+standards and adds them either as ``cell_measure`` (see `CF conventions on cell
+measures
+<https://cfconventions.org/cf-conventions/cf-conventions.html#cell-measures>`_
+and :class:`iris.coords.CellMeasure`) or ``ancillary_variable`` (see `CF
+conventions on ancillary variables
+<https://cfconventions.org/cf-conventions/cf-conventions.html#ancillary-data>`_
+and :class:`iris.coords.AncillaryVariable`) inside the cube data. This ensures
+that the defined preprocessor chain is applied to both ``variables`` and
+``fx_variables``.
 
 Note that when calling steps that require ``fx_variables`` inside diagnostic
 scripts, the variables are expected to contain the required ``cell_measures`` or
@@ -428,7 +440,7 @@ or alternatively:
             ]
 
 More details on the argument ``fx_variables`` and its default values are given
-:ref:`here<Fx variables as cell measures or ancillary variables>`.
+in :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
@@ -507,7 +519,7 @@ or alternatively:
             ]
 
 More details on the argument ``fx_variables`` and its default values are given
-:ref:`here<Fx variables as cell measures or ancillary variables>`.
+in :ref:`Fx variables as cell measures or ancillary variables`.
 
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
@@ -561,7 +573,7 @@ or alternatively:
           fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
 
 More details on the argument ``fx_variables`` and its default values are given
-:ref:`here<Fx variables as cell measures or ancillary variables>`.
+in :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -1470,8 +1482,8 @@ region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
 The optional ``fx_variables`` argument specifies the fx variables that the user
-wishes to input to the function. More details on this are given
-:ref:`here<Fx variables as cell measures or ancillary variables>`.
+wishes to input to the function. More details on this are given in :ref:`Fx
+variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -1516,8 +1528,8 @@ apply over the volume.
 No depth coordinate is required as this is determined by Iris. This function
 works best when the ``fx_variables`` provide the cell volume. The optional
 ``fx_variables`` argument specifies the fx variables that the user wishes to
-input to the function. More details on this are given
-:ref:`here<Fx variables as cell measures or ancillary variables>`.
+input to the function. More details on this are given in :ref:`Fx variables as
+cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
