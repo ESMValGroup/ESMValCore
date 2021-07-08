@@ -207,6 +207,7 @@ def _combine(cubes):
         # https://scitools-iris.readthedocs.io/en/stable/userguide/
         #    merge_and_concat.html#common-issues-with-merge-and-concatenate
 
+        cube = remove_fx_variables(cube)
         cube.cell_methods = None
 
         for coord in cube.coords():
@@ -275,13 +276,7 @@ def _multicube_statistics(cubes, statistics, span):
         raise ValueError('Cannot perform multicube statistics '
                          'for a single cube.')
 
-    copied_cubes = []
-    for cube in cubes:
-        # avoid modifying inputs
-        copied_cube = cube.copy()
-        copied_cube = remove_fx_variables(copied_cube)
-        copied_cubes.append(copied_cube)
-
+    copied_cubes = [cube.copy() for cube in cubes]  # avoid modifying inputs
     aligned_cubes = _align(copied_cubes, span=span)
 
     statistics_cubes = {}
