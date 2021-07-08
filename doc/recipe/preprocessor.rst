@@ -205,16 +205,20 @@ the variables, e.g.,
       areacello:
       volcello:
 
-or by explicitly adding variable parameters (the key-value pair may be as
-specific as a CMOR variable can permit):
+or by additionally specifying further keys that are used to define the fx
+datsets, e.g.,
 
 .. code-block:: yaml
 
     fx_variables:
       areacello:
         mip: Ofx
+        exp: piControl
       volcello:
         mip: Omon
+
+This might be useful to select fx files from a specific ``mip`` table or from a
+specific ``exp`` in case not all experiments provide the fx variable.
 
 Alternatively, the ``fx_variables`` argument can also be specified as a list:
 
@@ -226,7 +230,7 @@ or as a list of dictionaries:
 
 .. code-block:: yaml
 
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Ofx'}, {'short_name': 'volcello', 'mip': 'Omon'}]
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Ofx', 'exp': 'piControl'}, {'short_name': 'volcello', 'mip': 'Omon'}]
 
 The recipe parser will automatically find the data files that are associated
 with these variables and pass them to the function for loading and processing.
