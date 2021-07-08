@@ -9,6 +9,7 @@ import cf_units
 import iris
 import numpy as np
 from iris.util import equalise_attributes
+from esmvalcore.preprocessor import remove_fx_variables
 
 logger = logging.getLogger(__name__)
 
@@ -262,8 +263,14 @@ def _multicube_statistics(cubes, statistics, span):
     if len(cubes) == 1:
         raise ValueError('Cannot perform multicube statistics '
                          'for a single cube.')
+    
+    copied_cubes = []
+    for cube in cubes:
+        # avoid modifying inputs
+        copied_cube = cube.copy()
+        copied_cube = remove_fx_variables(copied_cube)
+        copied_cubes.append(copied_cube)
 
-    copied_cubes = [cube.copy() for cube in cubes]  # avoid modifying inputs
     aligned_cubes = _align(copied_cubes, span=span)
 
     statistics_cubes = {}
