@@ -295,6 +295,10 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
                 return []
             if 'sftlf' in filename:
                 return []
+            if 'IyrAnt_' in filename:
+                return []
+            if 'IyrGre_' in filename:
+                return []
         return _get_filenames(tmp_path, filenames, tracking_id)
 
     monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
@@ -2009,8 +2013,8 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
     settings = product.settings['mask_landseaice']
     assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_piControl_' in fx_variables['sftlf']['filename']
+    assert '_fx_' in fx_variables['sftgif']['filename']
+    assert '_piControl_' in fx_variables['sftgif']['filename']
 
     # volume statistics
     settings = product.settings['volume_statistics']
@@ -2759,7 +2763,7 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
 
 
 def test_ambiguous_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
-    """Test that error is raised for fx variable available in multiple mips."""
+    """Test that error is raised for fx files available in multiple mips."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent("""
@@ -2786,12 +2790,70 @@ def test_ambiguous_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    msg = ("Requested fx variable 'volcello' is available in more than one "
-           "CMOR table for 'CMIP6': ['Ofx', 'Oyr', 'Odec', 'Omon']")
+    msg = ("Requested fx variable 'volcello' for dataset 'CanESM5' of project "
+           "'CMIP6' is available in more than one CMOR table for 'CMIP6': "
+           "['Ofx', 'Oyr', 'Odec', 'Omon']")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
     assert msg in rec_err_exp.value.failed_tasks[0].message
+
+
+def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
+                                              patched_failing_datafinder,
+                                              config_user):
+    """Test that no error is raised for fx files available in one mip."""
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
+    content = dedent("""
+        preprocessors:
+          preproc:
+           area_statistics:
+             operator: mean
+             fx_variables:
+               sftgif:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    # Check area_statistics
+    assert 'area_statistics' in product.settings
+    settings = product.settings['area_statistics']
+    assert len(settings) == 1
+    assert settings['operator'] == 'mean'
+
+    # Check add_fx_variables
+    # Due to failing datafinder, only files in LImon are found even though
+    # sftgif is available in the tables fx, IyrAnt, IyrGre and LImon
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
+    assert isinstance(fx_variables, dict)
+    assert len(fx_variables) == 1
+    sftgif_files = fx_variables['sftgif']['filename']
+    assert isinstance(sftgif_files, list)
+    assert len(sftgif_files) == 1
+    assert'_LImon_' in sftgif_files[0]
 
 
 def test_multimodel_mask(tmp_path, patched_datafinder, config_user):

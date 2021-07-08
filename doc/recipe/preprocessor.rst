@@ -206,7 +206,7 @@ the variables, e.g.,
       volcello:
 
 or by additionally specifying further keys that are used to define the fx
-datsets, e.g.,
+datasets, e.g.,
 
 .. code-block:: yaml
 
@@ -241,8 +241,9 @@ available tables of the specified project.
 .. warning::
    Some fx variables exist in more than one table (e.g., ``volcello`` exists in
    CMIP6's ``Odec``, ``Ofx``, ``Omon``, and ``Oyr`` tables; ``sftgif`` exists
-   in CMIP6's ``fx``, ``IyrAnt`` and ``IyrGre``, and ``LImon`` tables).  In
-   these cases, ``mip`` needs to be specified, otherwise an error is raised.
+   in CMIP6's ``fx``, ``IyrAnt`` and ``IyrGre``, and ``LImon`` tables). If (for
+   a given dataset) fx files are found in more than one table, ``mip`` needs to
+   be specified, otherwise an error is raised.
 
 Internally, the required ``fx_variables`` are automatically loaded by the
 preprocessor step ``add_fx_variables`` which also checks them against CMOR
