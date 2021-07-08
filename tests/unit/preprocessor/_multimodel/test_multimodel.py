@@ -537,3 +537,22 @@ def test_return_products():
 
     assert result3 == result1
     assert result4 == result2
+
+
+def test_no_warn_model_dim_non_contiguous(recwarn):
+    """Test that now warning is raised that model dim is non-contiguous."""
+    coord = iris.coords.DimCoord(
+        [0.5, 1.5],
+        bounds=[[0, 1.], [1., 2.]],
+        standard_name='time',
+        units='days since 1850-01-01',
+    )
+    cube1 = iris.cube.Cube([1, 1], dim_coords_and_dims=[(coord, 0)])
+    cube2 = iris.cube.Cube([2, 2], dim_coords_and_dims=[(coord, 0)])
+    cubes = [cube1, cube2]
+
+    multi_model_statistics(cubes, span="overlap", statistics=['mean'])
+    msg = ("Collapsing a non-contiguous coordinate. "
+           "Metadata may not be fully descriptive for 'multi-model'.")
+    for warning in recwarn:
+        assert str(warning.message) != msg
