@@ -263,7 +263,7 @@ def _multicube_statistics(cubes, statistics, span):
     if len(cubes) == 1:
         raise ValueError('Cannot perform multicube statistics '
                          'for a single cube.')
-    
+
     copied_cubes = []
     for cube in cubes:
         # avoid modifying inputs

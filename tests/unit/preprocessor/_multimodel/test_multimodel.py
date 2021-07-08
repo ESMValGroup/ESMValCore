@@ -602,6 +602,7 @@ def test_daily_inconsistent_calendars():
     result_cube = result['mean']
     assert result_cube[59].data == 2
 
+
 def test_remove_fx_variables():
     """Test fx variables are removed from cubes."""
     cube1 = generate_cube_from_dates("monthly")
