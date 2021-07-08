@@ -551,7 +551,7 @@ def test_ignore_tas_scalar_height_coord():
         cube.add_aux_coord(
             iris.coords.AuxCoord([height], var_name="height", units="m"))
 
-    result = mm.multi_model_statistics([tas_2m, tas_1p5m],
+    result = mm.multi_model_statistics([tas_2m, tas_2m.copy(), tas_1p5m],
                                        statistics=['mean'],
                                        span='full')
 
