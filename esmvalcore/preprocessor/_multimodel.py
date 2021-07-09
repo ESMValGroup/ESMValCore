@@ -207,7 +207,7 @@ def _combine(cubes):
         # https://scitools-iris.readthedocs.io/en/stable/userguide/
         #    merge_and_concat.html#common-issues-with-merge-and-concatenate
 
-        cube = remove_fx_variables(cube)
+        remove_fx_variables(cube)
         cube.cell_methods = None
 
         for coord in cube.coords():
