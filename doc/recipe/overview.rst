@@ -170,6 +170,7 @@ When using the ``timerange`` tag to specify the start and end points, possible v
     * ``timerange: '*/1982``. Finds first available point, spans to 31/12/1982.
     * ``timerange: '*/P6Y``. Finds first available point, spans 6 years from it.
     * ``timerange: '198003/*``. Starting from 01/03/1980, spans until the last available point.
+    * ``timerange: 'P5M/*``. Finds last available point, spans 5 months backwards from it.
 
 
 Note that this section is not required, as datasets can also be provided in the
