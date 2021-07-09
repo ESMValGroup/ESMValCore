@@ -2792,7 +2792,7 @@ def test_ambiguous_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
         """)
     msg = ("Requested fx variable 'volcello' for dataset 'CanESM5' of project "
            "'CMIP6' is available in more than one CMOR table for 'CMIP6': "
-           "['Ofx', 'Oyr', 'Odec', 'Omon']")
+           "['Odec', 'Ofx', 'Omon', 'Oyr']")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, config_user)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG

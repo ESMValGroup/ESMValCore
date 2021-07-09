@@ -383,7 +383,7 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
             f"Requested fx variable '{fx_info['short_name']}' for dataset "
             f"'{variable['dataset']}' of project '{variable['project']}' is "
             f"available in more than one CMOR table for "
-            f"'{variable['project']}': {list(fx_files_for_mips)}")
+            f"'{variable['project']}': {sorted(list(fx_files_for_mips))}")
 
     # Dict is empty -> no files found -> handled at later stage
     if not fx_files_for_mips:
