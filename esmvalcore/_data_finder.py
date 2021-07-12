@@ -4,7 +4,6 @@
 # Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
 # Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
 
-import datetime
 import fnmatch
 import glob
 import logging
