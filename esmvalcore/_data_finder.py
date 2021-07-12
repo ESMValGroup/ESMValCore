@@ -93,6 +93,7 @@ def get_start_end_year(filename):
                 start_date = end_date = end.group('datetime')
 
     # As final resort, try to get the dates from the file contents
+    start_year = None
     if start_year is None or end_year is None:
         logger.debug("Must load file %s for daterange ", filename)
         cubes = iris.load(filename)
@@ -104,19 +105,13 @@ def get_start_end_year(filename):
             except iris.exceptions.CoordinateNotFoundError:
                 continue
             start_point = time.cell(0).point
-            start_datetime = datetime.datetime(
-                start_point.year, start_point.month, start_point.day,
-                start_point.hour, start_point.minute, start_point.second)
             start_date = isodate.date_isoformat(
-                start_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
+                start_point, format=isodate.isostrf.DATE_BAS_COMPLETE)
             start_year = start_point.year
 
             end_point = time.cell(-1).point
-            end_datetime = datetime.datetime(
-                end_point.year, end_point.month, end_point.day,
-                end_point.hour, end_point.minute, end_point.second)
             end_date = isodate.date_isoformat(
-                end_datetime, format=isodate.isostrf.DATE_BAS_COMPLETE)
+                end_point, format=isodate.isostrf.DATE_BAS_COMPLETE)
             end_year = end_point.year
             break
 
