@@ -92,7 +92,6 @@ def get_start_end_year(filename):
                 start_date = end_date = end.group('datetime')
 
     # As final resort, try to get the dates from the file contents
-    start_year = None
     if start_year is None or end_year is None:
         logger.debug("Must load file %s for daterange ", filename)
         cubes = iris.load(filename)
