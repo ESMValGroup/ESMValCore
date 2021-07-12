@@ -11,6 +11,7 @@ from cf_units import Unit
 from iris.cube import Cube
 
 import esmvalcore.preprocessor._multimodel as mm
+from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
 from esmvalcore.preprocessor import multi_model_statistics
 
 SPAN_OPTIONS = ('overlap', 'full')
@@ -599,6 +600,20 @@ def test_daily_inconsistent_calendars():
     result = multi_model_statistics(cubes, span="overlap", statistics=['mean'])
     result_cube = result['mean']
     assert result_cube[59].data == 2
+
+
+def test_remove_fx_variables():
+    """Test fx variables are removed from cubes."""
+    cube1 = generate_cube_from_dates("monthly")
+    fx_cube = generate_cube_from_dates("monthly")
+    fx_cube.standard_name = "land_area_fraction"
+    add_ancillary_variable(cube1, fx_cube)
+
+    cube2 = generate_cube_from_dates("monthly", fill_val=9)
+    result = mm.multi_model_statistics([cube1, cube2],
+                                       statistics=['mean'],
+                                       span='full')
+    assert result['mean'].ancillary_variables() == []
 
 
 def test_no_warn_model_dim_non_contiguous(recwarn):

@@ -10,6 +10,7 @@ import cf_units
 import iris
 import numpy as np
 from iris.util import equalise_attributes
+from esmvalcore.preprocessor import remove_fx_variables
 
 logger = logging.getLogger(__name__)
 
@@ -206,6 +207,7 @@ def _combine(cubes):
         # https://scitools-iris.readthedocs.io/en/stable/userguide/
         #    merge_and_concat.html#common-issues-with-merge-and-concatenate
 
+        remove_fx_variables(cube)
         cube.cell_methods = None
 
         for coord in cube.coords():
