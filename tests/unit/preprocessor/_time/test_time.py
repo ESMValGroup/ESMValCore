@@ -64,7 +64,6 @@ def add_auxiliary_coordinate(cubelist):
 
 class TestExtractMonth(tests.Test):
     """Tests for extract_month."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -98,7 +97,6 @@ class TestExtractMonth(tests.Test):
 
 class TestTimeSlice(tests.Test):
     """Tests for extract_time."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -170,7 +168,6 @@ class TestTimeSlice(tests.Test):
 
 class TestClipStartEndYear(tests.Test):
     """Tests for clip_start_end_year."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -211,10 +208,17 @@ class TestClipStartEndYear(tests.Test):
         sliced = clip_start_end_year(cube, 1950, 1950)
         assert cube == sliced
 
+    def test_clip_start_end_year_timerange(self):
+        """Test timerange argument is ignored."""
+        sliced = clip_start_end_year(self.cube,
+                                     1950,
+                                     1952,
+                                     timerange='1950/1952')
+        assert sliced == self.cube
+
 
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -299,7 +303,6 @@ class TestExtractSeason(tests.Test):
 
 class TestClimatology(tests.Test):
     """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
-
     @staticmethod
     def _create_cube(data, times, bounds):
         time = iris.coords.DimCoord(times,
@@ -501,7 +504,6 @@ class TestClimatology(tests.Test):
 
 class TestSeasonalStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -589,7 +591,6 @@ class TestSeasonalStatistics(tests.Test):
 
 class TestMonthlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -657,7 +658,6 @@ class TestMonthlyStatistics(tests.Test):
 
 class TestHourlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -721,7 +721,6 @@ class TestHourlyStatistics(tests.Test):
 
 class TestDailyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -785,7 +784,6 @@ class TestDailyStatistics(tests.Test):
 
 class TestRegridTimeYearly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -843,7 +841,6 @@ class TestRegridTimeYearly(tests.Test):
 
 class TestRegridTimeMonthly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -911,7 +908,6 @@ class TestRegridTimeMonthly(tests.Test):
 
 class TestRegridTimeDaily(tests.Test):
     """Tests for regrid_time with daily frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -965,7 +961,6 @@ class TestRegridTimeDaily(tests.Test):
 
 class TestRegridTime6Hourly(tests.Test):
     """Tests for regrid_time with 6-hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1019,7 +1014,6 @@ class TestRegridTime6Hourly(tests.Test):
 
 class TestRegridTime3Hourly(tests.Test):
     """Tests for regrid_time with 3-hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1073,7 +1067,6 @@ class TestRegridTime3Hourly(tests.Test):
 
 class TestRegridTime1Hourly(tests.Test):
     """Tests for regrid_time with hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1127,7 +1120,6 @@ class TestRegridTime1Hourly(tests.Test):
 
 class TestTimeseriesFilter(tests.Test):
     """Tests for regrid_time with hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -1578,7 +1570,6 @@ def test_climate_statistics_complex_cube_mean():
 
 class TestResampleHours(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -1668,7 +1659,6 @@ class TestResampleHours(tests.Test):
 
 class TestResampleTime(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
