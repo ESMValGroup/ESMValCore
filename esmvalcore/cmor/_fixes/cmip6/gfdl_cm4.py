@@ -5,6 +5,7 @@ from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
 from .gfdl_esm4 import Omon as BaseOmon
+from .gfdl_esm4 import Fgco2 as BaseFgco2
 
 
 class Cl(ClFixHybridPressureCoord):
@@ -109,3 +110,6 @@ class Vas(Fix):
 
 
 Omon = BaseOmon
+
+
+Fgco2 = BaseFgco2

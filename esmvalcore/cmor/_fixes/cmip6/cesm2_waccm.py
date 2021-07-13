@@ -4,6 +4,7 @@ from netCDF4 import Dataset
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Tas as BaseTas
 from .cesm2 import Omon as BaseOmon
+from .cesm2 import Fgco2 as BaseFgco2
 
 
 class Cl(BaseCl):
@@ -52,3 +53,6 @@ Tas = BaseTas
 
 
 Omon = BaseOmon
+
+
+Fgco2 = BaseFgco2
