@@ -142,7 +142,8 @@ def data_availability(input_files, var, dirnames, filenames):
     if missing_years:
         raise RecipeError(
             "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years), input_files))
+                ", ".join(str(year) for year in sorted(missing_years)),
+                input_files))
 
 
 def tasks_valid(tasks):
