@@ -151,11 +151,9 @@ def _convert_duration(duration, freq, time_format, reference):
 
 def _duration_to_date(cube, duration, reference, sign):
     time_coord = cube.coord('time')
-    time_format = time_coord.cell(0).point.format
-    time_unit = time_coord.units
-    reference_format = reference.strftime(time_format)
+    reference_format = reference.strftime(time_coord.cell(0).point.format)
     reference_unit = cf_units.Unit(f'seconds since {reference_format}',
-                                   calendar=time_unit.calendar)
+                                   calendar=time_coord.units.calendar)
 
     years = sign * int(duration.years)
     months = sign * int(duration.months)
@@ -170,10 +168,9 @@ def _duration_to_date(cube, duration, reference, sign):
                                    reference_unit)
 
     delta = delta_years + delta_months + delta_days + seconds
-    delta = reference_unit.convert(delta, time_unit)
-    duration_date = time_unit.num2date(delta)
+    delta = reference_unit.convert(delta, time_coord.units)
 
-    return duration_date
+    return time_coord.units.num2date(delta)
 
 
 def clip_timerange(cube, start_year, end_year, timerange=None):
