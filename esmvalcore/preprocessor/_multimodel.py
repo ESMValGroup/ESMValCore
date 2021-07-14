@@ -2,6 +2,7 @@
 
 import logging
 import re
+import warnings
 from datetime import datetime
 from functools import reduce
 
@@ -9,6 +10,7 @@ import cf_units
 import iris
 import numpy as np
 from iris.util import equalise_attributes
+from esmvalcore.preprocessor import remove_fx_variables
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +207,7 @@ def _combine(cubes):
         # https://scitools-iris.readthedocs.io/en/stable/userguide/
         #    merge_and_concat.html#common-issues-with-merge-and-concatenate
 
+        remove_fx_variables(cube)
         cube.cell_methods = None
 
         for coord in cube.coords():
@@ -227,8 +230,18 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
     for i in range(cubes[0].shape[0]):
         single_model_slices = [cube[i] for cube in cubes]
         combined_slice = _combine(single_model_slices)
-        collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
-                                                   **kwargs)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message=(
+                    "Collapsing a non-contiguous coordinate. "
+                    f"Metadata may not be fully descriptive for '{CONCAT_DIM}."
+                ),
+                category=UserWarning,
+                module='iris',
+            )
+            collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
+                                                       **kwargs)
 
         # some iris aggregators modify dtype, see e.g.
         # https://numpy.org/doc/stable/reference/generated/numpy.ma.average.html
