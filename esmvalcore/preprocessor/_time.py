@@ -7,15 +7,15 @@ import copy
 import datetime
 import logging
 from warnings import filterwarnings
-import cf_units
-import isodate
 
+import cf_units
 import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.cube
 import iris.exceptions
 import iris.util
+import isodate
 import numpy as np
 from iris.time import PartialDateTime
 
@@ -116,8 +116,8 @@ def _parse_start_date(date):
     else:
         try:
             start_date = isodate.parse_date(date)
-            start_date = datetime.datetime.combine(
-                start_date, datetime.time.min)
+            start_date = datetime.datetime.combine(start_date,
+                                                   datetime.time.min)
         except isodate.ISO8601Error:
             start_date = isodate.parse_datetime(date)
     return start_date
@@ -128,24 +128,23 @@ def _parse_end_date(date):
         end_date = isodate.parse_duration(date)
     else:
         if len(date) == 4:
-            end_date = datetime.datetime(int(date)+1, 1, 1, 0, 0, 0)
+            end_date = datetime.datetime(int(date) + 1, 1, 1, 0, 0, 0)
         elif len(date) == 6:
             month, year = _get_next_month(int(date[4:]), int(date[0:4]))
             end_date = datetime.datetime(year, month, 1, 0, 0, 0)
         else:
             try:
                 end_date = isodate.parse_date(date)
-                end_date = datetime.datetime.combine(
-                    end_date, datetime.time.min)
+                end_date = datetime.datetime.combine(end_date,
+                                                     datetime.time.min)
             except isodate.ISO8601Error:
                 end_date = isodate.parse_datetime(date)
     return end_date
 
 
-def _convert_duration(duration, freq, format, reference):
-    duration_unit = cf_units.Unit(
-        f'{freq} since {format}',
-        calendar=reference.calendar)
+def _convert_duration(duration, freq, time_format, reference):
+    duration_unit = cf_units.Unit(f'{freq} since {time_format}',
+                                  calendar=reference.calendar)
     delta = duration_unit.convert(duration, reference)
     return delta
 
@@ -155,21 +154,20 @@ def _duration_to_date(cube, duration, reference, sign):
     time_format = time_coord.cell(0).point.format
     time_unit = time_coord.units
     reference_format = reference.strftime(time_format)
-    reference_unit = cf_units.Unit(
-        f'seconds since {reference_format}', calendar=time_unit.calendar
-    )
+    reference_unit = cf_units.Unit(f'seconds since {reference_format}',
+                                   calendar=time_unit.calendar)
 
     years = sign * int(duration.years)
     months = sign * int(duration.months)
     days = sign * int(duration.days)
     seconds = sign * int(duration.seconds)
 
-    delta_years = _convert_duration(
-        years, 'years', reference_format, reference_unit)
-    delta_months = _convert_duration(
-        months, 'months', reference_format, reference_unit)
-    delta_days = _convert_duration(
-        days, 'days', reference_format, reference_unit)
+    delta_years = _convert_duration(years, 'years', reference_format,
+                                    reference_unit)
+    delta_months = _convert_duration(months, 'months', reference_format,
+                                     reference_unit)
+    delta_days = _convert_duration(days, 'days', reference_format,
+                                   reference_unit)
 
     delta = delta_years + delta_months + delta_days + seconds
     delta = reference_unit.convert(delta, time_unit)
@@ -216,9 +214,9 @@ def clip_timerange(cube, start_year, end_year, timerange=None):
         if isinstance(end_date, isodate.duration.Duration):
             end_date = _duration_to_date(cube, end_date, start_date, sign=1)
 
-        return extract_time(
-            cube, start_date.year, start_date.month, start_date.day,
-            end_date.year, end_date.month, end_date.day)
+        return extract_time(cube, start_date.year, start_date.month,
+                            start_date.day, end_date.year, end_date.month,
+                            end_date.day)
 
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
 

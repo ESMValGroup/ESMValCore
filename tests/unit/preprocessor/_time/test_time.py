@@ -168,7 +168,7 @@ class TestTimeSlice(tests.Test):
         assert cube == sliced
 
 
-class TestClipStartEndYear(tests.Test):
+class TestClipTimerange(tests.Test):
     """Tests for clip_timerange."""
 
     def setUp(self):
