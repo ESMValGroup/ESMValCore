@@ -115,11 +115,11 @@ def _parse_start_date(date):
         start_date = isodate.parse_duration(date)
     else:
         try:
+            start_date = isodate.parse_datetime(date)
+        except isodate.ISO8601Error:
             start_date = isodate.parse_date(date)
             start_date = datetime.datetime.combine(start_date,
                                                    datetime.time.min)
-        except isodate.ISO8601Error:
-            start_date = isodate.parse_datetime(date)
     return start_date
 
 
@@ -134,11 +134,12 @@ def _parse_end_date(date):
             end_date = datetime.datetime(year, month, 1, 0, 0, 0)
         else:
             try:
+                end_date = isodate.parse_datetime(date)
+            except isodate.ISO8601Error:
                 end_date = isodate.parse_date(date)
                 end_date = datetime.datetime.combine(end_date,
                                                      datetime.time.min)
-            except isodate.ISO8601Error:
-                end_date = isodate.parse_datetime(date)
+            end_date += datetime.timedelta(seconds=1)
     return end_date
 
 
@@ -171,6 +172,46 @@ def _duration_to_date(cube, duration, reference, sign):
     delta = reference_unit.convert(delta, time_coord.units)
 
     return time_coord.units.num2date(delta)
+
+
+def _extract_datetime(cube, start_datetime, end_datetime):
+    time_coord = cube.coord('time')
+    time_units = time_coord.units
+    if time_units.calendar == '360_day':
+        if start_datetime.day > 30:
+            start_datetime.day = 30
+        if end_datetime.day > 30:
+            end_datetime.day = 30
+
+    t_1 = PartialDateTime(year=int(start_datetime.year),
+                          month=int(start_datetime.month),
+                          day=int(start_datetime.day),
+                          hour=int(start_datetime.hour),
+                          minute=int(start_datetime.minute),
+                          second=int(start_datetime.second))
+
+    t_2 = PartialDateTime(year=int(end_datetime.year),
+                          month=int(end_datetime.month),
+                          day=int(end_datetime.day),
+                          hour=int(end_datetime.hour),
+                          minute=int(end_datetime.minute),
+                          second=int(end_datetime.second))
+
+    constraint = iris.Constraint(time=lambda t: t_1 <= t.point < t_2)
+    cube_slice = cube.extract(constraint)
+    if cube_slice is None:
+        raise ValueError(
+            f"Time slice {start_datetime.strftime('%Y-%m-%d')} "
+            f"to {end_datetime.strftime('%Y-%m-%d')} is outside "
+            f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
+
+    # Issue when time dimension was removed when only one point as selected.
+    if cube_slice.ndim != cube.ndim:
+        if cube_slice.coord('time') == time_coord:
+            logger.debug('No change needed to time.')
+            return cube
+
+    return cube_slice
 
 
 def clip_timerange(cube, start_year, end_year, timerange=None):
@@ -211,9 +252,7 @@ def clip_timerange(cube, start_year, end_year, timerange=None):
         if isinstance(end_date, isodate.duration.Duration):
             end_date = _duration_to_date(cube, end_date, start_date, sign=1)
 
-        return extract_time(cube, start_date.year, start_date.month,
-                            start_date.day, end_date.year, end_date.month,
-                            end_date.day)
+        return _extract_datetime(cube, start_date, end_date)
 
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
 

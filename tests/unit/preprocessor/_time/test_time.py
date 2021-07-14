@@ -64,7 +64,6 @@ def add_auxiliary_coordinate(cubelist):
 
 class TestExtractMonth(tests.Test):
     """Tests for extract_month."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -98,7 +97,6 @@ class TestExtractMonth(tests.Test):
 
 class TestTimeSlice(tests.Test):
     """Tests for extract_time."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -170,10 +168,19 @@ class TestTimeSlice(tests.Test):
 
 class TestClipTimerange(tests.Test):
     """Tests for clip_timerange."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
+
+    @staticmethod
+    def _create_cube(data, times, bounds):
+        time = iris.coords.DimCoord(times,
+                                    bounds=bounds,
+                                    standard_name='time',
+                                    units=Unit('days since 1950-01-01',
+                                               calendar='gregorian'))
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        return cube
 
     def test_clip_timerange_1_year(self):
         """Test clip_timerange with 1 year."""
@@ -196,6 +203,9 @@ class TestClipTimerange(tests.Test):
         msg = ("Time slice 2200-01-01 to 2201-01-01 is outside"
                " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         assert ctx.exception.args == (msg, )
+        with self.assertRaises(ValueError) as ctx:
+            clip_timerange(self.cube, 2200, 2200, '2200/2200')
+        assert ctx.exception.args == (msg, )
 
     def test_clip_timerange_one_time(self):
         """Test clip_timerange with one time step."""
@@ -203,36 +213,54 @@ class TestClipTimerange(tests.Test):
         cube.coord('time').guess_bounds()
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = clip_timerange(cube, 1950, 1952)
+        sliced_timerange = clip_timerange(cube, 1950, 1952, '1950/1952')
         assert_array_equal(np.array([360.]), sliced.coord('time').points)
+        assert_array_equal(np.array([360.]),
+                           sliced_timerange.coord('time').points)
 
     def test_clip_timerange_no_time(self):
         """Test clip_timerange with no time step."""
         cube = _create_sample_cube()[0]
         sliced = clip_timerange(cube, 1950, 1950)
+        sliced_timerange = clip_timerange(cube, 1950, 1950, '1950/1950')
         assert cube == sliced
+        assert cube == sliced_timerange
 
     def test_clip_timerange_date(self):
         """Test timerange with dates."""
-        cube = _create_sample_cube()
-        sliced_year = clip_timerange(cube, 1950, 1952, '1950/1952')
-        sliced_month = clip_timerange(cube, 1950, 1952, '195001/195212')
-        sliced_day = clip_timerange(cube, 1950, 1952, '19500101/19521231')
-        assert cube == sliced_year
-        assert cube == sliced_month
-        assert cube == sliced_day
+        sliced_year = clip_timerange(self.cube, 1950, 1952, '1950/1952')
+        sliced_month = clip_timerange(self.cube, 1950, 1952, '195001/195212')
+        sliced_day = clip_timerange(self.cube, 1950, 1952, '19500101/19521231')
+        assert self.cube == sliced_year
+        assert self.cube == sliced_month
+        assert self.cube == sliced_day
 
     def test_clip_timerange_duration(self):
         """Test timerange with duration periods."""
-        cube = _create_sample_cube()
-        sliced_end = clip_timerange(cube, 1950, 1952, '1950/P2Y')
-        sliced_start = clip_timerange(cube, 1950, 1951, 'P2Y/1951')
-        assert cube == sliced_end
-        assert cube == sliced_start
+        sliced_end = clip_timerange(self.cube, 1950, 1952, '1950/P2Y')
+        sliced_start = clip_timerange(self.cube, 1950, 1951, 'P2Y/1951')
+        assert self.cube == sliced_end
+        assert self.cube == sliced_start
+
+    def test_clip_timerange_datetime(self):
+        """Test timerange with datetime periods."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        time = iris.coords.DimCoord(times,
+                                    standard_name='time',
+                                    units=Unit('hours since 1950-01-01',
+                                               calendar='360_day'))
+        time.guess_bounds()
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+
+        sliced_cube = clip_timerange(cube, 1950, 1950,
+                                     '19500101T000000/19500101T120000')
+        expected_time = np.arange(0, 18, 6)
+        assert_array_equal(sliced_cube.coord(time).points, expected_time)
 
 
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -317,7 +345,6 @@ class TestExtractSeason(tests.Test):
 
 class TestClimatology(tests.Test):
     """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
-
     @staticmethod
     def _create_cube(data, times, bounds):
         time = iris.coords.DimCoord(times,
@@ -519,7 +546,6 @@ class TestClimatology(tests.Test):
 
 class TestSeasonalStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -607,7 +633,6 @@ class TestSeasonalStatistics(tests.Test):
 
 class TestMonthlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -675,7 +700,6 @@ class TestMonthlyStatistics(tests.Test):
 
 class TestHourlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -739,7 +763,6 @@ class TestHourlyStatistics(tests.Test):
 
 class TestDailyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -803,7 +826,6 @@ class TestDailyStatistics(tests.Test):
 
 class TestRegridTimeYearly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -861,7 +883,6 @@ class TestRegridTimeYearly(tests.Test):
 
 class TestRegridTimeMonthly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -929,7 +950,6 @@ class TestRegridTimeMonthly(tests.Test):
 
 class TestRegridTimeDaily(tests.Test):
     """Tests for regrid_time with daily frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -983,7 +1003,6 @@ class TestRegridTimeDaily(tests.Test):
 
 class TestRegridTime6Hourly(tests.Test):
     """Tests for regrid_time with 6-hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1037,7 +1056,6 @@ class TestRegridTime6Hourly(tests.Test):
 
 class TestRegridTime3Hourly(tests.Test):
     """Tests for regrid_time with 3-hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1091,7 +1109,6 @@ class TestRegridTime3Hourly(tests.Test):
 
 class TestRegridTime1Hourly(tests.Test):
     """Tests for regrid_time with hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1145,7 +1162,6 @@ class TestRegridTime1Hourly(tests.Test):
 
 class TestTimeseriesFilter(tests.Test):
     """Tests for regrid_time with hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -1596,7 +1612,6 @@ def test_climate_statistics_complex_cube_mean():
 
 class TestResampleHours(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -1686,7 +1701,6 @@ class TestResampleHours(tests.Test):
 
 class TestResampleTime(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
