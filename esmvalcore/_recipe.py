@@ -1036,6 +1036,13 @@ class Recipe:
         variables = []
 
         raw_variable = deepcopy(raw_variable)
+        exclude_list = raw_variable.pop('exclude_datasets',[])
+        datasets = deepcopy(raw_datasets)
+        for dataset in raw_datasets:
+            if dataset['dataset'] in exclude_list:
+                datasets.remove(dataset)
+        raw_datasets = datasets
+
         datasets = self._initialize_datasets(
             raw_datasets + raw_variable.pop('additional_datasets', []))
 
@@ -1044,12 +1051,6 @@ class Recipe:
                               "or additional_dataset groups "
                               f"for variable {raw_variable} Exiting.")
         check.duplicate_datasets(datasets)
-
-        exclude_list = raw_variable.pop('exclude_datasets',[])
-        raw_datasets = deepcopy(datasets)
-        for dataset in raw_datasets:
-            if dataset['dataset'] in exclude_list:
-                datasets.remove(dataset)
 
         for index, dataset in enumerate(datasets):
             variable = deepcopy(raw_variable)
