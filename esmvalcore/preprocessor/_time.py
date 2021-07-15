@@ -179,9 +179,9 @@ def _extract_datetime(cube, start_datetime, end_datetime):
     time_units = time_coord.units
     if time_units.calendar == '360_day':
         if start_datetime.day > 30:
-            start_datetime.day = 30
+            start_datetime = start_datetime.replace(day=30)
         if end_datetime.day > 30:
-            end_datetime.day = 30
+            end_datetime = end_datetime.replace(day=30)
 
     t_1 = PartialDateTime(year=int(start_datetime.year),
                           month=int(start_datetime.month),
@@ -204,12 +204,6 @@ def _extract_datetime(cube, start_datetime, end_datetime):
             f"Time slice {start_datetime.strftime('%Y-%m-%d')} "
             f"to {end_datetime.strftime('%Y-%m-%d')} is outside "
             f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
-
-    # Issue when time dimension was removed when only one point as selected.
-    if cube_slice.ndim != cube.ndim:
-        if cube_slice.coord('time') == time_coord:
-            logger.debug('No change needed to time.')
-            return cube
 
     return cube_slice
 

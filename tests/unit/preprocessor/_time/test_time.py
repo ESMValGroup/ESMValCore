@@ -258,6 +258,20 @@ class TestClipTimerange(tests.Test):
         expected_time = np.arange(0, 18, 6)
         assert_array_equal(sliced_cube.coord(time).points, expected_time)
 
+    def test_clip_timerange_360_day(self):
+        """Test clip timerange with 360_day calendar."""
+        data = np.arange(91)
+        times = np.arange(0, 91)
+        time = iris.coords.DimCoord(times,
+                                    standard_name='time',
+                                    units=Unit('days since 1950-01-01',
+                                               calendar='360_day'))
+        time.guess_bounds()
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        sliced = clip_timerange(cube, 1950, 1950, '19500131/19500331')
+        expected_time = np.arange(29, 90)
+        assert_array_equal(expected_time, sliced.coord('time').points)
+
 
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""
