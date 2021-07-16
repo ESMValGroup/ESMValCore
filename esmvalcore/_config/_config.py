@@ -61,8 +61,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     """Read config user file and store settings in a dictionary."""
     if not config_file:
         config_file = '~/.esmvaltool/config-user.yml'
-    config_file = os.path.abspath(
-        os.path.expandvars(os.path.expanduser(config_file)))
+    config_file = _normalize_path(config_file)
     # Read user config file
     if not os.path.exists(config_file):
         print(f"ERROR: Config file {config_file} does not exist")
@@ -135,6 +134,7 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
+    cfg['config_user_file'] = config_file
 
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
