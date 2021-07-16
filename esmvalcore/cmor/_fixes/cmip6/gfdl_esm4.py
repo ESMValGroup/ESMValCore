@@ -31,6 +31,9 @@ class Omon(Fix):
         return CubeList(new_list)
 
 
+Oyr = Omon
+
+
 class Siconc(Fix):
     """Fixes for siconc."""
 
