@@ -381,7 +381,11 @@ class ESMValTool():
         # log header
         logger.info(HEADER)
 
-        logger.info("Using config file %s", config_file)
+        if config_file is not None:
+            logger.info("Using config file %s", config_file)
+        else:
+            logger.info("Attempting to use default config file from "
+                        "$HOME/.esmvaltool/config-user.yml")
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
         cfg['skip-nonexistent'] = skip_nonexistent
