@@ -3,11 +3,12 @@ Tests for ESMValTool CLI
 
 Includes a context manager to temporarly modify sys.argv
 """
-
 import contextlib
 import copy
 import functools
+import os
 import sys
+from textwrap import dedent
 from unittest.mock import patch
 
 import pytest
@@ -58,8 +59,32 @@ def test_run():
         run()
 
 
+def test_actual_run(tmp_path):
+    """Test run from command line in full."""
+    recipe_file = tmp_path / "recipe.yml"
+    content = dedent("""
+        documentation:
+          description: This is a test recipe.
+          authors:
+            - andela_bouwe
+          references:
+            - contact_authors
+            - acknow_project
+          projects:
+            - c3s-magic
+    """)
+    recipe_file.write_text(content)
+    os.system("esmvaltool run %s" % recipe_file)
+    log_dir = './esmvaltool_output'
+    log_file = os.path.join(log_dir,
+                            os.listdir(log_dir)[0], 'run', 'main_log.txt')
+    os.system("rm -r esmvaltool_output")
+
+    assert log_file
+
+
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_tun_with_config():
+def test_run_with_config():
     with arguments('esmvaltool', 'run', 'recipe.yml', '--config_file',
                    'config.yml'):
         run()
