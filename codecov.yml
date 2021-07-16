@@ -3,4 +3,7 @@ coverage:
     project: off
     patch:
       default:
+        informational: true
         target: 100%
+comment:
+  require_changes: true  # comment only if the coverage changes
