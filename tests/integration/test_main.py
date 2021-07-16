@@ -74,6 +74,7 @@ def test_actual_run(tmp_path):
             - c3s-magic
     """)
     recipe_file.write_text(content)
+    os.system('esmvaltool config get_config_user')
     os.system("esmvaltool run %s" % recipe_file)
     log_dir = './esmvaltool_output'
     log_file = os.path.join(log_dir,
