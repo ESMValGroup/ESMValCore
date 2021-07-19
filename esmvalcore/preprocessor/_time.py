@@ -544,6 +544,7 @@ def climate_statistics(cube,
     iris.cube.Cube
         Monthly statistics cube
     """
+    original_dtype = cube.dtype
     period = period.lower()
 
     if period in ('full', ):
@@ -559,18 +560,24 @@ def climate_statistics(cube,
                                       weights=time_weights)
         else:
             cube = cube.collapsed('time', operator_method)
-        return cube
-
-    clim_coord = _get_period_coord(cube, period, seasons)
-    operator = get_iris_analysis_operation(operator)
-    clim_cube = cube.aggregated_by(clim_coord, operator)
-    clim_cube.remove_coord('time')
-    if clim_cube.coord(clim_coord.name()).is_monotonic():
-        iris.util.promote_aux_coord_to_dim_coord(clim_cube, clim_coord.name())
     else:
-        clim_cube = iris.cube.CubeList(clim_cube.slices_over(
-            clim_coord.name())).merge_cube()
-    cube.remove_coord(clim_coord)
+        clim_coord = _get_period_coord(cube, period, seasons)
+        operator = get_iris_analysis_operation(operator)
+        clim_cube = cube.aggregated_by(clim_coord, operator)
+        clim_cube.remove_coord('time')
+        if clim_cube.coord(clim_coord.name()).is_monotonic():
+            iris.util.promote_aux_coord_to_dim_coord(clim_cube,
+                                                     clim_coord.name())
+        else:
+            clim_cube = iris.cube.CubeList(
+                clim_cube.slices_over(clim_coord.name())).merge_cube()
+        cube.remove_coord(clim_coord)
+
+    new_dtype = cube.dtype
+    if original_dtype != new_dtype:
+        logger.warning(f"climate_statistics changed dtype from "
+                       f"{original_dtype} to {new_dtype}, changing back")
+        cube.data = cube.core_data().astype(original_dtype)
     return clim_cube
 
 
