@@ -553,13 +553,13 @@ def climate_statistics(cube,
             time_weights = get_time_weights(cube)
             if time_weights.min() == time_weights.max():
                 # No weighting needed.
-                cube = cube.collapsed('time', operator_method)
+                clim_cube = cube.collapsed('time', operator_method)
             else:
-                cube = cube.collapsed('time',
-                                      operator_method,
-                                      weights=time_weights)
+                clim_cube = cube.collapsed('time',
+                                           operator_method,
+                                           weights=time_weights)
         else:
-            cube = cube.collapsed('time', operator_method)
+            clim_cube = cube.collapsed('time', operator_method)
     else:
         clim_coord = _get_period_coord(cube, period, seasons)
         operator = get_iris_analysis_operation(operator)
@@ -573,11 +573,11 @@ def climate_statistics(cube,
                 clim_cube.slices_over(clim_coord.name())).merge_cube()
         cube.remove_coord(clim_coord)
 
-    new_dtype = cube.dtype
+    new_dtype = clim_cube.dtype
     if original_dtype != new_dtype:
         logger.warning(f"climate_statistics changed dtype from "
                        f"{original_dtype} to {new_dtype}, changing back")
-        cube.data = cube.core_data().astype(original_dtype)
+        clim_cube.data = clim_cube.core_data().astype(original_dtype)
     return clim_cube
 
 
