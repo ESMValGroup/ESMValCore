@@ -30,7 +30,7 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
-        'cf-units>=2.1.5',
+        'cf-units>=3.0.0',
         'dask[array]',
         'fiona',
         'fire',
@@ -44,7 +44,7 @@ REQUIREMENTS = {
         'pybtex',
         'pyyaml',
         'requests',
-        'scitools-iris>=3.0.1',
+        'scitools-iris>=3.0.2',
         'shapely[vectorized]',
         'stratify',
         'yamale',

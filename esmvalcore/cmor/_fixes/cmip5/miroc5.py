@@ -165,5 +165,13 @@ class Tos(Fix):
         return cube
 
 
+class Evspsbl(Tas):
+    """Fixes for evspsbl."""
+
+
+class Hfls(Tas):
+    """Fixes for hfls."""
+
+
 class Pr(Tas):
     """Fixes for pr."""

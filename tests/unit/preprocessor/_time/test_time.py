@@ -42,6 +42,7 @@ from esmvalcore.preprocessor._time import (
 
 
 def _create_sample_cube(calendar='gregorian'):
+    """Create sample cube."""
     cube = Cube(np.arange(1, 25), var_name='co2', units='J')
     cube.add_dim_coord(
         iris.coords.DimCoord(
@@ -63,6 +64,7 @@ def add_auxiliary_coordinate(cubelist):
 
 class TestExtractMonth(tests.Test):
     """Tests for extract_month."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -96,6 +98,7 @@ class TestExtractMonth(tests.Test):
 
 class TestTimeSlice(tests.Test):
     """Tests for extract_time."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -167,6 +170,7 @@ class TestTimeSlice(tests.Test):
 
 class TestClipStartEndYear(tests.Test):
     """Tests for clip_start_end_year."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -210,6 +214,7 @@ class TestClipStartEndYear(tests.Test):
 
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -293,7 +298,8 @@ class TestExtractSeason(tests.Test):
 
 
 class TestClimatology(tests.Test):
-    """Test class for :func:`esmvalcore.preprocessor._time.climatology`"""
+    """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
+
     @staticmethod
     def _create_cube(data, times, bounds):
         time = iris.coords.DimCoord(times,
@@ -494,7 +500,8 @@ class TestClimatology(tests.Test):
 
 
 class TestSeasonalStatistics(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`"""
+    """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
+
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -581,7 +588,8 @@ class TestSeasonalStatistics(tests.Test):
 
 
 class TestMonthlyStatistics(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`"""
+    """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
+
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -648,7 +656,8 @@ class TestMonthlyStatistics(tests.Test):
 
 
 class TestHourlyStatistics(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`"""
+    """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`."""
+
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -711,7 +720,8 @@ class TestHourlyStatistics(tests.Test):
 
 
 class TestDailyStatistics(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`"""
+    """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
+
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -775,6 +785,7 @@ class TestDailyStatistics(tests.Test):
 
 class TestRegridTimeYearly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -832,6 +843,7 @@ class TestRegridTimeYearly(tests.Test):
 
 class TestRegridTimeMonthly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -899,6 +911,7 @@ class TestRegridTimeMonthly(tests.Test):
 
 class TestRegridTimeDaily(tests.Test):
     """Tests for regrid_time with daily frequency."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -952,6 +965,7 @@ class TestRegridTimeDaily(tests.Test):
 
 class TestRegridTime6Hourly(tests.Test):
     """Tests for regrid_time with 6-hourly frequency."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1005,6 +1019,7 @@ class TestRegridTime6Hourly(tests.Test):
 
 class TestRegridTime3Hourly(tests.Test):
     """Tests for regrid_time with 3-hourly frequency."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1058,6 +1073,7 @@ class TestRegridTime3Hourly(tests.Test):
 
 class TestRegridTime1Hourly(tests.Test):
     """Tests for regrid_time with hourly frequency."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1111,6 +1127,7 @@ class TestRegridTime1Hourly(tests.Test):
 
 class TestTimeseriesFilter(tests.Test):
     """Tests for regrid_time with hourly frequency."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -1133,7 +1150,6 @@ class TestTimeseriesFilter(tests.Test):
 
     def test_timeseries_filter_timecoord(self):
         """Test missing time axis."""
-        import iris.exceptions
         new_cube = self.cube.copy()
         new_cube.remove_coord(new_cube.coord('time'))
         with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
@@ -1204,7 +1220,7 @@ def test_decadal_average(existing_coord):
     if existing_coord:
 
         def get_decade(coord, value):
-            """Callback function to get decades from cube."""
+            """Get decades from cube."""
             date = coord.units.num2date(value)
             return date.year - date.year % 10
 
@@ -1225,7 +1241,7 @@ def test_decadal_sum(existing_coord):
     if existing_coord:
 
         def get_decade(coord, value):
-            """Callback function to get decades from cube."""
+            """Get decades from cube."""
             date = coord.units.num2date(value)
             return date.year - date.year % 10
 
@@ -1289,6 +1305,7 @@ for period in ('full', 'day', 'month', 'season'):
 
 @pytest.mark.parametrize('period', ['full'])
 def test_standardized_anomalies(period, standardize=True):
+    """Test standardized ``anomalies``."""
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize=standardize)
     if period == 'full':
@@ -1309,6 +1326,7 @@ def test_standardized_anomalies(period, standardize=True):
 
 @pytest.mark.parametrize('period, reference', PARAMETERS)
 def test_anomalies_preserve_metadata(period, reference, standardize=False):
+    """Test that ``anomalies`` preserves metadata."""
     cube = make_map_data(number_years=2)
     cube.var_name = "si"
     cube.units = "m"
@@ -1323,6 +1341,7 @@ def test_anomalies_preserve_metadata(period, reference, standardize=False):
 
 @pytest.mark.parametrize('period, reference', PARAMETERS)
 def test_anomalies(period, reference, standardize=False):
+    """Test ``anomalies``."""
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, reference, standardize=standardize)
     if reference is None:
@@ -1374,6 +1393,7 @@ def test_anomalies(period, reference, standardize=False):
 
 
 def test_anomalies_custom_season():
+    """Test ``anomalies`` with custom season."""
     cube = make_map_data(number_years=2)
     result = anomalies(cube, 'season', seasons=('jfmamj', 'jasond'))
     anom = np.concatenate((
@@ -1401,6 +1421,16 @@ def get_1d_time():
     time = iris.coords.DimCoord([20., 45.],
                                 standard_name='time',
                                 bounds=[[15., 30.], [30., 60.]],
+                                units=Unit('days since 1950-01-01',
+                                           calendar='gregorian'))
+    return time
+
+
+def get_2d_time():
+    """Get 2D time coordinate."""
+    time = iris.coords.AuxCoord([[20., 45.]],
+                                standard_name='time',
+                                bounds=[[[15., 30.], [30., 60.]]],
                                 units=Unit('days since 1950-01-01',
                                            calendar='gregorian'))
     return time
@@ -1444,9 +1474,8 @@ def test_get_time_weights():
     """Test ``get_time_weights`` for complex cube."""
     cube = _make_cube()
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
-    np.testing.assert_allclose(
-        weights, [[[[15.0, 15.0, 15.0]]], [[[30.0, 30.0, 30.0]]]])
+    assert weights.shape == (2, )
+    np.testing.assert_allclose(weights, [15.0, 30.0])
 
 
 def test_get_time_weights_0d_time():
@@ -1457,8 +1486,8 @@ def test_get_time_weights_0d_time():
                           units='K',
                           aux_coords_and_dims=[(time, ())])
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
-    np.testing.assert_allclose(weights, 30.0)
+    assert weights.shape == (1, )
+    np.testing.assert_allclose(weights, [30.0])
 
 
 def test_get_time_weights_0d_time_1d_lon():
@@ -1471,8 +1500,8 @@ def test_get_time_weights_0d_time_1d_lon():
                           aux_coords_and_dims=[(time, ())],
                           dim_coords_and_dims=[(lons, 0)])
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
-    np.testing.assert_allclose(weights, [30.0, 30.0, 30.0])
+    assert weights.shape == (1, )
+    np.testing.assert_allclose(weights, [30.0])
 
 
 def test_get_time_weights_1d_time():
@@ -1483,7 +1512,7 @@ def test_get_time_weights_1d_time():
                           units='K',
                           dim_coords_and_dims=[(time, 0)])
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
+    assert weights.shape == (2, )
     np.testing.assert_allclose(weights, [15.0, 30.0])
 
 
@@ -1496,9 +1525,19 @@ def test_get_time_weights_1d_time_1d_lon():
                           units='K',
                           dim_coords_and_dims=[(time, 0), (lons, 1)])
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
-    np.testing.assert_allclose(weights,
-                               [[15.0, 15.0, 15.0], [30.0, 30.0, 30.0]])
+    assert weights.shape == (2, )
+    np.testing.assert_allclose(weights, [15.0, 30.0])
+
+
+def test_get_time_weights_2d_time():
+    """Test ``get_time_weights`` for 1D time coordinate."""
+    time = get_2d_time()
+    cube = iris.cube.Cube([[0.0, 1.0]],
+                          var_name='x',
+                          units='K',
+                          aux_coords_and_dims=[(time, (0, 1))])
+    with pytest.raises(ValueError):
+        get_time_weights(cube)
 
 
 def test_climate_statistics_0d_time_1d_lon():
@@ -1519,7 +1558,7 @@ def test_climate_statistics_0d_time_1d_lon():
     np.testing.assert_allclose(new_cube.data, [1.0, -1.0, 42.0])
 
 
-def test_climate_statistics_complex_cube():
+def test_climate_statistics_complex_cube_sum():
     """Test climate statistics."""
     cube = _make_cube()
     new_cube = climate_statistics(cube, operator='sum', period='full')
@@ -1528,8 +1567,18 @@ def test_climate_statistics_complex_cube():
     np.testing.assert_allclose(new_cube.data, [[[45.0, 45.0, 45.0]]])
 
 
+def test_climate_statistics_complex_cube_mean():
+    """Test climate statistics."""
+    cube = _make_cube()
+    new_cube = climate_statistics(cube, operator='mean', period='full')
+    assert cube.shape == (2, 1, 1, 3)
+    assert new_cube.shape == (1, 1, 3)
+    np.testing.assert_allclose(new_cube.data, [[[1.0, 1.0, 1.0]]])
+
+
 class TestResampleHours(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.resample_hours`"""
+    """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
+
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -1618,7 +1667,8 @@ class TestResampleHours(tests.Test):
 
 
 class TestResampleTime(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.resample_hours`"""
+    """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
+
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
