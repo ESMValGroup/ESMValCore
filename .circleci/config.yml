@@ -3,6 +3,7 @@ version: 2.1
 
 orbs:
   coverage-reporter: codacy/coverage-reporter@11.4.1
+  codecov: codecov/codecov@1.2.3
 
 commands:
   check_changes:
@@ -34,7 +35,7 @@ jobs:
             conda activate esmvaltool
             pip install .[test]
             pytest -n 2 -m "not installation and not sequential"
-            pytest -n 0 -m "sequential"
+            pytest -n 0 -m "sequential" --cov-append
       - save_cache:
           key: test-{{ .Branch }}
           paths:
@@ -44,6 +45,11 @@ jobs:
           path: test-reports/
       - store_artifacts:
           path: test-reports/
+      - run:
+          # Install curl for codecov upload
+          command: apt update && apt install -y curl
+      - codecov/upload:
+          file: 'test-reports/coverage.xml'
       - coverage-reporter/send_report:
           coverage-reports: 'test-reports/coverage.xml'
           project-token: $CODACY_PROJECT_TOKEN

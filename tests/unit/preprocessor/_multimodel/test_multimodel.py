@@ -2,6 +2,7 @@
 
 from datetime import datetime
 
+import cftime
 import dask.array as da
 import iris
 import numpy as np
@@ -10,6 +11,7 @@ from cf_units import Unit
 from iris.cube import Cube
 
 import esmvalcore.preprocessor._multimodel as mm
+from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
 from esmvalcore.preprocessor import multi_model_statistics
 
 SPAN_OPTIONS = ('overlap', 'full')
@@ -537,3 +539,117 @@ def test_return_products():
 
     assert result3 == result1
     assert result4 == result2
+
+
+def test_ignore_tas_scalar_height_coord():
+    """Ignore conflicting aux_coords for height in tas."""
+    tas_2m = generate_cube_from_dates("monthly")
+    tas_1p5m = generate_cube_from_dates("monthly")
+
+    for cube, height in zip([tas_2m, tas_1p5m], [2., 1.5]):
+        cube.rename("air_temperature")
+        cube.attributes["short_name"] = "tas"
+        cube.add_aux_coord(
+            iris.coords.AuxCoord([height], var_name="height", units="m"))
+
+    result = mm.multi_model_statistics([tas_2m, tas_2m.copy(), tas_1p5m],
+                                       statistics=['mean'],
+                                       span='full')
+
+    # iris automatically averages the value of the scalar coordinate.
+    assert len(result['mean'].coords("height")) == 1
+    assert result["mean"].coord("height").points == 1.75
+
+
+def test_daily_inconsistent_calendars():
+    """Determine behaviour for inconsistent calendars.
+
+    Deviating calendars should be converted to gregorian. Missing data
+    inside original bounds is filled with nearest neighbour Missing data
+    outside original bounds is masked.
+    """
+    start = cftime.date2num(datetime(1852, 1, 1),
+                            "days since 1850-01-01",
+                            calendar="standard")
+
+    # 1852 is a leap year, and include 1 extra day at the end
+    leapdates = cftime.num2date(start + np.arange(367),
+                                "days since 1850-01-01",
+                                calendar="standard")
+
+    noleapdates = cftime.num2date(start + np.arange(365),
+                                  "days since 1850-01-01",
+                                  calendar="noleap")
+
+    leapcube = generate_cube_from_dates(
+        leapdates,
+        calendar='gregorian',
+        offset='days since 1850-01-01',
+        fill_val=1,
+    )
+
+    noleapcube = generate_cube_from_dates(
+        noleapdates,
+        calendar='noleap',
+        offset='days since 1850-01-01',
+        fill_val=3,
+    )
+
+    cubes = [leapcube, noleapcube]
+
+    # span=full
+    aligned_cubes = mm._align(cubes, span='full')
+    for cube in aligned_cubes:
+        assert cube.coord('time').units.calendar == "gregorian"
+        assert cube.shape == (367, )
+        assert cube[59].coord('time').points == 789  # 29 Feb 1852
+    np.ma.is_masked(aligned_cubes[1][366].data)  # outside original range
+
+    result = multi_model_statistics(cubes, span="full", statistics=['mean'])
+    result_cube = result['mean']
+    assert result_cube[59].data == 2  # looked up nearest neighbour
+    assert result_cube[366].data == 1  # outside original range
+
+    # span=overlap
+    aligned_cubes = mm._align(cubes, span='overlap')
+    for cube in aligned_cubes:
+        assert cube.coord('time').units.calendar == "gregorian"
+        assert cube.shape == (365, )
+        assert cube[59].coord('time').points == 790  # 1 March 1852
+
+    result = multi_model_statistics(cubes, span="overlap", statistics=['mean'])
+    result_cube = result['mean']
+    assert result_cube[59].data == 2
+
+
+def test_remove_fx_variables():
+    """Test fx variables are removed from cubes."""
+    cube1 = generate_cube_from_dates("monthly")
+    fx_cube = generate_cube_from_dates("monthly")
+    fx_cube.standard_name = "land_area_fraction"
+    add_ancillary_variable(cube1, fx_cube)
+
+    cube2 = generate_cube_from_dates("monthly", fill_val=9)
+    result = mm.multi_model_statistics([cube1, cube2],
+                                       statistics=['mean'],
+                                       span='full')
+    assert result['mean'].ancillary_variables() == []
+
+
+def test_no_warn_model_dim_non_contiguous(recwarn):
+    """Test that now warning is raised that model dim is non-contiguous."""
+    coord = iris.coords.DimCoord(
+        [0.5, 1.5],
+        bounds=[[0, 1.], [1., 2.]],
+        standard_name='time',
+        units='days since 1850-01-01',
+    )
+    cube1 = iris.cube.Cube([1, 1], dim_coords_and_dims=[(coord, 0)])
+    cube2 = iris.cube.Cube([2, 2], dim_coords_and_dims=[(coord, 0)])
+    cubes = [cube1, cube2]
+
+    multi_model_statistics(cubes, span="overlap", statistics=['mean'])
+    msg = ("Collapsing a non-contiguous coordinate. "
+           "Metadata may not be fully descriptive for 'multi-model'.")
+    for warning in recwarn:
+        assert str(warning.message) != msg
