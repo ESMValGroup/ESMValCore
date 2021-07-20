@@ -380,7 +380,7 @@ class ESMValTool():
 
         # log header
         logger.info(HEADER)
-        logger.info("Using config file %s", cfg['config_user_file'])
+        logger.info("Using config file %s", cfg['config_file'])
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
         cfg['skip-nonexistent'] = skip_nonexistent
