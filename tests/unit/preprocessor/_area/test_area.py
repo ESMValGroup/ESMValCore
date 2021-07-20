@@ -29,7 +29,7 @@ class Test(tests.Test):
         """Prepare tests."""
         self.coord_sys = iris.coord_systems.GeogCS(
             iris.fileformats.pp.EARTH_RADIUS)
-        data = np.ones((5, 5))
+        data = np.ones((5, 5), dtype=np.float32)
         lons = iris.coords.DimCoord(
             [i + .5 for i in range(5)],
             standard_name='longitude',
@@ -67,7 +67,7 @@ class Test(tests.Test):
     def test_area_statistics_mean(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_cell_measure_mean(self):
@@ -83,56 +83,56 @@ class Test(tests.Test):
             measure='area')
         self.grid.add_cell_measure(measure, range(0, measure.ndim))
         result = area_statistics(self.grid, 'mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_min(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'min')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_max(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'max')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_median(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'median')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_std_dev(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'std_dev')
-        expected = np.array([0.])
+        expected = np.array([0.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_sum(self):
         """Test for sum of a 2D field."""
         result = area_statistics(self.grid, 'sum')
         grid_areas = iris.analysis.cartography.area_weights(self.grid)
-        expected = np.sum(grid_areas)
+        expected = np.sum(grid_areas).astype(np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_variance(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'variance')
-        expected = np.array([0.])
+        expected = np.array([0.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_neg_lon(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.negative_grid, 'mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_rms(self):
         """Test for area rms of a 2D field."""
         result = area_statistics(self.grid, 'rms')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_extract_region(self):
@@ -497,7 +497,7 @@ def test_area_statistics_rotated(case):
         cube_tmp.remove_coord('longitude')
         cube_tmp.coord('grid_longitude').rename('longitude')
         grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
-        expected = np.sum(grid_areas)
+        expected = np.sum(grid_areas).astype(np.float32)
         np.testing.assert_array_equal(cube.data, expected)
 
 
