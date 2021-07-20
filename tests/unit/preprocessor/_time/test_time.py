@@ -306,71 +306,69 @@ class TestClimatology(tests.Test):
 
     def test_time_mean(self):
         """Test for time average of a 1D field."""
-        data = np.ones((3))
+        data = np.array([1., 1., 1.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_mean_uneven(self):
         """Test for time average of a 1D field with uneven time boundaries."""
-        data = np.array([1., 5.])
+        data = np.array([1., 5.], dtype=np.float32)
         times = np.array([5., 25.])
         bounds = np.array([[0., 1.], [1., 4.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean')
-        expected = np.array([4.])
+        expected = np.array([4.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_mean_365_day(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_sum(self):
         """Test for time sum of a 1D field."""
-        data = np.ones((3))
-        data[1] = 2.0
+        data = np.array([1., 2., 1.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([4.])
+        expected = np.array([4.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_sum_weighted(self):
         """Test for time sum of a 1D field."""
-        data = np.ones((3))
-        data[1] = 2.0
+        data = np.array([1., 2., 1.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[10., 20.], [30., 60.], [73., 77.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([74.])
+        expected = np.array([74.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_sum_uneven(self):
         """Test for time sum of a 1D field with uneven time boundaries."""
-        data = np.array([1., 5.])
+        data = np.array([1., 5.], dtype=np.float32)
         times = np.array([5., 25.])
         bounds = np.array([[0., 1.], [1., 4.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([16.0])
+        expected = np.array([16.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_sum_365_day(self):
@@ -383,24 +381,24 @@ class TestClimatology(tests.Test):
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([211.])
+        expected = np.array([211.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_season_climatology(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean', period='season')
-        expected = np.array([1., 1., 1.])
+        expected = np.array([1., 1., 1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_custom_season_climatology(self):
         """Test for time avg of a realisitc time axis and 365 day calendar."""
-        data = np.ones((8, ))
+        data = np.array([1., 1., 1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166, 195, 225])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181], [181, 212], [212, 243]])
@@ -410,36 +408,36 @@ class TestClimatology(tests.Test):
                                     operator='mean',
                                     period='season',
                                     seasons=('jfmamj', 'jasond'))
-        expected = np.array([1., 1.])
+        expected = np.array([1., 1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_monthly(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean', period='mon')
-        expected = np.ones((6, ))
+        expected = np.ones((6, ), dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_day(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([0.5, 1.5, 2.5, 365.5, 366.5, 367.5])
         bounds = np.array([[0, 1], [1, 2], [2, 3], [365, 366], [366, 367],
                            [367, 368]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean', period='day')
-        expected = np.array([1, 1, 1])
+        expected = np.array([1, 1, 1], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_period_not_supported(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181]])
@@ -450,46 +448,46 @@ class TestClimatology(tests.Test):
 
     def test_time_max(self):
         """Test for time max of a 1D field."""
-        data = np.arange((3))
+        data = np.array([0., 1., 2.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='max')
-        expected = np.array([2.])
+        expected = np.array([2.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_min(self):
         """Test for time min of a 1D field."""
-        data = np.arange((3))
+        data = np.array([0., 1., 2.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='min')
-        expected = np.array([0.])
+        expected = np.array([0.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_median(self):
         """Test for time meadian of a 1D field."""
-        data = np.arange((3))
+        data = np.array([0., 1., 2.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='median')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_rms(self):
         """Test for time rms of a 1D field."""
-        data = np.arange((3))
+        data = np.array([0., 1., 2.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='rms')
-        expected = np.array([(5 / 3)**0.5])
+        expected = np.array([(5 / 3)**0.5], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
 
