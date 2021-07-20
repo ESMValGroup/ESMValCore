@@ -1,7 +1,6 @@
-"""
-Tests for ESMValTool CLI
+"""Tests for ESMValTool CLI.
 
-Includes a context manager to temporarly modify sys.argv
+Includes a context manager to temporarily modify sys.argv
 """
 import contextlib
 import copy
@@ -44,7 +43,7 @@ def test_setargs():
 
 @patch('esmvalcore._main.ESMValTool.version', new=wrapper(ESMValTool.version))
 def test_version():
-    """Test version command"""
+    """Test version command."""
     with arguments('esmvaltool', 'version'):
         run()
     with arguments('esmvaltool', 'version', '--extra_parameter=asterisk'):
@@ -54,7 +53,7 @@ def test_version():
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_run():
-    """Test version command"""
+    """Test version command."""
     with arguments('esmvaltool', 'run', 'recipe.yml'):
         run()
 
@@ -74,8 +73,9 @@ def test_actual_run(tmp_path):
             - c3s-magic
     """)
     recipe_file.write_text(content)
-    os.system('esmvaltool config get_config_user')
-    os.system("esmvaltool run %s" % recipe_file)
+    os.system(f'esmvaltool config get_config_user --path {tmp_path}')
+    os.system(f"esmvaltool run {recipe_file} "
+              f"--config_file={tmp_path}/config_user.yml")
     log_dir = './esmvaltool_output'
     log_file = os.path.join(log_dir,
                             os.listdir(log_dir)[0], 'run', 'main_log.txt')
@@ -137,7 +137,7 @@ def test_run_fails_with_other_params():
 
 
 def test_recipes_get(tmp_path, monkeypatch):
-    """Test version command"""
+    """Test version command."""
     src_recipe = tmp_path / 'recipe.yml'
     src_recipe.touch()
     tgt_dir = tmp_path / 'test'
@@ -150,14 +150,14 @@ def test_recipes_get(tmp_path, monkeypatch):
 
 @patch('esmvalcore._main.Recipes.list', new=wrapper(Recipes.list))
 def test_recipes_list():
-    """Test version command"""
+    """Test version command."""
     with arguments('esmvaltool', 'recipes', 'list'):
         run()
 
 
 @patch('esmvalcore._main.Recipes.list', new=wrapper(Recipes.list))
 def test_recipes_list_do_not_admit_parameters():
-    """Test version command"""
+    """Test version command."""
     with arguments('esmvaltool', 'recipes', 'list', 'parameter'):
         with pytest.raises(FireExit):
             run()
@@ -166,7 +166,7 @@ def test_recipes_list_do_not_admit_parameters():
 @patch('esmvalcore._main.Config.get_config_developer',
        new=wrapper(Config.get_config_developer))
 def test_get_config_developer():
-    """Test version command"""
+    """Test version command."""
     with arguments('esmvaltool', 'config', 'get_config_developer'):
         run()
 
@@ -174,13 +174,13 @@ def test_get_config_developer():
 @patch('esmvalcore._main.Config.get_config_user',
        new=wrapper(Config.get_config_user))
 def test_get_config_user():
-    """Test version command"""
+    """Test version command."""
     with arguments('esmvaltool', 'config', 'get_config_user'):
         run()
 
 
 def test_get_config_user_path(tmp_path):
-    """Test version command"""
+    """Test version command."""
     with arguments('esmvaltool', 'config', 'get_config_user',
                    f'--path={tmp_path}'):
         run()
@@ -188,7 +188,7 @@ def test_get_config_user_path(tmp_path):
 
 
 def test_get_config_user_overwrite(tmp_path):
-    """Test version command"""
+    """Test version command."""
     config_user = tmp_path / 'config-user.yml'
     config_user.touch()
     with arguments('esmvaltool', 'config', 'get_config_user',
@@ -199,7 +199,7 @@ def test_get_config_user_overwrite(tmp_path):
 @patch('esmvalcore._main.Config.get_config_user',
        new=wrapper(Config.get_config_user))
 def test_get_config_user_bad_option_fails():
-    """Test version command"""
+    """Test version command."""
     with arguments('esmvaltool', 'config', 'get_config_user',
                    '--bad_option=path'):
         with pytest.raises(FireExit):
