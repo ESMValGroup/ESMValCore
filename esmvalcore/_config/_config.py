@@ -134,7 +134,7 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
-    cfg['config_user_file'] = config_file
+    cfg['config_file'] = config_file
 
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
