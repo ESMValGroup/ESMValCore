@@ -13,6 +13,7 @@ from unittest.mock import patch
 import pytest
 from fire.core import FireExit
 
+import esmvalcore._recipe_checks as check
 from esmvalcore._main import Config, ESMValTool, Recipes, run
 
 
@@ -58,8 +59,8 @@ def test_run():
         run()
 
 
-def test_actual_run(tmp_path):
-    """Test run from command line in full."""
+def test_empty_run(tmp_path):
+    """Test real run with no diags."""
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
         documentation:
@@ -71,11 +72,13 @@ def test_actual_run(tmp_path):
             - acknow_project
           projects:
             - c3s-magic
+        diagnostics: null
     """)
     recipe_file.write_text(content)
-    os.system(f'esmvaltool config get_config_user --path {tmp_path}')
-    os.system(f"esmvaltool run {recipe_file} "
-              f"--config_file={tmp_path}/config-user.yml")
+    Config.get_config_user(path=tmp_path)
+    with pytest.raises(check.RecipeError) as exc:
+        ESMValTool.run(recipe_file, config_file=f"{tmp_path}/config-user.yml")
+    assert str(exc.value) == 'The given recipe does not have any diagnostic.'
     log_dir = './esmvaltool_output'
     log_file = os.path.join(log_dir,
                             os.listdir(log_dir)[0], 'run', 'main_log.txt')
