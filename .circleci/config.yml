@@ -183,11 +183,12 @@ jobs:
             mkdir /logs
             conda update -y conda > /logs/conda_base.txt 2>&1
             conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
+            conda install -y -c conda-forge mamba
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export -n base > /logs/build_environment.yml
             # Build conda package
-            conda build package -c conda-forge > /logs/build_log.txt
+            mamba build package -c conda-forge > /logs/build_log.txt
           no_output_timeout: 60m
       - store_artifacts:
           path: /logs
