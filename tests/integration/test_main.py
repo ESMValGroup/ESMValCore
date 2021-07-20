@@ -75,7 +75,7 @@ def test_actual_run(tmp_path):
     recipe_file.write_text(content)
     os.system(f'esmvaltool config get_config_user --path {tmp_path}')
     os.system(f"esmvaltool run {recipe_file} "
-              f"--config_file={tmp_path}/config_user.yml")
+              f"--config_file={tmp_path}/config-user.yml")
     log_dir = './esmvaltool_output'
     log_file = os.path.join(log_dir,
                             os.listdir(log_dir)[0], 'run', 'main_log.txt')
