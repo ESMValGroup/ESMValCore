@@ -575,8 +575,9 @@ def climate_statistics(cube,
 
     new_dtype = clim_cube.dtype
     if original_dtype != new_dtype:
-        logger.warning(f"climate_statistics changed dtype from "
-                       f"{original_dtype} to {new_dtype}, changing back")
+        logger.warning(
+            "climate_statistics changed dtype from "
+            "%s to %s, changing back", original_dtype, new_dtype)
         clim_cube.data = clim_cube.core_data().astype(original_dtype)
     return clim_cube
 
