@@ -13,11 +13,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris.cube import Cube
-from numpy.testing import (
-    assert_array_almost_equal,
-    assert_array_equal,
-    assert_raises,
-)
+from numpy.testing import assert_array_almost_equal, assert_raises
 
 import tests
 from esmvalcore.preprocessor._time import (
@@ -43,16 +39,22 @@ from esmvalcore.preprocessor._time import (
 
 def _create_sample_cube(calendar='gregorian'):
     """Create sample cube."""
-    cube = Cube(np.arange(1, 25), var_name='co2', units='J')
+    cube = Cube(np.arange(1, 25, dtype=np.float32), var_name='co2', units='J')
     cube.add_dim_coord(
         iris.coords.DimCoord(
-            np.arange(15., 720., 30.),
+            np.arange(15., 720., 30., dtype=np.float32),
             standard_name='time',
             units=Unit('days since 1950-01-01 00:00:00', calendar=calendar),
         ),
         0,
     )
     return cube
+
+
+def assert_equal_and_same_dtype(result, expected):
+    """"Check data is identical to the expected one."""
+    assert result.dtype == expected.dtype
+    tests.assert_array_equal(result.data, expected)
 
 
 def add_auxiliary_coordinate(cubelist):
@@ -64,7 +66,6 @@ def add_auxiliary_coordinate(cubelist):
 
 class TestExtractMonth(tests.Test):
     """Tests for extract_month."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -72,8 +73,8 @@ class TestExtractMonth(tests.Test):
     def test_get_january(self):
         """Test january extraction."""
         sliced = extract_month(self.cube, 1)
-        assert_array_equal(np.array([1, 1]),
-                           sliced.coord('month_number').points)
+        assert_equal_and_same_dtype(np.array([1, 1], dtype=np.int64),
+                                    sliced.coord('month_number').points)
 
     def test_raises_if_extracted_cube_is_none(self):
         """Test function for winter."""
@@ -85,8 +86,8 @@ class TestExtractMonth(tests.Test):
         """Test january extraction."""
         iris.coord_categorisation.add_month_number(self.cube, 'time')
         sliced = extract_month(self.cube, 1)
-        assert_array_equal(np.array([1, 1]),
-                           sliced.coord('month_number').points)
+        assert_equal_and_same_dtype(np.array([1, 1], dtype=np.int64),
+                                    sliced.coord('month_number').points)
 
     def test_bad_month_raises(self):
         """Test january extraction."""
@@ -98,7 +99,6 @@ class TestExtractMonth(tests.Test):
 
 class TestTimeSlice(tests.Test):
     """Tests for extract_time."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -112,15 +112,15 @@ class TestTimeSlice(tests.Test):
         """Test extract_time."""
         sliced = extract_time(self.cube, 1950, 1, 1, 1950, 12, 31)
         iris.coord_categorisation.add_month_number(sliced, 'time')
-        assert_array_equal(np.arange(1, 13, 1),
-                           sliced.coord('month_number').points)
+        assert_equal_and_same_dtype(np.arange(1, 13, 1, dtype=np.int64),
+                                    sliced.coord('month_number').points)
 
     def test_extract_time_limit(self):
         """Test extract time when limits are included."""
         cube = Cube(np.arange(0, 720), var_name='co2', units='J')
         cube.add_dim_coord(
             iris.coords.DimCoord(
-                np.arange(0., 720., 1.),
+                np.arange(0., 720., 1., dtype=np.float32),
                 standard_name='time',
                 units=Unit('days since 1950-01-01 00:00:00',
                            calendar='360_day'),
@@ -128,7 +128,8 @@ class TestTimeSlice(tests.Test):
             0,
         )
         sliced = extract_time(cube, 1950, 1, 1, 1951, 1, 1)
-        assert_array_equal(np.arange(0, 360), sliced.coord('time').points)
+        assert_equal_and_same_dtype(np.arange(0, 360, dtype=np.float32),
+                                    sliced.coord('time').points)
 
     def test_extract_time_non_gregorian_day(self):
         """Test extract time when the day is not in the Gregorian calendar."""
@@ -143,7 +144,8 @@ class TestTimeSlice(tests.Test):
             0,
         )
         sliced = extract_time(cube, 1950, 2, 30, 1950, 3, 1)
-        assert_array_equal(np.array([59]), sliced.coord('time').points)
+        assert_equal_and_same_dtype(np.array([59.]),
+                                    sliced.coord('time').points)
 
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
@@ -159,7 +161,8 @@ class TestTimeSlice(tests.Test):
         cube.coord('time').guess_bounds()
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = extract_time(cube, 1950, 1, 1, 1952, 12, 31)
-        assert_array_equal(np.array([360.]), sliced.coord('time').points)
+        assert_equal_and_same_dtype(np.array([360.], dtype=np.float32),
+                                    sliced.coord('time').points)
 
     def test_extract_time_no_time(self):
         """Test extract_time with no time step."""
@@ -170,7 +173,6 @@ class TestTimeSlice(tests.Test):
 
 class TestClipStartEndYear(tests.Test):
     """Tests for clip_start_end_year."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -180,9 +182,10 @@ class TestClipStartEndYear(tests.Test):
         sliced = clip_start_end_year(self.cube, 1950, 1950)
         iris.coord_categorisation.add_month_number(sliced, 'time')
         iris.coord_categorisation.add_year(sliced, 'time')
-        assert_array_equal(np.arange(1, 13, 1),
-                           sliced.coord('month_number').points)
-        assert_array_equal(np.full(12, 1950), sliced.coord('year').points)
+        assert_equal_and_same_dtype(np.arange(1, 13, 1),
+                                    sliced.coord('month_number').points)
+        assert_equal_and_same_dtype(np.full(12, 1950),
+                                    sliced.coord('year').points)
 
     def test_clip_start_end_year_3_years(self):
         """Test clip_start_end_year with 3 years."""
@@ -203,7 +206,8 @@ class TestClipStartEndYear(tests.Test):
         cube.coord('time').guess_bounds()
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = clip_start_end_year(cube, 1950, 1952)
-        assert_array_equal(np.array([360.]), sliced.coord('time').points)
+        assert_equal_and_same_dtype(np.array([360.], dtype=np.float32),
+                                    sliced.coord('time').points)
 
     def test_clip_start_end_year_no_time(self):
         """Test clip_start_end_year with no time step."""
@@ -214,7 +218,6 @@ class TestClipStartEndYear(tests.Test):
 
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -223,8 +226,8 @@ class TestExtractSeason(tests.Test):
         """Test function for winter."""
         sliced = extract_season(self.cube, 'DJF')
         iris.coord_categorisation.add_month_number(sliced, 'time')
-        assert_array_equal(np.array([1, 2, 12, 1, 2, 12]),
-                           sliced.coord('month_number').points)
+        assert_equal_and_same_dtype(np.array([1, 2, 12, 1, 2, 12]),
+                                    sliced.coord('month_number').points)
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
             self.cube.coord('clim_season')
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
@@ -240,8 +243,9 @@ class TestExtractSeason(tests.Test):
         """Test function works when season specified in caps."""
         sliced = extract_season(self.cube, 'DJF')
         iris.coord_categorisation.add_month_number(sliced, 'time')
-        assert_array_equal(np.array([1, 2, 12, 1, 2, 12]),
-                           sliced.coord('month_number').points)
+        assert_equal_and_same_dtype(
+            np.array([1, 2, 12, 1, 2, 12], dtype=np.int64),
+            sliced.coord('month_number').points)
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
             self.cube.coord('clim_season')
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
@@ -251,8 +255,9 @@ class TestExtractSeason(tests.Test):
         """Test function for spring."""
         sliced = extract_season(self.cube, 'MAM')
         iris.coord_categorisation.add_month_number(sliced, 'time')
-        assert_array_equal(np.array([3, 4, 5, 3, 4, 5]),
-                           sliced.coord('month_number').points)
+        assert_equal_and_same_dtype(
+            np.array([3, 4, 5, 3, 4, 5], dtype=np.int64),
+            sliced.coord('month_number').points)
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
             self.cube.coord('clim_season')
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
@@ -262,24 +267,26 @@ class TestExtractSeason(tests.Test):
         """Test function for summer."""
         sliced = extract_season(self.cube, 'JJA')
         iris.coord_categorisation.add_month_number(sliced, 'time')
-        assert_array_equal(np.array([6, 7, 8, 6, 7, 8]),
-                           sliced.coord('month_number').points)
+        self.assert_array_equal(np.array([6, 7, 8, 6, 7, 8]),
+                                sliced.coord('month_number').points)
 
     def test_get_multiple_seasons(self):
         """Test function for two seasons."""
         sliced = [extract_season(self.cube, seas) for seas in ["JJA", "SON"]]
         clim_coords = [sin_sli.coord("clim_season") for sin_sli in sliced]
-        assert_array_equal(clim_coords[0].points,
-                           ['JJA', 'JJA', 'JJA', 'JJA', 'JJA', 'JJA'])
-        assert_array_equal(clim_coords[1].points,
-                           ['SON', 'SON', 'SON', 'SON', 'SON', 'SON'])
+        self.assert_array_equal(
+            clim_coords[0].points,
+            np.array(['JJA', 'JJA', 'JJA', 'JJA', 'JJA', 'JJA']))
+        self.assert_array_equal(
+            clim_coords[1].points,
+            np.array(['SON', 'SON', 'SON', 'SON', 'SON', 'SON']))
 
     def test_get_son(self):
         """Test function for summer."""
         sliced = extract_season(self.cube, 'SON')
         iris.coord_categorisation.add_month_number(sliced, 'time')
-        assert_array_equal(np.array([9, 10, 11, 9, 10, 11]),
-                           sliced.coord('month_number').points)
+        assert_equal_and_same_dtype(np.array([9, 10, 11, 9, 10, 11]),
+                                    sliced.coord('month_number').points)
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
             self.cube.coord('clim_season')
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
@@ -289,8 +296,8 @@ class TestExtractSeason(tests.Test):
         """Test function for custom seasons."""
         sliced = extract_season(self.cube, 'JF')
         iris.coord_categorisation.add_month_number(sliced, 'time')
-        assert_array_equal(np.array([1, 2, 1, 2]),
-                           sliced.coord('month_number').points)
+        assert_equal_and_same_dtype(np.array([1, 2, 1, 2]),
+                                    sliced.coord('month_number').points)
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
             self.cube.coord('clim_season')
         with assert_raises(iris.exceptions.CoordinateNotFoundError):
@@ -299,7 +306,6 @@ class TestExtractSeason(tests.Test):
 
 class TestClimatology(tests.Test):
     """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
-
     @staticmethod
     def _create_cube(data, times, bounds):
         time = iris.coords.DimCoord(times,
@@ -319,7 +325,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='mean')
         expected = np.array([1.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_time_mean_uneven(self):
         """Test for time average of a 1D field with uneven time boundaries."""
@@ -330,7 +336,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='mean')
         expected = np.array([4.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_time_mean_365_day(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -342,7 +348,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='mean')
         expected = np.array([1.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_time_sum(self):
         """Test for time sum of a 1D field."""
@@ -353,7 +359,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='sum')
         expected = np.array([4.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_time_sum_weighted(self):
         """Test for time sum of a 1D field."""
@@ -364,7 +370,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='sum')
         expected = np.array([74.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_time_sum_uneven(self):
         """Test for time sum of a 1D field with uneven time boundaries."""
@@ -375,11 +381,11 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='sum')
         expected = np.array([16.0], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_time_sum_365_day(self):
         """Test for time sum of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.ones((6, ), dtype=np.float32)
         data[3] = 2.0
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
@@ -388,7 +394,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='sum')
         expected = np.array([211.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_season_climatology(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -400,7 +406,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='mean', period='season')
         expected = np.array([1., 1., 1.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_custom_season_climatology(self):
         """Test for time avg of a realisitc time axis and 365 day calendar."""
@@ -415,7 +421,7 @@ class TestClimatology(tests.Test):
                                     period='season',
                                     seasons=('jfmamj', 'jasond'))
         expected = np.array([1., 1.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_monthly(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -427,7 +433,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='mean', period='mon')
         expected = np.ones((6, ), dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_day(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -439,7 +445,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='mean', period='day')
         expected = np.array([1, 1, 1], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_period_not_supported(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -461,7 +467,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='max')
         expected = np.array([2.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_time_min(self):
         """Test for time min of a 1D field."""
@@ -472,7 +478,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='min')
         expected = np.array([0.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_time_median(self):
         """Test for time meadian of a 1D field."""
@@ -483,7 +489,7 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='median')
         expected = np.array([1.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_time_rms(self):
         """Test for time rms of a 1D field."""
@@ -494,12 +500,11 @@ class TestClimatology(tests.Test):
 
         result = climate_statistics(cube, operator='rms')
         expected = np.array([(5 / 3)**0.5], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
 
 class TestSeasonalStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -512,82 +517,81 @@ class TestSeasonalStatistics(tests.Test):
 
     def test_season_mean(self):
         """Test for season average of a 1D field."""
-        data = np.arange(12)
+        data = np.arange(12, dtype=np.float32)
         times = np.arange(15, 360, 30)
         cube = self._create_cube(data, times)
 
         result = seasonal_statistics(cube, 'mean')
-        expected = np.array([3., 6., 9.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([3., 6., 9.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_season_median(self):
         """Test for season median of a 1D field."""
-        data = np.arange(12)
+        data = np.arange(12, dtype=np.float32)
         times = np.arange(15, 360, 30)
         cube = self._create_cube(data, times)
 
         result = seasonal_statistics(cube, 'median')
-        expected = np.array([3., 6., 9.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([3., 6., 9.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_season_min(self):
         """Test for season min of a 1D field."""
-        data = np.arange(12)
+        data = np.arange(12, dtype=np.float32)
         times = np.arange(15, 360, 30)
         cube = self._create_cube(data, times)
 
         result = seasonal_statistics(cube, 'min')
-        expected = np.array([2., 5., 8.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([2., 5., 8.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_season_max(self):
         """Test for season max of a 1D field."""
-        data = np.arange(12)
+        data = np.arange(12, dtype=np.float32)
         times = np.arange(15, 360, 30)
         cube = self._create_cube(data, times)
 
         result = seasonal_statistics(cube, 'max')
-        expected = np.array([4., 7., 10.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([4., 7., 10.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_season_sum(self):
         """Test for season sum of a 1D field."""
-        data = np.arange(12)
+        data = np.arange(12, dtype=np.float32)
         times = np.arange(15, 360, 30)
         cube = self._create_cube(data, times)
 
         result = seasonal_statistics(cube, 'sum')
-        expected = np.array([9., 18., 27.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([9., 18., 27.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_season_custom_mean(self):
         """Test for season average of a 1D field."""
-        data = np.arange(12)
+        data = np.arange(12, dtype=np.float32)
         times = np.arange(15, 360, 30)
         cube = self._create_cube(data, times)
 
         result = seasonal_statistics(cube,
                                      'mean',
                                      seasons=('jfmamj', 'jasond'))
-        expected = np.array([2.5, 8.5])
-        assert_array_equal(result.data, expected)
+        expected = np.array([2.5, 8.5], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_season_custom_spans_full_season(self):
         """Test for season average of a 1D field."""
-        data = np.ones(12)
+        data = np.ones(12, dtype=np.float32)
         times = np.arange(15, 360, 30)
         cube = self._create_cube(data, times)
 
         result = seasonal_statistics(cube,
                                      'mean',
                                      seasons=('JJAS', 'ondjfmam'))
-        expected = np.array([1])
-        assert_array_equal(result.data, expected)
+        expected = np.array([1], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
 
 class TestMonthlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -600,62 +604,66 @@ class TestMonthlyStatistics(tests.Test):
 
     def test_mean(self):
         """Test average of a 1D field."""
-        data = np.arange(24)
+        data = np.arange(24, dtype=np.float32)
         times = np.arange(7, 360, 15)
         cube = self._create_cube(data, times)
 
         result = monthly_statistics(cube, 'mean')
         expected = np.array([
             0.5, 2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5, 16.5, 18.5, 20.5, 22.5
-        ])
-        assert_array_equal(result.data, expected)
+        ],
+                            dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_median(self):
         """Test median of a 1D field."""
-        data = np.arange(24)
+        data = np.arange(24, dtype=np.float32)
         times = np.arange(7, 360, 15)
         cube = self._create_cube(data, times)
 
         result = monthly_statistics(cube, 'median')
         expected = np.array([
             0.5, 2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5, 16.5, 18.5, 20.5, 22.5
-        ])
-        assert_array_equal(result.data, expected)
+        ],
+                            dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_min(self):
         """Test min of a 1D field."""
-        data = np.arange(24)
+        data = np.arange(24, dtype=np.float32)
         times = np.arange(7, 360, 15)
         cube = self._create_cube(data, times)
 
         result = monthly_statistics(cube, 'min')
-        expected = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22])
-        assert_array_equal(result.data, expected)
+        expected = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22],
+                            dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_max(self):
         """Test max of a 1D field."""
-        data = np.arange(24)
+        data = np.arange(24, dtype=np.float32)
         times = np.arange(7, 360, 15)
         cube = self._create_cube(data, times)
 
         result = monthly_statistics(cube, 'max')
-        expected = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23])
-        assert_array_equal(result.data, expected)
+        expected = np.array([1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23],
+                            dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_sum(self):
         """Test sum of a 1D field."""
-        data = np.arange(24)
+        data = np.arange(24, dtype=np.float32)
         times = np.arange(7, 360, 15)
         cube = self._create_cube(data, times)
 
         result = monthly_statistics(cube, 'sum')
-        expected = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45])
-        assert_array_equal(result.data, expected)
+        expected = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45],
+                            dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
 
 class TestHourlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -668,58 +676,57 @@ class TestHourlyStatistics(tests.Test):
 
     def test_mean(self):
         """Test average of a 1D field."""
-        data = np.arange(8)
+        data = np.arange(8, dtype=np.float32)
         times = np.arange(0, 48, 6)
         cube = self._create_cube(data, times)
 
         result = hourly_statistics(cube, 12, 'mean')
-        expected = np.array([0.5, 2.5, 4.5, 6.5])
-        assert_array_equal(result.data, expected)
+        expected = np.array([0.5, 2.5, 4.5, 6.5], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_median(self):
         """Test median of a 1D field."""
-        data = np.arange(8)
+        data = np.arange(8, dtype=np.float32)
         times = np.arange(0, 48, 6)
         cube = self._create_cube(data, times)
 
         result = hourly_statistics(cube, 12, 'median')
-        expected = np.array([0.5, 2.5, 4.5, 6.5])
-        assert_array_equal(result.data, expected)
+        expected = np.array([0.5, 2.5, 4.5, 6.5], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_min(self):
         """Test min of a 1D field."""
-        data = np.arange(8)
+        data = np.arange(8, dtype=np.float32)
         times = np.arange(0, 48, 6)
         cube = self._create_cube(data, times)
 
         result = hourly_statistics(cube, 12, 'min')
-        expected = np.array([0., 2., 4., 6.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([0., 2., 4., 6.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_max(self):
         """Test max of a 1D field."""
-        data = np.arange(8)
+        data = np.arange(8, dtype=np.float32)
         times = np.arange(0, 48, 6)
         cube = self._create_cube(data, times)
 
         result = hourly_statistics(cube, 12, 'max')
-        expected = np.array([1., 3., 5., 7.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([1., 3., 5., 7.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_sum(self):
         """Test sum of a 1D field."""
-        data = np.arange(8)
+        data = np.arange(8, dtype=np.float32)
         times = np.arange(0, 48, 6)
         cube = self._create_cube(data, times)
 
         result = hourly_statistics(cube, 12, 'sum')
-        expected = np.array([1., 5., 9., 13.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([1., 5., 9., 13.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
 
 class TestDailyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -738,7 +745,7 @@ class TestDailyStatistics(tests.Test):
 
         result = daily_statistics(cube, 'mean')
         expected = np.array([1.5, 5.5])
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_median(self):
         """Test median of a 1D field."""
@@ -748,42 +755,41 @@ class TestDailyStatistics(tests.Test):
 
         result = daily_statistics(cube, 'median')
         expected = np.array([1.5, 5.5])
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_min(self):
         """Test min of a 1D field."""
-        data = np.arange(8)
+        data = np.arange(8, dtype=np.float32)
         times = np.arange(0, 48, 6)
         cube = self._create_cube(data, times)
 
         result = daily_statistics(cube, 'min')
-        expected = np.array([0., 4.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([0., 4.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_max(self):
         """Test max of a 1D field."""
-        data = np.arange(8)
+        data = np.arange(8, dtype=np.float32)
         times = np.arange(0, 48, 6)
         cube = self._create_cube(data, times)
 
         result = daily_statistics(cube, 'max')
-        expected = np.array([3., 7.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([3., 7.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_sum(self):
         """Test sum of a 1D field."""
-        data = np.arange(8)
+        data = np.arange(8, dtype=np.float32)
         times = np.arange(0, 48, 6)
         cube = self._create_cube(data, times)
 
         result = daily_statistics(cube, 'sum')
-        expected = np.array([6., 22.])
-        assert_array_equal(result.data, expected)
+        expected = np.array([6., 22.], dtype=np.float32)
+        assert_equal_and_same_dtype(result.data, expected)
 
 
 class TestRegridTimeYearly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -817,15 +823,15 @@ class TestRegridTimeYearly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='yr')
         newcube_2 = regrid_time(self.cube_2, frequency='yr')
         # no changes to core data
-        assert_array_equal(newcube_1.data, self.cube_1.data)
-        assert_array_equal(newcube_2.data, self.cube_2.data)
+        assert_equal_and_same_dtype(newcube_1.data, self.cube_1.data)
+        assert_equal_and_same_dtype(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        assert_array_equal(diff_cube.data, expected)
+        assert_equal_and_same_dtype(diff_cube.data, expected)
         # test bounds are set at [01-01-YEAR 00:00, 01-01-NEXT_YEAR 00:00]
         timeunit_1 = newcube_1.coord('time').units
         for i, time in enumerate(newcube_1.coord('time').points):
@@ -834,14 +840,13 @@ class TestRegridTimeYearly(tests.Test):
                 datetime.datetime(year_1, 1, 1))
             expected_maxbound = timeunit_1.date2num(
                 datetime.datetime(year_1 + 1, 1, 1))
-            assert_array_equal(
+            assert_equal_and_same_dtype(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
 
 
 class TestRegridTimeMonthly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -865,15 +870,15 @@ class TestRegridTimeMonthly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='mon')
         newcube_2 = regrid_time(self.cube_2, frequency='mon')
         # no changes to core data
-        assert_array_equal(newcube_1.data, self.cube_1.data)
-        assert_array_equal(newcube_2.data, self.cube_2.data)
+        assert_equal_and_same_dtype(newcube_1.data, self.cube_1.data)
+        assert_equal_and_same_dtype(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        assert_array_equal(diff_cube.data, expected)
+        assert_equal_and_same_dtype(diff_cube.data, expected)
         # test bounds are set at
         # [01-MONTH-YEAR 00:00, 01-NEXT_MONTH-YEAR 00:00]
         timeunit_1 = newcube_1.coord('time').units
@@ -889,7 +894,7 @@ class TestRegridTimeMonthly(tests.Test):
                 datetime.datetime(year_1, month_1, 1))
             expected_maxbound = timeunit_1.date2num(
                 datetime.datetime(next_year, next_month, 1))
-            assert_array_equal(
+            assert_equal_and_same_dtype(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
 
@@ -909,7 +914,6 @@ class TestRegridTimeMonthly(tests.Test):
 
 class TestRegridTimeDaily(tests.Test):
     """Tests for regrid_time with daily frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -943,27 +947,26 @@ class TestRegridTimeDaily(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='day')
         newcube_2 = regrid_time(self.cube_2, frequency='day')
         # no changes to core data
-        self.assert_array_equal(newcube_1.data, self.cube_1.data)
-        self.assert_array_equal(newcube_2.data, self.cube_2.data)
+        assert_equal_and_same_dtype(newcube_1.data, self.cube_1.data)
+        assert_equal_and_same_dtype(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assert_array_equal(diff_cube.data, expected)
+        assert_equal_and_same_dtype(diff_cube.data, expected)
         # test bounds are set with a dt = 12/24 days
         for i, time in enumerate(newcube_1.coord('time').points):
             expected_minbound = time - 12 / 24
             expected_maxbound = time + 12 / 24
-            assert_array_equal(
+            assert_equal_and_same_dtype(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
 
 
 class TestRegridTime6Hourly(tests.Test):
     """Tests for regrid_time with 6-hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -997,27 +1000,26 @@ class TestRegridTime6Hourly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='6hr')
         newcube_2 = regrid_time(self.cube_2, frequency='6hr')
         # no changes to core data
-        self.assert_array_equal(newcube_1.data, self.cube_1.data)
-        self.assert_array_equal(newcube_2.data, self.cube_2.data)
+        assert_equal_and_same_dtype(newcube_1.data, self.cube_1.data)
+        assert_equal_and_same_dtype(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assert_array_equal(diff_cube.data, expected)
+        assert_equal_and_same_dtype(diff_cube.data, expected)
         # test bounds are set with a dt = 3/24 days
         for i, time in enumerate(newcube_1.coord('time').points):
             expected_minbound = time - 3 / 24
             expected_maxbound = time + 3 / 24
-            assert_array_equal(
+            assert_equal_and_same_dtype(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
 
 
 class TestRegridTime3Hourly(tests.Test):
     """Tests for regrid_time with 3-hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1051,27 +1053,26 @@ class TestRegridTime3Hourly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='3hr')
         newcube_2 = regrid_time(self.cube_2, frequency='3hr')
         # no changes to core data
-        self.assert_array_equal(newcube_1.data, self.cube_1.data)
-        self.assert_array_equal(newcube_2.data, self.cube_2.data)
+        assert_equal_and_same_dtype(newcube_1.data, self.cube_1.data)
+        assert_equal_and_same_dtype(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assert_array_equal(diff_cube.data, expected)
+        assert_equal_and_same_dtype(diff_cube.data, expected)
         # test bounds are set with a dt = 1.5/24 days
         for i, time in enumerate(newcube_1.coord('time').points):
             expected_minbound = time - 1.5 / 24
             expected_maxbound = time + 1.5 / 24
-            assert_array_equal(
+            assert_equal_and_same_dtype(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
 
 
 class TestRegridTime1Hourly(tests.Test):
     """Tests for regrid_time with hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1105,27 +1106,26 @@ class TestRegridTime1Hourly(tests.Test):
         newcube_1 = regrid_time(self.cube_1, frequency='1hr')
         newcube_2 = regrid_time(self.cube_2, frequency='1hr')
         # no changes to core data
-        self.assert_array_equal(newcube_1.data, self.cube_1.data)
-        self.assert_array_equal(newcube_2.data, self.cube_2.data)
+        assert_equal_and_same_dtype(newcube_1.data, self.cube_1.data)
+        assert_equal_and_same_dtype(newcube_2.data, self.cube_2.data)
         # no changes to number of coords and aux_coords
         assert len(newcube_1.coords()) == len(self.cube_1.coords())
         assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
         # test difference; also diff is zero
         expected = self.cube_1.data
         diff_cube = newcube_2 - newcube_1
-        self.assert_array_equal(diff_cube.data, expected)
+        assert_equal_and_same_dtype(diff_cube.data, expected)
         # test bounds are set with a dt = 0.5/24 days
         for i, time in enumerate(newcube_1.coord('time').points):
             expected_minbound = time - 0.5 / 24
             expected_maxbound = time + 0.5 / 24
-            assert_array_equal(
+            assert_equal_and_same_dtype(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
 
 
 class TestTimeseriesFilter(tests.Test):
     """Tests for regrid_time with hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -1169,8 +1169,10 @@ class TestTimeseriesFilter(tests.Test):
 
 def make_time_series(number_years=2):
     """Make a cube with time only dimension."""
-    times = np.array([i * 30 + 15 for i in range(0, 12 * number_years, 1)])
-    bounds = np.array([i * 30 for i in range(0, 12 * number_years + 1, 1)])
+    times = np.array([i * 30 + 15 for i in range(0, 12 * number_years, 1)],
+                     dtype=np.float32)
+    bounds = np.array([i * 30 for i in range(0, 12 * number_years + 1, 1)],
+                      dtype=np.float32)
     bounds = np.array([[bnd, bounds[index + 1]]
                        for index, bnd in enumerate(bounds[:-1])])
     data = np.ones_like(times)
@@ -1191,10 +1193,10 @@ def test_annual_average(existing_coord):
         iris.coord_categorisation.add_year(cube, 'time')
 
     result = annual_statistics(cube)
-    expected = np.array([1., 1.])
-    assert_array_equal(result.data, expected)
-    expected_time = np.array([180., 540.])
-    assert_array_equal(result.coord('time').points, expected_time)
+    expected = np.array([1., 1.], dtype=np.float32)
+    assert_equal_and_same_dtype(result.data, expected)
+    expected_time = np.array([180., 540.], dtype=np.float32)
+    assert_equal_and_same_dtype(result.coord('time').points, expected_time)
 
 
 @pytest.mark.parametrize('existing_coord', [True, False])
@@ -1205,10 +1207,10 @@ def test_annual_sum(existing_coord):
         iris.coord_categorisation.add_year(cube, 'time')
 
     result = annual_statistics(cube, 'sum')
-    expected = np.array([12., 12.])
-    assert_array_equal(result.data, expected)
-    expected_time = np.array([180., 540.])
-    assert_array_equal(result.coord('time').points, expected_time)
+    expected = np.array([12., 12.], dtype=np.float32)
+    assert_equal_and_same_dtype(result.data, expected)
+    expected_time = np.array([180., 540.], dtype=np.float32)
+    assert_equal_and_same_dtype(result.coord('time').points, expected_time)
 
 
 @pytest.mark.parametrize('existing_coord', [True, False])
@@ -1226,10 +1228,10 @@ def test_decadal_average(existing_coord):
             cube, 'decade', 'time', get_decade)
 
     result = decadal_statistics(cube)
-    expected = np.array([1., 1.])
-    assert_array_equal(result.data, expected)
-    expected_time = np.array([1800., 5400.])
-    assert_array_equal(result.coord('time').points, expected_time)
+    expected = np.array([1., 1.], dtype=np.float32)
+    assert_equal_and_same_dtype(result.data, expected)
+    expected_time = np.array([1800., 5400.], dtype=np.float32)
+    assert_equal_and_same_dtype(result.coord('time').points, expected_time)
 
 
 @pytest.mark.parametrize('existing_coord', [True, False])
@@ -1247,10 +1249,10 @@ def test_decadal_sum(existing_coord):
             cube, 'decade', 'time', get_decade)
 
     result = decadal_statistics(cube, 'sum')
-    expected = np.array([120., 120.])
-    assert_array_equal(result.data, expected)
-    expected_time = np.array([1800., 5400.])
-    assert_array_equal(result.coord('time').points, expected_time)
+    expected = np.array([120., 120.], dtype=np.float32)
+    assert_equal_and_same_dtype(result.data, expected)
+    expected_time = np.array([1800., 5400.], dtype=np.float32)
+    assert_equal_and_same_dtype(result.coord('time').points, expected_time)
 
 
 def make_map_data(number_years=2):
@@ -1270,7 +1272,8 @@ def make_map_data(number_years=2):
         range(2),
         standard_name='longitude',
     )
-    data = np.array([[0, 1], [1, 0]]) * times[:, None, None]
+    data = (np.array([[0, 1], [1, 0]]) * times[:, None, None]).astype(
+        np.float32)
     cube = iris.cube.Cube(
         data,
         dim_coords_and_dims=[(time, 0), (lat, 1), (lon, 2)],
@@ -1307,19 +1310,20 @@ def test_standardized_anomalies(period, standardize=True):
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize=standardize)
     if period == 'full':
-        expected_anomalies = (cube.data -
-                              np.mean(cube.data, axis=0, keepdims=True))
+        expected_anomalies = (
+            cube.data -
+            np.mean(cube.data, axis=0, keepdims=True)).astype(dtype=np.float32)
         if standardize:
             # NB: default behaviour for np.std is ddof=0, whereas
             #     default behaviour for iris.analysis.STD_DEV is ddof=1
             expected_stdanomalies = expected_anomalies / np.std(
                 expected_anomalies, axis=0, keepdims=True, ddof=1)
-            expected = np.ma.masked_invalid(expected_stdanomalies)
-            assert_array_equal(result.data, expected)
+            expected = np.nan_to_num(expected_stdanomalies)
+            assert_equal_and_same_dtype(result.data, expected)
             assert result.units == '1'
         else:
             expected = np.ma.masked_invalid(expected_anomalies)
-            assert_array_equal(result.data, expected)
+            assert_equal_and_same_dtype(result.data, expected)
 
 
 @pytest.mark.parametrize('period, reference', PARAMETERS)
@@ -1333,7 +1337,7 @@ def test_anomalies_preserve_metadata(period, reference, standardize=False):
     assert result.metadata == metadata
     for coord_cube, coord_res in zip(cube.coords(), result.coords()):
         if coord_cube.has_bounds() and coord_res.has_bounds():
-            assert_array_equal(coord_cube.bounds, coord_res.bounds)
+            assert_equal_and_same_dtype(coord_cube.bounds, coord_res.bounds)
         assert coord_cube == coord_res
 
 
@@ -1385,9 +1389,11 @@ def test_anomalies(period, reference, standardize=False):
                 np.arange(315.5, 405),
                 np.arange(315.5, 345),
             ))
-    expected = anom[:, None, None] * [[0, 1], [1, 0]]
-    assert_array_equal(result.data, expected)
-    assert_array_equal(result.coord('time').points, cube.coord('time').points)
+    expected = (anom[:, None, None] * [[0, 1], [1, 0]]).astype(np.float32)
+    assert_equal_and_same_dtype(result.data, expected)
+    assert_equal_and_same_dtype(
+        result.coord('time').points,
+        cube.coord('time').points)
 
 
 def test_anomalies_custom_season():
@@ -1400,9 +1406,11 @@ def test_anomalies_custom_season():
         np.arange(90.5, 270),
         np.arange(90.5, 270),
     ))
-    expected = anom[:, None, None] * [[0, 1], [1, 0]]
-    assert_array_equal(result.data, expected)
-    assert_array_equal(result.coord('time').points, cube.coord('time').points)
+    expected = (anom[:, None, None] * [[0, 1], [1, 0]]).astype(np.float32)
+    assert_equal_and_same_dtype(result.data, expected)
+    assert_equal_and_same_dtype(
+        result.coord('time').points,
+        cube.coord('time').points)
 
 
 def get_0d_time():
@@ -1576,7 +1584,6 @@ def test_climate_statistics_complex_cube_mean():
 
 class TestResampleHours(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -1595,7 +1602,7 @@ class TestResampleHours(tests.Test):
 
         result = resample_hours(cube, 6)
         expected = np.arange(0, 48, 6)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_resample_3_to_6(self):
         """Test average of a 1D field."""
@@ -1605,7 +1612,7 @@ class TestResampleHours(tests.Test):
 
         result = resample_hours(cube, 6)
         expected = np.arange(0, 48, 6)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_resample_1_to_3(self):
         """Test average of a 1D field."""
@@ -1615,7 +1622,7 @@ class TestResampleHours(tests.Test):
 
         result = resample_hours(cube, 3)
         expected = np.arange(0, 48, 3)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_resample_1_to_3_with_offset2(self):
         """Test average of a 1D field."""
@@ -1625,7 +1632,7 @@ class TestResampleHours(tests.Test):
 
         result = resample_hours(cube, 3, 2)
         expected = np.arange(2, 48, 3)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_resample_invalid(self):
         """Test average of a 1D field."""
@@ -1666,7 +1673,6 @@ class TestResampleHours(tests.Test):
 
 class TestResampleTime(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -1685,7 +1691,7 @@ class TestResampleTime(tests.Test):
 
         result = resample_time(cube, hour=12)
         expected = np.arange(12, 48, 24)
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_resample_hourly_to_monthly(self):
         """Test average of a 1D field."""
@@ -1695,7 +1701,7 @@ class TestResampleTime(tests.Test):
 
         result = resample_time(cube, hour=12, day=15)
         expected = np.array([12 + 14 * 24, 12 + 44 * 24])
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
     def test_resample_daily_to_monthly(self):
         """Test average of a 1D field."""
@@ -1708,7 +1714,7 @@ class TestResampleTime(tests.Test):
             14 * 24,
             44 * 24,
         ])
-        assert_array_equal(result.data, expected)
+        assert_equal_and_same_dtype(result.data, expected)
 
 
 if __name__ == '__main__':

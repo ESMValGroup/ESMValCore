@@ -618,6 +618,8 @@ def anomalies(cube,
     iris.cube.Cube
         Anomalies cube
     """
+    original_dtype = cube.dtype
+    print(original_dtype)
     if reference is None:
         reference_cube = cube
     else:
@@ -636,25 +638,33 @@ def anomalies(cube,
                                              seasons=seasons)
             cube = cube / cube_stddev
             cube.units = '1'
-        return cube
+    else:
+        cube = _compute_anomalies(cube, reference, period, seasons)
 
-    cube = _compute_anomalies(cube, reference, period, seasons)
+        # standardize the results if requested
+        if standardize:
+            cube_stddev = climate_statistics(cube,
+                                             operator='std_dev',
+                                             period=period)
+            tdim = cube.coord_dims('time')[0]
+            reps = cube.shape[tdim] / cube_stddev.shape[tdim]
+            if not reps % 1 == 0:
+                raise ValueError(
+                    "Cannot safely apply preprocessor to this dataset, "
+                    "since the full time period of this dataset is not "
+                    f"a multiple of the period '{period}'")
+            cube.data = (cube.core_data() / da.concatenate(
+                [cube_stddev.core_data()
+                 for _ in range(int(reps))], axis=tdim))
+            cube.units = '1'
 
-    # standardize the results if requested
-    if standardize:
-        cube_stddev = climate_statistics(cube,
-                                         operator='std_dev',
-                                         period=period)
-        tdim = cube.coord_dims('time')[0]
-        reps = cube.shape[tdim] / cube_stddev.shape[tdim]
-        if not reps % 1 == 0:
-            raise ValueError(
-                "Cannot safely apply preprocessor to this dataset, "
-                "since the full time period of this dataset is not "
-                f"a multiple of the period '{period}'")
-        cube.data = cube.core_data() / da.concatenate(
-            [cube_stddev.core_data() for _ in range(int(reps))], axis=tdim)
-        cube.units = '1'
+    new_dtype = cube.dtype
+    print(new_dtype)
+    if original_dtype != new_dtype:
+        logger.warning(
+            "anomalies changed dtype from "
+            "%s to %s, changing back", original_dtype, new_dtype)
+        cube.data = cube.core_data().astype(original_dtype)
     return cube
 
 
