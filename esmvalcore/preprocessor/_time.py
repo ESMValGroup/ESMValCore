@@ -619,7 +619,6 @@ def anomalies(cube,
         Anomalies cube
     """
     original_dtype = cube.dtype
-    print(original_dtype)
     if reference is None:
         reference_cube = cube
     else:
@@ -659,7 +658,6 @@ def anomalies(cube,
             cube.units = '1'
 
     new_dtype = cube.dtype
-    print(new_dtype)
     if original_dtype != new_dtype:
         logger.warning(
             "anomalies changed dtype from "
