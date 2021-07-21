@@ -1,9 +1,11 @@
+github_checks:
+    annotations: false  # remove annoying inline code comments
 coverage:
   status:
     project: off
     patch:
       default:
-        informational: true
+        # informational: true  # turn this one on to get cov tests to always pass
         target: 100%
 comment:
   require_changes: true  # comment only if the coverage changes
