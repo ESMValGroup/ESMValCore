@@ -1,5 +1,5 @@
-github_checks:
-    annotations: false  # remove annoying inline code comments
+#github_checks:
+#    annotations: false  # remove annoying inline code comments
 coverage:
   status:
     project: off
