@@ -61,6 +61,8 @@ def recipe_with_schema(filename):
 
 def diagnostics(diags):
     """Check diagnostics in recipe."""
+    if diags is None:
+        raise RecipeError('The given recipe does not have any diagnostic.')
     for name, diagnostic in diags.items():
         if 'scripts' not in diagnostic:
             raise RecipeError(
@@ -142,7 +144,8 @@ def data_availability(input_files, var, dirnames, filenames):
     if missing_years:
         raise RecipeError(
             "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years), input_files))
+                ", ".join(str(year) for year in sorted(missing_years)),
+                input_files))
 
 
 def tasks_valid(tasks):
