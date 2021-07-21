@@ -8,4 +8,5 @@ coverage:
         # informational: true  # turn this one on to get cov tests to always pass
         target: 100%
 comment:
+  behavior: new  # delete old comment and post new
   require_changes: true  # comment only if the coverage changes
