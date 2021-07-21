@@ -61,7 +61,7 @@ def get_start_end_year(filename):
     #
     # Next string allows to test that there is an allowed delimiter (or
     # string start or end) close to date range (or to single date)
-    context = r"(?:^|[-_]|$)"
+    context = r"(?:^|[-_.]|$)"
     #
     # First check for a block of two potential dates
     date_range_pattern = context + date_range_pattern + context
