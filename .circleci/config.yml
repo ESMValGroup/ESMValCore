@@ -182,7 +182,7 @@ jobs:
             # Install prerequisites
             mkdir /logs
             conda update -y conda > /logs/conda_base.txt 2>&1
-            conda create --name build 'python=3.9.6'
+            conda create --name build 'python=3.9'
             set +x; conda activate build; set -x
             conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
             conda install -y -c conda-forge mamba
