@@ -229,6 +229,7 @@ def area_statistics(cube, operator):
     ValueError
         if input data cube has different shape than grid area weights
     """
+    original_dtype = cube.dtype
     grid_areas = None
     try:
         grid_areas = cube.cell_measure('cell_area').core_data()
@@ -273,10 +274,18 @@ def area_statistics(cube, operator):
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
     if operator_accept_weights(operator):
-        return cube.collapsed(coord_names, operation, weights=grid_areas)
+        result = cube.collapsed(coord_names, operation, weights=grid_areas)
+    else:
+        # Many IRIS analysis functions do not accept weights arguments.
+        result = cube.collapsed(coord_names, operation)
 
-    # Many IRIS analysis functions do not accept weights arguments.
-    return cube.collapsed(coord_names, operation)
+    new_dtype = result.dtype
+    if original_dtype != new_dtype:
+        logger.warning(
+            "area_statistics changed dtype from "
+            "%s to %s, changing back", original_dtype, new_dtype)
+        result.data = result.core_data().astype(original_dtype)
+    return result
 
 
 def extract_named_regions(cube, regions):

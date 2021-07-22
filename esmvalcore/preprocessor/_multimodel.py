@@ -2,14 +2,15 @@
 
 import logging
 import re
+import warnings
 from datetime import datetime
 from functools import reduce
 
 import cf_units
-import dask.array as da
 import iris
 import numpy as np
 from iris.util import equalise_attributes
+from esmvalcore.preprocessor import remove_fx_variables
 
 logger = logging.getLogger(__name__)
 
@@ -142,63 +143,18 @@ def _time_coords_are_aligned(cubes):
     return True
 
 
-def _subset(cube, time_points):
-    """Subset cube to given time range."""
-    begin = cube.coord('time').units.num2date(time_points[0])
-    end = cube.coord('time').units.num2date(time_points[-1])
-    constraint = iris.Constraint(time=lambda cell: begin <= cell.point <= end)
-    try:
-        return cube.extract(constraint)
-    except Exception as excinfo:
-        raise ValueError(
-            "Tried to align cubes in multi-model statistics, but failed for"
-            f" cube {cube} and time points {time_points}. Encountered the "
-            f"following exception: {excinfo}")
+def _map_to_new_time(cube, time_points):
+    """Map cube onto new cube with specified time points.
 
-
-def _extend(cube, time_points):
-    """Extend cube to a specified time range.
-
-    If time points are missing before the start/after the end of the
-    time range, cubes for each missing time pointwith masked data will
-    be added to pad the time range to match `time_points`. This method
-    supports lazy operation.
+    Missing data inside original bounds is filled with nearest neighbour
+    Missing data outside original bounds is masked.
     """
-    cube.coord('time').bounds = None
-    cube_points = cube.coord('time').points
-
-    begin = cube_points[0]
-    end = cube_points[-1]
-
-    pad_begin = time_points[time_points < begin]
-    pad_end = time_points[time_points > end]
-
-    if (len(pad_begin)) == 0 and (len(pad_end) == 0):
-        return cube
-
-    template_cube = cube[:1].copy()
-    template_cube.data = np.ma.array(da.zeros_like(template_cube.data),
-                                     mask=True,
-                                     dtype=template_cube.data.dtype)
-
-    cube_list = []
-
-    for time_point in pad_begin:
-        new_slice = template_cube.copy()
-        new_slice.coord('time').points = float(time_point)
-        cube_list.append(new_slice)
-
-    cube_list.append(cube)
-
-    for time_point in pad_end:
-        new_slice = template_cube.copy()
-        new_slice.coord('time').points = float(time_point)
-        cube_list.append(new_slice)
-
-    cube_list = iris.cube.CubeList(cube_list)
+    time_points = cube.coord('time').units.num2date(time_points)
+    sample_points = [('time', time_points)]
+    scheme = iris.analysis.Nearest(extrapolation_mode='mask')
 
     try:
-        new_cube = cube_list.concatenate_cube()
+        new_cube = cube.interpolate(sample_points, scheme)
     except Exception as excinfo:
         raise ValueError(
             "Tried to align cubes in multi-model statistics, but failed for"
@@ -218,14 +174,14 @@ def _align(cubes, span):
     all_time_arrays = [cube.coord('time').points for cube in cubes]
 
     if span == 'overlap':
-        common_time_points = reduce(np.intersect1d, all_time_arrays)
-        new_cubes = [_subset(cube, common_time_points) for cube in cubes]
+        new_time_points = reduce(np.intersect1d, all_time_arrays)
     elif span == 'full':
-        all_time_points = reduce(np.union1d, all_time_arrays)
-        new_cubes = [_extend(cube, all_time_points) for cube in cubes]
+        new_time_points = reduce(np.union1d, all_time_arrays)
     else:
         raise ValueError(f"Invalid argument for span: {span!r}"
                          "Must be one of 'overlap', 'full'.")
+
+    new_cubes = [_map_to_new_time(cube, new_time_points) for cube in cubes]
 
     for cube in new_cubes:
         # Make sure bounds exist and are consistent
@@ -251,6 +207,7 @@ def _combine(cubes):
         # https://scitools-iris.readthedocs.io/en/stable/userguide/
         #    merge_and_concat.html#common-issues-with-merge-and-concatenate
 
+        remove_fx_variables(cube)
         cube.cell_methods = None
 
         for coord in cube.coords():
@@ -273,8 +230,18 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
     for i in range(cubes[0].shape[0]):
         single_model_slices = [cube[i] for cube in cubes]
         combined_slice = _combine(single_model_slices)
-        collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
-                                                   **kwargs)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message=(
+                    "Collapsing a non-contiguous coordinate. "
+                    f"Metadata may not be fully descriptive for '{CONCAT_DIM}."
+                ),
+                category=UserWarning,
+                module='iris',
+            )
+            collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
+                                                       **kwargs)
 
         # some iris aggregators modify dtype, see e.g.
         # https://numpy.org/doc/stable/reference/generated/numpy.ma.average.html

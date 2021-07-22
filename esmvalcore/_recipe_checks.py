@@ -61,6 +61,8 @@ def recipe_with_schema(filename):
 
 def diagnostics(diags):
     """Check diagnostics in recipe."""
+    if diags is None:
+        raise RecipeError('The given recipe does not have any diagnostic.')
     for name, diagnostic in diags.items():
         if 'scripts' not in diagnostic:
             raise RecipeError(

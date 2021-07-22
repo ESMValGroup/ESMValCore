@@ -349,26 +349,59 @@ def _add_fxvar_keys(fx_info, variable):
     return fx_variable
 
 
-def _search_fx_mip(tables, found_mip, variable, fx_info, config_user):
-    fx_files = None
-    for mip in tables:
-        fx_cmor = tables[mip].get(fx_info['short_name'])
-        if fx_cmor:
-            found_mip = True
-            fx_info['mip'] = mip
-            fx_info = _add_fxvar_keys(fx_info, variable)
-            logger.debug("For fx variable '%s', found table '%s'",
-                         fx_info['short_name'], mip)
-            fx_files = _get_input_files(fx_info, config_user)[0]
-            if fx_files:
-                logger.debug("Found fx variables '%s':\n%s",
-                             fx_info['short_name'], pformat(fx_files))
-    return found_mip, fx_info, fx_files
+def _search_fx_mip(tables, variable, fx_info, config_user):
+    """Search mip for fx variable."""
+    # Get all mips that offer that specific fx variable
+    mips_with_fx_var = []
+    for (mip, table) in tables.items():
+        if fx_info['short_name'] in table:
+            mips_with_fx_var.append(mip)
+
+    # List is empty -> no table includes the fx variable
+    if not mips_with_fx_var:
+        raise RecipeError(
+            f"Requested fx variable '{fx_info['short_name']}' not available "
+            f"in any CMOR table for '{variable['project']}'")
+
+    # Iterate through all possible mips and check if files are available; in
+    # case of ambiguity raise an error
+    fx_files_for_mips = {}
+    for mip in mips_with_fx_var:
+        fx_info['mip'] = mip
+        fx_info = _add_fxvar_keys(fx_info, variable)
+        logger.debug("For fx variable '%s', found table '%s'",
+                     fx_info['short_name'], mip)
+        fx_files = _get_input_files(fx_info, config_user)[0]
+        if fx_files:
+            logger.debug("Found fx variables '%s':\n%s",
+                         fx_info['short_name'], pformat(fx_files))
+            fx_files_for_mips[mip] = fx_files
+
+    # Dict contains more than one element -> ambiguity
+    if len(fx_files_for_mips) > 1:
+        raise RecipeError(
+            f"Requested fx variable '{fx_info['short_name']}' for dataset "
+            f"'{variable['dataset']}' of project '{variable['project']}' is "
+            f"available in more than one CMOR table for "
+            f"'{variable['project']}': {sorted(list(fx_files_for_mips))}")
+
+    # Dict is empty -> no files found -> handled at later stage
+    if not fx_files_for_mips:
+        fx_info['mip'] = variable['mip']
+        fx_files = []
+
+    # Dict contains one element -> ok
+    else:
+        mip = list(fx_files_for_mips)[0]
+        fx_info['mip'] = mip
+        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_files = fx_files_for_mips[mip]
+
+    return fx_info, fx_files
 
 
 def _get_fx_files(variable, fx_info, config_user):
     """Get fx files (searching all possible mips)."""
-
     # assemble info from master variable
     var_project = variable['project']
     # check if project in config-developer
@@ -380,31 +413,31 @@ def _get_fx_files(variable, fx_info, config_user):
                           f"a '{var_project}' project in config-developer.")
     project_tables = CMOR_TABLES[var_project].tables
 
-    # force only the mip declared by user
-    found_mip = False
+    # If mip is not given, search all available tables. If the variable is not
+    # found or files are available in more than one table, raise error
     if not fx_info['mip']:
-        found_mip, fx_info, fx_files = _search_fx_mip(project_tables,
-                                                      found_mip, variable,
-                                                      fx_info, config_user)
+        fx_info, fx_files = _search_fx_mip(project_tables, variable, fx_info,
+                                           config_user)
     else:
-        fx_cmor = project_tables[fx_info['mip']].get(fx_info['short_name'])
-        if fx_cmor:
-            found_mip = True
-            fx_info = _add_fxvar_keys(fx_info, variable)
-            fx_files = _get_input_files(fx_info, config_user)[0]
+        mip = fx_info['mip']
+        if mip not in project_tables:
+            raise RecipeError(
+                f"Requested mip table '{mip}' for fx variable "
+                f"'{fx_info['short_name']}' not available for project "
+                f"'{var_project}'")
+        if fx_info['short_name'] not in project_tables[mip]:
+            raise RecipeError(
+                f"fx variable '{fx_info['short_name']}' not available in CMOR "
+                f"table '{mip}' for '{var_project}'")
+        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_files = _get_input_files(fx_info, config_user)[0]
 
-    # If fx variable was not found in any table, raise exception
-    if not found_mip:
-        raise RecipeError(
-            f"Requested fx variable '{fx_info['short_name']}' "
-            f"not available in any CMOR table for '{var_project}'")
-
-    # flag a warning
+    # Flag a warning if no files are found
     if not fx_files:
         logger.warning("Missing data for fx variable %s of dataset %s",
                        fx_info['short_name'], fx_info['dataset'])
 
-    # allow for empty lists corrected for by NE masks
+    # If frequency = fx, only allow a single file
     if fx_files:
         if fx_info['frequency'] == 'fx':
             fx_files = fx_files[0]
@@ -470,7 +503,6 @@ def _fx_list_to_dict(fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
-
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
