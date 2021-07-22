@@ -40,7 +40,7 @@ DATA_AVAILABILITY_DATA = [
     (FILES[:-1], dict(VAR), ERR_RANGE.format('2025', FILES[:-1])),
     (FILES[:-2], dict(VAR), ERR_RANGE.format('2024, 2025', FILES[:-2])),
     ([FILES[1]] + [FILES[3]], dict(VAR),
-     ERR_RANGE.format('2024, 2025, 2020, 2022', [FILES[1]] + [FILES[3]])),
+     ERR_RANGE.format('2020, 2022, 2024, 2025', [FILES[1]] + [FILES[3]])),
 ]
 
 
