@@ -552,7 +552,8 @@ def _update_fx_settings(settings, variable, config_user):
 def _read_attributes(filename):
     """Read the attributes from a netcdf file."""
     attributes = {}
-    if not (os.path.exists(filename)
+    if not (isinstance(filename, (str, os.PathLike))
+            and os.path.exists(filename)
             and os.path.splitext(filename)[1].lower() == '.nc'):
         return attributes
 
@@ -578,7 +579,7 @@ def _get_input_files(variable, config_user):
             # Only look on ESGF if files are not available locally.
             local_files = set(Path(f).name for f in input_files)
             for file in esgf_search(variable):
-                if Path(file.url).name not in local_files:
+                if file.name not in local_files:
                     local_copy = file.local_file(config_user['download_dir'])
                     if local_copy.exists():
                         input_files.append(str(local_copy))
@@ -596,7 +597,7 @@ def _get_ancestors(variable, config_user):
 
     logger.info("Using input files for variable %s of dataset %s:\n%s",
                 variable['short_name'], variable['dataset'],
-                '\n'.join(input_files))
+                '\n'.join(str(f) for f in input_files))
     check.data_availability(input_files, variable, dirnames, filenames)
 
     # Set up provenance tracking

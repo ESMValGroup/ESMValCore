@@ -1,5 +1,7 @@
+aiohttp
 autodocsumm
 dask[array]
+esgf-pyclient
 fiona
 importlib_resources
 jinja2

@@ -107,7 +107,7 @@ def get_task_provenance(task, recipe_entity):
     return activity
 
 
-class TrackedFile(object):
+class TrackedFile:
     """File with provenance tracking."""
 
     def __init__(self, filename, attributes, ancestors=None):
@@ -179,7 +179,7 @@ class TrackedFile(object):
             for k, v in self.attributes.items()
             if k not in ('authors', 'projects')
         }
-        self.entity = self.provenance.entity('file:' + self.filename,
+        self.entity = self.provenance.entity(f'file: {self.filename}',
                                              attributes)
         attribute_to_authors(self.entity, self.attributes.get('authors', []))
         attribute_to_projects(self.entity, self.attributes.get('projects', []))

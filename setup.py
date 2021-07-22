@@ -30,8 +30,10 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
+        'aiohttp',
         'cf-units>=3.0.0',
         'dask[array]',
+        'esgf-pyclient',
         'fiona',
         'fire',
         "importlib_resources;python_version<'3.9'",

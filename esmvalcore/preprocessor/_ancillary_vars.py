@@ -23,7 +23,11 @@ def _load_fx(var_cube, fx_info, check_level, dest_folder):
     short_name = fx_info['short_name']
     freq = fx_info['frequency']
 
-    fx_files = download(fx_info['filename'], dest_folder)
+    if not isinstance(fx_info['filename'], list):
+        fx_files = [fx_info['filename']]
+    else:
+        fx_files = fx_info['filename']
+    fx_files = download(fx_files, dest_folder)
     for fx_file in fx_files:
         loaded_cube = load(fx_file, callback=concatenate_callback)
         loaded_cube = fix_metadata(loaded_cube,

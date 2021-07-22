@@ -1,6 +1,8 @@
+import logging
+import time
 from pathlib import Path
 
-from esmvalcore.preprocessor._download import ESGFFile, download, esgf_search
+from esmvalcore.preprocessor._download import download, esgf_search
 
 VARIABLES = [
     {
@@ -13,7 +15,7 @@ VARIABLES = [
         # 'version': '1',
     },
     {
-        'dataset': 'CanESM2',
+        'dataset': 'CanESM2',  # 'HadCM3'
         'ensemble': 'r1i1p1',
         'exp': 'historical',
         'mip': 'Amon',
@@ -23,7 +25,7 @@ VARIABLES = [
     },
     {
         'activity': 'CMIP',
-        'dataset': 'AWI-ESM-1-1-LR',
+        'dataset': 'AWI-ESM-1-1-LR',  # 'CanESM5'
         'ensemble': 'r1i1p1f1',
         'exp': 'historical',
         'grid': 'gn',
@@ -61,14 +63,14 @@ def test_esgf_search():
         print(files)
 
 
-def test_esgf_download():
-    dataset = 'cmip5.output1.CCCma.CanESM2.historical.mon.atmos.Amon.r1i1p1.v20120718'
-    url = 'http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/CCCma/CanESM2/historical/mon/atmos/Amon/r1i1p1/v20120718/tas/tas_Amon_CanESM2_historical_r1i1p1_185001-200512.nc'
-    files = [ESGFFile(url, dataset)]
-
-    dest_folder = str(Path.home() / 'esmvaltool_download')
-    local_file = download(files, dest_folder)
-    print(local_file)
+def test_multidownload():
+    variable = VARIABLES[1]
+    variable['start_year'] = 2000
+    variable['end_year'] = 2000
+    files = esgf_search(variable)
+    dest_folder = '.'
+    for esgf_file in files:
+        esgf_file.download(dest_folder)
 
 
 def test_download_all():
@@ -84,8 +86,12 @@ def test_download_all():
 
 
 if __name__ == '__main__':
-    test_esgf_search()
+    logging.basicConfig(format="%(asctime)s [%(process)d] %(levelname)-8s "
+                        "%(name)s,%(lineno)s\t%(message)s")
+    logging.Formatter.converter = time.gmtime
+    logging.captureWarnings(True)
+    logging.getLogger().setLevel('info'.upper())
 
-    # test_esgf_download()
-
-    test_download_all()
+    # test_esgf_search()
+    # test_download_all()
+    test_multidownload()

@@ -10,6 +10,7 @@ import yamale
 
 from ._data_finder import get_start_end_year
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from .preprocessor._download import ESGFFile
 from .preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
@@ -145,6 +146,8 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
     available_years = set()
 
     for filename in input_files:
+        if isinstance(filename, ESGFFile):
+            filename = filename.name
         start, end = get_start_end_year(filename)
         available_years.update(range(start, end + 1))
 
