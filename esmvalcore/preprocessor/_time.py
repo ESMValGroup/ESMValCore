@@ -515,7 +515,8 @@ def decadal_statistics(cube, operator='mean'):
 def climate_statistics(cube,
                        operator='mean',
                        period='full',
-                       seasons=('DJF', 'MAM', 'JJA', 'SON')):
+                       seasons=('DJF', 'MAM', 'JJA', 'SON'),
+                       **kwargs):
     """Compute climate statistics with the specified granularity.
 
     Computes statistics for the whole dataset. It is possible to get them for
@@ -553,17 +554,18 @@ def climate_statistics(cube,
             time_weights = get_time_weights(cube)
             if time_weights.min() == time_weights.max():
                 # No weighting needed.
-                clim_cube = cube.collapsed('time', operator_method)
+                clim_cube = cube.collapsed('time', operator_method, **kwargs)
             else:
                 clim_cube = cube.collapsed('time',
                                            operator_method,
-                                           weights=time_weights)
+                                           weights=time_weights,
+                                           **kwargs)
         else:
-            clim_cube = cube.collapsed('time', operator_method)
+            clim_cube = cube.collapsed('time', operator_method, **kwargs)
     else:
         clim_coord = _get_period_coord(cube, period, seasons)
         operator = get_iris_analysis_operation(operator)
-        clim_cube = cube.aggregated_by(clim_coord, operator)
+        clim_cube = cube.aggregated_by(clim_coord, operator, **kwargs)
         clim_cube.remove_coord('time')
         if clim_cube.coord(clim_coord.name()).is_monotonic():
             iris.util.promote_aux_coord_to_dim_coord(clim_cube,
