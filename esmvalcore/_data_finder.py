@@ -34,17 +34,18 @@ def find_files(dirnames, filenames):
 
 
 def get_start_end_year(filename):
-    """Get the start and end year from a file name.
+    """Returns the start and end year from a file name, as well as the start
+    and end dates as strings.
 
     Examples of allowed dates : 1980, 198001, 19801231,
     1980123123, 19801231T23, 19801231T2359, 19801231T235959,
-    19801231T235959Z
+    19801231T235959Z (ISO 8601).
 
     Dates must be surrounded by - or _ or string start or string end
-    (after removing filename suffix)
+    (after removing filename suffix).
 
     Look first for two dates separated by - or _, then for one single
-    date, and if they are multiple, for one date at start or end
+    date, and if they are multiple, for one date at start or end.
     """
     stem = Path(filename).stem
     start_year = end_year = None
@@ -137,7 +138,7 @@ def select_files(filenames, start_year, end_year):
 def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        paths = set((paths.strip('/'),))
+        paths = set((paths.strip('/'), ))
     else:
         paths = set(path.strip('/') for path in paths)
     tlist = set()
@@ -146,10 +147,9 @@ def _replace_tags(paths, variable):
     if 'sub_experiment' in variable:
         new_paths = []
         for path in paths:
-            new_paths.extend((
-                re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
-                re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)
-            ))
+            new_paths.extend(
+                (re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
+                 re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)))
             tlist.add('sub_experiment')
         paths = new_paths
     logger.debug(tlist)

@@ -4,10 +4,10 @@ import logging
 import os
 import re
 import warnings
-import isodate
 from copy import deepcopy
 from pprint import pformat
 
+import isodate
 import yaml
 from netCDF4 import Dataset
 
@@ -383,8 +383,8 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
                      fx_info['short_name'], mip)
         fx_files = _get_input_files(fx_info, config_user)[0]
         if fx_files:
-            logger.debug("Found fx variables '%s':\n%s",
-                         fx_info['short_name'], pformat(fx_files))
+            logger.debug("Found fx variables '%s':\n%s", fx_info['short_name'],
+                         pformat(fx_files))
             fx_files_for_mips[mip] = fx_files
 
     # Dict contains more than one element -> ambiguity
@@ -488,12 +488,10 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
         fx_files, fx_info = _get_fx_files(variable, fx_info, config_user)
         if fx_files:
             fx_info['filename'] = fx_files
-            settings['add_fx_variables']['fx_variables'].update({
-                fx_var: fx_info
-            })
-            logger.info(
-                'Using fx files for variable %s during step %s: %s',
-                variable['short_name'], step_name, pformat(fx_files))
+            settings['add_fx_variables']['fx_variables'].update(
+                {fx_var: fx_info})
+            logger.info('Using fx files for variable %s during step %s: %s',
+                        variable['short_name'], step_name, pformat(fx_files))
 
 
 def _fx_list_to_dict(fx_vars):
@@ -513,6 +511,7 @@ def _fx_list_to_dict(fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
+
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -709,16 +708,16 @@ def _parse_period(timerange):
     end_year = None
     if timerange.split('/')[0].startswith('P'):
         try:
-            end_year = isodate.parse_date(timerange.split('/')[1]).year
-        except isodate.ISO8601Error:
             end_year = isodate.parse_datetime(timerange.split('/')[1]).year
+        except isodate.ISO8601Error:
+            end_year = isodate.parse_date(timerange.split('/')[1]).year
         delta = int(isodate.parse_duration(timerange.split('/')[0]).years)
         start_year = end_year - delta
     elif timerange.split('/')[1].startswith('P'):
         try:
-            start_year = isodate.parse_date(timerange.split('/')[0]).year
-        except isodate.ISO8601Error:
             start_year = isodate.parse_datetime(timerange.split('/')[0]).year
+        except isodate.ISO8601Error:
+            start_year = isodate.parse_date(timerange.split('/')[0]).year
         delta = int(isodate.parse_duration(timerange.split('/')[1]).years)
         end_year = start_year + delta
     return start_year, end_year
@@ -735,8 +734,7 @@ def _update_timerange(variable, settings, config_user):
     if '*' in timerange:
         (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                           config_user['drs'])
-        intervals = [
-            get_start_end_year(name) for name in files]
+        intervals = [get_start_end_year(name) for name in files]
 
         min_date = min(intervals)[2]
         max_date = max(intervals)[3]
@@ -754,18 +752,18 @@ def _update_timerange(variable, settings, config_user):
         start_year = int(timerange.split('/')[0][0:4])
         end_year = int(timerange.split('/')[1][0:4])
 
-    variable.update(
-        {'timerange': timerange,
-         'start_year': start_year,
-         'end_year': end_year})
+    variable.update({
+        'timerange': timerange,
+        'start_year': start_year,
+        'end_year': end_year
+    })
 
     settings[step]['timerange'] = timerange
     settings[step]['start_year'] = start_year
     settings[step]['end_year'] = end_year
 
     timerange = timerange.replace('/', '-')
-    filename = variable['filename'].replace(
-        '.nc', f'_{timerange}.nc')
+    filename = variable['filename'].replace('.nc', f'_{timerange}.nc')
     variable['filename'] = filename
 
 
@@ -1469,20 +1467,18 @@ class Recipe:
                 raw_timerange = (
                     self._raw_recipe['datasets'][index]['timerange'])
             else:
-                raw_timerange = (
-                    self._raw_recipe['diagnostics'][diagnostic]
-                    ['additional_datasets'][index]['timerange'])
+                raw_timerange = (self._raw_recipe['diagnostics'][diagnostic]
+                                 ['additional_datasets'][index]['timerange'])
 
             if timerange != raw_timerange:
                 if not self._updated_recipe:
                     self._updated_recipe = deepcopy(self._raw_recipe)
                 if datasets:
-                    (self._updated_recipe['datasets'][index]
-                     ['timerange']) = timerange
+                    (self._updated_recipe['datasets'][index]['timerange']
+                     ) = timerange
                 else:
-                    (self._updated_recipe['diagnostics']
-                     [diagnostic]['additional_datasets']
-                     [index]['timerange']) = timerange
+                    (self._updated_recipe['diagnostics'][diagnostic]
+                     ['additional_datasets'][index]['timerange']) = timerange
 
     def initialize_tasks(self):
         """Define tasks in recipe."""
@@ -1512,8 +1508,8 @@ class Recipe:
                 except RecipeError as ex:
                     failed_tasks.append(ex)
                 else:
-                    self._fill_wildcards(
-                        variable_group, diagnostic['preprocessor_output'])
+                    self._fill_wildcards(variable_group,
+                                         diagnostic['preprocessor_output'])
                     for task0 in task.flatten():
                         task0.priority = priority
                     tasks.add(task)

@@ -943,8 +943,7 @@ TEST_ISO_TIMERANGE = [
      '19900101TH00M00S-P2Y2M1DT12H00M00S'),
     ('P2Y/1992', 'P2Y-1992'),
     ('P2Y2M1D/19920101', 'P2Y2M1D-19920101'),
-    ('P2Y2M1D/19920101T12H00M00S',
-     'P2Y2M1D-19920101T12H00M00S'),
+    ('P2Y2M1D/19920101T12H00M00S', 'P2Y2M1D-19920101T12H00M00S'),
     ('P2Y/*', 'P2Y-2019'),
     ('P2Y2M1D/*', 'P2Y2M1D-2019'),
     ('P2Y21DT12H00M00S/*', 'P2Y21DT12H00M00S-2019'),
@@ -955,8 +954,8 @@ TEST_ISO_TIMERANGE = [
 
 
 @pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
-def test_recipe_iso_timerange(
-  tmp_path, patched_datafinder, config_user, input_time, output_time):
+def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user,
+                              input_time, output_time):
     """Test recipe with timerange tag."""
     content = dedent("""
         diagnostics:
@@ -978,19 +977,56 @@ def test_recipe_iso_timerange(
 
     # Add invalid timerange
     recipe = yaml.safe_load(content)
-    (recipe['diagnostics']
-           ['test']['additional_datasets'][0]['timerange']) = input_time
+    (recipe['diagnostics']['test']['additional_datasets'][0]['timerange']
+     ) = input_time
     content = yaml.safe_dump(recipe)
 
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
     filename = variable.pop('filename').split('/')[-1]
-    assert (filename ==
-            'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
+    assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
             f'pr_{output_time}.nc')
-    fx_variable = (recipe.diagnostics['test']
-                                     ['preprocessor_output']
-                                     ['areacella'][0])
+    fx_variable = (
+        recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
+    fx_filename = fx_variable.pop('filename').split('/')[-1]
+    assert (fx_filename ==
+            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella.nc')
+
+
+@pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
+def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
+                                         config_user, input_time, output_time):
+    """Test recipe with timerange tag in the datasets section."""
+    content = dedent("""
+        datasets:
+          - dataset: HadGEM3-GC31-LL
+            project: CMIP6
+            exp: historical
+            ensemble: r2i1p1f1
+            grid: gn
+            timerange:
+        diagnostics:
+          test:
+            variables:
+              pr:
+                mip: 3hr
+              areacella:
+                mip: fx
+            scripts: null
+        """)
+
+    # Add invalid timerange
+    recipe = yaml.safe_load(content)
+    (recipe['datasets'][0]['timerange']) = input_time
+    content = yaml.safe_dump(recipe)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
+    filename = variable.pop('filename').split('/')[-1]
+    assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
+            f'pr_{output_time}.nc')
+    fx_variable = (
+        recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
     fx_filename = fx_variable.pop('filename').split('/')[-1]
     assert (fx_filename ==
             'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella.nc')
@@ -2920,7 +2956,7 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     sftgif_files = fx_variables['sftgif']['filename']
     assert isinstance(sftgif_files, list)
     assert len(sftgif_files) == 1
-    assert'_LImon_' in sftgif_files[0]
+    assert '_LImon_' in sftgif_files[0]
 
 
 def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
