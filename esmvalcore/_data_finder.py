@@ -34,8 +34,9 @@ def find_files(dirnames, filenames):
 
 
 def get_start_end_year(filename):
-    """Returns the start and end year from a file name, as well as the start
-    and end dates as strings.
+    """Get the start and end year from a file name.
+
+    Additionally, returns the start and end dates as strings.
 
     Examples of allowed dates : 1980, 198001, 19801231,
     1980123123, 19801231T23, 19801231T2359, 19801231T235959,
