@@ -43,7 +43,7 @@ def get_iris_analysis_operation(operator):
         allowed operators: mean, median, std_dev, sum, variance, min, max, rms
     """
     operators = [
-        'mean', 'median', 'std_dev', 'sum', 'variance', 'min', 'max', 'rms'
+        'mean', 'median', 'std_dev', 'sum', 'variance', 'min', 'max', 'rms', 'percentile'
     ]
     operator = operator.lower()
     if operator not in operators:
