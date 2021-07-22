@@ -24,6 +24,8 @@ FILENAME_CASES = [
         'icon-2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_phy_3d_ml_20150101T000000Z.nc',
         2015, 2015
     ],
+    ['pr_A1.186101-200012.nc', 1861, 2000],
+    ['tas_A1.20C3M_1.CCSM.atmm.1990-01_cat_1999-12.nc', None, None],
 ]
 
 
@@ -31,9 +33,16 @@ FILENAME_CASES = [
 def test_get_start_end_year(case):
     """Tests for get_start_end_year function"""
     filename, case_start, case_end = case
-    start, end = get_start_end_year(filename)
-    assert case_start == start
-    assert case_end == end
+    if case_start is None and case_end is None:
+        # If the filename is inconclusive or too difficult
+        # we resort to reading the file, which fails here
+        # because the file is not there.
+        with pytest.raises(IOError):
+            get_start_end_year(filename)
+    else:
+        start, end = get_start_end_year(filename)
+        assert case_start == start
+        assert case_end == end
 
 
 def test_read_time_from_cube(monkeypatch, tmp_path):
