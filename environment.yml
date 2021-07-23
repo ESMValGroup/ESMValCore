@@ -9,7 +9,7 @@ dependencies:
   - compilers
   - fiona  # 1.8.18/py39, they seem weary to build manylinux wheels and pypi ver built with older gdal
   - esmpy
-  - iris>=3.0.2  # bump to latest to have a number of bugfixes available
+  - iris>=3.0.2,<3.0.4  # iris=3.0.4 dropped support for Python 3.6 but we haven't just yet (23 July 2021, bugfix release 2.3.1)
   - graphviz
   - python>=3.6
   - python-stratify
