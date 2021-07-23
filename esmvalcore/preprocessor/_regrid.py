@@ -1,5 +1,6 @@
 """Horizontal and vertical regridding module."""
 
+import logging
 import os
 import re
 from copy import deepcopy
@@ -10,6 +11,7 @@ import iris
 import numpy as np
 import stratify
 from dask import array as da
+from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
@@ -19,6 +21,8 @@ from ..cmor.table import CMOR_TABLES
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+
+logger = logging.getLogger(__name__)
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -300,6 +304,40 @@ def _attempt_irregular_regridding(cube, scheme):
         except iris.exceptions.CoordinateNotFoundError:
             pass
     return False
+
+
+def extract_town(cube, town, scheme):
+    """Extract a point using a town name, with interpolation.
+
+    Extracts a single town point from a cube, according
+    to the interpolation scheme `scheme`.
+
+    The function just retrieves the coordinates of the town and then calls
+    the `extract_point` preprocessor.
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+
+    town : str
+        The reference town.
+
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+    Returns
+    -------
+    Returns a cube with the extracted point, and with adjusted
+    latitude and longitude coordinates.
+    """
+    geolocator = Nominatim(user_agent='esmvalcore')
+    city = geolocator.geocode(town)
+    if not city:
+        raise ValueError(f'Town {town} can not be found.')
+    logger.info(
+        f"Extracting data for {city} ({city.latitude}, {city.longitude})")
+    return extract_point(cube, city.latitude, city.longitude, scheme)
 
 
 def extract_point(cube, latitude, longitude, scheme):
