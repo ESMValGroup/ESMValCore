@@ -43,12 +43,12 @@ Automatic testing
 ~~~~~~~~~~~~~~~~~
 
 -  Pin Python to 3.9 in environment.yml on CircleCI and skip mypy tests in conda build (`#1176 <https://github.com/ESMValGroup/ESMValCore/pull/1176>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Pin `iris<3.0.4` to ensure we still (sort of) support Python 3.6 (`#1252 <https://github.com/ESMValGroup/ESMValCore/pull/1252>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 Installation
 ~~~~~~~~~~~~
 
 -  Pin lower bound for iris to 3.0.2 (`#1206 <https://github.com/ESMValGroup/ESMValCore/pull/1206>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Pin `iris<3.0.4` to ensure we still (sort of) support Python 3.6 (`#1252 <https://github.com/ESMValGroup/ESMValCore/pull/1252>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 Improvements
 ~~~~~~~~~~~~
