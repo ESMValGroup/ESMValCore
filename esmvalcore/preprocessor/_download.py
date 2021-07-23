@@ -2,13 +2,13 @@
 import asyncio
 import datetime
 import hashlib
+import itertools
 import logging
 import os
 import pprint
 import shutil
 import tempfile
 import urllib
-from itertools import groupby
 from pathlib import Path
 
 import aiohttp
@@ -62,7 +62,7 @@ FACETS = {
 }
 
 
-def _get_esgf_facets(variable):
+def get_esgf_facets(variable):
     """Translate variable to facets for searching on ESGF."""
     project = variable.get('project', '')
     if project not in FACETS:
@@ -119,18 +119,46 @@ def select_latest_versions(datasets: dict) -> dict:
         A dict containing only the most recent version of each dataset object,
         in case multiple versions have been passed.
     """
-    keys = (key.rsplit('.', 1) for key in datasets)
-    keys = sorted(keys)
-    grouped = groupby(keys, key=lambda key: key[0])
+    def name(dataset_name):
+        """Return the name of the dataset without the version."""
+        return dataset_name.rsplit('.', 1)[0]
 
-    most_recent_keys = (list(versions)[-1] for group, versions in grouped)
-    most_recent_datasets = {}
+    latest_versions = {}
+    for _, versions in itertools.groupby(sorted(datasets), key=name):
+        latest = list(versions)[-1]
+        latest_versions[latest] = datasets[latest]
 
-    for name, version in most_recent_keys:
-        key = f'{name}.{version}'
-        most_recent_datasets[key] = datasets[key]
+    return latest_versions
 
-    return most_recent_datasets
+
+def merge_datasets(datasets):
+    """Merge datasets that only differ in capitalization.
+
+    Example of two datasets that will be merged:
+
+    Dataset available on hosts 'esgf-data1.ceda.ac.uk', 'esgf.nci.org.au',
+    'esgf2.dkrz.de':
+    cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010
+    Dataset available on host 'aims3.llnl.gov':
+    cmip5.output1.FIO.fio-esm.historical.mon.atmos.Amon.r1i1p1.v20121010
+    """
+    merged = {}
+    names = sorted(datasets, key=str.lower)
+    for _, aliases in itertools.groupby(names, key=str.lower):
+        name = next(aliases)
+        files = {file.name: file for file in datasets[name]}
+        for alias in aliases:
+            logger.info("Combining dataset %s with %s", alias, name)
+            for file in datasets[alias]:
+                if file.name not in files:
+                    files[file.name] = file
+                else:
+                    for url in file.urls:
+                        if url not in files[file.name].urls:
+                            files[file.name].urls.append(url)
+        merged[name] = list(files.values())
+
+    return merged
 
 
 def search(connection, preferred_hosts, facets):
@@ -196,6 +224,8 @@ def search(connection, preferred_hosts, facets):
                         checksum_type=file.checksum_type,
                     )
         files[dataset_name] = list(dataset_files.values())
+
+    files = merge_datasets(files)
 
     return files
 
@@ -450,7 +480,7 @@ def esgf_search(variable):
 
     connection = pyesgf.search.SearchConnection(**cfg["search_connection"])
 
-    facets = _get_esgf_facets(variable)
+    facets = get_esgf_facets(variable)
     if facets is None:
         return []
 
