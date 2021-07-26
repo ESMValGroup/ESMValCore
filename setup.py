@@ -46,7 +46,7 @@ REQUIREMENTS = {
         'pybtex',
         'pyyaml',
         'requests',
-        'scitools-iris>=3.0.2',
+        'scitools-iris>=3.0.2,<3.0.4',  # see environment.yml
         'shapely[vectorized]',
         'stratify',
         'yamale',
