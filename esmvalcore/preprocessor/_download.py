@@ -60,6 +60,32 @@ FACETS = {
         'short_name': 'variable',
     }
 }
+"""Mapping between the recipe and ESGF facet names."""
+
+DATASET_MAP = {
+    'CMIP3': {},
+    'CMIP5': {
+        'ACCESS1-0': 'ACCESS1.0',
+        'ACCESS1-3': 'ACCESS1.3',
+        'bcc-csm1-1': 'BCC-CSM1.1',
+        'bcc-csm1-1-m': 'BCC-CSM1.1(m)',
+        'CESM1-BGC': 'CESM1(BGC)',
+        'CESM1-CAM5': 'CESM1(CAM5)',
+        'CESM1-CAM5-1-FV2': 'CESM1(CAM5.1,FV2)',
+        'CESM1-FASTCHEM': 'CESM1(FASTCHEM)',
+        'CESM1-WACCM': 'CESM1(WACCM)',
+        'CSIRO-Mk3-6-0': 'CSIRO-Mk3.6.0',
+        'fio-esm': 'FIO-ESM',
+        'GFDL-CM2p1': 'GFDL-CM2.1',
+        'inmcm4': 'INM-CM4',
+        'MRI-AGCM3-2H': 'MRI-AGCM3.2H',
+        'MRI-AGCM3-2S': 'MRI-AGCM3.2S'
+    },
+    'CMIP6': {},
+    'CORDEX': {},
+    'obs4MIPs': {},
+}
+"""Cache for the mapping between recipe/filesystem and ESGF dataset names."""
 
 
 def get_esgf_facets(variable):
@@ -76,7 +102,11 @@ def get_esgf_facets(variable):
         facets['product'] = 'output1'
     for our_name, esgf_name in FACETS[project].items():
         if our_name in variable:
-            facets[esgf_name] = variable[our_name]
+            value = variable[our_name]
+            if our_name == 'dataset':
+                # Replace dataset name by ESGF name for dataset
+                value = DATASET_MAP[project].get(value, value)
+            facets[esgf_name] = value
 
     return facets
 
@@ -161,6 +191,54 @@ def merge_datasets(datasets):
     return merged
 
 
+def create_dataset_map(connection=None):
+    """Create a dataset map from recipe datasets to ESGF facet values."""
+    dataset_map = {}
+
+    if connection is None:
+        connection = get_connection()
+
+    indices = {
+        'CMIP3': 2,
+        'CMIP5': 3,
+        'CMIP6': 3,
+        'CORDEX': 7,
+        'obs4MIPs': 2,
+    }
+
+    for project in FACETS:
+        dataset_map[project] = {}
+        ctx = connection.new_context(project=project, latest=True)
+
+        dataset_key = FACETS[project]['dataset']
+        available_datasets = sorted(ctx.facet_counts[dataset_key])
+        print(f"The following datasets are available for project {project}:")
+        for dataset in available_datasets:
+            print(dataset)
+
+        # Figure out the ESGF name of the requested dataset
+        n_available = len(available_datasets)
+        for i, dataset in enumerate(available_datasets, 1):
+            print(f"Looking for dataset name of facet name"
+                  f" {dataset} ({i} of {n_available})")
+            query = {dataset_key: dataset}
+            dataset_result = next(iter(ctx.search(batch_size=1, **query)))
+            print(f"Dataset id: {dataset_result.dataset_id}")
+            dataset_id = dataset_result.dataset_id
+            if dataset in dataset_id:
+                print(f"Dataset facet is identical to "
+                      f"dataset name for '{dataset}'")
+            else:
+                idx = indices[project]
+                dataset_alias = dataset_id.split('.')[idx]
+                print(f"Found dataset name '{dataset_alias}'"
+                      f" for facet '{dataset}',")
+                dataset_map[project][dataset_alias] = dataset
+        print(dataset_map)
+
+    return dataset_map
+
+
 def search(connection, preferred_hosts, facets):
     """Search for files on ESGF.
 
@@ -185,13 +263,25 @@ def search(connection, preferred_hosts, facets):
         "Found %s datasets (any version, including copies)"
         " with facets=%s", ctx.hit_count, facets)
 
-    # Find available datasets
+    # Obtain dataset results
     datasets = {}
-    for dataset in ctx.search():
-        dataset_name, host = dataset.dataset_id.split('|')
+    for dataset_result in ctx.search(**facets, latest=True):
+        dataset_name, host = dataset_result.dataset_id.split('|')
         if dataset_name not in datasets:
             datasets[dataset_name] = {}
-        datasets[dataset_name][host] = dataset
+        datasets[dataset_name][host] = dataset_result
+
+    logger.info("Found the following datasets matching facets %s:\n%s", facets,
+                '\n'.join(datasets))
+
+    if not datasets:
+        # Figure out the ESGF name of the requested dataset here?
+        project = facets['project']
+        dataset_key = FACETS[project]['dataset']
+        available_datasets = sorted(ctx.facet_counts[dataset_key])
+        print(f"Available datasets for project {project}:"
+              "\n" + "\n".join(available_datasets))
+        raise ValueError(f"Dataset {facets[dataset_key]} not found")
 
     datasets = select_latest_versions(datasets)
 
@@ -208,10 +298,10 @@ def search(connection, preferred_hosts, facets):
 
         dataset_files = {}
         for host in hosts:
-            dataset = copies[host]
-            dataset_result = dataset.file_context().search(
+            dataset_result = copies[host]
+            file_result = dataset_result.file_context().search(
                 variable=facets['variable'])
-            for file in dataset_result:
+            for file in file_result:
                 if file.filename in dataset_files:
                     dataset_files[file.filename].urls.append(file.download_url)
                 else:
@@ -325,6 +415,7 @@ class ESGFFile:
 
     def local_file(self, dest_folder):
         """Return the path to the local file after download."""
+        # TODO: this fails for obs4MIPs datasets with a . in their name
         return Path(
             dest_folder,
             *self.dataset.split('.'),
@@ -469,8 +560,8 @@ class ESGFFile:
         shutil.move(tmp_file, local_file)
 
 
-def esgf_search(variable):
-    """Search files using esgf-pyclient."""
+def get_connection():
+    """Connect to ESGF."""
     cfg = _load_esgf_pyclient_config()
 
     manager = pyesgf.logon.LogonManager()
@@ -479,6 +570,13 @@ def esgf_search(variable):
         logger.info("Logged %s", "on" if manager.is_logged_on() else "off")
 
     connection = pyesgf.search.SearchConnection(**cfg["search_connection"])
+    return connection
+
+
+def esgf_search(variable):
+    """Search files using esgf-pyclient."""
+    cfg = _load_esgf_pyclient_config()
+    connection = get_connection()
 
     facets = get_esgf_facets(variable)
     if facets is None:
