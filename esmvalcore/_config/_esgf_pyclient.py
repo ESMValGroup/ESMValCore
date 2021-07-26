@@ -5,9 +5,9 @@ The configuration is read from the file ~/.esmvaltool/esgf-pyclient.yml.
 There are four sections in the configuration file:
 
 logon: contains keyword arguments to :func:`pyesgf.logon.LogonManager.logon`
-search_connection: contains keyword arguments to :class:`pyesgf.search.connection.SearchConnection`
-preferred_hosts: the first host in this list that has a certain file will be used
-ignore_hosts: these hosts will not be used
+search_connection: contains keyword arguments to
+    :class:`pyesgf.search.connection.SearchConnection`
+preferred_hosts: a way to specify which hosts are preferred
 """
 from functools import lru_cache
 from pathlib import Path
@@ -29,7 +29,8 @@ def _load_esgf_pyclient_config():
         # Arguments to
         # https://esgf-pyclient.readthedocs.io/en/latest/api.html#pyesgf.search.connection.SearchConnection
         'search_connection': {
-            'url': 'https://esgf-data.dkrz.de/esg-search',
+            # Be careful about the url, not all search urls have CMIP3 data?
+            'url': 'http://esgf-node.llnl.gov/esg-search',
             'distrib': True,
             'timeout': 120,
             'cache': str(Path().home() / '.pyesgf-cache'),
