@@ -1,4 +1,10 @@
 """Functions for downloading climate data files."""
+# TODO: fix authentication so we can download CORDEX
+# TODO: move to esmvalcore.esgf module
+# TODO: improve password saving by using keyring?
+# TODO: add unit tests
+# TODO: update documentation, remove synda instructions
+# TODO: fix obs4MIPs issue with the path for dataset names containing a period
 import asyncio
 import datetime
 import hashlib
@@ -86,6 +92,53 @@ DATASET_MAP = {
     'obs4MIPs': {},
 }
 """Cache for the mapping between recipe/filesystem and ESGF dataset names."""
+
+
+def create_dataset_map(connection=None):
+    """Create the DATASET_MAP from recipe datasets to ESGF dataset names."""
+    dataset_map = {}
+
+    if connection is None:
+        connection = get_connection()
+
+    indices = {
+        'CMIP3': 2,
+        'CMIP5': 3,
+        'CMIP6': 3,
+        'CORDEX': 7,
+        'obs4MIPs': 2,
+    }
+
+    for project in FACETS:
+        dataset_map[project] = {}
+        ctx = connection.new_context(project=project, latest=True)
+
+        dataset_key = FACETS[project]['dataset']
+        available_datasets = sorted(ctx.facet_counts[dataset_key])
+        print(f"The following datasets are available for project {project}:")
+        for dataset in available_datasets:
+            print(dataset)
+
+        # Figure out the ESGF name of the requested dataset
+        n_available = len(available_datasets)
+        for i, dataset in enumerate(available_datasets, 1):
+            print(f"Looking for dataset name of facet name"
+                  f" {dataset} ({i} of {n_available})")
+            query = {dataset_key: dataset}
+            dataset_result = next(iter(ctx.search(batch_size=1, **query)))
+            print(f"Dataset id: {dataset_result.dataset_id}")
+            dataset_id = dataset_result.dataset_id
+            if dataset in dataset_id:
+                print(f"Dataset facet is identical to "
+                      f"dataset name for '{dataset}'")
+            else:
+                idx = indices[project]
+                dataset_alias = dataset_id.split('.')[idx]
+                print(f"Found dataset name '{dataset_alias}'"
+                      f" for facet '{dataset}',")
+                dataset_map[project][dataset_alias] = dataset
+
+    return dataset_map
 
 
 def get_esgf_facets(variable):
@@ -191,55 +244,7 @@ def merge_datasets(datasets):
     return merged
 
 
-def create_dataset_map(connection=None):
-    """Create a dataset map from recipe datasets to ESGF facet values."""
-    dataset_map = {}
-
-    if connection is None:
-        connection = get_connection()
-
-    indices = {
-        'CMIP3': 2,
-        'CMIP5': 3,
-        'CMIP6': 3,
-        'CORDEX': 7,
-        'obs4MIPs': 2,
-    }
-
-    for project in FACETS:
-        dataset_map[project] = {}
-        ctx = connection.new_context(project=project, latest=True)
-
-        dataset_key = FACETS[project]['dataset']
-        available_datasets = sorted(ctx.facet_counts[dataset_key])
-        print(f"The following datasets are available for project {project}:")
-        for dataset in available_datasets:
-            print(dataset)
-
-        # Figure out the ESGF name of the requested dataset
-        n_available = len(available_datasets)
-        for i, dataset in enumerate(available_datasets, 1):
-            print(f"Looking for dataset name of facet name"
-                  f" {dataset} ({i} of {n_available})")
-            query = {dataset_key: dataset}
-            dataset_result = next(iter(ctx.search(batch_size=1, **query)))
-            print(f"Dataset id: {dataset_result.dataset_id}")
-            dataset_id = dataset_result.dataset_id
-            if dataset in dataset_id:
-                print(f"Dataset facet is identical to "
-                      f"dataset name for '{dataset}'")
-            else:
-                idx = indices[project]
-                dataset_alias = dataset_id.split('.')[idx]
-                print(f"Found dataset name '{dataset_alias}'"
-                      f" for facet '{dataset}',")
-                dataset_map[project][dataset_alias] = dataset
-        print(dataset_map)
-
-    return dataset_map
-
-
-def search(connection, preferred_hosts, facets):
+def esgf_search(connection, preferred_hosts, facets):
     """Search for files on ESGF.
 
     Parameters
@@ -253,9 +258,9 @@ def search(connection, preferred_hosts, facets):
 
     Returns
     -------
-    :obj:`list` of :obj:`str`
-        A dict with dataset names as keys and a list of filenames
-        (OPeNDAP URLs) as values.
+    :obj:`dict` of :obj:`list` of :obj:`ESGFFile`
+        The found datasets, stored in a dict with dataset names as keys and
+        lists of ESGFFile instances as values.
     """
     logger.info("Searching on ESGF using facets=%s", facets)
     ctx = connection.new_context(**facets, latest=True)
@@ -275,7 +280,6 @@ def search(connection, preferred_hosts, facets):
                 '\n'.join(datasets))
 
     if not datasets:
-        # Figure out the ESGF name of the requested dataset here?
         project = facets['project']
         dataset_key = FACETS[project]['dataset']
         available_datasets = sorted(ctx.facet_counts[dataset_key])
@@ -320,26 +324,6 @@ def search(connection, preferred_hosts, facets):
     return files
 
 
-def select_by_time(files, start_year, end_year):
-    """Select files containing data between start_year and end_year."""
-    filedict = {file.name: file for file in files}
-    files = select_files(filedict, start_year, end_year)
-
-    # filter partially overlapping files
-    intervals = {get_start_end_year(name): name for name in files}
-    files = []
-    for (start, end), filename in intervals.items():
-        for _start, _end in intervals:
-            if start == _start and end == _end:
-                continue
-            if start >= _start and end <= _end:
-                break
-        else:
-            files.append(filename)
-
-    return [filedict[f] for f in files]
-
-
 _RANGE_HOSTS = {}
 
 
@@ -355,12 +339,13 @@ def host_accepts_range(url):
                 headers={'Range': 'bytes=0-0'},
             )
         except requests.exceptions.RequestException:
+            # host is offline
             _RANGE_HOSTS[hostname] = False
         else:
             _RANGE_HOSTS[hostname] = (
                 response.status_code == 206
-                # http://esgf-data1.ceda.ac.uk does return status code 206, but
-                # it does not support ranges and will redirect to a html page
+                # esgf-data1.ceda.ac.uk does return status code 206, but it
+                # does not support ranges and will redirect to a html page
                 and response.headers['Content-Type'] == 'application/x-netcdf')
 
     return _RANGE_HOSTS[hostname]
@@ -560,6 +545,26 @@ class ESGFFile:
         shutil.move(tmp_file, local_file)
 
 
+def select_by_time(files, start_year, end_year):
+    """Select files containing data between start_year and end_year."""
+    filedict = {file.name: file for file in files}
+    files = select_files(filedict, start_year, end_year)
+
+    # filter partially overlapping files
+    intervals = {get_start_end_year(name): name for name in files}
+    files = []
+    for (start, end), filename in intervals.items():
+        for _start, _end in intervals:
+            if start == _start and end == _end:
+                continue
+            if start >= _start and end <= _end:
+                break
+        else:
+            files.append(filename)
+
+    return [filedict[f] for f in files]
+
+
 def get_connection():
     """Connect to ESGF."""
     cfg = _load_esgf_pyclient_config()
@@ -573,7 +578,7 @@ def get_connection():
     return connection
 
 
-def esgf_search(variable):
+def search(variable):
     """Search files using esgf-pyclient."""
     cfg = _load_esgf_pyclient_config()
     connection = get_connection()
@@ -582,7 +587,7 @@ def esgf_search(variable):
     if facets is None:
         return []
 
-    datasets = search(
+    datasets = esgf_search(
         connection,
         cfg['preferred_hosts'],
         facets,
@@ -625,3 +630,8 @@ def download(files, dest_folder):
             local_files.append(file)
 
     return local_files
+
+
+if __name__ == '__main__':
+    # Run this module to create an up to date DATASET_MAP
+    print(create_dataset_map())
