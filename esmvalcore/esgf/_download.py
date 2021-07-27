@@ -1,5 +1,4 @@
 """Module for downloading files from ESGF."""
-# TODO: fix authentication so we can download CORDEX
 # TODO: fix obs4MIPs issue with the path for dataset names containing a period
 import asyncio
 import datetime
@@ -13,6 +12,8 @@ from pathlib import Path
 
 import aiohttp
 import requests
+
+from ._logon import logon
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +125,7 @@ class ESGFFile:
         local_file = self.local_file(dest_folder)
         if local_file.exists():
             logger.info("Skipping download of existing file %s", local_file)
-            return str(local_file)
+            return local_file
 
         os.makedirs(local_file.parent, exist_ok=True)
         start_time = datetime.datetime.now()
@@ -136,10 +137,12 @@ class ESGFFile:
             for url in self.urls:
                 try:
                     self._download_single_url(local_file, url)
-                except requests.exceptions.RequestException:
-                    logger.info("Failed to download from %s", url)
+                except requests.exceptions.RequestException as exc:
+                    logger.info("Failed to download from %s. Message:\n%s",
+                                url, exc)
                 else:
                     break
+
         duration = datetime.datetime.now() - start_time
         logger.info("Downloaded %s (%.0f MB) in %s (%.1f MB/s)", local_file,
                     self.size / 2**20, duration,
@@ -159,7 +162,8 @@ class ESGFFile:
         tmp_file = self._tmp_local_file(local_file)
 
         logger.info("Downloading %s to %s", url, tmp_file)
-        response = requests.get(url, timeout=5)
+        response = requests.get(url, timeout=60, cert=logon().esgf_credentials)
+        response.raise_for_status()
         with tmp_file.open("wb") as file:
             chunk_size = 1 << 20  # 1 MB
             for chunk in response.iter_content(chunk_size=chunk_size):
@@ -247,6 +251,10 @@ class ESGFFile:
 
     def _finalize_download(self, tmp_file, local_file, checksum=None):
         """Move file to correct location if checksum is correct."""
+        if not tmp_file.exists():
+            raise IOError(
+                f"Failed to download file {local_file} from {self.urls}")
+
         if checksum is None:
             hasher = hashlib.new(self._checksum_type)
             with tmp_file.open('rb') as file:

@@ -4,12 +4,12 @@ import itertools
 import logging
 import pprint
 
-import pyesgf.logon
 import pyesgf.search
 
 from .._config._esgf_pyclient import _load_esgf_pyclient_config
 from .._data_finder import get_start_end_year, select_files
 from ._download import ESGFFile
+from ._logon import logon
 
 logger = logging.getLogger(__name__)
 
@@ -266,25 +266,21 @@ def merge_datasets(datasets):
     return merged
 
 
-def esgf_search(recipe_facets):
-    """Search for files on ESGF.
+def esgf_search_datasets(facets):
+    """Search for datasets on ESGF.
 
     Parameters
     ----------
-    recipe_facets: :obj:`dict` of :obj:`str`
-        Facets from the recipe to constrain the search.
+    facets: :obj:`dict` of :obj:`str`
+        Facets to constrain the search.
 
     Returns
     -------
-    :obj:`dict` of :obj:`list` of :obj:`ESGFFile`
-        The found datasets, stored in a dict with dataset names as keys and
-        lists of ESGFFile instances as values.
+    dict
+        The found datasets, stored in a dict with dataset names as keys,
+        followed by a dict with the hosts as keys the dataset result as values.
     """
-    facets = get_esgf_facets(recipe_facets)
-    if facets is None:
-        return {}
-
-    logger.info("Searching on ESGF using facets=%s", facets)
+    logger.info("Searching for datasets on ESGF using facets=%s", facets)
     connection = get_connection()
     context = connection.new_context(**facets, latest=True)
     logger.info(
@@ -300,15 +296,52 @@ def esgf_search(recipe_facets):
         datasets[dataset_name][host] = dataset_result
 
     logger.info("Found the following datasets matching facets %s:\n%s", facets,
-                '\n'.join(datasets))
+                '\n'.join(f"{d}: on {list(h)}" for d, h in datasets.items()))
 
     if not datasets:
+        # Give some advice on which facets are available
         project = facets['project']
-        dataset_key = FACETS[project]['dataset']
-        available_datasets = sorted(context.facet_counts[dataset_key])
-        print(f"Available datasets for project {project}:"
-              "\n" + "\n".join(available_datasets))
-        raise ValueError(f"Dataset {facets[dataset_key]} not found")
+        context = connection.new_context(project=project, latest=True)
+
+        # Distuinguish between valid and invalid choices
+        available_facets = {}
+        missing_facets = {}
+        for our_facet, esgf_facet in FACETS[project].items():
+            available = set(context.facet_counts[esgf_facet])
+            if esgf_facet in facets:
+                if facets[esgf_facet] in available:
+                    available_facets[esgf_facet] = facets[esgf_facet]
+                else:
+                    missing_facets[esgf_facet] = facets[esgf_facet]
+
+        reduced_ctx = context.constrain(**available_facets, latest=True)
+        for our_facet, esgf_facet in FACETS[project].items():
+            available = sorted(reduced_ctx.facet_counts[esgf_facet])
+            if esgf_facet in missing_facets:
+                logger.info("Available values for '%s' based on %s:\n%s",
+                            our_facet, available_facets,
+                            "\n".join(sorted(available)))
+
+        raise ValueError(f"No dataset matching facets {facets} found")
+
+    return datasets
+
+
+def esgf_search_files(facets):
+    """Search for files on ESGF.
+
+    Parameters
+    ----------
+    facets: :obj:`dict` of :obj:`str`
+        Facets to constrain the search.
+
+    Returns
+    -------
+    :obj:`dict` of :obj:`list` of :obj:`ESGFFile`
+        The found datasets, stored in a dict with dataset names as keys and
+        lists of ESGFFile instances as values.
+    """
+    datasets = esgf_search_datasets(facets)
 
     # Select only the latest versions
     datasets = select_latest_versions(datasets)
@@ -344,13 +377,9 @@ def select_by_time(files, start_year, end_year):
 
 def get_connection():
     """Connect to ESGF."""
+    logon()
+
     cfg = _load_esgf_pyclient_config()
-
-    manager = pyesgf.logon.LogonManager()
-    if not manager.is_logged_on():
-        manager.logon(**cfg['logon'])
-        logger.info("Logged %s", "on" if manager.is_logged_on() else "off")
-
     connection = pyesgf.search.SearchConnection(**cfg["search_connection"])
     return connection
 
@@ -455,10 +484,15 @@ def search(*, project, short_name, dataset, **facets):
     # likely that too many results will be found.
     facets['dataset'] = dataset
 
-    datasets = esgf_search(facets)
-    logger.info("Found files\n%s", pprint.pformat(datasets))
+    esgf_facets = get_esgf_facets(facets)
+    if esgf_facets is None:
+        return []
+
+    datasets = esgf_search_files(esgf_facets)
     if not datasets:
         return []
+
+    logger.info("Found files\n%s", pprint.pformat(datasets))
 
     if len(datasets) > 1:
         raise ValueError(
