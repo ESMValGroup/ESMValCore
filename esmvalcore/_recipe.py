@@ -30,6 +30,7 @@ from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
+from .esgf import search
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -39,7 +40,6 @@ from .preprocessor import (
     PreprocessorFile,
 )
 from .preprocessor._derive import get_required
-from .preprocessor._download import esgf_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
 from .preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -578,7 +578,7 @@ def _get_input_files(variable, config_user):
         except RecipeError:
             # Only look on ESGF if files are not available locally.
             local_files = set(Path(f).name for f in input_files)
-            for file in esgf_search(variable):
+            for file in search(**variable):
                 if file.name not in local_files:
                     local_copy = file.local_file(config_user['download_dir'])
                     if local_copy.exists():
