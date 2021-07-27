@@ -380,6 +380,49 @@ def get_connection():
     return connection
 
 
+def expand_facets(facets):
+    """Expand facet values that are a list."""
+    for facet, value in facets.items():
+        if not isinstance(value, list):
+            facets[facet] = [value]
+
+    expanded_facets = []
+    for facet_values in itertools.product(*facets.values()):
+        single_facets = dict(zip(facets, facet_values))
+        expanded_facets.append(single_facets)
+
+    return expanded_facets
+
+
+def search_single_facets(facets):
+    """Search for files on ESGF matching facets."""
+    esgf_facets = get_esgf_facets(facets)
+    if esgf_facets is None:
+        return []
+
+    datasets = esgf_search_files(esgf_facets)
+    if not datasets:
+        return []
+
+    logger.info("Found files\n%s", pprint.pformat(datasets))
+
+    if len(datasets) > 1:
+        raise ValueError(
+            "Expected to find a single dataset, found\n:{}".format(
+                pprint.pformat(datasets)))
+
+    dataset_name = next(iter(datasets))
+    files = datasets[dataset_name]
+
+    filter_timerange = (facets.get('frequency', '') != 'fx'
+                        and 'start_year' in facets and 'end_year' in facets)
+    if filter_timerange:
+        files = select_by_time(files, facets['start_year'], facets['end_year'])
+        logger.info("Selected files:\n%s", '\n'.join(str(f) for f in files))
+
+    return files
+
+
 def search(*, project, short_name, dataset, **facets):
     """Search for files on ESGF.
 
@@ -392,7 +435,8 @@ def search(*, project, short_name, dataset, **facets):
     dataset : str
         The name of the dataset.
     **facets:
-        Any other search facets.
+        Any other search facets. Values can be strings, list of strings, or
+        'start_year' and 'end_year' with values of type :obj:`int`.
 
     Raises
     ------
@@ -480,29 +524,9 @@ def search(*, project, short_name, dataset, **facets):
     # likely that too many results will be found.
     facets['dataset'] = dataset
 
-    esgf_facets = get_esgf_facets(facets)
-    if esgf_facets is None:
-        return []
-
-    datasets = esgf_search_files(esgf_facets)
-    if not datasets:
-        return []
-
-    logger.info("Found files\n%s", pprint.pformat(datasets))
-
-    if len(datasets) > 1:
-        raise ValueError(
-            "Expected to find a single dataset, found\n:{}".format(
-                pprint.pformat(datasets)))
-
-    dataset_name = next(iter(datasets))
-    files = datasets[dataset_name]
-
-    filter_timerange = (facets.get('frequency', '') != 'fx'
-                        and 'start_year' in facets and 'end_year' in facets)
-    if filter_timerange:
-        files = select_by_time(files, facets['start_year'], facets['end_year'])
-        logger.info("Selected files:\n%s", '\n'.join(str(f) for f in files))
+    files = []
+    for single_facets in expand_facets(facets):
+        files.extend(search_single_facets(single_facets))
 
     return files
 
