@@ -176,7 +176,7 @@ It will be installed along with ESMValCore and can also be viewed on GitHub:
 `esmvalcore/config-developer.yml
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config-developer.yml>`_.
 This configuration file describes the file system structure and CMOR tables for several
-key projects (CMIP6, CMIP5, obs4mips, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
+key projects (CMIP6, CMIP5, obs4MIPs, OBS6, OBS) on several key machines (e.g. BADC, CP4CDS, DKRZ,
 ETHZ, SMHI, BSC), and for native output data for some
 models (IPSL, ... see :ref:`configure_native_models`).
 CMIP data is stored as part of the Earth System Grid

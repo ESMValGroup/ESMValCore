@@ -450,65 +450,65 @@ def search(*, project, short_name, dataset, **facets):
     Search for a CMIP3 dataset:
 
     >>> search(
-        project='CMIP3',
-        frequency='mon',
-        short_name='tas',
-        dataset='cccma_cgcm3_1',
-        exp='historical',
-        ensemble='run1',
-    )  # doctest: +SKIP
+    ...     project='CMIP3',
+    ...     frequency='mon',
+    ...     short_name='tas',
+    ...     dataset='cccma_cgcm3_1',
+    ...     exp='historical',
+    ...     ensemble='run1',
+    ... )  # doctest: +SKIP
     [ESGFFile:cmip3/CCCma/cccma_cgcm3_1/historical/mon/atmos/run1/tas/v1/tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc]
 
     Search for a CMIP5 dataset:
 
     >>> search(
-        project='CMIP5',
-        mip='Amon',
-        short_name='tas',
-        dataset='inmcm4',
-        exp='historical',
-        ensemble='r1i1p1',
-    )  # doctest: +SKIP
+    ...     project='CMIP5',
+    ...     mip='Amon',
+    ...     short_name='tas',
+    ...     dataset='inmcm4',
+    ...     exp='historical',
+    ...     ensemble='r1i1p1',
+    ... )  # doctest: +SKIP
     [ESGFFile:cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/v20130207/tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc]
 
     Search for a CMIP6 dataset:
 
     >>> search(
-        project='CMIP6',
-        mip='Amon',
-        short_name='tas',
-        dataset='CanESM5',
-        exp='historical',
-        ensemble='r1i1p1f1',
-    )  # doctest: +SKIP
+    ...     project='CMIP6',
+    ...     mip='Amon',
+    ...     short_name='tas',
+    ...     dataset='CanESM5',
+    ...     exp='historical',
+    ...     ensemble='r1i1p1f1',
+    ... )  # doctest: +SKIP
     [ESGFFile:CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p1f1/Amon/tas/gn/v20190429/tas_Amon_CanESM5_historical_r1i1p1f1_gn_185001-201412.nc]
 
     Search for a CORDEX dataset and limit the search results to files
     containing data to the years in the range 1990-2000:
 
     >>> search(
-        project='CORDEX',
-        frequency='mon',
-        dataset='COSMO-crCLIM-v1-1',
-        short_name='tas',
-        exp='historical',
-        ensemble='r1i1p1',
-        domain='EUR-11',
-        driver='MPI-M-MPI-ESM-LR',
-        start_year=1990,
-        end_year=2000,
-    )  # doctest: +SKIP
+    ...     project='CORDEX',
+    ...     frequency='mon',
+    ...     dataset='COSMO-crCLIM-v1-1',
+    ...     short_name='tas',
+    ...     exp='historical',
+    ...     ensemble='r1i1p1',
+    ...     domain='EUR-11',
+    ...     driver='MPI-M-MPI-ESM-LR',
+    ...     start_year=1990,
+    ...     end_year=2000,
+    ... )  # doctest: +SKIP
     [ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_198101-199012.nc,
     ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_199101-200012.nc]
 
     Search for a obs4MIPs dataset:
 
     >>> search(
-        project='obs4MIPs',
-        frequency='mon',
-        dataset='CERES-EBAF',
-        short_name='rsutcs',
-    )  # doctest: +SKIP
+    ...     project='obs4MIPs',
+    ...     frequency='mon',
+    ...     dataset='CERES-EBAF',
+    ...     short_name='rsutcs',
+    ... )  # doctest: +SKIP
     [ESGFFile:obs4MIPs/NASA-LaRC/CERES-EBAF/atmos/mon/v20160610/rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc]
 
     Returns

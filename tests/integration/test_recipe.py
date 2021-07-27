@@ -97,7 +97,7 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
-    cfg['synda_download'] = False
+    cfg['download'] = False
     cfg['check_level'] = CheckLevels.DEFAULT
     return cfg
 
@@ -1751,7 +1751,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1771,7 +1771,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
         assert settings['area_type'] == 'land'
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
             assert fx_variables.get('sftlf')
         else:
@@ -1802,7 +1802,7 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1850,7 +1850,7 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
                 additional_datasets:
                   - {dataset: CanESM2}
                   - {dataset: GFDL-CM3}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1929,7 +1929,7 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1950,7 +1950,7 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
         else:
             assert len(fx_variables) == 2
@@ -2121,7 +2121,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
                   - {dataset: CanESM2}
                   - {dataset: CanESM5, project: CMIP6, grid: gn,
                      ensemble: r1i1p1f1}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -2853,7 +2853,7 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     sftgif_files = fx_variables['sftgif']['filename']
     assert isinstance(sftgif_files, list)
     assert len(sftgif_files) == 1
-    assert'_LImon_' in sftgif_files[0]
+    assert '_LImon_' in sftgif_files[0]
 
 
 def test_multimodel_mask(tmp_path, patched_datafinder, config_user):

@@ -276,7 +276,7 @@ _validators = {
     "skip-nonexistent": validate_bool,
     "diagnostics": validate_diagnostics,
     "check_level": validate_check_level,
-    "esgf_download": validate_bool,
+    "download": validate_bool,
     'max_years': validate_int_positive_or_none,
     'max_datasets': validate_int_positive_or_none,
 

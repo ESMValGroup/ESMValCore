@@ -138,6 +138,14 @@ def read_config_user_file(config_file, folder_name, options=None):
         cfg['config_developer_file'])
     cfg['config_file'] = config_file
 
+    for section in ['rootpath', 'drs']:
+        if 'obs4mips' in cfg[section]:
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips'"
+                " should be written as 'obs4MIPs' in %s in %s", section,
+                config_file)
+            cfg[section]['obs4MIPs'] = cfg[section].pop('obs4mips')
+
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
         if isinstance(root, str):
@@ -198,6 +206,9 @@ def load_config_developer(cfg_file=None):
     cfg_developer = read_config_developer_file(cfg_file)
     for key, value in cfg_developer.items():
         if key == 'obs4mips':
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips'"
+                " should be written as 'obs4MIPs' in %s", cfg_file)
             key = 'obs4MIPs'
         CFG[key] = value
     read_cmor_tables(CFG)

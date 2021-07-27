@@ -260,7 +260,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings = {}
 
     # Set up downloading using synda if requested.
-    if config_user.get('esgf_download'):
+    if config_user.get('download'):
         settings['download'] = {
             'dest_folder': config_user['download_dir'],
         }
@@ -326,8 +326,11 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['add_fx_variables'] = {
         'fx_variables': {},
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
-        'dest_folder': config_user['download_dir'],
     }
+    if config_user.get('download'):
+        settings['add_fx_variables']['dest_folder'] = (
+            config_user['download_dir'])
+
     settings['remove_fx_variables'] = {}
 
     return settings
@@ -528,7 +531,7 @@ def _update_fx_settings(settings, variable, config_user):
                     'sftlf': None,
                 },
             }
-            if variable['project'] != 'obs4mips':
+            if variable['project'] != 'obs4MIPs':
                 default_fx['mask_landsea'].update({'sftof': None})
                 default_fx['weighting_landsea_fraction'].update(
                     {'sftof': None})
@@ -571,7 +574,7 @@ def _get_input_files(variable, config_user):
                                      drs=config_user['drs'])
 
     # Set up downloading from ESGF if requested.
-    if config_user.get('esgf_download'):
+    if config_user.get('download'):
         try:
             check.data_availability(
                 input_files, variable, dirnames, filenames, log=False)

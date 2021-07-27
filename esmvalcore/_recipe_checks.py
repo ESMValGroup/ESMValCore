@@ -156,6 +156,7 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
         return
 
     start = missing_years[0]
+    end = start
     ranges = []
     for year in missing_years[1:]:
         if year == end + 1:

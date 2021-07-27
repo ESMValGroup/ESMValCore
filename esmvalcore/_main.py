@@ -309,7 +309,7 @@ class ESMValTool():
             max_datasets=None,
             max_years=None,
             skip_nonexistent=False,
-            esgf_download=False,
+            download=False,
             diagnostics=None,
             check_level='default',
             **kwargs):
@@ -333,7 +333,7 @@ class ESMValTool():
             Maximum number of years to use.
         skip_nonexistent: bool, optional
             If True, the run will not fail if some datasets are not available.
-        esgf_download: bool, optional
+        download: bool, optional
             If True, the tool will try to download missing data from ESGF.
         diagnostics: list(str), optional
             Only run the selected diagnostics from the recipe. To provide more
@@ -391,7 +391,7 @@ class ESMValTool():
             for pattern in diagnostics or ()
         }
         cfg['check_level'] = CheckLevels[check_level.upper()]
-        cfg['esgf_download'] = esgf_download
+        cfg['download'] = download
 
         def _check_limit(limit, value):
             if value is not None and value < 1:

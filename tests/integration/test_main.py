@@ -108,8 +108,8 @@ def test_run_with_max_datasets():
 
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_synda_download():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--synda_download=True'):
+def test_run_with_download():
+    with arguments('esmvaltool', 'run', 'recipe.yml', '--download=True'):
         run()
 
 
