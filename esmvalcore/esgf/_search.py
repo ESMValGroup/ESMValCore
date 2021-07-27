@@ -1,5 +1,4 @@
 """Module for finding files on ESGF."""
-# TODO: improve password saving by using keyring?
 import itertools
 import logging
 import pprint
@@ -114,10 +113,7 @@ def create_dataset_map(connection=None):
             dataset_result = next(iter(ctx.search(batch_size=1, **query)))
             print(f"Dataset id: {dataset_result.dataset_id}")
             dataset_id = dataset_result.dataset_id
-            if dataset in dataset_id:
-                print(f"Dataset facet is identical to "
-                      f"dataset name for '{dataset}'")
-            else:
+            if dataset not in dataset_id:
                 idx = indices[project]
                 dataset_alias = dataset_id.split('.')[idx]
                 print(f"Found dataset name '{dataset_alias}'"
@@ -318,9 +314,9 @@ def esgf_search_datasets(facets):
         for our_facet, esgf_facet in FACETS[project].items():
             available = sorted(reduced_ctx.facet_counts[esgf_facet])
             if esgf_facet in missing_facets:
-                logger.info("Available values for '%s' based on %s:\n%s",
-                            our_facet, available_facets,
-                            "\n".join(sorted(available)))
+                logger.error("Available values for '%s' based on %s:\n%s",
+                             our_facet, available_facets,
+                             "\n".join(sorted(available)))
 
         raise ValueError(f"No dataset matching facets {facets} found")
 
@@ -475,7 +471,7 @@ def search(*, project, short_name, dataset, **facets):
     -------
     :obj:`list` of :obj:`ESGFFile`
         A list of files that have been found.
-    """
+    """  # pylint: disable=locally-disabled, line-too-long
     # The project and short_name functions are required for the function
     # to work.
     facets['project'] = project

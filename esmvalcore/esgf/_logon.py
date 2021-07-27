@@ -21,6 +21,7 @@ def logon():
     manager = get_manager()
 
     if not manager.is_logged_on():
+        # TODO: improve password saving by using keyring?
         manager.logon(**cfg['logon'])
         logger.info("Logged %s", "on" if manager.is_logged_on() else "off")
 

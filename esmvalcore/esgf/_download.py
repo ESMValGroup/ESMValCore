@@ -46,6 +46,7 @@ def host_accepts_range(url):
 
 class Queue(asyncio.Queue):
     """Queue that keeps track of the number of unfinished tasks."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.unfinished_tasks = 0
@@ -77,6 +78,7 @@ class ESGFFile:
     size : int
         The size of the file in bytes.
     """
+
     def __init__(self, urls, dataset, name, size, checksum, checksum_type):
         self.urls = urls
         self.dataset = dataset
@@ -209,9 +211,9 @@ class ESGFFile:
             n_chunks = queue.qsize()
             while queue.unfinished_tasks:
                 await asyncio.sleep(1)
-                print(f"Queued chunks: {queue.qsize()}, running"
-                      f" {queue.unfinished_tasks - queue.qsize()},"
-                      f" total {n_chunks}, ")
+                logger.info("Queued chunks: %s, running %s, total %s",
+                            queue.qsize(),
+                            queue.unfinished_tasks - queue.qsize(), n_chunks)
                 await self._check_worker_health(workers, urls)
 
             # Clean up workers
@@ -229,24 +231,26 @@ class ESGFFile:
         timeout = aiohttp.ClientTimeout(total=12 * 60 * 60)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             while True:
-                print(f"Requesting work for host {hostname}")
+                logger.info("Requesting work for host %s", hostname)
                 chunk = await queue.get()
                 start, end = chunk
                 headers = {'Range': f'bytes={start}-{end}'}
-                print(f"Start download {start}-{end} of {url}")
+                logger.info("Start download %s-%s MB of %s", start / 2**20,
+                            end / 2**20, url)
                 try:
                     async with session.get(url, timeout=60,
                                            headers=headers) as response:
                         content = await response.content.read()
                 except (aiohttp.ClientError,
                         asyncio.exceptions.TimeoutError) as exc:
-                    print(f"Not able to download from host {hostname}")
+                    logger.info("Not able to download from host %s", hostname)
                     await queue.put(chunk)
                     raise asyncio.CancelledError from exc
 
                 tmp_file.seek(start)
                 tmp_file.write(content)
-                print(f"Done: chunk {start} of {url}")
+                logger.info("Done: chunk %s-%s MB of %s", start / 2**20,
+                            end / 2**20, url)
                 queue.task_done()
 
     def _finalize_download(self, tmp_file, local_file, checksum=None):
