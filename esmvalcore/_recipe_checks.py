@@ -155,19 +155,23 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
     if not missing_years:
         return
 
+    # Group missing years in ranges
     start = missing_years[0]
-    end = start
-    ranges = []
+    starts = [start]
+    ends = []
+    year = start
+    previous_year = year
     for year in missing_years[1:]:
-        if year == end + 1:
-            end = year
-        else:
-            if start == end:
-                ranges.append(f"{start}")
-            else:
-                ranges.append(f"{start}-{end}")
-            start = year
-            end = year
+        if year != previous_year + 1:
+            starts.append(year)
+            ends.append(previous_year)
+        previous_year = year
+    ends.append(year)
+
+    ranges = []
+    for start, end in zip(starts, ends):
+        ranges.append(f"{start}" if start == end else f"{start}-{end}")
+
     raise RecipeError(
         "No input data available for years {} in files {}".format(
             ", ".join(ranges), input_files))
