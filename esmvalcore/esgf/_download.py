@@ -1,5 +1,4 @@
 """Module for downloading files from ESGF."""
-# TODO: fix obs4MIPs issue with the path for dataset names containing a period
 import asyncio
 import datetime
 import hashlib
@@ -104,7 +103,6 @@ class ESGFFile:
         pathlib.Path
             The path where the file will be located after download.
         """
-        # TODO: this fails for obs4MIPs datasets with a . in their name
         return Path(
             dest_folder,
             *self.dataset.split('.'),

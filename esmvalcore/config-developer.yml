@@ -208,7 +208,7 @@ obs4MIPs:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}'
-    ESGF: '{institute}/{dataset}/{modeling_realm}/{frequency}/{latestversion}'
+    ESGF: '{institute}/{dataset}/{latestversion}'
     RCAST: '/'
     IPSL: '{realm}/{short_name}/{freq}/{grid}/{institute}/{dataset}/{latest_version}'
   input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'

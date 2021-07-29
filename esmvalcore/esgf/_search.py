@@ -184,9 +184,9 @@ def select_latest_versions(datasets: dict) -> dict:
         A dict containing only the most recent version of each dataset object,
         in case multiple versions have been passed.
     """
-    def name(dataset_name):
+    def name(dataset_id):
         """Return the name of the dataset without the version."""
-        return dataset_name.rsplit('.', 1)[0]
+        return dataset_id.rsplit('.', 1)[0]
 
     latest_versions = {}
     for _, versions in itertools.groupby(sorted(datasets), key=name):
@@ -196,39 +196,49 @@ def select_latest_versions(datasets: dict) -> dict:
     return latest_versions
 
 
-def find_files(datasets, short_name):
+def simplify_dataset_id(dataset_id, facets):
+    """Simplify dataset_id so it is always composed of the same facets."""
+    project = facets['project']
+    if project != 'obs4MIPs':
+        return dataset_id
+
+    version = dataset_id.rsplit('.', 1)[1]
+    dataset_key = FACETS[project]['dataset']
+    dataset_name = facets[dataset_key]
+    return f"{project}.{dataset_name}.{version}"
+
+
+def find_files(datasets, facets):
     """Find files for each dataset in datasets."""
     cfg = _load_esgf_pyclient_config()
     preferred_hosts = cfg.get('preferred_hosts', [])
 
     files = {}
-    for dataset_name in sorted(datasets):
-        copies = datasets[dataset_name]
+    for dataset_id in sorted(datasets):
+        copies = datasets[dataset_id]
         hosts = sort_hosts(copies.keys(), preferred_hosts)
         logger.info(
             "Searching for files for dataset %s, available on hosts %s",
-            dataset_name,
-            hosts,
-        )
+            dataset_id, hosts)
 
         dataset_files = {}
         for host in hosts:
             dataset_result = copies[host]
             file_result = dataset_result.file_context().search(
-                variable=short_name)
+                variable=facets['variable'])
             for file in file_result:
                 if file.filename in dataset_files:
                     dataset_files[file.filename].urls.append(file.download_url)
                 else:
                     dataset_files[file.filename] = ESGFFile(
                         urls=[file.download_url],
-                        dataset=dataset_name,
+                        dataset=simplify_dataset_id(dataset_id, facets),
                         name=file.filename,
                         size=file.size,
                         checksum=file.checksum,
                         checksum_type=file.checksum_type,
                     )
-        files[dataset_name] = list(dataset_files.values())
+        files[dataset_id] = list(dataset_files.values())
 
     return files
 
@@ -286,10 +296,10 @@ def esgf_search_datasets(facets):
     # Obtain dataset results
     datasets = {}
     for dataset_result in context.search(**facets, latest=True):
-        dataset_name, host = dataset_result.dataset_id.split('|')
-        if dataset_name not in datasets:
-            datasets[dataset_name] = {}
-        datasets[dataset_name][host] = dataset_result
+        dataset_id, host = dataset_result.dataset_id.split('|')
+        if dataset_id not in datasets:
+            datasets[dataset_id] = {}
+        datasets[dataset_id][host] = dataset_result
 
     logger.info("Found the following datasets matching facets %s:\n%s", facets,
                 '\n'.join(f"{d} on {list(h)}" for d, h in datasets.items()))
@@ -299,7 +309,7 @@ def esgf_search_datasets(facets):
         project = facets['project']
         context = connection.new_context(project=project, latest=True)
 
-        # Distuinguish between valid and invalid choices
+        # Distinguish between valid and invalid choices
         available_facets = {}
         missing_facets = {}
         for our_facet, esgf_facet in FACETS[project].items():
@@ -343,7 +353,7 @@ def esgf_search_files(facets):
     datasets = select_latest_versions(datasets)
 
     # Find files for each dataset
-    files = find_files(datasets, facets['variable'])
+    files = find_files(datasets, facets)
 
     # Merge datasets that only differ in capitalization
     files = merge_datasets(files)
@@ -407,8 +417,8 @@ def search_single_facets(facets):
             "Expected to find a single dataset, found\n:{}".format(
                 pprint.pformat(datasets)))
 
-    dataset_name = next(iter(datasets))
-    files = datasets[dataset_name]
+    dataset_id = next(iter(datasets))
+    files = datasets[dataset_id]
 
     return files
 
