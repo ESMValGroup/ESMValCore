@@ -9,19 +9,23 @@ search_connection: contains keyword arguments to
     :class:`pyesgf.search.connection.SearchConnection`
 preferred_hosts: a way to specify which hosts are preferred
 """
+import importlib
 import logging
 import os
 import stat
 import textwrap
 from functools import lru_cache
 from pathlib import Path
+from types import ModuleType
+from typing import Optional
 
 import yaml
 
+keyring: Optional[ModuleType] = None
 try:
-    import keyring
-except ImportError:
-    keyring = None
+    keyring = importlib.import_module('keyring')
+except ModuleNotFoundError:
+    pass
 
 logger = logging.getLogger(__name__)
 
