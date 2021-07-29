@@ -50,6 +50,7 @@ VARIABLES = [{
 }]
 
 
+@pytest.mark.skip(reason="This will actually search the ESGF.")
 def test_search():
     results = [
         ['tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc'],

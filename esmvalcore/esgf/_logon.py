@@ -21,7 +21,7 @@ def logon():
     manager = get_manager()
 
     if not manager.is_logged_on():
-        if ('interactive' in cfg['logon']
+        if (cfg['logon'].get('interactive')
                 or {'hostname', 'username', 'password'} == set(cfg['logon'])):
             manager.logon(**cfg['logon'])
             if manager.is_logged_on():
