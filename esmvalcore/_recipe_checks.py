@@ -129,6 +129,32 @@ def _log_data_availability_errors(input_files, var, dirnames, filenames):
         logger.error("Set 'log_level' to 'debug' to get more information")
 
 
+def _group_years(years):
+    """Group an iterable of years into easy to read text.
+
+    Example
+    -------
+    [1990, 1991, 1992, 1993, 2000] -> "1990-1993, 2000"
+    """
+    years = sorted(years)
+    year = years[0]
+    previous_year = year
+    starts = [year]
+    ends = []
+    for year in years[1:]:
+        if year != previous_year + 1:
+            starts.append(year)
+            ends.append(previous_year)
+        previous_year = year
+    ends.append(year)
+
+    ranges = []
+    for start, end in zip(starts, ends):
+        ranges.append(f"{start}" if start == end else f"{start}-{end}")
+
+    return ", ".join(ranges)
+
+
 def data_availability(input_files, var, dirnames, filenames, log=True):
     """Check if input_files cover the required years."""
     if log:
@@ -151,30 +177,13 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
         start, end = get_start_end_year(filename)
         available_years.update(range(start, end + 1))
 
-    missing_years = sorted(required_years - available_years)
-    if not missing_years:
-        return
+    missing_years = required_years - available_years
+    if missing_years:
+        missing_txt = _group_years(missing_years)
 
-    # Group missing years in ranges
-    start = missing_years[0]
-    starts = [start]
-    ends = []
-    year = start
-    previous_year = year
-    for year in missing_years[1:]:
-        if year != previous_year + 1:
-            starts.append(year)
-            ends.append(previous_year)
-        previous_year = year
-    ends.append(year)
-
-    ranges = []
-    for start, end in zip(starts, ends):
-        ranges.append(f"{start}" if start == end else f"{start}-{end}")
-
-    raise RecipeError(
-        "No input data available for years {} in files {}".format(
-            ", ".join(ranges), input_files))
+        raise RecipeError(
+            "No input data available for years {} in files:\n{}".format(
+                missing_txt, "\n".join(str(f) for f in input_files)))
 
 
 def tasks_valid(tasks):

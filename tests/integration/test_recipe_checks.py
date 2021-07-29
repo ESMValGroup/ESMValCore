@@ -11,7 +11,7 @@ ERR_D = ('Looked for files in %s, but did not find any file pattern to match '
          'against')
 ERR_F = ('Looked for files matching %s, but did not find any existing input '
          'directory')
-ERR_RANGE = 'No input data available for years {} in files {}'
+ERR_RANGE = 'No input data available for years {} in files:\n{}'
 VAR = {
     'filename': 'a/c.nc',
     'frequency': 'mon',
@@ -37,11 +37,13 @@ FILES = [
 DATA_AVAILABILITY_DATA = [
     (FILES, dict(VAR), None),
     (FILES, dict(FX_VAR), None),
-    (FILES[1:], dict(VAR), ERR_RANGE.format('2020', FILES[1:])),
-    (FILES[:-1], dict(VAR), ERR_RANGE.format('2025', FILES[:-1])),
-    (FILES[:-3], dict(VAR), ERR_RANGE.format('2023-2025', FILES[:-3])),
+    (FILES[1:], dict(VAR), ERR_RANGE.format('2020', "\n".join(FILES[1:]))),
+    (FILES[:-1], dict(VAR), ERR_RANGE.format('2025', "\n".join(FILES[:-1]))),
+    (FILES[:-3], dict(VAR), ERR_RANGE.format('2023-2025',
+                                             "\n".join(FILES[:-3]))),
     ([FILES[1]] + [FILES[3]], dict(VAR),
-     ERR_RANGE.format('2020, 2022, 2024-2025', [FILES[1]] + [FILES[3]])),
+     ERR_RANGE.format('2020, 2022, 2024-2025',
+                      "\n".join([FILES[1]] + [FILES[3]]))),
 ]
 
 
