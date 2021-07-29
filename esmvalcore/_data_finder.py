@@ -26,6 +26,7 @@ def find_files(dirnames, filenames):
     for dirname in dirnames:
         for path, _, files in os.walk(dirname, followlinks=True):
             for filename in filenames:
+                files.sort()  # sorting makes it easier to see what was found
                 matches = fnmatch.filter(files, filename)
                 result.extend(os.path.join(path, f) for f in matches)
 
