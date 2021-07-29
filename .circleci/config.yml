@@ -49,6 +49,7 @@ jobs:
           # Install curl for codecov upload
           command: apt update && apt install -y curl
       - codecov/upload:
+          when: always
           file: 'test-reports/coverage.xml'
       - coverage-reporter/send_report:
           coverage-reports: 'test-reports/coverage.xml'
