@@ -1,3 +1,4 @@
+import os.path
 from collections import defaultdict
 
 import yaml
@@ -19,7 +20,7 @@ DEFAULT_CONFIG: dict = {
         'url': 'http://esgf-node.llnl.gov/esg-search',
         'distrib': True,
         'timeout': 120,
-        'cache': '/home/bandela/.pyesgf-cache',
+        'cache': os.path.expanduser('~/.pyesgf-cache'),
         'expire_after': 86400
     },
     'preferred_hosts': [],
