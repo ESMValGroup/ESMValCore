@@ -13,7 +13,7 @@ from pathlib import Path
 import aiohttp
 import requests
 
-from ._logon import logon
+from ._logon import get_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,6 @@ def host_accepts_range(url):
 
 class Queue(asyncio.Queue):
     """Queue that keeps track of the number of unfinished tasks."""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.unfinished_tasks = 0
@@ -78,7 +77,6 @@ class ESGFFile:
     size : int
         The size of the file in bytes.
     """
-
     def __init__(self, urls, dataset, name, size, checksum, checksum_type):
         self.urls = urls
         self.dataset = dataset
@@ -164,7 +162,7 @@ class ESGFFile:
         tmp_file = self._tmp_local_file(local_file)
 
         logger.info("Downloading %s to %s", url, tmp_file)
-        response = requests.get(url, timeout=60, cert=logon().esgf_credentials)
+        response = requests.get(url, timeout=60, cert=get_credentials())
         response.raise_for_status()
         with tmp_file.open("wb") as file:
             chunk_size = 1 << 20  # 1 MB

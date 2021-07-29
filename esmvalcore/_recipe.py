@@ -582,8 +582,8 @@ def _get_input_files(variable, config_user):
             # Only look on ESGF if files are not available locally.
             local_files = set(Path(f).name for f in input_files)
             for file in search(**variable):
-                if file.name not in local_files:
-                    local_copy = file.local_file(config_user['download_dir'])
+                local_copy = file.local_file(config_user['download_dir'])
+                if local_copy.name not in local_files:
                     if local_copy.exists():
                         input_files.append(str(local_copy))
                     else:

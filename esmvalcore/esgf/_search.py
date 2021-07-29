@@ -292,7 +292,7 @@ def esgf_search_datasets(facets):
         datasets[dataset_name][host] = dataset_result
 
     logger.info("Found the following datasets matching facets %s:\n%s", facets,
-                '\n'.join(f"{d}: on {list(h)}" for d, h in datasets.items()))
+                '\n'.join(f"{d} on {list(h)}" for d, h in datasets.items()))
 
     if not datasets:
         # Give some advice on which facets are available
@@ -373,7 +373,7 @@ def select_by_time(files, start_year, end_year):
 
 def get_connection():
     """Connect to ESGF."""
-    logon()
+    logon()  # TODO: check if this is needed here at all
 
     cfg = _load_esgf_pyclient_config()
     connection = pyesgf.search.SearchConnection(**cfg["search_connection"])
@@ -396,11 +396,7 @@ def expand_facets(facets):
 
 def search_single_facets(facets):
     """Search for files on ESGF matching facets."""
-    esgf_facets = get_esgf_facets(facets)
-    if esgf_facets is None:
-        return []
-
-    datasets = esgf_search_files(esgf_facets)
+    datasets = esgf_search_files(facets)
     if not datasets:
         return []
 
@@ -413,12 +409,6 @@ def search_single_facets(facets):
 
     dataset_name = next(iter(datasets))
     files = datasets[dataset_name]
-
-    filter_timerange = (facets.get('frequency', '') != 'fx'
-                        and 'start_year' in facets and 'end_year' in facets)
-    if filter_timerange:
-        files = select_by_time(files, facets['start_year'], facets['end_year'])
-        logger.info("Selected files:\n%s", '\n'.join(str(f) for f in files))
 
     return files
 
@@ -524,9 +514,19 @@ def search(*, project, short_name, dataset, **facets):
     # likely that too many results will be found.
     facets['dataset'] = dataset
 
+    esgf_facets = get_esgf_facets(facets)
+    if esgf_facets is None:
+        return []
+
     files = []
-    for single_facets in expand_facets(facets):
+    for single_facets in expand_facets(esgf_facets):
         files.extend(search_single_facets(single_facets))
+
+    filter_timerange = (facets.get('frequency', '') != 'fx'
+                        and 'start_year' in facets and 'end_year' in facets)
+    if filter_timerange:
+        files = select_by_time(files, facets['start_year'], facets['end_year'])
+        logger.info("Selected files:\n%s", '\n'.join(str(f) for f in files))
 
     return files
 

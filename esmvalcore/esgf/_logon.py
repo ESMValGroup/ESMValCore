@@ -23,6 +23,16 @@ def logon():
     if not manager.is_logged_on():
         # TODO: improve password saving by using keyring?
         manager.logon(**cfg['logon'])
-        logger.info("Logged %s", "on" if manager.is_logged_on() else "off")
+        if manager.is_logged_on():
+            logger.info("Logged on to ESGF")
+        else:
+            logger.warning(
+                "Failed to log on to ESGF, data availability will be limited.")
 
     return manager
+
+
+def get_credentials():
+    """Return ESGF credentials."""
+    manager = logon()
+    return manager.esgf_credentials
