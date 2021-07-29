@@ -118,7 +118,6 @@ class Config():
     This group contains utilities to manage ESMValTool configuration
     files.
     """
-
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
         import os
@@ -189,7 +188,6 @@ class Recipes():
     Documentation for recipes included with ESMValTool is available at
     https://docs.esmvaltool.org/en/latest/recipes/index.html.
     """
-
     @staticmethod
     def list():
         """List all installed recipes.
@@ -277,7 +275,6 @@ class ESMValTool():
     To report issues or ask for improvements, please visit
     https://github.com/ESMValGroup/ESMValTool.
     """
-
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
@@ -356,6 +353,7 @@ class ESMValTool():
         )
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
+        from .esgf._logon import logon
 
         if not os.path.exists(recipe):
             installed_recipe = str(DIAGNOSTICS.recipes / recipe)
@@ -392,6 +390,8 @@ class ESMValTool():
         }
         cfg['check_level'] = CheckLevels[check_level.upper()]
         cfg['download'] = download
+        if download:
+            logon()
 
         def _check_limit(limit, value):
             if value is not None and value < 1:

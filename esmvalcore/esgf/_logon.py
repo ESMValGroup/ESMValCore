@@ -21,13 +21,14 @@ def logon():
     manager = get_manager()
 
     if not manager.is_logged_on():
-        # TODO: improve password saving by using keyring?
-        manager.logon(**cfg['logon'])
-        if manager.is_logged_on():
-            logger.info("Logged on to ESGF")
-        else:
-            logger.warning(
-                "Failed to log on to ESGF, data availability will be limited.")
+        if ('interactive' in cfg['logon']
+                or {'hostname', 'username', 'password'} == set(cfg['logon'])):
+            manager.logon(**cfg['logon'])
+            if manager.is_logged_on():
+                logger.info("Logged on to ESGF")
+            else:
+                logger.warning("Failed to log on to ESGF, data "
+                               "availability will be limited.")
 
     return manager
 
