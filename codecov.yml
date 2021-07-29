@@ -9,4 +9,4 @@ coverage:
         target: 100%
 comment:
   behavior: new  # delete old comment and post new
-  require_changes: true  # comment only if the coverage changes
+  # require_changes: true  # comment only if the coverage changes
