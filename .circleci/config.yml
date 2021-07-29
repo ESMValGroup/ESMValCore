@@ -188,7 +188,7 @@ jobs:
             dpkg -l > /logs/versions.txt
             conda env export -n build > /logs/build_environment.yml
             # Build conda package
-            mamba build package -c conda-forge > /logs/build_log.txt
+            conda mambabuild package -c conda-forge > /logs/build_log.txt
           no_output_timeout: 60m
       - store_artifacts:
           path: /logs
