@@ -48,6 +48,7 @@ requirements:
     - fiona
     - fire
     - jinja2
+    - mpich<3.4  # prevent external build
     - nc-time-axis
     - netCDF4
     - numpy
