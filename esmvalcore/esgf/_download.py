@@ -6,6 +6,7 @@ import hashlib
 import logging
 import os
 import shutil
+import ssl
 import tempfile
 import urllib
 from pathlib import Path
@@ -29,6 +30,7 @@ def host_accepts_range(url):
             response = requests.get(
                 url,
                 timeout=5,
+                cert=get_credentials(),
                 headers={'Range': 'bytes=0-0'},
             )
         except requests.exceptions.RequestException:
@@ -225,9 +227,16 @@ class ESGFFile:
     async def _downloader(self, url, tmp_file, queue):
         """Start a worker that downloads and saves chunks from a single URL."""
         hostname = urllib.parse.urlparse(url).hostname
+
+        sslcontext = ssl.create_default_context(
+            purpose=ssl.Purpose.CLIENT_AUTH)
+        sslcontext.load_cert_chain(get_credentials())
+
         # 12 hours should be enough to download a single file.
         timeout = aiohttp.ClientTimeout(total=12 * 60 * 60)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+
+        async with aiohttp.ClientSession(timeout=timeout,
+                                         raise_for_status=True) as session:
             while True:
                 logger.info("Requesting work for host %s", hostname)
                 chunk = await queue.get()
@@ -236,12 +245,15 @@ class ESGFFile:
                 logger.info("Start download %s-%s MB of %s", start / 2**20,
                             end / 2**20, url)
                 try:
-                    async with session.get(url, timeout=60,
+                    async with session.get(url,
+                                           timeout=60,
+                                           ssl=sslcontext,
                                            headers=headers) as response:
                         content = await response.content.read()
                 except (aiohttp.ClientError,
                         asyncio.exceptions.TimeoutError) as exc:
-                    logger.info("Not able to download from host %s", hostname)
+                    logger.info("Not able to download %s. Error message: %s",
+                                url, exc)
                     await queue.put(chunk)
                     raise asyncio.CancelledError from exc
 
