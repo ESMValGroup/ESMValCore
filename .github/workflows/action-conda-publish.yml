@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - fix_conda_build
 
 jobs:
 
