@@ -21,7 +21,6 @@ VARIABLES = [{
     'project': 'CMIP5',
     'short_name': 'tas',
 }, {
-    'activity': 'CMIP',
     'dataset': 'AWI-ESM-1-1-LR',
     'ensemble': 'r1i1p1f1',
     'exp': 'historical',

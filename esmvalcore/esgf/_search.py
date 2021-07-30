@@ -32,7 +32,6 @@ FACETS = {
         'short_name': 'variable',
     },
     'CMIP6': {
-        'activity': 'activity_id',
         'dataset': 'source_id',
         'ensemble': 'variant_label',
         'exp': 'experiment_id',
@@ -331,9 +330,6 @@ def esgf_search_datasets(facets):
                 logger.error("Available values for '%s' based on %s:\n%s",
                              our_facet, available_facets,
                              "\n".join(sorted(available)))
-
-        raise ESGFSearchError(
-            f"No dataset matching facets {facets} found on ESGF")
 
     return datasets
 
