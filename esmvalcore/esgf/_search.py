@@ -8,9 +8,13 @@ import pyesgf.search
 from .._config._esgf_pyclient import _load_esgf_pyclient_config
 from .._data_finder import get_start_end_year, select_files
 from ._download import ESGFFile
-from ._logon import logon
 
 logger = logging.getLogger(__name__)
+
+
+class ESGFSearchError(Exception):
+    """A problem occurred while searching ESGF."""
+
 
 FACETS = {
     'CMIP3': {
@@ -328,7 +332,8 @@ def esgf_search_datasets(facets):
                              our_facet, available_facets,
                              "\n".join(sorted(available)))
 
-        raise ValueError(f"No dataset matching facets {facets} found")
+        raise ESGFSearchError(
+            f"No dataset matching facets {facets} found on ESGF")
 
     return datasets
 
@@ -383,8 +388,6 @@ def select_by_time(files, start_year, end_year):
 
 def get_connection():
     """Connect to ESGF."""
-    logon()  # TODO: check if this is needed here at all
-
     cfg = _load_esgf_pyclient_config()
     connection = pyesgf.search.SearchConnection(**cfg["search_connection"])
     return connection
@@ -413,7 +416,7 @@ def search_single_facets(facets):
     logger.info("Found files\n%s", pprint.pformat(datasets))
 
     if len(datasets) > 1:
-        raise ValueError(
+        raise ESGFSearchError(
             "Expected to find a single dataset, found\n:{}".format(
                 pprint.pformat(datasets)))
 
@@ -440,8 +443,8 @@ def search(*, project, short_name, dataset, **facets):
 
     Raises
     ------
-    ValueError
-        If more than one dataset is found.
+    ESGFSearchError
+        If no dataset is found or more than one dataset is found.
 
     Examples
     --------

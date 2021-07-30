@@ -30,7 +30,7 @@ from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
-from .esgf import ESGFFile, search
+from .esgf import ESGFFile, ESGFSearchError, search
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -574,14 +574,24 @@ def _get_input_files(variable, config_user):
                                      drs=config_user['drs'])
 
     # Set up downloading from ESGF if requested.
-    if config_user.get('download'):
+    on_esgf = ('CMIP3', 'CMIP5', 'CMIP6', 'CORDEX', 'obs4MIPs')
+    if variable['project'] in on_esgf and config_user.get('download'):
         try:
             check.data_availability(
-                input_files, variable, dirnames, filenames, log=False)
+                input_files,
+                variable,
+                dirnames,
+                filenames,
+                log=False,
+            )
         except RecipeError:
             # Only look on ESGF if files are not available locally.
             local_files = set(Path(f).name for f in input_files)
-            for file in search(**variable):
+            try:
+                search_result = search(**variable)
+            except ESGFSearchError as exc:
+                raise RecipeError(str(exc))
+            for file in search_result:
                 local_copy = file.local_file(config_user['download_dir'])
                 if local_copy.name not in local_files:
                     if local_copy.exists():
@@ -1005,6 +1015,7 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
 
 
 def get_download_message(tasks):
+    """Create a log message describing what will be downloaded."""
     esgf_files = set()
     for task in tasks.flatten():
         for product in task.products:
@@ -1021,9 +1032,16 @@ def get_download_message(tasks):
         lines.append(f"{file.size / megabyte:.0f} MB" "\t" f"{file}")
     if total_size:
         lines.insert(0, "Will download the following files:")
-        lines.insert(0, f"Will download {total_size / gigabyte:.1f} GB")
+    lines.insert(0, f"Will download {total_size / gigabyte:.1f} GB")
     if total_size > 100 * gigabyte:
-        raise ValueError("Trying to download more than 100 GB, aborting.")
+        answer = ''
+        while answer not in ('y', 'n'):
+            answer = input(
+                "This will download more than 100 GB, are you sure you want"
+                " to continue? Answer 'y' to download or 'n' to stop. ")
+        if answer == 'n':
+            raise ValueError(
+                "Stopping because too much data was requested for download.")
     return "\n".join(lines)
 
 
@@ -1492,8 +1510,6 @@ class Recipe:
 
         # Report total download size
         logger.info(get_download_message(tasks))
-
-        # TODO: check that no loops are created (will throw RecursionError)
 
         # Return smallest possible set of tasks
         return tasks.get_independent()
