@@ -13,4 +13,4 @@ dependencies:
   - graphviz
   - python>=3.7
   - python-stratify
-  - scipy<1.6  # until ESMValGroup/ESMValCore/issues/927 gets resolved
+  - scipy>=1.6
