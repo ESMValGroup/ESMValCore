@@ -1,6 +1,7 @@
 """Functions dealing with config-user.yml / config-developer.yml."""
 import collections.abc
 import datetime
+import fnmatch
 import logging
 import os
 import sys
@@ -54,7 +55,17 @@ def _load_extra_facets(project, extra_facets_dir):
 def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
     """Read configuration files with additional variable information."""
     project_details = _load_extra_facets(project, extra_facets_dir)
-    return project_details.get(dataset, {}).get(mip, {}).get(short_name, {})
+    extra_facets = {}
+    for dataset_ in project_details:
+        if fnmatch.fnmatchcase(dataset, dataset_):
+            for mip_ in project_details[dataset_]:
+                if fnmatch.fnmatchcase(mip, mip_):
+                    for var in project_details[dataset_]:
+                        if fnmatch.fnmatchcase(short_name, var):
+                            facets = project_details[dataset_][mip_][var]
+                            extra_facets.update(facets)
+
+    return extra_facets
 
 
 def read_config_user_file(config_file, folder_name, options=None):
@@ -208,15 +219,14 @@ def get_project_config(project):
 
 
 def get_institutes(variable):
-    """Return the institutes given the dataset name in CMIP5 and CMIP6."""
+    """Return the institutes given the dataset name in CMIP6."""
     dataset = variable['dataset']
     project = variable['project']
     logger.debug("Retrieving institutes for dataset %s", dataset)
     try:
         return CMOR_TABLES[project].institutes[dataset]
     except (KeyError, AttributeError):
-        pass
-    return CFG.get(project, {}).get('institutes', {}).get(dataset, [])
+        return []
 
 
 def get_activity(variable):
