@@ -182,13 +182,14 @@ jobs:
             set -x
             # Install prerequisites
             mkdir /logs
-            # conda update -y conda > /logs/conda_base.txt 2>&1
-            conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
+            conda update -y conda > /logs/conda_base.txt 2>&1
+            conda create -y --name build -c conda-forge 'python=3.9' conda-build>=3.21 conda-verify ripgrep mamba boa >> /logs/conda_base.txt 2>&1
+            set +x; conda activate build; set -x
             # Log versions
             dpkg -l > /logs/versions.txt
-            conda env export -n base > /logs/build_environment.yml
+            conda env export -n build > /logs/build_environment.yml
             # Build conda package
-            conda build package -c conda-forge > /logs/build_log.txt
+            conda mambabuild package -c conda-forge > /logs/build_log.txt
           no_output_timeout: 60m
       - store_artifacts:
           path: /logs
