@@ -92,7 +92,11 @@ def get_keyring_credentials():
         return logon
 
     for key in ['hostname', 'username', 'password']:
-        value = keyring.get_password('ESGF', key)
+        try:
+            value = keyring.get_password('ESGF', key)
+        except keyring.errors.NoKeyringError:
+            # No keyring backend is available
+            return logon
         if value is not None:
             logon[key] = value
 
