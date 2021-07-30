@@ -30,7 +30,7 @@ from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
-from .esgf import search
+from .esgf import ESGFFile, search
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -1004,6 +1004,29 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     return task
 
 
+def get_download_message(tasks):
+    esgf_files = set()
+    for task in tasks.flatten():
+        for product in task.products:
+            for file in product.files:
+                if isinstance(file, ESGFFile):
+                    esgf_files.add(file)
+
+    megabyte = 2**20
+    gigabyte = 2**30
+    total_size = 0
+    lines = []
+    for file in sorted(esgf_files):
+        total_size += file.size
+        lines.append(f"{file.size / megabyte:.0f} MB" "\t" f"{file}")
+    if total_size:
+        lines.insert(0, "Will download the following files:")
+        lines.insert(0, f"Will download {total_size / gigabyte:.1f} GB")
+    if total_size > 100 * gigabyte:
+        raise ValueError("Trying to download more than 100 GB, aborting.")
+    return "\n".join(lines)
+
+
 class Recipe:
     """Recipe object."""
 
@@ -1466,6 +1489,9 @@ class Recipe:
         # Initialize task provenance
         for task in tasks:
             task.initialize_provenance(self.entity)
+
+        # Report total download size
+        logger.info(get_download_message(tasks))
 
         # TODO: check that no loops are created (will throw RecursionError)
 

@@ -1,6 +1,7 @@
 """Module for downloading files from ESGF."""
 import asyncio
 import datetime
+import functools
 import hashlib
 import logging
 import os
@@ -62,6 +63,7 @@ class Queue(asyncio.Queue):
         self.unfinished_tasks -= 1
 
 
+@functools.total_ordering
 class ESGFFile:
     """File on the ESGF.
 
@@ -89,6 +91,15 @@ class ESGFFile:
     def __repr__(self):
         """Represent the file as a string."""
         return f"ESGFFile:{self.dataset.replace('.', '/')}/{self.name}"
+
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+    def __lt__(self, other):
+        return str(self) < str(other)
+
+    def __hash__(self):
+        return hash(str(self))
 
     def local_file(self, dest_folder):
         """Return the path to the local file after download.
