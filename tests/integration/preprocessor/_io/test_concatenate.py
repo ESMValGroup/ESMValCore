@@ -343,7 +343,7 @@ class TestConcatenate(unittest.TestCase):
         cube2 = Cube([33., 55., 77.],
                      var_name='sample',
                      dim_coords_and_dims=((ap_coord_2, 0), ))
-        with self.assertRaises((TypeError, ValueError)):
+        with self.assertRaises(ValueError):
             _io.concatenate([cube1, cube2])
 
     def test_concatenate_with_order(self):
@@ -384,7 +384,7 @@ class TestConcatenate(unittest.TestCase):
             Cube([33., 55.],
                  var_name='sample',
                  dim_coords_and_dims=((time_coord, 0), )))
-        with self.assertRaises(ValueError):
+        with self.assertRaises((TypeError, ValueError)):
             _io.concatenate(self.raw_cubes)
 
     def test_fail_on_units_concatenate_with_overlap(self):
