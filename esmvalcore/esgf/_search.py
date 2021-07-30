@@ -29,6 +29,7 @@ FACETS = {
         'ensemble': 'ensemble',
         'exp': 'experiment',
         'mip': 'cmor_table',
+        'product': 'product',
         'short_name': 'variable',
     },
     'CMIP6': {
@@ -136,8 +137,6 @@ def get_esgf_facets(variable):
         return None
 
     facets = {'project': project}
-    if project == 'CMIP5':
-        facets['product'] = 'output1'
     for our_name, esgf_name in FACETS[project].items():
         if our_name in variable:
             value = variable[our_name]
