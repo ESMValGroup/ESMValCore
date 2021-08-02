@@ -30,7 +30,7 @@ from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
-from .esgf import ESGFFile, ESGFSearchError, search
+from .esgf import ESGFSearchError, search
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -51,6 +51,9 @@ from .preprocessor._regrid import (
 logger = logging.getLogger(__name__)
 
 TASKSEP = os.sep
+
+DOWNLOAD_FILES = set()
+"""Use a global variable to keep track of files that need to be downloaded."""
 
 
 def read_recipe_file(filename, config_user, initialize_tasks=True):
@@ -598,6 +601,7 @@ def _get_input_files(variable, config_user):
                         input_files.append(str(local_copy))
                     else:
                         input_files.append(file)
+                        DOWNLOAD_FILES.add(file)
             dirnames.append('ESGF')
 
     return (input_files, dirnames, filenames)
@@ -1014,20 +1018,13 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     return task
 
 
-def get_download_message(tasks):
+def get_download_message():
     """Create a log message describing what will be downloaded."""
-    esgf_files = set()
-    for task in tasks.flatten():
-        for product in task.products:
-            for file in product.files:
-                if isinstance(file, ESGFFile):
-                    esgf_files.add(file)
-
     megabyte = 2**20
     gigabyte = 2**30
     total_size = 0
     lines = []
-    for file in sorted(esgf_files):
+    for file in sorted(DOWNLOAD_FILES):
         total_size += file.size
         lines.append(f"{file.size / megabyte:.0f} MB" "\t" f"{file}")
     if total_size:
@@ -1057,6 +1054,7 @@ class Recipe:
                  initialize_tasks=True,
                  recipe_file=None):
         """Parse a recipe file into an object."""
+        DOWNLOAD_FILES.clear()
         self._cfg = deepcopy(config_user)
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
@@ -1511,7 +1509,7 @@ class Recipe:
             task.initialize_provenance(self.entity)
 
         # Report total download size
-        logger.info(get_download_message(tasks))
+        logger.info(get_download_message())
 
         # Return smallest possible set of tasks
         return tasks.get_independent()

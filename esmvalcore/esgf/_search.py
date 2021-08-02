@@ -2,6 +2,7 @@
 import itertools
 import logging
 import pprint
+from functools import lru_cache
 
 import pyesgf.search
 
@@ -391,8 +392,8 @@ def get_connection():
 def expand_facets(facets):
     """Expand facet values that are a list."""
     for facet, value in facets.items():
-        if not isinstance(value, list):
-            facets[facet] = [value]
+        if not isinstance(value, tuple):
+            facets[facet] = (value, )
 
     expanded_facets = []
     for facet_values in itertools.product(*facets.values()):
@@ -522,6 +523,20 @@ def search(*, project, short_name, dataset, **facets):
     # likely that too many results will be found.
     facets['dataset'] = dataset
 
+    for facet, value in facets.items():
+        if isinstance(value, list):
+            facets[facet] = tuple(value)
+
+    return cached_search(**facets)
+
+
+@lru_cache(10000)
+def cached_search(**facets):
+    """Search for files on ESGF.
+
+    A cached search function will speed up recipes that use the same
+    variable multiple times.
+    """
     esgf_facets = get_esgf_facets(facets)
     if esgf_facets is None:
         return []

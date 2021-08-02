@@ -6,7 +6,6 @@ import hashlib
 import logging
 import os
 import shutil
-import ssl
 import tempfile
 import urllib
 from pathlib import Path
@@ -14,11 +13,15 @@ from pathlib import Path
 import aiohttp
 import requests
 
-from ._logon import get_credentials
+from ._logon import get_credentials, get_ssl_context
 
 logger = logging.getLogger(__name__)
 
+TIMEOUT = 5 * 60
+"""Timeout (in seconds) for downloads."""
+
 _RANGE_HOSTS = {}
+"""Hosts that support range requests."""
 
 
 def host_accepts_range(url):
@@ -29,7 +32,7 @@ def host_accepts_range(url):
         try:
             response = requests.get(
                 url,
-                timeout=5,
+                timeout=TIMEOUT,
                 cert=get_credentials(),
                 headers={'Range': 'bytes=0-0'},
             )
@@ -173,7 +176,7 @@ class ESGFFile:
         tmp_file = self._tmp_local_file(local_file)
 
         logger.info("Downloading %s to %s", url, tmp_file)
-        response = requests.get(url, timeout=60, cert=get_credentials())
+        response = requests.get(url, timeout=TIMEOUT, cert=get_credentials())
         response.raise_for_status()
         with tmp_file.open("wb") as file:
             chunk_size = 1 << 20  # 1 MB
@@ -236,10 +239,8 @@ class ESGFFile:
     async def _downloader(self, url, tmp_file, queue):
         """Start a worker that downloads and saves chunks from a single URL."""
         hostname = urllib.parse.urlparse(url).hostname
-
-        sslcontext = ssl.create_default_context(
-            purpose=ssl.Purpose.CLIENT_AUTH)
-        sslcontext.load_cert_chain(get_credentials())
+        logger.info("Starting worker %s", hostname)
+        sslcontext = get_ssl_context()
 
         # 12 hours should be enough to download a single file.
         timeout = aiohttp.ClientTimeout(total=12 * 60 * 60)
@@ -255,7 +256,7 @@ class ESGFFile:
                             end / 2**20, url)
                 try:
                     async with session.get(url,
-                                           timeout=60,
+                                           timeout=TIMEOUT,
                                            ssl=sslcontext,
                                            headers=headers) as response:
                         content = await response.content.read()
