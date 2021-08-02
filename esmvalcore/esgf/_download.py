@@ -60,6 +60,10 @@ class Queue(asyncio.Queue):
         super().put_nowait(*args, **kwargs)
         self.unfinished_tasks += 1
 
+    def put_back(self, *args, **kwargs):
+        """Put an item previously taken from the queue back."""
+        super().put_nowait(*args, **kwargs)
+
     def task_done(self, *args, **kwargs):
         """Indicate that a formerly enqueued task is complete."""
         super().task_done(*args, **kwargs)
@@ -99,7 +103,7 @@ class ESGFFile:
         return str(self) == str(other)
 
     def __lt__(self, other):
-        return str(self) < str(other)
+        return str(self).lower() < str(other).lower()
 
     def __hash__(self):
         return hash(str(self))
@@ -264,7 +268,7 @@ class ESGFFile:
                         asyncio.exceptions.TimeoutError) as exc:
                     logger.info("Not able to download %s. Error message: %s",
                                 url, exc)
-                    await queue.put(chunk)
+                    queue.put_back(chunk)
                     raise asyncio.CancelledError from exc
 
                 tmp_file.seek(start)
