@@ -55,15 +55,17 @@ def _load_extra_facets(project, extra_facets_dir):
 def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
     """Read configuration files with additional variable information."""
     project_details = _load_extra_facets(project, extra_facets_dir)
+
+    def fnfilter(patterns, name):
+        """Return the subset of the list `patterns` that match `name`."""
+        return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
+
     extra_facets = {}
-    for dataset_ in project_details:
-        if fnmatch.fnmatchcase(dataset, dataset_):
-            for mip_ in project_details[dataset_]:
-                if fnmatch.fnmatchcase(mip, mip_):
-                    for var in project_details[dataset_]:
-                        if fnmatch.fnmatchcase(short_name, var):
-                            facets = project_details[dataset_][mip_][var]
-                            extra_facets.update(facets)
+    for dataset_ in fnfilter(project_details, dataset):
+        for mip_ in fnfilter(project_details[dataset_], mip):
+            for var in fnfilter(project_details[dataset_], short_name):
+                facets = project_details[dataset_][mip_][var]
+                extra_facets.update(facets)
 
     return extra_facets
 
