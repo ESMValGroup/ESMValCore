@@ -77,7 +77,8 @@ def test_empty_run(tmp_path):
     recipe_file.write_text(content)
     Config.get_config_user(path=tmp_path)
     with pytest.raises(check.RecipeError) as exc:
-        ESMValTool.run(recipe_file, config_file=f"{tmp_path}/config-user.yml")
+        ESMValTool().run(recipe_file,
+                         config_file=f"{tmp_path}/config-user.yml")
     assert str(exc.value) == 'The given recipe does not have any diagnostic.'
     log_dir = './esmvaltool_output'
     log_file = os.path.join(log_dir,
