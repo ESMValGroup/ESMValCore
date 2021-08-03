@@ -236,9 +236,10 @@ def area_statistics(cube, operator):
     except iris.exceptions.CellMeasureNotFoundError:
         logger.info(
             'Cell measure "cell_area" not found in cube %s. '
-            'Check fx_file availability.', cube.summary(shorten=True)
-        )
+            'Check fx_file availability.', cube.summary(shorten=True))
         logger.info('Attempting to calculate grid cell area...')
+    else:
+        grid_areas = da.broadcast_to(grid_areas, cube.shape)
 
     if grid_areas is None and cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
@@ -407,8 +408,12 @@ def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
     return lon, lat
 
 
-def _get_masks_from_geometries(geometries, lon, lat, method='contains',
-                               decomposed=False, ids=None):
+def _get_masks_from_geometries(geometries,
+                               lon,
+                               lat,
+                               method='contains',
+                               decomposed=False,
+                               ids=None):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(

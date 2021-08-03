@@ -1,5 +1,6 @@
 """Horizontal and vertical regridding module."""
 
+import logging
 import os
 import re
 from copy import deepcopy
@@ -19,6 +20,8 @@ from ..cmor.table import CMOR_TABLES
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+
+logger = logging.getLogger(__name__)
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -642,6 +645,30 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
+def _preserve_fx_vars(cube, result):
+    vertical_dim = set(cube.coord_dims(axis='Z'))
+    if cube.cell_measures():
+        for measure in cube.cell_measures():
+            measure_dims = set(cube.cell_measure_dims(measure))
+            if vertical_dim.intersection(measure_dims):
+                logger.warning(
+                    'Discarding use of z-axis dependent cell measure %s '
+                    'in variable %s, as z-axis has been interpolated',
+                    measure.var_name, result.var_name)
+            else:
+                result.add_cell_measure(measure, measure_dims)
+    if cube.ancillary_variables():
+        for ancillary_var in cube.ancillary_variables():
+            ancillary_dims = cube.ancillary_variable_dims(ancillary_var)
+            if vertical_dim.intersection(ancillary_dims):
+                logger.warning(
+                    'Discarding use of z-axis dependent ancillary variable %s '
+                    'in variable %s, as z-axis has been interpolated',
+                    measure.var_name, result.var_name)
+            else:
+                result.add_ancillary_variable(ancillary_var, ancillary_dims)
+
+
 def extract_levels(cube, levels, scheme, coordinate=None):
     """Perform vertical interpolation.
 
@@ -729,6 +756,7 @@ def extract_levels(cube, levels, scheme, coordinate=None):
         # As a last resort, perform vertical interpolation.
         result = _vertical_interpolate(cube, src_levels, levels, scheme,
                                        extrap_scheme)
+        _preserve_fx_vars(cube, result)
 
     return result
 
