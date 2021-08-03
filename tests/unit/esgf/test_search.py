@@ -3,12 +3,12 @@ from esmvalcore.esgf._search import expand_facets
 
 
 def test_expand_facets():
-    """Test that facets that are a list are correctly expanded."""
+    """Test that facets that are a tuple are correctly expanded."""
     facets = {
         'a': 1,
         'b': 2,
-        'c': [3, 4],
-        'd': [5, 6],
+        'c': (3, 4),
+        'd': (5, 6),
     }
     result = expand_facets(facets)
 
