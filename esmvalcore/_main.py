@@ -47,13 +47,12 @@ ______________________________________________________________________
 """ + __doc__
 
 
-def process_recipe(recipe_file, config_user):
+def process_recipe(recipe_file, config_user, packages):
     """Process recipe."""
     import datetime
     import os
     import shutil
 
-    from . import __version__
     from ._recipe import read_recipe_file
     if not os.path.isfile(recipe_file):
         import errno
@@ -64,8 +63,8 @@ def process_recipe(recipe_file, config_user):
     timestamp_format = "%Y-%m-%d %H:%M:%S"
 
     logger.info(
-        "Starting the Earth System Model Evaluation Tool v%s at time: %s UTC",
-        __version__, timestamp1.strftime(timestamp_format))
+        "Starting the Earth System Model Evaluation Tool at time: %s UTC",
+        timestamp1.strftime(timestamp_format))
 
     logger.info(70 * "-")
     logger.info("RECIPE   = %s", recipe_file)
@@ -108,8 +107,8 @@ def process_recipe(recipe_file, config_user):
     # End time timing
     timestamp2 = datetime.datetime.utcnow()
     logger.info(
-        "Ending the Earth System Model Evaluation Tool v%s at time: %s UTC",
-        __version__, timestamp2.strftime(timestamp_format))
+        "Ending the Earth System Model Evaluation Tool at time: %s UTC",
+        timestamp2.strftime(timestamp_format))
     logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
 
 
@@ -119,7 +118,6 @@ class Config():
     This group contains utilities to manage ESMValTool configuration
     files.
     """
-
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
         import os
@@ -190,7 +188,6 @@ class Recipes():
     Documentation for recipes included with ESMValTool is available at
     https://docs.esmvaltool.org/en/latest/recipes/index.html.
     """
-
     @staticmethod
     def list():
         """List all installed recipes.
@@ -278,7 +275,6 @@ class ESMValTool():
     To report issues or ask for improvements, please visit
     https://github.com/ESMValGroup/ESMValTool.
     """
-
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
@@ -304,8 +300,8 @@ class ESMValTool():
         for project, version in self._extra_packages.items():
             print(f'{project}: {version}')
 
-    @staticmethod
-    def run(recipe,
+    def run(self,
+            recipe,
             config_file=None,
             max_datasets=None,
             max_years=None,
@@ -350,6 +346,7 @@ class ESMValTool():
         import os
         import shutil
 
+        from . import __version__
         from ._config import (
             DIAGNOSTICS,
             configure_logging,
@@ -382,6 +379,12 @@ class ESMValTool():
 
         # log header
         logger.info(HEADER)
+        logger.info('Package versions')
+        logger.info('----------------')
+        logger.info(f'ESMValCore: {__version__}')
+        for project, version in self._extra_packages.items():
+            logger.info('%s: %s', project, version)
+        logger.info('----------------')
         logger.info("Using config file %s", cfg['config_file'])
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
@@ -412,7 +415,9 @@ class ESMValTool():
         resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
         from ._task import resource_usage_logger
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
-            process_recipe(recipe_file=recipe, config_user=cfg)
+            process_recipe(recipe_file=recipe,
+                           config_user=cfg,
+                           packages=self._extra_packages)
 
         if os.path.exists(cfg["preproc_dir"]) and cfg["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
