@@ -47,7 +47,7 @@ ______________________________________________________________________
 """ + __doc__
 
 
-def process_recipe(recipe_file, config_user, packages):
+def process_recipe(recipe_file, config_user):
     """Process recipe."""
     import datetime
     import os
@@ -381,7 +381,7 @@ class ESMValTool():
         logger.info(HEADER)
         logger.info('Package versions')
         logger.info('----------------')
-        logger.info(f'ESMValCore: {__version__}')
+        logger.info('ESMValCore: %s', __version__)
         for project, version in self._extra_packages.items():
             logger.info('%s: %s', project, version)
         logger.info('----------------')
