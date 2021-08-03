@@ -225,8 +225,8 @@ ESMValCore replaces the placeholders ``{item}`` in
 ``input_dir`` and ``input_file`` with the values supplied in the recipe.
 ESMValCore will try to automatically fill in the values for institute, frequency,
 and modeling_realm based on the information provided in the CMOR tables
-and/or ``config-developer.yml`` when reading the recipe. If this fails for some reason,
-these values can be provided in the recipe too.
+and/or extra_facets_ when reading the recipe.
+If this fails for some reason, these values can be provided in the recipe too.
 
 The data directory structure of the CMIP projects is set up differently
 at each site. As an example, the CMIP6 directory path on BADC would be:
@@ -370,10 +370,9 @@ These four items here are named people, references and projects listed in the
 Extra Facets
 ============
 
-Sometimes it is useful to provide extra information for the loading of data,
-particularly in the case of native model data, or observational or other data,
-that generally follows the established standards, but is not part of the big
-supported projects like CMIP, CORDEX, obs4MIPs.
+Sometimes it is useful to automatically add extra key-value pairs to variables
+or datasets in the recipe.
+These key-value pairs are called facets.
 
 To support this, we provide the extra facets facilities. Facets are the
 key-value pairs described in :ref:`Datasets`. Extra facets allows for the

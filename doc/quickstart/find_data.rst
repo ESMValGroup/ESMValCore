@@ -322,8 +322,9 @@ Use of extra facets in the datafinder
 Extra facets are a mechanism to provide additional information for certain kinds
 of data. The general approach is described in :ref:`extra_facets`. Here, we
 describe how they can be used to locate data files within the datafinder
-framework. This is useful to build paths for directory structures and file names
-that follow a different system than the established DRS for, e.g. CMIP.
+framework.
+This is useful to build paths for directory structures and file names
+that require more information than what is provided in the recipe.
 A common application is the location of variables in multi-variable files as
 often found in climate models' native output formats.
 
