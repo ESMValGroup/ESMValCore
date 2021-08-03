@@ -415,9 +415,7 @@ class ESMValTool():
         resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
         from ._task import resource_usage_logger
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
-            process_recipe(recipe_file=recipe,
-                           config_user=cfg,
-                           packages=self._extra_packages)
+            process_recipe(recipe_file=recipe, config_user=cfg)
 
         if os.path.exists(cfg["preproc_dir"]) and cfg["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
