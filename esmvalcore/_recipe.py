@@ -1379,7 +1379,7 @@ class Recipe:
         tasks = TaskSet()
 
         run_diagnostic = self._cfg.get('run_diagnostic', True)
-        tasknames_to_run = self._cfg.get('diagnostics')
+        tasknames_to_run = self._cfg.get('diagnostics', [])
 
         priority = 0
         failed_tasks = []
