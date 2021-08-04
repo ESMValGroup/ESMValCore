@@ -646,7 +646,7 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
 
 def _preserve_fx_vars(cube, result):
-    vertical_dim = set(cube.coord_dims(axis='Z'))
+    vertical_dim = set(cube.coord_dims(cube.coord(axis='z', dim_coords=True)))
     if cube.cell_measures():
         for measure in cube.cell_measures():
             measure_dims = set(cube.cell_measure_dims(measure))
@@ -664,7 +664,7 @@ def _preserve_fx_vars(cube, result):
                 logger.warning(
                     'Discarding use of z-axis dependent ancillary variable %s '
                     'in variable %s, as z-axis has been interpolated',
-                    measure.var_name, result.var_name)
+                    ancillary_var.var_name, result.var_name)
             else:
                 result.add_ancillary_variable(ancillary_var, ancillary_dims)
 
