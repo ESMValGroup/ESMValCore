@@ -373,8 +373,8 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
                      fx_info['short_name'], mip)
         fx_files = _get_input_files(fx_info, config_user)[0]
         if fx_files:
-            logger.debug("Found fx variables '%s':\n%s",
-                         fx_info['short_name'], pformat(fx_files))
+            logger.debug("Found fx variables '%s':\n%s", fx_info['short_name'],
+                         pformat(fx_files))
             fx_files_for_mips[mip] = fx_files
 
     # Dict contains more than one element -> ambiguity
@@ -478,12 +478,10 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
         fx_files, fx_info = _get_fx_files(variable, fx_info, config_user)
         if fx_files:
             fx_info['filename'] = fx_files
-            settings['add_fx_variables']['fx_variables'].update({
-                fx_var: fx_info
-            })
-            logger.info(
-                'Using fx files for variable %s during step %s: %s',
-                variable['short_name'], step_name, pformat(fx_files))
+            settings['add_fx_variables']['fx_variables'].update(
+                {fx_var: fx_info})
+            logger.info('Using fx files for variable %s during step %s: %s',
+                        variable['short_name'], step_name, pformat(fx_files))
 
 
 def _fx_list_to_dict(fx_vars):
@@ -503,6 +501,7 @@ def _fx_list_to_dict(fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
+
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -1384,12 +1383,19 @@ class Recipe:
 
         priority = 0
         failed_tasks = []
+
         for diagnostic_name, diagnostic in self.diagnostics.items():
             logger.info("Creating tasks for diagnostic %s", diagnostic_name)
 
             # Create preprocessor tasks
             for variable_group in diagnostic['preprocessor_output']:
                 task_name = diagnostic_name + TASKSEP + variable_group
+                for pattern in tasknames_to_run:
+                    if fnmatch.fnmatch(task_name, pattern):
+                        break
+                else:
+                    logger.info("Skipping task %s due to filter", task_name)
+                    continue
                 logger.info("Creating preprocessor task %s", task_name)
                 try:
                     task = _get_preprocessor_task(
@@ -1420,6 +1426,7 @@ class Recipe:
                 task.priority = priority
                 tasks.add(task)
                 priority += 1
+
         if failed_tasks:
             recipe_error = RecipeError('Could not create all tasks')
             recipe_error.failed_tasks.extend(failed_tasks)
@@ -1434,12 +1441,6 @@ class Recipe:
         if not run_diagnostic:
             tasks = TaskSet(t for t in tasks
                             if isinstance(t, PreprocessingTask))
-        if tasknames_to_run:
-            names = {t.name for t in tasks}
-            selection = set()
-            for pattern in tasknames_to_run:
-                selection |= set(fnmatch.filter(names, pattern))
-            tasks = TaskSet(t for t in tasks if t.name in selection)
 
         tasks = tasks.flatten()
         logger.info("These tasks will be executed: %s",
