@@ -1379,7 +1379,7 @@ class Recipe:
         tasks = TaskSet()
 
         run_diagnostic = self._cfg.get('run_diagnostic', True)
-        tasknames_to_run = self._cfg.get('diagnostics', [])
+        tasknames_to_run = self._cfg.get('diagnostics')
 
         priority = 0
         failed_tasks = []
@@ -1390,12 +1390,14 @@ class Recipe:
             # Create preprocessor tasks
             for variable_group in diagnostic['preprocessor_output']:
                 task_name = diagnostic_name + TASKSEP + variable_group
-                for pattern in tasknames_to_run:
-                    if fnmatch.fnmatch(task_name, pattern):
-                        break
-                else:
-                    logger.info("Skipping task %s due to filter", task_name)
-                    continue
+                if tasknames_to_run:
+                    for pattern in tasknames_to_run:
+                        if fnmatch.fnmatch(task_name, pattern):
+                            break
+                    else:
+                        logger.info("Skipping task %s due to filter",
+                                    task_name)
+                        continue
                 logger.info("Creating preprocessor task %s", task_name)
                 try:
                     task = _get_preprocessor_task(

@@ -99,6 +99,7 @@ def config_user(tmp_path):
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
     cfg['synda_download'] = False
     cfg['check_level'] = CheckLevels.DEFAULT
+    cfg['diagnostics'] = set()
     return cfg
 
 
@@ -2853,7 +2854,7 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     sftgif_files = fx_variables['sftgif']['filename']
     assert isinstance(sftgif_files, list)
     assert len(sftgif_files) == 1
-    assert'_LImon_' in sftgif_files[0]
+    assert '_LImon_' in sftgif_files[0]
 
 
 def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
