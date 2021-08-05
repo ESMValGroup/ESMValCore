@@ -62,6 +62,8 @@ class Queue(asyncio.Queue):
 
     def put_back(self, *args, **kwargs):
         """Put an item previously taken from the queue back."""
+        # TODO: this doesn't work, because Queue._unfinished_tasks
+        # still get incremented
         super().put_nowait(*args, **kwargs)
 
     def task_done(self, *args, **kwargs):
@@ -156,7 +158,7 @@ class ESGFFile:
                 try:
                     self._download_single_url(local_file, url)
                 except requests.exceptions.RequestException as exc:
-                    logger.info("Failed to download from %s. Message:\n%s",
+                    logger.info("Not able to download %s. Error message: %s",
                                 url, exc)
                 else:
                     break
@@ -284,6 +286,8 @@ class ESGFFile:
                 f"Failed to download file {local_file} from {self.urls}")
 
         if checksum is None:
+            # TODO: sometimes checksum_type is None or invalid?
+            print(repr(self._checksum_type))
             hasher = hashlib.new(self._checksum_type)
             with tmp_file.open('rb') as file:
                 hasher.update(file.read())
