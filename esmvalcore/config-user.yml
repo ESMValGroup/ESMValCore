@@ -11,6 +11,11 @@ output_file_type: png
 # Destination directory
 output_dir: ./esmvaltool_output
 # Auxiliary data directory (used for some additional datasets)
+# Jasmin
+# auxiliary_data_dir: /gws/nopw/j04/esmeval/aux_data/AUX
+# Mistral
+# auxiliary_data_dir: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/AUX
+# default
 auxiliary_data_dir: ./auxiliary_data
 # Use netCDF compression true/[false]
 compress_netcdf: false
