@@ -10,6 +10,7 @@ ERA5:
       frequency: 1hrPt
       cds_var_name: 2m_temperature
       era5cli_frequency: hourly
+      var_type: an_sfc
     tasmax:
       frequency: 1hrPt
       source_var_name: mx2t
@@ -32,6 +33,8 @@ ERA5:
       frequency: mon
       cds_var_name: 2m_temperature
       era5cli_frequency: monthly
+      var_type: an_sfc
+      exp_type: oper
     tasmax:
       source_var_name: mx2t
       frequency: mon
@@ -42,3 +45,11 @@ ERA5:
       frequency: mon
       cds_var_name: minimum_2m_temperature_since_previous_post_processing
       era5cli_frequency: monthly
+
+  fx:
+    areacello:
+      source_var_name: t2m
+      frequency: mon
+      cds_var_name: 2m_temperature
+      var_type: null
+      exp_type: invariants

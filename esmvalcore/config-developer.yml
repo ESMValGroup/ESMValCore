@@ -252,3 +252,16 @@ IPSLCM:
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
 
+ERA5:
+  cmor_strict: false
+  input_dir:
+    default:
+      - '{exp_type}/{var_type}/*/*/*'
+      - '{exp_type}'
+  input_file:
+    default:
+      - 'ecmwf-era*.{source_var_name}.nc'
+      - 'ecmwf-era*.{source_var_name}.inv.nc'
+  output_file: '{project}_{dataset}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
