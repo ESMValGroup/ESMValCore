@@ -1,10 +1,4 @@
 """Data finder module for the ESMValTool."""
-# Authors:
-# Bouwe Andela (eScience, NL - b.andela@esciencecenter.nl)
-# Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-# Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
-
-import fnmatch
 import glob
 import logging
 import os
@@ -24,11 +18,11 @@ def find_files(dirnames, filenames):
 
     result = []
     for dirname in dirnames:
-        for path, _, files in os.walk(dirname, followlinks=True):
-            for filename in filenames:
-                files.sort()  # sorting makes it easier to see what was found
-                matches = fnmatch.filter(files, filename)
-                result.extend(os.path.join(path, f) for f in matches)
+        for filename_pattern in filenames:
+            pat = os.path.join(dirname, filename_pattern)
+            files = glob.glob(pat)
+            files.sort()  # sorting makes it easier to see what was found
+            result.extend(files)
 
     return result
 
