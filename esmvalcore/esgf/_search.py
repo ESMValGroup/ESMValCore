@@ -227,9 +227,9 @@ def find_files(datasets, facets):
         dataset_files = {}
         for host in hosts:
             dataset_result = copies[host]
-            file_result = dataset_result.file_context().search(
+            file_results = dataset_result.file_context().search(
                 variable=facets['variable'])
-            for file in file_result:
+            for file in file_results:
                 if file.filename in dataset_files:
                     dataset_files[file.filename].urls.append(file.download_url)
                 else:

@@ -177,6 +177,8 @@ class ESGFFile:
 
     def _download_single_url(self, local_file, url):
         """Download file from a single url."""
+        logger.info("Checksum type is %r for %s", self._checksum_type,
+                    self.urls[0])
         hasher = hashlib.new(self._checksum_type)
 
         tmp_file = self._tmp_local_file(local_file)
@@ -287,7 +289,8 @@ class ESGFFile:
 
         if checksum is None:
             # TODO: sometimes checksum_type is None or invalid?
-            print(repr(self._checksum_type))
+            logger.info("Checksum type is %r for %s", self._checksum_type,
+                        self.urls[0])
             hasher = hashlib.new(self._checksum_type)
             with tmp_file.open('rb') as file:
                 hasher.update(file.read())

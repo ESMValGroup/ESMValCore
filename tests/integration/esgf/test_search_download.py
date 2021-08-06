@@ -43,7 +43,7 @@ VARIABLES = [{
     'end_year': 1952,
 }, {
     'dataset': 'CERES-EBAF',
-    'time_frequency': 'mon',
+    'frequency': 'mon',
     'project': 'obs4MIPs',
     'short_name': 'rsutcs',
 }]

@@ -1,4 +1,5 @@
 """Test 1esmvalcore.esgf._search`."""
+import pyesgf.search.results
 import pytest
 
 from esmvalcore.esgf import ESGFFile, _search
@@ -170,6 +171,110 @@ def test_simplify_dataset_id_obs4mips():
     dataset_id = 'obs4MIPs.NASA-LaRC.CERES-EBAF.atmos.mon.v20160610'
     result = _search.simplify_dataset_id(dataset_id, facets)
     assert result == 'obs4MIPs.CERES-EBAF.v20160610'
+
+
+def test_find_files():
+
+    # Set up some fake FileResults
+    dataset_id = ('cmip5.output1.INM.inmcm4.historical'
+                  '.mon.atmos.Amon.r1i1p1.v20130207')
+    filename0 = 'tas_Amon_inmcm4_historical_r1i1p1_185001-189912.nc'
+    filename1 = 'tas_Amon_inmcm4_historical_r1i1p1_190001-200512.nc'
+
+    aims_url0 = ('http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/'
+                 'cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/'
+                 'tas/1/' + filename0)
+    aims_url1 = ('http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/'
+                 'cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/'
+                 'tas/1/' + filename1)
+    dkrz_url = ('http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/'
+                'output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/'
+                'v20130207/tas/' + filename0)
+
+    file_aims0 = pyesgf.search.results.FileResult(
+        {
+            'checksum': ['123'],
+            'checksum_type': ['SHA256'],
+            'size': 100,
+            'title': filename0,
+            'url': [
+                aims_url0 + '|application/netcdf|HTTPServer',
+            ],
+        }, None)
+
+    file_aims1 = pyesgf.search.results.FileResult(
+        {
+            'checksum': ['234'],
+            'checksum_type': ['SHA256'],
+            'size': 200,
+            'title': filename1,
+            'url': [
+                aims_url1 + '|application/netcdf|HTTPServer',
+            ],
+        }, None)
+
+    file_dkrz = pyesgf.search.results.FileResult(
+        {
+            'checksum': ['456'],
+            'checksum_type': ['MD5'],
+            'size': 100,
+            'title': filename0,
+            'url': [dkrz_url + '|application/netcdf|HTTPServer'],
+        }, None)
+
+    class MockFileSearchContext:
+        def __init__(self, results):
+            self.results = results
+
+        def search(self, **kwargs):
+            assert kwargs == {'variable': 'tas'}
+            return self.results
+
+    class MockDatasetResult:
+        def __init__(self, results):
+            self.results = results
+
+        def file_context(self):
+            return MockFileSearchContext(self.results)
+
+    datasets = {
+        dataset_id: {
+            'aims3.llnl.gov': MockDatasetResult([file_aims0, file_aims1]),
+            'esgf2.dkrz.de': MockDatasetResult([file_dkrz]),
+        }
+    }
+
+    facets = {
+        'project': 'CMIP5',
+        'variable': 'tas',
+    }
+
+    files = _search.find_files(datasets, facets)
+    assert len(files) == 1
+
+    dataset_files = files[dataset_id]
+    assert len(dataset_files) == 2
+
+    file0 = dataset_files[0]
+    assert file0.name == filename0
+    assert file0.dataset == dataset_id
+    assert file0.size == 100
+    assert file0._checksum_type == 'SHA256'
+    assert file0._checksum == '123'
+    urls = sorted(file0.urls)
+    assert len(urls) == 2
+    assert urls[0] == aims_url0
+    assert urls[1] == dkrz_url
+
+    file1 = dataset_files[1]
+    assert file1.name == filename1
+    assert file1.dataset == dataset_id
+    assert file1.size == 200
+    assert file1._checksum_type == 'SHA256'
+    assert file1._checksum == '234'
+    urls = sorted(file1.urls)
+    assert len(urls) == 1
+    assert urls[0] == aims_url1
 
 
 def test_select_by_time():
