@@ -277,6 +277,56 @@ def test_find_files():
     assert urls[0] == aims_url1
 
 
+def test_merge_datasets():
+    filename = 'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'
+    urls0 = [
+        ('http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/'
+         'FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/'
+         'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'),
+        ('http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/'
+         'output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/'
+         'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'),
+        ('http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/'
+         'FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/'
+         'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'),
+    ]
+    urls1 = [
+        ('http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/'
+         'output1/FIO/fio-esm/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/'
+         'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'),
+    ]
+    reference = urls0 + urls1
+
+    dataset0 = ('cmip5.output1.FIO.FIO-ESM.historical.'
+                'mon.atmos.Amon.r1i1p1.v20121010')
+    dataset1 = ('cmip5.output1.FIO.fio-esm.historical.'
+                'mon.atmos.Amon.r1i1p1.v20121010')
+    files = {
+        dataset0: [
+            ESGFFile(urls0,
+                     dataset0,
+                     filename,
+                     size=0,
+                     checksum='123',
+                     checksum_type='MD5')
+        ],
+        dataset1: [
+            ESGFFile(urls1,
+                     dataset1,
+                     filename,
+                     size=0,
+                     checksum='123',
+                     checksum_type='MD5')
+        ],
+    }
+
+    result = _search.merge_datasets(files)
+
+    assert len(result) == 1
+    assert len(result[dataset0]) == 1
+    assert result[dataset0][0].urls == reference
+
+
 def test_select_by_time():
     dataset_id = ('CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical'
                   '.r1i1p1f1.Amon.tas.gn.v20200212')
