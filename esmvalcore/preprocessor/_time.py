@@ -254,8 +254,8 @@ def _aggregate_time_fx(result_cube, source_cube):
         for measure in source_cube.cell_measures():
             measure_dims = set(source_cube.cell_measure_dims(measure))
             if time_dim.intersection(measure_dims):
-                logger.debug('Averaging time dimension in measure %s',
-                             measure.name)
+                logger.debug('Averaging time dimension in measure %s.',
+                             measure.var_name)
                 result_measure = da.mean(measure.core_data(),
                                          axis=tuple(time_dim))
                 measure = measure.copy(result_measure)
@@ -263,13 +263,13 @@ def _aggregate_time_fx(result_cube, source_cube):
                 result_cube.add_cell_measure(measure, measure_dims)
 
     if source_cube.ancillary_variables():
-        for ancillary_var in source_cube.ancillary_variables:
+        for ancillary_var in source_cube.ancillary_variables():
             ancillary_dims = set(
                 source_cube.ancillary_variable_dims(ancillary_var))
             if time_dim.intersection(ancillary_dims):
                 logger.debug(
-                    'Averaging time dimension in ancillary variable %s',
-                    ancillary_var.name)
+                    'Averaging time dimension in ancillary variable %s.',
+                    ancillary_var.var_name)
                 result_ancillary_var = da.mean(ancillary_var.core_data(),
                                                axis=tuple(time_dim))
                 ancillary_var = ancillary_var.copy(result_ancillary_var)
