@@ -1,4 +1,6 @@
 """Test 1esmvalcore.esgf._search`."""
+import copy
+
 import pytest
 from pyesgf.search.context import FileSearchContext
 from pyesgf.search.results import FileResult
@@ -66,7 +68,7 @@ ESGF_FACETS = (
         'project': 'CMIP5',
         'model': 'INM-CM4',
         'ensemble': 'r1i1p1',
-        'experiment': ['historical', 'rcp85'],
+        'experiment': 'historical,rcp85',
         'cmor_table': 'Amon',
         'variable': 'tas',
     },
@@ -102,6 +104,10 @@ ESGF_FACETS = (
                          zip(OUR_FACETS, ESGF_FACETS))
 def test_get_esgf_facets(our_facets, esgf_facets):
     """Test that facet translation by get_esgf_facets works as expected."""
+    our_facets = copy.deepcopy(our_facets)
+    for facet, value in our_facets.items():
+        if isinstance(value, list):
+            our_facets[facet] = tuple(value)
     facets = _search.get_esgf_facets(our_facets)
     assert facets == esgf_facets
 
