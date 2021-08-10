@@ -1,9 +1,8 @@
 """Find files on the ESGF and download them."""
 from ._download import ESGFFile
-from ._search import ESGFSearchError, search
+from ._search import find_files
 
 __all__ = [
-    'search',
-    'ESGFSearchError',
+    'find_files',
     'ESGFFile',
 ]

@@ -3,21 +3,12 @@
 ###############################################################################
 ---
 
-log_level: info
-# Exit on warning (only for NCL diagnostic scripts)? true/[false]
-exit_on_warning: false
-# Plot file format? [png]/pdf/ps/eps/epsi
-output_file_type: png
-# Destination directory
+# Directory where results are stored
 output_dir: ./esmvaltool_output
+# Directory for storing downloaded climate data
+download_dir: ~/climate_data
 # Auxiliary data directory (used for some additional datasets)
 auxiliary_data_dir: ./auxiliary_data
-# Use netCDF compression true/[false]
-compress_netcdf: false
-# Save intermediary cubes in the preprocessor true/[false]
-save_intermediary_cubes: false
-# Remove the preproc dir if all fine
-remove_preproc_dir: false
 # Run at most this many tasks in parallel [null]/1/2/3/4/..
 # Set to null to use the number of available CPUs.
 # If you run out of memory, try setting max_parallel_tasks to 1 and check the
@@ -26,6 +17,18 @@ remove_preproc_dir: false
 # can increase the number of parallel tasks again to a reasonable number for
 # the amount of memory available in your system.
 max_parallel_tasks: null
+# Log level of the console
+log_level: info
+# Exit on warning (only for NCL diagnostic scripts)? true/[false]
+exit_on_warning: false
+# Plot file format? [png]/pdf/ps/eps/epsi
+output_file_type: png
+# Remove the preproc dir if all fine
+remove_preproc_dir: false
+# Use netCDF compression true/[false]
+compress_netcdf: false
+# Save intermediary cubes in the preprocessor true/[false]
+save_intermediary_cubes: false
 # Path to custom config-developer file, to customise project configurations.
 # See config-developer.yml for an example. Set to None to use the default
 config_developer_file: null
@@ -38,31 +41,33 @@ profile_diagnostic: false
 # For site-specific entries, see below
 # Comment out these when using a site-specific path
 rootpath:
-  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
-  OBS: ~/obs_inputpath
-  RAWOBS: ~/rawobs_inputpath
-  default: ~/default_inputpath
-  CORDEX: ~/default_inputpath
+  CMIP3: ~/climate_data/cmip3
+  CMIP5: ~/climate_data/cmip5
+  CMIP6: ~/climate_data/CMIP6
+  CORDEX: ~/climate_data/cordex
+  obs4MIPs: ~/climate_data/obs4MIPs
 
-# Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
+# Directory structure for input data: [default]/ESGF/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
 # comment out/replace as per needed
 drs:
-  CMIP5: default
-  CORDEX: default
-  OBS: default
+  CMIP3: ESGF
+  CMIP5: ESGF
+  CMIP6: ESGF
+  CORDEX: ESGF
+  obs4MIPs: ESGF
 
 # Directory tree created by automatically downloading from ESGF
 #rootpath:
-#  CMIP6: ~/data/CMIP6
-#  CMIP5: ~/data/cmip5
 #  CMIP3: ~/data/cmip3
-#  obs4MIPs: ~/data/obs4MIPs
+#  CMIP5: ~/data/cmip5
+#  CMIP6: ~/data/CMIP6
 #  CORDEX: ~/data/cordex
+#  obs4MIPs: ~/data/obs4MIPs
 #drs:
-#  CMIP6: ESGF
-#  CMIP5: ESGF
 #  CMIP3: ESGF
+#  CMIP5: ESGF
+#  CMIP6: ESGF
 #  CORDEX: ESGF
 #  obs4MIPs: ESGF
 

@@ -70,7 +70,7 @@ def test_read_config_file(monkeypatch, tmp_path):
 
 
 def test_default_config(monkeypatch, tmp_path):
-    """Test that _load_esgf_pyclient_config returns the default config."""
+    """Test that load_esgf_pyclient_config returns the default config."""
     monkeypatch.setattr(_esgf_pyclient, 'CONFIG_FILE',
                         tmp_path / 'non-existent.yml')
 
@@ -80,7 +80,7 @@ def test_default_config(monkeypatch, tmp_path):
     monkeypatch.setattr(_esgf_pyclient, 'get_keyring_credentials',
                         get_keyring_credentials)
 
-    cfg = _esgf_pyclient._load_esgf_pyclient_config()
+    cfg = _esgf_pyclient.load_esgf_pyclient_config()
     print(cfg)
 
     assert cfg == DEFAULT_CONFIG

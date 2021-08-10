@@ -1,5 +1,4 @@
 """Module for downloading files from ESGF."""
-import asyncio
 import datetime
 import functools
 import hashlib
@@ -7,69 +6,46 @@ import logging
 import os
 import shutil
 import tempfile
-import urllib
 from pathlib import Path
+from urllib.parse import urlparse
 
-import aiohttp
 import requests
 
-from ._logon import get_credentials, get_ssl_context
+from .._config._esgf_pyclient import load_esgf_pyclient_config
+from ._logon import get_credentials
+from .facets import DATASET_MAP, FACETS
 
 logger = logging.getLogger(__name__)
 
 TIMEOUT = 5 * 60
 """Timeout (in seconds) for downloads."""
 
-_RANGE_HOSTS = {}
-"""Hosts that support range requests."""
 
+def sort_hosts(urls):
+    """Sort a list of URLs by preferred hosts.
 
-def host_accepts_range(url):
-    """Test whether a host accepts the Range parameter."""
-    # https://stackoverflow.com/questions/720419/how-can-i-find-out-whether-a-server-supports-the-range-header
-    hostname = urllib.parse.urlparse(url).hostname
-    if hostname not in _RANGE_HOSTS:
-        try:
-            response = requests.get(
-                url,
-                timeout=TIMEOUT,
-                cert=get_credentials(),
-                headers={'Range': 'bytes=0-0'},
-            )
-        except requests.exceptions.RequestException:
-            # host is offline
-            _RANGE_HOSTS[hostname] = False
-        else:
-            _RANGE_HOSTS[hostname] = (
-                response.status_code == 206
-                # esgf-data1.ceda.ac.uk does return status code 206, but it
-                # does not support ranges and will redirect to a html page
-                and response.headers['Content-Type'] == 'application/x-netcdf')
+    Parameters
+    ----------
+    urls : :obj:`list` of :obj:`str`
+        List of all available URLs.
 
-    return _RANGE_HOSTS[hostname]
+    Returns
+    -------
+    :obj:`list` of :obj:`str`
+        The list of URLs, with URLs from a preferred hosts first.
+    """
+    urls = list(urls)
+    hosts = [urlparse(url).hostname for url in urls]
+    cfg = load_esgf_pyclient_config()
+    preferred_hosts = cfg.get('preferred_hosts', [])
+    for host in preferred_hosts[::-1]:
+        if host in hosts:
+            # Move host and corresponding URL to the beginning of the list
+            idx = hosts.index(host)
+            hosts.insert(0, hosts.pop(idx))
+            urls.insert(0, urls.pop(idx))
 
-
-class Queue(asyncio.Queue):
-    """Queue that keeps track of the number of unfinished tasks."""
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.unfinished_tasks = 0
-
-    def put_nowait(self, *args, **kwargs):
-        """Put an item into the queue without blocking."""
-        super().put_nowait(*args, **kwargs)
-        self.unfinished_tasks += 1
-
-    def put_back(self, *args, **kwargs):
-        """Put an item previously taken from the queue back."""
-        # TODO: this doesn't work, because Queue._unfinished_tasks
-        # still get incremented
-        super().put_nowait(*args, **kwargs)
-
-    def task_done(self, *args, **kwargs):
-        """Indicate that a formerly enqueued task is complete."""
-        super().task_done(*args, **kwargs)
-        self.unfinished_tasks -= 1
+    return urls
 
 
 @functools.total_ordering
@@ -89,26 +65,69 @@ class ESGFFile:
     size : int
         The size of the file in bytes.
     """
-    def __init__(self, urls, dataset, name, size, checksum, checksum_type):
-        self.urls = urls
-        self.dataset = dataset
-        self.name = name
-        self.size = size
-        self._checksum = checksum
-        self._checksum_type = checksum_type
+
+    def __init__(self, results):
+        def get_file_id(result):
+            """Get a value that uniquely identifies the file."""
+            # Remove the hostname from the dataset_id
+            dataset = result.json['dataset_id'].split('|')[0]
+            return (dataset.lower(), result.filename.lower())
+
+        results = sorted(results, key=get_file_id)
+
+        self.name = results[0].filename
+        self.size = results[0].size
+        self.dataset = self._get_dataset_id(results)
+
+        self.urls = []
+        self._checksums = []
+
+        file_id = get_file_id(results[0])
+        for result in results:
+            self.urls.append(result.download_url)
+            self._checksums.append((result.checksum_type, result.checksum))
+            # Sanity check
+            if get_file_id(result) != file_id:
+                raise ValueError(
+                    f"FileResult {get_file_id(result)} does not match"
+                    f" {file_id}, are these files the same?")
+
+    @staticmethod
+    def _get_dataset_id(results):
+        """Simplify dataset_id so it is always composed of the same facets."""
+        # Pick the first dataset_id if there are differences in case
+        dataset_id = sorted(r.json['dataset_id'].split('|')[0]
+                            for r in results)[0]
+
+        project = results[0].json['project'][0]
+        if project != 'obs4MIPs':
+            return dataset_id
+
+        # Simplify the obs4MIPs dataset_id so it contains only facets that are
+        # present for all datasets.
+        version = dataset_id.rsplit('.', 1)[1]
+        dataset_key = FACETS[project]['dataset']
+        dataset_name = results[0].json[dataset_key][0]
+        dataset_name = DATASET_MAP[project].get(dataset_name, dataset_name)
+        return f"{project}.{dataset_name}.{version}"
 
     def __repr__(self):
         """Represent the file as a string."""
-        return f"ESGFFile:{self.dataset.replace('.', '/')}/{self.name}"
+        hosts = [urlparse(u).hostname for u in self.urls]
+        return (f"ESGFFile:{self.dataset.replace('.', '/')}/{self.name}"
+                f" on hosts {hosts}")
 
     def __eq__(self, other):
-        return str(self) == str(other)
+        """Compare `self` to `other`."""
+        return (self.dataset, self.name) == (other.dataset, other.name)
 
     def __lt__(self, other):
-        return str(self).lower() < str(other).lower()
+        """Compare `self` to `other`."""
+        return (self.dataset, self.name) < (other.dataset, other.name)
 
     def __hash__(self):
-        return hash(str(self))
+        """Compute a unique hash value."""
+        return hash((self.dataset, self.name))
 
     def local_file(self, dest_folder):
         """Return the path to the local file after download.
@@ -150,18 +169,18 @@ class ESGFFile:
         os.makedirs(local_file.parent, exist_ok=True)
         start_time = datetime.datetime.now()
 
-        range_urls = [url for url in self.urls if host_accepts_range(url)]
-        if len(range_urls) > 1:
-            self._download_multiple_urls(local_file, range_urls)
-        else:
-            for url in self.urls:
-                try:
-                    self._download_single_url(local_file, url)
-                except requests.exceptions.RequestException as exc:
-                    logger.info("Not able to download %s. Error message: %s",
-                                url, exc)
-                else:
-                    break
+        for url in sort_hosts(self.urls):
+            try:
+                self._download(local_file, url)
+            except requests.exceptions.RequestException as exc:
+                logger.info("Not able to download %s. Error message: %s", url,
+                            exc)
+            else:
+                break
+
+        if not local_file.exists():
+            raise IOError(
+                f"Failed to download file {local_file} from {self.urls}")
 
         duration = datetime.datetime.now() - start_time
         logger.info("Downloaded %s (%.0f MB) in %s (%.1f MB/s)", local_file,
@@ -175,11 +194,14 @@ class ESGFFile:
         with tempfile.NamedTemporaryFile(prefix=f"{local_file}.") as tmp_file:
             return Path(tmp_file.name)
 
-    def _download_single_url(self, local_file, url):
+    def _download(self, local_file, url):
         """Download file from a single url."""
-        logger.info("Checksum type is %r for %s", self._checksum_type,
-                    self.urls[0])
-        hasher = hashlib.new(self._checksum_type)
+        idx = self.urls.index(url)
+        checksum_type, checksum = self._checksums[idx]
+        if checksum_type is None:
+            hasher = None
+        else:
+            hasher = hashlib.new(checksum_type)
 
         tmp_file = self._tmp_local_file(local_file)
 
@@ -189,115 +211,19 @@ class ESGFFile:
         with tmp_file.open("wb") as file:
             chunk_size = 1 << 20  # 1 MB
             for chunk in response.iter_content(chunk_size=chunk_size):
-                hasher.update(chunk)
+                if hasher is not None:
+                    hasher.update(chunk)
                 file.write(chunk)
 
-        checksum = hasher.hexdigest()
+        if hasher is None:
+            logger.warning(
+                "No checksum available, unable to check data"
+                " integrity for %s, ", url)
+        else:
+            local_checksum = hasher.hexdigest()
+            if local_checksum != checksum:
+                raise ValueError(
+                    f"Wrong {checksum_type} checksum for file {tmp_file},"
+                    f" expected: {checksum}, got {local_checksum}.")
 
-        self._finalize_download(tmp_file, local_file, checksum)
-
-    def _download_multiple_urls(self, local_file, urls):
-        """Download file from multiple urls."""
-        asyncio.run(self._download_from_multiple_urls(local_file, urls))
-
-    async def _check_worker_health(self, workers, urls):
-        """Check that there is at least 1 worker downloading the file."""
-        online_workers = [w for w in workers if not w.cancelled()]
-        if not online_workers:
-            errors = await asyncio.gather(*workers, return_exceptions=True)
-            for error, url in zip(errors, urls):
-                if error:
-                    logger.warning(
-                        "An exception occurred while downloading from %s:\n%s",
-                        url, error)
-            raise IOError(f"Unable to download {self.name}"
-                          f" from {urls}: no hosts are online.")
-
-    async def _download_from_multiple_urls(self, local_file, urls):
-        """Download a file from multiple urls."""
-        queue = Queue()
-        chunk_size = 10 * 2**20  # 10 MB
-        for start in range(0, self.size, chunk_size):
-            end = min(start + chunk_size, self.size - 1)
-            queue.put_nowait([start, end])
-
-        tmp_file = self._tmp_local_file(local_file)
-        with tmp_file.open('wb') as file:
-            workers = [
-                asyncio.create_task(self._downloader(url, file, queue))
-                for url in urls
-            ]
-
-            n_chunks = queue.qsize()
-            while queue.unfinished_tasks:
-                await asyncio.sleep(1)
-                logger.info("Queued chunks: %s, running %s, total %s",
-                            queue.qsize(),
-                            queue.unfinished_tasks - queue.qsize(), n_chunks)
-                await self._check_worker_health(workers, urls)
-
-            # Clean up workers
-            await queue.join()
-            for worker in workers:
-                worker.cancel()
-            await asyncio.gather(*workers, return_exceptions=True)
-
-        self._finalize_download(tmp_file, local_file)
-
-    async def _downloader(self, url, tmp_file, queue):
-        """Start a worker that downloads and saves chunks from a single URL."""
-        hostname = urllib.parse.urlparse(url).hostname
-        logger.info("Starting worker %s", hostname)
-        sslcontext = get_ssl_context()
-
-        # 12 hours should be enough to download a single file.
-        timeout = aiohttp.ClientTimeout(total=12 * 60 * 60)
-
-        async with aiohttp.ClientSession(timeout=timeout,
-                                         raise_for_status=True) as session:
-            while True:
-                logger.info("Requesting work for host %s", hostname)
-                chunk = await queue.get()
-                start, end = chunk
-                headers = {'Range': f'bytes={start}-{end}'}
-                logger.info("Start download %s-%s MB of %s", start / 2**20,
-                            end / 2**20, url)
-                try:
-                    async with session.get(url,
-                                           timeout=TIMEOUT,
-                                           ssl=sslcontext,
-                                           headers=headers) as response:
-                        content = await response.content.read()
-                except (aiohttp.ClientError,
-                        asyncio.exceptions.TimeoutError) as exc:
-                    logger.info("Not able to download %s. Error message: %s",
-                                url, exc)
-                    queue.put_back(chunk)
-                    raise asyncio.CancelledError from exc
-
-                tmp_file.seek(start)
-                tmp_file.write(content)
-                logger.info("Done: chunk %s-%s MB of %s", start / 2**20,
-                            end / 2**20, url)
-                queue.task_done()
-
-    def _finalize_download(self, tmp_file, local_file, checksum=None):
-        """Move file to correct location if checksum is correct."""
-        if not tmp_file.exists():
-            raise IOError(
-                f"Failed to download file {local_file} from {self.urls}")
-
-        if checksum is None:
-            # TODO: sometimes checksum_type is None or invalid?
-            logger.info("Checksum type is %r for %s", self._checksum_type,
-                        self.urls[0])
-            hasher = hashlib.new(self._checksum_type)
-            with tmp_file.open('rb') as file:
-                hasher.update(file.read())
-            checksum = hasher.hexdigest()
-
-        if checksum != self._checksum:
-            raise ValueError(
-                f"Wrong {self._checksum_type} checksum for file {tmp_file},"
-                f" expected: {self._checksum}, got {checksum}.")
         shutil.move(tmp_file, local_file)

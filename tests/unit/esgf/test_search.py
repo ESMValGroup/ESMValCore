@@ -1,6 +1,7 @@
 """Test 1esmvalcore.esgf._search`."""
-import pyesgf.search.results
 import pytest
+from pyesgf.search.context import FileSearchContext
+from pyesgf.search.results import FileResult
 
 from esmvalcore.esgf import ESGFFile, _search
 
@@ -105,75 +106,7 @@ def test_get_esgf_facets(our_facets, esgf_facets):
     assert facets == esgf_facets
 
 
-def test_sort_hosts():
-    """Test that hosts are sorted according to priority by sort_hosts."""
-    hosts = ['esgf.nci.org.au', 'esgf2.dkrz.de', 'esgf-data1.ceda.ac.uk']
-    preferred_hosts = [
-        'esgf2.dkrz.de', 'esgf-data1.ceda.ac.uk', 'aims3.llnl.gov'
-    ]
-
-    result = _search.sort_hosts(hosts, preferred_hosts)
-    assert result == [
-        'esgf2.dkrz.de', 'esgf-data1.ceda.ac.uk', 'esgf.nci.org.au'
-    ]
-
-
-def test_select_latest_versions():
-    datasets = {
-        ('cmip5.output1.CSIRO-BOM.ACCESS1-0.historical'
-         '.mon.atmos.Amon.r1i1p1.v1'):
-        'a',
-        ('cmip5.output1.CSIRO-BOM.ACCESS1-0.historical'
-         '.mon.atmos.Amon.r1i1p1.v20120329'):
-        'b',
-        ('cmip5.output1.CSIRO-BOM.ACCESS1-0.historical'
-         '.mon.atmos.Amon.r1i1p1.v20120727'):
-        'c',
-        ('cmip5.output1.INM.inmcm4.historical'
-         '.mon.atmos.Amon.r1i1p1.v20130207'):
-        'd',
-    }
-    result = _search.select_latest_versions(datasets)
-    assert result == {
-        ('cmip5.output1.CSIRO-BOM.ACCESS1-0.historical'
-         '.mon.atmos.Amon.r1i1p1.v20120727'):
-        'c',
-        ('cmip5.output1.INM.inmcm4.historical'
-         '.mon.atmos.Amon.r1i1p1.v20130207'):
-        'd',
-    }
-
-
-@pytest.mark.parametrize('dataset_id,facets', [
-    ('a.b.c.v1', {
-        'project': 'CMIP3'
-    }),
-    ('a.b.c.v1', {
-        'project': 'CMIP5'
-    }),
-    ('a.b.c.v1', {
-        'project': 'CMIP6'
-    }),
-    ('a.b.c.v1', {
-        'project': 'CORDEX'
-    }),
-])
-def test_simplify_dataset_id_noop(dataset_id, facets):
-    result = _search.simplify_dataset_id(dataset_id, facets)
-    assert result == dataset_id
-
-
-def test_simplify_dataset_id_obs4mips():
-    facets = {
-        'project': 'obs4MIPs',
-        'source_id': 'CERES-EBAF',
-    }
-    dataset_id = 'obs4MIPs.NASA-LaRC.CERES-EBAF.atmos.mon.v20160610'
-    result = _search.simplify_dataset_id(dataset_id, facets)
-    assert result == 'obs4MIPs.CERES-EBAF.v20160610'
-
-
-def test_find_files():
+def test_esgf_search_files(mocker):
 
     # Set up some fake FileResults
     dataset_id = ('cmip5.output1.INM.inmcm4.historical'
@@ -191,10 +124,12 @@ def test_find_files():
                 'output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/'
                 'v20130207/tas/' + filename0)
 
-    file_aims0 = pyesgf.search.results.FileResult(
+    file_aims0 = FileResult(
         {
             'checksum': ['123'],
             'checksum_type': ['SHA256'],
+            'dataset_id': dataset_id + '|aims3.llnl.gov',
+            'project': ['CMIP5'],
             'size': 100,
             'title': filename0,
             'url': [
@@ -202,10 +137,10 @@ def test_find_files():
             ],
         }, None)
 
-    file_aims1 = pyesgf.search.results.FileResult(
+    file_aims1 = FileResult(
         {
-            'checksum': ['234'],
-            'checksum_type': ['SHA256'],
+            'dataset_id': dataset_id + '|aims3.llnl.gov',
+            'project': ['CMIP5'],
             'size': 200,
             'title': filename1,
             'url': [
@@ -213,118 +148,72 @@ def test_find_files():
             ],
         }, None)
 
-    file_dkrz = pyesgf.search.results.FileResult(
+    file_dkrz = FileResult(
         {
             'checksum': ['456'],
             'checksum_type': ['MD5'],
+            'dataset_id': dataset_id + '|esgf2.dkrz.de',
+            'project': ['CMIP5'],
             'size': 100,
             'title': filename0,
             'url': [dkrz_url + '|application/netcdf|HTTPServer'],
         }, None)
+
+    facets = {
+        'project': 'CMIP5',
+        'model': 'inmcm4',
+        'variable': 'tas',
+    }
 
     class MockFileSearchContext:
         def __init__(self, results):
             self.results = results
 
         def search(self, **kwargs):
-            assert kwargs == {'variable': 'tas'}
+            assert kwargs['batch_size'] == 500
+            assert kwargs['ignore_facet_check']
             return self.results
 
-    class MockDatasetResult:
+    class MockConnection:
         def __init__(self, results):
             self.results = results
 
-        def file_context(self):
+        def new_context(self, *args, **kwargs):
+            assert len(args) == 1
+            assert args[0] == FileSearchContext
+            assert kwargs.pop('latest')
+            assert kwargs == facets
             return MockFileSearchContext(self.results)
 
-    datasets = {
-        dataset_id: {
-            'aims3.llnl.gov': MockDatasetResult([file_aims0, file_aims1]),
-            'esgf2.dkrz.de': MockDatasetResult([file_dkrz]),
-        }
-    }
+    file_results = [file_aims0, file_aims1, file_dkrz]
+    conn = MockConnection(file_results)
+    mocker.patch.object(_search,
+                        'get_connection',
+                        autspec=True,
+                        return_value=conn)
 
-    facets = {
-        'project': 'CMIP5',
-        'variable': 'tas',
-    }
+    files = _search.esgf_search_files(facets)
+    print(files)
+    assert len(files) == 2
 
-    files = _search.find_files(datasets, facets)
-    assert len(files) == 1
-
-    dataset_files = files[dataset_id]
-    assert len(dataset_files) == 2
-
-    file0 = dataset_files[0]
+    file0 = files[0]
     assert file0.name == filename0
     assert file0.dataset == dataset_id
     assert file0.size == 100
-    assert file0._checksum_type == 'SHA256'
-    assert file0._checksum == '123'
+    assert file0._checksums == [('SHA256', '123'), ('MD5', '456')]
     urls = sorted(file0.urls)
     assert len(urls) == 2
     assert urls[0] == aims_url0
     assert urls[1] == dkrz_url
 
-    file1 = dataset_files[1]
+    file1 = files[1]
     assert file1.name == filename1
     assert file1.dataset == dataset_id
     assert file1.size == 200
-    assert file1._checksum_type == 'SHA256'
-    assert file1._checksum == '234'
+    assert file1._checksums == [(None, None)]
     urls = sorted(file1.urls)
     assert len(urls) == 1
     assert urls[0] == aims_url1
-
-
-def test_merge_datasets():
-    filename = 'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'
-    urls0 = [
-        ('http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/'
-         'FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/'
-         'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'),
-        ('http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/'
-         'output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/'
-         'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'),
-        ('http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/'
-         'FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/'
-         'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'),
-    ]
-    urls1 = [
-        ('http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/'
-         'output1/FIO/fio-esm/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/'
-         'tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc'),
-    ]
-    reference = urls0 + urls1
-
-    dataset0 = ('cmip5.output1.FIO.FIO-ESM.historical.'
-                'mon.atmos.Amon.r1i1p1.v20121010')
-    dataset1 = ('cmip5.output1.FIO.fio-esm.historical.'
-                'mon.atmos.Amon.r1i1p1.v20121010')
-    files = {
-        dataset0: [
-            ESGFFile(urls0,
-                     dataset0,
-                     filename,
-                     size=0,
-                     checksum='123',
-                     checksum_type='MD5')
-        ],
-        dataset1: [
-            ESGFFile(urls1,
-                     dataset1,
-                     filename,
-                     size=0,
-                     checksum='123',
-                     checksum_type='MD5')
-        ],
-    }
-
-    result = _search.merge_datasets(files)
-
-    assert len(result) == 1
-    assert len(result[dataset0]) == 1
-    assert result[dataset0][0].urls == reference
 
 
 def test_select_by_time():
@@ -337,54 +226,19 @@ def test_select_by_time():
         'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185301-185312.nc',
         'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185301-185412.nc',
     ]
-    files = [
-        ESGFFile(urls=[],
-                 dataset=dataset_id,
-                 name=filename,
-                 size=0,
-                 checksum='123',
-                 checksum_type='MD5') for filename in filenames
+    results = [
+        FileResult(
+            json={
+                'title': filename,
+                'dataset_id': dataset_id + '|xyz.com',
+                'project': ['CMIP5'],
+                'size': 100,
+            },
+            context=None,
+        ) for filename in filenames
     ]
+    files = [ESGFFile([r]) for r in results]
 
     result = _search.select_by_time(files, 1851, 1855)
     reference = files[1:3] + files[4:]
     assert sorted(result) == sorted(reference)
-
-
-def test_expand_facets():
-    """Test that facets that are a tuple are correctly expanded."""
-    facets = {
-        'a': 1,
-        'b': 2,
-        'c': (3, 4),
-        'd': (5, 6),
-    }
-    result = _search.expand_facets(facets)
-
-    reference = [
-        {
-            'a': 1,
-            'b': 2,
-            'c': 3,
-            'd': 5,
-        },
-        {
-            'a': 1,
-            'b': 2,
-            'c': 3,
-            'd': 6,
-        },
-        {
-            'a': 1,
-            'b': 2,
-            'c': 4,
-            'd': 5,
-        },
-        {
-            'a': 1,
-            'b': 2,
-            'c': 4,
-            'd': 6,
-        },
-    ]
-    assert result == reference

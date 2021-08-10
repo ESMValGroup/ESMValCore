@@ -109,7 +109,7 @@ def read_config_file():
         logger.info("Loading ESGF configuration from %s", CONFIG_FILE)
         mode = os.stat(CONFIG_FILE).st_mode
         if mode & stat.S_IRWXG or mode & stat.S_IRWXO:
-            logger.warning(f"Correcting unsafe permissions on {CONFIG_FILE}")
+            logger.warning("Correcting unsafe permissions on %s", CONFIG_FILE)
             os.chmod(CONFIG_FILE, stat.S_IRUSR | stat.S_IWUSR)
         with CONFIG_FILE.open() as file:
             cfg = yaml.safe_load(file)
@@ -123,8 +123,8 @@ def read_config_file():
 
 
 @lru_cache()
-def _load_esgf_pyclient_config():
-
+def load_esgf_pyclient_config():
+    """Load the esgf-pyclient configuration."""
     cfg = {
         # Arguments to
         # https://esgf-pyclient.readthedocs.io/en/latest/api.html#pyesgf.logon.LogonManager.logon

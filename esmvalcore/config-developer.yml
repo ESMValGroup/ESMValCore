@@ -40,7 +40,7 @@ CMIP5:
     CP4CDS: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{short_name}/latest/'
     DKRZ: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
-    ESGF: 'output1/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}'
+    ESGF: '{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}'
     RCAST: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
     SMHI: '{dataset}/{ensemble}/{exp}/{frequency}'
     SYNDA: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}'

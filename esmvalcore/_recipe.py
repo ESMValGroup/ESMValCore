@@ -30,7 +30,7 @@ from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
-from .esgf import ESGFSearchError, search
+from .esgf import find_files
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -590,10 +590,7 @@ def _get_input_files(variable, config_user):
         except RecipeError:
             # Only look on ESGF if files are not available locally.
             local_files = set(Path(f).name for f in input_files)
-            try:
-                search_result = search(**variable)
-            except ESGFSearchError as exc:
-                raise RecipeError(str(exc))
+            search_result = find_files(**variable)
             for file in search_result:
                 local_copy = file.local_file(config_user['download_dir'])
                 if local_copy.name not in local_files:
@@ -602,7 +599,7 @@ def _get_input_files(variable, config_user):
                     else:
                         input_files.append(file)
                         DOWNLOAD_FILES.add(file)
-            dirnames.append('ESGF')
+            dirnames.append('ESGF:')
 
     return (input_files, dirnames, filenames)
 
@@ -1030,15 +1027,6 @@ def get_download_message():
     if total_size:
         lines.insert(0, "Will download the following files:")
     lines.insert(0, f"Will download {total_size / gigabyte:.1f} GB")
-    if total_size > 100 * gigabyte:
-        answer = ''
-        while answer not in ('y', 'n'):
-            answer = input(
-                "This will download more than 100 GB, are you sure you want"
-                " to continue? Answer 'y' to download or 'n' to stop. ")
-        if answer == 'n':
-            raise ValueError(
-                "Stopping because too much data was requested for download.")
     return "\n".join(lines)
 
 
