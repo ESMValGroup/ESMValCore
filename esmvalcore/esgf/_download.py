@@ -65,32 +65,15 @@ class ESGFFile:
     size : int
         The size of the file in bytes.
     """
-
     def __init__(self, results):
-        def get_file_id(result):
-            """Get a value that uniquely identifies the file."""
-            # Remove the hostname from the dataset_id
-            dataset = result.json['dataset_id'].split('|')[0]
-            return (dataset.lower(), result.filename.lower())
-
-        results = sorted(results, key=get_file_id)
-
         self.name = results[0].filename
         self.size = results[0].size
         self.dataset = self._get_dataset_id(results)
-
         self.urls = []
         self._checksums = []
-
-        file_id = get_file_id(results[0])
         for result in results:
             self.urls.append(result.download_url)
             self._checksums.append((result.checksum_type, result.checksum))
-            # Sanity check
-            if get_file_id(result) != file_id:
-                raise ValueError(
-                    f"FileResult {get_file_id(result)} does not match"
-                    f" {file_id}, are these files the same?")
 
     @staticmethod
     def _get_dataset_id(results):

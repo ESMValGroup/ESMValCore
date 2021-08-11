@@ -24,18 +24,18 @@ def get_esgf_facets(variable):
     for our_name, esgf_name in FACETS[project].items():
         if our_name in variable:
             values = variable[our_name]
-            if isinstance(values, tuple):
-                for value in values:
-                    if our_name == 'dataset':
-                        # Replace dataset name by ESGF name for dataset
-                        value = DATASET_MAP[project].get(value, value)
-                value = ','.join(values)
+
+            if isinstance(values, (tuple, list)):
+                values = list(values)
             else:
-                value = values
+                values = [values]
+
+            for i, value in enumerate(values):
                 if our_name == 'dataset':
                     # Replace dataset name by ESGF name for dataset
-                    value = DATASET_MAP[project].get(value, value)
-            facets[esgf_name] = value
+                    values[i] = DATASET_MAP[project].get(value, value)
+
+            facets[esgf_name] = ','.join(values)
 
     return facets
 
@@ -65,7 +65,12 @@ def select_latest_versions(files):
 def debug_search(connection, facets):
     """Give some advice on which facets are available."""
     project = facets['project']
-    context = connection.new_context(project=project, latest=True)
+    esgf_facet_names = list(FACETS[project].values())
+    context = connection.new_context(
+        project=project,
+        facets=esgf_facet_names,
+        latest=True,
+    )
 
     # Distinguish between valid and invalid choices
     available_facets = {}
@@ -123,7 +128,7 @@ def esgf_search_files(facets):
     files = []
     results = sorted(results, key=same_file)
     for _, file_results in itertools.groupby(results, key=same_file):
-        file = ESGFFile(file_results)
+        file = ESGFFile(list(file_results))
         files.append(file)
 
     files = select_latest_versions(files)
@@ -246,13 +251,13 @@ def find_files(*, project, short_name, dataset, **facets):
     :obj:`list` of :obj:`ESGFFile`
         A list of files that have been found.
     """  # pylint: disable=locally-disabled, line-too-long
-    # The project and short_name functions are required for the function
-    # to work.
+    # The project is required for the function to work.
     facets['project'] = project
-    facets['short_name'] = short_name
-    # The dataset facet is not strictly required, but without it it seems
-    # likely that too many results will be found.
+    # The dataset and short_name facet are not strictly required,
+    # but without these it seems likely that the user is requesting
+    # more results than they intended.
     facets['dataset'] = dataset
+    facets['short_name'] = short_name
 
     # Convert lists to tuples to allow caching results
     for facet, value in facets.items():

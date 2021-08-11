@@ -112,6 +112,26 @@ def test_get_esgf_facets(our_facets, esgf_facets):
     assert facets == esgf_facets
 
 
+def get_mock_connection(facets, results):
+    """Create a mock pyesgf.search.SearchConnection instance."""
+    class MockFileSearchContext:
+        def search(self, **kwargs):
+            assert kwargs['batch_size'] == 500
+            assert kwargs['ignore_facet_check']
+            assert len(kwargs) == 2
+            return results
+
+    class MockConnection:
+        def new_context(self, *args, **kwargs):
+            assert len(args) == 1
+            assert args[0] == FileSearchContext
+            assert kwargs.pop('latest')
+            assert kwargs == facets
+            return MockFileSearchContext()
+
+    return MockConnection()
+
+
 def test_esgf_search_files(mocker):
 
     # Set up some fake FileResults
@@ -170,29 +190,8 @@ def test_esgf_search_files(mocker):
         'model': 'inmcm4',
         'variable': 'tas',
     }
-
-    class MockFileSearchContext:
-        def __init__(self, results):
-            self.results = results
-
-        def search(self, **kwargs):
-            assert kwargs['batch_size'] == 500
-            assert kwargs['ignore_facet_check']
-            return self.results
-
-    class MockConnection:
-        def __init__(self, results):
-            self.results = results
-
-        def new_context(self, *args, **kwargs):
-            assert len(args) == 1
-            assert args[0] == FileSearchContext
-            assert kwargs.pop('latest')
-            assert kwargs == facets
-            return MockFileSearchContext(self.results)
-
     file_results = [file_aims0, file_aims1, file_dkrz]
-    conn = MockConnection(file_results)
+    conn = get_mock_connection(facets, file_results)
     mocker.patch.object(_search,
                         'get_connection',
                         autspec=True,
