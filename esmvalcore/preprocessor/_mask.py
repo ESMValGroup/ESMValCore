@@ -112,12 +112,9 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
             except iris.exceptions.AncillaryVariableNotFoundError:
                 logger.debug('Ancillary variables land/sea area fraction '
                              'not found in cube. Check fx_file availability.')
-            else:
-                fx_cube = da.broadcast_to(fx_cube.core_data(), cube.shape)
-        else:
-            fx_cube = da.broadcast_to(fx_cube.core_data(), cube.shape)
 
         if fx_cube:
+            fx_cube.data = da.broadcast_to(fx_cube.core_data(), cube.shape)
             landsea_mask = _get_fx_mask(fx_cube.data, mask_out,
                                         fx_cube.var_name)
             cube.data = _apply_fx_mask(landsea_mask, cube.data)
@@ -183,9 +180,8 @@ def mask_landseaice(cube, mask_out):
     except iris.exceptions.AncillaryVariableNotFoundError:
         logger.debug('Ancillary variable land ice area fraction '
                      'not found in cube. Check fx_file availability.')
-    else:
-        fx_cube = da.broadcast_to(fx_cube.core_data(), cube.shape)
     if fx_cube:
+        fx_cube.data = da.broadcast_to(fx_cube.core_data(), cube.shape)
         landice_mask = _get_fx_mask(fx_cube.data, mask_out, fx_cube.var_name)
         cube.data = _apply_fx_mask(landice_mask, cube.data)
         logger.debug("Applying landsea-ice mask: sftgif")
