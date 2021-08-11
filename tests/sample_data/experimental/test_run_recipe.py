@@ -20,6 +20,7 @@ from esmvalcore.experimental.recipe_output import (
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 CFG.update(esmvaltool_sample_data.get_rootpaths())
+CFG['drs']['CMIP6'] = 'SYNDA'
 CFG['max_parallel_tasks'] = 1
 
 AUTHOR_TAGS = {
