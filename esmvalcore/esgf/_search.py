@@ -79,7 +79,12 @@ def esgf_search_files(facets):
         latest=True,
     )
 
-    results = context.search(batch_size=500, ignore_facet_check=True)
+    results = context.search(
+        batch_size=500,
+        # enable ignore_facet_check once the following issue has been fixed:
+        # https://github.com/ESGF/esgf-pyclient/issues/75
+        # ignore_facet_check=True,
+    )
 
     def same_file(result):
         # Remove the hostname from the dataset_id
