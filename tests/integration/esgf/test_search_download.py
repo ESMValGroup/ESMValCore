@@ -115,8 +115,29 @@ def test_mock_search(variable, mocker):
         ]
 
 
-@pytest.mark.skip(reason="This will actually search the ESGF.")
 def test_real_search():
+    """Test a real search for a single file."""
+    variable = {
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'dataset': 'EC-Earth3',
+        'exp': 'historical',
+        'ensemble': 'r1i1p1f1',
+        'grid': 'gr',
+        'start_year': 1990,
+        'end_year': 2000,
+    }
+    files = find_files(**variable)
+    dataset = ('CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3'
+               '.historical.r1i1p1f1.Amon.tas.gr')
+    assert files
+    for file in files:
+        assert file.dataset.startswith(dataset)
+
+
+@pytest.mark.skip(reason="This will actually search the ESGF.")
+def test_real_search_many():
     expected_files = [
         [
             'tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc',

@@ -69,7 +69,10 @@ DATASET_MAP = {
 
 
 def create_dataset_map():
-    """Create the DATASET_MAP from recipe datasets to ESGF dataset names."""
+    """Create the DATASET_MAP from recipe datasets to ESGF dataset names.
+
+    Run `python -m esmvalcore.esgf.facets` to print an up to date map.
+    """
     connection = get_connection()
     dataset_map = {}
     indices = {
@@ -86,6 +89,7 @@ def create_dataset_map():
         ctx = connection.new_context(
             project=project,
             facets=[dataset_key],
+            fields=['id'],
             latest=True,
         )
         available_datasets = sorted(ctx.facet_counts[dataset_key])
