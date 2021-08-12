@@ -5,7 +5,7 @@ import pytest
 from pyesgf.search.context import FileSearchContext
 from pyesgf.search.results import FileResult
 
-from esmvalcore.esgf import ESGFFile, _search
+from esmvalcore.esgf import ESGFFile, _search, find_files
 
 OUR_FACETS = (
     {
@@ -247,3 +247,11 @@ def test_select_by_time():
     result = _search.select_by_time(files, 1851, 1855)
     reference = files[1:3] + files[4:]
     assert sorted(result) == sorted(reference)
+
+
+def test_search_unknown_project():
+    project = 'Unknown'
+    msg = (f"Unable to download from ESGF, because project {project} is not on"
+           " it or is not supported by the esmvalcore.esgf module.")
+    with pytest.raises(ValueError, match=msg):
+        find_files(project=project, dataset='', short_name='')

@@ -16,10 +16,6 @@ logger = logging.getLogger(__name__)
 def get_esgf_facets(variable):
     """Translate variable to facets for searching on ESGF."""
     project = variable.get('project', '')
-    if project not in FACETS:
-        raise ValueError("Unable to download from ESGF, because project"
-                         f" '{project}' is not on it.")
-
     facets = {'project': project}
     for our_name, esgf_name in FACETS[project].items():
         if our_name in variable:
@@ -62,41 +58,6 @@ def select_latest_versions(files):
     return result
 
 
-def debug_search(connection, facets):
-    """Give some advice on which facets are available."""
-    project = facets['project']
-    esgf_facet_names = list(FACETS[project].values())
-    context = connection.new_context(
-        project=project,
-        facets=esgf_facet_names,
-        latest=True,
-    )
-
-    # Distinguish between valid and invalid choices
-    available_facets = {}
-    missing_facets = {}
-    for our_facet, esgf_facet in FACETS[project].items():
-        available = set(context.facet_counts[esgf_facet])
-        if esgf_facet in facets:
-            if facets[esgf_facet] in available:
-                available_facets[esgf_facet] = facets[esgf_facet]
-            else:
-                missing_facets[esgf_facet] = facets[esgf_facet]
-
-    reduced_ctx = context.constrain(**available_facets, latest=True)
-    for our_facet, esgf_facet in FACETS[project].items():
-        available = sorted(reduced_ctx.facet_counts[esgf_facet])
-        if esgf_facet in missing_facets:
-            if available:
-                logger.error("Available values for '%s' based on %s:\n%s",
-                             our_facet, available_facets,
-                             "\n".join(sorted(available)))
-            else:
-                logger.error(
-                    "No choices containing data available "
-                    "for '%s' based on %s", our_facet, available_facets)
-
-
 def esgf_search_files(facets):
     """Search for files on ESGF.
 
@@ -133,12 +94,9 @@ def esgf_search_files(facets):
 
     files = select_latest_versions(files)
 
-    logger.debug("Found the following files matching facets %s:\n%s", facets,
-                 '\n'.join(str(f) for f in files))
-
-    if not files:
-        # Give some advice on which facets are available
-        debug_search(connection, facets)
+    msg = 'none' if not files else '\n' + '\n'.join(str(f) for f in files)
+    logger.debug("Found the following files matching facets %s: %s", facets,
+                 msg)
 
     return files
 
@@ -251,6 +209,11 @@ def find_files(*, project, short_name, dataset, **facets):
     :obj:`list` of :obj:`ESGFFile`
         A list of files that have been found.
     """  # pylint: disable=locally-disabled, line-too-long
+    if project not in FACETS:
+        raise ValueError(
+            f"Unable to download from ESGF, because project {project} is not"
+            " on it or is not supported by the esmvalcore.esgf module.")
+
     # The project is required for the function to work.
     facets['project'] = project
     # The dataset and short_name facet are not strictly required,

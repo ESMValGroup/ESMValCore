@@ -1,5 +1,5 @@
 """Module containing mappings from our names to ESGF names."""
-from ._logon import get_connection
+from esmvalcore.esgf._logon import get_connection
 
 FACETS = {
     'CMIP3': {
@@ -68,13 +68,10 @@ DATASET_MAP = {
 """Cache for the mapping between recipe/filesystem and ESGF dataset names."""
 
 
-def create_dataset_map(connection=None):
+def create_dataset_map():
     """Create the DATASET_MAP from recipe datasets to ESGF dataset names."""
+    connection = get_connection()
     dataset_map = {}
-
-    if connection is None:
-        connection = get_connection()
-
     indices = {
         'CMIP3': 2,
         'CMIP5': 3,

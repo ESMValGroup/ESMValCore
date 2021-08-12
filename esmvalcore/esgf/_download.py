@@ -207,6 +207,7 @@ class ESGFFile:
             if local_checksum != checksum:
                 raise ValueError(
                     f"Wrong {checksum_type} checksum for file {tmp_file},"
-                    f" expected: {checksum}, got {local_checksum}.")
+                    f" downloaded from {url}: expected {checksum}, but got"
+                    f" {local_checksum}. Try downloading the file again.")
 
         shutil.move(tmp_file, local_file)

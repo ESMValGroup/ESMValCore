@@ -1,6 +1,5 @@
 """Functions for logging on to ESGF."""
 import logging
-import ssl
 from functools import lru_cache
 
 import pyesgf.logon
@@ -43,18 +42,6 @@ def get_credentials():
     else:
         credentials = None
     return credentials
-
-
-def get_ssl_context():
-    """Get an SSL context."""
-    credentials = get_credentials()
-    if credentials:
-        sslcontext = ssl.create_default_context(
-            purpose=ssl.Purpose.CLIENT_AUTH)
-        sslcontext.load_cert_chain(credentials)
-    else:
-        sslcontext = None
-    return sslcontext
 
 
 def get_connection():
