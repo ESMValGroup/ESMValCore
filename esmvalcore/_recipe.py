@@ -13,6 +13,7 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
+from . import esgf
 from ._config import (
     TAGS,
     get_activity,
@@ -30,7 +31,6 @@ from ._recipe_checks import RecipeError
 from ._task import DiagnosticTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
-from .esgf import find_files
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -263,7 +263,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings = {}
 
     # Set up downloading using synda if requested.
-    if config_user.get('download'):
+    if not config_user['no_download']:
         settings['download'] = {
             'dest_folder': config_user['download_dir'],
         }
@@ -330,7 +330,7 @@ def _get_default_settings(variable, config_user, derive=False):
         'fx_variables': {},
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
     }
-    if config_user.get('download'):
+    if not config_user['no_download']:
         settings['add_fx_variables']['dest_folder'] = (
             config_user['download_dir'])
 
@@ -379,8 +379,8 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
                      fx_info['short_name'], mip)
         fx_files = _get_input_files(fx_info, config_user)[0]
         if fx_files:
-            logger.debug("Found fx variables '%s':\n%s",
-                         fx_info['short_name'], pformat(fx_files))
+            logger.debug("Found fx variables '%s':\n%s", fx_info['short_name'],
+                         pformat(fx_files))
             fx_files_for_mips[mip] = fx_files
 
     # Dict contains more than one element -> ambiguity
@@ -484,12 +484,10 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
         fx_files, fx_info = _get_fx_files(variable, fx_info, config_user)
         if fx_files:
             fx_info['filename'] = fx_files
-            settings['add_fx_variables']['fx_variables'].update({
-                fx_var: fx_info
-            })
-            logger.info(
-                'Using fx files for variable %s during step %s: %s',
-                variable['short_name'], step_name, pformat(fx_files))
+            settings['add_fx_variables']['fx_variables'].update(
+                {fx_var: fx_info})
+            logger.info('Using fx files for variable %s during step %s: %s',
+                        variable['short_name'], step_name, pformat(fx_files))
 
 
 def _fx_list_to_dict(fx_vars):
@@ -509,6 +507,7 @@ def _fx_list_to_dict(fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
+
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -558,8 +557,8 @@ def _update_fx_settings(settings, variable, config_user):
 def _read_attributes(filename):
     """Read the attributes from a netcdf file."""
     attributes = {}
-    if not (isinstance(filename, (str, os.PathLike))
-            and os.path.exists(filename)
+    if not (isinstance(filename,
+                       (str, os.PathLike)) and os.path.exists(filename)
             and os.path.splitext(filename)[1].lower() == '.nc'):
         return attributes
 
@@ -577,8 +576,8 @@ def _get_input_files(variable, config_user):
                                      drs=config_user['drs'])
 
     # Set up downloading from ESGF if requested.
-    on_esgf = ('CMIP3', 'CMIP5', 'CMIP6', 'CORDEX', 'obs4MIPs')
-    if variable['project'] in on_esgf and config_user.get('download'):
+    if (not config_user['no_download']
+            and variable['project'] in esgf.facets.FACETS):
         try:
             check.data_availability(
                 input_files,
@@ -590,7 +589,7 @@ def _get_input_files(variable, config_user):
         except RecipeError:
             # Only look on ESGF if files are not available locally.
             local_files = set(Path(f).name for f in input_files)
-            search_result = find_files(**variable)
+            search_result = esgf.find_files(**variable)
             for file in search_result:
                 local_copy = file.local_file(config_user['download_dir'])
                 if local_copy.name not in local_files:

@@ -41,7 +41,6 @@ requirements:
     - python-stratify
     - scipy>=1.6
     # Normally installed via pip:
-    - aiohttp
     - cftime # iris=3.0.1 needs <=1.2.1; >=1.3.0 years<999 get a 0 instead of empty space
     - cf-units>=3.0.0
     - cython  # required by cf-units but not automatically installed
@@ -51,6 +50,7 @@ requirements:
     - fire
     - jinja2
     - mpich<3.4  # prevent external build
+    - myproxyclient  # needed by pyesgf.logon
     - nc-time-axis
     - netCDF4
     - numpy
@@ -60,6 +60,7 @@ requirements:
     - pydot
     - pyyaml
     - requests
+    - requests_cache<0.6  # https://github.com/ESGF/esgf-pyclient/issues/71
     - shapely
     - yamale
 

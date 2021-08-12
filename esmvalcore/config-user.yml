@@ -41,11 +41,7 @@ profile_diagnostic: false
 # For site-specific entries, see below
 # Comment out these when using a site-specific path
 rootpath:
-  CMIP3: ~/climate_data/cmip3
-  CMIP5: ~/climate_data/cmip5
-  CMIP6: ~/climate_data/CMIP6
-  CORDEX: ~/climate_data/cordex
-  obs4MIPs: ~/climate_data/obs4MIPs
+  default: ~/climate_data
 
 # Directory structure for input data: [default]/ESGF/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.

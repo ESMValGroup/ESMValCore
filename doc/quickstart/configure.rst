@@ -165,6 +165,143 @@ the user.
    ``--argument_name argument_value``
 
 
+.. _config-esgf:
+
+ESGF configuration
+==================
+
+The ``esmvaltool run`` command will automatically try to download the files
+required to run the recipe from ESGF for the projects CMIP3, CMIP5, CMIP6,
+CORDEX, and obs4MIPs.
+For downloading some files (e.g. those produced by the CORDEX project),
+you need to log in to be able to download the data.
+
+See the
+`ESGF user guide <https://esgf.github.io/esgf-user-support/user_guide.html>`_
+for instructions on how to create an ESGF OpenID account if you do not have
+one yet.
+Note that the OpenID account consists of 3 components instead of the usual
+two, in addition a username and password you also need the hostname of the
+provider of the ID; for example `esgf-data.dkrz.de`.
+
+Next, configure your system so esmvaltool can use your
+credentials. This can be done using the keyring_ package or
+they can be stored in a :ref:`configuration file <config_esgf_pyclient>`.
+
+.. _keyring:
+
+Storing credentials in keyring
+------------------------------
+First install the keyring package. Note that this requires a supported
+backend that may not be available on compute clusters, see the
+`keyring documentation <https://pypi.org/project/keyring>`__ for more
+information.
+
+.. code-block:: bash
+
+	pip install keyring
+
+Next, set your username and password by running the commands:
+
+.. code-block:: bash
+
+	keyring set ESGF hostname
+	keyring set ESGF username
+	keyring set ESGF password
+
+To check that you entered your credentials correctly, run:
+
+.. code-block:: bash
+
+	keyring get ESGF hostname
+	keyring get ESGF username
+	keyring get ESGF password
+
+.. _config_esgf_pyclient:
+
+Configuration file
+------------------
+An optional configuration file can be created for configuring how the tool uses
+`esgf-pyclient <https://esgf-pyclient.readthedocs.io>`_
+to find and download data.
+The name of this file is ``~/.esmvaltool/esgf-pyclient.yml``.
+
+Logon
+`````
+In the ``logon`` section you can provide arguments that will be passed on to
+:py:meth:`pyesgf.logon.LogonManager.logon`.
+For example, you can store the hostname, username, and password or your OpenID
+account in the file like this:
+
+.. code-block:: yaml
+
+	logon:
+	  hostname: "your-hostname"
+	  username: "your-username"
+	  password: "your-password"
+
+or your can configure an interactive log in:
+
+.. code-block:: yaml
+
+	logon:
+	  interactive: true
+
+Note that storing your password in plain text in the configuration
+file is less secure.
+On shared systems, make sure the permissions of the file are set so
+only you and administrators can read it, i.e.
+
+.. code-block:: bash
+
+	ls -l ~/.esmvaltool/esgf-pyclient.yml
+
+shows permissions ``-rw-------``.
+
+Search
+``````
+Any arguments to :py:obj:`pyesgf.search.connection.SearchConnection` can
+be provided in the section ``search_connection``, for example:
+
+.. code-block:: yaml
+
+	search_connection:
+	  url: "http://esgf-index1.ceda.ac.uk/esg-search"
+
+to choose the CEDA index node or
+
+.. code-block:: yaml
+
+	search_connection:
+	  expire_after: 2592000  # the number of seconds in a month
+
+to keep cached search results for a month.
+
+The default settings are:
+
+.. code-block:: yaml
+
+    url: 'http://esgf-node.llnl.gov/esg-search'
+    distrib: true
+    timeout: 120  # seconds
+    cache: '~/.pyesgf-cache'
+    expire_after: 86400  # cache expires after 1 day
+
+Preferred hosts
+```````````````
+It is possible to provide a list of preferred hosts, if you know that
+you have a fast connection with certain hosts.
+For example, if you prefer to download data from Europe you could use:
+
+.. code-block:: yaml
+
+	preferred_hosts:
+	  - esgf3.dkrz.de
+	  - esgf-data3.ceda.ac.uk
+	  - esg-dn1.nsc.liu.se
+	  - noresg.nird.sigma2.no
+	  - esgf-node2.cmcc.it
+
 .. _config-developer:
 
 Developer configuration file

@@ -97,7 +97,7 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
-    cfg['download'] = False
+    cfg['no_download'] = True
     cfg['check_level'] = CheckLevels.DEFAULT
     return cfg
 

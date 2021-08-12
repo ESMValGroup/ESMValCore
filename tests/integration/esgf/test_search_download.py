@@ -241,4 +241,4 @@ if __name__ == '__main__':
     logging.getLogger().setLevel('info'.upper())
 
     test_real_search()
-    # test_real_download()
+    test_real_download()

@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
+import pyesgf.search.results
 import requests
 
 from .._config._esgf_pyclient import load_esgf_pyclient_config
@@ -65,7 +66,7 @@ class ESGFFile:
     size : int
         The size of the file in bytes.
     """
-    def __init__(self, results):
+    def __init__(self, results: list[pyesgf.search.results.FileResult]):
         self.name = results[0].filename
         self.size = results[0].size
         self.dataset = self._get_dataset_id(results)

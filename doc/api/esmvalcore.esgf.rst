@@ -1,9 +1,18 @@
 Find and download files from ESGF
 =================================
 
-TODO: Add some text about configuration here
+This module provides the function :py:func:`esmvalcore.esgf.find_files`
+for searching for files on ESGF using the ESMValTool vocabulary.
+It returns :py:class:`esmvalcore.esgf.ESGFFile` objects, which have a convenient
+:py:meth:`esmvalcore.esgf.ESGFFile.download` method for downloading the files.
 
-TODO: Update other documentation, remove synda instructions
+See :ref:`config-esgf` for instructions on configuring this module.
 
-.. autofunction:: esmvalcore.esgf.search
+esmvalcore.esgf
+---------------
+.. autofunction:: esmvalcore.esgf.find_files
 .. autoclass:: esmvalcore.esgf.ESGFFile
+
+esmvalcore.esgf.facets
+----------------------
+.. automodule:: esmvalcore.esgf.facets

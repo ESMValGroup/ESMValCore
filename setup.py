@@ -30,10 +30,11 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
-        'aiohttp',
         'cf-units>=3.0.0',
         'dask[array]',
         'esgf-pyclient',
+        # pin requests_cache: https://github.com/ESGF/esgf-pyclient/issues/71
+        'requests_cache<0.6',
         'fiona',
         'fire',
         "importlib_resources;python_version<'3.9'",

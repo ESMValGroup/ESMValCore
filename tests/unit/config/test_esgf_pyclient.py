@@ -69,16 +69,16 @@ def test_read_config_file(monkeypatch, tmp_path):
     assert cfg == reference
 
 
-def test_default_config(monkeypatch, tmp_path):
+def test_default_config(monkeypatch, mocker, tmp_path):
     """Test that load_esgf_pyclient_config returns the default config."""
     monkeypatch.setattr(_esgf_pyclient, 'CONFIG_FILE',
                         tmp_path / 'non-existent.yml')
-
-    def get_keyring_credentials():
-        return CREDENTIALS
-
-    monkeypatch.setattr(_esgf_pyclient, 'get_keyring_credentials',
-                        get_keyring_credentials)
+    mocker.patch.object(
+        _esgf_pyclient,
+        'get_keyring_credentials',
+        autospec=True,
+        return_value=CREDENTIALS,
+    )
 
     cfg = _esgf_pyclient.load_esgf_pyclient_config()
     print(cfg)

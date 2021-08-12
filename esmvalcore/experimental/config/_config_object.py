@@ -70,6 +70,10 @@ class Config(ValidatedConfig):
         new = cls()
 
         mapping = _read_config_file(filename)
+        # Add defaults that are not available in esmvalcore/config-user.yml
+        mapping['extra_facets_dir'] = []
+        mapping['no_download'] = False
+
         new.update(mapping)
 
         return new

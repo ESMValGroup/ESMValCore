@@ -29,7 +29,7 @@ except ModuleNotFoundError:
 
 logger = logging.getLogger(__name__)
 
-CONFIG_FILE = Path().home() / '.esmvaltool' / 'esgf-pyclient.yml'
+CONFIG_FILE = Path.home() / '.esmvaltool' / 'esgf-pyclient.yml'
 
 INSTRUCTIONS = textwrap.dedent("""
 ESGF credentials missing, only data that is accessible without
@@ -139,7 +139,7 @@ def load_esgf_pyclient_config():
             'url': 'http://esgf-node.llnl.gov/esg-search',
             'distrib': True,
             'timeout': 120,
-            'cache': str(Path().home() / '.pyesgf-cache'),
+            'cache': '~/.pyesgf-cache',
             'expire_after': 86400,  # cache expires after 1 day
         },
     }
@@ -150,6 +150,10 @@ def load_esgf_pyclient_config():
     file_cfg = read_config_file()
     for section in ['logon', 'search_connection']:
         cfg[section].update(file_cfg.get(section, {}))
+
+    if 'cache' in cfg['search_connection']:
+        cfg['search_connection']['cache'] = Path(
+            cfg['search_connection']['cache']).expanduser().as_posix()
 
     cfg['preferred_hosts'] = file_cfg.get('preferred_hosts', [])
 

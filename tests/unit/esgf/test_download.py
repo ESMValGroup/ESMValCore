@@ -1,4 +1,4 @@
-"""Test 1esmvalcore.esgf._download`."""
+"""Test `esmvalcore.esgf._download`."""
 import logging
 import re
 from pathlib import Path
