@@ -5,7 +5,7 @@ from functools import lru_cache
 import pyesgf.logon
 import pyesgf.search
 
-from .._config._esgf_pyclient import load_esgf_pyclient_config
+from .._config._esgf_pyclient import get_esgf_config
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def get_manager():
 
 def logon():
     """Log on to ESGF and return a LogonManager."""
-    cfg = load_esgf_pyclient_config()
+    cfg = get_esgf_config()
     manager = get_manager()
 
     if not manager.is_logged_on():
@@ -46,6 +46,6 @@ def get_credentials():
 
 def get_connection():
     """Connect to ESGF."""
-    cfg = load_esgf_pyclient_config()
+    cfg = get_esgf_config()
     connection = pyesgf.search.SearchConnection(**cfg["search_connection"])
     return connection

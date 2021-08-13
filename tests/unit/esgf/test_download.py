@@ -22,7 +22,7 @@ def test_sort_hosts(mocker):
         'esgf2.dkrz.de', 'esgf-data1.ceda.ac.uk', 'aims3.llnl.gov'
     ]
     mocker.patch.object(_download,
-                        'load_esgf_pyclient_config',
+                        'get_esgf_config',
                         autospec=True,
                         return_value={'preferred_hosts': preferred_hosts})
     sorted_urls = _download.sort_hosts(urls)

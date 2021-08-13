@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 import pyesgf.search.results
 import requests
 
-from .._config._esgf_pyclient import load_esgf_pyclient_config
+from .._config._esgf_pyclient import get_esgf_config
 from ._logon import get_credentials
 from .facets import DATASET_MAP, FACETS
 
@@ -37,7 +37,7 @@ def sort_hosts(urls):
     """
     urls = list(urls)
     hosts = [urlparse(url).hostname for url in urls]
-    cfg = load_esgf_pyclient_config()
+    cfg = get_esgf_config()
     preferred_hosts = cfg.get('preferred_hosts', [])
     for host in preferred_hosts[::-1]:
         if host in hosts:

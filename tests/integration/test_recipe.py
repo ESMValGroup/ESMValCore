@@ -2914,7 +2914,7 @@ def test_obs4mips_case_correct(tmp_path, patched_datafinder, config_user):
                 end_year: 2005
                 ensemble: r1i1p1
                 additional_datasets:
-                  - {dataset: TEST, project: obs4MIPs,
+                  - {dataset: TEST, project: obs4mips,
                      version: 1, tier: 1, level: 1}
             scripts: null
         """)

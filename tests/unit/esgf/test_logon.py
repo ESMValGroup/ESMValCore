@@ -27,7 +27,7 @@ def test_logon(mocker, caplog, credentials):
 
     cfg = {'logon': credentials}
     mocker.patch.object(_logon,
-                        'load_esgf_pyclient_config',
+                        'get_esgf_config',
                         autospec=True,
                         return_value=cfg)
     manager = mocker.create_autospec(pyesgf.logon.LogonManager,
@@ -47,7 +47,7 @@ def test_logon(mocker, caplog, credentials):
 def test_logon_fail_message(mocker, caplog):
     cfg = {'logon': {'interactive': True}}
     mocker.patch.object(_logon,
-                        'load_esgf_pyclient_config',
+                        'get_esgf_config',
                         autospec=True,
                         return_value=cfg)
     manager = mocker.create_autospec(pyesgf.logon.LogonManager,
@@ -86,7 +86,7 @@ def test_get_connection(mocker):
     cfg = {'search_connection': {'url': url}}
 
     mocker.patch.object(_logon,
-                        'load_esgf_pyclient_config',
+                        'get_esgf_config',
                         autospec=True,
                         return_value=cfg)
 

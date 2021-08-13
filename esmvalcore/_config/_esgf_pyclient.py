@@ -122,7 +122,6 @@ def read_config_file():
     return cfg
 
 
-@lru_cache()
 def load_esgf_pyclient_config():
     """Load the esgf-pyclient configuration."""
     cfg = {
@@ -166,3 +165,9 @@ def load_esgf_pyclient_config():
         logger.warning(INSTRUCTIONS)
 
     return cfg
+
+
+@lru_cache()
+def get_esgf_config():
+    """Get the esgf-pyclient configuration."""
+    return load_esgf_pyclient_config()

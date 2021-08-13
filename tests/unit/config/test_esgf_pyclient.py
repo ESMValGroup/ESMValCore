@@ -1,15 +1,14 @@
+import copy
 import os.path
 from collections import defaultdict
 
+import pytest
 import yaml
 
 from esmvalcore._config import _esgf_pyclient
 
 DEFAULT_CONFIG: dict = {
     'logon': {
-        'hostname': 'esgf-data.dkrz.de',
-        'username': 'cookiemonster',
-        'password': 'Welcome01',
         'interactive': False,
         'bootstrap': True,
     },
@@ -87,18 +86,23 @@ def test_read_config_file(monkeypatch, tmp_path):
     assert cfg == reference
 
 
-def test_default_config(monkeypatch, mocker, tmp_path):
+@pytest.mark.parametrize('with_keyring_creds', [True, False])
+def test_default_config(monkeypatch, mocker, tmp_path, with_keyring_creds):
     """Test that load_esgf_pyclient_config returns the default config."""
     monkeypatch.setattr(_esgf_pyclient, 'CONFIG_FILE',
                         tmp_path / 'non-existent.yml')
+
+    credentials = CREDENTIALS if with_keyring_creds else {}
     mocker.patch.object(
         _esgf_pyclient,
         'get_keyring_credentials',
         autospec=True,
-        return_value=CREDENTIALS,
+        return_value=credentials,
     )
 
     cfg = _esgf_pyclient.load_esgf_pyclient_config()
-    print(cfg)
 
-    assert cfg == DEFAULT_CONFIG
+    expected = copy.deepcopy(DEFAULT_CONFIG)
+    expected['logon'].update(credentials)
+
+    assert cfg == expected
