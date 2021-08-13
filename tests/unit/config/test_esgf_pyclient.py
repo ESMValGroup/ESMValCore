@@ -5,14 +5,11 @@ import yaml
 
 from esmvalcore._config import _esgf_pyclient
 
-CREDENTIALS = {
-    'hostname': 'esgf-data.dkrz.de',
-    'username': 'cookiemonster',
-    'password': 'Welcome01',
-}
-
 DEFAULT_CONFIG: dict = {
     'logon': {
+        'hostname': 'esgf-data.dkrz.de',
+        'username': 'cookiemonster',
+        'password': 'Welcome01',
         'interactive': False,
         'bootstrap': True,
     },
@@ -25,7 +22,12 @@ DEFAULT_CONFIG: dict = {
     },
     'preferred_hosts': [],
 }
-DEFAULT_CONFIG['logon'].update(CREDENTIALS)
+
+CREDENTIALS = {
+    'hostname': 'esgf-data.dkrz.de',
+    'username': 'cookiemonster',
+    'password': 'Welcome01',
+}
 
 
 class MockKeyring:
@@ -50,6 +52,22 @@ def test_get_keyring_credentials(monkeypatch):
     credentials = _esgf_pyclient.get_keyring_credentials()
 
     assert credentials == CREDENTIALS
+
+
+def test_get_keyring_credentials_no_keyring(mocker):
+
+    mocker.patch.object(_esgf_pyclient, 'keyring', None)
+    credentials = _esgf_pyclient.get_keyring_credentials()
+    assert credentials == {}
+
+
+def test_get_keyring_credentials_no_backend(mocker):
+
+    keyring = mocker.patch.object(_esgf_pyclient, 'keyring')
+    keyring.errors.NoKeyringError = Exception
+    keyring.get_password.side_effect = keyring.errors.NoKeyringError
+    credentials = _esgf_pyclient.get_keyring_credentials()
+    assert credentials == {}
 
 
 def test_read_config_file(monkeypatch, tmp_path):

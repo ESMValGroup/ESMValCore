@@ -240,5 +240,5 @@ if __name__ == '__main__':
                         "%(name)s,%(lineno)s\t%(message)s")
     logging.getLogger().setLevel('info'.upper())
 
-    test_real_search()
+    test_real_search_many()
     test_real_download()

@@ -108,8 +108,8 @@ def test_run_with_max_datasets():
 
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_no_download():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--no_download'):
+def test_run_with_offline():
+    with arguments('esmvaltool', 'run', 'recipe.yml', '--offline'):
         run()
 
 

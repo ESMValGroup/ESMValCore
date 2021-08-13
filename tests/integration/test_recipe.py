@@ -97,7 +97,7 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
-    cfg['no_download'] = True
+    cfg['offline'] = True
     cfg['check_level'] = CheckLevels.DEFAULT
     return cfg
 
@@ -2898,3 +2898,27 @@ def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
     for product in task.products:
         assert 'mask_multimodel' in product.settings
         assert product.settings['mask_multimodel'] == {}
+
+
+def test_obs4mips_case_correct(tmp_path, patched_datafinder, config_user):
+    """Test that obs4mips is corrected to obs4MIPs."""
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: TEST, project: obs4MIPs,
+                     version: 1, tier: 1, level: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['diagnostic_name']['preprocessor_output'][
+        'tas'][0]
+    assert variable['project'] == 'obs4MIPs'

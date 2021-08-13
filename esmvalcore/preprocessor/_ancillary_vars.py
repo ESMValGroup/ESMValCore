@@ -23,10 +23,7 @@ def _load_fx(var_cube, fx_info, check_level, dest_folder):
     short_name = fx_info['short_name']
     freq = fx_info['frequency']
 
-    if not isinstance(fx_info['filename'], list):
-        fx_files = [fx_info['filename']]
-    else:
-        fx_files = fx_info['filename']
+    fx_files = fx_info['filename']
     fx_files = download(fx_files, dest_folder)
     for fx_file in fx_files:
         loaded_cube = load(fx_file, callback=concatenate_callback)
@@ -172,7 +169,7 @@ def add_fx_variables(cube, fx_variables, check_level, dest_folder=''):
     for fx_info in fx_variables.values():
         if not fx_info:
             continue
-        if isinstance(fx_info['filename'], str):
+        if not isinstance(fx_info['filename'], (list, tuple)):
             fx_info['filename'] = [fx_info['filename']]
         fx_cube = _load_fx(cube, fx_info, check_level, dest_folder)
 

@@ -8,7 +8,7 @@ output_dir: ./esmvaltool_output
 # Directory for storing downloaded climate data
 download_dir: ~/climate_data
 # Auxiliary data directory (used for some additional datasets)
-auxiliary_data_dir: ./auxiliary_data
+auxiliary_data_dir: ~/auxiliary_data
 # Run at most this many tasks in parallel [null]/1/2/3/4/..
 # Set to null to use the number of available CPUs.
 # If you run out of memory, try setting max_parallel_tasks to 1 and check the

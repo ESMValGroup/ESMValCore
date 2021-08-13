@@ -208,11 +208,13 @@ obs4MIPs:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}'
-    ESGF: '{project}/{institute}/{dataset}/{latestversion}'
+    ESGF: '{project}/{dataset}/{latestversion}'
     RCAST: '/'
     IPSL: '{realm}/{short_name}/{freq}/{grid}/{institute}/{dataset}/{latest_version}'
-  input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
-  output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
+  input_file:
+    default: '{short_name}_{dataset}_{level}_{version}_*.nc'
+    ESGF: '{short_name}_{dataset}*.nc'
+  output_file: '{project}_{dataset}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_path: 'obs4mips'
   cmor_default_table_prefix: 'obs4MIPs_'

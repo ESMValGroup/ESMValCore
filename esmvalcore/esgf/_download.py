@@ -212,3 +212,18 @@ class ESGFFile:
                     f" {local_checksum}. Try downloading the file again.")
 
         shutil.move(tmp_file, local_file)
+
+
+def get_download_message(files):
+    """Create a log message describing what will be downloaded."""
+    megabyte = 2**20
+    gigabyte = 2**30
+    total_size = 0
+    lines = []
+    for file in sorted(files):
+        total_size += file.size
+        lines.append(f"{file.size / megabyte:.0f} MB" "\t" f"{file}")
+    if total_size:
+        lines.insert(0, "Will download the following files:")
+    lines.insert(0, f"Will download {total_size / gigabyte:.1f} GB")
+    return "\n".join(lines)

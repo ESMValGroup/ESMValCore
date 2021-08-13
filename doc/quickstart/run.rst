@@ -48,6 +48,8 @@ To run a reduced version of the recipe, usually for testing purpose you can use
 In this case, the recipe will limit the number of datasets per variable to
 NDATASETS and the total amount of years loaded to NYEARS. They can also be used
 separately.
+Note that diagnostics may require specific combinations of available data, so
+use the above two flags at your own risk and for testing purposes only.
 
 To run a recipe, even if some datasets are not available, use
 
@@ -55,14 +57,13 @@ To run a recipe, even if some datasets are not available, use
 
     esmvaltool run --skip_nonexistent=True recipe_python.yml
 
-
-If Synda is installed (see http://prodiguer.github.io/synda/), it is possible
-to use it to automatically download the requested data from ESGF if it is not
-available locally:
+For running on systems without an internet connection, it is possible to
+disable searching for files on ESGF if they are not available locally
+by running:
 
 .. code:: bash
 
-    esmvaltool run --synda_download=True recipe_python.yml
+    esmvaltool run --offline=True recipe_python.yml
 
 It is also possible to select only specific diagnostics to be run. To tun only
 one, just specify its name. To provide more than one diagnostic to filter use

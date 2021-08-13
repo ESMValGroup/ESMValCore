@@ -1,6 +1,7 @@
 """Test `esmvalcore.esgf._download`."""
 import logging
 import re
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -307,3 +308,36 @@ def test_download_fail(mocker, tmp_path):
     msg = f"Failed to download file {local_file} from {[url]}"
     with pytest.raises(IOError, match=re.escape(msg)):
         file.download(dest_folder)
+
+
+def test_get_download_message():
+
+    result1 = FileResult(
+        json={
+            'dataset_id': 'ABC.v1|something.org',
+            'project': ['CMIP6'],
+            'size': 4 * 2**30,
+            'title': 'abc_1850-1900.nc',
+            'url': ['http://xyz.org/file1.nc|application/netcdf|HTTPServer'],
+        },
+        context=None,
+    )
+    result2 = FileResult(
+        json={
+            'dataset_id': 'ABC.v1|something.org',
+            'project': ['CMIP6'],
+            'size': 6 * 2**30,
+            'title': 'abc_1900-1950.nc',
+            'url': ['http://abc.com/file2.nc|application/netcdf|HTTPServer'],
+        },
+        context=None,
+    )
+    files = [_download.ESGFFile([r]) for r in (result1, result2)]
+    msg = _download.get_download_message(files)
+    expected = textwrap.dedent("""
+        Will download 10.0 GB
+        Will download the following files:
+        4096 MB\tESGFFile:ABC/v1/abc_1850-1900.nc on hosts ['xyz.org']
+        6144 MB\tESGFFile:ABC/v1/abc_1900-1950.nc on hosts ['abc.com']
+        """).strip()
+    assert msg == expected

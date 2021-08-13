@@ -198,6 +198,12 @@ def read_config_developer_file(cfg_file=None):
     with open(cfg_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
+    if 'obs4mips' in cfg:
+        logger.warning(
+            "Correcting capitalization, project 'obs4mips'"
+            " should be written as 'obs4MIPs' in %s", cfg_file)
+        cfg['obs4MIPs'] = cfg.pop('obs4mips')
+
     return cfg
 
 
@@ -205,11 +211,6 @@ def load_config_developer(cfg_file=None):
     """Load the config developer file and initialize CMOR tables."""
     cfg_developer = read_config_developer_file(cfg_file)
     for key, value in cfg_developer.items():
-        if key == 'obs4mips':
-            logger.warning(
-                "Correcting capitalization, project 'obs4mips'"
-                " should be written as 'obs4MIPs' in %s", cfg_file)
-            key = 'obs4MIPs'
         CFG[key] = value
     read_cmor_tables(CFG)
 

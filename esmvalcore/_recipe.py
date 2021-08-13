@@ -262,8 +262,8 @@ def _get_default_settings(variable, config_user, derive=False):
     """Get default preprocessor settings."""
     settings = {}
 
-    # Set up downloading using synda if requested.
-    if not config_user['no_download']:
+    # Set up downloading from ESGF.
+    if not config_user['offline']:
         settings['download'] = {
             'dest_folder': config_user['download_dir'],
         }
@@ -330,7 +330,7 @@ def _get_default_settings(variable, config_user, derive=False):
         'fx_variables': {},
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
     }
-    if not config_user['no_download']:
+    if not config_user['offline']:
         settings['add_fx_variables']['dest_folder'] = (
             config_user['download_dir'])
 
@@ -576,7 +576,7 @@ def _get_input_files(variable, config_user):
                                      drs=config_user['drs'])
 
     # Set up downloading from ESGF if requested.
-    if (not config_user['no_download']
+    if (not config_user['offline']
             and variable['project'] in esgf.facets.FACETS):
         try:
             check.data_availability(
@@ -1012,21 +1012,6 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
     )
 
     return task
-
-
-def get_download_message():
-    """Create a log message describing what will be downloaded."""
-    megabyte = 2**20
-    gigabyte = 2**30
-    total_size = 0
-    lines = []
-    for file in sorted(DOWNLOAD_FILES):
-        total_size += file.size
-        lines.append(f"{file.size / megabyte:.0f} MB" "\t" f"{file}")
-    if total_size:
-        lines.insert(0, "Will download the following files:")
-    lines.insert(0, f"Will download {total_size / gigabyte:.1f} GB")
-    return "\n".join(lines)
 
 
 class Recipe:
@@ -1495,9 +1480,6 @@ class Recipe:
         for task in tasks:
             task.initialize_provenance(self.entity)
 
-        # Report total download size
-        logger.info(get_download_message())
-
         # Return smallest possible set of tasks
         return tasks.get_independent()
 
@@ -1509,6 +1491,9 @@ class Recipe:
         """Run all tasks in the recipe."""
         if not self.tasks:
             raise RecipeError('No tasks to run!')
+
+        # Report total download size
+        logger.info(esgf._download.get_download_message(DOWNLOAD_FILES))
 
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
 

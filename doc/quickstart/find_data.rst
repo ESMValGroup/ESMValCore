@@ -89,12 +89,14 @@ Data retrieval
 Data retrieval in ESMValTool has two main aspects from the user's point of
 view:
 
-* data can be found by the tool, subject to availability on disk;
+* data can be found by the tool, subject to availability on disk or `ESGF <https://esgf.llnl.gov/>`_;
 * it is the user's responsibility to set the correct data retrieval parameters;
 
 The first point is self-explanatory: if the user runs the tool on a machine
 that has access to a data repository or multiple data repositories, then
 ESMValTool will look for and find the available data requested by the user.
+If the files are not found locally, the tool will search the ESGF_ and download
+the missing files, provided that they are available.
 
 The second point underlines the fact that the user has full control over what
 type and the amount of data is needed for the analyses. Setting the data
@@ -203,10 +205,8 @@ Explaining ``config-user/rootpath:``
 
     OBS: /gws/nopw/j04/esmeval/obsdata-v2
 
-* ``default``: this is the `root` path(s) to where files are stored without any
-  DRS-like directory structure; in a nutshell, this is a single directory that
-  should contain all the files needed by the run, without any sub-directory
-  structure.
+* ``default``: this is the `root` path(s) where the tool will look for data
+  from projects that do not have their own rootpath set.
 
 * ``RAWOBS``: this is the `root` path(s) to where the raw observational data
   files are stored; this is used by ``cmorize_obs``.

@@ -46,37 +46,34 @@ with explanations in a commented line above each option:
 
 .. code-block:: yaml
 
-  # Set the console log level debug, [info], warning, error
-  # for much more information printed to screen set log_level: debug
-  log_level: info
-
-  # Exit on warning (only for NCL diagnostic scripts)? true/[false]
-  exit_on_warning: false
-
-  # Plot file format? [png]/pdf/ps/eps/epsi
-  output_file_type: png
-
   # Destination directory where all output will be written
   # including log files and performance stats
   output_dir: ./esmvaltool_output
 
-  # Auxiliary data directory (used for some additional datasets)
-  # this is where e.g. files can be downloaded to by a download
-  # script embedded in the diagnostic
-  auxiliary_data_dir: ./auxiliary_data
+  # Directory for storing downloaded climate data
+  download_dir: ~/climate_data
 
-  # Use netCDF compression true/[false]
-  compress_netcdf: false
+  # Auxiliary data directory, used by some recipes to look for additional datasets
+  auxiliary_data_dir: ~/auxiliary_data
 
-  # Save intermediary cubes in the preprocessor true/[false]
-  # set to true will save the output cube from each preprocessing step
-  # these files are numbered according to the preprocessing order
-  save_intermediary_cubes: false
+  # Rootpaths to the data from different projects (lists are also possible)
+  # these are generic entries to better allow you to enter your own
+  # For site-specific entries, see the default config-user.yml file
+  # that can be installed with the command `esmvaltool config get_config_user`.
+  # For each project, this can be either a single path or a list of paths.
+  # Comment out these when using a site-specific path
+  rootpath:
+    default: ~/climate_data
 
-  # Remove the preproc dir if all fine
-  # if this option is set to "true", ALL preprocessor files will be removed
-  # CAUTION when using: if you need those files, set it to false
-  remove_preproc_dir: true
+  # Directory structure for input data: [default]/ESGF/BADC/DKRZ/ETHZ/etc
+  # See config-developer.yml for definitions.
+  # comment out/replace as per needed
+  drs:
+    CMIP3: ESGF
+    CMIP5: ESGF
+    CMIP6: ESGF
+    CORDEX: ESGF
+    obs4MIPs: ESGF
 
   # Run at most this many tasks in parallel [null]/1/2/3/4/..
   # Set to null to use the number of available CPUs.
@@ -87,9 +84,28 @@ with explanations in a commented line above each option:
   # the amount of memory available in your system.
   max_parallel_tasks: null
 
-  # Path to custom config-developer file, to customise project configurations.
-  # See config-developer.yml for an example. Set to None to use the default
-  config_developer_file: null
+  # Set the console log level debug, [info], warning, error
+  # for much more information printed to screen set log_level: debug
+  log_level: info
+
+  # Exit on warning (only for NCL diagnostic scripts)? true/[false]
+  exit_on_warning: false
+
+  # Plot file format? [png]/pdf/ps/eps/epsi
+  output_file_type: png
+
+  # Remove the ``preproc`` dir if the run was successful
+  # By default this option is set to "true", so all preprocessor output files
+  # will be removed after a successful run. Set to "false" if you need those files.
+  remove_preproc_dir: true
+
+  # Use netCDF compression true/[false]
+  compress_netcdf: false
+
+  # Save intermediary cubes in the preprocessor true/[false]
+  # set to true will save the output cube from each preprocessing step
+  # these files are numbered according to the preprocessing order
+  save_intermediary_cubes: false
 
   # Use a profiling tool for the diagnostic run [false]/true
   # A profiler tells you which functions in your code take most time to run.
@@ -97,16 +113,9 @@ with explanations in a commented line above each option:
   # Only available for Python diagnostics
   profile_diagnostic: false
 
-  # Rootpaths to the data from different projects (lists are also possible)
-  rootpath:
-    CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
-    OBS: ~/obs_inputpath
-    default: ~/default_inputpath
-
-  # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
-  # See config-developer.yml for definitions.
-  drs:
-    CMIP5: default
+  # Path to custom config-developer file, to customise project configurations.
+  # See config-developer.yml for an example. Set to "null" to use the default
+  config_developer_file: null
 
 ..
    DEPRECATED: remove in v2.4
@@ -133,7 +142,7 @@ downloaded at runtime.
 .. warning::
 
    This setting is not for model or observational datasets, rather it is for
-   data files used in plotting such as coastline descriptions and so on.
+   extra data files such as shapefiles or other data sources needed by the diagnostics.
 
 The ``profile_diagnostic`` setting triggers profiling of Python diagnostics,
 this will tell you which functions in the diagnostic took most time to run.
@@ -170,9 +179,9 @@ the user.
 ESGF configuration
 ==================
 
-The ``esmvaltool run`` command will automatically try to download the files
-required to run the recipe from ESGF for the projects CMIP3, CMIP5, CMIP6,
-CORDEX, and obs4MIPs.
+The ``esmvaltool run recipe_example.yml`` command will automatically try
+to download the files required to run the recipe from ESGF for the projects
+CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 For downloading some files (e.g. those produced by the CORDEX project),
 you need to log in to be able to download the data.
 
