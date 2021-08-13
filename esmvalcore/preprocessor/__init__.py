@@ -22,7 +22,6 @@ from ._area import (
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
-from ._download import download
 from ._io import (
     _get_debug_filename,
     cleanup,
@@ -77,7 +76,6 @@ from ._weighting import weighting_landsea_fraction
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'download',
     # File reformatting/CMORization
     'fix_file',
     # Load cubes from file

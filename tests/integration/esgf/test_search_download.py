@@ -6,8 +6,7 @@ import pytest
 import yaml
 from pyesgf.search.results import FileResult
 
-from esmvalcore.esgf import _search, find_files
-from esmvalcore.preprocessor import download
+from esmvalcore.esgf import _search, download, find_files
 
 VARIABLES = [{
     'dataset': 'cccma_cgcm3_1',
@@ -222,17 +221,18 @@ def test_real_search_many():
 
 @pytest.mark.skip(reason="This will actually download the data")
 def test_real_download():
+    all_files = []
     for variable in VARIABLES:
-        if variable['exp'] == 'historical':
+        if variable.get('exp', '') == 'historical':
             variable['start_year'] = 2000
             variable['end_year'] = 2001
         files = find_files(**variable)
-        dest_folder = Path.home() / 'esmvaltool_download_test'
-        local_files = download(files, dest_folder)
-        assert local_files
-        for file in local_files:
-            assert Path(file).is_file()
-        print(f"Download successful, {local_files=}")
+        assert files
+        all_files.extend(files)
+
+    dest_folder = Path.home() / 'esmvaltool_download_test'
+    download(all_files, dest_folder)
+    print(f"Download of {variable=} successful")
 
 
 if __name__ == '__main__':

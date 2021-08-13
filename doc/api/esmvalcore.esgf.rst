@@ -11,6 +11,7 @@ See :ref:`config-esgf` for instructions on configuring this module.
 esmvalcore.esgf
 ---------------
 .. autofunction:: esmvalcore.esgf.find_files
+.. autofunction:: esmvalcore.esgf.download
 .. autoclass:: esmvalcore.esgf.ESGFFile
 
 esmvalcore.esgf.facets

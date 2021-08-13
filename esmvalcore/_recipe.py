@@ -262,12 +262,6 @@ def _get_default_settings(variable, config_user, derive=False):
     """Get default preprocessor settings."""
     settings = {}
 
-    # Set up downloading from ESGF.
-    if not config_user['offline']:
-        settings['download'] = {
-            'dest_folder': config_user['download_dir'],
-        }
-
     # Configure loading
     settings['load'] = {
         'callback': concatenate_callback,
@@ -330,10 +324,6 @@ def _get_default_settings(variable, config_user, derive=False):
         'fx_variables': {},
         'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
     }
-    if not config_user['offline']:
-        settings['add_fx_variables']['dest_folder'] = (
-            config_user['download_dir'])
-
     settings['remove_fx_variables'] = {}
 
     return settings
@@ -557,8 +547,7 @@ def _update_fx_settings(settings, variable, config_user):
 def _read_attributes(filename):
     """Read the attributes from a netcdf file."""
     attributes = {}
-    if not (isinstance(filename,
-                       (str, os.PathLike)) and os.path.exists(filename)
+    if not (os.path.exists(filename)
             and os.path.splitext(filename)[1].lower() == '.nc'):
         return attributes
 
@@ -593,11 +582,10 @@ def _get_input_files(variable, config_user):
             for file in search_result:
                 local_copy = file.local_file(config_user['download_dir'])
                 if local_copy.name not in local_files:
-                    if local_copy.exists():
-                        input_files.append(str(local_copy))
-                    else:
-                        input_files.append(file)
+                    if not local_copy.exists():
                         DOWNLOAD_FILES.add(file)
+                    input_files.append(str(local_copy))
+
             dirnames.append('ESGF:')
 
     return (input_files, dirnames, filenames)
@@ -1492,8 +1480,9 @@ class Recipe:
         if not self.tasks:
             raise RecipeError('No tasks to run!')
 
-        # Report total download size
-        logger.info(esgf._download.get_download_message(DOWNLOAD_FILES))
+        # Download required data
+        if not self._cfg['offline']:
+            esgf.download(DOWNLOAD_FILES, self._cfg['download_dir'])
 
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
 

@@ -9,12 +9,10 @@ from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_metadata
 from esmvalcore.preprocessor._io import concatenate, concatenate_callback, load
 
-from ._download import download
-
 logger = logging.getLogger(__name__)
 
 
-def _load_fx(var_cube, fx_info, check_level, dest_folder):
+def _load_fx(var_cube, fx_info, check_level):
     """Load and CMOR-check fx variables."""
     fx_cubes = iris.cube.CubeList()
 
@@ -23,9 +21,7 @@ def _load_fx(var_cube, fx_info, check_level, dest_folder):
     short_name = fx_info['short_name']
     freq = fx_info['frequency']
 
-    fx_files = fx_info['filename']
-    fx_files = download(fx_files, dest_folder)
-    for fx_file in fx_files:
+    for fx_file in fx_info['filename']:
         loaded_cube = load(fx_file, callback=concatenate_callback)
         loaded_cube = fix_metadata(loaded_cube,
                                    check_level=check_level,
@@ -143,7 +139,7 @@ def add_ancillary_variable(cube, fx_cube):
                  fx_cube.var_name, cube.var_name)
 
 
-def add_fx_variables(cube, fx_variables, check_level, dest_folder=''):
+def add_fx_variables(cube, fx_variables, check_level):
     """Load requested fx files, check with CMOR standards and add the fx
     variables as cell measures or ancillary variables in the cube containing
     the data.
@@ -156,8 +152,6 @@ def add_fx_variables(cube, fx_variables, check_level, dest_folder=''):
         Dictionary with fx_variable information.
     check_level: CheckLevels
         Level of strictness of the checks.
-    dest_folder: str
-        Directory for storing files downloaded from ESGF.
 
     Returns
     -------
@@ -169,9 +163,9 @@ def add_fx_variables(cube, fx_variables, check_level, dest_folder=''):
     for fx_info in fx_variables.values():
         if not fx_info:
             continue
-        if not isinstance(fx_info['filename'], (list, tuple)):
+        if isinstance(fx_info['filename'], str):
             fx_info['filename'] = [fx_info['filename']]
-        fx_cube = _load_fx(cube, fx_info, check_level, dest_folder)
+        fx_cube = _load_fx(cube, fx_info, check_level)
 
         if fx_cube is None:
             continue

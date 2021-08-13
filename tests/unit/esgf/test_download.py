@@ -8,6 +8,7 @@ import pytest
 import requests
 from pyesgf.search.results import FileResult
 
+import esmvalcore.esgf
 from esmvalcore.esgf import _download
 
 
@@ -190,7 +191,7 @@ def test_merge_datasets():
 
 
 @pytest.mark.parametrize('checksum', ['yes', 'no', 'wrong'])
-def test_download(mocker, tmp_path, checksum):
+def test_single_download(mocker, tmp_path, checksum):
     credentials = '/path/to/creds.pem'
     mocker.patch.object(_download,
                         'get_credentials',
@@ -278,7 +279,7 @@ def test_download_skip_existing(tmp_path, caplog):
     assert f"Skipping download of existing file {local_file}" in caplog.text
 
 
-def test_download_fail(mocker, tmp_path):
+def test_single_download_fail(mocker, tmp_path):
 
     response = mocker.create_autospec(requests.Response,
                                       spec_set=True,
@@ -341,3 +342,51 @@ def test_get_download_message():
         6144 MB\tESGFFile:ABC/v1/abc_1900-1950.nc on hosts ['abc.com']
         """).strip()
     assert msg == expected
+
+
+def test_download(mocker, tmp_path, caplog):
+    """Test `esmvalcore.esgf.download`."""
+    dest_folder = tmp_path
+    test_files = [
+        mocker.create_autospec(esmvalcore.esgf.ESGFFile, instance=True)
+        for _ in range(5)
+    ]
+    for i, file in enumerate(test_files):
+        file.__str__.return_value = f'file{i}.nc'
+        file.size = 200 * 2**20
+        file.__lt__.return_value = False
+
+    caplog.set_level(logging.INFO)
+    esmvalcore.esgf.download(test_files, dest_folder)
+
+    for file in test_files:
+        file.download.assert_called_with(dest_folder)
+
+    print(caplog.text)
+    assert "Downloaded 1 GB" in caplog.text
+
+
+def test_download_fail(mocker, tmp_path, caplog):
+    """Test `esmvalcore.esgf.download`."""
+    dest_folder = tmp_path
+    test_files = [
+        mocker.create_autospec(esmvalcore.esgf.ESGFFile, instance=True)
+        for _ in range(5)
+    ]
+    for file in test_files:
+        file.size = 100 * 2**20
+        file.__lt__.return_value = False
+
+    # Fail some files
+    error0 = "Failed to download first file"
+    error1 = "Failed to download third file"
+    test_files[0].download.side_effect = IOError(error0)
+    test_files[2].download.side_effect = IOError(error1)
+
+    error = "Download of some requested files failed."
+    with pytest.raises(IOError, match=error):
+        esmvalcore.esgf.download(test_files, dest_folder)
+    assert error0 in caplog.text
+    assert error1 in caplog.text
+    for file in test_files:
+        file.download.assert_called_with(dest_folder)

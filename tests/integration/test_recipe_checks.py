@@ -112,7 +112,7 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     assert var == VAR
 
 
-def test_data_availability_esgffile():
+def test_data_availability_nonexistent(tmp_path):
     var = {
         'dataset': 'ABC',
         'short_name': 'tas',
@@ -129,5 +129,6 @@ def test_data_availability_esgffile():
         },
         context=None,
     )
-    input_files = [esmvalcore.esgf.ESGFFile([result])]
+    dest_folder = tmp_path
+    input_files = [esmvalcore.esgf.ESGFFile([result]).local_file(dest_folder)]
     check.data_availability(input_files, var, dirnames=[], filenames=[])

@@ -188,6 +188,8 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
     download_dir = tmp_path / 'download_dir'
     esgf_files = create_esgf_search_results()
 
+    # ESGF files may have been downloaded previously, but not have
+    # been found if the download_dir is not configured as a rootpath
     if already_downloaded:
         for file in esgf_files:
             local_path = file.local_file(download_dir)
@@ -235,14 +237,9 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
     }
     input_files = _recipe._get_input_files(variable, config_user)[0]
 
-    # ESGF files may have been downloaded previously, but not have
-    # been found if the download_dir is not configured as a rootpath
-    if already_downloaded:
-        download_files = [
-            f.local_file(download_dir).as_posix() for f in esgf_files
-        ]
-    else:
-        download_files = esgf_files
+    download_files = [
+        f.local_file(download_dir).as_posix() for f in esgf_files
+    ]
 
     expected = {
         'all': local_files,

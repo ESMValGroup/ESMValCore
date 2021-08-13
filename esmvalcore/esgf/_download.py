@@ -1,4 +1,5 @@
 """Module for downloading files from ESGF."""
+import concurrent.futures
 import datetime
 import functools
 import hashlib
@@ -227,3 +228,43 @@ def get_download_message(files):
         lines.insert(0, "Will download the following files:")
     lines.insert(0, f"Will download {total_size / gigabyte:.1f} GB")
     return "\n".join(lines)
+
+
+def download(files, dest_folder, n_jobs=4):
+    """Download multiple ESGFFiles in parallel."""
+    logger.info(get_download_message(files))
+
+    def _download(file: ESGFFile):
+        """Download file to dest_folder."""
+        file.download(dest_folder)
+
+    total_size = sum(file.size for file in files)
+    start_time = datetime.datetime.now()
+
+    errored = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=n_jobs) as executor:
+
+        future_to_file = {
+            executor.submit(_download, file): file
+            for file in files
+        }
+
+        for future in concurrent.futures.as_completed(future_to_file):
+            file = future_to_file[future]
+            try:
+                future.result()
+            except Exception as exc:
+                logger.error("Failed to download %s, error message %s", file,
+                             str(exc))
+                errored.append(file)
+
+    duration = datetime.datetime.now() - start_time
+    logger.info("Downloaded %.0f GB in %s (%.1f MB/s)", total_size / 2**30,
+                duration, total_size / 2**20 / duration.total_seconds())
+
+    if errored:
+        logger.error("Failed to download the following files:\n%s",
+                     '\n'.join(str(f) for f in errored))
+        raise IOError("Download of some requested files failed.")
+    else:
+        logger.info("Successfully downloaded all requested files.")
