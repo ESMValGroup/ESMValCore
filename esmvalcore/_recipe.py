@@ -1600,9 +1600,8 @@ class Recipe:
             filename = self._filename.split('.')
             filename[0] = filename[0] + '_filled'
             new_filename = '.'.join(filename)
-            file = open(os.path.join(run_dir, new_filename), 'w')
-            yaml.safe_dump(self._updated_recipe, file, sort_keys=False)
-            file.close()
+            with open(os.path.join(run_dir, new_filename), 'w') as file:
+                yaml.safe_dump(self._updated_recipe, file, sort_keys=False)
 
     def write_html_summary(self):
         """Write summary html file to the output dir."""
