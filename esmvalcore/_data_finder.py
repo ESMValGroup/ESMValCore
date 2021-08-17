@@ -1,10 +1,4 @@
 """Data finder module for the ESMValTool."""
-# Authors:
-# Bouwe Andela (eScience, NL - b.andela@esciencecenter.nl)
-# Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-# Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
-
-import fnmatch
 import glob
 import logging
 import os
@@ -24,10 +18,11 @@ def find_files(dirnames, filenames):
 
     result = []
     for dirname in dirnames:
-        for path, _, files in os.walk(dirname, followlinks=True):
-            for filename in filenames:
-                matches = fnmatch.filter(files, filename)
-                result.extend(os.path.join(path, f) for f in matches)
+        for filename_pattern in filenames:
+            pat = os.path.join(dirname, filename_pattern)
+            files = glob.glob(pat)
+            files.sort()  # sorting makes it easier to see what was found
+            result.extend(files)
 
     return result
 
@@ -64,8 +59,14 @@ def get_start_end_year(filename):
     context = r"(?:^|[-_]|$)"
     #
     # First check for a block of two potential dates
-    date_range_pattern = context + date_range_pattern + context
-    daterange = re.search(date_range_pattern, stem)
+    date_range_pattern_with_context = context + date_range_pattern + context
+    daterange = re.search(date_range_pattern_with_context, stem)
+    if not daterange:
+        # Retry with extended context for CMIP3
+        context = r"(?:^|[-_.]|$)"
+        date_range_pattern_with_context = (context + date_range_pattern +
+                                           context)
+        daterange = re.search(date_range_pattern_with_context, stem)
     if daterange:
         start_year = daterange.group("year")
         end_year = daterange.group("year_end")

@@ -3,6 +3,7 @@ version: 2.1
 
 orbs:
   coverage-reporter: codacy/coverage-reporter@11.4.1
+  codecov: codecov/codecov@1.2.3
 
 commands:
   check_changes:
@@ -34,7 +35,7 @@ jobs:
             conda activate esmvaltool
             pip install .[test]
             pytest -n 2 -m "not installation and not sequential"
-            pytest -n 0 -m "sequential"
+            pytest -n 0 -m "sequential" --cov-append
       - save_cache:
           key: test-{{ .Branch }}
           paths:
@@ -44,6 +45,12 @@ jobs:
           path: test-reports/
       - store_artifacts:
           path: test-reports/
+      - run:
+          # Install curl for codecov upload
+          command: apt update && apt install -y curl
+      - codecov/upload:
+          when: always
+          file: 'test-reports/coverage.xml'
       - coverage-reporter/send_report:
           coverage-reports: 'test-reports/coverage.xml'
           project-token: $CODACY_PROJECT_TOKEN
@@ -175,13 +182,14 @@ jobs:
             set -x
             # Install prerequisites
             mkdir /logs
-            # conda update -y conda > /logs/conda_base.txt 2>&1
-            conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
+            conda update -y conda > /logs/conda_base.txt 2>&1
+            conda create -y --name build -c conda-forge 'python=3.9' conda-build>=3.21 conda-verify ripgrep mamba boa >> /logs/conda_base.txt 2>&1
+            set +x; conda activate build; set -x
             # Log versions
             dpkg -l > /logs/versions.txt
-            conda env export -n base > /logs/build_environment.yml
+            conda env export -n build > /logs/build_environment.yml
             # Build conda package
-            conda build package -c conda-forge > /logs/build_log.txt
+            conda mambabuild package -c conda-forge > /logs/build_log.txt
           no_output_timeout: 60m
       - store_artifacts:
           path: /logs

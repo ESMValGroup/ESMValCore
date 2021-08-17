@@ -1,6 +1,62 @@
 Changelog
 =========
 
+.. _changelog-v2-3-1:
+
+v2.3.1
+------
+
+This release includes
+
+Bug fixes
+~~~~~~~~~
+
+-  Update config-user.yml template with correct drs entries for CEDA-JASMIN (`#1184 <https://github.com/ESMValGroup/ESMValCore/pull/1184>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Enhancing MIROC5 fix for hfls and evspsbl (`#1192 <https://github.com/ESMValGroup/ESMValCore/pull/1192>`__) `katjaweigel <https://github.com/katjaweigel>`__
+-  Fix alignment of daily data with inconsistent calendars in multimodel statistics (`#1212 <https://github.com/ESMValGroup/ESMValCore/pull/1212>`__) `Peter Kalverla <https://github.com/Peter9192>`__
+-  Pin cf-units, remove github actions test for Python 3.6 and fix test_access1_0 and test_access1_3 to use cf-units for comparisons (`#1197 <https://github.com/ESMValGroup/ESMValCore/pull/1197>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Fixed search for fx files when no ``mip`` is given (`#1216 <https://github.com/ESMValGroup/ESMValCore/pull/1216>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Make sure climate statistics always returns original dtype (`#1237 <https://github.com/ESMValGroup/ESMValCore/pull/1237>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+-  Bugfix for regional regridding when non-integer range is passed (`#1231 <https://github.com/ESMValGroup/ESMValCore/pull/1231>`__) `Stef Smeets <https://github.com/stefsmeets>`__
+-  Make sure area_statistics preprocessor always returns original dtype (`#1239 <https://github.com/ESMValGroup/ESMValCore/pull/1239>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+-  Add "." (dot) as allowed separation character for the time range group (`#1248 <https://github.com/ESMValGroup/ESMValCore/pull/1248>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Add a link to the instructions to use pre-installed versions on HPC clusters (`#1186 <https://github.com/ESMValGroup/ESMValCore/pull/1186>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Bugfix release: set version to 2.3.1 (`#1253 <https://github.com/ESMValGroup/ESMValCore/pull/1253>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Set circular attribute in MCM-UA-1-0 fix (`#1178 <https://github.com/ESMValGroup/ESMValCore/pull/1178>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Fixed time coordinate of MIROC-ESM (`#1188 <https://github.com/ESMValGroup/ESMValCore/pull/1188>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Filter warnings about collapsing multi-model dimension in multimodel statistics preprocessor function (`#1215 <https://github.com/ESMValGroup/ESMValCore/pull/1215>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Remove fx variables before computing multimodel statistics (`#1220 <https://github.com/ESMValGroup/ESMValCore/pull/1220>`__) `sloosvel <https://github.com/sloosvel>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Pin Python to 3.9 in environment.yml on CircleCI and skip mypy tests in conda build (`#1176 <https://github.com/ESMValGroup/ESMValCore/pull/1176>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Installation
+~~~~~~~~~~~~
+
+-  Pin lower bound for iris to 3.0.2 (`#1206 <https://github.com/ESMValGroup/ESMValCore/pull/1206>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Pin `iris<3.0.4` to ensure we still (sort of) support Python 3.6 (`#1252 <https://github.com/ESMValGroup/ESMValCore/pull/1252>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Improvements
+~~~~~~~~~~~~
+
+-  Add test to verify behaviour for scalar height coord for tas in multi-model (`#1209 <https://github.com/ESMValGroup/ESMValCore/pull/1209>`__) `Peter Kalverla <https://github.com/Peter9192>`__
+-  Sort missing years in "No input data available for years" message (`#1225 <https://github.com/ESMValGroup/ESMValCore/pull/1225>`__) `Lee de Mora <https://github.com/ledm>`__
+
+
 .. _changelog-v2-3-0:
 
 v2.3.0
