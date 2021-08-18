@@ -38,7 +38,7 @@ REQUIREMENTS = {
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
-        'numpy',
+        'numpy>=1.20',
         'prov[dot]',
         'psutil',
         'pybtex',
