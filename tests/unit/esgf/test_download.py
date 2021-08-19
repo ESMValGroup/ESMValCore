@@ -1,15 +1,117 @@
 """Test `esmvalcore.esgf._download`."""
+import datetime
 import logging
+import os
 import re
 import textwrap
 from pathlib import Path
 
 import pytest
 import requests
+import yaml
 from pyesgf.search.results import FileResult
 
 import esmvalcore.esgf
 from esmvalcore.esgf import _download
+
+
+def test_log_speed(monkeypatch, tmp_path):
+    hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
+    monkeypatch.setattr(_download, 'HOSTS_FILE', hosts_file)
+
+    _download.log_speed('http://somehost.org/some_file.nc', 52428800, 10)
+
+    with hosts_file.open('r') as file:
+        result = yaml.safe_load(file)
+
+    expected = {
+        'somehost.org': {
+            'speed (MB/s)': 5,
+            'duration (s)': 10,
+            'size (bytes)': 52428800,
+            'error': False,
+        }
+    }
+    assert result == expected
+
+
+def test_error(monkeypatch, tmp_path):
+    hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
+    monkeypatch.setattr(_download, 'HOSTS_FILE', hosts_file)
+
+    _download.log_error('http://somehost.org/some_file.nc')
+
+    with hosts_file.open('r') as file:
+        result = yaml.safe_load(file)
+
+    expected = {
+        'somehost.org': {
+            'speed (MB/s)': 0,
+            'duration (s)': 0,
+            'size (bytes)': 0,
+            'error': True,
+        }
+    }
+    assert result == expected
+
+
+@pytest.mark.parametrize('age_in_hours', [0.5, 2])
+def test_get_preferred_hosts(monkeypatch, tmp_path, age_in_hours):
+    hosts_file = tmp_path / 'esgf-hosts.yml'
+    content = textwrap.dedent("""
+    aims3.llnl.gov:
+      duration (s): 8
+      error: false
+      size (bytes): 42065408
+      speed (MB/s): 4.9
+    esg.lasg.ac.cn:
+      duration (s): 37
+      error: false
+      size (bytes): 3702108
+      speed (MB/s): 0.1
+    esgdata.gfdl.noaa.gov:
+      duration (s): 3
+      error: true
+      size (bytes): 3124084
+      speed (MB/s): 1.0
+    esgf.ichec.ie:
+      duration (s): 0
+      error: false
+      size (bytes): 0
+      speed (MB/s): 0
+    esgf.nci.org.au:
+      duration (s): 13
+      error: false
+      size (bytes): 12461112
+      speed (MB/s): 0.9
+    """).lstrip()
+    hosts_file.write_text(content)
+    now = datetime.datetime.now().timestamp()
+    file_age = now - age_in_hours * 3600
+    os.utime(hosts_file, (file_age, file_age))
+    monkeypatch.setattr(_download, 'HOSTS_FILE', hosts_file)
+
+    preferred_hosts = _download.get_preferred_hosts()
+    # hosts should be sorted by download speed
+    # host with no data downloaded yet in the middle
+    # host with a recent error last
+    if age_in_hours < 1:
+        expected = [
+            'aims3.llnl.gov',
+            'esgf.ichec.ie',
+            'esgf.nci.org.au',
+            'esg.lasg.ac.cn',
+            'esgdata.gfdl.noaa.gov',
+        ]
+    else:
+        expected = [
+            'aims3.llnl.gov',
+            'esgdata.gfdl.noaa.gov',
+            'esgf.ichec.ie',
+            'esgf.nci.org.au',
+            'esg.lasg.ac.cn',
+        ]
+    assert preferred_hosts == expected
 
 
 def test_sort_hosts(mocker):
@@ -23,9 +125,9 @@ def test_sort_hosts(mocker):
         'esgf2.dkrz.de', 'esgf-data1.ceda.ac.uk', 'aims3.llnl.gov'
     ]
     mocker.patch.object(_download,
-                        'get_esgf_config',
+                        'get_preferred_hosts',
                         autospec=True,
-                        return_value={'preferred_hosts': preferred_hosts})
+                        return_value=preferred_hosts)
     sorted_urls = _download.sort_hosts(urls)
     assert sorted_urls == [
         'http://esgf2.dkrz.de/abc.nc',
@@ -66,7 +168,8 @@ def test_get_dataset_id_obs4mips():
 
 
 def test_init():
-    filename = 'abc_2000-2001.nc'
+    """Test ESGFFile.__init__()."""
+    filename = 'tas_ABC_2000-2001.nc'
     url = f'http://something.org/ABC/v1/{filename}'
     result = FileResult(
         json={
@@ -90,6 +193,49 @@ def test_init():
     txt = f"ESGFFile:ABC/v1/{filename} on hosts ['something.org']"
     assert repr(file) == txt
     assert hash(file) == hash(('ABC.v1', filename))
+
+
+def test_from_results():
+    """Test ESGFFile._from_results()."""
+    facets = {
+        'project': 'CMIP6',
+        'variable': 'tas',
+    }
+    results = []
+    for i in range(2):
+        filename = f'tas_ABC{i}_2000-2001.nc'
+        url = f'http://something.org/ABC/v1/{filename}'
+        result = FileResult(
+            json={
+                'dataset_id': f'ABC{i}.v1|something.org',
+                'project': ['CMIP6'],
+                'size': 10,
+                'source_id': [f'ABC{i}'],
+                'title': filename,
+                'url': [url + '|application/netcdf|HTTPServer']
+            },
+            context=None,
+        )
+        results.append(result)
+
+    # Append an invalid result
+    wrong_var_filename = 'zg_ABC0_2000-2001.nc'
+    results.append(
+        FileResult(
+            json={
+                'dataset_id': f'ABC{i}.v1|something.org',
+                'project': ['CMIP6'],
+                'size': 10,
+                'source_id': [f'ABC{i}'],
+                'title': wrong_var_filename,
+            },
+            context=None,
+        ))
+
+    files = _download.ESGFFile._from_results(results, facets)
+    assert len(files) == 2
+    for i in range(2):
+        assert files[i].name == f'tas_ABC{i}_2000-2001.nc'
 
 
 def test_sorting():
@@ -192,6 +338,9 @@ def test_merge_datasets():
 
 @pytest.mark.parametrize('checksum', ['yes', 'no', 'wrong'])
 def test_single_download(mocker, tmp_path, checksum):
+    hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
+    mocker.patch.object(_download, 'HOSTS_FILE', hosts_file)
+
     credentials = '/path/to/creds.pem'
     mocker.patch.object(_download,
                         'get_credentials',
@@ -208,7 +357,7 @@ def test_single_download(mocker, tmp_path, checksum):
                               return_value=response)
 
     dest_folder = tmp_path
-    filename = 'abc_2000-2001.txt'
+    filename = 'abc_2000-2001.nc'
     dataset = 'CMIP6.ABC.v1'
     url = f'http://something.org/CMIP6/ABC/v1/{filename}'
 
@@ -230,7 +379,8 @@ def test_single_download(mocker, tmp_path, checksum):
     file = _download.ESGFFile([FileResult(json=json, context=None)])
 
     if checksum == 'wrong':
-        with pytest.raises(ValueError, match='Wrong MD5 checksum'):
+        with pytest.raises(_download.DownloadError,
+                           match='Wrong MD5 checksum'):
             file.download(dest_folder)
         return
 
@@ -247,11 +397,11 @@ def test_single_download(mocker, tmp_path, checksum):
     # File was downloaded only once
     get.assert_called_once()
     # From the correct URL
-    get.assert_called_with(url, timeout=300, cert=credentials)
+    get.assert_called_with(url, stream=True, timeout=300, cert=credentials)
     # We checked for a valid response
     response.raise_for_status.assert_called_once()
     # And requested a reasonable chunk size
-    response.iter_content.assert_called_with(chunk_size=2**20)
+    response.iter_content.assert_called_with(chunk_size=None)
 
 
 def test_download_skip_existing(tmp_path, caplog):
@@ -272,7 +422,7 @@ def test_download_skip_existing(tmp_path, caplog):
     local_file.parent.mkdir()
     local_file.touch()
 
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.DEBUG)
 
     local_file = file.download(dest_folder)
 
@@ -280,12 +430,14 @@ def test_download_skip_existing(tmp_path, caplog):
 
 
 def test_single_download_fail(mocker, tmp_path):
+    hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
+    mocker.patch.object(_download, 'HOSTS_FILE', hosts_file)
 
     response = mocker.create_autospec(requests.Response,
                                       spec_set=True,
                                       instance=True)
     response.raise_for_status.side_effect = (
-        requests.exceptions.RequestException)
+        requests.exceptions.RequestException("test error"))
     mocker.patch.object(_download.requests,
                         'get',
                         autospec=True,
@@ -305,9 +457,9 @@ def test_single_download_fail(mocker, tmp_path):
     }
     file = _download.ESGFFile([FileResult(json=json, context=None)])
     local_file = file.local_file(dest_folder)
-
-    msg = f"Failed to download file {local_file} from {[url]}"
-    with pytest.raises(IOError, match=re.escape(msg)):
+    msg = (f"Failed to download file {local_file}, errors:"
+           "\n" + f"{url}: test error")
+    with pytest.raises(_download.DownloadError, match=re.escape(msg)):
         file.download(dest_folder)
 
 
@@ -373,18 +525,22 @@ def test_download_fail(mocker, tmp_path, caplog):
         mocker.create_autospec(esmvalcore.esgf.ESGFFile, instance=True)
         for _ in range(5)
     ]
-    for file in test_files:
+    for i, file in enumerate(test_files):
+        file.__str__.return_value = f'file{i}.nc'
         file.size = 100 * 2**20
         file.__lt__.return_value = False
 
     # Fail some files
-    error0 = "Failed to download first file"
-    error1 = "Failed to download third file"
-    test_files[0].download.side_effect = IOError(error0)
-    test_files[2].download.side_effect = IOError(error1)
-
-    error = "Download of some requested files failed."
-    with pytest.raises(IOError, match=error):
+    error0 = "error messages for first file"
+    error1 = "error messages for third file"
+    test_files[0].download.side_effect = _download.DownloadError(error0)
+    test_files[2].download.side_effect = _download.DownloadError(error1)
+    msg = textwrap.dedent("""
+        Failed to download the following files:
+        error messages for first file
+        error messages for third file
+        """).strip()
+    with pytest.raises(_download.DownloadError, match=re.escape(msg)):
         esmvalcore.esgf.download(test_files, dest_folder)
     assert error0 in caplog.text
     assert error1 in caplog.text

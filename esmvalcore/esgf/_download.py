@@ -1,19 +1,22 @@
 """Module for downloading files from ESGF."""
 import concurrent.futures
+import contextlib
 import datetime
 import functools
 import hashlib
+import itertools
 import logging
 import os
 import shutil
-import tempfile
 from pathlib import Path
+from statistics import median
+from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 
 import pyesgf.search.results
 import requests
+import yaml
 
-from .._config._esgf_pyclient import get_esgf_config
 from ._logon import get_credentials
 from .facets import DATASET_MAP, FACETS
 
@@ -21,6 +24,114 @@ logger = logging.getLogger(__name__)
 
 TIMEOUT = 5 * 60
 """Timeout (in seconds) for downloads."""
+
+HOSTS_FILE = Path.home() / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
+SIZE = 'size (bytes)'
+DURATION = 'duration (s)'
+SPEED = 'speed (MB/s)'
+
+
+class DownloadError(Exception):
+    """An error occurred while downloading."""
+
+
+def compute_speed(size, duration):
+    """Compute download speed in MB/s."""
+    if duration != 0:
+        speed = size / duration / 2**20
+    else:
+        speed = 0
+    return speed
+
+
+def load_speeds():
+    """Load average download speeds from HOSTS_FILE."""
+    speeds = {}
+    if HOSTS_FILE.exists():
+        with HOSTS_FILE.open('r') as file:
+            speeds = yaml.safe_load(file)
+            for entry in speeds.values():
+                entry[SPEED] = compute_speed(entry[SIZE], entry[DURATION])
+    return speeds
+
+
+def log_speed(url, size, duration):
+    """Write the downloaded file size and duration to HOSTS_FILE."""
+    speeds = load_speeds()
+    host = urlparse(url).hostname
+    size += speeds.get(host, {}).get('size', 0)
+    duration += speeds.get(host, {}).get('duration', 0)
+    speed = compute_speed(size, duration)
+
+    speeds[host] = {
+        SIZE: size,
+        DURATION: round(duration),
+        SPEED: round(speed, 1),
+        'error': False,
+    }
+    with atomic_write(HOSTS_FILE) as file:
+        yaml.safe_dump(speeds, file)
+
+
+def log_error(url):
+    """Write the hosts that errored to HOSTS_FILE."""
+    speeds = load_speeds()
+    host = urlparse(url).hostname
+    entry = speeds.get(host, {SIZE: 0, DURATION: 0, SPEED: 0})
+    entry['error'] = True
+    speeds[host] = entry
+    with atomic_write(HOSTS_FILE) as file:
+        yaml.safe_dump(speeds, file)
+
+
+@contextlib.contextmanager
+def atomic_write(filename):
+    """Write a file without the risk of interfering with other processes."""
+    filename.parent.mkdir(parents=True, exist_ok=True)
+    with NamedTemporaryFile(prefix=f"{filename}.") as file:
+        tmp_file = file.name
+    with open(tmp_file, 'w') as file:
+        yield file
+    shutil.move(tmp_file, filename)
+
+
+def get_preferred_hosts():
+    """Get a list of preferred hosts.
+
+    The list will be sorted by download speed. Hosts that recentely
+    returned an error will be at the end.
+    """
+    speeds = load_speeds()
+    if not speeds:
+        return []
+
+    # Hosts from which no data has been downloaded yet get median speed
+    median_speed = median(speeds[h][SPEED] for h in speeds
+                          if speeds[h][SPEED] != 0)
+    for host in speeds:
+        if speeds[host][SIZE] == 0:
+            speeds[host][SPEED] = median_speed
+
+    # Sort hosts by download speed
+    hosts = sorted(speeds, key=lambda h: speeds[h][SPEED], reverse=True)
+
+    # Figure out which hosts recently returned an error
+    mtime = HOSTS_FILE.stat().st_mtime
+    now = datetime.datetime.now().timestamp()
+    age = now - mtime
+    if age > 60 * 60:
+        # Ignore errors older than an hour
+        errored = []
+    else:
+        errored = [h for h in speeds if speeds[h]['error']]
+
+    # Move hosts with an error to the end of the list
+    for host in errored:
+        if host in hosts:
+            hosts.pop(hosts.index(host))
+            hosts.append(host)
+
+    return hosts
 
 
 def sort_hosts(urls):
@@ -38,8 +149,7 @@ def sort_hosts(urls):
     """
     urls = list(urls)
     hosts = [urlparse(url).hostname for url in urls]
-    cfg = get_esgf_config()
-    preferred_hosts = cfg.get('preferred_hosts', [])
+    preferred_hosts = get_preferred_hosts()
     for host in preferred_hosts[::-1]:
         if host in hosts:
             # Move host and corresponding URL to the beginning of the list
@@ -68,7 +178,8 @@ class ESGFFile:
         The size of the file in bytes.
     """
     def __init__(self, results: list[pyesgf.search.results.FileResult]):
-        self.name = results[0].filename
+        results = list(results)
+        self.name = str(Path(results[0].filename).with_suffix('.nc'))
         self.size = results[0].size
         self.dataset = self._get_dataset_id(results)
         self.urls = []
@@ -76,6 +187,35 @@ class ESGFFile:
         for result in results:
             self.urls.append(result.download_url)
             self._checksums.append((result.checksum_type, result.checksum))
+
+    @classmethod
+    def _from_results(cls, results, facets):
+        """Return a list of files from a pyesgf.search.results.ResultSet."""
+        def same_file(result):
+            # Remove the hostname from the dataset_id
+            dataset = result.json['dataset_id'].split('|')[0]
+            # Ignore the extension (some files are called .nc_0, .nc_1
+            filename = Path(result.filename).stem
+            # Ignore case
+            return (dataset.lower(), filename.lower())
+
+        files = []
+        results = sorted(results, key=same_file)
+        for _, file_results in itertools.groupby(results, key=same_file):
+            file = cls(file_results)
+            # Filter out files containing the wrong variable, e.g. for
+            # cmip5.output1.ICHEC.EC-EARTH.historical
+            # .mon.atmos.Amon.r1i1p1.v20121115
+            variable = file.name.split('_')[0]
+            if 'variable' in facets and facets['variable'] == variable:
+                files.append(file)
+            else:
+                logger.warning(
+                    "Ignoring file(s) %s containing wrong variable '%s' in"
+                    " found in search for variable '%s'", file.urls, variable,
+                    facets['variable'])
+
+        return files
 
     @staticmethod
     def _get_dataset_id(results):
@@ -119,12 +259,12 @@ class ESGFFile:
 
         Arguments
         ---------
-        dest_folder:
+        dest_folder: Path
             The destination folder.
 
         Returns
         -------
-        pathlib.Path
+        Path
             The path where the file will be located after download.
         """
         return Path(
@@ -138,45 +278,50 @@ class ESGFFile:
 
         Arguments
         ---------
-        dest_folder:
+        dest_folder: Path
             The destination folder.
+
+        Raises
+        ------
+        DownloadError:
+            Raised if downloading the file failed.
 
         Returns
         -------
-        pathlib.Path
+        Path
             The path where the file will be located after download.
         """
         local_file = self.local_file(dest_folder)
         if local_file.exists():
-            logger.info("Skipping download of existing file %s", local_file)
+            logger.debug("Skipping download of existing file %s", local_file)
             return local_file
 
         os.makedirs(local_file.parent, exist_ok=True)
-        start_time = datetime.datetime.now()
 
+        errors = {}
         for url in sort_hosts(self.urls):
             try:
                 self._download(local_file, url)
-            except requests.exceptions.RequestException as exc:
-                logger.info("Not able to download %s. Error message: %s", url,
-                            exc)
+            except (DownloadError,
+                    requests.exceptions.RequestException) as error:
+                logger.debug("Not able to download %s. Error message: %s", url,
+                             error)
+                errors[url] = error
+                log_error(url)
             else:
                 break
 
         if not local_file.exists():
-            raise IOError(
-                f"Failed to download file {local_file} from {self.urls}")
+            raise DownloadError(
+                f"Failed to download file {local_file}, errors:"
+                "\n" + "\n".join(f"{url}: {errors[url]}" for url in errors))
 
-        duration = datetime.datetime.now() - start_time
-        logger.info("Downloaded %s (%.0f MB) in %s (%.1f MB/s)", local_file,
-                    self.size / 2**20, duration,
-                    self.size / 2**20 / duration.total_seconds())
         return local_file
 
     @staticmethod
     def _tmp_local_file(local_file):
         """Return the path to a temporary local file for downloading to."""
-        with tempfile.NamedTemporaryFile(prefix=f"{local_file}.") as tmp_file:
+        with NamedTemporaryFile(prefix=f"{local_file}.") as tmp_file:
             return Path(tmp_file.name)
 
     def _download(self, local_file, url):
@@ -190,15 +335,20 @@ class ESGFFile:
 
         tmp_file = self._tmp_local_file(local_file)
 
-        logger.info("Downloading %s to %s", url, tmp_file)
-        response = requests.get(url, timeout=TIMEOUT, cert=get_credentials())
+        logger.debug("Downloading %s to %s", url, tmp_file)
+        start_time = datetime.datetime.now()
+        response = requests.get(url,
+                                stream=True,
+                                timeout=TIMEOUT,
+                                cert=get_credentials())
         response.raise_for_status()
         with tmp_file.open("wb") as file:
-            chunk_size = 1 << 20  # 1 MB
-            for chunk in response.iter_content(chunk_size=chunk_size):
+            for chunk in response.iter_content(chunk_size=None):
                 if hasher is not None:
                     hasher.update(chunk)
                 file.write(chunk)
+
+        duration = datetime.datetime.now() - start_time
 
         if hasher is None:
             logger.warning(
@@ -207,12 +357,17 @@ class ESGFFile:
         else:
             local_checksum = hasher.hexdigest()
             if local_checksum != checksum:
-                raise ValueError(
+                raise DownloadError(
                     f"Wrong {checksum_type} checksum for file {tmp_file},"
                     f" downloaded from {url}: expected {checksum}, but got"
                     f" {local_checksum}. Try downloading the file again.")
 
         shutil.move(tmp_file, local_file)
+        log_speed(url, self.size, duration.total_seconds())
+        logger.info("Downloaded %s (%.0f MB) in %s (%.1f MB/s) from %s",
+                    local_file, self.size / 2**20, duration,
+                    self.size / 2**20 / duration.total_seconds(),
+                    urlparse(url).hostname)
 
 
 def get_download_message(files):
@@ -231,19 +386,34 @@ def get_download_message(files):
 
 
 def download(files, dest_folder, n_jobs=4):
-    """Download multiple ESGFFiles in parallel."""
+    """Download multiple ESGFFiles in parallel.
+
+    Arguments
+    ---------
+    files: list of :obj:`ESGFFile`
+        The files to download.
+    dest_folder: Path
+        The destination folder.
+    n_jobs: int
+        The number of files to download in parallel.
+
+    Raises
+    ------
+    DownloadError:
+        Raised if one or more files failed to download.
+    """
     logger.info(get_download_message(files))
+    logger.info("Downloading..")
 
     def _download(file: ESGFFile):
         """Download file to dest_folder."""
         file.download(dest_folder)
 
-    total_size = sum(file.size for file in files)
+    total_size = 0
     start_time = datetime.datetime.now()
 
-    errored = []
+    errors = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_jobs) as executor:
-
         future_to_file = {
             executor.submit(_download, file): file
             for file in files
@@ -253,18 +423,20 @@ def download(files, dest_folder, n_jobs=4):
             file = future_to_file[future]
             try:
                 future.result()
-            except Exception as exc:
+            except DownloadError as error:
                 logger.error("Failed to download %s, error message %s", file,
-                             str(exc))
-                errored.append(file)
+                             error)
+                errors.append(error)
+            else:
+                total_size += file.size
 
     duration = datetime.datetime.now() - start_time
     logger.info("Downloaded %.0f GB in %s (%.1f MB/s)", total_size / 2**30,
                 duration, total_size / 2**20 / duration.total_seconds())
 
-    if errored:
-        logger.error("Failed to download the following files:\n%s",
-                     '\n'.join(str(f) for f in errored))
-        raise IOError("Download of some requested files failed.")
-    else:
-        logger.info("Successfully downloaded all requested files.")
+    if errors:
+        msg = ("Failed to download the following files:\n" +
+               "\n".join(sorted(str(error) for error in errors)))
+        raise DownloadError(msg)
+
+    logger.info("Successfully downloaded all requested files.")

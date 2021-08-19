@@ -1,6 +1,6 @@
 import copy
-import os.path
 from collections import defaultdict
+from pathlib import Path
 
 import pytest
 import yaml
@@ -13,13 +13,17 @@ DEFAULT_CONFIG: dict = {
         'bootstrap': True,
     },
     'search_connection': {
-        'url': 'http://esgf-node.llnl.gov/esg-search',
-        'distrib': True,
-        'timeout': 120,
-        'cache': os.path.expanduser('~/.pyesgf-cache'),
-        'expire_after': 86400
+        'url':
+        'http://esgf-node.llnl.gov/esg-search',
+        'distrib':
+        True,
+        'timeout':
+        120,
+        'cache':
+        str(Path.home() / '.esmvaltool' / 'cache' / 'pyesgf-search-results'),
+        'expire_after':
+        86400
     },
-    'preferred_hosts': [],
 }
 
 CREDENTIALS = {

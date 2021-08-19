@@ -52,8 +52,8 @@ def select_latest_versions(files):
         latest_version = versions[0]
         result.append(latest_version)
         if len(versions) > 1:
-            logger.info("Only using the latest version %s, not %s",
-                        latest_version, versions[1:])
+            logger.debug("Only using the latest version %s, not %s",
+                         latest_version, versions[1:])
 
     return result
 
@@ -71,7 +71,7 @@ def esgf_search_files(facets):
     list of :py:class:`~ESGFFile`
         The found files.
     """
-    logger.info("Searching for datasets on ESGF using facets=%s", facets)
+    logger.debug("Searching for datasets on ESGF using facets=%s", facets)
     connection = get_connection()
     context = connection.new_context(
         pyesgf.search.context.FileSearchContext,
@@ -86,16 +86,7 @@ def esgf_search_files(facets):
         # ignore_facet_check=True,
     )
 
-    def same_file(result):
-        # Remove the hostname from the dataset_id
-        dataset = result.json['dataset_id'].split('|')[0]
-        return (dataset.lower(), result.filename.lower())
-
-    files = []
-    results = sorted(results, key=same_file)
-    for _, file_results in itertools.groupby(results, key=same_file):
-        file = ESGFFile(list(file_results))
-        files.append(file)
+    files = ESGFFile._from_results(results, facets)
 
     files = select_latest_versions(files)
 
@@ -249,6 +240,6 @@ def cached_search(**facets):
                         and 'start_year' in facets and 'end_year' in facets)
     if filter_timerange:
         files = select_by_time(files, facets['start_year'], facets['end_year'])
-        logger.info("Selected files:\n%s", '\n'.join(str(f) for f in files))
+        logger.debug("Selected files:\n%s", '\n'.join(str(f) for f in files))
 
     return files

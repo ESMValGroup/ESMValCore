@@ -596,9 +596,11 @@ def _get_ancestors(variable, config_user):
     (input_files, dirnames,
      filenames) = _get_input_files(variable, config_user)
 
-    logger.info("Using input files for variable %s of dataset %s:\n%s",
-                variable['short_name'], variable['dataset'],
-                '\n'.join(str(f) for f in input_files))
+    logger.info(
+        "Using input files for variable %s of dataset %s:\n%s",
+        variable['short_name'], variable['dataset'], '\n'.join(
+            f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
+            for f in input_files))
     check.data_availability(input_files, variable, dirnames, filenames)
 
     # Set up provenance tracking
@@ -1014,7 +1016,9 @@ class Recipe:
                  initialize_tasks=True,
                  recipe_file=None):
         """Parse a recipe file into an object."""
+        # Clear the global variable containing the set of files to download
         DOWNLOAD_FILES.clear()
+        self._download_files = set()
         self._cfg = deepcopy(config_user)
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
@@ -1468,6 +1472,9 @@ class Recipe:
         for task in tasks:
             task.initialize_provenance(self.entity)
 
+        # Store the set of files to download before running
+        self._download_files = set(DOWNLOAD_FILES)
+
         # Return smallest possible set of tasks
         return tasks.get_independent()
 
@@ -1482,7 +1489,7 @@ class Recipe:
 
         # Download required data
         if not self._cfg['offline']:
-            esgf.download(DOWNLOAD_FILES, self._cfg['download_dir'])
+            esgf.download(self._download_files, self._cfg['download_dir'])
 
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
 

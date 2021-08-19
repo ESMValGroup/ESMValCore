@@ -293,23 +293,35 @@ The default settings are:
     url: 'http://esgf-node.llnl.gov/esg-search'
     distrib: true
     timeout: 120  # seconds
-    cache: '~/.pyesgf-cache'
+    cache: '~/.esmvaltool/cache/pyesgf-search-results'
     expire_after: 86400  # cache expires after 1 day
 
-Preferred hosts
-```````````````
-It is possible to provide a list of preferred hosts, if you know that
-you have a fast connection with certain hosts.
-For example, if you prefer to download data from Europe you could use:
+If you experience errors while searching, it sometimes helps to delete the
+cached results.
+
+Download statistics
+```````````````````
+The tool will maintain statistics of how fast data can be downloaded
+from what host in the file ~/.esmvaltool/cache/esgf-hosts.yml and
+automatically select hosts that are faster.
+There is no need to manually edit this file, though it can be useful
+to delete it if you move your computer to a location that is very
+different from the place where you previously downloaded data.
+An entry in the file might look like this:
 
 .. code-block:: yaml
 
-	preferred_hosts:
-	  - esgf3.dkrz.de
-	  - esgf-data3.ceda.ac.uk
-	  - esg-dn1.nsc.liu.se
-	  - noresg.nird.sigma2.no
-	  - esgf-node2.cmcc.it
+	esgf2.dkrz.de:
+	  duration (s): 8
+	  error: false
+	  size (bytes): 69067460
+	  speed (MB/s): 7.9
+
+The tool only uses the duration and size to determine the download speed,
+the speed shown in the file is not used.
+If ``error`` is set to ``true``, the most recent download request to that
+host failed and the tool will automatically try this host only as a last
+resort.
 
 .. _config-developer:
 

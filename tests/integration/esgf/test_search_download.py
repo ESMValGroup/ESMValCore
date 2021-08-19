@@ -39,6 +39,15 @@ VARIABLES = [{
     'start_year': 2080,
     'end_year': 2100,
 }, {
+    'dataset': 'EC-EARTH',
+    'ensemble': 'r1i1p1',
+    'exp': 'historical',
+    'mip': 'Amon',
+    'project': 'CMIP5',
+    'short_name': 'tas',
+    'start_year': 1990,
+    'end_year': 1999,
+}, {
     'dataset': 'AWI-ESM-1-1-LR',
     'ensemble': 'r1i1p1f1',
     'exp': 'historical',
@@ -87,11 +96,13 @@ def test_mock_search(variable, mocker):
     data_path = Path(__file__).parent / 'search_results'
     facets = _search.get_esgf_facets(variable)
     json_file = '_'.join(str(facets[k]) for k in sorted(facets)) + '.json'
+    raw_results = data_path / json_file
 
-    with open(data_path / 'expected.yml') as file:
-        expected_files = yaml.safe_load(file)[json_file]
+    if not raw_results.exists():
+        # Skip cases where the raw search results were too large to save.
+        pytest.skip(f"Raw search results in {raw_results} not available.")
 
-    with open(data_path / json_file) as file:
+    with raw_results.open('r') as file:
         search_results = [
             FileResult(json=j, context=None) for j in json.load(file)
         ]
@@ -102,6 +113,9 @@ def test_mock_search(variable, mocker):
                         return_value=conn)
 
     files = find_files(**variable)
+
+    with open(data_path / 'expected.yml') as file:
+        expected_files = yaml.safe_load(file)[json_file]
 
     assert len(files) == len(expected_files)
     for found_file, expected in zip(files, expected_files):
@@ -154,6 +168,9 @@ def test_real_search_many():
             'tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc',
         ],
         [
+            'tas_Amon_EC-EARTH_historical_r1i1p1_199001-199912.nc',
+        ],
+        [
             'tas_Amon_AWI-ESM-1-1-LR_historical_'
             'r1i1p1f1_gn_200001-200012.nc',
             'tas_Amon_AWI-ESM-1-1-LR_historical_'
@@ -189,6 +206,10 @@ def test_real_search_many():
             '.v20120531',
             'cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1'
             '.v20120531',
+        ],
+        [
+            'cmip5.output1.ICHEC.EC-EARTH.historical.mon.atmos.Amon.r1i1p1'
+            '.v20121115',
         ],
         [
             'CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical.r1i1p1f1.Amon.tas.gn'

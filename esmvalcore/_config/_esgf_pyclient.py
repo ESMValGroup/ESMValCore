@@ -7,7 +7,6 @@ There are four sections in the configuration file:
 logon: contains keyword arguments to :func:`pyesgf.logon.LogonManager.logon`
 search_connection: contains keyword arguments to
     :class:`pyesgf.search.connection.SearchConnection`
-preferred_hosts: a way to specify which hosts are preferred
 """
 import importlib
 import logging
@@ -20,6 +19,8 @@ from types import ModuleType
 from typing import Optional
 
 import yaml
+
+from ._config import _normalize_path
 
 keyring: Optional[ModuleType] = None
 try:
@@ -138,7 +139,7 @@ def load_esgf_pyclient_config():
             'url': 'http://esgf-node.llnl.gov/esg-search',
             'distrib': True,
             'timeout': 120,
-            'cache': '~/.pyesgf-cache',
+            'cache': '~/.esmvaltool/cache/pyesgf-search-results',
             'expire_after': 86400,  # cache expires after 1 day
         },
     }
@@ -151,10 +152,9 @@ def load_esgf_pyclient_config():
         cfg[section].update(file_cfg.get(section, {}))
 
     if 'cache' in cfg['search_connection']:
-        cfg['search_connection']['cache'] = Path(
-            cfg['search_connection']['cache']).expanduser().as_posix()
-
-    cfg['preferred_hosts'] = file_cfg.get('preferred_hosts', [])
+        cache_file = _normalize_path(cfg['search_connection']['cache'])
+        cfg['search_connection']['cache'] = cache_file
+        Path(cache_file).parent.mkdir(parents=True, exist_ok=True)
 
     missing_credentials = []
     for key in ['hostname', 'username', 'password']:
