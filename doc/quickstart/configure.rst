@@ -208,23 +208,23 @@ information.
 
 .. code-block:: bash
 
-	pip install keyring
+    pip install keyring
 
 Next, set your username and password by running the commands:
 
 .. code-block:: bash
 
-	keyring set ESGF hostname
-	keyring set ESGF username
-	keyring set ESGF password
+    keyring set ESGF hostname
+    keyring set ESGF username
+    keyring set ESGF password
 
 To check that you entered your credentials correctly, run:
 
 .. code-block:: bash
 
-	keyring get ESGF hostname
-	keyring get ESGF username
-	keyring get ESGF password
+    keyring get ESGF hostname
+    keyring get ESGF username
+    keyring get ESGF password
 
 .. _config_esgf_pyclient:
 
@@ -244,17 +244,17 @@ account in the file like this:
 
 .. code-block:: yaml
 
-	logon:
-	  hostname: "your-hostname"
-	  username: "your-username"
-	  password: "your-password"
+    logon:
+      hostname: "your-hostname"
+      username: "your-username"
+      password: "your-password"
 
 or your can configure an interactive log in:
 
 .. code-block:: yaml
 
-	logon:
-	  interactive: true
+    logon:
+      interactive: true
 
 Note that storing your password in plain text in the configuration
 file is less secure.
@@ -263,7 +263,7 @@ only you and administrators can read it, i.e.
 
 .. code-block:: bash
 
-	ls -l ~/.esmvaltool/esgf-pyclient.yml
+    ls -l ~/.esmvaltool/esgf-pyclient.yml
 
 shows permissions ``-rw-------``.
 
@@ -274,15 +274,15 @@ be provided in the section ``search_connection``, for example:
 
 .. code-block:: yaml
 
-	search_connection:
-	  url: "http://esgf-index1.ceda.ac.uk/esg-search"
+    search_connection:
+      url: "http://esgf-index1.ceda.ac.uk/esg-search"
 
 to choose the CEDA index node or
 
 .. code-block:: yaml
 
-	search_connection:
-	  expire_after: 2592000  # the number of seconds in a month
+    search_connection:
+      expire_after: 2592000  # the number of seconds in a month
 
 to keep cached search results for a month.
 
@@ -311,11 +311,11 @@ An entry in the file might look like this:
 
 .. code-block:: yaml
 
-	esgf2.dkrz.de:
-	  duration (s): 8
-	  error: false
-	  size (bytes): 69067460
-	  speed (MB/s): 7.9
+    esgf2.dkrz.de:
+      duration (s): 8
+      error: false
+      size (bytes): 69067460
+      speed (MB/s): 7.9
 
 The tool only uses the duration and size to determine the download speed,
 the speed shown in the file is not used.
