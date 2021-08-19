@@ -21,6 +21,7 @@ def test_get_manager():
         'hostname': 'esgf-data.dkrz.de',
         'username': 'cookiemonster',
         'password': 'Welcome01',
+        'interactive': False,
     },
 ])
 def test_logon(mocker, caplog, credentials):
