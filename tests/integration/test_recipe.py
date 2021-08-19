@@ -975,7 +975,6 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user,
             scripts: null
         """)
 
-    # Add invalid timerange
     recipe = yaml.safe_load(content)
     (recipe['diagnostics']['test']['additional_datasets'][0]['timerange']
      ) = input_time
@@ -1015,7 +1014,6 @@ def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
             scripts: null
         """)
 
-    # Add invalid timerange
     recipe = yaml.safe_load(content)
     (recipe['datasets'][0]['timerange']) = input_time
     content = yaml.safe_dump(recipe)
