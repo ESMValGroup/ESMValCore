@@ -22,7 +22,7 @@ def test_log_speed(monkeypatch, tmp_path):
     megabyte = 2**20
     _download.log_speed('http://somehost.org/some_file.nc', 100 * megabyte, 10)
     _download.log_speed('http://somehost.org/some_other_file.nc',
-                        200 * megabyte, 15)
+                        200 * megabyte, 16)
     _download.log_speed('http://otherhost.org/other_file.nc', 4 * megabyte, 1)
 
     with hosts_file.open('r') as file:
@@ -30,8 +30,8 @@ def test_log_speed(monkeypatch, tmp_path):
 
     expected = {
         'somehost.org': {
-            'speed (MB/s)': round(300 / 25., 1),
-            'duration (s)': 25,
+            'speed (MB/s)': 11.5,
+            'duration (s)': 26,
             'size (bytes)': 300 * megabyte,
             'error': False,
         },
@@ -49,6 +49,8 @@ def test_error(monkeypatch, tmp_path):
     hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
     monkeypatch.setattr(_download, 'HOSTS_FILE', hosts_file)
 
+    megabyte = 2**20
+    _download.log_speed('http://somehost.org/some_file.nc', 3 * megabyte, 2)
     _download.log_error('http://somehost.org/some_file.nc')
 
     with hosts_file.open('r') as file:
@@ -56,9 +58,9 @@ def test_error(monkeypatch, tmp_path):
 
     expected = {
         'somehost.org': {
-            'speed (MB/s)': 0,
-            'duration (s)': 0,
-            'size (bytes)': 0,
+            'speed (MB/s)': 1.5,
+            'duration (s)': 2,
+            'size (bytes)': 3 * megabyte,
             'error': True,
         }
     }

@@ -7,6 +7,7 @@ import hashlib
 import itertools
 import logging
 import os
+import random
 import shutil
 from pathlib import Path
 from statistics import median
@@ -49,8 +50,6 @@ def load_speeds():
     if HOSTS_FILE.exists():
         with HOSTS_FILE.open('r') as file:
             speeds = yaml.safe_load(file)
-            for entry in speeds.values():
-                entry[SPEED] = compute_speed(entry[SIZE], entry[DURATION])
     return speeds
 
 
@@ -103,6 +102,10 @@ def get_preferred_hosts():
     speeds = load_speeds()
     if not speeds:
         return []
+
+    # Compute speeds from size and duration
+    for entry in speeds.values():
+        entry[SPEED] = compute_speed(entry[SIZE], entry[DURATION])
 
     # Hosts from which no data has been downloaded yet get median speed
     median_speed = median(speeds[h][SPEED] for h in speeds
@@ -375,7 +378,7 @@ def get_download_message(files):
     gigabyte = 2**30
     total_size = 0
     lines = []
-    for file in sorted(files):
+    for file in files:
         total_size += file.size
         lines.append(f"{file.size / megabyte:.0f} MB" "\t" f"{file}")
     if total_size:
@@ -401,6 +404,7 @@ def download(files, dest_folder, n_jobs=4):
     DownloadError:
         Raised if one or more files failed to download.
     """
+    files = sorted(files)
     logger.info(get_download_message(files))
     logger.info("Downloading..")
 
@@ -412,6 +416,7 @@ def download(files, dest_folder, n_jobs=4):
     start_time = datetime.datetime.now()
 
     errors = []
+    random.shuffle(files)
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_jobs) as executor:
         future_to_file = {
             executor.submit(_download, file): file
