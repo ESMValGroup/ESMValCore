@@ -19,18 +19,28 @@ def test_log_speed(monkeypatch, tmp_path):
     hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
     monkeypatch.setattr(_download, 'HOSTS_FILE', hosts_file)
 
-    _download.log_speed('http://somehost.org/some_file.nc', 52428800, 10)
+    megabyte = 2**20
+    _download.log_speed('http://somehost.org/some_file.nc', 100 * megabyte, 10)
+    _download.log_speed('http://somehost.org/some_other_file.nc',
+                        200 * megabyte, 15)
+    _download.log_speed('http://otherhost.org/other_file.nc', 4 * megabyte, 1)
 
     with hosts_file.open('r') as file:
         result = yaml.safe_load(file)
 
     expected = {
         'somehost.org': {
-            'speed (MB/s)': 5,
-            'duration (s)': 10,
-            'size (bytes)': 52428800,
+            'speed (MB/s)': round(300 / 25., 1),
+            'duration (s)': 25,
+            'size (bytes)': 300 * megabyte,
             'error': False,
-        }
+        },
+        'otherhost.org': {
+            'speed (MB/s)': 4,
+            'duration (s)': 1,
+            'size (bytes)': 4 * megabyte,
+            'error': False,
+        },
     }
     assert result == expected
 

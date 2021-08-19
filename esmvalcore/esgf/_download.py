@@ -13,7 +13,6 @@ from statistics import median
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 
-import pyesgf.search.results
 import requests
 import yaml
 
@@ -59,8 +58,8 @@ def log_speed(url, size, duration):
     """Write the downloaded file size and duration to HOSTS_FILE."""
     speeds = load_speeds()
     host = urlparse(url).hostname
-    size += speeds.get(host, {}).get('size', 0)
-    duration += speeds.get(host, {}).get('duration', 0)
+    size += speeds.get(host, {}).get(SIZE, 0)
+    duration += speeds.get(host, {}).get(DURATION, 0)
     speed = compute_speed(size, duration)
 
     speeds[host] = {
@@ -177,7 +176,7 @@ class ESGFFile:
     size : int
         The size of the file in bytes.
     """
-    def __init__(self, results: list[pyesgf.search.results.FileResult]):
+    def __init__(self, results):
         results = list(results)
         self.name = str(Path(results[0].filename).with_suffix('.nc'))
         self.size = results[0].size
@@ -194,7 +193,7 @@ class ESGFFile:
         def same_file(result):
             # Remove the hostname from the dataset_id
             dataset = result.json['dataset_id'].split('|')[0]
-            # Ignore the extension (some files are called .nc_0, .nc_1
+            # Ignore the extension (some files are called .nc_0, .nc_1)
             filename = Path(result.filename).stem
             # Ignore case
             return (dataset.lower(), filename.lower())

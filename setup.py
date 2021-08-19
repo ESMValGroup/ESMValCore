@@ -39,7 +39,6 @@ REQUIREMENTS = {
         'fire',
         "importlib_resources;python_version<'3.9'",
         'jinja2',
-        'myproxyclient',  # needed by pyesgf.logon
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numpy',
