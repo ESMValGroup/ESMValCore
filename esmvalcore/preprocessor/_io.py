@@ -32,7 +32,6 @@ def _fix_aux_factories(cube):
     """Fix :class:`iris.aux_factory.AuxCoordFactory` after concatenation.
 
     Necessary because of bug in :mod:`iris` (see issue #2478).
-
     """
     coord_names = [coord.name() for coord in cube.coords()]
 
@@ -89,9 +88,7 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
 def concatenate_callback(raw_cube, field, _):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
-    for attr in ['creation_date', 'tracking_id', 'history']:
-        if attr in raw_cube.attributes:
-            del raw_cube.attributes[attr]
+    _delete_attributes(raw_cube, ('creation_date', 'tracking_id', 'history'))
     for coord in raw_cube.coords():
         # Iris chooses to change longitude and latitude units to degrees
         # regardless of value in file, so reinstating file value
@@ -99,6 +96,14 @@ def concatenate_callback(raw_cube, field, _):
             units = _get_attr_from_field_coord(field, coord.var_name, 'units')
             if units is not None:
                 coord.units = units
+        # CMOR sometimes adds a history to the coordinates.
+        _delete_attributes(coord, ('history', ))
+
+
+def _delete_attributes(object, attrs):
+    for attr in attrs:
+        if attr in object.attributes:
+            del object.attributes[attr]
 
 
 def load(file, callback=None):
@@ -199,10 +204,13 @@ def concatenate(cubes):
     return result
 
 
-def save(cubes, filename, optimize_access='', compress=False, alias='',
+def save(cubes,
+         filename,
+         optimize_access='',
+         compress=False,
+         alias='',
          **kwargs):
-    """
-    Save iris cubes to file.
+    """Save iris cubes to file.
 
     Parameters
     ----------
@@ -233,7 +241,6 @@ def save(cubes, filename, optimize_access='', compress=False, alias='',
     ------
     ValueError
         cubes is empty.
-
     """
     if not cubes:
         raise ValueError(f"Cannot save empty cubes '{cubes}'")
@@ -276,8 +283,8 @@ def save(cubes, filename, optimize_access='', compress=False, alias='',
     if alias:
 
         for cube in cubes:
-            logger.debug(
-                'Changing var_name from %s to %s', cube.var_name, alias)
+            logger.debug('Changing var_name from %s to %s', cube.var_name,
+                         alias)
             cube.var_name = alias
     iris.save(cubes, **kwargs)
 
