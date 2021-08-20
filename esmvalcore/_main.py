@@ -118,6 +118,7 @@ class Config():
     This group contains utilities to manage ESMValTool configuration
     files.
     """
+
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
         import os
@@ -188,6 +189,7 @@ class Recipes():
     Documentation for recipes included with ESMValTool is available at
     https://docs.esmvaltool.org/en/latest/recipes/index.html.
     """
+
     @staticmethod
     def list():
         """List all installed recipes.
@@ -275,6 +277,7 @@ class ESMValTool():
     To report issues or ask for improvements, please visit
     https://github.com/ESMValGroup/ESMValTool.
     """
+
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
