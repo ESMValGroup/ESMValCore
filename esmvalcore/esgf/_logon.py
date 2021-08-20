@@ -22,9 +22,9 @@ def logon():
     manager = get_manager()
 
     if not manager.is_logged_on():
-        if (cfg['logon'].get('interactive') or any(
-            (key in cfg['logon']
-             for key in ['hostname', 'username', 'password']))):
+        keys = ['interactive', 'hostname', 'username', 'password']
+        if any(cfg['logon'].get(key) for key in keys):
+            # only try logging on if it is configured
             manager.logon(**cfg['logon'])
             if manager.is_logged_on():
                 logger.info("Logged on to ESGF")

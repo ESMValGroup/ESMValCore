@@ -179,6 +179,7 @@ class ESGFFile:
     size : int
         The size of the file in bytes.
     """
+
     def __init__(self, results):
         results = list(results)
         self.name = str(Path(results[0].filename).with_suffix('.nc'))
@@ -193,6 +194,7 @@ class ESGFFile:
     @classmethod
     def _from_results(cls, results, facets):
         """Return a list of files from a pyesgf.search.results.ResultSet."""
+
         def same_file(result):
             # Remove the hostname from the dataset_id
             dataset = result.json['dataset_id'].split('|')[0]
