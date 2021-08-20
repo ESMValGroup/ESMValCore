@@ -224,7 +224,6 @@ workflows:
       - install
       - develop
       - conda_build
-      - conda_install
       - documentation
   nightly:
     triggers:
