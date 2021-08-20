@@ -142,9 +142,9 @@ def test_sort_hosts(mocker):
                         return_value=preferred_hosts)
     sorted_urls = _download.sort_hosts(urls)
     assert sorted_urls == [
+        'http://esgf.nci.org.au/abc.nc',
         'http://esgf2.dkrz.de/abc.nc',
         'http://esgf-data1.ceda.ac.uk/abc.nc',
-        'http://esgf.nci.org.au/abc.nc',
     ]
 
 

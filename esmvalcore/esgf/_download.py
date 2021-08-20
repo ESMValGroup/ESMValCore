@@ -153,12 +153,13 @@ def sort_hosts(urls):
     urls = list(urls)
     hosts = [urlparse(url).hostname for url in urls]
     preferred_hosts = get_preferred_hosts()
-    for host in preferred_hosts[::-1]:
+    for host in preferred_hosts:
         if host in hosts:
-            # Move host and corresponding URL to the beginning of the list
+            # Move host and corresponding URL to the beginning of the list,
+            # but after any unknown hosts so these will get used too.
             idx = hosts.index(host)
-            hosts.insert(0, hosts.pop(idx))
-            urls.insert(0, urls.pop(idx))
+            hosts.append(hosts.pop(idx))
+            urls.append(urls.pop(idx))
 
     return urls
 
@@ -180,7 +181,6 @@ class ESGFFile:
     size : int
         The size of the file in bytes.
     """
-
     def __init__(self, results):
         results = list(results)
         self.name = str(Path(results[0].filename).with_suffix('.nc'))
@@ -195,7 +195,6 @@ class ESGFFile:
     @classmethod
     def _from_results(cls, results, facets):
         """Return a list of files from a pyesgf.search.results.ResultSet."""
-
         def same_file(result):
             # Remove the hostname from the dataset_id
             dataset = result.json['dataset_id'].split('|')[0]
