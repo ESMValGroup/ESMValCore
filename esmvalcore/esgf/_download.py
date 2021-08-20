@@ -46,10 +46,11 @@ def compute_speed(size, duration):
 
 def load_speeds():
     """Load average download speeds from HOSTS_FILE."""
-    speeds = {}
-    if HOSTS_FILE.exists():
-        with HOSTS_FILE.open('r') as file:
-            speeds = yaml.safe_load(file)
+    try:
+        content = HOSTS_FILE.read_text()
+    except FileNotFoundError:
+        content = '{}'
+    speeds = yaml.safe_load(content)
     return speeds
 
 
