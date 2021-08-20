@@ -295,13 +295,9 @@ def _get_default_settings(variable, config_user, derive=False):
             'start_year': variable['start_year'],
             'end_year': variable['end_year'],
         }
-
-    if 'timerange' in variable and variable['frequency'] != 'fx':
-        settings['clip_start_end_year'] = {
-            'start_year': None,
-            'end_year': None,
-            'timerange': None
-        }
+        if 'timerange' in variable:
+            settings['clip_start_end_year'].update(
+                {'timerange': variable['timerange']})
 
     if derive:
         settings['derive'] = {
@@ -723,14 +719,13 @@ def _parse_period(timerange):
     return start_year, end_year
 
 
-def _update_timerange(variable, settings, config_user):
+def _update_timerange(variable, config_user):
     if 'timerange' not in variable:
         return
 
     timerange = variable.get('timerange')
     check.valid_time_selection(timerange)
 
-    step = 'clip_start_end_year'
     if '*' in timerange:
         (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                           config_user['drs'])
@@ -745,6 +740,7 @@ def _update_timerange(variable, settings, config_user):
             timerange = timerange.replace('*', min_date)
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
+        check.valid_time_selection(timerange)
 
     start_year, end_year = _parse_period(timerange)
 
@@ -757,14 +753,6 @@ def _update_timerange(variable, settings, config_user):
         'start_year': start_year,
         'end_year': end_year
     })
-
-    settings[step]['timerange'] = timerange
-    settings[step]['start_year'] = start_year
-    settings[step]['end_year'] = end_year
-
-    timerange = timerange.replace('/', '-')
-    filename = variable['filename'].replace('.nc', f'_{timerange}.nc')
-    variable['filename'] = filename
 
 
 def _match_products(products, variables):
@@ -818,6 +806,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     """
     products = set()
     for variable in variables:
+        _update_timerange(variable, config_user)
         variable['filename'] = get_output_file(variable,
                                                config_user['preproc_dir'])
 
@@ -882,7 +871,7 @@ def _update_preproc_functions(settings, config_user, variable, variables,
     _update_fx_settings(settings=settings,
                         variable=variable,
                         config_user=config_user)
-    _update_timerange(variable, settings, config_user)
+    _update_timerange(variable, config_user)
     try:
         _update_target_grid(
             variable=variable,
