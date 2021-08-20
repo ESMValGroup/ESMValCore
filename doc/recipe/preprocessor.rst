@@ -1678,6 +1678,9 @@ See also :func:`esmvalcore.preprocessor.detrend`.
 Unit conversion
 ===============
 
+``convert_units``
+-----------------
+
 Converting units is also supported. This is particularly useful in
 cases where different datasets might have different units, for example
 when comparing CMIP5 and CMIP6 variables where the units have changed
@@ -1694,6 +1697,16 @@ will guarantee homogeneous input for the diagnostics.
    amount based unit is not supported at the moment.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
+
+
+``flux_to_total``
+-----------------
+
+This function can be used to convert time fluxes to aggregated values
+automatically. It's only requirement is that the original units are in
+``X s-1`` or any other compatible unit.
+
+See also :func:`esmvalcore.preprocessor.flux_to_total.`
 
 
 .. _Memory use:
