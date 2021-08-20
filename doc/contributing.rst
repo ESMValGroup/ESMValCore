@@ -757,7 +757,11 @@ and create the new release from the release branch (i.e. not from ``main``).
 
 The package is automatically uploaded to the
 `ESMValGroup conda channel <https://anaconda.org/esmvalgroup/esmvalcore>`__
-by a GitHub action.
+by a GitHub action (note that this is an obsolete procedure for the main package upload,
+since the main package is now uploaded to
+`conda-forge conda channel <https://anaconda.org/conda-forge>`__ via
+the upload to PyPi, but we still upload to the esmvalgroup channel as a backup option;
+also the upload to esmvalcore gives us a chance to verify it immediately after upload).
 If this has failed for some reason, build and upload the package manually by
 following the instructions below.
 
