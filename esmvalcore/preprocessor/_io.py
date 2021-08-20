@@ -100,10 +100,10 @@ def concatenate_callback(raw_cube, field, _):
         _delete_attributes(coord, ('history', ))
 
 
-def _delete_attributes(object, attrs):
-    for attr in attrs:
-        if attr in object.attributes:
-            del object.attributes[attr]
+def _delete_attributes(iris_object, atts):
+    for att in atts:
+        if att in iris_object.attributes:
+            del iris_object.attributes[att]
 
 
 def load(file, callback=None):
@@ -231,6 +231,9 @@ def save(cubes,
 
     compress: bool, optional
         Use NetCDF internal compression.
+
+    alias: str, optional
+        Var name to use when saving instead of the one in the cube.
 
     Returns
     -------
