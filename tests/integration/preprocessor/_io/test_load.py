@@ -20,7 +20,6 @@ def _create_sample_cube():
 
 class TestLoad(unittest.TestCase):
     """Tests for :func:`esmvalcore.preprocessor.load`."""
-
     def setUp(self):
         """Start tests."""
         self.temp_files = []
@@ -52,7 +51,7 @@ class TestLoad(unittest.TestCase):
 
     def test_callback_remove_attributes(self):
         """Test callback remove unwanted attributes."""
-        attributes = ('history', 'creation_date', 'tracking_id')
+        attributes = ('history', 'creation_date', 'tracking_id', 'comment')
         for _ in range(2):
             cube = _create_sample_cube()
             for attr in attributes:
