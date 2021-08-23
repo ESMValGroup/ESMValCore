@@ -138,7 +138,7 @@ def data_availability(input_files, var, dirnames, filenames):
     available_years = set()
 
     for filename in input_files:
-        start, end, _, _ = get_start_end_year(filename)
+        start, end = get_start_end_year(filename)
         available_years.update(range(start, end + 1))
 
     missing_years = required_years - available_years
@@ -208,10 +208,9 @@ def valid_multimodel_statistic(statistic):
 
 def _check_delimiter(timerange):
     if len(timerange) != 2:
-        raise RecipeError(
-            "Invalid value encountered for `timerange`. "
-            "Valid values must be separated by `/`. "
-            f"Got {timerange} instead.")
+        raise RecipeError("Invalid value encountered for `timerange`. "
+                          "Valid values must be separated by `/`. "
+                          f"Got {timerange} instead.")
 
 
 def _check_duration_periods(timerange):
@@ -225,10 +224,9 @@ def _check_duration_periods(timerange):
         except ValueError:
             pass
         else:
-            raise RecipeError(
-                "Invalid value encountered for `timerange`. "
-                "Cannot set both the beginning and the end "
-                "as duration periods.")
+            raise RecipeError("Invalid value encountered for `timerange`. "
+                              "Cannot set both the beginning and the end "
+                              "as duration periods.")
 
 
 def _check_timerange_values(date, timerange):
@@ -239,12 +237,11 @@ def _check_timerange_values(date, timerange):
             isodate.parse_duration(date)
         except ValueError as exc:
             if date != '*':
-                raise RecipeError(
-                    "Invalid value encountered for `timerange`. "
-                    "Valid value must follow ISO 8601 standard "
-                    "for dates and duration periods, or be "
-                    "set to '*' to load available years. "
-                    f"Got {timerange} instead.") from exc
+                raise RecipeError("Invalid value encountered for `timerange`. "
+                                  "Valid value must follow ISO 8601 standard "
+                                  "for dates and duration periods, or be "
+                                  "set to '*' to load available years. "
+                                  f"Got {timerange} instead.") from exc
 
 
 def valid_time_selection(timerange):

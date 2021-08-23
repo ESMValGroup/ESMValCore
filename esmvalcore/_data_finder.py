@@ -33,10 +33,103 @@ def find_files(dirnames, filenames):
     return result
 
 
+def _get_from_pattern(pattern, date_range_pattern, stem, group):
+    """Get time, date or datetime from date range patterns in file names."""
+    #
+    # Next string allows to test that there is an allowed delimiter (or
+    # string start or end) close to date range (or to single date)
+    start_point = end_point = None
+    context = r"(?:^|[-_]|$)"
+    #
+    # First check for a block of two potential dates
+    date_range_pattern_with_context = context + date_range_pattern + context
+    daterange = re.search(date_range_pattern_with_context, stem)
+    if not daterange:
+        # Retry with extended context for CMIP3
+        context = r"(?:^|[-_.]|$)"
+        date_range_pattern_with_context = (context + date_range_pattern +
+                                           context)
+        daterange = re.search(date_range_pattern_with_context, stem)
+    if daterange:
+        start_point = daterange.group(group)
+        end_group = '_'.join([group, 'end'])
+        end_point = daterange.group(end_group)
+    else:
+        # Check for single dates in the filename
+        single_date_pattern = context + pattern + context
+        dates = re.findall(single_date_pattern, stem)
+        if len(dates) == 1:
+            start_point = end_point = dates[0][0]
+        elif len(dates) > 1:
+            # Check for dates at start or (exclusive or) end of filename
+            start = re.search(r'^' + pattern, stem)
+            end = re.search(pattern + r'$', stem)
+            if start and not end:
+                start_point = end_point = start.group(group)
+            elif end:
+                start_point = end_point = end.group(group)
+
+    return start_point, end_point
+
+
+def get_start_end_date(filename):
+    """Get the start and end dates as a string from a file name.
+
+    Examples of allowed dates : 1980, 198001, 19801231,
+    1980123123, 19801231T23, 19801231T2359, 19801231T235959,
+    19801231T235959Z (ISO 8601).
+
+    Dates must be surrounded by - or _ or string start or string end
+    (after removing filename suffix).
+
+    Look first for two dates separated by - or _, then for one single
+    date, and if they are multiple, for one date at start or end.
+    """
+    stem = Path(filename).stem
+    start_date = end_date = None
+    #
+    time_pattern = (r"(?P<hour>[0-2][0-9]"
+                    r"(?P<minute>[0-5][0-9]"
+                    r"(?P<second>[0-5][0-9])?)?Z?)")
+    date_pattern = (r"(?P<year>[0-9]{4})"
+                    r"(?P<month>[01][0-9]"
+                    r"(?P<day>[0-3][0-9]"
+                    rf"(T?{time_pattern})?)?)?")
+    datetime_pattern = (rf"(?P<datetime>{date_pattern})")
+    #
+    end_datetime_pattern = datetime_pattern.replace(">", "_end>")
+    date_range_pattern = datetime_pattern + r"[-_]" + end_datetime_pattern
+    start_date, end_date = _get_from_pattern(datetime_pattern,
+                                             date_range_pattern, stem,
+                                             'datetime')
+
+    # As final resort, try to get the dates from the file contents
+    if start_date is None or end_date is None:
+        logger.debug("Must load file %s for daterange ", filename)
+        cubes = iris.load(filename)
+
+        for cube in cubes:
+            logger.debug(cube)
+            try:
+                time = cube.coord('time')
+            except iris.exceptions.CoordinateNotFoundError:
+                continue
+            start_date = isodate.date_isoformat(
+                time.cell(0).point, format=isodate.isostrf.DATE_BAS_COMPLETE)
+
+            end_date = isodate.date_isoformat(
+                time.cell(-1).point, format=isodate.isostrf.DATE_BAS_COMPLETE)
+            break
+
+    if start_date is None or end_date is None:
+        raise ValueError(f'File {filename} dates do not match a recognized'
+                         'pattern and time can not be read from the file')
+
+    return start_date, end_date
+
+
 def get_start_end_year(filename):
     """Get the start and end year from a file name.
-
-    Additionally, returns the start and end dates as strings.
 
     Examples of allowed dates : 1980, 198001, 19801231,
     1980123123, 19801231T23, 19801231T2359, 19801231T235959,
@@ -58,47 +151,11 @@ def get_start_end_year(filename):
                     r"(?P<month>[01][0-9]"
                     r"(?P<day>[0-3][0-9]"
                     rf"(T?{time_pattern})?)?)?")
-    datetime_pattern = (rf"(?P<datetime>{date_pattern})")
     #
-    end_datetime_pattern = datetime_pattern.replace(">", "_end>")
-    date_range_pattern = datetime_pattern + r"[-_]" + end_datetime_pattern
-    #
-    # Next string allows to test that there is an allowed delimiter (or
-    # string start or end) close to date range (or to single date)
-    context = r"(?:^|[-_]|$)"
-    #
-    # First check for a block of two potential dates
-    date_range_pattern_with_context = context + date_range_pattern + context
-    daterange = re.search(date_range_pattern_with_context, stem)
-    if not daterange:
-        # Retry with extended context for CMIP3
-        context = r"(?:^|[-_.]|$)"
-        date_range_pattern_with_context = (context + date_range_pattern +
-                                           context)
-        daterange = re.search(date_range_pattern_with_context, stem)
-    if daterange:
-        start_date = daterange.group("datetime")
-        start_year = daterange.group("year")
-        end_date = daterange.group("datetime_end")
-        end_year = daterange.group("year_end")
-    else:
-        # Check for single dates in the filename
-        single_date_pattern = context + datetime_pattern + context
-        dates = re.findall(single_date_pattern, stem)
-        if len(dates) == 1:
-            start_date = end_date = dates[0][0]
-            start_year = end_year = dates[0][1]
-        elif len(dates) > 1:
-            # Check for dates at start or (exclusive or) end of filename
-            start = re.search(r'^' + datetime_pattern, stem)
-            end = re.search(datetime_pattern + r'$', stem)
-            if start and not end:
-                start_year = end_year = start.group('year')
-                start_date = end_date = start.group('datetime')
-            elif end:
-                start_year = end_year = end.group('year')
-                start_date = end_date = end.group('datetime')
-
+    end_date_pattern = date_pattern.replace(">", "_end>")
+    date_range_pattern = date_pattern + r"[-_]" + end_date_pattern
+    start_year, end_year = _get_from_pattern(date_pattern, date_range_pattern,
+                                             stem, 'year')
     # As final resort, try to get the dates from the file contents
     if start_year is None or end_year is None:
         logger.debug("Must load file %s for daterange ", filename)
@@ -110,15 +167,8 @@ def get_start_end_year(filename):
                 time = cube.coord('time')
             except iris.exceptions.CoordinateNotFoundError:
                 continue
-            start_point = time.cell(0).point
-            start_date = isodate.date_isoformat(
-                start_point, format=isodate.isostrf.DATE_BAS_COMPLETE)
-            start_year = start_point.year
-
-            end_point = time.cell(-1).point
-            end_date = isodate.date_isoformat(
-                end_point, format=isodate.isostrf.DATE_BAS_COMPLETE)
-            end_year = end_point.year
+            start_year = time.cell(0).point.year
+            end_year = time.cell(-1).point.year
             break
 
     if start_year is None or end_year is None:
@@ -126,7 +176,7 @@ def get_start_end_year(filename):
                          'pattern and time can not be read from the file')
 
     logger.debug("Found start_year %s and end_year %s", start_year, end_year)
-    return int(start_year), int(end_year), start_date, end_date
+    return int(start_year), int(end_year)
 
 
 def select_files(filenames, start_year, end_year):
@@ -136,7 +186,7 @@ def select_files(filenames, start_year, end_year):
     """
     selection = []
     for filename in filenames:
-        start, end, _, _ = get_start_end_year(filename)
+        start, end = get_start_end_year(filename)
         if start <= end_year and end >= start_year:
             selection.append(filename)
     return selection

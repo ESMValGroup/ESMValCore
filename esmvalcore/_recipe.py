@@ -24,7 +24,7 @@ from ._data_finder import (
     _find_input_files,
     get_input_filelist,
     get_output_file,
-    get_start_end_year,
+    get_start_end_date,
     get_statistic_output_file,
 )
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -729,10 +729,10 @@ def _update_timerange(variable, config_user):
     if '*' in timerange:
         (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                           config_user['drs'])
-        intervals = [get_start_end_year(name) for name in files]
+        intervals = [get_start_end_date(name) for name in files]
 
-        min_date = min(intervals)[2]
-        max_date = max(intervals)[3]
+        min_date = min(intervals)[0]
+        max_date = max(intervals)[1]
 
         if timerange == '*':
             timerange = f'{min_date}/{max_date}'
