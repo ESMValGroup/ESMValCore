@@ -10,7 +10,7 @@ import sqlite3
 
 def _parse_pymon_database():
     # Create a SQL connection to our SQLite database
-    con = sqlite3.connect("../.pymon")
+    con = sqlite3.connect(".pymon")
     cur = con.cursor()
 
     # The result of a "cursor.execute" can be iterated over by row
@@ -20,8 +20,6 @@ def _parse_pymon_database():
         if memory_used > 1000.:  # test result in RES mem in MB
             print("Test name / memory (MB)")
             print(test_name, memory_used)
-        else:
-            print("All our tests need less than 1GB resident memory, phew.")
 
     # Be sure to close the connection
     con.close()
