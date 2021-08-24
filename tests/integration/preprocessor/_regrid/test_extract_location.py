@@ -101,3 +101,10 @@ class Test(tests.Test):
         self.assertEqual(point.shape, (3, ))
         print(point.data)
         np.testing.assert_equal(point.data, [1186, 2806, 4426])
+
+    def test_non_existing_location(self):
+        """Test town plus region plus country."""
+        with self.assertRaises(ValueError):
+            extract_location(self.cube,
+                             scheme='nearest',
+                             location='Minas Tirith,Gondor')
