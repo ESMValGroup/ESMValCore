@@ -1,9 +1,9 @@
 """Fixes for FGOALS-g3 model."""
+import iris
+
 from ..cmip5.fgoals_g2 import Cl as BaseCl
 from ..common import OceanFixGrid
 from ..fix import Fix
-
-import iris
 
 Cl = BaseCl
 
@@ -43,11 +43,10 @@ Siconc = Tos
 
 
 class Mrsos(Fix):
-    """Fixes for mrsos"""
+    """Fixes for mrsos."""
 
     def _check_bounds_monotonicity(self, coord):
         """Check monotonicity of a coords bounds array."""
-
         if coord.has_bounds():
             for i in range(coord.nbounds):
                 if not iris.util.monotonic(coord.bounds[..., i], strict=True):
