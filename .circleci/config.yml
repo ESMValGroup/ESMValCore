@@ -208,10 +208,10 @@ jobs:
             mkdir /logs
             # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
-            conda create -y --name esmvaltool
+            conda create -y --name esmvaltool -c conda-forge 'python=3.9'
             set +x; conda activate esmvaltool; set -x
             # Install
-            conda install -y esmvalcore -c esmvalgroup -c conda-forge
+            conda install -y esmvalcore -c conda-forge
             # Log versions
             conda env export > /logs/environment.yml
             # Test installation

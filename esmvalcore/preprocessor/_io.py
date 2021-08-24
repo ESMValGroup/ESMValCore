@@ -88,7 +88,10 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
 def concatenate_callback(raw_cube, field, _):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
-    _delete_attributes(raw_cube, ('creation_date', 'tracking_id', 'history'))
+    _delete_attributes(
+        raw_cube,
+        ('creation_date', 'tracking_id', 'history', 'comment')
+    )
     for coord in raw_cube.coords():
         # Iris chooses to change longitude and latitude units to degrees
         # regardless of value in file, so reinstating file value
