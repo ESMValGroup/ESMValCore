@@ -12,6 +12,16 @@ Cli = BaseCl
 Clw = BaseCl
 
 
+def _check_bounds_monotonicity(coord):
+    """Check monotonicity of a coords bounds array."""
+    if coord.has_bounds():
+        for i in range(coord.nbounds):
+            if not iris.util.monotonic(coord.bounds[..., i], strict=True):
+                return False
+
+    return True
+
+
 class Tos(OceanFixGrid):
     """Fixes for tos."""
 
@@ -45,15 +55,6 @@ Siconc = Tos
 class Mrsos(Fix):
     """Fixes for mrsos."""
 
-    def _check_bounds_monotonicity(self, coord):
-        """Check monotonicity of a coords bounds array."""
-        if coord.has_bounds():
-            for i in range(coord.nbounds):
-                if not iris.util.monotonic(coord.bounds[..., i], strict=True):
-                    return False
-
-        return True
-
     def fix_metadata(self, cubes):
         """Fix metadata.
 
@@ -71,12 +72,12 @@ class Mrsos(Fix):
         cube = self.get_cube_from_list(cubes)
 
         # Check both lat and lon coords and replace bounds if necessary
-        if not self._check_bounds_monotonicity(cube.coord("latitude")):
+        if not _check_bounds_monotonicity(cube.coord("latitude")):
             cube.coord("latitude").bounds = None
             cube.coord("latitude").guess_bounds()
             iris.util.promote_aux_coord_to_dim_coord(cube, "latitude")
 
-        if not self._check_bounds_monotonicity(cube.coord("longitude")):
+        if not _check_bounds_monotonicity(cube.coord("longitude")):
             cube.coord("longitude").bounds = None
             cube.coord("longitude").guess_bounds()
             iris.util.promote_aux_coord_to_dim_coord(cube, "longitude")
