@@ -306,22 +306,25 @@ def _attempt_irregular_regridding(cube, scheme):
     return False
 
 
-def extract_town(cube, town, scheme):
-    """Extract a point using a town name, with interpolation.
+def extract_location(cube, location, scheme):
+    """Extract a point using a location name, with interpolation.
 
-    Extracts a single town point from a cube, according
+    Extracts a single location point from a cube, according
     to the interpolation scheme `scheme`.
 
-    The function just retrieves the coordinates of the town and then calls
+    The function just retrieves the coordinates of the location and then calls
     the `extract_point` preprocessor.
+
+    It can be use to locate cities and villages, but also mountains or other
+    geographical locations.
 
     Parameters
     ----------
     cube : cube
         The source cube to extract a point from.
 
-    town : str
-        The reference town.
+    location : str
+        The reference location.
 
     scheme : str
         The interpolation scheme. 'linear' or 'nearest'. No default.
@@ -332,12 +335,12 @@ def extract_town(cube, town, scheme):
     latitude and longitude coordinates.
     """
     geolocator = Nominatim(user_agent='esmvalcore')
-    city = geolocator.geocode(town)
-    if not city:
-        raise ValueError(f'Town {town} can not be found.')
-    logger.info(
-        f"Extracting data for {city} ({city.latitude}, {city.longitude})")
-    return extract_point(cube, city.latitude, city.longitude, scheme)
+    location = geolocator.geocode(location)
+    if not location:
+        raise ValueError(f'Town {location} can not be found.')
+    logger.info(f"Extracting data for {location} "
+                f"({location.latitude}, {location.longitude})")
+    return extract_point(cube, location.latitude, location.longitude, scheme)
 
 
 def extract_point(cube, latitude, longitude, scheme):

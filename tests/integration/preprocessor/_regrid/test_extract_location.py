@@ -6,7 +6,7 @@ import numpy as np
 from iris.coords import CellMethod, DimCoord
 
 import tests
-from esmvalcore.preprocessor import extract_town
+from esmvalcore.preprocessor import extract_location
 
 
 class Test(tests.Test):
@@ -62,29 +62,42 @@ class Test(tests.Test):
 
     def test_extract_only_town_name(self):
         """Test only town name."""
-        point = extract_town(self.cube, scheme='nearest', town='Peñacaballera')
+        point = extract_location(self.cube,
+                                 scheme='nearest',
+                                 location='Peñacaballera')
         self.assertEqual(point.shape, (3, ))
         np.testing.assert_equal(point.data, [1186, 2806, 4426])
 
     def test_extract_town_name_and_region(self):
         """Test town plus region."""
-        point = extract_town(self.cube,
-                             scheme='nearest',
-                             town='Salamanca,Castilla y León')
+        point = extract_location(self.cube,
+                                 scheme='nearest',
+                                 location='Salamanca,Castilla y León')
         self.assertEqual(point.shape, (3, ))
         np.testing.assert_equal(point.data, [1186, 2806, 4426])
 
     def test_extract_town_and_country(self):
         """Test town plus country."""
-        point = extract_town(self.cube, scheme='nearest', town='Salamanca,USA')
+        point = extract_location(self.cube,
+                                 scheme='nearest',
+                                 location='Salamanca,USA')
         self.assertEqual(point.shape, (3, ))
         np.testing.assert_equal(point.data, [1179, 2799, 4419])
 
     def test_extract_all_params(self):
         """Test town plus region plus country."""
-        point = extract_town(self.cube,
-                             scheme='nearest',
-                             town='Salamanca,Castilla y León,Spain')
+        point = extract_location(self.cube,
+                                 scheme='nearest',
+                                 location='Salamanca,Castilla y León,Spain')
+        self.assertEqual(point.shape, (3, ))
+        print(point.data)
+        np.testing.assert_equal(point.data, [1186, 2806, 4426])
+
+    def test_extract_mountain(self):
+        """Test town plus region plus country."""
+        point = extract_location(self.cube,
+                                 scheme='nearest',
+                                 location='Calvitero,Candelario')
         self.assertEqual(point.shape, (3, ))
         print(point.data)
         np.testing.assert_equal(point.data, [1186, 2806, 4426])
