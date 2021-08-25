@@ -37,7 +37,7 @@ def _synda_search_cmd(variable):
             'rcm_name' :  variable.get('rcm_name'),
             'rcm_version' : variable.get('rcm_version'),
             'project': variable.get('project'),
-            'frequency': variable.get('frequency'),
+            'frequency': variable.get('mip'),
             'ensemble': variable.get('ensemble'),
             'experiment': variable.get('exp'),
             'variable': variable.get('short_name'),
