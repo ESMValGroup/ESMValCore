@@ -17,6 +17,10 @@ auxiliary_data_dir: ~/auxiliary_data
 # can increase the number of parallel tasks again to a reasonable number for
 # the amount of memory available in your system.
 max_parallel_tasks: null
+# Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
+# and obs4MIPs data from ESGF by default. This is useful if you are working
+# on a computer without an internet connection.
+offline: false
 # Log level of the console
 log_level: info
 # Exit on warning (only for NCL diagnostic scripts)? true/[false]

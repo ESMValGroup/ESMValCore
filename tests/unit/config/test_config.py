@@ -74,6 +74,7 @@ def test_load_default_config(monkeypatch):
         'download_dir': str(Path.home() / 'climate_data'),
         'auxiliary_data_dir': str(Path.home() / 'auxiliary_data'),
         'max_parallel_tasks': None,
+        'offline': False,
         'log_level': 'info',
         'exit_on_warning': False,
         'output_file_type': 'png',

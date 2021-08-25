@@ -65,6 +65,9 @@ by running:
 
     esmvaltool run --offline=True recipe_python.yml
 
+If you prefer not having to specify this for every run, it is also possible to
+change the default setting to ``False`` in the :ref:`user configuration file`.
+
 It is also possible to select only specific diagnostics to be run. To tun only
 one, just specify its name. To provide more than one diagnostic to filter use
 the syntax 'diag1 diag2/script1' or '("diag1", "diag2/script1")' and pay

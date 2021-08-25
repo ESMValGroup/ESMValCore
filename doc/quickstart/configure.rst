@@ -75,6 +75,11 @@ with explanations in a commented line above each option:
     CORDEX: ESGF
     obs4MIPs: ESGF
 
+  # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
+  # and obs4MIPs data from ESGF. This is useful if you are working on a
+  # computer without an internet connection.
+  offline: false
+
   # Run at most this many tasks in parallel [null]/1/2/3/4/..
   # Set to null to use the number of available CPUs.
   # If you run out of memory, try setting max_parallel_tasks to 1 and check the
@@ -182,6 +187,23 @@ ESGF configuration
 The ``esmvaltool run recipe_example.yml`` command will automatically try
 to download the files required to run the recipe from ESGF for the projects
 CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
+The downloaded files will be stored in the ``download_dir`` specified in the
+`user configuration file`_.
+
+.. note::
+
+   When running a recipe that uses many or large datasets on a machine that
+   does not have any data available locally, the amount of data that will be
+   downloaded can be in the range of a few hundred gigabyte to a few terrabyte.
+   See :ref:`esmvaltool:inputdata` for advice on getting access to machines
+   with large datasets already available.
+
+   A log message will be displayed with the total amount of data that will
+   be downloaded before starting the download.
+   If you see that this is more than you would like to download, stop the
+   tool by pressing the ``Ctrl`` and ``C`` keys on your keyboard simultaneously
+   several times, edit the recipe so it contains fewer datasets and try again.
+
 For downloading some files (e.g. those produced by the CORDEX project),
 you need to log in to be able to download the data.
 
@@ -191,11 +213,14 @@ for instructions on how to create an ESGF OpenID account if you do not have
 one yet.
 Note that the OpenID account consists of 3 components instead of the usual
 two, in addition a username and password you also need the hostname of the
-provider of the ID; for example `esgf-data.dkrz.de`.
+provider of the ID; for example
+`esgf-data.dkrz.de <https://esgf-data.dkrz.de/user/add/?next=http://esgf-data.dkrz.de/projects/esgf-dkrz/>`_.
+Even though the account is issued by a particular host, the same OpenID
+account can be used to download data from all hosts in the ESGF.
 
-Next, configure your system so esmvaltool can use your
-credentials. This can be done using the keyring_ package or
-they can be stored in a :ref:`configuration file <config_esgf_pyclient>`.
+Next, configure your system so the ``esmvaltool`` can use your credentials.
+This can be done using the keyring_ package or they can be stored in a
+:ref:`configuration file <config_esgf_pyclient>`.
 
 .. _keyring:
 
@@ -217,6 +242,17 @@ Next, set your username and password by running the commands:
     keyring set ESGF hostname
     keyring set ESGF username
     keyring set ESGF password
+
+for example
+
+.. code-block:: bash
+
+    keyring set ESGF esgf-data.dkrz.de
+    keyring set ESGF cookiemonster
+    keyring set ESGF Welcome01
+
+if you created an account on the host `esgf-data.dkrz.de`_ with username
+'cookiemonster' and password 'Welcome01'.
 
 To check that you entered your credentials correctly, run:
 
@@ -249,7 +285,18 @@ account in the file like this:
       username: "your-username"
       password: "your-password"
 
-or your can configure an interactive log in:
+for example
+
+.. code-block:: yaml
+
+    logon:
+      hostname: "esgf-data.dkrz.de"
+      username: "cookiemonster"
+      password: "Welcome01"
+
+if you created an account on the host `esgf-data.dkrz.de`_ with username
+'cookiemonster' and password 'Welcome01'.
+Alternatively, you can configure an interactive log in:
 
 .. code-block:: yaml
 
@@ -300,7 +347,7 @@ If you experience errors while searching, it sometimes helps to delete the
 cached results.
 
 Download statistics
-```````````````````
+-------------------
 The tool will maintain statistics of how fast data can be downloaded
 from what host in the file ~/.esmvaltool/cache/esgf-hosts.yml and
 automatically select hosts that are faster.

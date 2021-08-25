@@ -309,7 +309,7 @@ class ESMValTool():
             max_datasets=None,
             max_years=None,
             skip_nonexistent=False,
-            offline=False,
+            offline=None,
             diagnostics=None,
             check_level='default',
             **kwargs):
@@ -392,8 +392,10 @@ class ESMValTool():
             for pattern in diagnostics or ()
         }
         cfg['check_level'] = CheckLevels[check_level.upper()]
-        cfg['offline'] = offline
-        if not offline:
+        if offline is not None:
+            # Override config-user.yml from command line
+            cfg['offline'] = offline
+        if not cfg['offline']:
             logon()
 
         def _check_limit(limit, value):
