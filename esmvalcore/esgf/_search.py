@@ -5,7 +5,7 @@ from functools import lru_cache
 
 import pyesgf.search
 
-from .._data_finder import get_start_end_year, select_files
+from .._data_finder import get_start_end_year
 from ._download import ESGFFile
 from ._logon import get_connection
 from .facets import DATASET_MAP, FACETS
@@ -99,22 +99,19 @@ def esgf_search_files(facets):
 
 def select_by_time(files, start_year, end_year):
     """Select files containing data between start_year and end_year."""
-    filedict = {file.name: file for file in files}
-    files = select_files(filedict, start_year, end_year)
-
-    # filter partially overlapping files
-    intervals = {get_start_end_year(name): name for name in files}
-    files = []
-    for (start, end), filename in intervals.items():
-        for _start, _end in intervals:
-            if start == _start and end == _end:
-                continue
-            if start >= _start and end <= _end:
-                break
+    selection = []
+    for file in files:
+        try:
+            start, end = get_start_end_year(file.name)
+        except ValueError:
+            # If start and end year cannot be read from the filename
+            # just select everything.
+            selection.append(file)
         else:
-            files.append(filename)
+            if start <= end_year and end >= start_year:
+                selection.append(file)
 
-    return [filedict[f] for f in files]
+    return selection
 
 
 def find_files(*, project, short_name, dataset, **facets):
