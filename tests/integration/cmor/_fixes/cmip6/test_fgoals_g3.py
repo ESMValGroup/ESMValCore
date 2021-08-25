@@ -7,7 +7,6 @@ import numpy as np
 from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Cl, Cli, Clw, Siconc
 from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Tos, Mrsos
-from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import _check_bounds_monotonicity
 from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -138,6 +137,10 @@ def test_mrsos_fix_metadata(mock_base_fix_metadata):
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
-    assert _check_bounds_monotonicity(fixed_cube.coord('latitude'))
-    assert _check_bounds_monotonicity(fixed_cube.coord('longitude'))
+    np.testing.assert_allclose(
+        fixed_cube.coord('latitude').bounds,
+        [[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]])
+    np.testing.assert_allclose(
+        fixed_cube.coord('longitude').bounds,
+        [[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]])
     mock_base_fix_metadata.assert_called_once_with(fix, cubes)
