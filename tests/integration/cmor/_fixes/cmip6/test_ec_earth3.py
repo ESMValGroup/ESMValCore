@@ -15,6 +15,7 @@ from esmvalcore.cmor.table import get_var_info
 
 class TestSiconca(unittest.TestCase):
     """Test sftof fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='siconca', units='%')

@@ -8,6 +8,7 @@ from ..shared import round_coordinates
 
 class AllVars(Fix):
     """Fixes for all variables."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -27,6 +28,7 @@ class AllVars(Fix):
 
 class Siconca(Fix):
     """Fixes for siconca."""
+
     def fix_data(self, cube):
         """Fix data.
 
@@ -47,6 +49,7 @@ class Siconca(Fix):
 
 class Tas(Fix):
     """Fixes for tas."""
+
     def fix_metadata(self, cubes):
         """Fix latitude points and bounds.
 
