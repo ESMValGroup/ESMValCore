@@ -30,17 +30,20 @@ def _parse_pymon_database():
     # then look at total time (in seconds)
     # (user time is availbale too via USER_TIME, kernel time via KERNEL_TIME)
     timed_tests = []
-    sq_command = 'select ITEM, ITEM_VARIANT, TOTAL_TIME from TEST_METRICS;'
+    sq_command = \
+        'select ITEM, ITEM_VARIANT, ITEM_PATH, TOTAL_TIME from TEST_METRICS;'
     for row in cur.execute(sq_command):
-        test_name, test_var, time_used = row[0], row[1], row[2]
-        timed_tests.append((test_name, test_var, time_used))
+        test_name, test_var, test_path, time_used = \
+            row[0], row[1], row[2], row[3]
+        timed_tests.append((test_name, test_var, test_path, time_used))
 
-    timed_tests = sorted(timed_tests, reverse=True, key=itemgetter(2))
+    timed_tests = sorted(timed_tests, reverse=True, key=itemgetter(3))
     hundred_slowest_tests = timed_tests[0:100]
-    print("List of 100 slowest tests (test name, test variant: duration [s])")
+    print("List of 100 slowest tests (name, variant: duration [s] and path)")
     if hundred_slowest_tests:
-        for test_name, test_var, test_duration in hundred_slowest_tests:
-            print(test_name + " " + test_var + ": " + "%.2f" % test_duration)
+        for test_name, test_var, pth, test_duration in hundred_slowest_tests:
+            print(test_name + " " + test_var + ": " + "%.2f" % test_duration +
+                  "s\n" + pth)
     else:
         print("Could not retrieve test timing data.")
 
