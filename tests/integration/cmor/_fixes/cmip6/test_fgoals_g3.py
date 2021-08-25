@@ -144,6 +144,40 @@ def test_mrsos_fix_metadata(mock_base_fix_metadata):
     np.testing.assert_allclose(
         fixed_cube.coord('longitude').bounds,
         [[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]])
-    assert _check_bounds_monotonicity(fixed_cube.coord('latitude'))
-    assert _check_bounds_monotonicity(fixed_cube.coord('longitude'))
+    mock_base_fix_metadata.assert_called_once_with(fix, cubes)
+
+
+@mock.patch('esmvalcore.cmor._fixes.cmip6.fgoals_g3.Fix.fix_metadata',
+            autospec=True)
+def test_mrsos_fix_metadata_2(mock_base_fix_metadata):
+    """Test ``fix_metadata`` for ``mrsos`` if no fix is necessary."""
+    mock_base_fix_metadata.side_effect = lambda x, y: y
+
+    # Create test cube
+    lat_coord = iris.coords.AuxCoord([1.0, 2.0, 3.0],
+                                     var_name='lat',
+                                     standard_name='latitude')
+    lat_coord.bounds = [[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]]
+    lon_coord = iris.coords.AuxCoord([1.0, 2.0, 3.0],
+                                     var_name='lon',
+                                     standard_name='longitude')
+    lon_coord.bounds = [[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]]
+    cube = iris.cube.Cube([1.0, 2.0, 3.0],
+                          var_name='mrsos',
+                          standard_name='mass_content_of_water_in_soil_layer',
+                          aux_coords_and_dims=[(lat_coord, 0), (lon_coord, 0)])
+    cubes = iris.cube.CubeList([cube])
+
+    # Apply fix
+    vardef = get_var_info('CMIP6', 'Lmon', 'mrsos')
+    fix = Mrsos(vardef)
+    fixed_cubes = fix.fix_metadata(cubes)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    np.testing.assert_allclose(
+        fixed_cube.coord('latitude').bounds,
+        [[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]])
+    np.testing.assert_allclose(
+        fixed_cube.coord('longitude').bounds,
+        [[0.5, 1.5], [1.5, 2.5], [2.5, 3.5]])
     mock_base_fix_metadata.assert_called_once_with(fix, cubes)
