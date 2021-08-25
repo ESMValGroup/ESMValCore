@@ -7,7 +7,6 @@ import numpy as np
 from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Cl, Cli, Clw, Siconc
 from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Tos, Mrsos
-from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import _check_bounds_monotonicity
 from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
