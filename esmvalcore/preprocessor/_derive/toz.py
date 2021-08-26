@@ -1,5 +1,7 @@
 """Derivation of variable `toz`."""
 
+import warnings
+
 import cf_units
 import iris
 from scipy import constants
@@ -51,7 +53,11 @@ class DerivedVariable(DerivedVariableBase):
                                                top_limit=0.0)
         toz_cube = (tro3_cube * p_layer_widths / STANDARD_GRAVITY * MW_O3 /
                     MW_AIR)
-        toz_cube = toz_cube.collapsed('air_pressure', iris.analysis.SUM)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', category=UserWarning,
+                message='Collapsing a non-contiguous coordinate')
+            toz_cube = toz_cube.collapsed('air_pressure', iris.analysis.SUM)
         toz_cube.units = (tro3_cube.units * p_layer_widths.units /
                           STANDARD_GRAVITY_UNIT * MW_O3_UNIT / MW_AIR_UNIT)
 

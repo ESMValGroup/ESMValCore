@@ -1,6 +1,5 @@
-SOURCE: CCMI1
 !============
-variable_entry:    toz
+variable_entry:    soz
 !============
 modeling_realm:    atmos
 !----------------------------------
@@ -10,8 +9,8 @@ standard_name:
 units:             DU
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         Total Ozone Column
-comment:           total ozone column in DU
+long_name:         Stratospheric Ozone Column
+comment:           stratospheric ozone column in DU (in this context, the stratosphere is defined as the region where O3 mole fraction >= 125 ppb)
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
