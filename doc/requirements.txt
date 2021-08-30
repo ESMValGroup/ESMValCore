@@ -2,6 +2,7 @@ autodocsumm
 dask[array]
 esgf-pyclient
 fiona
+humanfriendly
 importlib_resources
 jinja2
 netCDF4
