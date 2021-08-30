@@ -504,7 +504,7 @@ def test_get_download_message():
         Will download the following files:
         4 GB\tESGFFile:ABC/v1/abc_1850-1900.nc on hosts ['xyz.org']
         6 GB\tESGFFile:ABC/v1/abc_1900-1950.nc on hosts ['abc.com']
-        Downloading 10 GB ..
+        Downloading 10 GB..
         """).strip()
     assert msg == expected
 

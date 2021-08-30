@@ -371,10 +371,10 @@ class ESGFFile:
 
         shutil.move(tmp_file, local_file)
         log_speed(url, self.size, duration.total_seconds())
-        logger.info("Downloaded %s in %s (%.1f MB/s) from %s", local_file,
+        logger.info("Downloaded %s (%s) in %s (%s/s) from %s", local_file,
                     format_size(self.size),
                     format_timespan(duration.total_seconds()),
-                    self.size / 10 * 6 / duration.total_seconds(),
+                    format_size(self.size / duration.total_seconds()),
                     urlparse(url).hostname)
 
 
@@ -388,7 +388,7 @@ def get_download_message(files):
 
     lines.insert(0, "Will download the following files:")
     lines.insert(0, f"Will download {format_size(total_size)}")
-    lines.append(f"Downloading {format_size(total_size)} ..")
+    lines.append(f"Downloading {format_size(total_size)}..")
     return "\n".join(lines)
 
 
@@ -445,10 +445,10 @@ def download(files, dest_folder, n_jobs=4):
 
     duration = datetime.datetime.now() - start_time
     logger.info(
-        "Downloaded %s in %s (%.1f MB/s)",
+        "Downloaded %s in %s (%s/s)",
         format_size(total_size),
         format_timespan(duration.total_seconds()),
-        total_size / 10**6 / duration.total_seconds(),
+        format_size(total_size / duration.total_seconds()),
     )
 
     if errors:
