@@ -1,7 +1,7 @@
 import pytest
 
 from esmvalcore._recipe import Recipe, _allow_skipping
-from esmvalcore._recipe_checks import RecipeError
+from esmvalcore.exceptions import RecipeError
 
 
 class TestRecipe:

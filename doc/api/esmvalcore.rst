@@ -9,5 +9,6 @@ library. This section documents the public API of ESMValCore.
 .. toctree::
 
    esmvalcore.cmor
+   esmvalcore.exceptions
    esmvalcore.preprocessor
    esmvalcore.api

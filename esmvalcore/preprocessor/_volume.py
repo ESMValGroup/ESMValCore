@@ -1,12 +1,10 @@
-"""
-Volume and z coordinate operations on data cubes.
+"""Volume and z coordinate operations on data cubes.
 
-Allows for selecting data subsets using certain volume bounds;
-selecting depth or height regions; constructing volumetric averages;
+Allows for selecting data subsets using certain volume bounds; selecting
+depth or height regions; constructing volumetric averages;
 """
-from copy import deepcopy
-
 import logging
+from copy import deepcopy
 
 import iris
 import numpy as np
@@ -15,8 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_volume(cube, z_min, z_max):
-    """
-    Subset a cube based on a range of values in the z-coordinate.
+    """Subset a cube based on a range of values in the z-coordinate.
 
     Function that subsets a cube on a box (z_min, z_max)
     This function is a restriction of masked_cube_lonlat();
@@ -54,8 +51,7 @@ def extract_volume(cube, z_min, z_max):
 
 
 def _create_cube_time(src_cube, data, times):
-    """
-    Generate a new cube with the volume averaged data.
+    """Generate a new cube with the volume averaged data.
 
     The resultant cube is seeded with `src_cube` metadata and coordinates,
     excluding any source coordinates that span the associated vertical
@@ -139,8 +135,7 @@ def _create_cube_time(src_cube, data, times):
 
 
 def calculate_volume(cube):
-    """
-    Calculate volume from a cube.
+    """Calculate volume from a cube.
 
     This function is used when the volume netcdf fx_variables can't be found.
 
@@ -175,8 +170,7 @@ def calculate_volume(cube):
 
 
 def volume_statistics(cube, operator):
-    """
-    Apply a statistical operation over a volume.
+    """Apply a statistical operation over a volume.
 
     The volume average is weighted according to the cell volume. Cell volume
     is calculated from iris's cartography tool multiplied by the cell
@@ -209,11 +203,11 @@ def volume_statistics(cube, operator):
     try:
         grid_volume = cube.cell_measure('ocean_volume').core_data()
     except iris.exceptions.CellMeasureNotFoundError:
-        logger.info(
+        logger.debug(
             'Cell measure "ocean_volume" not found in cube. '
             'Check fx_file availability.'
         )
-        logger.info('Attempting to calculate grid cell volume...')
+        logger.debug('Attempting to calculate grid cell volume...')
         grid_volume = calculate_volume(cube)
 
     if cube.data.shape != grid_volume.shape:
@@ -280,8 +274,7 @@ def volume_statistics(cube, operator):
 
 
 def depth_integration(cube):
-    """
-    Determine the total sum over the vertical component.
+    """Determine the total sum over the vertical component.
 
     Requires a 3D cube. The z-coordinate
     integration is calculated by taking the sum in the z direction of the
@@ -322,8 +315,7 @@ def depth_integration(cube):
 
 
 def extract_transect(cube, latitude=None, longitude=None):
-    """
-    Extract data along a line of constant latitude or longitude.
+    """Extract data along a line of constant latitude or longitude.
 
     Both arguments, latitude and longitude, are treated identically.
     Either argument can be a single float, or a pair of floats, or can be
@@ -413,8 +405,7 @@ def extract_transect(cube, latitude=None, longitude=None):
 
 
 def extract_trajectory(cube, latitudes, longitudes, number_points=2):
-    """
-    Extract data along a trajectory.
+    """Extract data along a trajectory.
 
     latitudes and longitudes are the pairs of coordinates for two points.
     number_points is the number of points between the two points.
