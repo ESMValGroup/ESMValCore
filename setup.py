@@ -37,6 +37,7 @@ REQUIREMENTS = {
         'requests_cache<0.6',
         'fiona',
         'fire',
+        'humanfriendly',
         "importlib_resources;python_version<'3.9'",
         'jinja2',
         'nc-time-axis',  # needed by iris.plot

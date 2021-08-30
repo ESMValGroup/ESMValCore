@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 
 import requests
 import yaml
+from humanfriendly import format_size, format_timespan
 
 from ._logon import get_credentials
 from .facets import DATASET_MAP, FACETS
@@ -38,7 +39,7 @@ class DownloadError(Exception):
 def compute_speed(size, duration):
     """Compute download speed in MB/s."""
     if duration != 0:
-        speed = size / duration / 2**20
+        speed = size / duration / 10**6
     else:
         speed = 0
     return speed
@@ -216,7 +217,7 @@ class ESGFFile:
             if 'variable' in facets and facets['variable'] == variable:
                 files.append(file)
             else:
-                logger.warning(
+                logger.debug(
                     "Ignoring file(s) %s containing wrong variable '%s' in"
                     " found in search for variable '%s'", file.urls, variable,
                     facets['variable'])
@@ -370,24 +371,24 @@ class ESGFFile:
 
         shutil.move(tmp_file, local_file)
         log_speed(url, self.size, duration.total_seconds())
-        logger.info("Downloaded %s (%.0f MB) in %s (%.1f MB/s) from %s",
-                    local_file, self.size / 2**20, duration,
-                    self.size / 2**20 / duration.total_seconds(),
+        logger.info("Downloaded %s in %s (%.1f MB/s) from %s", local_file,
+                    format_size(self.size),
+                    format_timespan(duration.total_seconds()),
+                    self.size / 10 * 6 / duration.total_seconds(),
                     urlparse(url).hostname)
 
 
 def get_download_message(files):
     """Create a log message describing what will be downloaded."""
-    megabyte = 2**20
-    gigabyte = 2**30
     total_size = 0
     lines = []
     for file in files:
         total_size += file.size
-        lines.append(f"{file.size / megabyte:.0f} MB" "\t" f"{file}")
-    if total_size:
-        lines.insert(0, "Will download the following files:")
-    lines.insert(0, f"Will download {total_size / gigabyte:.1f} GB")
+        lines.append(f"{format_size(file.size)}" "\t" f"{file}")
+
+    lines.insert(0, "Will download the following files:")
+    lines.insert(0, f"Will download {format_size(total_size)}")
+    lines.append(f"Downloading {format_size(total_size)} ..")
     return "\n".join(lines)
 
 
@@ -408,9 +409,13 @@ def download(files, dest_folder, n_jobs=4):
     DownloadError:
         Raised if one or more files failed to download.
     """
+    if not files:
+        logger.info("All required data is available locally,"
+                    " not downloading anything.")
+        return
+
     files = sorted(files)
     logger.info(get_download_message(files))
-    logger.info("Downloading..")
 
     def _download(file: ESGFFile):
         """Download file to dest_folder."""
@@ -439,8 +444,12 @@ def download(files, dest_folder, n_jobs=4):
                 total_size += file.size
 
     duration = datetime.datetime.now() - start_time
-    logger.info("Downloaded %.0f GB in %s (%.1f MB/s)", total_size / 2**30,
-                duration, total_size / 2**20 / duration.total_seconds())
+    logger.info(
+        "Downloaded %s in %s (%.1f MB/s)",
+        format_size(total_size),
+        format_timespan(duration.total_seconds()),
+        total_size / 10**6 / duration.total_seconds(),
+    )
 
     if errors:
         msg = ("Failed to download the following files:\n" +

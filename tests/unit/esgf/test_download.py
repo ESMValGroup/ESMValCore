@@ -19,7 +19,7 @@ def test_log_speed(monkeypatch, tmp_path):
     hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
     monkeypatch.setattr(_download, 'HOSTS_FILE', hosts_file)
 
-    megabyte = 2**20
+    megabyte = 10**6
     _download.log_speed('http://somehost.org/some_file.nc', 100 * megabyte, 10)
     _download.log_speed('http://somehost.org/some_other_file.nc',
                         200 * megabyte, 16)
@@ -49,7 +49,7 @@ def test_error(monkeypatch, tmp_path):
     hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
     monkeypatch.setattr(_download, 'HOSTS_FILE', hosts_file)
 
-    megabyte = 2**20
+    megabyte = 10**6
     _download.log_speed('http://somehost.org/some_file.nc', 3 * megabyte, 2)
     _download.log_error('http://somehost.org/some_file.nc')
 
@@ -481,7 +481,7 @@ def test_get_download_message():
         json={
             'dataset_id': 'ABC.v1|something.org',
             'project': ['CMIP6'],
-            'size': 4 * 2**30,
+            'size': 4 * 10**9,
             'title': 'abc_1850-1900.nc',
             'url': ['http://xyz.org/file1.nc|application/netcdf|HTTPServer'],
         },
@@ -491,7 +491,7 @@ def test_get_download_message():
         json={
             'dataset_id': 'ABC.v1|something.org',
             'project': ['CMIP6'],
-            'size': 6 * 2**30,
+            'size': 6 * 10**9,
             'title': 'abc_1900-1950.nc',
             'url': ['http://abc.com/file2.nc|application/netcdf|HTTPServer'],
         },
@@ -500,10 +500,11 @@ def test_get_download_message():
     files = [_download.ESGFFile([r]) for r in (result1, result2)]
     msg = _download.get_download_message(files)
     expected = textwrap.dedent("""
-        Will download 10.0 GB
+        Will download 10 GB
         Will download the following files:
-        4096 MB\tESGFFile:ABC/v1/abc_1850-1900.nc on hosts ['xyz.org']
-        6144 MB\tESGFFile:ABC/v1/abc_1900-1950.nc on hosts ['abc.com']
+        4 GB\tESGFFile:ABC/v1/abc_1850-1900.nc on hosts ['xyz.org']
+        6 GB\tESGFFile:ABC/v1/abc_1900-1950.nc on hosts ['abc.com']
+        Downloading 10 GB ..
         """).strip()
     assert msg == expected
 
@@ -517,7 +518,7 @@ def test_download(mocker, tmp_path, caplog):
     ]
     for i, file in enumerate(test_files):
         file.__str__.return_value = f'file{i}.nc'
-        file.size = 200 * 2**20
+        file.size = 200 * 10**6
         file.__lt__.return_value = False
 
     caplog.set_level(logging.INFO)
@@ -539,7 +540,7 @@ def test_download_fail(mocker, tmp_path, caplog):
     ]
     for i, file in enumerate(test_files):
         file.__str__.return_value = f'file{i}.nc'
-        file.size = 100 * 2**20
+        file.size = 100 * 10**6
         file.__lt__.return_value = False
 
     # Fail some files

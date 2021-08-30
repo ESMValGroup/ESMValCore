@@ -49,6 +49,7 @@ requirements:
     - esmpy
     - fiona
     - fire
+    - humanfriendly
     - jinja2
     - mpich<3.4  # prevent external build
     - myproxyclient  # required by esgf-pyclient
