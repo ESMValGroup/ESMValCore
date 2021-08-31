@@ -11,7 +11,7 @@ def get_coord_spec(include_plev=True):
     """Coordinate specs for cubes."""
     time_coord = iris.coords.DimCoord([0], var_name='time',
                                       standard_name='time',
-                                      units='days since 0000-01-01 00:00:00')
+                                      units='days since 0001-01-01 00:00:00')
     lat_coord = iris.coords.DimCoord([0.0, 1.0], var_name='latitude',
                                      standard_name='latitude', units='degrees')
     lon_coord = iris.coords.DimCoord([0.0, 1.0], var_name='longitude',

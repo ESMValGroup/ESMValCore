@@ -5,12 +5,12 @@ import numpy as np
 import pytest
 
 import esmvalcore.preprocessor._derive.toz as toz
+
 from .test_co2s import get_coord_spec, get_ps_cube
 
 
-@pytest.fixture
-def masked_cubes():
-    """Masked O3 cube."""
+def get_masked_o3_cube():
+    """Get masked ``o3`` cube."""
     coord_spec = get_coord_spec()
     o3_data = da.ma.masked_less([[[[0.0, -1.0],
                                    [-1.0, -1.0]],
@@ -25,7 +25,25 @@ def masked_cubes():
         units='1e-9',
         dim_coords_and_dims=coord_spec,
     )
+    return o3_cube
+
+
+@pytest.fixture
+def masked_cubes():
+    """Masked O3 cube."""
+    o3_cube = get_masked_o3_cube()
     ps_cube = get_ps_cube()
+    return iris.cube.CubeList([o3_cube, ps_cube])
+
+
+@pytest.fixture
+def masked_cubes_no_lon():
+    """Masked zonal mean O3 cube."""
+    o3_cube = get_masked_o3_cube()
+    o3_cube = o3_cube.collapsed('longitude', iris.analysis.MEAN)
+    o3_cube.remove_coord('longitude')
+    ps_cube = get_ps_cube()
+    ps_cube.data = [[[101300.0, 101300.0], [101300.0, 101300.0]]]
     return iris.cube.CubeList([o3_cube, ps_cube])
 
 
@@ -58,6 +76,17 @@ def test_toz_calculate_masked_cubes(masked_cubes):
     np.testing.assert_allclose(out_cube.data,
                                [[[1.2988646378902597, 0.7871906896304607],
                                  [1.6924599827054907, 0.9446288275565529]]])
+    assert out_cube.units == 'DU'
+
+
+def test_toz_calculate_masked_cubes_no_lon(masked_cubes_no_lon):
+    """Test function ``calculate`` with zonal mean masked cube."""
+    derived_var = toz.DerivedVariable()
+    out_cube = derived_var.calculate(masked_cubes_no_lon)
+    assert not np.ma.is_masked(out_cube.data)
+    np.testing.assert_allclose(out_cube.data,
+                               [[[1.3972634740940675],
+                                 [1.6924599827054907]]])
     assert out_cube.units == 'DU'
 
 
