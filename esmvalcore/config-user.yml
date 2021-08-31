@@ -59,11 +59,11 @@ drs:
 
 # Directory tree created by automatically downloading from ESGF
 #rootpath:
-#  CMIP3: ~/data/cmip3
-#  CMIP5: ~/data/cmip5
-#  CMIP6: ~/data/CMIP6
-#  CORDEX: ~/data/cordex
-#  obs4MIPs: ~/data/obs4MIPs
+#  CMIP3: ~/climate_data
+#  CMIP5: ~/climate_data
+#  CMIP6: ~/climate_data
+#  CORDEX: ~/climate_data
+#  obs4MIPs: ~/climate_data
 #drs:
 #  CMIP3: ESGF
 #  CMIP5: ESGF
