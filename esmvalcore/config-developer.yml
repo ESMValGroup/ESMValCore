@@ -241,7 +241,7 @@ CORDEX:
     default: '/'
     spec: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}'
     BADC: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{latestversion}'
-    ESGF: '{project}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{latestversion}'
+    ESGF: '{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{latestversion}'
   input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
   output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
   cmor_type: 'CMIP5'
