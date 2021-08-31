@@ -228,12 +228,21 @@ def _select_drs(input_type, drs, project):
             structure, project))
 
 
+ROOTPATH_WARNED = set()
+
+
 def get_rootpath(rootpath, project):
     """Select the rootpath."""
-    if project in rootpath:
-        return rootpath[project]
-    if 'default' in rootpath:
-        return rootpath['default']
+    for key in (project, 'default'):
+        if key in rootpath:
+            nonexistent = tuple(p for p in rootpath[key]
+                                if not os.path.exists(p))
+            if nonexistent and (key, nonexistent) not in ROOTPATH_WARNED:
+                logger.warning(
+                    "'%s' rootpaths '%s' set in config-user.yml do not exist",
+                    key, ', '.join(nonexistent))
+                ROOTPATH_WARNED.add((key, nonexistent))
+            return rootpath[key]
     raise KeyError('default rootpath must be specified in config-user file')
 
 
