@@ -28,6 +28,31 @@ def get_masked_o3_cube():
     return o3_cube
 
 
+def get_masked_o3_hybrid_plevs_cube():
+    """Get masked ``o3`` cube with hybrid pressure levels."""
+    o3_cube = get_masked_o3_cube()
+    o3_cube.remove_coord('air_pressure')
+
+    ap_coord = iris.coords.AuxCoord([0.0, 10000.0, 0.0], var_name='ap',
+                                    units='Pa')
+    b_coord = iris.coords.AuxCoord([0.95, 0.8, 0.7], var_name='b', units='1')
+    ps_coord = iris.coords.AuxCoord(
+        [[[100000.0, 100000.0], [100000.0, 100000.0]]], var_name='ps',
+        units='Pa')
+    z_coord = iris.coords.DimCoord([0.95, 0.9, 0.7], var_name='lev',
+                                   units='1', attributes={'positive': 'down'})
+    o3_cube.add_aux_coord(ap_coord, 1)
+    o3_cube.add_aux_coord(b_coord, 1)
+    o3_cube.add_aux_coord(ps_coord, (0, 2, 3))
+    o3_cube.add_dim_coord(z_coord, 1)
+
+    aux_factory = iris.aux_factory.HybridPressureFactory(
+        delta=ap_coord, sigma=b_coord, surface_air_pressure=ps_coord)
+    o3_cube.add_aux_factory(aux_factory)
+
+    return o3_cube
+
+
 @pytest.fixture
 def masked_cubes():
     """Masked O3 cube."""
@@ -42,6 +67,15 @@ def masked_cubes_no_lon():
     o3_cube = get_masked_o3_cube()
     o3_cube = o3_cube.collapsed('longitude', iris.analysis.MEAN)
     o3_cube.remove_coord('longitude')
+    ps_cube = get_ps_cube()
+    ps_cube.data = [[[101300.0, 101300.0], [101300.0, 101300.0]]]
+    return iris.cube.CubeList([o3_cube, ps_cube])
+
+
+@pytest.fixture
+def masked_cubes_hybrid_plevs():
+    """Masked zonal mean O3 cube on hybrid levels."""
+    o3_cube = get_masked_o3_hybrid_plevs_cube()
     ps_cube = get_ps_cube()
     ps_cube.data = [[[101300.0, 101300.0], [101300.0, 101300.0]]]
     return iris.cube.CubeList([o3_cube, ps_cube])
@@ -87,6 +121,18 @@ def test_toz_calculate_masked_cubes_no_lon(masked_cubes_no_lon):
     np.testing.assert_allclose(out_cube.data,
                                [[[1.3972634740940675],
                                  [1.6924599827054907]]])
+    assert out_cube.units == 'DU'
+
+
+def test_toz_calculate_masked_cubes_hybrid_plevs(masked_cubes_hybrid_plevs):
+    """Test function ``calculate`` with zonal mean masked cube."""
+    derived_var = toz.DerivedVariable()
+    out_cube = derived_var.calculate(masked_cubes_hybrid_plevs)
+    print(out_cube.data)
+    assert not np.ma.is_masked(out_cube.data)
+    np.testing.assert_allclose(out_cube.data,
+                               [[[0.33701601399804104, 0.3739155775744688],
+                                 [0.440334792012039, 0.19679767240761517]]])
     assert out_cube.units == 'DU'
 
 

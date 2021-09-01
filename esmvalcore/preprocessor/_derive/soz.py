@@ -1,11 +1,11 @@
-"""Derivation of variable `soz`."""
+"""Derivation of variable ``soz``."""
 
 import dask.array as da
 import iris
 
 from ._baseclass import DerivedVariableBase
 from .toz import DerivedVariable as Toz
-from .toz import ensure_correct_lon
+from .toz import ensure_correct_lon, interpolate_hybrid_plevs
 
 # O3 mole fraction threshold (in ppb) that is used for the defintion of the
 # stratosphere (stratosphere = region where O3 mole fraction is at least as
@@ -54,6 +54,11 @@ class DerivedVariable(DerivedVariableBase):
         """
         o3_cube = cubes.extract_cube(
             iris.Constraint(name='mole_fraction_of_ozone_in_air'))
+
+        # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),
+        # interpolate it to regular pressure levels
+        if len(o3_cube.coord_dims('air_pressure')) > 1:
+            o3_cube = interpolate_hybrid_plevs(o3_cube)
 
         # To support zonal mean o3 (e.g., from Table AERmonZ), add longitude
         # coordinate if necessary

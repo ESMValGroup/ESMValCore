@@ -1,4 +1,4 @@
-"""Derivation of variable `toz`."""
+"""Derivation of variable ``toz``."""
 
 import warnings
 
@@ -6,6 +6,7 @@ import cf_units
 import iris
 from scipy import constants
 
+from .._regrid import extract_levels
 from ._baseclass import DerivedVariableBase
 from ._shared import pressure_level_widths
 
@@ -55,6 +56,36 @@ def ensure_correct_lon(o3_cube, ps_cube=None):
     return tuple(new_cubes)
 
 
+def interpolate_hybrid_plevs(cube):
+    """Interpolate hybrid pressure levels."""
+    # Use plev19 target levels (in Pa)
+    target_levels = [
+        100000.0,
+        92500.0,
+        85000.0,
+        70000.0,
+        60000.0,
+        50000.0,
+        40000.0,
+        30000.0,
+        25000.0,
+        20000.0,
+        15000.0,
+        10000.0,
+        7000.0,
+        5000.0,
+        3000.0,
+        2000.0,
+        1000.0,
+        500.0,
+        100.0,
+    ]
+    cube.coord('air_pressure').convert_units('Pa')
+    cube = extract_levels(cube, target_levels, 'linear',
+                          coordinate='air_pressure')
+    return cube
+
+
 class DerivedVariable(DerivedVariableBase):
     """Derivation of variable `toz`."""
 
@@ -81,6 +112,11 @@ class DerivedVariable(DerivedVariableBase):
             iris.Constraint(name='mole_fraction_of_ozone_in_air'))
         ps_cube = cubes.extract_cube(
             iris.Constraint(name='surface_air_pressure'))
+
+        # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),
+        # interpolate it to regular pressure levels
+        if len(o3_cube.coord_dims('air_pressure')) > 1:
+            o3_cube = interpolate_hybrid_plevs(o3_cube)
 
         # To support zonal mean o3 (e.g., from Table AERmonZ), add longitude
         # coordinate if necessary and ensure that ps has correct shape
