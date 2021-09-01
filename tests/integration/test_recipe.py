@@ -1038,11 +1038,11 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
           default: &default
-            area_statistics:
-              operator: mean
             multi_model_statistics:
               span: overlap
               statistics: [mean ]
+            area_statistics:
+              operator: mean
           custom:
             custom_order: true
             <<: *default
@@ -1090,10 +1090,10 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
 
     for task in recipe.tasks:
         if task.name == 'diagnostic_name/chl_default':
-            assert task.order.index('area_statistics') > task.order.index(
+            assert task.order.index('area_statistics') < task.order.index(
                 'multi_model_statistics')
         elif task.name == 'diagnostic_name/chl_custom':
-            assert task.order.index('area_statistics') < task.order.index(
+            assert task.order.index('area_statistics') > task.order.index(
                 'multi_model_statistics')
         elif task.name == 'diagnostic_name/chl_empty_custom':
             assert len(task.products) == 1
