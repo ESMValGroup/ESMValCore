@@ -1,0 +1,20 @@
+# Extra facets for native ICON model output
+---
+
+ICON:
+  Amon:
+    clwvi: {raw_name: cllvi}
+  CF3hr:
+    clwvi: {raw_name: cllvi}
+  CFday:
+    clwvi: {raw_name: cllvi}
+  CFsubhr:
+    clwvi: {raw_name: cllvi}
+  E3hr:
+    clwvi: {raw_name: cllvi}
+  fx:
+    areacella: {raw_name: cell_area}
+  SIday:
+    siconca: {raw_name: sic}
+  SImon:
+    siconca: {raw_name: sic}

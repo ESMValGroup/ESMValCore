@@ -201,16 +201,6 @@ native6:
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
 
-ICON:
-  cmor_strict: false
-  input_dir:
-    default: '{model_version}_{model_component}_{exp}_{grid}_{ensemble}'
-  input_file:
-    default: '{model_version}_{model_component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
-  output_file: '{project}_{dataset}_{model_version}_{model_component}_{exp}_{grid}_{ensemble}_{mip}_{short_name}'
-  cmor_type: 'CMIP6'
-  cmor_default_table_prefix: 'CMIP6_'
-
 obs4mips:
   cmor_strict: false
   input_dir:
@@ -262,3 +252,12 @@ IPSLCM:
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
 
+ICON:
+  cmor_strict: false
+  input_dir:
+    default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+  input_file:
+    default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
+  output_file: '{dataset}_{version}_{component}_{grid}_{mip}_{exp}_{ensemble}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'

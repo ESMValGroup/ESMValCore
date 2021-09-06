@@ -11,7 +11,7 @@ import numpy as np
 from esmvalcore.iris_helpers import var_name_constraint
 
 from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from ..shared import add_scalar_height_coord, add_scalar_typesi_coord
 
 logger = logging.getLogger(__name__)
 
@@ -19,18 +19,9 @@ logger = logging.getLogger(__name__)
 class AllVars(Fix):
     """Fixes for all variables."""
 
-    # TODO Read this from file
-    # If variable is not in the table, raw_name == var_name
-    TRANSLATION_TABLE = {
-        'areacella': 'cell_area',
-        'clwvi': 'cllvi',
-        'siconca': 'sic',
-    }
-
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        raw_name = self.TRANSLATION_TABLE.get(self.vardef.short_name,
-                                              self.vardef.short_name)
+        raw_name = self.extra_facets.get('raw_name', self.vardef.short_name)
         cube = cubes.extract_cube(var_name_constraint(raw_name))
 
         # Fix dimensional coordinates
@@ -64,16 +55,7 @@ class AllVars(Fix):
         if "height10m" in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.0)
         if "typesi" in self.vardef.dimensions:
-            # TODO: use general function for this (see #1105)
-            typesi_coord = iris.coords.AuxCoord(
-                'sea_ice',
-                var_name='type',
-                standard_name='area_type',
-                long_name='Sea Ice area type',
-                units='no unit',
-            )
-            if not cube.coords('area_type'):
-                cube.add_aux_coord(typesi_coord, ())
+            add_scalar_typesi_coord(cube, 'sea_ice')
 
     def _fix_var_metadata(self, cube):
         """Fix metadata of variable."""
@@ -129,6 +111,8 @@ class AllVars(Fix):
         lon.standard_name = "longitude"
         lat.long_name = "latitude"
         lon.long_name = "longitude"
+        lat.units = "degrees_north"
+        lon.units = "degrees_east"
 
         # If grid is not unstructured, no further changes are necessary
         if cube.coord_dims(lat) != cube.coord_dims(lon):
