@@ -22,7 +22,7 @@ on:
   push:
     branches:
     - main
-    - github-actions2
+    - unpin_iris
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
@@ -36,7 +36,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
@@ -71,7 +71,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
