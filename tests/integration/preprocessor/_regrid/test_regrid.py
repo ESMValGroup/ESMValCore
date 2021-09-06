@@ -17,11 +17,11 @@ class Test(tests.Test):
     def setUp(self):
         """Prepare tests."""
         shape = (3, 2, 2)
-        data = np.arange(np.prod(shape)).reshape(shape)
+        data = np.arange(np.prod(shape, dtype=float)).reshape(shape)
         self.cube = _make_cube(data)
         self.cs = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
 
-    def test_regrid__linear(self):
+        # Setup grid for linear regridding
         data = np.empty((1, 1))
         lons = iris.coords.DimCoord([1.5],
                                     standard_name='longitude',
@@ -35,9 +35,20 @@ class Test(tests.Test):
                                     coord_system=self.cs)
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
-        result = regrid(self.cube, grid, 'linear')
+        self.grid_for_linear = grid
+
+    def test_regrid__linear(self):
+        result = regrid(self.cube, self.grid_for_linear, 'linear')
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         self.assert_array_equal(result.data, expected)
+
+    def test_regrid__linear_do_not_preserve_dtype(self):
+        self.cube.data = self.cube.data.astype(int)
+        result = regrid(self.cube, self.grid_for_linear, 'linear')
+        expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
+        self.assert_array_equal(result.data, expected)
+        assert np.issubdtype(self.cube.dtype, np.integer)
+        assert np.issubdtype(result.dtype, np.floating)
 
     def test_regrid__linear_extrapolate(self):
         data = np.empty((3, 3))
@@ -180,6 +191,12 @@ class Test(tests.Test):
         self.cube.remove_coord('Pressure Slice')
         self.cube.add_aux_coord(lons, (1, 2))
         self.cube.add_aux_coord(lats, (1, 2))
+        self.cube.data = self.cube.data.astype(np.float32)
+
         result = regrid(self.cube, grid, 'unstructured_nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
+
+        # Make sure that dtype is preserved
+        assert self.cube.dtype == np.float32
+        assert result.dtype == np.float32

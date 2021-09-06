@@ -1,5 +1,6 @@
 """Horizontal and vertical regridding module."""
 
+import logging
 import os
 import re
 from copy import deepcopy
@@ -19,6 +20,8 @@ from ..cmor.table import CMOR_TABLES
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+
+logger = logging.getLogger(__name__)
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -476,8 +479,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
-        if cube.core_data().dtype != original_dtype:
-            cube.data = cube.core_data().astype(original_dtype)
+        try:
+            cube.data = cube.core_data().astype(original_dtype,
+                                                casting='same_kind')
+        except TypeError as exc:
+            logger.warning(
+                "Dtype of data changed during regridding from '%s' to '%s': "
+                "%s", original_dtype, cube.core_data().dtype, str(exc))
 
     return cube
 
