@@ -237,7 +237,7 @@ def check_preprocessor_settings(settings):
         # Final sanity check in case the above fails to catch a mistake
         try:
             signature = inspect.Signature.from_callable(function)
-            signature.bind_partial(**settings[step])
+            signature.bind(None, **settings[step])
         except TypeError:
             logger.error(
                 "Wrong preprocessor function arguments in "
