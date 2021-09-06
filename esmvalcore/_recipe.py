@@ -1335,15 +1335,6 @@ class Recipe:
             ):
                 settings[key] = self._cfg[key]
 
-            # Add deprecated settings from configuration file
-            # DEPRECATED: remove in v2.4
-            for key in (
-                    'write_plots',
-                    'write_netcdf',
-            ):
-                if key not in settings and key in self._cfg:
-                    settings[key] = self._cfg[key]
-
             scripts[script_name] = {
                 'script': script,
                 'output_dir': settings['work_dir'],
