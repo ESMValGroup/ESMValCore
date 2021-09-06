@@ -467,41 +467,7 @@ class CMORCheck():
                         f'Generic level coordinate {key} with out_name '
                         f'{out_name} has wrong standard_name or is not set.')
                 else:
-                    self._check_alternative_dim_names(key)
-
-    def _check_alternative_dim_names(self, key):
-        """Check for viable alternatives to generic level coordinates."""
-        alternative_coord = None
-        allowed_alternatives = {
-            'alevel': ['alt40', 'plev19', 'plevs'],
-        }
-        all_coords = CMOR_TABLES[self._cmor_var.table_type].coords
-        for allowed_alternative in allowed_alternatives.get(key, []):
-            if allowed_alternative in all_coords:
-                coord_info = all_coords[allowed_alternative]
-                try:
-                    cube_coord = self._cube.coord(var_name=coord_info.out_name)
-                    if (cube_coord.standard_name is None
-                            and coord_info.standard_name == ''):
-                        alternative_coord = coord_info
-                        break
-                    if cube_coord.standard_name == coord_info.standard_name:
-                        alternative_coord = coord_info
-                        break
-                    self.report_warning(
-                        f"Found alternative coordinate '{coord_info.out_name}'"
-                        f" for generic level coordinate '{key}' with wrong "
-                        f"standard_name '{cube_coord.standard_name}' "
-                        f"(expected '{coord_info.standard_name}')")
-                    break
-                except iris.exceptions.CoordinateNotFoundError:
-                    pass
-        if alternative_coord is None:
-            self.report_critical(self._does_msg, key, 'exist')
-            return
-        self.report_debug_message(
-            f"Found alternative coordinate '{alternative_coord.out_name}' "
-            f"for generic level coordinate '{key}'")
+                    self.report_critical(self._does_msg, key, 'exist')
 
     def _check_coords(self):
         """Check coordinates."""
