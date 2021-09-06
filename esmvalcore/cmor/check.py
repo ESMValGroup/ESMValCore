@@ -645,7 +645,8 @@ class CMORCheck():
                                          valid_max)
 
         if l_fix_coord_value:
-            if coord.ndim == 1 and not self._is_unstructured_grid():
+            # cube.intersection only works for cells with 0 or 2 bounds
+            if coord.ndim == 1 and coord.nbounds in (0, 2):
                 lon_extent = iris.coords.CoordExtent(coord, 0.0, 360., True,
                                                      False)
                 self._cube = self._cube.intersection(lon_extent)
@@ -695,7 +696,7 @@ class CMORCheck():
             except ValueError:
                 cmor_points = coord_info.requested
             if coord.points.ndim != 1:
-                self.report_warning(
+                self.report_debug_message(
                     "Cannot check requested values of {}D coordinate {} since "
                     "it is not 1D", coord.points.ndim, var_name)
                 return

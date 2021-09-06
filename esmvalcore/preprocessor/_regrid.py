@@ -484,7 +484,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                                                 casting='same_kind')
         except TypeError as exc:
             logger.warning(
-                "Dtype of data changed during regridding from '%s' to '%s': "
+                "dtype of data changed during regridding from '%s' to '%s': "
                 "%s", original_dtype, cube.core_data().dtype, str(exc))
 
     return cube
