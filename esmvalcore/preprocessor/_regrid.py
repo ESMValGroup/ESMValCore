@@ -476,7 +476,8 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
-        cube.data = cube.core_data().astype(original_dtype)
+        if cube.core_data().dtype != original_dtype:
+            cube.data = cube.core_data().astype(original_dtype)
 
     return cube
 
