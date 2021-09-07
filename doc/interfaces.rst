@@ -110,7 +110,7 @@ in its :code:`run_dir`.
 
 For every output file (netCDF files, plot files, etc.) produced by the diagnostic script, there should be an entry in the :code:`diagnostic_provenance.yml` file.
 The name of each entry should be the path to the file.
-Each output file entry should at least contain the following items
+Each output file entry should at least contain the following items:
 
 - :code:`ancestors` a list of input files used to create the plot.
 - :code:`caption` a caption text for the plot.
