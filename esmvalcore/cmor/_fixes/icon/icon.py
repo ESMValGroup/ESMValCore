@@ -28,17 +28,13 @@ class AllVars(Fix):
         if cube.coords("time"):
             self._fix_time(cube)
         if cube.coords("height"):
-            plev_points_cube = cubes.extract_cube(var_name_constraint(
-                'pfull'))
-            plev_bounds_cube = cubes.extract_cube(var_name_constraint(
-                'phalf'))
-            cube = self._fix_height(cube, plev_points_cube,
-                                    plev_bounds_cube)
-        if cube.coords("latitude") and cube.coords("longitude"):
-            self._fix_lat_lon(cube, "latitude", "longitude")
-        elif (cube.coords("grid_latitude") and
-              cube.coords("grid_longitude")):
-            self._fix_lat_lon(cube, "grid_latitude", "grid_longitude")
+            plev_points_cube = cubes.extract_cube(var_name_constraint('pfull'))
+            plev_bounds_cube = cubes.extract_cube(var_name_constraint('phalf'))
+            cube = self._fix_height(cube, plev_points_cube, plev_bounds_cube)
+        lat_name = self.extra_facets.get('latitude', 'latitude')
+        lon_name = self.extra_facets.get('longitude', 'longitude')
+        if cube.coords(lat_name) and cube.coords(lon_name):
+            self._fix_lat_lon(cube, lat_name, lon_name)
 
         # Fix scalar coordinates
         self._fix_scalar_coords(cube)
@@ -111,6 +107,8 @@ class AllVars(Fix):
         lon.standard_name = "longitude"
         lat.long_name = "latitude"
         lon.long_name = "longitude"
+        lat.convert_units('degrees')
+        lon.convert_units('degrees')
         lat.units = "degrees_north"
         lon.units = "degrees_east"
 
@@ -135,9 +133,12 @@ class AllVars(Fix):
     def _fix_time(cube):
         """Fix time coordinate of cube."""
         t_coord = cube.coord("time")
+        t_coord.var_name = 'time'
+        t_coord.standard_name = 'time'
+        t_coord.long_name = 'time'
 
         # Convert units to CF format
-        t_unit = t_coord.attributes["invalid_units"]
+        t_unit = t_coord.attributes.pop("invalid_units")
         timestep, _, t_fmt_str = t_unit.split(" ")
         new_t_unit_str = f"{timestep} since 1850-01-01"
         new_t_unit = cf_units.Unit(new_t_unit_str, calendar="standard")

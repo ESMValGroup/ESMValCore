@@ -13,7 +13,10 @@ ICON:
   E3hr:
     clwvi: {raw_name: cllvi}
   fx:
-    areacella: {raw_name: cell_area}
+    areacella:
+      latitude: grid_latitude
+      longitude: grid_longitude
+      raw_name: cell_area
   SIday:
     siconca: {raw_name: sic}
   SImon:
