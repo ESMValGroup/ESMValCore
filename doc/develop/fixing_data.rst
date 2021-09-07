@@ -376,8 +376,8 @@ ICON
 ~~~~
 
 The ESMValTool is able to read native `ICON
-<https://code.mpimet.mpg.de/projects/iconpublic>` model output. Example dataset
-entries could look like this:
+<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output. Example
+dataset entries could look like this:
 
 .. code-block:: yaml
 
