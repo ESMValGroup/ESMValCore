@@ -107,12 +107,12 @@ After the diagnostic script has finished running, ESMValCore will try to store p
 link the produced files to input data, the diagnostic script needs to store a YAML file called :code:`diagnostic_provenance.yml`
 in its :code:`run_dir`.
 
-For every output file produced by the diagnostic script, there should be an entry in the :code:`diagnostic_provenance.yml` file.
+For every output file (netCDF files, plot files, etc.) produced by the diagnostic script, there should be an entry in the :code:`diagnostic_provenance.yml` file.
 The name of each entry should be the path to the file.
 Each output file entry should at least contain the following items
 
 - :code:`ancestors` a list of input files used to create the plot.
-- :code:`caption` a caption text for the plot
+- :code:`caption` a caption text for the plot.
 
 Each file entry can also contain items from the categories defined in the file :code:`esmvaltool/config_references.yml`.
 The short entries will automatically be replaced by their longer equivalent in the final provenance records.
@@ -141,7 +141,7 @@ An example :code:`diagnostic_provenance.yml` file could look like this
     statistics: [mean]
 
 You can check whether your diagnostic script successfully provided the provenance information to the ESMValCore by
-verifying by checking the following points:
+checking the following points:
 
   - for each output file in the ``work_dir`` and ``plot_dir``, a file with the same
     name, but ending with ``_provenance.xml`` is created
