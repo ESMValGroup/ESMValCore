@@ -13,9 +13,10 @@ Provenance
 When ESMValCore (the ``esmvaltool`` command) runs a recipe, it will first find all data and run the default preprocessor steps plus any
 additional preprocessing steps defined in the recipe. Next it will run the diagnostic script defined in the recipe
 and finally it will store provenance information. Provenance information is stored in the
-`W3C PROV XML format <https://www.w3.org/TR/prov-xml/>`_
-and also plotted in an SVG file for human inspection. In addition to provenance information, a caption is also added
-to the plots.
+`W3C PROV XML format <https://www.w3.org/TR/prov-xml/>`_.
+To read in and extract information, or to plot these files, the
+`prov <https://prov.readthedocs.io>`_ Python package can be used.
+In addition to provenance information, a caption is also added to the plots.
 
 .. _interface_esmvalcore_diagnostic:
 
