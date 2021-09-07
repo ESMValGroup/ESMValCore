@@ -372,6 +372,27 @@ Native models
 The following models are natively supported through the procedure described
 above (:ref:`fix_structure`) and at :ref:`configure_native_models`:
 
+ICON
+~~~~
+
+The ESMValTool is able to read native `ICON
+<https://code.mpimet.mpg.de/projects/iconpublic>` model output. Example dataset
+entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
+       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
+       short_name: tas, var_type: atm_2d_ml, start_year: 2000, end_year: 2014}
+    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
+       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
+       short_name: ta, var_type: atm_3d_ml, start_year: 2000, end_year: 2014}
+
+Please note the duplication of the name ``ICON`` in ``project`` and
+``dataset``, which is necessary to comply with ESMValTool's data finding and
+CMORizing functionalities.
+
 IPSL-CM6
 ~~~~~~~~
 
