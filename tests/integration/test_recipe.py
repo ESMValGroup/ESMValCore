@@ -1513,7 +1513,6 @@ def test_diagnostic_task_provenance(
     assert 'provenance' in cube.attributes
     prefix = os.path.splitext(product.filename)[0] + '_provenance'
     assert os.path.exists(prefix + '.xml')
-    assert os.path.exists(prefix + '.svg')
 
 
 def test_alias_generation(tmp_path, patched_datafinder, config_user):

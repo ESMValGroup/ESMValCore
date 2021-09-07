@@ -36,7 +36,6 @@ requirements:
   run:
     # esmvaltool
     - python>=3.7
-    - graphviz
     - iris>=3.0.2
     - python-stratify
     - scipy>=1.6
