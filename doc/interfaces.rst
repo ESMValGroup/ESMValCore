@@ -1,3 +1,5 @@
+.. _interfaces:
+
 Diagnostic script interfaces
 ============================
 
@@ -11,9 +13,10 @@ Provenance
 When ESMValCore (the ``esmvaltool`` command) runs a recipe, it will first find all data and run the default preprocessor steps plus any
 additional preprocessing steps defined in the recipe. Next it will run the diagnostic script defined in the recipe
 and finally it will store provenance information. Provenance information is stored in the
-`W3C PROV XML format <https://www.w3.org/TR/prov-xml/>`_
-and also plotted in an SVG file for human inspection. In addition to provenance information, a caption is also added
-to the plots.
+`W3C PROV XML format <https://www.w3.org/TR/prov-xml/>`_.
+To read in and extract information, or to plot these files, the
+`prov <https://prov.readthedocs.io>`_ Python package can be used.
+In addition to provenance information, a caption is also added to the plots.
 
 .. _interface_esmvalcore_diagnostic:
 
@@ -103,15 +106,14 @@ Information provided by the diagnostic script to ESMValCore
 
 After the diagnostic script has finished running, ESMValCore will try to store provenance information. In order to
 link the produced files to input data, the diagnostic script needs to store a YAML file called :code:`diagnostic_provenance.yml`
-in it's :code:`run_dir`.
+in its :code:`run_dir`.
 
-For output file produced by the diagnostic script, there should be an entry in the :code:`diagnostic_provenance.yml` file.
-The name of each entry should be the path to the output file.
-Each file entry should at least contain the following items
+For every output file (netCDF files, plot files, etc.) produced by the diagnostic script, there should be an entry in the :code:`diagnostic_provenance.yml` file.
+The name of each entry should be the path to the file.
+Each output file entry should at least contain the following items:
 
-- :code:`ancestors` a list of input files used to create the plot
-- :code:`caption` a caption text for the plot
-- :code:`plot_file` if the diagnostic also created a plot file, e.g. in .png format.
+- :code:`ancestors` a list of input files used to create the plot.
+- :code:`caption` a caption text for the plot.
 
 Each file entry can also contain items from the categories defined in the file :code:`esmvaltool/config_references.yml`.
 The short entries will automatically be replaced by their longer equivalent in the final provenance records.
@@ -121,31 +123,30 @@ An example :code:`diagnostic_provenance.yml` file could look like this
 
 .. code-block:: yaml
 
-  ? /path/to/recipe_output/work/diagnostic_name/script_name/CMIP5_GFDL-ESM2G_Amon_historical_r1i1p1_T2Ms_pr_2000-2002_mean.nc
-  : ancestors:[/path/to/recipe_output/preproc/diagnostic_name/pr/CMIP5_GFDL-ESM2G_Amon_historical_r1i1p1_T2Ms_pr_2000-2002.nc]
+  ? /path/to/recipe_output/work/diagnostic_name/script_name/CMIP5_GFDL-ESM2G_Amon_historical_r1i1p1_pr_2000-2002_mean.nc
+  : ancestors:[/path/to/recipe_output/preproc/diagnostic_name/pr/CMIP5_GFDL-ESM2G_Amon_historical_r1i1p1_pr_2000-2002.nc]
     authors: [andela_bouwe, righi_mattia]
     caption: Average Precipitation between 2000 and 2002 according to GFDL-ESM2G.
     domains: [global]
-    plot_file: /path/to/recipe_output/plots/diagnostic_name/script_name/CMIP5_GFDL ESM2G_Amon_historical_r1i1p1_T2Ms_pr_2000-2002_mean.png
-    plot_type: zonal
+    plot_types: [zonal]
     references: [acknow_project]
     statistics: [mean]
 
-  ? /path/to/recipe_output/work/diagnostic_name/script_name/CMIP5_MPI-ESM-LR_Amon_historical_r1i1p1_T2Ms_pr_2000-2002_mean.nc
-  : ancestors: [/path/to/recipe_output/preproc/diagnostic_name/pr/CMIP5_MPI-ESM-LR_Amon_historical_r1i1p1_T2Ms_pr_2000-2002.nc]
+  ? /path/to/recipe_output/plots/diagnostic_name/script_name/CMIP5_GFDL-ESM2G_Amon_historical_r1i1p1_pr_2000-2002_mean.png
+  : ancestors:[/path/to/recipe_output/preproc/diagnostic_name/pr/CMIP5_GFDL-ESM2G_Amon_historical_r1i1p1_pr_2000-2002.nc]
     authors: [andela_bouwe, righi_mattia]
-    caption: Average Precipitation between 2000 and 2002 according to MPI-ESM-LR.
+    caption: Average Precipitation between 2000 and 2002 according to GFDL-ESM2G.
     domains: [global]
-    plot_file: /path/to/recipe_output/plots/diagnostic_name/script_name/CMIP5_MPI-ESM-LR_Amon_historical_r1i1p1_T2Ms_pr_2000-2002_mean.png
-    plot_type: zonal
+    plot_types: ['zonal']
     references: [acknow_project]
     statistics: [mean]
 
 You can check whether your diagnostic script successfully provided the provenance information to the ESMValCore by
-verifying that
+checking the following points:
 
-- for each output file in the :code:`work_dir`, a file with the same name, but ending with _provenance.xml is created
-- any NetCDF files created by your diagnostic script contain a 'provenance' global attribute
-- any PNG plots created by your diagnostic script contain the provenance information in the 'Image History' attribute
+  - for each output file in the ``work_dir`` and ``plot_dir``, a file with the same
+    name, but ending with ``_provenance.xml`` is created
+  - the output file is shown on the ``index.html`` page
+  - there were no warning messages in the log related to provenance
 
-Note that this information is included automatically by ESMValCore if the diagnostic script provides the required :code:`diagnostic_provenance.yml` file.
+See :ref:`esmvaltool:recording-provenance` for more extensive usage notes.

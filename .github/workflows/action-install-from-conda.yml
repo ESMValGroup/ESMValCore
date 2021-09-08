@@ -13,20 +13,19 @@
 
 name: Conda Base Install
 
-# runs on a push on master and at the end of every day
+# runs on a push on main and at the end of every day
 on:
   # triggering on push without branch name will run tests everytime
   # there is a push on any branch
   # turn it on only if needed
   push:
     branches:
-    - master
-    - github-actions2
-  # run the test only if the PR is to master
+    - main
+  # run the test only if the PR is to maain
   # turn it on if required
   #pull_request:
   #  branches:
-  #  - master
+  #  - main
   schedule:
     - cron: '0 4 * * *'
 
@@ -35,7 +34,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
       # fail-fast set to False allows all other tests
       # in the worflow to run regardless of any fail
       fail-fast: false
@@ -46,7 +45,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
-          channels: esmvalgroup,conda-forge
+          channels: conda-forge
       - shell: bash -l {0}
         run: mkdir -p conda_install_linux_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
@@ -72,7 +71,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
@@ -82,7 +81,7 @@ jobs:
           activate-environment: esmvalcore
           python-version: ${{ matrix.python-version }}
           miniconda-version: "latest"
-          channels: esmvalgroup,conda-forge
+          channels: conda-forge
       - shell: bash -l {0}
         run: mkdir -p conda_install_osx_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}

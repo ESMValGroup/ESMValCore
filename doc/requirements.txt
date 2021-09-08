@@ -1,12 +1,13 @@
 autodocsumm
 dask[array]
 fiona
+importlib_resources
 jinja2
 netCDF4
 numpy
 pandas
 pillow
-prov[dot]
+prov
 pybtex
 pyyaml
 scipy

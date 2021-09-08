@@ -1,7 +1,7 @@
 """Integration tests for :func:`esmvalcore.preprocessor._io.concatenate`."""
 
-import warnings
 import unittest
+import warnings
 from unittest.mock import call
 
 import numpy as np
@@ -243,6 +243,12 @@ class TestConcatenate(unittest.TestCase):
         np.testing.assert_array_equal(
             concatenated.coord('time').points, np.array([1, 2, 3, 4, 5, 6]))
 
+    def test_concatenate_empty_cubes(self):
+        """Test concatenation with empty :class:`iris.cube.CubeList`."""
+        empty_cubes = CubeList([])
+        result = _io.concatenate(empty_cubes)
+        assert result is empty_cubes
+
     def test_concatenate_noop(self):
         """Test concatenation of a single cube."""
         concatenated = _io.concatenate([self.raw_cubes[0]])
@@ -378,7 +384,7 @@ class TestConcatenate(unittest.TestCase):
             Cube([33., 55.],
                  var_name='sample',
                  dim_coords_and_dims=((time_coord, 0), )))
-        with self.assertRaises(TypeError):
+        with self.assertRaises((TypeError, ValueError)):
             _io.concatenate(self.raw_cubes)
 
     def test_fail_on_units_concatenate_with_overlap(self):
