@@ -14,7 +14,7 @@ Once you have installed conda, you can install ESMValCore by running:
 
 .. code-block:: bash
 
-    conda install -c esmvalgroup -c conda-forge esmvalcore
+    conda install -c conda-forge esmvalcore
 
 It is also possible to create a new
 `Conda environment <https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html#managing-environments>`_
@@ -22,7 +22,7 @@ and install ESMValCore into it with a single command:
 
 .. code-block:: bash
 
-    conda create --name esmvalcore -c esmvalgroup -c conda-forge esmvalcore
+    conda create --name esmvalcore -c conda-forge esmvalcore 'python=3.9'
 
 Don't forget to activate the newly created environment after the installation:
 
@@ -45,11 +45,11 @@ By far the easiest way to install these dependencies is to use conda_.
 For a minimal conda installation (recommended) go to https://conda.io/miniconda.html.
 
 After installing Conda, download
-`the file with the list of dependencies <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/master/environment.yml>`_:
+`the file with the list of dependencies <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/environment.yml>`_:
 
 .. code-block:: bash
 
-    wget https://raw.githubusercontent.com/ESMValGroup/ESMValCore/master/environment.yml
+    wget https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/environment.yml
 
 and install these dependencies into a new conda environment with the command
 
@@ -84,7 +84,7 @@ You can get the latest release with
 
    docker pull esmvalgroup/esmvalcore:stable
 
-If you want to use the current master branch, use
+If you want to use the current main branch, use
 
 .. code-block:: bash
 
@@ -199,9 +199,7 @@ To install from source for development, follow these instructions.
 Pre-installed versions on HPC clusters
 --------------------------------------
 
-You will find the tool available on HPC clusters and there will be no need to install it
-yourself if you are just running diagnostics:
-
- - CEDA-JASMIN: `esmvaltool` is available on the scientific compute nodes (`sciX.jasmin.ac.uk` where
-   `X = 1, 2,`3, 4, 5`) after login and module loading via `module load esmvaltool`; see the helper page at
-   `CEDA <https://help.jasmin.ac.uk/article/4955-community-software-esmvaltool>`__ ;
+.. note::
+    If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-MISTRAL),
+    please have a look at
+    :ref:`these instructions <esmvaltool:install_on_hpc>`.

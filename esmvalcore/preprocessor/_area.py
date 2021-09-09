@@ -21,15 +21,15 @@ from ._shared import (
 
 logger = logging.getLogger(__name__)
 
+SHAPE_ID_KEYS = ('name', 'NAME', 'Name', 'id', 'ID')
 
-# slice cube over a restricted area (box)
+
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
                    end_latitude):
     """Extract a region from a cube.
 
     Function that subsets a cube on a box (start_longitude, end_longitude,
     start_latitude, end_latitude)
-    This function is a restriction of masked_cube_lonlat().
 
     Parameters
     ----------
@@ -63,16 +63,29 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             ignore_bounds=True,
         )
         region_subset = region_subset.intersection(longitude=(0., 360.))
-        return region_subset
-    # Irregular grids
-    lats = cube.coord('latitude').points
-    lons = cube.coord('longitude').points
+    else:
+        region_subset = _extract_irregular_region(
+            cube,
+            start_longitude,
+            end_longitude,
+            start_latitude,
+            end_latitude,
+        )
+    return region_subset
+
+
+def _extract_irregular_region(cube, start_longitude, end_longitude,
+                              start_latitude, end_latitude):
+    """Extract a region from a cube on an irregular grid."""
     # Convert longitudes to valid range
     if start_longitude != 360.:
         start_longitude %= 360.
     if end_longitude != 360.:
         end_longitude %= 360.
 
+    # Select coordinates inside the region
+    lats = cube.coord('latitude').points
+    lons = (cube.coord('longitude').points + 360.) % 360.
     if start_longitude <= end_longitude:
         select_lons = (lons >= start_longitude) & (lons <= end_longitude)
     else:
@@ -84,8 +97,19 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
         select_lats = (lats >= start_latitude) | (lats <= end_latitude)
 
     selection = select_lats & select_lons
-    selection = da.broadcast_to(selection, cube.shape)
-    cube.data = da.ma.masked_where(~selection, cube.core_data())
+
+    # Crop the selection, but keep rectangular shape
+    i_range, j_range = selection.nonzero()
+    if i_range.size == 0:
+        raise ValueError("No data points available in selected region")
+    i_min, i_max = i_range.min(), i_range.max()
+    j_min, j_max = j_range.min(), j_range.max()
+    i_slice, j_slice = slice(i_min, i_max + 1), slice(j_min, j_max + 1)
+    cube = cube[..., i_slice, j_slice]
+    selection = selection[i_slice, j_slice]
+    # Mask remaining coordinates outside region
+    mask = da.broadcast_to(~selection, cube.shape)
+    cube.data = da.ma.masked_where(mask, cube.core_data())
     return cube
 
 
@@ -205,13 +229,14 @@ def area_statistics(cube, operator):
     ValueError
         if input data cube has different shape than grid area weights
     """
+    original_dtype = cube.dtype
     grid_areas = None
     try:
         grid_areas = cube.cell_measure('cell_area').core_data()
     except iris.exceptions.CellMeasureNotFoundError:
         logger.info(
             'Cell measure "cell_area" not found in cube %s. '
-            'Check fx_file availability.', cube
+            'Check fx_file availability.', cube.summary(shorten=True)
         )
         logger.info('Attempting to calculate grid cell area...')
 
@@ -249,10 +274,18 @@ def area_statistics(cube, operator):
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
     if operator_accept_weights(operator):
-        return cube.collapsed(coord_names, operation, weights=grid_areas)
+        result = cube.collapsed(coord_names, operation, weights=grid_areas)
+    else:
+        # Many IRIS analysis functions do not accept weights arguments.
+        result = cube.collapsed(coord_names, operation)
 
-    # Many IRIS analysis functions do not accept weights arguments.
-    return cube.collapsed(coord_names, operation)
+    new_dtype = result.dtype
+    if original_dtype != new_dtype:
+        logger.warning(
+            "area_statistics changed dtype from "
+            "%s to %s, changing back", original_dtype, new_dtype)
+        result.data = result.core_data().astype(original_dtype)
+    return result
 
 
 def extract_named_regions(cube, regions):
@@ -386,7 +419,7 @@ def _get_masks_from_geometries(geometries, lon, lat, method='contains',
     if ids:
         ids = [str(id_) for id_ in ids]
     for i, item in enumerate(geometries):
-        for id_prop in ('name', 'NAME', 'Name', 'id', 'ID'):
+        for id_prop in SHAPE_ID_KEYS:
             if id_prop in item['properties']:
                 id_ = str(item['properties'][id_prop])
                 break
@@ -406,6 +439,53 @@ def _get_masks_from_geometries(geometries, lon, lat, method='contains',
         return _merge_shapes(selections, lat.shape)
 
     return selections
+
+
+def _geometry_matches_ids(geometry: dict, ids: list):
+    """Returns True if `geometry` matches one of the `ids`."""
+    props = geometry['properties']
+
+    geom_id = [props.get(key, None) for key in SHAPE_ID_KEYS]
+    geom_id = [key for key in geom_id if key is not None]
+
+    if not geom_id:
+        raise KeyError(f'{props} dict has no `name` or `id` key')
+
+    geom_id = geom_id[0]
+
+    return geom_id in ids
+
+
+def _get_bounds(geometries, ids=None):
+    """Get bounds from the subset of geometries defined by `ids`.
+
+    Parameters
+    ----------
+    geometries : fiona.Collection
+        Fiona collection of shapes (geometries).
+    ids : tuple of str, optional
+        List of ids to select from geometry collection. If None,
+        return global bounds (``geometries.bounds``)
+
+    Returns
+    -------
+    lat_min, lon_min, lat_max, lon_max
+        Returns coordinates deliminating bounding box for shape ids.
+    """
+    if not ids:
+        return geometries.bounds
+
+    subset = [geom for geom in geometries if _geometry_matches_ids(geom, ids)]
+
+    all_points = [
+        np.hstack(geom['geometry']['coordinates']) for geom in subset
+    ]
+    all_points = np.vstack(all_points)
+
+    lon_max, lat_max = all_points.max(axis=0)
+    lon_min, lat_min = all_points.min(axis=0)
+
+    return lon_min, lat_min, lon_max, lat_max
 
 
 def _get_shape(lon, lat, method, item):
@@ -465,8 +545,12 @@ def fix_coordinate_ordering(cube):
     return cube
 
 
-def extract_shape(cube, shapefile, method='contains', crop=True,
-                  decomposed=False, ids=None):
+def extract_shape(cube,
+                  shapefile,
+                  method='contains',
+                  crop=True,
+                  decomposed=False,
+                  ids=None):
     """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
@@ -520,8 +604,15 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
             pad_hawaii = True
 
         if crop:
+            lon_min, lat_min, lon_max, lat_max = _get_bounds(
+                geometries=geometries,
+                ids=ids,
+            )
             cube = _crop_cube(cube,
-                              *geometries.bounds,
+                              start_longitude=lon_min,
+                              start_latitude=lat_min,
+                              end_longitude=lon_max,
+                              end_latitude=lat_max,
                               cmor_coords=cmor_coords)
 
         lon, lat = _correct_coords_from_shapefile(cube, cmor_coords,

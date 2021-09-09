@@ -9,7 +9,8 @@ from shutil import which
 import yamale
 
 from ._data_finder import get_start_end_year
-from .preprocessor import PreprocessingTask, TIME_PREPROCESSORS
+from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from .preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,8 @@ def recipe_with_schema(filename):
 
 def diagnostics(diags):
     """Check diagnostics in recipe."""
+    if diags is None:
+        raise RecipeError('The given recipe does not have any diagnostic.')
     for name, diagnostic in diags.items():
         if 'scripts' not in diagnostic:
             raise RecipeError(
@@ -141,7 +144,8 @@ def data_availability(input_files, var, dirnames, filenames):
     if missing_years:
         raise RecipeError(
             "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years), input_files))
+                ", ".join(str(year) for year in sorted(missing_years)),
+                input_files))
 
 
 def tasks_valid(tasks):
@@ -191,7 +195,7 @@ def extract_shape(settings):
 
 def valid_multimodel_statistic(statistic):
     """Check that `statistic` is a valid argument for multimodel stats."""
-    valid_names = ["mean", "median", "std", "min", "max"]
+    valid_names = ['std'] + list(STATISTIC_MAPPING.keys())
     valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
     if not (statistic in valid_names
             or re.match(r'|'.join(valid_patterns), statistic)):

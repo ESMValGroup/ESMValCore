@@ -394,13 +394,6 @@ class DiagnosticTask(BaseTask):
             else:
                 settings[key] = value
 
-        # Still add deprecated keys to config_user_info to avoid
-        # crashing the diagnostic script that need this.
-        # DEPRECATED: remove in v2.4
-        for key in ('write_plots', 'write_netcdf'):
-            if key in self.settings:
-                settings['config_user_info'][key] = self.settings[key]
-
         write_ncl_settings(settings, filename)
 
         return filename

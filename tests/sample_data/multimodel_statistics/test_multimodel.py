@@ -1,7 +1,7 @@
 """Test using sample data for :func:`esmvalcore.preprocessor._multimodel`."""
 
 import pickle
-import sys
+import platform
 from itertools import groupby
 from pathlib import Path
 
@@ -24,7 +24,11 @@ CALENDAR_PARAMS = (
             reason='Cannot calculate statistics with single cube in list')),
     '365_day',
     'gregorian',
-    'proleptic_gregorian',
+    pytest.param(
+        'proleptic_gregorian',
+        marks=pytest.mark.xfail(
+            raises=iris.exceptions.MergeError,
+            reason='https://github.com/ESMValGroup/ESMValCore/issues/956')),
     pytest.param(
         'julian',
         marks=pytest.mark.skip(
@@ -39,7 +43,30 @@ def assert_array_almost_equal(this, other):
     if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
         np.testing.assert_array_equal(this.mask, other.mask)
 
-    np.testing.assert_array_almost_equal(this, other)
+    np.testing.assert_allclose(this, other)
+
+
+def assert_coords_equal(this: list, other: list):
+    """Assert coords list `this` equals coords list `other`."""
+    for this_coord, other_coord in zip(this, other):
+        np.testing.assert_equal(this_coord.points, other_coord.points)
+        assert this_coord.var_name == other_coord.var_name
+        assert this_coord.standard_name == other_coord.standard_name
+        assert this_coord.units == other_coord.units
+
+
+def assert_metadata_equal(this, other):
+    """Assert metadata `this` are equal to metadata `other`."""
+    assert this.standard_name == other.standard_name
+    assert this.long_name == other.long_name
+    assert this.var_name == other.var_name
+    assert this.units == other.units
+
+
+def fix_metadata(cubes):
+    """Fix metadata."""
+    for cube in cubes:
+        cube.coord('air_pressure').bounds = None
 
 
 def preprocess_data(cubes, time_slice: dict = None):
@@ -67,13 +94,10 @@ def get_cache_key(value):
     If this doesn't avoid problems with unpickling the cached data,
     manually clean the pytest cache with the command `pytest --cache-clear`.
     """
-    return ' '.join([
-        str(value),
-        iris.__version__,
-        np.__version__,
-        sys.version,
-        f"rev-{TEST_REVISION}",
-    ])
+    py_version = platform.python_version()
+    return (f'{value}_iris-{iris.__version__}_'
+            f'numpy-{np.__version__}_python-{py_version}'
+            f'rev-{TEST_REVISION}')
 
 
 @pytest.fixture(scope="module")
@@ -101,6 +125,8 @@ def timeseries_cubes_month(request):
         # cubes are not serializable via json, so we must go via pickle
         request.config.cache.set(cache_key,
                                  pickle.dumps(cubes).decode('latin1'))
+
+    fix_metadata(cubes)
 
     return cubes
 
@@ -131,6 +157,8 @@ def timeseries_cubes_day(request):
         # cubes are not serializable via json, so we must go via pickle
         request.config.cache.set(cache_key,
                                  pickle.dumps(cubes).decode('latin1'))
+
+    fix_metadata(cubes)
 
     def calendar(cube):
         return cube.coord('time').units.calendar
@@ -172,17 +200,10 @@ def multimodel_regression_test(cubes, span, name):
     filename = Path(__file__).with_name(f'{name}-{span}-{statistic}.nc')
     if filename.exists():
         reference_cube = iris.load_cube(str(filename))
+
         assert_array_almost_equal(result_cube.data, reference_cube.data)
-
-        # Compare coords
-        for this_coord, other_coord in zip(result_cube.coords(),
-                                           reference_cube.coords()):
-            assert this_coord == other_coord
-
-        # remove Conventions which are added by Iris on save
-        reference_cube.attributes.pop('Conventions', None)
-
-        assert reference_cube.metadata == result_cube.metadata
+        assert_metadata_equal(result_cube.metadata, reference_cube.metadata)
+        assert_coords_equal(result_cube.coords(), reference_cube.coords())
 
     else:
         # The test will fail if no regression data are available.
@@ -190,6 +211,9 @@ def multimodel_regression_test(cubes, span, name):
         raise RuntimeError(f'Wrote reference data to {filename.absolute()}')
 
 
+@pytest.mark.xfail(
+    raises=iris.exceptions.MergeError,
+    reason='https://github.com/ESMValGroup/ESMValCore/issues/956')
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize('span', SPAN_PARAMS)
 def test_multimodel_regression_month(timeseries_cubes_month, span):
@@ -228,8 +252,11 @@ def test_multimodel_no_vertical_dimension(timeseries_cubes_month):
 
 @pytest.mark.use_sample_data
 @pytest.mark.xfail(
-    'iris.exceptions.CoordinateNotFoundError',
-    reason='https://github.com/ESMValGroup/ESMValCore/issues/891')
+    raises=iris.exceptions.MergeError,
+    reason='https://github.com/ESMValGroup/ESMValCore/issues/956')
+# @pytest.mark.xfail(
+#     raises=iris.exceptions.CoordinateNotFoundError,
+#     reason='https://github.com/ESMValGroup/ESMValCore/issues/891')
 def test_multimodel_no_horizontal_dimension(timeseries_cubes_month):
     """Test statistic without horizontal dimension using monthly data."""
     span = 'full'
@@ -252,7 +279,7 @@ def test_multimodel_only_time_dimension(timeseries_cubes_month):
 
 @pytest.mark.use_sample_data
 @pytest.mark.xfail(
-    'ValueError',
+    raises=ValueError,
     reason='https://github.com/ESMValGroup/ESMValCore/issues/890')
 def test_multimodel_no_time_dimension(timeseries_cubes_month):
     """Test statistic without time dimension using monthly data."""

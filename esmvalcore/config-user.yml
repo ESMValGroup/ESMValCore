@@ -36,22 +36,25 @@ profile_diagnostic: false
 # Rootpaths to the data from different projects (lists are also possible)
 # these are generic entries to better allow you to enter your own
 # For site-specific entries, see below
-# rootpath:
-#   CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
-#   OBS: ~/obs_inputpath
-#   RAWOBS: ~/rawobs_inputpath
-#   default: ~/default_inputpath
-#   CORDEX: ~/default_inputpath
+# Comment out these when using a site-specific path
+rootpath:
+  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
+  OBS: ~/obs_inputpath
+  RAWOBS: ~/rawobs_inputpath
+  default: ~/default_inputpath
+  CORDEX: ~/default_inputpath
 
 # Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
-# drs:
-#   CMIP5: default
-#   CORDEX: default
-#   OBS: default
+# comment out/replace as per needed
+drs:
+  CMIP5: default
+  CORDEX: default
+  OBS: default
 
 # Site-specific entries: Jasmin
 # Uncomment the lines below to locate data on JASMIN
+#auxiliary_data_dir: /gws/nopw/j04/esmeval/aux_data/AUX
 #rootpath:
 #  CMIP6: /badc/cmip6/data/CMIP6
 #  CMIP5: /badc/cmip5/data/cmip5/output1
@@ -66,13 +69,14 @@ profile_diagnostic: false
 #  CMIP5: BADC
 #  CMIP3: BADC
 #  CORDEX: BADC
-#  OBS: BADC
-#  OBS6: BADC
-#  obs4mips: BADC
-#  ana4mips: BADC
+#  OBS: default
+#  OBS6: default
+#  obs4mips: default
+#  ana4mips: default
 
 # Site-specific entries: DKRZ
 # Uncomment the lines below to locate data on Mistral at DKRZ
+#auxiliary_data_dir: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/AUX
 #rootpath:
 #  CMIP6: /mnt/lustre02/work/ik1017/CMIP6/data/CMIP6
 #  CMIP5: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/CMIP5_DKRZ
@@ -106,3 +110,26 @@ profile_diagnostic: false
 #  CMIP6: ETHZ
 #  CMIP5: ETHZ
 #  CMIP3: ETHZ
+
+# Site-specific entries: IPSL
+# Uncomment the lines below to locate data on Ciclad at IPSL
+#rootpath:
+#  IPSLCM: /
+#  CMIP5: /bdd/CMIP5/output
+#  CMIP6: /bdd/CMIP6
+#  CMIP3: /bdd/CMIP3
+#  CORDEX: /bdd/CORDEX/output
+#  obs4mips: /bdd/obs4MIPS/obs-CFMIP/observations
+#  ana4mips: /not_yet
+#  OBS: /not_yet
+#  OBS6: /not_yet
+#  RAWOBS: /not_yet
+#drs:
+#  CMIP6: DKRZ
+#  CMIP5: DKRZ
+#  CMIP3: IPSL
+#  CORDEX: BADC
+#  obs4mips: IPSL
+#  ana4mips: default
+#  OBS: not_yet
+#  OBS6: not_yet

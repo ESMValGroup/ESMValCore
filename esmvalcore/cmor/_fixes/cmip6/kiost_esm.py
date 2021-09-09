@@ -1,4 +1,5 @@
 """Fixes for KIOST-ESM model."""
+from ..common import SiconcFixScalarCoord
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
@@ -57,3 +58,6 @@ class Uas(SfcWind):
 
 class Vas(SfcWind):
     """Fixes for vas."""
+
+
+Siconc = SiconcFixScalarCoord

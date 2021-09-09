@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+import cftime
+import dask.array as da
 import iris
 import numpy as np
 import pytest
@@ -10,6 +12,7 @@ from iris.cube import Cube
 
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.preprocessor import multi_model_statistics
+from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
 
 SPAN_OPTIONS = ('overlap', 'full')
 
@@ -56,6 +59,7 @@ def generate_cube_from_dates(
     fill_val=1,
     len_data=3,
     var_name=None,
+    lazy=False,
 ):
     """Generate test cube from list of dates / frequency specification.
 
@@ -80,78 +84,91 @@ def generate_cube_from_dates(
     if isinstance(dates, str):
         time = timecoord(dates, calendar, offset=offset, num=len_data)
     else:
+        len_data = len(dates)
         unit = Unit(offset, calendar=calendar)
         time = iris.coords.DimCoord(unit.date2num(dates),
                                     standard_name='time',
                                     units=unit)
 
-    return Cube((fill_val, ) * len_data,
-                dim_coords_and_dims=[(time, 0)],
-                var_name=var_name)
+    data = np.array((fill_val, ) * len_data, dtype=np.float32)
+
+    if lazy:
+        data = da.from_array(data)
+
+    return Cube(data, dim_coords_and_dims=[(time, 0)], var_name=var_name)
 
 
-def get_cubes_for_validation_test(frequency):
+def get_cubes_for_validation_test(frequency, lazy=False):
     """Set up cubes used for testing multimodel statistics."""
 
     # Simple 1d cube with standard time cord
-    cube1 = generate_cube_from_dates(frequency)
+    cube1 = generate_cube_from_dates(frequency, lazy=lazy)
 
     # Cube with masked data
     cube2 = cube1.copy()
-    cube2.data = np.ma.array([5, 5, 5], mask=[True, False, False])
+    data2 = np.ma.array([5, 5, 5], mask=[True, False, False], dtype=np.float32)
+    if lazy:
+        data2 = da.from_array(data2)
+    cube2.data = data2
 
     # Cube with deviating time coord
     cube3 = generate_cube_from_dates(frequency,
                                      calendar='360_day',
                                      offset='days since 1950-01-01',
                                      len_data=2,
-                                     fill_val=9)
+                                     fill_val=9,
+                                     lazy=lazy)
 
     return [cube1, cube2, cube3]
 
 
 VALIDATION_DATA_SUCCESS = (
     ('full', 'mean', (5, 5, 3)),
-    pytest.param(
-        'full',
-        'std', (5.656854249492381, 4, 2.8284271247461903),
-        marks=pytest.mark.xfail(
-            raises=AssertionError,
-            reason='https://github.com/ESMValGroup/ESMValCore/issues/1024')),
+    ('full', 'std_dev', (5.656854249492381, 4, 2.8284271247461903)),
+    ('full', 'std', (5.656854249492381, 4, 2.8284271247461903)),
     ('full', 'min', (1, 1, 1)),
     ('full', 'max', (9, 9, 5)),
     ('full', 'median', (5, 5, 3)),
     ('full', 'p50', (5, 5, 3)),
     ('full', 'p99.5', (8.96, 8.96, 4.98)),
+    ('full', 'peak', (9, 9, 5)),
     ('overlap', 'mean', (5, 5)),
-    pytest.param(
-        'full',
-        'std', (5.656854249492381, 4),
-        marks=pytest.mark.xfail(
-            raises=AssertionError,
-            reason='https://github.com/ESMValGroup/ESMValCore/issues/1024')),
+    ('overlap', 'std_dev', (5.656854249492381, 4)),
+    ('overlap', 'std', (5.656854249492381, 4)),
     ('overlap', 'min', (1, 1)),
     ('overlap', 'max', (9, 9)),
     ('overlap', 'median', (5, 5)),
     ('overlap', 'p50', (5, 5)),
     ('overlap', 'p99.5', (8.96, 8.96)),
+    ('overlap', 'peak', (9, 9)),
     # test multiple statistics
     ('overlap', ('min', 'max'), ((1, 1), (9, 9))),
     ('full', ('min', 'max'), ((1, 1, 1), (9, 9, 5))),
 )
 
 
+@pytest.mark.parametrize(
+    'length,slices',
+    [
+        (1, [slice(0, 1)]),
+        (25000, [slice(0, 8334),
+                 slice(8334, 16668),
+                 slice(16668, 25000)]),
+    ],
+)
+def test_compute_slices(length, slices):
+    """Test cube `_compute_slices`."""
+    cubes = [
+        Cube(da.empty([length, 50, 100], dtype=np.float32)) for _ in range(5)
+    ]
+    result = list(mm._compute_slices(cubes))
+    assert result == slices
+
+
 @pytest.mark.parametrize('frequency', FREQUENCY_OPTIONS)
 @pytest.mark.parametrize('span, statistics, expected', VALIDATION_DATA_SUCCESS)
 def test_multimodel_statistics(frequency, span, statistics, expected):
-    """High level test for multicube statistics function.
-
-    - Should work for multiple data frequencies
-    - Should be able to deal with multiple statistics
-    - Should work for both span arguments
-    - Should deal correctly with different mask options
-    - Return type should be a dict with all requested statistics as keys
-    """
+    """High level test for multicube statistics function."""
     cubes = get_cubes_for_validation_test(frequency)
 
     if isinstance(statistics, str):
@@ -165,8 +182,83 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
 
     for i, statistic in enumerate(statistics):
         result_cube = result[statistic]
+        # make sure that temporary coord has been removed
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            result_cube.coord('multi-model')
+        # test that real data in => real data out
+        assert result_cube.has_lazy_data() is False
         expected_data = np.ma.array(expected[i], mask=False)
         assert_array_allclose(result_cube.data, expected_data)
+
+
+@pytest.mark.xfail(reason='Lazy data not (yet) supported.')
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_lazy_data_consistent_times(span):
+    """Test laziness of multimodel statistics with consistent time axis."""
+    cubes = (
+        generate_cube_from_dates('monthly', fill_val=1, lazy=True),
+        generate_cube_from_dates('monthly', fill_val=3, lazy=True),
+        generate_cube_from_dates('monthly', fill_val=6, lazy=True),
+    )
+
+    for cube in cubes:
+        assert cube.has_lazy_data()
+
+    statistic = 'sum'
+    statistics = (statistic, )
+
+    result = mm._multicube_statistics(cubes, span=span, statistics=statistics)
+
+    result_cube = result[statistic]
+    assert result_cube.has_lazy_data()
+
+
+@pytest.mark.xfail(reason='Lazy data not (yet) supported.')
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_lazy_data_inconsistent_times(span):
+    """Test laziness of multimodel statistics with inconsistent time axis.
+
+    This hits `_align`, which adds additional computations which must be
+    lazy.
+    """
+
+    cubes = (
+        generate_cube_from_dates(
+            [datetime(1850, i, 15, 0, 0, 0) for i in range(1, 10)], lazy=True),
+        generate_cube_from_dates(
+            [datetime(1850, i, 15, 0, 0, 0) for i in range(3, 8)], lazy=True),
+        generate_cube_from_dates(
+            [datetime(1850, i, 15, 0, 0, 0) for i in range(2, 9)], lazy=True),
+    )
+
+    for cube in cubes:
+        assert cube.has_lazy_data()
+
+    statistic = 'sum'
+    statistics = (statistic, )
+
+    result = mm._multicube_statistics(cubes, span=span, statistics=statistics)
+
+    result_cube = result[statistic]
+    assert result_cube.has_lazy_data()
+
+
+VALIDATION_DATA_FAIL = (
+    ('percentile', ValueError),
+    ('wpercentile', ValueError),
+    ('count', TypeError),
+    ('proportion', TypeError),
+)
+
+
+@pytest.mark.parametrize('statistic, error', VALIDATION_DATA_FAIL)
+def test_unsupported_statistics_fail(statistic, error):
+    """Check that unsupported statistics raise an exception."""
+    cubes = get_cubes_for_validation_test('monthly')
+    span = 'overlap'
+    statistics = (statistic, )
+    with pytest.raises(error):
+        _ = multi_model_statistics(cubes, span, statistics)
 
 
 @pytest.mark.parametrize('calendar1, calendar2, expected', (
@@ -194,6 +286,91 @@ def test_get_consistent_time_unit(calendar1, calendar2, expected):
 
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_align(span):
+    """Test _align function."""
+
+    # TODO --> check that if a cube is extended,
+    #          the extended points are masked (not NaN!)
+
+    len_data = 3
+
+    cubes = []
+
+    for calendar in CALENDAR_OPTIONS:
+        cube = generate_cube_from_dates('monthly',
+                                        calendar=calendar,
+                                        len_data=3)
+        cubes.append(cube)
+
+    result_cubes = mm._align(cubes, span)
+
+    calendars = set(cube.coord('time').units.calendar for cube in result_cubes)
+
+    assert len(calendars) == 1
+    assert list(calendars)[0] == 'gregorian'
+
+    shapes = set(cube.shape for cube in result_cubes)
+
+    assert len(shapes) == 1
+    assert tuple(shapes)[0] == (len_data, )
+
+
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_combine_same_shape(span):
+    """Test _combine with same shape of cubes."""
+    len_data = 3
+    num_cubes = 5
+    cubes = []
+
+    for i in range(num_cubes):
+        cube = generate_cube_from_dates('monthly',
+                                        '360_day',
+                                        fill_val=i,
+                                        len_data=len_data)
+        cubes.append(cube)
+
+    result_cube = mm._combine(cubes)
+
+    dim_coord = result_cube.coord(mm.CONCAT_DIM)
+    assert dim_coord.var_name == mm.CONCAT_DIM
+    assert result_cube.shape == (num_cubes, len_data)
+
+    desired = np.linspace((0, ) * len_data,
+                          num_cubes - 1,
+                          num=num_cubes,
+                          dtype=int)
+    np.testing.assert_equal(result_cube.data, desired)
+
+
+def test_combine_different_shape_fail():
+    """Test _combine with inconsistent data."""
+    num_cubes = 5
+    cubes = []
+
+    for num in range(1, num_cubes + 1):
+        cube = generate_cube_from_dates('monthly', '360_day', len_data=num)
+        cubes.append(cube)
+
+    with pytest.raises(iris.exceptions.MergeError):
+        _ = mm._combine(cubes)
+
+
+def test_combine_inconsistent_var_names_fail():
+    """Test _combine with inconsistent var names."""
+    num_cubes = 5
+    cubes = []
+
+    for num in range(num_cubes):
+        cube = generate_cube_from_dates('monthly',
+                                        '360_day',
+                                        var_name=f'test_var_{num}')
+        cubes.append(cube)
+
+    with pytest.raises(iris.exceptions.MergeError):
+        _ = mm._combine(cubes)
+
+
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_edge_case_different_time_offsets(span):
     cubes = (
         generate_cube_from_dates('monthly',
@@ -218,10 +395,6 @@ def test_edge_case_different_time_offsets(span):
 
     desired = np.array((14., 45., 73.))
     np.testing.assert_array_equal(time_coord.points, desired)
-
-    # input cubes are updated in-place
-    for cube in cubes:
-        np.testing.assert_array_equal(cube.coord('time').points, desired)
 
 
 def generate_cubes_with_non_overlapping_timecoords():
@@ -296,16 +469,25 @@ def test_edge_case_time_not_in_middle_of_months(span):
     desired = np.array((14., 45., 73.))
     np.testing.assert_array_equal(time_coord.points, desired)
 
-    # input cubes are updated in-place
-    for cube in cubes:
-        np.testing.assert_array_equal(cube.coord('time').points, desired)
-
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_edge_case_sub_daily_data_fail(span):
     """Test case when cubes with sub-daily time coords are passed."""
     cube = generate_cube_from_dates('hourly')
     cubes = (cube, cube)
+
+    statistic = 'min'
+    statistics = (statistic, )
+
+    with pytest.raises(ValueError):
+        _ = multi_model_statistics(cubes, span, statistics)
+
+
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_edge_case_single_cube_fail(span):
+    """Test that an error is raised when a single cube is passed."""
+    cube = generate_cube_from_dates('monthly')
+    cubes = (cube, )
 
     statistic = 'min'
     statistics = (statistic, )
@@ -330,6 +512,7 @@ def test_unify_time_coordinates():
 
 class PreprocessorFile:
     """Mockup to test output of multimodel."""
+
     def __init__(self, cube=None):
         if cube:
             self.cubes = [cube]
@@ -360,6 +543,7 @@ def test_return_products():
     result1 = mm._multiproduct_statistics(products,
                                           keep_input_datasets=True,
                                           **kwargs)
+
     result2 = mm._multiproduct_statistics(products,
                                           keep_input_datasets=False,
                                           **kwargs)
@@ -374,3 +558,116 @@ def test_return_products():
 
     assert result3 == result1
     assert result4 == result2
+
+
+def test_ignore_tas_scalar_height_coord():
+    """Ignore conflicting aux_coords for height in tas."""
+    tas_2m = generate_cube_from_dates("monthly")
+    tas_1p5m = generate_cube_from_dates("monthly")
+
+    for cube, height in zip([tas_2m, tas_1p5m], [2., 1.5]):
+        cube.rename("air_temperature")
+        cube.attributes["short_name"] = "tas"
+        cube.add_aux_coord(
+            iris.coords.AuxCoord([height], var_name="height", units="m"))
+
+    result = mm.multi_model_statistics(
+        [tas_2m, tas_2m.copy(), tas_1p5m], statistics=['mean'], span='full')
+
+    # iris automatically averages the value of the scalar coordinate.
+    assert len(result['mean'].coords("height")) == 1
+    assert result["mean"].coord("height").points == 1.75
+
+
+def test_daily_inconsistent_calendars():
+    """Determine behaviour for inconsistent calendars.
+
+    Deviating calendars should be converted to gregorian. Missing data
+    inside original bounds is filled with nearest neighbour Missing data
+    outside original bounds is masked.
+    """
+    start = cftime.date2num(datetime(1852, 1, 1),
+                            "days since 1850-01-01",
+                            calendar="standard")
+
+    # 1852 is a leap year, and include 1 extra day at the end
+    leapdates = cftime.num2date(start + np.arange(367),
+                                "days since 1850-01-01",
+                                calendar="standard")
+
+    noleapdates = cftime.num2date(start + np.arange(365),
+                                  "days since 1850-01-01",
+                                  calendar="noleap")
+
+    leapcube = generate_cube_from_dates(
+        leapdates,
+        calendar='gregorian',
+        offset='days since 1850-01-01',
+        fill_val=1,
+    )
+
+    noleapcube = generate_cube_from_dates(
+        noleapdates,
+        calendar='noleap',
+        offset='days since 1850-01-01',
+        fill_val=3,
+    )
+
+    cubes = [leapcube, noleapcube]
+
+    # span=full
+    aligned_cubes = mm._align(cubes, span='full')
+    for cube in aligned_cubes:
+        assert cube.coord('time').units.calendar == "gregorian"
+        assert cube.shape == (367, )
+        assert cube[59].coord('time').points == 789  # 29 Feb 1852
+    np.ma.is_masked(aligned_cubes[1][366].data)  # outside original range
+
+    result = multi_model_statistics(cubes, span="full", statistics=['mean'])
+    result_cube = result['mean']
+    assert result_cube[59].data == 2  # looked up nearest neighbour
+    assert result_cube[366].data == 1  # outside original range
+
+    # span=overlap
+    aligned_cubes = mm._align(cubes, span='overlap')
+    for cube in aligned_cubes:
+        assert cube.coord('time').units.calendar == "gregorian"
+        assert cube.shape == (365, )
+        assert cube[59].coord('time').points == 790  # 1 March 1852
+
+    result = multi_model_statistics(cubes, span="overlap", statistics=['mean'])
+    result_cube = result['mean']
+    assert result_cube[59].data == 2
+
+
+def test_remove_fx_variables():
+    """Test fx variables are removed from cubes."""
+    cube1 = generate_cube_from_dates("monthly")
+    fx_cube = generate_cube_from_dates("monthly")
+    fx_cube.standard_name = "land_area_fraction"
+    add_ancillary_variable(cube1, fx_cube)
+
+    cube2 = generate_cube_from_dates("monthly", fill_val=9)
+    result = mm.multi_model_statistics([cube1, cube2],
+                                       statistics=['mean'],
+                                       span='full')
+    assert result['mean'].ancillary_variables() == []
+
+
+def test_no_warn_model_dim_non_contiguous(recwarn):
+    """Test that now warning is raised that model dim is non-contiguous."""
+    coord = iris.coords.DimCoord(
+        [0.5, 1.5],
+        bounds=[[0, 1.], [1., 2.]],
+        standard_name='time',
+        units='days since 1850-01-01',
+    )
+    cube1 = iris.cube.Cube([1, 1], dim_coords_and_dims=[(coord, 0)])
+    cube2 = iris.cube.Cube([2, 2], dim_coords_and_dims=[(coord, 0)])
+    cubes = [cube1, cube2]
+
+    multi_model_statistics(cubes, span="overlap", statistics=['mean'])
+    msg = ("Collapsing a non-contiguous coordinate. "
+           "Metadata may not be fully descriptive for 'multi-model'.")
+    for warning in recwarn:
+        assert str(warning.message) != msg
