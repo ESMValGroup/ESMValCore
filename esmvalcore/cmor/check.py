@@ -477,7 +477,7 @@ class CMORCheck():
         },
         'zlevel': {
             'CMIP3': ['pressure'],
-        }
+        },
     }
 
     def _check_alternative_dim_names(self, key):
