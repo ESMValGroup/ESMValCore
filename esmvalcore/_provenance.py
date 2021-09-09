@@ -6,7 +6,6 @@ import os
 from netCDF4 import Dataset
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-from prov.dot import prov_to_dot
 from prov.model import ProvDocument
 
 from ._version import __version__
@@ -107,7 +106,7 @@ def get_task_provenance(task, recipe_entity):
     return activity
 
 
-class TrackedFile(object):
+class TrackedFile:
     """File with provenance tracking."""
 
     def __init__(self, filename, attributes, ancestors=None):
@@ -205,7 +204,6 @@ class TrackedFile(object):
 
     def _select_for_include(self):
         attributes = {
-            'provenance': self.provenance.serialize(format='xml'),
             'software': "Created with ESMValTool v{}".format(__version__),
         }
         if 'caption' in self.attributes:
@@ -222,7 +220,6 @@ class TrackedFile(object):
     def _include_provenance_png(filename, attributes):
         pnginfo = PngInfo()
         exif_tags = {
-            'provenance': 'ImageHistory',
             'caption': 'ImageDescription',
             'software': 'Software',
         }
@@ -235,27 +232,14 @@ class TrackedFile(object):
         """Include provenance information as metadata."""
         attributes = self._select_for_include()
 
-        # List of files to attach provenance to
-        files = [self.filename]
-        if 'plot_file' in self.attributes:
-            files.append(self.attributes['plot_file'])
-
         # Attach provenance to supported file types
-        for filename in files:
-            ext = os.path.splitext(filename)[1].lstrip('.').lower()
-            write = getattr(self, '_include_provenance_' + ext, None)
-            if write:
-                write(filename, attributes)
+        ext = os.path.splitext(self.filename)[1].lstrip('.').lower()
+        write = getattr(self, '_include_provenance_' + ext, None)
+        if write:
+            write(self.filename, attributes)
 
     def save_provenance(self):
         """Export provenance information."""
         self._include_provenance()
         filename = os.path.splitext(self.filename)[0] + '_provenance'
         self.provenance.serialize(filename + '.xml', format='xml')
-        # Only plot provenance if there are not too many records.
-        if len(self.provenance.records) > 100:
-            logger.debug("Not plotting large provenance tree of %s",
-                         self.filename)
-        else:
-            figure = prov_to_dot(self.provenance)
-            figure.write_svg(filename + '.svg')

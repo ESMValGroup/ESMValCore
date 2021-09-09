@@ -245,6 +245,17 @@ available tables of the specified project.
    a given dataset) fx files are found in more than one table, ``mip`` needs to
    be specified, otherwise an error is raised.
 
+Additionally, it is possible to search across all ensembles and experiments (or
+any other keys) when specifying the fx variable, by using the ``*`` character,
+which is useful for some projects where the location of the fx files is not
+consistent.  This makes it possible to search for fx files under multiple
+ensemble members or experiments.  For example: ``ensemble: '*'``. Note that the
+``*`` character must be quoted since ``*`` is a special charcter in YAML. This
+functionality is only supported for time invariant fx variables (i.e. frequency
+``fx``). Note also that if multiple folders of matching fx files are found,
+ESMValTool will default to ensemble r0i0p0 if it exists and then first folder
+found only if it does not.
+
 Internally, the required ``fx_variables`` are automatically loaded by the
 preprocessor step ``add_fx_variables`` which also checks them against CMOR
 standards and adds them either as ``cell_measure`` (see `CF conventions on cell
