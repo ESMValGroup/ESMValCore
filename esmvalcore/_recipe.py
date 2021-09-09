@@ -12,7 +12,13 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
-from ._config import TAGS, get_activity, get_institutes, get_project_config
+from ._config import (
+    TAGS,
+    get_activity,
+    get_extra_facets,
+    get_institutes,
+    get_project_config,
+)
 from ._data_finder import (
     get_input_filelist,
     get_output_file,
@@ -93,6 +99,13 @@ def _add_cmor_info(variable, override=False):
     check.variable(variable, required_keys=cmor_keys)
 
 
+def _add_extra_facets(variable, extra_facets_dir):
+    extra_facets = get_extra_facets(variable["project"], variable["dataset"],
+                                    variable["mip"], variable["short_name"],
+                                    extra_facets_dir)
+    _augment(variable, extra_facets)
+
+
 def _special_name_to_dataset(variable, special_name):
     """Convert special names to dataset names."""
     if special_name in ('reference_dataset', 'alternative_dataset'):
@@ -137,6 +150,7 @@ def _update_target_levels(variable, variables, settings, config_user):
         else:
             variable_data = _get_dataset_info(dataset, variables)
             filename = _dataset_to_file(variable_data, config_user)
+            fix_dir = f"{os.path.splitext(variable_data['filename'])[0]}_fixed"
             settings['extract_levels']['levels'] = get_reference_levels(
                 filename=filename,
                 project=variable_data['project'],
@@ -144,8 +158,7 @@ def _update_target_levels(variable, variables, settings, config_user):
                 short_name=variable_data['short_name'],
                 mip=variable_data['mip'],
                 frequency=variable_data['frequency'],
-                fix_dir=os.path.splitext(variable_data['filename'])[0] +
-                '_fixed',
+                fix_dir=fix_dir,
             )
 
 
@@ -261,12 +274,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['concatenate'] = {}
 
     # Configure fixes
-    fix = {
-        'project': variable['project'],
-        'dataset': variable['dataset'],
-        'short_name': variable['short_name'],
-        'mip': variable['mip'],
-    }
+    fix = deepcopy(variable)
     # File fixes
     fix_dir = os.path.splitext(variable['filename'])[0] + '_fixed'
     settings['fix_file'] = dict(fix)
@@ -342,64 +350,95 @@ def _add_fxvar_keys(fx_info, variable):
     return fx_variable
 
 
-def _search_fx_mip(tables, found_mip, variable, fx_info, config_user):
-    fx_files = None
-    for mip in tables:
-        fx_cmor = tables[mip].get(fx_info['short_name'])
-        if fx_cmor:
-            found_mip = True
-            fx_info['mip'] = mip
-            fx_info = _add_fxvar_keys(fx_info, variable)
-            logger.debug(
-                "For fx variable '%s', found table '%s'",
-                fx_info['short_name'], mip)
-            fx_files = _get_input_files(fx_info, config_user)[0]
-            if fx_files:
-                logger.debug(
-                    "Found fx variables '%s':\n%s",
-                    fx_info['short_name'], pformat(fx_files))
-    return found_mip, fx_info, fx_files
+def _search_fx_mip(tables, variable, fx_info, config_user):
+    """Search mip for fx variable."""
+    # Get all mips that offer that specific fx variable
+    mips_with_fx_var = []
+    for (mip, table) in tables.items():
+        if fx_info['short_name'] in table:
+            mips_with_fx_var.append(mip)
+
+    # List is empty -> no table includes the fx variable
+    if not mips_with_fx_var:
+        raise RecipeError(
+            f"Requested fx variable '{fx_info['short_name']}' not available "
+            f"in any CMOR table for '{variable['project']}'")
+
+    # Iterate through all possible mips and check if files are available; in
+    # case of ambiguity raise an error
+    fx_files_for_mips = {}
+    for mip in mips_with_fx_var:
+        fx_info['mip'] = mip
+        fx_info = _add_fxvar_keys(fx_info, variable)
+        logger.debug("For fx variable '%s', found table '%s'",
+                     fx_info['short_name'], mip)
+        fx_files = _get_input_files(fx_info, config_user)[0]
+        if fx_files:
+            logger.debug("Found fx variables '%s':\n%s",
+                         fx_info['short_name'], pformat(fx_files))
+            fx_files_for_mips[mip] = fx_files
+
+    # Dict contains more than one element -> ambiguity
+    if len(fx_files_for_mips) > 1:
+        raise RecipeError(
+            f"Requested fx variable '{fx_info['short_name']}' for dataset "
+            f"'{variable['dataset']}' of project '{variable['project']}' is "
+            f"available in more than one CMOR table for "
+            f"'{variable['project']}': {sorted(list(fx_files_for_mips))}")
+
+    # Dict is empty -> no files found -> handled at later stage
+    if not fx_files_for_mips:
+        fx_info['mip'] = variable['mip']
+        fx_files = []
+
+    # Dict contains one element -> ok
+    else:
+        mip = list(fx_files_for_mips)[0]
+        fx_info['mip'] = mip
+        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_files = fx_files_for_mips[mip]
+
+    return fx_info, fx_files
 
 
 def _get_fx_files(variable, fx_info, config_user):
     """Get fx files (searching all possible mips)."""
-
     # assemble info from master variable
     var_project = variable['project']
     # check if project in config-developer
     try:
         get_project_config(var_project)
     except ValueError:
-        raise RecipeError(
-            f"Requested fx variable '{fx_info['short_name']}' "
-            f"with parent variable '{variable}' does not have "
-            f"a '{var_project}' project in config-developer.")
+        raise RecipeError(f"Requested fx variable '{fx_info['short_name']}' "
+                          f"with parent variable '{variable}' does not have "
+                          f"a '{var_project}' project in config-developer.")
     project_tables = CMOR_TABLES[var_project].tables
 
-    # force only the mip declared by user
-    found_mip = False
+    # If mip is not given, search all available tables. If the variable is not
+    # found or files are available in more than one table, raise error
     if not fx_info['mip']:
-        found_mip, fx_info, fx_files = _search_fx_mip(
-            project_tables, found_mip, variable, fx_info, config_user)
+        fx_info, fx_files = _search_fx_mip(project_tables, variable, fx_info,
+                                           config_user)
     else:
-        fx_cmor = project_tables[fx_info['mip']].get(fx_info['short_name'])
-        if fx_cmor:
-            found_mip = True
-            fx_info = _add_fxvar_keys(fx_info, variable)
-            fx_files = _get_input_files(fx_info, config_user)[0]
+        mip = fx_info['mip']
+        if mip not in project_tables:
+            raise RecipeError(
+                f"Requested mip table '{mip}' for fx variable "
+                f"'{fx_info['short_name']}' not available for project "
+                f"'{var_project}'")
+        if fx_info['short_name'] not in project_tables[mip]:
+            raise RecipeError(
+                f"fx variable '{fx_info['short_name']}' not available in CMOR "
+                f"table '{mip}' for '{var_project}'")
+        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_files = _get_input_files(fx_info, config_user)[0]
 
-    # If fx variable was not found in any table, raise exception
-    if not found_mip:
-        raise RecipeError(
-            f"Requested fx variable '{fx_info['short_name']}' "
-            f"not available in any CMOR table for '{var_project}'")
-
-    # flag a warning
+    # Flag a warning if no files are found
     if not fx_files:
-        logger.warning(
-            "Missing data for fx variable '%s'", fx_info['short_name'])
+        logger.warning("Missing data for fx variable '%s'",
+                       fx_info['short_name'])
 
-    # allow for empty lists corrected for by NE masks
+    # If frequency = fx, only allow a single file
     if fx_files:
         if fx_info['frequency'] == 'fx':
             fx_files = fx_files[0]
@@ -443,17 +482,16 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
             settings['add_fx_variables']['fx_variables'].update({
                 fx_var: fx_info
             })
-
-    logger.debug('Using fx_files: %s for variable %s during step %s',
-                 pformat(settings['add_fx_variables']['fx_variables']),
-                 variable['short_name'], step_name)
-    logger.info('Using fx_files: %s for variable %s during step %s',
-                list(settings['add_fx_variables']['fx_variables']),
-                variable['short_name'], step_name)
+            logger.info(
+                'Using fx files for variable %s during step %s: %s',
+                variable['short_name'], step_name, pformat(fx_files))
 
 
 def _fx_list_to_dict(fx_vars):
-    """Convert fx list to dictionary. To be deprecated at some point."""
+    """Convert fx list to dictionary.
+
+    To be deprecated at some point.
+    """
     user_fx_vars = {}
     for fx_var in fx_vars:
         if isinstance(fx_var, dict):
@@ -473,15 +511,29 @@ def _update_fx_settings(settings, variable, config_user):
             user_fx_vars = _fx_list_to_dict(user_fx_vars)
             step_settings['fx_variables'] = user_fx_vars
         if not user_fx_vars:
-            if step_name in ('mask_landsea', 'weighting_landsea_fraction'):
-                user_fx_vars = {'sftlf': None}
-                if variable['project'] != 'obs4mips':
-                    user_fx_vars.update({'sftof': None})
-            elif step_name == 'mask_landseaice':
-                user_fx_vars = {'sftgif': None}
-            elif step_name in ('area_statistics', 'volume_statistics'):
-                user_fx_vars = {}
-            step_settings['fx_variables'] = user_fx_vars
+            default_fx = {
+                'area_statistics': {
+                    'areacella': None,
+                    'areacello': None,
+                },
+                'mask_landsea': {
+                    'sftlf': None,
+                },
+                'mask_landseaice': {
+                    'sftgif': None,
+                },
+                'volume_statistics': {
+                    'volcello': None,
+                },
+                'weighting_landsea_fraction': {
+                    'sftlf': None,
+                },
+            }
+            if variable['project'] != 'obs4mips':
+                default_fx['mask_landsea'].update({'sftof': None})
+                default_fx['weighting_landsea_fraction'].update(
+                    {'sftof': None})
+            step_settings['fx_variables'] = default_fx[step_name]
 
     fx_steps = [
         'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
@@ -1008,12 +1060,13 @@ class Recipe:
         for name, raw_diagnostic in raw_diagnostics.items():
             diagnostic = {}
             diagnostic['name'] = name
+            additional_datasets = raw_diagnostic.get('additional_datasets', [])
+            datasets = (raw_datasets + additional_datasets)
             diagnostic['preprocessor_output'] = \
                 self._initialize_preprocessor_output(
                     name,
                     raw_diagnostic.get('variables', {}),
-                    raw_datasets +
-                    raw_diagnostic.get('additional_datasets', []))
+                    datasets)
             variable_names = tuple(raw_diagnostic.get('variables', {}))
             diagnostic['scripts'] = self._initialize_scripts(
                 name, raw_diagnostic.get('scripts'), variable_names)
@@ -1037,8 +1090,8 @@ class Recipe:
 
     @staticmethod
     def _expand_tag(variables, input_tag):
-        """
-        Expand tags such as ensemble members or stardates to multiple datasets.
+        """Expand tags such as ensemble members or stardates to multiple
+        datasets.
 
         Expansion only supports ensembles defined as strings, not lists.
         """
@@ -1106,6 +1159,7 @@ class Recipe:
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
+            _add_extra_facets(variable, self._cfg['extra_facets_dir'])
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:
@@ -1286,15 +1340,6 @@ class Recipe:
                     'auxiliary_data_dir',
             ):
                 settings[key] = self._cfg[key]
-
-            # Add deprecated settings from configuration file
-            # DEPRECATED: remove in v2.4
-            for key in (
-                    'write_plots',
-                    'write_netcdf',
-            ):
-                if key not in settings and key in self._cfg:
-                    settings[key] = self._cfg[key]
 
             scripts[script_name] = {
                 'script': script,

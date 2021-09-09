@@ -44,8 +44,10 @@ class TestAllVars(unittest.TestCase):
         time = cube.coord('time')
         dates = num2date(time.points, time.units.name, time.units.calendar)
         self.assertEqual(time.units.calendar, 'gregorian')
-        self.assertEqual(dates[0].strftime('%Y%m%d%H%M'), '30001161200')
-        self.assertEqual(dates[1].strftime('%Y%m%d%H%M'), '185001161200')
+        u = Unit('days since 300-01-01 12:00:00', calendar='gregorian')
+        self.assertEqual(dates[0], u.num2date(15))
+        u = Unit('days since 1850-01-01 12:00:00', calendar='gregorian')
+        self.assertEqual(dates[1], u.num2date(15))
 
     def test_fix_metadata_if_not_time(self):
         """Test calendar fix do not fail if no time coord present."""

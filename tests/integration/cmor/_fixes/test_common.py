@@ -2,11 +2,13 @@
 import iris
 import numpy as np
 import pytest
+from cf_units import Unit
 
 from esmvalcore.cmor._fixes.common import (
     ClFixHybridHeightCoord,
     ClFixHybridPressureCoord,
     OceanFixGrid,
+    SiconcFixScalarCoord,
 )
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import var_name_constraint
@@ -169,6 +171,49 @@ def test_cl_hybrid_height_coord_fix_metadata(test_data_path):
                                      ClFixHybridHeightCoord(vardef))
 
 
+@pytest.fixture
+def siconc_cubes():
+    """Sample cube."""
+    time_coord = iris.coords.DimCoord([0.0], standard_name='time',
+                                      var_name='time',
+                                      units='days since 6543-2-1')
+    lat_coord = iris.coords.DimCoord([-30.0], standard_name='latitude',
+                                     var_name='lat', units='degrees_north')
+    lon_coord = iris.coords.DimCoord([30.0], standard_name='longitude',
+                                     var_name='lon', units='degrees_east')
+    coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
+    cube = iris.cube.Cube([[[22.0]]], standard_name='sea_ice_area_fraction',
+                          var_name='siconc', units='%',
+                          dim_coords_and_dims=coords_specs)
+    return iris.cube.CubeList([cube])
+
+
+def test_siconc_fix_metadata(siconc_cubes):
+    """Test ``fix_metadata`` for ``siconc``."""
+    assert len(siconc_cubes) == 1
+    siconc_cube = siconc_cubes[0]
+    assert siconc_cube.var_name == "siconc"
+
+    # Extract siconc cube
+    siconc_cube = siconc_cubes.extract_cube('sea_ice_area_fraction')
+    assert not siconc_cube.coords('typesi')
+
+    # Apply fix
+    vardef = get_var_info('CMIP6', 'SImon', 'siconc')
+    fix = SiconcFixScalarCoord(vardef)
+    fixed_cubes = fix.fix_metadata(siconc_cubes)
+    assert len(fixed_cubes) == 1
+    fixed_siconc_cube = fixed_cubes.extract_cube(
+        'sea_ice_area_fraction')
+    fixed_typesi_coord = fixed_siconc_cube.coord('area_type')
+    assert fixed_typesi_coord.points is not None
+    assert fixed_typesi_coord.bounds is None
+    np.testing.assert_equal(fixed_typesi_coord.points,
+                            ['sea_ice'])
+    np.testing.assert_equal(fixed_typesi_coord.units,
+                            Unit('No unit'))
+
+
 def get_tos_cubes(wrong_ij_names=False, ij_bounds=False):
     """Cubes containing tos variable."""
     if wrong_ij_names:
@@ -284,12 +329,14 @@ def test_ocean_fix_grid_wrong_ij_names(tos_cubes_wrong_ij_names):
     assert len(fixed_cube.coords('longitude')) == 1
     assert fixed_cube.coord('latitude').bounds is not None
     assert fixed_cube.coord('longitude').bounds is not None
-    latitude_bounds = np.array([[[-40, -33.75, -23.75, -30.0],
-                                 [-33.75, -6.25, 3.75, -23.75],
-                                 [-6.25, -1.02418074021670e-14, 10.0, 3.75]],
-                                [[-30.0, -23.75, -13.75, -20.0],
-                                 [-23.75, 3.75, 13.75, -13.75],
-                                 [3.75, 10.0, 20.0, 13.75]]])
+    latitude_bounds = np.array(
+        [[[-43.48076211, -34.01923789, -22.00961894, -31.47114317],
+          [-34.01923789, -10.0, 2.00961894, -22.00961894],
+          [-10.0, -0.53847577, 11.47114317, 2.00961894]],
+         [[-31.47114317, -22.00961894, -10.0, -19.46152423],
+          [-22.00961894, 2.00961894, 14.01923789, -10.0],
+          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]]
+    )
     np.testing.assert_allclose(fixed_cube.coord('latitude').bounds,
                                latitude_bounds)
     longitude_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],
@@ -353,12 +400,14 @@ def test_ocean_fix_grid_no_ij_bounds(tos_cubes_no_ij_bounds):
     assert len(fixed_cube.coords('longitude')) == 1
     assert fixed_cube.coord('latitude').bounds is not None
     assert fixed_cube.coord('longitude').bounds is not None
-    latitude_bounds = np.array([[[-40, -33.75, -23.75, -30.0],
-                                 [-33.75, -6.25, 3.75, -23.75],
-                                 [-6.25, -1.02418074021670e-14, 10.0, 3.75]],
-                                [[-30.0, -23.75, -13.75, -20.0],
-                                 [-23.75, 3.75, 13.75, -13.75],
-                                 [3.75, 10.0, 20.0, 13.75]]])
+    latitude_bounds = np.array(
+        [[[-43.48076211, -34.01923789, -22.00961894, -31.47114317],
+          [-34.01923789, -10.0, 2.00961894, -22.00961894],
+          [-10.0, -0.53847577, 11.47114317, 2.00961894]],
+         [[-31.47114317, -22.00961894, -10.0, -19.46152423],
+          [-22.00961894, 2.00961894, 14.01923789, -10.0],
+          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]]
+    )
     np.testing.assert_allclose(fixed_cube.coord('latitude').bounds,
                                latitude_bounds)
     longitude_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],

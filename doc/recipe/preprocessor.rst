@@ -31,7 +31,7 @@ Overview
 ========
 
 ..
-   ESMValTool is a modular ``Python 3.6+`` software package possessing capabilities
+   ESMValTool is a modular ``Python 3.7+`` software package possessing capabilities
    of executing a large number of diagnostic routines that can be written in a
    number of programming languages (Python, NCL, R, Julia). The modular nature
    benefits the users and developers in different key areas: a new feature
@@ -180,15 +180,96 @@ To get an overview on data fixes and how to implement new ones, please go to
 
 Fx variables as cell measures or ancillary variables
 ====================================================
-Preprocessor steps related to spatial statistics or masking may require
-the use of ``fx_variables`` to be able to perform the computations.
-The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
-checks them against CMOR standards and adds them either as ``cell_measure``
-or ``ancillary_variable`` inside the cube data. This ensures that the
-defined preprocessor chain is applied to both ``variables`` and ``fx_variables``.
+The following preprocessors may require the use of ``fx_variables`` to be able
+to perform the computations:
+
+============================================================== =====================
+Preprocessor                                                   Default fx variables
+============================================================== =====================
+:ref:`area_statistics<area_statistics>`                        ``areacella``, ``areacello``
+:ref:`mask_landsea<land/sea/ice masking>`                      ``sftlf``, ``sftof``
+:ref:`mask_landseaice<ice masking>`                            ``sftgif``
+:ref:`volume_statistics<volume_statistics>`                    ``volcello``
+:ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``
+============================================================== =====================
+
+If no ``fx_variables`` are specified for these preprocessors, the fx variables
+in the second column are used. If given, the ``fx_variables`` argument
+specifies the fx variables that the user wishes to input to the corresponding
+preprocessor function. The user may specify these by simply adding the names of
+the variables, e.g.,
+
+.. code-block:: yaml
+
+    fx_variables:
+      areacello:
+      volcello:
+
+or by additionally specifying further keys that are used to define the fx
+datasets, e.g.,
+
+.. code-block:: yaml
+
+    fx_variables:
+      areacello:
+        mip: Ofx
+        exp: piControl
+      volcello:
+        mip: Omon
+
+This might be useful to select fx files from a specific ``mip`` table or from a
+specific ``exp`` in case not all experiments provide the fx variable.
+
+Alternatively, the ``fx_variables`` argument can also be specified as a list:
+
+.. code-block:: yaml
+
+    fx_variables: ['areacello', 'volcello']
+
+or as a list of dictionaries:
+
+.. code-block:: yaml
+
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Ofx', 'exp': 'piControl'}, {'short_name': 'volcello', 'mip': 'Omon'}]
+
+The recipe parser will automatically find the data files that are associated
+with these variables and pass them to the function for loading and processing.
+
+If ``mip`` is not given, ESMValTool will search for the fx variable in all
+available tables of the specified project.
+
+.. warning::
+   Some fx variables exist in more than one table (e.g., ``volcello`` exists in
+   CMIP6's ``Odec``, ``Ofx``, ``Omon``, and ``Oyr`` tables; ``sftgif`` exists
+   in CMIP6's ``fx``, ``IyrAnt`` and ``IyrGre``, and ``LImon`` tables). If (for
+   a given dataset) fx files are found in more than one table, ``mip`` needs to
+   be specified, otherwise an error is raised.
+
+Additionally, it is possible to search across all ensembles and experiments (or
+any other keys) when specifying the fx variable, by using the ``*`` character,
+which is useful for some projects where the location of the fx files is not
+consistent.  This makes it possible to search for fx files under multiple
+ensemble members or experiments.  For example: ``ensemble: '*'``. Note that the
+``*`` character must be quoted since ``*`` is a special charcter in YAML. This
+functionality is only supported for time invariant fx variables (i.e. frequency
+``fx``). Note also that if multiple folders of matching fx files are found,
+ESMValTool will default to ensemble r0i0p0 if it exists and then first folder
+found only if it does not.
+
+Internally, the required ``fx_variables`` are automatically loaded by the
+preprocessor step ``add_fx_variables`` which also checks them against CMOR
+standards and adds them either as ``cell_measure`` (see `CF conventions on cell
+measures
+<https://cfconventions.org/cf-conventions/cf-conventions.html#cell-measures>`_
+and :class:`iris.coords.CellMeasure`) or ``ancillary_variable`` (see `CF
+conventions on ancillary variables
+<https://cfconventions.org/cf-conventions/cf-conventions.html#ancillary-data>`_
+and :class:`iris.coords.AncillaryVariable`) inside the cube data. This ensures
+that the defined preprocessor chain is applied to both ``variables`` and
+``fx_variables``.
 
 Note that when calling steps that require ``fx_variables`` inside diagnostic
-scripts, the variables are expected to contain the required ``cell_measures`` or 
+scripts, the variables are expected to contain the required ``cell_measures`` or
 ``ancillary_variables``. If missing, they can be added using the following functions:
 
 .. code-block::
@@ -202,7 +283,7 @@ scripts, the variables are expected to contain the required ``cell_measures`` or
     cube_with_ancillary_sftlf = add_ancillary_variable(cube, sftlf_cube)
 
     cube_with_ancillary_sftgif = add_ancillary_variable(cube, sftgif_cube)
-  
+
   Details on the arguments needed for each step can be found in the following sections.
 
 .. _Vertical interpolation:
@@ -344,8 +425,8 @@ is for example useful for climate models which do not offer land/sea fraction
 files. This arguments also accepts the special dataset specifiers
 ``reference_dataset`` and ``alternative_dataset``.
 
-Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
-experiment is preferred for fx data retrieval:
+Optionally you can specify your own custom fx variable to be used in cases when
+e.g. a certain experiment is preferred for fx data retrieval:
 
 .. code-block:: yaml
 
@@ -354,7 +435,7 @@ experiment is preferred for fx data retrieval:
         weighting_landsea_fraction:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
-          fx_variables: 
+          fx_variables:
             sftlf:
               exp: piControl
             sftof:
@@ -370,20 +451,12 @@ or alternatively:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
           fx_variables: [
-            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftlf', 'exp': 'piControl'},
             {'short_name': 'sftof', 'exp': 'piControl'}
             ]
 
-Additionally, it is possible to search across all ensembles and experiments (or any other keys)
-when specifying the fx variable, by using the ``*`` character, which is useful for some projects
-where the location of the fx files is not consistent.
-This makes it possible to search for fx files under multiple ensemble members or experiments.
-For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML. This functionality is only supported for time invariant fx variables
-(i.e. frequency ``fx``). Note also that if multiple folders of matching fx files are found,
-ESMValTool will default to ensemble r0i0p0 if it exists and then first folder found only 
-if it does not.
-            
+More details on the argument ``fx_variables`` and its default values are given
+in :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
@@ -430,11 +503,6 @@ To mask out a certain domain (e.g., sea) in the preprocessor,
 
 and requires only one argument: ``mask_out``: either ``land`` or ``sea``.
 
-The preprocessor automatically retrieves the corresponding mask (``fx: stfof``
-in this case) and applies it so that sea-covered grid cells are set to
-missing. Conversely, it retrieves the ``fx: sftlf`` mask when land needs to be
-masked out, respectively.
-
 Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
 experiment is preferred for fx data retrieval. Note that it is possible to specify as many tags
 for the fx variable as required:
@@ -446,8 +514,8 @@ for the fx variable as required:
       landmask:
         mask_landsea:
           mask_out: sea
-          fx_variables: 
-            sftlf: 
+          fx_variables:
+            sftlf:
               exp: piControl
             sftof:
               exp: piControl
@@ -462,20 +530,12 @@ or alternatively:
         mask_landsea:
           mask_out: sea
           fx_variables: [
-            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftlf', 'exp': 'piControl'},
             {'short_name': 'sftof', 'exp': 'piControl', 'ensemble': 'r2i1p1f1'}
             ]
 
-Additionally, it is possible to search across all ensembles and experiments (or any other keys)
-when specifying the fx variable, by using the ``*`` character, which is useful for some projects
-where the location of the fx files is not consistent.
-This makes it possible to search for fx files under multiple ensemble members or experiments.
-For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML. This functionality is only supported for time invariant fx variables
-(i.e. frequency ``fx``). Note also that if multiple folders of matching fx files are found,
-ESMValTool will default to ensemble r0i0p0 if it exists and then first folder found only 
-if it does not.
-            
+More details on the argument ``fx_variables`` and its default values are given
+in :ref:`Fx variables as cell measures or ancillary variables`.
 
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
@@ -485,6 +545,8 @@ Natural Earth masks are much higher than any typical global model (10m for
 land and glaciated areas and 50m for ocean masks).
 
 See also :func:`esmvalcore.preprocessor.mask_landsea`.
+
+.. _ice masking:
 
 Ice masking
 -----------
@@ -502,11 +564,8 @@ losing generality. To mask ice out, ``mask_landseaice`` can be used:
 
 and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
-As in the case of ``mask_landsea``, the preprocessor automatically retrieves
-the ``fx_variables: [sftgif]`` mask.
-
-Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
-experiment is preferred for fx data retrieval:
+Optionally you can specify your own custom fx variable to be used in cases when
+e.g. a certain experiment is preferred for fx data retrieval:
 
 
 .. code-block:: yaml
@@ -515,7 +574,7 @@ experiment is preferred for fx data retrieval:
       landseaicemask:
         mask_landseaice:
           mask_out: sea
-          fx_variables: 
+          fx_variables:
             sftgif:
               exp: piControl
 
@@ -529,15 +588,8 @@ or alternatively:
           mask_out: sea
           fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
 
-Additionally, it is possible to search across all ensembles and experiments (or any other keys)
-when specifying the fx variable, by using the ``*`` character, which is useful for some projects
-where the location of the fx files is not consistent.
-This makes it possible to search for fx files under multiple ensemble members or experiments.
-For example: ``ensemble: '*'``. Note that the ``*`` character must be quoted since ``*`` is a
-special charcter in YAML. This functionality is only supported for time invariant fx variables
-(i.e. frequency ``fx``). Note also that if multiple folders of matching fx files are found,
-ESMValTool will default to ensemble r0i0p0 if it exists and then first folder found only 
-if it does not.
+More details on the argument ``fx_variables`` and its default values are given
+in :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -1046,7 +1098,7 @@ See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 ----------------------
 
 This function produces statistics for the whole dataset. It can produce scalars
-(if the full period is chosen) or daily, monthly or seasonal statics.
+(if the full period is chosen) or daily, monthly or seasonal statistics.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',
@@ -1290,9 +1342,9 @@ The area manipulation module contains the following preprocessor functions:
 ``extract_region``
 ------------------
 
-This function masks data outside a rectangular region requested. The boundaries
-of the region are provided as latitude and longitude coordinates in the
-arguments:
+This function returns a subset of the data on the rectangular region requested.
+The boundaries of the region are provided as latitude and longitude coordinates
+in the arguments:
 
 * ``start_longitude``
 * ``end_longitude``
@@ -1301,6 +1353,10 @@ arguments:
 
 Note that this function can only be used to extract a rectangular region. Use
 ``extract_shape`` to extract any other shaped region from a shapefile.
+
+If the grid is irregular, the returned region retains the original coordinates,
+but is cropped to a rectangular bounding box defined by the start/end
+coordinates. The deselected area inside the region is masked.
 
 See also :func:`esmvalcore.preprocessor.extract_region`.
 
@@ -1427,6 +1483,8 @@ argument:
 See also :func:`esmvalcore.preprocessor.meridional_means`.
 
 
+.. _area_statistics:
+
 ``area_statistics``
 -------------------
 
@@ -1441,40 +1499,9 @@ Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
-The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it calling the variables e.g.
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-      volcello:
-
-or calling the variables and adding specific variable parameters (the key-value pair may be as specific
-as a CMOR variable can permit):
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-        mip: Omon
-      volcello:
-        mip: fx
-
-Alternatively, the ``fx_variables`` argument can also be specified as a list:
-
-.. code-block:: yaml
-
-    fx_variables: ['areacello', 'volcello']
-
-or as a list of dictionaries:
-
-.. code-block:: yaml
-
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
-
-The recipe parser will automatically find the data files that are associated with these
-variables and pass them to the function for loading and processing.
+The optional ``fx_variables`` argument specifies the fx variables that the user
+wishes to input to the function. More details on this are given in :ref:`Fx
+variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -1507,6 +1534,8 @@ as the Iris cube. That is, if the cube has `z`-coordinate as negative, then
 See also :func:`esmvalcore.preprocessor.extract_volume`.
 
 
+.. _volume_statistics:
+
 ``volume_statistics``
 ---------------------
 
@@ -1517,42 +1546,10 @@ This function takes the argument: ``operator``, which defines the operation to
 apply over the volume.
 
 No depth coordinate is required as this is determined by Iris. This function
-works best when the ``fx_variables`` provide the cell volume.
-
-The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it calling the variables e.g.
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-      volcello:
-
-or calling the variables and adding specific variable parameters (the key-value pair may be as specific
-as a CMOR variable can permit):
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-        mip: Omon
-      volcello:
-        mip: fx
-
-Alternatively, the ``fx_variables`` argument can also be specified as a list:
-
-.. code-block:: yaml
-
-    fx_variables: ['areacello', 'volcello']
-
-or as a list of dictionaries:
-
-.. code-block:: yaml
-
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
-
-The recipe parser will automatically find the data files that are associated with these
-variables and pass them to the function for loading and processing.
+works best when the ``fx_variables`` provide the cell volume. The optional
+``fx_variables`` argument specifies the fx variables that the user wishes to
+input to the function. More details on this are given in :ref:`Fx variables as
+cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
