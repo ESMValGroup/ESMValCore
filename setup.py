@@ -32,6 +32,7 @@ REQUIREMENTS = {
     'install': [
         'cf-units>=3.0.0',
         'dask[array]',
+        'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
         "importlib_resources;python_version<'3.9'",
