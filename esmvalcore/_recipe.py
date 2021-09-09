@@ -431,11 +431,15 @@ def _get_fx_files(variable, fx_info, config_user):
                 f"table '{mip}' for '{var_project}'")
         fx_info = _add_fxvar_keys(fx_info, variable)
         fx_files = _get_input_files(fx_info, config_user)[0]
-
+   
+ 
     # Flag a warning if no files are found
     if not fx_files:
-        logger.warning("Missing data for fx variable '%s'",
-                       fx_info['short_name'])
+        
+        outs = ', '.join([str(i)+': '+str(v) for i, v in fx_info.items()])
+        logger.error("Missing data for fx variable '%s', '%s'",
+                     fx_info['short_name'], outs)
+        assert 0
 
     # If frequency = fx, only allow a single file
     if fx_files:
