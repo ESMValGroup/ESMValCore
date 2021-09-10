@@ -108,15 +108,6 @@ with explanations in a commented line above each option:
   drs:
     CMIP5: default
 
-..
-   DEPRECATED: remove in v2.4
-
-There used to be a setting ``write_plots`` and ``write_netcdf``
-in the config user file, but these have been deprecated since ESMValCore v2.2 and
-will be removed in v2.4, because only some diagnostic scripts supported these settings.
-For those diagnostic scripts that do support these settings, they can now be configured
-in the diagnostic script section of the recipe.
-
 .. code-block:: yaml
 
   # Auxiliary data directory (used for some additional datasets)
@@ -128,7 +119,12 @@ Python toolkits, such as cartopy, will attempt to download data files at run
 time, typically geographic data files such as coastlines or land surface maps.
 This can fail if the machine does not have access to the wider internet. This
 location allows the user to specify where to find such files if they can not be
-downloaded at runtime.
+downloaded at runtime. The example user configuration file already contains two valid
+locations for ``auxiliary_data_dir`` directories on CEDA-JASMIN and DKRZ, and a number
+of such maps and shapefiles (used by current diagnostics) are already there. You will
+need ``esmeval`` group workspace membership to access the JASMIN one (see
+`instructions <https://help.jasmin.ac.uk/article/199-introduction-to-group-workspaces>`_
+how to gain access to the group workspace.
 
 .. warning::
 

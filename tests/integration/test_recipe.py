@@ -257,6 +257,7 @@ def _get_filenames(root_path, filenames, tracking_id):
 
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
+
     def tracking_ids(i=0):
         while True:
             yield i
@@ -276,6 +277,7 @@ def patched_datafinder(tmp_path, monkeypatch):
 
 @pytest.fixture
 def patched_failing_datafinder(tmp_path, monkeypatch):
+
     def tracking_ids(i=0):
         while True:
             yield i
@@ -306,6 +308,7 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
+
     def get_required(short_name, _):
         if short_name != 'tas':
             assert False
@@ -1417,8 +1420,7 @@ def simulate_diagnostic_run(diagnostic_task):
         p.filename for a in diagnostic_task.ancestors for p in a.products
     ]
     record = {
-        'caption': 'Test plot',
-        'plot_file': create_test_image('test', cfg),
+        'caption': 'Test figure',
         'statistics': ['mean', 'var'],
         'domains': ['trop', 'et'],
         'plot_types': ['zonal'],
@@ -1429,10 +1431,11 @@ def simulate_diagnostic_run(diagnostic_task):
 
     diagnostic_file = get_diagnostic_filename('test', cfg)
     create_test_file(diagnostic_file)
+    plot_file = create_test_image('test', cfg)
     provenance = os.path.join(cfg['run_dir'], 'diagnostic_provenance.yml')
     os.makedirs(cfg['run_dir'])
     with open(provenance, 'w') as file:
-        yaml.safe_dump({diagnostic_file: record}, file)
+        yaml.safe_dump({diagnostic_file: record, plot_file: record}, file)
 
     diagnostic_task._collect_provenance()
     return record
@@ -1479,41 +1482,45 @@ def test_diagnostic_task_provenance(
     simulate_diagnostic_run(next(iter(diagnostic_task.ancestors)))
     record = simulate_diagnostic_run(diagnostic_task)
 
-    # Check resulting product
-    product = diagnostic_task.products.pop()
-    check_provenance(product)
-    for key in ('caption', 'plot_file'):
-        assert product.attributes[key] == record[key]
-        assert product.entity.get_attribute('attribute:' +
-                                            key).pop() == record[key]
+    # Check resulting products
+    assert len(diagnostic_task.products) == 2
+    for product in diagnostic_task.products:
+        check_provenance(product)
+        assert product.attributes['caption'] == record['caption']
+        assert product.entity.get_attribute(
+            'attribute:' + 'caption').pop() == record['caption']
 
-    # Check that diagnostic script tags have been added
-    for key in ('statistics', 'domains', 'authors'):
-        assert product.attributes[key] == tuple(TAGS[key][k]
-                                                for k in record[key])
+        # Check that diagnostic script tags have been added
+        for key in ('statistics', 'domains', 'authors'):
+            assert product.attributes[key] == tuple(TAGS[key][k]
+                                                    for k in record[key])
 
-    # Check that recipe diagnostic tags have been added
-    src = yaml.safe_load(DEFAULT_DOCUMENTATION + content)
-    for key in ('realms', 'themes'):
-        value = src['diagnostics']['diagnostic_name'][key]
-        assert product.attributes[key] == tuple(TAGS[key][k] for k in value)
+        # Check that recipe diagnostic tags have been added
+        src = yaml.safe_load(DEFAULT_DOCUMENTATION + content)
+        for key in ('realms', 'themes'):
+            value = src['diagnostics']['diagnostic_name'][key]
+            assert product.attributes[key] == tuple(TAGS[key][k]
+                                                    for k in value)
 
-    # Check that recipe tags have been added
-    recipe_record = product.provenance.get_record('recipe:recipe_test.yml')
-    assert len(recipe_record) == 1
-    for key in ('description', 'references'):
-        value = src['documentation'][key]
-        if key == 'references':
-            value = str(src['documentation'][key])
-        assert recipe_record[0].get_attribute('attribute:' +
-                                              key).pop() == value
+        # Check that recipe tags have been added
+        recipe_record = product.provenance.get_record('recipe:recipe_test.yml')
+        assert len(recipe_record) == 1
+        for key in ('description', 'references'):
+            value = src['documentation'][key]
+            if key == 'references':
+                value = str(src['documentation'][key])
+            assert recipe_record[0].get_attribute('attribute:' +
+                                                  key).pop() == value
 
     # Test that provenance was saved to netcdf, xml and svg plot
-    cube = iris.load(product.filename)[0]
-    assert 'provenance' in cube.attributes
+    product = next(
+        iter(p for p in diagnostic_task.products
+             if p.filename.endswith('.nc')))
+    cube = iris.load_cube(product.filename)
+    assert cube.attributes['software'].startswith("Created with ESMValTool v")
+    assert cube.attributes['caption'] == record['caption']
     prefix = os.path.splitext(product.filename)[0] + '_provenance'
     assert os.path.exists(prefix + '.xml')
-    assert os.path.exists(prefix + '.svg')
 
 
 def test_alias_generation(tmp_path, patched_datafinder, config_user):
@@ -2853,7 +2860,7 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     sftgif_files = fx_variables['sftgif']['filename']
     assert isinstance(sftgif_files, list)
     assert len(sftgif_files) == 1
-    assert'_LImon_' in sftgif_files[0]
+    assert '_LImon_' in sftgif_files[0]
 
 
 def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
