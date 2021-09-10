@@ -7,14 +7,14 @@ from ._baseclass import DerivedVariableBase
 from .toz import DerivedVariable as Toz
 from .toz import ensure_correct_lon, interpolate_hybrid_plevs
 
-# O3 mole fraction threshold (in ppb) that is used for the defintion of the
+# O3 mole fraction threshold (in ppb) that is used for the definition of the
 # stratosphere (stratosphere = region where O3 mole fraction is at least as
-# hight as the threshold value)
+# high as the threshold value)
 STRATOSPHERIC_O3_THRESHOLD = 125.0
 
 
 class DerivedVariable(DerivedVariableBase):
-    """Derivation of variable `soz`."""
+    """Derivation of variable ``soz``."""
 
     @staticmethod
     def required(project):
@@ -70,8 +70,10 @@ class DerivedVariable(DerivedVariableBase):
         mask |= da.ma.getmaskarray(o3_cube.lazy_data())
         o3_cube.data = da.ma.masked_array(o3_cube.lazy_data(), mask=mask)
 
-        # (2) Add surface air pressure (ps) cube using the lowest pressure
-        # level available in the data
+        # (2) Add surrogate for the surface air pressure (ps) cube using the
+        # lowest pressure level available in the data (this is fine since the
+        # the lowest pressure level is far away from the stratosphere).
+
         # Get dummy ps cube with correct dimensions
         ps_dims = (o3_cube.coord_dims('time') +
                    o3_cube.coord_dims('latitude') +
@@ -98,6 +100,6 @@ class DerivedVariable(DerivedVariableBase):
         o3_cube = o3_cube[tuple(idx_to_cut_lowest_plev)]
 
         # (3) Use derivation function of toz to calculate soz using the masked
-        # o3 cube and the ps cube
+        # o3 cube and the surrogate ps cube
         cubes = iris.cube.CubeList([o3_cube, ps_cube])
         return Toz.calculate(cubes)

@@ -6,11 +6,11 @@ modeling_realm:    atmos
 ! Variable attributes:
 !----------------------------------
 standard_name:
-units:             DU
+units:             m
 cell_methods:      time: mean
 cell_measures:     area: areacella
 long_name:         Stratospheric Ozone Column
-comment:           stratospheric ozone column in DU (in this context, the stratosphere is defined as the region where O3 mole fraction >= 125 ppb)
+comment:           stratospheric ozone column calculated at 0 degrees C and 1 bar, such that 1m = 1e5 DU (in this context, the stratosphere is defined as the region where O3 mole fraction >= 125 ppb).
 !----------------------------------
 ! Additional variable information:
 !----------------------------------

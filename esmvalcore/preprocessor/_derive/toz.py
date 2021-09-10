@@ -6,7 +6,7 @@ import cf_units
 import iris
 from scipy import constants
 
-from .._regrid import extract_levels
+from .._regrid import extract_levels, regrid
 from ._baseclass import DerivedVariableBase
 from ._shared import pressure_level_widths
 
@@ -58,7 +58,7 @@ def ensure_correct_lon(o3_cube, ps_cube=None):
 
 def interpolate_hybrid_plevs(cube):
     """Interpolate hybrid pressure levels."""
-    # Use plev19 target levels (in Pa)
+    # Use CMIP6's plev19 target levels (in Pa)
     target_levels = [
         100000.0,
         92500.0,
@@ -87,15 +87,23 @@ def interpolate_hybrid_plevs(cube):
 
 
 class DerivedVariable(DerivedVariableBase):
-    """Derivation of variable `toz`."""
+    """Derivation of variable ``toz``."""
 
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
+        # TODO: make get_required _derive/__init__.py use variables as argument
+        # and make this dependent on mip
         if project == 'CMIP6':
-            required = [{'short_name': 'o3'}, {'short_name': 'ps'}]
+            required = [
+                {'short_name': 'o3'},
+                {'short_name': 'ps', 'mip': 'Amon'},
+            ]
         else:
-            required = [{'short_name': 'tro3'}, {'short_name': 'ps'}]
+            required = [
+                {'short_name': 'tro3'},
+                {'short_name': 'ps'},
+            ]
         return required
 
     @staticmethod
@@ -122,6 +130,11 @@ class DerivedVariable(DerivedVariableBase):
         # coordinate if necessary and ensure that ps has correct shape
         (o3_cube, ps_cube) = ensure_correct_lon(o3_cube, ps_cube=ps_cube)
 
+        # If the horizontal dimensions of ps and o3 differ, regrid ps
+        # Note: regrid() checks if the regridding is really necessary before
+        # running the actual interpolation
+        ps_cube = regrid(ps_cube, o3_cube, 'linear')
+
         # Actual derivation of toz using o3 mole fraction and pressure level
         # widths
         p_layer_widths = pressure_level_widths(o3_cube,
@@ -137,10 +150,13 @@ class DerivedVariable(DerivedVariableBase):
         toz_cube.units = (o3_cube.units * p_layer_widths.units /
                           STANDARD_GRAVITY_UNIT * MW_O3_UNIT / MW_AIR_UNIT)
 
-        # Convert from kg m^-2 to Dobson unit (2.69e20 m^-2 )
+        # Convert from kg m^-2 to Dobson units DU (2.69e20 m^-2 ) and from
+        # DU to m (1 mm = 100 DU)
         toz_cube = toz_cube / MW_O3 * AVOGADRO_CONST
         toz_cube.units = toz_cube.units / MW_O3_UNIT * AVOGADRO_CONST_UNIT
         toz_cube.convert_units(DOBSON_UNIT)
-        toz_cube.units = 'DU'
+        toz_cube.data = toz_cube.core_data() / 100.0
+        toz_cube.units = 'mm'
+        toz_cube.convert_units('m')
 
         return toz_cube
