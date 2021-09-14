@@ -6,6 +6,8 @@ import re
 import warnings
 from copy import deepcopy
 from pprint import pformat
+from nested_lookup import nested_lookup, nested_delete, get_all_keys
+
 
 import isodate
 import yaml
@@ -49,6 +51,7 @@ from .preprocessor._regrid import (
     get_reference_levels,
     parse_cell_spec,
 )
+from esmvalcore import preprocessor
 
 logger = logging.getLogger(__name__)
 
@@ -1237,8 +1240,12 @@ class Recipe:
                 check.variable(variable, subexperiment_keys)
             else:
                 check.variable(variable, required_keys)
+            #_add_cmor_info(variable)
         variables = self._expand_tag(variables, 'ensemble')
         variables = self._expand_tag(variables, 'sub_experiment')
+        #for variable in variables:
+        #_update_timerange(variables, self._cfg)
+        
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
@@ -1445,29 +1452,41 @@ class Recipe:
 
     def _fill_wildcards(self, variable_group, preprocessor_output):
         # To be generalised for other tags
-        var = preprocessor_output[variable_group][0]
-        index = var.get('recipe_dataset_index')
-        diagnostic = var.get('diagnostic')
-
         datasets = self._raw_recipe.get('datasets')
-        timerange = var.get('timerange')
-        if timerange:
+        diagnostics = self._raw_recipe.get('diagnostics')
+        if datasets:
+            raw_timeranges = nested_lookup('timerange', datasets)
+        if diagnostics:
+            raw_timeranges = nested_lookup('timerange', diagnostics)
+        
+        wildcard = False
+        for raw_timerange in raw_timeranges:
+            if '*' in raw_timerange:
+                wildcard = True
+                break
+    
+        if wildcard:
+            if not self._updated_recipe:
+                self._updated_recipe = deepcopy(self._raw_recipe)
+                nested_delete(self._updated_recipe, 'datasets', in_place=True)
+                nested_delete(self._updated_recipe, 'additional_datasets', in_place=True)
             if datasets:
-                raw_timerange = (
-                    self._raw_recipe['datasets'][index]['timerange'])
-            else:
-                raw_timerange = (self._raw_recipe['diagnostics'][diagnostic]
-                                 ['additional_datasets'][index]['timerange'])
-
-            if timerange != raw_timerange:
-                if not self._updated_recipe:
-                    self._updated_recipe = deepcopy(self._raw_recipe)
-                if datasets:
-                    (self._updated_recipe['datasets'][index]['timerange']
-                     ) = timerange
-                else:
-                    (self._updated_recipe['diagnostics'][diagnostic]
-                     ['additional_datasets'][index]['timerange']) = timerange
+                dataset_keys = set(get_all_keys(datasets))
+                if not self._updated_recipe.get('datasets'):
+                    self._updated_recipe.update({'datasets': []})
+                    for data in preprocessor_output[variable_group]:
+                        updated_dataset = {key: data[key] for key in dataset_keys if key in data}
+                        self._updated_recipe['datasets'].append(updated_dataset)
+            if diagnostics:
+                additional_datasets = nested_lookup('additional_datasets', diagnostics)
+                dataset_keys = set(get_all_keys(additional_datasets))
+                updated_datasets = []
+                for data in preprocessor_output[variable_group]:
+                    updated_dataset = {key: data[key] for key in dataset_keys if key in data}
+                    diagnostic = data['diagnostic']
+                    updated_datasets.append(updated_dataset)
+                self._updated_recipe['diagnostics'][diagnostic]['variables'][variable_group].update({'additional_datasets': updated_datasets})
+                
 
     def initialize_tasks(self):
         """Define tasks in recipe."""
