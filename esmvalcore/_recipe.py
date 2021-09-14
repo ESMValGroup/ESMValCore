@@ -513,7 +513,6 @@ def _update_fx_settings(settings, variable, config_user):
             default_fx = {
                 'area_statistics': {
                     'areacella': None,
-                    'areacello': None,
                 },
                 'mask_landsea': {
                     'sftlf': None,
@@ -529,9 +528,9 @@ def _update_fx_settings(settings, variable, config_user):
                 },
             }
             if variable['project'] != 'obs4mips':
-                default_fx['mask_landsea'].update({'sftof': None})
-                default_fx['weighting_landsea_fraction'].update(
-                    {'sftof': None})
+                default_fx['area_statistics']['areacello'] = None
+                default_fx['mask_landsea']['sftof'] = None
+                default_fx['weighting_landsea_fraction']['sftof'] = None
             step_settings['fx_variables'] = default_fx[step_name]
 
     fx_steps = [
