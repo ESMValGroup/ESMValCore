@@ -400,21 +400,9 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
     return fx_info, fx_files
 
 
-def _get_fx_files(variable, fx_info, config_user):
-    """Get fx files (searching all possible mips)."""
-    # assemble info from master variable
+def _get_correct_fx_mip(fx_info, project_tables, variable, config_user):
+    """Set the correct mips for fx variables."""
     var_project = variable['project']
-    # check if project in config-developer
-    try:
-        get_project_config(var_project)
-    except ValueError:
-        raise RecipeError(f"Requested fx variable '{fx_info['short_name']}' "
-                          f"with parent variable '{variable}' does not have "
-                          f"a '{var_project}' project in config-developer.")
-    project_tables = CMOR_TABLES[var_project].tables
-
-    # If mip is not given, search all available tables. If the variable is not
-    # found or files are available in more than one table, raise error
     if not fx_info['mip']:
         fx_info, fx_files = _search_fx_mip(project_tables, variable, fx_info,
                                            config_user)
@@ -432,6 +420,28 @@ def _get_fx_files(variable, fx_info, config_user):
         fx_info = _add_fxvar_keys(fx_info, variable)
         fx_files = _get_input_files(fx_info, config_user)[0]
 
+    return fx_info, fx_files
+
+
+def _get_fx_files(variable, fx_info, config_user):
+    """Get fx files (searching all possible mips)."""
+    orig_fx_info = fx_info
+    # assemble info from master variable
+    var_project = variable['project']
+    # check if project in config-developer
+    try:
+        get_project_config(var_project)
+    except ValueError:
+        raise RecipeError(f"Requested fx variable '{fx_info['short_name']}' "
+                          f"with parent variable '{variable}' does not have "
+                          f"a '{var_project}' project in config-developer.")
+    project_tables = CMOR_TABLES[var_project].tables
+
+    # If mip is not given, search all available tables. If the variable is not
+    # found or files are available in more than one table, raise error
+    fx_info, fx_files = _get_correct_fx_mip(fx_info, project_tables,
+                                            variable, config_user)
+
     # Flag a warning if no files are found
     # CMIP6 special case:
     # Before completely giving up, try looking for fx files in piControl:
@@ -443,9 +453,10 @@ def _get_fx_files(variable, fx_info, config_user):
                 "and experiment %s; since data is CMIP6, "
                 "will try experiment piControl, most fx "
                 "stuff is there.", fx_info['short_name'], fx_info['exp'])
-            fx_info = dict(fx_info)
+            fx_info = dict(orig_fx_info)
             fx_info['exp'] = 'piControl'
-            fx_files = _get_input_files(fx_info, config_user)[0]
+            fx_info, fx_files = _get_correct_fx_mip(fx_info, project_tables,
+                                                    variable, config_user)
             if not fx_files:
                 logger.warning(
                     "Failed to find data for CMIP6 fx variable "
