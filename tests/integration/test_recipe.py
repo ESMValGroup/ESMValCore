@@ -2403,7 +2403,8 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     assert '_Ofx_' in fx_variables['sftof']['filename']
 
 
-def test_fx_vars_exp_search_cmip6(tmp_path, patched_failing_datafinder, config_user):
+def test_fx_vars_exp_search_cmip6(tmp_path,
+                                  patched_failing_datafinder, config_user):
     """Test mip tables search for different fx variables."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
