@@ -111,12 +111,14 @@ def test_tos_fix_metadata():
     np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
     assert fixed_cube.coord('latitude').bounds is not None
     assert fixed_cube.coord('longitude').bounds is not None
-    latitude_bounds = np.array([[[-40, -33.75, -23.75, -30.0],
-                                 [-33.75, -6.25, 3.75, -23.75],
-                                 [-6.25, -1.02418074021670e-14, 10.0, 3.75]],
-                                [[-30.0, -23.75, -13.75, -20.0],
-                                 [-23.75, 3.75, 13.75, -13.75],
-                                 [3.75, 10.0, 20.0, 13.75]]])
+    latitude_bounds = np.array(
+        [[[-43.48076211, -34.01923789, -22.00961894, -31.47114317],
+          [-34.01923789, -10.0, 2.00961894, -22.00961894],
+          [-10.0, -0.53847577, 11.47114317, 2.00961894]],
+         [[-31.47114317, -22.00961894, -10.0, -19.46152423],
+          [-22.00961894, 2.00961894, 14.01923789, -10.0],
+          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]]
+    )
     np.testing.assert_allclose(fixed_cube.coord('latitude').bounds,
                                latitude_bounds)
     longitude_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],

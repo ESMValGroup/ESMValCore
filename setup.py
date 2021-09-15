@@ -32,6 +32,7 @@ REQUIREMENTS = {
     'install': [
         'cf-units>=3.0.0',
         'dask[array]',
+        'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
         "importlib_resources;python_version<'3.9'",
@@ -39,11 +40,12 @@ REQUIREMENTS = {
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numpy',
-        'prov[dot]',
+        'prov',
         'psutil',
         'pybtex',
         'pyyaml',
         'requests',
+        'scipy>=1.6',
         'scitools-iris>=3.0.2',
         'shapely[vectorized]',
         'stratify',
@@ -198,9 +200,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',

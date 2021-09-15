@@ -521,7 +521,6 @@ def _update_fx_settings(settings, variable, config_user):
             default_fx = {
                 'area_statistics': {
                     'areacella': None,
-                    'areacello': None,
                 },
                 'mask_landsea': {
                     'sftlf': None,
@@ -537,9 +536,9 @@ def _update_fx_settings(settings, variable, config_user):
                 },
             }
             if variable['project'] != 'obs4mips':
-                default_fx['mask_landsea'].update({'sftof': None})
-                default_fx['weighting_landsea_fraction'].update(
-                    {'sftof': None})
+                default_fx['area_statistics']['areacello'] = None
+                default_fx['mask_landsea']['sftof'] = None
+                default_fx['weighting_landsea_fraction']['sftof'] = None
             step_settings['fx_variables'] = default_fx[step_name]
 
     fx_steps = [
@@ -1407,15 +1406,6 @@ class Recipe:
                     'auxiliary_data_dir',
             ):
                 settings[key] = self._cfg[key]
-
-            # Add deprecated settings from configuration file
-            # DEPRECATED: remove in v2.4
-            for key in (
-                    'write_plots',
-                    'write_netcdf',
-            ):
-                if key not in settings and key in self._cfg:
-                    settings[key] = self._cfg[key]
 
             scripts[script_name] = {
                 'script': script,
