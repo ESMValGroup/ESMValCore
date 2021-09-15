@@ -440,15 +440,15 @@ def _get_fx_files(variable, fx_info, config_user):
         logger.warning("Missing data for fx variable '%s'",
                        fx_info['short_name'])
         if fx_info['project'] == 'CMIP6':
-            logger.warning(
+            logger.debug(
                 f"Missing data for fx variable {fx_info['short_name']} "
-                f"and experiment {fx_info['exp']}; "
-                f"will try experiment piControl")
+                f"and experiment {fx_info['exp']}; since CMIP6, "
+                f"will try experiment piControl, most fx stuff is there.")
             fx_info['exp'] = 'piControl'
             fx_files = _get_input_files(fx_info, config_user)[0]
             if not fx_files:
                 logger.warning(
-                    f"Failed to find data for fx variable "
+                    f"Failed to find data for CMIP6 fx variable "
                     f"{fx_info['short_name']} with experiment piControl as well.")
 
     # If frequency = fx, only allow a single file
