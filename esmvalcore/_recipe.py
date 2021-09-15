@@ -445,6 +445,7 @@ def _get_fx_files(variable, fx_info, config_user):
                 "and experiment %s; since CMIP6, "
                 "will try experiment piControl, most fx "
                 "stuff is there.", fx_info['short_name'], fx_info['exp'])
+            fx_info = dict(fx_info)
             fx_info['exp'] = 'piControl'
             fx_files = _get_input_files(fx_info, config_user)[0]
             if not fx_files:
