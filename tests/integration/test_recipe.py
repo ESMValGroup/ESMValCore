@@ -2397,6 +2397,73 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     assert '_Ofx_' in fx_variables['sftof']['filename']
 
 
+def test_fx_vars_exp_search_cmip6(tmp_path, patched_datafinder, config_user):
+    """Test mip tables search for different fx variables."""
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+
+    # pass an invalid experiment, that will have no fx files
+    # so we can test the lookup in exp=piControl when no fx data
+    # is found in given experiment
+    content = dedent("""
+        preprocessors:
+          preproc:
+           area_statistics:
+             operator: mean
+             fx_variables:
+               areacella:
+               areacello:
+               clayfrac:
+           mask_landsea:
+             mask_out: sea
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: preproc
+                project: CMIP6
+                mip: Amon
+                exp: historical-222
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
+    assert len(task.products) == 1
+    product = task.products.pop()
+
+    # Check area_statistics
+    assert 'area_statistics' in product.settings
+    settings = product.settings['area_statistics']
+    assert len(settings) == 1
+    assert settings['operator'] == 'mean'
+
+    # Check mask_landsea
+    assert 'mask_landsea' in product.settings
+    settings = product.settings['mask_landsea']
+    assert len(settings) == 1
+    assert settings['mask_out'] == 'sea'
+
+    # Check add_fx_variables
+    fx_variables = product.settings['add_fx_variables']['fx_variables']
+    assert isinstance(fx_variables, dict)
+    assert len(fx_variables) == 5
+    assert '_fx_' in fx_variables['areacella']['filename']
+    assert '_Ofx_' in fx_variables['areacello']['filename']
+    assert '_Efx_' in fx_variables['clayfrac']['filename']
+    assert '_fx_' in fx_variables['sftlf']['filename']
+    assert '_Ofx_' in fx_variables['sftof']['filename']
+
+
 def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     """Test mip tables search for list of different fx variables."""
     content = dedent("""
