@@ -435,7 +435,7 @@ def _get_fx_files(variable, fx_info, config_user):
     # Flag a warning if no files are found
     # CMIP6 special case:
     # Before completely giving up, try looking for fx files in piControl:
-    # a lot of CMIP6 models have fx data only in piControl 
+    # a lot of CMIP6 models have fx data only in piControl
     if not fx_files:
         logger.warning("Missing data for fx variable '%s'",
                        fx_info['short_name'])
@@ -449,7 +449,8 @@ def _get_fx_files(variable, fx_info, config_user):
             if not fx_files:
                 logger.warning(
                     f"Failed to find data for CMIP6 fx variable "
-                    f"{fx_info['short_name']} with experiment piControl as well.")
+                    f"{fx_info['short_name']} with experiment "
+                    f"piControl as well.")
 
     # If frequency = fx, only allow a single file
     if fx_files:
