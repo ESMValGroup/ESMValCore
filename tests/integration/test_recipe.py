@@ -2403,7 +2403,7 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     assert '_Ofx_' in fx_variables['sftof']['filename']
 
 
-def test_fx_vars_exp_search_cmip6(tmp_path, patched_datafinder, config_user):
+def test_fx_vars_exp_search_cmip6(tmp_path, patched_failing_datafinder, config_user):
     """Test mip tables search for different fx variables."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -2462,12 +2462,11 @@ def test_fx_vars_exp_search_cmip6(tmp_path, patched_datafinder, config_user):
     # Check add_fx_variables
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 5
-    assert '_fx_' in fx_variables['areacella']['filename']
-    assert '_Ofx_' in fx_variables['areacello']['filename']
-    assert '_Efx_' in fx_variables['clayfrac']['filename']
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_Ofx_' in fx_variables['sftof']['filename']
+    assert len(fx_variables) == 4
+    assert '_fx_' and '_piControl_' in fx_variables['areacella']['filename']
+    assert '_Ofx_' and '_piControl_' in fx_variables['areacello']['filename']
+    assert '_Efx_' and '_piControl_' in fx_variables['clayfrac']['filename']
+    assert '_Ofx_' and '_piControl_' in fx_variables['sftof']['filename']
 
 
 def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
