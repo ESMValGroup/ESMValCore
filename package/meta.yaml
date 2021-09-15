@@ -49,6 +49,7 @@ requirements:
     - fire
     - jinja2
     - nc-time-axis
+    - nested-lookup
     - netCDF4
     - numpy
     - prov

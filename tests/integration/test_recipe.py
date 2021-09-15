@@ -7,6 +7,7 @@ from unittest.mock import create_autospec
 import iris
 import pytest
 import yaml
+from nested_lookup import get_occurrence_of_value, nested_lookup
 from PIL import Image
 
 import esmvalcore
@@ -464,6 +465,55 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
         for key in MANDATORY_SCRIPT_SETTINGS_KEYS:
             assert key in task.settings and task.settings[key]
         assert task.settings['custom_setting'] == 1
+    # Filled recipe is not created as there are no wildcards
+    assert recipe._updated_recipe == {}
+
+
+def test_simple_recipe_fill(tmp_path, patched_datafinder, config_user):
+    script = tmp_path / 'diagnostic.py'
+    script.write_text('')
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        preprocessors:
+          preprocessor_name:
+            extract_levels:
+              levels: 85000
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            additional_datasets:
+              - dataset: GFDL-ESM2G
+            variables:
+              ta:
+                preprocessor: preprocessor_name
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                timerange: '*'
+                additional_datasets:
+                  - dataset: MPI-ESM-LR
+                    timerange: '*/P2Y'
+            scripts:
+              script_name:
+                script: {}
+                custom_setting: 1
+        """.format(script))
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    raw = yaml.safe_load(content)
+    preprocessor_output = recipe.diagnostics['diagnostic_name'][
+        'preprocessor_output']
+    recipe._fill_wildcards('ta', preprocessor_output)
+    assert recipe._updated_recipe
+    assert get_occurrence_of_value(recipe._updated_recipe, value='*') == 0
+    assert get_occurrence_of_value(recipe._updated_recipe,
+                                   value='1990/2019') == 2
+    assert get_occurrence_of_value(recipe._updated_recipe,
+                                   value='1990/P2Y') == 1
 
 
 def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):

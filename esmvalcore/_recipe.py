@@ -6,12 +6,13 @@ import re
 import warnings
 from copy import deepcopy
 from pprint import pformat
-from nested_lookup import nested_lookup, nested_delete, get_all_keys
-
 
 import isodate
 import yaml
+from nested_lookup import get_all_keys, nested_delete, nested_lookup
 from netCDF4 import Dataset
+
+from esmvalcore import preprocessor
 
 from . import __version__
 from . import _recipe_checks as check
@@ -51,7 +52,6 @@ from .preprocessor._regrid import (
     get_reference_levels,
     parse_cell_spec,
 )
-from esmvalcore import preprocessor
 
 logger = logging.getLogger(__name__)
 
@@ -1240,12 +1240,9 @@ class Recipe:
                 check.variable(variable, subexperiment_keys)
             else:
                 check.variable(variable, required_keys)
-            #_add_cmor_info(variable)
         variables = self._expand_tag(variables, 'ensemble')
         variables = self._expand_tag(variables, 'sub_experiment')
-        #for variable in variables:
-        #_update_timerange(variables, self._cfg)
-        
+
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
@@ -1454,39 +1451,41 @@ class Recipe:
         # To be generalised for other tags
         datasets = self._raw_recipe.get('datasets')
         diagnostics = self._raw_recipe.get('diagnostics')
-        if datasets:
-            raw_timeranges = nested_lookup('timerange', datasets)
+        additional_datasets = []
         if diagnostics:
-            raw_timeranges = nested_lookup('timerange', diagnostics)
-        
+            additional_datasets = nested_lookup('additional_datasets',
+                                                diagnostics)
+
+        raw_dataset_tags = nested_lookup('timerange', datasets)
+        raw_diagnostic_tags = nested_lookup('timerange', diagnostics)
+
         wildcard = False
-        for raw_timerange in raw_timeranges:
+        for raw_timerange in raw_dataset_tags + raw_diagnostic_tags:
             if '*' in raw_timerange:
                 wildcard = True
                 break
-    
+
         if wildcard:
             if not self._updated_recipe:
                 self._updated_recipe = deepcopy(self._raw_recipe)
                 nested_delete(self._updated_recipe, 'datasets', in_place=True)
-                nested_delete(self._updated_recipe, 'additional_datasets', in_place=True)
-            if datasets:
-                dataset_keys = set(get_all_keys(datasets))
-                if not self._updated_recipe.get('datasets'):
-                    self._updated_recipe.update({'datasets': []})
-                    for data in preprocessor_output[variable_group]:
-                        updated_dataset = {key: data[key] for key in dataset_keys if key in data}
-                        self._updated_recipe['datasets'].append(updated_dataset)
-            if diagnostics:
-                additional_datasets = nested_lookup('additional_datasets', diagnostics)
-                dataset_keys = set(get_all_keys(additional_datasets))
-                updated_datasets = []
-                for data in preprocessor_output[variable_group]:
-                    updated_dataset = {key: data[key] for key in dataset_keys if key in data}
-                    diagnostic = data['diagnostic']
-                    updated_datasets.append(updated_dataset)
-                self._updated_recipe['diagnostics'][diagnostic]['variables'][variable_group].update({'additional_datasets': updated_datasets})
-                
+                nested_delete(self._updated_recipe,
+                              'additional_datasets',
+                              in_place=True)
+            updated_datasets = []
+            dataset_keys = set(
+                get_all_keys(datasets) + get_all_keys(additional_datasets) +
+                ['timerange'])
+            for data in preprocessor_output[variable_group]:
+                diagnostic = data['diagnostic']
+                updated_datasets.append(
+                    {key: data[key]
+                     for key in dataset_keys if key in data})
+            self._updated_recipe['diagnostics'][diagnostic]['variables'][
+                variable_group].pop('timerange', None)
+            self._updated_recipe['diagnostics'][diagnostic]['variables'][
+                variable_group].update(
+                    {'additional_datasets': updated_datasets})
 
     def initialize_tasks(self):
         """Define tasks in recipe."""
