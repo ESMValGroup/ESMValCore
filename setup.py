@@ -38,6 +38,7 @@ REQUIREMENTS = {
         "importlib_resources;python_version<'3.9'",
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
+        'nested-lookup',
         'netCDF4',
         'numpy',
         'prov',
