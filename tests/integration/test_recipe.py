@@ -2199,7 +2199,13 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
-        assert not any(fx_variables)
+        # usable fx data is found for CMIP6 in piControl
+        # the test is to check if all those found instances are only CMIP6's
+        if fx_variables:
+            count_cmip6 = [
+                p for p in fx_variables if p.get('project', None) == 'CMIP6'
+            ]
+            assert len(fx_variables) == len(count_cmip6)
 
 
 def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, config_user):
