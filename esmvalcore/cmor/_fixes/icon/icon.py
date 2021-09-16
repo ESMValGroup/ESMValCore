@@ -90,7 +90,7 @@ class AllVars(Fix):
         # correctly
         cube.coord('height').attributes['positive'] = 'down'
 
-        # Reverse height axis so that index 0 is surface level
+        # Reverse entire cube along height axis so that index 0 is surface level
         cube = iris.util.reverse(cube, 'height')
         return cube
 
