@@ -7,7 +7,7 @@ from unittest.mock import create_autospec
 import iris
 import pytest
 import yaml
-from nested_lookup import get_occurrence_of_value, nested_lookup
+from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
 import esmvalcore
@@ -507,7 +507,6 @@ def test_simple_recipe_fill(tmp_path, patched_datafinder, config_user):
         """.format(script))
 
     recipe = get_recipe(tmp_path, content, config_user)
-    raw = yaml.safe_load(content)
     preprocessor_output = recipe.diagnostics['diagnostic_name'][
         'preprocessor_output']
     recipe._fill_wildcards('ta', preprocessor_output)

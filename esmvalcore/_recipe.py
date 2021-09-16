@@ -12,8 +12,6 @@ import yaml
 from nested_lookup import get_all_keys, nested_delete, nested_lookup
 from netCDF4 import Dataset
 
-from esmvalcore import preprocessor
-
 from . import __version__
 from . import _recipe_checks as check
 from ._config import (
