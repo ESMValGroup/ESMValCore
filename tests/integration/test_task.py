@@ -18,6 +18,7 @@ from esmvalcore._task import (
 
 
 class MockBaseTask(BaseTask):
+
     def _run(self, input_files):
         tmp_path = self._tmp_path
         output_file = tmp_path / self.name
@@ -60,8 +61,13 @@ def example_tasks(tmp_path):
     return tasks
 
 
-@pytest.mark.parametrize('mpmethod', ["spawn", "fork"])
-@pytest.mark.parametrize('max_parallel_tasks', [1, 2, 3, 4, 16, None])
+@pytest.mark.parametrize(['mpmethod', 'max_parallel_tasks'], [
+    ('fork', 1),
+    ('fork', 2),
+    ('fork', 15),
+    ('fork', None),
+    ('spawn', 2),
+])
 def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks,
                    mpmethod):
     """Check that tasks are run correctly."""
@@ -174,7 +180,7 @@ def test_py_diagnostic_task_constructor(tmp_path):
 
 
 def test_diagnostic_diag_script_none(tmp_path):
-    """Test case when diagnostic script doesnt exist."""
+    """Test case when diagnostic script doesn't exist."""
     diag_script = tmp_path / 'diag_cow.py'
     with pytest.raises(DiagnosticError) as err_msg:
         _get_single_diagnostic_task(tmp_path, diag_script, write_diag=False)
@@ -216,12 +222,10 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
 
 
 # skip if no exec
-no_ncl = pytest.mark.skipif(
-    shutil.which('ncl') is None, reason="ncl is not installed"
-)
-no_rscript = pytest.mark.skipif(
-    shutil.which('Rscript') is None, reason="Rscript is not installed"
-)
+no_ncl = pytest.mark.skipif(shutil.which('ncl') is None,
+                            reason="ncl is not installed")
+no_rscript = pytest.mark.skipif(shutil.which('Rscript') is None,
+                                reason="Rscript is not installed")
 
 CMD_diag = {
     ('ncl', 'ncl'): _py2ncl({'cow': 22}, 'tas'),
@@ -232,8 +236,8 @@ CMD_diag = {
 CMD_diag_fail = {
     ('ncl', 'ncl'): ("cows on the [river]",
                      "An error occurred during execution of NCL script"),
-    ('python', 'py'): ("import os\n\nprint(cow)",
-                       "diag_cow.py failed with return code 1")
+    ('python', 'py'):
+    ("import os\n\nprint(cow)", "diag_cow.py failed with return code 1")
 }
 
 
@@ -242,6 +246,7 @@ CMD_diag_fail = {
 @no_rscript
 def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
     """Run DiagnosticTask that will not fail."""
+
     def _run(self, input_filesi=[]):
         print(f'running task {self.name}')
 
@@ -252,8 +257,8 @@ def test_diagnostic_run_task(monkeypatch, executable, diag_text, tmp_path):
 
 @pytest.mark.parametrize('executable,diag_text', CMD_diag_fail.items())
 @no_ncl
-def test_diagnostic_run_task_fail(monkeypatch, executable,
-                                  diag_text, tmp_path):
+def test_diagnostic_run_task_fail(monkeypatch, executable, diag_text,
+                                  tmp_path):
     """Run DiagnosticTask that will fail."""
 
     def _run(self, input_filesi=[]):
