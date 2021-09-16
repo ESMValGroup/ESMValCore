@@ -696,7 +696,7 @@ class CMORCheck():
             except ValueError:
                 cmor_points = coord_info.requested
             if coord.points.ndim != 1:
-                self.report_debug_message(
+                self.report_warning(
                     "Cannot check requested values of {}D coordinate {} since "
                     "it is not 1D", coord.points.ndim, var_name)
                 return

@@ -600,7 +600,7 @@ class TestCMORCheck(unittest.TestCase):
         self._check_cube()
 
     def test_requested_non_1d(self):
-        """No warning if requested values in non-1d coord are not present."""
+        """Warning if requested values in non-1d cannot be checked."""
         coord = self.cube.coord('air_pressure')
         values = np.linspace(0, 40, len(coord.points))
         values = np.broadcast_to(values, (20, 20))
@@ -613,8 +613,8 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.add_aux_coord(new_plev_coord, (2, 3))
         checker = CMORCheck(self.cube, self.var_info)
         checker.check_metadata()
-        self.assertTrue(checker.has_debug_messages())
-        self.assertFalse(checker.has_warnings())
+        self.assertFalse(checker.has_debug_messages())
+        self.assertTrue(checker.has_warnings())
 
     def test_non_increasing(self):
         """Fail in metadata if increasing coordinate is decreasing."""
