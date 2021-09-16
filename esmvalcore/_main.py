@@ -423,7 +423,7 @@ def run():
 
     from .exceptions import RecipeError
 
-    # Workaroud to avoid using more for the output
+    # Workaround to avoid using more for the output
 
     def display(lines, out):
         text = "\n".join(lines) + "\n"
@@ -438,7 +438,7 @@ def run():
     except RecipeError as exc:
         # Hide the stack trace for RecipeErrors
         logger.error("%s", exc)
-        logger.debug("RecipeError:", exc_info=True)
+        logger.debug("Stack trace for debugging:", exc_info=True)
         sys.exit(1)
     except Exception:  # noqa
         if not logger.handlers:
