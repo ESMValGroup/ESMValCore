@@ -86,12 +86,20 @@ class AllVars(Fix):
         )
         cube.add_aux_coord(air_pressure_coord, np.arange(cube.ndim))
 
-        # Add 'positive' attribute to height so iris can determine Z axis
-        # correctly
-        cube.coord('height').attributes['positive'] = 'down'
-
-        # Reverse entire cube along height axis so that index 0 is surface level
+        # Reverse entire cube along height axis so that index 0 is surface
+        # level
         cube = iris.util.reverse(cube, 'height')
+
+        # Fix metadata of generalized height coordinate
+        z_coord = cube.coord('height')
+        z_coord.var_name = 'model_level'
+        z_coord.standard_name = None
+        z_coord.long_name = 'model level number'
+        z_coord.units = 'no unit'
+        z_coord.attributes['positive'] = 'up'
+        z_coord.points = np.arange(len(z_coord.points))
+        z_coord.bounds = None
+
         return cube
 
     @staticmethod
@@ -107,10 +115,8 @@ class AllVars(Fix):
         lon.standard_name = "longitude"
         lat.long_name = "latitude"
         lon.long_name = "longitude"
-        lat.convert_units('degrees')
-        lon.convert_units('degrees')
-        lat.units = "degrees_north"
-        lon.units = "degrees_east"
+        lat.convert_units('degrees_north')
+        lon.convert_units('degrees_east')
 
         # If grid is not unstructured, no further changes are necessary
         if cube.coord_dims(lat) != cube.coord_dims(lon):
@@ -137,16 +143,26 @@ class AllVars(Fix):
         t_coord.standard_name = 'time'
         t_coord.long_name = 'time'
 
-        # Convert units to CF format
+        # Convert invalid time units of the form "day as %Y%m%d.%f" to CF
+        # format (e.g., "days since 1850-01-01")
+        # Notes:
+        # - It might be necessary to expand this to other time formats in the
+        #   raw file.
+        # - This has not been tested with sub-daily data
+        time_format = 'day as %Y%m%d.%f'
         t_unit = t_coord.attributes.pop("invalid_units")
+        if t_unit != time_format:
+            raise ValueError(
+                f"Expected time units '{time_format}' in input file, got "
+                f"'{t_unit}'")
         timestep, _, t_fmt_str = t_unit.split(" ")
         new_t_unit_str = f"{timestep} since 1850-01-01"
-        new_t_unit = cf_units.Unit(new_t_unit_str, calendar="standard")
+        new_t_unit = cf_units.Unit(new_t_unit_str,
+                                   calendar="proleptic_gregorian")
 
         new_datetimes = [datetime.strptime(str(dt), t_fmt_str) for dt in
                          t_coord.points]
-        new_dt_points = [new_t_unit.date2num(new_dt) for new_dt in
-                         new_datetimes]
+        new_dt_points = new_t_unit.date2num(np.array(new_datetimes))
 
         t_coord.points = new_dt_points
         t_coord.units = new_t_unit
@@ -157,7 +173,10 @@ class Siconca(Fix):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        # Note: wrong var_name gets fixed in AllVars
+        # Note: This fix is called before the AllVars() fix. The wrong var_name
+        # and units (which need to be %) are fixed in a later step in
+        # AllVars(). This fix here is necessary to fix the "unknown" units that
+        # cannot be converted to % in AllVars().
         cube = cubes.extract_cube(var_name_constraint('sic'))
         cube.units = '1'
         return cubes

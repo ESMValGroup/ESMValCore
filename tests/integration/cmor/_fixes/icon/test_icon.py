@@ -4,6 +4,7 @@ from functools import lru_cache
 import iris
 import numpy as np
 import pytest
+from cf_units import Unit
 
 from esmvalcore._config import get_extra_facets
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Siconca
@@ -79,8 +80,8 @@ def check_time(cube):
     assert time.var_name == 'time'
     assert time.standard_name == 'time'
     assert time.long_name == 'time'
-    assert time.units == 'days since 1850-01-01'
-    assert time.units.calendar == 'gregorian'
+    assert time.units == Unit('days since 1850-01-01',
+                              calendar='proleptic_gregorian')
     np.testing.assert_allclose(time.points, [54786.])
     assert time.bounds is None
     assert time.attributes == {}
@@ -88,16 +89,15 @@ def check_time(cube):
 
 def check_height(cube):
     """Check height coordinate of cube."""
-    assert cube.coords('height', dim_coords=True)
-    height = cube.coord('height', dim_coords=True)
-    assert height.var_name == 'height'
-    assert height.standard_name == 'height'
-    assert height.long_name == 'generalized_height'
-    assert height.units == 'unknown'
-    assert np.isclose(height.points[0], 47.0)
-    assert np.isclose(height.points[-1], 1.0)
-    assert height.bounds is not None
-    assert height.attributes == {'positive': 'down'}
+    assert cube.coords('model level number', dim_coords=True)
+    height = cube.coord('model level number', dim_coords=True)
+    assert height.var_name == 'model_level'
+    assert height.standard_name is None
+    assert height.long_name == 'model level number'
+    assert height.units == 'no unit'
+    np.testing.assert_array_equal(height.points, np.arange(47))
+    assert height.bounds is None
+    assert height.attributes == {'positive': 'up'}
 
     assert cube.coords('air_pressure', dim_coords=False)
     plev = cube.coord('air_pressure', dim_coords=False)
@@ -396,3 +396,15 @@ def test_empty_standard_name_fix(cubes_2d):
     assert cube.standard_name is None
     assert cube.long_name == 'Near-Surface Air Temperature'
     assert cube.units == 'K'
+
+
+# Test fix with invalid time units
+
+
+def test_invalid_time_units(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    for cube in cubes_2d:
+        cube.coord('time').attributes['invalid_units'] = 'month as %Y%m%d.%f'
+    with pytest.raises(ValueError):
+        fix.fix_metadata(cubes_2d)

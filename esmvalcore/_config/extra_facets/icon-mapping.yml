@@ -1,4 +1,8 @@
 # Extra facets for native ICON model output
+
+# Note: The 'raw_name' attribute is only necessary for variables which do not
+# have the correct CMOR name in the files. Most variables already have the
+# correct name.
 ---
 
 ICON:
