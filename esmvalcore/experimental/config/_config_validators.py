@@ -252,10 +252,6 @@ def deprecate(func, variable, version: str = None):
 
 
 _validators = {
-    # deprecate in 2.2.0
-    'write_plots': deprecate(validate_bool, 'write_plots', '2.4.0'),
-    'write_netcdf': deprecate(validate_bool, 'write_netcdf', '2.4.0'),
-
     # From user config
     'log_level': validate_string,
     'exit_on_warning': validate_bool,
