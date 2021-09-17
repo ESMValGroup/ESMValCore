@@ -486,7 +486,8 @@ class CMORCheck():
         Generic level coordinates are used to calculate high-dimensional (e.g.,
         3D or 4D) regular level coordinates (like pressure or altitude) from
         lower-dimensional (e.g., 2D or 1D) arrays in order to save disk space.
-        A detailed explanation can be found here:
+        In order to also support regular level coordinates, search for allowed
+        alternatives here.  A detailed explanation of this can be found here:
             https://github.com/ESMValGroup/ESMValCore/issues/1029
 
         Only the projects CMIP3, CMIP5, CMIP6 and obs4MIPs support generic
@@ -504,6 +505,12 @@ class CMORCheck():
         the use of alternative level coordinates) in the first place, so we do
         not need to worry about differing requested values for the levels in
         this case.
+
+        In the future, this might be extended: For ``cmor_strict=True``
+        projects (like CMIP) the level coordinate's ``len`` might be used to
+        search for the correct coordinate version and then check against this.
+        For ``cmor_strict=False`` project (like OBS) the check for requested
+        values might be disabled.
 
         """
         table_type = self._cmor_var.table_type
@@ -538,7 +545,9 @@ class CMORCheck():
         # Valid alternative coordinate found -> perform checks on it
         self.report_warning(
             f"Found alternative coordinate '{alternative_coord.out_name}' "
-            f"for generic level coordinate '{key}'")
+            f"for generic level coordinate '{key}'. Subsequent warnings about "
+            f"levels that are not contained in '{alternative_coord.out_name}' "
+            f"can be safely ignored.")
         self._check_coord(alternative_coord, cube_coord, self._cube.var_name)
 
     def _check_coords(self):
