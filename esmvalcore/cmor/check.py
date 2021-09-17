@@ -646,6 +646,10 @@ class CMORCheck():
 
         if l_fix_coord_value:
             # cube.intersection only works for cells with 0 or 2 bounds
+            # Note: nbounds==0 means there are no bounds given, nbounds==2
+            # implies a regular grid with bounds in the grid direction,
+            # nbounds>2 implies an irregular grid with bounds given as vertices
+            # of the cell polygon.
             if coord.ndim == 1 and coord.nbounds in (0, 2):
                 lon_extent = iris.coords.CoordExtent(coord, 0.0, 360., True,
                                                      False)

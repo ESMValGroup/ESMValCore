@@ -155,12 +155,10 @@ class AllVars(Fix):
             raise ValueError(
                 f"Expected time units '{time_format}' in input file, got "
                 f"'{t_unit}'")
-        timestep, _, t_fmt_str = t_unit.split(" ")
-        new_t_unit_str = f"{timestep} since 1850-01-01"
-        new_t_unit = cf_units.Unit(new_t_unit_str,
+        new_t_unit = cf_units.Unit('days since 1850-01-01',
                                    calendar="proleptic_gregorian")
 
-        new_datetimes = [datetime.strptime(str(dt), t_fmt_str) for dt in
+        new_datetimes = [datetime.strptime(str(dt), '%Y%m%d.%f') for dt in
                          t_coord.points]
         new_dt_points = new_t_unit.date2num(np.array(new_datetimes))
 
