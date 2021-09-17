@@ -41,10 +41,12 @@ def cubes_regular_grid():
     """Cube with regular grid."""
     lat_coord = iris.coords.DimCoord([0.0, 1.0], var_name='lat',
                                      standard_name='latitude',
-                                     long_name='latitude', units='degrees')
+                                     long_name='latitude',
+                                     units='degrees_north')
     lon_coord = iris.coords.DimCoord([-1.0, 1.0], var_name='lon',
                                      standard_name='longitude',
-                                     long_name='longitude', units='degrees')
+                                     long_name='longitude',
+                                     units='degrees_east')
     cube = iris.cube.Cube([[0.0, 1.0], [2.0, 3.0]], var_name='tas', units='K',
                           dim_coords_and_dims=[(lat_coord, 0), (lon_coord, 1)])
     return iris.cube.CubeList([cube])
@@ -55,10 +57,12 @@ def cubes_2d_lat_lon_grid():
     """Cube with 2D latitude and longitude."""
     lat_coord = iris.coords.AuxCoord([[0.0, 1.0], [2.0, 3.0]], var_name='lat',
                                      standard_name='latitude',
-                                     long_name='latitude', units='degrees')
+                                     long_name='latitude',
+                                     units='degrees_north')
     lon_coord = iris.coords.AuxCoord([[-1.0, 1.0], [2.0, 3.0]], var_name='lon',
                                      standard_name='longitude',
-                                     long_name='longitude', units='degrees')
+                                     long_name='longitude',
+                                     units='degrees_east')
     cube = iris.cube.Cube([[0.0, 1.0], [2.0, 3.0]], var_name='tas', units='K',
                           aux_coords_and_dims=[(lat_coord, (0, 1)),
                                                (lon_coord, (0, 1))])
