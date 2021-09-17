@@ -24,7 +24,7 @@ CMIP data
 ---------
 CMIP data is widely available via the Earth System Grid Federation
 (`ESGF <https://esgf.llnl.gov/>`_) and is accessible to users either
-via download from the ESGF portal or through the ESGF data nodes hosted
+via automatic download by ``esmvaltool`` or through the ESGF data nodes hosted
 by large computing facilities (like CEDA-Jasmin, DKRZ, etc). This data
 adheres to, among other standards, the DRS and Controlled Vocabulary
 standard for naming files and structured paths; the `DRS
@@ -95,12 +95,20 @@ view:
 The first point is self-explanatory: if the user runs the tool on a machine
 that has access to a data repository or multiple data repositories, then
 ESMValTool will look for and find the available data requested by the user.
-If the files are not found locally, the tool will search the ESGF_ and download
+If the files are not found locally, the tool can search the ESGF_ and download
 the missing files, provided that they are available.
 
 The second point underlines the fact that the user has full control over what
 type and the amount of data is needed for the analyses. Setting the data
 retrieval parameters is explained below.
+
+Enabling automatic downloads from the ESGF
+------------------------------------------
+To enable automatic downloads from ESGF, set ``offline: false`` in
+the :ref:`user configuration file` or provide the command line argument
+``--offline=False`` when running the recipe.
+The files will be stored in the ``download_dir`` set in
+the :ref:`user configuration file`.
 
 Setting the correct root paths
 ------------------------------

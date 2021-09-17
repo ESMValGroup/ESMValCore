@@ -20,7 +20,7 @@ max_parallel_tasks: null
 # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
 # and obs4MIPs data from ESGF by default. This is useful if you are working
 # on a computer without an internet connection.
-offline: false
+offline: true
 # Log level of the console
 log_level: info
 # Exit on warning (only for NCL diagnostic scripts)? true/[false]
@@ -92,10 +92,6 @@ drs:
 #  OBS6: default
 #  obs4MIPs: default
 #  ana4mips: default
-# Because storage of ESGF data is centrally managed on Jasmin,
-# you might want ask the administrators to download and store
-# the required data instead of downloading it yourself.
-#offline: true
 
 # Site-specific entries: DKRZ
 # Uncomment the lines below to locate data on Mistral at DKRZ
@@ -121,10 +117,6 @@ drs:
 #  OBS: default
 #  OBS6: default
 #  native6: default
-# Because storage of ESGF data is centrally managed on Mistral,
-# you might want ask the administrators to download and store
-# the required data instead of downloading it yourself.
-#offline: true
 
 # Site-specific entries: ETHZ
 # Uncomment the lines below to locate data at ETHZ

@@ -27,7 +27,7 @@ from ._data_finder import (
     get_statistic_output_file,
 )
 from ._provenance import TrackedFile, get_recipe_provenance
-from ._recipe_checks import RecipeError
+from ._recipe_checks import InputFilesNotFound, RecipeError
 from ._task import DiagnosticTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
@@ -805,8 +805,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
 
     if missing_vars:
         separator = "\n- "
-        raise RecipeError(f'Missing data for preprocessor {name}:{separator}'
-                          f'{separator.join(sorted(missing_vars))}')
+        raise InputFilesNotFound(
+            f'Missing data for preprocessor {name}:{separator}'
+            f'{separator.join(sorted(missing_vars))}')
 
     _update_statistic_settings(products, order, config_user['preproc_dir'])
 
@@ -1010,6 +1011,7 @@ class Recipe:
     info_keys = ('project', 'activity', 'dataset', 'exp', 'ensemble',
                  'version')
     """List of keys to be used to compose the alias, ordered by priority."""
+
     def __init__(self,
                  raw_recipe,
                  config_user,
@@ -1033,11 +1035,39 @@ class Recipe:
             raw_recipe.get('documentation', {}))
         try:
             self.tasks = self.initialize_tasks() if initialize_tasks else None
-        except RecipeError as ex:
-            logger.error(ex.message)
-            for task in ex.failed_tasks:
-                logger.error(task.message)
+        except RecipeError as exc:
+            self._log_recipe_errors(exc)
             raise
+
+    def _log_recipe_errors(self, exc):
+        """Log a message with recipe errors."""
+        logger.error(exc.message)
+        for task in exc.failed_tasks:
+            logger.error(task.message)
+
+        if self._cfg['offline'] and any(
+                isinstance(err, InputFilesNotFound)
+                for err in exc.failed_tasks):
+            logger.error(
+                "Not all input files required to run the recipe could be"
+                " found.")
+            logger.error(
+                "If the files are available locally, please check"
+                " your `rootpath` and `drs` settings in your user "
+                "configuration file %s", self._cfg['config_file'])
+            logger.error(
+                "To automatically download the required files to "
+                "`download_dir: %s`, set `offline: false` in %s or run the "
+                "recipe with the extra command line argument --offline=False",
+                self._cfg['download_dir'],
+                self._cfg['config_file'],
+            )
+            logger.info(
+                "Note that automatic download is only available for files"
+                " that are hosted on the ESGF, i.e. for projects: %s, and %s",
+                ', '.join(list(esgf.facets.FACETS)[:-1]),
+                list(esgf.facets.FACETS)[-1],
+            )
 
     @staticmethod
     def _need_ncl(raw_diagnostics):

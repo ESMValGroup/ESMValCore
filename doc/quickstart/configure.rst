@@ -53,6 +53,10 @@ with explanations in a commented line above each option:
   # Directory for storing downloaded climate data
   download_dir: ~/climate_data
 
+  # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
+  # and obs4MIPs data from ESGF [true]/false.
+  offline: true
+
   # Auxiliary data directory, used by some recipes to look for additional datasets
   auxiliary_data_dir: ~/auxiliary_data
 
@@ -74,11 +78,6 @@ with explanations in a commented line above each option:
     CMIP6: ESGF
     CORDEX: ESGF
     obs4MIPs: ESGF
-
-  # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
-  # and obs4MIPs data from ESGF. This is useful if you are working on a
-  # computer without an internet connection.
-  offline: false
 
   # Run at most this many tasks in parallel [null]/1/2/3/4/..
   # Set to null to use the number of available CPUs.
@@ -126,6 +125,12 @@ with explanations in a commented line above each option:
 
   # Auxiliary data directory (used for some additional datasets)
   auxiliary_data_dir: ~/auxiliary_data
+
+The ``offline`` setting can be used to disable or enable automatic downloads from ESGF.
+If ``offline`` is set to ``false``, the tool will automatically download
+any CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe
+but not available locally and store it in ``download_dir`` using the ``ESGF``
+directory structure defined in the :ref:`config-developer`.
 
 The ``auxiliary_data_dir`` setting is the path to place any required
 additional auxiliary data files. This is necessary because certain
@@ -180,11 +185,13 @@ the user.
 ESGF configuration
 ==================
 
-The ``esmvaltool run recipe_example.yml`` command will automatically try
-to download the files required to run the recipe from ESGF for the projects
-CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
+The ``esmvaltool run`` command can automatically download the files required
+to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 The downloaded files will be stored in the ``download_dir`` specified in the
-`user configuration file`_.
+:ref:`user configuration file`_.
+To enable automatic downloads from ESGF, set ``offline: false`` in
+the :ref:`user configuration file` or provide the command line argument
+``--offline=False`` when running the recipe.
 
 .. note::
 

@@ -78,7 +78,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     defaults = {
         'compress_netcdf': False,
         'exit_on_warning': False,
-        'offline': False,
+        'offline': True,
         'output_file_type': 'png',
         'output_dir': 'esmvaltool_output',
         'download_dir': '~/climate_data',

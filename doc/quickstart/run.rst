@@ -25,6 +25,17 @@ It is also possible to explicitly change values from the config file using flags
 
 	esmvaltool run --argument_name argument_value recipe_python.yml
 
+To automatically download the files required to run a recipe from ESGF, set
+``offline`` to ``false`` in the :ref:`user configuration file`
+or run the tool with the command
+
+.. code:: bash
+
+    esmvaltool run --offline=False recipe_python.yml
+
+This feature is available for projects that are hosted on the ESGF, i.e.
+CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
+
 To control the strictness of the CMOR checker, use the flag ``--check_level``:
 
 .. code:: bash
@@ -56,17 +67,6 @@ To run a recipe, even if some datasets are not available, use
 .. code:: bash
 
     esmvaltool run --skip_nonexistent=True recipe_python.yml
-
-For running on systems without an internet connection, it is possible to
-disable searching for files on ESGF if they are not available locally
-by running:
-
-.. code:: bash
-
-    esmvaltool run --offline=True recipe_python.yml
-
-If you prefer not having to specify this for every run, it is also possible to
-change the default setting to ``False`` in the :ref:`user configuration file`.
 
 It is also possible to select only specific diagnostics to be run. To tun only
 one, just specify its name. To provide more than one diagnostic to filter use

@@ -27,6 +27,10 @@ class RecipeError(Exception):
         return self.message
 
 
+class InputFilesNotFound(RecipeError):
+    """Files that are required to run the recipe have not been found."""
+
+
 def ncl_version():
     """Check the NCL version."""
     ncl = which('ncl')
@@ -160,7 +164,7 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
         _log_data_availability_errors(input_files, var, dirnames, filenames)
 
     if not input_files:
-        raise RecipeError(
+        raise InputFilesNotFound(
             f"Missing data for {var['alias']}: {var['short_name']}")
 
     if var['frequency'] == 'fx':
@@ -178,7 +182,7 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
     if missing_years:
         missing_txt = _group_years(missing_years)
 
-        raise RecipeError(
+        raise InputFilesNotFound(
             "No input data available for years {} in files:\n{}".format(
                 missing_txt, "\n".join(str(f) for f in input_files)))
 
