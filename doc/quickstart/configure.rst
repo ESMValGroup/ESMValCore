@@ -188,7 +188,7 @@ ESGF configuration
 The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 The downloaded files will be stored in the ``download_dir`` specified in the
-:ref:`user configuration file`_.
+:ref:`user configuration file`.
 To enable automatic downloads from ESGF, set ``offline: false`` in
 the :ref:`user configuration file` or provide the command line argument
 ``--offline=False`` when running the recipe.
