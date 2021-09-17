@@ -1041,11 +1041,11 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
           default: &default
-            area_statistics:
-              operator: mean
             multi_model_statistics:
               span: overlap
               statistics: [mean ]
+            area_statistics:
+              operator: mean
           custom:
             custom_order: true
             <<: *default
@@ -1093,10 +1093,10 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
 
     for task in recipe.tasks:
         if task.name == 'diagnostic_name/chl_default':
-            assert task.order.index('area_statistics') > task.order.index(
+            assert task.order.index('area_statistics') < task.order.index(
                 'multi_model_statistics')
         elif task.name == 'diagnostic_name/chl_custom':
-            assert task.order.index('area_statistics') < task.order.index(
+            assert task.order.index('area_statistics') > task.order.index(
                 'multi_model_statistics')
         elif task.name == 'diagnostic_name/chl_empty_custom':
             assert len(task.products) == 1
@@ -1914,6 +1914,55 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
         'Preprocessor landfrac_weighting uses alternative_dataset, but '
         'alternative_dataset is not defined for variable gpp of diagnostic '
         'diagnostic_name')
+
+
+def test_area_statistics(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          area_statistics:
+            area_statistics:
+              operator: mean
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: area_statistics
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                     tier: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+
+    # Check area_statistics
+    assert len(task.products) == 2
+    for product in task.products:
+        assert 'area_statistics' in product.settings
+        settings = product.settings['area_statistics']
+        assert len(settings) == 1
+        assert settings['operator'] == 'mean'
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
+        assert isinstance(fx_variables, dict)
+        if product.attributes['project'] == 'obs4mips':
+            assert len(fx_variables) == 1
+            assert fx_variables.get('areacella')
+        else:
+            assert len(fx_variables) == 2
+            assert fx_variables.get('areacella')
+            assert fx_variables.get('areacello')
 
 
 def test_landmask(tmp_path, patched_datafinder, config_user):
