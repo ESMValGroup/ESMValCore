@@ -1942,7 +1942,7 @@ def test_area_statistics(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1962,7 +1962,7 @@ def test_area_statistics(tmp_path, patched_datafinder, config_user):
         assert settings['operator'] == 'mean'
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
             assert fx_variables.get('areacella')
         else:

@@ -95,8 +95,6 @@ def test_load_default_config(monkeypatch):
         },
         'extra_facets_dir': tuple(),
         'run_diagnostic': True,
-        'write_plots': True,
-        'write_netcdf': True,
         'config_file': str(default_cfg_file),
     }
     default_keys = set(
