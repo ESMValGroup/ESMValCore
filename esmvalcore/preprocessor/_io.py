@@ -154,7 +154,16 @@ def _by_two_concatenation(cubes):
     concatenated = iris.cube.CubeList(cubes).concatenate()
     if len(concatenated) == 1:
         return concatenated[0]
+    
+    logger.debug("Found unmatching attributes in cubes during pairwise concatenation. I'm trying to equalise them!")
+    cubes_adj = _equalise_attributes(cubes)
+    concatenated = iris.cube.CubeList(cubes_adj).concatenate()
 
+    if len(concatenated) == 1:
+        return concatenated[0]
+
+    logger.debug("Found unmatching attributes in cubes during pairwise concatenation. I'm trying to concatenate it as overlapping cubes.")
+    
     concatenated = _concatenate_overlapping_cubes(concatenated)
     if len(concatenated) == 2:
         _get_concatenation_error(concatenated)
@@ -473,4 +482,85 @@ def _concatenate_overlapping_cubes(cubes):
                     logger.error(cube)
                 raise ex
 
+    return cubes
+
+def _equalise_attributes(cubes_list):
+    """
+    Equalise the attributes of a given cubes_list. It sets up the same value 
+    for common attributes and remove the attributes which don't match.
+    The first cube is taken as reference
+
+    Arguments:
+
+    * cubes_list (iterable of :class:`iris.cube.Cube`):
+        A collection of cubes to compare and adjust.
+    
+    Return:
+    
+    * cubes (iterable of :class:`iris.cube.Cube`):
+        A collection of adjusted cubes.
+    """
+    
+    # create a deepcopy of original data
+    cubes = copy.deepcopy(cubes_list)
+    # Work out which attributes are identical across all the cubes.
+    common_keys = cubes[0].attributes.keys()
+    dtype = cubes[0].dtype
+    for cube in cubes[1:]:
+        cube_keys = cube.attributes.keys()
+        common_keys = [
+            key for key in common_keys
+            if key in cube_keys
+            and np.all(cube.attributes[key] == cubes[0].attributes[key])]
+        # Match data type and fill value to those of first cube.
+        if cube.dtype != dtype:
+            cube.data = cube.data.astype(dtype)
+
+    # Remove all the other attributes.
+    for cube in cubes:
+        for key in cube.attributes.keys():
+            if key not in common_keys:
+                del cube.attributes[key]
+
+    # Iterate for each co-ordinate in first cube.
+    for coord0 in cubes[0].coords():
+        coord_name = coord0.standard_name
+        if coord_name is not None:
+            dtype_points = coord0.points.dtype
+            dtype_bounds = getattr(coord0.bounds, 'dtype', None)
+            long_name = coord0.long_name
+            var_name = coord0.var_name
+            circular = getattr(coord0, 'circular', None)
+            # Work out which attributes are identical (for this co-ordinate)
+            # across all the cubes.
+            common_coord_keys = coord0.attributes.keys()
+            for cube in cubes[1:]:
+                coord = cube.coord(coord_name)
+                cube_coord_keys = coord.attributes.keys()
+                common_coord_keys = [key for key in common_coord_keys if key in
+                                     cube_coord_keys and
+                                     np.all(coord.attributes[key] ==
+                                            coord0.attributes[key])]
+                # Match names and data types to those of coord in first cube.
+                if coord.points.dtype != dtype_points:
+                    coord.points = coord.points.astype(dtype_points,
+                                                       copy=False)
+                d = getattr(coord.bounds, 'dtype', None)
+                if d != dtype_bounds and d is not None:
+                    coord.bounds = coord.bounds.astype(dtype_bounds,
+                                                       copy=False)
+                if coord.long_name != long_name:
+                    coord.long_name = long_name
+                if coord.var_name != var_name:
+                    coord.var_name = var_name
+                if circular is not None and \
+                        getattr(coord, 'circular', None) != circular:
+                    coord.circular = circular
+
+            # Remove all the other attributes (for this co-ordinate).
+            for cube in cubes:
+                coord = cube.coord(coord_name)
+                for key in coord.attributes.keys():
+                    if key not in common_coord_keys:
+                        del coord.attributes[key]
     return cubes
