@@ -8,6 +8,7 @@ from pathlib import Path
 import iris
 
 from ._config import get_project_config
+from .exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -148,8 +149,8 @@ def _replace_tags(paths, variable):
         if tag in variable:
             replacewith = variable[tag]
         else:
-            raise KeyError("Dataset key {} must be specified for {}, check "
-                           "your recipe entry".format(tag, variable))
+            raise RecipeError(f"Dataset key '{tag}' must be specified for "
+                              f"{variable}, check your recipe entry")
         paths = _replace_tag(paths, original_tag, replacewith)
     return paths
 
