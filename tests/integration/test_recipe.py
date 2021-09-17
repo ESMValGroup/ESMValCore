@@ -2978,3 +2978,36 @@ def test_obs4mips_case_correct(tmp_path, patched_datafinder, config_user):
     variable = recipe.diagnostics['diagnostic_name']['preprocessor_output'][
         'tas'][0]
     assert variable['project'] == 'obs4MIPs'
+
+
+def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              areacella:
+                project: CMIP5
+                mip: fx
+                exp: historical
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: BNU-ESM}
+            scripts: null
+        """)
+    config_user['download_dir'] = tmp_path / 'download_dir'
+    config_user['offline'] = False
+
+    mocker.patch.object(esmvalcore._recipe.esgf,
+                        'download',
+                        create_autospec=True)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    recipe.tasks.run = mocker.Mock()
+    recipe.run()
+
+    esmvalcore._recipe.esgf.download.assert_called_once_with(
+        set(), config_user['download_dir'])
+    recipe.tasks.run.assert_called_once_with(
+        max_parallel_tasks=config_user['max_parallel_tasks'])

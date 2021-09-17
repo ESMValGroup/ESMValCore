@@ -559,3 +559,13 @@ def test_download_fail(mocker, tmp_path, caplog):
     assert error1 in caplog.text
     for file in test_files:
         file.download.assert_called_with(dest_folder)
+
+
+def test_download_noop(caplog):
+    """Test downloading no files."""
+    caplog.set_level('INFO')
+    esmvalcore.esgf.download([], dest_folder='/does/not/exist')
+
+    msg = ("All required data is available locally,"
+           " not downloading anything.")
+    assert msg in caplog.text
