@@ -36,7 +36,6 @@ requirements:
   run:
     # esmvaltool
     - python>=3.7
-    - graphviz
     - iris>=3.0.2
     - python-stratify
     - scipy>=1.6
@@ -46,7 +45,7 @@ requirements:
     - cython  # required by cf-units but not automatically installed
     - defusedxml  # required by esgf-pyclient
     - esgf-pyclient
-    - esmpy
+    - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
     - fiona
     - fire
     - humanfriendly

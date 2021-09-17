@@ -9,7 +9,7 @@ netCDF4
 numpy
 pandas
 pillow
-prov[dot]
+prov
 pybtex
 pyyaml
 scipy
