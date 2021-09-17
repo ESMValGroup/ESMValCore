@@ -1,6 +1,7 @@
 autodocsumm
 dask[array]
 esgf-pyclient
+docutils <0.17
 fiona
 humanfriendly
 importlib_resources
