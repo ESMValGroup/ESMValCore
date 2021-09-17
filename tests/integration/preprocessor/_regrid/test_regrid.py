@@ -37,7 +37,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         self.grid_for_linear = grid
 
-        # Setup unstructed cube and grid
+        # Setup unstructured cube and grid
         data = np.empty((1, 1))
         lons = iris.coords.DimCoord([1.6],
                                     standard_name='longitude',
