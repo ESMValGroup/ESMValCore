@@ -1,5 +1,6 @@
 autodocsumm
 dask[array]
+docutils <0.17
 fiona
 importlib_resources
 jinja2
