@@ -429,6 +429,7 @@ class CMORCheck():
                                               'exist')
 
     def _check_generic_level_dim_names(self, key, coordinate):
+        """Check name of generic level coordinate."""
         standard_name = None
         out_name = None
         name = None
@@ -451,8 +452,7 @@ class CMORCheck():
             if standard_name:
                 if not out_name:
                     self.report_error(
-                        f'Generic level coordinate {key} '
-                        'has wrong var_name.', )
+                        f'Generic level coordinate {key} has wrong var_name.')
                 level = coordinate.generic_lev_coords[name]
                 level.generic_level = True
                 level.generic_lev_coords = self._cmor_var.coordinates[
@@ -464,17 +464,96 @@ class CMORCheck():
             else:
                 if out_name:
                     self.report_critical(
-                        f'Generic level coordinate {key} '
-                        'has wrong standard_name '
-                        'or is not set.', )
+                        f'Generic level coordinate {key} with out_name '
+                        f'{out_name} has wrong standard_name or is not set.')
                 else:
-                    self.report_critical(self._does_msg, key, 'exist')
+                    self._check_alternative_dim_names(key)
+
+    ALTERNATIVE_GENERIC_LEV_COORDS = {
+        'alevel': {
+            'CMIP5': ['alt40', 'plevs'],
+            'CMIP6': ['alt16', 'plev3'],
+            'obs4mips': ['alt16', 'plev3'],
+        },
+        'zlevel': {
+            'CMIP3': ['pressure'],
+        },
+    }
+
+    def _check_alternative_dim_names(self, key):
+        """Check for viable alternatives to generic level coordinates.
+
+        Generic level coordinates are used to calculate high-dimensional (e.g.,
+        3D or 4D) regular level coordinates (like pressure or altitude) from
+        lower-dimensional (e.g., 2D or 1D) arrays in order to save disk space.
+        In order to also support regular level coordinates, search for allowed
+        alternatives here.  A detailed explanation of this can be found here:
+            https://github.com/ESMValGroup/ESMValCore/issues/1029
+
+        Only the projects CMIP3, CMIP5, CMIP6 and obs4MIPs support generic
+        level coordinates. Right now, only alternative level coordinates for
+        the atmosphere ('alevel' or 'zlevel') are supported.
+
+        Note that only the "simplest" CMOR table entry per coordinate is
+        specified (e.g., only 'plev3' for the pressure level coordinate and
+        'alt16' for the altitude coordinate). These different versions (e.g.,
+        'plev3', 'plev19', 'plev39', etc.) only differ in the requested values.
+        We are mainly interested in the metadata of the coordinates (names,
+        units), which is equal for all coordinate versions. In the DEFAULT
+        strictness or lower, differing requested values only produce a warning.
+        A stricter setting (such as STRICT) does not allow this feature (i.e.,
+        the use of alternative level coordinates) in the first place, so we do
+        not need to worry about differing requested values for the levels in
+        this case.
+
+        In the future, this might be extended: For ``cmor_strict=True``
+        projects (like CMIP) the level coordinate's ``len`` might be used to
+        search for the correct coordinate version and then check against this.
+        For ``cmor_strict=False`` project (like OBS) the check for requested
+        values might be disabled.
+
+        """
+        table_type = self._cmor_var.table_type
+        alternative_coord = None
+        allowed_alternatives = self.ALTERNATIVE_GENERIC_LEV_COORDS.get(
+            key, {}).get(table_type, [])
+
+        # Check if any of the allowed alternative coordinates is present in the
+        # cube
+        for allowed_alternative in allowed_alternatives:
+            coord_info = CMOR_TABLES[table_type].coords[allowed_alternative]
+            try:
+                cube_coord = self._cube.coord(var_name=coord_info.out_name)
+            except iris.exceptions.CoordinateNotFoundError:
+                pass
+            else:
+                if cube_coord.standard_name == coord_info.standard_name:
+                    alternative_coord = coord_info
+                    break
+                self.report_error(
+                    f"Found alternative coordinate '{coord_info.out_name}' "
+                    f"for generic level coordinate '{key}' with wrong "
+                    f"standard_name '{cube_coord.standard_name}' (expected "
+                    f"'{coord_info.standard_name}')")
+                break
+
+        # No valid alternative coordinate found -> critical error
+        if alternative_coord is None:
+            self.report_critical(self._does_msg, key, 'exist')
+            return
+
+        # Valid alternative coordinate found -> perform checks on it
+        self.report_warning(
+            f"Found alternative coordinate '{alternative_coord.out_name}' "
+            f"for generic level coordinate '{key}'. Subsequent warnings about "
+            f"levels that are not contained in '{alternative_coord.out_name}' "
+            f"can be safely ignored.")
+        self._check_coord(alternative_coord, cube_coord, self._cube.var_name)
 
     def _check_coords(self):
         """Check coordinates."""
-
         for coordinate in self._cmor_var.coordinates.values():
-            # Cannot check generic_level coords as no CMOR information
+            # Cannot check generic_level coords with no CMOR information
             if coordinate.generic_level and not coordinate.out_name:
                 continue
             var_name = coordinate.out_name
