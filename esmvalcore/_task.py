@@ -215,6 +215,7 @@ def write_ncl_settings(settings, filename, mode='wt'):
 
 class BaseTask:
     """Base class for defining task classes."""
+
     def __init__(self, ancestors=None, name='', products=None):
         """Initialize task."""
         self.ancestors = [] if ancestors is None else ancestors
@@ -285,6 +286,7 @@ class DiagnosticError(Exception):
 
 class DiagnosticTask(BaseTask):
     """Task for running a diagnostic."""
+
     def __init__(self, script, settings, output_dir, ancestors=None, name=''):
         """Create a diagnostic task."""
         super().__init__(ancestors=ancestors, name=name)
@@ -616,8 +618,8 @@ class DiagnosticTask(BaseTask):
 
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)
-            product.save_provenance()
             _write_citation_files(product.filename, product.provenance)
+            product.save_provenance()
             self.products.add(product)
 
         if not valid:
@@ -732,14 +734,7 @@ class TaskSet(set):
 
 def _copy_results(task, future):
     """Update task with the results from the remote process."""
-    task.output_files, updated_products = future.get()
-    for updated in updated_products:
-        for original in task.products:
-            if original.filename == updated.filename:
-                updated.copy_provenance(target=original)
-                break
-        else:
-            task.products.add(updated)
+    task.output_files, task.products = future.get()
 
 
 def _run_task(task):

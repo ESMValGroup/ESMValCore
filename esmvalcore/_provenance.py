@@ -116,25 +116,20 @@ class TrackedFile:
 
         self.provenance = None
         self.entity = None
+        self._entity_uri = ''
         self.activity = None
+        self._activity_uri = ''
         self._ancestors = [] if ancestors is None else ancestors
 
     def __str__(self):
         """Return summary string."""
         return "{}: {}".format(self.__class__.__name__, self.filename)
 
-    def copy_provenance(self, target=None):
+    def copy_provenance(self):
         """Create a copy with identical provenance information."""
         if self.provenance is None:
             raise ValueError("Provenance of {} not initialized".format(self))
-        if target is None:
-            new = TrackedFile(self.filename, self.attributes)
-        else:
-            if target.filename != self.filename:
-                raise ValueError(
-                    "Attempt to copy provenance to incompatible file.")
-            new = target
-            new.attributes = copy.deepcopy(self.attributes)
+        new = TrackedFile(self.filename, self.attributes)
         new.provenance = copy.deepcopy(self.provenance)
         new.entity = new.provenance.get_record(self.entity.identifier)[0]
         new.activity = new.provenance.get_record(self.activity.identifier)[0]
@@ -169,6 +164,7 @@ class TrackedFile:
     def _initialize_activity(self, activity):
         """Copy the preprocessor task activity."""
         self.activity = activity
+        self._activity_uri = activity.identifier.uri
         update_without_duplicating(self.provenance, activity.bundle)
 
     def _initialize_entity(self):
@@ -180,6 +176,7 @@ class TrackedFile:
         }
         self.entity = self.provenance.entity('file:' + self.filename,
                                              attributes)
+        self._entity_uri = self.entity.identifier.uri
         attribute_to_authors(self.entity, self.attributes.get('authors', []))
         attribute_to_projects(self.entity, self.attributes.get('projects', []))
 
@@ -188,6 +185,8 @@ class TrackedFile:
         for ancestor in self._ancestors:
             if ancestor.provenance is None:
                 ancestor.initialize_provenance(activity)
+            elif isinstance(ancestor.provenance, str):
+                ancestor.restore_from_file()
             update_without_duplicating(self.provenance, ancestor.provenance)
             self.wasderivedfrom(ancestor)
 
@@ -241,5 +240,15 @@ class TrackedFile:
     def save_provenance(self):
         """Export provenance information."""
         self._include_provenance()
-        filename = os.path.splitext(self.filename)[0] + '_provenance'
-        self.provenance.serialize(filename + '.xml', format='xml')
+        filename = os.path.splitext(self.filename)[0] + '_provenance.xml'
+        self.provenance.serialize(filename, format='xml')
+        self.activity = None
+        self.entity = None
+        self.provenance = filename
+
+    def restore_from_file(self):
+        """Import provenance information from a previously saved file."""
+        filename = os.path.splitext(self.filename)[0] + '_provenance.xml'
+        self.provenance = ProvDocument.deserialize(filename, format='xml')
+        self.activity = self.provenance.get_record(self._activity_uri)[0]
+        self.entity = self.provenance.get_record(self._entity_uri)[0]
