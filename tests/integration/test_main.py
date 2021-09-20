@@ -10,11 +10,14 @@ import sys
 from textwrap import dedent
 from unittest.mock import patch
 
+import iris
 import pytest
 from fire.core import FireExit
 
 import esmvalcore._recipe_checks as check
 from esmvalcore._main import Config, ESMValTool, Recipes, run
+
+from .test_recipe import patched_datafinder
 
 
 def wrapper(f):
@@ -82,9 +85,69 @@ def test_empty_run(tmp_path):
     log_dir = './esmvaltool_output'
     log_file = os.path.join(log_dir,
                             os.listdir(log_dir)[0], 'run', 'main_log.txt')
+    filled_recipe = os.path.exists(
+        log_dir + '/' + os.listdir(log_dir)[0] + '/run/recipe_filled.yml')
     os.system("rm -r esmvaltool_output")
 
     assert log_file
+    assert not filled_recipe
+
+
+def test_filled_recipe(tmp_path, patched_datafinder):
+    """Test filled recipe is written."""
+    recipe_file = tmp_path / "recipe.yml"
+    content = dedent("""
+        documentation:
+          description: This is a test recipe.
+          authors:
+            - andela_bouwe
+          references:
+            - contact_authors
+            - acknow_project
+          projects:
+            - c3s-magic
+
+        datasets:
+          - dataset: bcc-csm1-1
+
+        preprocessors:
+          preprocessor_name:
+            extract_levels:
+              levels: 85000
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            additional_datasets:
+              - dataset: GFDL-ESM2G
+            variables:
+              ta:
+                preprocessor: preprocessor_name
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                timerange: '*'
+                additional_datasets:
+                  - dataset: MPI-ESM-LR
+                    timerange: '*/P1Y'
+            scripts: null
+        """)
+    recipe_file.write_text(content)
+    Config.get_config_user(path=tmp_path)
+    excs = (ValueError, iris.exceptions.CoordinateNotFoundError)
+    with pytest.raises(excs) as exc:
+        ESMValTool.run(
+            recipe_file,
+            config_file=f"{tmp_path}/config-user.yml",
+            check_level='ignore')
+    assert str(exc.value)
+    log_dir = './esmvaltool_output'
+    filled_recipe = os.path.exists(
+        log_dir + '/' + os.listdir(log_dir)[0] + '/run/recipe_filled.yml')
+    os.system("rm -r esmvaltool_output")
+
+    assert filled_recipe
 
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
