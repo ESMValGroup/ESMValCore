@@ -1485,6 +1485,7 @@ def test_diagnostic_task_provenance(
     # Check resulting products
     assert len(diagnostic_task.products) == 2
     for product in diagnostic_task.products:
+        product.restore_provenance()
         check_provenance(product)
         assert product.attributes['caption'] == record['caption']
         assert product.entity.get_attribute(

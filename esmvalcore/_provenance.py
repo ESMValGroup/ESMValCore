@@ -170,7 +170,7 @@ class TrackedFile:
     def _initialize_entity(self):
         """Initialize the entity representing the file."""
         attributes = {
-            'attribute:' + k: str(v)
+            'attribute:' + str(k).replace(' ', '_'): str(v)
             for k, v in self.attributes.items()
             if k not in ('authors', 'projects')
         }
@@ -186,7 +186,7 @@ class TrackedFile:
             if ancestor.provenance is None:
                 ancestor.initialize_provenance(activity)
             elif isinstance(ancestor.provenance, str):
-                ancestor.restore_from_file()
+                ancestor.restore_provenance()
             update_without_duplicating(self.provenance, ancestor.provenance)
             self.wasderivedfrom(ancestor)
 
@@ -246,7 +246,7 @@ class TrackedFile:
         self.entity = None
         self.provenance = filename
 
-    def restore_from_file(self):
+    def restore_provenance(self):
         """Import provenance information from a previously saved file."""
         filename = os.path.splitext(self.filename)[0] + '_provenance.xml'
         self.provenance = ProvDocument.deserialize(filename, format='xml')
