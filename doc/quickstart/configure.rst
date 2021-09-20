@@ -250,9 +250,9 @@ for example
 
 .. code-block:: bash
 
-    keyring set ESGF esgf-data.dkrz.de
-    keyring set ESGF cookiemonster
-    keyring set ESGF Welcome01
+    keyring set ESGF hostname esgf-data.dkrz.de
+    keyring set ESGF username cookiemonster
+    keyring set ESGF password Welcome01
 
 if you created an account on the host `esgf-data.dkrz.de`_ with username
 'cookiemonster' and password 'Welcome01'.
