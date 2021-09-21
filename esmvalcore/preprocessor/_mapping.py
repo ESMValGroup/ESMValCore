@@ -4,6 +4,7 @@
 import collections
 
 import iris
+import iris.cube
 import numpy as np
 
 

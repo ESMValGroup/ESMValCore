@@ -13,6 +13,7 @@ import os
 import cartopy.io.shapereader as shpreader
 import dask.array as da
 import iris
+import iris.cube
 import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator

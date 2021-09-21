@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Dict
 
 import iris
+import iris.cube
 import numpy as np
 import stratify
 from dask import array as da

@@ -8,6 +8,7 @@ from functools import reduce
 
 import cf_units
 import iris
+import iris.cube
 import numpy as np
 from iris.util import equalise_attributes
 

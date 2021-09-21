@@ -7,6 +7,7 @@ from itertools import groupby
 from warnings import catch_warnings, filterwarnings
 
 import iris
+import iris.cube
 import iris.exceptions
 import numpy as np
 import yaml

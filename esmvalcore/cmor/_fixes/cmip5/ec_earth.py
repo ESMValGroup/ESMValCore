@@ -1,5 +1,6 @@
 """Fixes for EC-Earth model."""
 import iris
+import iris.cube
 import numpy as np
 from dask import array as da
 

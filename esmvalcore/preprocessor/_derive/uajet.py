@@ -2,6 +2,7 @@
 
 import cf_units
 import iris
+import iris.cube
 import numpy as np
 
 from ._baseclass import DerivedVariableBase

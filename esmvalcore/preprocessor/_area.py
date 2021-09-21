@@ -7,6 +7,7 @@ import logging
 
 import fiona
 import iris
+import iris.cube
 import numpy as np
 import shapely
 import shapely.ops

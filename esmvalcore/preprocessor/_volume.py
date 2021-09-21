@@ -9,6 +9,7 @@ from copy import deepcopy
 import logging
 
 import iris
+import iris.cube
 import numpy as np
 
 logger = logging.getLogger(__name__)

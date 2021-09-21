@@ -4,6 +4,7 @@ import logging
 
 import dask.array as da
 import iris
+import iris.cube
 
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_metadata

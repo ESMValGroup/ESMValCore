@@ -6,6 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import iris
+import iris.cube
 
 logger = logging.getLogger(__name__)
 

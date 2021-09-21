@@ -3,6 +3,8 @@ import datetime
 import logging
 
 import iris
+import iris.cube
+
 import numpy as np
 
 from ..fix import Fix

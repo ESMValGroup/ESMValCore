@@ -1,5 +1,6 @@
 """Fixes for CNRM-CM6-1 model."""
 import iris
+import iris.cube
 
 from ..common import ClFixHybridPressureCoord
 from ..fix import Fix

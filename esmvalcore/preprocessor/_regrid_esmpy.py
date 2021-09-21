@@ -3,6 +3,7 @@
 
 import ESMF
 import iris
+import iris.cube
 import numpy as np
 
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
