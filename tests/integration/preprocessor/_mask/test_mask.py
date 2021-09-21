@@ -7,6 +7,7 @@ module.
 """
 
 import iris
+import iris.fileformats
 import numpy as np
 import pytest
 

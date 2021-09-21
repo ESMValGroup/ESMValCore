@@ -7,6 +7,7 @@ function.
 import unittest
 
 import iris
+import iris.fileformats
 import numpy as np
 
 import tests

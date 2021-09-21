@@ -4,6 +4,7 @@ from pathlib import Path
 
 import fiona
 import iris
+import iris.fileformats
 import numpy as np
 import pytest
 from cf_units import Unit

@@ -4,6 +4,7 @@ import unittest
 
 import cf_units
 import iris
+import iris.fileformats
 import numpy as np
 
 import tests

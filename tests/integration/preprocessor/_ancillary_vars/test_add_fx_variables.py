@@ -7,6 +7,7 @@ Integration tests for the
 """
 import logging
 import iris
+import iris.fileformats
 import numpy as np
 import pytest
 

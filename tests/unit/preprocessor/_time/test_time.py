@@ -9,6 +9,7 @@ import iris
 import iris.coord_categorisation
 import iris.coords
 import iris.exceptions
+import iris.fileformats
 import numpy as np
 import pytest
 from cf_units import Unit

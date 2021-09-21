@@ -5,6 +5,7 @@ function.
 """
 
 import iris
+import iris.fileformats
 import numpy as np
 from numpy import ma
 

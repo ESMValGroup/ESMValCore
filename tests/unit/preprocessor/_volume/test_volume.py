@@ -3,6 +3,7 @@
 import unittest
 
 import iris
+import iris.fileformats
 import numpy as np
 from cf_units import Unit
 
