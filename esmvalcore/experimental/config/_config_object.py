@@ -71,6 +71,7 @@ class Config(ValidatedConfig):
 
         mapping = _read_config_file(filename)
         new.update(mapping)
+        new['resume'] = []
 
         return new
 

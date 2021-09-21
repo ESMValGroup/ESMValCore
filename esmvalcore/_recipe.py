@@ -5,6 +5,7 @@ import os
 import re
 import warnings
 from copy import deepcopy
+from pathlib import Path
 from pprint import pformat
 
 import yaml
@@ -26,7 +27,7 @@ from ._data_finder import (
 )
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import RecipeError
-from ._task import DiagnosticTask, TaskSet
+from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (
@@ -1083,10 +1084,10 @@ class Recipe:
 
     @staticmethod
     def _expand_tag(variables, input_tag):
-        """Expand tags such as ensemble members or stardates to multiple
-        datasets.
+        """Expand tags such as ensemble members or startdates.
 
         Expansion only supports ensembles defined as strings, not lists.
+        Returns the expanded datasets.
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
@@ -1380,22 +1381,37 @@ class Recipe:
             # Create preprocessor tasks
             for variable_group in diagnostic['preprocessor_output']:
                 task_name = diagnostic_name + TASKSEP + variable_group
-                logger.info("Creating preprocessor task %s", task_name)
-                try:
-                    task = _get_preprocessor_task(
-                        variables=diagnostic['preprocessor_output']
-                        [variable_group],
-                        profiles=self._preprocessors,
-                        config_user=self._cfg,
-                        task_name=task_name,
+                for resume_dir in self._cfg['resume']:
+                    preproc_dir = Path(
+                        resume_dir,
+                        'preproc',
+                        diagnostic_name,
+                        variable_group,
                     )
-                except RecipeError as ex:
-                    failed_tasks.append(ex)
+                    if preproc_dir.exists():
+                        logger.info(
+                            "Re-using preprocessed files from %s for %s",
+                            preproc_dir, task_name)
+                        task = ResumeTask(preproc_dir, task_name)
+                        tasks.add(task)
+                        break
                 else:
-                    for task0 in task.flatten():
-                        task0.priority = priority
-                    tasks.add(task)
-                    priority += 1
+                    logger.info("Creating preprocessor task %s", task_name)
+                    try:
+                        task = _get_preprocessor_task(
+                            variables=diagnostic['preprocessor_output']
+                            [variable_group],
+                            profiles=self._preprocessors,
+                            config_user=self._cfg,
+                            task_name=task_name,
+                        )
+                    except RecipeError as ex:
+                        failed_tasks.append(ex)
+                    else:
+                        for task0 in task.flatten():
+                            task0.priority = priority
+                        tasks.add(task)
+                        priority += 1
 
             # Create diagnostic tasks
             for script_name, script_cfg in diagnostic['scripts'].items():

@@ -28,6 +28,7 @@ http://docs.esmvaltool.org. Have fun!
 """  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
 import logging
+from pathlib import Path
 
 import fire
 from pkg_resources import iter_entry_points
@@ -45,6 +46,22 @@ ______________________________________________________________________
 ______________________________________________________________________
 
 """ + __doc__
+
+
+def parse_resume(resume, recipe):
+    """Set `resume` to a correct value and sanity check."""
+    if not resume:
+        resume = []
+    if isinstance(resume, str):
+        resume = [resume]
+    # Sanity check resume directories:
+    current_recipe = recipe.read_text()
+    for resume_dir in resume:
+        resume_recipe = Path(resume_dir, 'run', recipe.name)
+        if current_recipe != resume_recipe.read_text():
+            raise ValueError(f'Only identical recipes can be resumed, but '
+                             f'{resume_recipe} is different from {recipe}')
+    return resume
 
 
 def process_recipe(recipe_file, config_user):
@@ -226,7 +243,6 @@ class Recipes():
             Name of the recipe to get, including any subdirectories.
         """
         import shutil
-        from pathlib import Path
 
         from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
@@ -307,6 +323,7 @@ class ESMValTool():
     @staticmethod
     def run(recipe,
             config_file=None,
+            resume=None,
             max_datasets=None,
             max_years=None,
             skip_nonexistent=False,
@@ -328,6 +345,9 @@ class ESMValTool():
         config_file: str, optional
             Configuration file to use. If not provided the file
             ${HOME}/.esmvaltool/config-user.yml will be used.
+        resume: list(str), optional
+            Resume one or more previous runs by using preprocessor output files
+            from these directories.
         max_datasets: int, optional
             Maximum number of datasets to use.
         max_years: int, optional
@@ -362,12 +382,9 @@ class ESMValTool():
             installed_recipe = str(DIAGNOSTICS.recipes / recipe)
             if os.path.exists(installed_recipe):
                 recipe = installed_recipe
-        recipe = os.path.abspath(os.path.expandvars(
-            os.path.expanduser(recipe)))
+        recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
 
-        recipe_name = os.path.splitext(os.path.basename(recipe))[0]
-
-        cfg = read_config_user_file(config_file, recipe_name, kwargs)
+        cfg = read_config_user_file(config_file, recipe.stem, kwargs)
 
         # Create run dir
         if os.path.exists(cfg['run_dir']):
@@ -384,6 +401,7 @@ class ESMValTool():
         logger.info("Using config file %s", cfg['config_file'])
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
+        cfg['resume'] = parse_resume(resume, recipe)
         cfg['skip-nonexistent'] = skip_nonexistent
         if isinstance(diagnostics, str):
             diagnostics = diagnostics.split(' ')

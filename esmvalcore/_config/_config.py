@@ -76,19 +76,20 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     # set defaults
     defaults = {
-        'compress_netcdf': False,
-        'exit_on_warning': False,
-        'output_file_type': 'png',
-        'output_dir': 'esmvaltool_output',
         'auxiliary_data_dir': 'auxiliary_data',
-        'extra_facets_dir': tuple(),
-        'save_intermediary_cubes': False,
-        'remove_preproc_dir': True,
-        'max_parallel_tasks': None,
-        'run_diagnostic': True,
-        'profile_diagnostic': False,
+        'compress_netcdf': False,
         'config_developer_file': None,
         'drs': {},
+        'exit_on_warning': False,
+        'extra_facets_dir': tuple(),
+        'max_parallel_tasks': None,
+        'output_file_type': 'png',
+        'output_dir': 'esmvaltool_output',
+        'profile_diagnostic': False,
+        'remove_preproc_dir': True,
+        'resume': [],
+        'run_diagnostic': True,
+        'save_intermediary_cubes': False,
     }
 
     for key in defaults:

@@ -6,7 +6,7 @@ import os
 from netCDF4 import Dataset
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-from prov.model import ProvDocument
+from prov.model import ProvDerivation, ProvDocument
 
 from ._version import __version__
 
@@ -116,9 +116,7 @@ class TrackedFile:
 
         self.provenance = None
         self.entity = None
-        self._entity_uri = ''
         self.activity = None
-        self._activity_uri = ''
         self._ancestors = [] if ancestors is None else ancestors
 
     def __str__(self):
@@ -139,6 +137,11 @@ class TrackedFile:
     def filename(self):
         """Filename."""
         return self._filename
+
+    @property
+    def _prov_file(self):
+        """Filename of provenance."""
+        return os.path.splitext(self.filename)[0] + '_provenance.xml'
 
     def initialize_provenance(self, activity):
         """Initialize the provenance document.
@@ -164,7 +167,6 @@ class TrackedFile:
     def _initialize_activity(self, activity):
         """Copy the preprocessor task activity."""
         self.activity = activity
-        self._activity_uri = activity.identifier.uri
         update_without_duplicating(self.provenance, activity.bundle)
 
     def _initialize_entity(self):
@@ -176,7 +178,7 @@ class TrackedFile:
         }
         self.entity = self.provenance.entity('file:' + self.filename,
                                              attributes)
-        self._entity_uri = self.entity.identifier.uri
+
         attribute_to_authors(self.entity, self.attributes.get('authors', []))
         attribute_to_projects(self.entity, self.attributes.get('projects', []))
 
@@ -184,9 +186,10 @@ class TrackedFile:
         """Register ancestor files for provenance tracking."""
         for ancestor in self._ancestors:
             if ancestor.provenance is None:
-                ancestor.initialize_provenance(activity)
-            elif isinstance(ancestor.provenance, str):
-                ancestor.restore_provenance()
+                if os.path.exists(ancestor._prov_file):
+                    ancestor.restore_provenance()
+                else:
+                    ancestor.initialize_provenance(activity)
             update_without_duplicating(self.provenance, ancestor.provenance)
             self.wasderivedfrom(ancestor)
 
@@ -240,15 +243,24 @@ class TrackedFile:
     def save_provenance(self):
         """Export provenance information."""
         self._include_provenance()
-        filename = os.path.splitext(self.filename)[0] + '_provenance.xml'
-        self.provenance.serialize(filename, format='xml')
+        self.provenance.serialize(self._prov_file, format='xml')
         self.activity = None
         self.entity = None
-        self.provenance = filename
+        self.provenance = None
 
     def restore_provenance(self):
         """Import provenance information from a previously saved file."""
-        filename = os.path.splitext(self.filename)[0] + '_provenance.xml'
-        self.provenance = ProvDocument.deserialize(filename, format='xml')
-        self.activity = self.provenance.get_record(self._activity_uri)[0]
-        self.entity = self.provenance.get_record(self._entity_uri)[0]
+        self.provenance = ProvDocument.deserialize(self._prov_file,
+                                                   format='xml')
+        entity_uri = f"{ESMVALTOOL_URI_PREFIX}file{self.filename}"
+        try:
+            self.entity = self.provenance.get_record(entity_uri)[0]
+        except IndexError:
+            logger.error("Failed to retrieve %s from %s", entity_uri,
+                         self._prov_file)
+        for rec in self.provenance.records:
+            if isinstance(rec, ProvDerivation):
+                if rec.args[0] == self.entity.identifier:
+                    activity_id = rec.args[2]
+                    self.activity = self.provenance.get_record(activity_id)[0]
+                    break

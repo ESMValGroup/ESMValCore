@@ -280,6 +280,31 @@ class BaseTask:
         return f"{self.__class__.__name__}({repr(self.name)})"
 
 
+class ResumeTask(BaseTask):
+    """Task for re-using preprocessor output files from a previous run."""
+
+    def __init__(self, resume_path, name):
+        """Create a resume task."""
+        metadata_file = resume_path / 'metadata.yml'
+
+        # Set result of a run
+        self._result = [str(metadata_file)]
+
+        # Reconstruct output
+        with metadata_file.open('rb') as file:
+            metadata = yaml.safe_load(file)
+        products = set()
+        for filename, attributes in metadata.items():
+            product = TrackedFile(filename, attributes)
+            products.add(product)
+
+        super().__init__(ancestors=None, name=name, products=products)
+
+    def _run(self, _):
+        """Return the result of a previous run."""
+        return self._result
+
+
 class DiagnosticError(Exception):
     """Error in diagnostic."""
 
