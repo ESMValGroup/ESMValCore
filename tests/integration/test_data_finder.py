@@ -7,7 +7,11 @@ import pytest
 import yaml
 
 import esmvalcore._config
-from esmvalcore._data_finder import get_input_filelist, get_output_file
+from esmvalcore._data_finder import (
+    _find_input_files,
+    get_input_filelist,
+    get_output_file,
+)
 from esmvalcore.cmor.table import read_cmor_tables
 
 # Initialize with standard config developer file
@@ -101,3 +105,25 @@ def test_get_input_filelist(root, cfg):
     assert sorted(input_filelist) == sorted(ref_files)
     assert sorted(dirnames) == sorted(ref_dirs)
     assert sorted(filenames) == sorted(ref_patterns)
+
+
+@pytest.mark.parametrize('cfg', CONFIG['get_input_filelist'])
+def test_get_input_filelist_wildcard_in_timerange(root, cfg):
+    """Test retrieving input filelist."""
+    if cfg.get('available_files'):
+        create_tree(root, cfg.get('available_files'),
+                    cfg.get('available_symlinks'))
+
+        # Find files
+        cfg['variable'].update({'timerange': '*'})
+        cfg['variable'].pop('start_year', None)
+        cfg['variable'].pop('end_year', None)
+        rootpath = {cfg['variable']['project']: [root]}
+        drs = {cfg['variable']['project']: cfg['drs']}
+        (files, _, _) = _find_input_files(cfg['variable'], rootpath,
+                                          drs)
+        available_files = [
+            os.path.join(root, file) for file in cfg['available_files']]
+        # Test result
+        for file in files:
+            assert file in available_files

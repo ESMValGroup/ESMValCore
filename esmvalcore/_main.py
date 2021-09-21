@@ -100,10 +100,8 @@ def process_recipe(recipe_file, config_user):
     # parse recipe
     recipe = read_recipe_file(recipe_file, config_user)
     logger.debug("Recipe summary:\n%s", recipe)
-    recipe.write_filled_recipe()
     # run
     recipe.run()
-    recipe.write_html_summary()
 
     # End time timing
     timestamp2 = datetime.datetime.utcnow()
@@ -358,6 +356,7 @@ class ESMValTool():
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
 
+        recipe.write_filled_recipe()
         if not os.path.exists(recipe):
             installed_recipe = str(DIAGNOSTICS.recipes / recipe)
             if os.path.exists(installed_recipe):
