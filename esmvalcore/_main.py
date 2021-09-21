@@ -414,6 +414,7 @@ class ESMValTool():
             logger.info("set remove_preproc_dir to false in config-user.yml")
             shutil.rmtree(cfg["preproc_dir"])
         logger.info("Run was successful")
+        recipe.write_html_summary()
 
 
 def run():
