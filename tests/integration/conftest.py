@@ -1,8 +1,9 @@
+import os
+
+import iris
 import pytest
 
 import esmvalcore
-import iris
-import os
 
 
 def create_test_file(filename, tracking_id=None):
@@ -16,6 +17,7 @@ def create_test_file(filename, tracking_id=None):
     cube = iris.cube.Cube([], attributes=attributes)
 
     iris.save(cube, filename)
+
 
 def _get_filenames(root_path, filenames, tracking_id):
     filename = filenames[0]
@@ -40,6 +42,7 @@ def _get_filenames(root_path, filenames, tracking_id):
     for filename in filenames:
         create_test_file(filename, next(tracking_id))
     return filenames
+
 
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
