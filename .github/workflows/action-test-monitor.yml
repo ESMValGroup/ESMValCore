@@ -3,7 +3,7 @@ on:
   push:
     branches:
     - main
-    - monitor_tests
+    - fix_fileformats_import_and_esmpy_install
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
