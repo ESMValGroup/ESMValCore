@@ -17,8 +17,6 @@ from fire.core import FireExit
 import esmvalcore._recipe_checks as check
 from esmvalcore._main import Config, ESMValTool, Recipes, run
 
-from .test_recipe import patched_datafinder
-
 
 def wrapper(f):
     @functools.wraps(f)
