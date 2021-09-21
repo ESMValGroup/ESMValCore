@@ -1563,10 +1563,12 @@ class Recipe:
 
     def run(self):
         """Run all tasks in the recipe."""
+        self.write_filled_recipe()
         if not self.tasks:
             raise RecipeError('No tasks to run!')
 
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
+        self.write_html_summary()
 
     def get_output(self) -> dict:
         """Return the paths to the output plots and data.

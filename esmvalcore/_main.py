@@ -102,7 +102,6 @@ def process_recipe(recipe_file, config_user):
     logger.debug("Recipe summary:\n%s", recipe)
     # run
     recipe.run()
-
     # End time timing
     timestamp2 = datetime.datetime.utcnow()
     logger.info(
@@ -356,7 +355,6 @@ class ESMValTool():
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
 
-        recipe.write_filled_recipe()
         if not os.path.exists(recipe):
             installed_recipe = str(DIAGNOSTICS.recipes / recipe)
             if os.path.exists(installed_recipe):
@@ -414,7 +412,6 @@ class ESMValTool():
             logger.info("set remove_preproc_dir to false in config-user.yml")
             shutil.rmtree(cfg["preproc_dir"])
         logger.info("Run was successful")
-        recipe.write_html_summary()
 
 
 def run():
