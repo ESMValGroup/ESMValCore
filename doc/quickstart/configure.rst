@@ -246,16 +246,23 @@ Next, set your username and password by running the commands:
     keyring set ESGF username
     keyring set ESGF password
 
-for example
+for example, if you created an account on the host `esgf-data.dkrz.de`_ with username
+'cookiemonster' and password 'Welcome01', run the command
 
 .. code-block:: bash
 
-    keyring set ESGF hostname esgf-data.dkrz.de
-    keyring set ESGF username cookiemonster
-    keyring set ESGF password Welcome01
+    keyring set ESGF hostname
 
-if you created an account on the host `esgf-data.dkrz.de`_ with username
-'cookiemonster' and password 'Welcome01'.
+this will display the text
+
+.. code-block:: bash
+
+    Password for 'hostname' in 'ESGF':
+
+type ``esgf-data.dkrz.de`` (the characters will not be shown) and press ``Enter``.
+Repeat the same procedure with ``keyring set ESGF username``, type ``cookiemonster``
+and press ``Enter`` and ``keyring set ESGF password``, type ``Welcome01`` and
+press ``Enter``.
 
 To check that you entered your credentials correctly, run:
 
