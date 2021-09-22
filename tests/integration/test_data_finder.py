@@ -69,7 +69,7 @@ def create_tree(path, filenames=None, symlinks=None):
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
     output_file = get_output_file(cfg['variable'], cfg['preproc_dir'])
-    assert output_file == cfg['output_file']
+    assert [output_file] == cfg['output_file']
 
 
 @pytest.fixture
@@ -121,6 +121,7 @@ def test_get_input_filelist_wildcard_in_timerange(root, cfg):
     drs = {cfg['variable']['project']: cfg['drs']}
     (files, _, _) = _find_input_files(cfg['variable'], rootpath,
                                       drs)
-    ref_files = [os.path.join(root, file) for file in cfg['found_timerange_files']]
+    ref_files = [
+        os.path.join(root, file) for file in cfg['found_timerange_files']]
     # Test result
     assert sorted(files) == sorted(ref_files)
