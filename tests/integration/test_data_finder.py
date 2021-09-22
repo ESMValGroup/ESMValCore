@@ -110,20 +110,17 @@ def test_get_input_filelist(root, cfg):
 @pytest.mark.parametrize('cfg', CONFIG['get_input_filelist'])
 def test_get_input_filelist_wildcard_in_timerange(root, cfg):
     """Test retrieving input filelist."""
-    if cfg.get('available_files'):
-        create_tree(root, cfg.get('available_files'),
-                    cfg.get('available_symlinks'))
+    create_tree(root, cfg.get('available_files'),
+                cfg.get('available_symlinks'))
 
-        # Find files
-        cfg['variable'].update({'timerange': '*'})
-        cfg['variable'].pop('start_year', None)
-        cfg['variable'].pop('end_year', None)
-        rootpath = {cfg['variable']['project']: [root]}
-        drs = {cfg['variable']['project']: cfg['drs']}
-        (files, _, _) = _find_input_files(cfg['variable'], rootpath,
-                                          drs)
-        available_files = [
-            os.path.join(root, file) for file in cfg['available_files']]
-        # Test result
-        for file in files:
-            assert file in available_files
+    # Find files
+    cfg['variable'].update({'timerange': '*'})
+    cfg['variable'].pop('start_year', None)
+    cfg['variable'].pop('end_year', None)
+    rootpath = {cfg['variable']['project']: [root]}
+    drs = {cfg['variable']['project']: cfg['drs']}
+    (files, _, _) = _find_input_files(cfg['variable'], rootpath,
+                                      drs)
+    ref_files = [os.path.join(root, file) for file in cfg['found_timerange_files']]
+    # Test result
+    assert sorted(files) == sorted(ref_files)
