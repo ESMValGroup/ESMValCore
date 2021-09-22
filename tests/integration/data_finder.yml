@@ -19,13 +19,15 @@ get_output_file:
       diagnostic: test_diag
       preprocessor: test_preproc
     preproc_dir: this/is/a/path
-    output_file: this/is/a/path/test_diag/test/CMIP5_HadGEM2-ES_Amon_historical_r1i1p1_ta_1960-1980.nc
+    output_file:
+      - this/is/a/path/test_diag/test/CMIP5_HadGEM2-ES_Amon_historical_r1i1p1_ta_1960-1980.nc
 
   - variable:
       <<: *variable
       exp: [historical, rcp85]
     preproc_dir: /test
-    output_file: /test/test_diag/test/CMIP5_HadGEM2-ES_Amon_historical-rcp85_r1i1p1_ta_1960-1980.nc
+    output_file:
+      - /test/test_diag/test/CMIP5_HadGEM2-ES_Amon_historical-rcp85_r1i1p1_ta_1960-1980.nc
 
 
 get_input_filelist:
@@ -474,7 +476,7 @@ get_input_filelist:
     found_files:
       - areacella_fx_HadGEM2-ES_historical_r0i0p0.nc
     found_timerange_files:
-      - areacella_fx_HadGEM2-ES_historical_r1i1p1.nc
+      - areacella_fx_HadGEM2-ES_historical_r0i0p0.nc
   - drs: DKRZ
     variable:
       variable_group: test
@@ -501,7 +503,7 @@ get_input_filelist:
     found_files:
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
     found_timerange_files:
-      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
 
   - drs: DKRZ
     variable:
