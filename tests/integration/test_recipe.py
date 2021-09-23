@@ -97,7 +97,7 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
-    cfg['synda_download'] = False
+    cfg['offline'] = True
     cfg['check_level'] = CheckLevels.DEFAULT
     return cfg
 
@@ -140,6 +140,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'original_short_name': 'chl',
             'output_dir': fix_dir,
             'preprocessor': preprocessor,
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'chl',
@@ -164,6 +165,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'modeling_realm': ['ocnBgchem'],
             'original_short_name': 'chl',
             'preprocessor': preprocessor,
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'chl',
@@ -188,6 +190,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'modeling_realm': ['ocnBgchem'],
             'original_short_name': 'chl',
             'preprocessor': preprocessor,
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'chl',
@@ -627,6 +630,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'original_short_name': 'sftlf',
             'output_dir': fix_dir,
             'preprocessor': 'default',
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'sftlf',
@@ -649,6 +653,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'modeling_realm': ['atmos'],
             'original_short_name': 'sftlf',
             'preprocessor': 'default',
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'sftlf',
@@ -671,6 +676,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'modeling_realm': ['atmos'],
             'original_short_name': 'sftlf',
             'preprocessor': 'default',
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'sftlf',
@@ -1758,7 +1764,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1778,7 +1784,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
         assert settings['area_type'] == 'land'
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
             assert fx_variables.get('sftlf')
         else:
@@ -1809,7 +1815,7 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1857,7 +1863,7 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
                 additional_datasets:
                   - {dataset: CanESM2}
                   - {dataset: GFDL-CM3}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1936,7 +1942,7 @@ def test_area_statistics(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1956,7 +1962,7 @@ def test_area_statistics(tmp_path, patched_datafinder, config_user):
         assert settings['operator'] == 'mean'
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
             assert fx_variables.get('areacella')
         else:
@@ -1985,7 +1991,7 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -2006,7 +2012,7 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
         else:
             assert len(fx_variables) == 2
@@ -2177,7 +2183,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
                   - {dataset: CanESM2}
                   - {dataset: CanESM5, project: CMIP6, grid: gn,
                      ensemble: r1i1p1f1}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -2948,3 +2954,60 @@ def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
     for product in task.products:
         assert 'mask_multimodel' in product.settings
         assert product.settings['mask_multimodel'] == {}
+
+
+def test_obs4mips_case_correct(tmp_path, patched_datafinder, config_user):
+    """Test that obs4mips is corrected to obs4MIPs."""
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: TEST, project: obs4mips,
+                     version: 1, tier: 1, level: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['diagnostic_name']['preprocessor_output'][
+        'tas'][0]
+    assert variable['project'] == 'obs4MIPs'
+
+
+def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              areacella:
+                project: CMIP5
+                mip: fx
+                exp: historical
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: BNU-ESM}
+            scripts: null
+        """)
+    config_user['download_dir'] = tmp_path / 'download_dir'
+    config_user['offline'] = False
+
+    mocker.patch.object(esmvalcore._recipe.esgf,
+                        'download',
+                        create_autospec=True)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    recipe.tasks.run = mocker.Mock()
+    recipe.run()
+
+    esmvalcore._recipe.esgf.download.assert_called_once_with(
+        set(), config_user['download_dir'])
+    recipe.tasks.run.assert_called_once_with(
+        max_parallel_tasks=config_user['max_parallel_tasks'])

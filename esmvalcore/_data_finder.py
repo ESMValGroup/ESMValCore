@@ -86,7 +86,7 @@ def get_start_end_year(filename):
                 start_year = end_year = end.group('year')
 
     # As final resort, try to get the dates from the file contents
-    if start_year is None or end_year is None:
+    if (start_year is None or end_year is None) and Path(filename).exists():
         logger.debug("Must load file %s for daterange ", filename)
         cubes = iris.load(filename)
 
@@ -228,12 +228,21 @@ def _select_drs(input_type, drs, project):
             structure, project))
 
 
+ROOTPATH_WARNED = set()
+
+
 def get_rootpath(rootpath, project):
     """Select the rootpath."""
-    if project in rootpath:
-        return rootpath[project]
-    if 'default' in rootpath:
-        return rootpath['default']
+    for key in (project, 'default'):
+        if key in rootpath:
+            nonexistent = tuple(p for p in rootpath[key]
+                                if not os.path.exists(p))
+            if nonexistent and (key, nonexistent) not in ROOTPATH_WARNED:
+                logger.warning(
+                    "'%s' rootpaths '%s' set in config-user.yml do not exist",
+                    key, ', '.join(nonexistent))
+                ROOTPATH_WARNED.add((key, nonexistent))
+            return rootpath[key]
     raise KeyError('default rootpath must be specified in config-user file')
 
 

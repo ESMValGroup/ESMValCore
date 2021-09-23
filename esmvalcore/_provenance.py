@@ -174,7 +174,7 @@ class TrackedFile:
     def _initialize_entity(self):
         """Initialize the entity representing the file."""
         attributes = {
-            'attribute:' + k: str(v)
+            'attribute:' + str(k).replace(' ', '_'): str(v)
             for k, v in self.attributes.items()
             if k not in ('authors', 'projects')
         }
