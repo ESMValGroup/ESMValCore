@@ -117,7 +117,7 @@ def test_read_datetime_from_cube(monkeypatch, tmp_path):
     assert end == '19910102'
 
 
-def test_no_pattern_and_no_time_raises(monkeypatch, tmp_path):
+def test_raises_if_unable_to_deduce(monkeypatch, tmp_path):
     """Try to get time from cube if no date in filename."""
     monkeypatch.chdir(tmp_path)
     temp_file = 'test.nc'
