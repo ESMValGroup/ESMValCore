@@ -272,11 +272,8 @@ class TrackedFile:
         self.provenance = ProvDocument.deserialize(self._prov_file,
                                                    format='xml')
         entity_uri = f"{ESMVALTOOL_URI_PREFIX}file{self.prov_filename}"
-        try:
-            self.entity = self.provenance.get_record(entity_uri)[0]
-        except IndexError:
-            logger.error("Failed to retrieve %s from %s", entity_uri,
-                         self._prov_file)
+        self.entity = self.provenance.get_record(entity_uri)[0]
+        # Find the associated activity
         for rec in self.provenance.records:
             if isinstance(rec, ProvDerivation):
                 if rec.args[0] == self.entity.identifier:
