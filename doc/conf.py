@@ -72,6 +72,7 @@ autodoc_mock_imports = [
     'cartopy',
     'cf_units',
     'psutil',
+    'nested_lookup'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
