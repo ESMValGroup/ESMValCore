@@ -310,7 +310,7 @@ class ESMValTool():
             max_datasets=None,
             max_years=None,
             skip_nonexistent=False,
-            synda_download=False,
+            offline=None,
             diagnostics=None,
             check_level='default',
             **kwargs):
@@ -334,8 +334,8 @@ class ESMValTool():
             Maximum number of years to use.
         skip_nonexistent: bool, optional
             If True, the run will not fail if some datasets are not available.
-        synda_download: bool, optional
-            If True, the tool will try to download missing data using Synda.
+        offline: bool, optional
+            If True, the tool will not download missing data from ESGF.
         diagnostics: list(str), optional
             Only run the selected diagnostics from the recipe. To provide more
             than one diagnostic to filter use the syntax 'diag1 diag2/script1'
@@ -357,6 +357,7 @@ class ESMValTool():
         )
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
+        from .esgf._logon import logon
 
         if not os.path.exists(recipe):
             installed_recipe = str(DIAGNOSTICS.recipes / recipe)
@@ -392,7 +393,11 @@ class ESMValTool():
             for pattern in diagnostics or ()
         }
         cfg['check_level'] = CheckLevels[check_level.upper()]
-        cfg['synda_download'] = synda_download
+        if offline is not None:
+            # Override config-user.yml from command line
+            cfg['offline'] = offline
+        if not cfg['offline']:
+            logon()
 
         def _check_limit(limit, value):
             if value is not None and value < 1:

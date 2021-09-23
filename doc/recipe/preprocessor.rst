@@ -705,7 +705,7 @@ Regridding on a reference dataset grid
 --------------------------------------
 
 The example below shows how to regrid on the reference dataset
-``ERA-Interim`` (observational data, but just as well CMIP, obs4mips,
+``ERA-Interim`` (observational data, but just as well CMIP, obs4MIPs,
 or ana4mips datasets can be used); in this case the `scheme` is
 `linear`.
 

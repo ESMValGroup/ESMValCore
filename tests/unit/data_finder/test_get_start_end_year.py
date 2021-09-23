@@ -37,7 +37,7 @@ def test_get_start_end_year(case):
         # If the filename is inconclusive or too difficult
         # we resort to reading the file, which fails here
         # because the file is not there.
-        with pytest.raises(IOError):
+        with pytest.raises(ValueError):
             get_start_end_year(filename)
     else:
         start, end = get_start_end_year(filename)
