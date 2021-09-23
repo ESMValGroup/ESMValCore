@@ -117,6 +117,16 @@ def test_read_datetime_from_cube(monkeypatch, tmp_path):
     assert end == '19910102'
 
 
+def test_no_pattern_and_no_time_raises(monkeypatch, tmp_path):
+    """Try to get time from cube if no date in filename."""
+    monkeypatch.chdir(tmp_path)
+    temp_file = 'test.nc'
+    cube = iris.cube.Cube([0, 0], var_name='var')
+    iris.save(cube, temp_file)
+    with pytest.raises(ValueError):
+        get_start_end_date(temp_file)
+
+
 def test_fails_if_no_date_present():
     """Test raises if no date is present."""
     with pytest.raises((ValueError, OSError)):
