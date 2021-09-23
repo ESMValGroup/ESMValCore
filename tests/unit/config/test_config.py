@@ -71,21 +71,11 @@ def test_load_default_config(monkeypatch):
     cfg = _config.read_config_user_file(default_cfg_file, 'recipe_example')
 
     default_cfg = {
-        'download_dir': str(Path.home() / 'climate_data'),
         'auxiliary_data_dir': str(Path.home() / 'auxiliary_data'),
-        'max_parallel_tasks': None,
-        'offline': True,
-        'log_level': 'info',
-        'exit_on_warning': False,
-        'output_file_type': 'png',
-        'remove_preproc_dir': False,
         'compress_netcdf': False,
-        'save_intermediary_cubes': False,
         'config_developer_file': None,
-        'profile_diagnostic': False,
-        'rootpath': {
-            'default': [str(Path.home() / 'climate_data')]
-        },
+        'config_file': str(default_cfg_file),
+        'download_dir': str(Path.home() / 'climate_data'),
         'drs': {
             'CMIP3': 'ESGF',
             'CMIP5': 'ESGF',
@@ -93,17 +83,28 @@ def test_load_default_config(monkeypatch):
             'CORDEX': 'ESGF',
             'obs4MIPs': 'ESGF'
         },
+        'exit_on_warning': False,
         'extra_facets_dir': tuple(),
+        'log_level': 'info',
+        'max_parallel_tasks': None,
+        'offline': True,
+        'output_file_type': 'png',
+        'profile_diagnostic': False,
+        'remove_preproc_dir': False,
+        'resume': [],
+        'rootpath': {
+            'default': [str(Path.home() / 'climate_data')]
+        },
         'run_diagnostic': True,
-        'config_file': str(default_cfg_file),
+        'save_intermediary_cubes': False,
     }
     default_keys = set(
         list(default_cfg) + [
             'output_dir',
-            'preproc_dir',
-            'work_dir',
             'plot_dir',
+            'preproc_dir',
             'run_dir',
+            'work_dir',
         ])
 
     # Check that only allowed keys are in it
