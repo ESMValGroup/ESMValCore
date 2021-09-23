@@ -109,9 +109,31 @@ def get_task_provenance(task, recipe_entity):
 class TrackedFile:
     """File with provenance tracking."""
 
-    def __init__(self, filename, attributes, ancestors=None):
-        """Create an instance of a file with provenance tracking."""
+    def __init__(self,
+                 filename,
+                 attributes,
+                 ancestors=None,
+                 prov_filename=None):
+        """Create an instance of a file with provenance tracking.
+
+        Arguments
+        ---------
+        filename: str
+            Path to the file on disk.
+        attributes: dict
+            Dictionary with facets describing the file.
+        ancestors: :obj:`list` of :obj:`TrackedFile`
+            Ancestor files.
+        prov_filename: str
+            The path this file has in the provenance record. This can
+            differ from `filename` if the file was moved before resuming
+            processing.
+        """
         self._filename = filename
+        if prov_filename is None:
+            self.prov_filename = filename
+        else:
+            self.prov_filename = prov_filename
         self.attributes = copy.deepcopy(attributes)
 
         self.provenance = None
@@ -252,7 +274,7 @@ class TrackedFile:
         """Import provenance information from a previously saved file."""
         self.provenance = ProvDocument.deserialize(self._prov_file,
                                                    format='xml')
-        entity_uri = f"{ESMVALTOOL_URI_PREFIX}file{self.filename}"
+        entity_uri = f"{ESMVALTOOL_URI_PREFIX}file{self.prov_filename}"
         try:
             self.entity = self.provenance.get_record(entity_uri)[0]
         except IndexError:

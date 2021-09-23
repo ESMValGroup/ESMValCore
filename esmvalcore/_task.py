@@ -283,26 +283,39 @@ class BaseTask:
 class ResumeTask(BaseTask):
     """Task for re-using preprocessor output files from a previous run."""
 
-    def __init__(self, resume_path, name):
+    def __init__(self, prev_preproc_dir, preproc_dir, name):
         """Create a resume task."""
-        metadata_file = resume_path / 'metadata.yml'
-
-        # Set result of a run
-        self._result = [str(metadata_file)]
+        # Set the path to the file resulting from running this task
+        self._metadata_file = preproc_dir / 'metadata.yml'
 
         # Reconstruct output
-        with metadata_file.open('rb') as file:
-            metadata = yaml.safe_load(file)
+        prev_metadata_file = prev_preproc_dir / 'metadata.yml'
+        with prev_metadata_file.open('rb') as file:
+            prev_metadata = yaml.safe_load(file)
+
         products = set()
-        for filename, attributes in metadata.items():
-            product = TrackedFile(filename, attributes)
+        for prov_filename, attributes in prev_metadata.items():
+            # Update the filename in case the output directory was moved
+            # since the original run
+            filename = str(prev_preproc_dir / Path(prov_filename).name)
+            attributes['filename'] = filename
+            product = TrackedFile(filename,
+                                  attributes,
+                                  prov_filename=prov_filename)
             products.add(product)
 
         super().__init__(ancestors=None, name=name, products=products)
 
     def _run(self, _):
         """Return the result of a previous run."""
-        return self._result
+        metadata = self.get_product_attributes()
+
+        # Write metadata to file
+        self._metadata_file.parent.mkdir(parents=True)
+        with self._metadata_file.open('w') as file:
+            yaml.safe_dump(metadata, file)
+
+        return [str(self._metadata_file)]
 
 
 class DiagnosticError(Exception):

@@ -996,6 +996,7 @@ class Recipe:
     info_keys = ('project', 'activity', 'dataset', 'exp', 'ensemble',
                  'version')
     """List of keys to be used to compose the alias, ordered by priority."""
+
     def __init__(self,
                  raw_recipe,
                  config_user,
@@ -1382,17 +1383,24 @@ class Recipe:
             for variable_group in diagnostic['preprocessor_output']:
                 task_name = diagnostic_name + TASKSEP + variable_group
                 for resume_dir in self._cfg['resume']:
-                    preproc_dir = Path(
+                    prev_preproc_dir = Path(
                         resume_dir,
                         'preproc',
                         diagnostic_name,
                         variable_group,
                     )
-                    if preproc_dir.exists():
+                    if prev_preproc_dir.exists():
                         logger.info(
                             "Re-using preprocessed files from %s for %s",
-                            preproc_dir, task_name)
-                        task = ResumeTask(preproc_dir, task_name)
+                            prev_preproc_dir, task_name)
+                        preproc_dir = Path(
+                            self._cfg['preproc_dir'],
+                            'preproc',
+                            diagnostic_name,
+                            variable_group,
+                        )
+                        task = ResumeTask(prev_preproc_dir, preproc_dir,
+                                          task_name)
                         tasks.add(task)
                         break
                 else:
