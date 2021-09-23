@@ -28,6 +28,7 @@ http://docs.esmvaltool.org. Have fun!
 """  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
 import logging
+import os.path
 from pathlib import Path
 
 import fire
@@ -53,11 +54,14 @@ def parse_resume(resume, recipe):
     if not resume:
         resume = []
     if isinstance(resume, str):
-        resume = [resume]
+        resume = resume.split(' ')
+    for i, resume_dir in enumerate(resume):
+        resume[i] = Path(os.path.expandvars(resume_dir)).expanduser()
+
     # Sanity check resume directories:
     current_recipe = recipe.read_text()
     for resume_dir in resume:
-        resume_recipe = Path(resume_dir, 'run', recipe.name)
+        resume_recipe = resume_dir / 'run' / recipe.name
         if current_recipe != resume_recipe.read_text():
             raise ValueError(f'Only identical recipes can be resumed, but '
                              f'{resume_recipe} is different from {recipe}')
@@ -67,7 +71,6 @@ def parse_resume(resume, recipe):
 def process_recipe(recipe_file, config_user):
     """Process recipe."""
     import datetime
-    import os
     import shutil
 
     from . import __version__
@@ -139,7 +142,6 @@ class Config():
 
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
-        import os
         import shutil
 
         from ._config import configure_logging
@@ -214,8 +216,6 @@ class Recipes():
 
         Show all installed recipes, grouped by folder.
         """
-        import os
-
         from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
         recipes_folder = DIAGNOSTICS.recipes
@@ -367,7 +367,6 @@ class ESMValTool():
             default (fail if there are any errors),
             strict (fail if there are any warnings).
         """
-        import os
         import shutil
 
         from ._config import (
