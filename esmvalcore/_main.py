@@ -5,18 +5,19 @@ http://www.esmvaltool.org
 CORE DEVELOPMENT TEAM AND CONTACTS:
   Birgit Hassler (Co-PI; DLR, Germany - birgit.hassler@dlr.de)
   Alistair Sellar (Co-PI; Met Office, UK - alistair.sellar@metoffice.gov.uk)
-  Bouwe Andela (Netherlands eScience Center, The Netherlands
-    - b.andela@esciencecenter.nl)
-  Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
+  Bouwe Andela (Netherlands eScience Center, The Netherlands - b.andela@esciencecenter.nl)
   Lee de Mora (PML, UK - ledm@pml.ac.uk)
-  Niels Drost (Netherlands eScience Center, The Netherlands
-    - n.drost@esciencecenter.nl)
+  Niels Drost (Netherlands eScience Center, The Netherlands - n.drost@esciencecenter.nl)
+  Veronika Eyring (DLR, Germany - veronika.eyring@dlr.de)
   Bettina Gier (UBremen, Germany - gier@uni-bremen.de)
   Remi Kazeroni (DLR, Germany - remi.kazeroni@dlr.de)
   Nikolay Koldunov (AWI, Germany - nikolay.koldunov@awi.de)
   Axel Lauer (DLR, Germany - axel.lauer@dlr.de)
+  Saskia Loosveldt-Tomas (BSC, Spain - saskia.loosveldt@bsc.es)
+  Ruth Lorenz (ETH Zurich, Switzerland - ruth.lorenz@env.ethz.ch)
   Benjamin Mueller (LMU, Germany - b.mueller@iggf.geo.uni-muenchen.de)
   Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
+  Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
   Manuel Schlund (DLR, Germany - manuel.schlund@dlr.de)
   Breixo Solino Fernandez (DLR, Germany - breixo.solinofernandez@dlr.de)
   Javier Vegas-Regidor (BSC, Spain - javier.vegas@bsc.es)
@@ -24,7 +25,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
 
 For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
-"""
+"""  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
 import logging
 
@@ -309,7 +310,7 @@ class ESMValTool():
             max_datasets=None,
             max_years=None,
             skip_nonexistent=False,
-            synda_download=False,
+            offline=None,
             diagnostics=None,
             check_level='default',
             **kwargs):
@@ -333,8 +334,8 @@ class ESMValTool():
             Maximum number of years to use.
         skip_nonexistent: bool, optional
             If True, the run will not fail if some datasets are not available.
-        synda_download: bool, optional
-            If True, the tool will try to download missing data using Synda.
+        offline: bool, optional
+            If True, the tool will not download missing data from ESGF.
         diagnostics: list(str), optional
             Only run the selected diagnostics from the recipe. To provide more
             than one diagnostic to filter use the syntax 'diag1 diag2/script1'
@@ -356,6 +357,7 @@ class ESMValTool():
         )
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
+        from .esgf._logon import logon
 
         if not os.path.exists(recipe):
             installed_recipe = str(DIAGNOSTICS.recipes / recipe)
@@ -380,8 +382,7 @@ class ESMValTool():
 
         # log header
         logger.info(HEADER)
-
-        logger.info("Using config file %s", config_file)
+        logger.info("Using config file %s", cfg['config_file'])
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
         cfg['skip-nonexistent'] = skip_nonexistent
@@ -392,7 +393,11 @@ class ESMValTool():
             for pattern in diagnostics or ()
         }
         cfg['check_level'] = CheckLevels[check_level.upper()]
-        cfg['synda_download'] = synda_download
+        if offline is not None:
+            # Override config-user.yml from command line
+            cfg['offline'] = offline
+        if not cfg['offline']:
+            logon()
 
         def _check_limit(limit, value):
             if value is not None and value < 1:

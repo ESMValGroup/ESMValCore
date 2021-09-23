@@ -34,6 +34,8 @@ repos:
     rev: 'v0.30.0'
     hooks:
       - id: yapf
+        # see https://github.com/google/yapf/issues/744
+        args: ["--style={based_on_style: pep8, blank_line_before_nested_class_or_def: True}"]
   - repo: https://github.com/myint/docformatter
     rev: 'v1.4'
     hooks:

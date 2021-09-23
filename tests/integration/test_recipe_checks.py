@@ -2,16 +2,18 @@
 from typing import Any, List
 from unittest import mock
 
+import pyesgf.search.results
 import pytest
 
 import esmvalcore._recipe_checks as check
+import esmvalcore.esgf
 
 ERR_ALL = 'Looked for files matching%s'
 ERR_D = ('Looked for files in %s, but did not find any file pattern to match '
          'against')
 ERR_F = ('Looked for files matching %s, but did not find any existing input '
          'directory')
-ERR_RANGE = 'No input data available for years {} in files {}'
+ERR_RANGE = 'No input data available for years {} in files:\n{}'
 VAR = {
     'filename': 'a/c.nc',
     'frequency': 'mon',
@@ -37,10 +39,13 @@ FILES = [
 DATA_AVAILABILITY_DATA = [
     (FILES, dict(VAR), None),
     (FILES, dict(FX_VAR), None),
-    (FILES[:-1], dict(VAR), ERR_RANGE.format('2025', FILES[:-1])),
-    (FILES[:-2], dict(VAR), ERR_RANGE.format('2024, 2025', FILES[:-2])),
+    (FILES[1:], dict(VAR), ERR_RANGE.format('2020', "\n".join(FILES[1:]))),
+    (FILES[:-1], dict(VAR), ERR_RANGE.format('2025', "\n".join(FILES[:-1]))),
+    (FILES[:-3], dict(VAR), ERR_RANGE.format('2023-2025',
+                                             "\n".join(FILES[:-3]))),
     ([FILES[1]] + [FILES[3]], dict(VAR),
-     ERR_RANGE.format('2024, 2025, 2020, 2022', [FILES[1]] + [FILES[3]])),
+     ERR_RANGE.format('2020, 2022, 2024-2025',
+                      "\n".join([FILES[1]] + [FILES[3]]))),
 ]
 
 
@@ -105,3 +110,25 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     calls = [mock.call(*e) for e in errors]
     assert mock_logger.error.call_args_list == calls
     assert var == VAR
+
+
+def test_data_availability_nonexistent(tmp_path):
+    var = {
+        'dataset': 'ABC',
+        'short_name': 'tas',
+        'frequency': 'mon',
+        'start_year': 1990,
+        'end_year': 1992,
+    }
+    result = pyesgf.search.results.FileResult(
+        json={
+            'dataset_id': 'ABC',
+            'project': ['CMIP6'],
+            'size': 10,
+            'title': 'tas_1990-1992.nc',
+        },
+        context=None,
+    )
+    dest_folder = tmp_path
+    input_files = [esmvalcore.esgf.ESGFFile([result]).local_file(dest_folder)]
+    check.data_availability(input_files, var, dirnames=[], filenames=[])

@@ -20,6 +20,7 @@ from esmvalcore.experimental.recipe_output import (
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 CFG.update(esmvaltool_sample_data.get_rootpaths())
+CFG['drs']['CMIP6'] = 'SYNDA'
 CFG['max_parallel_tasks'] = 1
 
 AUTHOR_TAGS = {
@@ -54,7 +55,6 @@ def test_run_recipe(task, recipe, tmp_path):
     assert isinstance(recipe._repr_html_(), str)
 
     session = CFG.start_session(recipe.path.stem)
-    session['extra_facets_dir'] = []
 
     output = recipe.run(task=task, session=session)
 
@@ -89,7 +89,6 @@ def test_run_recipe_diagnostic_failing(recipe, tmp_path):
     CFG['output_dir'] = tmp_path
 
     session = CFG.start_session(recipe.path.stem)
-    session['extra_facets_dir'] = []
 
     with pytest.raises(RecipeError):
         task = 'example/non-existant'

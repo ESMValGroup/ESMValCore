@@ -5,16 +5,16 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.ccsm4 import Cl, Csoil, Rlut, Rlutcs, So
 from esmvalcore.cmor._fixes.cmip5.bnu_esm import Cl as BaseCl
+from esmvalcore.cmor._fixes.cmip5.ccsm4 import AllVars, Cl, Csoil, So
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    fixes = Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'cl')
+    assert Cl(None) in fixes
 
 
 def test_cl_fix():
@@ -32,8 +32,7 @@ class TestCsoil(unittest.TestCase):
 
     def test_get(self):
         """Test fix get."""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Lmon', 'cSoil'),
-                             [Csoil(None)])
+        assert Csoil(None) in Fix.get_fixes('CMIP5', 'CCSM4', 'Lmon', 'cSoil')
 
     def test_fix_data(self):
         """Test data fix."""
@@ -42,7 +41,7 @@ class TestCsoil(unittest.TestCase):
         self.assertTrue(np.all(cube.data == expected))
 
 
-class TestsRlut(unittest.TestCase):
+class TestsAllVars(unittest.TestCase):
     """Test for rlut fixes."""
 
     def setUp(self):
@@ -55,43 +54,12 @@ class TestsRlut(unittest.TestCase):
                          [0.00001, 0.999999],
                          [1.00001, 1.999999],
                      ]), 0)
-        self.fix = Rlut(None)
+        self.fix = AllVars(None)
 
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'rlut'),
-                             [Rlut(None)])
-
-    def test_fix_metadata(self):
-        """Check that latitudes values are rounded."""
-        cube = self.fix.fix_metadata([self.cube])[0]
-
-        latitude = cube.coord('latitude')
-        self.assertTrue(np.all(latitude.points == np.array([0.5000, 1.5000])))
-        self.assertTrue(
-            np.all(latitude.bounds == np.array([[0.0000, 1.0000],
-                                                [1.0000, 2.0000]])))
-
-
-class TestsRlutcs(unittest.TestCase):
-    """Test for rlutcs fixes."""
-
-    def setUp(self):
-        """Prepare tests."""
-        self.cube = Cube([1.0, 2.0], var_name='rlutcs')
-        self.cube.add_dim_coord(
-            DimCoord([0.50001, 1.499999],
-                     standard_name='latitude',
-                     bounds=[
-                         [0.00001, 0.999999],
-                         [1.00001, 1.999999],
-                     ]), 0)
-        self.fix = Rlutcs(None)
-
-    def test_get(self):
-        """Test fix get."""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'rlutcs'),
-                             [Rlutcs(None)])
+                             [AllVars(None)])
 
     def test_fix_metadata(self):
         """Check that latitudes values are rounded."""
@@ -115,8 +83,7 @@ class TestSo(unittest.TestCase):
 
     def test_get(self):
         """Test fix get."""
-        self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'so'),
-                             [So(self.vardef)])
+        assert So(self.vardef) in Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'so')
 
     def test_fix_metadata(self):
         """Checks that units are changed to the correct value."""
