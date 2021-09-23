@@ -473,7 +473,7 @@ class CMORCheck():
         'alevel': {
             'CMIP5': ['alt40', 'plevs'],
             'CMIP6': ['alt16', 'plev3'],
-            'obs4mips': ['alt16', 'plev3'],
+            'obs4MIPs': ['alt16', 'plev3'],
         },
         'zlevel': {
             'CMIP3': ['pressure'],

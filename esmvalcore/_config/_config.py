@@ -80,9 +80,11 @@ def read_config_user_file(config_file, folder_name, options=None):
         'compress_netcdf': False,
         'config_developer_file': None,
         'drs': {},
+        'download_dir': '~/climate_data',
         'exit_on_warning': False,
         'extra_facets_dir': tuple(),
         'max_parallel_tasks': None,
+        'offline': True,
         'output_file_type': 'png',
         'output_dir': 'esmvaltool_output',
         'profile_diagnostic': False,
@@ -100,6 +102,7 @@ def read_config_user_file(config_file, folder_name, options=None):
             cfg[key] = defaults[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
+    cfg['download_dir'] = _normalize_path(cfg['download_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
 
     if isinstance(cfg['extra_facets_dir'], str):
@@ -111,6 +114,14 @@ def read_config_user_file(config_file, folder_name, options=None):
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
     cfg['config_file'] = config_file
+
+    for section in ['rootpath', 'drs']:
+        if 'obs4mips' in cfg[section]:
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips'"
+                " should be written as 'obs4MIPs' in %s in %s", section,
+                config_file)
+            cfg[section]['obs4MIPs'] = cfg[section].pop('obs4mips')
 
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
@@ -173,6 +184,12 @@ def read_config_developer_file(cfg_file=None):
 
     with open(cfg_file, 'r') as file:
         cfg = yaml.safe_load(file)
+
+    if 'obs4mips' in cfg:
+        logger.warning(
+            "Correcting capitalization, project 'obs4mips'"
+            " should be written as 'obs4MIPs' in %s", cfg_file)
+        cfg['obs4MIPs'] = cfg.pop('obs4mips')
 
     return cfg
 

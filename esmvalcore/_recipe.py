@@ -13,6 +13,7 @@ from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
+from . import esgf
 from ._config import (
     TAGS,
     get_activity,
@@ -26,7 +27,7 @@ from ._data_finder import (
     get_statistic_output_file,
 )
 from ._provenance import TrackedFile, get_recipe_provenance
-from ._recipe_checks import RecipeError
+from ._recipe_checks import InputFilesNotFound, RecipeError
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
@@ -39,7 +40,6 @@ from .preprocessor import (
     PreprocessorFile,
 )
 from .preprocessor._derive import get_required
-from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
 from .preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -51,6 +51,9 @@ from .preprocessor._regrid import (
 logger = logging.getLogger(__name__)
 
 TASKSEP = os.sep
+
+DOWNLOAD_FILES = set()
+"""Use a global variable to keep track of files that need to be downloaded."""
 
 
 def read_recipe_file(filename, config_user, initialize_tasks=True):
@@ -259,14 +262,6 @@ def _get_default_settings(variable, config_user, derive=False):
     """Get default preprocessor settings."""
     settings = {}
 
-    # Set up downloading using synda if requested.
-    if config_user.get('synda_download'):
-        # TODO: make this respect drs or download to preproc dir?
-        download_folder = os.path.join(config_user['preproc_dir'], 'downloads')
-        settings['download'] = {
-            'dest_folder': download_folder,
-        }
-
     # Configure loading
     settings['load'] = {
         'callback': concatenate_callback,
@@ -435,8 +430,8 @@ def _get_fx_files(variable, fx_info, config_user):
 
     # Flag a warning if no files are found
     if not fx_files:
-        logger.warning("Missing data for fx variable '%s'",
-                       fx_info['short_name'])
+        logger.warning("Missing data for fx variable %s of dataset %s",
+                       fx_info['short_name'], fx_info['dataset'])
 
     # If frequency = fx, only allow a single file
     if fx_files:
@@ -528,7 +523,7 @@ def _update_fx_settings(settings, variable, config_user):
                     'sftlf': None,
                 },
             }
-            if variable['project'] != 'obs4mips':
+            if variable['project'] != 'obs4MIPs':
                 default_fx['area_statistics']['areacello'] = None
                 default_fx['mask_landsea']['sftof'] = None
                 default_fx['weighting_landsea_fraction']['sftof'] = None
@@ -569,12 +564,29 @@ def _get_input_files(variable, config_user):
                                      rootpath=config_user['rootpath'],
                                      drs=config_user['drs'])
 
-    # Set up downloading using synda if requested.
-    # Do not download if files are already available locally.
-    if config_user.get('synda_download') and not input_files:
-        input_files = synda_search(variable)
-        dirnames = None
-        filenames = None
+    # Set up downloading from ESGF if requested.
+    if (not config_user['offline']
+            and variable['project'] in esgf.facets.FACETS):
+        try:
+            check.data_availability(
+                input_files,
+                variable,
+                dirnames,
+                filenames,
+                log=False,
+            )
+        except RecipeError:
+            # Only look on ESGF if files are not available locally.
+            local_files = set(Path(f).name for f in input_files)
+            search_result = esgf.find_files(**variable)
+            for file in search_result:
+                local_copy = file.local_file(config_user['download_dir'])
+                if local_copy.name not in local_files:
+                    if not local_copy.exists():
+                        DOWNLOAD_FILES.add(file)
+                    input_files.append(str(local_copy))
+
+            dirnames.append('ESGF:')
 
     return (input_files, dirnames, filenames)
 
@@ -584,9 +596,11 @@ def _get_ancestors(variable, config_user):
     (input_files, dirnames,
      filenames) = _get_input_files(variable, config_user)
 
-    logger.info("Using input files for variable %s of dataset %s:\n%s",
-                variable['short_name'], variable['dataset'],
-                '\n'.join(input_files))
+    logger.info(
+        "Using input files for variable %s of dataset %s:\n%s",
+        variable['short_name'], variable['dataset'], '\n'.join(
+            f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
+            for f in input_files))
     check.data_availability(input_files, variable, dirnames, filenames)
 
     # Set up provenance tracking
@@ -791,8 +805,9 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
 
     if missing_vars:
         separator = "\n- "
-        raise RecipeError(f'Missing data for preprocessor {name}:{separator}'
-                          f'{separator.join(sorted(missing_vars))}')
+        raise InputFilesNotFound(
+            f'Missing data for preprocessor {name}:{separator}'
+            f'{separator.join(sorted(missing_vars))}')
 
     _update_statistic_settings(products, order, config_user['preproc_dir'])
 
@@ -1003,6 +1018,9 @@ class Recipe:
                  initialize_tasks=True,
                  recipe_file=None):
         """Parse a recipe file into an object."""
+        # Clear the global variable containing the set of files to download
+        DOWNLOAD_FILES.clear()
+        self._download_files = set()
         self._cfg = deepcopy(config_user)
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
@@ -1017,11 +1035,39 @@ class Recipe:
             raw_recipe.get('documentation', {}))
         try:
             self.tasks = self.initialize_tasks() if initialize_tasks else None
-        except RecipeError as ex:
-            logger.error(ex.message)
-            for task in ex.failed_tasks:
-                logger.error(task.message)
+        except RecipeError as exc:
+            self._log_recipe_errors(exc)
             raise
+
+    def _log_recipe_errors(self, exc):
+        """Log a message with recipe errors."""
+        logger.error(exc.message)
+        for task in exc.failed_tasks:
+            logger.error(task.message)
+
+        if self._cfg['offline'] and any(
+                isinstance(err, InputFilesNotFound)
+                for err in exc.failed_tasks):
+            logger.error(
+                "Not all input files required to run the recipe could be"
+                " found.")
+            logger.error(
+                "If the files are available locally, please check"
+                " your `rootpath` and `drs` settings in your user "
+                "configuration file %s", self._cfg['config_file'])
+            logger.error(
+                "To automatically download the required files to "
+                "`download_dir: %s`, set `offline: false` in %s or run the "
+                "recipe with the extra command line argument --offline=False",
+                self._cfg['download_dir'],
+                self._cfg['config_file'],
+            )
+            logger.info(
+                "Note that automatic download is only available for files"
+                " that are hosted on the ESGF, i.e. for projects: %s, and %s",
+                ', '.join(list(esgf.facets.FACETS)[:-1]),
+                list(esgf.facets.FACETS)[-1],
+            )
 
     @staticmethod
     def _need_ncl(raw_diagnostics):
@@ -1169,6 +1215,12 @@ class Recipe:
                 check.variable(variable, subexperiment_keys)
             else:
                 check.variable(variable, required_keys)
+            if variable['project'] == 'CMIP5' and 'product' not in variable:
+                variable['product'] = 'output1'
+            if variable['project'] == 'obs4mips':
+                logger.warning("Correcting capitalization, project 'obs4mips'"
+                               " should be written as 'obs4MIPs'")
+                variable['project'] = 'obs4MIPs'
         variables = self._expand_tag(variables, 'ensemble')
         variables = self._expand_tag(variables, 'sub_experiment')
         return variables
@@ -1463,7 +1515,8 @@ class Recipe:
         for task in tasks:
             task.initialize_provenance(self.entity)
 
-        # TODO: check that no loops are created (will throw RecursionError)
+        # Store the set of files to download before running
+        self._download_files = set(DOWNLOAD_FILES)
 
         # Return smallest possible set of tasks
         return tasks.get_independent()
@@ -1476,6 +1529,10 @@ class Recipe:
         """Run all tasks in the recipe."""
         if not self.tasks:
             raise RecipeError('No tasks to run!')
+
+        # Download required data
+        if not self._cfg['offline']:
+            esgf.download(self._download_files, self._cfg['download_dir'])
 
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
 

@@ -256,6 +256,7 @@ _validators = {
     'log_level': validate_string,
     'exit_on_warning': validate_bool,
     'output_dir': validate_path,
+    'download_dir': validate_path,
     'auxiliary_data_dir': validate_path,
     'extra_facets_dir': validate_pathtuple,
     'compress_netcdf': validate_bool,
@@ -272,7 +273,7 @@ _validators = {
     "skip-nonexistent": validate_bool,
     "diagnostics": validate_diagnostics,
     "check_level": validate_check_level,
-    "synda_download": validate_bool,
+    "offline": validate_bool,
     'max_years': validate_int_positive_or_none,
     'max_datasets': validate_int_positive_or_none,
 
