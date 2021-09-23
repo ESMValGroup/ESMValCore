@@ -361,7 +361,7 @@ class TestCMORCheck(unittest.TestCase):
 
     def test_generic_level_alternative_obs4mips(self):
         """Test valid alternative for generic level coords (obs4MIPs)."""
-        self.var_info.table_type = 'obs4mips'
+        self.var_info.table_type = 'obs4MIPs'
         self._setup_generic_level_var()
         self._add_plev_to_cube()
         self._check_warnings_on_metadata()
