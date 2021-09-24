@@ -1,12 +1,14 @@
 import pyesgf.search.results
 import pytest
 
+import esmvalcore.experimental.recipe_output
 from esmvalcore import _recipe
 from esmvalcore._recipe_checks import RecipeError
 from esmvalcore.esgf._download import ESGFFile
 
 
 class TestRecipe:
+
     def test_expand_ensemble(self):
 
         datasets = [
@@ -53,8 +55,10 @@ class TestRecipe:
             's2005',
         ]
         for i, subexperiment in enumerate(subexperiments):
-            assert expanded[i] == {'dataset': 'XYZ',
-                                   'sub_experiment': subexperiment}
+            assert expanded[i] == {
+                'dataset': 'XYZ',
+                'sub_experiment': subexperiment
+            }
 
     def test_expand_ensemble_nolist(self):
 
@@ -73,26 +77,49 @@ VAR_A = {'dataset': 'A'}
 VAR_A_REF_A = {'dataset': 'A', 'reference_dataset': 'A'}
 VAR_A_REF_B = {'dataset': 'A', 'reference_dataset': 'B'}
 
-
 TEST_ALLOW_SKIPPING = [
     ([], VAR_A, {}, False),
-    ([], VAR_A, {'skip-nonexistent': False}, False),
-    ([], VAR_A, {'skip-nonexistent': True}, True),
+    ([], VAR_A, {
+        'skip-nonexistent': False
+    }, False),
+    ([], VAR_A, {
+        'skip-nonexistent': True
+    }, True),
     ([], VAR_A_REF_A, {}, False),
-    ([], VAR_A_REF_A, {'skip-nonexistent': False}, False),
-    ([], VAR_A_REF_A, {'skip-nonexistent': True}, False),
+    ([], VAR_A_REF_A, {
+        'skip-nonexistent': False
+    }, False),
+    ([], VAR_A_REF_A, {
+        'skip-nonexistent': True
+    }, False),
     ([], VAR_A_REF_B, {}, False),
-    ([], VAR_A_REF_B, {'skip-nonexistent': False}, False),
-    ([], VAR_A_REF_B, {'skip-nonexistent': True}, True),
+    ([], VAR_A_REF_B, {
+        'skip-nonexistent': False
+    }, False),
+    ([], VAR_A_REF_B, {
+        'skip-nonexistent': True
+    }, True),
     (['A'], VAR_A, {}, False),
-    (['A'], VAR_A, {'skip-nonexistent': False}, False),
-    (['A'], VAR_A, {'skip-nonexistent': True}, False),
+    (['A'], VAR_A, {
+        'skip-nonexistent': False
+    }, False),
+    (['A'], VAR_A, {
+        'skip-nonexistent': True
+    }, False),
     (['A'], VAR_A_REF_A, {}, False),
-    (['A'], VAR_A_REF_A, {'skip-nonexistent': False}, False),
-    (['A'], VAR_A_REF_A, {'skip-nonexistent': True}, False),
+    (['A'], VAR_A_REF_A, {
+        'skip-nonexistent': False
+    }, False),
+    (['A'], VAR_A_REF_A, {
+        'skip-nonexistent': True
+    }, False),
     (['A'], VAR_A_REF_B, {}, False),
-    (['A'], VAR_A_REF_B, {'skip-nonexistent': False}, False),
-    (['A'], VAR_A_REF_B, {'skip-nonexistent': True}, False),
+    (['A'], VAR_A_REF_B, {
+        'skip-nonexistent': False
+    }, False),
+    (['A'], VAR_A_REF_B, {
+        'skip-nonexistent': True
+    }, False),
 ]
 
 
@@ -222,3 +249,21 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
         'none': download_files,
     }
     assert input_files == expected[local_availability]
+
+
+def test_write_html_summary(mocker, caplog):
+    """Test `Recipe.write_html_summary` failing and logging a message."""
+    message = "Failed to look up references."
+    recipe_output = mocker.patch.object(
+        esmvalcore.experimental.recipe_output,
+        'RecipeOutput',
+        create_autospec=True,
+    )
+    recipe_output.from_core_recipe_output.side_effect = LookupError(message)
+    mock_recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
+    caplog.set_level('WARNING')
+
+    _recipe.Recipe.write_html_summary(mock_recipe)
+
+    assert f"Could not write HTML report: {message}" in caplog.text
+    mock_recipe.get_output.assert_called_once()
