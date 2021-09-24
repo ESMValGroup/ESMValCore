@@ -64,6 +64,7 @@ def test_empty_run(tmp_path):
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
         documentation:
+          title: Test recipe
           description: This is a test recipe.
           authors:
             - andela_bouwe
