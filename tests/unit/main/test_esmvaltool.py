@@ -71,7 +71,7 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         create_autospec=True,
     )
 
-    ESMValTool.run(str(recipe), offline=cmd_offline)
+    ESMValTool().run(str(recipe), offline=cmd_offline)
 
     # Check that configuration has been updated from the command line
     assert cfg == reference
