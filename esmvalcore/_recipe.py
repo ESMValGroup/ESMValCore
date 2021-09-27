@@ -1432,7 +1432,7 @@ class Recipe:
         for diagnostic_name, diagnostic in self.diagnostics.items():
             logger.info("Creating tasks for diagnostic %s", diagnostic_name)
 
-            any_diag = not bool(diagnostic['scripts'])
+            any_diag = False
             # Create diagnostic tasks
             for script_name, script_cfg in diagnostic['scripts'].items():
                 task_name = diagnostic_name + TASKSEP + script_name
@@ -1457,25 +1457,33 @@ class Recipe:
                 priority += 1
 
             # Create preprocessor tasks
-            if any_diag:
-                for variable_group in diagnostic['preprocessor_output']:
-                    task_name = diagnostic_name + TASKSEP + variable_group
-                    logger.info("Creating preprocessor task %s", task_name)
-                    try:
-                        task = _get_preprocessor_task(
-                            variables=diagnostic['preprocessor_output']
-                            [variable_group],
-                            profiles=self._preprocessors,
-                            config_user=self._cfg,
-                            task_name=task_name,
-                        )
-                    except RecipeError as ex:
-                        failed_tasks.append(ex)
-                    else:
-                        for task0 in task.flatten():
-                            task0.priority = priority
-                        tasks.add(task)
-                        priority += 1
+            for variable_group in diagnostic['preprocessor_output']:
+                task_name = diagnostic_name + TASKSEP + variable_group
+                if tasknames_to_run:
+                    if not any_diag:
+                        for pattern in tasknames_to_run:
+                            if fnmatch.fnmatch(task_name, pattern):
+                                break
+                        else:
+                            logger.info("Skipping task %s due to filter",
+                                        task_name)
+                            continue
+                logger.info("Creating preprocessor task %s", task_name)
+                try:
+                    task = _get_preprocessor_task(
+                        variables=diagnostic['preprocessor_output']
+                        [variable_group],
+                        profiles=self._preprocessors,
+                        config_user=self._cfg,
+                        task_name=task_name,
+                    )
+                except RecipeError as ex:
+                    failed_tasks.append(ex)
+                else:
+                    for task0 in task.flatten():
+                        task0.priority = priority
+                    tasks.add(task)
+                    priority += 1
 
         if failed_tasks:
             recipe_error = RecipeError('Could not create all tasks')
@@ -1508,8 +1516,9 @@ class Recipe:
 
     def _get_tasks_to_run(self):
         """Get tasks filtered and add ancestors if needed."""
-        tasknames_to_run = set(self._cfg.get('diagnostics'))
+        tasknames_to_run = self._cfg.get('diagnostics', [])
         if tasknames_to_run:
+            tasknames_to_run = set(tasknames_to_run)
             while self._update_with_ancestors(tasknames_to_run):
                 pass
         return tasknames_to_run
