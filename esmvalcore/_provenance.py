@@ -6,7 +6,6 @@ import os
 from netCDF4 import Dataset
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-from prov.dot import prov_to_dot
 from prov.model import ProvDocument
 
 from ._version import __version__
@@ -14,13 +13,6 @@ from ._version import __version__
 logger = logging.getLogger(__name__)
 
 ESMVALTOOL_URI_PREFIX = 'https://www.esmvaltool.org/'
-
-
-def update_without_duplicating(bundle, other):
-    """Add new records from other provenance bundle."""
-    new_records = set(other.records) - set(bundle.records)
-    for record in new_records:
-        bundle.add_record(record)
 
 
 def create_namespace(provenance, namespace):
@@ -97,17 +89,17 @@ def get_task_provenance(task, recipe_entity):
     activity = provenance.activity('task:' + task.name)
 
     trigger = recipe_entity
-    update_without_duplicating(provenance, recipe_entity.bundle)
+    provenance.update(recipe_entity.bundle)
 
     starter = ESMVALTOOL_PROVENANCE
-    update_without_duplicating(provenance, starter.bundle)
+    provenance.update(starter.bundle)
 
     activity.wasStartedBy(trigger, starter)
 
     return activity
 
 
-class TrackedFile(object):
+class TrackedFile:
     """File with provenance tracking."""
 
     def __init__(self, filename, attributes, ancestors=None):
@@ -170,12 +162,12 @@ class TrackedFile(object):
     def _initialize_activity(self, activity):
         """Copy the preprocessor task activity."""
         self.activity = activity
-        update_without_duplicating(self.provenance, activity.bundle)
+        self.provenance.update(activity.bundle)
 
     def _initialize_entity(self):
         """Initialize the entity representing the file."""
         attributes = {
-            'attribute:' + k: str(v)
+            'attribute:' + str(k).replace(' ', '_'): str(v)
             for k, v in self.attributes.items()
             if k not in ('authors', 'projects')
         }
@@ -189,7 +181,7 @@ class TrackedFile(object):
         for ancestor in self._ancestors:
             if ancestor.provenance is None:
                 ancestor.initialize_provenance(activity)
-            update_without_duplicating(self.provenance, ancestor.provenance)
+            self.provenance.update(ancestor.provenance)
             self.wasderivedfrom(ancestor)
 
     def wasderivedfrom(self, other):
@@ -198,14 +190,13 @@ class TrackedFile(object):
             other_entity = other.entity
         else:
             other_entity = other
-        update_without_duplicating(self.provenance, other_entity.bundle)
+        self.provenance.update(other_entity.bundle)
         if not self.activity:
             raise ValueError("Activity not initialized.")
         self.entity.wasDerivedFrom(other_entity, self.activity)
 
     def _select_for_include(self):
         attributes = {
-            'provenance': self.provenance.serialize(format='xml'),
             'software': "Created with ESMValTool v{}".format(__version__),
         }
         if 'caption' in self.attributes:
@@ -222,7 +213,6 @@ class TrackedFile(object):
     def _include_provenance_png(filename, attributes):
         pnginfo = PngInfo()
         exif_tags = {
-            'provenance': 'ImageHistory',
             'caption': 'ImageDescription',
             'software': 'Software',
         }
@@ -235,27 +225,18 @@ class TrackedFile(object):
         """Include provenance information as metadata."""
         attributes = self._select_for_include()
 
-        # List of files to attach provenance to
-        files = [self.filename]
-        if 'plot_file' in self.attributes:
-            files.append(self.attributes['plot_file'])
-
         # Attach provenance to supported file types
-        for filename in files:
-            ext = os.path.splitext(filename)[1].lstrip('.').lower()
-            write = getattr(self, '_include_provenance_' + ext, None)
-            if write:
-                write(filename, attributes)
+        ext = os.path.splitext(self.filename)[1].lstrip('.').lower()
+        write = getattr(self, '_include_provenance_' + ext, None)
+        if write:
+            write(self.filename, attributes)
 
     def save_provenance(self):
         """Export provenance information."""
+        self.provenance = ProvDocument(
+            records=set(self.provenance.records),
+            namespaces=self.provenance.namespaces,
+        )
         self._include_provenance()
         filename = os.path.splitext(self.filename)[0] + '_provenance'
         self.provenance.serialize(filename + '.xml', format='xml')
-        # Only plot provenance if there are not too many records.
-        if len(self.provenance.records) > 100:
-            logger.debug("Not plotting large provenance tree of %s",
-                         self.filename)
-        else:
-            figure = prov_to_dot(self.provenance)
-            figure.write_svg(filename + '.svg')

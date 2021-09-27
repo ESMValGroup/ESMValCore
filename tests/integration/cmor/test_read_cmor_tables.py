@@ -29,7 +29,7 @@ def test_read_cmor_tables():
     assert Path(table._cmor_folder) == table_path / 'cmip6' / 'Tables'
     assert table.strict is False
 
-    project = 'obs4mips'
+    project = 'obs4MIPs'
     table = CMOR_TABLES[project]
     assert Path(table._cmor_folder) == table_path / 'obs4mips' / 'Tables'
     assert table.strict is False

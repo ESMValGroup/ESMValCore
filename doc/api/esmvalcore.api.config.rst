@@ -30,9 +30,7 @@ The global configuration can be imported from the :py:mod:`esmvalcore.experiment
             'rootpath': {'CMIP5': '~/default_inputpath',
                          'CMIP6': '~/default_inputpath',
                          'default': '~/default_inputpath'},
-            'save_intermediary_cubes': False,
-            'write_netcdf': True,
-            'write_plots': True})
+            'save_intermediary_cubes': False)
 
 The parameters for the user configuration file are listed :ref:`here <user configuration file>`.
 

@@ -97,7 +97,7 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
-    cfg['synda_download'] = False
+    cfg['offline'] = True
     cfg['check_level'] = CheckLevels.DEFAULT
     cfg['diagnostics'] = set()
     return cfg
@@ -141,6 +141,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'original_short_name': 'chl',
             'output_dir': fix_dir,
             'preprocessor': preprocessor,
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'chl',
@@ -165,6 +166,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'modeling_realm': ['ocnBgchem'],
             'original_short_name': 'chl',
             'preprocessor': preprocessor,
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'chl',
@@ -189,6 +191,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'modeling_realm': ['ocnBgchem'],
             'original_short_name': 'chl',
             'preprocessor': preprocessor,
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'chl',
@@ -258,6 +261,7 @@ def _get_filenames(root_path, filenames, tracking_id):
 
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
+
     def tracking_ids(i=0):
         while True:
             yield i
@@ -277,6 +281,7 @@ def patched_datafinder(tmp_path, monkeypatch):
 
 @pytest.fixture
 def patched_failing_datafinder(tmp_path, monkeypatch):
+
     def tracking_ids(i=0):
         while True:
             yield i
@@ -307,6 +312,7 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
+
     def get_required(short_name, _):
         if short_name != 'tas':
             assert False
@@ -625,6 +631,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'original_short_name': 'sftlf',
             'output_dir': fix_dir,
             'preprocessor': 'default',
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'sftlf',
@@ -647,6 +654,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'modeling_realm': ['atmos'],
             'original_short_name': 'sftlf',
             'preprocessor': 'default',
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'sftlf',
@@ -669,6 +677,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'modeling_realm': ['atmos'],
             'original_short_name': 'sftlf',
             'preprocessor': 'default',
+            'product': 'output1',
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'sftlf',
@@ -1039,11 +1048,11 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
           default: &default
-            area_statistics:
-              operator: mean
             multi_model_statistics:
               span: overlap
               statistics: [mean ]
+            area_statistics:
+              operator: mean
           custom:
             custom_order: true
             <<: *default
@@ -1091,10 +1100,10 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
 
     for task in recipe.tasks:
         if task.name == 'diagnostic_name/chl_default':
-            assert task.order.index('area_statistics') > task.order.index(
+            assert task.order.index('area_statistics') < task.order.index(
                 'multi_model_statistics')
         elif task.name == 'diagnostic_name/chl_custom':
-            assert task.order.index('area_statistics') < task.order.index(
+            assert task.order.index('area_statistics') > task.order.index(
                 'multi_model_statistics')
         elif task.name == 'diagnostic_name/chl_empty_custom':
             assert len(task.products) == 1
@@ -1418,8 +1427,7 @@ def simulate_diagnostic_run(diagnostic_task):
         p.filename for a in diagnostic_task.ancestors for p in a.products
     ]
     record = {
-        'caption': 'Test plot',
-        'plot_file': create_test_image('test', cfg),
+        'caption': 'Test figure',
         'statistics': ['mean', 'var'],
         'domains': ['trop', 'et'],
         'plot_types': ['zonal'],
@@ -1430,10 +1438,11 @@ def simulate_diagnostic_run(diagnostic_task):
 
     diagnostic_file = get_diagnostic_filename('test', cfg)
     create_test_file(diagnostic_file)
+    plot_file = create_test_image('test', cfg)
     provenance = os.path.join(cfg['run_dir'], 'diagnostic_provenance.yml')
     os.makedirs(cfg['run_dir'])
     with open(provenance, 'w') as file:
-        yaml.safe_dump({diagnostic_file: record}, file)
+        yaml.safe_dump({diagnostic_file: record, plot_file: record}, file)
 
     diagnostic_task._collect_provenance()
     return record
@@ -1480,41 +1489,45 @@ def test_diagnostic_task_provenance(
     simulate_diagnostic_run(next(iter(diagnostic_task.ancestors)))
     record = simulate_diagnostic_run(diagnostic_task)
 
-    # Check resulting product
-    product = diagnostic_task.products.pop()
-    check_provenance(product)
-    for key in ('caption', 'plot_file'):
-        assert product.attributes[key] == record[key]
-        assert product.entity.get_attribute('attribute:' +
-                                            key).pop() == record[key]
+    # Check resulting products
+    assert len(diagnostic_task.products) == 2
+    for product in diagnostic_task.products:
+        check_provenance(product)
+        assert product.attributes['caption'] == record['caption']
+        assert product.entity.get_attribute(
+            'attribute:' + 'caption').pop() == record['caption']
 
-    # Check that diagnostic script tags have been added
-    for key in ('statistics', 'domains', 'authors'):
-        assert product.attributes[key] == tuple(TAGS[key][k]
-                                                for k in record[key])
+        # Check that diagnostic script tags have been added
+        for key in ('statistics', 'domains', 'authors'):
+            assert product.attributes[key] == tuple(TAGS[key][k]
+                                                    for k in record[key])
 
-    # Check that recipe diagnostic tags have been added
-    src = yaml.safe_load(DEFAULT_DOCUMENTATION + content)
-    for key in ('realms', 'themes'):
-        value = src['diagnostics']['diagnostic_name'][key]
-        assert product.attributes[key] == tuple(TAGS[key][k] for k in value)
+        # Check that recipe diagnostic tags have been added
+        src = yaml.safe_load(DEFAULT_DOCUMENTATION + content)
+        for key in ('realms', 'themes'):
+            value = src['diagnostics']['diagnostic_name'][key]
+            assert product.attributes[key] == tuple(TAGS[key][k]
+                                                    for k in value)
 
-    # Check that recipe tags have been added
-    recipe_record = product.provenance.get_record('recipe:recipe_test.yml')
-    assert len(recipe_record) == 1
-    for key in ('description', 'references'):
-        value = src['documentation'][key]
-        if key == 'references':
-            value = str(src['documentation'][key])
-        assert recipe_record[0].get_attribute('attribute:' +
-                                              key).pop() == value
+        # Check that recipe tags have been added
+        recipe_record = product.provenance.get_record('recipe:recipe_test.yml')
+        assert len(recipe_record) == 1
+        for key in ('description', 'references'):
+            value = src['documentation'][key]
+            if key == 'references':
+                value = str(src['documentation'][key])
+            assert recipe_record[0].get_attribute('attribute:' +
+                                                  key).pop() == value
 
     # Test that provenance was saved to netcdf, xml and svg plot
-    cube = iris.load(product.filename)[0]
-    assert 'provenance' in cube.attributes
+    product = next(
+        iter(p for p in diagnostic_task.products
+             if p.filename.endswith('.nc')))
+    cube = iris.load_cube(product.filename)
+    assert cube.attributes['software'].startswith("Created with ESMValTool v")
+    assert cube.attributes['caption'] == record['caption']
     prefix = os.path.splitext(product.filename)[0] + '_provenance'
     assert os.path.exists(prefix + '.xml')
-    assert os.path.exists(prefix + '.svg')
 
 
 def test_alias_generation(tmp_path, patched_datafinder, config_user):
@@ -1752,7 +1765,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1772,7 +1785,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
         assert settings['area_type'] == 'land'
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
             assert fx_variables.get('sftlf')
         else:
@@ -1803,7 +1816,7 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1851,7 +1864,7 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
                 additional_datasets:
                   - {dataset: CanESM2}
                   - {dataset: GFDL-CM3}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1910,6 +1923,55 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
         'diagnostic_name')
 
 
+def test_area_statistics(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          area_statistics:
+            area_statistics:
+              operator: mean
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: area_statistics
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
+                     tier: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+
+    # Check area_statistics
+    assert len(task.products) == 2
+    for product in task.products:
+        assert 'area_statistics' in product.settings
+        settings = product.settings['area_statistics']
+        assert len(settings) == 1
+        assert settings['operator'] == 'mean'
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
+        assert isinstance(fx_variables, dict)
+        if product.attributes['project'] == 'obs4MIPs':
+            assert len(fx_variables) == 1
+            assert fx_variables.get('areacella')
+        else:
+            assert len(fx_variables) == 2
+            assert fx_variables.get('areacella')
+            assert fx_variables.get('areacello')
+
+
 def test_landmask(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
@@ -1930,7 +1992,7 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1951,7 +2013,7 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
         else:
             assert len(fx_variables) == 2
@@ -2122,7 +2184,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
                   - {dataset: CanESM2}
                   - {dataset: CanESM5, project: CMIP6, grid: gn,
                      ensemble: r1i1p1f1}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -2893,3 +2955,60 @@ def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
     for product in task.products:
         assert 'mask_multimodel' in product.settings
         assert product.settings['mask_multimodel'] == {}
+
+
+def test_obs4mips_case_correct(tmp_path, patched_datafinder, config_user):
+    """Test that obs4mips is corrected to obs4MIPs."""
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: TEST, project: obs4mips,
+                     version: 1, tier: 1, level: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['diagnostic_name']['preprocessor_output'][
+        'tas'][0]
+    assert variable['project'] == 'obs4MIPs'
+
+
+def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              areacella:
+                project: CMIP5
+                mip: fx
+                exp: historical
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: BNU-ESM}
+            scripts: null
+        """)
+    config_user['download_dir'] = tmp_path / 'download_dir'
+    config_user['offline'] = False
+
+    mocker.patch.object(esmvalcore._recipe.esgf,
+                        'download',
+                        create_autospec=True)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    recipe.tasks.run = mocker.Mock()
+    recipe.run()
+
+    esmvalcore._recipe.esgf.download.assert_called_once_with(
+        set(), config_user['download_dir'])
+    recipe.tasks.run.assert_called_once_with(
+        max_parallel_tasks=config_user['max_parallel_tasks'])

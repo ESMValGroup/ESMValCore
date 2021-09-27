@@ -77,12 +77,12 @@ data specifications:
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``)
 - project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
   ``OBS`` for observational data, ``ana4mips`` for ana4mips data,
-  ``obs4mips`` for obs4mips data, ``EMAC`` for EMAC data)
+  ``obs4MIPs`` for obs4MIPs data, ``EMAC`` for EMAC data)
 - experiment (key ``exp``, value e.g. ``historical``, ``amip``, ``piControl``,
   ``RCP8.5``)
 - mip (for CMIP data, key ``mip``, value e.g. ``Amon``, ``Omon``, ``LImon``)
 - ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
-- sub-experiment id (key `sub_experiment`, value e.g. `s2000`, `s(2000:2002)`, 
+- sub-experiment id (key `sub_experiment`, value e.g. `s2000`, `s(2000:2002)`,
   for DCPP data only)
 - time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``. Please
   note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
