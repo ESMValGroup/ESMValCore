@@ -1,4 +1,6 @@
+import logging
 import os
+from unittest import mock
 
 import pytest
 
@@ -6,8 +8,11 @@ import esmvalcore._config
 import esmvalcore._main
 import esmvalcore._task
 import esmvalcore.esgf
-from esmvalcore._main import ESMValTool
+from esmvalcore import __version__
+from esmvalcore._main import HEADER, ESMValTool
 from esmvalcore.cmor.check import CheckLevels
+
+LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize('cmd_offline', [None, True, False])
@@ -99,4 +104,33 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
     esmvalcore._main.process_recipe.assert_called_once_with(
         recipe_file=str(recipe),
         config_user=cfg,
+    )
+
+
+@mock.patch('esmvalcore._main.iter_entry_points')
+def test_header(mock_entry_points, caplog):
+
+    entry_point = mock.Mock()
+    entry_point.dist.project_name = 'MyEntry'
+    entry_point.dist.version = 'v42.42.42'
+    entry_point.name = 'Entry name'
+    mock_entry_points.return_value = [entry_point]
+    with caplog.at_level(logging.INFO):
+        ESMValTool()._log_header(
+            'path_to_config_file',
+            ['path_to_log_file1', 'path_to_log_file2']
+        )
+
+    assert len(caplog.messages) == 8
+    assert caplog.messages[0] == HEADER
+    assert caplog.messages[1] == 'Package versions'
+    assert caplog.messages[2] == '----------------'
+    assert caplog.messages[3] == f'ESMValCore: {__version__}'
+    assert caplog.messages[4] == 'MyEntry: v42.42.42'
+    assert caplog.messages[5] == '----------------'
+    assert caplog.messages[6] == 'Using config file path_to_config_file'
+    assert caplog.messages[7] == (
+        'Writing program log files to:\n'
+        'path_to_log_file1\n'
+        'path_to_log_file2'
     )

@@ -379,7 +379,7 @@ class ESMValTool():
         log_files = configure_logging(output_dir=cfg['run_dir'],
                                       console_log_level=cfg['log_level'])
 
-        self._log_header(cfg, log_files)
+        self._log_header(cfg['config_file'], log_files)
 
         cfg['skip-nonexistent'] = skip_nonexistent
         if isinstance(diagnostics, str):
@@ -417,7 +417,7 @@ class ESMValTool():
             shutil.rmtree(cfg["preproc_dir"])
         logger.info("Run was successful")
 
-    def _log_header(self, cfg, log_files):
+    def _log_header(self, config_file, log_files):
         from . import __version__
         logger.info(HEADER)
         logger.info('Package versions')
@@ -426,7 +426,7 @@ class ESMValTool():
         for project, version in self._extra_packages.items():
             logger.info('%s: %s', project, version)
         logger.info('----------------')
-        logger.info("Using config file %s", cfg['config_file'])
+        logger.info("Using config file %s", config_file)
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
 
