@@ -347,24 +347,13 @@ class ESMValTool():
             strict (fail if there are any warnings).
         """
         import os
-        import shutil
 
-        from ._config import (
-            DIAGNOSTICS,
-            configure_logging,
-            read_config_user_file,
-        )
+        from ._config import configure_logging, read_config_user_file
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
         from .esgf._logon import logon
 
-        if not os.path.exists(recipe):
-            installed_recipe = str(DIAGNOSTICS.recipes / recipe)
-            if os.path.exists(installed_recipe):
-                recipe = installed_recipe
-        recipe = os.path.abspath(os.path.expandvars(
-            os.path.expanduser(recipe)))
-
+        recipe = self._get_recipe(recipe)
         recipe_name = os.path.splitext(os.path.basename(recipe))[0]
 
         cfg = read_config_user_file(config_file, recipe_name, kwargs)
@@ -410,12 +399,31 @@ class ESMValTool():
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
             process_recipe(recipe_file=recipe, config_user=cfg)
 
+        self._clean_preproc(cfg)
+        logger.info("Run was successful")
+
+    def _clean_preproc(self, cfg):
+        import os
+        import shutil
+
         if os.path.exists(cfg["preproc_dir"]) and cfg["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
             logger.info("set remove_preproc_dir to false in config-user.yml")
             shutil.rmtree(cfg["preproc_dir"])
-        logger.info("Run was successful")
+
+    def _get_recipe(self, recipe):
+        import os
+
+        from ._config import DIAGNOSTICS
+
+        if not os.path.exists(recipe):
+            installed_recipe = str(DIAGNOSTICS.recipes / recipe)
+            if os.path.exists(installed_recipe):
+                recipe = installed_recipe
+        recipe = os.path.abspath(os.path.expandvars(
+            os.path.expanduser(recipe)))
+        return recipe
 
     def _log_header(self, config_file, log_files):
         from . import __version__
