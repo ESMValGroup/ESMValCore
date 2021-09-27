@@ -69,39 +69,19 @@ def read_config_user_file(config_file, folder_name, options=None):
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
-    # DEPRECATED: remove in v2.4
-    for setting in ('write_plots', 'write_netcdf'):
-        if setting in cfg:
-            msg = (
-                f"Using '{setting}' in {config_file} is deprecated and will "
-                "be removed in ESMValCore version 2.4. For diagnostics "
-                "that support this setting, it should be set in the "
-                "diagnostic script section of the recipe instead. "
-                f"Remove the setting from {config_file} to get rid of this "
-                "warning message.")
-            print(f"Warning: {msg}")
-            warnings.warn(DeprecationWarning(msg))
-
     if options is None:
         options = dict()
     for key, value in options.items():
         cfg[key] = value
-        # DEPRECATED: remove in v2.4
-        if key in ('write_plots', 'write_netcdf'):
-            msg = (
-                f"Setting '{key}' from the command line is deprecated and "
-                "will be removed in ESMValCore version 2.4. For diagnostics "
-                "that support this setting, it should be set in the "
-                "diagnostic script section of the recipe instead.")
-            print(f"Warning: {msg}")
-            warnings.warn(DeprecationWarning(msg))
 
     # set defaults
     defaults = {
         'compress_netcdf': False,
         'exit_on_warning': False,
+        'offline': True,
         'output_file_type': 'png',
         'output_dir': 'esmvaltool_output',
+        'download_dir': '~/climate_data',
         'auxiliary_data_dir': 'auxiliary_data',
         'extra_facets_dir': tuple(),
         'save_intermediary_cubes': False,
@@ -111,9 +91,6 @@ def read_config_user_file(config_file, folder_name, options=None):
         'profile_diagnostic': False,
         'config_developer_file': None,
         'drs': {},
-        # DEPRECATED: remove default settings below in v2.4
-        'write_plots': True,
-        'write_netcdf': True,
     }
 
     for key in defaults:
@@ -124,6 +101,7 @@ def read_config_user_file(config_file, folder_name, options=None):
             cfg[key] = defaults[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
+    cfg['download_dir'] = _normalize_path(cfg['download_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
 
     if isinstance(cfg['extra_facets_dir'], str):
@@ -135,6 +113,14 @@ def read_config_user_file(config_file, folder_name, options=None):
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
     cfg['config_file'] = config_file
+
+    for section in ['rootpath', 'drs']:
+        if 'obs4mips' in cfg[section]:
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips'"
+                " should be written as 'obs4MIPs' in %s in %s", section,
+                config_file)
+            cfg[section]['obs4MIPs'] = cfg[section].pop('obs4mips')
 
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
@@ -156,6 +142,16 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     # Read developer configuration file
     load_config_developer(cfg['config_developer_file'])
+
+    # Validate configuration using the experimental module to avoid a crash
+    # after running the recipe because the html output writer uses this.
+    # In the long run, we need to replace this module with the Session from
+    # the experimental module.
+    with warnings.catch_warnings():
+        # ignore experimental API warning
+        warnings.simplefilter("ignore")
+        from esmvalcore.experimental.config._config_object import Session
+    Session.from_config_user(cfg)
 
     return cfg
 
@@ -187,6 +183,12 @@ def read_config_developer_file(cfg_file=None):
 
     with open(cfg_file, 'r') as file:
         cfg = yaml.safe_load(file)
+
+    if 'obs4mips' in cfg:
+        logger.warning(
+            "Correcting capitalization, project 'obs4mips'"
+            " should be written as 'obs4MIPs' in %s", cfg_file)
+        cfg['obs4MIPs'] = cfg.pop('obs4mips')
 
     return cfg
 

@@ -1,0 +1,79 @@
+[
+    {
+        "id": "cmip3.CCCma.cccma_cgcm3_1.historical.mon.atmos.run1.tas.v1.tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc|aims3.llnl.gov",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "ee398fdd869ff702c525ebac091e79e6ff69cf4487e3d042cf8dc1e2f105fcb4"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "aims3.llnl.gov",
+        "dataset_id": "cmip3.CCCma.cccma_cgcm3_1.historical.mon.atmos.run1.tas.v1|aims3.llnl.gov",
+        "dataset_id_template_": [
+            "%(project)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(ensemble)s.%(variable)s"
+        ],
+        "description": [
+            "CCCma  model output prepared for IPCC Fourth Assessment climate of the 20th Century experiment (20C3M)"
+        ],
+        "ensemble": [
+            "run1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "format": [
+            "netCDF, CF-1.0"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "cmip3.CCCma.cccma_cgcm3_1.historical.mon.atmos.run1.tas.v1.tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc",
+        "institute": [
+            "CCCMA"
+        ],
+        "latest": true,
+        "master_id": "cmip3.CCCma.cccma_cgcm3_1.historical.mon.atmos.run1.tas.tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc",
+        "model": [
+            "cccma_cgcm3_1"
+        ],
+        "project": [
+            "CMIP3"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": false,
+        "size": 33448576,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2011-09-04T06:33:31Z",
+        "title": "tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc",
+        "type": "File",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/cmip3_data/data2/20c3m/atm/mo/tas/cccma_cgcm3_1/run1/tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc|application/netcdf|HTTPServer",
+            "http://aims3.llnl.gov/thredds/dodsC/cmip3_data/data2/20c3m/atm/mo/tas/cccma_cgcm3_1/run1/tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc.html|application/opendap-html|OPENDAP",
+            "gsiftp://aimsdtn3.llnl.gov:2811//cmip3_data/data2/20c3m/atm/mo/tas/cccma_cgcm3_1/run1/tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc|application/gridftp|GridFTP",
+            "globus:415a6320-e49c-11e5-9798-22000b9da45e/cmip3_data/data2/20c3m/atm/mo/tas/cccma_cgcm3_1/run1/tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1636820467429933056,
+        "retracted": false,
+        "_timestamp": "2019-06-20T01:20:40.356Z",
+        "score": 1.0
+    }
+]

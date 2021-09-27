@@ -31,7 +31,7 @@ Overview
 ========
 
 ..
-   ESMValTool is a modular ``Python 3.6+`` software package possessing capabilities
+   ESMValTool is a modular ``Python 3.7+`` software package possessing capabilities
    of executing a large number of diagnostic routines that can be written in a
    number of programming languages (Python, NCL, R, Julia). The modular nature
    benefits the users and developers in different key areas: a new feature
@@ -694,7 +694,7 @@ Regridding on a reference dataset grid
 --------------------------------------
 
 The example below shows how to regrid on the reference dataset
-``ERA-Interim`` (observational data, but just as well CMIP, obs4mips,
+``ERA-Interim`` (observational data, but just as well CMIP, obs4MIPs,
 or ana4mips datasets can be used); in this case the `scheme` is
 `linear`.
 

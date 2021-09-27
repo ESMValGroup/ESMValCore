@@ -11,8 +11,8 @@ from cf_units import Unit
 from iris.cube import Cube
 
 import esmvalcore.preprocessor._multimodel as mm
-from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
 from esmvalcore.preprocessor import multi_model_statistics
+from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
 
 SPAN_OPTIONS = ('overlap', 'full')
 
@@ -131,7 +131,7 @@ VALIDATION_DATA_SUCCESS = (
     ('full', 'median', (5, 5, 3)),
     ('full', 'p50', (5, 5, 3)),
     ('full', 'p99.5', (8.96, 8.96, 4.98)),
-    ('full', 'peak', ([9], [9], [5])),
+    ('full', 'peak', (9, 9, 5)),
     ('overlap', 'mean', (5, 5)),
     ('overlap', 'std_dev', (5.656854249492381, 4)),
     ('overlap', 'std', (5.656854249492381, 4)),
@@ -140,11 +140,29 @@ VALIDATION_DATA_SUCCESS = (
     ('overlap', 'median', (5, 5)),
     ('overlap', 'p50', (5, 5)),
     ('overlap', 'p99.5', (8.96, 8.96)),
-    ('overlap', 'peak', ([9], [9])),
+    ('overlap', 'peak', (9, 9)),
     # test multiple statistics
     ('overlap', ('min', 'max'), ((1, 1), (9, 9))),
     ('full', ('min', 'max'), ((1, 1, 1), (9, 9, 5))),
 )
+
+
+@pytest.mark.parametrize(
+    'length,slices',
+    [
+        (1, [slice(0, 1)]),
+        (25000, [slice(0, 8334),
+                 slice(8334, 16668),
+                 slice(16668, 25000)]),
+    ],
+)
+def test_compute_slices(length, slices):
+    """Test cube `_compute_slices`."""
+    cubes = [
+        Cube(da.empty([length, 50, 100], dtype=np.float32)) for _ in range(5)
+    ]
+    result = list(mm._compute_slices(cubes))
+    assert result == slices
 
 
 @pytest.mark.parametrize('frequency', FREQUENCY_OPTIONS)
@@ -494,6 +512,7 @@ def test_unify_time_coordinates():
 
 class PreprocessorFile:
     """Mockup to test output of multimodel."""
+
     def __init__(self, cube=None):
         if cube:
             self.cubes = [cube]
@@ -552,9 +571,8 @@ def test_ignore_tas_scalar_height_coord():
         cube.add_aux_coord(
             iris.coords.AuxCoord([height], var_name="height", units="m"))
 
-    result = mm.multi_model_statistics([tas_2m, tas_2m.copy(), tas_1p5m],
-                                       statistics=['mean'],
-                                       span='full')
+    result = mm.multi_model_statistics(
+        [tas_2m, tas_2m.copy(), tas_1p5m], statistics=['mean'], span='full')
 
     # iris automatically averages the value of the scalar coordinate.
     assert len(result['mean'].coords("height")) == 1
