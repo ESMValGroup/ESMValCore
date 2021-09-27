@@ -156,19 +156,21 @@ def _duration_to_date(cube, duration, reference, sign):
     reference_unit = cf_units.Unit(f'seconds since {reference_format}',
                                    calendar=time_coord.units.calendar)
 
-    years = sign * int(duration.years)
-    months = sign * int(duration.months)
-    days = sign * int(duration.days)
+    delta = 0
+    if isinstance(duration, isodate.duration.Duration):
+        years = sign * int(duration.years)
+        months = sign * int(duration.months)
+        days = sign * int(duration.days)
+        delta_years = _convert_duration(years, 'years', reference_format,
+                                        reference_unit)
+        delta_months = _convert_duration(months, 'months', reference_format,
+                                         reference_unit)
+        delta_days = _convert_duration(days, 'days', reference_format,
+                                       reference_unit)
+        delta = delta_years + delta_months + delta_days
     seconds = sign * int(duration.seconds)
 
-    delta_years = _convert_duration(years, 'years', reference_format,
-                                    reference_unit)
-    delta_months = _convert_duration(months, 'months', reference_format,
-                                     reference_unit)
-    delta_days = _convert_duration(days, 'days', reference_format,
-                                   reference_unit)
-
-    delta = delta_years + delta_months + delta_days + seconds
+    delta += seconds
     delta = reference_unit.convert(delta, time_coord.units)
 
     return time_coord.units.num2date(delta)
@@ -241,7 +243,9 @@ def clip_timerange(cube, start_year, end_year, timerange=None):
 
         if isinstance(start_date, isodate.duration.Duration):
             start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
-            start_date += datetime.timedelta(days=1)
+        elif isinstance(start_date, datetime.timedelta):
+            start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
+            start_date -= datetime.timedelta(seconds=1)
 
         if isinstance(end_date, isodate.duration.Duration):
             end_date = _duration_to_date(cube, end_date, start_date, sign=1)

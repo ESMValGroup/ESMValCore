@@ -242,6 +242,25 @@ class TestClipTimerange(tests.Test):
         assert self.cube == sliced_end
         assert self.cube == sliced_start
 
+    def test_clip_timerange_duration_seconds(self):
+        """Test timerange with duration periods with resolution up to
+        seconds."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        time = iris.coords.DimCoord(times,
+                                    standard_name='time',
+                                    units=Unit('hours since 1950-01-01',
+                                               calendar='360_day'))
+        time.guess_bounds()
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        sliced_cube_start = clip_timerange(cube, 1950, 1950,
+                                           'PT12H/19500101T120000')
+        sliced_cube_end = clip_timerange(cube, None, None,
+                                         '19500101T000000/PT12H')
+        expected_time = np.arange(0, 18, 6)
+        assert_array_equal(sliced_cube_start.coord(time).points, expected_time)
+        assert_array_equal(sliced_cube_end.coord(time).points, expected_time)
+
     def test_clip_timerange_datetime(self):
         """Test timerange with datetime periods."""
         data = np.arange(8)
