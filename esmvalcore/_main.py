@@ -118,6 +118,7 @@ class Config():
     This group contains utilities to manage ESMValTool configuration
     files.
     """
+
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
         import os
@@ -188,6 +189,7 @@ class Recipes():
     Documentation for recipes included with ESMValTool is available at
     https://docs.esmvaltool.org/en/latest/recipes/index.html.
     """
+
     @staticmethod
     def list():
         """List all installed recipes.
@@ -275,6 +277,7 @@ class ESMValTool():
     To report issues or ask for improvements, please visit
     https://github.com/ESMValGroup/ESMValTool.
     """
+
     def __init__(self):
         self.recipes = Recipes()
         self.config = Config()
@@ -346,7 +349,6 @@ class ESMValTool():
         import os
         import shutil
 
-        from . import __version__
         from ._config import (
             DIAGNOSTICS,
             configure_logging,
@@ -377,16 +379,7 @@ class ESMValTool():
         log_files = configure_logging(output_dir=cfg['run_dir'],
                                       console_log_level=cfg['log_level'])
 
-        # log header
-        logger.info(HEADER)
-        logger.info('Package versions')
-        logger.info('----------------')
-        logger.info('ESMValCore: %s', __version__)
-        for project, version in self._extra_packages.items():
-            logger.info('%s: %s', project, version)
-        logger.info('----------------')
-        logger.info("Using config file %s", cfg['config_file'])
-        logger.info("Writing program log files to:\n%s", "\n".join(log_files))
+        self._log_header(cfg, log_files)
 
         cfg['skip-nonexistent'] = skip_nonexistent
         if isinstance(diagnostics, str):
@@ -423,6 +416,18 @@ class ESMValTool():
             logger.info("set remove_preproc_dir to false in config-user.yml")
             shutil.rmtree(cfg["preproc_dir"])
         logger.info("Run was successful")
+
+    def _log_header(self, cfg, log_files):
+        from . import __version__
+        logger.info(HEADER)
+        logger.info('Package versions')
+        logger.info('----------------')
+        logger.info('ESMValCore: %s', __version__)
+        for project, version in self._extra_packages.items():
+            logger.info('%s: %s', project, version)
+        logger.info('----------------')
+        logger.info("Using config file %s", cfg['config_file'])
+        logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
 
 def run():
