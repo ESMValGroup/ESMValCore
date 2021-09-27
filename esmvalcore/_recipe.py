@@ -1424,7 +1424,7 @@ class Recipe:
         tasks = TaskSet()
 
         run_diagnostic = self._cfg.get('run_diagnostic', True)
-        tasknames_to_run = self._cfg.get('diagnostics')
+        tasknames_to_run = self._get_tasks_to_run()
 
         priority = 0
         failed_tasks = []
@@ -1505,6 +1505,30 @@ class Recipe:
 
         # Return smallest possible set of tasks
         return tasks.get_independent()
+
+    def _get_tasks_to_run(self):
+        """Get tasks filtered and add ancestors if needed."""
+        tasknames_to_run = set(self._cfg.get('diagnostics'))
+        if tasknames_to_run:
+            while self._update_with_ancestors(tasknames_to_run):
+                pass
+        return tasknames_to_run
+
+    def _update_with_ancestors(self, tasknames_to_run):
+        """Add ancestors for all selected tasks."""
+        num_filters = len(tasknames_to_run)
+        for diagnostic_name, diagnostic in self.diagnostics.items():
+            for script_name, script_cfg in diagnostic['scripts'].items():
+                task_name = diagnostic_name + TASKSEP + script_name
+                for pattern in tasknames_to_run:
+                    if fnmatch.fnmatch(task_name, pattern):
+                        ancestors = script_cfg.get('ancestors', [])
+                        if isinstance(ancestors, str):
+                            ancestors = ancestors.split()
+                        for ancestor in ancestors:
+                            tasknames_to_run.add(ancestor)
+                        break
+        return num_filters != len(tasknames_to_run)
 
     def __str__(self):
         """Get human readable summary."""
