@@ -204,7 +204,7 @@ class TestClipTimerange(tests.Test):
                " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         assert ctx.exception.args == (msg, )
         with self.assertRaises(ValueError) as ctx:
-            clip_timerange(self.cube, 2200, 2200, '2200/2200')
+            clip_timerange(self.cube, None, None, '2200/2200')
         assert ctx.exception.args == (msg, )
 
     def test_clip_timerange_one_time(self):
@@ -213,7 +213,7 @@ class TestClipTimerange(tests.Test):
         cube.coord('time').guess_bounds()
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = clip_timerange(cube, 1950, 1952)
-        sliced_timerange = clip_timerange(cube, 1950, 1952, '1950/1952')
+        sliced_timerange = clip_timerange(cube, None, None, '1950/1952')
         assert_array_equal(np.array([360.]), sliced.coord('time').points)
         assert_array_equal(np.array([360.]),
                            sliced_timerange.coord('time').points)
@@ -222,23 +222,23 @@ class TestClipTimerange(tests.Test):
         """Test clip_timerange with no time step."""
         cube = _create_sample_cube()[0]
         sliced = clip_timerange(cube, 1950, 1950)
-        sliced_timerange = clip_timerange(cube, 1950, 1950, '1950/1950')
+        sliced_timerange = clip_timerange(cube, None, None, '1950/1950')
         assert cube == sliced
         assert cube == sliced_timerange
 
     def test_clip_timerange_date(self):
         """Test timerange with dates."""
-        sliced_year = clip_timerange(self.cube, 1950, 1952, '1950/1952')
-        sliced_month = clip_timerange(self.cube, 1950, 1952, '195001/195212')
-        sliced_day = clip_timerange(self.cube, 1950, 1952, '19500101/19521231')
+        sliced_year = clip_timerange(self.cube, None, None, '1950/1952')
+        sliced_month = clip_timerange(self.cube, None, None, '195001/195212')
+        sliced_day = clip_timerange(self.cube, None, None, '19500101/19521231')
         assert self.cube == sliced_year
         assert self.cube == sliced_month
         assert self.cube == sliced_day
 
     def test_clip_timerange_duration(self):
         """Test timerange with duration periods."""
-        sliced_end = clip_timerange(self.cube, 1950, 1952, '1950/P2Y')
-        sliced_start = clip_timerange(self.cube, 1950, 1951, 'P2Y/1951')
+        sliced_end = clip_timerange(self.cube, None, None, '1950/P2Y')
+        sliced_start = clip_timerange(self.cube, None, None, 'P2Y/1951')
         assert self.cube == sliced_end
         assert self.cube == sliced_start
 
@@ -253,7 +253,7 @@ class TestClipTimerange(tests.Test):
                                                calendar='360_day'))
         time.guess_bounds()
         cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-        sliced_cube_start = clip_timerange(cube, 1950, 1950,
+        sliced_cube_start = clip_timerange(cube, None, None,
                                            'PT12H/19500101T120000')
         sliced_cube_end = clip_timerange(cube, None, None,
                                          '19500101T000000/PT12H')
@@ -272,7 +272,7 @@ class TestClipTimerange(tests.Test):
         time.guess_bounds()
         cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
 
-        sliced_cube = clip_timerange(cube, 1950, 1950,
+        sliced_cube = clip_timerange(cube, None, None,
                                      '19500101T000000/19500101T120000')
         expected_time = np.arange(0, 18, 6)
         assert_array_equal(sliced_cube.coord(time).points, expected_time)
@@ -287,7 +287,7 @@ class TestClipTimerange(tests.Test):
                                                calendar='360_day'))
         time.guess_bounds()
         cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
-        sliced = clip_timerange(cube, 1950, 1950, '19500131/19500331')
+        sliced = clip_timerange(cube, None, None, '19500131/19500331')
         expected_time = np.arange(29, 90)
         assert_array_equal(expected_time, sliced.coord('time').points)
 
