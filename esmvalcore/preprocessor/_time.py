@@ -249,6 +249,9 @@ def clip_timerange(cube, start_year, end_year, timerange=None):
 
         if isinstance(end_date, isodate.duration.Duration):
             end_date = _duration_to_date(cube, end_date, start_date, sign=1)
+        elif isinstance(end_date, datetime.timedelta):
+            end_date = _duration_to_date(cube, end_date, start_date, sign=1)
+            end_date += datetime.timedelta(seconds=1)
 
         return _extract_datetime(cube, start_date, end_date)
 
