@@ -53,6 +53,7 @@ __pycache__/
 #pytest
 .cache
 .pytest_cache
+.pymon
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

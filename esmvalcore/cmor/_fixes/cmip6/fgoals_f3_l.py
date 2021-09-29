@@ -3,7 +3,10 @@ import cftime
 import dask.array as da
 import numpy as np
 
+from ..common import OceanFixGrid
 from ..fix import Fix
+
+Tos = OceanFixGrid
 
 
 class AllVars(Fix):

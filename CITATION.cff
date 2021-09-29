@@ -161,6 +161,12 @@ authors:
     "family-names": "Sénési"
     "given-names": "Stéphane"
     "orcid": "https://orcid.org/0000-0003-0892-5967"
+  -
+    affiliation: "MetOffice, UK"
+    family-names: Crocker
+    given-names: Thomas
+    orcid: "https://orcid.org/0000-0001-7761-5546"
+
 
 cff-version: "1.0.3"
 date-released: 2021-7-23
