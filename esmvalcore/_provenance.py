@@ -154,7 +154,7 @@ class TrackedFile:
         return self._filename
 
     @property
-    def _prov_file(self):
+    def provenance_file(self):
         """Filename of provenance."""
         return os.path.splitext(self.filename)[0] + '_provenance.xml'
 
@@ -201,7 +201,7 @@ class TrackedFile:
         """Register ancestor files for provenance tracking."""
         for ancestor in self._ancestors:
             if ancestor.provenance is None:
-                if os.path.exists(ancestor._prov_file):
+                if os.path.exists(ancestor.provenance_file):
                     ancestor.restore_provenance()
                 else:
                     ancestor.initialize_provenance(activity)
@@ -262,14 +262,14 @@ class TrackedFile:
             namespaces=self.provenance.namespaces,
         )
         self._include_provenance()
-        self.provenance.serialize(self._prov_file, format='xml')
+        self.provenance.serialize(self.provenance_file, format='xml')
         self.activity = None
         self.entity = None
         self.provenance = None
 
     def restore_provenance(self):
         """Import provenance information from a previously saved file."""
-        self.provenance = ProvDocument.deserialize(self._prov_file,
+        self.provenance = ProvDocument.deserialize(self.provenance_file,
                                                    format='xml')
         entity_uri = f"{ESMVALTOOL_URI_PREFIX}file{self.prov_filename}"
         self.entity = self.provenance.get_record(entity_uri)[0]
