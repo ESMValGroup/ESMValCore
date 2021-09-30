@@ -332,6 +332,7 @@ def patched_tas_derivation(monkeypatch):
 
 DEFAULT_DOCUMENTATION = dedent("""
     documentation:
+      title: Test recipe
       description: This is a test recipe.
       authors:
         - andela_bouwe
