@@ -49,6 +49,40 @@ Possible values are:
   - `default`: fail if there are any errors
   - `strict`: fail if there are any warnings
 
+To re-use pre-processed files from a previous run of the same recipe, you can
+use
+
+.. code:: bash
+
+    esmvaltool run recipe_python.yml --resume_from ~/esmvaltool_output/recipe_python_20210930_123907
+
+Multiple directories can be specified for re-use, make sure to quote them:
+
+.. code:: bash
+
+    esmvaltool run recipe_python.yml --resume_from "~/esmvaltool_output/recipe_python_20210930_101007 ~/esmvaltool_output/recipe_python_20210930_123907"
+
+The first preprocessor directory containing the required data will be used.
+
+This feature be useful when developing new diagnostics, because it avoids
+the need to re-run the preprocessor.
+Another potential use case is running the preprocessing part of a recipe on
+one or more machines that have access to a lot of data and then running the
+diagnostics on a machine without access to data.
+
+To run only the preprocessor tasks from a recipe, use
+
+.. code:: bash
+
+    esmvaltool run recipe_python.yml --remove_preproc_dir=False --run_diagnostic=False
+
+.. note::
+
+    Only preprocessing :ref:`tasks <tasks>` that completed successfully
+    can be re-used with the ``--resume_from`` option.
+    Preprocessing tasks that completed successfully, contain a file called
+    :ref:`metadata.yml <interface_esmvalcore_diagnostic>` in their output
+    directory.
 
 To run a reduced version of the recipe, usually for testing purpose you can use
 

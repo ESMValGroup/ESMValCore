@@ -269,7 +269,7 @@ _validators = {
     'output_file_type': validate_string,
 
     # From CLI
-    "resume": validate_pathlist,
+    "resume_from": validate_pathlist,
     "skip-nonexistent": validate_bool,
     "diagnostics": validate_diagnostics,
     "check_level": validate_check_level,

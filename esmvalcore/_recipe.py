@@ -1425,7 +1425,7 @@ class Recipe:
         for variable_group in diagnostic['preprocessor_output']:
             task_name = diagnostic_name + TASKSEP + variable_group
             # Resume previous runs if requested, else create a new task
-            for resume_dir in self._cfg['resume']:
+            for resume_dir in self._cfg['resume_from']:
                 prev_preproc_dir = Path(
                     resume_dir,
                     'preproc',
@@ -1496,6 +1496,10 @@ class Recipe:
                     tasks.add(task)
                     priority += 1
 
+        # Resolve diagnostic ancestors
+        if self._cfg.get('run_diagnostic', True):
+            self._resolve_diagnostic_ancestors(tasks)
+
         if failed_tasks:
             recipe_error = RecipeError('Could not create all tasks')
             recipe_error.failed_tasks.extend(failed_tasks)
@@ -1508,9 +1512,6 @@ class Recipe:
     def initialize_tasks(self):
         """Define tasks in recipe."""
         tasks = self._create_tasks()
-
-        # Resolve diagnostic ancestors
-        self._resolve_diagnostic_ancestors(tasks)
 
         # Select only requested tasks
         tasknames_to_run = self._cfg.get('diagnostics')

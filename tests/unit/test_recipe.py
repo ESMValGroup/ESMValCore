@@ -145,7 +145,7 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
     # Create a mock recipe
     recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
     recipe._cfg = {
-        'resume': [str(prev_output)],
+        'resume_from': [str(prev_output)],
         'preproc_dir': '/path/to/recipe_test_20210101_000000/preproc',
     }
 

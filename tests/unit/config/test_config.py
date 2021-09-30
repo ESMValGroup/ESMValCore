@@ -91,7 +91,7 @@ def test_load_default_config(monkeypatch):
         'output_file_type': 'png',
         'profile_diagnostic': False,
         'remove_preproc_dir': False,
-        'resume': [],
+        'resume_from': [],
         'rootpath': {
             'default': [str(Path.home() / 'climate_data')]
         },

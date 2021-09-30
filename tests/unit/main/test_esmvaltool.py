@@ -35,7 +35,7 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         'check_level': CheckLevels.DEFAULT,
         'diagnostics': set(),
         'offline': offline,
-        'resume': [],
+        'resume_from': [],
         'skip-nonexistent': False,
 
     })

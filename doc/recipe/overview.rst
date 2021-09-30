@@ -212,6 +212,8 @@ section will include:
 - a description of the diagnostic and lists of themes and realms that it applies to;
 - an optional ``additional_datasets`` section.
 
+.. _tasks:
+
 The diagnostics section defines tasks
 -------------------------------------
 The diagnostic section(s) define the tasks that will be executed when running the recipe.

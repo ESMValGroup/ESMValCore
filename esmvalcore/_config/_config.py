@@ -89,7 +89,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         'output_dir': 'esmvaltool_output',
         'profile_diagnostic': False,
         'remove_preproc_dir': True,
-        'resume': [],
+        'resume_from': [],
         'run_diagnostic': True,
         'save_intermediary_cubes': False,
     }

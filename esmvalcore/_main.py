@@ -323,7 +323,7 @@ class ESMValTool():
     @staticmethod
     def run(recipe,
             config_file=None,
-            resume=None,
+            resume_from=None,
             max_datasets=None,
             max_years=None,
             skip_nonexistent=False,
@@ -345,9 +345,9 @@ class ESMValTool():
         config_file: str, optional
             Configuration file to use. If not provided the file
             ${HOME}/.esmvaltool/config-user.yml will be used.
-        resume: list(str), optional
+        resume_from: list(str), optional
             Resume one or more previous runs by using preprocessor output files
-            from these directories.
+            from these output directories.
         max_datasets: int, optional
             Maximum number of datasets to use.
         max_years: int, optional
@@ -401,7 +401,7 @@ class ESMValTool():
         logger.info("Using config file %s", cfg['config_file'])
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
-        cfg['resume'] = parse_resume(resume, recipe)
+        cfg['resume_from'] = parse_resume(resume_from, recipe)
         cfg['skip-nonexistent'] = skip_nonexistent
         if isinstance(diagnostics, str):
             diagnostics = diagnostics.split(' ')
