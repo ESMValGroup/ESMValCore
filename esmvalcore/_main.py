@@ -52,7 +52,7 @@ ______________________________________________________________________
 def parse_resume(resume, recipe):
     """Set `resume` to a correct value and sanity check."""
     if not resume:
-        resume = []
+        return []
     if isinstance(resume, str):
         resume = resume.split(' ')
     for i, resume_dir in enumerate(resume):
