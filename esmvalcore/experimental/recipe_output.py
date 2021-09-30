@@ -2,6 +2,7 @@
 import base64
 import logging
 import os
+import shutil
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional, Tuple, Type
@@ -11,7 +12,7 @@ import iris
 from .config import Session
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
-from .templates import get_template
+from .templates import TEMPLATE_DIR, get_template
 
 logger = logging.getLogger(__name__)
 
@@ -201,6 +202,9 @@ class RecipeOutput(Mapping):
 
         A html file `index.html` gets written to the session directory.
         """
+        for filename in ('logo.png', 'style.css'):
+            shutil.copy2(TEMPLATE_DIR / filename, self.session.run_dir)
+
         filename = self.session.session_dir / 'index.html'
 
         template = get_template('recipe_output_page.j2')

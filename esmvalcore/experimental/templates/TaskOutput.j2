@@ -25,7 +25,8 @@
 {% for file in task.data_files %}
 
     <li>
-        {{ file.caption }} |
+        {{ file.caption }}
+        <br>
         <a href='{{ file.path.relative_to(session.session_dir) }}'>download</a> |
         <a href='{{ file.citation_file.relative_to(session.session_dir) }}'>references</a> |
         <a href='{{ file.data_citation_file.relative_to(session.session_dir) }}'>extra data citation</a> |
