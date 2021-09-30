@@ -64,7 +64,7 @@ Multiple directories can be specified for re-use, make sure to quote them:
 
 The first preprocessor directory containing the required data will be used.
 
-This feature be useful when developing new diagnostics, because it avoids
+This feature can be useful when developing new diagnostics, because it avoids
 the need to re-run the preprocessor.
 Another potential use case is running the preprocessing part of a recipe on
 one or more machines that have access to a lot of data and then running the
