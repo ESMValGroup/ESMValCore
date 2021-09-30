@@ -176,6 +176,26 @@ class Test(tests.Test):
         self.assertEqual(self.cube.ancillary_variables(),
                          result.ancillary_variables())
 
+    def test_preserve_2D_fx_interpolation_single_level(self):
+        result = self.cube[0, :, :]
+        area_data = np.ones((2, 1))
+        area_measure = iris.coords.CellMeasure(area_data,
+                                               standard_name='cell_area',
+                                               var_name='areacella',
+                                               units='m2',
+                                               measure='area')
+        ancillary_2D = iris.coords.AncillaryVariable(
+            area_data,
+            standard_name='land_area_fraction',
+            var_name='sftlf',
+            units='%')
+        self.cube.add_cell_measure(area_measure, (1, 2))
+        self.cube.add_ancillary_variable(ancillary_2D, (1, 2))
+        _preserve_fx_vars(self.cube, result)
+        self.assertEqual(self.cube.cell_measures(), result.cell_measures())
+        self.assertEqual(self.cube.ancillary_variables(),
+                         result.ancillary_variables())
+
     def test_do_not_preserve_3D_fx_interpolation(self):
         volume_data = np.ones(self.shape)
         volume_measure = iris.coords.CellMeasure(volume_data,

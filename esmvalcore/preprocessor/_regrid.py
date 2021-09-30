@@ -17,6 +17,7 @@ from iris.util import broadcast_to_shape
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
+from ._ancillary_vars import add_ancillary_variable, add_cell_measure
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
@@ -656,7 +657,7 @@ def _preserve_fx_vars(cube, result):
                     'in variable %s, as z-axis has been interpolated',
                     measure.var_name, result.var_name)
             else:
-                result.add_cell_measure(measure, measure_dims)
+                add_cell_measure(result, measure, measure.measure)
     if cube.ancillary_variables():
         for ancillary_var in cube.ancillary_variables():
             ancillary_dims = cube.ancillary_variable_dims(ancillary_var)
@@ -666,7 +667,7 @@ def _preserve_fx_vars(cube, result):
                     'in variable %s, as z-axis has been interpolated',
                     ancillary_var.var_name, result.var_name)
             else:
-                result.add_ancillary_variable(ancillary_var, ancillary_dims)
+                add_ancillary_variable(result, ancillary_var)
 
 
 def extract_levels(cube, levels, scheme, coordinate=None):
