@@ -182,14 +182,19 @@ def meridional_statistics(cube, operator):
 
 def compute_area_weights(cube):
     """Compute area weights."""
-    with warnings.catch_warnings():
+    with warnings.catch_warnings(record=True) as caught_warnings:
         warnings.filterwarnings(
-            'ignore',
+            'always',
             message="Using DEFAULT_SPHERICAL_EARTH_RADIUS.",
             category=UserWarning,
             module='iris.analysis.cartography',
         )
-        return iris.analysis.cartography.area_weights(cube)
+        weights = iris.analysis.cartography.area_weights(cube)
+        for warning in caught_warnings:
+            logger.debug(
+                "%s while computing area weights of the following cube:\n%s",
+                warning.message, cube)
+    return weights
 
 
 def area_statistics(cube, operator):
