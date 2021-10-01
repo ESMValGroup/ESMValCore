@@ -642,14 +642,19 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
-def extract_levels(cube, levels, scheme, coordinate=None):
+def extract_levels(cube,
+                   levels,
+                   scheme,
+                   coordinate=None,
+                   rtol=1e-7,
+                   atol=None):
     """Perform vertical interpolation.
 
     Parameters
     ----------
-    cube : cube
+    cube : iris.cube.Cube
         The source cube to be vertically interpolated.
-    levels : array
+    levels : ArrayLike
         One or more target levels for the vertical interpolation. Assumed
         to be in the same S.I. units of the source cube vertical dimension
         coordinate. If the requested levels are sufficiently close to the
@@ -668,6 +673,16 @@ def extract_levels(cube, levels, scheme, coordinate=None):
         existing pressure levels (air_pressure) to height levels (altitude);
         'coordinate = air_pressure' will convert existing height levels
         (altitude) to pressure levels (air_pressure).
+    rtol : float
+        Relative tolerance for comparing the levels in `cube` to the requested
+        levels. If the levels are sufficiently close, the requested levels
+        will be assigned to the cube and no interpolation will take place.
+    atol : float
+        Absolute tolerance for comparing the levels in `cube` to the requested
+        levels. If the levels are sufficiently close, the requested levels
+        will be assigned to the cube and no interpolation will take place.
+        By default, `atol` will be set to 10^-7 times the mean value of
+        the levels on the cube.
 
     Returns
     -------
@@ -713,11 +728,12 @@ def extract_levels(cube, levels, scheme, coordinate=None):
     else:
         src_levels = cube.coord(axis='z', dim_coords=True)
 
-    if (src_levels.shape == levels.shape
-            and np.allclose(src_levels.points,
-                            levels,
-                            rtol=1e-7,
-                            atol=1e-7 * np.mean(src_levels.points))):
+    if (src_levels.shape == levels.shape and np.allclose(
+            src_levels.points,
+            levels,
+            rtol=rtol,
+            atol=1e-7 * np.mean(src_levels.points) if atol is None else atol,
+    )):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
         result = cube
