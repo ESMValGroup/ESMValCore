@@ -102,21 +102,22 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     # set defaults
     defaults = {
+        'auxiliary_data_dir': 'auxiliary_data',
         'compress_netcdf': False,
+        'config_developer_file': None,
+        'drs': {},
+        'download_dir': '~/climate_data',
         'exit_on_warning': False,
+        'extra_facets_dir': tuple(),
+        'max_parallel_tasks': None,
         'offline': True,
         'output_file_type': 'png',
         'output_dir': 'esmvaltool_output',
-        'download_dir': '~/climate_data',
-        'auxiliary_data_dir': 'auxiliary_data',
-        'extra_facets_dir': tuple(),
-        'save_intermediary_cubes': False,
-        'remove_preproc_dir': True,
-        'max_parallel_tasks': None,
-        'run_diagnostic': True,
         'profile_diagnostic': False,
-        'config_developer_file': None,
-        'drs': {},
+        'remove_preproc_dir': True,
+        'resume_from': [],
+        'run_diagnostic': True,
+        'save_intermediary_cubes': False,
     }
 
     for key in defaults:

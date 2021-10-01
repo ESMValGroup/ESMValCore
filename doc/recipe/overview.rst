@@ -216,6 +216,8 @@ section will include:
 - an optional ``title`` and ``description``, used to generate the title and description
   of the ``index.html`` output file.
 
+.. _tasks:
+
 The diagnostics section defines tasks
 -------------------------------------
 The diagnostic section(s) define the tasks that will be executed when running the recipe.

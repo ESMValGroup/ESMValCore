@@ -28,7 +28,7 @@ from ._data_finder import (
 )
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._recipe_checks import InputFilesNotFound, RecipeError
-from ._task import DiagnosticTask, TaskSet
+from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
 from .preprocessor import (
@@ -1131,10 +1131,10 @@ class Recipe:
 
     @staticmethod
     def _expand_tag(variables, input_tag):
-        """Expand tags such as ensemble members or stardates to multiple
-        datasets.
+        """Expand tags such as ensemble members or startdates.
 
         Expansion only supports ensembles defined as strings, not lists.
+        Returns the expanded datasets.
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
@@ -1416,22 +1416,33 @@ class Recipe:
                         ancestors.extend(tasks[a] for a in ancestor_ids)
                     tasks[task_id].ancestors = ancestors
 
-    def initialize_tasks(self):
-        """Define tasks in recipe."""
-        logger.info("Creating tasks from recipe")
-        tasks = TaskSet()
-
-        run_diagnostic = self._cfg.get('run_diagnostic', True)
-        tasknames_to_run = self._cfg.get('diagnostics')
-
-        priority = 0
+    def _create_preprocessor_tasks(self, diagnostic_name, diagnostic):
+        """Create preprocessor tasks."""
+        tasks = []
         failed_tasks = []
-        for diagnostic_name, diagnostic in self.diagnostics.items():
-            logger.info("Creating tasks for diagnostic %s", diagnostic_name)
-
-            # Create preprocessor tasks
-            for variable_group in diagnostic['preprocessor_output']:
-                task_name = diagnostic_name + TASKSEP + variable_group
+        for variable_group in diagnostic['preprocessor_output']:
+            task_name = diagnostic_name + TASKSEP + variable_group
+            # Resume previous runs if requested, else create a new task
+            for resume_dir in self._cfg['resume_from']:
+                prev_preproc_dir = Path(
+                    resume_dir,
+                    'preproc',
+                    diagnostic_name,
+                    variable_group,
+                )
+                if prev_preproc_dir.exists():
+                    logger.info("Re-using preprocessed files from %s for %s",
+                                prev_preproc_dir, task_name)
+                    preproc_dir = Path(
+                        self._cfg['preproc_dir'],
+                        'preproc',
+                        diagnostic_name,
+                        variable_group,
+                    )
+                    task = ResumeTask(prev_preproc_dir, preproc_dir, task_name)
+                    tasks.append(task)
+                    break
+            else:
                 logger.info("Creating preprocessor task %s", task_name)
                 try:
                     task = _get_preprocessor_task(
@@ -1444,39 +1455,67 @@ class Recipe:
                 except RecipeError as ex:
                     failed_tasks.append(ex)
                 else:
-                    for task0 in task.flatten():
-                        task0.priority = priority
+                    tasks.append(task)
+
+        return tasks, failed_tasks
+
+    def _create_tasks(self):
+        """Create tasks from the recipe."""
+        logger.info("Creating tasks from recipe")
+        tasks = TaskSet()
+
+        priority = 0
+        failed_tasks = []
+        for diagnostic_name, diagnostic in self.diagnostics.items():
+            logger.info("Creating tasks for diagnostic %s", diagnostic_name)
+
+            # Create preprocessor tasks
+            new_tasks, failed = self._create_preprocessor_tasks(
+                diagnostic_name, diagnostic)
+            failed_tasks.extend(failed)
+            for task in new_tasks:
+                for task0 in task.flatten():
+                    task0.priority = priority
+                tasks.add(task)
+                priority += 1
+
+            # Create diagnostic tasks
+            if self._cfg.get('run_diagnostic', True):
+                for script_name, script_cfg in diagnostic['scripts'].items():
+                    task_name = diagnostic_name + TASKSEP + script_name
+                    logger.info("Creating diagnostic task %s", task_name)
+                    task = DiagnosticTask(
+                        script=script_cfg['script'],
+                        output_dir=script_cfg['output_dir'],
+                        settings=script_cfg['settings'],
+                        name=task_name,
+                    )
+                    task.priority = priority
                     tasks.add(task)
                     priority += 1
 
-            # Create diagnostic tasks
-            for script_name, script_cfg in diagnostic['scripts'].items():
-                task_name = diagnostic_name + TASKSEP + script_name
-                logger.info("Creating diagnostic task %s", task_name)
-                task = DiagnosticTask(
-                    script=script_cfg['script'],
-                    output_dir=script_cfg['output_dir'],
-                    settings=script_cfg['settings'],
-                    name=task_name,
-                )
-                task.priority = priority
-                tasks.add(task)
-                priority += 1
+        # Resolve diagnostic ancestors
+        if self._cfg.get('run_diagnostic', True):
+            self._resolve_diagnostic_ancestors(tasks)
+
         if failed_tasks:
             recipe_error = RecipeError('Could not create all tasks')
             recipe_error.failed_tasks.extend(failed_tasks)
             raise recipe_error
+
         check.tasks_valid(tasks)
 
-        # Resolve diagnostic ancestors
-        self._resolve_diagnostic_ancestors(tasks)
+        return tasks
+
+    def initialize_tasks(self):
+        """Define tasks in recipe."""
+        tasks = self._create_tasks()
 
         # Select only requested tasks
-        tasks = tasks.flatten()
-        if not run_diagnostic:
-            tasks = TaskSet(t for t in tasks
-                            if isinstance(t, PreprocessingTask))
+        tasknames_to_run = self._cfg.get('diagnostics')
+
         if tasknames_to_run:
+            tasks = tasks.flatten()
             names = {t.name for t in tasks}
             selection = set()
             for pattern in tasknames_to_run:

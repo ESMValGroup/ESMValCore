@@ -130,6 +130,37 @@ def test_allow_skipping(ancestors, var, cfg, out):
     assert result is out
 
 
+def test_resume_preprocessor_tasks(mocker, tmp_path):
+    """Test that `Recipe._create_preprocessor_tasks` creates a ResumeTask."""
+    # Create a mock ResumeTask class that returns a mock instance
+    resume_task_cls = mocker.patch.object(_recipe, 'ResumeTask', autospec=True)
+    resume_task = mocker.Mock()
+    resume_task_cls.return_value = resume_task
+
+    # Create a mock output directory of a previous run
+    diagnostic_name = 'diagnostic_name'
+    prev_output = tmp_path / 'recipe_test_20200101_000000'
+    prev_preproc_dir = prev_output / 'preproc' / diagnostic_name / 'tas'
+    prev_preproc_dir.mkdir(parents=True)
+
+    # Create a mock recipe
+    recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
+    recipe._cfg = {
+        'resume_from': [str(prev_output)],
+        'preproc_dir': '/path/to/recipe_test_20210101_000000/preproc',
+    }
+
+    # Create a very simplified list of datasets
+    diagnostic = {'preprocessor_output': {'tas': [{'short_name': 'tas'}]}}
+
+    # Create tasks
+    tasks, failed = _recipe.Recipe._create_preprocessor_tasks(
+        recipe, diagnostic_name, diagnostic)
+
+    assert tasks == [resume_task]
+    assert not failed
+
+
 def create_esgf_search_results():
     """Prepare some fake ESGF search results."""
     file0 = ESGFFile([
