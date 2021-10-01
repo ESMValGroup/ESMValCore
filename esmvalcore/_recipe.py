@@ -1215,8 +1215,6 @@ class Recipe:
                 check.variable(variable, subexperiment_keys)
             else:
                 check.variable(variable, required_keys)
-            if variable['project'] == 'CMIP5' and 'product' not in variable:
-                variable['product'] = 'output1'
             if variable['project'] == 'obs4mips':
                 logger.warning("Correcting capitalization, project 'obs4mips'"
                                " should be written as 'obs4MIPs'")

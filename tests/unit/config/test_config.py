@@ -7,6 +7,7 @@ from esmvalcore._config import _config
 from esmvalcore._config._config import (
     _deep_update,
     _load_extra_facets,
+    get_extra_facets,
     importlib_files,
 )
 
@@ -61,6 +62,32 @@ TEST_LOAD_EXTRA_FACETS = [
 def test_load_extra_facets(project, extra_facets_dir, expected):
     extra_facets = _load_extra_facets(project, extra_facets_dir)
     assert extra_facets == expected
+
+
+def test_get_extra_facets_cmip3():
+
+    variable = {
+        'project': 'CMIP3',
+        'mip': 'A1',
+        'short_name': 'tas',
+        'dataset': 'CM3',
+    }
+    extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
+
+    assert extra_facets == {'institute': ['CNRM', 'INM']}
+
+
+def test_get_extra_facets_cmip5():
+
+    variable = {
+        'project': 'CMIP5',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'dataset': 'ACCESS1-0',
+    }
+    extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
+
+    assert extra_facets == {'institute': ['CSIRO-BOM'], 'product': 'output1'}
 
 
 def test_load_default_config(monkeypatch):

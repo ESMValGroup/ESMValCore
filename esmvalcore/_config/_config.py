@@ -1,6 +1,7 @@
 """Functions dealing with config-user.yml / config-developer.yml."""
 import collections.abc
 import datetime
+import fnmatch
 import logging
 import os
 import sys
@@ -54,7 +55,32 @@ def _load_extra_facets(project, extra_facets_dir):
 def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
     """Read configuration files with additional variable information."""
     project_details = _load_extra_facets(project, extra_facets_dir)
-    return project_details.get(dataset, {}).get(mip, {}).get(short_name, {})
+
+    def pattern_filter(patterns, name):
+        """Get the subset of the list `patterns` that `name` matches.
+
+        Parameters
+        ----------
+        patterns : :obj:`list` of :obj:`str`
+            A list of strings that may contain shell-style wildcards.
+        name : str
+            A string describing the dataset, mip, or short_name.
+
+        Returns
+        -------
+        :obj:`list` of :obj:`str`
+            The subset of patterns that `name` matches.
+        """
+        return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
+
+    extra_facets = {}
+    for dataset_ in pattern_filter(project_details, dataset):
+        for mip_ in pattern_filter(project_details[dataset_], mip):
+            for var in pattern_filter(project_details[dataset_], short_name):
+                facets = project_details[dataset_][mip_][var]
+                extra_facets.update(facets)
+
+    return extra_facets
 
 
 def read_config_user_file(config_file, folder_name, options=None):
@@ -210,15 +236,14 @@ def get_project_config(project):
 
 
 def get_institutes(variable):
-    """Return the institutes given the dataset name in CMIP5 and CMIP6."""
+    """Return the institutes given the dataset name in CMIP6."""
     dataset = variable['dataset']
     project = variable['project']
     logger.debug("Retrieving institutes for dataset %s", dataset)
     try:
         return CMOR_TABLES[project].institutes[dataset]
     except (KeyError, AttributeError):
-        pass
-    return CFG.get(project, {}).get('institutes', {}).get(dataset, [])
+        return []
 
 
 def get_activity(variable):
