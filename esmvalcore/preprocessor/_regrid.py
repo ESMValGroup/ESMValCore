@@ -642,6 +642,41 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
+def parse_vertical_scheme(scheme):
+    """Parse the scheme provided for level extraction.
+
+    Parameters
+    ----------
+    scheme : str
+        The vertical interpolation scheme to use. Choose from
+        'linear',
+        'nearest',
+        'nearest_horizontal_extrapolate_vertical',
+        'linear_horizontal_extrapolate_vertical'.
+
+    Returns
+    -------
+    (str, str)
+        A tuple containing the interpolation and extrapolation scheme.
+    """
+    if scheme not in VERTICAL_SCHEMES:
+        emsg = 'Unknown vertical interpolation scheme, got {!r}. '
+        emsg += 'Possible schemes: {!r}'
+        raise ValueError(emsg.format(scheme, VERTICAL_SCHEMES))
+
+    # This allows us to put level 0. to load the ocean surface.
+    extrap_scheme = 'nan'
+    if scheme == 'nearest_horizontal_extrapolate_vertical':
+        scheme = 'nearest'
+        extrap_scheme = 'nearest'
+
+    if scheme == 'linear_horizontal_extrapolate_vertical':
+        scheme = 'linear'
+        extrap_scheme = 'nearest'
+
+    return scheme, extrap_scheme
+
+
 def extract_levels(cube,
                    levels,
                    scheme,
@@ -694,20 +729,7 @@ def extract_levels(cube,
     --------
     regrid : Perform horizontal regridding.
     """
-    if scheme not in VERTICAL_SCHEMES:
-        emsg = 'Unknown vertical interpolation scheme, got {!r}. '
-        emsg += 'Possible schemes: {!r}'
-        raise ValueError(emsg.format(scheme, VERTICAL_SCHEMES))
-
-    # This allows us to put level 0. to load the ocean surface.
-    extrap_scheme = 'nan'
-    if scheme == 'nearest_horizontal_extrapolate_vertical':
-        scheme = 'nearest'
-        extrap_scheme = 'nearest'
-
-    if scheme == 'linear_horizontal_extrapolate_vertical':
-        scheme = 'linear'
-        extrap_scheme = 'nearest'
+    interpolation, extrapolation = parse_vertical_scheme(scheme)
 
     # Ensure we have a non-scalar array of levels.
     levels = np.array(levels, ndmin=1)
@@ -752,8 +774,13 @@ def extract_levels(cube,
             raise ValueError(emsg.format(list(levels), name))
     else:
         # As a last resort, perform vertical interpolation.
-        result = _vertical_interpolate(cube, src_levels, levels, scheme,
-                                       extrap_scheme)
+        result = _vertical_interpolate(
+            cube,
+            src_levels,
+            levels,
+            interpolation,
+            extrapolation,
+        )
 
     return result
 
