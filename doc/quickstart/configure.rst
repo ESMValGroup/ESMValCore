@@ -585,9 +585,11 @@ These four items here are named people, references and projects listed in the
 Extra Facets
 ============
 
-Sometimes it is useful to automatically add extra key-value pairs to variables
+It can be useful to automatically add extra key-value pairs to variables
 or datasets in the recipe.
-These key-value pairs are called facets.
+These key-value pairs can for be used for :ref:`finding data <findingdata>`
+or for providing extra information to the functions that
+:ref:`fix data <extra-facets-fixes>` before passing it on to the preprocessor.
 
 To support this, we provide the extra facets facilities. Facets are the
 key-value pairs described in :ref:`Datasets`. Extra facets allows for the
@@ -615,6 +617,35 @@ infrastructure. The following example illustrates the concept.
      Amon:
        tas: {source_var_name: "t2m", cds_var_name: "2m_temperature"}
 
+The three levels of keys in this mapping can contain
+`Unix shell-style wildcards <https://en.wikipedia.org/wiki/Glob_(programming)#Syntax>`_.
+The special characters used in shell-style wildcards are:
+
++------------+----------------------------------------+
+|Pattern     | Meaning                                |
++============+========================================+
+| ``*``      |   matches everything                   |
++------------+----------------------------------------+
+| ``?``      |   matches any single character         |
++------------+----------------------------------------+
+| ``[seq]``  |   matches any character in ``seq``     |
++------------+----------------------------------------+
+| ``[!seq]`` |   matches any character not in ``seq`` |
++------------+----------------------------------------+
+
+where ``seq`` can either be a sequence of characters or just a bunch of characters,
+for example ``[A-C]`` matches the characters ``A``, ``B``, and ``C``,
+while ``[AC]`` matches the characters ``A`` and ``C``.
+
+For example, this is used to automatically add ``product: output1`` to any
+variable of any CMIP5 dataset that does not have a ``product`` key yet:
+
+.. code-block:: yaml
+   :caption: Extra facet example file `cmip5-product.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/_config/extra_facets/cmip5-product.yml>`_
+
+   '*':
+     '*':
+       '*': {product: output1}
 
 Location of the extra facets files
 ----------------------------------
