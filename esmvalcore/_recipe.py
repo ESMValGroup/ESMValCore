@@ -595,7 +595,7 @@ def _get_ancestors(variable, config_user):
     (input_files, dirnames,
      filenames) = _get_input_files(variable, config_user)
 
-    logger.info(
+    logger.debug(
         "Using input files for variable %s of dataset %s:\n%s",
         variable['short_name'],
         variable['alias'].replace('_', ' '),
@@ -604,6 +604,8 @@ def _get_ancestors(variable, config_user):
             for f in input_files),
     )
     check.data_availability(input_files, variable, dirnames, filenames)
+    logger.info("Found input files for %s",
+                variable['alias'].replace('_', ' '))
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
