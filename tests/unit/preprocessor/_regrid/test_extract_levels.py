@@ -1,21 +1,25 @@
 """Unit tests for :func:`esmvalcore.preprocessor.regrid.extract_levels`."""
 import os
-
+import tempfile
 import unittest
 from unittest import mock
 
 import iris
 import numpy as np
 from numpy import ma
-import tempfile
 
 import tests
-from esmvalcore.preprocessor._regrid import (_MDI, VERTICAL_SCHEMES,
-                                             extract_levels)
+from esmvalcore.preprocessor._regrid import (
+    _MDI,
+    VERTICAL_SCHEMES,
+    extract_levels,
+    parse_vertical_scheme,
+)
 from tests.unit.preprocessor._regrid import _make_cube, _make_vcoord
 
 
 class Test(tests.Test):
+
     def setUp(self):
         self.shape = (3, 2, 1)
         self.z = self.shape[0]
@@ -43,6 +47,17 @@ class Test(tests.Test):
 
     def test_vertical_schemes(self):
         self.assertEqual(set(VERTICAL_SCHEMES), set(self.schemes))
+
+    def test_parse_vertical_schemes(self):
+        reference = {
+            'linear': ('linear', 'nan'),
+            'nearest': ('nearest', 'nan'),
+            'linear_horizontal_extrapolate_vertical': ('linear', 'nearest'),
+            'nearest_horizontal_extrapolate_vertical': ('nearest', 'nearest'),
+        }
+        for scheme in self.schemes:
+            interpolation, extrapolation = parse_vertical_scheme(scheme)
+            assert interpolation, extrapolation == reference[scheme]
 
     def test_nop__levels_match(self):
         vcoord = _make_vcoord(self.z, dtype=self.dtype)
