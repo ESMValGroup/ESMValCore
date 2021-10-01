@@ -25,6 +25,17 @@ It is also possible to explicitly change values from the config file using flags
 
 	esmvaltool run --argument_name argument_value recipe_python.yml
 
+To automatically download the files required to run a recipe from ESGF, set
+``offline`` to ``false`` in the :ref:`user configuration file`
+or run the tool with the command
+
+.. code:: bash
+
+    esmvaltool run --offline=False recipe_python.yml
+
+This feature is available for projects that are hosted on the ESGF, i.e.
+CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
+
 To control the strictness of the CMOR checker, use the flag ``--check_level``:
 
 .. code:: bash
@@ -48,21 +59,14 @@ To run a reduced version of the recipe, usually for testing purpose you can use
 In this case, the recipe will limit the number of datasets per variable to
 NDATASETS and the total amount of years loaded to NYEARS. They can also be used
 separately.
+Note that diagnostics may require specific combinations of available data, so
+use the above two flags at your own risk and for testing purposes only.
 
 To run a recipe, even if some datasets are not available, use
 
 .. code:: bash
 
     esmvaltool run --skip_nonexistent=True recipe_python.yml
-
-
-If Synda is installed (see http://prodiguer.github.io/synda/), it is possible
-to use it to automatically download the requested data from ESGF if it is not
-available locally:
-
-.. code:: bash
-
-    esmvaltool run --synda_download=True recipe_python.yml
 
 It is also possible to select only specific diagnostics to be run. To tun only
 one, just specify its name. To provide more than one diagnostic to filter use
