@@ -587,7 +587,7 @@ Extra Facets
 
 It can be useful to automatically add extra key-value pairs to variables
 or datasets in the recipe.
-These key-value pairs can for be used for :ref:`finding data <findingdata>`
+These key-value pairs can be used for :ref:`finding data <findingdata>`
 or for providing extra information to the functions that
 :ref:`fix data <extra-facets-fixes>` before passing it on to the preprocessor.
 
