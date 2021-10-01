@@ -3,7 +3,6 @@ on:
   push:
     branches:
     - main
-    - monitor_tests
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:

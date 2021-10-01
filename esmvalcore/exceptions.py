@@ -12,3 +12,7 @@ class RecipeError(Exception):
     def __str__(self):
         """Return message string."""
         return self.message
+
+
+class InputFilesNotFound(RecipeError):
+    """Files that are required to run the recipe have not been found."""

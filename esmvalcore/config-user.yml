@@ -3,21 +3,12 @@
 ###############################################################################
 ---
 
-log_level: info
-# Exit on warning (only for NCL diagnostic scripts)? true/[false]
-exit_on_warning: false
-# Plot file format? [png]/pdf/ps/eps/epsi
-output_file_type: png
-# Destination directory
+# Directory where results are stored
 output_dir: ./esmvaltool_output
+# Directory for storing downloaded climate data
+download_dir: ~/climate_data
 # Auxiliary data directory (used for some additional datasets)
-auxiliary_data_dir: ./auxiliary_data
-# Use netCDF compression true/[false]
-compress_netcdf: false
-# Save intermediary cubes in the preprocessor true/[false]
-save_intermediary_cubes: false
-# Remove the preproc dir if all fine
-remove_preproc_dir: false
+auxiliary_data_dir: ~/auxiliary_data
 # Run at most this many tasks in parallel [null]/1/2/3/4/..
 # Set to null to use the number of available CPUs.
 # If you run out of memory, try setting max_parallel_tasks to 1 and check the
@@ -26,6 +17,22 @@ remove_preproc_dir: false
 # can increase the number of parallel tasks again to a reasonable number for
 # the amount of memory available in your system.
 max_parallel_tasks: null
+# Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
+# and obs4MIPs data from ESGF by default. This is useful if you are working
+# on a computer without an internet connection.
+offline: true
+# Log level of the console
+log_level: info
+# Exit on warning (only for NCL diagnostic scripts)? true/[false]
+exit_on_warning: false
+# Plot file format? [png]/pdf/ps/eps/epsi
+output_file_type: png
+# Remove the preproc dir if all fine
+remove_preproc_dir: false
+# Use netCDF compression true/[false]
+compress_netcdf: false
+# Save intermediary cubes in the preprocessor true/[false]
+save_intermediary_cubes: false
 # Path to custom config-developer file, to customise project configurations.
 # See config-developer.yml for an example. Set to None to use the default
 config_developer_file: null
@@ -38,19 +45,31 @@ profile_diagnostic: false
 # For site-specific entries, see below
 # Comment out these when using a site-specific path
 rootpath:
-  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
-  OBS: ~/obs_inputpath
-  RAWOBS: ~/rawobs_inputpath
-  default: ~/default_inputpath
-  CORDEX: ~/default_inputpath
+  default: ~/climate_data
 
-# Directory structure for input data: [default]/BADC/DKRZ/ETHZ/etc
+# Directory structure for input data: [default]/ESGF/BADC/DKRZ/ETHZ/etc
 # See config-developer.yml for definitions.
 # comment out/replace as per needed
 drs:
-  CMIP5: default
-  CORDEX: default
-  OBS: default
+  CMIP3: ESGF
+  CMIP5: ESGF
+  CMIP6: ESGF
+  CORDEX: ESGF
+  obs4MIPs: ESGF
+
+# Directory tree created by automatically downloading from ESGF
+#rootpath:
+#  CMIP3: ~/climate_data
+#  CMIP5: ~/climate_data
+#  CMIP6: ~/climate_data
+#  CORDEX: ~/climate_data
+#  obs4MIPs: ~/climate_data
+#drs:
+#  CMIP3: ESGF
+#  CMIP5: ESGF
+#  CMIP6: ESGF
+#  CORDEX: ESGF
+#  obs4MIPs: ESGF
 
 # Site-specific entries: Jasmin
 # Uncomment the lines below to locate data on JASMIN
@@ -61,7 +80,7 @@ drs:
 #  CMIP3: /badc/cmip3_drs/data/cmip3/output
 #  OBS: /gws/nopw/j04/esmeval/obsdata-v2
 #  OBS6: /gws/nopw/j04/esmeval/obsdata-v2
-#  obs4mips: /gws/nopw/j04/esmeval/obsdata-v2
+#  obs4MIPs: /gws/nopw/j04/esmeval/obsdata-v2
 #  ana4mips: /gws/nopw/j04/esmeval/obsdata-v2
 #  CORDEX: /badc/cordex/data/CORDEX/output
 #drs:
@@ -71,7 +90,7 @@ drs:
 #  CORDEX: BADC
 #  OBS: default
 #  OBS6: default
-#  obs4mips: default
+#  obs4MIPs: default
 #  ana4mips: default
 
 # Site-specific entries: DKRZ
@@ -84,7 +103,7 @@ drs:
 #  CORDEX: /mnt/lustre02/work/ik1017/C3SCORDEX/data/c3s-cordex/output
 #  OBS: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
 #  OBS6: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
-#  obs4mips: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
+#  obs4MIPs: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
 #  ana4mips: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/OBS
 #  native6: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/RAWOBS
 #  RAWOBS: /mnt/lustre02/work/bd0854/DATA/ESMValTool2/RAWOBS
@@ -93,7 +112,7 @@ drs:
 #  CMIP5: DKRZ
 #  CMIP3: DKRZ
 #  CORDEX: BADC
-#  obs4mips: default
+#  obs4MIPs: default
 #  ana4mips: default
 #  OBS: default
 #  OBS6: default
@@ -119,7 +138,7 @@ drs:
 #  CMIP6: /bdd/CMIP6
 #  CMIP3: /bdd/CMIP3
 #  CORDEX: /bdd/CORDEX/output
-#  obs4mips: /bdd/obs4MIPS/obs-CFMIP/observations
+#  obs4MIPs: /bdd/obs4MIPS/obs-CFMIP/observations
 #  ana4mips: /not_yet
 #  OBS: /not_yet
 #  OBS6: /not_yet
@@ -129,7 +148,7 @@ drs:
 #  CMIP5: DKRZ
 #  CMIP3: IPSL
 #  CORDEX: BADC
-#  obs4mips: IPSL
+#  obs4MIPs: IPSL
 #  ana4mips: default
 #  OBS: not_yet
 #  OBS6: not_yet

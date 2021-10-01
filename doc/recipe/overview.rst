@@ -26,6 +26,7 @@ The documentation section includes:
   :ref:`config-ref`)
 - The recipe's maintainer's user name (``maintainer``, matching the definitions in the
   :ref:`config-ref`)
+- The title of the recipe (``title``)
 - A description of the recipe (``description``, written in MarkDown format)
 - A list of scientific references (``references``, matching the definitions in
   the :ref:`config-ref`)
@@ -38,6 +39,7 @@ the following:
 .. code-block:: yaml
 
     documentation:
+      title: Atlantic Meridional Overturning Circulation (AMOC) and the drake passage current
       description: |
         Recipe to produce time series figures of the derived variable, the
         Atlantic meridional overturning circulation (AMOC).
@@ -77,12 +79,12 @@ data specifications:
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``)
 - project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
   ``OBS`` for observational data, ``ana4mips`` for ana4mips data,
-  ``obs4mips`` for obs4mips data, ``EMAC`` for EMAC data)
+  ``obs4MIPs`` for obs4MIPs data, ``EMAC`` for EMAC data)
 - experiment (key ``exp``, value e.g. ``historical``, ``amip``, ``piControl``,
   ``RCP8.5``)
 - mip (for CMIP data, key ``mip``, value e.g. ``Amon``, ``Omon``, ``LImon``)
 - ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
-- sub-experiment id (key `sub_experiment`, value e.g. `s2000`, `s(2000:2002)`, 
+- sub-experiment id (key `sub_experiment`, value e.g. `s2000`, `s(2000:2002)`,
   for DCPP data only)
 - time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``. Please
   note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
@@ -211,6 +213,10 @@ section will include:
 - the diagnostic script(s) to be run;
 - a description of the diagnostic and lists of themes and realms that it applies to;
 - an optional ``additional_datasets`` section.
+- an optional ``title`` and ``description``, used to generate the title and description
+  of the ``index.html`` output file.
+
+.. _tasks:
 
 The diagnostics section defines tasks
 -------------------------------------
@@ -231,7 +237,8 @@ A (simplified) example diagnostics section could look like
 
   diagnostics:
     diagnostic_name:
-      description: Air temperature tutorial diagnostic.
+      title: Air temperature tutorial diagnostic
+      description: A longer description can be added here.
       themes:
         - phys
       realms:
@@ -373,7 +380,8 @@ map script, ``ocean/diagnostic_maps.py``.
   diagnostics:
 
     diag_map:
-      description: Global Ocean Surface regridded temperature map
+      title: Global Ocean Surface regridded temperature map
+      description: Add a longer description here.
       variables:
         tos: # Temperature at the ocean surface
           preprocessor: prep_map
@@ -446,6 +454,7 @@ the absolute path to the diagnostic:
   diagnostics:
 
     myFirstDiag:
+      title: Let's do some science!
       description: John Doe wrote a funny diagnostic
       variables:
         tos: # Temperature at the ocean surface
