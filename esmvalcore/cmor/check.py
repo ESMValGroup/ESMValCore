@@ -511,7 +511,6 @@ class CMORCheck():
         search for the correct coordinate version and then check against this.
         For ``cmor_strict=False`` project (like OBS) the check for requested
         values might be disabled.
-
         """
         table_type = self._cmor_var.table_type
         alternative_coord = None
@@ -772,17 +771,22 @@ class CMORCheck():
         """Check requested values."""
         if coord_info.requested:
             try:
-                cmor_points = np.array(
-                    [float(val) for val in coord_info.requested])
-                atol = 1e-7 * np.mean(coord.points)
-                if self.automatic_fixes and np.allclose(
-                        coord.points, cmor_points, rtol=1e-7, atol=atol):
-                    coord.points = cmor_points
+                cmor_points = np.array(coord_info.requested, dtype=float)
             except ValueError:
                 cmor_points = coord_info.requested
-            coord_points = list(coord.points)
+            else:
+                atol = 1e-7 * np.mean(cmor_points)
+                if (self.automatic_fixes
+                        and coord.points.shape == cmor_points.shape
+                        and np.allclose(
+                            coord.points,
+                            cmor_points,
+                            rtol=1e-7,
+                            atol=atol,
+                        )):
+                    coord.points = cmor_points
             for point in cmor_points:
-                if point not in coord_points:
+                if point not in coord.points:
                     self.report_warning(self._contain_msg, var_name,
                                         str(point), str(coord.units))
 
