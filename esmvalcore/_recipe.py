@@ -1499,16 +1499,16 @@ class Recipe:
                     tasks.add(task)
                     priority += 1
 
-        # Resolve diagnostic ancestors
-        if self._cfg.get('run_diagnostic', True):
-            self._resolve_diagnostic_ancestors(tasks)
-
         if failed_tasks:
             recipe_error = RecipeError('Could not create all tasks')
             recipe_error.failed_tasks.extend(failed_tasks)
             raise recipe_error
 
         check.tasks_valid(tasks)
+
+        # Resolve diagnostic ancestors
+        if self._cfg.get('run_diagnostic', True):
+            self._resolve_diagnostic_ancestors(tasks)
 
         return tasks
 
