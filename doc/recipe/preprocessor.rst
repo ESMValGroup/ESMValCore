@@ -245,6 +245,17 @@ available tables of the specified project.
    a given dataset) fx files are found in more than one table, ``mip`` needs to
    be specified, otherwise an error is raised.
 
+Additionally, it is possible to search across all ensembles and experiments (or
+any other keys) when specifying the fx variable, by using the ``*`` character,
+which is useful for some projects where the location of the fx files is not
+consistent.  This makes it possible to search for fx files under multiple
+ensemble members or experiments.  For example: ``ensemble: '*'``. Note that the
+``*`` character must be quoted since ``*`` is a special charcter in YAML. This
+functionality is only supported for time invariant fx variables (i.e. frequency
+``fx``). Note also that if multiple folders of matching fx files are found,
+ESMValTool will default to ensemble r0i0p0 if it exists and then first folder
+found only if it does not.
+
 Internally, the required ``fx_variables`` are automatically loaded by the
 preprocessor step ``add_fx_variables`` which also checks them against CMOR
 standards and adds them either as ``cell_measure`` (see `CF conventions on cell
@@ -1507,6 +1518,7 @@ The ``_volume.py`` module contains the following preprocessor functions:
 * ``extract_transect``: Extract data along a line of constant latitude or
   longitude.
 * ``extract_trajectory``: Extract data along a specified trajectory.
+* ``extract_surface``: Extract the surface layer from a cube.
 
 
 ``extract_volume``
@@ -1588,6 +1600,24 @@ Note that this function uses the expensive ``interpolate`` method from
 ``Iris.analysis.trajectory``, but it may be necessary for irregular grids.
 
 See also :func:`esmvalcore.preprocessor.extract_trajectory`.
+
+
+``extract_surface``
+-------------------
+
+This function extracts the surface layer from a dataset. 
+
+The surface layer is defined as the minimum
+of the absolute value of the Z-dimension. 
+This is typically the case for ocean models, but might not be the
+case for atmospheric models. 
+
+The same functionality exists in the ``extract_levels`` preprocessor,
+and this function should be used for more complex datasets
+if extract_surface fails. However, ``extract_levels`` also 
+has a higher computational cost, and may be slower. 
+
+See also :func:`esmvalcore.preprocessor.extract_levels`.
 
 
 .. _cycles:

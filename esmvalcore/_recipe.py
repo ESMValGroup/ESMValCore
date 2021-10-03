@@ -336,7 +336,8 @@ def _add_fxvar_keys(fx_info, variable):
     fx_variable['variable_group'] = fx_info['short_name']
 
     # add special ensemble for CMIP5 only
-    if fx_variable['project'] == 'CMIP5':
+    if (fx_variable['project'] == 'CMIP5' and
+            fx_variable.get('ensemble') != '*'):
         fx_variable['ensemble'] = 'r0i0p0'
 
     # add missing cmor info
@@ -427,11 +428,14 @@ def _get_fx_files(variable, fx_info, config_user):
                 f"table '{mip}' for '{var_project}'")
         fx_info = _add_fxvar_keys(fx_info, variable)
         fx_files = _get_input_files(fx_info, config_user)[0]
-
+   
+ 
     # Flag a warning if no files are found
     if not fx_files:
-        logger.warning("Missing data for fx variable %s of dataset %s",
-                       fx_info['short_name'], fx_info['dataset'])
+        outs = ', '.join([str(i)+': '+str(v) for i, v in fx_info.items()])
+        logger.error("Missing data for fx variable '%s', '%s'",
+                     fx_info['short_name'], outs)
+        assert 0
 
     # If frequency = fx, only allow a single file
     if fx_files:
@@ -796,6 +800,11 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
                 else:
                     missing_vars.add(ex.message)
                 continue
+
+        # Update output filename in case wildcards have been resolved
+        if '*' in variable['filename']:
+            variable['filename'] = get_output_file(variable,
+                                                   config_user['preproc_dir'])
         product = PreprocessorFile(
             attributes=variable,
             settings=settings,

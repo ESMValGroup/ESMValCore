@@ -279,6 +279,78 @@ def volume_statistics(cube, operator):
     return _create_cube_time(src_cube, result, times)
 
 
+def extract_surface(cube):
+    """
+    Extact the surface layer from a 3D cube.
+
+    Extracts the entire layer along the z axis where the z coordinate is
+    the minimum of the absolute value of the z-axis dimensions points.
+
+    Requires a cube with a z axis.
+
+    This assumes that the surface is the closest layer to zero.
+    This assumption is usually true in the ocean, but may not be the
+    case in all models for all z-axes.
+
+    In the case of temporally or spatially varying depth grid,
+    (ie the depth array is 3D or 4D), the surface layer is determined
+    using the mean of the depth points along the time, latitude and
+    longitude axes. This preprocessor may also behave strangely
+    if the z axis data are not monotonic, or unusual in some other way.
+
+    The preprocessor extract_layer can also do this, but it may be
+    much slower and more memory intensie as it regrids.
+    It is more robust to variability in the grid definitions.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+
+    Returns
+    -------
+    iris.cube.Cube
+        collapsed cube.
+
+    """
+    # Get the z axis.
+    zcoord = cube.coord(axis='Z')
+    positive = zcoord.attributes['positive']
+
+    # Get the Z points dimension, usually 0 or 1.
+    zcoord_dim = cube.coord_dims(zcoord)[0] 
+    
+    # make a list of axes for the non-z axes
+    # something like [0, 2, 3]. or [1, 2]
+    axes = list(range(cube.data.ndim))
+    axes = axes.remove(zcoord_dim)
+
+    # Get a list of points.
+    points = zcoord.points
+    if points.ndim == cube.data.ndim:
+        points = zcoord.points.mean(axis=axes)
+
+    # Calculate the surface layer index:
+    surf = np.abs(points).argmin()
+
+    # Get the z axis dimension in the cude:
+    if zcoord_dim in [0, (0,)]:
+        return cube[surf]
+
+    if zcoord_dim in [1, (1,)]:
+        return cube[:, surf]
+
+    if zcoord_dim in [2, (2,)]:
+        return cube[:, :, surf]
+
+    if zcoord_dim in [3, (3,)]:
+        return cube[:, :, :, surf]
+
+    logger.error('Z coordinate is strange: positive is %s , Z dim is along axis: %s, '
+                 'surface level: %s', positive, zcoord_dim, surf)
+    return cube
+
+
 def depth_integration(cube):
     """
     Determine the total sum over the vertical component.
@@ -467,5 +539,10 @@ def extract_trajectory(cube, latitudes, longitudes, number_points=2):
         latitudes = np.linspace(minlat, maxlat, num=number_points)
 
     points = [('latitude', latitudes), ('longitude', longitudes)]
+    #times = cube.coord('time')
+    #if len(times.points):
     interpolated_cube = interpolate(cube, points)  # Very slow!
+    #interpolated_cube.coord('latitude').guess_bounds()
+    #interpolated_cube.coord('longitude').guess_bounds()
+
     return interpolated_cube

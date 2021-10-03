@@ -7,7 +7,11 @@ import pytest
 import yaml
 
 import esmvalcore._config
-from esmvalcore._data_finder import get_input_filelist, get_output_file
+from esmvalcore._data_finder import (
+    dir_to_var,
+    get_input_filelist,
+    get_output_file,
+)
 from esmvalcore.cmor.table import read_cmor_tables
 
 # Initialize with standard config developer file
@@ -101,3 +105,15 @@ def test_get_input_filelist(root, cfg):
     assert sorted(input_filelist) == sorted(ref_files)
     assert sorted(dirnames) == sorted(ref_dirs)
     assert sorted(filenames) == sorted(ref_patterns)
+
+
+@pytest.mark.parametrize('cfg', CONFIG['dir_to_var'])
+def test_dir_to_var(cfg):
+    """Test converting directory path to variable :obj:`dict`."""
+    drs = {cfg['project']: cfg['drs']}
+    if cfg['variable'] is None:
+        with pytest.raises(ValueError):
+            dir_to_var(cfg['dirname'], cfg['basepath'], cfg['project'], drs)
+        return
+    output = dir_to_var(cfg['dirname'], cfg['basepath'], cfg['project'], drs)
+    assert output == cfg['variable']
