@@ -27,10 +27,10 @@ from ._data_finder import (
     get_statistic_output_file,
 )
 from ._provenance import TrackedFile, get_recipe_provenance
-from ._recipe_checks import InputFilesNotFound, RecipeError
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
+from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -70,7 +70,6 @@ def read_recipe_file(filename, config_user, initialize_tasks=True):
 
 def _add_cmor_info(variable, override=False):
     """Add information from CMOR tables to variable."""
-    logger.debug("If not present: adding keys from CMOR table to %s", variable)
     # Copy the following keys from CMOR table
     cmor_keys = [
         'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
@@ -369,8 +368,8 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
                      fx_info['short_name'], mip)
         fx_files = _get_input_files(fx_info, config_user)[0]
         if fx_files:
-            logger.debug("Found fx variables '%s':\n%s",
-                         fx_info['short_name'], pformat(fx_files))
+            logger.debug("Found fx variables '%s':\n%s", fx_info['short_name'],
+                         pformat(fx_files))
             fx_files_for_mips[mip] = fx_files
 
     # Dict contains more than one element -> ambiguity
@@ -430,8 +429,9 @@ def _get_fx_files(variable, fx_info, config_user):
 
     # Flag a warning if no files are found
     if not fx_files:
-        logger.warning("Missing data for fx variable %s of dataset %s",
-                       fx_info['short_name'], fx_info['dataset'])
+        logger.warning("Missing data for fx variable '%s' of dataset %s",
+                       fx_info['short_name'],
+                       fx_info['alias'].replace('_', ' '))
 
     # If frequency = fx, only allow a single file
     if fx_files:
@@ -474,12 +474,10 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
         fx_files, fx_info = _get_fx_files(variable, fx_info, config_user)
         if fx_files:
             fx_info['filename'] = fx_files
-            settings['add_fx_variables']['fx_variables'].update({
-                fx_var: fx_info
-            })
-            logger.info(
-                'Using fx files for variable %s during step %s: %s',
-                variable['short_name'], step_name, pformat(fx_files))
+            settings['add_fx_variables']['fx_variables'].update(
+                {fx_var: fx_info})
+            logger.debug('Using fx files for variable %s during step %s: %s',
+                         variable['short_name'], step_name, pformat(fx_files))
 
 
 def _fx_list_to_dict(fx_vars):
@@ -499,6 +497,7 @@ def _fx_list_to_dict(fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
+
     # get fx variables either from user defined attribute or fixed
     def _get_fx_vars_from_attribute(step_settings, step_name):
         user_fx_vars = step_settings.get('fx_variables')
@@ -596,12 +595,17 @@ def _get_ancestors(variable, config_user):
     (input_files, dirnames,
      filenames) = _get_input_files(variable, config_user)
 
-    logger.info(
+    logger.debug(
         "Using input files for variable %s of dataset %s:\n%s",
-        variable['short_name'], variable['dataset'], '\n'.join(
+        variable['short_name'],
+        variable['alias'].replace('_', ' '),
+        '\n'.join(
             f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
-            for f in input_files))
+            for f in input_files),
+    )
     check.data_availability(input_files, variable, dirnames, filenames)
+    logger.info("Found input files for %s",
+                variable['alias'].replace('_', ' '))
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
@@ -873,8 +877,9 @@ def _get_single_preprocessor_task(variables,
         write_ncl_interface=config_user['write_ncl_interface'],
     )
 
-    logger.info("PreprocessingTask %s created. It will create the files:\n%s",
-                task.name, '\n'.join(p.filename for p in task.products))
+    logger.info("PreprocessingTask %s created.", task.name)
+    logger.debug("PreprocessingTask %s will create the files:\n%s", task.name,
+                 '\n'.join(p.filename for p in task.products))
 
     return task
 
@@ -1494,16 +1499,16 @@ class Recipe:
                     tasks.add(task)
                     priority += 1
 
-        # Resolve diagnostic ancestors
-        if self._cfg.get('run_diagnostic', True):
-            self._resolve_diagnostic_ancestors(tasks)
-
         if failed_tasks:
             recipe_error = RecipeError('Could not create all tasks')
             recipe_error.failed_tasks.extend(failed_tasks)
             raise recipe_error
 
         check.tasks_valid(tasks)
+
+        # Resolve diagnostic ancestors
+        if self._cfg.get('run_diagnostic', True):
+            self._resolve_diagnostic_ancestors(tasks)
 
         return tasks
 

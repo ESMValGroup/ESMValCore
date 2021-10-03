@@ -10,6 +10,7 @@ from esmvalcore._config._config import (
     get_extra_facets,
     importlib_files,
 )
+from esmvalcore.exceptions import RecipeError
 
 TEST_DEEP_UPDATE = [
     ([{}], {}),
@@ -88,6 +89,19 @@ def test_get_extra_facets_cmip5():
     extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
 
     assert extra_facets == {'institute': ['CSIRO-BOM'], 'product': 'output1'}
+
+
+def test_get_project_config(mocker):
+    mock_result = mocker.Mock()
+    mocker.patch.object(_config, 'CFG', {'CMIP6': mock_result})
+
+    # Check valid result
+    result = _config.get_project_config('CMIP6')
+    assert result == mock_result
+
+    # Check error
+    with pytest.raises(RecipeError):
+        _config.get_project_config('non-existent-project')
 
 
 def test_load_default_config(monkeypatch):

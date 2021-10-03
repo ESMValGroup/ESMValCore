@@ -3,8 +3,8 @@ import pytest
 
 import esmvalcore.experimental.recipe_output
 from esmvalcore import _recipe
-from esmvalcore._recipe_checks import RecipeError
 from esmvalcore.esgf._download import ESGFFile
+from esmvalcore.exceptions import RecipeError
 
 
 class TestRecipe:

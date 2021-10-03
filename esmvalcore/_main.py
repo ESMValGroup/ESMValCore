@@ -443,7 +443,9 @@ def run():
     """Run the `esmvaltool` program, logging any exceptions."""
     import sys
 
-    # Workaroud to avoid using more for the output
+    from .exceptions import RecipeError
+
+    # Workaround to avoid using more for the output
 
     def display(lines, out):
         text = "\n".join(lines) + "\n"
@@ -455,6 +457,11 @@ def run():
         fire.Fire(ESMValTool())
     except fire.core.FireExit:
         raise
+    except RecipeError as exc:
+        # Hide the stack trace for RecipeErrors
+        logger.error("%s", exc)
+        logger.debug("Stack trace for debugging:", exc_info=True)
+        sys.exit(1)
     except Exception:  # noqa
         if not logger.handlers:
             # Add a logging handler if main failed to do so.

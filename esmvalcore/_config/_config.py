@@ -12,6 +12,7 @@ from pathlib import Path
 import yaml
 
 from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
+from esmvalcore.exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -230,17 +231,15 @@ def load_config_developer(cfg_file=None):
 
 def get_project_config(project):
     """Get developer-configuration for project."""
-    logger.debug("Retrieving %s configuration", project)
     if project in CFG:
         return CFG[project]
-    raise ValueError(f"Project '{project}' not in config-developer.yml")
+    raise RecipeError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
     """Return the institutes given the dataset name in CMIP6."""
     dataset = variable['dataset']
     project = variable['project']
-    logger.debug("Retrieving institutes for dataset %s", dataset)
     try:
         return CMOR_TABLES[project].institutes[dataset]
     except (KeyError, AttributeError):
@@ -252,7 +251,6 @@ def get_activity(variable):
     project = variable['project']
     try:
         exp = variable['exp']
-        logger.debug("Retrieving activity_id for experiment %s", exp)
         if isinstance(exp, list):
             return [CMOR_TABLES[project].activities[value][0] for value in exp]
         return CMOR_TABLES[project].activities[exp][0]
