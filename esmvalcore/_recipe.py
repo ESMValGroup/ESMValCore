@@ -292,9 +292,9 @@ def _get_default_settings(variable, config_user, derive=False):
         settings['clip_timerange'] = {
             'timerange': '/'.join((start_year, end_year)),
         }
-    if 'timerange' in variable:
-        settings['clip_timerange'].update(
-            {'timerange': variable['timerange']})
+    if 'timerange' in variable and variable['frequency'] != 'fx':
+        settings['clip_timerange'] = {
+            'timerange': variable['timerange']}
 
     if derive:
         settings['derive'] = {
