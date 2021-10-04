@@ -160,6 +160,8 @@ def test_valid_time_selection_rehections(timerange, message):
     with pytest.raises(check.RecipeError) as rec_err:
         check.valid_time_selection(timerange)
     assert str(rec_err.value) == message
+
+
 def test_data_availability_nonexistent(tmp_path):
     var = {
         'dataset': 'ABC',
