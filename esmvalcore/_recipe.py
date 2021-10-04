@@ -292,13 +292,14 @@ def _get_default_settings(variable, config_user, derive=False):
     # Configure time extraction
     if 'start_year' in variable and 'end_year' in variable \
             and variable['frequency'] != 'fx':
-        settings['clip_start_end_year'] = {
-            'start_year': variable['start_year'],
-            'end_year': variable['end_year'],
+        start_year = str(variable['start_year'])
+        end_year = str(variable['end_year'])
+        settings['clip_timerange'] = {
+            'timerange': '/'.join((start_year, end_year)),
         }
-        if 'timerange' in variable:
-            settings['clip_start_end_year'].update(
-                {'timerange': variable['timerange']})
+    if 'timerange' in variable:
+        settings['clip_timerange'].update(
+            {'timerange': variable['timerange']})
 
     if derive:
         settings['derive'] = {

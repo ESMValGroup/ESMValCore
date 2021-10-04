@@ -108,17 +108,13 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     return cube_slice
 
 
-def clip_start_end_year(cube, start_year, end_year, timerange=None):
+def clip_timerange(cube, timerange):
     """Extract time range given by the dataset keys.
 
     Parameters
     ----------
     cube : iris.cube.Cube
         Input cube.
-    start_year : int
-        Start year.
-    end_year : int
-        End year.
     timerange : str
         Time range in ISO 8601 format.
 
@@ -132,9 +128,8 @@ def clip_start_end_year(cube, start_year, end_year, timerange=None):
     ValueError
         Time ranges are outside the cube's time limits.
     """
-    if timerange:
-        # To be done in another PR.
-        pass
+    start_year = int(timerange.split('/')[0][0:4])
+    end_year = int(timerange.split('/')[1][0:4])
     return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
 
 

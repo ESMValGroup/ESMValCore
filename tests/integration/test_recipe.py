@@ -82,7 +82,7 @@ DEFAULT_PREPROCESSOR_STEPS = (
     'cmor_check_data',
     'cmor_check_metadata',
     'concatenate',
-    'clip_start_end_year',
+    'clip_timerange',
     'fix_data',
     'fix_file',
     'fix_metadata',
@@ -197,9 +197,8 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'units': 'kg m-3',
             'variable_group': 'chl',
         },
-        'clip_start_end_year': {
-            'start_year': 2000,
-            'end_year': 2005,
+        'clip_timerange': {
+            'timerange': '2000/2005',
         },
         'cmor_check_metadata': {
             'check_level': CheckLevels.DEFAULT,
@@ -1190,9 +1189,8 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
                 'end_month': 6,
                 'end_day': 28,
             }
-            assert product.settings['clip_start_end_year'] == {
-                'start_year': 2000,
-                'end_year': 2005,
+            assert product.settings['clip_timerange'] == {
+                'timerange': '2000/2005',
             }
         else:
             assert False, f"invalid task {task.name}"
