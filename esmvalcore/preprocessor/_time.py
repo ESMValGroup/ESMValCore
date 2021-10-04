@@ -210,17 +210,13 @@ def _extract_datetime(cube, start_datetime, end_datetime):
     return cube_slice
 
 
-def clip_timerange(cube, start_year, end_year, timerange=None):
+def clip_timerange(cube, timerange):
     """Extract time range given by the dataset keys.
 
     Parameters
     ----------
     cube : iris.cube.Cube
         Input cube.
-    start_year : int
-        Start year.
-    end_year : int
-        End year.
     timerange : str
         Time range in ISO 8601 format.
 
@@ -234,28 +230,25 @@ def clip_timerange(cube, start_year, end_year, timerange=None):
     ValueError
         Time ranges are outside the cube's time limits.
     """
-    if timerange:
-        start_date = timerange.split('/')[0]
-        start_date = _parse_start_date(start_date)
+    start_date = timerange.split('/')[0]
+    start_date = _parse_start_date(start_date)
 
-        end_date = timerange.split('/')[1]
-        end_date = _parse_end_date(end_date)
+    end_date = timerange.split('/')[1]
+    end_date = _parse_end_date(end_date)
 
-        if isinstance(start_date, isodate.duration.Duration):
-            start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
-        elif isinstance(start_date, datetime.timedelta):
-            start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
-            start_date -= datetime.timedelta(seconds=1)
+    if isinstance(start_date, isodate.duration.Duration):
+        start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
+    elif isinstance(start_date, datetime.timedelta):
+        start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
+        start_date -= datetime.timedelta(seconds=1)
 
-        if isinstance(end_date, isodate.duration.Duration):
-            end_date = _duration_to_date(cube, end_date, start_date, sign=1)
-        elif isinstance(end_date, datetime.timedelta):
-            end_date = _duration_to_date(cube, end_date, start_date, sign=1)
-            end_date += datetime.timedelta(seconds=1)
+    if isinstance(end_date, isodate.duration.Duration):
+        end_date = _duration_to_date(cube, end_date, start_date, sign=1)
+    elif isinstance(end_date, datetime.timedelta):
+        end_date = _duration_to_date(cube, end_date, start_date, sign=1)
+        end_date += datetime.timedelta(seconds=1)
 
-        return _extract_datetime(cube, start_date, end_date)
-
-    return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
+    return _extract_datetime(cube, start_date, end_date)
 
 
 def extract_season(cube, season):
