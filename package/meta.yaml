@@ -46,6 +46,7 @@ requirements:
     - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
     - fiona
     - fire
+    - isodate
     - jinja2
     - mpich<3.4  # prevent external build
     - nc-time-axis

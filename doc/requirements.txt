@@ -3,6 +3,7 @@ dask[array]
 docutils <0.17
 fiona
 importlib_resources
+isodate
 jinja2
 netCDF4
 numpy

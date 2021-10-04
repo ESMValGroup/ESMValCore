@@ -36,6 +36,7 @@ REQUIREMENTS = {
         'fiona',
         'fire',
         "importlib_resources;python_version<'3.9'",
+        'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
