@@ -6,12 +6,14 @@ import contextlib
 import copy
 import functools
 import os
+import shutil
 import sys
 from textwrap import dedent
 from unittest.mock import patch
 
 import iris
 import pytest
+import yaml
 from fire.core import FireExit
 
 import esmvalcore._recipe_checks as check
@@ -77,15 +79,20 @@ def test_empty_run(tmp_path):
     """)
     recipe_file.write_text(content)
     Config.get_config_user(path=tmp_path)
+    log_dir = f'{tmp_path}/esmvaltool_output'
+    config_file = f"{tmp_path}/config-user.yml"
+    with open(config_file, 'r+') as file:
+        config = yaml.safe_load(file)
+        config['output_dir'] = log_dir
+        yaml.safe_dump(config, file, sort_keys=False)
     with pytest.raises(check.RecipeError) as exc:
-        ESMValTool.run(recipe_file, config_file=f"{tmp_path}/config-user.yml")
+        ESMValTool.run(recipe_file, config_file=config_file)
     assert str(exc.value) == 'The given recipe does not have any diagnostic.'
-    log_dir = './esmvaltool_output'
     log_file = os.path.join(log_dir,
                             os.listdir(log_dir)[0], 'run', 'main_log.txt')
     filled_recipe = os.path.exists(
         log_dir + '/' + os.listdir(log_dir)[0] + '/run/recipe_filled.yml')
-    os.system("rm -r esmvaltool_output")
+    shutil.rmtree(log_dir)
 
     assert log_file
     assert not filled_recipe
@@ -108,19 +115,12 @@ def test_filled_recipe(tmp_path, patched_datafinder):
         datasets:
           - dataset: bcc-csm1-1
 
-        preprocessors:
-          preprocessor_name:
-            extract_levels:
-              levels: 85000
-              scheme: nearest
-
         diagnostics:
           diagnostic_name:
             additional_datasets:
               - dataset: GFDL-ESM2G
             variables:
               ta:
-                preprocessor: preprocessor_name
                 project: CMIP5
                 mip: Amon
                 exp: historical
@@ -133,6 +133,12 @@ def test_filled_recipe(tmp_path, patched_datafinder):
         """)
     recipe_file.write_text(content)
     Config.get_config_user(path=tmp_path)
+    log_dir = f'{tmp_path}/esmvaltool_output'
+    config_file = f"{tmp_path}/config-user.yml"
+    with open(config_file, 'r+') as file:
+        config = yaml.safe_load(file)
+        config['output_dir'] = log_dir
+        yaml.safe_dump(config, file, sort_keys=False)
     excs = (ValueError, iris.exceptions.CoordinateNotFoundError)
     with pytest.raises(excs) as exc:
         ESMValTool.run(
@@ -140,10 +146,9 @@ def test_filled_recipe(tmp_path, patched_datafinder):
             config_file=f"{tmp_path}/config-user.yml",
             check_level='ignore')
     assert str(exc.value)
-    log_dir = './esmvaltool_output'
     filled_recipe = os.path.exists(
         log_dir + '/' + os.listdir(log_dir)[0] + '/run/recipe_filled.yml')
-    os.system("rm -r esmvaltool_output")
+    shutil.rmtree(log_dir)
 
     assert filled_recipe
 

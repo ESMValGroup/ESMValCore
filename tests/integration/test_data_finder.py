@@ -91,37 +91,23 @@ def test_get_input_filelist(root, cfg):
     # Find files
     rootpath = {cfg['variable']['project']: [root]}
     drs = {cfg['variable']['project']: cfg['drs']}
-    (input_filelist, dirnames,
-     filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
+    if cfg['variable'].get('timerange') is None:
+        (input_filelist, dirnames,
+         filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
+        # Test result
+        ref_files = [os.path.join(root, file) for file in cfg['found_files']]
+        if cfg['dirs'] is None:
+            ref_dirs = []
+        else:
+            ref_dirs = [os.path.join(root, dir) for dir in cfg['dirs']]
+        ref_patterns = cfg['file_patterns']
 
-    # Test result
-    ref_files = [os.path.join(root, file) for file in cfg['found_files']]
-    if cfg['dirs'] is None:
-        ref_dirs = []
+        assert sorted(input_filelist) == sorted(ref_files)
+        assert sorted(dirnames) == sorted(ref_dirs)
+        assert sorted(filenames) == sorted(ref_patterns)
     else:
-        ref_dirs = [os.path.join(root, dir) for dir in cfg['dirs']]
-    ref_patterns = cfg['file_patterns']
-
-    assert sorted(input_filelist) == sorted(ref_files)
-    assert sorted(dirnames) == sorted(ref_dirs)
-    assert sorted(filenames) == sorted(ref_patterns)
-
-
-@pytest.mark.parametrize('cfg', CONFIG['get_input_filelist'])
-def test_get_input_filelist_wildcard_in_timerange(root, cfg):
-    """Test retrieving input filelist."""
-    create_tree(root, cfg.get('available_files'),
-                cfg.get('available_symlinks'))
-
-    # Find files
-    cfg['variable'].update({'timerange': '*'})
-    cfg['variable'].pop('start_year', None)
-    cfg['variable'].pop('end_year', None)
-    rootpath = {cfg['variable']['project']: [root]}
-    drs = {cfg['variable']['project']: cfg['drs']}
-    (files, _, _) = _find_input_files(cfg['variable'], rootpath,
-                                      drs)
-    ref_files = [
-        os.path.join(root, file) for file in cfg['found_timerange_files']]
-    # Test result
-    assert sorted(files) == sorted(ref_files)
+        (files, _, _) = _find_input_files(cfg['variable'], rootpath, drs)
+        ref_files = [
+            os.path.join(root, file) for file in cfg['found_files']]
+        # Test result
+        assert sorted(files) == sorted(ref_files)
