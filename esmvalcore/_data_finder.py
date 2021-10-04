@@ -9,6 +9,7 @@ import iris
 import isodate
 
 from ._config import get_project_config
+from .exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +153,7 @@ def get_start_end_year(filename):
     start_year, end_year = _get_from_pattern(date_pattern, date_range_pattern,
                                              stem, 'year')
     # As final resort, try to get the dates from the file contents
-    if start_year is None or end_year is None:
+    if (start_year is None or end_year is None) and Path(filename).exists():
         logger.debug("Must load file %s for daterange ", filename)
         cubes = iris.load(filename)
 
@@ -170,7 +171,6 @@ def get_start_end_year(filename):
         raise ValueError(f'File {filename} dates do not match a recognized'
                          'pattern and time can not be read from the file')
 
-    logger.debug("Found start_year %s and end_year %s", start_year, end_year)
     return int(start_year), int(end_year)
 
 
@@ -204,7 +204,6 @@ def _replace_tags(paths, variable):
                  re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)))
             tlist.add('sub_experiment')
         paths = new_paths
-    logger.debug(tlist)
 
     for tag in tlist:
         original_tag = tag
@@ -215,8 +214,8 @@ def _replace_tags(paths, variable):
         if tag in variable:
             replacewith = variable[tag]
         else:
-            raise KeyError("Dataset key {} must be specified for {}, check "
-                           "your recipe entry".format(tag, variable))
+            raise RecipeError(f"Dataset key '{tag}' must be specified for "
+                              f"{variable}, check your recipe entry")
         paths = _replace_tag(paths, original_tag, replacewith)
     return paths
 
@@ -274,7 +273,7 @@ def _resolve_latestversion(dirname_template):
             if os.path.isdir(dirname):
                 return dirname
 
-    return dirname_template
+    return None
 
 
 def _select_drs(input_type, drs, project):
@@ -293,12 +292,21 @@ def _select_drs(input_type, drs, project):
             structure, project))
 
 
+ROOTPATH_WARNED = set()
+
+
 def get_rootpath(rootpath, project):
     """Select the rootpath."""
-    if project in rootpath:
-        return rootpath[project]
-    if 'default' in rootpath:
-        return rootpath['default']
+    for key in (project, 'default'):
+        if key in rootpath:
+            nonexistent = tuple(p for p in rootpath[key]
+                                if not os.path.exists(p))
+            if nonexistent and (key, nonexistent) not in ROOTPATH_WARNED:
+                logger.warning(
+                    "'%s' rootpaths '%s' set in config-user.yml do not exist",
+                    key, ', '.join(nonexistent))
+                ROOTPATH_WARNED.add((key, nonexistent))
+            return rootpath[key]
     raise KeyError('default rootpath must be specified in config-user file')
 
 
@@ -314,11 +322,12 @@ def _find_input_dirs(variable, rootpath, drs):
         for base_path in root:
             dirname = os.path.join(base_path, dirname_template)
             dirname = _resolve_latestversion(dirname)
+            if dirname is None:
+                continue
             matches = glob.glob(dirname)
             matches = [match for match in matches if os.path.isdir(match)]
             if matches:
                 for match in matches:
-                    logger.debug("Found %s", match)
                     dirnames.append(match)
             else:
                 logger.debug("Skipping non-existent %s", dirname)

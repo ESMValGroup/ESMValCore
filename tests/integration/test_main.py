@@ -16,8 +16,8 @@ import pytest
 import yaml
 from fire.core import FireExit
 
-import esmvalcore._recipe_checks as check
 from esmvalcore._main import Config, ESMValTool, Recipes, run
+from esmvalcore.exceptions import RecipeError
 
 
 def wrapper(f):
@@ -67,6 +67,7 @@ def test_empty_run(tmp_path):
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
         documentation:
+          title: Test recipe
           description: This is a test recipe.
           authors:
             - andela_bouwe
@@ -174,8 +175,8 @@ def test_run_with_max_datasets():
 
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_synda_download():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--synda_download=True'):
+def test_run_with_offline():
+    with arguments('esmvaltool', 'run', 'recipe.yml', '--offline'):
         run()
 
 

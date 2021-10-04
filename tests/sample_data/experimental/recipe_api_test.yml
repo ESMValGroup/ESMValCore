@@ -2,6 +2,7 @@
 # recipe_api_test.yml
 ---
 documentation:
+  title: API test recipe
   description: Recipe for testing API.
 
   authors:

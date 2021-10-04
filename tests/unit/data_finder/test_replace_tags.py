@@ -1,5 +1,8 @@
 """Tests for _replace_tags in _data_finder.py."""
+import pytest
+
 from esmvalcore._data_finder import _replace_tags
+from esmvalcore.exceptions import RecipeError
 
 VARIABLE = {
     'project': 'CMIP6',
@@ -29,6 +32,16 @@ def test_replace_tags():
     ]
     assert input_file == ['tas_Amon_ACCURATE-MODEL_experiment_r1i1p1f1_gr*.nc']
     assert output_file == ['CMIP6_ACCURATE-MODEL_Amon_experiment_r1i1p1f1_tas']
+
+
+def test_replace_tags_missing_facet():
+    """Check that a RecipeError is raised if a required facet is missing."""
+    paths = ['{short_name}_{missing}_*.nc']
+    variable = {'short_name': 'tas'}
+    with pytest.raises(RecipeError) as exc:
+        _replace_tags(paths, variable)
+
+    assert "Dataset key 'missing' must be specified" in exc.value.message
 
 
 def test_replace_tags_list_of_str():

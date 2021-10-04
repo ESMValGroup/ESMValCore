@@ -43,13 +43,13 @@ def _get_time_bounds(time, freq):
             max_bound = time.units.date2num(
                 datetime.datetime(next_year, next_month, 1, 0, 0))
         elif freq == 'yr':
-            min_bound = time.units.date2num(
-                datetime.datetime(year, 1, 1, 0, 0))
+            min_bound = time.units.date2num(datetime.datetime(
+                year, 1, 1, 0, 0))
             max_bound = time.units.date2num(
                 datetime.datetime(year + 1, 1, 1, 0, 0))
         elif freq == 'dec':
-            min_bound = time.units.date2num(
-                datetime.datetime(year, 1, 1, 0, 0))
+            min_bound = time.units.date2num(datetime.datetime(
+                year, 1, 1, 0, 0))
             max_bound = time.units.date2num(
                 datetime.datetime(year + 10, 1, 1, 0, 0))
         else:
@@ -137,8 +137,8 @@ class CMORCheck():
             except iris.exceptions.CoordinateNotFoundError:
                 pass
             else:
-                if lat.ndim == 1 and (self._cube.coord_dims(lat) ==
-                                      self._cube.coord_dims(lon)):
+                if lat.ndim == 1 and (self._cube.coord_dims(lat)
+                                      == self._cube.coord_dims(lon)):
                     self._unstructured = True
         return self._unstructured
 
@@ -229,9 +229,14 @@ class CMORCheck():
             If any errors were reported before calling this method.
         """
         if self.has_errors():
-            msg = 'There were errors in variable {}:\n{}\n in cube:\n{}'
-            msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
-                             self._cube)
+            msg = '\n'.join([
+                f'There were errors in variable {self._cube.var_name}:'
+                '\n '.join(self._errors),
+                'in cube:',
+                f'{self._cube}',
+                'loaded from file ' +
+                self._cube.attributes.get('source_file', ''),
+            ])
             raise CMORCheckError(msg)
 
     def report_warnings(self):
@@ -243,8 +248,12 @@ class CMORCheck():
             Given logger
         """
         if self.has_warnings():
-            msg = 'There were warnings in variable {}:\n{}\n'.format(
-                self._cube.var_name, '\n '.join(self._warnings))
+            msg = '\n'.join([
+                f'There were warnings in variable {self._cube.var_name}:',
+                '\n '.join(self._warnings),
+                'loaded from file ' +
+                self._cube.attributes.get('source_file', ''),
+            ])
             self._logger.warning(msg)
 
     def report_debug_messages(self):
@@ -256,8 +265,13 @@ class CMORCheck():
             Given logger.
         """
         if self.has_debug_messages():
-            msg = 'There were metadata changes in variable {}:\n{}\n'.format(
-                self._cube.var_name, '\n '.join(self._debug_messages))
+            msg = '\n'.join([
+                'There were metadata changes in variable' +
+                self._cube.var_name,
+                '\n '.join(self._debug_messages),
+                'loaded from file ' +
+                self._cube.attributes.get('source_file', ''),
+            ])
             self._logger.debug(msg)
 
     def _check_fill_value(self):
@@ -473,7 +487,7 @@ class CMORCheck():
         'alevel': {
             'CMIP5': ['alt40', 'plevs'],
             'CMIP6': ['alt16', 'plev3'],
-            'obs4mips': ['alt16', 'plev3'],
+            'obs4MIPs': ['alt16', 'plev3'],
         },
         'zlevel': {
             'CMIP3': ['pressure'],
@@ -511,7 +525,6 @@ class CMORCheck():
         search for the correct coordinate version and then check against this.
         For ``cmor_strict=False`` project (like OBS) the check for requested
         values might be disabled.
-
         """
         table_type = self._cmor_var.table_type
         alternative_coord = None
@@ -653,8 +666,7 @@ class CMORCheck():
             self.report_debug_message(
                 f'Coordinate {coord.standard_name} appears to belong to '
                 'an unstructured grid. Skipping monotonicity and '
-                'direction tests.'
-            )
+                'direction tests.')
             return
 
         if not coord.is_monotonic():

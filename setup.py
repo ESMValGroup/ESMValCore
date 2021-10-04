@@ -32,9 +32,13 @@ REQUIREMENTS = {
     'install': [
         'cf-units>=3.0.0',
         'dask[array]',
+        'esgf-pyclient',
+        # pin requests_cache: https://github.com/ESGF/esgf-pyclient/issues/71
+        'requests_cache<0.6',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
+        'humanfriendly',
         "importlib_resources;python_version<'3.9'",
         'isodate',
         'jinja2',
