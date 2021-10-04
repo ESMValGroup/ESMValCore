@@ -3,7 +3,7 @@ import os
 import iris
 import pytest
 
-import esmvalcore
+from esmvalcore import _data_finder
 
 
 def create_test_file(filename, tracking_id=None):
@@ -61,7 +61,7 @@ def patched_datafinder(tmp_path, monkeypatch):
             assert '{' not in filename
         return _get_filenames(tmp_path, filenames, tracking_id)
 
-    monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
+    monkeypatch.setattr(_data_finder, 'find_files', find_files)
 
 
 @pytest.fixture
@@ -92,4 +92,4 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
                 return []
         return _get_filenames(tmp_path, filenames, tracking_id)
 
-    monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
+    monkeypatch.setattr(_data_finder, 'find_files', find_files)

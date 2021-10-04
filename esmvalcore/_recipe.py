@@ -1533,6 +1533,7 @@ class Recipe:
             self._updated_recipe['diagnostics'][diagnostic]['variables'][
                 variable_group].update(
                     {'additional_datasets': updated_datasets})
+
     def _create_preprocessor_tasks(self, diagnostic_name, diagnostic):
         """Create preprocessor tasks."""
         tasks = []

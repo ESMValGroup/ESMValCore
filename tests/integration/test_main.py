@@ -86,7 +86,7 @@ def test_empty_run(tmp_path):
         config = yaml.safe_load(file)
         config['output_dir'] = log_dir
         yaml.safe_dump(config, file, sort_keys=False)
-    with pytest.raises(check.RecipeError) as exc:
+    with pytest.raises(RecipeError) as exc:
         ESMValTool.run(recipe_file, config_file=config_file)
     assert str(exc.value) == 'The given recipe does not have any diagnostic.'
     log_file = os.path.join(log_dir,
@@ -104,6 +104,7 @@ def test_filled_recipe(tmp_path, patched_datafinder):
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
         documentation:
+          title: Test recipe
           description: This is a test recipe.
           authors:
             - andela_bouwe
