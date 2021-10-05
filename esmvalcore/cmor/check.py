@@ -784,12 +784,22 @@ class CMORCheck():
         """Check requested values."""
         if coord_info.requested:
             try:
-                cmor_points = [float(val) for val in coord_info.requested]
+                cmor_points = np.array(coord_info.requested, dtype=float)
             except ValueError:
                 cmor_points = coord_info.requested
-            coord_points = list(coord.points)
+            else:
+                atol = 1e-7 * np.mean(cmor_points)
+                if (self.automatic_fixes
+                        and coord.points.shape == cmor_points.shape
+                        and np.allclose(
+                            coord.points,
+                            cmor_points,
+                            rtol=1e-7,
+                            atol=atol,
+                        )):
+                    coord.points = cmor_points
             for point in cmor_points:
-                if point not in coord_points:
+                if point not in coord.points:
                     self.report_warning(self._contain_msg, var_name,
                                         str(point), str(coord.units))
 
