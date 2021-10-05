@@ -69,7 +69,7 @@ def create_tree(path, filenames=None, symlinks=None):
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
     output_file = get_output_file(cfg['variable'], cfg['preproc_dir'])
-    assert [output_file] == cfg['output_file']
+    assert output_file == cfg['output_file']
 
 
 @pytest.fixture
