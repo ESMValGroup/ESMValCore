@@ -7,6 +7,7 @@ import pytest
 
 import esmvalcore._recipe_checks as check
 import esmvalcore.esgf
+from esmvalcore.exceptions import RecipeError
 
 ERR_ALL = 'Looked for files matching%s'
 ERR_D = ('Looked for files in %s, but did not find any file pattern to match '
@@ -58,7 +59,7 @@ def test_data_availability_data(mock_logger, input_files, var, error):
         check.data_availability(input_files, var, None, None)
         mock_logger.error.assert_not_called()
     else:
-        with pytest.raises(check.RecipeError) as rec_err:
+        with pytest.raises(RecipeError) as rec_err:
             check.data_availability(input_files, var, None, None)
         assert str(rec_err.value) == error
     assert var == saved_var
@@ -98,7 +99,7 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     }
     error_first = ('No input files found for variable %s', var_no_filename)
     error_last = ("Set 'log_level' to 'debug' to get more information", )
-    with pytest.raises(check.RecipeError) as rec_err:
+    with pytest.raises(RecipeError) as rec_err:
         check.data_availability([], var, dirnames, filenames)
     assert str(rec_err.value) == 'Missing data for alias: tas'
     if error is None:

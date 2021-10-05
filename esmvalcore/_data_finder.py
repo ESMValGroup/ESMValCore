@@ -8,6 +8,7 @@ from pathlib import Path
 import iris
 
 from ._config import get_project_config
+from .exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,6 @@ def get_start_end_year(filename):
         raise ValueError(f'File {filename} dates do not match a recognized'
                          'pattern and time can not be read from the file')
 
-    logger.debug("Found start_year %s and end_year %s", start_year, end_year)
     return int(start_year), int(end_year)
 
 
@@ -139,7 +139,6 @@ def _replace_tags(paths, variable):
             ))
             tlist.add('sub_experiment')
         paths = new_paths
-    logger.debug(tlist)
 
     for tag in tlist:
         original_tag = tag
@@ -150,8 +149,8 @@ def _replace_tags(paths, variable):
         if tag in variable:
             replacewith = variable[tag]
         else:
-            raise KeyError("Dataset key {} must be specified for {}, check "
-                           "your recipe entry".format(tag, variable))
+            raise RecipeError(f"Dataset key '{tag}' must be specified for "
+                              f"{variable}, check your recipe entry")
         paths = _replace_tag(paths, original_tag, replacewith)
     return paths
 
@@ -209,7 +208,7 @@ def _resolve_latestversion(dirname_template):
             if os.path.isdir(dirname):
                 return dirname
 
-    return dirname_template
+    return None
 
 
 def _select_drs(input_type, drs, project):
@@ -258,11 +257,12 @@ def _find_input_dirs(variable, rootpath, drs):
         for base_path in root:
             dirname = os.path.join(base_path, dirname_template)
             dirname = _resolve_latestversion(dirname)
+            if dirname is None:
+                continue
             matches = glob.glob(dirname)
             matches = [match for match in matches if os.path.isdir(match)]
             if matches:
                 for match in matches:
-                    logger.debug("Found %s", match)
                     dirnames.append(match)
             else:
                 logger.debug("Skipping non-existent %s", dirname)
