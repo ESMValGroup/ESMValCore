@@ -206,7 +206,7 @@ def volume_statistics(cube, operator):
         grid_volume = cube.cell_measure('ocean_volume').core_data()
     except iris.exceptions.CellMeasureNotFoundError:
         logger.debug('Cell measure "ocean_volume" not found in cube. '
-                    'Check fx_file availability.')
+                     'Check fx_file availability.')
         logger.debug('Attempting to calculate grid cell volume...')
         grid_volume = calculate_volume(cube)
     else:

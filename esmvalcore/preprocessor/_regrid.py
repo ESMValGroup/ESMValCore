@@ -669,6 +669,7 @@ def _preserve_fx_vars(cube, result):
             else:
                 add_ancillary_variable(result, ancillary_var)
 
+
 def parse_vertical_scheme(scheme):
     """Parse the scheme provided for level extraction.
 
