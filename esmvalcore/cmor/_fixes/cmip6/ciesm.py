@@ -29,10 +29,11 @@ class Cl(ClFixHybridPressureCoord):
 class Pr(Fix):
     """Fixes for pr."""
 
-    def fix_metadata(self, cube):
-        """Fix metadata.
+    def fix_data(self, cube):
+        """Fix data.
 
         The values of v20200417 are off by a factor 1000.
         """
-        cube.data = cube.core_data() * 1000.
+        if float(cube.core_data()[:10].mean()) < 1.e-5:
+            cube.data = cube.core_data() * 1000.
         return cube
