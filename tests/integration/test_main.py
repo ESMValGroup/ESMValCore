@@ -11,7 +11,6 @@ import sys
 from textwrap import dedent
 from unittest.mock import patch
 
-import iris
 import pytest
 import yaml
 from fire.core import FireExit
@@ -141,8 +140,7 @@ def test_filled_recipe(tmp_path, patched_datafinder):
         config = yaml.safe_load(file)
         config['output_dir'] = log_dir
         yaml.safe_dump(config, file, sort_keys=False)
-    excs = (ValueError, iris.exceptions.CoordinateNotFoundError)
-    with pytest.raises(excs) as exc:
+    with pytest.raises(ValueError) as exc:
         ESMValTool.run(
             recipe_file,
             config_file=f"{tmp_path}/config-user.yml",
