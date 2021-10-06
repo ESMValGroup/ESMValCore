@@ -412,7 +412,8 @@ class ESMValTool():
             logger.info("set remove_preproc_dir to false in config-user.yml")
             shutil.rmtree(cfg["preproc_dir"])
 
-    def _get_recipe(self, recipe):
+    @staticmethod
+    def _get_recipe(recipe):
         import os
 
         from ._config import DIAGNOSTICS
