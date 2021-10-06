@@ -28,7 +28,6 @@ http://docs.esmvaltool.org. Have fun!
 """  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
 import logging
-import os.path
 from pathlib import Path
 
 import fire
@@ -51,6 +50,7 @@ ______________________________________________________________________
 
 def parse_resume(resume, recipe):
     """Set `resume` to a correct value and sanity check."""
+    import os
     if not resume:
         return []
     if isinstance(resume, str):
@@ -71,6 +71,7 @@ def parse_resume(resume, recipe):
 def process_recipe(recipe_file, config_user):
     """Process recipe."""
     import datetime
+    import os
     import shutil
 
     from ._recipe import read_recipe_file
@@ -141,6 +142,7 @@ class Config():
 
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
+        import os
         import shutil
 
         from ._config import configure_logging
@@ -215,6 +217,8 @@ class Recipes():
 
         Show all installed recipes, grouped by folder.
         """
+        import os
+
         from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
         recipes_folder = DIAGNOSTICS.recipes
