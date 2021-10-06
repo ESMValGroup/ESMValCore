@@ -4,9 +4,10 @@ on:
   release:
     types: [published]
   # use this to test before actual release and publish
-  push:
-    branches:
-      - main
+  # Currently the test is fully deactivated, reactivate if need be
+  # push:
+  #  branches:
+  #    - main
 
 jobs:
 
@@ -51,6 +52,7 @@ jobs:
         run: |
           export BUILD_FOLDER=/tmp/esmvalcore/_build
           # use --label test before actual release and check all works well
+          # esmvalgroup is not the main channel anymore, conda-forge superseded it
           anaconda --token ${{ secrets.ANACONDA_TOKEN }} upload --user esmvalgroup $BUILD_FOLDER/noarch/*.tar.bz2
   verify:
     name: verify / python-${{ matrix.python-version }} / ${{ matrix.os }}
