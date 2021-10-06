@@ -387,7 +387,7 @@ def cube_to_aux_coord(cube):
     )
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def get_altitude_to_pressure_func():
     """Get function converting altitude [m] to air pressure [Pa].
 
@@ -444,7 +444,7 @@ def get_bounds_cube(cubes, coord_var_name):
         f"cubes\n{cubes}")
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def get_pressure_to_altitude_func():
     """Get function converting air pressure [Pa] to altitude [m].
 
