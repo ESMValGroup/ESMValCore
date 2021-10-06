@@ -27,20 +27,22 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
 
     # Minimal config-user.yml for ESMValTool run function.
     cfg = {
-        'run_dir': str(output_dir / 'run_dir'),
-        'preproc_dir': str(output_dir / 'preproc_dir'),
-        'log_level': 'info',
         'config_file': tmp_path / '.esmvaltool' / 'config-user.yml',
+        'log_level': 'info',
         'offline': cfg_offline,
+        'preproc_dir': str(output_dir / 'preproc_dir'),
+        'run_dir': str(output_dir / 'run_dir'),
     }
 
     # Expected configuration after updating from command line.
     reference = dict(cfg)
     reference.update({
-        'offline': offline,
-        'skip-nonexistent': False,
+        'check_level': CheckLevels.DEFAULT,
         'diagnostics': set(),
-        'check_level': CheckLevels.DEFAULT
+        'offline': offline,
+        'resume_from': [],
+        'skip-nonexistent': False,
+
     })
 
     # Patch every imported function
@@ -102,7 +104,7 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         filename=os.path.join(cfg['run_dir'], 'resource_usage.txt'),
     )
     esmvalcore._main.process_recipe.assert_called_once_with(
-        recipe_file=str(recipe),
+        recipe_file=recipe,
         config_user=cfg,
     )
 

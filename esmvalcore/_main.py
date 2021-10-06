@@ -28,6 +28,8 @@ http://docs.esmvaltool.org. Have fun!
 """  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
 import logging
+import os.path
+from pathlib import Path
 
 import fire
 from pkg_resources import iter_entry_points
@@ -47,10 +49,28 @@ ______________________________________________________________________
 """ + __doc__
 
 
+def parse_resume(resume, recipe):
+    """Set `resume` to a correct value and sanity check."""
+    if not resume:
+        return []
+    if isinstance(resume, str):
+        resume = resume.split(' ')
+    for i, resume_dir in enumerate(resume):
+        resume[i] = Path(os.path.expandvars(resume_dir)).expanduser()
+
+    # Sanity check resume directories:
+    current_recipe = recipe.read_text()
+    for resume_dir in resume:
+        resume_recipe = resume_dir / 'run' / recipe.name
+        if current_recipe != resume_recipe.read_text():
+            raise ValueError(f'Only identical recipes can be resumed, but '
+                             f'{resume_recipe} is different from {recipe}')
+    return resume
+
+
 def process_recipe(recipe_file, config_user):
     """Process recipe."""
     import datetime
-    import os
     import shutil
 
     from ._recipe import read_recipe_file
@@ -121,7 +141,6 @@ class Config():
 
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
-        import os
         import shutil
 
         from ._config import configure_logging
@@ -196,8 +215,6 @@ class Recipes():
 
         Show all installed recipes, grouped by folder.
         """
-        import os
-
         from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
         recipes_folder = DIAGNOSTICS.recipes
@@ -225,7 +242,6 @@ class Recipes():
             Name of the recipe to get, including any subdirectories.
         """
         import shutil
-        from pathlib import Path
 
         from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
@@ -306,6 +322,7 @@ class ESMValTool():
     def run(self,
             recipe,
             config_file=None,
+            resume_from=None,
             max_datasets=None,
             max_years=None,
             skip_nonexistent=False,
@@ -327,6 +344,9 @@ class ESMValTool():
         config_file: str, optional
             Configuration file to use. If not provided the file
             ${HOME}/.esmvaltool/config-user.yml will be used.
+        resume_from: list(str), optional
+            Resume one or more previous runs by using preprocessor output files
+            from these output directories.
         max_datasets: int, optional
             Maximum number of datasets to use.
         max_years: int, optional
@@ -354,9 +374,7 @@ class ESMValTool():
         from .esgf._logon import logon
 
         recipe = self._get_recipe(recipe)
-        recipe_name = os.path.splitext(os.path.basename(recipe))[0]
-
-        cfg = read_config_user_file(config_file, recipe_name, kwargs)
+        cfg = read_config_user_file(config_file, recipe.stem, kwargs)
 
         # Create run dir
         if os.path.exists(cfg['run_dir']):
@@ -370,6 +388,7 @@ class ESMValTool():
 
         self._log_header(cfg['config_file'], log_files)
 
+        cfg['resume_from'] = parse_resume(resume_from, recipe)
         cfg['skip-nonexistent'] = skip_nonexistent
         if isinstance(diagnostics, str):
             diagnostics = diagnostics.split(' ')
@@ -418,13 +437,11 @@ class ESMValTool():
         import os
 
         from ._config import DIAGNOSTICS
-
         if not os.path.exists(recipe):
             installed_recipe = str(DIAGNOSTICS.recipes / recipe)
             if os.path.exists(installed_recipe):
                 recipe = installed_recipe
-        recipe = os.path.abspath(os.path.expandvars(
-            os.path.expanduser(recipe)))
+        recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
         return recipe
 
     def _log_header(self, config_file, log_files):
@@ -444,7 +461,9 @@ def run():
     """Run the `esmvaltool` program, logging any exceptions."""
     import sys
 
-    # Workaroud to avoid using more for the output
+    from .exceptions import RecipeError
+
+    # Workaround to avoid using more for the output
 
     def display(lines, out):
         text = "\n".join(lines) + "\n"
@@ -456,6 +475,11 @@ def run():
         fire.Fire(ESMValTool())
     except fire.core.FireExit:
         raise
+    except RecipeError as exc:
+        # Hide the stack trace for RecipeErrors
+        logger.error("%s", exc)
+        logger.debug("Stack trace for debugging:", exc_info=True)
+        sys.exit(1)
     except Exception:  # noqa
         if not logger.handlers:
             # Add a logging handler if main failed to do so.
