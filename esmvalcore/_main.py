@@ -402,7 +402,8 @@ class ESMValTool():
         self._clean_preproc(cfg)
         logger.info("Run was successful")
 
-    def _clean_preproc(self, cfg):
+    @staticmethod
+    def _clean_preproc(cfg):
         import os
         import shutil
 
