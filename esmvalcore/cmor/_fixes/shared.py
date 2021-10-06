@@ -26,7 +26,6 @@ class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
 
         p(n, k, j, i) = pressure_at_top + sigma(k) *
                         (surface_air_pressure(n, j, i) - pressure_at_top)
-
         """
         self._metadata_manager = iris.common.metadata_manager_factory(
             iris.common.CoordMetadata)
@@ -176,7 +175,6 @@ def add_sigma_factory(cube):
     ------
     ValueError
         ``cube`` does not contain coordinate ``atmosphere_sigma_coordinate``.
-
     """
     if cube.coords('atmosphere_sigma_coordinate'):
         aux_factory = AtmosphereSigmaFactory(
@@ -211,7 +209,6 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
     ValueError
         ``cubes`` do not contain a desired coordinate or multiple copies of
         it.
-
     """
     for (coord_name, coord_dims) in coord_dict.items():
         coord_cube = cubes.extract(var_name_constraint(coord_name))
@@ -237,7 +234,6 @@ def add_plev_from_altitude(cube):
     ------
     ValueError
         ``cube`` does not contain coordinate ``altitude``.
-
     """
     if cube.coords('altitude'):
         height_coord = cube.coord('altitude')
@@ -274,7 +270,6 @@ def add_altitude_from_plev(cube):
     ------
     ValueError
         ``cube`` does not contain coordinate ``air_pressure``.
-
     """
     if cube.coords('air_pressure'):
         plev_coord = cube.coord('air_pressure')
@@ -387,7 +382,7 @@ def cube_to_aux_coord(cube):
     )
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def get_altitude_to_pressure_func():
     """Get function converting altitude [m] to air pressure [Pa].
 
@@ -395,7 +390,6 @@ def get_altitude_to_pressure_func():
     -------
     callable
         Function that converts altitude to air pressure.
-
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, 'us_standard_atmosphere.csv')
@@ -429,7 +423,6 @@ def get_bounds_cube(cubes, coord_var_name):
     ValueError
         ``cubes`` do not contain the desired coordinate bounds or multiple
         copies of them.
-
     """
     for bounds in ('bnds', 'bounds'):
         bound_var = f'{coord_var_name}_{bounds}'
@@ -444,7 +437,7 @@ def get_bounds_cube(cubes, coord_var_name):
         f"cubes\n{cubes}")
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def get_pressure_to_altitude_func():
     """Get function converting air pressure [Pa] to altitude [m].
 
@@ -452,7 +445,6 @@ def get_pressure_to_altitude_func():
     -------
     callable
         Function that converts air pressure to altitude.
-
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, 'us_standard_atmosphere.csv')
@@ -483,7 +475,6 @@ def fix_bounds(cube, cubes, coord_var_names):
     ValueError
         ``cubes`` do not contain a desired coordinate bounds or multiple copies
         of them.
-
     """
     for coord_var_name in coord_var_names:
         coord = cube.coord(var_name=coord_var_name)
@@ -519,7 +510,6 @@ def round_coordinates(cubes, decimals=5, coord_names=None):
     -------
     iris.cube.CubeList or list of iris.cube.Cube
         The modified input ``cubes``.
-
     """
     for cube in cubes:
         if not coord_names:
@@ -541,7 +531,6 @@ def fix_ocean_depth_coord(cube):
     ----------
     cube : iris.cube.Cube
         Input cube.
-
     """
     depth_coord = cube.coord(axis='Z')
     depth_coord.standard_name = 'depth'
