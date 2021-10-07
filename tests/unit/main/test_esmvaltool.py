@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 from unittest import mock
 
 import pytest
@@ -136,3 +137,30 @@ def test_header(mock_entry_points, caplog):
         'path_to_log_file1\n'
         'path_to_log_file2'
     )
+
+
+@mock.patch('os.path.isfile')
+def test_get_recipe(is_file):
+    """Test get recipe."""
+    is_file.return_value = True
+    recipe = ESMValTool()._get_recipe('/recipe.yaml')
+    assert recipe == pathlib.Path('/recipe.yaml')
+
+
+@mock.patch('os.path.isfile')
+@mock.patch('esmvalcore._config.DIAGNOSTICS')
+def test_get_installed_recipe(diagnostics, is_file):
+    def encountered(path):
+        return path == '/install_folder/recipe.yaml'
+    is_file.side_effect = encountered
+    diagnostics.recipes = pathlib.Path('/install_folder')
+    recipe = ESMValTool()._get_recipe('recipe.yaml')
+    assert recipe == pathlib.Path('/install_folder/recipe.yaml')
+
+
+@mock.patch('os.path.isfile')
+def test_get_recipe_not_found(is_file):
+    """Test get recipe."""
+    is_file.return_value = False
+    recipe = ESMValTool()._get_recipe('/recipe.yaml')
+    assert recipe == pathlib.Path('/recipe.yaml')

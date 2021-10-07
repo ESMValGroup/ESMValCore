@@ -440,10 +440,10 @@ class ESMValTool():
     def _get_recipe(recipe):
         import os
 
-        from ._config import DIAGNOSTICS
-        if not os.path.exists(recipe):
+        from esmvalcore._config import DIAGNOSTICS
+        if not os.path.isfile(recipe):
             installed_recipe = str(DIAGNOSTICS.recipes / recipe)
-            if os.path.exists(installed_recipe):
+            if os.path.isfile(installed_recipe):
                 recipe = installed_recipe
         recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
         return recipe
