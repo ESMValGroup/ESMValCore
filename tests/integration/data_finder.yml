@@ -86,8 +86,7 @@ get_input_filelist:
       mip: Amon
       exp: historical
       ensemble: r1i1p1
-      start_year: 1960
-      end_year: 1980
+      timerange: '1960/1980'
       diagnostic: test_diag
       preprocessor: test_preproc
       grid: gn
@@ -105,7 +104,7 @@ get_input_filelist:
   - drs: default
     variable:
       <<: *variable
-      end_year: 2060
+      timerange: '1960/2060'
       exp: [historical, rcp85]
     available_files:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
@@ -158,8 +157,7 @@ get_input_filelist:
   - drs: default
     variable:
       <<: *variable
-      start_year: 2010
-      end_year: 2100
+      timerange: '2010/2100'
     available_files:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
@@ -182,8 +180,7 @@ get_input_filelist:
   - drs: BADC
     variable:
       <<: *variable
-      start_year: 1980
-      end_year: 2002
+      timerange: '1980/2002'
     available_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
@@ -203,8 +200,7 @@ get_input_filelist:
   - drs: BADC
     variable:
       <<: *variable
-      start_year: 1980
-      end_year: 2002
+      timerange: '1980/2002'
     available_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
@@ -226,8 +222,7 @@ get_input_filelist:
   - drs: DKRZ
     variable:
       <<: *variable
-      start_year: 1980
-      end_year: 2002
+      timerange: '1980/2002'
     available_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_185912-188411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_188412-190911.nc
@@ -247,8 +242,7 @@ get_input_filelist:
     variable:
       <<: *variable
       exp: [historical, rcp45, rcp85]
-      start_year: 1980
-      end_year: 2100
+      timerange: '1980/2100'
     available_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_185912-188411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_188412-190911.nc
@@ -275,8 +269,7 @@ get_input_filelist:
   - drs: ETHZ
     variable:
       <<: *variable
-      start_year: 1980
-      end_year: 2002
+      timerange: '1980/2002'
     available_files:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_185912-188411.nc
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_188412-190911.nc
@@ -295,8 +288,7 @@ get_input_filelist:
   - drs: ETHZ
     variable:
       <<: *variable
-      start_year: 2000
-      end_year: 2100
+      timerange: '2000/2100'
     available_files:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_185912-188411.nc
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_188412-190911.nc
@@ -330,8 +322,7 @@ get_input_filelist:
       exp: historical
       grid: gn
       ensemble: r1i1p1f1
-      start_year: 1999
-      end_year: 2000
+      timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -361,8 +352,7 @@ get_input_filelist:
       mip: Amon
       exp: historical
       ensemble: r1i1p1
-      start_year: 1999
-      end_year: 2000
+      timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -391,8 +381,7 @@ get_input_filelist:
       tier: 3
       type: reanaly
       version: 42
-      start_year: 1999
-      end_year: 2000
+      timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -422,8 +411,7 @@ get_input_filelist:
       tier: 3
       type: reanaly
       version: 42
-      start_year: 1999
-      end_year: 2000
+      timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -563,8 +551,7 @@ get_input_filelist:
       exp: historical
       grid: gn
       ensemble: r1i1p1f1
-      start_year: 2000
-      end_year: 2000
+      timerange: '2000/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -594,8 +581,7 @@ get_input_filelist:
       exp: historical
       grid: gn
       ensemble: r1i1p1f1
-      start_year: 2000
-      end_year: 2000
+      timerange: '2000/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -624,8 +610,7 @@ get_input_filelist:
       exp: historical
       grid: gn
       ensemble: r1i1p1f1
-      start_year: 2000
-      end_year: 2000
+      timerange: '2000/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -649,8 +634,7 @@ get_input_filelist:
       mip: fx
       exp: historical
       ensemble: r1i1p1
-      start_year: 1999
-      end_year: 2000
+      timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -702,8 +686,7 @@ get_input_filelist:
       tier: 3
       type: reanaly
       version: 42
-      start_year: 1995
-      end_year: 1996
+      timerange: '1995/1996'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -732,8 +715,7 @@ get_input_filelist:
       tier: 3
       type: reanaly
       version: 42
-      start_year: 2050
-      end_year: 2100
+      timerange: '2050/2100'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:

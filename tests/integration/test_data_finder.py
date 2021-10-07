@@ -91,10 +91,14 @@ def test_get_input_filelist(root, cfg):
     # Find files
     rootpath = {cfg['variable']['project']: [root]}
     drs = {cfg['variable']['project']: cfg['drs']}
-    start_year = cfg['variable'].get('start_year')
-    end_year = cfg['variable'].get('end_year')
-    if cfg['variable'].get('timerange') is None and start_year and end_year:
-        cfg['variable'].update({'timerange': f'{start_year}/{end_year}'})
+    timerange = cfg['variable'].get('timerange')
+    if timerange and '*' in timerange:
+        (files, _, _) = _find_input_files(cfg['variable'], rootpath, drs)
+        ref_files = [
+            os.path.join(root, file) for file in cfg['found_files']]
+        # Test result
+        assert sorted(files) == sorted(ref_files)
+    else:
         (input_filelist, dirnames,
          filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
         # Test result
@@ -108,9 +112,3 @@ def test_get_input_filelist(root, cfg):
         assert sorted(input_filelist) == sorted(ref_files)
         assert sorted(dirnames) == sorted(ref_dirs)
         assert sorted(filenames) == sorted(ref_patterns)
-    else:
-        (files, _, _) = _find_input_files(cfg['variable'], rootpath, drs)
-        ref_files = [
-            os.path.join(root, file) for file in cfg['found_files']]
-        # Test result
-        assert sorted(files) == sorted(ref_files)
