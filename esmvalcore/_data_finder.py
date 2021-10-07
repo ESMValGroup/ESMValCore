@@ -124,6 +124,19 @@ def get_start_end_date(filename):
     return start_date, end_date
 
 
+def _get_timerange_from_start_end_year(variable):
+    start_year = variable.get('start_year')
+    end_year = variable.get('end_year')
+    if start_year and end_year:
+        variable['timerange'] = f'{start_year}/{end_year}'
+    elif start_year:
+        variable['timerange'] = f'{start_year}/{start_year}'
+    elif end_year:
+        variable['timerange'] = f'{end_year}/{end_year}'
+    variable.pop('start_year', None)
+    variable.pop('end_year', None)
+
+
 def get_start_end_year(filename):
     """Get the start and end year from a file name.
 
@@ -174,16 +187,66 @@ def get_start_end_year(filename):
     return int(start_year), int(end_year)
 
 
-def select_files(filenames, start_year, end_year):
-    """Select files containing data between start_year and end_year.
+def _parse_period(timerange):
+    start_year = None
+    end_year = None
+    if timerange.split('/')[0].startswith('P'):
+        try:
+            end_year = isodate.parse_datetime(timerange.split('/')[1]).year
+        except isodate.ISO8601Error:
+            end_year = isodate.parse_date(timerange.split('/')[1]).year
+        delta = int(isodate.parse_duration(timerange.split('/')[0]).years)
+        start_year = end_year - delta
+    elif timerange.split('/')[1].startswith('P'):
+        try:
+            start_year = isodate.parse_datetime(timerange.split('/')[0]).year
+        except isodate.ISO8601Error:
+            start_year = isodate.parse_date(timerange.split('/')[0]).year
+        delta = int(isodate.parse_duration(timerange.split('/')[1]).years)
+        end_year = start_year + delta
+    return start_year, end_year
 
-    This works for filenames matching *_YYYY*-YYYY*.* or *_YYYY*.*
+
+def _compare_dates(frequency, date, file_date):
+    if frequency.endswith('hr'):
+        date = re.sub("[^0-9]", '', date)
+        file_date = re.sub("[^0-9]", '', file_date)
+    if len(date) < len(file_date):
+        file_date = file_date[0:len(date)]
+    elif len(date) > len(file_date):
+        date = date[0:len(file_date)]
+
+    return date, file_date
+
+
+def select_files(filenames, frequency, timerange):
+    """Select files containing data between a given timerange.
+
+    If the timerange is given as a period, the file selection
+    occurs taking only the years into account.
+
+    Otherwise, the file selection occurs taking into account
+    the time resolution of the file.
     """
     selection = []
+    start_date, end_date = _parse_period(timerange)
+
+    if start_date is None and end_date is None:
+        start_date = timerange.split('/')[0]
+        end_date = timerange.split('/')[1]
+    else:
+        start_date = str(start_date)
+        end_date = str(end_date)
+
     for filename in filenames:
-        start, end = get_start_end_year(filename)
-        if start <= end_year and end >= start_year:
+        start, end = get_start_end_date(filename)
+
+        start_date, start = _compare_dates(frequency, start_date, start)
+        end_date, end = _compare_dates(frequency, end_date, end)
+
+        if start <= end_date and end >= start_date:
             selection.append(filename)
+
     return selection
 
 
@@ -361,8 +424,7 @@ def get_input_filelist(variable, rootpath, drs):
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
-        files = select_files(files, variable['start_year'],
-                             variable['end_year'])
+        files = select_files(files, variable['frequency'], variable['timerange'])
     return (files, dirnames, filenames)
 
 
@@ -382,11 +444,8 @@ def get_output_file(variable, preproc_dir):
         _replace_tags(cfg['output_file'], variable)[0],
     )
     if variable['frequency'] != 'fx':
-        if 'timerange' not in variable:
-            outfile += '_{start_year}-{end_year}'.format(**variable)
-        else:
-            timerange = variable['timerange'].replace('/', '-')
-            outfile += f'_{timerange}'
+        timerange = variable['timerange'].replace('/', '-')
+        outfile += f'_{timerange}'
 
     outfile += '.nc'
     return outfile

@@ -267,7 +267,7 @@ def test_select_by_time_nodate():
     ]
     files = [ESGFFile([r]) for r in results]
 
-    result = _search.select_by_time(files, 1851, 1852)
+    result = _search.select_by_time(files, '1851/1852')
     assert result == files
 
 

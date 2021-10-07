@@ -19,8 +19,7 @@ VAR = {
     'filename': 'a/c.nc',
     'frequency': 'mon',
     'short_name': 'tas',
-    'start_year': 2020,
-    'end_year': 2025,
+    'timerange': '2020/2025',
     'alias': 'alias',
 }
 FX_VAR = {
@@ -93,8 +92,7 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     var_no_filename = {
         'frequency': 'mon',
         'short_name': 'tas',
-        'start_year': 2020,
-        'end_year': 2025,
+        'timerange': '2020/2025',
         'alias': 'alias',
     }
     error_first = ('No input files found for variable %s', var_no_filename)
@@ -167,8 +165,7 @@ def test_data_availability_nonexistent(tmp_path):
         'dataset': 'ABC',
         'short_name': 'tas',
         'frequency': 'mon',
-        'start_year': 1990,
-        'end_year': 1992,
+        'timerange': '1990/1992',
     }
     result = pyesgf.search.results.FileResult(
         json={

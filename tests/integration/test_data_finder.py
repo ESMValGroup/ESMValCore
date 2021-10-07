@@ -91,7 +91,10 @@ def test_get_input_filelist(root, cfg):
     # Find files
     rootpath = {cfg['variable']['project']: [root]}
     drs = {cfg['variable']['project']: cfg['drs']}
-    if cfg['variable'].get('timerange') is None:
+    start_year = cfg['variable'].get('start_year')
+    end_year = cfg['variable'].get('end_year')
+    if cfg['variable'].get('timerange') is None and start_year and end_year:
+        cfg['variable'].update({'timerange': f'{start_year}/{end_year}'})
         (input_filelist, dirnames,
          filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
         # Test result

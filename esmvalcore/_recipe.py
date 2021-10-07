@@ -8,7 +8,6 @@ from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
 
-import isodate
 import yaml
 from nested_lookup import get_all_keys, nested_delete, nested_lookup
 from netCDF4 import Dataset
@@ -25,6 +24,7 @@ from ._config import (
 )
 from ._data_finder import (
     _find_input_files,
+    _get_timerange_from_start_end_year,
     get_input_filelist,
     get_output_file,
     get_start_end_date,
@@ -285,16 +285,8 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_data'] = dict(fix)
 
     # Configure time extraction
-    if 'start_year' in variable and 'end_year' in variable \
-            and variable['frequency'] != 'fx':
-        start_year = str(variable['start_year'])
-        end_year = str(variable['end_year'])
-        settings['clip_timerange'] = {
-            'timerange': '/'.join((start_year, end_year)),
-        }
-    if 'timerange' in variable:
-        settings['clip_timerange'].update(
-            {'timerange': variable['timerange']})
+    if 'timerange' in variable and variable['frequency'] != 'fx':
+        settings['clip_timerange'] = {'timerange': variable['timerange']}
 
     if derive:
         settings['derive'] = {
@@ -720,26 +712,6 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
-def _parse_period(timerange):
-    start_year = None
-    end_year = None
-    if timerange.split('/')[0].startswith('P'):
-        try:
-            end_year = isodate.parse_datetime(timerange.split('/')[1]).year
-        except isodate.ISO8601Error:
-            end_year = isodate.parse_date(timerange.split('/')[1]).year
-        delta = int(isodate.parse_duration(timerange.split('/')[0]).years)
-        start_year = end_year - delta
-    elif timerange.split('/')[1].startswith('P'):
-        try:
-            start_year = isodate.parse_datetime(timerange.split('/')[0]).year
-        except isodate.ISO8601Error:
-            start_year = isodate.parse_date(timerange.split('/')[0]).year
-        delta = int(isodate.parse_duration(timerange.split('/')[1]).years)
-        end_year = start_year + delta
-    return start_year, end_year
-
-
 def _update_timerange(variable, config_user):
     if 'timerange' not in variable:
         return
@@ -762,18 +734,7 @@ def _update_timerange(variable, config_user):
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
         check.valid_time_selection(timerange)
-
-    start_year, end_year = _parse_period(timerange)
-
-    if start_year is None and end_year is None:
-        start_year = int(timerange.split('/')[0][0:4])
-        end_year = int(timerange.split('/')[1][0:4])
-
-    variable.update({
-        'timerange': timerange,
-        'start_year': start_year,
-        'end_year': end_year
-    })
+        variable.update({'timerange': timerange})
 
 
 def _match_products(products, variables):
@@ -1270,11 +1231,12 @@ class Recipe:
             'diagnostic',
         }
         if 'fx' not in raw_variable.get('mip', ''):
-            required_keys.update({'start_year', 'end_year'})
+            required_keys.update({'timerange'})
         else:
             variable.pop('timerange', None)
         for variable in variables:
             _add_extra_facets(variable, self._cfg['extra_facets_dir'])
+            _get_timerange_from_start_end_year(variable)
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:
@@ -1283,9 +1245,6 @@ class Recipe:
                 activity = get_activity(variable)
                 if activity:
                     variable['activity'] = activity
-            if 'timerange' in variable:
-                required_keys.discard('start_year')
-                required_keys.discard('end_year')
             if 'sub_experiment' in variable:
                 subexperiment_keys = deepcopy(required_keys)
                 subexperiment_keys.update({'sub_experiment'})

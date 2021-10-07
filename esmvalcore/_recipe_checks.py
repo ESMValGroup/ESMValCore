@@ -9,7 +9,7 @@ from shutil import which
 import isodate
 import yamale
 
-from ._data_finder import get_start_end_year
+from ._data_finder import _parse_period, get_start_end_year
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from .preprocessor._multimodel import STATISTIC_MAPPING
@@ -157,7 +157,11 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
         # check time availability only for non-fx variables
         return
 
-    required_years = set(range(var['start_year'], var['end_year'] + 1))
+    start_year, end_year = _parse_period(var['timerange'])
+    if start_year is None and end_year is None:
+        start_year = int(var['timerange'].split('/')[0][0:4])
+        end_year = int(var['timerange'].split('/')[1][0:4])
+    required_years = set(range(start_year, end_year + 1))
     available_years = set()
 
     for filename in input_files:

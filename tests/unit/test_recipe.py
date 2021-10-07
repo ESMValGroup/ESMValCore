@@ -257,8 +257,7 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
         'exp': 'historical',
         'ensemble': 'r1i1p1f1',
         'grid': 'gr',
-        'start_year': 1850,
-        'end_year': 1851,
+        'timerange': '1850/1851',
         'alias': 'CMIP6_EC-Eeath3_tas',
     }
 
