@@ -14,8 +14,7 @@ get_output_file:
       mip: Amon
       exp: historical
       ensemble: r1i1p1
-      start_year: 1960
-      end_year: 1980
+      timerange: '1960/1980'
       diagnostic: test_diag
       preprocessor: test_preproc
     preproc_dir: this/is/a/path
