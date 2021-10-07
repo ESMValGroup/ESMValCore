@@ -46,7 +46,8 @@
         },
         {
             "affiliation": "DLR, Germany",
-            "name": "Schlund, Manuel"
+            "name": "Schlund, Manuel",
+            "orcid": "0000-0001-5251-0158"
         },
         {
             "affiliation": "BSC, Spain",
@@ -55,7 +56,8 @@
         },
         {
             "affiliation": "SMHI, Sweden",
-            "name": "Zimmermann, Klaus"
+            "name": "Zimmermann, Klaus",
+            "orcid": "0000-0003-3994-2057"
         },
         {
             "affiliation": "DLR, Germany",
@@ -86,45 +88,85 @@
         {
             "affiliation": "BSC, Spain",
             "name": "Loosveldt-Tomas, Saskia"
+        },
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Smeets, Stef",
+            "orcid": "0000-0002-5413-9038"
+        },
+        {
+            "affiliation": "NLeSC, Netherlands",
+            "name": "Camphuijsen, Jaro",
+            "orcid": "0000-0002-8928-7831"
+        },
+        {
+            "affiliation": "University of Bremen, Germany",
+            "name": "Gier, Bettina K.",
+            "orcid": "0000-0002-2928-8664"
+        },
+        {
+            "affiliation": "University of Bremen, Germany",
+            "name": "Weigel, Katja",
+            "orcid": "0000-0001-6133-7801"
+        },
+        {
+            "affiliation": "Institute for Atmospheric and Climate Science, ETH Zurich, Zurich, Switzerland",
+            "name": "Hauser, Mathias",
+            "orcid": "0000-0002-0057-4878"
+        },
+        {
+            "affiliation": "Netherlands eScience Center",
+            "name": "Kalverla, Peter",
+            "orcid": "0000-0002-5025-7862"
+        },
+        {
+            "affiliation": "University of Bremen, Germany",
+            "name": "Galytska, Evgenia",
+            "orcid": "0000-0001-6575-1559"
+        },
+        {
+            "affiliation": "BSC, Spain",
+            "name": "Cos-Espuña, Pep"
+        },
+        {
+            "affiliation": "Netherlands eScience Center",
+            "name": "Pelupessy, Inti",
+            "orcid": "0000-0002-8024-0412"
+        },
+        {
+            "affiliation": "Max Planck Institute for Biogeochemistry, Germany",
+            "name": "Koirala, Sujan",
+            "orcid": "0000-0001-5681-1986"
+        },
+        {
+            "affiliation": "Helmholtz-Zentrum Geesthacht, Germany ",
+            "name": "Stacke, Tobias",
+            "orcid": "0000-0003-4637-5337"
+        },
+        {
+            "affiliation": "Netherlands eScience Center",
+            "name": "Alidoost, Sarah",
+            "orcid": "0000-0001-8407-6472"
+        },
+        {
+            "affiliation": "Barcelona Supercomputing Center",
+            "name": "Jury, Martin",
+            "orcid": "0000-0003-0590-7843"
+        },
+        {
+            "affiliation": "Stéphane Sénési EIRL, Colomiers, France",
+            "name": "Sénési, Stéphane",
+            "orcid": "0000-0003-0892-5967"
+        },
+        {
+            "affiliation": "MetOffice, UK",
+            "name": "Crocker, Thomas",
+            "orcid": "0000-0001-7761-5546"
         }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
     "license": {
         "id": "Apache-2.0"
     },
-    "title": "ESMValCore",
-    "communities": [
-        {
-            "identifier": "is-enes3"
-        },
-        {
-            "identifier": "dlr_de"
-        },
-        {
-            "identifier": "ecfunded"
-        },
-        {
-            "identifier": "nlesc"
-        }
-    ],
-    "grants": [
-        {
-            "id": "10.13039/501100000780::282672"
-        },
-        {
-            "id": "10.13039/501100000780::641727"
-        },
-        {
-            "id": "10.13039/501100000780::641816"
-        },
-        {
-            "id": "10.13039/501100000780::727862"
-        },
-        {
-            "id": "10.13039/501100000780::776613"
-        },
-        {
-            "id": "10.13039/501100000780::824084"
-        }
-    ]
+    "title": "ESMValCore"
 }

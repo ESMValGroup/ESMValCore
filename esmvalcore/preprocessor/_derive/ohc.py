@@ -55,13 +55,14 @@ class DerivedVariable(DerivedVariableBase):
               Output OHC cube.
         """
         # 1. Load the thetao and volcello cubes
-        cube = cubes.extract_strict(
+        cube = cubes.extract_cube(
             Constraint(cube_func=lambda c: c.var_name == 'thetao'))
-        volume = cubes.extract_strict(
+        volume = cubes.extract_cube(
             Constraint(cube_func=lambda c: c.var_name == 'volcello'))
         # 2. multiply with each other and with cprho0
         # some juggling with coordinates needed since Iris is very
         # restrictive in this regard
+        cube.convert_units('K')
         try:
             t_coord_dims = cube.coord_dims('time')
         except iris.exceptions.CoordinateNotFoundError:

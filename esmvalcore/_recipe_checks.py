@@ -2,21 +2,18 @@
 import itertools
 import logging
 import os
+import re
 import subprocess
 from shutil import which
-import re
 
 import yamale
 
 from ._data_finder import get_start_end_year
-from ._task import get_flattened_tasks
-from .preprocessor import PreprocessingTask, TIME_PREPROCESSORS
+from .exceptions import InputFilesNotFound, RecipeError
+from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from .preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
-
-
-class RecipeError(Exception):
-    """Recipe contains an error."""
 
 
 def ncl_version():
@@ -48,11 +45,13 @@ def recipe_with_schema(filename):
     logger.debug("Checking recipe against schema %s", schema_file)
     recipe = yamale.make_data(filename)
     schema = yamale.make_schema(schema_file)
-    yamale.validate(schema, recipe)
+    yamale.validate(schema, recipe, strict=False)
 
 
 def diagnostics(diags):
     """Check diagnostics in recipe."""
+    if diags is None:
+        raise RecipeError('The given recipe does not have any diagnostic.')
     for name, diagnostic in diags.items():
         if 'scripts' not in diagnostic:
             raise RecipeError(
@@ -93,7 +92,7 @@ def variable(var, required_keys):
                 missing, var.get('short_name'), var.get('diagnostic')))
 
 
-def data_availability(input_files, var, dirnames, filenames):
+def _log_data_availability_errors(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
     var = dict(var)
     if not input_files:
@@ -116,10 +115,45 @@ def data_availability(input_files, var, dirnames, filenames):
                 "Looked for files matching %s, but did not find any existing "
                 "input directory", filenames)
         logger.error("Set 'log_level' to 'debug' to get more information")
-        raise RecipeError("Missing data")
 
-    # check time avail only for non-fx variables
+
+def _group_years(years):
+    """Group an iterable of years into easy to read text.
+
+    Example
+    -------
+    [1990, 1991, 1992, 1993, 2000] -> "1990-1993, 2000"
+    """
+    years = sorted(years)
+    year = years[0]
+    previous_year = year
+    starts = [year]
+    ends = []
+    for year in years[1:]:
+        if year != previous_year + 1:
+            starts.append(year)
+            ends.append(previous_year)
+        previous_year = year
+    ends.append(year)
+
+    ranges = []
+    for start, end in zip(starts, ends):
+        ranges.append(f"{start}" if start == end else f"{start}-{end}")
+
+    return ", ".join(ranges)
+
+
+def data_availability(input_files, var, dirnames, filenames, log=True):
+    """Check if input_files cover the required years."""
+    if log:
+        _log_data_availability_errors(input_files, var, dirnames, filenames)
+
+    if not input_files:
+        raise InputFilesNotFound(
+            f"Missing data for {var['alias']}: {var['short_name']}")
+
     if var['frequency'] == 'fx':
+        # check time availability only for non-fx variables
         return
 
     required_years = set(range(var['start_year'], var['end_year'] + 1))
@@ -131,16 +165,18 @@ def data_availability(input_files, var, dirnames, filenames):
 
     missing_years = required_years - available_years
     if missing_years:
-        raise RecipeError(
-            "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years), input_files))
+        missing_txt = _group_years(missing_years)
+
+        raise InputFilesNotFound(
+            "No input data available for years {} in files:\n{}".format(
+                missing_txt, "\n".join(str(f) for f in input_files)))
 
 
 def tasks_valid(tasks):
     """Check that tasks are consistent."""
     filenames = set()
     msg = "Duplicate preprocessor filename {}, please file a bug report."
-    for task in get_flattened_tasks(tasks):
+    for task in tasks.flatten():
         if isinstance(task, PreprocessingTask):
             for product in task.products:
                 if product.filename in filenames:
@@ -183,12 +219,11 @@ def extract_shape(settings):
 
 def valid_multimodel_statistic(statistic):
     """Check that `statistic` is a valid argument for multimodel stats."""
-    valid_names = ["mean", "median", "std", "min", "max"]
+    valid_names = ['std'] + list(STATISTIC_MAPPING.keys())
     valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
-    if not (statistic in valid_names or
-            re.match(r'|'.join(valid_patterns), statistic)):
+    if not (statistic in valid_names
+            or re.match(r'|'.join(valid_patterns), statistic)):
         raise RecipeError(
             "Invalid value encountered for `statistic` in preprocessor "
             f"`multi_model_statistics`. Valid values are {valid_names} "
-            f"or patterns matching {valid_patterns}. Got '{statistic}.'"
-        )
+            f"or patterns matching {valid_patterns}. Got '{statistic}.'")

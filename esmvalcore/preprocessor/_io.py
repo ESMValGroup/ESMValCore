@@ -3,7 +3,6 @@ import copy
 import logging
 import os
 import shutil
-from collections import OrderedDict
 from itertools import groupby
 from warnings import catch_warnings, filterwarnings
 
@@ -33,7 +32,6 @@ def _fix_aux_factories(cube):
     """Fix :class:`iris.aux_factory.AuxCoordFactory` after concatenation.
 
     Necessary because of bug in :mod:`iris` (see issue #2478).
-
     """
     coord_names = [coord.name() for coord in cube.coords()]
 
@@ -90,9 +88,10 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
 def concatenate_callback(raw_cube, field, _):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
-    for attr in ['creation_date', 'tracking_id', 'history']:
-        if attr in raw_cube.attributes:
-            del raw_cube.attributes[attr]
+    _delete_attributes(
+        raw_cube,
+        ('creation_date', 'tracking_id', 'history', 'comment')
+    )
     for coord in raw_cube.coords():
         # Iris chooses to change longitude and latitude units to degrees
         # regardless of value in file, so reinstating file value
@@ -100,6 +99,14 @@ def concatenate_callback(raw_cube, field, _):
             units = _get_attr_from_field_coord(field, coord.var_name, 'units')
             if units is not None:
                 coord.units = units
+        # CMOR sometimes adds a history to the coordinates.
+        _delete_attributes(coord, ('history', ))
+
+
+def _delete_attributes(iris_object, atts):
+    for att in atts:
+        if att in iris_object.attributes:
+            del iris_object.attributes[att]
 
 
 def load(file, callback=None):
@@ -118,8 +125,8 @@ def load(file, callback=None):
             category=UserWarning,
             module='iris',
         )
-
         raw_cubes = iris.load_raw(file, callback=callback)
+    logger.debug("Done with loading %s", file)
     if not raw_cubes:
         raise Exception('Can not load cubes from {0}'.format(file))
     for cube in raw_cubes:
@@ -174,6 +181,8 @@ def _get_concatenation_error(cubes):
 
 def concatenate(cubes):
     """Concatenate all cubes after fixing metadata."""
+    if not cubes:
+        return cubes
     if len(cubes) == 1:
         return cubes[0]
 
@@ -198,9 +207,13 @@ def concatenate(cubes):
     return result
 
 
-def save(cubes, filename, optimize_access='', compress=False, **kwargs):
-    """
-    Save iris cubes to file.
+def save(cubes,
+         filename,
+         optimize_access='',
+         compress=False,
+         alias='',
+         **kwargs):
+    """Save iris cubes to file.
 
     Parameters
     ----------
@@ -222,12 +235,22 @@ def save(cubes, filename, optimize_access='', compress=False, **kwargs):
     compress: bool, optional
         Use NetCDF internal compression.
 
+    alias: str, optional
+        Var name to use when saving instead of the one in the cube.
+
     Returns
     -------
     str
         filename
 
+    Raises
+    ------
+    ValueError
+        cubes is empty.
     """
+    if not cubes:
+        raise ValueError(f"Cannot save empty cubes '{cubes}'")
+
     # Rename some arguments
     kwargs['target'] = filename
     kwargs['zlib'] = compress
@@ -263,6 +286,12 @@ def save(cubes, filename, optimize_access='', compress=False, **kwargs):
             for index, length in enumerate(cube.shape))
 
     kwargs['fill_value'] = GLOBAL_FILL_VALUE
+    if alias:
+
+        for cube in cubes:
+            logger.debug('Changing var_name from %s to %s', cube.var_name,
+                         alias)
+            cube.var_name = alias
     iris.save(cubes, **kwargs)
 
     return filename
@@ -293,19 +322,6 @@ def cleanup(files, remove=None):
     return files
 
 
-def _ordered_safe_dump(data, stream):
-    """Write data containing OrderedDicts to yaml file."""
-    class _OrderedDumper(yaml.SafeDumper):
-        pass
-
-    def _dict_representer(dumper, data):
-        return dumper.represent_mapping(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, data.items())
-
-    _OrderedDumper.add_representer(OrderedDict, _dict_representer)
-    return yaml.dump(data, stream, _OrderedDumper)
-
-
 def write_metadata(products, write_ncl=False):
     """Write product metadata to file."""
     output_files = []
@@ -318,17 +334,19 @@ def write_metadata(products, write_ncl=False):
                 p.attributes.get('dataset', ''),
             ),
         )
-        metadata = OrderedDict()
+        metadata = {}
         for product in sorted_products:
             if isinstance(product.attributes.get('exp'), (list, tuple)):
                 product.attributes = dict(product.attributes)
                 product.attributes['exp'] = '-'.join(product.attributes['exp'])
+            if 'original_short_name' in product.attributes:
+                del product.attributes['original_short_name']
             metadata[product.filename] = product.attributes
 
         output_filename = os.path.join(output_dir, 'metadata.yml')
         output_files.append(output_filename)
         with open(output_filename, 'w') as file:
-            _ordered_safe_dump(metadata, file)
+            yaml.safe_dump(metadata, file)
         if write_ncl:
             output_files.append(_write_ncl_metadata(output_dir, metadata))
 

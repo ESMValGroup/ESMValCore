@@ -44,8 +44,10 @@ class TestAllVars(unittest.TestCase):
         time = cube.coord('time')
         dates = num2date(time.points, time.units.name, time.units.calendar)
         self.assertEqual(time.units.calendar, 'gregorian')
-        self.assertEqual(dates[0].strftime('%Y%m%d%H%M'), ' 30001161200')
-        self.assertEqual(dates[1].strftime('%Y%m%d%H%M'), '185001161200')
+        u = Unit('days since 300-01-01 12:00:00', calendar='gregorian')
+        self.assertEqual(dates[0], u.num2date(15))
+        u = Unit('days since 1850-01-01 12:00:00', calendar='gregorian')
+        self.assertEqual(dates[1], u.num2date(15))
 
     def test_fix_metadata_if_not_time(self):
         """Test calendar fix do not fail if no time coord present."""
@@ -91,10 +93,10 @@ def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
     fixed_cubes = fix.fix_metadata(cl_cubes)
     mock_base_fix_metadata.assert_called_once_with(fix, cl_cubes)
     assert len(fixed_cubes) == 2
-    cl_cube = fixed_cubes.extract_strict(
+    cl_cube = fixed_cubes.extract_cube(
         'cloud_area_fraction_in_atmosphere_layer')
     b_coord_cl = cl_cube.coord('vertical coordinate formula term: b(k)')
     assert not b_coord_cl.attributes
-    x_cube = fixed_cubes.extract_strict('x')
+    x_cube = fixed_cubes.extract_cube('x')
     b_coord_x = x_cube.coord('vertical coordinate formula term: b(k)')
     assert b_coord_x.attributes == {'a': 1, 'b': '2'}
