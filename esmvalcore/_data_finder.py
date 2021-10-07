@@ -424,7 +424,10 @@ def get_input_filelist(variable, rootpath, drs):
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
     if variable['frequency'] != 'fx':
-        files = select_files(files, variable['frequency'], variable['timerange'])
+        files = select_files(
+            files,
+            variable['frequency'],
+            variable['timerange'])
     return (files, dirnames, filenames)
 
 
