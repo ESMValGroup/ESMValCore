@@ -14,6 +14,7 @@ from esmvalcore.preprocessor._regrid import (
     VERTICAL_SCHEMES,
     extract_levels,
     parse_vertical_scheme,
+    _preserve_fx_vars,
 )
 from tests.unit.preprocessor._regrid import _make_cube, _make_vcoord
 
@@ -24,8 +25,8 @@ class Test(tests.Test):
         self.shape = (3, 2, 1)
         self.z = self.shape[0]
         self.dtype = np.dtype('int8')
-        data = np.arange(
-            np.prod(self.shape), dtype=self.dtype).reshape(self.shape)
+        data = np.arange(np.prod(self.shape),
+                         dtype=self.dtype).reshape(self.shape)
         self.cube = _make_cube(data, dtype=self.dtype)
         self.created_cube = mock.sentinel.created_cube
         self.mock_create_cube = self.patch(
@@ -71,12 +72,61 @@ class Test(tests.Test):
         levels = [0, 2]
         result = extract_levels(self.cube, levels, 'linear')
         data = np.array([0, 1, 4, 5], dtype=self.dtype).reshape(2, 2, 1)
-        expected = _make_cube(
-            data, aux_coord=False, dim_coord=False, dtype=self.dtype)
+        expected = _make_cube(data,
+                              aux_coord=False,
+                              dim_coord=False,
+                              dtype=self.dtype)
         coord = self.cube.coord('Pressure Slice').copy()
         expected.add_aux_coord(coord[levels], (0, 1))
         coord = self.cube.coord('air_pressure').copy()
         expected.add_dim_coord(coord[levels], 0)
+        self.assertEqual(result, expected)
+
+    def test_fx_extraction(self):
+        levels = [0, 2]
+        area_data = np.ones((2, 1))
+        volume_data = np.ones(self.shape)
+        area_measure = iris.coords.CellMeasure(area_data,
+                                               standard_name='cell_area',
+                                               var_name='areacella',
+                                               units='m2',
+                                               measure='area')
+        volume_measure = iris.coords.CellMeasure(volume_data,
+                                                 standard_name='ocean_volume',
+                                                 var_name='volcello',
+                                                 units='m3',
+                                                 measure='volume')
+        ancillary_2D = iris.coords.AncillaryVariable(
+            area_data,
+            standard_name='land_area_fraction',
+            var_name='sftlf',
+            units='%')
+        ancillary_3D = iris.coords.AncillaryVariable(
+            volume_data,
+            standard_name='height_above_reference_ellipsoid',
+            var_name='zfull',
+            units='m')
+        self.cube.add_cell_measure(area_measure, (1, 2))
+        self.cube.add_cell_measure(volume_measure, (0, 1, 2))
+        self.cube.add_ancillary_variable(ancillary_2D, (1, 2))
+        self.cube.add_ancillary_variable(ancillary_3D, (0, 1, 2))
+
+        result = extract_levels(self.cube, levels, 'linear')
+
+        data = np.array([0, 1, 4, 5], dtype=self.dtype).reshape(2, 2, 1)
+        expected = _make_cube(data,
+                              aux_coord=False,
+                              dim_coord=False,
+                              dtype=self.dtype)
+        coord = self.cube.coord('Pressure Slice').copy()
+        expected.add_aux_coord(coord[levels], (0, 1))
+        coord = self.cube.coord('air_pressure').copy()
+        expected.add_dim_coord(coord[levels], 0)
+        expected.add_cell_measure(area_measure, (1, 2))
+        expected.add_ancillary_variable(ancillary_2D, (1, 2))
+        expected.add_cell_measure(volume_measure[0:2, ...], (0, 1, 2))
+        expected.add_ancillary_variable(ancillary_3D[0:2, ...], (0, 1, 2))
+
         self.assertEqual(result, expected)
 
     def test_extraction__failure(self):
@@ -90,8 +140,8 @@ class Test(tests.Test):
         new_data = np.array(True)
         levels = np.array([0.5, 1.5])
         scheme = 'linear'
-        with mock.patch(
-                'stratify.interpolate', return_value=new_data) as mocker:
+        with mock.patch('stratify.interpolate',
+                        return_value=new_data) as mocker:
             result = extract_levels(self.cube, levels, scheme)
             self.assertEqual(result, self.created_cube)
             args, kwargs = mocker.call_args
@@ -99,31 +149,99 @@ class Test(tests.Test):
             self.assertEqual(len(args), 3)
             self.assert_array_equal(args[0], levels)
             pts = self.cube.coord(axis='z', dim_coords=True).points
-            src_levels_broadcast = np.broadcast_to(
-                pts.reshape(self.z, 1, 1), self.cube.shape)
+            src_levels_broadcast = np.broadcast_to(pts.reshape(self.z, 1, 1),
+                                                   self.cube.shape)
             self.assert_array_equal(args[1], src_levels_broadcast)
             self.assert_array_equal(args[2], self.cube.data)
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
-                kwargs, dict(
-                    axis=0, interpolation=scheme, extrapolation='nan'))
+                kwargs, dict(axis=0, interpolation=scheme,
+                             extrapolation='nan'))
         args, kwargs = self.mock_create_cube.call_args
         # Check the _create_cube args ...
         self.assertEqual(len(args), 4)
         self.assertEqual(args[0], self.cube)
         self.assert_array_equal(args[1], new_data)
-        self.assert_array_equal(
-            args[2], self.cube.coord(axis='z', dim_coords=True))
+        self.assert_array_equal(args[2],
+                                self.cube.coord(axis='z', dim_coords=True))
         self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())
+
+    def test_preserve_2D_fx_interpolation(self):
+        area_data = np.ones((2, 1))
+        area_measure = iris.coords.CellMeasure(area_data,
+                                               standard_name='cell_area',
+                                               var_name='areacella',
+                                               units='m2',
+                                               measure='area')
+        ancillary_2D = iris.coords.AncillaryVariable(
+            area_data,
+            standard_name='land_area_fraction',
+            var_name='sftlf',
+            units='%')
+        self.cube.add_cell_measure(area_measure, (1, 2))
+        self.cube.add_ancillary_variable(ancillary_2D, (1, 2))
+        result_data = np.array([0, 1, 4, 5], dtype=self.dtype).reshape(2, 2, 1)
+        result = _make_cube(result_data)
+        _preserve_fx_vars(self.cube, result)
+        self.assertEqual(self.cube.cell_measures(), result.cell_measures())
+        self.assertEqual(self.cube.ancillary_variables(),
+                         result.ancillary_variables())
+
+    def test_preserve_2D_fx_interpolation_single_level(self):
+        result = self.cube[0, :, :]
+        area_data = np.ones((2, 1))
+        area_measure = iris.coords.CellMeasure(area_data,
+                                               standard_name='cell_area',
+                                               var_name='areacella',
+                                               units='m2',
+                                               measure='area')
+        ancillary_2D = iris.coords.AncillaryVariable(
+            area_data,
+            standard_name='land_area_fraction',
+            var_name='sftlf',
+            units='%')
+        self.cube.add_cell_measure(area_measure, (1, 2))
+        self.cube.add_ancillary_variable(ancillary_2D, (1, 2))
+        _preserve_fx_vars(self.cube, result)
+        self.assertEqual(self.cube.cell_measures(), result.cell_measures())
+        self.assertEqual(self.cube.ancillary_variables(),
+                         result.ancillary_variables())
+
+    def test_do_not_preserve_3D_fx_interpolation(self):
+        volume_data = np.ones(self.shape)
+        volume_measure = iris.coords.CellMeasure(volume_data,
+                                                 standard_name='ocean_volume',
+                                                 var_name='volcello',
+                                                 units='m3',
+                                                 measure='volume')
+        ancillary_3D = iris.coords.AncillaryVariable(
+            volume_data,
+            standard_name='height_above_reference_ellipsoid',
+            var_name='zfull',
+            units='m')
+        self.cube.add_cell_measure(volume_measure, (0, 1, 2))
+        self.cube.add_ancillary_variable(ancillary_3D, (0, 1, 2))
+        result_data = np.array([0, 1, 4, 5], dtype=self.dtype).reshape(2, 2, 1)
+        result = _make_cube(result_data)
+        with self.assertLogs(level='WARNING') as cm:
+            _preserve_fx_vars(self.cube, result)
+        self.assertEqual(
+            cm.records[0].getMessage(),
+            'Discarding use of z-axis dependent cell measure '
+            'volcello in variable ta, as z-axis has been interpolated')
+        self.assertEqual(
+            cm.records[1].getMessage(),
+            'Discarding use of z-axis dependent ancillary variable '
+            'zfull in variable ta, as z-axis has been interpolated')
 
     def test_interpolation__extrapolated_nan_filling(self):
         new_data = np.array([0, np.nan])
         levels = [0.5, 1.5]
         scheme = 'nearest'
-        with mock.patch(
-                'stratify.interpolate', return_value=new_data) as mocker:
+        with mock.patch('stratify.interpolate',
+                        return_value=new_data) as mocker:
             result = extract_levels(self.cube, levels, scheme)
             self.assertEqual(result, self.created_cube)
             args, kwargs = mocker.call_args
@@ -131,14 +249,14 @@ class Test(tests.Test):
             self.assertEqual(len(args), 3)
             self.assert_array_equal(args[0], levels)
             pts = self.cube.coord(axis='z', dim_coords=True).points
-            src_levels_broadcast = np.broadcast_to(
-                pts.reshape(self.z, 1, 1), self.cube.shape)
+            src_levels_broadcast = np.broadcast_to(pts.reshape(self.z, 1, 1),
+                                                   self.cube.shape)
             self.assert_array_equal(args[1], src_levels_broadcast)
             self.assert_array_equal(args[2], self.cube.data)
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
-                kwargs, dict(
-                    axis=0, interpolation=scheme, extrapolation='nan'))
+                kwargs, dict(axis=0, interpolation=scheme,
+                             extrapolation='nan'))
         args, kwargs = self.mock_create_cube.call_args
         # Check the _create_cube args ...
         self.assertEqual(len(args), 4)
@@ -148,8 +266,8 @@ class Test(tests.Test):
         new_data_mask[new_data == _MDI] = True
         new_data = np.ma.array(new_data, mask=new_data_mask)
         self.assert_array_equal(args[1], new_data)
-        self.assert_array_equal(
-            args[2], self.cube.coord(axis='z', dim_coords=True))
+        self.assert_array_equal(args[2],
+                                self.cube.coord(axis='z', dim_coords=True))
         self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())
@@ -166,8 +284,8 @@ class Test(tests.Test):
         cube = _make_cube(masked, dtype=self.dtype)
         # save cube to test the lazy data interpolation too
         iris.save(cube, self.filename)
-        with mock.patch(
-                'stratify.interpolate', return_value=new_data) as mocker:
+        with mock.patch('stratify.interpolate',
+                        return_value=new_data) as mocker:
             # first test lazy
             loaded_cube = iris.load_cube(self.filename)
             result_from_lazy = extract_levels(loaded_cube, levels, scheme)
@@ -180,14 +298,14 @@ class Test(tests.Test):
             self.assertEqual(len(args), 3)
             self.assert_array_equal(args[0], levels)
             pts = cube.coord(axis='z', dim_coords=True).points
-            src_levels_broadcast = np.broadcast_to(
-                pts.reshape(self.z, 1, 1), cube.shape)
+            src_levels_broadcast = np.broadcast_to(pts.reshape(self.z, 1, 1),
+                                                   cube.shape)
             self.assert_array_equal(args[1], src_levels_broadcast)
             self.assert_array_equal(args[2], cube.data)
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
-                kwargs, dict(
-                    axis=0, interpolation=scheme, extrapolation='nan'))
+                kwargs, dict(axis=0, interpolation=scheme,
+                             extrapolation='nan'))
         args, kwargs = self.mock_create_cube.call_args
         input_cube = args[0]
         # in-place for new extract_levels with nan's
@@ -204,8 +322,8 @@ class Test(tests.Test):
         self.assert_array_equal(args[1], new_data)
         self.assertTrue(ma.isMaskedArray(args[1]))
         self.assert_array_equal(args[1].mask, new_data_mask)
-        self.assert_array_equal(
-            args[2], self.cube.coord(axis='z', dim_coords=True))
+        self.assert_array_equal(args[2],
+                                self.cube.coord(axis='z', dim_coords=True))
         self.assert_array_equal(args[3], levels)
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())

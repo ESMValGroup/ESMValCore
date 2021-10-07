@@ -1,10 +1,8 @@
-"""
-Mask module.
+"""Mask module.
 
-Module that performs a number of masking
-operations that include: masking with ancillary variables, masking with
-Natural Earth shapefiles (land or ocean), masking on thresholds,
-missing values masking.
+Module that performs a number of masking operations that include:
+masking with ancillary variables, masking with Natural Earth shapefiles
+(land or ocean), masking on thresholds, missing values masking.
 """
 
 import logging
@@ -62,8 +60,7 @@ def _apply_fx_mask(fx_mask, var_data):
 
 
 def mask_landsea(cube, mask_out, always_use_ne_mask=False):
-    """
-    Mask out either land mass or sea (oceans, seas and lakes).
+    """Mask out either land mass or sea (oceans, seas and lakes).
 
     It uses dedicated ancillary variables (sftlf or sftof) or,
     in their absence, it applies a
@@ -95,7 +92,6 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
         Error raised if masking on irregular grids is attempted.
         Irregular grids are not currently supported for masking
         with Natural Earth shapefile masks.
-
     """
     # Dict to store the Natural Earth masks
     cwd = os.path.dirname(__file__)
@@ -114,13 +110,13 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
             try:
                 fx_cube = cube.ancillary_variable('sea_area_fraction')
             except iris.exceptions.AncillaryVariableNotFoundError:
-                logger.debug(
-                    'Ancillary variables land/sea area fraction '
-                    'not found in cube. Check fx_file availability.')
+                logger.debug('Ancillary variables land/sea area fraction '
+                             'not found in cube. Check fx_file availability.')
 
         if fx_cube:
-            landsea_mask = _get_fx_mask(
-                fx_cube.data, mask_out, fx_cube.var_name)
+            fx_cube.data = da.broadcast_to(fx_cube.core_data(), cube.shape)
+            landsea_mask = _get_fx_mask(fx_cube.data, mask_out,
+                                        fx_cube.var_name)
             cube.data = _apply_fx_mask(landsea_mask, cube.data)
             logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
         else:
@@ -152,8 +148,7 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
 
 
 def mask_landseaice(cube, mask_out):
-    """
-    Mask out either landsea (combined) or ice.
+    """Mask out either landsea (combined) or ice.
 
     Function that masks out either landsea (land and seas) or ice (Antarctica
     and Greenland and some wee glaciers).
@@ -177,7 +172,6 @@ def mask_landseaice(cube, mask_out):
     ------
     ValueError
         Error raised if landsea-ice mask not found as an ancillary variable.
-
     """
     # sftgif is the only one so far but users can set others
     fx_cube = None
@@ -187,6 +181,7 @@ def mask_landseaice(cube, mask_out):
         logger.debug('Ancillary variable land ice area fraction '
                      'not found in cube. Check fx_file availability.')
     if fx_cube:
+        fx_cube.data = da.broadcast_to(fx_cube.core_data(), cube.shape)
         landice_mask = _get_fx_mask(fx_cube.data, mask_out, fx_cube.var_name)
         cube.data = _apply_fx_mask(landice_mask, cube.data)
         logger.debug("Applying landsea-ice mask: sftgif")
@@ -198,8 +193,7 @@ def mask_landseaice(cube, mask_out):
 
 
 def mask_glaciated(cube, mask_out):
-    """
-    Mask out glaciated areas.
+    """Mask out glaciated areas.
 
     It applies a Natural Earth mask. Note that for computational reasons
     only the 10 largest polygons are used for masking.
@@ -268,17 +262,16 @@ def _get_geometries_from_shp(shapefilename):
 
 
 def _mask_with_shp(cube, shapefilename, region_indices=None):
-    """
-    Apply a Natural Earth land/sea mask.
+    """Apply a Natural Earth land/sea mask.
 
-    Apply a pre-made land or sea mask that is extracted form a
-    Natural Earth shapefile (proprietary file format). The masking
-    process is performed by checking if any given (x, y) point from
-    the data cube lies within the desired geometries (eg land, sea) stored
-    in the shapefile (this is done via shapefle vectorization and is fast).
+    Apply a pre-made land or sea mask that is extracted form a Natural
+    Earth shapefile (proprietary file format). The masking process is
+    performed by checking if any given (x, y) point from the data cube
+    lies within the desired geometries (eg land, sea) stored in the
+    shapefile (this is done via shapefle vectorization and is fast).
     region_indices is a list of indices that the user will want to index
-    the regions on (select a region by its index as it is listed in
-    the shapefile).
+    the regions on (select a region by its index as it is listed in the
+    shapefile).
     """
     # Create the region
     regions = _get_geometries_from_shp(shapefilename)
@@ -328,8 +321,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
 
 
 def count_spells(data, threshold, axis, spell_length):
-    """
-    Count data occurrences.
+    """Count data occurrences.
 
     Define a function to perform the custom statistical operation.
     Note: in order to meet the requirements of iris.analysis.Aggregator,
@@ -360,7 +352,6 @@ def count_spells(data, threshold, axis, spell_length):
     -------
     int
         Number of counts.
-
     """
     if axis < 0:
         # just cope with negative axis numbers
@@ -388,8 +379,7 @@ def count_spells(data, threshold, axis, spell_length):
 
 
 def mask_above_threshold(cube, threshold):
-    """
-    Mask above a specific threshold value.
+    """Mask above a specific threshold value.
 
     Takes a value 'threshold' and masks off anything that is above
     it in the cube data. Values equal to the threshold are not masked.
@@ -406,15 +396,13 @@ def mask_above_threshold(cube, threshold):
     -------
     iris.cube.Cube
         thresholded cube.
-
     """
     cube.data = np.ma.masked_where(cube.data > threshold, cube.data)
     return cube
 
 
 def mask_below_threshold(cube, threshold):
-    """
-    Mask below a specific threshold value.
+    """Mask below a specific threshold value.
 
     Takes a value 'threshold' and masks off anything that is below
     it in the cube data. Values equal to the threshold are not masked.
@@ -430,15 +418,13 @@ def mask_below_threshold(cube, threshold):
     -------
     iris.cube.Cube
         thresholded cube.
-
     """
     cube.data = np.ma.masked_where(cube.data < threshold, cube.data)
     return cube
 
 
 def mask_inside_range(cube, minimum, maximum):
-    """
-    Mask inside a specific threshold range.
+    """Mask inside a specific threshold range.
 
     Takes a MINIMUM and a MAXIMUM value for the range, and masks off anything
     that's between the two in the cube data.
@@ -456,15 +442,13 @@ def mask_inside_range(cube, minimum, maximum):
     -------
     iris.cube.Cube
         thresholded cube.
-
     """
     cube.data = np.ma.masked_inside(cube.data, minimum, maximum)
     return cube
 
 
 def mask_outside_range(cube, minimum, maximum):
-    """
-    Mask outside a specific threshold range.
+    """Mask outside a specific threshold range.
 
     Takes a MINIMUM and a MAXIMUM value for the range, and masks off anything
     that's outside the two in the cube data.
@@ -482,7 +466,6 @@ def mask_outside_range(cube, minimum, maximum):
     -------
     iris.cube.Cube
         thresholded cube.
-
     """
     cube.data = np.ma.masked_outside(cube.data, minimum, maximum)
     return cube
@@ -554,7 +537,6 @@ def mask_multimodel(products):
         Datasets have different shapes.
     TypeError
         Invalid input data.
-
     """
     if not products:
         return products
@@ -584,8 +566,7 @@ def mask_fillvalues(products,
                     threshold_fraction,
                     min_value=None,
                     time_window=1):
-    """
-    Compute and apply a multi-dataset fillvalues mask.
+    """Compute and apply a multi-dataset fillvalues mask.
 
     Construct the mask that fills a certain time window with missing values
     if the number of values in that specific window is less than a given
@@ -619,7 +600,6 @@ def mask_fillvalues(products,
     ------
     NotImplementedError
         Implementation missing for data with higher dimensionality than 4.
-
     """
     combined_mask = None
 
@@ -628,8 +608,8 @@ def mask_fillvalues(products,
     for product in products:
         for cube in product.cubes:
             cube.data = np.ma.fix_invalid(cube.data, copy=False)
-            mask = _get_fillvalues_mask(cube, threshold_fraction,
-                                        min_value, time_window)
+            mask = _get_fillvalues_mask(cube, threshold_fraction, min_value,
+                                        time_window)
             if combined_mask is None:
                 combined_mask = np.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
@@ -662,15 +642,14 @@ def mask_fillvalues(products,
 
 
 def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
-    """
-    Compute the per-model missing values mask.
+    """Compute the per-model missing values mask.
 
-    Construct the mask that fills a certain time window with missing values
-    if the number of values in that specific window is less than a given
-    fractional threshold; it uses a custom iris Aggregator function that
-    aggregates the cube data by a given time window and counts the number of
-    valid (unmasked) data points within that window;
-    a simple value thresholding is also applied if needed.
+    Construct the mask that fills a certain time window with missing
+    values if the number of values in that specific window is less than
+    a given fractional threshold; it uses a custom iris Aggregator
+    function that aggregates the cube data by a given time window and
+    counts the number of valid (unmasked) data points within that
+    window; a simple value thresholding is also applied if needed.
     """
     # basic checks
     if threshold_fraction < 0 or threshold_fraction > 1.0:

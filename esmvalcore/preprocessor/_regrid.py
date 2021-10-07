@@ -1,5 +1,6 @@
 """Horizontal and vertical regridding module."""
 
+import logging
 import os
 import re
 from copy import deepcopy
@@ -16,9 +17,12 @@ from iris.util import broadcast_to_shape
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
+from ._ancillary_vars import add_ancillary_variable, add_cell_measure
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+
+logger = logging.getLogger(__name__)
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -642,6 +646,30 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
+def _preserve_fx_vars(cube, result):
+    vertical_dim = set(cube.coord_dims(cube.coord(axis='z', dim_coords=True)))
+    if cube.cell_measures():
+        for measure in cube.cell_measures():
+            measure_dims = set(cube.cell_measure_dims(measure))
+            if vertical_dim.intersection(measure_dims):
+                logger.warning(
+                    'Discarding use of z-axis dependent cell measure %s '
+                    'in variable %s, as z-axis has been interpolated',
+                    measure.var_name, result.var_name)
+            else:
+                add_cell_measure(result, measure, measure.measure)
+    if cube.ancillary_variables():
+        for ancillary_var in cube.ancillary_variables():
+            ancillary_dims = cube.ancillary_variable_dims(ancillary_var)
+            if vertical_dim.intersection(ancillary_dims):
+                logger.warning(
+                    'Discarding use of z-axis dependent ancillary variable %s '
+                    'in variable %s, as z-axis has been interpolated',
+                    ancillary_var.var_name, result.var_name)
+            else:
+                add_ancillary_variable(result, ancillary_var)
+
+
 def parse_vertical_scheme(scheme):
     """Parse the scheme provided for level extraction.
 
@@ -781,6 +809,7 @@ def extract_levels(cube,
             interpolation,
             extrapolation,
         )
+        _preserve_fx_vars(cube, result)
 
     return result
 
