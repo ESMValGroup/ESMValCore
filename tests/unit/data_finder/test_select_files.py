@@ -113,3 +113,21 @@ def test_select_files_time_period():
     ]
 
     assert result == expected
+
+
+def test_select_files_varying_format():
+    filename = "psl_6hrPlev_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_"
+
+    files = [
+        filename + "196011010900-196110312100.nc",
+        filename + "196111010900-196210312100.nc",
+        filename + "196211010300-196310312100.nc",
+    ]
+
+    result_yearly = select_files(files, '6hr', '1960/1962')
+    result_monthly = select_files(files, '6hr', '196011/196210')
+    result_daily = select_files(files, '6hr', '19601101/19601105')
+
+    assert result_yearly == files
+    assert result_monthly == files[0:2]
+    assert result_daily == [files[0]]
