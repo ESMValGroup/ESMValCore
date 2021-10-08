@@ -139,7 +139,7 @@ CORDEX:
 IPSLCM:
   cmor_strict: false
   input_dir:
-    default: '{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
+    default: '{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{out}/{freq}'
   input_file:
     default:
       - '{simulation}_*_{ipsl_varname}.nc'
