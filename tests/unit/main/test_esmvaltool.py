@@ -1,4 +1,7 @@
+import logging
 import os
+import pathlib
+from unittest import mock
 
 import pytest
 
@@ -6,8 +9,11 @@ import esmvalcore._config
 import esmvalcore._main
 import esmvalcore._task
 import esmvalcore.esgf
-from esmvalcore._main import ESMValTool
+from esmvalcore import __version__
+from esmvalcore._main import HEADER, ESMValTool
 from esmvalcore.cmor.check import CheckLevels
+
+LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize('cmd_offline', [None, True, False])
@@ -73,7 +79,7 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         create_autospec=True,
     )
 
-    ESMValTool.run(str(recipe), offline=cmd_offline)
+    ESMValTool().run(str(recipe), offline=cmd_offline)
 
     # Check that configuration has been updated from the command line
     assert cfg == reference
@@ -102,3 +108,59 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         recipe_file=recipe,
         config_user=cfg,
     )
+
+
+@mock.patch('esmvalcore._main.iter_entry_points')
+def test_header(mock_entry_points, caplog):
+
+    entry_point = mock.Mock()
+    entry_point.dist.project_name = 'MyEntry'
+    entry_point.dist.version = 'v42.42.42'
+    entry_point.name = 'Entry name'
+    mock_entry_points.return_value = [entry_point]
+    with caplog.at_level(logging.INFO):
+        ESMValTool()._log_header(
+            'path_to_config_file',
+            ['path_to_log_file1', 'path_to_log_file2']
+        )
+
+    assert len(caplog.messages) == 8
+    assert caplog.messages[0] == HEADER
+    assert caplog.messages[1] == 'Package versions'
+    assert caplog.messages[2] == '----------------'
+    assert caplog.messages[3] == f'ESMValCore: {__version__}'
+    assert caplog.messages[4] == 'MyEntry: v42.42.42'
+    assert caplog.messages[5] == '----------------'
+    assert caplog.messages[6] == 'Using config file path_to_config_file'
+    assert caplog.messages[7] == (
+        'Writing program log files to:\n'
+        'path_to_log_file1\n'
+        'path_to_log_file2'
+    )
+
+
+@mock.patch('os.path.isfile')
+def test_get_recipe(is_file):
+    """Test get recipe."""
+    is_file.return_value = True
+    recipe = ESMValTool()._get_recipe('/recipe.yaml')
+    assert recipe == pathlib.Path('/recipe.yaml')
+
+
+@mock.patch('os.path.isfile')
+@mock.patch('esmvalcore._config.DIAGNOSTICS')
+def test_get_installed_recipe(diagnostics, is_file):
+    def encountered(path):
+        return path == '/install_folder/recipe.yaml'
+    is_file.side_effect = encountered
+    diagnostics.recipes = pathlib.Path('/install_folder')
+    recipe = ESMValTool()._get_recipe('recipe.yaml')
+    assert recipe == pathlib.Path('/install_folder/recipe.yaml')
+
+
+@mock.patch('os.path.isfile')
+def test_get_recipe_not_found(is_file):
+    """Test get recipe."""
+    is_file.return_value = False
+    recipe = ESMValTool()._get_recipe('/recipe.yaml')
+    assert recipe == pathlib.Path('/recipe.yaml')
