@@ -22,7 +22,6 @@ from ._area import (
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
-from ._download import download
 from ._io import (
     _get_debug_filename,
     cleanup,
@@ -77,7 +76,6 @@ from ._weighting import weighting_landsea_fraction
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'download',
     # File reformatting/CMORization
     'fix_file',
     # Load cubes from file
@@ -385,16 +383,17 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
-        if self._cubes is not None:
-            self.files = preprocess(self._cubes, 'save',
-                                    **self.settings['save'])
-            self.files = preprocess(self.files, 'cleanup',
-                                    **self.settings.get('cleanup', {}))
+        self.files = preprocess(self._cubes, 'save',
+                                **self.settings['save'])
+        self.files = preprocess(self.files, 'cleanup',
+                                **self.settings.get('cleanup', {}))
 
     def close(self):
         """Close the file."""
-        self.save()
-        self._cubes = None
+        if self._cubes is not None:
+            self.save()
+            self._cubes = None
+            self.save_provenance()
 
     @property
     def is_closed(self):

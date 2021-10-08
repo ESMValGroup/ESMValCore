@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - pin_esmpy_affinity
 
 jobs:
   build-n-publish:

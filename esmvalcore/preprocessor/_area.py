@@ -4,6 +4,7 @@ Allows for selecting data subsets using certain latitude and longitude
 bounds; selecting geographical regions; constructing area averages; etc.
 """
 import logging
+import warnings
 
 import fiona
 import iris
@@ -179,6 +180,23 @@ def meridional_statistics(cube, operator):
     raise ValueError(msg)
 
 
+def compute_area_weights(cube):
+    """Compute area weights."""
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.filterwarnings(
+            'always',
+            message="Using DEFAULT_SPHERICAL_EARTH_RADIUS.",
+            category=UserWarning,
+            module='iris.analysis.cartography',
+        )
+        weights = iris.analysis.cartography.area_weights(cube)
+        for warning in caught_warnings:
+            logger.debug(
+                "%s while computing area weights of the following cube:\n%s",
+                warning.message, cube)
+    return weights
+
+
 def area_statistics(cube, operator):
     """Apply a statistical operator in the horizontal direction.
 
@@ -234,11 +252,12 @@ def area_statistics(cube, operator):
     try:
         grid_areas = cube.cell_measure('cell_area').core_data()
     except iris.exceptions.CellMeasureNotFoundError:
-        logger.info(
+        logger.debug(
             'Cell measure "cell_area" not found in cube %s. '
-            'Check fx_file availability.', cube.summary(shorten=True)
-        )
-        logger.info('Attempting to calculate grid cell area...')
+            'Check fx_file availability.', cube.summary(shorten=True))
+        logger.debug('Attempting to calculate grid cell area...')
+    else:
+        grid_areas = da.broadcast_to(grid_areas, cube.shape)
 
     if grid_areas is None and cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
@@ -249,8 +268,8 @@ def area_statistics(cube, operator):
             cube_tmp.coord('grid_latitude').rename('latitude')
             cube_tmp.remove_coord('longitude')
             cube_tmp.coord('grid_longitude').rename('longitude')
-            grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
-            logger.info('Calculated grid area shape: %s', grid_areas.shape)
+            grid_areas = compute_area_weights(cube_tmp)
+            logger.debug('Calculated grid area shape: %s', grid_areas.shape)
         else:
             logger.error(
                 'fx_file needed to calculate grid cell area for irregular '
@@ -261,8 +280,8 @@ def area_statistics(cube, operator):
     coord_names = ['longitude', 'latitude']
     if grid_areas is None:
         cube = guess_bounds(cube, coord_names)
-        grid_areas = iris.analysis.cartography.area_weights(cube)
-        logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        grid_areas = compute_area_weights(cube)
+        logger.debug('Calculated grid area shape: %s', grid_areas.shape)
 
     if cube.shape != grid_areas.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid area shape '
@@ -281,7 +300,7 @@ def area_statistics(cube, operator):
 
     new_dtype = result.dtype
     if original_dtype != new_dtype:
-        logger.warning(
+        logger.debug(
             "area_statistics changed dtype from "
             "%s to %s, changing back", original_dtype, new_dtype)
         result.data = result.core_data().astype(original_dtype)
@@ -407,8 +426,12 @@ def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
     return lon, lat
 
 
-def _get_masks_from_geometries(geometries, lon, lat, method='contains',
-                               decomposed=False, ids=None):
+def _get_masks_from_geometries(geometries,
+                               lon,
+                               lat,
+                               method='contains',
+                               decomposed=False,
+                               ids=None):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(

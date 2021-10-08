@@ -17,6 +17,7 @@ from iris.util import broadcast_to_shape
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
+from ._ancillary_vars import add_ancillary_variable, add_cell_measure
 from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
@@ -657,38 +658,46 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
-def extract_levels(cube, levels, scheme, coordinate=None):
-    """Perform vertical interpolation.
+def _preserve_fx_vars(cube, result):
+    vertical_dim = set(cube.coord_dims(cube.coord(axis='z', dim_coords=True)))
+    if cube.cell_measures():
+        for measure in cube.cell_measures():
+            measure_dims = set(cube.cell_measure_dims(measure))
+            if vertical_dim.intersection(measure_dims):
+                logger.warning(
+                    'Discarding use of z-axis dependent cell measure %s '
+                    'in variable %s, as z-axis has been interpolated',
+                    measure.var_name, result.var_name)
+            else:
+                add_cell_measure(result, measure, measure.measure)
+    if cube.ancillary_variables():
+        for ancillary_var in cube.ancillary_variables():
+            ancillary_dims = cube.ancillary_variable_dims(ancillary_var)
+            if vertical_dim.intersection(ancillary_dims):
+                logger.warning(
+                    'Discarding use of z-axis dependent ancillary variable %s '
+                    'in variable %s, as z-axis has been interpolated',
+                    ancillary_var.var_name, result.var_name)
+            else:
+                add_ancillary_variable(result, ancillary_var)
+
+
+def parse_vertical_scheme(scheme):
+    """Parse the scheme provided for level extraction.
 
     Parameters
     ----------
-    cube : cube
-        The source cube to be vertically interpolated.
-    levels : array
-        One or more target levels for the vertical interpolation. Assumed
-        to be in the same S.I. units of the source cube vertical dimension
-        coordinate.
     scheme : str
         The vertical interpolation scheme to use. Choose from
         'linear',
         'nearest',
         'nearest_horizontal_extrapolate_vertical',
         'linear_horizontal_extrapolate_vertical'.
-    coordinate :  optional str
-        The coordinate to interpolate. If specified, pressure levels
-        (if present) can be converted to height levels and vice versa using
-        the US standard atmosphere. E.g. 'coordinate = altitude' will convert
-        existing pressure levels (air_pressure) to height levels (altitude);
-        'coordinate = air_pressure' will convert existing height levels
-        (altitude) to pressure levels (air_pressure).
 
     Returns
     -------
-    cube
-
-    See Also
-    --------
-    regrid : Perform horizontal regridding.
+    (str, str)
+        A tuple containing the interpolation and extrapolation scheme.
     """
     if scheme not in VERTICAL_SCHEMES:
         emsg = 'Unknown vertical interpolation scheme, got {!r}. '
@@ -704,6 +713,63 @@ def extract_levels(cube, levels, scheme, coordinate=None):
     if scheme == 'linear_horizontal_extrapolate_vertical':
         scheme = 'linear'
         extrap_scheme = 'nearest'
+
+    return scheme, extrap_scheme
+
+
+def extract_levels(cube,
+                   levels,
+                   scheme,
+                   coordinate=None,
+                   rtol=1e-7,
+                   atol=None):
+    """Perform vertical interpolation.
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        The source cube to be vertically interpolated.
+    levels : ArrayLike
+        One or more target levels for the vertical interpolation. Assumed
+        to be in the same S.I. units of the source cube vertical dimension
+        coordinate. If the requested levels are sufficiently close to the
+        levels of the cube, cube slicing will take place instead of
+        interpolation.
+    scheme : str
+        The vertical interpolation scheme to use. Choose from
+        'linear',
+        'nearest',
+        'nearest_horizontal_extrapolate_vertical',
+        'linear_horizontal_extrapolate_vertical'.
+    coordinate :  optional str
+        The coordinate to interpolate. If specified, pressure levels
+        (if present) can be converted to height levels and vice versa using
+        the US standard atmosphere. E.g. 'coordinate = altitude' will convert
+        existing pressure levels (air_pressure) to height levels (altitude);
+        'coordinate = air_pressure' will convert existing height levels
+        (altitude) to pressure levels (air_pressure).
+    rtol : float
+        Relative tolerance for comparing the levels in `cube` to the requested
+        levels. If the levels are sufficiently close, the requested levels
+        will be assigned to the cube and no interpolation will take place.
+    atol : float
+        Absolute tolerance for comparing the levels in `cube` to the requested
+        levels. If the levels are sufficiently close, the requested levels
+        will be assigned to the cube and no interpolation will take place.
+        By default, `atol` will be set to 10^-7 times the mean value of
+        the levels on the cube.
+
+    Returns
+    -------
+    iris.cube.Cube
+        A cube with the requested vertical levels.
+
+
+    See Also
+    --------
+    regrid : Perform horizontal regridding.
+    """
+    interpolation, extrapolation = parse_vertical_scheme(scheme)
 
     # Ensure we have a non-scalar array of levels.
     levels = np.array(levels, ndmin=1)
@@ -724,11 +790,17 @@ def extract_levels(cube, levels, scheme, coordinate=None):
     else:
         src_levels = cube.coord(axis='z', dim_coords=True)
 
-    if (src_levels.shape == levels.shape
-            and np.allclose(src_levels.points, levels)):
+    if (src_levels.shape == levels.shape and np.allclose(
+            src_levels.points,
+            levels,
+            rtol=rtol,
+            atol=1e-7 * np.mean(src_levels.points) if atol is None else atol,
+    )):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
         result = cube
+        # Set the levels to the requested values
+        src_levels.points = levels
     elif len(src_levels.shape) == 1 and \
             set(levels).issubset(set(src_levels.points)):
         # If all target levels exist in the source cube, simply extract them.
@@ -742,8 +814,14 @@ def extract_levels(cube, levels, scheme, coordinate=None):
             raise ValueError(emsg.format(list(levels), name))
     else:
         # As a last resort, perform vertical interpolation.
-        result = _vertical_interpolate(cube, src_levels, levels, scheme,
-                                       extrap_scheme)
+        result = _vertical_interpolate(
+            cube,
+            src_levels,
+            levels,
+            interpolation,
+            extrapolation,
+        )
+        _preserve_fx_vars(cube, result)
 
     return result
 

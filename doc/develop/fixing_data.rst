@@ -416,10 +416,10 @@ formats) are supported, and should be configured in recipes as e.g.:
 .. code-block:: yaml
 
   datasets:
-    - {simulation: CM61-LR-hist-03.1950, exp: piControl, freq: Analyse/TS_MO,
+    - {simulation: CM61-LR-hist-03.1950, exp: piControl, out: Analyse, freq: TS_MO,
        account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
        root: /thredds/tgcc/store}
-    - {simulation: CM61-LR-hist-03.1950, exp: historical, freq: Output/MO,
+    - {simulation: CM61-LR-hist-03.1950, exp: historical, out: Output, freq: MO,
        account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
        root: /thredds/tgcc/store}
 

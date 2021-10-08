@@ -150,6 +150,7 @@ following:
     - Incorrect units, if they can be converted to the correct ones.
     - Direction of coordinates.
     - Automatic clipping of longitude to 0 - 360 interval.
+    - Minute differences between the required and actual vertical coordinate values
 
 
 Dataset specific fixes
@@ -348,6 +349,23 @@ to height levels and vice versa using the US standard atmosphere. E.g.
 (air_pressure) to height levels (altitude);
 ``coordinate = air_pressure`` will convert existing height levels
 (altitude) to pressure levels (air_pressure).
+
+If the requested levels are very close to the values in the input data,
+the function will just select the available levels instead of interpolating.
+The meaning of 'very close' can be changed by providing the parameters:
+
+* ``rtol``
+    Relative tolerance for comparing the levels in the input data to the requested
+    levels. If the levels are sufficiently close, the requested levels
+    will be assigned to the vertical coordinate and no interpolation will take place.
+    The default value is 10^-7.
+* ``atol``
+    Absolute tolerance for comparing the levels in the input data to the requested
+    levels. If the levels are sufficiently close, the requested levels
+    will be assigned to the vertical coordinate and no interpolation will take place.
+    By default, `atol` will be set to 10^-7 times the mean value of
+    of the available levels.
+
 
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
@@ -694,7 +712,7 @@ Regridding on a reference dataset grid
 --------------------------------------
 
 The example below shows how to regrid on the reference dataset
-``ERA-Interim`` (observational data, but just as well CMIP, obs4mips,
+``ERA-Interim`` (observational data, but just as well CMIP, obs4MIPs,
 or ana4mips datasets can be used); in this case the `scheme` is
 `linear`.
 
