@@ -177,7 +177,7 @@ def check_lat_lon(cube):
     assert i_coord.long_name == ('first spatial index for variables stored on '
                                  'an unstructured grid')
     assert i_coord.units == '1'
-    np.testing.assert_allclose(i_coord.points, [0, 1, 2, 3, 4])
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2, 3, 4, 5, 6, 7])
     assert i_coord.bounds is None
 
     assert len(cube.coord_dims(lat)) == 1
@@ -273,7 +273,10 @@ def test_siconca_fix(cubes_2d):
     np.testing.assert_array_equal(typesi.points, ['sea_ice'])
     assert typesi.bounds is None
 
-    np.testing.assert_allclose(cube.data, [[0.0, 20.0, 40.0, 60.0, 80.0]])
+    np.testing.assert_allclose(
+        cube.data,
+        [[10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0]],
+    )
 
 
 # Test ta (for height and plev coordinate)
