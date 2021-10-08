@@ -24,10 +24,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute surface chlorophyll concentration."""
-        chldiatos_cube = cubes.extract_strict(
+        chldiatos_cube = cubes.extract_cube(
             Constraint(name='mass_concentration_of_diatoms_expressed_as' +
                        '_chlorophyll_in_sea_water'))
-        chlmiscos_cube = cubes.extract_strict(
+        chlmiscos_cube = cubes.extract_cube(
             Constraint(name='mass_concentration_of_miscellaneous' +
                        '_phytoplankton_expressed_as_chlorophyll' +
                        '_in_sea_water'))

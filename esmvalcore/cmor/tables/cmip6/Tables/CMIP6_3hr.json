@@ -1,10 +1,10 @@
 {
     "Header": {
-        "data_specs_version": "01.00.32", 
+        "data_specs_version": "01.00.33", 
         "cmor_version": "3.5", 
         "table_id": "Table 3hr", 
         "realm": "atmos", 
-        "table_date": "28 May 2020", 
+        "table_date": "18 November 2020", 
         "missing_value": "1e20", 
         "int_missing_value": "-999", 
         "product": "model-output", 

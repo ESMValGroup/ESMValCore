@@ -1,10 +1,4 @@
 """Data finder module for the ESMValTool."""
-# Authors:
-# Bouwe Andela (eScience, NL - b.andela@esciencecenter.nl)
-# Valeriu Predoi (URead, UK - valeriu.predoi@ncas.ac.uk)
-# Mattia Righi (DLR, Germany - mattia.righi@dlr.de)
-
-import fnmatch
 import glob
 import logging
 import os
@@ -14,6 +8,7 @@ from pathlib import Path
 import iris
 
 from ._config import get_project_config
+from .exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -24,38 +19,76 @@ def find_files(dirnames, filenames):
 
     result = []
     for dirname in dirnames:
-        for path, _, files in os.walk(dirname, followlinks=True):
-            for filename in filenames:
-                matches = fnmatch.filter(files, filename)
-                result.extend(os.path.join(path, f) for f in matches)
+        for filename_pattern in filenames:
+            pat = os.path.join(dirname, filename_pattern)
+            files = glob.glob(pat)
+            files.sort()  # sorting makes it easier to see what was found
+            result.extend(files)
 
     return result
 
 
 def get_start_end_year(filename):
-    """Get the start and end year from a file name."""
+    """Get the start and end year from a file name.
+
+    Examples of allowed dates : 1980, 198001, 19801231,
+    1980123123, 19801231T23, 19801231T2359, 19801231T235959,
+    19801231T235959Z
+
+    Dates must be surrounded by - or _ or string start or string end
+    (after removing filename suffix)
+
+    Look first for two dates separated by - or _, then for one single
+    date, and if they are multiple, for one date at start or end
+    """
     stem = Path(filename).stem
     start_year = end_year = None
-
-    # First check for a block of two potential dates separated by _ or -
-    daterange = re.findall(r'([0-9]{4,12}[-_][0-9]{4,12})', stem)
+    #
+    time_pattern = (r"(?P<hour>[0-2][0-9]"
+                    r"(?P<minute>[0-5][0-9]"
+                    r"(?P<second>[0-5][0-9])?)?Z?)")
+    date_pattern = (r"(?P<year>[0-9]{4})"
+                    r"(?P<month>[01][0-9]"
+                    r"(?P<day>[0-3][0-9]"
+                    rf"(T?{time_pattern})?)?)?")
+    #
+    end_date_pattern = date_pattern.replace(">", "_end>")
+    date_range_pattern = date_pattern + r"[-_]" + end_date_pattern
+    #
+    # Next string allows to test that there is an allowed delimiter (or
+    # string start or end) close to date range (or to single date)
+    context = r"(?:^|[-_]|$)"
+    #
+    # First check for a block of two potential dates
+    date_range_pattern_with_context = context + date_range_pattern + context
+    daterange = re.search(date_range_pattern_with_context, stem)
+    if not daterange:
+        # Retry with extended context for CMIP3
+        context = r"(?:^|[-_.]|$)"
+        date_range_pattern_with_context = (context + date_range_pattern +
+                                           context)
+        daterange = re.search(date_range_pattern_with_context, stem)
     if daterange:
-        start_date, end_date = re.findall(r'([0-9]{4,12})', daterange[0])
-        start_year = start_date[:4]
-        end_year = end_date[:4]
+        start_year = daterange.group("year")
+        end_year = daterange.group("year_end")
     else:
         # Check for single dates in the filename
-        dates = re.findall(r'([0-9]{4,12})', stem)
+        single_date_pattern = context + date_pattern + context
+        dates = re.findall(single_date_pattern, stem)
         if len(dates) == 1:
-            start_year = end_year = dates[0][:4]
+            start_year = end_year = dates[0][0]
         elif len(dates) > 1:
-            # Check for dates at start or end of filename
-            outerdates = re.findall(r'^[0-9]{4,12}|[0-9]{4,12}$', stem)
-            if len(outerdates) == 1:
-                start_year = end_year = outerdates[0][:4]
+            # Check for dates at start or (exclusive or) end of filename
+            start = re.search(r'^' + date_pattern, stem)
+            end = re.search(date_pattern + r'$', stem)
+            if start and not end:
+                start_year = end_year = start.group('year')
+            elif end:
+                start_year = end_year = end.group('year')
 
     # As final resort, try to get the dates from the file contents
-    if start_year is None or end_year is None:
+    if (start_year is None or end_year is None) and Path(filename).exists():
+        logger.debug("Must load file %s for daterange ", filename)
         cubes = iris.load(filename)
 
         for cube in cubes:
@@ -72,7 +105,6 @@ def get_start_end_year(filename):
         raise ValueError(f'File {filename} dates do not match a recognized'
                          'pattern and time can not be read from the file')
 
-    logger.debug("Found start_year %s and end_year %s", start_year, end_year)
     return int(start_year), int(end_year)
 
 
@@ -89,11 +121,25 @@ def select_files(filenames, start_year, end_year):
     return selection
 
 
-def _replace_tags(path, variable):
+def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
-    path = path.strip('/')
-    tlist = re.findall(r'{([^}]*)}', path)
-    paths = [path]
+    if isinstance(paths, str):
+        paths = set((paths.strip('/'),))
+    else:
+        paths = set(path.strip('/') for path in paths)
+    tlist = set()
+    for path in paths:
+        tlist = tlist.union(re.findall(r'{([^}]*)}', path))
+    if 'sub_experiment' in variable:
+        new_paths = []
+        for path in paths:
+            new_paths.extend((
+                re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
+                re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)
+            ))
+            tlist.add('sub_experiment')
+        paths = new_paths
+
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
@@ -103,9 +149,8 @@ def _replace_tags(path, variable):
         if tag in variable:
             replacewith = variable[tag]
         else:
-            raise KeyError("Dataset key {} must be specified for {}, check "
-                           "your recipe entry".format(tag, variable))
-
+            raise RecipeError(f"Dataset key '{tag}' must be specified for "
+                              f"{variable}, check your recipe entry")
         paths = _replace_tag(paths, original_tag, replacewith)
     return paths
 
@@ -120,7 +165,7 @@ def _replace_tag(paths, tag, replacewith):
     else:
         text = _apply_caps(str(replacewith), lower, upper)
         result.extend(p.replace('{' + tag + '}', text) for p in paths)
-    return result
+    return list(set(result))
 
 
 def _get_caps_options(tag):
@@ -144,7 +189,11 @@ def _apply_caps(original, lower, upper):
 
 
 def _resolve_latestversion(dirname_template):
-    """Resolve the 'latestversion' tag."""
+    """Resolve the 'latestversion' tag.
+
+    This implementation avoid globbing on centralized clusters with very
+    large data root dirs (i.e. ESGF nodes like Jasmin/DKRZ).
+    """
     if '{latestversion}' not in dirname_template:
         return dirname_template
 
@@ -159,7 +208,7 @@ def _resolve_latestversion(dirname_template):
             if os.path.isdir(dirname):
                 return dirname
 
-    return dirname_template
+    return None
 
 
 def _select_drs(input_type, drs, project):
@@ -178,12 +227,21 @@ def _select_drs(input_type, drs, project):
             structure, project))
 
 
+ROOTPATH_WARNED = set()
+
+
 def get_rootpath(rootpath, project):
     """Select the rootpath."""
-    if project in rootpath:
-        return rootpath[project]
-    if 'default' in rootpath:
-        return rootpath['default']
+    for key in (project, 'default'):
+        if key in rootpath:
+            nonexistent = tuple(p for p in rootpath[key]
+                                if not os.path.exists(p))
+            if nonexistent and (key, nonexistent) not in ROOTPATH_WARNED:
+                logger.warning(
+                    "'%s' rootpaths '%s' set in config-user.yml do not exist",
+                    key, ', '.join(nonexistent))
+                ROOTPATH_WARNED.add((key, nonexistent))
+            return rootpath[key]
     raise KeyError('default rootpath must be specified in config-user file')
 
 
@@ -199,11 +257,12 @@ def _find_input_dirs(variable, rootpath, drs):
         for base_path in root:
             dirname = os.path.join(base_path, dirname_template)
             dirname = _resolve_latestversion(dirname)
+            if dirname is None:
+                continue
             matches = glob.glob(dirname)
             matches = [match for match in matches if os.path.isdir(match)]
             if matches:
                 for match in matches:
-                    logger.debug("Found %s", match)
                     dirnames.append(match)
             else:
                 logger.debug("Skipping non-existent %s", dirname)

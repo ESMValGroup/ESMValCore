@@ -1,0 +1,75 @@
+[
+    {
+        "id": "obs4MIPs.NASA-LaRC.CERES-EBAF.atmos.mon.v20160610.rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc|dpesgf03.nccs.nasa.gov",
+        "version": "1",
+        "cf_standard_name": [
+            "toa_outgoing_shortwave_flux_assuming_clear_sky"
+        ],
+        "checksum": [
+            "db1434a04f3c65eb43e85c0f5d5f344dec5c7813989a7e3bfb5aab6ac3a39414"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "dpesgf03.nccs.nasa.gov",
+        "data_structure": [
+            "grid"
+        ],
+        "dataset_id": "obs4MIPs.NASA-LaRC.CERES-EBAF.atmos.mon.v20160610|dpesgf03.nccs.nasa.gov",
+        "dataset_id_template_": [
+            "%(project)s.%(institute)s.%(source_id)s.%(realm)s.%(time_frequency)s"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "obs4MIPs.NASA-LaRC.CERES-EBAF.atmos.mon.v20160610.rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc",
+        "institute": [
+            "NASA-LaRC"
+        ],
+        "latest": true,
+        "master_id": "obs4MIPs.NASA-LaRC.CERES-EBAF.atmos.mon.rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc",
+        "model": [
+            "Obs-CERES-EBAF"
+        ],
+        "processing_level": [
+            "L3B"
+        ],
+        "product": [
+            "observations"
+        ],
+        "project": [
+            "obs4MIPs"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": false,
+        "size": 44090540,
+        "source_id": [
+            "CERES-EBAF"
+        ],
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2014-07-29T17:06:17Z",
+        "title": "rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc",
+        "tracking_id": [
+            "cfdea942-77b9-4f92-bba4-ee34fa324382"
+        ],
+        "type": "File",
+        "url": [
+            "https://dpesgf03.nccs.nasa.gov/thredds/fileServer/obs4MIPs/NASA-LaRC/observations/atmos/rsutcs/mon/grid/NASA-LaRC/CERES-EBAF/v20140728/rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc|application/netcdf|HTTPServer"
+        ],
+        "variable": [
+            "rsutcs"
+        ],
+        "variable_long_name": [
+            "TOA Outgoing Clear-Sky Shortwave Radiation"
+        ],
+        "variable_units": [
+            "W m-2"
+        ],
+        "_version_": 1662343939232890880,
+        "retracted": false,
+        "_timestamp": "2020-03-27T18:45:19.880Z",
+        "score": 1.0
+    }
+]

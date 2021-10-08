@@ -25,11 +25,11 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute vegetation fraction from bare soil fraction."""
-        baresoilfrac_cube = cubes.extract_strict(var_name_constraint(
+        baresoilfrac_cube = cubes.extract_cube(var_name_constraint(
             'baresoilFrac'))
-        residualfrac_cube = cubes.extract_strict(var_name_constraint(
+        residualfrac_cube = cubes.extract_cube(var_name_constraint(
             'residualFrac'))
-        sftlf_cube = cubes.extract_strict(var_name_constraint('sftlf'))
+        sftlf_cube = cubes.extract_cube(var_name_constraint('sftlf'))
 
         # Add time dimension to sftlf
         target_shape_sftlf = (baresoilfrac_cube.shape[0], *sftlf_cube.shape)

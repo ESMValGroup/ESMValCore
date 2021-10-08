@@ -1,0 +1,12 @@
+---
+PROJECT1:
+  Amon:
+    tas:
+      source_var_name: "t2m"
+      cds_var_name: "temperature_2m"
+    uas:
+      source_var_name: "u10n"
+      cds_var_name: "10m_u-component_of_neutral_wind"
+    vas:
+      source_var_name: "v10n"
+      cds_var_name: "10m_v-component_of_neutral_wind"

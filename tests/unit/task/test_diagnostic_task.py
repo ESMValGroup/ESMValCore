@@ -5,6 +5,8 @@ import pytest
 import yaml
 
 import esmvalcore._task
+from esmvalcore._config._diagnostics import TagsManager
+from esmvalcore._task import DiagnosticError
 
 
 @pytest.mark.parametrize("ext", ['.jl', '.py', '.ncl', '.R'])
@@ -14,7 +16,8 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
                         lambda self: None)
 
     esmvaltool_path = tmp_path / 'esmvaltool'
-    monkeypatch.setattr(esmvalcore._task, 'DIAGNOSTICS_PATH', esmvaltool_path)
+    monkeypatch.setattr(esmvalcore._config.DIAGNOSTICS, 'path',
+                        esmvaltool_path)
 
     diagnostics_path = esmvaltool_path / 'diag_scripts'
     diagnostics_path.mkdir(parents=True)
@@ -92,6 +95,18 @@ def test_initialize_cmd(ext_profile, cmd, tmp_path, monkeypatch):
     cmd.append(str(script))
     assert task.cmd == cmd
 
+    # test for no executable
+    monkeypatch.setattr(esmvalcore._task, 'which', lambda x: None)
+    if ext_profile[0] != '' and ext_profile[0] != '.py':
+        with pytest.raises(DiagnosticError) as err_mssg:
+            esmvalcore._task.DiagnosticTask(script,
+                                            settings,
+                                            output_dir=str(tmp_path))
+        exp_mssg1 = "Cannot execute script "
+        exp_mssg2 = "program '{}' not installed.".format(CMD[ext_profile][0])
+        assert exp_mssg1 in str(err_mssg.value)
+        assert exp_mssg2 in str(err_mssg.value)
+
 
 @pytest.fixture
 def diagnostic_task(mocker, tmp_path):
@@ -99,10 +114,8 @@ def diagnostic_task(mocker, tmp_path):
         provenance = None
 
     mocker.patch.object(esmvalcore._task, 'TrackedFile', autospec=TrackedFile)
-    mocker.patch.dict(esmvalcore._task.TAGS,
-                      {'plot_type': {
-                          'tag': 'tag_value'
-                      }})
+    tags = TagsManager({'plot_type': {'tag': 'tag_value'}})
+    mocker.patch.dict(esmvalcore._task.TAGS, tags)
     mocker.patch.object(esmvalcore._task,
                         '_write_citation_files',
                         autospec=True)

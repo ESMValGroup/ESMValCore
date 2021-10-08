@@ -1,0 +1,37 @@
+<h1>{{ info.title }}</h1>
+
+<p>
+  {{ info.description }}
+</p>
+
+<h3>Authors</h3>
+
+<ul>
+  {% for author in info.authors %}
+    <li>{{ author.name }} ({{ author.institute }}; <a href='{{ author.orcid }}'>{{ author.orcid }}</a>)</li>
+  {% endfor %}
+</ul>
+
+<h3>Maintainers</h3>
+
+<ul>
+  {% for author in info.maintainers %}
+    <li>{{ author.name }} ({{ author.institute }}; <a href='{{ author.orcid }}'>{{ author.orcid }}</a>)</li>
+  {% endfor %}
+</ul>
+
+<h3>Projects</h3>
+
+<ul>
+  {% for project in info.projects %}
+    <li>{{ project }}</li>
+  {% endfor %}
+</ul>
+
+<h3>References</h3>
+
+<ul>
+  {% for reference in info.references %}
+    <li>{{ reference.render('html') | safe }}</li>
+  {% endfor %}
+</ul>

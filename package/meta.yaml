@@ -2,10 +2,10 @@
 ---
 
 # Build command (run this from the root of the repository):
-# conda build package -c conda-forge -c esmvalgroup
+# conda build package -c conda-forge
 
 # Package version number
-{% set version = "2.1.0" %}
+{% set version = "2.3.1" %}
 
 package:
   name: esmvalcore
@@ -29,33 +29,41 @@ build:
 requirements:
   build:
     - git
-    - python>=3.6
+    - python>=3.7
     # Normally installed via pip:
     - pytest-runner
     - setuptools_scm
   run:
     # esmvaltool
-    - python>=3.6
-    - graphviz
-    - iris>=2.2.1
+    - python>=3.7
+    - iris>=3.0.2
     - python-stratify
+    - scipy>=1.6
     # Normally installed via pip:
-    - cf-units
+    - cftime
+    - cf-units>=3.0.0
     - cython  # required by cf-units but not automatically installed
-    - esmpy
+    - defusedxml  # required by esgf-pyclient
+    - esgf-pyclient
+    - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
     - fiona
     - fire
+    - humanfriendly
+    - jinja2
+    - mpich<3.4  # prevent external build
+    - myproxyclient  # required by esgf-pyclient
     - nc-time-axis
     - netCDF4
-    - numba
     - numpy
     - prov
     - psutil
+    - pybtex
     - pydot
     - pyyaml
     - requests
+    - requests_cache<0.6  # https://github.com/ESGF/esgf-pyclient/issues/71
     - shapely
-    - yamale==2.*  # in esmvalgroup channel
+    - yamale
 
 test:
   source_files:
@@ -69,11 +77,13 @@ test:
     - pytest-html!=2.1.0
     - pytest-metadata>=1.5.1
     - pytest-mock
+    - pytest-mypy
     - pytest-xdist
     - r-yaml
     - ncl
   commands:
-    - pytest -n 2 --ignore=run_test.py
+    - pytest -n 2 -m "not mypy and not sequential" --ignore=run_test.py
+    - pytest -n 0 -m "not mypy and sequential" --ignore=run_test.py
     - esmvaltool -- --help
     - esmvaltool version
   imports:
@@ -82,7 +92,7 @@ test:
     - esmvalcore.cmor.check
     - esmvalcore.cmor.fix
     - esmvalcore.preprocessor
-
+    - esmvalcore.experimental
 
 about:
   home: https://www.esmvaltool.org

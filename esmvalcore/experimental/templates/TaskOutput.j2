@@ -1,0 +1,36 @@
+<h3>{{ task.title }}</h3>
+
+{% for file in task.image_files %}
+
+    <figure>
+        <a href='{{ file.path.relative_to(session.session_dir) }}'>
+        <img src='{{ file.path.relative_to(session.session_dir) }}' alt='{{ file.caption }}'/>
+        </a>
+        <figcaption>
+            {{ file.caption }}
+            <br>
+            <br>
+            <a href='{{ file.path.relative_to(session.session_dir) }}'>download</a> |
+            <a href='{{ file.citation_file.relative_to(session.session_dir) }}'>references</a> |
+            <a href='{{ file.data_citation_file.relative_to(session.session_dir) }}'>extra data citation</a> |
+            <a href='{{ file.provenance_xml_file.relative_to(session.session_dir) }}'>provenance</a>
+        </figcaption>
+    </figure>
+
+{% endfor %}
+
+<h4>Data files</h4>
+
+<ul>
+{% for file in task.data_files %}
+
+    <li>
+        {{ file.caption }} |
+        <a href='{{ file.path.relative_to(session.session_dir) }}'>download</a> |
+        <a href='{{ file.citation_file.relative_to(session.session_dir) }}'>references</a> |
+        <a href='{{ file.data_citation_file.relative_to(session.session_dir) }}'>extra data citation</a> |
+        <a href='{{ file.provenance_xml_file.relative_to(session.session_dir) }}'>provenance</a>
+    </li>
+
+{% endfor %}
+</ul>

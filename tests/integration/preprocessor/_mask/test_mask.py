@@ -10,8 +10,10 @@ import iris
 import numpy as np
 import pytest
 
+from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.preprocessor import (PreprocessorFile, mask_fillvalues,
-                                     mask_landsea, mask_landseaice)
+                                     mask_landsea, mask_landseaice,
+                                     add_fx_variables)
 from tests import assert_array_equal
 
 
@@ -47,58 +49,90 @@ class Test:
                                           units='hours')
         self.coords_spec = [(self.lats, 0), (self.lons, 1)]
         self.fx_mask = iris.cube.Cube(fx_data,
-                                      dim_coords_and_dims=self.coords_spec)
+                                      dim_coords_and_dims=self.coords_spec,
+                                      units='%')
         self.mock_data = np.ma.empty((4, 3, 3))
         self.mock_data[:] = 10.
 
-    def test_components_fx_dict(self, tmp_path):
-        """Test compatibility of input fx dictionary."""
+    def test_components_fx_var(self, tmp_path):
+        """Test compatibility of ancillary variables."""
+        self.fx_mask.var_name = 'sftlf'
+        self.fx_mask.standard_name = 'land_area_fraction'
         sftlf_file = str(tmp_path / 'sftlf_mask.nc')
         iris.save(self.fx_mask, sftlf_file)
+        fx_vars = {
+            'sftlf': {
+                'short_name': 'sftlf',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'fx',
+                'frequency': 'fx',
+                'filename': sftlf_file}
+        }
         new_cube_land = iris.cube.Cube(self.new_cube_data,
                                        dim_coords_and_dims=self.coords_spec)
+        new_cube_land = add_fx_variables(new_cube_land, fx_vars,
+                                         CheckLevels.IGNORE)
         result_land = mask_landsea(
             new_cube_land,
-            {
-                'sftlf': sftlf_file,
-                'sftof': [],
-            },
             'land',
         )
         assert isinstance(result_land, iris.cube.Cube)
 
+        self.fx_mask.var_name = 'sftgif'
+        self.fx_mask.standard_name = 'land_ice_area_fraction'
         sftgif_file = str(tmp_path / 'sftgif_mask.nc')
         iris.save(self.fx_mask, sftgif_file)
+        fx_vars = {
+            'sftgif': {
+                'short_name': 'sftgif',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'fx',
+                'frequency': 'fx',
+                'filename': sftlf_file}
+        }
         new_cube_ice = iris.cube.Cube(self.new_cube_data,
                                       dim_coords_and_dims=self.coords_spec)
+        new_cube_ice = add_fx_variables(new_cube_ice, fx_vars,
+                                        CheckLevels.IGNORE)
         result_ice = mask_landseaice(
             new_cube_ice,
-            {
-                'sftgif': sftgif_file,
-                'sftof': [],
-            },
             'ice',
         )
         assert isinstance(result_ice, iris.cube.Cube)
 
     def test_mask_landsea(self, tmp_path):
         """Test mask_landsea func."""
+        self.fx_mask.var_name = 'sftlf'
+        self.fx_mask.standard_name = 'land_area_fraction'
         sftlf_file = str(tmp_path / 'sftlf_mask.nc')
         iris.save(self.fx_mask, sftlf_file)
+        fx_vars = {
+            'sftlf': {
+                'short_name': 'sftlf',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'fx',
+                'frequency': 'fx',
+                'filename': sftlf_file}
+        }
         new_cube_land = iris.cube.Cube(self.new_cube_data,
                                        dim_coords_and_dims=self.coords_spec)
+        new_cube_land = add_fx_variables(new_cube_land, fx_vars,
+                                         CheckLevels.IGNORE)
         new_cube_sea = iris.cube.Cube(self.new_cube_data,
                                       dim_coords_and_dims=self.coords_spec)
+        new_cube_sea = add_fx_variables(new_cube_sea, fx_vars,
+                                        CheckLevels.IGNORE)
 
         # mask with fx files
         result_land = mask_landsea(
             new_cube_land,
-            {'sftlf': sftlf_file},
             'land',
         )
         result_sea = mask_landsea(
             new_cube_sea,
-            {'sftlf': sftlf_file},
             'sea',
         )
         expected = np.ma.empty((3, 3))
@@ -117,17 +151,19 @@ class Test:
         # Mask with shp files although sftlf is available
         new_cube_land = iris.cube.Cube(self.new_cube_data,
                                        dim_coords_and_dims=self.coords_spec)
+        new_cube_land = add_fx_variables(new_cube_land, fx_vars,
+                                         CheckLevels.IGNORE)
         new_cube_sea = iris.cube.Cube(self.new_cube_data,
                                       dim_coords_and_dims=self.coords_spec)
+        new_cube_sea = add_fx_variables(new_cube_sea, fx_vars,
+                                        CheckLevels.IGNORE)
         result_land = mask_landsea(
             new_cube_land,
-            {'sftlf': sftlf_file},
             'land',
             always_use_ne_mask=True,
         )
         result_sea = mask_landsea(
             new_cube_sea,
-            {'sftlf': sftlf_file},
             'sea',
             always_use_ne_mask=True,
         )
@@ -145,8 +181,8 @@ class Test:
                                        dim_coords_and_dims=self.coords_spec)
         new_cube_sea = iris.cube.Cube(self.new_cube_data,
                                       dim_coords_and_dims=self.coords_spec)
-        result_land = mask_landsea(new_cube_land, {}, 'land')
-        result_sea = mask_landsea(new_cube_sea, {}, 'sea')
+        result_land = mask_landsea(new_cube_land, 'land')
+        result_sea = mask_landsea(new_cube_sea, 'sea')
 
         # bear in mind all points are in the ocean
         np.ma.set_fill_value(result_land.data, 1e+20)
@@ -158,12 +194,24 @@ class Test:
 
     def test_mask_landseaice(self, tmp_path):
         """Test mask_landseaice func."""
+        self.fx_mask.var_name = 'sftgif'
+        self.fx_mask.standard_name = 'land_ice_area_fraction'
         sftgif_file = str(tmp_path / 'sftgif_mask.nc')
         iris.save(self.fx_mask, sftgif_file)
+        fx_vars = {
+            'sftgif': {
+                'short_name': 'sftgif',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'fx',
+                'frequency': 'fx',
+                'filename': sftgif_file}
+        }
         new_cube_ice = iris.cube.Cube(self.new_cube_data,
                                       dim_coords_and_dims=self.coords_spec)
-        result_ice = mask_landseaice(new_cube_ice, {'sftgif': sftgif_file},
-                                     'ice')
+        new_cube_ice = add_fx_variables(new_cube_ice, fx_vars,
+                                        CheckLevels.IGNORE)
+        result_ice = mask_landseaice(new_cube_ice, 'ice')
         expected = np.ma.empty((3, 3))
         expected.data[:] = 200.
         expected.mask = np.ones((3, 3), bool)

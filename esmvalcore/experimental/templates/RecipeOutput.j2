@@ -1,0 +1,12 @@
+{% for diagnostic in diagnostics %}
+
+  <h2>{{ diagnostic.title }}</h2>
+  <p>{{ diagnostic.description }}</p>
+
+  {% for task in diagnostic.task_output %}
+
+    {% include 'TaskOutput.j2' %}
+
+  {% endfor %}
+
+{% endfor %}

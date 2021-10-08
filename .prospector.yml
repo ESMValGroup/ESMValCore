@@ -15,6 +15,9 @@ pyroma:
 pep8:
     full: true
 
+mypy:
+  run: true
+
 pep257:
     # disable rules that are allowed by the numpy convention
     # see https://github.com/PyCQA/pydocstyle/blob/master/src/pydocstyle/violations.py

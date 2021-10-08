@@ -33,13 +33,13 @@
             "variant_label"
         ],
         "version_metadata":{
-            "CV_collection_modified":"Wed May 20 16:39:54 2020 -0700",
-            "CV_collection_version":"6.2.53.0",
+            "CV_collection_modified":"Mon Nov 16 11:34:20 2020 -0800",
+            "CV_collection_version":"6.2.54.5",
             "author":"Paul J. Durack <durack1@llnl.gov>",
-            "experiment_id_CV_modified":"Thu May  7 09:08:24 2020 -0700",
-            "experiment_id_CV_note":"Revise experiment_id ssp370-lowNTCFCH4",
+            "experiment_id_CV_modified":"Fri Oct 23 15:16:35 2020 -0700",
+            "experiment_id_CV_note":"Register experiment_ids for CovidMIP (#973)",
             "institution_id":"PCMDI",
-            "previous_commit":"284fc5e798e19f44d3c81682f1719c5fa462ad86",
+            "previous_commit":"3f71d190105f7a210c2a9f4df86d1847f03dfb6f",
             "specs_doc":"v6.2.7 (10th September 2018; https://goo.gl/v1drZl)"
         },
         "activity_id":{
@@ -82,7 +82,8 @@
             "CNRM-CERFACS":"CNRM (Centre National de Recherches Meteorologiques, Toulouse 31057, France), CERFACS (Centre Europeen de Recherche et de Formation Avancee en Calcul Scientifique, Toulouse 31057, France)",
             "CSIR-Wits-CSIRO":"CSIR (Council for Scientific and Industrial Research - Natural Resources and the Environment, Pretoria, 0001, South Africa), Wits (University of the Witwatersrand - Global Change Institute, Johannesburg 2050, South Africa), CSIRO (Commonwealth Scientific and Industrial Research Organisation, Aspendale, Victoria 3195, Australia)Mailing address: Wits, Global Change Institute, Johannesburg 2050, South Africa",
             "CSIRO":"Commonwealth Scientific and Industrial Research Organisation, Aspendale, Victoria 3195, Australia",
-            "CSIRO-ARCCSS":"CSIRO (Commonwealth Scientific and Industrial Research Organisation, Aspendale, Victoria 3195, Australia), ARCCSS (Australian Research Council Centre of Excellence for Climate System Science)",
+            "CSIRO-ARCCSS":"CSIRO (Commonwealth Scientific and Industrial Research Organisation, Aspendale, Victoria 3195, Australia), ARCCSS (Australian Research Council Centre of Excellence for Climate System Science). Mailing address: CSIRO, c/o Simon J. Marsland, 107-121 Station Street, Aspendale, Victoria 3195, Australia",
+            "CSIRO-COSIMA":"CSIRO (Commonwealth Scientific and Industrial Research Organisation, Australia), COSIMA (Consortium for Ocean-Sea Ice Modelling in Australia). Mailing address: CSIRO, c/o Simon J. Marsland, 107-121 Station Street, Aspendale, Victoria 3195, Australia",
             "DKRZ":"Deutsches Klimarechenzentrum, Hamburg 20146, Germany",
             "DWD":"Deutscher Wetterdienst, Offenbach am Main 63067, Germany",
             "E3SM-Project":"LLNL (Lawrence Livermore National Laboratory, Livermore, CA 94550, USA); ANL (Argonne National Laboratory, Argonne, IL 60439, USA); BNL (Brookhaven National Laboratory, Upton, NY 11973, USA); LANL (Los Alamos National Laboratory, Los Alamos, NM 87545, USA); LBNL (Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA); ORNL (Oak Ridge National Laboratory, Oak Ridge, TN 37831, USA); PNNL (Pacific Northwest National Laboratory, Richland, WA 99352, USA); SNL (Sandia National Laboratories, Albuquerque, NM 87185, USA). Mailing address: LLNL Climate Program, c/o David C. Bader, Principal Investigator, L-103, 7000 East Avenue, Livermore, CA 94550, USA",
@@ -93,7 +94,8 @@
             "INM":"Institute for Numerical Mathematics, Russian Academy of Science, Moscow 119991, Russia",
             "INPE":"National Institute for Space Research, Cachoeira Paulista, SP 12630-000, Brazil",
             "IPSL":"Institut Pierre Simon Laplace, Paris 75252, France",
-            "KIOST":"Korea Institute of Ocean Science & Technology, Busan 49111, Republic of Korea",
+            "KIOST":"Korea Institute of Ocean Science and Technology, Busan 49111, Republic of Korea",
+            "LLNL":"Lawrence Livermore National Laboratory, Livermore, CA 94550, USA. Mailing address: LLNL Climate Program, c/o Stephen A. Klein, Principal Investigator, L-103, 7000 East Avenue, Livermore, CA 94550, USA",
             "MESSy-Consortium":"The Modular Earth Submodel System (MESSy) Consortium, represented by the Institute for Physics of the Atmosphere, Deutsches Zentrum fur Luft- und Raumfahrt (DLR), Wessling, Bavaria 82234, Germany",
             "MIROC":"JAMSTEC (Japan Agency for Marine-Earth Science and Technology, Kanagawa 236-0001, Japan), AORI (Atmosphere and Ocean Research Institute, The University of Tokyo, Chiba 277-8564, Japan), NIES (National Institute for Environmental Studies, Ibaraki 305-8506, Japan), and R-CCS (RIKEN Center for Computational Science, Hyogo 650-0047, Japan)",
             "MOHC":"Met Office Hadley Centre, Fitzroy Road, Exeter, Devon, EX1 3PB, UK",
@@ -107,6 +109,7 @@
             "NIMS-KMA":"National Institute of Meteorological Sciences/Korea Meteorological Administration, Climate Research Division, Seoho-bukro 33, Seogwipo-si, Jejudo 63568, Republic of Korea",
             "NIWA":"National Institute of Water and Atmospheric Research, Hataitai, Wellington 6021, New Zealand",
             "NOAA-GFDL":"National Oceanic and Atmospheric Administration, Geophysical Fluid Dynamics Laboratory, Princeton, NJ 08540, USA",
+            "NTU":"National Taiwan University, Taipei 10650, Taiwan",
             "NUIST":"Nanjing University of Information Science and Technology, Nanjing, 210044, China",
             "PCMDI":"Program for Climate Model Diagnosis and Intercomparison, Lawrence Livermore National Laboratory, Livermore, CA 94550, USA",
             "PNNL-WACCEM":"PNNL (Pacific Northwest National Laboratory), Richland, WA 99352, USA",
@@ -137,6 +140,7 @@
             "ACCESS-CM2":{
                 "activity_participation":[
                     "CMIP",
+                    "DAMIP",
                     "FAFMIP",
                     "OMIP",
                     "RFMIP",
@@ -157,6 +161,7 @@
                     "C4MIP",
                     "CDRMIP",
                     "CMIP",
+                    "DAMIP",
                     "OMIP",
                     "PMIP",
                     "RFMIP",
@@ -170,6 +175,32 @@
                 ],
                 "source_id":"ACCESS-ESM1-5",
                 "source":"ACCESS-ESM1.5 (2019): \naerosol: CLASSIC (v1.0)\natmos: HadGAM2 (r1.1, N96; 192 x 145 longitude/latitude; 38 levels; top level 39255 m)\natmosChem: none\nland: CABLE2.4\nlandIce: none\nocean: ACCESS-OM2 (MOM5, tripolar primarily 1deg; 360 x 300 longitude/latitude; 50 levels; top grid cell 0-10 m)\nocnBgchem: WOMBAT (same grid as ocean)\nseaIce: CICE4.1 (same grid as ocean)"
+            },
+            "ACCESS-OM2":{
+                "activity_participation":[
+                    "OMIP"
+                ],
+                "cohort":[
+                    "Registered"
+                ],
+                "institution_id":[
+                    "CSIRO-COSIMA"
+                ],
+                "source_id":"ACCESS-OM2",
+                "source":"ACCESS-OM2 (2020): \naerosol: none\natmos: none\natmosChem: none\nland: none\nlandIce: none\nocean: ACCESS-OM2 (MOM5, tripolar primarily 1deg; 360 x 300 longitude/latitude; 50 levels; top grid cell 0-2.3 m)\nocnBgchem: WOMBAT (same grid as ocean)\nseaIce: CICE5.1.2 (same grid as ocean)"
+            },
+            "ACCESS-OM2-025":{
+                "activity_participation":[
+                    "OMIP"
+                ],
+                "cohort":[
+                    "Registered"
+                ],
+                "institution_id":[
+                    "CSIRO-COSIMA"
+                ],
+                "source_id":"ACCESS-OM2-025",
+                "source":"ACCESS-OM2-025 (2020): \naerosol: none\natmos: none\natmosChem: none\nland: none\nlandIce: none\nocean: ACCESS-OM2 (MOM5, tripolar primarily 1/4 deg; 1440 x 1080 longitude/latitude; 50 levels; top grid cell 0-2.3 m)\nocnBgchem: WOMBAT (same grid as ocean)\nseaIce: CICE5.1.2 (same grid as ocean)"
             },
             "ARTS-2-3":{
                 "activity_participation":[
@@ -367,6 +398,19 @@
                 "source_id":"CAM-MPAS-HR",
                 "source":"CAM-MPAS-HR (2018): \naerosol: none, prescribed MACv2-SP\natmos: CAM-MPAS (CAMv5.4 with Grell-Freitas deep convection; MPASv4, C-grid staggered centroidal Voronoi tesselation atmosphere 30 km mesh with 655362 cells and 1966080 edges; 32 levels, top level 40363 m)\natmosChem: none\nland: CLM (v4.0, same grid as atmos), River Transport Model (v1.0)\nlandIce: none\nocean: none\nocnBgchem: none\nseaIce: none"
             },
+            "CAM-MPAS-LR":{
+                "activity_participation":[
+                    "HighResMIP"
+                ],
+                "cohort":[
+                    "Registered"
+                ],
+                "institution_id":[
+                    "PNNL-WACCEM"
+                ],
+                "source_id":"CAM-MPAS-LR",
+                "source":"CAM-MPAS-LR (2018): \naerosol: none, prescribed MACv2-SP\natmos: CAM-MPAS (CAMv5.4 with Grell-Freitas deep convection; MPASv4, C-grid staggered centroidal Voronoi tesselation atmosphere 120 km mesh with 40962 cells and 122880 edges; 32 vertical levels, model top 40363 m)\natmosChem: none\nland: CLM (v4.0, same grid as atmos), River Transport Model (v1.0)\nlandIce: none\nocean: none\nocnBgchem: none\nseaIce: none"
+            },
             "CAMS-CSM1-0":{
                 "activity_participation":[
                     "CFMIP",
@@ -463,7 +507,8 @@
                     "Registered"
                 ],
                 "institution_id":[
-                    "UCI"
+                    "UCI",
+                    "NCAR"
                 ],
                 "source_id":"CESM1-WACCM-SC",
                 "source":"CESM1-WACCM-SC (2011): \naerosol: MOZART-specified (same grid as atmos)\natmos: WACCM4 (1.9x2.5 finite volume grid; 144 x 96 longitude/latitude; 66 levels; top level 5.9e-06 mb)\natmosChem: MOZART-specified (same grid as atmos)\nland: CLM4.0\nlandIce: none\nocean: POP2 (320 x 384 longitude/latitude; 60 levels; top grid cell 0-10 m)\nocnBgchem: BEC (same grid as ocean)\nseaIce: CICE4 (same as grid as ocean)"
@@ -795,13 +840,15 @@
             },
             "E3SM-1-0":{
                 "activity_participation":[
+                    "CFMIP",
                     "CMIP"
                 ],
                 "cohort":[
                     "Registered"
                 ],
                 "institution_id":[
-                    "E3SM-Project"
+                    "E3SM-Project",
+                    "LLNL"
                 ],
                 "source_id":"E3SM-1-0",
                 "source":"E3SM 1.0 (2018): \naerosol: MAM4 with resuspension, marine organics, and secondary organics (same grid as atmos)\natmos: EAM (v1.0, cubed sphere spectral-element grid; 5400 elements with p=3; 1 deg average grid spacing; 90 x 90 x 6 longitude/latitude/cubeface; 72 levels; top level 0.1 hPa)\natmosChem: Troposphere specified oxidants for aerosols. Stratosphere linearized interactive ozone (LINOZ v2) (same grid as atmos)\nland: ELM (v1.0, cubed sphere spectral-element grid; 5400 elements with p=3; 1 deg average grid spacing; 90 x 90 x 6 longitude/latitude/cubeface; satellite phenology mode), MOSART (v1.0, 0.5 degree latitude/longitude grid)\nlandIce: none\nocean: MPAS-Ocean (v6.0, oEC60to30 unstructured SVTs mesh with 235160 cells and 714274 edges, variable resolution 60 km to 30 km; 60 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: MPAS-Seaice (v6.0, same grid as ocean)"
@@ -840,9 +887,11 @@
                 "activity_participation":[
                     "CMIP",
                     "CORDEX",
+                    "DAMIP",
                     "DCPP",
                     "DynVarMIP",
                     "LS3MIP",
+                    "OMIP",
                     "PAMIP",
                     "PMIP",
                     "RFMIP",
@@ -1446,6 +1495,8 @@
                     "DAMIP",
                     "FAFMIP",
                     "HighResMIP",
+                    "LS3MIP",
+                    "LUMIP",
                     "PMIP",
                     "RFMIP",
                     "ScenarioMIP"
@@ -1496,6 +1547,7 @@
                     "HighResMIP",
                     "LS3MIP",
                     "OMIP",
+                    "PAMIP",
                     "ScenarioMIP"
                 ],
                 "cohort":[
@@ -1551,7 +1603,8 @@
             "IITM-ESM":{
                 "activity_participation":[
                     "CMIP",
-                    "GMMIP"
+                    "GMMIP",
+                    "ScenarioMIP"
                 ],
                 "cohort":[
                     "Registered"
@@ -1662,7 +1715,8 @@
             },
             "IPSL-CM6A-LR-INCA":{
                 "activity_participation":[
-                    "AerChemMIP"
+                    "AerChemMIP",
+                    "RFMIP"
                 ],
                 "cohort":[
                     "Registered"
@@ -1757,7 +1811,7 @@
                     "UA"
                 ],
                 "source_id":"MCM-UA-1-0",
-                "source":"MCM-UA-1-0 (1991): \naerosol: Modifies surface albedoes (Haywood et al. 1997, doi: 10.1175/1520-0442(1997)010<1562:GCMCOT>2.0.CO;2)\natmos: R30L14 (3.75 X 2.5 degree (long-lat) configuration; 96 x 80 longitude/latitude; 14 levels; top level 0.015 sigma, 15 mb)\natmosChem: none\nland: Standard Manabe bucket hydrology scheme (Manabe 1969, doi: 10.1175/1520-0493(1969)097<0739:CATOC>2.3.CO;2)\nlandIce: Specified location - invariant in time, has high albedo and latent heat capacity\nocean: MOM1.0 (MOM1, 1.875 X 2.5 deg; 192 x 80 longitude/latitude; 18 levels; top grid cell 0-40 m)\nocnBgchem: none\nseaIce: Thermodynamic ice model (free drift dynamics)"
+                "source":"MCM-UA-1-0 (1991): \naerosol: Modifies surface albedoes (Haywood et al. 1997, doi: 10.1175/1520-0442(1997)010&lt;1562:GCMCOT&gt;2.0.CO;2)\natmos: R30L14 (3.75 X 2.5 degree (long-lat) configuration; 96 x 80 longitude/latitude; 14 levels; top level 0.015 sigma, 15 mb)\natmosChem: none\nland: Standard Manabe bucket hydrology scheme (Manabe 1969, doi: 10.1175/1520-0493(1969)097&lt;0739:CATOC&gt;2.3.CO;2)\nlandIce: Specified location - invariant in time, has high albedo and latent heat capacity\nocean: MOM1.0 (MOM1, 1.875 X 2.5 deg; 192 x 80 longitude/latitude; 18 levels; top grid cell 0-40 m)\nocnBgchem: none\nseaIce: Thermodynamic ice model (free drift dynamics)"
             },
             "MIROC-ES2H":{
                 "activity_participation":[
@@ -1844,7 +1898,9 @@
             "MPI-ESM-1-2-HAM":{
                 "activity_participation":[
                     "AerChemMIP",
-                    "CMIP"
+                    "CMIP",
+                    "RFMIP",
+                    "ScenarioMIP"
                 ],
                 "cohort":[
                     "Registered"
@@ -1885,6 +1941,7 @@
                     "CDRMIP",
                     "CFMIP",
                     "CMIP",
+                    "DAMIP",
                     "DCPP",
                     "DynVarMIP",
                     "FAFMIP",
@@ -2283,13 +2340,29 @@
                 "source_id":"TaiESM1",
                 "source":"TaiESM 1.0 (2018): \naerosol: SNAP (same grid as atmos)\natmos: TaiAM1 (0.9x1.25 degree; 288 x 192 longitude/latitude; 30 levels; top level ~2 hPa)\natmosChem: SNAP (same grid as atmos)\nland: CLM4.0 (same grid as atmos)\nlandIce: none\nocean: POP2 (320x384 longitude/latitude; 60 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: CICE4"
             },
+            "TaiESM1-TIMCOM":{
+                "activity_participation":[
+                    "CMIP",
+                    "OMIP"
+                ],
+                "cohort":[
+                    "Registered"
+                ],
+                "institution_id":[
+                    "NTU"
+                ],
+                "source_id":"TaiESM1-TIMCOM",
+                "source":"TaiESM1-TIMCOM (2020): \naerosol: SNAP (same grid as atmos)\natmos: TaiAM1 (0.9x1.25 degree; 288 x 192 longitude/latitude; 30 levels; top level ~2 hPa)\natmosChem: SNAP (same grid as atmos)\nland: CLM4.0 (same grid as atmos)\nlandIce: none\nocean: TIMCOM (TIMCOMv1.7, primarily 1deg; 360 x 288 longitude/latitude; 45 levels; top grid cell 0-10 m)\nocnBgchem: none\nseaIce: CICE4"
+            },
             "UKESM1-0-LL":{
                 "activity_participation":[
                     "AerChemMIP",
                     "C4MIP",
                     "CDRMIP",
                     "CMIP",
+                    "DAMIP",
                     "GeoMIP",
+                    "LS3MIP",
                     "LUMIP",
                     "OMIP",
                     "PMIP",
@@ -9488,6 +9561,150 @@
                 ],
                 "parent_experiment_id":[
                     "hist-aer"
+                ],
+                "required_model_components":[
+                    "AOGCM"
+                ],
+                "sub_experiment_id":[
+                    "none"
+                ]
+            },
+            "ssp245-cov-GHG":{
+                "activity_id":[
+                    "DAMIP"
+                ],
+                "additional_allowed_model_components":[
+                    "AER",
+                    "CHEM",
+                    "BGC"
+                ],
+                "experiment":"2-year Covid-19 emissions blip including well mixed GHG only, based upon ssp245",
+                "experiment_id":"ssp245-cov-GHG",
+                "parent_activity_id":[
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id":[
+                    "ssp245"
+                ],
+                "required_model_components":[
+                    "AOGCM"
+                ],
+                "sub_experiment_id":[
+                    "none"
+                ]
+            },
+            "ssp245-cov-aer":{
+                "activity_id":[
+                    "DAMIP"
+                ],
+                "additional_allowed_model_components":[
+                    "AER",
+                    "CHEM",
+                    "BGC"
+                ],
+                "experiment":"2-year Covid-19 emissions blip including anthropogenic aerosols only, based upon ssp245",
+                "experiment_id":"ssp245-cov-aer",
+                "parent_activity_id":[
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id":[
+                    "ssp245"
+                ],
+                "required_model_components":[
+                    "AOGCM"
+                ],
+                "sub_experiment_id":[
+                    "none"
+                ]
+            },
+            "ssp245-cov-fossil":{
+                "activity_id":[
+                    "DAMIP"
+                ],
+                "additional_allowed_model_components":[
+                    "AER",
+                    "CHEM",
+                    "BGC"
+                ],
+                "experiment":"2-year Covid-19 emissions blip followed by increased emissions due to a fossil-fuel based recovery, based upon ssp245",
+                "experiment_id":"ssp245-cov-fossil",
+                "parent_activity_id":[
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id":[
+                    "ssp245"
+                ],
+                "required_model_components":[
+                    "AOGCM"
+                ],
+                "sub_experiment_id":[
+                    "none"
+                ]
+            },
+            "ssp245-cov-modgreen":{
+                "activity_id":[
+                    "DAMIP"
+                ],
+                "additional_allowed_model_components":[
+                    "AER",
+                    "CHEM",
+                    "BGC"
+                ],
+                "experiment":"2-year Covid-19 emissions blip followed by moderate-green stimulus recovery, based upon ssp245",
+                "experiment_id":"ssp245-cov-modgreen",
+                "parent_activity_id":[
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id":[
+                    "ssp245"
+                ],
+                "required_model_components":[
+                    "AOGCM"
+                ],
+                "sub_experiment_id":[
+                    "none"
+                ]
+            },
+            "ssp245-cov-strgreen":{
+                "activity_id":[
+                    "DAMIP"
+                ],
+                "additional_allowed_model_components":[
+                    "AER",
+                    "CHEM",
+                    "BGC"
+                ],
+                "experiment":"2-year Covid-19 emissions blip followed by strong-green stimulus recovery, based upon ssp245",
+                "experiment_id":"ssp245-cov-strgreen",
+                "parent_activity_id":[
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id":[
+                    "ssp245"
+                ],
+                "required_model_components":[
+                    "AOGCM"
+                ],
+                "sub_experiment_id":[
+                    "none"
+                ]
+            },
+            "ssp245-covid":{
+                "activity_id":[
+                    "DAMIP"
+                ],
+                "additional_allowed_model_components":[
+                    "AER",
+                    "CHEM",
+                    "BGC"
+                ],
+                "experiment":"2-year Covid-19 emissions blip based upon ssp245",
+                "experiment_id":"ssp245-covid",
+                "parent_activity_id":[
+                    "ScenarioMIP"
+                ],
+                "parent_experiment_id":[
+                    "ssp245"
                 ],
                 "required_model_components":[
                     "AOGCM"

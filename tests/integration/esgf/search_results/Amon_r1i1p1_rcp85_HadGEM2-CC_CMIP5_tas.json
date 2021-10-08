@@ -1,0 +1,1832 @@
+[
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|aims3.llnl.gov",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "90a375f7792d3fbf365360502b1d54b4dc8a65ad01989842575c4afbc5ec2ecd"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "aims3.llnl.gov",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|aims3.llnl.gov",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(valid_institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_gateway": [
+            "DEFAULT"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2012-07-18T21:01:49Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "tracking_id": [
+            "0dd2a394-fe6e-40b3-ab7e-c5c5225ac819"
+        ],
+        "type": "File",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|application/netcdf|HTTPServer",
+            "http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc.html|application/opendap-html|OPENDAP",
+            "gsiftp://aimsdtn3.llnl.gov:2811//cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|application/gridftp|GridFTP",
+            "globus:415a6320-e49c-11e5-9798-22000b9da45e/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1636634288668540928,
+        "retracted": false,
+        "_timestamp": "2019-06-18T00:01:26.453Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|esgf2.dkrz.de",
+        "version": "1",
+        "cera_acronym": [
+            "MOGCr8"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "0fb4e2a1f3c4b34c9fed9c2d5bf72aba"
+        ],
+        "checksum_type": [
+            "MD5"
+        ],
+        "citation_url": [
+            "https://cera-www.dkrz.de/WDCC/meta/CMIP5/MOGCr8.json"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf2.dkrz.de",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|esgf2.dkrz.de",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "format": [
+            "NetCDF"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "lta": [
+            "true"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2019-09-04T11:13:35Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "tracking_id": [
+            "0dd2a394-fe6e-40b3-ab7e-c5c5225ac819"
+        ],
+        "type": "File",
+        "unit": [
+            "Kelvin"
+        ],
+        "url": [
+            "http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20111201/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|application/netcdf|HTTPServer"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "air_temperature"
+        ],
+        "variable_units": [
+            "None"
+        ],
+        "_version_": 1643747349161312256,
+        "retracted": false,
+        "_timestamp": "2019-09-04T12:20:29.556Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|aims3.llnl.gov",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "461dfa5f987788460833bbb7a6e0c56b96d3b288b534cfc80cb4d1228e341801"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "aims3.llnl.gov",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|aims3.llnl.gov",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(valid_institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_gateway": [
+            "DEFAULT"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2012-07-18T21:01:22Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "tracking_id": [
+            "1f3e752c-46e6-4f6d-9129-52780fb25535"
+        ],
+        "type": "File",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|application/netcdf|HTTPServer",
+            "http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc.html|application/opendap-html|OPENDAP",
+            "gsiftp://aimsdtn3.llnl.gov:2811//cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|application/gridftp|GridFTP",
+            "globus:415a6320-e49c-11e5-9798-22000b9da45e/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1636634288634986496,
+        "retracted": false,
+        "_timestamp": "2019-06-18T00:01:26.421Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|esgf2.dkrz.de",
+        "version": "1",
+        "cera_acronym": [
+            "MOGCr8"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "d58470cec6a81348b257ff20be87b5c1"
+        ],
+        "checksum_type": [
+            "MD5"
+        ],
+        "citation_url": [
+            "https://cera-www.dkrz.de/WDCC/meta/CMIP5/MOGCr8.json"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf2.dkrz.de",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|esgf2.dkrz.de",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "format": [
+            "NetCDF"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "lta": [
+            "true"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2019-09-04T11:13:35Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "tracking_id": [
+            "1f3e752c-46e6-4f6d-9129-52780fb25535"
+        ],
+        "type": "File",
+        "unit": [
+            "Kelvin"
+        ],
+        "url": [
+            "http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20111201/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|application/netcdf|HTTPServer"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "air_temperature"
+        ],
+        "variable_units": [
+            "None"
+        ],
+        "_version_": 1643747344986931200,
+        "retracted": false,
+        "_timestamp": "2019-09-04T12:20:25.574Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|aims3.llnl.gov",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "10a94293f2ac844ab62496d5d5369ccc0e839c73882a323c21800d71d7780315"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "aims3.llnl.gov",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|aims3.llnl.gov",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(valid_institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_gateway": [
+            "DEFAULT"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2012-07-18T21:01:38Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "tracking_id": [
+            "221aa298-cf63-4445-a138-d21a03eed3db"
+        ],
+        "type": "File",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|application/netcdf|HTTPServer",
+            "http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc.html|application/opendap-html|OPENDAP",
+            "gsiftp://aimsdtn3.llnl.gov:2811//cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|application/gridftp|GridFTP",
+            "globus:415a6320-e49c-11e5-9798-22000b9da45e/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1636634288599334912,
+        "retracted": false,
+        "_timestamp": "2019-06-18T00:01:26.387Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|esgf2.dkrz.de",
+        "version": "1",
+        "cera_acronym": [
+            "MOGCr8"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "1f24b067b2a92032b1186da4386c5fb9"
+        ],
+        "checksum_type": [
+            "MD5"
+        ],
+        "citation_url": [
+            "https://cera-www.dkrz.de/WDCC/meta/CMIP5/MOGCr8.json"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf2.dkrz.de",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|esgf2.dkrz.de",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "format": [
+            "NetCDF"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "lta": [
+            "true"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2019-09-04T11:13:35Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "tracking_id": [
+            "221aa298-cf63-4445-a138-d21a03eed3db"
+        ],
+        "type": "File",
+        "unit": [
+            "Kelvin"
+        ],
+        "url": [
+            "http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20111201/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|application/netcdf|HTTPServer"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "air_temperature"
+        ],
+        "variable_units": [
+            "None"
+        ],
+        "_version_": 1643747345661165568,
+        "retracted": false,
+        "_timestamp": "2019-09-04T12:20:26.218Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|aims3.llnl.gov",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "568e590103ed3bec8692aad85686b576466bd76dea872a9b0411c4c1941f44ad"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "aims3.llnl.gov",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|aims3.llnl.gov",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(valid_institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_gateway": [
+            "DEFAULT"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 25523776,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2012-07-18T21:01:52Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "tracking_id": [
+            "4ad40f1d-b7a0-4046-8401-5f3abd1ff4e6"
+        ],
+        "type": "File",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|application/netcdf|HTTPServer",
+            "http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc.html|application/opendap-html|OPENDAP",
+            "gsiftp://aimsdtn3.llnl.gov:2811//cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|application/gridftp|GridFTP",
+            "globus:415a6320-e49c-11e5-9798-22000b9da45e/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1636634288566829056,
+        "retracted": false,
+        "_timestamp": "2019-06-18T00:01:26.356Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|esgf2.dkrz.de",
+        "version": "1",
+        "cera_acronym": [
+            "MOGCr8"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "3b515fc89328de39e094d85f2b150838"
+        ],
+        "checksum_type": [
+            "MD5"
+        ],
+        "citation_url": [
+            "https://cera-www.dkrz.de/WDCC/meta/CMIP5/MOGCr8.json"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf2.dkrz.de",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|esgf2.dkrz.de",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "format": [
+            "NetCDF"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "lta": [
+            "true"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 25523776,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2019-09-04T11:13:35Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "tracking_id": [
+            "4ad40f1d-b7a0-4046-8401-5f3abd1ff4e6"
+        ],
+        "type": "File",
+        "unit": [
+            "Kelvin"
+        ],
+        "url": [
+            "http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20111201/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|application/netcdf|HTTPServer"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "air_temperature"
+        ],
+        "variable_units": [
+            "None"
+        ],
+        "_version_": 1643747346390974464,
+        "retracted": false,
+        "_timestamp": "2019-09-04T12:20:26.914Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|aims3.llnl.gov",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "f718b1d91b25e5cc5acd3c0080dabb3762711676ad8efe0f54c0946f495f943a"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "aims3.llnl.gov",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|aims3.llnl.gov",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(valid_institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_gateway": [
+            "DEFAULT"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 1353448,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2012-05-31T03:15:28Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "tracking_id": [
+            "9f6e7611-cde7-4e42-ae12-097038d045f5"
+        ],
+        "type": "File",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|application/netcdf|HTTPServer",
+            "http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc.html|application/opendap-html|OPENDAP",
+            "gsiftp://aimsdtn3.llnl.gov:2811//cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|application/gridftp|GridFTP",
+            "globus:415a6320-e49c-11e5-9798-22000b9da45e/cmip5_css02_data/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1636634288535371776,
+        "retracted": false,
+        "_timestamp": "2019-06-18T00:01:26.326Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|esgf2.dkrz.de",
+        "version": "1",
+        "cera_acronym": [
+            "MOGCr8"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "2d87333eb22c33f73defa67490275625"
+        ],
+        "checksum_type": [
+            "MD5"
+        ],
+        "citation_url": [
+            "https://cera-www.dkrz.de/WDCC/meta/CMIP5/MOGCr8.json"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf2.dkrz.de",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201|esgf2.dkrz.de",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "format": [
+            "NetCDF"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20111201.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "lta": [
+            "true"
+        ],
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 1353448,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2019-09-04T11:13:35Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "tracking_id": [
+            "9f6e7611-cde7-4e42-ae12-097038d045f5"
+        ],
+        "type": "File",
+        "unit": [
+            "Kelvin"
+        ],
+        "url": [
+            "http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20111201/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|application/netcdf|HTTPServer"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "air_temperature"
+        ],
+        "variable_units": [
+            "None"
+        ],
+        "_version_": 1643747347502465024,
+        "retracted": false,
+        "_timestamp": "2019-09-04T12:20:27.974Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc_1|esgf-data1.ceda.ac.uk",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "90a375f7792d3fbf365360502b1d54b4dc8a65ad01989842575c4afbc5ec2ecd"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf-data1.ceda.ac.uk",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf-data1.ceda.ac.uk",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-index1.ceda.ac.uk",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc_1",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc_1",
+        "metadata_format": "THREDDS",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": false,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2011-10-11T02:44:47Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "tracking_id": [
+            "0dd2a394-fe6e-40b3-ab7e-c5c5225ac819"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf-dn1.ceda.ac.uk:2811//esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|application/gridftp|GridFTP",
+            "http://esgf-data1.ceda.ac.uk/thredds/dodsC/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc.html|application/opendap-html|OPENDAP",
+            "globus:ee3aa1a0-7e4c-11e6-afc4-22000b92c261/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_timestamp": "2015-11-03T06:10:05.653Z",
+        "retracted": false,
+        "_version_": 1613438760474640384,
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|esgf.nci.org.au",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "90a375f7792d3fbf365360502b1d54b4dc8a65ad01989842575c4afbc5ec2ecd"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf.nci.org.au",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf.nci.org.au",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(project)s/%(product)s/%(institute)s/%(model)s/%(experiment)s/%(time_frequency)s/%(realm)s/%(cmor_table)s/%(ensemble)s/%(version)s/%(variable)s"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "index_node": "esgf.nci.org.au",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2018-05-19T01:25:21Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc",
+        "tracking_id": [
+            "0dd2a394-fe6e-40b3-ab7e-c5c5225ac819"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgfdtn.nci.org.au:2811//replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|application/gridftp|GridFTP",
+            "http://esgf.nci.org.au/thredds/dodsC/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc.html|application/opendap-html|OPENDAP",
+            "globus:2058c7d6-a79f-11e6-9ad6-22000a1e3b52/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1643863518798151680,
+        "retracted": false,
+        "_timestamp": "2019-09-05T19:06:57.555Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc_1|esgf-data1.ceda.ac.uk",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "461dfa5f987788460833bbb7a6e0c56b96d3b288b534cfc80cb4d1228e341801"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf-data1.ceda.ac.uk",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf-data1.ceda.ac.uk",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-index1.ceda.ac.uk",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc_1",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc_1",
+        "metadata_format": "THREDDS",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": false,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2011-10-11T02:46:25Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "tracking_id": [
+            "1f3e752c-46e6-4f6d-9129-52780fb25535"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf-dn1.ceda.ac.uk:2811//esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|application/gridftp|GridFTP",
+            "http://esgf-data1.ceda.ac.uk/thredds/dodsC/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc.html|application/opendap-html|OPENDAP",
+            "globus:ee3aa1a0-7e4c-11e6-afc4-22000b92c261/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_timestamp": "2015-11-03T06:10:05.624Z",
+        "retracted": false,
+        "_version_": 1613438760087715840,
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|esgf.nci.org.au",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "461dfa5f987788460833bbb7a6e0c56b96d3b288b534cfc80cb4d1228e341801"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf.nci.org.au",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf.nci.org.au",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(project)s/%(product)s/%(institute)s/%(model)s/%(experiment)s/%(time_frequency)s/%(realm)s/%(cmor_table)s/%(ensemble)s/%(version)s/%(variable)s"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "index_node": "esgf.nci.org.au",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2018-05-17T02:02:39Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc",
+        "tracking_id": [
+            "1f3e752c-46e6-4f6d-9129-52780fb25535"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgfdtn.nci.org.au:2811//replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|application/gridftp|GridFTP",
+            "http://esgf.nci.org.au/thredds/dodsC/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc.html|application/opendap-html|OPENDAP",
+            "globus:2058c7d6-a79f-11e6-9ad6-22000a1e3b52/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1643863518721605632,
+        "retracted": false,
+        "_timestamp": "2019-09-05T19:06:57.482Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc_1|esgf-data1.ceda.ac.uk",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "10a94293f2ac844ab62496d5d5369ccc0e839c73882a323c21800d71d7780315"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf-data1.ceda.ac.uk",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf-data1.ceda.ac.uk",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-index1.ceda.ac.uk",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc_1",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc_1",
+        "metadata_format": "THREDDS",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": false,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2011-10-11T02:47:42Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "tracking_id": [
+            "221aa298-cf63-4445-a138-d21a03eed3db"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf-dn1.ceda.ac.uk:2811//esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|application/gridftp|GridFTP",
+            "http://esgf-data1.ceda.ac.uk/thredds/dodsC/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc.html|application/opendap-html|OPENDAP",
+            "globus:ee3aa1a0-7e4c-11e6-afc4-22000b92c261/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_timestamp": "2015-11-03T06:10:05.608Z",
+        "retracted": false,
+        "_version_": 1613438762791993344,
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|esgf.nci.org.au",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "10a94293f2ac844ab62496d5d5369ccc0e839c73882a323c21800d71d7780315"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf.nci.org.au",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf.nci.org.au",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(project)s/%(product)s/%(institute)s/%(model)s/%(experiment)s/%(time_frequency)s/%(realm)s/%(cmor_table)s/%(ensemble)s/%(version)s/%(variable)s"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "index_node": "esgf.nci.org.au",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 33432040,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2018-05-15T16:43:40Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc",
+        "tracking_id": [
+            "221aa298-cf63-4445-a138-d21a03eed3db"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgfdtn.nci.org.au:2811//replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|application/gridftp|GridFTP",
+            "http://esgf.nci.org.au/thredds/dodsC/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc.html|application/opendap-html|OPENDAP",
+            "globus:2058c7d6-a79f-11e6-9ad6-22000a1e3b52/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1643863518666031104,
+        "retracted": false,
+        "_timestamp": "2019-09-05T19:06:57.429Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc_1|esgf-data1.ceda.ac.uk",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "568e590103ed3bec8692aad85686b576466bd76dea872a9b0411c4c1941f44ad"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf-data1.ceda.ac.uk",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf-data1.ceda.ac.uk",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-index1.ceda.ac.uk",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc_1",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc_1",
+        "metadata_format": "THREDDS",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": false,
+        "size": 25523776,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2011-10-11T02:49:03Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "tracking_id": [
+            "4ad40f1d-b7a0-4046-8401-5f3abd1ff4e6"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf-dn1.ceda.ac.uk:2811//esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|application/gridftp|GridFTP",
+            "http://esgf-data1.ceda.ac.uk/thredds/dodsC/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc.html|application/opendap-html|OPENDAP",
+            "globus:ee3aa1a0-7e4c-11e6-afc4-22000b92c261/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_timestamp": "2015-11-03T06:10:05.582Z",
+        "retracted": false,
+        "_version_": 1613438760068841472,
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|esgf.nci.org.au",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "568e590103ed3bec8692aad85686b576466bd76dea872a9b0411c4c1941f44ad"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf.nci.org.au",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf.nci.org.au",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(project)s/%(product)s/%(institute)s/%(model)s/%(experiment)s/%(time_frequency)s/%(realm)s/%(cmor_table)s/%(ensemble)s/%(version)s/%(variable)s"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "index_node": "esgf.nci.org.au",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 25523776,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2018-05-17T12:03:46Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc",
+        "tracking_id": [
+            "4ad40f1d-b7a0-4046-8401-5f3abd1ff4e6"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgfdtn.nci.org.au:2811//replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|application/gridftp|GridFTP",
+            "http://esgf.nci.org.au/thredds/dodsC/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc.html|application/opendap-html|OPENDAP",
+            "globus:2058c7d6-a79f-11e6-9ad6-22000a1e3b52/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1643863518595776512,
+        "retracted": false,
+        "_timestamp": "2019-09-05T19:06:57.362Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|esgf-data1.ceda.ac.uk",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "f718b1d91b25e5cc5acd3c0080dabb3762711676ad8efe0f54c0946f495f943a"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf-data1.ceda.ac.uk",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf-data1.ceda.ac.uk",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "HadGEM2-CC model output prepared for CMIP5 RCP8.5"
+        ],
+        "drs_id": [
+            "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "forcing": [
+            "GHG, Oz, SA, LU, Sl, Vl, BC, OC, (GHG = CO2, N2O, CH4, CFCs)"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-index1.ceda.ac.uk",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "metadata_format": "THREDDS",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": false,
+        "size": 1353448,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2012-05-31T03:15:28Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "tracking_id": [
+            "9f6e7611-cde7-4e42-ae12-097038d045f5"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf-dn1.ceda.ac.uk:2811//esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|application/gridftp|GridFTP",
+            "http://esgf-data1.ceda.ac.uk/thredds/dodsC/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc.html|application/opendap-html|OPENDAP",
+            "globus:ee3aa1a0-7e4c-11e6-afc4-22000b92c261/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_timestamp": "2015-11-03T06:10:05.564Z",
+        "retracted": false,
+        "_version_": 1613438760048918528,
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|esgf.nci.org.au",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "f718b1d91b25e5cc5acd3c0080dabb3762711676ad8efe0f54c0946f495f943a"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf.nci.org.au",
+        "dataset_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531|esgf.nci.org.au",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(project)s/%(product)s/%(institute)s/%(model)s/%(experiment)s/%(time_frequency)s/%(realm)s/%(cmor_table)s/%(ensemble)s/%(version)s/%(variable)s"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "rcp85"
+        ],
+        "experiment_family": [
+            "All",
+            "RCP"
+        ],
+        "index_node": "esgf.nci.org.au",
+        "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "institute": [
+            "MOHC"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "model": [
+            "HadGEM2-CC"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 1353448,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2018-05-22T16:02:07Z",
+        "title": "tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
+        "tracking_id": [
+            "9f6e7611-cde7-4e42-ae12-097038d045f5"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgfdtn.nci.org.au:2811//replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|application/gridftp|GridFTP",
+            "http://esgf.nci.org.au/thredds/dodsC/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc.html|application/opendap-html|OPENDAP",
+            "globus:2058c7d6-a79f-11e6-9ad6-22000a1e3b52/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1643863518520279040,
+        "retracted": false,
+        "_timestamp": "2019-09-05T19:06:57.290Z",
+        "score": 1.0
+    }
+]
