@@ -122,13 +122,25 @@ def check_lat_lon(cube):
     assert lat.standard_name == 'latitude'
     assert lat.long_name == 'latitude'
     assert lat.units == 'degrees_north'
-    np.testing.assert_allclose(lat.points, [-90.0, -45.0, 0.0,  45.0, 90.0])
-    np.testing.assert_allclose(lat.bounds,
-                               [[-100.0, -90.0, -80.0],
-                                [-55.0, -45.0, -35.0],
-                                [-10.0, 0.0, 10.0],
-                                [35.0, 45.0, 55.0],
-                                [80.0, 90.0, 100.0]])
+    np.testing.assert_allclose(
+        lat.points,
+        [-45.0, -45.0, -45.0, -45.0, 45.0, 45.0, 45.0, 45.0],
+        rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        lat.bounds,
+        [
+            [-90.0, 0.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [0.0, 0.0, 90.0],
+            [0.0, 0.0, 90.0],
+            [0.0, 0.0, 90.0],
+            [0.0, 0.0, 90.0],
+        ],
+        rtol=1e-5
+    )
 
     assert cube.coords('longitude', dim_coords=False)
     lon = cube.coord('longitude', dim_coords=False)
@@ -136,13 +148,25 @@ def check_lat_lon(cube):
     assert lon.standard_name == 'longitude'
     assert lon.long_name == 'longitude'
     assert lon.units == 'degrees_east'
-    np.testing.assert_allclose(lon.points, [-180.0, -90.0, 0.0, 90.0, 180.0])
-    np.testing.assert_allclose(lon.bounds,
-                               [[-190.0, -180.0, -170.0],
-                                [-100.0, -90.0, -80.0],
-                                [-10.0, 0.0, 10.0],
-                                [80.0, 90.0, 100.0],
-                                [170.0, 180.0, 190.0]])
+    np.testing.assert_allclose(
+        lon.points,
+        [-135.0, -45.0, 45.0, 135.0, -135.0, -45.0, 45.0, 135.0],
+        rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        lon.bounds,
+        [
+            [-135.0, -90.0, -180.0],
+            [-45.0, 0.0, -90.0],
+            [45.0, 90.0, 0.0],
+            [135.0, 180.0, 90.0],
+            [-180.0, -90.0, -135.0],
+            [-90.0, 0.0, -45.0],
+            [0.0, 90.0, 45.0],
+            [90.0, 180.0, 135.0],
+        ],
+        rtol=1e-5
+    )
 
     assert cube.coords('first spatial index for variables stored on an '
                        'unstructured grid', dim_coords=True)
