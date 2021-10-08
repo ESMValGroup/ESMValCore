@@ -38,7 +38,7 @@ class Test(tests.Test):
         self.grid_for_linear = grid
 
         # Setup unstructured cube and grid
-        data = np.empty((1, 1))
+        data = np.zeros((1, 1))
         lons = iris.coords.DimCoord([1.6],
                                     standard_name='longitude',
                                     bounds=[[1, 2]],
@@ -59,7 +59,7 @@ class Test(tests.Test):
         x, y = np.meshgrid(lons.points, lats.points)
 
         lats = iris.coords.AuxCoord(
-            x,
+            y,
             standard_name=lats.metadata.standard_name,
             long_name=lats.metadata.long_name,
             var_name=lats.metadata.var_name,
@@ -69,7 +69,7 @@ class Test(tests.Test):
             climatological=lats.metadata.climatological)
 
         lons = iris.coords.AuxCoord(
-            y,
+            x,
             standard_name=lons.metadata.standard_name,
             long_name=lons.metadata.long_name,
             var_name=lons.metadata.var_name,
