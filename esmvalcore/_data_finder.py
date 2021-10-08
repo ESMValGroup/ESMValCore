@@ -124,7 +124,7 @@ def get_start_end_date(filename):
     return start_date, end_date
 
 
-def _get_timerange_from_start_end_year(variable):
+def _get_timerange_from_years(variable):
     start_year = variable.get('start_year')
     end_year = variable.get('end_year')
     if start_year and end_year:

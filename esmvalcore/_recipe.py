@@ -24,7 +24,7 @@ from ._config import (
 )
 from ._data_finder import (
     _find_input_files,
-    _get_timerange_from_start_end_year,
+    _get_timerange_from_years,
     get_input_filelist,
     get_output_file,
     get_start_end_date,
@@ -1236,7 +1236,7 @@ class Recipe:
             variable.pop('timerange', None)
         for variable in variables:
             _add_extra_facets(variable, self._cfg['extra_facets_dir'])
-            _get_timerange_from_start_end_year(variable)
+            _get_timerange_from_years(variable)
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:

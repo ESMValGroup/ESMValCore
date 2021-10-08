@@ -7,7 +7,7 @@ import pyesgf.search
 
 from .._data_finder import (
     _compare_dates,
-    _get_timerange_from_start_end_year,
+    _get_timerange_from_years,
     _parse_period,
     get_start_end_date,
 )
@@ -248,7 +248,7 @@ def cached_search(**facets):
     """
     esgf_facets = get_esgf_facets(facets)
     files = esgf_search_files(esgf_facets)
-    _get_timerange_from_start_end_year(facets)
+    _get_timerange_from_years(facets)
     filter_timerange = (facets.get('frequency', '') != 'fx'
                         and 'timerange' in facets)
     if filter_timerange:
