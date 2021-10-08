@@ -52,11 +52,11 @@ class Test:
                                           standard_name='time',
                                           bounds=[[0, 1], [1, 2], [2, 3]],
                                           units='hours')
-        self.coords_spec = [(self.lats, 0), (self.lons, 1)]
+        self.fx_coords_spec = [(self.lats, 0), (self.lons, 1)]
         self.cube_coords_spec = [(self.zcoord, 0),
                                  (self.lats, 1), (self.lons, 2)]
         self.fx_mask = iris.cube.Cube(fx_data,
-                                      dim_coords_and_dims=self.coords_spec,
+                                      dim_coords_and_dims=self.fx_coords_spec,
                                       units='%')
         self.mock_data = np.ma.empty((4, 3, 3))
         self.mock_data[:] = 10.
