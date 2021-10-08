@@ -55,11 +55,11 @@ def cubes_regular_grid():
 @pytest.fixture
 def cubes_2d_lat_lon_grid():
     """Cube with 2D latitude and longitude."""
-    lat_coord = iris.coords.AuxCoord([[0.0, 1.0], [2.0, 3.0]], var_name='lat',
+    lat_coord = iris.coords.AuxCoord([[0.0, 0.0], [1.0, 1.0]], var_name='lat',
                                      standard_name='latitude',
                                      long_name='latitude',
                                      units='degrees_north')
-    lon_coord = iris.coords.AuxCoord([[-1.0, 1.0], [2.0, 3.0]], var_name='lon',
+    lon_coord = iris.coords.AuxCoord([[0.0, 1.0], [0.0, 1.0]], var_name='lon',
                                      standard_name='longitude',
                                      long_name='longitude',
                                      units='degrees_east')
