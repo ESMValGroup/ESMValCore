@@ -388,6 +388,10 @@ def test_2d_lat_lon_grid_fix(cubes_2d_lat_lon_grid):
 
 def test_empty_standard_name_fix(cubes_2d):
     """Test fix."""
+    # We know that tas has a standard name, but this being native model output
+    # there may be variables with no standard name. The code is designed to
+    # handle this gracefully and here we test it with an artificial, but
+    # realistic case.
     vardef = get_var_info('ICON', 'Amon', 'tas')
     vardef.standard_name = ''
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'tas', ())
