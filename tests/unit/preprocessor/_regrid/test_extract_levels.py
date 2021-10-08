@@ -96,20 +96,20 @@ class Test(tests.Test):
                                                  var_name='volcello',
                                                  units='m3',
                                                  measure='volume')
-        ancillary_2D = iris.coords.AncillaryVariable(
+        ancillary_2d = iris.coords.AncillaryVariable(
             area_data,
             standard_name='land_area_fraction',
             var_name='sftlf',
             units='%')
-        ancillary_3D = iris.coords.AncillaryVariable(
+        ancillary_3d = iris.coords.AncillaryVariable(
             volume_data,
             standard_name='height_above_reference_ellipsoid',
             var_name='zfull',
             units='m')
         self.cube.add_cell_measure(area_measure, (1, 2))
         self.cube.add_cell_measure(volume_measure, (0, 1, 2))
-        self.cube.add_ancillary_variable(ancillary_2D, (1, 2))
-        self.cube.add_ancillary_variable(ancillary_3D, (0, 1, 2))
+        self.cube.add_ancillary_variable(ancillary_2d, (1, 2))
+        self.cube.add_ancillary_variable(ancillary_3d, (0, 1, 2))
 
         result = extract_levels(self.cube, levels, 'linear')
 
@@ -123,9 +123,9 @@ class Test(tests.Test):
         coord = self.cube.coord('air_pressure').copy()
         expected.add_dim_coord(coord[levels], 0)
         expected.add_cell_measure(area_measure, (1, 2))
-        expected.add_ancillary_variable(ancillary_2D, (1, 2))
+        expected.add_ancillary_variable(ancillary_2d, (1, 2))
         expected.add_cell_measure(volume_measure[0:2, ...], (0, 1, 2))
-        expected.add_ancillary_variable(ancillary_3D[0:2, ...], (0, 1, 2))
+        expected.add_ancillary_variable(ancillary_3d[0:2, ...], (0, 1, 2))
 
         self.assertEqual(result, expected)
 
@@ -168,20 +168,20 @@ class Test(tests.Test):
         # Check the _create_cube kwargs ...
         self.assertEqual(kwargs, dict())
 
-    def test_preserve_2D_fx_interpolation(self):
+    def test_preserve_2d_fx_interpolation(self):
         area_data = np.ones((2, 1))
         area_measure = iris.coords.CellMeasure(area_data,
                                                standard_name='cell_area',
                                                var_name='areacella',
                                                units='m2',
                                                measure='area')
-        ancillary_2D = iris.coords.AncillaryVariable(
+        ancillary_2d = iris.coords.AncillaryVariable(
             area_data,
             standard_name='land_area_fraction',
             var_name='sftlf',
             units='%')
         self.cube.add_cell_measure(area_measure, (1, 2))
-        self.cube.add_ancillary_variable(ancillary_2D, (1, 2))
+        self.cube.add_ancillary_variable(ancillary_2d, (1, 2))
         result_data = np.array([0, 1, 4, 5], dtype=self.dtype).reshape(2, 2, 1)
         result = _make_cube(result_data)
         _preserve_fx_vars(self.cube, result)
@@ -189,7 +189,7 @@ class Test(tests.Test):
         self.assertEqual(self.cube.ancillary_variables(),
                          result.ancillary_variables())
 
-    def test_preserve_2D_fx_interpolation_single_level(self):
+    def test_preserve_2d_fx_interpolation_single_level(self):
         result = self.cube[0, :, :]
         area_data = np.ones((2, 1))
         area_measure = iris.coords.CellMeasure(area_data,
@@ -197,32 +197,32 @@ class Test(tests.Test):
                                                var_name='areacella',
                                                units='m2',
                                                measure='area')
-        ancillary_2D = iris.coords.AncillaryVariable(
+        ancillary_2d = iris.coords.AncillaryVariable(
             area_data,
             standard_name='land_area_fraction',
             var_name='sftlf',
             units='%')
         self.cube.add_cell_measure(area_measure, (1, 2))
-        self.cube.add_ancillary_variable(ancillary_2D, (1, 2))
+        self.cube.add_ancillary_variable(ancillary_2d, (1, 2))
         _preserve_fx_vars(self.cube, result)
         self.assertEqual(self.cube.cell_measures(), result.cell_measures())
         self.assertEqual(self.cube.ancillary_variables(),
                          result.ancillary_variables())
 
-    def test_do_not_preserve_3D_fx_interpolation(self):
+    def test_do_not_preserve_3d_fx_interpolation(self):
         volume_data = np.ones(self.shape)
         volume_measure = iris.coords.CellMeasure(volume_data,
                                                  standard_name='ocean_volume',
                                                  var_name='volcello',
                                                  units='m3',
                                                  measure='volume')
-        ancillary_3D = iris.coords.AncillaryVariable(
+        ancillary_3d = iris.coords.AncillaryVariable(
             volume_data,
             standard_name='height_above_reference_ellipsoid',
             var_name='zfull',
             units='m')
         self.cube.add_cell_measure(volume_measure, (0, 1, 2))
-        self.cube.add_ancillary_variable(ancillary_3D, (0, 1, 2))
+        self.cube.add_ancillary_variable(ancillary_3d, (0, 1, 2))
         result_data = np.array([0, 1, 4, 5], dtype=self.dtype).reshape(2, 2, 1)
         result = _make_cube(result_data)
         with self.assertLogs(level='WARNING') as cm:
