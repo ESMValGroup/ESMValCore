@@ -20,7 +20,7 @@ commands:
           fi
 
 jobs:
-  test:
+  run_tests:
     # Run tests
     working_directory: /test
     docker:
@@ -57,7 +57,7 @@ jobs:
           project-token: $CODACY_PROJECT_TOKEN
           skip: true  # skip if project-token is not defined (i.e. on a fork)
 
-  install:
+  test_installation_from_source_test_mode:
     # Test installation
     working_directory: /install
     docker:
@@ -106,7 +106,7 @@ jobs:
       - store_test_results:
           path: test-reports/
 
-  documentation:
+  build_documentation:
     # Test building documentation
     working_directory: /doc
     docker:
@@ -133,7 +133,7 @@ jobs:
       - store_artifacts:
           path: /logs
 
-  develop:
+  test_installation_from_source_develop_mode:
     # Test development installation
     working_directory: /develop
     docker:
@@ -169,7 +169,7 @@ jobs:
       - store_artifacts:
           path: /logs
 
-  conda_install:
+  test_installation_from_conda:
     # Test conda package installation
     working_directory: /esmvaltool
     docker:
@@ -195,10 +195,10 @@ jobs:
 workflows:
   commit:
     jobs:
-      - test
-      - install
-      - develop
-      - documentation
+      - run_tests
+      - test_installation_from_source_test_mode
+      - test_installation_from_source_develop_mode
+      - build_documentation
   nightly:
     triggers:
       - schedule:
@@ -208,8 +208,8 @@ workflows:
               only:
                 - main
     jobs:
-      - test
-      - install
-      - documentation
-      - develop
-      - conda_install
+      - run_tests
+      - test_installation_from_source_test_mode
+      - build_documentation
+      - test_installation_from_source_develop_mode
+      - test_installation_from_conda
