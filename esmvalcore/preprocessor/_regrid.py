@@ -660,7 +660,7 @@ def _preserve_fx_vars(cube, result):
                 add_cell_measure(result, measure, measure.measure)
     if cube.ancillary_variables():
         for ancillary_var in cube.ancillary_variables():
-            ancillary_dims = cube.ancillary_variable_dims(ancillary_var)
+            ancillary_dims = set(cube.ancillary_variable_dims(ancillary_var))
             if vertical_dim.intersection(ancillary_dims):
                 logger.warning(
                     'Discarding use of z-axis dependent ancillary variable %s '
