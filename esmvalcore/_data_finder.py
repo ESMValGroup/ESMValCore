@@ -460,7 +460,7 @@ def get_statistic_output_file(variable, preproc_dir):
         preproc_dir,
         '{diagnostic}',
         '{variable_group}',
-        '{dataset}_{mip}_{short_name}_{start_year}-{end_year}.nc',
+        '{dataset}_{mip}_{short_name}_{timerange}.nc',
     )
 
     outfile = template.format(**variable)

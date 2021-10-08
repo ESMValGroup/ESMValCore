@@ -25,6 +25,7 @@ from ._config import (
 from ._data_finder import (
     _find_input_files,
     _get_timerange_from_years,
+    _parse_period,
     get_input_filelist,
     get_output_file,
     get_start_end_date,
@@ -639,14 +640,25 @@ def _get_statistic_attributes(products):
         if all(p.attributes.get(key, object()) == value for p in products):
             attributes[key] = value
 
-    # Ensure start_year and end_year attributes are available
+    # Ensure timerange attribute is available
     for product in products:
-        start = product.attributes['start_year']
-        if 'start_year' not in attributes or start < attributes['start_year']:
-            attributes['start_year'] = start
-        end = product.attributes['end_year']
-        if 'end_year' not in attributes or end > attributes['end_year']:
-            attributes['end_year'] = end
+        timerange = product.attributes['timerange']
+        start = int(timerange.split('/')[0])
+        end = int(timerange.split('/')[1])
+        if 'timerange' not in attributes:
+            attributes['timerange'] = f'{start}/{end}'
+        else:
+            # compare years only
+            start_year, end_year = _parse_period(attributes['timerange'])
+            if start_year is None and end_year is None:
+                start_year = int(attributes['timerange'].split('/')[0][0:4])
+                end_year = int(attributes['timerange'].split('/')[1][0:4])
+            if start < start_year:
+                start_year = start
+            if end > end_year:
+                end_year = end
+
+            attributes['timerange'] = f'{start_year}/{end_year}'
 
     return attributes
 
