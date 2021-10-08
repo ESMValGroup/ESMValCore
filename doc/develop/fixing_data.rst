@@ -393,6 +393,20 @@ Please note the duplication of the name ``ICON`` in ``project`` and
 ``dataset``, which is necessary to comply with ESMValTool's data finding and
 CMORizing functionalities.
 
+Similar to any other fix, the ICON fix allows the use of :ref:`extra
+facets<extra_facets>`. By default, the file :download:`icon-mappings.yml
+</../esmvalcore/_config/extra_facets/icon-mappings.yml>` is used for that
+purpose. For some variables, extra facets are necessary; otherwise ESMValTool
+cannot read them properly. Supported keys for extra facets are:
+
+============= ===============================================================
+Key           Description
+============= ===============================================================
+``latitude``  Standard name of the latitude coordinate in the raw input file
+``longitude`` Standard name of the longitude coordinate in the raw input file
+``raw_name``  Variable name of the variables in the raw input file
+============= ===============================================================
+
 IPSL-CM6
 ~~~~~~~~
 

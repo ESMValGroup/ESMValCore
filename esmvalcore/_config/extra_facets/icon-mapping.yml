@@ -1,8 +1,8 @@
 # Extra facets for native ICON model output
 
-# Note: The 'raw_name' attribute is only necessary for variables which do not
-# have the correct CMOR name in the files. Most variables already have the
-# correct name.
+# All extra facets for ICON are optional but might be necessary for some
+# variables. A complete list of supported keys is given in the documentation
+# (see ESMValCore/doc/develop/fixing_data.rst).
 ---
 
 ICON:
