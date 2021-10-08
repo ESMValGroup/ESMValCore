@@ -25,7 +25,7 @@ class Test:
         fx_data = np.empty((3, 3))
         fx_data[:] = 60.
         fx_data[1, 2] = 30.
-        self.new_cube_data = np.empty((3, 3))
+        self.new_cube_data = np.empty((2, 3, 3))
         self.new_cube_data[:] = 200.
         crd_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
         self.lons = iris.coords.DimCoord([0, 1.5, 3],
@@ -38,6 +38,11 @@ class Test:
                                          bounds=[[0, 1], [1, 2], [2, 3]],
                                          units='degrees_north',
                                          coord_system=crd_sys)
+        self.zcoord = iris.coords.DimCoord([0.5, 5.],
+                                           long_name='zcoord',
+                                           bounds=[[0., 2.5], [2.5, 25.]],
+                                           units='m',
+                                           attributes={'positive': 'down'})
         self.times = iris.coords.DimCoord([0, 1.5, 2.5, 3.5],
                                           standard_name='time',
                                           bounds=[[0, 1], [1, 2], [2, 3],
@@ -48,6 +53,8 @@ class Test:
                                           bounds=[[0, 1], [1, 2], [2, 3]],
                                           units='hours')
         self.coords_spec = [(self.lats, 0), (self.lons, 1)]
+        self.cube_coords_spec = [(self.zcoord, 0),
+                                 (self.lats, 1), (self.lons, 2)]
         self.fx_mask = iris.cube.Cube(fx_data,
                                       dim_coords_and_dims=self.coords_spec,
                                       units='%')
@@ -69,8 +76,10 @@ class Test:
                 'frequency': 'fx',
                 'filename': sftlf_file}
         }
-        new_cube_land = iris.cube.Cube(self.new_cube_data,
-                                       dim_coords_and_dims=self.coords_spec)
+        new_cube_land = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=self.cube_coords_spec
+        )
         new_cube_land = add_fx_variables(new_cube_land, fx_vars,
                                          CheckLevels.IGNORE)
         result_land = mask_landsea(
@@ -92,8 +101,10 @@ class Test:
                 'frequency': 'fx',
                 'filename': sftlf_file}
         }
-        new_cube_ice = iris.cube.Cube(self.new_cube_data,
-                                      dim_coords_and_dims=self.coords_spec)
+        new_cube_ice = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=self.cube_coords_spec
+        )
         new_cube_ice = add_fx_variables(new_cube_ice, fx_vars,
                                         CheckLevels.IGNORE)
         result_ice = mask_landseaice(
@@ -117,12 +128,16 @@ class Test:
                 'frequency': 'fx',
                 'filename': sftlf_file}
         }
-        new_cube_land = iris.cube.Cube(self.new_cube_data,
-                                       dim_coords_and_dims=self.coords_spec)
+        new_cube_land = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=self.cube_coords_spec
+        )
         new_cube_land = add_fx_variables(new_cube_land, fx_vars,
                                          CheckLevels.IGNORE)
-        new_cube_sea = iris.cube.Cube(self.new_cube_data,
-                                      dim_coords_and_dims=self.coords_spec)
+        new_cube_sea = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=self.cube_coords_spec
+        )
         new_cube_sea = add_fx_variables(new_cube_sea, fx_vars,
                                         CheckLevels.IGNORE)
 
@@ -135,26 +150,30 @@ class Test:
             new_cube_sea,
             'sea',
         )
-        expected = np.ma.empty((3, 3))
+        expected = np.ma.empty((2, 3, 3))
         expected.data[:] = 200.
-        expected.mask = np.ones((3, 3), bool)
-        expected.mask[1, 2] = False
+        expected.mask = np.ones((2, 3, 3), bool)
+        expected.mask[:, 1, 2] = False
         # set fillvalues so we are sure they are equal
         np.ma.set_fill_value(result_land.data, 1e+20)
         np.ma.set_fill_value(result_sea.data, 1e+20)
         np.ma.set_fill_value(expected, 1e+20)
         assert_array_equal(result_land.data, expected)
-        expected.mask = np.zeros((3, 3), bool)
-        expected.mask[1, 2] = True
+        expected.mask = np.zeros((2, 3, 3), bool)
+        expected.mask[:, 1, 2] = True
         assert_array_equal(result_sea.data, expected)
 
         # Mask with shp files although sftlf is available
-        new_cube_land = iris.cube.Cube(self.new_cube_data,
-                                       dim_coords_and_dims=self.coords_spec)
+        new_cube_land = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=self.cube_coords_spec
+        )
         new_cube_land = add_fx_variables(new_cube_land, fx_vars,
                                          CheckLevels.IGNORE)
-        new_cube_sea = iris.cube.Cube(self.new_cube_data,
-                                      dim_coords_and_dims=self.coords_spec)
+        new_cube_sea = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=self.cube_coords_spec
+        )
         new_cube_sea = add_fx_variables(new_cube_sea, fx_vars,
                                         CheckLevels.IGNORE)
         result_land = mask_landsea(
@@ -177,10 +196,14 @@ class Test:
         assert_array_equal(result_sea.data, expected)
 
         # mask with shp files
-        new_cube_land = iris.cube.Cube(self.new_cube_data,
-                                       dim_coords_and_dims=self.coords_spec)
-        new_cube_sea = iris.cube.Cube(self.new_cube_data,
-                                      dim_coords_and_dims=self.coords_spec)
+        new_cube_land = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=self.cube_coords_spec
+        )
+        new_cube_sea = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=self.cube_coords_spec
+        )
         result_land = mask_landsea(new_cube_land, 'land')
         result_sea = mask_landsea(new_cube_sea, 'sea')
 
@@ -207,15 +230,17 @@ class Test:
                 'frequency': 'fx',
                 'filename': sftgif_file}
         }
-        new_cube_ice = iris.cube.Cube(self.new_cube_data,
-                                      dim_coords_and_dims=self.coords_spec)
+        new_cube_ice = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=self.cube_coords_spec
+        )
         new_cube_ice = add_fx_variables(new_cube_ice, fx_vars,
                                         CheckLevels.IGNORE)
         result_ice = mask_landseaice(new_cube_ice, 'ice')
-        expected = np.ma.empty((3, 3))
+        expected = np.ma.empty((2, 3, 3))
         expected.data[:] = 200.
-        expected.mask = np.ones((3, 3), bool)
-        expected.mask[1, 2] = False
+        expected.mask = np.ones((2, 3, 3), bool)
+        expected.mask[:, 1, 2] = False
         np.ma.set_fill_value(result_ice.data, 1e+20)
         np.ma.set_fill_value(expected, 1e+20)
         assert_array_equal(result_ice.data, expected)
