@@ -10,7 +10,7 @@ def test_select_files():
         "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197001-197412.nc",
     ]
 
-    result = select_files(files, 'mon', '1962/1967')
+    result = select_files(files, '1962/1967')
 
     expected = [
         "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_196001-196412.nc",
@@ -29,7 +29,7 @@ def test_select_files_monthly_resolution():
         "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196311-196410.nc",
     ]
 
-    result = select_files(files, 'mon', '196201/196205')
+    result = select_files(files, '196201/196205')
 
     expected = [
         "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196111-196210.nc"
@@ -48,7 +48,7 @@ def test_select_files_daily_resolution():
         filename + "19621101-19631031.nc"
     ]
 
-    result = select_files(files, 'day', '19600101/19611215')
+    result = select_files(files, '19600101/19611215')
 
     expected = [
         filename + "19601101-19611031.nc",
@@ -74,11 +74,9 @@ def test_select_files_sub_daily_resolution():
 
     result_no_separator = select_files(
         files_no_separator,
-        '6hr',
         '19600101T0900/19610101T09HH00MM')
     result_separator = select_files(
         files_separator,
-        '6hr',
         '19600101T0900/19610101T0900')
 
     expected_no_separator = [
@@ -104,7 +102,7 @@ def test_select_files_time_period():
         "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196311-196410.nc",
     ]
 
-    result = select_files(files, 'mon', '196211/P2Y5M')
+    result = select_files(files, '196211/P2Y5M')
 
     expected = [
         "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196111-196210.nc",
@@ -124,9 +122,9 @@ def test_select_files_varying_format():
         filename + "196211010300-196310312100.nc",
     ]
 
-    result_yearly = select_files(files, '6hr', '1960/1962')
-    result_monthly = select_files(files, '6hr', '196011/196210')
-    result_daily = select_files(files, '6hr', '19601101/19601105')
+    result_yearly = select_files(files, '1960/1962')
+    result_monthly = select_files(files, '196011/196210')
+    result_daily = select_files(files, '19601101/19601105')
 
     assert result_yearly == files
     assert result_monthly == files[0:2]

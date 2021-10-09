@@ -102,7 +102,7 @@ def esgf_search_files(facets):
     return files
 
 
-def select_by_time(files, frequency, timerange):
+def select_by_time(files, timerange):
     """Select files containing data between a timerange."""
     selection = []
     start_date, end_date = _parse_period(timerange)
@@ -122,10 +122,10 @@ def select_by_time(files, frequency, timerange):
             # just select everything.
             selection.append(file)
         else:
-            start_date, start = _compare_dates(frequency, start_date, start)
-            end_date, end = _compare_dates(frequency, end_date, end)
+            start_date, start = _compare_dates(start_date, start)
+            end_date, end = _compare_dates(end_date, end)
             if start <= end_date and end >= start_date:
-                selection.append(file.name)
+                selection.append(file)
 
     return selection
 
@@ -252,7 +252,7 @@ def cached_search(**facets):
     filter_timerange = (facets.get('frequency', '') != 'fx'
                         and 'timerange' in facets)
     if filter_timerange:
-        files = select_by_time(files, facets['frequency'], facets['timerange'])
+        files = select_by_time(files, facets['timerange'])
         logger.debug("Selected files:\n%s", '\n'.join(str(f) for f in files))
 
     return files

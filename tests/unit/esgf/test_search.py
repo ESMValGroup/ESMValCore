@@ -245,7 +245,7 @@ def test_select_by_time():
     ]
     files = [ESGFFile([r]) for r in results]
 
-    result = _search.select_by_time(files, 1851, 1852)
+    result = _search.select_by_time(files, '1851/1852')
     reference = files[1:3]
     assert sorted(result) == sorted(reference)
 

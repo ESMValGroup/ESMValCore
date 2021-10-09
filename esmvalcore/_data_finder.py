@@ -207,10 +207,9 @@ def _parse_period(timerange):
     return start_year, end_year
 
 
-def _compare_dates(frequency, date, file_date):
-    if frequency.endswith('hr'):
-        date = re.sub("[^0-9]", '', date)
-        file_date = re.sub("[^0-9]", '', file_date)
+def _compare_dates(date, file_date):
+    date = re.sub("[^0-9]", '', date)
+    file_date = re.sub("[^0-9]", '', file_date)
     if len(date) < len(file_date):
         file_date = file_date[0:len(date)]
     elif len(date) > len(file_date):
@@ -219,7 +218,7 @@ def _compare_dates(frequency, date, file_date):
     return date, file_date
 
 
-def select_files(filenames, frequency, timerange):
+def select_files(filenames, timerange):
     """Select files containing data between a given timerange.
 
     If the timerange is given as a period, the file selection
@@ -241,8 +240,8 @@ def select_files(filenames, frequency, timerange):
     for filename in filenames:
         start, end = get_start_end_date(filename)
 
-        start_date, start = _compare_dates(frequency, start_date, start)
-        end_date, end = _compare_dates(frequency, end_date, end)
+        start_date, start = _compare_dates(start_date, start)
+        end_date, end = _compare_dates(end_date, end)
 
         if start <= end_date and end >= start_date:
             selection.append(filename)
