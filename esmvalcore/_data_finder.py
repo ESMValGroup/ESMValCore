@@ -425,7 +425,6 @@ def get_input_filelist(variable, rootpath, drs):
     if variable['frequency'] != 'fx':
         files = select_files(
             files,
-            variable['frequency'],
             variable['timerange'])
     return (files, dirnames, filenames)
 
