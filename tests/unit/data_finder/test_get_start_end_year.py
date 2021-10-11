@@ -3,7 +3,11 @@
 import iris
 import pytest
 
-from esmvalcore._data_finder import get_start_end_date, get_start_end_year
+from esmvalcore._data_finder import (
+    _get_timerange_from_years,
+    get_start_end_date,
+    get_start_end_year,
+)
 
 FILENAME_CASES = [
     ['var_whatever_1980-1981', 1980, 1981],
@@ -132,3 +136,38 @@ def test_fails_if_no_date_present():
     with pytest.raises((ValueError, OSError)):
         get_start_end_date('var_whatever')
         get_start_end_year('var_whatever')
+
+
+def test_get_timerange_from_years():
+
+    variable = {
+        'start_year': 2000,
+        'end_year': 2002}
+
+    _get_timerange_from_years(variable)
+
+    assert 'start_year' not in variable
+    assert 'end_year' not in variable
+    assert variable['timerange'] == '2000/2002'
+
+
+def test_get_timerange_from_start_year():
+    variable = {
+        'start_year': 2000
+    }
+
+    _get_timerange_from_years(variable)
+
+    assert 'start_year' not in variable
+    assert variable['timerange'] == '2000/2000'
+
+
+def test_get_timerange_from_end_year():
+    variable = {
+        'end_year': 2002
+    }
+
+    _get_timerange_from_years(variable)
+
+    assert 'end_year' not in variable
+    assert variable['timerange'] == '2002/2002'
