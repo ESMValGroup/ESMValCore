@@ -6,6 +6,7 @@ depth or height regions; constructing volumetric averages;
 import logging
 from copy import deepcopy
 
+import dask.array as da
 import iris
 import numpy as np
 
@@ -45,7 +46,8 @@ def extract_volume(cube, z_min, z_max):
 
     z_constraint = iris.Constraint(
         coord_values={
-            cube.coord(axis='Z'): lambda cell: zmin < cell.point < zmax})
+            cube.coord(axis='Z'): lambda cell: zmin < cell.point < zmax
+        })
 
     return cube.extract(z_constraint)
 
@@ -203,12 +205,12 @@ def volume_statistics(cube, operator):
     try:
         grid_volume = cube.cell_measure('ocean_volume').core_data()
     except iris.exceptions.CellMeasureNotFoundError:
-        logger.debug(
-            'Cell measure "ocean_volume" not found in cube. '
-            'Check fx_file availability.'
-        )
+        logger.debug('Cell measure "ocean_volume" not found in cube. '
+                     'Check fx_file availability.')
         logger.debug('Attempting to calculate grid cell volume...')
         grid_volume = calculate_volume(cube)
+    else:
+        grid_volume = da.broadcast_to(grid_volume, cube.shape)
 
     if cube.data.shape != grid_volume.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
@@ -232,8 +234,7 @@ def volume_statistics(cube, operator):
             # Calculate weighted mean for this time and layer
             if operator == 'mean':
                 total = cube[time_itr, z_itr].collapsed(
-                    [cube.coord(axis='z'),
-                     'longitude', 'latitude'],
+                    [cube.coord(axis='z'), 'longitude', 'latitude'],
                     iris.analysis.MEAN,
                     weights=grid_volume[time_itr, z_itr]).data
             else:
@@ -242,9 +243,9 @@ def volume_statistics(cube, operator):
             column.append(total)
 
             try:
-                layer_vol = np.ma.masked_where(
-                    cube[time_itr, z_itr].data.mask,
-                    grid_volume[time_itr, z_itr]).sum()
+                layer_vol = np.ma.masked_where(cube[time_itr, z_itr].data.mask,
+                                               grid_volume[time_itr,
+                                                           z_itr]).sum()
 
             except AttributeError:
                 # ####
@@ -265,10 +266,11 @@ def volume_statistics(cube, operator):
     # #####
     # Create a small dummy output array for the output cube
     if operator == 'mean':
-        src_cube = cube[:2, :2].collapsed([cube.coord(axis='z'),
-                                           'longitude', 'latitude'],
-                                          iris.analysis.MEAN,
-                                          weights=grid_volume[:2, :2], )
+        src_cube = cube[:2, :2].collapsed(
+            [cube.coord(axis='z'), 'longitude', 'latitude'],
+            iris.analysis.MEAN,
+            weights=grid_volume[:2, :2],
+        )
 
     return _create_cube_time(src_cube, result, times)
 
@@ -304,7 +306,8 @@ def depth_integration(cube):
 
     weights = thickness * ones
 
-    result = cube.collapsed(cube.coord(axis='z'), iris.analysis.SUM,
+    result = cube.collapsed(cube.coord(axis='z'),
+                            iris.analysis.SUM,
                             weights=weights)
 
     result.rename('Depth_integrated_' + str(cube.name()))
@@ -366,18 +369,16 @@ def extract_transect(cube, latitude=None, longitude=None):
 
     if lats.ndim == 2:
         raise ValueError(
-            'extract_transect: Not implemented for irregular arrays!'
-            + '\nTry regridding the data first.')
+            'extract_transect: Not implemented for irregular arrays!' +
+            '\nTry regridding the data first.')
 
     if isinstance(latitude, float) and isinstance(longitude, float):
         raise ValueError(
-            "extract_transect: Can't slice along lat and lon at the same time"
-        )
+            "extract_transect: Can't slice along lat and lon at the same time")
 
     if isinstance(latitude, list) and isinstance(longitude, list):
         raise ValueError(
-            "extract_transect: Can't reduce lat and lon at the same time"
-        )
+            "extract_transect: Can't reduce lat and lon at the same time")
 
     for dim_name, dim_cut, coord in zip(['latitude', 'longitude'],
                                         [latitude, longitude], [lats, lons]):
@@ -391,8 +392,10 @@ def extract_transect(cube, latitude=None, longitude=None):
         # Look for the second coordinate.
         if isinstance(dim_cut, list):
             coord_dim2 = cube.coord_dims(dim_name)[0]
-            second_coord_range = [coord.nearest_neighbour_index(dim_cut[0]),
-                                  coord.nearest_neighbour_index(dim_cut[1])]
+            second_coord_range = [
+                coord.nearest_neighbour_index(dim_cut[0]),
+                coord.nearest_neighbour_index(dim_cut[1])
+            ]
     # ####
     # Extracting the line of constant longitude/latitude
     slices = [slice(None) for i in cube.shape]
@@ -447,8 +450,7 @@ def extract_trajectory(cube, latitudes, longitudes, number_points=2):
 
     if len(latitudes) != len(longitudes):
         raise ValueError(
-            'Longitude & Latitude coordinates have different lengths'
-        )
+            'Longitude & Latitude coordinates have different lengths')
 
     if len(latitudes) == len(longitudes) == 2:
         minlat, maxlat = np.min(latitudes), np.max(latitudes)

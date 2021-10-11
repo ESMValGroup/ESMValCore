@@ -86,7 +86,8 @@ def test_empty_run(tmp_path):
         config['output_dir'] = log_dir
         yaml.safe_dump(config, file, sort_keys=False)
     with pytest.raises(RecipeError) as exc:
-        ESMValTool.run(recipe_file, config_file=config_file)
+        ESMValTool().run(
+            recipe_file, config_file=f"{tmp_path}/config-user.yml")
     assert str(exc.value) == 'The given recipe does not have any diagnostic.'
     log_file = os.path.join(log_dir,
                             os.listdir(log_dir)[0], 'run', 'main_log.txt')

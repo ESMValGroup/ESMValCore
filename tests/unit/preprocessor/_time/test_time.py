@@ -491,6 +491,35 @@ class TestClimatology(tests.Test):
         expected = np.array([(5 / 3)**0.5], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
+    def test_time_dependent_fx(self):
+        """Test average time dimension in time-dependent fx vars."""
+        data = np.ones((3, 3, 3))
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+        cube = self._create_cube(data, times, bounds)
+        measure = iris.coords.CellMeasure(data,
+                                          standard_name='ocean_volume',
+                                          var_name='volcello',
+                                          units='m3',
+                                          measure='volume')
+        ancillary_var = iris.coords.AncillaryVariable(
+            data,
+            standard_name='land_ice_area_fraction',
+            var_name='sftgif',
+            units='%')
+        cube.add_cell_measure(measure, (0, 1, 2))
+        cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
+        with self.assertLogs(level='DEBUG') as cm:
+            result = climate_statistics(cube, operator='mean', period='mon')
+        self.assertEqual(cm.records[0].getMessage(),
+                         'Averaging time dimension in measure volcello.')
+        self.assertEqual(
+            cm.records[1].getMessage(),
+            'Averaging time dimension in ancillary variable sftgif.')
+        self.assertEqual(result.cell_measure('ocean_volume').ndim, 2)
+        self.assertEqual(
+            result.ancillary_variable('land_ice_area_fraction').ndim, 2)
+
 
 class TestSeasonalStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
