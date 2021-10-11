@@ -100,7 +100,7 @@ def get_start_end_date(filename):
                                              'datetime')
 
     # As final resort, try to get the dates from the file contents
-    if start_date is None or end_date is None:
+    if (start_date is None or end_date is None) and Path(filename).exists():
         logger.debug("Must load file %s for daterange ", filename)
         cubes = iris.load(filename)
 

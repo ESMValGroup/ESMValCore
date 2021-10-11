@@ -142,7 +142,7 @@ def test_filled_recipe(tmp_path, patched_datafinder):
         config['output_dir'] = log_dir
         yaml.safe_dump(config, file, sort_keys=False)
     with pytest.raises(ValueError) as exc:
-        ESMValTool.run(
+        ESMValTool().run(
             recipe_file,
             config_file=f"{tmp_path}/config-user.yml",
             check_level='ignore')

@@ -79,7 +79,7 @@ def test_get_start_end_date(case):
         # If the filename is inconclusive or too difficult
         # we resort to reading the file, which fails here
         # because the file is not there.
-        with pytest.raises(IOError):
+        with pytest.raises(ValueError):
             get_start_end_date(filename)
     else:
         start, end = get_start_end_date(filename)
