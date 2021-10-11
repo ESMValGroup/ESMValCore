@@ -454,6 +454,7 @@ def get_output_file(variable, preproc_dir):
 
 def get_statistic_output_file(variable, preproc_dir):
     """Get multi model statistic filename depending on settings."""
+    variable['timerange'] = variable['timerange'].replace('/', '-')
     template = os.path.join(
         preproc_dir,
         '{diagnostic}',
