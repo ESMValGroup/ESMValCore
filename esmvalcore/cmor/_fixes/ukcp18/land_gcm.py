@@ -1,4 +1,4 @@
-"""Fix UKCP land-gcm data."""
+"""Fix UKCP land-rcm data."""
 from ..fix import Fix
 
 
@@ -22,10 +22,12 @@ class AllVars(Fix):
             if lats:
                 lat = cube.coord("latitude")
                 lat.var_name = "lat"
+                lat.coord_system = None
 
             lons = cube.coords("longitude")
             if lons:
                 lon = cube.coord("longitude")
                 lon.var_name = "lon"
+                lon.coord_system = None
 
         return cubes

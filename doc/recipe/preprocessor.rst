@@ -603,7 +603,6 @@ or alternatively:
           mask_out: sea
           fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
 
-<<<<<<< HEAD
 Additionally, it is possible to search across all ensembles and experiments (or any other keys)
 when specifying the fx variable, by using the ``*`` character, which is useful for some projects
 where the location of the fx files is not consistent.
@@ -613,10 +612,8 @@ special charcter in YAML. This functionality is only supported for time invarian
 (i.e. frequency ``fx``). Note also that if multiple folders of matching fx files are found,
 ESMValTool will default to ensemble r0i0p0 if it exists and then first folder found only 
 if it does not.
-=======
 More details on the argument ``fx_variables`` and its default values are given
 in :ref:`Fx variables as cell measures or ancillary variables`.
->>>>>>> origin/main
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
