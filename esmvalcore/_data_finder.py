@@ -64,8 +64,14 @@ def get_start_end_year(filename):
     context = r"(?:^|[-_]|$)"
     #
     # First check for a block of two potential dates
-    date_range_pattern = context + date_range_pattern + context
-    daterange = re.search(date_range_pattern, stem)
+    date_range_pattern_with_context = context + date_range_pattern + context
+    daterange = re.search(date_range_pattern_with_context, stem)
+    if not daterange:
+        # Retry with extended context for CMIP3
+        context = r"(?:^|[-_.]|$)"
+        date_range_pattern_with_context = (context + date_range_pattern +
+                                           context)
+        daterange = re.search(date_range_pattern_with_context, stem)
     if daterange:
         start_year = daterange.group("year")
         end_year = daterange.group("year_end")
