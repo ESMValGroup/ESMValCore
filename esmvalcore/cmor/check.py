@@ -366,6 +366,15 @@ class CMORCheck():
                 except iris.exceptions.CoordinateNotFoundError:
                     # Error reported at other stages
                     pass
+        for dim_name in self._cmor_var.extra_dims:
+            try:
+                for dim in self._cube.coord_dims(dim_name):
+                    self.report_debug_message(
+                        f'Extra dimension "{dim_name}" found')
+                    dimensions.append(dim)
+            except iris.exceptions.CoordinateNotFoundError:
+                # Error reported at other stages
+                pass
         rank += len(set(dimensions))
 
         # Check number of dimension coords matches rank
