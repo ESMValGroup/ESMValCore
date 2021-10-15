@@ -1,3 +1,4 @@
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -63,6 +64,28 @@ TEST_LOAD_EXTRA_FACETS = [
 def test_load_extra_facets(project, extra_facets_dir, expected):
     extra_facets = _load_extra_facets(project, extra_facets_dir)
     assert extra_facets == expected
+
+
+def test_get_extra_facets(tmp_path):
+
+    variable = {
+        'project': 'test_project',
+        'mip': 'test_mip',
+        'dataset': 'test_dataset',
+        'short_name': 'test_short_name',
+    }
+    extra_facets_file = tmp_path / f"{variable['project']}-test.yml"
+    extra_facets_file.write_text(
+        textwrap.dedent("""
+            {dataset}:
+              {mip}:
+                {short_name}:
+                  key: value
+            """).strip().format(**variable))
+
+    extra_facets = get_extra_facets(**variable, extra_facets_dir=(tmp_path, ))
+
+    assert extra_facets == {'key': 'value'}
 
 
 def test_get_extra_facets_cmip3():
