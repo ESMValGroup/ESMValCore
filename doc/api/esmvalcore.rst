@@ -10,5 +10,6 @@ library. This section documents the public API of ESMValCore.
 
    esmvalcore.cmor
    esmvalcore.esgf
+   esmvalcore.exceptions
    esmvalcore.preprocessor
    esmvalcore.api

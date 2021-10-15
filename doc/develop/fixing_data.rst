@@ -372,6 +372,41 @@ Native models
 The following models are natively supported through the procedure described
 above (:ref:`fix_structure`) and at :ref:`configure_native_models`:
 
+ICON
+~~~~
+
+The ESMValTool is able to read native `ICON
+<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output. Example
+dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
+       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
+       short_name: tas, var_type: atm_2d_ml, start_year: 2000, end_year: 2014}
+    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
+       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
+       short_name: ta, var_type: atm_3d_ml, start_year: 2000, end_year: 2014}
+
+Please note the duplication of the name ``ICON`` in ``project`` and
+``dataset``, which is necessary to comply with ESMValTool's data finding and
+CMORizing functionalities.
+
+Similar to any other fix, the ICON fix allows the use of :ref:`extra
+facets<extra_facets>`. By default, the file :download:`icon-mapping.yml
+</../esmvalcore/_config/extra_facets/icon-mapping.yml>` is used for that
+purpose. For some variables, extra facets are necessary; otherwise ESMValTool
+cannot read them properly. Supported keys for extra facets are:
+
+============= ===============================================================
+Key           Description
+============= ===============================================================
+``latitude``  Standard name of the latitude coordinate in the raw input file
+``longitude`` Standard name of the longitude coordinate in the raw input file
+``raw_name``  Variable name of the variables in the raw input file
+============= ===============================================================
+
 IPSL-CM6
 ~~~~~~~~
 
@@ -381,10 +416,10 @@ formats) are supported, and should be configured in recipes as e.g.:
 .. code-block:: yaml
 
   datasets:
-    - {simulation: CM61-LR-hist-03.1950, exp: piControl, freq: Analyse/TS_MO,
+    - {simulation: CM61-LR-hist-03.1950, exp: piControl, out: Analyse, freq: TS_MO,
        account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
        root: /thredds/tgcc/store}
-    - {simulation: CM61-LR-hist-03.1950, exp: historical, freq: Output/MO,
+    - {simulation: CM61-LR-hist-03.1950, exp: historical, out: Output, freq: MO,
        account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
        root: /thredds/tgcc/store}
 
