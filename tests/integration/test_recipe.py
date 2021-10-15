@@ -1195,6 +1195,39 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
             assert False, f"invalid task {task.name}"
 
 
+def test_multi_model_filename(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          default: &default
+            multi_model_statistics:
+              span: overlap
+              statistics: [mean ]
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: default
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2, start_year: 2000, end_year: 2006}
+                  - {dataset: EC-EARTH,  timerange: '2001/P2Y'}
+                  - {dataset: MPI-ESM-LR, timerange: '1999/2005'}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    task = recipe.tasks.pop()
+    for product in task.products:
+        filename = (
+          product.settings['multi_model_statistics']
+          ['output_products']['mean'].filename)
+        assert '1999-2006' in filename
+
+
 def test_derive(tmp_path, patched_datafinder, config_user):
 
     content = dedent("""

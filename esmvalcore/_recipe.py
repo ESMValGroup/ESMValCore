@@ -643,8 +643,10 @@ def _get_statistic_attributes(products):
     # Ensure timerange attribute is available
     for product in products:
         timerange = product.attributes['timerange']
-        start = int(timerange.split('/')[0])
-        end = int(timerange.split('/')[1])
+        start, end = _parse_period(timerange)
+        if start is None and end is None:
+            start = int(timerange.split('/')[0])
+            end = int(timerange.split('/')[1])
         if 'timerange' not in attributes:
             attributes['timerange'] = f'{start}/{end}'
         else:
