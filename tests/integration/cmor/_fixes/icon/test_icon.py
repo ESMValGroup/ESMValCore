@@ -1,6 +1,4 @@
 """Tests for the ICON on-the-fly CMORizer."""
-from functools import lru_cache
-
 import iris
 import numpy as np
 import pytest
@@ -12,7 +10,6 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
 
-@lru_cache
 @pytest.fixture
 def cubes_2d(test_data_path):
     """2D sample cubes."""
@@ -20,7 +17,6 @@ def cubes_2d(test_data_path):
     return iris.load(str(nc_path))
 
 
-@lru_cache
 @pytest.fixture
 def cubes_3d(test_data_path):
     """3D sample cubes."""
@@ -28,7 +24,6 @@ def cubes_3d(test_data_path):
     return iris.load(str(nc_path))
 
 
-@lru_cache
 @pytest.fixture
 def cubes_grid(test_data_path):
     """Grid description sample cubes."""
