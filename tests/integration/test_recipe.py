@@ -958,12 +958,12 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user,
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
     filename = variable.pop('filename').split('/')[-1]
     assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
-            f'pr_{output_time}.nc')
+            f'pr_gn_{output_time}.nc')
     fx_variable = (
         recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
     fx_filename = fx_variable.pop('filename').split('/')[-1]
     assert (fx_filename ==
-            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella.nc')
+            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
 
 
 @pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
@@ -996,12 +996,12 @@ def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
     filename = variable.pop('filename').split('/')[-1]
     assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
-            f'pr_{output_time}.nc')
+            f'pr_gn_{output_time}.nc')
     fx_variable = (
         recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
     fx_filename = fx_variable.pop('filename').split('/')[-1]
     assert (fx_filename ==
-            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella.nc')
+            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
 
 
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,
