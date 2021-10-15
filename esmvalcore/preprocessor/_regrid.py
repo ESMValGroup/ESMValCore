@@ -473,12 +473,24 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     # Return non-regridded cube if horizontal grid is the same.
     if not _horizontal_grid_is_close(cube, target_grid):
+        original_dtype = cube.core_data().dtype
 
-        # Perform the horizontal regridding.
+        # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+
+        # Preserve dtype for 'unstructured_nearest' scheme
+        if scheme == 'unstructured_nearest':
+            try:
+                cube.data = cube.core_data().astype(original_dtype,
+                                                    casting='same_kind')
+            except TypeError as exc:
+                logger.warning(
+                    "dtype of data changed during regridding from '%s' to "
+                    "'%s': %s", original_dtype, cube.core_data().dtype,
+                    str(exc))
 
     return cube
 

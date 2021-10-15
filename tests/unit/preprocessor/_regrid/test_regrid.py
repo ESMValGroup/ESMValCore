@@ -52,7 +52,12 @@ class Test(tests.Test):
         self.coord = mock.sentinel.coord
         self.coords = mock.Mock(return_value=[self.coord])
         self.remove_coord = mock.Mock()
-        self.regridded_cube = mock.sentinel.regridded_cube
+        self.regridded_cube = mock.Mock()
+        self.regridded_cube.data = mock.sentinel.data_no_astype
+        self.regridded_cube_data = mock.Mock()
+        self.regridded_cube_data.astype.return_value = (
+            mock.sentinel.data_after_astype)
+        self.regridded_cube.core_data.return_value = self.regridded_cube_data
         self.regrid = mock.Mock(return_value=self.regridded_cube)
         self.src_cube = mock.Mock(
             spec=iris.cube.Cube,
@@ -110,6 +115,13 @@ class Test(tests.Test):
         for scheme in self.regrid_schemes:
             result = regrid(self.src_cube, self.tgt_grid, scheme)
             self.assertEqual(result, self.regridded_cube)
+
+            # For 'unstructured_nearest', a cube.data.astype() is called to
+            # conserve the dtype
+            if scheme == 'unstructured_nearest':
+                self.assertEqual(result.data, mock.sentinel.data_after_astype)
+            else:
+                self.assertEqual(result.data, mock.sentinel.data_no_astype)
             self._check(self.tgt_grid, scheme)
 
     def test_regrid__cell_specification(self):
@@ -123,6 +135,7 @@ class Test(tests.Test):
         for spec in specs:
             result = regrid(self.src_cube, spec, scheme)
             self.assertEqual(result, self.regridded_cube)
+            self.assertEqual(result.data, mock.sentinel.data_no_astype)
             self._check(spec, scheme, spec=True)
         self.assertEqual(set(_CACHE.keys()), set(specs))
 

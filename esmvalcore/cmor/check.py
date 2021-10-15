@@ -738,7 +738,12 @@ class CMORCheck():
                                          valid_max)
 
         if l_fix_coord_value:
-            if coord.ndim == 1:
+            # cube.intersection only works for cells with 0 or 2 bounds
+            # Note: nbounds==0 means there are no bounds given, nbounds==2
+            # implies a regular grid with bounds in the grid direction,
+            # nbounds>2 implies an irregular grid with bounds given as vertices
+            # of the cell polygon.
+            if coord.ndim == 1 and coord.nbounds in (0, 2):
                 lon_extent = iris.coords.CoordExtent(coord, 0.0, 360., True,
                                                      False)
                 self._cube = self._cube.intersection(lon_extent)
@@ -783,6 +788,11 @@ class CMORCheck():
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
         if coord_info.requested:
+            if coord.points.ndim != 1:
+                self.report_warning(
+                    "Cannot check requested values of {}D coordinate {} since "
+                    "it is not 1D", coord.points.ndim, var_name)
+                return
             try:
                 cmor_points = np.array(coord_info.requested, dtype=float)
             except ValueError:
