@@ -321,7 +321,6 @@ def hourly_statistics(cube, hours, operator='mean'):
     result.remove_coord('day_of_year')
     result.remove_coord('year')
 
-    _aggregate_time_fx(result, cube)
     return result
 
 
@@ -355,7 +354,6 @@ def daily_statistics(cube, operator='mean'):
 
     result.remove_coord('day_of_year')
     result.remove_coord('year')
-    _aggregate_time_fx(result, cube)
     return result
 
 

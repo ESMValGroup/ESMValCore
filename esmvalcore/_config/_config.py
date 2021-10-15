@@ -77,7 +77,8 @@ def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
     extra_facets = {}
     for dataset_ in pattern_filter(project_details, dataset):
         for mip_ in pattern_filter(project_details[dataset_], mip):
-            for var in pattern_filter(project_details[dataset_], short_name):
+            for var in pattern_filter(project_details[dataset_][mip_],
+                                      short_name):
                 facets = project_details[dataset_][mip_][var]
                 extra_facets.update(facets)
 

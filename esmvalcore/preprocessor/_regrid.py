@@ -473,12 +473,24 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     # Return non-regridded cube if horizontal grid is the same.
     if not _horizontal_grid_is_close(cube, target_grid):
+        original_dtype = cube.core_data().dtype
 
-        # Perform the horizontal regridding.
+        # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+
+        # Preserve dtype for 'unstructured_nearest' scheme
+        if scheme == 'unstructured_nearest':
+            try:
+                cube.data = cube.core_data().astype(original_dtype,
+                                                    casting='same_kind')
+            except TypeError as exc:
+                logger.warning(
+                    "dtype of data changed during regridding from '%s' to "
+                    "'%s': %s", original_dtype, cube.core_data().dtype,
+                    str(exc))
 
     return cube
 
@@ -660,7 +672,7 @@ def _preserve_fx_vars(cube, result):
                 add_cell_measure(result, measure, measure.measure)
     if cube.ancillary_variables():
         for ancillary_var in cube.ancillary_variables():
-            ancillary_dims = cube.ancillary_variable_dims(ancillary_var)
+            ancillary_dims = set(cube.ancillary_variable_dims(ancillary_var))
             if vertical_dim.intersection(ancillary_dims):
                 logger.warning(
                     'Discarding use of z-axis dependent ancillary variable %s '
