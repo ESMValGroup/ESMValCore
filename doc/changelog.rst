@@ -67,11 +67,6 @@ Preprocessor
 -  Implemented fully lazy climate_statistics (`#1194 <https://github.com/ESMValGroup/ESMValCore/pull/1194>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Run the multimodel statistics preprocessor last (`#1299 <https://github.com/ESMValGroup/ESMValCore/pull/1299>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
-Notebook API (experimental)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
 Automatic testing
 ~~~~~~~~~~~~~~~~~
 
