@@ -1,4 +1,6 @@
 """Test individual fix functions."""
+import iris
+import iris.aux_factory  # noqa
 import pytest
 
 import esmvalcore.cmor._fixes.shared as shared
