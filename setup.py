@@ -52,7 +52,7 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.0.2',
+        'scitools-iris>=3.1.0',
         'shapely[vectorized]',
         'stratify',
         'yamale',
