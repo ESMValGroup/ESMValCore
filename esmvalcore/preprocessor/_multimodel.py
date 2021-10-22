@@ -214,6 +214,10 @@ def _combine(cubes):
             coord.long_name = None
             coord.attributes = None
 
+        for auxcoord in cube.aux_coords:
+            if (auxcoord.var_name == 'p0'):
+                cube.remove_coord(auxcoord)
+
     cubes = iris.cube.CubeList(cubes)
 
     merged_cube = cubes.merge_cube()
