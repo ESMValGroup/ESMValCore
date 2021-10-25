@@ -215,7 +215,7 @@ def _combine(cubes):
             coord.attributes = None
 
         for auxcoord in cube.aux_coords:
-            if (auxcoord.var_name == 'p0'):
+            if (auxcoord.var_name == 'p0' or auxcoord.var_name == 'ptop'):
                 cube.remove_coord(auxcoord)
 
     cubes = iris.cube.CubeList(cubes)
