@@ -25,6 +25,7 @@ jobs:
     working_directory: /test
     docker:
       - image: esmvalgroup/esmvalcore:development
+    parallelism: 4
     steps:
       - checkout
       - restore_cache:
@@ -62,6 +63,7 @@ jobs:
     working_directory: /install
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     steps:
       - checkout
       - check_changes
@@ -138,6 +140,7 @@ jobs:
     working_directory: /develop
     docker:
       - image: continuumio/miniconda3
+    parallelism: 4
     steps:
       - checkout
       - check_changes
