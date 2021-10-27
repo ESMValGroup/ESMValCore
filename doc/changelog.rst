@@ -3,8 +3,25 @@ Changelog
 
 .. _changelog-v2-4-0:
 
-v2.4.0
-------
+v2.4.0rc2
+---------
+
+This release includes
+
+Bug fixes
+~~~~~~~~~
+
+-  Add a custom `date2num` function to deal with changes in cftime (`#1373 <https://github.com/ESMValGroup/ESMValCore/pull/1373>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Update changelog for 2.4.0 (`#1366 <https://github.com/ESMValGroup/ESMValCore/pull/1366>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+-  Update to new ESMValTool logo (`#1374 <https://github.com/ESMValGroup/ESMValCore/pull/1374>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+
+
+v2.4.0rc1
+---------
 
 This release includes
 
