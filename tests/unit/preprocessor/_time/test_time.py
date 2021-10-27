@@ -64,7 +64,6 @@ def add_auxiliary_coordinate(cubelist):
 
 class TestExtractMonth(tests.Test):
     """Tests for extract_month."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -98,7 +97,6 @@ class TestExtractMonth(tests.Test):
 
 class TestTimeSlice(tests.Test):
     """Tests for extract_time."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -170,7 +168,6 @@ class TestTimeSlice(tests.Test):
 
 class TestClipStartEndYear(tests.Test):
     """Tests for clip_start_end_year."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -214,7 +211,6 @@ class TestClipStartEndYear(tests.Test):
 
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -299,7 +295,6 @@ class TestExtractSeason(tests.Test):
 
 class TestClimatology(tests.Test):
     """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
-
     @staticmethod
     def _create_cube(data, times, bounds):
         time = iris.coords.DimCoord(times,
@@ -496,10 +491,38 @@ class TestClimatology(tests.Test):
         expected = np.array([(5 / 3)**0.5], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
+    def test_time_dependent_fx(self):
+        """Test average time dimension in time-dependent fx vars."""
+        data = np.ones((3, 3, 3))
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+        cube = self._create_cube(data, times, bounds)
+        measure = iris.coords.CellMeasure(data,
+                                          standard_name='ocean_volume',
+                                          var_name='volcello',
+                                          units='m3',
+                                          measure='volume')
+        ancillary_var = iris.coords.AncillaryVariable(
+            data,
+            standard_name='land_ice_area_fraction',
+            var_name='sftgif',
+            units='%')
+        cube.add_cell_measure(measure, (0, 1, 2))
+        cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
+        with self.assertLogs(level='DEBUG') as cm:
+            result = climate_statistics(cube, operator='mean', period='mon')
+        self.assertEqual(cm.records[0].getMessage(),
+                         'Averaging time dimension in measure volcello.')
+        self.assertEqual(
+            cm.records[1].getMessage(),
+            'Averaging time dimension in ancillary variable sftgif.')
+        self.assertEqual(result.cell_measure('ocean_volume').ndim, 2)
+        self.assertEqual(
+            result.ancillary_variable('land_ice_area_fraction').ndim, 2)
+
 
 class TestSeasonalStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -584,10 +607,37 @@ class TestSeasonalStatistics(tests.Test):
         expected = np.array([1])
         assert_array_equal(result.data, expected)
 
+    def test_time_dependent_fx(self):
+        """Test average time dimension in time-dependent fx vars."""
+        data = np.ones((12, 3, 3))
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+        measure = iris.coords.CellMeasure(data,
+                                          standard_name='ocean_volume',
+                                          var_name='volcello',
+                                          units='m3',
+                                          measure='volume')
+        ancillary_var = iris.coords.AncillaryVariable(
+            data,
+            standard_name='land_ice_area_fraction',
+            var_name='sftgif',
+            units='%')
+        cube.add_cell_measure(measure, (0, 1, 2))
+        cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
+        with self.assertLogs(level='DEBUG') as cm:
+            result = seasonal_statistics(cube, operator='mean')
+        self.assertEqual(cm.records[0].getMessage(),
+                         'Averaging time dimension in measure volcello.')
+        self.assertEqual(
+            cm.records[1].getMessage(),
+            'Averaging time dimension in ancillary variable sftgif.')
+        self.assertEqual(result.cell_measure('ocean_volume').ndim, 2)
+        self.assertEqual(
+            result.ancillary_variable('land_ice_area_fraction').ndim, 2)
+
 
 class TestMonthlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -652,10 +702,37 @@ class TestMonthlyStatistics(tests.Test):
         expected = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45])
         assert_array_equal(result.data, expected)
 
+    def test_time_dependent_fx(self):
+        """Test average time dimension in time-dependent fx vars."""
+        data = np.ones((3, 3, 3))
+        times = np.array([15., 45., 75.])
+        cube = self._create_cube(data, times)
+        measure = iris.coords.CellMeasure(data,
+                                          standard_name='ocean_volume',
+                                          var_name='volcello',
+                                          units='m3',
+                                          measure='volume')
+        ancillary_var = iris.coords.AncillaryVariable(
+            data,
+            standard_name='land_ice_area_fraction',
+            var_name='sftgif',
+            units='%')
+        cube.add_cell_measure(measure, (0, 1, 2))
+        cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
+        with self.assertLogs(level='DEBUG') as cm:
+            result = monthly_statistics(cube, operator='mean')
+        self.assertEqual(cm.records[0].getMessage(),
+                         'Averaging time dimension in measure volcello.')
+        self.assertEqual(
+            cm.records[1].getMessage(),
+            'Averaging time dimension in ancillary variable sftgif.')
+        self.assertEqual(result.cell_measure('ocean_volume').ndim, 2)
+        self.assertEqual(
+            result.ancillary_variable('land_ice_area_fraction').ndim, 2)
+
 
 class TestHourlyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -719,7 +796,6 @@ class TestHourlyStatistics(tests.Test):
 
 class TestDailyStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -783,7 +859,6 @@ class TestDailyStatistics(tests.Test):
 
 class TestRegridTimeYearly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -841,7 +916,6 @@ class TestRegridTimeYearly(tests.Test):
 
 class TestRegridTimeMonthly(tests.Test):
     """Tests for regrid_time with monthly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -909,7 +983,6 @@ class TestRegridTimeMonthly(tests.Test):
 
 class TestRegridTimeDaily(tests.Test):
     """Tests for regrid_time with daily frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -963,7 +1036,6 @@ class TestRegridTimeDaily(tests.Test):
 
 class TestRegridTime6Hourly(tests.Test):
     """Tests for regrid_time with 6-hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1017,7 +1089,6 @@ class TestRegridTime6Hourly(tests.Test):
 
 class TestRegridTime3Hourly(tests.Test):
     """Tests for regrid_time with 3-hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1071,7 +1142,6 @@ class TestRegridTime3Hourly(tests.Test):
 
 class TestRegridTime1Hourly(tests.Test):
     """Tests for regrid_time with hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube_1 = _create_sample_cube()
@@ -1125,7 +1195,6 @@ class TestRegridTime1Hourly(tests.Test):
 
 class TestTimeseriesFilter(tests.Test):
     """Tests for regrid_time with hourly frequency."""
-
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -1230,6 +1299,36 @@ def test_decadal_average(existing_coord):
     assert_array_equal(result.data, expected)
     expected_time = np.array([1800., 5400.])
     assert_array_equal(result.coord('time').points, expected_time)
+
+
+@pytest.mark.parametrize('existing_coord', [True, False])
+def test_decadal_average_time_dependent_fx(existing_coord):
+    """Test for decadal average."""
+    cube = make_time_series(number_years=20)
+    measure = iris.coords.CellMeasure(cube.data,
+                                      standard_name='ocean_volume',
+                                      var_name='volcello',
+                                      units='m3',
+                                      measure='volume')
+    ancillary_var = iris.coords.AncillaryVariable(
+        cube.data,
+        standard_name='land_ice_area_fraction',
+        var_name='sftgif',
+        units='%')
+    cube.add_cell_measure(measure, 0)
+    cube.add_ancillary_variable(ancillary_var, 0)
+    if existing_coord:
+        def get_decade(coord, value):
+            """Get decades from cube."""
+            date = coord.units.num2date(value)
+            return date.year - date.year % 10
+
+        iris.coord_categorisation.add_categorised_coord(
+            cube, 'decade', 'time', get_decade)
+    result = decadal_statistics(cube)
+    assert result.cell_measure('ocean_volume').data.shape == (1,)
+    assert result.ancillary_variable(
+        'land_ice_area_fraction').data.shape == (1,)
 
 
 @pytest.mark.parametrize('existing_coord', [True, False])
@@ -1576,7 +1675,6 @@ def test_climate_statistics_complex_cube_mean():
 
 class TestResampleHours(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -1666,7 +1764,6 @@ class TestResampleHours(tests.Test):
 
 class TestResampleTime(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
-
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,

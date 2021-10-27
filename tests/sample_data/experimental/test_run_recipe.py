@@ -9,7 +9,7 @@ import iris
 import pytest
 
 from esmvalcore._config import TAGS
-from esmvalcore._recipe import RecipeError
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (
     DataFile,

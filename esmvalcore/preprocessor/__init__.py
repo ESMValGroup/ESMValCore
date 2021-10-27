@@ -384,16 +384,17 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
-        if self._cubes is not None:
-            self.files = preprocess(self._cubes, 'save',
-                                    **self.settings['save'])
-            self.files = preprocess(self.files, 'cleanup',
-                                    **self.settings.get('cleanup', {}))
+        self.files = preprocess(self._cubes, 'save',
+                                **self.settings['save'])
+        self.files = preprocess(self.files, 'cleanup',
+                                **self.settings.get('cleanup', {}))
 
     def close(self):
         """Close the file."""
-        self.save()
-        self._cubes = None
+        if self._cubes is not None:
+            self.save()
+            self._cubes = None
+            self.save_provenance()
 
     @property
     def is_closed(self):
