@@ -789,9 +789,8 @@ def regrid_time(cube, frequency):
                               0) for t in time_c
         ]
 
-    cube.coord('time').points = [
-        date2num(cl, cube.coord('time').units) for cl in time_cells
-    ]
+    coord = cube.coord('time')
+    cube.coord('time').points = date2num(time_cells, coord.units, coord.dtype)
 
     # uniformize bounds
     cube.coord('time').bounds = None
