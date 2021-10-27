@@ -20,7 +20,11 @@ def date2num(date, unit, dtype=np.float64):
     :class:`numpy.ndarray` of type `dtype`
         the return value of `unit.date2num` with the requested dtype
     """
-    return unit.date2num(date).astype(dtype)
+    num = unit.date2num(date)
+    try:
+        return num.astype(dtype)
+    except AttributeError:
+        return dtype(num)
 
 
 def var_name_constraint(var_name):
