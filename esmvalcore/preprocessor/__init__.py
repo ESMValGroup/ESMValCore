@@ -142,6 +142,7 @@ __all__ = [
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
+    'flux_to_total',
     'hourly_statistics',
     'daily_statistics',
     'monthly_statistics',
