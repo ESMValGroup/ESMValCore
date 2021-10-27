@@ -4,6 +4,19 @@ import numpy as np
 
 
 def date2num(date, unit, dtype=np.float64):
+    """Custom date2num function to guarantee return dtype.
+
+    Arguments
+    ---------
+    date : :class:`datetime.datetime` or :class:`cftime.datetime`
+    unit : :class:`cf_units.Unit`
+    dtype : a numpy dtype
+
+    Returns
+    -------
+    :class:`numpy.ndarray` of type `dtype`
+        the return value of `unit.date2num` with the requested dtype
+    """
     return unit.date2num(date).astype(dtype)
 
 
