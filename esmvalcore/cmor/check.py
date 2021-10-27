@@ -1,6 +1,6 @@
 """Module for checking iris cubes against their CMOR definitions."""
-from datetime import datetime
 import logging
+from datetime import datetime
 from enum import IntEnum
 
 import cf_units
@@ -40,15 +40,20 @@ def _get_time_bounds(time, freq):
         year = time.cell(step).point.year
         if freq in ['mon', 'mo']:
             next_month, next_year = _get_next_month(month, year)
-            min_bound = date2num(datetime(year, month, 1, 0, 0), time.units)
+            min_bound = date2num(datetime(year, month, 1, 0, 0),
+                                 time.units, time.dtype)
             max_bound = date2num(datetime(next_year, next_month, 1, 0, 0),
-                                 time.units)
+                                 time.units, time.dtype)
         elif freq == 'yr':
-            min_bound = date2num(datetime(year, 1, 1, 0, 0), time.units)
-            max_bound = date2num(datetime(year + 1, 1, 1, 0, 0), time.units)
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 1, 1, 1, 0, 0),
+                                 time.units, time.dtype)
         elif freq == 'dec':
-            min_bound = date2num(datetime(year, 1, 1, 0, 0), time.units)
-            max_bound = date2num(datetime(year + 10, 1, 1, 0, 0), time.units)
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 10, 1, 1, 0, 0),
+                                 time.units, time.dtype)
         else:
             delta = {
                 'day': 12 / 24,
