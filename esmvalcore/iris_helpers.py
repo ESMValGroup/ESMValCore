@@ -1,5 +1,10 @@
 """Auxiliary functions for :mod:`iris`."""
 import iris
+import numpy as np
+
+
+def date2num(date, unit, dtype=np.float64):
+    return unit.date2num(date).astype(dtype)
 
 
 def var_name_constraint(var_name):
