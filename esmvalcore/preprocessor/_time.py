@@ -4,8 +4,8 @@ Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
 import copy
-import datetime
 import logging
+from datetime import datetime
 from warnings import filterwarnings
 
 import dask.array as da
@@ -764,29 +764,29 @@ def regrid_time(cube, frequency):
     # standardize time points
     time_c = [cell.point for cell in cube.coord('time').cells()]
     if frequency == 'yr':
-        time_cells = [datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c]
+        time_cells = [datetime(t.year, 7, 1, 0, 0, 0) for t in time_c]
     elif frequency == 'mon':
         time_cells = [
-            datetime.datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
+            datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
         ]
     elif frequency == 'day':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
+            datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
         ]
     elif frequency == '1hr':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour, 0, 0)
+            datetime(t.year, t.month, t.day, t.hour, 0, 0)
             for t in time_c
         ]
     elif frequency == '3hr':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 3, 0,
-                              0) for t in time_c
+            datetime(t.year, t.month, t.day, t.hour - t.hour % 3, 0, 0)
+            for t in time_c
         ]
     elif frequency == '6hr':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 6, 0,
-                              0) for t in time_c
+            datetime(t.year, t.month, t.day, t.hour - t.hour % 6, 0, 0)
+            for t in time_c
         ]
 
     coord = cube.coord('time')
