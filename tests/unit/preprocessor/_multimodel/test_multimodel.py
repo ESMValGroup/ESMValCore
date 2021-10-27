@@ -592,9 +592,11 @@ def test_daily_inconsistent_calendars():
     start = date2num(datetime(1852, 1, 1), ref_standard)
 
     # 1852 is a leap year, and include 1 extra day at the end
-    leapdates = cftime.num2date(start + np.arange(367), ref_standard)
+    leapdates = cftime.num2date(start + np.arange(367),
+                                ref_standard.name, ref_standard.calendar)
 
-    noleapdates = cftime.num2date(start + np.arange(365), ref_noleap)
+    noleapdates = cftime.num2date(start + np.arange(365),
+                                  ref_noleap.name, ref_noleap.calendar)
 
     leapcube = generate_cube_from_dates(
         leapdates,
