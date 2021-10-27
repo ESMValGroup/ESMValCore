@@ -18,6 +18,7 @@ import numpy as np
 from iris.time import PartialDateTime
 
 from esmvalcore.cmor.check import _get_time_bounds
+from esmvalcore.iris_helpers import date2num
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
@@ -789,7 +790,7 @@ def regrid_time(cube, frequency):
         ]
 
     cube.coord('time').points = [
-        cube.coord('time').units.date2num(cl) for cl in time_cells
+        date2num(cl, cube.coord('time').units) for cl in time_cells
     ]
 
     # uniformize bounds

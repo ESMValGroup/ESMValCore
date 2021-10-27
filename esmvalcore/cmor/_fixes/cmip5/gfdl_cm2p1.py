@@ -3,6 +3,8 @@ from copy import deepcopy
 import numpy as np
 import cftime
 
+from esmvalcore.iris_helpers import date2num
+
 from ..fix import Fix
 from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
 from .cesm1_cam5 import Cl as BaseCl
@@ -94,7 +96,7 @@ class Sit(Fix):
                 else cftime.DatetimeJulian(c.year + 1, 1, 1)
                 for c in times
             ]
-            time.bounds = time.units.date2num(np.stack([starts, ends], -1))
+            time.bounds = date2num(np.stack([starts, ends], -1), time.units)
         return cubes
 
     def _fix_required(self, time):
