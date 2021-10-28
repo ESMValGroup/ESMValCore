@@ -85,16 +85,21 @@ jobs:
             # Install
             conda env create >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
+            no_output_timeout: 30m
+      - run:
+        command: |
             pip install .[test] > /logs/install.txt 2>&1
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test installation
-            pytest -n 2 -m "not sequential"
-            pytest -n 0 -m "sequential"
-            esmvaltool version
-          no_output_timeout: 30m
+      - run:
+          command: pytest -n 2 -m "not sequential"
+      - run:
+          command: pytest -n 0 -m "sequential"
+      - run:
+        command: esmvaltool version
       - save_cache:
           key: install-{{ .Branch }}
           paths:
