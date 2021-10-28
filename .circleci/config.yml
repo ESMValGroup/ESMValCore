@@ -85,7 +85,7 @@ jobs:
             # Install
             conda env create >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
-            no_output_timeout: 30m
+          no_output_timeout: 30m
       - run:
         command: |
             pip install .[test] > /logs/install.txt 2>&1
