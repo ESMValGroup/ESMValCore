@@ -3,7 +3,7 @@ import iris
 from cf_units import Unit
 
 from ..fix import Fix
-from ..shared import add_sigma_factory, round_coordinates
+from ..shared import round_coordinates
 
 
 class AllVars(Fix):
@@ -36,26 +36,3 @@ class AllVars(Fix):
         round_coordinates(cubes, 4, coord_names=['longitude'])
 
         return cubes
-
-
-class Cl(Fix):
-    """Fixes for ``cl``."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata.
-
-        Add pressure level coordinate.
-
-        Parameters
-        ----------
-        cubes : iris.cube.CubeList
-            Input cubes.
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        cube = self.get_cube_from_list(cubes)
-        add_sigma_factory(cube)
-        return iris.cube.CubeList([cube])
