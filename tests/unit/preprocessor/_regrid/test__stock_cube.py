@@ -1,8 +1,5 @@
-"""
-Unit tests for the :func:`esmvalcore.preprocessor.regrid._stock_cube`
-function.
-
-"""
+"""Unit tests for the :func:`esmvalcore.preprocessor.regrid._stock_cube`
+function."""
 
 import unittest
 from unittest import mock
@@ -11,9 +8,15 @@ import iris
 import numpy as np
 
 import tests
-from esmvalcore.preprocessor._regrid import (_LAT_MAX, _LAT_MIN, _LAT_RANGE,
-                                             _LON_MAX, _LON_MIN, _LON_RANGE)
-from esmvalcore.preprocessor._regrid import _global_stock_cube
+from esmvalcore.preprocessor._regrid import (
+    _LAT_MAX,
+    _LAT_MIN,
+    _LAT_RANGE,
+    _LON_MAX,
+    _LON_MIN,
+    _LON_RANGE,
+    _global_stock_cube,
+)
 
 
 class Test(tests.Test):
@@ -40,6 +43,7 @@ class Test(tests.Test):
         [args], kwargs = call_lats
         self.assert_array_equal(args, expected_lat_points)
         expected_lat_kwargs = dict(standard_name='latitude',
+                                   long_name='latitude',
                                    units='degrees_north',
                                    var_name='lat',
                                    circular=False)
@@ -49,6 +53,7 @@ class Test(tests.Test):
         [args], kwargs = call_lons
         self.assert_array_equal(args, expected_lon_points)
         expected_lon_kwargs = dict(standard_name='longitude',
+                                   long_name='longitude',
                                    units='degrees_east',
                                    var_name='lon',
                                    circular=False)
