@@ -245,5 +245,15 @@ def test_regrid_is_skipped_if_grids_are_the_same():
     assert expected_different_cube is not cube
 
 
+def test_lat_lon_long_names_are_set():
+    """Test that lat and lon long_names are set."""
+    cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    scheme = 'linear'
+
+    regridded = regrid(cube, target_grid='5x5', scheme=scheme)
+    assert regridded.coord('latitude').long_name == 'latitude'
+    assert regridded.coord('longitude').long_name == 'longitude'
+
+
 if __name__ == '__main__':
     unittest.main()

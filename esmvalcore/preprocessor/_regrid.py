@@ -129,12 +129,14 @@ def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
     """
     lats = iris.coords.DimCoord(latdata,
                                 standard_name='latitude',
+                                long_name='latitude',
                                 units='degrees_north',
                                 var_name='lat',
                                 circular=circular)
 
     lons = iris.coords.DimCoord(londata,
                                 standard_name='longitude',
+                                long_name='longitude',
                                 units='degrees_east',
                                 var_name='lon',
                                 circular=circular)
