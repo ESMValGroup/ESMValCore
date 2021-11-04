@@ -3,6 +3,22 @@ Changelog
 
 .. _changelog-v2-4-0:
 
+v2.4.0rc3
+---------
+
+This release includes
+
+Bug fixes
+~~~~~~~~~
+
+-  Removed custom version of `AtmosphereSigmaFactory` (`#1382 <https://github.com/ESMValGroup/ESMValCore/pull/1382>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Update version number for third release candidate 2.4.0rc3 (`#1384 <https://github.com/ESMValGroup/ESMValCore/pull/1384>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+
+
 v2.4.0rc2
 ---------
 
