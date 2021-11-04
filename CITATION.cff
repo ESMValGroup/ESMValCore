@@ -169,11 +169,11 @@ authors:
 
 
 cff-version: "1.0.3"
-date-released: 2021-10-27
+date-released: 2021-11-04
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.4.0rc2"
+version: "v2.4.0rc3"
 ...
