@@ -11,7 +11,7 @@ units:             W m-2
 cell_methods:      time: mean
 cell_measures:     area: areacella
 long_name:         Surface Net downward Shortwave Radiation
-comment:           at the top of the atmosphere (to be compared with satellite measurements)
+comment:           amount of solar radiation that reaches the surface of the Earth minus the amount reflected by the Earth's surface
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
