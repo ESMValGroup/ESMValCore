@@ -3,6 +3,7 @@
 Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
+import calendar as clr
 import copy
 import datetime
 import logging
@@ -149,25 +150,137 @@ def _convert_duration(duration, freq, time_format, reference):
     delta = duration_unit.convert(duration, reference)
     return delta
 
+def _months_to_days(reference, duration, leap=False):
+    standard = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    index = reference - 1
+    days = 0
+    if leap:
+        standard[2] = 29   
+    if duration > 0:
+        # roll reference month to the beginning
+        # of the array and count forward.
+        reorder = np.roll(standard, -index)
+        days = sum(reorder[0:duration])
+    if duration < 0:
+        # roll reference month to the end of
+        # the array and count backwards.
+        reorder = np.roll(standard, len(standard) - reference)
+        indices = np.arange(len(standard)-2, -duration, -1)
+        days = -sum(reorder[indices])
+    
+    return days
+
+
+def _duration_to_date_360(duration, reference_format, reference_unit, sign):
+    years = sign * int(duration.years)
+    months = sign * int(duration.months)
+    days = sign * int(duration.days) + 360 * years + 30 * months
+    delta = _convert_duration(days, 'days', reference_format,
+                              reference_unit)
+    return delta
+
+
+def _duration_to_date_365(duration, reference, reference_format, reference_unit, sign):
+    years = sign * int(duration.years)
+    months = int(duration.months)
+    days = _months_to_days(reference.month, months)
+    days += sign * int(duration.days) + 365 * years
+    delta = _convert_duration(days, 'days', reference_format,
+                              reference_unit)
+
+    return delta
+
+def _duration_to_date_366(duration, reference, reference_format, reference_unit, sign):
+    years = sign * int(duration.years)
+    months = sign * int(duration.months)
+    days = _months_to_days(reference.month, months, leap=True)
+    days += sign * int(duration.days) + 366 * years
+    delta = _convert_duration(days, 'days', reference_format,
+                              reference_unit)
+
+    return delta
+
+def _duration_to_date_gregorian(duration, reference_format, reference_unit, sign):
+    years = sign * int(duration.years)
+    months = sign * int(duration.months)
+    days = sign * int(duration.days)
+    delta_years = _convert_duration(years, 'years', reference_format,
+                                    reference_unit)
+    delta_months = _convert_duration(months, 'months', reference_format,
+                                     reference_unit)
+    delta_days = _convert_duration(days, 'days', reference_format,
+                                   reference_unit)
+    delta = delta_years + delta_months + delta_days
+
+    return delta
+
+def _duration_to_date_proleptic(duration, reference, reference_format, reference_unit, sign):
+    # al final el mes facil es corregir at the very end
+    end_year = reference.year + sign * int(duration.years)
+    leap_years = clr.leapdays(reference.year, end_year)
+    # is leap de l'ultim any i check signes i check els boundaries
+    years = int(duration.years) - abs(leap_years)
+    months = sign * int(duration.months)
+    leap = clr.isleap(end_year)
+    days = _months_to_days(reference.month, months, leap)
+    days += sign * int(duration.days) + 366 * leap_years + 365 * years
+    delta = _convert_duration(days, 'days', reference_format, reference_unit)
+
+    return delta
+
+def _julianleapdays(y1, y2):
+    """Return number of leap years in range [y1, y2).
+       Assume y1 <= y2."""
+    y1 -= 1
+    y2 -= 1
+    return (y2//4 - y1//4)
+
+def _julianisleap(year):
+    return year % 4 == 0
+
+def _duration_to_date_julian(duration, reference, reference_format, reference_unit, sign):
+    # els mateixos comentaris que pel proleptic gregorian
+    leap_years = _julianleapdays(reference.year, int(duration.years))
+    years = duration - abs(leap_years)
+    months = sign * int(duration.months)
+    last_year = 1
+    leap = _julianisleap(last_year)
+    last_year = 1
+    days = _months_to_days(reference.month, months, leap)
+
+    days += sign * int(duration.days) + 366 * leap_years + 365 * years
+    delta = _convert_duration(days, 'days', reference_format, reference_unit)
+
+    return delta
+
+
 
 def _duration_to_date(cube, duration, reference, sign):
     time_coord = cube.coord('time')
     reference_format = reference.strftime(time_coord.cell(0).point.format)
     reference_unit = cf_units.Unit(f'seconds since {reference_format}',
                                    calendar=time_coord.units.calendar)
-
     delta = 0
     if isinstance(duration, isodate.duration.Duration):
-        years = sign * int(duration.years)
-        months = sign * int(duration.months)
-        days = sign * int(duration.days)
-        delta_years = _convert_duration(years, 'years', reference_format,
-                                        reference_unit)
-        delta_months = _convert_duration(months, 'months', reference_format,
-                                         reference_unit)
-        delta_days = _convert_duration(days, 'days', reference_format,
-                                       reference_unit)
-        delta = delta_years + delta_months + delta_days
+        if time_coord.units.calendar == 'gregorian':
+            delta = _duration_to_date_gregorian(
+                duration, reference_format, reference_unit, sign)
+        if time_coord.units.calendar == 'julian':
+            delta = _duration_to_date_gregorian(
+                duration, reference_format, reference_unit, sign
+            )
+        if time_coord.units.calendar == 'proleptic_gregorian':
+            delta = _duration_to_date_proleptic(
+                duration, reference, reference_format, reference_unit, sign)
+        if time_coord.units.calendar == '360_day':
+            delta = _duration_to_date_360(
+                duration, reference_format, reference_unit, sign)
+        if time_coord.units.calendar == '365_day':
+            delta = _duration_to_date_365(
+                duration, reference, reference_format, reference_unit, sign)
+        if time_coord.units.calendar == '366_day':
+            delta = _duration_to_date_366(
+                duration, reference, reference_format, reference_unit, sign)
     seconds = sign * int(duration.seconds)
 
     delta += seconds
