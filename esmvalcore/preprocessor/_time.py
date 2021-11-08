@@ -155,7 +155,7 @@ def _months_to_days(reference, duration, leap=False):
     index = reference - 1
     days = 0
     if leap:
-        standard[2] = 29   
+        standard[2] = 29
     if duration > 0:
         # roll reference month to the beginning
         # of the array and count forward.
@@ -167,7 +167,7 @@ def _months_to_days(reference, duration, leap=False):
         reorder = np.roll(standard, len(standard) - reference)
         indices = np.arange(len(standard)-2, -duration, -1)
         days = -sum(reorder[indices])
-    
+
     return days
 
 
@@ -182,7 +182,7 @@ def _duration_to_date_360(duration, reference_format, reference_unit, sign):
 
 def _duration_to_date_365(duration, reference, reference_format, reference_unit, sign):
     years = sign * int(duration.years)
-    months = int(duration.months)
+    months = sign * int(duration.months)
     days = _months_to_days(reference.month, months)
     days += sign * int(duration.days) + 365 * years
     delta = _convert_duration(days, 'days', reference_format,
@@ -224,8 +224,6 @@ def _duration_to_date_proleptic_and_julian(duration, reference, reference_format
     return delta
 
 def _julian_leapdays(y1, y2):
-    """Return number of leap years in range [y1, y2).
-       Assume y1 <= y2."""
     y1 -= 1
     y2 -= 1
     return (y2//4 - y1//4)
@@ -258,7 +256,6 @@ def _duration_to_date(cube, duration, reference, sign):
                                    calendar=time_coord.units.calendar)
     delta = 0
     other_calendars = {
-        '360_day': _duration_to_date_360,
         '365_day': _duration_to_date_365,
         '366_day': _duration_to_date_366,
         'julian': _duration_to_date_proleptic_and_julian,
@@ -268,6 +265,10 @@ def _duration_to_date(cube, duration, reference, sign):
         if time_coord.units.calendar == 'gregorian':
             delta = _duration_to_date_gregorian(
                 duration, reference_format, reference_unit, sign)
+        elif time_coord.units.calendar == '360_day':
+            delta = _duration_to_date_360(
+                duration, reference_format, reference_unit, sign
+            )
         else:
             delta = other_calendars[time_coord.units.calendar](duration, reference, reference_format, reference_unit, sign)
     seconds = sign * int(duration.seconds)
