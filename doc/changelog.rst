@@ -6,6 +6,12 @@ Changelog
 v2.4.0
 ------
 
+Highlights
+~~~~~~~~~~
+
+- ESMValCore now has the ability to automatically download missing data from ESGF. For details, see :ref:`Data Retrieval<data-retrieval>`.
+- ESMValCore now also can resume an earlier run. This is useful to re-use expensive preprocessor results. For details, see :ref:`Running<running>`.
+
 This release includes
 
 Bug fixes
