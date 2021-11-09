@@ -3,13 +3,11 @@
 Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
-import calendar as clr
 import copy
 import datetime
 import logging
 from warnings import filterwarnings
 
-import cf_units
 import dask.array as da
 import iris
 import iris.coord_categorisation
@@ -144,141 +142,8 @@ def _parse_end_date(date):
     return end_date
 
 
-def _convert_duration(duration, freq, time_format, reference):
-    duration_unit = cf_units.Unit(f'{freq} since {time_format}',
-                                  calendar=reference.calendar)
-    delta = duration_unit.convert(duration, reference)
-    return delta
-
-def _months_to_days(reference, duration, leap=False):
-    standard = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    index = reference - 1
-    days = 0
-    if leap:
-        standard[1] = 29
-    if duration > 0:
-        # roll reference month to the beginning
-        # of the array and count forward.
-        reorder = np.roll(standard, -index)
-        days = sum(reorder[0:duration])
-    if duration < 0:
-        # roll reference month to the end of
-        # the array and count backwards.
-        reorder = np.roll(standard, len(standard) - reference)
-        indices = np.arange(10, 10+duration, -1)
-        days = -sum(reorder[indices])
-
-    return days
-
-
-def _duration_to_date_360(duration, reference_format, reference_unit, sign):
-    years = sign * int(duration.years)
-    months = sign * int(duration.months)
-    days = sign * int(duration.days) + 360 * years + 30 * months
-    delta = _convert_duration(days, 'days', reference_format,
-                              reference_unit)
-    return delta
-
-
-def _duration_to_date_365(duration, reference, reference_format, reference_unit, sign):
-    years = sign * int(duration.years)
-    months = sign * int(duration.months)
-    days = _months_to_days(reference.month, months)
-    days += sign * int(duration.days) + 365 * years
-    delta = _convert_duration(days, 'days', reference_format,
-                              reference_unit)
-
-    return delta
-
-def _duration_to_date_366(duration, reference, reference_format, reference_unit, sign):
-    years = sign * int(duration.years)
-    months = sign * int(duration.months)
-    days = _months_to_days(reference.month, months, leap=True)
-    days += sign * int(duration.days) + 366 * years
-    delta = _convert_duration(days, 'days', reference_format,
-                              reference_unit)
-
-    return delta
-
-def _duration_to_date_gregorian(duration, reference_format, reference_unit, sign):
-    years = sign * int(duration.years)
-    months = sign * int(duration.months)
-    days = sign * int(duration.days)
-    delta_years = _convert_duration(years, 'years', reference_format,
-                                    reference_unit)
-    delta_months = _convert_duration(months, 'months', reference_format,
-                                     reference_unit)
-    delta_days = _convert_duration(days, 'days', reference_format,
-                                   reference_unit)
-    delta = delta_years + delta_months + delta_days
-
-    return delta
-
-def _duration_to_date_proleptic_and_julian(duration, reference, reference_format, reference_unit, sign):
-    years = sign * int(duration.years)
-    months = sign * int(duration.months)
-    days = _months_to_days(reference.month, months)
-    days += sign * int(duration.days) + 365 * years
-    delta = _convert_duration(days, 'days', reference_format, reference_unit)
-
-    return delta
-
-def _julian_leapdays(y1, y2):
-    y1 -= 1
-    y2 -= 1
-    return (y2//4 - y1//4)
-
-def _julian_isleap(year):
-    return year % 4 == 0
-
-def _add_leap_days(calendar, date, reference):
-    years = [reference.year, date.year]
-    leapdays = {
-        'julian': _julian_leapdays,
-        'proleptic_gregorian': clr.leapdays
-    }
-    isleap = {
-        'julian': _julian_isleap,
-        'proleptic_gregorian': clr.isleap
-    }
-    leap = leapdays[calendar](min(years), max(years))
-    if isleap[calendar](date.year) and date.dayofyr > 59:
-        leap += 1
-    date += datetime.timedelta(days=leap)
-    return date
-
-
-
-def _duration_to_date(cube, duration, reference, sign):
-    time_coord = cube.coord('time')
-    reference_format = reference.strftime(time_coord.cell(0).point.format)
-    reference_unit = cf_units.Unit(f'seconds since {reference_format}',
-                                   calendar=time_coord.units.calendar)
-    delta = 0
-    other_calendars = {
-        '365_day': _duration_to_date_365,
-        '366_day': _duration_to_date_366,
-        'julian': _duration_to_date_proleptic_and_julian,
-        'proleptic_gregorian': _duration_to_date_proleptic_and_julian
-    }
-    if isinstance(duration, isodate.duration.Duration):
-        if time_coord.units.calendar == 'gregorian':
-            delta = _duration_to_date_gregorian(
-                duration, reference_format, reference_unit, sign)
-        elif time_coord.units.calendar == '360_day':
-            delta = _duration_to_date_360(
-                duration, reference_format, reference_unit, sign
-            )
-        else:
-            delta = other_calendars[time_coord.units.calendar](duration, reference, reference_format, reference_unit, sign)
-    seconds = sign * int(duration.seconds)
-
-    delta += seconds
-    delta = reference_unit.convert(delta, time_coord.units)
-    date = time_coord.units.num2date(delta)
-
-    if time_coord.units.calendar in ['julian', 'proleptic_gregorian']:
-        date = _add_leap_days(time_coord.units.calendar, date, reference)
+def _duration_to_date(duration, reference, sign):
+    date = reference + sign * duration
     return date
 
 
@@ -343,15 +208,15 @@ def clip_timerange(cube, timerange):
     end_date = _parse_end_date(end_date)
 
     if isinstance(start_date, isodate.duration.Duration):
-        start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
+        start_date = _duration_to_date(start_date, end_date, sign=-1)
     elif isinstance(start_date, datetime.timedelta):
-        start_date = _duration_to_date(cube, start_date, end_date, sign=-1)
+        start_date = _duration_to_date(start_date, end_date, sign=-1)
         start_date -= datetime.timedelta(seconds=1)
 
     if isinstance(end_date, isodate.duration.Duration):
-        end_date = _duration_to_date(cube, end_date, start_date, sign=1)
+        end_date = _duration_to_date(end_date, start_date, sign=1)
     elif isinstance(end_date, datetime.timedelta):
-        end_date = _duration_to_date(cube, end_date, start_date, sign=1)
+        end_date = _duration_to_date(end_date, start_date, sign=1)
         end_date += datetime.timedelta(seconds=1)
 
     return _extract_datetime(cube, start_date, end_date)
