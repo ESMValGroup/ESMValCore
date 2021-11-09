@@ -4,8 +4,8 @@ Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
 import copy
-import datetime
 import logging
+from datetime import datetime
 from warnings import filterwarnings
 
 import dask.array as da
@@ -19,6 +19,7 @@ import numpy as np
 from iris.time import PartialDateTime
 
 from esmvalcore.cmor.check import _get_next_month, _get_time_bounds
+from esmvalcore.iris_helpers import date2num
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
@@ -337,6 +338,36 @@ def get_time_weights(cube):
     return time_weights
 
 
+def _aggregate_time_fx(result_cube, source_cube):
+    time_dim = set(source_cube.coord_dims(source_cube.coord('time')))
+    if source_cube.cell_measures():
+        for measure in source_cube.cell_measures():
+            measure_dims = set(source_cube.cell_measure_dims(measure))
+            if time_dim.intersection(measure_dims):
+                logger.debug('Averaging time dimension in measure %s.',
+                             measure.var_name)
+                result_measure = da.mean(measure.core_data(),
+                                         axis=tuple(time_dim))
+                measure = measure.copy(result_measure)
+                measure_dims = tuple(measure_dims - time_dim)
+                result_cube.add_cell_measure(measure, measure_dims)
+
+    if source_cube.ancillary_variables():
+        for ancillary_var in source_cube.ancillary_variables():
+            ancillary_dims = set(
+                source_cube.ancillary_variable_dims(ancillary_var))
+            if time_dim.intersection(ancillary_dims):
+                logger.debug(
+                    'Averaging time dimension in ancillary variable %s.',
+                    ancillary_var.var_name)
+                result_ancillary_var = da.mean(ancillary_var.core_data(),
+                                               axis=tuple(time_dim))
+                ancillary_var = ancillary_var.copy(result_ancillary_var)
+                ancillary_dims = tuple(ancillary_dims - time_dim)
+                result_cube.add_ancillary_variable(ancillary_var,
+                                                   ancillary_dims)
+
+
 def hourly_statistics(cube, hours, operator='mean'):
     """Compute hourly statistics.
 
@@ -373,12 +404,14 @@ def hourly_statistics(cube, hours, operator='mean'):
         iris.coord_categorisation.add_year(cube, 'time')
 
     operator = get_iris_analysis_operation(operator)
-    cube = cube.aggregated_by(['hour_group', 'day_of_year', 'year'], operator)
+    result = cube.aggregated_by(['hour_group', 'day_of_year', 'year'],
+                                operator)
 
-    cube.remove_coord('hour_group')
-    cube.remove_coord('day_of_year')
-    cube.remove_coord('year')
-    return cube
+    result.remove_coord('hour_group')
+    result.remove_coord('day_of_year')
+    result.remove_coord('year')
+
+    return result
 
 
 def daily_statistics(cube, operator='mean'):
@@ -407,11 +440,11 @@ def daily_statistics(cube, operator='mean'):
         iris.coord_categorisation.add_year(cube, 'time')
 
     operator = get_iris_analysis_operation(operator)
-    cube = cube.aggregated_by(['day_of_year', 'year'], operator)
+    result = cube.aggregated_by(['day_of_year', 'year'], operator)
 
-    cube.remove_coord('day_of_year')
-    cube.remove_coord('year')
-    return cube
+    result.remove_coord('day_of_year')
+    result.remove_coord('year')
+    return result
 
 
 def monthly_statistics(cube, operator='mean'):
@@ -440,8 +473,9 @@ def monthly_statistics(cube, operator='mean'):
         iris.coord_categorisation.add_year(cube, 'time')
 
     operator = get_iris_analysis_operation(operator)
-    cube = cube.aggregated_by(['month_number', 'year'], operator)
-    return cube
+    result = cube.aggregated_by(['month_number', 'year'], operator)
+    _aggregate_time_fx(result, cube)
+    return result
 
 
 def seasonal_statistics(cube,
@@ -498,7 +532,7 @@ def seasonal_statistics(cube,
 
     operator = get_iris_analysis_operation(operator)
 
-    cube = cube.aggregated_by(['clim_season', 'season_year'], operator)
+    result = cube.aggregated_by(['clim_season', 'season_year'], operator)
 
     # CMOR Units are days so we are safe to operate on days
     # Ranging on [29, 31] days makes this calendar-independent
@@ -525,8 +559,10 @@ def seasonal_statistics(cube,
 
         return [dt[0] <= dn <= dt[1] for dn, dt in zip(num_days, tar_days)]
 
-    full_seasons = spans_full_season(cube)
-    return cube[full_seasons]
+    full_seasons = spans_full_season(result)
+    result = result[full_seasons]
+    _aggregate_time_fx(result, cube)
+    return result
 
 
 def annual_statistics(cube, operator='mean'):
@@ -558,7 +594,9 @@ def annual_statistics(cube, operator='mean'):
 
     if not cube.coords('year'):
         iris.coord_categorisation.add_year(cube, 'time')
-    return cube.aggregated_by('year', operator)
+    result = cube.aggregated_by('year', operator)
+    _aggregate_time_fx(result, cube)
+    return result
 
 
 def decadal_statistics(cube, operator='mean'):
@@ -597,8 +635,9 @@ def decadal_statistics(cube, operator='mean'):
 
         iris.coord_categorisation.add_categorised_coord(
             cube, 'decade', 'time', get_decade)
-
-    return cube.aggregated_by('decade', operator)
+    result = cube.aggregated_by('decade', operator)
+    _aggregate_time_fx(result, cube)
+    return result
 
 
 def climate_statistics(cube,
@@ -654,6 +693,7 @@ def climate_statistics(cube,
         operator = get_iris_analysis_operation(operator)
         clim_cube = cube.aggregated_by(clim_coord, operator)
         clim_cube.remove_coord('time')
+        _aggregate_time_fx(clim_cube, cube)
         if clim_cube.coord(clim_coord.name()).is_monotonic():
             iris.util.promote_aux_coord_to_dim_coord(clim_cube,
                                                      clim_coord.name())
@@ -664,7 +704,7 @@ def climate_statistics(cube,
 
     new_dtype = clim_cube.dtype
     if original_dtype != new_dtype:
-        logger.warning(
+        logger.debug(
             "climate_statistics changed dtype from "
             "%s to %s, changing back", original_dtype, new_dtype)
         clim_cube.data = clim_cube.core_data().astype(original_dtype)
@@ -813,34 +853,33 @@ def regrid_time(cube, frequency):
     # standardize time points
     time_c = [cell.point for cell in cube.coord('time').cells()]
     if frequency == 'yr':
-        time_cells = [datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c]
+        time_cells = [datetime(t.year, 7, 1, 0, 0, 0) for t in time_c]
     elif frequency == 'mon':
         time_cells = [
-            datetime.datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
+            datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
         ]
     elif frequency == 'day':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
+            datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
         ]
     elif frequency == '1hr':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour, 0, 0)
+            datetime(t.year, t.month, t.day, t.hour, 0, 0)
             for t in time_c
         ]
     elif frequency == '3hr':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 3, 0,
-                              0) for t in time_c
+            datetime(t.year, t.month, t.day, t.hour - t.hour % 3, 0, 0)
+            for t in time_c
         ]
     elif frequency == '6hr':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 6, 0,
-                              0) for t in time_c
+            datetime(t.year, t.month, t.day, t.hour - t.hour % 6, 0, 0)
+            for t in time_c
         ]
 
-    cube.coord('time').points = [
-        cube.coord('time').units.date2num(cl) for cl in time_cells
-    ]
+    coord = cube.coord('time')
+    cube.coord('time').points = date2num(time_cells, coord.units, coord.dtype)
 
     # uniformize bounds
     cube.coord('time').bounds = None

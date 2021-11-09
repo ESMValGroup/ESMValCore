@@ -253,7 +253,7 @@ def test_real_download():
 
     dest_folder = Path.home() / 'esmvaltool_download_test'
     download(all_files, dest_folder)
-    print(f"Download of {variable=} successful")
+    print(f"Download of variable={variable} successful")
 
 
 if __name__ == '__main__':

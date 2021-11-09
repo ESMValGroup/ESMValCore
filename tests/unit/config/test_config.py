@@ -1,3 +1,4 @@
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -7,8 +8,10 @@ from esmvalcore._config import _config
 from esmvalcore._config._config import (
     _deep_update,
     _load_extra_facets,
+    get_extra_facets,
     importlib_files,
 )
+from esmvalcore.exceptions import RecipeError
 
 TEST_DEEP_UPDATE = [
     ([{}], {}),
@@ -63,6 +66,67 @@ def test_load_extra_facets(project, extra_facets_dir, expected):
     assert extra_facets == expected
 
 
+def test_get_extra_facets(tmp_path):
+
+    variable = {
+        'project': 'test_project',
+        'mip': 'test_mip',
+        'dataset': 'test_dataset',
+        'short_name': 'test_short_name',
+    }
+    extra_facets_file = tmp_path / f"{variable['project']}-test.yml"
+    extra_facets_file.write_text(
+        textwrap.dedent("""
+            {dataset}:
+              {mip}:
+                {short_name}:
+                  key: value
+            """).strip().format(**variable))
+
+    extra_facets = get_extra_facets(**variable, extra_facets_dir=(tmp_path, ))
+
+    assert extra_facets == {'key': 'value'}
+
+
+def test_get_extra_facets_cmip3():
+
+    variable = {
+        'project': 'CMIP3',
+        'mip': 'A1',
+        'short_name': 'tas',
+        'dataset': 'CM3',
+    }
+    extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
+
+    assert extra_facets == {'institute': ['CNRM', 'INM']}
+
+
+def test_get_extra_facets_cmip5():
+
+    variable = {
+        'project': 'CMIP5',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'dataset': 'ACCESS1-0',
+    }
+    extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
+
+    assert extra_facets == {'institute': ['CSIRO-BOM'], 'product': 'output1'}
+
+
+def test_get_project_config(mocker):
+    mock_result = mocker.Mock()
+    mocker.patch.object(_config, 'CFG', {'CMIP6': mock_result})
+
+    # Check valid result
+    result = _config.get_project_config('CMIP6')
+    assert result == mock_result
+
+    # Check error
+    with pytest.raises(RecipeError):
+        _config.get_project_config('non-existent-project')
+
+
 def test_load_default_config(monkeypatch):
     """Test that the default configuration can be loaded."""
     project_cfg = {}
@@ -71,21 +135,11 @@ def test_load_default_config(monkeypatch):
     cfg = _config.read_config_user_file(default_cfg_file, 'recipe_example')
 
     default_cfg = {
-        'download_dir': str(Path.home() / 'climate_data'),
         'auxiliary_data_dir': str(Path.home() / 'auxiliary_data'),
-        'max_parallel_tasks': None,
-        'offline': True,
-        'log_level': 'info',
-        'exit_on_warning': False,
-        'output_file_type': 'png',
-        'remove_preproc_dir': False,
         'compress_netcdf': False,
-        'save_intermediary_cubes': False,
         'config_developer_file': None,
-        'profile_diagnostic': False,
-        'rootpath': {
-            'default': [str(Path.home() / 'climate_data')]
-        },
+        'config_file': str(default_cfg_file),
+        'download_dir': str(Path.home() / 'climate_data'),
         'drs': {
             'CMIP3': 'ESGF',
             'CMIP5': 'ESGF',
@@ -93,17 +147,28 @@ def test_load_default_config(monkeypatch):
             'CORDEX': 'ESGF',
             'obs4MIPs': 'ESGF'
         },
+        'exit_on_warning': False,
         'extra_facets_dir': tuple(),
+        'log_level': 'info',
+        'max_parallel_tasks': None,
+        'offline': True,
+        'output_file_type': 'png',
+        'profile_diagnostic': False,
+        'remove_preproc_dir': False,
+        'resume_from': [],
+        'rootpath': {
+            'default': [str(Path.home() / 'climate_data')]
+        },
         'run_diagnostic': True,
-        'config_file': str(default_cfg_file),
+        'save_intermediary_cubes': False,
     }
     default_keys = set(
         list(default_cfg) + [
             'output_dir',
-            'preproc_dir',
-            'work_dir',
             'plot_dir',
+            'preproc_dir',
             'run_dir',
+            'work_dir',
         ])
 
     # Check that only allowed keys are in it

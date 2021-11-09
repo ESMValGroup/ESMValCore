@@ -9,26 +9,11 @@ from shutil import which
 import yamale
 
 from ._data_finder import get_start_end_year
+from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from .preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
-
-
-class RecipeError(Exception):
-    """Recipe contains an error."""
-    def __init__(self, msg):
-        super().__init__(self)
-        self.message = msg
-        self.failed_tasks = []
-
-    def __str__(self):
-        """Return message string."""
-        return self.message
-
-
-class InputFilesNotFound(RecipeError):
-    """Files that are required to run the recipe have not been found."""
 
 
 def ncl_version():
