@@ -244,6 +244,7 @@ class TestClipTimerange(tests.Test):
         assert_array_equal(sliced_cube.coord(time).points, expected_time)
 
     def test_clip_timerange_monthly(self):
+        """Test timerange with monthly data."""
         time = np.arange(15., 2175., 30)
         data = np.ones_like(time)
         calendars = [
@@ -264,6 +265,7 @@ class TestClipTimerange(tests.Test):
             assert sliced_backward.coord('time').cell(0).point.month == 1
 
     def test_clip_timerange_daily(self):
+        """Test timerange with daily data."""
         time = np.arange(0., 3000.)
         data = np.ones_like(time)
         calendars = [
