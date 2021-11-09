@@ -155,7 +155,7 @@ def _months_to_days(reference, duration, leap=False):
     index = reference - 1
     days = 0
     if leap:
-        standard[2] = 29
+        standard[1] = 29
     if duration > 0:
         # roll reference month to the beginning
         # of the array and count forward.
@@ -165,7 +165,7 @@ def _months_to_days(reference, duration, leap=False):
         # roll reference month to the end of
         # the array and count backwards.
         reorder = np.roll(standard, len(standard) - reference)
-        indices = np.arange(len(standard)-2, -duration, -1)
+        indices = np.arange(10, 10+duration, -1)
         days = -sum(reorder[indices])
 
     return days
