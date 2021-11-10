@@ -188,23 +188,40 @@ def get_start_end_year(filename):
 
 
 def _parse_period(timerange):
-    start_year = None
-    end_year = None
+    start_date = None
+    end_date = None
+    format = None
+    datetime_format = (
+        isodate.DATE_EXT_COMPLETE + 'T' + isodate.TIME_EXT_COMPLETE)
     if timerange.split('/')[0].startswith('P'):
         try:
             end_year = isodate.parse_datetime(timerange.split('/')[1]).year
+            format = datetime_format
         except isodate.ISO8601Error:
             end_year = isodate.parse_date(timerange.split('/')[1]).year
+            format = isodate.DATE_BAS_COMPLETE
         delta = int(isodate.parse_duration(timerange.split('/')[0]).years)
-        start_year = end_year - delta
+        start_date = end_year - delta
     elif timerange.split('/')[1].startswith('P'):
         try:
-            start_year = isodate.parse_datetime(timerange.split('/')[0]).year
+            start_date = isodate.parse_datetime(timerange.split('/')[0])
+            format = datetime_format
         except isodate.ISO8601Error:
-            start_year = isodate.parse_date(timerange.split('/')[0]).year
-        delta = int(isodate.parse_duration(timerange.split('/')[1]).years)
-        end_year = start_year + delta
-    return start_year, end_year
+            start_date = isodate.parse_date(timerange.split('/')[0])
+            format = isodate.DATE_BAS_COMPLETE
+        delta = isodate.parse_duration(timerange.split('/')[1])
+        end_date = start_date + delta
+
+    if format == datetime_format:
+        start_date = isodate.datetime_isoformat(
+            start_date, format=datetime_format)
+        end_date = isodate.datetime_isoformat(
+            end_date, format=datetime_format)
+    elif format == isodate.DATE_BAS_COMPLETE:
+        start_date = isodate.date_isoformat(start_date, format=format)
+        end_date = isodate.date_isoformat(end_date, format=format)
+
+    return start_date, end_date
 
 
 def _compare_dates(date, file_date):

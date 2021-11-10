@@ -92,25 +92,41 @@ def test_select_files_sub_daily_resolution():
 
 
 def test_select_files_time_period():
-    # if the time range contains a duration period,
-    # the file selection only occurs at yearly resolution.
 
-    files = [
-        "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196011-196110.nc",
-        "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196111-196210.nc",
-        "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196211-196310.nc",
-        "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196311-196410.nc",
+    filename_date = "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_"
+    filename_datetime = (
+        "psl_6hrPlev_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_")
+
+    files_date = [
+        filename_date + "196011-196110.nc",
+        filename_date + "196111-196210.nc",
+        filename_date + "196211-196310.nc",
+        filename_date + "196311-196410.nc",
+        filename_date + "196411-196510.nc",
     ]
 
-    result = select_files(files, '196211/P2Y5M')
-
-    expected = [
-        "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196111-196210.nc",
-        "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196211-196310.nc",
-        "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196311-196410.nc",
+    files_datetime = [
+        filename_datetime + "196011010900-196110312100.nc",
+        filename_datetime + "196111010900-196210312100.nc",
+        filename_datetime + "196211010300-196310312100.nc",
     ]
 
-    assert result == expected
+    result_date = select_files(files_date, '196211/P2Y5M')
+    result_datetime = select_files(files_datetime, '196011011300/P1Y0M0DT6H')
+
+    expected_date = [
+        filename_date + "196211-196310.nc",
+        filename_date + "196311-196410.nc",
+        filename_date + "196411-196510.nc",
+    ]
+
+    expected_datetime = [
+        filename_datetime + "196011010900-196110312100.nc",
+        filename_datetime + "196111010900-196210312100.nc",
+    ]
+
+    assert result_date == expected_date
+    assert result_datetime == expected_datetime
 
 
 def test_select_files_varying_format():
