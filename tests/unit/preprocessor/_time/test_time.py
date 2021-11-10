@@ -1,14 +1,15 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
 import copy
-import datetime
 import unittest
+from datetime import datetime
 from typing import List, Tuple
 
 import iris
 import iris.coord_categorisation
 import iris.coords
 import iris.exceptions
+import iris.fileformats
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -20,6 +21,7 @@ from numpy.testing import (
 )
 
 import tests
+from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor._time import (
     annual_statistics,
     anomalies,
@@ -905,10 +907,10 @@ class TestRegridTimeYearly(tests.Test):
         timeunit_1 = newcube_1.coord('time').units
         for i, time in enumerate(newcube_1.coord('time').points):
             year_1 = timeunit_1.num2date(time).year
-            expected_minbound = timeunit_1.date2num(
-                datetime.datetime(year_1, 1, 1))
-            expected_maxbound = timeunit_1.date2num(
-                datetime.datetime(year_1 + 1, 1, 1))
+            expected_minbound = date2num(datetime(year_1, 1, 1),
+                                         timeunit_1)
+            expected_maxbound = date2num(datetime(year_1 + 1, 1, 1),
+                                         timeunit_1)
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
@@ -959,10 +961,10 @@ class TestRegridTimeMonthly(tests.Test):
             if month_1 == 12:
                 next_month = 1
                 next_year += 1
-            expected_minbound = timeunit_1.date2num(
-                datetime.datetime(year_1, month_1, 1))
-            expected_maxbound = timeunit_1.date2num(
-                datetime.datetime(next_year, next_month, 1))
+            expected_minbound = date2num(datetime(year_1, month_1, 1),
+                                         timeunit_1)
+            expected_maxbound = date2num(datetime(next_year, next_month, 1),
+                                         timeunit_1)
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
