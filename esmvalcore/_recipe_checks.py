@@ -161,6 +161,9 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
     if start_year is None and end_year is None:
         start_year = int(var['timerange'].split('/')[0][0:4])
         end_year = int(var['timerange'].split('/')[1][0:4])
+    if isinstance(start_year, str) and isinstance(end_year, str):
+        start_year = int(start_year[0:4])
+        end_year = int(end_year[0:4])
     required_years = set(range(start_year, end_year + 1))
     available_years = set()
 

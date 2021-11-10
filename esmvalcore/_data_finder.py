@@ -195,13 +195,13 @@ def _parse_period(timerange):
         isodate.DATE_EXT_COMPLETE + 'T' + isodate.TIME_EXT_COMPLETE)
     if timerange.split('/')[0].startswith('P'):
         try:
-            end_year = isodate.parse_datetime(timerange.split('/')[1]).year
+            end_date = isodate.parse_datetime(timerange.split('/')[1])
             format = datetime_format
         except isodate.ISO8601Error:
-            end_year = isodate.parse_date(timerange.split('/')[1]).year
+            end_date = isodate.parse_date(timerange.split('/')[1])
             format = isodate.DATE_BAS_COMPLETE
-        delta = int(isodate.parse_duration(timerange.split('/')[0]).years)
-        start_date = end_year - delta
+        delta = isodate.parse_duration(timerange.split('/')[0])
+        start_date = end_date - delta
     elif timerange.split('/')[1].startswith('P'):
         try:
             start_date = isodate.parse_datetime(timerange.split('/')[0])

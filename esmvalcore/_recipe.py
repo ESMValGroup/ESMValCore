@@ -23,6 +23,7 @@ from ._config import (
     get_project_config,
 )
 from ._data_finder import (
+    _compare_dates,
     _find_input_files,
     _get_timerange_from_years,
     _parse_period,
@@ -645,22 +646,23 @@ def _get_statistic_attributes(products):
         timerange = product.attributes['timerange']
         start, end = _parse_period(timerange)
         if start is None and end is None:
-            start = int(timerange.split('/')[0])
-            end = int(timerange.split('/')[1])
+            start = timerange.split('/')[0]
+            end = timerange.split('/')[1]
         if 'timerange' not in attributes:
             attributes['timerange'] = f'{start}/{end}'
         else:
-            # compare years only
-            start_year, end_year = _parse_period(attributes['timerange'])
-            if start_year is None and end_year is None:
-                start_year = int(attributes['timerange'].split('/')[0][0:4])
-                end_year = int(attributes['timerange'].split('/')[1][0:4])
-            if start < start_year:
-                start_year = start
-            if end > end_year:
-                end_year = end
+            start_date, end_date = _parse_period(attributes['timerange'])
+            if start_date is None and end_date is None:
+                start_date = attributes['timerange'].split('/')[0]
+                end_date = attributes['timerange'].split('/')[1]
+            start_date, start = _compare_dates(start_date, start)
+            end_date, end = _compare_dates(end_date, end)
+            if start < start_date:
+                start_date = start
+            if end > end_date:
+                end_date = end
 
-            attributes['timerange'] = f'{start_year}/{end_year}'
+            attributes['timerange'] = f'{start_date}/{end_date}'
 
     return attributes
 
