@@ -192,7 +192,7 @@ def _parse_period(timerange):
     end_date = None
     time_format = None
     datetime_format = (
-        isodate.DATE_EXT_COMPLETE + 'T' + isodate.TIME_EXT_COMPLETE)
+        isodate.DATE_BAS_COMPLETE + 'T' + isodate.TIME_BAS_COMPLETE)
     if timerange.split('/')[0].startswith('P'):
         try:
             end_date = isodate.parse_datetime(timerange.split('/')[1])

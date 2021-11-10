@@ -112,7 +112,7 @@ def test_select_files_time_period():
     ]
 
     result_date = select_files(files_date, '196211/P2Y5M')
-    result_datetime = select_files(files_datetime, '196011011300/P1Y0M0DT6H')
+    result_datetime = select_files(files_datetime, '19601101T1300/P1Y0M0DT6H')
 
     expected_date = [
         filename_date + "196211-196310.nc",
