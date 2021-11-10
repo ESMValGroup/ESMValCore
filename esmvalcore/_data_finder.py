@@ -218,8 +218,8 @@ def _parse_period(timerange):
         end_date = isodate.datetime_isoformat(
             end_date, format=datetime_format)
     elif time_format == isodate.DATE_BAS_COMPLETE:
-        start_date = isodate.date_isoformat(start_date, format=format)
-        end_date = isodate.date_isoformat(end_date, format=format)
+        start_date = isodate.date_isoformat(start_date, format=time_format)
+        end_date = isodate.date_isoformat(end_date, format=time_format)
 
     return start_date, end_date
 
