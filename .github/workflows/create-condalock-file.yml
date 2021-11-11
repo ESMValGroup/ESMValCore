@@ -64,7 +64,9 @@ jobs:
       - shell: bash -l {0}
         run: python -V
       - shell: bash -l {0}
-        run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
+        run: conda install -y -c conda-forge mamba
+      - shell: bash -l {0}
+        run: mamba create --name esmvaltool-fromlock --file conda-linux-64.lock
       - shell: bash -l {0}
         run: conda install pip
       - shell: bash -l {0}
@@ -104,7 +106,9 @@ jobs:
       - shell: bash -l {0}
         run: python -V
       - shell: bash -l {0}
-        run: conda create --name esmvaltool-fromlock --file conda-osx-64.lock
+        run: conda install -y -c conda-forge mamba
+      - shell: bash -l {0}
+        run: mamba create --name esmvaltool-fromlock --file conda-osx-64.lock
       - shell: bash -l {0}
         run: conda install pip
       - shell: bash -l {0}
