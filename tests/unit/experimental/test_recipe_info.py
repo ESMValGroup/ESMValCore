@@ -1,9 +1,15 @@
+import textwrap
 from pathlib import Path
 
 import esmvalcore
 from esmvalcore._config import TAGS
 from esmvalcore._config._diagnostics import Diagnostics
-from esmvalcore.experimental.recipe_info import Contributor, Project, Reference
+from esmvalcore.experimental.recipe_info import (
+    Contributor,
+    Project,
+    RecipeInfo,
+    Reference,
+)
 
 DIAGNOSTICS = Diagnostics(Path(__file__).parent)
 
@@ -62,3 +68,26 @@ def test_project():
     assert isinstance(repr(project), str)
     assert isinstance(str(project), str)
     assert project.project == 'Test Project'
+
+
+def test_recipe_info_str():
+    """Test `RecipeInfo.__str__`."""
+    data = {
+        'documentation': {
+            'title': 'Test recipe',
+            'description': 'This is a very empty test recipe.'
+        }
+    }
+
+    recipe = RecipeInfo(data, filename='/path/to/recipe_test.yml')
+
+    text = textwrap.dedent("""
+        ## Test recipe
+
+        This is a very empty test recipe.
+
+        ### Authors
+
+        ### Maintainers
+        """).lstrip()
+    assert str(recipe) == text

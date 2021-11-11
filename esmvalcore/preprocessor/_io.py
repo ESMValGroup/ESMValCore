@@ -7,12 +7,12 @@ from itertools import groupby
 from warnings import catch_warnings, filterwarnings
 
 import iris
+import iris.aux_factory
 import iris.exceptions
 import numpy as np
 import yaml
 
 from .._task import write_ncl_settings
-from ..cmor._fixes.shared import AtmosphereSigmaFactory
 from ._time import extract_time
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,6 @@ def _fix_aux_factories(cube):
     """Fix :class:`iris.aux_factory.AuxCoordFactory` after concatenation.
 
     Necessary because of bug in :mod:`iris` (see issue #2478).
-
     """
     coord_names = [coord.name() for coord in cube.coords()]
 
@@ -65,13 +64,14 @@ def _fix_aux_factories(cube):
 
     # Atmosphere sigma coordinate
     if 'atmosphere_sigma_coordinate' in coord_names:
-        new_aux_factory = AtmosphereSigmaFactory(
+        new_aux_factory = iris.aux_factory.AtmosphereSigmaFactory(
             pressure_at_top=cube.coord(var_name='ptop'),
             sigma=cube.coord(var_name='lev'),
             surface_air_pressure=cube.coord(var_name='ps'),
         )
         for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory, AtmosphereSigmaFactory):
+            if isinstance(aux_factory,
+                          iris.aux_factory.AtmosphereSigmaFactory):
                 break
         else:
             cube.add_aux_factory(new_aux_factory)
@@ -89,9 +89,10 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
 def concatenate_callback(raw_cube, field, _):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
-    for attr in ['creation_date', 'tracking_id', 'history']:
-        if attr in raw_cube.attributes:
-            del raw_cube.attributes[attr]
+    _delete_attributes(
+        raw_cube,
+        ('creation_date', 'tracking_id', 'history', 'comment')
+    )
     for coord in raw_cube.coords():
         # Iris chooses to change longitude and latitude units to degrees
         # regardless of value in file, so reinstating file value
@@ -99,6 +100,14 @@ def concatenate_callback(raw_cube, field, _):
             units = _get_attr_from_field_coord(field, coord.var_name, 'units')
             if units is not None:
                 coord.units = units
+        # CMOR sometimes adds a history to the coordinates.
+        _delete_attributes(coord, ('history', ))
+
+
+def _delete_attributes(iris_object, atts):
+    for att in atts:
+        if att in iris_object.attributes:
+            del iris_object.attributes[att]
 
 
 def load(file, callback=None):
@@ -199,10 +208,13 @@ def concatenate(cubes):
     return result
 
 
-def save(cubes, filename, optimize_access='', compress=False, alias='',
+def save(cubes,
+         filename,
+         optimize_access='',
+         compress=False,
+         alias='',
          **kwargs):
-    """
-    Save iris cubes to file.
+    """Save iris cubes to file.
 
     Parameters
     ----------
@@ -224,6 +236,9 @@ def save(cubes, filename, optimize_access='', compress=False, alias='',
     compress: bool, optional
         Use NetCDF internal compression.
 
+    alias: str, optional
+        Var name to use when saving instead of the one in the cube.
+
     Returns
     -------
     str
@@ -233,7 +248,6 @@ def save(cubes, filename, optimize_access='', compress=False, alias='',
     ------
     ValueError
         cubes is empty.
-
     """
     if not cubes:
         raise ValueError(f"Cannot save empty cubes '{cubes}'")
@@ -276,8 +290,8 @@ def save(cubes, filename, optimize_access='', compress=False, alias='',
     if alias:
 
         for cube in cubes:
-            logger.debug(
-                'Changing var_name from %s to %s', cube.var_name, alias)
+            logger.debug('Changing var_name from %s to %s', cube.var_name,
+                         alias)
             cube.var_name = alias
     iris.save(cubes, **kwargs)
 

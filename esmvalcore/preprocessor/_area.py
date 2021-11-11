@@ -4,6 +4,7 @@ Allows for selecting data subsets using certain latitude and longitude
 bounds; selecting geographical regions; constructing area averages; etc.
 """
 import logging
+import warnings
 
 import fiona
 import iris
@@ -20,6 +21,8 @@ from ._shared import (
 )
 
 logger = logging.getLogger(__name__)
+
+SHAPE_ID_KEYS = ('name', 'NAME', 'Name', 'id', 'ID')
 
 
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
@@ -177,6 +180,23 @@ def meridional_statistics(cube, operator):
     raise ValueError(msg)
 
 
+def compute_area_weights(cube):
+    """Compute area weights."""
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.filterwarnings(
+            'always',
+            message="Using DEFAULT_SPHERICAL_EARTH_RADIUS.",
+            category=UserWarning,
+            module='iris.analysis.cartography',
+        )
+        weights = iris.analysis.cartography.area_weights(cube)
+        for warning in caught_warnings:
+            logger.debug(
+                "%s while computing area weights of the following cube:\n%s",
+                warning.message, cube)
+    return weights
+
+
 def area_statistics(cube, operator):
     """Apply a statistical operator in the horizontal direction.
 
@@ -227,15 +247,17 @@ def area_statistics(cube, operator):
     ValueError
         if input data cube has different shape than grid area weights
     """
+    original_dtype = cube.dtype
     grid_areas = None
     try:
         grid_areas = cube.cell_measure('cell_area').core_data()
     except iris.exceptions.CellMeasureNotFoundError:
-        logger.info(
+        logger.debug(
             'Cell measure "cell_area" not found in cube %s. '
-            'Check fx_file availability.', cube.summary(shorten=True)
-        )
-        logger.info('Attempting to calculate grid cell area...')
+            'Check fx_file availability.', cube.summary(shorten=True))
+        logger.debug('Attempting to calculate grid cell area...')
+    else:
+        grid_areas = da.broadcast_to(grid_areas, cube.shape)
 
     if grid_areas is None and cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
@@ -246,8 +268,8 @@ def area_statistics(cube, operator):
             cube_tmp.coord('grid_latitude').rename('latitude')
             cube_tmp.remove_coord('longitude')
             cube_tmp.coord('grid_longitude').rename('longitude')
-            grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
-            logger.info('Calculated grid area shape: %s', grid_areas.shape)
+            grid_areas = compute_area_weights(cube_tmp)
+            logger.debug('Calculated grid area shape: %s', grid_areas.shape)
         else:
             logger.error(
                 'fx_file needed to calculate grid cell area for irregular '
@@ -258,8 +280,8 @@ def area_statistics(cube, operator):
     coord_names = ['longitude', 'latitude']
     if grid_areas is None:
         cube = guess_bounds(cube, coord_names)
-        grid_areas = iris.analysis.cartography.area_weights(cube)
-        logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        grid_areas = compute_area_weights(cube)
+        logger.debug('Calculated grid area shape: %s', grid_areas.shape)
 
     if cube.shape != grid_areas.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid area shape '
@@ -271,10 +293,18 @@ def area_statistics(cube, operator):
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
     if operator_accept_weights(operator):
-        return cube.collapsed(coord_names, operation, weights=grid_areas)
+        result = cube.collapsed(coord_names, operation, weights=grid_areas)
+    else:
+        # Many IRIS analysis functions do not accept weights arguments.
+        result = cube.collapsed(coord_names, operation)
 
-    # Many IRIS analysis functions do not accept weights arguments.
-    return cube.collapsed(coord_names, operation)
+    new_dtype = result.dtype
+    if original_dtype != new_dtype:
+        logger.debug(
+            "area_statistics changed dtype from "
+            "%s to %s, changing back", original_dtype, new_dtype)
+        result.data = result.core_data().astype(original_dtype)
+    return result
 
 
 def extract_named_regions(cube, regions):
@@ -396,8 +426,12 @@ def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
     return lon, lat
 
 
-def _get_masks_from_geometries(geometries, lon, lat, method='contains',
-                               decomposed=False, ids=None):
+def _get_masks_from_geometries(geometries,
+                               lon,
+                               lat,
+                               method='contains',
+                               decomposed=False,
+                               ids=None):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
@@ -408,7 +442,7 @@ def _get_masks_from_geometries(geometries, lon, lat, method='contains',
     if ids:
         ids = [str(id_) for id_ in ids]
     for i, item in enumerate(geometries):
-        for id_prop in ('name', 'NAME', 'Name', 'id', 'ID'):
+        for id_prop in SHAPE_ID_KEYS:
             if id_prop in item['properties']:
                 id_ = str(item['properties'][id_prop])
                 break
@@ -428,6 +462,53 @@ def _get_masks_from_geometries(geometries, lon, lat, method='contains',
         return _merge_shapes(selections, lat.shape)
 
     return selections
+
+
+def _geometry_matches_ids(geometry: dict, ids: list):
+    """Returns True if `geometry` matches one of the `ids`."""
+    props = geometry['properties']
+
+    geom_id = [props.get(key, None) for key in SHAPE_ID_KEYS]
+    geom_id = [key for key in geom_id if key is not None]
+
+    if not geom_id:
+        raise KeyError(f'{props} dict has no `name` or `id` key')
+
+    geom_id = geom_id[0]
+
+    return geom_id in ids
+
+
+def _get_bounds(geometries, ids=None):
+    """Get bounds from the subset of geometries defined by `ids`.
+
+    Parameters
+    ----------
+    geometries : fiona.Collection
+        Fiona collection of shapes (geometries).
+    ids : tuple of str, optional
+        List of ids to select from geometry collection. If None,
+        return global bounds (``geometries.bounds``)
+
+    Returns
+    -------
+    lat_min, lon_min, lat_max, lon_max
+        Returns coordinates deliminating bounding box for shape ids.
+    """
+    if not ids:
+        return geometries.bounds
+
+    subset = [geom for geom in geometries if _geometry_matches_ids(geom, ids)]
+
+    all_points = [
+        np.hstack(geom['geometry']['coordinates']) for geom in subset
+    ]
+    all_points = np.vstack(all_points)
+
+    lon_max, lat_max = all_points.max(axis=0)
+    lon_min, lat_min = all_points.min(axis=0)
+
+    return lon_min, lat_min, lon_max, lat_max
 
 
 def _get_shape(lon, lat, method, item):
@@ -487,8 +568,12 @@ def fix_coordinate_ordering(cube):
     return cube
 
 
-def extract_shape(cube, shapefile, method='contains', crop=True,
-                  decomposed=False, ids=None):
+def extract_shape(cube,
+                  shapefile,
+                  method='contains',
+                  crop=True,
+                  decomposed=False,
+                  ids=None):
     """Extract a region defined by a shapefile.
 
     Note that this function does not work for shapes crossing the
@@ -542,8 +627,15 @@ def extract_shape(cube, shapefile, method='contains', crop=True,
             pad_hawaii = True
 
         if crop:
+            lon_min, lat_min, lon_max, lat_max = _get_bounds(
+                geometries=geometries,
+                ids=ids,
+            )
             cube = _crop_cube(cube,
-                              *geometries.bounds,
+                              start_longitude=lon_min,
+                              start_latitude=lat_min,
+                              end_longitude=lon_max,
+                              end_latitude=lat_max,
                               cmor_coords=cmor_coords)
 
         lon, lat = _correct_coords_from_shapefile(cube, cmor_coords,

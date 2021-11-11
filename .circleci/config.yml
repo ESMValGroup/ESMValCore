@@ -3,6 +3,7 @@ version: 2.1
 
 orbs:
   coverage-reporter: codacy/coverage-reporter@11.4.1
+  codecov: codecov/codecov@1.2.3
 
 commands:
   check_changes:
@@ -19,7 +20,7 @@ commands:
           fi
 
 jobs:
-  test:
+  run_tests:
     # Run tests
     working_directory: /test
     docker:
@@ -34,7 +35,7 @@ jobs:
             conda activate esmvaltool
             pip install .[test]
             pytest -n 2 -m "not installation and not sequential"
-            pytest -n 0 -m "sequential"
+            pytest -n 0 -m "sequential" --cov-append
       - save_cache:
           key: test-{{ .Branch }}
           paths:
@@ -44,12 +45,19 @@ jobs:
           path: test-reports/
       - store_artifacts:
           path: test-reports/
+      - run:
+          # Install curl for codecov upload
+          when: always
+          command: apt update && apt install -y curl
+      - codecov/upload:
+          when: always
+          file: 'test-reports/coverage.xml'
       - coverage-reporter/send_report:
           coverage-reports: 'test-reports/coverage.xml'
           project-token: $CODACY_PROJECT_TOKEN
           skip: true  # skip if project-token is not defined (i.e. on a fork)
 
-  install:
+  test_installation_from_source_test_mode:
     # Test installation
     working_directory: /install
     docker:
@@ -98,7 +106,7 @@ jobs:
       - store_test_results:
           path: test-reports/
 
-  documentation:
+  build_documentation:
     # Test building documentation
     working_directory: /doc
     docker:
@@ -125,7 +133,7 @@ jobs:
       - store_artifacts:
           path: /logs
 
-  develop:
+  test_installation_from_source_develop_mode:
     # Test development installation
     working_directory: /develop
     docker:
@@ -161,32 +169,7 @@ jobs:
       - store_artifacts:
           path: /logs
 
-  conda_build:
-    # Test conda build
-    working_directory: /esmvaltool
-    docker:
-      - image: continuumio/miniconda3
-    steps:
-      - checkout
-      - check_changes
-      - run:
-          command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            set -x
-            # Install prerequisites
-            mkdir /logs
-            # conda update -y conda > /logs/conda_base.txt 2>&1
-            conda install -y conda-build conda-verify ripgrep >> /logs/conda_base.txt 2>&1
-            # Log versions
-            dpkg -l > /logs/versions.txt
-            conda env export -n base > /logs/build_environment.yml
-            # Build conda package
-            conda build package -c conda-forge > /logs/build_log.txt
-          no_output_timeout: 60m
-      - store_artifacts:
-          path: /logs
-
-  conda_install:
+  test_installation_from_conda:
     # Test conda package installation
     working_directory: /esmvaltool
     docker:
@@ -200,10 +183,10 @@ jobs:
             mkdir /logs
             # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
-            conda create -y --name esmvaltool
+            conda create -y --name esmvaltool -c conda-forge 'python=3.9'
             set +x; conda activate esmvaltool; set -x
             # Install
-            conda install -y esmvalcore -c esmvalgroup -c conda-forge
+            conda install -y esmvalcore -c conda-forge
             # Log versions
             conda env export > /logs/environment.yml
             # Test installation
@@ -212,11 +195,10 @@ jobs:
 workflows:
   commit:
     jobs:
-      - test
-      - install
-      - develop
-      - conda_build
-      - documentation
+      - run_tests
+      - test_installation_from_source_test_mode
+      - test_installation_from_source_develop_mode
+      - build_documentation
   nightly:
     triggers:
       - schedule:
@@ -226,9 +208,8 @@ workflows:
               only:
                 - main
     jobs:
-      - test
-      - install
-      - documentation
-      - develop
-      - conda_build
-      - conda_install
+      - run_tests
+      - test_installation_from_source_test_mode
+      - build_documentation
+      - test_installation_from_source_develop_mode
+      - test_installation_from_conda

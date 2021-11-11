@@ -1,14 +1,15 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
 import copy
-import datetime
 import unittest
+from datetime import datetime
 from typing import List, Tuple
 
 import iris
 import iris.coord_categorisation
 import iris.coords
 import iris.exceptions
+import iris.fileformats
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -20,6 +21,7 @@ from numpy.testing import (
 )
 
 import tests
+from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor._time import (
     annual_statistics,
     anomalies,
@@ -42,6 +44,7 @@ from esmvalcore.preprocessor._time import (
 
 
 def _create_sample_cube(calendar='gregorian'):
+    """Create sample cube."""
     cube = Cube(np.arange(1, 25), var_name='co2', units='J')
     cube.add_dim_coord(
         iris.coords.DimCoord(
@@ -293,7 +296,7 @@ class TestExtractSeason(tests.Test):
 
 
 class TestClimatology(tests.Test):
-    """Test class for :func:`esmvalcore.preprocessor._time.climatology`"""
+    """Test class for :func:`esmvalcore.preprocessor._time.climatology`."""
     @staticmethod
     def _create_cube(data, times, bounds):
         time = iris.coords.DimCoord(times,
@@ -306,71 +309,69 @@ class TestClimatology(tests.Test):
 
     def test_time_mean(self):
         """Test for time average of a 1D field."""
-        data = np.ones((3))
+        data = np.array([1., 1., 1.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_mean_uneven(self):
         """Test for time average of a 1D field with uneven time boundaries."""
-        data = np.array([1., 5.])
+        data = np.array([1., 5.], dtype=np.float32)
         times = np.array([5., 25.])
         bounds = np.array([[0., 1.], [1., 4.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean')
-        expected = np.array([4.])
+        expected = np.array([4.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_mean_365_day(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_sum(self):
         """Test for time sum of a 1D field."""
-        data = np.ones((3))
-        data[1] = 2.0
+        data = np.array([1., 2., 1.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([4.])
+        expected = np.array([4.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_sum_weighted(self):
         """Test for time sum of a 1D field."""
-        data = np.ones((3))
-        data[1] = 2.0
+        data = np.array([1., 2., 1.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[10., 20.], [30., 60.], [73., 77.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([74.])
+        expected = np.array([74.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_sum_uneven(self):
         """Test for time sum of a 1D field with uneven time boundaries."""
-        data = np.array([1., 5.])
+        data = np.array([1., 5.], dtype=np.float32)
         times = np.array([5., 25.])
         bounds = np.array([[0., 1.], [1., 4.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([16.0])
+        expected = np.array([16.0], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_sum_365_day(self):
@@ -383,24 +384,24 @@ class TestClimatology(tests.Test):
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='sum')
-        expected = np.array([211.])
+        expected = np.array([211.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_season_climatology(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean', period='season')
-        expected = np.array([1., 1., 1.])
+        expected = np.array([1., 1., 1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_custom_season_climatology(self):
         """Test for time avg of a realisitc time axis and 365 day calendar."""
-        data = np.ones((8, ))
+        data = np.array([1., 1., 1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166, 195, 225])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181], [181, 212], [212, 243]])
@@ -410,36 +411,36 @@ class TestClimatology(tests.Test):
                                     operator='mean',
                                     period='season',
                                     seasons=('jfmamj', 'jasond'))
-        expected = np.array([1., 1.])
+        expected = np.array([1., 1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_monthly(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean', period='mon')
-        expected = np.ones((6, ))
+        expected = np.ones((6, ), dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_day(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([0.5, 1.5, 2.5, 365.5, 366.5, 367.5])
         bounds = np.array([[0, 1], [1, 2], [2, 3], [365, 366], [366, 367],
                            [367, 368]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='mean', period='day')
-        expected = np.array([1, 1, 1])
+        expected = np.array([1, 1, 1], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_period_not_supported(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
-        data = np.ones((6, ))
+        data = np.array([1., 1., 1., 1., 1., 1.], dtype=np.float32)
         times = np.array([15, 45, 74, 105, 135, 166])
         bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
                            [151, 181]])
@@ -450,51 +451,80 @@ class TestClimatology(tests.Test):
 
     def test_time_max(self):
         """Test for time max of a 1D field."""
-        data = np.arange((3))
+        data = np.array([0., 1., 2.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='max')
-        expected = np.array([2.])
+        expected = np.array([2.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_min(self):
         """Test for time min of a 1D field."""
-        data = np.arange((3))
+        data = np.array([0., 1., 2.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='min')
-        expected = np.array([0.])
+        expected = np.array([0.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_median(self):
         """Test for time meadian of a 1D field."""
-        data = np.arange((3))
+        data = np.array([0., 1., 2.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='median')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
     def test_time_rms(self):
         """Test for time rms of a 1D field."""
-        data = np.arange((3))
+        data = np.array([0., 1., 2.], dtype=np.float32)
         times = np.array([15., 45., 75.])
         bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
         cube = self._create_cube(data, times, bounds)
 
         result = climate_statistics(cube, operator='rms')
-        expected = np.array([(5 / 3)**0.5])
+        expected = np.array([(5 / 3)**0.5], dtype=np.float32)
         assert_array_equal(result.data, expected)
+
+    def test_time_dependent_fx(self):
+        """Test average time dimension in time-dependent fx vars."""
+        data = np.ones((3, 3, 3))
+        times = np.array([15., 45., 75.])
+        bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+        cube = self._create_cube(data, times, bounds)
+        measure = iris.coords.CellMeasure(data,
+                                          standard_name='ocean_volume',
+                                          var_name='volcello',
+                                          units='m3',
+                                          measure='volume')
+        ancillary_var = iris.coords.AncillaryVariable(
+            data,
+            standard_name='land_ice_area_fraction',
+            var_name='sftgif',
+            units='%')
+        cube.add_cell_measure(measure, (0, 1, 2))
+        cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
+        with self.assertLogs(level='DEBUG') as cm:
+            result = climate_statistics(cube, operator='mean', period='mon')
+        self.assertEqual(cm.records[0].getMessage(),
+                         'Averaging time dimension in measure volcello.')
+        self.assertEqual(
+            cm.records[1].getMessage(),
+            'Averaging time dimension in ancillary variable sftgif.')
+        self.assertEqual(result.cell_measure('ocean_volume').ndim, 2)
+        self.assertEqual(
+            result.ancillary_variable('land_ice_area_fraction').ndim, 2)
 
 
 class TestSeasonalStatistics(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`"""
+    """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -579,9 +609,37 @@ class TestSeasonalStatistics(tests.Test):
         expected = np.array([1])
         assert_array_equal(result.data, expected)
 
+    def test_time_dependent_fx(self):
+        """Test average time dimension in time-dependent fx vars."""
+        data = np.ones((12, 3, 3))
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+        measure = iris.coords.CellMeasure(data,
+                                          standard_name='ocean_volume',
+                                          var_name='volcello',
+                                          units='m3',
+                                          measure='volume')
+        ancillary_var = iris.coords.AncillaryVariable(
+            data,
+            standard_name='land_ice_area_fraction',
+            var_name='sftgif',
+            units='%')
+        cube.add_cell_measure(measure, (0, 1, 2))
+        cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
+        with self.assertLogs(level='DEBUG') as cm:
+            result = seasonal_statistics(cube, operator='mean')
+        self.assertEqual(cm.records[0].getMessage(),
+                         'Averaging time dimension in measure volcello.')
+        self.assertEqual(
+            cm.records[1].getMessage(),
+            'Averaging time dimension in ancillary variable sftgif.')
+        self.assertEqual(result.cell_measure('ocean_volume').ndim, 2)
+        self.assertEqual(
+            result.ancillary_variable('land_ice_area_fraction').ndim, 2)
+
 
 class TestMonthlyStatistics(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`"""
+    """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -646,9 +704,37 @@ class TestMonthlyStatistics(tests.Test):
         expected = np.array([1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45])
         assert_array_equal(result.data, expected)
 
+    def test_time_dependent_fx(self):
+        """Test average time dimension in time-dependent fx vars."""
+        data = np.ones((3, 3, 3))
+        times = np.array([15., 45., 75.])
+        cube = self._create_cube(data, times)
+        measure = iris.coords.CellMeasure(data,
+                                          standard_name='ocean_volume',
+                                          var_name='volcello',
+                                          units='m3',
+                                          measure='volume')
+        ancillary_var = iris.coords.AncillaryVariable(
+            data,
+            standard_name='land_ice_area_fraction',
+            var_name='sftgif',
+            units='%')
+        cube.add_cell_measure(measure, (0, 1, 2))
+        cube.add_ancillary_variable(ancillary_var, (0, 1, 2))
+        with self.assertLogs(level='DEBUG') as cm:
+            result = monthly_statistics(cube, operator='mean')
+        self.assertEqual(cm.records[0].getMessage(),
+                         'Averaging time dimension in measure volcello.')
+        self.assertEqual(
+            cm.records[1].getMessage(),
+            'Averaging time dimension in ancillary variable sftgif.')
+        self.assertEqual(result.cell_measure('ocean_volume').ndim, 2)
+        self.assertEqual(
+            result.ancillary_variable('land_ice_area_fraction').ndim, 2)
+
 
 class TestHourlyStatistics(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`"""
+    """Test :func:`esmvalcore.preprocessor._time.hourly_statistics`."""
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -711,7 +797,7 @@ class TestHourlyStatistics(tests.Test):
 
 
 class TestDailyStatistics(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`"""
+    """Test :func:`esmvalcore.preprocessor._time.monthly_statistics`."""
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -821,10 +907,10 @@ class TestRegridTimeYearly(tests.Test):
         timeunit_1 = newcube_1.coord('time').units
         for i, time in enumerate(newcube_1.coord('time').points):
             year_1 = timeunit_1.num2date(time).year
-            expected_minbound = timeunit_1.date2num(
-                datetime.datetime(year_1, 1, 1))
-            expected_maxbound = timeunit_1.date2num(
-                datetime.datetime(year_1 + 1, 1, 1))
+            expected_minbound = date2num(datetime(year_1, 1, 1),
+                                         timeunit_1)
+            expected_maxbound = date2num(datetime(year_1 + 1, 1, 1),
+                                         timeunit_1)
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
@@ -875,10 +961,10 @@ class TestRegridTimeMonthly(tests.Test):
             if month_1 == 12:
                 next_month = 1
                 next_year += 1
-            expected_minbound = timeunit_1.date2num(
-                datetime.datetime(year_1, month_1, 1))
-            expected_maxbound = timeunit_1.date2num(
-                datetime.datetime(next_year, next_month, 1))
+            expected_minbound = date2num(datetime(year_1, month_1, 1),
+                                         timeunit_1)
+            expected_maxbound = date2num(datetime(next_year, next_month, 1),
+                                         timeunit_1)
             assert_array_equal(
                 newcube_1.coord('time').bounds[i],
                 np.array([expected_minbound, expected_maxbound]))
@@ -1133,7 +1219,6 @@ class TestTimeseriesFilter(tests.Test):
 
     def test_timeseries_filter_timecoord(self):
         """Test missing time axis."""
-        import iris.exceptions
         new_cube = self.cube.copy()
         new_cube.remove_coord(new_cube.coord('time'))
         with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
@@ -1204,7 +1289,7 @@ def test_decadal_average(existing_coord):
     if existing_coord:
 
         def get_decade(coord, value):
-            """Callback function to get decades from cube."""
+            """Get decades from cube."""
             date = coord.units.num2date(value)
             return date.year - date.year % 10
 
@@ -1219,13 +1304,43 @@ def test_decadal_average(existing_coord):
 
 
 @pytest.mark.parametrize('existing_coord', [True, False])
+def test_decadal_average_time_dependent_fx(existing_coord):
+    """Test for decadal average."""
+    cube = make_time_series(number_years=20)
+    measure = iris.coords.CellMeasure(cube.data,
+                                      standard_name='ocean_volume',
+                                      var_name='volcello',
+                                      units='m3',
+                                      measure='volume')
+    ancillary_var = iris.coords.AncillaryVariable(
+        cube.data,
+        standard_name='land_ice_area_fraction',
+        var_name='sftgif',
+        units='%')
+    cube.add_cell_measure(measure, 0)
+    cube.add_ancillary_variable(ancillary_var, 0)
+    if existing_coord:
+        def get_decade(coord, value):
+            """Get decades from cube."""
+            date = coord.units.num2date(value)
+            return date.year - date.year % 10
+
+        iris.coord_categorisation.add_categorised_coord(
+            cube, 'decade', 'time', get_decade)
+    result = decadal_statistics(cube)
+    assert result.cell_measure('ocean_volume').data.shape == (1,)
+    assert result.ancillary_variable(
+        'land_ice_area_fraction').data.shape == (1,)
+
+
+@pytest.mark.parametrize('existing_coord', [True, False])
 def test_decadal_sum(existing_coord):
     """Test for decadal average."""
     cube = make_time_series(number_years=20)
     if existing_coord:
 
         def get_decade(coord, value):
-            """Callback function to get decades from cube."""
+            """Get decades from cube."""
             date = coord.units.num2date(value)
             return date.year - date.year % 10
 
@@ -1289,6 +1404,7 @@ for period in ('full', 'day', 'month', 'season'):
 
 @pytest.mark.parametrize('period', ['full'])
 def test_standardized_anomalies(period, standardize=True):
+    """Test standardized ``anomalies``."""
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, standardize=standardize)
     if period == 'full':
@@ -1309,6 +1425,7 @@ def test_standardized_anomalies(period, standardize=True):
 
 @pytest.mark.parametrize('period, reference', PARAMETERS)
 def test_anomalies_preserve_metadata(period, reference, standardize=False):
+    """Test that ``anomalies`` preserves metadata."""
     cube = make_map_data(number_years=2)
     cube.var_name = "si"
     cube.units = "m"
@@ -1323,6 +1440,7 @@ def test_anomalies_preserve_metadata(period, reference, standardize=False):
 
 @pytest.mark.parametrize('period, reference', PARAMETERS)
 def test_anomalies(period, reference, standardize=False):
+    """Test ``anomalies``."""
     cube = make_map_data(number_years=2)
     result = anomalies(cube, period, reference, standardize=standardize)
     if reference is None:
@@ -1374,6 +1492,7 @@ def test_anomalies(period, reference, standardize=False):
 
 
 def test_anomalies_custom_season():
+    """Test ``anomalies`` with custom season."""
     cube = make_map_data(number_years=2)
     result = anomalies(cube, 'season', seasons=('jfmamj', 'jasond'))
     anom = np.concatenate((
@@ -1401,6 +1520,16 @@ def get_1d_time():
     time = iris.coords.DimCoord([20., 45.],
                                 standard_name='time',
                                 bounds=[[15., 30.], [30., 60.]],
+                                units=Unit('days since 1950-01-01',
+                                           calendar='gregorian'))
+    return time
+
+
+def get_2d_time():
+    """Get 2D time coordinate."""
+    time = iris.coords.AuxCoord([[20., 45.]],
+                                standard_name='time',
+                                bounds=[[[15., 30.], [30., 60.]]],
                                 units=Unit('days since 1950-01-01',
                                            calendar='gregorian'))
     return time
@@ -1444,9 +1573,8 @@ def test_get_time_weights():
     """Test ``get_time_weights`` for complex cube."""
     cube = _make_cube()
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
-    np.testing.assert_allclose(
-        weights, [[[[15.0, 15.0, 15.0]]], [[[30.0, 30.0, 30.0]]]])
+    assert weights.shape == (2, )
+    np.testing.assert_allclose(weights, [15.0, 30.0])
 
 
 def test_get_time_weights_0d_time():
@@ -1457,8 +1585,8 @@ def test_get_time_weights_0d_time():
                           units='K',
                           aux_coords_and_dims=[(time, ())])
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
-    np.testing.assert_allclose(weights, 30.0)
+    assert weights.shape == (1, )
+    np.testing.assert_allclose(weights, [30.0])
 
 
 def test_get_time_weights_0d_time_1d_lon():
@@ -1471,8 +1599,8 @@ def test_get_time_weights_0d_time_1d_lon():
                           aux_coords_and_dims=[(time, ())],
                           dim_coords_and_dims=[(lons, 0)])
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
-    np.testing.assert_allclose(weights, [30.0, 30.0, 30.0])
+    assert weights.shape == (1, )
+    np.testing.assert_allclose(weights, [30.0])
 
 
 def test_get_time_weights_1d_time():
@@ -1483,7 +1611,7 @@ def test_get_time_weights_1d_time():
                           units='K',
                           dim_coords_and_dims=[(time, 0)])
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
+    assert weights.shape == (2, )
     np.testing.assert_allclose(weights, [15.0, 30.0])
 
 
@@ -1496,9 +1624,19 @@ def test_get_time_weights_1d_time_1d_lon():
                           units='K',
                           dim_coords_and_dims=[(time, 0), (lons, 1)])
     weights = get_time_weights(cube)
-    assert weights.shape == cube.shape
-    np.testing.assert_allclose(weights,
-                               [[15.0, 15.0, 15.0], [30.0, 30.0, 30.0]])
+    assert weights.shape == (2, )
+    np.testing.assert_allclose(weights, [15.0, 30.0])
+
+
+def test_get_time_weights_2d_time():
+    """Test ``get_time_weights`` for 1D time coordinate."""
+    time = get_2d_time()
+    cube = iris.cube.Cube([[0.0, 1.0]],
+                          var_name='x',
+                          units='K',
+                          aux_coords_and_dims=[(time, (0, 1))])
+    with pytest.raises(ValueError):
+        get_time_weights(cube)
 
 
 def test_climate_statistics_0d_time_1d_lon():
@@ -1519,7 +1657,7 @@ def test_climate_statistics_0d_time_1d_lon():
     np.testing.assert_allclose(new_cube.data, [1.0, -1.0, 42.0])
 
 
-def test_climate_statistics_complex_cube():
+def test_climate_statistics_complex_cube_sum():
     """Test climate statistics."""
     cube = _make_cube()
     new_cube = climate_statistics(cube, operator='sum', period='full')
@@ -1528,8 +1666,17 @@ def test_climate_statistics_complex_cube():
     np.testing.assert_allclose(new_cube.data, [[[45.0, 45.0, 45.0]]])
 
 
+def test_climate_statistics_complex_cube_mean():
+    """Test climate statistics."""
+    cube = _make_cube()
+    new_cube = climate_statistics(cube, operator='mean', period='full')
+    assert cube.shape == (2, 1, 1, 3)
+    assert new_cube.shape == (1, 1, 3)
+    np.testing.assert_allclose(new_cube.data, [[[1.0, 1.0, 1.0]]])
+
+
 class TestResampleHours(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.resample_hours`"""
+    """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -1618,7 +1765,7 @@ class TestResampleHours(tests.Test):
 
 
 class TestResampleTime(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.resample_hours`"""
+    """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,

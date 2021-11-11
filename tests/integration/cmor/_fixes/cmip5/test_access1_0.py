@@ -3,13 +3,14 @@ import unittest
 from datetime import datetime
 
 import pytest
-from cf_units import Unit, date2num, num2date
+from cf_units import Unit, num2date
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip5.access1_0 import AllVars, Cl
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.iris_helpers import date2num
 
 
 class TestAllVars(unittest.TestCase):
@@ -22,14 +23,12 @@ class TestAllVars(unittest.TestCase):
             datetime(300, 1, 16, 12),  # e.g. piControl
             datetime(1850, 1, 16, 12)  # e.g. historical
         ]
-        esgf_time_units = {
-            'unit': 'days since 0001-01-01',
-            'calendar': 'proleptic_gregorian'
-        }
-        time_points = date2num(reference_dates, **esgf_time_units)
+        esgf_time_units = Unit('days since 0001-01-01',
+                               calendar='proleptic_gregorian')
+        time_points = date2num(reference_dates, esgf_time_units)
         self.cube.add_dim_coord(
-            DimCoord(time_points, 'time', 'time', 'time',
-                     Unit(**esgf_time_units)), data_dim=0)
+            DimCoord(time_points, 'time', 'time', 'time', esgf_time_units),
+            data_dim=0)
         self.fix = AllVars(None)
 
     def test_get(self):
@@ -44,8 +43,10 @@ class TestAllVars(unittest.TestCase):
         time = cube.coord('time')
         dates = num2date(time.points, time.units.name, time.units.calendar)
         self.assertEqual(time.units.calendar, 'gregorian')
-        self.assertEqual(dates[0], datetime(300, 1, 16, 12, 0))
-        self.assertEqual(dates[1], datetime(1850, 1, 16, 12, 0))
+        u = Unit('days since 300-01-01 12:00:00', calendar='gregorian')
+        self.assertEqual(dates[0], u.num2date(15))
+        u = Unit('days since 1850-01-01 12:00:00', calendar='gregorian')
+        self.assertEqual(dates[1], u.num2date(15))
 
     def test_fix_metadata_if_not_time(self):
         """Test calendar fix do not fail if no time coord present."""

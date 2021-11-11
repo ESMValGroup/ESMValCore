@@ -161,13 +161,19 @@ authors:
     "family-names": "Sénési"
     "given-names": "Stéphane"
     "orcid": "https://orcid.org/0000-0003-0892-5967"
+  -
+    affiliation: "MetOffice, UK"
+    family-names: Crocker
+    given-names: Thomas
+    orcid: "https://orcid.org/0000-0001-7761-5546"
+
 
 cff-version: "1.0.3"
-date-released: 2021-6-14
+date-released: 2021-11-08
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.3.0"
+version: "v2.4.0"
 ...

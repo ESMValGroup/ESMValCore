@@ -7,7 +7,11 @@ from unittest.mock import call
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.aux_factory import HybridHeightFactory, HybridPressureFactory
+from iris.aux_factory import (
+    AtmosphereSigmaFactory,
+    HybridHeightFactory,
+    HybridPressureFactory,
+)
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import ConcatenateError
@@ -62,6 +66,31 @@ def mock_empty_cube():
     a_coord = AuxCoord(0.0, var_name='a')
     b_coord = AuxCoord(0.0, var_name='b')
     cube.coords.return_value = [a_coord, b_coord]
+    return cube
+
+
+@pytest.fixture
+def mock_atmosphere_sigma_cube():
+    """Return mocked cube with atmosphere sigma coordinate."""
+    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
+    ptop_coord = AuxCoord([1.0], var_name='ptop', units='Pa')
+    lev_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='lev',
+                         units='1')
+    ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
+    cube.coord.side_effect = [ptop_coord, lev_coord, ps_coord,
+                              ptop_coord, lev_coord, ps_coord]
+    cube.coords.return_value = [
+        ptop_coord,
+        lev_coord,
+        ps_coord,
+        AuxCoord(0.0, standard_name='atmosphere_sigma_coordinate'),
+    ]
+    aux_factory = AtmosphereSigmaFactory(
+        pressure_at_top=ptop_coord,
+        sigma=lev_coord,
+        surface_air_pressure=ps_coord,
+    )
+    cube.aux_factories = ['dummy', aux_factory]
     return cube
 
 
@@ -145,6 +174,29 @@ def test_fix_aux_factories_empty_cube(mock_empty_cube):
     check_if_fix_aux_factories_is_necessary()
     _io._fix_aux_factories(mock_empty_cube)
     assert mock_empty_cube.mock_calls == [call.coords()]
+
+
+def test_fix_aux_factories_atmosphere_sigma(mock_atmosphere_sigma_cube):
+    """Test fixing of atmosphere sigma coordinate."""
+    check_if_fix_aux_factories_is_necessary()
+
+    # Test with aux_factory object
+    _io._fix_aux_factories(mock_atmosphere_sigma_cube)
+    mock_atmosphere_sigma_cube.coords.assert_called_once_with()
+    mock_atmosphere_sigma_cube.coord.assert_has_calls([call(var_name='ptop'),
+                                                       call(var_name='lev'),
+                                                       call(var_name='ps')])
+    mock_atmosphere_sigma_cube.add_aux_factory.assert_not_called()
+
+    # Test without aux_factory object
+    mock_atmosphere_sigma_cube.reset_mock()
+    mock_atmosphere_sigma_cube.aux_factories = ['dummy']
+    _io._fix_aux_factories(mock_atmosphere_sigma_cube)
+    mock_atmosphere_sigma_cube.coords.assert_called_once_with()
+    mock_atmosphere_sigma_cube.coord.assert_has_calls([call(var_name='ptop'),
+                                                       call(var_name='lev'),
+                                                       call(var_name='ps')])
+    mock_atmosphere_sigma_cube.add_aux_factory.assert_called_once()
 
 
 def test_fix_aux_factories_hybrid_height(mock_hybrid_height_cube):
@@ -384,7 +436,7 @@ class TestConcatenate(unittest.TestCase):
             Cube([33., 55.],
                  var_name='sample',
                  dim_coords_and_dims=((time_coord, 0), )))
-        with self.assertRaises(TypeError):
+        with self.assertRaises((TypeError, ValueError)):
             _io.concatenate(self.raw_cubes)
 
     def test_fail_on_units_concatenate_with_overlap(self):

@@ -395,27 +395,21 @@ Tests
 -----
 
 To check that the code works correctly, there tests available in the
-`tests directory <https://github.com/ESMValGroup/ESMValCore/tree/main/tests>`_.
+`tests <https://github.com/ESMValGroup/ESMValCore/tree/main/tests>`__ directory.
 We use `pytest <https://docs.pytest.org>`_ to write and run our tests.
 
-Contributions to ESMValCore should be covered by unit tests.
+Contributions to ESMValCore should be
+`covered by unit tests <https://the-turing-way.netlify.app/reproducible-research/testing/testing-guidance.html#aim-to-have-a-good-code-coverage>`_.
 Have a look at the existing tests in the ``tests`` directory for inspiration on
 how to write your own tests.
 If you do not know how to start with writing unit tests, ask the
 `@ESMValGroup/tech-reviewers`_ for help by commenting on the pull request and
 they will try to help you.
-To check which parts of your code are covered by tests, open the file
-``test-reports/coverage_html/index.html`` and browse to the relevant file.
-It is also possible to view code coverage on Codacy_ (click the Files tab)
-and CircleCI_ (open the ``tests`` job and click the ARTIFACTS tab).
+It is also recommended that you have a look at the pytest_ documentation at some
+point when you start writing your own tests.
 
-Whenever you make a pull request or push new commits to an existing pull
-request, the tests in the `tests directory`_ of the branch associated with the
-pull request will be run automatically on CircleCI_.
-The results appear at the bottom of the pull request.
-Click on 'Details' for more information on a specific test job.
-To see some of the results on CircleCI, you may need to log in.
-You can do so using your GitHub account.
+Running tests
+~~~~~~~~~~~~~
 
 To run the tests on your own computer, go to the directory where the repository
 is cloned and run the command
@@ -426,10 +420,57 @@ is cloned and run the command
 
 Optionally you can skip tests which require additional dependencies for
 supported diagnostic script languages by adding ``-m 'not installation'`` to the
-previous command.
+previous command. To only run tests from a single file, run the command
+
+.. code-block:: bash
+
+   pytest tests/unit/test_some_file.py
+
+If you would like to avoid loading the default pytest configuration from
+`setup.cfg <https://github.com/ESMValGroup/ESMValCore/blob/main/setup.cfg>`_
+because this can be a bit slow for running just a few tests, use
+
+.. code-block:: bash
+
+   pytest -c /dev/null tests/unit/test_some_file.py
+
+Use
+
+.. code-block:: bash
+
+    pytest --help
+
+for more information on the available commands.
+
+Whenever you make a pull request or push new commits to an existing pull
+request, the tests in the ``tests`` directory of the branch associated with the
+pull request will be run automatically on CircleCI_.
+The results appear at the bottom of the pull request.
+Click on 'Details' for more information on a specific test job.
 
 When reviewing a pull request, always check that all test jobs on CircleCI_ were
 successful.
+
+Test coverage
+~~~~~~~~~~~~~
+
+To check which parts of your code are `covered by unit tests`_, open the file
+``test-reports/coverage_html/index.html`` (available after running a ``pytest``
+command) and browse to the relevant file.
+
+CircleCI will upload the coverage results from running the tests to codecov and
+Codacy.
+`codecov <https://app.codecov.io/gh/ESMValGroup/ESMValCore/pulls>`_ is a service
+that will comment on pull requests with a summary of the test coverage.
+If codecov_ reports that the coverage has decreased, check the report and add
+additional tests.
+Alternatively, it is also possible to view code coverage on Codacy_ (click the
+Files tab) and CircleCI_ (open the ``tests`` job and click the ARTIFACTS tab).
+To see some of the results on CircleCI, Codacy, or codecov, you may need to log
+in; you can do so using your GitHub account.
+
+When reviewing a pull request, always check that new code is covered by unit
+tests and codecov_ reports an increased coverage.
 
 .. _sample_data_tests:
 
@@ -471,7 +512,7 @@ Automated testing
 ~~~~~~~~~~~~~~~~~
 
 Whenever you make a pull request or push new commits to an existing pull
-request, the tests in the `tests directory`_ of the branch associated with the
+request, the tests in the ``tests`` of the branch associated with the
 pull request will be run automatically on CircleCI_.
 
 Every night, more extensive tests are run to make sure that problems with the
@@ -716,7 +757,11 @@ and create the new release from the release branch (i.e. not from ``main``).
 
 The package is automatically uploaded to the
 `ESMValGroup conda channel <https://anaconda.org/esmvalgroup/esmvalcore>`__
-by a GitHub action.
+by a GitHub action (note that this is an obsolete procedure for the main package upload,
+since the main package is now uploaded to
+`conda-forge conda channel <https://anaconda.org/conda-forge>`__ via
+the upload to PyPi, but we still upload to the esmvalgroup channel as a backup option;
+also the upload to esmvalcore gives us a chance to verify it immediately after upload).
 If this has failed for some reason, build and upload the package manually by
 following the instructions below.
 
@@ -737,7 +782,7 @@ Follow these steps to create a new conda package:
    conda package
 -  If the build was successful, upload the package to the esmvalgroup
    conda channel, e.g.
-   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.3.0-py_0.tar.bz2``.
+   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.3.1-py_0.tar.bz2``.
 
 8. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -760,7 +805,7 @@ Follow these steps to create a new Python package:
 -  Build the package:
    ``python3 -m pep517.build --source --binary --out-dir dist/ .``
    This command should generate two files in the ``dist`` directory, e.g.
-   ``ESMValCore-2.3.0-py3-none-any.whl`` and ``ESMValCore-2.3.0.tar.gz``.
+   ``ESMValCore-2.3.1-py3-none-any.whl`` and ``ESMValCore-2.3.1.tar.gz``.
 -  Upload the package:
    ``python3 -m twine upload dist/*``
    You will be prompted for an API token if you have not set this up

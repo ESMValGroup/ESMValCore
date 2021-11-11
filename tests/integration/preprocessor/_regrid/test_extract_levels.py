@@ -45,6 +45,14 @@ class Test(tests.Test):
         self.assertEqual(result, self.cube)
         self.assertEqual(id(result), id(self.cube))
 
+    def test_levels_almost_match(self):
+        vcoord = self.cube.coord(axis='z', dim_coords=True)
+        levels = np.array(vcoord.points, dtype=float)
+        vcoord.points = vcoord.points + 1.e-7
+        result = extract_levels(self.cube, levels, 'linear')
+        self.assert_array_equal(vcoord.points, levels)
+        self.assertTrue(result is self.cube)
+
     def test_interpolation__linear(self):
         levels = [0.5, 1.5]
         scheme = 'linear'
