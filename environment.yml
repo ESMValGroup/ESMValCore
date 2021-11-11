@@ -10,7 +10,7 @@ dependencies:
   # 1.8.18/py39, they seem weary to build manylinux wheels
   # and pypi ver built with older gdal
   - fiona
-  - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
+  - esmpy
   - iris>=3.1.0
   - pip!=21.3
   - python>=3.7
