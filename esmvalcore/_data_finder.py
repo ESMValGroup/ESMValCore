@@ -224,7 +224,7 @@ def _parse_period(timerange):
     return start_date, end_date
 
 
-def _compare_dates(date, file_date):
+def _truncate_dates(date, file_date):
     date = re.sub("[^0-9]", '', date)
     file_date = re.sub("[^0-9]", '', file_date)
     if len(date) < len(file_date):
@@ -257,8 +257,8 @@ def select_files(filenames, timerange):
     for filename in filenames:
         start, end = get_start_end_date(filename)
 
-        start_date, start = _compare_dates(start_date, start)
-        end_date, end = _compare_dates(end_date, end)
+        start_date, start = _truncate_dates(start_date, start)
+        end_date, end = _truncate_dates(end_date, end)
 
         if start <= end_date and end >= start_date:
             selection.append(filename)

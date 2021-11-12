@@ -23,7 +23,7 @@ from ._config import (
     get_project_config,
 )
 from ._data_finder import (
-    _compare_dates,
+    _truncate_dates,
     _find_input_files,
     _get_timerange_from_years,
     _parse_period,
@@ -655,8 +655,8 @@ def _get_statistic_attributes(products):
             if start_date is None and end_date is None:
                 start_date = attributes['timerange'].split('/')[0]
                 end_date = attributes['timerange'].split('/')[1]
-            start_date, start = _compare_dates(start_date, start)
-            end_date, end = _compare_dates(end_date, end)
+            start_date, start = _truncate_dates(start_date, start)
+            end_date, end = _truncate_dates(end_date, end)
             if start < start_date:
                 start_date = start
             if end > end_date:
