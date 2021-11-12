@@ -21,6 +21,8 @@ VAR = {
     'short_name': 'tas',
     'timerange': '2020/2025',
     'alias': 'alias',
+    'start_year': 2020,
+    'end_year': 2025
 }
 FX_VAR = {
     'filename': 'a/b.nc',
@@ -94,6 +96,8 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
         'short_name': 'tas',
         'timerange': '2020/2025',
         'alias': 'alias',
+        'start_year': 2020,
+        'end_year': 2025
     }
     error_first = ('No input files found for variable %s', var_no_filename)
     error_last = ("Set 'log_level' to 'debug' to get more information", )
