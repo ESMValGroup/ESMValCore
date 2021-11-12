@@ -1,4 +1,5 @@
 """Data finder module for the ESMValTool."""
+import copy
 import glob
 import logging
 import os
@@ -218,7 +219,8 @@ def _parse_period(timerange):
         end_date = str(isodate.datetime_isoformat(
             end_date, format=datetime_format))
     elif time_format == isodate.DATE_BAS_COMPLETE:
-        start_date = str(isodate.date_isoformat(start_date, format=time_format))
+        start_date = str(
+            isodate.date_isoformat(start_date, format=time_format))
         end_date = str(isodate.date_isoformat(end_date, format=time_format))
 
     return start_date, end_date
@@ -468,7 +470,8 @@ def get_output_file(variable, preproc_dir):
 
 def get_statistic_output_file(variable, preproc_dir):
     """Get multi model statistic filename depending on settings."""
-    variable['timerange'] = variable['timerange'].replace('/', '-')
+    updated_var = copy.deepcopy(variable)
+    updated_var['timerange'] = updated_var['timerange'].replace('/', '-')
     template = os.path.join(
         preproc_dir,
         '{diagnostic}',
@@ -476,6 +479,6 @@ def get_statistic_output_file(variable, preproc_dir):
         '{dataset}_{mip}_{short_name}_{timerange}.nc',
     )
 
-    outfile = template.format(**variable)
+    outfile = template.format(**updated_var)
 
     return outfile
