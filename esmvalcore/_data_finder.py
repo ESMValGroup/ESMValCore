@@ -213,13 +213,13 @@ def _parse_period(timerange):
         end_date = start_date + delta
 
     if time_format == datetime_format:
-        start_date = isodate.datetime_isoformat(
-            start_date, format=datetime_format)
-        end_date = isodate.datetime_isoformat(
-            end_date, format=datetime_format)
+        start_date = str(isodate.datetime_isoformat(
+            start_date, format=datetime_format))
+        end_date = str(isodate.datetime_isoformat(
+            end_date, format=datetime_format))
     elif time_format == isodate.DATE_BAS_COMPLETE:
-        start_date = isodate.date_isoformat(start_date, format=time_format)
-        end_date = isodate.date_isoformat(end_date, format=time_format)
+        start_date = str(isodate.date_isoformat(start_date, format=time_format))
+        end_date = str(isodate.date_isoformat(end_date, format=time_format))
 
     return start_date, end_date
 
@@ -250,9 +250,6 @@ def select_files(filenames, timerange):
     if start_date is None and end_date is None:
         start_date = timerange.split('/')[0]
         end_date = timerange.split('/')[1]
-    else:
-        start_date = str(start_date)
-        end_date = str(end_date)
 
     for filename in filenames:
         start, end = get_start_end_date(filename)
