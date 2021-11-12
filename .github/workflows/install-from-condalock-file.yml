@@ -33,7 +33,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvaltool-fromlock
-          # environment-file: conda-linux-64.lock
+          environment-file: conda-linux-64.lock
           python-version: ${{ matrix.python-version }}
           mamba-version: "*"
           channels: conda-forge
@@ -45,12 +45,12 @@ jobs:
         run: which python
       - shell: bash -l {0}
         run: python -V 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
-      - shell: bash -l {0}
-        run: conda install -y -c conda-forge mamba
-      - shell: bash -l {0}
-        run: mamba create --name esmvaltool-fromlock --file conda-linux-64.lock
-      - shell: bash -l {0}
-        run: conda install pip
+      #- shell: bash -l {0}
+      #  run: conda install -y -c conda-forge mamba
+      #- shell: bash -l {0}
+      #  run: mamba create --name esmvaltool-fromlock --file conda-linux-64.lock
+      #- shell: bash -l {0}
+      #  run: conda install pip
       - shell: bash -l {0}
         run: which python
       - shell: bash -l {0}
