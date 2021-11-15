@@ -23,10 +23,10 @@ from ._config import (
     get_project_config,
 )
 from ._data_finder import (
-    _truncate_dates,
     _find_input_files,
     _get_timerange_from_years,
     _parse_period,
+    _truncate_dates,
     get_input_filelist,
     get_output_file,
     get_start_end_date,
@@ -740,8 +740,8 @@ def _update_timerange(variable, config_user):
                                           config_user['drs'])
         intervals = [get_start_end_date(name) for name in files]
 
-        min_date = min(intervals)[0]
-        max_date = max(intervals)[1]
+        min_date = min(interval[0] for interval in intervals)
+        max_date = max(interval[1] for interval in intervals)
 
         if timerange == '*':
             timerange = f'{min_date}/{max_date}'
