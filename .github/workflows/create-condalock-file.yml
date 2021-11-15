@@ -86,12 +86,15 @@ jobs:
       - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"
   createPullRequest:
+    name: Create Automated PR
+    strategy:
+      fail-fast: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Make changes to pull request
         run: date +%s > report.txt
-      - name: Create Pull Request
+      - name: Creating Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v3
         with:
