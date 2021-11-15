@@ -85,6 +85,38 @@ jobs:
         run: pytest -n 2 -m "not installation and not sequential"
       - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"
+  createPullRequest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Make changes to pull request
+        run: date +%s > report.txt
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: Updating Linux condalock file
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: update-linux-condalock-file
+          delete-branch: true
+          title: '[Condalock] Update Linux condalock file'
+          body: |
+            Update condalock file
+            Automatic Pull Request.
+          labels: |
+            testing
+            condalock
+            automatedPR
+          assignees: valeriupredoi
+          reviewers: valeriupredoi
+          team-reviewers: |
+            owners
+            maintainers
+          draft: false
+
 # OSX verification fails with some dodgy too many layers of abstraction error;
 # turning it off for now
 #  verify-osx:
