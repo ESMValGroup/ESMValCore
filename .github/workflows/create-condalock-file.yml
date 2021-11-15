@@ -85,7 +85,7 @@ jobs:
         run: pytest -n 2 -m "not installation and not sequential"
       - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"
-  createPullRequest:
+  XcreatePullRequest:
     name: Create Automated PR
     strategy:
       fail-fast: false
@@ -98,7 +98,7 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@v3
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ GITHUB_TOKEN }}
           commit-message: Updating Linux condalock file
           committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
