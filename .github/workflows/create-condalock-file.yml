@@ -95,13 +95,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Make changes to pull request
         run: date +%s > report.txt
-      - name: Creating Pull Request
-        id: cpr
         uses: peter-evans/create-pull-request@v3
         with:
-          token: ${{ GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Updating Linux condalock file
-          committer: GitHub <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
           branch: update-linux-condalock-file
