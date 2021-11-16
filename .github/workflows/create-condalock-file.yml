@@ -100,7 +100,7 @@ jobs:
           commit-message: Updating Linux condalock file
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
-          branch: condalock
+          branch: condalock-update
           delete-branch: true
           title: '[Condalock] Update Linux condalock file'
           body: |
