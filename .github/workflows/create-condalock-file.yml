@@ -85,7 +85,7 @@ jobs:
         run: pytest -n 2 -m "not installation and not sequential"
       - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"
-  zcreatePullRequest:
+  createPullRequest:
     # see https://github.com/marketplace/actions/create-pull-request
     name: Create Automated PR
     strategy:
@@ -93,9 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Make changes to pull request
-        run: date +%s > report.txt
-        uses: peter-evans/create-pull-request@v3
+      - uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Updating Linux condalock file
