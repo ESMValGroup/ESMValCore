@@ -11,8 +11,7 @@ class Sic(Fix):
     """Fixes for sic."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -23,7 +22,6 @@ class Sic(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 100
@@ -35,8 +33,7 @@ class Sftlf(Fix):
     """Fixes for sftlf."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -47,7 +44,6 @@ class Sftlf(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 100
@@ -59,8 +55,7 @@ class Tos(Fix):
     """Fixes for tos."""
 
     def fix_data(self, cube):
-        """
-        Fix tos data.
+        """Fix tos data.
 
         Fixes mask
 
@@ -71,7 +66,6 @@ class Tos(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube.data = da.ma.masked_equal(cube.core_data(), 273.15)
         return cube
@@ -81,8 +75,7 @@ class Tas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix potentially missing scalar dimension.
+        """Fix potentially missing scalar dimension and time coordinate.
 
         Parameters
         ----------
@@ -92,7 +85,6 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
 
         for cube in cubes:
@@ -101,6 +93,8 @@ class Tas(Fix):
 
             if cube.coord('time').long_name is None:
                 cube.coord('time').long_name = 'time'
+        time_fix = Pr(Fix)
+        time_fix.fix_metadata(cubes)
 
         return cubes
 
@@ -109,8 +103,7 @@ class Areacello(Fix):
     """Fixes for areacello."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix potentially missing scalar dimension.
+        """Fix potentially missing scalar dimension.
 
         Parameters
         ----------
@@ -120,7 +113,6 @@ class Areacello(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         areacello = cubes.extract('Areas of grid cell')[0]
         lat = cubes.extract('latitude')[0]
@@ -150,7 +142,6 @@ class Pr(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         new_list = iris.cube.CubeList()
         for cube in cubes:
