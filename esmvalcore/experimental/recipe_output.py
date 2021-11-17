@@ -1,7 +1,7 @@
 """API for handing recipe output."""
-
 import base64
 import logging
+import os
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional, Tuple, Type
@@ -15,6 +15,8 @@ from .templates import get_template
 
 logger = logging.getLogger(__name__)
 
+TASKSEP = os.sep
+
 
 class TaskOutput:
     """Container for task output.
@@ -26,8 +28,10 @@ class TaskOutput:
     files : dict
         Mapping of the filenames with the associated attributes.
     """
+
     def __init__(self, name: str, files: dict):
         self.name = name
+        self.title = name.replace('_', ' ').replace(TASKSEP, ': ').title()
         self.files = tuple(
             OutputFile.create(filename, attributes)
             for filename, attributes in files.items())
@@ -72,6 +76,36 @@ class TaskOutput:
         return cls(name=task.name, files=product_attributes)
 
 
+class DiagnosticOutput:
+    """Container for diagnostic output.
+
+    Parameters
+    ----------
+    name : str
+        Name of the diagnostic
+    title: str
+        Title of the diagnostic
+    description: str
+        Description of the diagnostic
+    task_output : :obj:`list` of :obj:`TaskOutput`
+        List of task output.
+    """
+
+    def __init__(self, name, task_output, title=None, description=None):
+        self.name = name
+        self.title = title if title else name.title()
+        self.description = description if description else ''
+        self.task_output = task_output
+
+    def __repr__(self):
+        """Return canonical string representation."""
+        indent = '  '
+        string = f'{self.name}:\n'
+        for task_output in self.task_output:
+            string += f'{indent}{task_output}\n'
+        return string
+
+
 class RecipeOutput(Mapping):
     """Container for recipe output.
 
@@ -80,15 +114,43 @@ class RecipeOutput(Mapping):
     task_output : dict
         Dictionary with recipe output grouped by task name. Each task value is
         a mapping of the filenames with the product attributes.
+
+    Attributes
+    ----------
+    diagnostics : dict
+        Dictionary with recipe output grouped by diagnostic.
+    info : RecipeInfo
+        The recipe used to create the output.
+    session : Session
+        The session used to run the recipe.
     """
+
     def __init__(self, task_output: dict, session=None, info=None):
         self._raw_task_output = task_output
         self._task_output = {}
+        self.diagnostics = {}
         self.info = info
         self.session = session
+
+        # Group create task output and group by diagnostic
+        diagnostics: dict = {}
         for task_name, files in task_output.items():
-            self._task_output[task_name] = TaskOutput(name=task_name,
-                                                      files=files)
+            name = task_name.split(TASKSEP)[0]
+            if name not in diagnostics:
+                diagnostics[name] = []
+            task = TaskOutput(name=task_name, files=files)
+            self._task_output[task_name] = task
+            diagnostics[name].append(task)
+
+        # Create diagnostic output
+        for name, tasks in diagnostics.items():
+            diagnostic_info = info.data['diagnostics'][name]
+            self.diagnostics[name] = DiagnosticOutput(
+                name=name,
+                task_output=tasks,
+                title=diagnostic_info.get('title'),
+                description=diagnostic_info.get('description'),
+            )
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -159,7 +221,7 @@ class RecipeOutput(Mapping):
         if not template:
             template = get_template(self.__class__.__name__ + '.j2')
         rendered = template.render(
-            tasks=self.values(),
+            diagnostics=self.diagnostics.values(),
             session=self.session,
             info=self.info,
         )
@@ -254,11 +316,6 @@ class OutputFile():
     def data_citation_file(self):
         """Return path of data citation info (txt format)."""
         return self._get_derived_path('_data_citation_info', '.txt')
-
-    @property
-    def provenance_svg_file(self):
-        """Return path of provenance file (svg format)."""
-        return self._get_derived_path('_provenance', '.svg')
 
     @property
     def provenance_xml_file(self):

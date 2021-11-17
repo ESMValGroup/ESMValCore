@@ -11,6 +11,7 @@ import iris
 import numpy as np
 from iris.util import equalise_attributes
 
+from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import remove_fx_variables
 
 logger = logging.getLogger(__name__)
@@ -126,7 +127,7 @@ def _unify_time_coordinates(cubes):
                 "support sub-daily data.")
 
         # Update the cubes' time coordinate (both point values and the units!)
-        cube.coord('time').points = t_unit.date2num(dates)
+        cube.coord('time').points = date2num(dates, t_unit, coord.dtype)
         cube.coord('time').units = t_unit
         cube.coord('time').bounds = None
         cube.coord('time').guess_bounds()

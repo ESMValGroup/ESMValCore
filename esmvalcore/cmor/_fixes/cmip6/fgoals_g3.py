@@ -1,15 +1,8 @@
 """Fixes for FGOALS-g3 model."""
 import iris
 
-from ..cmip5.fgoals_g2 import Cl as BaseCl
 from ..common import OceanFixGrid
 from ..fix import Fix
-
-Cl = BaseCl
-
-Cli = BaseCl
-
-Clw = BaseCl
 
 
 def _check_bounds_monotonicity(coord):

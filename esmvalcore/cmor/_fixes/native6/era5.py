@@ -5,6 +5,8 @@ import logging
 import iris
 import numpy as np
 
+from esmvalcore.iris_helpers import date2num
+
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 
@@ -356,7 +358,7 @@ class AllVars(Fix):
                     month = 1
                     year = year + 1
                 end.append(cell.point.replace(month=month, year=year))
-            end = coord.units.date2num(end)
+            end = date2num(end, coord.units)
             start = coord.points
             coord.points = 0.5 * (start + end)
             coord.bounds = np.column_stack([start, end])

@@ -1,6 +1,6 @@
 """Module for checking iris cubes against their CMOR definitions."""
-import datetime
 import logging
+from datetime import datetime
 from enum import IntEnum
 
 import cf_units
@@ -9,6 +9,8 @@ import iris.coords
 import iris.exceptions
 import iris.util
 import numpy as np
+
+from esmvalcore.iris_helpers import date2num
 
 from .table import CMOR_TABLES
 
@@ -38,20 +40,20 @@ def _get_time_bounds(time, freq):
         year = time.cell(step).point.year
         if freq in ['mon', 'mo']:
             next_month, next_year = _get_next_month(month, year)
-            min_bound = time.units.date2num(
-                datetime.datetime(year, month, 1, 0, 0))
-            max_bound = time.units.date2num(
-                datetime.datetime(next_year, next_month, 1, 0, 0))
+            min_bound = date2num(datetime(year, month, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(next_year, next_month, 1, 0, 0),
+                                 time.units, time.dtype)
         elif freq == 'yr':
-            min_bound = time.units.date2num(
-                datetime.datetime(year, 1, 1, 0, 0))
-            max_bound = time.units.date2num(
-                datetime.datetime(year + 1, 1, 1, 0, 0))
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 1, 1, 1, 0, 0),
+                                 time.units, time.dtype)
         elif freq == 'dec':
-            min_bound = time.units.date2num(
-                datetime.datetime(year, 1, 1, 0, 0))
-            max_bound = time.units.date2num(
-                datetime.datetime(year + 10, 1, 1, 0, 0))
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 10, 1, 1, 0, 0),
+                                 time.units, time.dtype)
         else:
             delta = {
                 'day': 12 / 24,
@@ -137,8 +139,8 @@ class CMORCheck():
             except iris.exceptions.CoordinateNotFoundError:
                 pass
             else:
-                if lat.ndim == 1 and (self._cube.coord_dims(lat) ==
-                                      self._cube.coord_dims(lon)):
+                if lat.ndim == 1 and (self._cube.coord_dims(lat)
+                                      == self._cube.coord_dims(lon)):
                     self._unstructured = True
         return self._unstructured
 
@@ -229,9 +231,14 @@ class CMORCheck():
             If any errors were reported before calling this method.
         """
         if self.has_errors():
-            msg = 'There were errors in variable {}:\n{}\n in cube:\n{}'
-            msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
-                             self._cube)
+            msg = '\n'.join([
+                f'There were errors in variable {self._cube.var_name}:'
+                '\n '.join(self._errors),
+                'in cube:',
+                f'{self._cube}',
+                'loaded from file ' +
+                self._cube.attributes.get('source_file', ''),
+            ])
             raise CMORCheckError(msg)
 
     def report_warnings(self):
@@ -243,8 +250,12 @@ class CMORCheck():
             Given logger
         """
         if self.has_warnings():
-            msg = 'There were warnings in variable {}:\n{}\n'.format(
-                self._cube.var_name, '\n '.join(self._warnings))
+            msg = '\n'.join([
+                f'There were warnings in variable {self._cube.var_name}:',
+                '\n '.join(self._warnings),
+                'loaded from file ' +
+                self._cube.attributes.get('source_file', ''),
+            ])
             self._logger.warning(msg)
 
     def report_debug_messages(self):
@@ -256,8 +267,13 @@ class CMORCheck():
             Given logger.
         """
         if self.has_debug_messages():
-            msg = 'There were metadata changes in variable {}:\n{}\n'.format(
-                self._cube.var_name, '\n '.join(self._debug_messages))
+            msg = '\n'.join([
+                'There were metadata changes in variable' +
+                self._cube.var_name,
+                '\n '.join(self._debug_messages),
+                'loaded from file ' +
+                self._cube.attributes.get('source_file', ''),
+            ])
             self._logger.debug(msg)
 
     def _check_fill_value(self):
@@ -429,6 +445,7 @@ class CMORCheck():
                                               'exist')
 
     def _check_generic_level_dim_names(self, key, coordinate):
+        """Check name of generic level coordinate."""
         standard_name = None
         out_name = None
         name = None
@@ -451,8 +468,7 @@ class CMORCheck():
             if standard_name:
                 if not out_name:
                     self.report_error(
-                        f'Generic level coordinate {key} '
-                        'has wrong var_name.', )
+                        f'Generic level coordinate {key} has wrong var_name.')
                 level = coordinate.generic_lev_coords[name]
                 level.generic_level = True
                 level.generic_lev_coords = self._cmor_var.coordinates[
@@ -464,17 +480,95 @@ class CMORCheck():
             else:
                 if out_name:
                     self.report_critical(
-                        f'Generic level coordinate {key} '
-                        'has wrong standard_name '
-                        'or is not set.', )
+                        f'Generic level coordinate {key} with out_name '
+                        f'{out_name} has wrong standard_name or is not set.')
                 else:
-                    self.report_critical(self._does_msg, key, 'exist')
+                    self._check_alternative_dim_names(key)
+
+    ALTERNATIVE_GENERIC_LEV_COORDS = {
+        'alevel': {
+            'CMIP5': ['alt40', 'plevs'],
+            'CMIP6': ['alt16', 'plev3'],
+            'obs4MIPs': ['alt16', 'plev3'],
+        },
+        'zlevel': {
+            'CMIP3': ['pressure'],
+        },
+    }
+
+    def _check_alternative_dim_names(self, key):
+        """Check for viable alternatives to generic level coordinates.
+
+        Generic level coordinates are used to calculate high-dimensional (e.g.,
+        3D or 4D) regular level coordinates (like pressure or altitude) from
+        lower-dimensional (e.g., 2D or 1D) arrays in order to save disk space.
+        In order to also support regular level coordinates, search for allowed
+        alternatives here.  A detailed explanation of this can be found here:
+            https://github.com/ESMValGroup/ESMValCore/issues/1029
+
+        Only the projects CMIP3, CMIP5, CMIP6 and obs4MIPs support generic
+        level coordinates. Right now, only alternative level coordinates for
+        the atmosphere ('alevel' or 'zlevel') are supported.
+
+        Note that only the "simplest" CMOR table entry per coordinate is
+        specified (e.g., only 'plev3' for the pressure level coordinate and
+        'alt16' for the altitude coordinate). These different versions (e.g.,
+        'plev3', 'plev19', 'plev39', etc.) only differ in the requested values.
+        We are mainly interested in the metadata of the coordinates (names,
+        units), which is equal for all coordinate versions. In the DEFAULT
+        strictness or lower, differing requested values only produce a warning.
+        A stricter setting (such as STRICT) does not allow this feature (i.e.,
+        the use of alternative level coordinates) in the first place, so we do
+        not need to worry about differing requested values for the levels in
+        this case.
+
+        In the future, this might be extended: For ``cmor_strict=True``
+        projects (like CMIP) the level coordinate's ``len`` might be used to
+        search for the correct coordinate version and then check against this.
+        For ``cmor_strict=False`` project (like OBS) the check for requested
+        values might be disabled.
+        """
+        table_type = self._cmor_var.table_type
+        alternative_coord = None
+        allowed_alternatives = self.ALTERNATIVE_GENERIC_LEV_COORDS.get(
+            key, {}).get(table_type, [])
+
+        # Check if any of the allowed alternative coordinates is present in the
+        # cube
+        for allowed_alternative in allowed_alternatives:
+            coord_info = CMOR_TABLES[table_type].coords[allowed_alternative]
+            try:
+                cube_coord = self._cube.coord(var_name=coord_info.out_name)
+            except iris.exceptions.CoordinateNotFoundError:
+                pass
+            else:
+                if cube_coord.standard_name == coord_info.standard_name:
+                    alternative_coord = coord_info
+                    break
+                self.report_error(
+                    f"Found alternative coordinate '{coord_info.out_name}' "
+                    f"for generic level coordinate '{key}' with wrong "
+                    f"standard_name '{cube_coord.standard_name}' (expected "
+                    f"'{coord_info.standard_name}')")
+                break
+
+        # No valid alternative coordinate found -> critical error
+        if alternative_coord is None:
+            self.report_critical(self._does_msg, key, 'exist')
+            return
+
+        # Valid alternative coordinate found -> perform checks on it
+        self.report_warning(
+            f"Found alternative coordinate '{alternative_coord.out_name}' "
+            f"for generic level coordinate '{key}'. Subsequent warnings about "
+            f"levels that are not contained in '{alternative_coord.out_name}' "
+            f"can be safely ignored.")
+        self._check_coord(alternative_coord, cube_coord, self._cube.var_name)
 
     def _check_coords(self):
         """Check coordinates."""
-
         for coordinate in self._cmor_var.coordinates.values():
-            # Cannot check generic_level coords as no CMOR information
+            # Cannot check generic_level coords with no CMOR information
             if coordinate.generic_level and not coordinate.out_name:
                 continue
             var_name = coordinate.out_name
@@ -574,8 +668,7 @@ class CMORCheck():
             self.report_debug_message(
                 f'Coordinate {coord.standard_name} appears to belong to '
                 'an unstructured grid. Skipping monotonicity and '
-                'direction tests.'
-            )
+                'direction tests.')
             return
 
         if not coord.is_monotonic():
@@ -647,7 +740,12 @@ class CMORCheck():
                                          valid_max)
 
         if l_fix_coord_value:
-            if coord.ndim == 1:
+            # cube.intersection only works for cells with 0 or 2 bounds
+            # Note: nbounds==0 means there are no bounds given, nbounds==2
+            # implies a regular grid with bounds in the grid direction,
+            # nbounds>2 implies an irregular grid with bounds given as vertices
+            # of the cell polygon.
+            if coord.ndim == 1 and coord.nbounds in (0, 2):
                 lon_extent = iris.coords.CoordExtent(coord, 0.0, 360., True,
                                                      False)
                 self._cube = self._cube.intersection(lon_extent)
@@ -692,13 +790,28 @@ class CMORCheck():
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
         if coord_info.requested:
+            if coord.points.ndim != 1:
+                self.report_warning(
+                    "Cannot check requested values of {}D coordinate {} since "
+                    "it is not 1D", coord.points.ndim, var_name)
+                return
             try:
-                cmor_points = [float(val) for val in coord_info.requested]
+                cmor_points = np.array(coord_info.requested, dtype=float)
             except ValueError:
                 cmor_points = coord_info.requested
-            coord_points = list(coord.points)
+            else:
+                atol = 1e-7 * np.mean(cmor_points)
+                if (self.automatic_fixes
+                        and coord.points.shape == cmor_points.shape
+                        and np.allclose(
+                            coord.points,
+                            cmor_points,
+                            rtol=1e-7,
+                            atol=atol,
+                        )):
+                    coord.points = cmor_points
             for point in cmor_points:
-                if point not in coord_points:
+                if point not in coord.points:
                     self.report_warning(self._contain_msg, var_name,
                                         str(point), str(coord.units))
 
