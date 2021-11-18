@@ -1,0 +1,21 @@
+SOURCE: CMIP6
+!============
+variable_entry:    pocos
+!============
+modeling_realm:    ocean
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             mol m-3
+cell_methods:      area: mean where sea time: mean
+cell_measures:     area: areacello
+long_name:         Particulate organic carbon
+comment:           sum of particulate organic carbon concentrations
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+!----------------------------------
+!
