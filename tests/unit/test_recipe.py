@@ -155,7 +155,7 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
     # Create tasks
     tasks, failed = _recipe.Recipe._create_preprocessor_tasks(
-        recipe, diagnostic_name, diagnostic)
+        recipe, diagnostic_name, diagnostic, [], True)
 
     assert tasks == [resume_task]
     assert not failed
