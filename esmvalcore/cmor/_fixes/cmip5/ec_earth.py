@@ -93,8 +93,6 @@ class Tas(Fix):
 
             if cube.coord('time').long_name is None:
                 cube.coord('time').long_name = 'time'
-        time_fix = Pr(Fix)
-        time_fix.fix_metadata(cubes)
 
         return cubes
 
