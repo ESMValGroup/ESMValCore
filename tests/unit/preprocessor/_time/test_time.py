@@ -174,6 +174,16 @@ class TestClipTimerange(tests.Test):
         """Prepare tests."""
         self.cube = _create_sample_cube()
 
+    @staticmethod
+    def _create_cube(data, times, bounds, calendar='gregorian'):
+        time = iris.coords.DimCoord(times,
+                                    bounds=bounds,
+                                    standard_name='time',
+                                    units=Unit('days since 1950-01-01',
+                                               calendar=calendar))
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+        return cube
+
     def test_clip_timerange_1_year(self):
         """Test clip_timerange with 1 year."""
         sliced = clip_timerange(self.cube, '1950/1950')
@@ -183,7 +193,7 @@ class TestClipTimerange(tests.Test):
                            sliced.coord('month_number').points)
         assert_array_equal(np.full(12, 1950), sliced.coord('year').points)
 
-    def test_timerange_3_years(self):
+    def test_clip_timerange_3_years(self):
         """Test clip_timerange with 3 years."""
         sliced = clip_timerange(self.cube, '1949/1951')
         assert sliced == self.cube
@@ -194,6 +204,8 @@ class TestClipTimerange(tests.Test):
             clip_timerange(self.cube, '2200/2200')
         msg = ("Time slice 2200-01-01 to 2201-01-01 is outside"
                " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
+        with self.assertRaises(ValueError) as ctx:
+            clip_timerange(self.cube, '2200/2200')
         assert ctx.exception.args == (msg, )
 
     def test_clip_timerange_one_time(self):
@@ -207,8 +219,101 @@ class TestClipTimerange(tests.Test):
     def test_clip_timerange_no_time(self):
         """Test clip_timerange with no time step."""
         cube = _create_sample_cube()[0]
-        sliced = clip_timerange(cube, '1950/1950')
-        assert cube == sliced
+        sliced_timerange = clip_timerange(cube, '1950/1950')
+        assert cube == sliced_timerange
+
+    def test_clip_timerange_date(self):
+        """Test timerange with dates."""
+        sliced_year = clip_timerange(self.cube, '1950/1952')
+        sliced_month = clip_timerange(self.cube, '195001/195212')
+        sliced_day = clip_timerange(self.cube, '19500101/19521231')
+        assert self.cube == sliced_year
+        assert self.cube == sliced_month
+        assert self.cube == sliced_day
+
+    def test_clip_timerange_datetime(self):
+        """Test timerange with datetime periods."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        time = iris.coords.DimCoord(times,
+                                    standard_name='time',
+                                    units=Unit('hours since 1950-01-01',
+                                               calendar='360_day'))
+        time.guess_bounds()
+        cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+
+        sliced_cube = clip_timerange(cube, '19500101T000000/19500101T120000')
+        expected_time = np.arange(0, 18, 6)
+        assert_array_equal(sliced_cube.coord(time).points, expected_time)
+
+    def test_clip_timerange_monthly(self):
+        """Test timerange with monthly data."""
+        time = np.arange(15., 2175., 30)
+        data = np.ones_like(time)
+        calendars = [
+            '360_day', '365_day', '366_day',
+            'gregorian', 'julian', 'proleptic_gregorian']
+        for calendar in calendars:
+            cube = self._create_cube(data, time, None, calendar)
+            sliced_forward = clip_timerange(cube, '195001/P4Y6M')
+            sliced_backward = clip_timerange(cube, 'P4Y6M/195406')
+            assert sliced_forward.coord('time').cell(0).point.year == 1950
+            assert sliced_forward.coord('time').cell(-1).point.year == 1954
+            assert sliced_forward.coord('time').cell(0).point.month == 1
+            assert sliced_forward.coord('time').cell(-1).point.month == 6
+
+            assert sliced_backward.coord('time').cell(-1).point.year == 1954
+            assert sliced_backward.coord('time').cell(0).point.year == 1950
+            assert sliced_backward.coord('time').cell(-1).point.month == 6
+            assert sliced_backward.coord('time').cell(0).point.month == 1
+
+    def test_clip_timerange_daily(self):
+        """Test timerange with daily data."""
+        time = np.arange(0., 3000.)
+        data = np.ones_like(time)
+        calendars = [
+            '360_day', '365_day', '366_day',
+            'gregorian', 'julian', 'proleptic_gregorian']
+        for calendar in calendars:
+            cube = self._create_cube(data, time, None, calendar)
+            sliced_forward = clip_timerange(cube, '19500101/P4Y6M2D')
+            sliced_backward = clip_timerange(cube, 'P4Y6M3D/19540703')
+            assert sliced_forward.coord('time').cell(0).point.year == 1950
+            assert sliced_forward.coord('time').cell(-1).point.year == 1954
+            assert sliced_forward.coord('time').cell(0).point.month == 1
+            assert sliced_forward.coord('time').cell(-1).point.month == 7
+            assert sliced_forward.coord('time').cell(0).point.day == 1
+            assert sliced_forward.coord('time').cell(-1).point.day == 2
+
+            assert sliced_backward.coord('time').cell(-1).point.year == 1954
+            assert sliced_backward.coord('time').cell(0).point.year == 1950
+            assert sliced_backward.coord('time').cell(-1).point.month == 7
+            assert sliced_backward.coord('time').cell(0).point.month == 1
+            assert sliced_backward.coord('time').cell(-1).point.day == 3
+            assert sliced_backward.coord('time').cell(0).point.day == 1
+
+    def test_clip_timerange_duration_seconds(self):
+        """Test timerange with duration periods with resolution up to
+        seconds."""
+        data = np.arange(8)
+        times = np.arange(0, 48, 6)
+        calendars = [
+            '360_day', '365_day', '366_day',
+            'gregorian', 'julian', 'proleptic_gregorian']
+        for calendar in calendars:
+            time = iris.coords.DimCoord(times,
+                                        standard_name='time',
+                                        units=Unit('hours since 1950-01-01',
+                                                   calendar=calendar))
+            time.guess_bounds()
+            cube = iris.cube.Cube(data, dim_coords_and_dims=[(time, 0)])
+            sliced_cube_start = clip_timerange(cube, 'PT12H/19500101T120000')
+            sliced_cube_end = clip_timerange(cube, '19500101T000000/PT12H')
+            expected_time = np.arange(0, 18, 6)
+            assert_array_equal(
+                sliced_cube_start.coord(time).points, expected_time)
+            assert_array_equal(
+                sliced_cube_end.coord(time).points, expected_time)
 
 
 class TestExtractSeason(tests.Test):
