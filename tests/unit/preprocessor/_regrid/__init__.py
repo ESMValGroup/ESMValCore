@@ -4,6 +4,7 @@ Unit tests for the :mod:`esmvalcore.preprocessor.regrid` module.
 """
 
 import iris
+import iris.fileformats
 import numpy as np
 from iris.coords import AuxCoord, CellMethod, DimCoord
 

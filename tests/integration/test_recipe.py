@@ -12,9 +12,9 @@ from PIL import Image
 import esmvalcore
 from esmvalcore._config import TAGS
 from esmvalcore._recipe import TASKSEP, read_recipe_file
-from esmvalcore._recipe_checks import RecipeError
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
 
@@ -333,6 +333,7 @@ def patched_tas_derivation(monkeypatch):
 
 DEFAULT_DOCUMENTATION = dedent("""
     documentation:
+      title: Test recipe
       description: This is a test recipe.
       authors:
         - andela_bouwe
@@ -1492,6 +1493,7 @@ def test_diagnostic_task_provenance(
     # Check resulting products
     assert len(diagnostic_task.products) == 2
     for product in diagnostic_task.products:
+        product.restore_provenance()
         check_provenance(product)
         assert product.attributes['caption'] == record['caption']
         assert product.entity.get_attribute(

@@ -13,8 +13,8 @@ from unittest.mock import patch
 import pytest
 from fire.core import FireExit
 
-import esmvalcore._recipe_checks as check
 from esmvalcore._main import Config, ESMValTool, Recipes, run
+from esmvalcore.exceptions import RecipeError
 
 
 def wrapper(f):
@@ -64,6 +64,7 @@ def test_empty_run(tmp_path):
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
         documentation:
+          title: Test recipe
           description: This is a test recipe.
           authors:
             - andela_bouwe
@@ -76,8 +77,9 @@ def test_empty_run(tmp_path):
     """)
     recipe_file.write_text(content)
     Config.get_config_user(path=tmp_path)
-    with pytest.raises(check.RecipeError) as exc:
-        ESMValTool.run(recipe_file, config_file=f"{tmp_path}/config-user.yml")
+    with pytest.raises(RecipeError) as exc:
+        ESMValTool().run(
+            recipe_file, config_file=f"{tmp_path}/config-user.yml")
     assert str(exc.value) == 'The given recipe does not have any diagnostic.'
     log_dir = './esmvaltool_output'
     log_file = os.path.join(log_dir,
