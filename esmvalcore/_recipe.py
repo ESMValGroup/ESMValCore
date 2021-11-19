@@ -328,7 +328,7 @@ def _get_default_settings(variable, config_user, derive=False):
     return settings
 
 
-def _add_fxvar_keys(fx_info, variable):
+def _add_fxvar_keys(fx_info, variable, extra_facets_dir):
     """Add keys specific to fx variable to use get_input_filelist."""
     fx_variable = deepcopy(variable)
     fx_variable.update(fx_info)
@@ -340,6 +340,9 @@ def _add_fxvar_keys(fx_info, variable):
 
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
+
+    # add extra_facets
+    _add_extra_facets(fx_variable, extra_facets_dir)
 
     return fx_variable
 
@@ -363,7 +366,8 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
     fx_files_for_mips = {}
     for mip in mips_with_fx_var:
         fx_info['mip'] = mip
-        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_info = _add_fxvar_keys(fx_info, variable,
+                                  config_user['extra_facets_dir'])
         logger.debug("For fx variable '%s', found table '%s'",
                      fx_info['short_name'], mip)
         fx_files = _get_input_files(fx_info, config_user)[0]
@@ -389,7 +393,8 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
     else:
         mip = list(fx_files_for_mips)[0]
         fx_info['mip'] = mip
-        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_info = _add_fxvar_keys(fx_info, variable,
+                                  config_user['extra_facets_dir'])
         fx_files = fx_files_for_mips[mip]
 
     return fx_info, fx_files
@@ -424,7 +429,8 @@ def _get_fx_files(variable, fx_info, config_user):
             raise RecipeError(
                 f"fx variable '{fx_info['short_name']}' not available in CMOR "
                 f"table '{mip}' for '{var_project}'")
-        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_info = _add_fxvar_keys(fx_info, variable,
+                                  config_user['extra_facets_dir'])
         fx_files = _get_input_files(fx_info, config_user)[0]
 
     # Flag a warning if no files are found
