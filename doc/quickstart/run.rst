@@ -34,6 +34,8 @@ the name matches one of the recipes in your ESMValTool installation directory,
 in the subdirectory
 `recipes <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/recipes/>`__
 and run that.
+To work with installed recipes, the ESMValTool package provides the
+``esmvaltool recipes`` command, see :ref:`esmvaltool:recipes_command`.
 
 If the configuration file is not in the default location
 ``~/.esmvaltool/config-user.yml``, you can pass its path explicitly:
