@@ -735,11 +735,11 @@ def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
     np.testing.assert_array_equal(result.data.data, expected)
     
     assert result.cell_measures()
-    result_measure = result.cell_measure('areacello').data
+    result_measure = result.cell_measure('cell_area').data
     np.testing.assert_array_equal(measure.data, result_measure)
 
     assert result.ancillary_variables()
-    result_ancillary_var = result.ancillary_variable('sftgif').data
+    result_ancillary_var = result.ancillary_variable('land_ice_area_fraction').data
     np.testing.assert_array_equal(ancillary_var.data, result_ancillary_var)
 
 
