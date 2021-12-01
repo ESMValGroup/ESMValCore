@@ -725,8 +725,8 @@ def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
         standard_name='land_ice_area_fraction',
         var_name='sftgif',
         units='%')
-    cube.add_cell_measure(measure, (1, 2))
-    cube.add_ancillary_variable(ancillary_var, (1, 2))
+    cube.add_cell_measure(measure, (0, 1))
+    cube.add_ancillary_variable(ancillary_var, (0, 1))
     result = extract_shape(
         cube,
         shp_file,
