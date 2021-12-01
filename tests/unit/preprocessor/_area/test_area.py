@@ -709,6 +709,40 @@ def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
     np.testing.assert_array_equal(result.data.data, expected)
 
 
+def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
+    """Test for extracting a shape from NE file."""
+    expected = np.ones((5, 5))
+    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
+    shp_file = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
+    cube = make_testcube
+    measure = iris.coords.CellMeasure(cube.data,
+                                      standard_name='cell_area',
+                                      var_name='areacello',
+                                      units='m2',
+                                      measure='area')
+    ancillary_var = iris.coords.AncillaryVariable(
+        cube.data,
+        standard_name='land_ice_area_fraction',
+        var_name='sftgif',
+        units='%')
+    cube.add_cell_measure(measure, (1, 2))
+    cube.add_ancillary_variable(ancillary_var, (1, 2))
+    result = extract_shape(
+        cube,
+        shp_file,
+        crop=False,
+    )
+    np.testing.assert_array_equal(result.data.data, expected)
+    
+    assert result.cell_measures()
+    result_measure = result.cell_measure('areacello').data
+    np.testing.assert_array_equal(measure.data, result_measure)
+
+    assert result.ancillary_variables()
+    result_ancillary_var = result.ancillary_variable('sftgif').data
+    np.testing.assert_array_equal(ancillary_var.data, result_ancillary_var)
+
+
 def test_extract_shape_ne_check_nans(ne_ocean_shapefile):
     """Test shape from NE file with check for boundary NaN's."""
     cube = _create_sample_full_cube()
