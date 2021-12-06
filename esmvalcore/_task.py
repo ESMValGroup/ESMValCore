@@ -404,8 +404,14 @@ class DiagnosticTask(BaseTask):
         run_dir = Path(self.settings['run_dir'])
         run_dir.mkdir(parents=True, exist_ok=True)
 
+        # ignore some settings for diagnostic
+        ignore_settings = ['profile_diagnostics', ]
+        for sett in ignore_settings:
+            settings_copy = self.settings
+            settings_copy.pop(sett, None)
+
         filename = run_dir / 'settings.yml'
-        filename.write_text(yaml.safe_dump(self.settings))
+        filename.write_text(yaml.safe_dump(settings_copy))
 
         # If running an NCL script:
         if Path(self.script).suffix.lower() == '.ncl':
