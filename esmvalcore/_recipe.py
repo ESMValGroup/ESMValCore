@@ -1392,7 +1392,6 @@ class Recipe:
             for key in (
                     'output_file_type',
                     'log_level',
-                    'profile_diagnostic',
                     'auxiliary_data_dir',
             ):
                 settings[key] = self._cfg[key]
