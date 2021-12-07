@@ -1742,7 +1742,10 @@ true`` in the recipe, e.g.,
        reference_for_bias: true}
 
 In the example above, ERA-Interim is used as reference dataset for the bias
-calculation.
+calculation. For this preprocessor, all input datasets need to have identical
+dimensional coordinates. This can for example be ensured with the preprocessors
+:func:`esmvalcore.preprocessor.regrid` and/or
+:func:`esmvalcore.preprocessor.regrid_time`.
 
 The ``bias`` preprocessor supports 3 optional arguments:
 

@@ -17,7 +17,7 @@ def bias(products, bias_type='absolute', denominator_mask_threshold=1e-3,
     -----
     This preprocessor requires a reference dataset. For this, exactly one input
     dataset needs to have the facet ``reference_for_bias: true`` defined in the
-    recipe. In addition, all input datasets need to have similar dimensional
+    recipe. In addition, all input datasets need to have identical dimensional
     coordinates. This can for example be ensured with the preprocessors
     :func:`esmvalcore.preprocessor.regrid` and/or
     :func:`esmvalcore.preprocessor.regrid_time`.
@@ -98,7 +98,7 @@ def bias(products, bias_type='absolute', denominator_mask_threshold=1e-3,
                 f"Expected one of ['absolute', 'relative'] for bias_type, got "
                 f"'{bias_type}'")
 
-        # Adapt cube metadata and provenancen information
+        # Adapt cube metadata and provenance information
         cube.metadata = cube_metadata
         cube.units = new_units
         product.attributes['units'] = new_units
