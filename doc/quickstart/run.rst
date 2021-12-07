@@ -34,6 +34,15 @@ the name matches one of the recipes in your ESMValTool installation directory,
 in the subdirectory
 `recipes <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/recipes/>`__
 and run that.
+
+.. note::
+
+  There is no ``recipe_example.yml`` shipped with either ESMValCore or ESMValTool.
+  If you would like to try out the command above, replace ``recipe_example.yml``
+  with the path to an existing recipe, e.g.
+  `examples/recipe_python.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/recipes/examples/recipe_python.yml>`_
+  if you have the ESMValTool package installed.
+
 To work with installed recipes, the ESMValTool package provides the
 ``esmvaltool recipes`` command, see :ref:`esmvaltool:recipes_command`.
 
