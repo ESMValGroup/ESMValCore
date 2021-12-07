@@ -190,7 +190,14 @@ def write_ncl_settings(settings, filename, mode='wt'):
         raise ValueError("Unable to map {} to an NCL type".format(type(value)))
 
     lines = []
-    for var_name, value in sorted(settings.items()):
+
+    # ignore some settings for NCL diagnostic
+    ignore_settings = ['profile_diagnostics', ]
+    for sett in ignore_settings:
+        settings_copy = settings
+        settings_copy.pop(sett, None)
+
+    for var_name, value in sorted(settings_copy.items()):
         if isinstance(value, (list, tuple)):
             # Create an NCL list that can span multiple files
             lines.append('if (.not. isdefined("{var_name}")) then\n'
