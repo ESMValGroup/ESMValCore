@@ -41,8 +41,6 @@ def check(result_file):
     """Check the results."""
     result = yaml.safe_load(result_file.read_text())
 
-    print(result)
-
     required_keys = {
         'input_files',
         'log_level',
@@ -52,23 +50,24 @@ def check(result_file):
     }
     missing = required_keys - set(result)
     assert not missing
+    assert 'profile_disgnostic' not in result
 
 
 SCRIPTS = {
     # TODO: make independent from ESMValTool installation
-    #     'diagnostic.py':
-    #     dedent("""
-    #         import yaml
-    #         from esmvaltool.diag_scripts.shared import run_diagnostic
-    #
-    #         def main(cfg):
-    #             with open(cfg['setting_name'], 'w') as file:
-    #                 yaml.safe_dump(cfg, file)
-    #
-    #         if __name__ == '__main__':
-    #             with run_diagnostic() as config:
-    #                 main(config)
-    #         """),
+    'diagnostic.py':
+    dedent("""
+        import yaml
+        from esmvaltool.diag_scripts.shared import run_diagnostic
+    
+        def main(cfg):
+            with open(cfg['setting_name'], 'w') as file:
+                yaml.safe_dump(cfg, file)
+    
+        if __name__ == '__main__':
+            with run_diagnostic() as config:
+                main(config)
+        """),
     'diagnostic.ncl':
     dedent("""
         begin
