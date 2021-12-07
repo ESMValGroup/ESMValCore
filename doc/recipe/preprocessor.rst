@@ -23,6 +23,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Trend`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
+* :ref:`Bias`
 * :ref:`Other`
 
 See :ref:`preprocessor_functions` for implementation details and the exact default order.
@@ -1712,6 +1713,54 @@ will guarantee homogeneous input for the diagnostics.
    amount based unit is not supported at the moment.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
+
+
+.. _bias:
+
+Bias
+====
+
+The bias module contains the following preprocessor functions:
+
+* ``bias``: Calculate absolute or relative biases with respect to a reference
+  dataset
+
+``bias``
+--------
+
+This function calculates biases with respect to a given reference dataset. For
+this, exactly one input dataset needs to be declared as ``reference_for_bias:
+true`` in the recipe, e.g.,
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: CESM2,   project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: MIROC6,  project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: ERA-Interim, project: OBS6, tier: 3, type: reanaly, version: 1,
+       reference_for_bias: true}
+
+In the example above, ERA-Interim is used as reference dataset for the bias
+calculation.
+
+The ``bias`` preprocessor supports 3 optional arguments:
+
+   * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
+     calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
+     :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e,
+     calculate bias as :math:`\frac{X - R}{R}`).
+   * ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
+     Threshold to mask values close to zero in the denominator (i.e., the
+     reference dataset) during the calculation of relative biases. All values
+     in the reference dataset with absolute value less than the given threshold
+     are masked out. This setting is ignored when ``bias_type`` is set to
+     ``'absolute'``.
+   * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
+     ``True``, keep the reference dataset in the output. If ``False``, drop the
+     reference dataset.
+
+See also :func:`esmvalcore.preprocessor.bias`.
 
 
 .. _Memory use:
