@@ -51,25 +51,32 @@ def check(result_file):
     }
     missing = required_keys - set(result)
     assert not missing
-    unwanted_keys = ['profile_disgnostic', ]
+    unwanted_keys = ['profile_diagnostic', ]
     for unwanted_key in unwanted_keys:
         assert unwanted_key not in result
 
 
 SCRIPTS = {
-    # TODO: make independent from ESMValTool installation
+    # very basic diagnostic that doesn't take much input
     'diagnostic.py':
     dedent("""
+        import numpy
         import yaml
-        from esmvaltool.diag_scripts.shared import run_diagnostic
 
-        def main(cfg):
-            with open(cfg['setting_name'], 'w') as file:
+        def main():
+            s_max = numpy.max([2, 4])
+            cfg = {}
+            cfg['run_dir'] = ""
+            cfg['input_files'] = "x"
+            cfg['log_level'] = "x"
+            cfg['plot_dir'] = "x"
+            cfg['work_dir'] = "x"
+            with open('../../../../../result.yml', 'w') as file:
                 yaml.safe_dump(cfg, file)
+            return s_max
 
         if __name__ == '__main__':
-            with run_diagnostic() as config:
-                main(config)
+            main()
         """),
     'diagnostic.ncl':
     dedent("""
