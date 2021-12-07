@@ -9,7 +9,7 @@ import iris
 import pytest
 
 from esmvalcore._config import TAGS
-from esmvalcore._recipe import RecipeError
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (
     DataFile,
@@ -55,7 +55,6 @@ def test_run_recipe(task, recipe, tmp_path):
     assert isinstance(recipe._repr_html_(), str)
 
     session = CFG.start_session(recipe.path.stem)
-    session['extra_facets_dir'] = []
 
     output = recipe.run(task=task, session=session)
 
@@ -90,7 +89,6 @@ def test_run_recipe_diagnostic_failing(recipe, tmp_path):
     CFG['output_dir'] = tmp_path
 
     session = CFG.start_session(recipe.path.stem)
-    session['extra_facets_dir'] = []
 
     with pytest.raises(RecipeError):
         task = 'example/non-existant'

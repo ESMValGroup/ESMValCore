@@ -32,21 +32,26 @@ REQUIREMENTS = {
     'install': [
         'cf-units>=3.0.0',
         'dask[array]',
+        'esgf-pyclient',
+        # pin requests_cache: https://github.com/ESGF/esgf-pyclient/issues/71
+        'requests_cache<0.6',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
+        'humanfriendly',
         "importlib_resources;python_version<'3.9'",
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'netCDF4',
         'numpy',
+        'pandas',
         'prov',
         'psutil',
         'pybtex',
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.0.2',
+        'scitools-iris>=3.1.0',
         'shapely[vectorized]',
         'stratify',
         'yamale',
