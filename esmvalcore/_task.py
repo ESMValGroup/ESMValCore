@@ -192,7 +192,7 @@ def write_ncl_settings(settings, filename, mode='wt'):
     lines = []
 
     # ignore some settings for NCL diagnostic
-    ignore_settings = ['profile_diagnostics', ]
+    ignore_settings = ['profile_diagnostic', ]
     for sett in ignore_settings:
         settings_copy = settings
         settings_copy.pop(sett, None)
@@ -412,7 +412,7 @@ class DiagnosticTask(BaseTask):
         run_dir.mkdir(parents=True, exist_ok=True)
 
         # ignore some settings for diagnostic
-        ignore_settings = ['profile_diagnostics', ]
+        ignore_settings = ['profile_diagnostic', ]
         for sett in ignore_settings:
             settings_copy = self.settings
             settings_copy.pop(sett, None)
