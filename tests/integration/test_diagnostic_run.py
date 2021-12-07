@@ -60,11 +60,9 @@ SCRIPTS = {
     # very basic diagnostic that doesn't take much input
     'diagnostic.py':
     dedent("""
-        import numpy
         import yaml
 
         def main():
-            s_max = numpy.max([2, 4])
             cfg = {}
             cfg['run_dir'] = ""
             cfg['input_files'] = "x"
@@ -73,7 +71,6 @@ SCRIPTS = {
             cfg['work_dir'] = "x"
             with open('../../../../../result.yml', 'w') as file:
                 yaml.safe_dump(cfg, file)
-            return s_max
 
         if __name__ == '__main__':
             main()
