@@ -24,6 +24,7 @@ def write_config_user_file(dirname):
             'CMIP5': 'BADC',
         },
         'log_level': 'debug',
+        'profile_diagnostic': True,
     }
     config_file.write_text(yaml.safe_dump(cfg, encoding=None))
     return str(config_file)
