@@ -50,7 +50,9 @@ def check(result_file):
     }
     missing = required_keys - set(result)
     assert not missing
-    assert 'profile_disgnostic' not in result
+    unwanted_keys = ['profile_disgnostic', ]
+    for unwanted_key in unwanted_keys:
+        assert unwanted_key not in result
 
 
 SCRIPTS = {
