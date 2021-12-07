@@ -60,17 +60,10 @@ SCRIPTS = {
     # very basic diagnostic that doesn't take much input
     'diagnostic.py':
     dedent("""
-        import yaml
+        import os
 
         def main():
-            cfg = {}
-            cfg['run_dir'] = ""
-            cfg['input_files'] = "x"
-            cfg['log_level'] = "x"
-            cfg['plot_dir'] = "x"
-            cfg['work_dir'] = "x"
-            with open('../../../../../result.yml', 'w') as file:
-                yaml.safe_dump(cfg, file)
+            os.system('cp settings.yml ../../../../../result.yml')
 
         if __name__ == '__main__':
             main()
