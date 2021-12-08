@@ -41,8 +41,6 @@ jobs:
           paths:
             - ".eggs"
             - ".pytest_cache"
-      - store_diag_run_logs:
-          path: /tmp/pytest-of-root/pytest-0/
       - store_test_results:
           path: test-reports/
       - store_artifacts:
