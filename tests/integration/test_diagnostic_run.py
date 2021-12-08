@@ -57,20 +57,19 @@ def check(result_file):
 
 
 SCRIPTS = {
-    'null': {},
     # very basic diagnostic that doesn't take much input
     # this works well locally but fails at Diagnostic run on CircleCI
     # not sure the reasons why it fails on Circle !!
-    # 'diagnostic.py':
-    # dedent("""
-    #     import os
-    #
-    #     def main():
-    #         os.system('cp settings.yml ../../../../../result.yml')
-    #
-    #     if __name__ == '__main__':
-    #         main()
-    #     """),
+    'diagnostic.py':
+    dedent("""
+        import os
+    
+        def main():
+            os.system('cp settings.yml ../../../../../result.yml')
+    
+        if __name__ == '__main__':
+            main()
+        """),
     'diagnostic.ncl':
     dedent("""
         begin
