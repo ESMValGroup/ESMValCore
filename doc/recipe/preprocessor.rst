@@ -1747,7 +1747,7 @@ dimensional coordinates. This can for example be ensured with the preprocessors
 :func:`esmvalcore.preprocessor.regrid` and/or
 :func:`esmvalcore.preprocessor.regrid_time`.
 
-The ``bias`` preprocessor supports 3 optional arguments:
+The ``bias`` preprocessor supports 4 optional arguments:
 
    * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
      calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
@@ -1760,11 +1760,28 @@ The ``bias`` preprocessor supports 3 optional arguments:
      are masked out. This setting is ignored when ``bias_type`` is set to
      ``'absolute'``. Please note that for some variables with very small
      absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
-     10^{-6} kg m^{-2} s^{-1}`) it is absolutely essential to adapt the default
-     value in order to get reasonable results.
+     10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
+     adapt the default value in order to get reasonable results.
    * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
      ``True``, keep the reference dataset in the output. If ``False``, drop the
      reference dataset.
+   * ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
+     this preprocessor. Note that this option is only available in the recipe,
+     not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
+     another python script). If the reference dataset has been excluded, an
+     error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_bias:
+        bias:
+          bias_type: relative
+          denominator_mask_threshold: 1e-8
+          keep_reference_dataset: true
+          exclude: [CanESM2]
 
 See also :func:`esmvalcore.preprocessor.bias`.
 
