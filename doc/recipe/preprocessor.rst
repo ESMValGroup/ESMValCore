@@ -1758,7 +1758,10 @@ The ``bias`` preprocessor supports 3 optional arguments:
      reference dataset) during the calculation of relative biases. All values
      in the reference dataset with absolute value less than the given threshold
      are masked out. This setting is ignored when ``bias_type`` is set to
-     ``'absolute'``.
+     ``'absolute'``. Please note that for some variables with very small
+     absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
+     10^{-6} kg m^{-2} s^{-1}`) it is absolutely essential to adapt the default
+     value in order to get reasonable results.
    * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
      ``True``, keep the reference dataset in the output. If ``False``, drop the
      reference dataset.
