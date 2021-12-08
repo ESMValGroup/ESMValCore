@@ -63,10 +63,10 @@ SCRIPTS = {
     'diagnostic.py':
     dedent("""
         import os
-    
+
         def main():
             os.system('cp settings.yml ../../../../../result.yml')
-    
+
         if __name__ == '__main__':
             main()
         """),
