@@ -57,9 +57,6 @@ def check(result_file):
 
 
 SCRIPTS = {
-    # very basic diagnostic that doesn't take much input
-    # this works well locally but fails at Diagnostic run on CircleCI
-    # not sure the reasons why it fails on Circle !!
     'diagnostic.py':
     dedent("""
         import os
