@@ -105,6 +105,8 @@ jobs:
           path: /logs
       - store_artifacts:
           path: test-reports/
+      - store_artifacts:
+          path: /tmp/pytest-of-root/pytest-0/
       - store_test_results:
           path: test-reports/
 
@@ -170,6 +172,8 @@ jobs:
           no_output_timeout: 30m
       - store_artifacts:
           path: /logs
+      - store_artifacts:
+          path: /tmp/pytest-of-root/pytest-0/
 
   test_installation_from_conda:
     # Test conda package installation
