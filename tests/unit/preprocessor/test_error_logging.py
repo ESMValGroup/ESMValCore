@@ -240,3 +240,30 @@ def test_long_items_long_input_files(mock_logger, items):
     assert "['x', 'y', 'z', 'w', 'v', 'u']" not in error_call_args[1]
     assert "\n(and 2 further file(s) not shown here;" in error_call_args[1]
     assert "\n(and 2 further argument(s) not shown here;" in error_call_args[1]
+
+
+class MockAncestor():
+    """Mock class for ancestors."""
+
+    def __init__(self, filename):
+        """Initialize mock ancestor."""
+        self.filename = filename
+
+
+def test_input_files_for_log():
+    """Test :meth:`PreprocessorFile._input_files_for_log`."""
+    ancestors = [
+        MockAncestor('a.nc'),
+        MockAncestor('b.nc'),
+    ]
+    preproc_file = PreprocessorFile({'filename': 'p.nc'}, {},
+                                    ancestors=ancestors)
+
+    assert preproc_file._input_files == ['a.nc', 'b.nc']
+    assert preproc_file.files == ['a.nc', 'b.nc']
+    assert preproc_file._input_files_for_log() is None
+
+    preproc_file.files = ['c.nc', 'd.nc']
+    assert preproc_file._input_files == ['a.nc', 'b.nc']
+    assert preproc_file.files == ['c.nc', 'd.nc']
+    assert preproc_file._input_files_for_log() == ['a.nc', 'b.nc']
