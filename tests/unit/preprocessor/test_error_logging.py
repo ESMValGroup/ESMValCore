@@ -20,15 +20,16 @@ def assert_debug_call_ok(mock_logger, items):
     mock_logger.debug.assert_called_once()
     assert mock_logger.debug.call_args.kwargs == {}
     debug_call_args = mock_logger.debug.call_args.args
-    assert debug_call_args[0] == ("Running %s with option(s)\n%s\non argument"
-                                  "(s)\n%s%s")
+    assert debug_call_args[0] == (
+        "Running preprocessor function '%s' on the data\n%s%s\nwith function "
+        "argument(s)\n%s")
     assert debug_call_args[1] == "failing_function"
-    assert debug_call_args[2] == "{'test': 42}"
     if isinstance(items, (PreprocessorFile, Cube, str)):
-        assert debug_call_args[3] == repr(items)
+        assert debug_call_args[2] == repr(items)
     else:
         for item in items:
-            assert repr(item) in debug_call_args[3]
+            assert repr(item) in debug_call_args[2]
+    assert debug_call_args[4] == "{'test': 42}"
 
 
 def assert_error_call_ok(mock_logger):
@@ -36,10 +37,11 @@ def assert_error_call_ok(mock_logger):
     mock_logger.error.assert_called_once()
     assert mock_logger.error.call_args.kwargs == {}
     error_call_args = mock_logger.error.call_args.args
-    assert error_call_args[0] == "Failed to run %s"
-    expected_str = ("failing_function with option(s)\n{'test': 42}\non "
-                    "argument(s)\n")
-    assert expected_str in error_call_args[1]
+    assert error_call_args[0] == (
+        "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
+        "function argument(s)\n%s")
+    assert error_call_args[1] == "failing_function"
+    assert error_call_args[4] == "{'test': 42}"
 
 
 KWARGS = {'test': 42}
@@ -88,19 +90,18 @@ def test_short_items_no_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[4] == ""
+    assert mock_logger.debug.call_args.args[3] == ""
 
     # Error call
     assert_error_call_ok(mock_logger)
     error_call_args = mock_logger.error.call_args.args
     if isinstance(items, (PreprocessorFile, Cube, str)):
-        assert repr(items) in error_call_args[1]
+        assert repr(items) in error_call_args[2]
     else:
         for item in items:
-            assert repr(item) in error_call_args[1]
-    assert "\nOriginal input file(s):\n" not in error_call_args[1]
-    assert "further file(s) not shown here;" not in error_call_args[1]
-    assert "further argument(s) not shown here;" not in error_call_args[1]
+            assert repr(item) in error_call_args[2]
+    assert "further argument(s) not shown here;" not in error_call_args[2]
+    assert error_call_args[3] == ""
 
 
 @pytest.mark.parametrize('items', TEST_ITEMS_SHORT)
@@ -114,21 +115,20 @@ def test_short_items_short_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[4] == (
-        "\nOriginal input file(s):\n['x', 'y', 'z', 'w']")
+    assert mock_logger.debug.call_args.args[3] == (
+        "\nloaded from original input file(s)\n['x', 'y', 'z', 'w']")
 
     # Error call
     assert_error_call_ok(mock_logger)
     error_call_args = mock_logger.error.call_args.args
     if isinstance(items, (PreprocessorFile, Cube, str)):
-        assert repr(items) in error_call_args[1]
+        assert repr(items) in error_call_args[2]
     else:
         for item in items:
-            assert repr(item) in error_call_args[1]
-    assert ("\nOriginal input file(s):\n['x', 'y', 'z', 'w']" in
-            error_call_args[1])
-    assert "further file(s) not shown here;" not in error_call_args[1]
-    assert "further argument(s) not shown here;" not in error_call_args[1]
+            assert repr(item) in error_call_args[2]
+    assert "further argument(s) not shown here;" not in error_call_args[2]
+    assert error_call_args[3] == (
+        "\nloaded from original input file(s)\n['x', 'y', 'z', 'w']")
 
 
 @pytest.mark.parametrize('items', TEST_ITEMS_SHORT)
@@ -142,22 +142,22 @@ def test_short_items_long_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[4] == (
-        "\nOriginal input file(s):\n['x', 'y', 'z', 'w', 'v', 'u']")
+    assert mock_logger.debug.call_args.args[3] == (
+        "\nloaded from original input file(s)\n['x', 'y', 'z', 'w', 'v', 'u']")
 
     # Error call
     assert_error_call_ok(mock_logger)
     error_call_args = mock_logger.error.call_args.args
     if isinstance(items, (PreprocessorFile, Cube, str)):
-        assert repr(items) in error_call_args[1]
+        assert repr(items) in error_call_args[2]
     else:
         for item in items:
-            assert repr(item) in error_call_args[1]
-    assert ("\nOriginal input file(s):\n['x', 'y', 'z', 'w']\n" in
-            error_call_args[1])
-    assert "['x', 'y', 'z', 'w', 'v', 'u']" not in error_call_args[1]
-    assert "\n(and 2 further file(s) not shown here;" in error_call_args[1]
-    assert "further argument(s) not shown here;" not in error_call_args[1]
+            assert repr(item) in error_call_args[2]
+    assert "further argument(s) not shown here;" not in error_call_args[2]
+    assert error_call_args[3] == (
+        "\nloaded from original input file(s)\n['x', 'y', 'z', 'w']\n(and 2 "
+        "further file(s) not shown here; refer to the debug log for a full "
+        "list)")
 
 
 @pytest.mark.parametrize('items', TEST_ITEMS_LONG)
@@ -170,19 +170,18 @@ def test_long_items_no_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[4] == ""
+    assert mock_logger.debug.call_args.args[3] == ""
 
     # Error call
     assert_error_call_ok(mock_logger)
     error_call_args = mock_logger.error.call_args.args
     items = list(items)
     for item in items[:4]:
-        assert repr(item) in error_call_args[1]
+        assert repr(item) in error_call_args[2]
     for item in items[4:]:
-        assert repr(item) not in error_call_args[1]
-    assert "\nOriginal input file(s):\n" not in error_call_args[1]
-    assert "further file(s) not shown here;" not in error_call_args[1]
-    assert "\n(and 2 further argument(s) not shown here;" in error_call_args[1]
+        assert repr(item) not in error_call_args[2]
+    assert "\n(and 2 further argument(s) not shown here;" in error_call_args[2]
+    assert error_call_args[3] == ""
 
 
 @pytest.mark.parametrize('items', TEST_ITEMS_LONG)
@@ -196,21 +195,20 @@ def test_long_items_short_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[4] == (
-        "\nOriginal input file(s):\n['x', 'y', 'z', 'w']")
+    assert mock_logger.debug.call_args.args[3] == (
+        "\nloaded from original input file(s)\n['x', 'y', 'z', 'w']")
 
     # Error call
     assert_error_call_ok(mock_logger)
     error_call_args = mock_logger.error.call_args.args
     items = list(items)
     for item in items[:4]:
-        assert repr(item) in error_call_args[1]
+        assert repr(item) in error_call_args[2]
     for item in items[4:]:
-        assert repr(item) not in error_call_args[1]
-    assert ("\nOriginal input file(s):\n['x', 'y', 'z', 'w']" in
-            error_call_args[1])
-    assert "further file(s) not shown here;" not in error_call_args[1]
-    assert "\n(and 2 further argument(s) not shown here;" in error_call_args[1]
+        assert repr(item) not in error_call_args[2]
+    assert "\n(and 2 further argument(s) not shown here;" in error_call_args[2]
+    assert error_call_args[3] == (
+        "\nloaded from original input file(s)\n['x', 'y', 'z', 'w']")
 
 
 @pytest.mark.parametrize('items', TEST_ITEMS_LONG)
@@ -224,22 +222,22 @@ def test_long_items_long_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[4] == (
-        "\nOriginal input file(s):\n['x', 'y', 'z', 'w', 'v', 'u']")
+    assert mock_logger.debug.call_args.args[3] == (
+        "\nloaded from original input file(s)\n['x', 'y', 'z', 'w', 'v', 'u']")
 
     # Error call
     assert_error_call_ok(mock_logger)
     error_call_args = mock_logger.error.call_args.args
     items = list(items)
     for item in items[:4]:
-        assert repr(item) in error_call_args[1]
+        assert repr(item) in error_call_args[2]
     for item in items[4:]:
-        assert repr(item) not in error_call_args[1]
-    assert ("\nOriginal input file(s):\n['x', 'y', 'z', 'w']\n" in
-            error_call_args[1])
-    assert "['x', 'y', 'z', 'w', 'v', 'u']" not in error_call_args[1]
-    assert "\n(and 2 further file(s) not shown here;" in error_call_args[1]
-    assert "\n(and 2 further argument(s) not shown here;" in error_call_args[1]
+        assert repr(item) not in error_call_args[2]
+    assert "\n(and 2 further argument(s) not shown here;" in error_call_args[2]
+    assert error_call_args[3] == (
+        "\nloaded from original input file(s)\n['x', 'y', 'z', 'w']\n(and 2 "
+        "further file(s) not shown here; refer to the debug log for a full "
+        "list)")
 
 
 class MockAncestor():

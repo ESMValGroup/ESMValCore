@@ -282,9 +282,12 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
     if input_files is None:
         file_msg = ""
     else:
-        file_msg = f"\nOriginal input file(s):\n{pformat(input_files)}"
-    logger.debug("Running %s with option(s)\n%s\non argument(s)\n%s%s",
-                 function.__name__, pformat(kwargs), pformat(items), file_msg)
+        file_msg = (f"\nloaded from original input file(s)\n"
+                    f"{pformat(input_files)}")
+    logger.debug(
+        "Running preprocessor function '%s' on the data\n%s%s\nwith function "
+        "argument(s)\n%s", function.__name__, pformat(items), file_msg,
+        pformat(kwargs))
     try:
         return function(items, **kwargs)
     except Exception:
@@ -293,7 +296,7 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
         n_shown_args = 4
         if input_files is not None and len(input_files) > n_shown_args:
             n_not_shown_files = len(input_files) - n_shown_args
-            file_msg = (f"\nOriginal input file(s):\n"
+            file_msg = (f"\nloaded from original input file(s)\n"
                         f"{pformat(input_files[:n_shown_args])}\n(and "
                         f"{n_not_shown_files:d} further file(s) not shown "
                         f"here; refer to the debug log for a full list)")
@@ -305,15 +308,16 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
             items = list(items)
 
         if len(items) <= n_shown_args:
-            msg = (f"{function.__name__} with option(s)\n{pformat(kwargs)}\n"
-                   f"on argument(s)\n{pformat(items)}{file_msg}")
+            data_msg = pformat(items)
         else:
             n_not_shown_args = len(items) - n_shown_args
-            msg = (f"{function.__name__} with option(s)\n{pformat(kwargs)}\n"
-                   f"on argument(s)\n{pformat(items[:n_shown_args])}\n(and "
-                   f"{n_not_shown_args:d} further argument(s) not shown here; "
-                   f"refer to the debug log for a full list){file_msg}")
-        logger.error("Failed to run %s", msg)
+            data_msg = (f"{pformat(items[:n_shown_args])}\n(and "
+                        f"{n_not_shown_args:d} further argument(s) not shown "
+                        f"here; refer to the debug log for a full list)")
+        logger.error(
+            "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
+            "function argument(s)\n%s", function.__name__, data_msg, file_msg,
+            pformat(kwargs))
         raise
 
 
