@@ -29,7 +29,7 @@ def assert_debug_call_ok(mock_logger, items):
     else:
         for item in items:
             assert repr(item) in debug_call_args[2]
-    assert debug_call_args[4] == "{'test': 42}"
+    assert debug_call_args[4] == "test = 42,\nlist = ['a', 'b']"
 
 
 def assert_error_call_ok(mock_logger):
@@ -41,10 +41,10 @@ def assert_error_call_ok(mock_logger):
         "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
         "function argument(s)\n%s")
     assert error_call_args[1] == "failing_function"
-    assert error_call_args[4] == "{'test': 42}"
+    assert error_call_args[4] == "test = 42,\nlist = ['a', 'b']"
 
 
-KWARGS = {'test': 42}
+KWARGS = {'test': 42, 'list': ['a', 'b']}
 PREPROC_FILE = PreprocessorFile({'filename': 'a'}, {})
 TEST_ITEMS_SHORT = [
     # Scalars

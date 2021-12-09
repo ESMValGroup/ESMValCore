@@ -279,6 +279,8 @@ def _get_multi_model_settings(products, step):
 
 def _run_preproc_function(function, items, kwargs, input_files=None):
     """Run preprocessor function."""
+    kwargs_str = ",\n".join(
+        [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()])
     if input_files is None:
         file_msg = ""
     else:
@@ -287,7 +289,7 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
     logger.debug(
         "Running preprocessor function '%s' on the data\n%s%s\nwith function "
         "argument(s)\n%s", function.__name__, pformat(items), file_msg,
-        pformat(kwargs))
+        kwargs_str)
     try:
         return function(items, **kwargs)
     except Exception:
@@ -317,7 +319,7 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
         logger.error(
             "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
             "function argument(s)\n%s", function.__name__, data_msg, file_msg,
-            pformat(kwargs))
+            kwargs_str)
         raise
 
 
