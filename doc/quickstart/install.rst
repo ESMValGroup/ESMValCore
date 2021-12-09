@@ -208,3 +208,9 @@ yourself if you are just running diagnostics:
  - DKRZ-Mistral: `esmvaltool` is available on login nodes (`mistral.dkrz.de`) and pre- and post-processing
    nodes (`mistralpp.dkrz.de`) after login and module loading via `module load esmvaltool`; the command
    `module help esmvaltool` provides some information about the module.
+
+.. note::
+    If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-MISTRAL),
+    please have a look at
+    :ref:`the ESMValTool instructions too <esmvaltool:install_on_hpc>`.
+
