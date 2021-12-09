@@ -196,10 +196,21 @@ To install from source for development, follow these instructions.
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
 
+
+Pre-installed versions on HPC clusters
+--------------------------------------
+
+.. note::
+    If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-MISTRAL),
+    please have a look at
+    :ref:`these instructions <esmvaltool:install_on_hpc>`.
+
+
 Installation from the conda lock file
 -------------------------------------
 
-A fast conda environment creation is possible using the provided conda lock files. A conda lock file
+A fast conda environment creation is possible using the provided conda lock files. This is a secure alternative
+to the installation from source, whenever the conda environment can not be created for some reason. A conda lock file
 is an explicit environment file that contains pointers to dependency packages as they are hosted on the Anaconda cloud;
 these have frozen version numbers, build hashes, and channel names, parameters established at the time
 of the conda lock file creation, so may be obsolete after a while,
@@ -214,6 +225,7 @@ Conda environment creation from a lock file is done just like with any other env
 
 .. note::
    `pip` and `conda` are NOT installed, so you will have to install them in the new environment: use conda-forge as channel): ``conda install -c conda-forge pip`` at the very minimum so we can install `esmvalcore` afterwards.
+
 
 Creating a conda lock file
 --------------------------
