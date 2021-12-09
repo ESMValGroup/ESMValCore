@@ -291,11 +291,7 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
         # To avoid very long error messages, we truncate the arguments and
         # input files here at a given threshold
         n_shown_args = 4
-        if input_files is None:
-            file_msg = ""
-        elif len(input_files) <= n_shown_args:
-            file_msg = f"\nOriginal input file(s):\n{pformat(input_files)}"
-        else:
+        if len(input_files) > n_shown_args:
             n_not_shown_files = len(input_files) - n_shown_args
             file_msg = (f"\nOriginal input file(s):\n"
                         f"{pformat(input_files[:n_shown_args])}\n(and "
