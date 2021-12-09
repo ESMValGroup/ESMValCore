@@ -19,6 +19,7 @@ from ._area import (
     meridional_statistics,
     zonal_statistics,
 )
+from ._bias import bias
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
@@ -159,6 +160,8 @@ __all__ = [
     'convert_units',
     # Multi model statistics
     'multi_model_statistics',
+    # Bias calculation
+    'bias',
     # Remove fx_variables from cube
     'remove_fx_variables',
     # Save to file
@@ -191,6 +194,7 @@ INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_fx_variables') + 1]
 FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('remove_fx_variables'):]
 
 MULTI_MODEL_FUNCTIONS = {
+    'bias',
     'multi_model_statistics',
     'mask_multimodel',
     'mask_fillvalues',
