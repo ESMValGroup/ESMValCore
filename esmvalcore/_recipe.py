@@ -820,6 +820,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             f'{separator.join(sorted(missing_vars))}')
 
     _update_statistic_settings(products, order, config_user['preproc_dir'])
+    check.reference_for_bias_preproc(products)
 
     for product in products:
         product.check()

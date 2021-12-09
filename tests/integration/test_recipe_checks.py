@@ -8,6 +8,7 @@ import pytest
 import esmvalcore._recipe_checks as check
 import esmvalcore.esgf
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.preprocessor import PreprocessorFile
 
 ERR_ALL = 'Looked for files matching%s'
 ERR_D = ('Looked for files in %s, but did not find any file pattern to match '
@@ -133,3 +134,74 @@ def test_data_availability_nonexistent(tmp_path):
     dest_folder = tmp_path
     input_files = [esmvalcore.esgf.ESGFFile([result]).local_file(dest_folder)]
     check.data_availability(input_files, var, dirnames=[], filenames=[])
+
+
+def test_reference_for_bias_preproc_empty():
+    """Test ``reference_for_bias_preproc``."""
+    products = {
+        PreprocessorFile({'filename': 10}, {}),
+        PreprocessorFile({'filename': 20}, {}),
+        PreprocessorFile({'filename': 30}, {'trend': {}}),
+    }
+    check.reference_for_bias_preproc(products)
+
+
+def test_reference_for_bias_preproc_one_ref():
+    """Test ``reference_for_bias_preproc`` with one reference."""
+    products = {
+        PreprocessorFile({'filename': 90}, {}),
+        PreprocessorFile({'filename': 10}, {'bias': {}}),
+        PreprocessorFile({'filename': 20}, {'bias': {}}),
+        PreprocessorFile({'filename': 30, 'reference_for_bias': True},
+                         {'bias': {}})
+    }
+    check.reference_for_bias_preproc(products)
+
+
+def test_reference_for_bias_preproc_no_ref():
+    """Test ``reference_for_bias_preproc`` with no reference."""
+    products = {
+        PreprocessorFile({'filename': 90}, {}),
+        PreprocessorFile({'filename': 10}, {'bias': {}}),
+        PreprocessorFile({'filename': 20}, {'bias': {}}),
+        PreprocessorFile({'filename': 30}, {'bias': {}})
+    }
+    with pytest.raises(RecipeError) as rec_err:
+        check.reference_for_bias_preproc(products)
+
+    # Note: checking the message directly does not work due to the unknown
+    # (machine-dependent) ordering of products in the set
+    assert ("Expected exactly 1 dataset with 'reference_for_bias: true' in "
+            "products\n[") in str(rec_err.value)
+    assert '10' in str(rec_err.value)
+    assert '20' in str(rec_err.value)
+    assert '30' in str(rec_err.value)
+    assert '90' not in str(rec_err.value)
+    assert ("],\nfound 0. Please also ensure that the reference dataset is "
+            "not excluded with the 'exclude' option") in str(rec_err.value)
+
+
+def test_reference_for_bias_preproc_two_refs():
+    """Test ``reference_for_bias_preproc`` with two references."""
+    products = {
+        PreprocessorFile({'filename': 90}, {}),
+        PreprocessorFile({'filename': 10}, {'bias': {}}),
+        PreprocessorFile({'filename': 20, 'reference_for_bias': True},
+                         {'bias': {}}),
+        PreprocessorFile({'filename': 30, 'reference_for_bias': True},
+                         {'bias': {}})
+    }
+    with pytest.raises(RecipeError) as rec_err:
+        check.reference_for_bias_preproc(products)
+
+    # Note: checking the message directly does not work due to the unknown
+    # (machine-dependent) ordering of products in the set
+    assert ("Expected exactly 1 dataset with 'reference_for_bias: true' in "
+            "products\n[") in str(rec_err.value)
+    assert '10' in str(rec_err.value)
+    assert '20' in str(rec_err.value)
+    assert '30' in str(rec_err.value)
+    assert '90' not in str(rec_err.value)
+    assert "],\nfound 2:\n[" in str(rec_err.value)
+    assert ("].\nPlease also ensure that the reference dataset is "
+            "not excluded with the 'exclude' option") in str(rec_err.value)
