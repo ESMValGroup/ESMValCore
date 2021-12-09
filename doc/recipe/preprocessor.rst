@@ -1761,7 +1761,7 @@ The ``bias`` preprocessor supports 4 optional arguments:
      ``'absolute'``. Please note that for some variables with very small
      absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
      10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
-     adapt the default value in order to get reasonable results.
+     change the default value in order to get reasonable results.
    * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
      ``True``, keep the reference dataset in the output. If ``False``, drop the
      reference dataset.

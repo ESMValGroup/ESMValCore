@@ -38,7 +38,7 @@ def bias(products, bias_type='absolute', denominator_mask_threshold=1e-3,
         set to ``'absolute'``. Please note that for some variables with very
         small absolute values (e.g., carbon cycle fluxes, which are usually
         :math:`< 10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely
-        essential to adapt the default value in order to get reasonable
+        essential to change the default value in order to get reasonable
         results.
     keep_reference_dataset: bool, optional (default: False)
         If ``True``, keep the reference dataset in the output. If ``False``,
