@@ -18,8 +18,8 @@ def failing_function(*_, **__):
 def assert_debug_call_ok(mock_logger, items):
     """Check debug call."""
     mock_logger.debug.assert_called_once()
-    assert mock_logger.debug.call_args.kwargs == {}
-    debug_call_args = mock_logger.debug.call_args.args
+    assert mock_logger.debug.call_args[1] == {}
+    debug_call_args = mock_logger.debug.call_args[0]
     assert debug_call_args[0] == (
         "Running preprocessor function '%s' on the data\n%s%s\nwith function "
         "argument(s)\n%s")
@@ -35,8 +35,8 @@ def assert_debug_call_ok(mock_logger, items):
 def assert_error_call_ok(mock_logger):
     """Check error call."""
     mock_logger.error.assert_called_once()
-    assert mock_logger.error.call_args.kwargs == {}
-    error_call_args = mock_logger.error.call_args.args
+    assert mock_logger.error.call_args[1] == {}
+    error_call_args = mock_logger.error.call_args[0]
     assert error_call_args[0] == (
         "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
         "function argument(s)\n%s")
@@ -90,11 +90,11 @@ def test_short_items_no_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[3] == ""
+    assert mock_logger.debug.call_args[0][3] == ""
 
     # Error call
     assert_error_call_ok(mock_logger)
-    error_call_args = mock_logger.error.call_args.args
+    error_call_args = mock_logger.error.call_args[0]
     if isinstance(items, (PreprocessorFile, Cube, str)):
         assert repr(items) in error_call_args[2]
     else:
@@ -115,12 +115,12 @@ def test_short_items_short_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[3] == (
+    assert mock_logger.debug.call_args[0][3] == (
         "\nloaded from original input file(s)\n['x', 'y', 'z', 'w']")
 
     # Error call
     assert_error_call_ok(mock_logger)
-    error_call_args = mock_logger.error.call_args.args
+    error_call_args = mock_logger.error.call_args[0]
     if isinstance(items, (PreprocessorFile, Cube, str)):
         assert repr(items) in error_call_args[2]
     else:
@@ -142,12 +142,12 @@ def test_short_items_long_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[3] == (
+    assert mock_logger.debug.call_args[0][3] == (
         "\nloaded from original input file(s)\n['x', 'y', 'z', 'w', 'v', 'u']")
 
     # Error call
     assert_error_call_ok(mock_logger)
-    error_call_args = mock_logger.error.call_args.args
+    error_call_args = mock_logger.error.call_args[0]
     if isinstance(items, (PreprocessorFile, Cube, str)):
         assert repr(items) in error_call_args[2]
     else:
@@ -170,11 +170,11 @@ def test_long_items_no_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[3] == ""
+    assert mock_logger.debug.call_args[0][3] == ""
 
     # Error call
     assert_error_call_ok(mock_logger)
-    error_call_args = mock_logger.error.call_args.args
+    error_call_args = mock_logger.error.call_args[0]
     items = list(items)
     for item in items[:4]:
         assert repr(item) in error_call_args[2]
@@ -195,12 +195,12 @@ def test_long_items_short_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[3] == (
+    assert mock_logger.debug.call_args[0][3] == (
         "\nloaded from original input file(s)\n['x', 'y', 'z', 'w']")
 
     # Error call
     assert_error_call_ok(mock_logger)
-    error_call_args = mock_logger.error.call_args.args
+    error_call_args = mock_logger.error.call_args[0]
     items = list(items)
     for item in items[:4]:
         assert repr(item) in error_call_args[2]
@@ -222,12 +222,12 @@ def test_long_items_long_input_files(mock_logger, items):
 
     # Debug call
     assert_debug_call_ok(mock_logger, items)
-    assert mock_logger.debug.call_args.args[3] == (
+    assert mock_logger.debug.call_args[0][3] == (
         "\nloaded from original input file(s)\n['x', 'y', 'z', 'w', 'v', 'u']")
 
     # Error call
     assert_error_call_ok(mock_logger)
-    error_call_args = mock_logger.error.call_args.args
+    error_call_args = mock_logger.error.call_args[0]
     items = list(items)
     for item in items[:4]:
         assert repr(item) in error_call_args[2]
