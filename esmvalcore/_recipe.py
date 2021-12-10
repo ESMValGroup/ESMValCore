@@ -103,6 +103,7 @@ def _add_cmor_info(variable, override=False):
 
 
 def _add_extra_facets(variable, extra_facets_dir):
+    """Add extra_facets to variable."""
     extra_facets = get_extra_facets(variable["project"], variable["dataset"],
                                     variable["mip"], variable["short_name"],
                                     extra_facets_dir)
