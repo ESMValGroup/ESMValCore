@@ -107,12 +107,8 @@ def select_by_time(files, timerange):
     selection = []
     start_date, end_date = _parse_period(timerange)
 
-    if start_date is None and end_date is None:
-        start_date = timerange.split('/')[0]
-        end_date = timerange.split('/')[1]
-    else:
-        start_date = str(start_date)
-        end_date = str(end_date)
+    start_date = str(start_date)
+    end_date = str(end_date)
 
     for file in files:
         try:

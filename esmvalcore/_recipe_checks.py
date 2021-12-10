@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 from shutil import which
+from typing_extensions import Required
 
 import isodate
 import yamale
@@ -156,17 +157,9 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
     if var['frequency'] == 'fx':
         # check time availability only for non-fx variables
         return
-
-    start_year, end_year = _parse_period(var['timerange'])
-    if start_year is None and end_year is None:
-        start_year = int(var['timerange'].split('/')[0][0:4])
-        end_year = int(var['timerange'].split('/')[1][0:4])
-    if isinstance(start_year, str) and isinstance(end_year, str):
-        start_year = int(start_year[0:4])
-        end_year = int(end_year[0:4])
-    required_years = set(range(start_year, end_year + 1))
-    var['start_year'] = start_year
-    var['end_year'] = end_year
+    start_year = var['start_year']
+    end_year = var['end_year']
+    required_years = set(range(start_year, end_year, 1))
     available_years = set()
 
     for filename in input_files:

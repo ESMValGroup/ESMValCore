@@ -223,6 +223,10 @@ def _parse_period(timerange):
             isodate.date_isoformat(start_date, format=time_format))
         end_date = str(isodate.date_isoformat(end_date, format=time_format))
 
+    if start_date is None and end_date is None:
+        start_date = timerange.split('/')[0]
+        end_date = timerange.split('/')[1]
+
     return start_date, end_date
 
 
@@ -248,10 +252,6 @@ def select_files(filenames, timerange):
     """
     selection = []
     start_date, end_date = _parse_period(timerange)
-
-    if start_date is None and end_date is None:
-        start_date = timerange.split('/')[0]
-        end_date = timerange.split('/')[1]
 
     for filename in filenames:
         start, end = get_start_end_date(filename)

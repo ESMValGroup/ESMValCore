@@ -605,6 +605,13 @@ def _get_ancestors(variable, config_user):
             f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
             for f in input_files),
     )
+    start_year, end_year = _parse_period(variable['timerange'])
+    
+    start_year = int(str(start_year[0:4]))
+    end_year = int(str(end_year[0:4]))
+
+    variable['start_year'] = start_year
+    variable['end_year'] = end_year
     check.data_availability(input_files, variable, dirnames, filenames)
     logger.info("Found input files for %s",
                 variable['alias'].replace('_', ' '))
@@ -645,9 +652,6 @@ def _get_statistic_attributes(products):
     for product in products:
         timerange = product.attributes['timerange']
         start, end = _parse_period(timerange)
-        if start is None and end is None:
-            start = timerange.split('/')[0]
-            end = timerange.split('/')[1]
         if 'timerange' not in attributes:
             attributes['timerange'] = f'{start}/{end}'
         else:
