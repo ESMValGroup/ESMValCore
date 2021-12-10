@@ -222,6 +222,7 @@ def _dataset_to_file(variable, config_user):
         for required_var in required_vars:
             _augment(required_var, variable)
             _add_cmor_info(required_var, override=True)
+            _add_extra_facets(required_var, config_user['extra_facets_dir'])
             (files, dirnames,
              filenames) = _get_input_files(required_var, config_user)
             if files:
@@ -955,6 +956,7 @@ def _get_derive_input_variables(variables, config_user):
             for var in required_vars:
                 _augment(var, variable)
                 _add_cmor_info(var, override=True)
+                _add_extra_facets(var, config_user['extra_facets_dir'])
                 files = _get_input_files(var, config_user)[0]
                 if var.get('optional') and not files:
                     logger.info(
