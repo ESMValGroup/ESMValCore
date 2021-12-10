@@ -612,7 +612,7 @@ def _get_ancestors(variable, config_user):
             for f in input_files),
     )
     start_year, end_year = _parse_period(variable['timerange'])
-    
+
     start_year = int(str(start_year[0:4]))
     end_year = int(str(end_year[0:4]))
 

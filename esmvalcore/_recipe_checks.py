@@ -6,12 +6,11 @@ import re
 import subprocess
 from pprint import pformat
 from shutil import which
-from typing_extensions import Required
 
 import isodate
 import yamale
 
-from ._data_finder import _parse_period, get_start_end_year
+from ._data_finder import get_start_end_year
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from .preprocessor._multimodel import STATISTIC_MAPPING
