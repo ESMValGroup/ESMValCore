@@ -46,6 +46,7 @@ REQUIREMENTS = {
         'nested-lookup',
         'netCDF4',
         'numpy',
+        'pandas',
         'prov',
         'psutil',
         'pybtex',

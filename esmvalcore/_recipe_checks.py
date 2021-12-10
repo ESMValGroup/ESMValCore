@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import subprocess
+from pprint import pformat
 from shutil import which
 from typing_extensions import Required
 
@@ -278,3 +279,31 @@ def valid_time_selection(timerange):
         _check_duration_periods(timerange)
         for date in timerange:
             _check_timerange_values(date, timerange)
+
+
+def reference_for_bias_preproc(products):
+    """Check that exactly one reference dataset for bias preproc is given."""
+    step = 'bias'
+    products = {p for p in products if step in p.settings}
+    if not products:
+        return
+
+    # Check that exactly one dataset contains the facet ``reference_for_bias:
+    # true``
+    reference_products = []
+    for product in products:
+        if product.attributes.get('reference_for_bias', False):
+            reference_products.append(product)
+    if len(reference_products) != 1:
+        products_str = [p.filename for p in products]
+        if not reference_products:
+            ref_products_str = ". "
+        else:
+            ref_products_str = [p.filename for p in reference_products]
+            ref_products_str = f":\n{pformat(ref_products_str)}.\n"
+        raise RecipeError(
+            f"Expected exactly 1 dataset with 'reference_for_bias: true' in "
+            f"products\n{pformat(products_str)},\nfound "
+            f"{len(reference_products):d}{ref_products_str}Please also "
+            f"ensure that the reference dataset is not excluded with the "
+            f"'exclude' option")

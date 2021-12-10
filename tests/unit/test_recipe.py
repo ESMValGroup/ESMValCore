@@ -297,3 +297,32 @@ def test_write_html_summary(mocker, caplog):
 
     assert f"Could not write HTML report: {message}" in caplog.text
     mock_recipe.get_output.assert_called_once()
+
+
+def test_add_fxvar_keys_extra_facets():
+    """Test correct addition of extra facets to fx variables."""
+    fx_info = {'short_name': 'areacella', 'mip': 'fx'}
+    variable = {'project': 'ICON', 'dataset': 'ICON'}
+    extra_facets_dir = tuple()
+    fx_var = _recipe._add_fxvar_keys(fx_info, variable, extra_facets_dir)
+    expected_fx_var = {
+        # Already given by fx_info and variable
+        'short_name': 'areacella',
+        'mip': 'fx',
+        'project': 'ICON',
+        'dataset': 'ICON',
+        # Added by _add_fxvar_keys
+        'variable_group': 'areacella',
+        # Added by _add_cmor_info
+        'original_short_name': 'areacella',
+        'standard_name': 'cell_area',
+        'long_name': 'Grid-Cell Area for Atmospheric Grid Variables',
+        'units': 'm2',
+        'modeling_realm': ['atmos', 'land'],
+        'frequency': 'fx',
+        # Added by _add_extra_facets
+        'latitude': 'grid_latitude',
+        'longitude': 'grid_longitude',
+        'raw_name': 'cell_area',
+    }
+    assert fx_var == expected_fx_var

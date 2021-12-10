@@ -199,7 +199,18 @@ To install from source for development, follow these instructions.
 Pre-installed versions on HPC clusters
 --------------------------------------
 
+You will find the tool available on HPC clusters and there will be no need to install it
+yourself if you are just running diagnostics:
+
+ - CEDA-JASMIN: `esmvaltool` is available on the scientific compute nodes (`sciX.jasmin.ac.uk` where
+   `X = 1, 2, 3, 4, 5`) after login and module loading via `module load esmvaltool`; see the helper page at
+   `CEDA <https://help.jasmin.ac.uk/article/4955-community-software-esmvaltool>`__ ;
+ - DKRZ-Mistral: `esmvaltool` is available on login nodes (`mistral.dkrz.de`) and pre- and post-processing
+   nodes (`mistralpp.dkrz.de`) after login and module loading via `module load esmvaltool`; the command
+   `module help esmvaltool` provides some information about the module.
+
 .. note::
     If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-MISTRAL),
     please have a look at
-    :ref:`these instructions <esmvaltool:install_on_hpc>`.
+    :ref:`the ESMValTool instructions too <esmvaltool:install_on_hpc>`.
+
