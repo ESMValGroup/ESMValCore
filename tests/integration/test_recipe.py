@@ -3109,3 +3109,38 @@ def test_write_filled_recipe(tmp_path, patched_datafinder, config_user):
                   '1990/2019', in_place=True)
     esmvalcore._recipe.Recipe.write_filled_recipe(recipe)
     assert os.path.isfile(os.path.join(run_dir, 'recipe_test_filled.yml'))
+
+
+def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              areacella:
+                project: CMIP5
+                mip: fx
+                exp: historical
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: BNU-ESM}
+            scripts: null
+        """)
+    config_user['download_dir'] = tmp_path / 'download_dir'
+    config_user['offline'] = False
+
+    mocker.patch.object(esmvalcore._recipe.esgf,
+                        'download',
+                        create_autospec=True)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    recipe.tasks.run = mocker.Mock()
+    recipe.write_filled_recipe = mocker.Mock()
+    recipe.run()
+
+    esmvalcore._recipe.esgf.download.assert_called_once_with(
+        set(), config_user['download_dir'])
+    recipe.tasks.run.assert_called_once_with(
+        max_parallel_tasks=config_user['max_parallel_tasks'])
+    recipe.write_filled_recipe.assert_called_once()
