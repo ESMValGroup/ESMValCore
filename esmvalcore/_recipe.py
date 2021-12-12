@@ -663,9 +663,6 @@ def _get_statistic_attributes(products):
             attributes['timerange'] = f'{start}/{end}'
         else:
             start_date, end_date = _parse_period(attributes['timerange'])
-            if start_date is None and end_date is None:
-                start_date = attributes['timerange'].split('/')[0]
-                end_date = attributes['timerange'].split('/')[1]
             start_date, start = _truncate_dates(start_date, start)
             end_date, end = _truncate_dates(end_date, end)
             if start < start_date:
