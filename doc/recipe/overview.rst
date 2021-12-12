@@ -166,7 +166,7 @@ When using the ``timerange`` tag to specify the start and end points, possible v
 
   - A start point or end point, and a relative period with a resolution up to second (P[n]Y[n]M[n]DT[n]H[n]M[n]S).
     * ``timerange: '1980/P5Y'``. Starting from 01/01/1980, spans 5 years.
-    * ``timerange: 'P2Y5M/198202``. Ending at 01/02/1982, spans 2 years and 5 months.
+    * ``timerange: 'P2Y5M/198202``. Ending at 28/02/1982, spans 2 years and 5 months.
   - A wildcard to load all available years, the first available start point or the last available end point.
     * ``timerange: '*'``. Finds all available years.
     * ``timerange: '*/1982``. Finds first available point, spans to 31/12/1982.
