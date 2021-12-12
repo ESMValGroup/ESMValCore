@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
@@ -7,7 +8,7 @@ from unittest.mock import create_autospec
 import iris
 import pytest
 import yaml
-from nested_lookup import get_occurrence_of_value
+from nested_lookup import get_occurrence_of_value, nested_update
 from PIL import Image
 
 import esmvalcore
@@ -3081,34 +3082,30 @@ def test_obs4mips_case_correct(tmp_path, patched_datafinder, config_user):
     assert variable['project'] == 'obs4MIPs'
 
 
-def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
+def test_write_filled_recipe(tmp_path, patched_datafinder, config_user):
 
     content = dedent("""
         diagnostics:
           diagnostic_name:
             variables:
-              areacella:
+              tas:
                 project: CMIP5
-                mip: fx
+                mip: Amon
                 exp: historical
                 ensemble: r1i1p1
+                timerange: '*'
                 additional_datasets:
                   - {dataset: BNU-ESM}
             scripts: null
         """)
-    config_user['download_dir'] = tmp_path / 'download_dir'
-    config_user['offline'] = False
-
-    mocker.patch.object(esmvalcore._recipe.esgf,
-                        'download',
-                        create_autospec=True)
 
     recipe = get_recipe(tmp_path, content, config_user)
+    run_dir = config_user['run_dir']
+    if not os.path.exists(run_dir):
+        os.makedirs(run_dir)
 
-    recipe.tasks.run = mocker.Mock()
-    recipe.run()
-
-    esmvalcore._recipe.esgf.download.assert_called_once_with(
-        set(), config_user['download_dir'])
-    recipe.tasks.run.assert_called_once_with(
-        max_parallel_tasks=config_user['max_parallel_tasks'])
+    recipe._updated_recipe = deepcopy(recipe._raw_recipe)
+    nested_update(recipe._updated_recipe, 'timerange',
+                  '1990/2019', in_place=True)
+    esmvalcore._recipe.Recipe.write_filled_recipe(recipe)
+    assert os.path.isfile(os.path.join(run_dir, 'recipe_test_filled.yml'))
