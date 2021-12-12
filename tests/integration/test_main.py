@@ -99,61 +99,6 @@ def test_empty_run(tmp_path):
     assert not filled_recipe
 
 
-def test_filled_recipe(tmp_path, patched_datafinder):
-    """Test filled recipe is written."""
-    recipe_file = tmp_path / "recipe.yml"
-    content = dedent("""
-        documentation:
-          title: Test recipe
-          description: This is a test recipe.
-          authors:
-            - andela_bouwe
-          references:
-            - contact_authors
-            - acknow_project
-          projects:
-            - c3s-magic
-
-        datasets:
-          - dataset: bcc-csm1-1
-
-        diagnostics:
-          diagnostic_name:
-            additional_datasets:
-              - dataset: GFDL-ESM2G
-            variables:
-              ta:
-                project: CMIP5
-                mip: Amon
-                exp: historical
-                ensemble: r1i1p1
-                timerange: '*'
-                additional_datasets:
-                  - dataset: MPI-ESM-LR
-                    timerange: '*/P1Y'
-            scripts: null
-        """)
-    recipe_file.write_text(content)
-    Config.get_config_user(path=tmp_path)
-    log_dir = f'{tmp_path}/esmvaltool_output'
-    config_file = f"{tmp_path}/config-user.yml"
-    with open(config_file, 'r+') as file:
-        config = yaml.safe_load(file)
-        config['output_dir'] = log_dir
-        yaml.safe_dump(config, file, sort_keys=False)
-    with pytest.raises(ValueError) as exc:
-        ESMValTool().run(
-            recipe_file,
-            config_file=f"{tmp_path}/config-user.yml",
-            check_level='ignore')
-    assert str(exc.value)
-    filled_recipe = os.path.exists(
-        log_dir + '/' + os.listdir(log_dir)[0] + '/run/recipe_filled.yml')
-    shutil.rmtree(log_dir)
-
-    assert filled_recipe
-
-
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_run_with_config():
     with arguments('esmvaltool', 'run', 'recipe.yml', '--config_file',
