@@ -171,6 +171,8 @@ def test_data_availability_nonexistent(tmp_path):
         'short_name': 'tas',
         'frequency': 'mon',
         'timerange': '1990/1992',
+        'start_year': 1990,
+        'end_year': 1992
     }
     result = pyesgf.search.results.FileResult(
         json={
