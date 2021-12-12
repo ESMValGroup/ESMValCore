@@ -311,9 +311,19 @@ class TestClipTimerange(tests.Test):
             sliced_cube_end = clip_timerange(cube, '19500101T000000/PT12H')
             expected_time = np.arange(0, 18, 6)
             assert_array_equal(
-                sliced_cube_start.coord(time).points, expected_time)
+                sliced_cube_start.coord('time').points, expected_time)
             assert_array_equal(
-                sliced_cube_end.coord(time).points, expected_time)
+                sliced_cube_end.coord('time').points, expected_time)
+
+    def test_clip_timerange_30_day(self):
+        """Test day 31 is converted to day 30 in 360_day calendars."""
+        time = np.arange(0., 3000.)
+        data = np.ones_like(time)
+        cube = self._create_cube(data, time, None, '360_day')
+        sliced_cube = clip_timerange(cube, '19500131/19500331')
+        expected_time = np.arange(29, 90, 1)
+        assert_array_equal(
+                sliced_cube.coord('time').points, expected_time)
 
 
 class TestExtractSeason(tests.Test):
