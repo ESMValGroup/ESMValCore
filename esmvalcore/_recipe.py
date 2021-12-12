@@ -566,6 +566,14 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
+    if variable['frequency'] != 'fx':
+        start_year, end_year = _parse_period(variable['timerange'])
+
+        start_year = int(str(start_year[0:4]))
+        end_year = int(str(end_year[0:4]))
+
+        variable['start_year'] = start_year
+        variable['end_year'] = end_year
     (input_files, dirnames,
      filenames) = get_input_filelist(variable=variable,
                                      rootpath=config_user['rootpath'],
@@ -611,14 +619,6 @@ def _get_ancestors(variable, config_user):
             f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
             for f in input_files),
     )
-    if variable['frequency'] != 'fx':
-        start_year, end_year = _parse_period(variable['timerange'])
-
-        start_year = int(str(start_year[0:4]))
-        end_year = int(str(end_year[0:4]))
-
-        variable['start_year'] = start_year
-        variable['end_year'] = end_year
     check.data_availability(input_files, variable, dirnames, filenames)
     logger.info("Found input files for %s",
                 variable['alias'].replace('_', ' '))
