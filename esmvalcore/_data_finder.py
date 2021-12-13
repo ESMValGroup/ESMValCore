@@ -238,8 +238,10 @@ def _parse_period(timerange):
 
 
 def _truncate_dates(date, file_date):
-    """Truncate dates of different lengths in order to compare them
-    chronologically."""
+    """Truncate dates of different lengths.
+
+    This allows to compare the dates chronologically.
+    """
     date = re.sub("[^0-9]", '', date)
     file_date = re.sub("[^0-9]", '', file_date)
     if len(date) < len(file_date):

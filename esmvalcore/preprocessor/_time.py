@@ -168,9 +168,9 @@ def _extract_datetime(cube, start_datetime, end_datetime):
     ----------
     cube: iris.cube.Cube
         input cube.
-    start_year: datetime.datetime
+    start_datetime: datetime.datetime
         start datetime
-    end_day: datetime.datetime
+    end_datetime: datetime.datetime
         end datetime
 
     Returns
@@ -217,8 +217,7 @@ def _extract_datetime(cube, start_datetime, end_datetime):
 
 
 def clip_timerange(cube, timerange):
-    """Extract time range given by the dataset keys with a resolution up to
-    seconds.
+    """Extract time range with a resolution up to seconds.
 
     Parameters
     ----------

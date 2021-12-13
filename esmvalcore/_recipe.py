@@ -737,6 +737,7 @@ def _update_extract_shape(settings, config_user):
 
 
 def _format_years(timerange):
+    """Format years that are not given in a 4-digit format."""
     dates = timerange.split('/')
     timerange = []
     for date in dates:
@@ -748,6 +749,11 @@ def _format_years(timerange):
 
 
 def _update_timerange(variable, config_user):
+    """Update wildcards in timerange with found datetime values.
+
+    If the timerange is given as a year, it ensures it's formatted as a
+    4-digit value (YYYY).
+    """
     if 'timerange' not in variable:
         return
 
