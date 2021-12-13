@@ -1006,6 +1006,26 @@ def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
     assert (fx_filename ==
             'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
 
+TEST_YEAR_FORMAT=[
+  ('1/301', '0001/0301'),
+  ('10/P2Y', '0010/P2Y'),
+  ('P2Y/10', 'P2Y/0010'),
+]
+@pytest.mark.parametrize('input_time,output_time', TEST_YEAR_FORMAT)
+def test_update_timerange_year_format(config_user, input_time, output_time):
+    variable = {
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'original_short_name': 'tas',
+        'dataset': 'HadGEM3-GC31-LL',
+        'exp': 'historical',
+        'ensemble': 'r2i1p1f1',
+        'grid': 'gr',
+        'timerange': input_time
+    }
+    esmvalcore._recipe._update_timerange(variable, config_user)
+    assert variable['timerange'] == output_time
 
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,
                            monkeypatch):

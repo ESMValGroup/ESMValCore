@@ -736,11 +736,25 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
+def _format_years(timerange):
+    dates = timerange.split('/')
+    timerange = []
+    for date in dates:
+        if date != '*' and not date.startswith('P') and len(date) < 4:
+            date = date.zfill(4)
+        timerange.append(date)
+
+    return '/'.join(timerange)
+
+
 def _update_timerange(variable, config_user):
     if 'timerange' not in variable:
         return
 
     timerange = variable.get('timerange')
+    check.valid_time_selection(timerange)
+
+    timerange = _format_years(timerange)
     check.valid_time_selection(timerange)
 
     if '*' in timerange:
@@ -758,7 +772,8 @@ def _update_timerange(variable, config_user):
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
         check.valid_time_selection(timerange)
-        variable.update({'timerange': timerange})
+
+    variable.update({'timerange': timerange})
 
 
 def _match_products(products, variables):
@@ -1479,6 +1494,8 @@ class Recipe:
                     tasks[task_id].ancestors = ancestors
 
     def _fill_wildcards(self, variable_group, preprocessor_output):
+        """Fill wildcards in the `timerange` tag with the datetime values that
+        have been found for the first and/or last available points."""
         # To be generalised for other tags
         datasets = self._raw_recipe.get('datasets')
         diagnostics = self._raw_recipe.get('diagnostics')

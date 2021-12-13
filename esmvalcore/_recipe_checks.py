@@ -255,6 +255,13 @@ def _check_duration_periods(timerange):
                               "as duration periods.")
 
 
+def _check_format_years(date):
+    if date != '*' and not date.startswith('P'):
+        if len(date) < 4:
+            date = date.zfill(4)
+    return date
+
+
 def _check_timerange_values(date, timerange):
     try:
         isodate.parse_date(date)
@@ -277,6 +284,7 @@ def valid_time_selection(timerange):
         _check_delimiter(timerange)
         _check_duration_periods(timerange)
         for date in timerange:
+            date = _check_format_years(date)
             _check_timerange_values(date, timerange)
 
 
