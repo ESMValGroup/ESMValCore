@@ -21,7 +21,7 @@ def test_select_files():
 
 
 def test_select_files_monthly_resolution():
-
+    """Test file selection works for monthly data."""
     files = [
         "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196011-196110.nc",
         "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_196111-196210.nc",
@@ -39,7 +39,7 @@ def test_select_files_monthly_resolution():
 
 
 def test_select_files_daily_resolution():
-
+    """Test file selection works for daily data."""
     filename = "tas_day_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_"
 
     files = [
@@ -58,6 +58,7 @@ def test_select_files_daily_resolution():
 
 
 def test_select_files_sub_daily_resolution():
+    """Test file selection works for sub-daily data."""
     filename = "psl_6hrPlev_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_"
 
     files_no_separator = [
@@ -92,7 +93,8 @@ def test_select_files_sub_daily_resolution():
 
 
 def test_select_files_time_period():
-
+    """Test file selection works with time range given as duration periods of
+    various resolution."""
     filename_date = "pr_Amon_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_"
     filename_datetime = (
         "psl_6hrPlev_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_")
@@ -130,6 +132,8 @@ def test_select_files_time_period():
 
 
 def test_select_files_varying_format():
+    """Test file selection works with time range of various time resolutions
+    and formats."""
     filename = "psl_6hrPlev_EC-Earth3_dcppA-hindcast_s1960-r1i1p1f1_gr_"
 
     files = [

@@ -126,6 +126,7 @@ def get_start_end_date(filename):
 
 
 def _get_timerange_from_years(variable):
+    """Build `timerange` tag from tags `start_year` and `end_year`."""
     start_year = variable.get('start_year')
     end_year = variable.get('end_year')
     if start_year and end_year:
@@ -189,6 +190,12 @@ def get_start_end_year(filename):
 
 
 def _parse_period(timerange):
+    """Parse `timerange` values given as duration periods.
+
+    Sum the duration periods to the `timerange` value given as a
+    reference point in order to compute the start and end dates needed
+    for file selection.
+    """
     start_date = None
     end_date = None
     time_format = None
@@ -231,6 +238,8 @@ def _parse_period(timerange):
 
 
 def _truncate_dates(date, file_date):
+    """Truncate dates of different lengths in order to compare them
+    chronologically."""
     date = re.sub("[^0-9]", '', date)
     file_date = re.sub("[^0-9]", '', file_date)
     if len(date) < len(file_date):
@@ -421,6 +430,8 @@ def _get_filenames_glob(variable, drs):
 
 
 def _find_input_files(variable, rootpath, drs):
+    """Return available input files, the directory in which they are located
+    in, and their file name."""
     short_name = variable['short_name']
     variable['short_name'] = variable['original_short_name']
     input_dirs = _find_input_dirs(variable, rootpath, drs)

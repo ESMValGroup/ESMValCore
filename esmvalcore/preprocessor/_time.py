@@ -111,6 +111,10 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
 
 
 def _parse_start_date(date):
+    """Parse start of the input `timerange` tag given in ISO 8601 format.
+
+    Returns a datetime.datetime object.
+    """
     if date.startswith('P'):
         start_date = isodate.parse_duration(date)
     else:
@@ -124,6 +128,10 @@ def _parse_start_date(date):
 
 
 def _parse_end_date(date):
+    """Parse end of the input `timerange` given in ISO 8601 format.
+
+    Returns a datetime.datetime object.
+    """
     if date.startswith('P'):
         end_date = isodate.parse_duration(date)
     else:
@@ -144,11 +152,37 @@ def _parse_end_date(date):
 
 
 def _duration_to_date(duration, reference, sign):
+    """Add or subtract a duration period to a reference datetime."""
     date = reference + sign * duration
     return date
 
 
 def _extract_datetime(cube, start_datetime, end_datetime):
+    """Extract a time range from a cube.
+
+    Given a time range passed in as a datetime.datetime object, it
+    returns a time-extracted cube with data only within the specified
+    time range with a resolution up to seconds..
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+    start_year: datetime.datetime
+        start datetime
+    end_day: datetime.datetime
+        end datetime
+
+    Returns
+    -------
+    iris.cube.Cube
+        Sliced cube.
+
+    Raises
+    ------
+    ValueError
+        if time ranges are outside the cube time limits
+    """
     time_coord = cube.coord('time')
     time_units = time_coord.units
     if time_units.calendar == '360_day':
@@ -183,7 +217,8 @@ def _extract_datetime(cube, start_datetime, end_datetime):
 
 
 def clip_timerange(cube, timerange):
-    """Extract time range given by the dataset keys.
+    """Extract time range given by the dataset keys with a resolution up to
+    seconds.
 
     Parameters
     ----------
