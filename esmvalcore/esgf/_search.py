@@ -107,9 +107,6 @@ def select_by_time(files, timerange):
     selection = []
     start_date, end_date = _parse_period(timerange)
 
-    start_date = str(start_date)
-    end_date = str(end_date)
-
     for file in files:
         try:
             start, end = get_start_end_date(file.name)
