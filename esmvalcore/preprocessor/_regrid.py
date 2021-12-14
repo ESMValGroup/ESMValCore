@@ -491,6 +491,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                     "dtype of data changed during regridding from '%s' to "
                     "'%s': %s", original_dtype, cube.core_data().dtype,
                     str(exc))
+            cube.data = da.ma.masked_equal(cube.core_data(), GLOBAL_FILL_VALUE)
 
     return cube
 
