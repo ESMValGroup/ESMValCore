@@ -1500,8 +1500,11 @@ class Recipe:
                     tasks[task_id].ancestors = ancestors
 
     def _fill_wildcards(self, variable_group, preprocessor_output):
-        """Fill wildcards in the `timerange` tag with the datetime values that
-        have been found for the first and/or last available points."""
+        """Fill wildcards in the `timerange` .
+
+        The new values will be datetime values that have been found for
+        the first and/or last available points.
+        """
         # To be generalised for other tags
         datasets = self._raw_recipe.get('datasets')
         diagnostics = self._raw_recipe.get('diagnostics')

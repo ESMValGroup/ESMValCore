@@ -432,8 +432,11 @@ def _get_filenames_glob(variable, drs):
 
 
 def _find_input_files(variable, rootpath, drs):
-    """Return available input files, the directory in which they are located
-    in, and their file name."""
+    """Find available input files.
+
+    Return the files, the directory in which they are located in, and
+    the file name.
+    """
     short_name = variable['short_name']
     variable['short_name'] = variable['original_short_name']
     input_dirs = _find_input_dirs(variable, rootpath, drs)
