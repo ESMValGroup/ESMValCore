@@ -16,14 +16,9 @@ from . import _recipe_checks as check
 from . import esgf
 from ._config import (
     TAGS,
-    get_activity,
-    get_extra_facets,
-    get_institutes,
     get_project_config,
 )
 from ._data_finder import (
-    get_input_filelist,
-    get_output_file,
     get_statistic_output_file,
 )
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -47,6 +42,7 @@ from .preprocessor._regrid import (
     get_reference_levels,
     parse_cell_spec,
 )
+from esmvalcore._dataset import _augment, _add_cmor_info, _add_extra_facets
 
 logger = logging.getLogger(__name__)
 
@@ -66,47 +62,6 @@ def read_recipe_file(filename, config_user, initialize_tasks=True):
                   config_user,
                   initialize_tasks,
                   recipe_file=filename)
-
-
-def _add_cmor_info(variable, override=False):
-    """Add information from CMOR tables to variable."""
-    # Copy the following keys from CMOR table
-    cmor_keys = [
-        'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
-    ]
-    project = variable['project']
-    mip = variable['mip']
-    short_name = variable['short_name']
-    derive = variable.get('derive', False)
-    table = CMOR_TABLES.get(project)
-    if table:
-        table_entry = table.get_variable(mip, short_name, derive)
-    else:
-        table_entry = None
-    if table_entry is None:
-        raise RecipeError(
-            f"Unable to load CMOR table (project) '{project}' for variable "
-            f"'{short_name}' with mip '{mip}'")
-    variable['original_short_name'] = table_entry.short_name
-    for key in cmor_keys:
-        if key not in variable or override:
-            value = getattr(table_entry, key, None)
-            if value is not None:
-                variable[key] = value
-            else:
-                logger.debug(
-                    "Failed to add key %s to variable %s from CMOR table", key,
-                    variable)
-
-    # Check that keys are available
-    check.variable(variable, required_keys=cmor_keys)
-
-
-def _add_extra_facets(variable, extra_facets_dir):
-    extra_facets = get_extra_facets(variable["project"], variable["dataset"],
-                                    variable["mip"], variable["short_name"],
-                                    extra_facets_dir)
-    _augment(variable, extra_facets)
 
 
 def _special_name_to_dataset(variable, special_name):
@@ -206,13 +161,6 @@ def _get_dataset_info(dataset, variables):
                       "{}".format(dataset))
 
 
-def _augment(base, update):
-    """Update dict base with values from dict update."""
-    for key in update:
-        if key not in base:
-            base[key] = update[key]
-
-
 def _dataset_to_file(variable, config_user):
     """Find the first file belonging to dataset from variable info."""
     (files, dirnames, filenames) = _get_input_files(variable, config_user)
@@ -261,32 +209,9 @@ def _get_default_settings(variable, config_user, derive=False):
     """Get default preprocessor settings."""
     settings = {}
 
-    # Configure loading
     settings['load'] = {
-        'callback': concatenate_callback,
+        'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
     }
-    # Configure concatenation
-    settings['concatenate'] = {}
-
-    # Configure fixes
-    fix = deepcopy(variable)
-    # File fixes
-    fix_dir = os.path.splitext(variable['filename'])[0] + '_fixed'
-    settings['fix_file'] = dict(fix)
-    settings['fix_file']['output_dir'] = fix_dir
-    # Cube fixes
-    fix['frequency'] = variable['frequency']
-    fix['check_level'] = config_user.get('check_level', CheckLevels.DEFAULT)
-    settings['fix_metadata'] = dict(fix)
-    settings['fix_data'] = dict(fix)
-
-    # Configure time extraction
-    if 'start_year' in variable and 'end_year' in variable \
-            and variable['frequency'] != 'fx':
-        settings['clip_start_end_year'] = {
-            'start_year': variable['start_year'],
-            'end_year': variable['end_year'],
-        }
 
     if derive:
         settings['derive'] = {
@@ -296,19 +221,9 @@ def _get_default_settings(variable, config_user, derive=False):
             'units': variable['units'],
         }
 
-    # Configure CMOR metadata check
-    settings['cmor_check_metadata'] = {
-        'cmor_table': variable['project'],
-        'mip': variable['mip'],
-        'short_name': variable['short_name'],
-        'frequency': variable['frequency'],
-        'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
-    }
-    # Configure final CMOR data check
-    settings['cmor_check_data'] = dict(settings['cmor_check_metadata'])
-
     # Clean up fixed files
     if not config_user['save_intermediary_cubes']:
+        fix_dir = os.path.splitext(self.facets['filename'])[0] + '_fixed'
         settings['cleanup'] = {
             'remove': [fix_dir],
         }
@@ -562,40 +477,6 @@ def _read_attributes(filename):
     return attributes
 
 
-def _get_input_files(variable, config_user):
-    """Get the input files for a single dataset (locally and via download)."""
-    (input_files, dirnames,
-     filenames) = get_input_filelist(variable=variable,
-                                     rootpath=config_user['rootpath'],
-                                     drs=config_user['drs'])
-
-    # Set up downloading from ESGF if requested.
-    if (not config_user['offline']
-            and variable['project'] in esgf.facets.FACETS):
-        try:
-            check.data_availability(
-                input_files,
-                variable,
-                dirnames,
-                filenames,
-                log=False,
-            )
-        except RecipeError:
-            # Only look on ESGF if files are not available locally.
-            local_files = set(Path(f).name for f in input_files)
-            search_result = esgf.find_files(**variable)
-            for file in search_result:
-                local_copy = file.local_file(config_user['download_dir'])
-                if local_copy.name not in local_files:
-                    if not local_copy.exists():
-                        DOWNLOAD_FILES.add(file)
-                    input_files.append(str(local_copy))
-
-            dirnames.append('ESGF:')
-
-    return (input_files, dirnames, filenames)
-
-
 def _get_ancestors(variable, config_user):
     """Get the input files for a single dataset and setup provenance."""
     (input_files, dirnames,
@@ -768,9 +649,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     sets the correct ancestry.
     """
     products = set()
-    for variable in variables:
-        variable['filename'] = get_output_file(variable,
-                                               config_user['preproc_dir'])
 
     if ancestor_products:
         grouped_ancestors = _match_products(ancestor_products, variables)
@@ -1140,42 +1018,6 @@ class Recipe:
                 DATASET_KEYS.add(key)
         return datasets
 
-    @staticmethod
-    def _expand_tag(variables, input_tag):
-        """Expand tags such as ensemble members or startdates.
-
-        Expansion only supports ensembles defined as strings, not lists.
-        Returns the expanded datasets.
-        """
-        expanded = []
-        regex = re.compile(r'\(\d+:\d+\)')
-
-        def expand_tag(variable, input_tag):
-            tag = variable.get(input_tag, "")
-            match = regex.search(tag)
-            if match:
-                start, end = match.group(0)[1:-1].split(':')
-                for i in range(int(start), int(end) + 1):
-                    expand = deepcopy(variable)
-                    expand[input_tag] = regex.sub(str(i), tag, 1)
-                    expand_tag(expand, input_tag)
-            else:
-                expanded.append(variable)
-
-        for variable in variables:
-            tag = variable.get(input_tag, "")
-            if isinstance(tag, (list, tuple)):
-                for elem in tag:
-                    if regex.search(elem):
-                        raise RecipeError(
-                            f"In variable {variable}: {input_tag} expansion "
-                            f"cannot be combined with {input_tag} lists")
-                expanded.append(variable)
-            else:
-                expand_tag(variable, input_tag)
-
-        return expanded
-
     def _initialize_variables(self, raw_variable, raw_datasets):
         """Define variables for all datasets."""
         variables = []
@@ -1211,27 +1053,11 @@ class Recipe:
         if 'fx' not in raw_variable.get('mip', ''):
             required_keys.update({'start_year', 'end_year'})
         for variable in variables:
-            _add_extra_facets(variable, self._cfg['extra_facets_dir'])
-            if 'institute' not in variable:
-                institute = get_institutes(variable)
-                if institute:
-                    variable['institute'] = institute
-            if 'activity' not in variable:
-                activity = get_activity(variable)
-                if activity:
-                    variable['activity'] = activity
-            if 'sub_experiment' in variable:
-                subexperiment_keys = deepcopy(required_keys)
-                subexperiment_keys.update({'sub_experiment'})
-                check.variable(variable, subexperiment_keys)
-            else:
-                check.variable(variable, required_keys)
+            check.variable(variable, required_keys)
             if variable['project'] == 'obs4mips':
                 logger.warning("Correcting capitalization, project 'obs4mips'"
                                " should be written as 'obs4MIPs'")
                 variable['project'] = 'obs4MIPs'
-        variables = self._expand_tag(variables, 'ensemble')
-        variables = self._expand_tag(variables, 'sub_experiment')
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,

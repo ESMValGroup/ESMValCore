@@ -1,10 +1,74 @@
 import copy
+import logging
+import os.path
 import re
+from pathlib import Path
 
-import yaml
+from . import esgf
+from . import _recipe_checks as check
+from ._config import get_activity, get_extra_facets, get_institutes
+from ._data_finder import get_input_filelist, get_output_file
+from ._recipe_checks import RecipeError
+from .cmor.check import cmor_check_data, cmor_check_metadata, CheckLevels
+from .cmor.fix import fix_data, fix_file, fix_metadata
+from .cmor.table import CMOR_TABLES
+from .preprocessor._io import concatenate, concatenate_callback, load
+from .preprocessor._time import clip_start_end_year
 
-from esmvalcore._data_finder import get_input_filelist
-from esmvalcore._recipe_checks import RecipeError
+logger = logging.getLogger(__name__)
+
+
+def _augment(base, update):
+    """Update dict base with values from dict update."""
+    for key in update:
+        if key not in base:
+            base[key] = update[key]
+
+
+def _add_cmor_info(facets, override=False):
+    """Add information from CMOR tables to facets."""
+    # Copy the following keys from CMOR table
+    cmor_keys = [
+        'standard_name',
+        'long_name',
+        'units',
+        'modeling_realm',
+        'frequency',
+    ]
+    project = facets['project']
+    mip = facets['mip']
+    short_name = facets['short_name']
+    derive = facets.get('derive', False)
+    table = CMOR_TABLES.get(project)
+    if table:
+        table_entry = table.get_variable(mip, short_name, derive)
+    else:
+        table_entry = None
+    if table_entry is None:
+        raise RecipeError(
+            f"Unable to load CMOR table (project) '{project}' for variable "
+            f"'{short_name}' with mip '{mip}'")
+    facets['original_short_name'] = table_entry.short_name
+    for key in cmor_keys:
+        if key not in facets or override:
+            value = getattr(table_entry, key, None)
+            if value is not None:
+                facets[key] = value
+            else:
+                logger.debug(
+                    "Failed to add key %s to variable %s from CMOR table", key,
+                    facets)
+
+    # Check that keys are available
+    check.variable(facets, required_keys=cmor_keys)
+
+
+def _add_extra_facets(facets, extra_facets_dir):
+    """Add extra facets from configuration files."""
+    extra_facets = get_extra_facets(facets["project"], facets["dataset"],
+                                    facets["mip"], facets["short_name"],
+                                    extra_facets_dir)
+    _augment(facets, extra_facets)
 
 
 class Dataset:
@@ -20,21 +84,102 @@ class Dataset:
     def __repr__(self):
         return repr(self.facets)
 
-    def copy(self, **facets):
-        # Is this a useful function? Maybe remove
-        facets_ = copy.deepcopy(self.facets)
-        facets_.update(facets)
-        return self.__class__(**facets_)
+    def augment_facets(self, config_user):
+        """Augment facets."""
+        _add_extra_facets(self.facets, config_user['extra_facets_dir'])
+        if 'institute' not in self.facets:
+            institute = get_institutes(self.facets)
+            if institute:
+                self.facets['institute'] = institute
+        if 'activity' not in self.facets:
+            activity = get_activity(self.facets)
+            if activity:
+                self.facets['activity'] = activity
+        _add_cmor_info(self.facets)
+        self.facets['filename'] = get_output_file(self.facets,
+                                                  config_user['preproc_dir'])
 
     def find_files(self, config_user, debug=False):
-        (input_files, dirnames, filenames) = get_input_filelist(
-            variable=self.facets,
-            rootpath=config_user['rootpath'],
-            drs=config_user['drs'],
-        )
+        """Get the input files for a single dataset (locally and via download)."""
+        (input_files, dirnames,
+         filenames) = get_input_filelist(variable=self.facets,
+                                         rootpath=config_user['rootpath'],
+                                         drs=config_user['drs'])
+
+        # Set up downloading from ESGF if requested.
+        if (not config_user['offline']
+                and self.facets['project'] in esgf.facets.FACETS):
+            try:
+                check.data_availability(
+                    input_files,
+                    self.facets,
+                    dirnames,
+                    filenames,
+                    log=False,
+                )
+            except RecipeError:
+                # Only look on ESGF if files are not available locally.
+                local_files = set(Path(f).name for f in input_files)
+                search_result = esgf.find_files(**self.facets)
+                for file in search_result:
+                    local_copy = file.local_file(config_user['download_dir'])
+                    if local_copy.name not in local_files:
+                        input_files.append(str(local_copy))
+
+                dirnames.append('ESGF:')
+
+        self.files = input_files
         if debug:
             return (input_files, dirnames, filenames)
         return input_files
+
+    def load(self, check_level=CheckLevels.DEFAULT):
+        """Load dataset.
+
+        """
+
+        cubes = []
+        for filename in self.files:
+            fix_dir = os.path.splitext(self.facets['filename'])[0] + '_fixed'
+            filename = fix_file(filename, output_dir=fix_dir, **self.facets)
+
+            file_cubes = load(filename, callback=concatenate_callback)
+            cubes.extend(file_cubes)
+
+        cubes = fix_metadata(cubes, check_level=check_level, **self.facets)
+
+        cube = concatenate(cubes)
+
+        cube = cmor_check_metadata(
+            cube,
+            cmor_table=self.facets['project'],
+            mip=self.facets['mip'],
+            short_name=self.facets['short_name'],
+            frequency=self.facets['frequency'],
+            check_level=check_level,
+        )
+
+        if ('start_year' in self.facets and 'end_year' in self.facets
+                and self.facets['frequency'] != 'fx'):
+            cube = clip_start_end_year(
+                cube,
+                self.facets['start_year'],
+                self.facets['end_year'],
+            )
+
+        cube = fix_data(cube, check_level=check_level, **self.facets)
+
+        cube = cmor_check_data(
+            cube,
+            cmor_table=self.facets['project'],
+            mip=self.facets['mip'],
+            short_name=self.facets['short_name'],
+            frequency=self.facets['frequency'],
+            check_level=check_level,
+        )
+        # TODO: add fx variables with `add_fx_variables`
+
+        return cube
 
 
 def _expand_tag(facets, input_tag):
@@ -73,9 +218,6 @@ def _expand_tag(facets, input_tag):
 
 def datasets_from_recipe(recipe):
 
-    with open(recipe, 'r') as file:
-        recipe = yaml.safe_load(file)
-
     datasets = []
 
     for diagnostic in recipe['diagnostics']:
@@ -92,10 +234,10 @@ def datasets_from_recipe(recipe):
                                    'additional_datasets', []) +
                                recipe_variable.get('additional_datasets', []))
 
+            idx = 0
             for recipe_dataset in recipe_datasets:
                 facets = copy.deepcopy(recipe_variable)
                 facets.pop('additional_datasets', None)
-                facets.pop('preprocessor', None)
                 facets.update(copy.deepcopy(recipe_dataset))
                 facets['diagnostic'] = diagnostic
                 facets['variable_group'] = variable_group
@@ -104,10 +246,36 @@ def datasets_from_recipe(recipe):
 
                 for facets0 in _expand_tag(facets, 'ensemble'):
                     for facets1 in _expand_tag(facets0, 'sub_experiment'):
+                        facets1['recipe_dataset_index'] = idx
+                        idx += 1
                         dataset = Dataset(**facets1)
                         datasets.append(dataset)
     return datasets
 
 
 def datasets_to_recipe(datasets):
-    pass
+
+    diagnostics = {}
+
+    for dataset in datasets:
+        facets = dict(dataset.facets)
+        facets.pop('recipe_dataset_index', None)
+        diagnostic = facets.pop('diagnostic')
+        if diagnostic not in diagnostics:
+            diagnostics[diagnostic] = {'variables': {}}
+        variables = diagnostics[diagnostic]['variables']
+        variable_group = facets.pop('variable_group')
+        if variable_group not in variables:
+            variables[variable_group] = {'additional_datasets': []}
+        variables[variable_group]['additional_datasets'].append(facets)
+
+    # TODO: make recipe look nice
+    # - move identical facets from dataset to variable
+    # - deduplicate by moving datasets up from variable to diagnostic to recipe
+    # - remove variable_group if the same as short_name
+    # - remove automatically added facets
+
+    # TODO: integrate with existing recipe
+
+    recipe = {'diagnostics': diagnostics}
+    return recipe
