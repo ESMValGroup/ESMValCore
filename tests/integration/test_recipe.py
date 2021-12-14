@@ -3192,6 +3192,7 @@ def test_dataset_to_file_regular_var(mock_data_availability,
         'project': 'ICON',
         'short_name': 'tas',
         'start_year': 1990,
+        'timerange': '1990/2000',
         'var_type': 'atm_2d_ml',
         'version': 1,
     }
@@ -3225,7 +3226,7 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'project': 'ICON',
         'short_name': 'lwp',
         'start_year': 1990,
-        'timerange'; '1990/2000',
+        'timerange': '1990/2000',
         'var_type': 'atm_2d_ml',
         'version': 1,
     }
@@ -3306,6 +3307,7 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'mip': 'Amon',
             'project': 'ICON',
             'start_year': 1990,
+            'timerange': '1990/2000',
             'var_type': 'atm_2d_ml',
             'version': 1,
             # Added by _add_cmor_info
@@ -3335,6 +3337,7 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'mip': 'Amon',
             'project': 'ICON',
             'start_year': 1990,
+            'timerange': '1990/2000',
             'var_type': 'atm_2d_ml',
             'version': 1,
             # Added by _add_cmor_info
