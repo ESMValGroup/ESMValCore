@@ -392,7 +392,7 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
         for key in MANDATORY_SCRIPT_SETTINGS_KEYS:
             assert key in task.settings and task.settings[key]
         assert task.settings['custom_setting'] == 1
-    # Filled recipe is not created as there are no wildcards
+    # Filled recipe is not created as there are no wildcards.
     assert recipe._updated_recipe == {}
 
 
@@ -1006,11 +1006,14 @@ def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
     assert (fx_filename ==
             'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
 
-TEST_YEAR_FORMAT=[
+
+TEST_YEAR_FORMAT = [
   ('1/301', '0001/0301'),
   ('10/P2Y', '0010/P2Y'),
   ('P2Y/10', 'P2Y/0010'),
 ]
+
+
 @pytest.mark.parametrize('input_time,output_time', TEST_YEAR_FORMAT)
 def test_update_timerange_year_format(config_user, input_time, output_time):
     variable = {
@@ -1026,6 +1029,7 @@ def test_update_timerange_year_format(config_user, input_time, output_time):
     }
     esmvalcore._recipe._update_timerange(variable, config_user)
     assert variable['timerange'] == output_time
+
 
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,
                            monkeypatch):
