@@ -3,7 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec, patch, sentinel
 
 import iris
 import pytest
@@ -13,7 +13,12 @@ from PIL import Image
 
 import esmvalcore
 from esmvalcore._config import TAGS
-from esmvalcore._recipe import TASKSEP, read_recipe_file
+from esmvalcore._recipe import (
+    TASKSEP,
+    _dataset_to_file,
+    _get_derive_input_variables,
+    read_recipe_file,
+)
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.exceptions import RecipeError
@@ -3168,3 +3173,175 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=config_user['max_parallel_tasks'])
     recipe.write_filled_recipe.assert_called_once()
+
+
+@patch('esmvalcore._recipe.check.data_availability', autospec=True)
+def test_dataset_to_file_regular_var(mock_data_availability,
+                                     patched_datafinder, config_user):
+    """Test ``_dataset_to_file`` with regular variable."""
+    variable = {
+        'component': 'atm',
+        'dataset': 'ICON',
+        'end_year': 2000,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'original_short_name': 'tas',
+        'project': 'ICON',
+        'short_name': 'tas',
+        'start_year': 1990,
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+    }
+    filename = _dataset_to_file(variable, config_user)
+    path = Path(filename)
+    assert path.name == '1_atm_amip_R2B5_r1v1i1p1l1f1_atm_2d_ml_1990_1999.nc'
+    mock_data_availability.assert_called_once()
+
+
+@patch('esmvalcore._recipe.check.data_availability', autospec=True)
+@patch('esmvalcore._recipe._get_input_files', autospec=True)
+def test_dataset_to_file_derived_var(mock_get_input_files,
+                                     mock_data_availability, config_user):
+    """Test ``_dataset_to_file`` with derived variable."""
+    mock_get_input_files.side_effect = [
+        ([], [], []),
+        ([sentinel.out_file], [sentinel.dirname], [sentinel.filename]),
+    ]
+    variable = {
+        'component': 'atm',
+        'dataset': 'ICON',
+        'derive': True,
+        'end_year': 2000,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'force_derivation': True,
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'original_short_name': 'lwp',
+        'project': 'ICON',
+        'short_name': 'lwp',
+        'start_year': 1990,
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+    }
+    filename = _dataset_to_file(variable, config_user)
+    assert filename == sentinel.out_file
+    assert mock_get_input_files.call_count == 2
+
+    expect_required_var = {
+        # Added by get_required
+        'short_name': 'clwvi',
+        # Already present in variable
+        'component': 'atm',
+        'dataset': 'ICON',
+        'derive': True,
+        'end_year': 2000,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'force_derivation': True,
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'project': 'ICON',
+        'start_year': 1990,
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+        # Added by _add_cmor_info
+        'long_name': 'Condensed Water Path',
+        'modeling_realm': ['atmos'],
+        'original_short_name': 'clwvi',
+        'standard_name': 'atmosphere_mass_content_of_cloud_condensed_water',
+        'units': 'kg m-2',
+        # Added by _add_extra_facets
+        'raw_name': 'cllvi',
+    }
+    mock_get_input_files.assert_called_with(expect_required_var, config_user)
+    mock_data_availability.assert_called_once()
+
+
+def test_get_derive_input_variables(patched_datafinder, config_user):
+    """Test ``_get_derive_input_variables``."""
+    variables = [{
+        'component': 'atm',
+        'dataset': 'ICON',
+        'derive': True,
+        'end_year': 2000,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'force_derivation': True,
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'original_short_name': 'lwp',
+        'project': 'ICON',
+        'short_name': 'lwp',
+        'start_year': 1990,
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+        'variable_group': 'lwp_group',
+    }]
+    derive_input = _get_derive_input_variables(variables, config_user)
+
+    expected_derive_input = {
+        'lwp_group_derive_input_clwvi': [{
+            # Added by get_required
+            'short_name': 'clwvi',
+            # Already present in variables
+            'component': 'atm',
+            'dataset': 'ICON',
+            'derive': True,
+            'end_year': 2000,
+            'ensemble': 'r1v1i1p1l1f1',
+            'exp': 'amip',
+            'force_derivation': True,
+            'frequency': 'mon',
+            'grid': 'R2B5',
+            'mip': 'Amon',
+            'project': 'ICON',
+            'start_year': 1990,
+            'var_type': 'atm_2d_ml',
+            'version': 1,
+            # Added by _add_cmor_info
+            'standard_name':
+            'atmosphere_mass_content_of_cloud_condensed_water',
+            'long_name': 'Condensed Water Path',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'clwvi',
+            'units': 'kg m-2',
+            # Added by _add_extra_facets
+            'raw_name': 'cllvi',
+            # Added by append
+            'variable_group': 'lwp_group_derive_input_clwvi',
+        }], 'lwp_group_derive_input_clivi': [{
+            # Added by get_required
+            'short_name': 'clivi',
+            # Already present in variables
+            'component': 'atm',
+            'dataset': 'ICON',
+            'derive': True,
+            'end_year': 2000,
+            'ensemble': 'r1v1i1p1l1f1',
+            'exp': 'amip',
+            'force_derivation': True,
+            'frequency': 'mon',
+            'grid': 'R2B5',
+            'mip': 'Amon',
+            'project': 'ICON',
+            'start_year': 1990,
+            'var_type': 'atm_2d_ml',
+            'version': 1,
+            # Added by _add_cmor_info
+            'standard_name': 'atmosphere_mass_content_of_cloud_ice',
+            'long_name': 'Ice Water Path',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'clivi',
+            'units': 'kg m-2',
+            # Added by append
+            'variable_group': 'lwp_group_derive_input_clivi',
+        }],
+    }
+    assert derive_input == expected_derive_input
