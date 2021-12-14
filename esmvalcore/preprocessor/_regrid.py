@@ -481,7 +481,8 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         else:
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
 
-        # Preserve dtype for 'unstructured_nearest' scheme
+        # Preserve dtype and use masked arrays for 'unstructured_nearest'
+        # scheme
         if scheme == 'unstructured_nearest':
             try:
                 cube.data = cube.core_data().astype(original_dtype,

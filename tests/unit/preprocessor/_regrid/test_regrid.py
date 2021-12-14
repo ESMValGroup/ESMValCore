@@ -10,6 +10,7 @@ import pytest
 
 import tests
 from esmvalcore.preprocessor import regrid
+from esmvalcore.preprocessor._io import GLOBAL_FILL_VALUE
 from esmvalcore.preprocessor._regrid import (
     _CACHE,
     HORIZONTAL_SCHEMES,
@@ -53,10 +54,8 @@ class Test(tests.Test):
         self.coords = mock.Mock(return_value=[self.coord])
         self.remove_coord = mock.Mock()
         self.regridded_cube = mock.Mock()
-        self.regridded_cube.data = mock.sentinel.data_no_astype
+        self.regridded_cube.data = mock.sentinel.data
         self.regridded_cube_data = mock.Mock()
-        self.regridded_cube_data.astype.return_value = (
-            mock.sentinel.data_after_astype)
         self.regridded_cube.core_data.return_value = self.regridded_cube_data
         self.regrid = mock.Mock(return_value=self.regridded_cube)
         self.src_cube = mock.Mock(
@@ -111,17 +110,23 @@ class Test(tests.Test):
         self.assertEqual(
             set(HORIZONTAL_SCHEMES.keys()), set(self.regrid_schemes))
 
-    def test_regrid__horizontal_schemes(self):
+    @mock.patch('esmvalcore.preprocessor._regrid.da.ma.masked_equal',
+                autospec=True)
+    def test_regrid__horizontal_schemes(self, mock_masked_equal):
+        mock_masked_equal.side_effect = lambda x, _: x
         for scheme in self.regrid_schemes:
             result = regrid(self.src_cube, self.tgt_grid, scheme)
             self.assertEqual(result, self.regridded_cube)
 
-            # For 'unstructured_nearest', a cube.data.astype() is called to
-            # conserve the dtype
+            # For 'unstructured_nearest', cube.data.astype() and
+            # da.ma.masked_equal() are called
             if scheme == 'unstructured_nearest':
-                self.assertEqual(result.data, mock.sentinel.data_after_astype)
+                self.regridded_cube_data.astype.assert_called_once()
+                mock_masked_equal.assert_called_once_with(
+                    self.regridded_cube_data, GLOBAL_FILL_VALUE)
+                self.assertEqual(result.data, self.regridded_cube_data)
             else:
-                self.assertEqual(result.data, mock.sentinel.data_no_astype)
+                self.assertEqual(result.data, mock.sentinel.data)
             self._check(self.tgt_grid, scheme)
 
     def test_regrid__cell_specification(self):
@@ -135,7 +140,7 @@ class Test(tests.Test):
         for spec in specs:
             result = regrid(self.src_cube, spec, scheme)
             self.assertEqual(result, self.regridded_cube)
-            self.assertEqual(result.data, mock.sentinel.data_no_astype)
+            self.assertEqual(result.data, mock.sentinel.data)
             self._check(spec, scheme, spec=True)
         self.assertEqual(set(_CACHE.keys()), set(specs))
 
