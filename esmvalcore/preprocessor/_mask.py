@@ -7,6 +7,7 @@ masking with ancillary variables, masking with Natural Earth shapefiles
 
 import logging
 import os
+import warnings
 
 import cartopy.io.shapereader as shpreader
 import dask.array as da
@@ -15,6 +16,8 @@ import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
+
+from esmvalcore import ESMValCoreDeprecationWarning
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +84,14 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
         always apply Natural Earths mask, regardless if fx files are available
         or not.
 
+        .. warning::
+            This option has been deprecated in ESMValCore version 2.5. To
+            always use Natural Earth masks, either explicitly remove all
+            ``ancillary_variables`` from the input cube (when this function is
+            used directly) or specify ``fx_variables: {}`` as option for this
+            preprocessor in the recipe (when this function is used as part of
+            ESMValTool).
+
     Returns
     -------
     iris.cube.Cube
@@ -132,6 +143,14 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
                        "yet implemented, land-sea mask not applied.")
                 raise ValueError(msg)
     else:
+        deprecation_msg = (
+            "The option ``always_use_ne_masks``' has been deprecated in "
+            "ESMValCore version 2.5. To always use Natural Earth masks, "
+            "either explicitly remove all ``ancillary_variables`` from the "
+            "input cube (when this function is used directly) or specify "
+            "``fx_variables: {}`` as option for this preprocessor in the "
+            "recipe (when this function is used as part of ESMValTool).")
+        warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
         if cube.coord('longitude').points.ndim < 2:
             cube = _mask_with_shp(cube, shapefiles[mask_out], [
                 0,

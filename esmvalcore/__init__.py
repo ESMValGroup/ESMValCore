@@ -17,3 +17,7 @@ __all__ = [
 def get_script_root():
     """Return the location of the ESMValTool installation."""
     return os.path.abspath(os.path.dirname(__file__))
+
+
+class ESMValCoreDeprecationWarning(UserWarning):
+    """Custom deprecation warning."""
