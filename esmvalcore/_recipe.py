@@ -505,14 +505,12 @@ def _fx_list_to_dict(fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
-
-    # get fx variables either from user defined attribute or fixed
-    def _get_fx_vars_from_attribute(step_settings, step_name):
-        user_fx_vars = step_settings.get('fx_variables')
-        if isinstance(user_fx_vars, list):
-            user_fx_vars = _fx_list_to_dict(user_fx_vars)
-            step_settings['fx_variables'] = user_fx_vars
-        if not user_fx_vars:
+    # Add default values to the option 'fx_variables' if it is not explicitly
+    # specified and transform fx variables to dicts
+    def _update_fx_vars_in_settings(step_settings, step_name):
+        """Update fx_variables option in the settings."""
+        # Add default values for fx_variables
+        if 'fx_variables' not in step_settings:
             default_fx = {
                 'area_statistics': {
                     'areacella': None,
@@ -536,13 +534,20 @@ def _update_fx_settings(settings, variable, config_user):
                 default_fx['weighting_landsea_fraction']['sftof'] = None
             step_settings['fx_variables'] = default_fx[step_name]
 
+        # Transform fx variables to dicts
+        user_fx_vars = step_settings['fx_variables']
+        if user_fx_vars is None:
+            step_settings['fx_variables'] = {}
+        elif isinstance(user_fx_vars, list):
+            step_settings['fx_variables'] = _fx_list_to_dict(user_fx_vars)
+
     fx_steps = [
         'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
         'area_statistics', 'volume_statistics'
     ]
     for step_name in settings:
         if step_name in fx_steps:
-            _get_fx_vars_from_attribute(settings[step_name], step_name)
+            _update_fx_vars_in_settings(settings[step_name], step_name)
             _update_fx_files(step_name, settings, variable, config_user,
                              settings[step_name]['fx_variables'])
             # Remove unused attribute in 'fx_steps' preprocessors.
