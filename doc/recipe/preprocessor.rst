@@ -248,11 +248,11 @@ available tables of the specified project.
    be specified, otherwise an error is raised.
 
 .. note::
-   To explicitly **not** use any fx variables in a preprocessor, use either
-   ``fx_variables: null``, ``fx_variables: {}`` or ``fx_variables: []``.  While
-   some of the preprocessors mentioned above do work without fx variables
-   (e.g., ``area_statistics`` or ``mask_landsea`` with datasets that have
-   regular latitude/longitude grids), using this option is **not** recommended.
+   To explicitly **not** use any fx variables in a preprocessor, use
+   ``fx_variables: null``.  While some of the preprocessors mentioned above do
+   work without fx variables (e.g., ``area_statistics`` or ``mask_landsea``
+   with datasets that have regular latitude/longitude grids), using this option
+   is **not** recommended.
 
 Internally, the required ``fx_variables`` are automatically loaded by the
 preprocessor step ``add_fx_variables`` which also checks them against CMOR

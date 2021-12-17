@@ -88,7 +88,7 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
             This option has been deprecated in ESMValCore version 2.5. To
             always use Natural Earth masks, either explicitly remove all
             ``ancillary_variables`` from the input cube (when this function is
-            used directly) or specify ``fx_variables: {}`` as option for this
+            used directly) or specify ``fx_variables: null`` as option for this
             preprocessor in the recipe (when this function is used as part of
             ESMValTool).
 
@@ -148,7 +148,7 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
             "ESMValCore version 2.5. To always use Natural Earth masks, "
             "either explicitly remove all ``ancillary_variables`` from the "
             "input cube (when this function is used directly) or specify "
-            "``fx_variables: {}`` as option for this preprocessor in the "
+            "``fx_variables: null`` as option for this preprocessor in the "
             "recipe (when this function is used as part of ESMValTool).")
         warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
         if cube.coord('longitude').points.ndim < 2:
