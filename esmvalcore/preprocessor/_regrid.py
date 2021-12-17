@@ -481,7 +481,11 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         # Note: da.ma.set_fill_value() works with any kind of input data
         # (masked and unmasked, numpy and dask)
         if scheme == 'unstructured_nearest':
-            da.ma.set_fill_value(cube.core_data(), GLOBAL_FILL_VALUE)
+            if np.issubdtype(cube.dtype, np.integer):
+                fill_value = np.iinfo(cube.dtype).max
+            else:
+                fill_value = GLOBAL_FILL_VALUE
+            da.ma.set_fill_value(cube.core_data(), fill_value)
 
         # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
@@ -500,7 +504,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                     "dtype of data changed during regridding from '%s' to "
                     "'%s': %s", original_dtype, cube.core_data().dtype,
                     str(exc))
-            cube.data = da.ma.masked_equal(cube.core_data(), GLOBAL_FILL_VALUE)
+            cube.data = da.ma.masked_equal(cube.core_data(), fill_value)
 
     return cube
 
