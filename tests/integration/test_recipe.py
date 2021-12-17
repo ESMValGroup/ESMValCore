@@ -1259,9 +1259,9 @@ def test_multi_model_filename(tmp_path, patched_datafinder, config_user):
           product.settings['multi_model_statistics']
           ['output_products']['mean'].filename)
         assert '1999-2006' in filename
-        if product.attributes['dataset'] == 'EC-EARTH':
+        if product.attributes['dataset'] == 'CanESM2':
             ordered_products.add(product)
-        elif product.attributes['dataset'] == 'CanESM2':
+        elif product.attributes['dataset'] == 'EC-EARTH':
             other_product = product
 
     # just to improve the coverage
